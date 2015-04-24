@@ -28,4 +28,3 @@ This template deploys a configurable number of cluster nodes of a configurable s
 - The template does not currently configure SSL on Datastax Operations Center virtual machine
 - The template uses username/password for provisioning cluster nodes in the cluster, and would ideally use an SSH key
 - The template deploys cassandra data nodes configured to use ephemeral storage and attaches a data disk that can be used for data backups in the event of a cluster failure resulting in the loss of the data on the ephemeral disks.
-- The deployment scripts are not currently idempotent and this template should only be used for provisioning a new cluster at the moment.
