@@ -10,11 +10,12 @@ The example expects the following parameters:
 
 | Name   | Description    |
 |:--- |:---|
+| region | Region name where the corresponding Azure artifacts will be created |
 | storageAccountPrefix  | Unique DNS Name for the Storage Account where the Virtual Machine's disks will be placed (multiple storage accounts are created with this template using this value as a prefix for the storage account name) |
+| dnsName | DNS subnet name for operations center public IP address |
+| virtualNetworkName | Name of the Virtual Network that is created and that resources will be deployed in to |
 | adminUsername  | Admin user name for the Virtual Machines  |
 | adminPassword  | Admin password for the Virtual Machine  |
-| region | Region name where the corresponding Azure artifacts will be created |
-| virtualNetworkName | Name of the Virtual Network that is created and that resources will be deployed in to |
 | opsCenterAdminPassword | Datastax Operations Center Admin User Password |
 | clusterName | The name of the new cluster that is provisioned with the deployment |
 
