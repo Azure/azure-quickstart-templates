@@ -1,0 +1,129 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "region": {
+      "type": "string",
+      "metadata": {
+        "Description": "Location where resources will be provisioned"
+      }
+    },
+    "subnet": {
+      "type": "object",
+      "metadata": {
+        "Description": "Subnet name for the virtual network that resources will be provisioned in to"
+      }
+    },
+    "storageAccountName": {
+      "type": "string",
+      "metadata": {
+        "Description": "Unique namespace for the Storage Account where the Virtual Machine's disks will be placed"
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "Description": "Administrator user name used when provisioning virtual machines"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "Description": "Administrator password used when provisioning virtual machines"
+      }
+    },
+    "osSettings": {
+      "type": "object",
+      "metadata": {
+        "Description": "Elasticsearch deployment platform settings"
+      }
+    }
+  },
+  "variables": {
+    "vmStorageAccountContainerName": "vhd",
+    "subnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('subnet').vnet), '/subnets/', parameters('subnet').name)]",
+    "vmSize": "Standard_A0"
+  },
+  "resources": [
+    {
+      "apiVersion": "2014-12-01-preview",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "jumpboxPublicIP",
+      "location": "[parameters('region')]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic"
+      }
+    },
+    {
+      "apiVersion": "2014-12-01-preview",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "nicJumpbox",
+      "location": "[parameters('region')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', 'jumpboxPublicIP')]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses','jumpboxPublicIP')]"
+              },
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2014-12-01-preview",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "jumpbox",
+      "location": "[parameters('region')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', 'nicJumpbox')]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('vmSize')]",
+          "platformGuestAgent": "true"
+        },
+        "osProfile": {
+          "computername": "jumpbox",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]",
+          "linuxOperatingSystemProfile": {
+            "disableSshPasswordAuthentication": "false"
+          }
+        },
+        "storageProfile": {
+          "sourceImage": {
+            "id": "[parameters('osSettings').sourceImage]"
+          },
+          "destinationVhdsContainer": "[concat('https://',parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/')]"
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces','nicJumpbox')]"
+            }
+          ],
+          "inputEndpoints": [
+            {
+              "enableDirectServerReturn": "False",
+              "endpointName": "SSH",
+              "privatePort": 22,
+              "publicPort": 22,
+              "protocol": "tcp"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}
