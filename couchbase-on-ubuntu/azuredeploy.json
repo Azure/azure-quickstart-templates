@@ -1,0 +1,342 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "adminUsername": {
+            "type": "string",
+            "metadata": {
+                "Description": "Admin username used when provisioning virtual machines"
+            }
+        },
+        "adminPassword": {
+            "type": "securestring",
+            "metadata": {
+                "Description": "Admin password used when provisioning virtual machines"
+            }
+        },
+        "storageAccountNamePrefix": {
+            "type": "string",
+            "defaultValue": "cbdeploy",
+            "metadata": {
+                "Description": "Storage account name"
+            }
+        },
+        "region": {
+            "type": "string",
+            "defaultValue": "West US",
+            "metadata": {
+                "Description": "Location where resources will be provisioned"
+            }
+        },
+        "virtualNetworkName": {
+            "type": "string",
+            "defaultValue": "couchVnet",
+            "metadata": {
+                "Description": "Virtual Network"
+            }
+        },
+        "cbClusterName": {
+            "type": "string",
+            "defaultValue": "couchbasecluster",
+            "metadata": {
+                "Description": "The name of the Couchbase cluster"
+            }
+        },
+        "tshirtSize": {
+            "type": "string",
+            "defaultValue": "Small",
+            "allowedValues": [
+                "Small",
+                "Medium",
+                "Large"
+            ],
+            "metadata": {
+                "Description": "T-shirt size of the Couchbase cluster"
+            }
+        },
+        "vmNamePrefix": {
+            "type": "string",
+            "defaultValue": "cbnode",
+            "metadata": {
+                "Description": "Prefx for VM names on the cluster"
+            }
+        },
+        "cbPackageDownloadBase": {
+            "type": "string",
+            "defaultValue": "http://packages.couchbase.com/releases/3.0.3/",
+            "metadata": {
+                "Description": "Couchbase package download location"
+            }
+        },
+        "cbPackage": {
+            "type": "string",
+            "defaultValue": "couchbase-server-enterprise_3.0.3-ubuntu12.04_amd64.deb",
+            "metadata": {
+                "Description": "Couchbase package to install"
+            }
+        },
+        "jumpbox": {
+            "type": "string",
+            "defaultValue": "enabled",
+            "allowedValues": [
+                "enabled",
+                "disabled"
+            ],
+            "metadata": {
+                "Description": "The flag allowing to enable or disable provisioning of the jumpbox VM that can be used to access the nodes"
+            }
+        }
+    },
+    "variables": {
+        "commonSettings": {
+            "availabilitySet": "cbClusterAvailabilitySet",
+            "region": "[parameters('region')]"
+        },
+        "networkSettings": {
+            "virtualNetworkName": "[parameters('virtualNetworkName')]",
+            "addressPrefix": "10.0.0.0/16",
+            "subnet": {
+                "name": "couchSubnet",
+                "prefix": "10.0.0.0/24"
+            },
+            "nodesIpPrefix": "10.0.0.1"
+        },
+        "machineSettings": {
+            "adminUsername": "[parameters('adminUsername')]",
+            "adminPassword": "[parameters('adminPassword')]",
+            "machineNamePrefix": "[parameters('vmNamePrefix')]",
+            "osImageName": "[variables('sourceImage')]",
+            "dataDiskSize": 1023
+        },
+
+        "sourceImageName": "b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu-12_04_5_LTS-amd64-server-20150413-en-us-30GB",
+        "sourceImage": "[concat('/',subscription().subscriptionId,'/services/images/',variables('sourceImageName'))]",
+        "templateBaseUrl": "https://raw.githubusercontent.com/ercenk/azurermtemplates/master/couchbase-on-ubuntu/",
+        "sharedBaseUrl": "https://raw.githubusercontent.com/azurermtemplates/azurermtemplates/master/shared_scripts/ubuntu/",
+        "storageAccountSuffixForNodeSmall0": "0",
+        "storageAccountSuffixForNodeSmall1": "0",
+        "storageAccountSuffixForNodeSmall2": "0",
+        "storageAccountSuffixForNodeMedium0": "0",
+        "storageAccountSuffixForNodeMedium1": "0",
+        "storageAccountSuffixForNodeMedium2": "0",
+        "storageAccountSuffixForNodeMedium3": "0",
+        "storageAccountSuffixForNodeLarge0": "0",
+        "storageAccountSuffixForNodeLarge1": "1",
+        "storageAccountSuffixForNodeLarge2": "2",
+        "storageAccountSuffixForNodeLarge3": "3",
+        "storageAccountSuffixForNodeLarge4": "4",
+        "tshirtSizeSmall": {
+            "storageAccountCount": 1,
+            "clusterSizeMinusOne": 2,
+            "lastNodeId": 2,
+            "clusterSize": 3,
+            "couchbaseRamQuota": 2700,
+            "vmSize": "Standard_A2",
+            "maxNumberOfDataDisksForVmSizeNotUsedButHereForReference": 4,
+            "vmTemplate": "[concat(variables('templateBaseUrl'), 'cluster-nodes-A2.json')]",
+            "backendIPConfigurations": [{
+                "id": "[concat(resourceId('Microsoft.Network/networkInterfaces',  'nic0'),'/ipConfigurations/ipconfig1')]"
+            }, {
+                "id": "[concat(resourceId('Microsoft.Network/networkInterfaces',  'nic1'),'/ipConfigurations/ipconfig1')]"
+            }, {
+                "id": "[concat(resourceId('Microsoft.Network/networkInterfaces',  'nic2'),'/ipConfigurations/ipconfig1')]"
+            }]
+        },
+        "tshirtSizeMedium": {
+            "storageAccountCount": 1,
+            "clusterSizeMinusOne": 3,
+            "lastNodeId": 3,
+            "clusterSize": 4,
+            "couchbaseRamQuota": 22000,
+            "vmSize": "Standard_A6",
+            "maxNumberOfDataDisksForVmSizeNotUsedButHereForReference": 8,
+            "vmTemplate": "[concat(variables('templateBaseUrl'), 'cluster-nodes-A6.json')]",
+            "backendIPConfigurations": [{
+                "id": "[concat(resourceId('Microsoft.Network/networkInterfaces',  'nic0'),'/ipConfigurations/ipconfig1')]"
+            }, {
+                "id": "[concat(resourceId('Microsoft.Network/networkInterfaces',  'nic1'),'/ipConfigurations/ipconfig1')]"
+            }, {
+                "id": "[concat(resourceId('Microsoft.Network/networkInterfaces',  'nic2'),'/ipConfigurations/ipconfig1')]"
+            }, {
+                "id": "[concat(resourceId('Microsoft.Network/networkInterfaces',  'nic3'),'/ipConfigurations/ipconfig1')]"
+            }]
+        },
+        "tshirtSizeLarge": {
+            "storageAccountCount": 5,
+            "clusterSizeMinusOne": 4,
+            "lastNodeId": 4,
+            "clusterSize": 5,
+            "couchbaseRamQuota": 88000,
+            "vmSize": "Standard_D14",
+            "maxNumberOfDataDisksForVmSizeNotUsedButHereForReference": 32,
+            "vmTemplate": "[concat(variables('templateBaseUrl'), 'cluster-nodes-D14.json')]",
+            "backendIPConfigurations": [{
+                "id": "[concat(resourceId('Microsoft.Network/networkInterfaces',  'nic0'),'/ipConfigurations/ipconfig1')]"
+            }, {
+                "id": "[concat(resourceId('Microsoft.Network/networkInterfaces',  'nic1'),'/ipConfigurations/ipconfig1')]"
+            }, {
+                "id": "[concat(resourceId('Microsoft.Network/networkInterfaces',  'nic2'),'/ipConfigurations/ipconfig1')]"
+            }, {
+                "id": "[concat(resourceId('Microsoft.Network/networkInterfaces',  'nic3'),'/ipConfigurations/ipconfig1')]"
+            }, {
+                "id": "[concat(resourceId('Microsoft.Network/networkInterfaces',  'nic4'),'/ipConfigurations/ipconfig1')]"
+            }]
+        },
+        "vmScripts": {
+            "scriptsToDownload": [
+                "[concat(variables('templateBaseUrl'), 'couchbase-azure-install.sh')]",
+                "[concat(parameters('cbPackageDownloadBase'), parameters('cbPackage'))]",
+                "[concat(variables('sharedBaseUrl'), 'vm-disk-utils-0.1.sh')]"
+            ],
+            "installCommand": "[concat('bash couchbase-azure-install.sh -d ', parameters('cbPackage'), ' -n ', parameters('cbClusterName'), ' -i ', concat(variables('networkSettings').nodesIpPrefix, '-', variables('clusterSpec').clusterSize), ' -a ', variables('machineSettings').adminUsername, ' -p ', variables('machineSettings').adminPassword, ' -r ', variables('clusterSpec').couchbaseRamQuota)]",
+            "setupCommand": "[concat('bash couchbase-azure-install.sh -d ', parameters('cbPackage'), ' -n ', parameters('cbClusterName'), ' -i ', concat(variables('networkSettings').nodesIpPrefix, '-', variables('clusterSpec').clusterSize), ' -a ', variables('machineSettings').adminUsername, ' -p ', variables('machineSettings').adminPassword, ' -r ', variables('clusterSpec').couchbaseRamQuota, ' -l')]"
+        },
+        "clusterSpec": "[variables(concat('tshirtSize', parameters('tshirtSize')))]"
+    },
+    "resources": [{
+        "name": "shared-resources",
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "2015-01-01",
+        "properties": {
+            "mode": "Incremental",
+            "templateLink": {
+                "uri": "[concat(variables('templateBaseUrl'), 'shared-resources.json')]",
+                "contentVersion": "1.0.0.0"
+            },
+            "parameters": {
+                "commonSettings": {
+                    "value": "[variables('commonSettings')]"
+                },
+                "networkSettings": {
+                    "value": "[variables('networkSettings')]"
+                },
+                "storageAccountNamePrefix": {
+                    "value": "[parameters('storageAccountNamePrefix')]"
+                }
+            }
+        }
+    }, {
+        "name": "[concat(parameters('storageAccountNamePrefix'), copyindex())]",
+        "type": "Microsoft.Storage/storageAccounts",
+        "apiVersion": "2014-12-01-preview",
+        "dependsOn": ["[concat('Microsoft.Resources/deployments/', 'shared-resources')]"],
+        "location": "[variables('commonSettings').region]",
+        "copy": {
+            "name": "storageAccountsLoop",
+            "count": "[variables('clusterSpec').storageAccountCount]"
+        },
+        "properties": {
+            "accountType": "Standard_LRS"
+        }
+    }, {
+        "name": "[concat('cluster-node', copyindex())]",
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "2015-01-01",
+        "dependsOn": [
+            "storageAccountsLoop"
+        ],
+        "copy": {
+            "name": "clusterNodesLoop",
+            "count": "[variables('clusterSpec').clusterSizeMinusOne]"
+        },
+        "properties": {
+            "mode": "Incremental",
+            "templateLink": {
+                "uri": "[variables('clusterSpec').vmTemplate]",
+                "contentVersion": "1.0.0.0"
+            },
+            "parameters": {
+                "commonSettings": {
+                    "value": "[variables('commonSettings')]"
+                },
+                "networkSettings": {
+                    "value": "[variables('networkSettings')]"
+                },
+                "machineSettings": {
+                    "value": "[variables('machineSettings')]"
+                },
+                "storageAccountName": {
+                    "value": "[concat(parameters('storageAccountNamePrefix'), variables(concat('storageAccountSuffixForNode', parameters('tshirtSize'), copyindex())))]"
+                },
+                "nodeId": {
+                    "value": "[copyindex()]"
+                },
+                "vmSize": {
+                    "value": "[variables('clusterSpec').vmSize]"
+                },
+                "vmScripts": {
+                    "value": "[variables('vmScripts')]"
+                },
+                "commandToExecute": {
+                    "value": "[variables('vmScripts').installCommand]"
+                }
+            }
+        }
+    }, {
+        "name": "last-cluster-node",
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "2015-01-01",
+        "dependsOn": [
+            "clusterNodesLoop"
+        ],
+        "properties": {
+            "mode": "Incremental",
+            "templateLink": {
+                "uri": "[variables('clusterSpec').vmTemplate]",
+                "contentVersion": "1.0.0.0"
+            },
+            "parameters": {
+                "commonSettings": {
+                    "value": "[variables('commonSettings')]"
+                },
+                "networkSettings": {
+                    "value": "[variables('networkSettings')]"
+                },
+                "machineSettings": {
+                    "value": "[variables('machineSettings')]"
+                },
+                "storageAccountName": {
+                    "value": "[concat(parameters('storageAccountNamePrefix'), variables(concat('storageAccountSuffixForNode', parameters('tshirtSize'), variables('clusterSpec').lastNodeId)))]"
+                },
+                "nodeId": {
+                    "value": "[variables('clusterSpec').lastNodeId]"
+                },
+                "vmSize": {
+                    "value": "[variables('clusterSpec').vmSize]"
+                },
+                "vmScripts": {
+                    "value": "[variables('vmScripts')]"
+                },
+                "commandToExecute": {
+                    "value": "[variables('vmScripts').setupCommand]"
+                }
+            }
+        }
+    }, {
+        "name": "jumpbox-resources",
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "2015-01-01",
+        "dependsOn": [],
+        "properties": {
+            "mode": "Incremental",
+            "templateLink": {
+                "uri": "[concat(variables('templateBaseUrl'), 'jumpbox-resources-', parameters('jumpbox'), '.json')]",
+                "contentVersion": "1.0.0.0"
+            },
+            "parameters": {
+                "commonSettings": {
+                    "value": "[variables('commonSettings')]"
+                },
+                "networkSettings": {
+                    "value": "[variables('networkSettings')]"
+                },
+                "machineSettings": {
+                    "value": "[variables('machineSettings')]"
+                },
+                "storageAccountNamePrefix": {
+                    "value": "[parameters('storageAccountNamePrefix')]"
+                }
+            }
+        }
+    }]
+}
