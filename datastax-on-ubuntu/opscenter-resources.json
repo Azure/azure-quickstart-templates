@@ -34,32 +34,38 @@
     }
   },
   "variables": {
-    "subnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('subnet').vnet), '/subnets/', parameters('subnet').name)]"
+    "subnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('subnet').vnet), '/subnets/', parameters('subnet').name)]",
+    "publicIpName": "[concat(parameters('namespace'), 'PublicIp')]",
+    "publicIpRef": "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIpName'))]",
+    "vmName": "[concat(parameters('namespace'), 'vm')]",
+    "vmRef": "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]",
+    "nicName": "[concat(parameters('namespace'), 'nic')]",
+    "nicRef": "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
   },
   "resources": [
     {
-      "apiVersion": "2014-12-01-preview",
+      "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/publicIPAddresses",
-      "name": "opsCenterPublicIp",
+      "name": "[variables('publicIpName')]",
       "location": "[parameters('region')]",
       "properties": {
         "publicIPAllocationMethod": "Dynamic"
       }
     },
     {
-      "apiVersion": "2014-12-01-preview",
+      "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[concat(parameters('namespace'), 'set')]",
       "location": "[parameters('region')]",
       "properties": {}
     },
     {
-      "apiVersion": "2014-12-01-preview",
+      "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[concat(parameters('namespace'), 'nic')]",
+      "name": "[variables('nicName')]",
       "location": "[parameters('region')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', 'opsCenterPublicIp')]"
+        "[variables('publicIpRef')]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -67,7 +73,7 @@
             "name": "ipconfig1",
             "properties": {
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses','opsCenterPublicIp')]"
+                "id": "[variables('publicIpRef')]"
               },
               "privateIPAllocationMethod": "Static",
               "privateIPAddress": "[parameters('staticIp')]",
@@ -80,32 +86,37 @@
       }
     },
     {
-      "apiVersion": "2014-12-01-preview",
+      "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[concat(parameters('namespace'), 'vm')]",
+      "name": "[variables('vmName')]",
       "location": "[parameters('region')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', parameters('namespace'), 'nic')]"
+        "[variables('nicRef')]"
       ],
       "properties": {
         "hardwareProfile": {
           "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
-          "computername": "[concat(parameters('namespace'), 'vm')]",
+          "computername": "[variables('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]"
         },
         "storageProfile": {
-          "sourceImage": {
-            "id": "[parameters('osSettings').sourceImage]"
-          },
-          "destinationVhdsContainer": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/')]"
+          "imageReference": "[parameters('osSettings').imageReference]",
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/', parameters('namespace'), 'vm-osdisk.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
         },
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('namespace'), 'nic'))]"
+              "id": "[variables('nicRef')]"
             }
           ],
           "inputEndpoints": [
@@ -115,6 +126,13 @@
               "privatePort": 22,
               "publicPort": 22,
               "protocol": "tcp"
+            },
+            {
+              "enableDirectServerReturn": "False",
+              "endpointName": "HTTP",
+              "privatePort": 8888,
+              "publicPort": 8888,
+              "protocol": "tcp"
             }
           ]
         }
@@ -122,12 +140,12 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(parameters('namespace'), 'vm', '/installopscenter')]",
-      "apiVersion": "2014-12-01-preview",
+      "name": "[concat(variables('vmName'), '/installopscenter')]",
+      "apiVersion": "2015-05-01-preview",
       "location": "[parameters('region')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('namespace'), 'vm')]",
-        "[concat('Microsoft.Network/networkInterfaces/', parameters('namespace'), 'nic')]"
+        "[variables('vmRef')]",
+        "[variables('nicRef')]"
       ],
       "properties": {
         "publisher": "Microsoft.OSTCExtensions",
