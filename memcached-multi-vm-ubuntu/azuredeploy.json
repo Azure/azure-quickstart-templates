@@ -1,0 +1,333 @@
+﻿{
+    "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "defaultValue": "West US",
+            "metadata": {
+                "Description": "Location of the resource group and all contained resources"
+            }
+        },
+        "newStorageAccountName": {
+            "type": "string",
+            "metadata": {
+                "Description": "Unique name of the new storage account that will be created to store virtual machine VHDs"
+            }
+        },
+        "domainName": {
+            "type": "string",
+            "metadata": {
+                "Description": "Domain name of the publicly accessible Apache test web server"
+            }
+        },
+        "adminUsername": {
+            "type": "string",
+            "defaultValue": "azureuser",
+            "metadata": {
+                "Description": "Virtual machine administrator username"
+            }
+        },
+        "adminPassword": {
+            "type": "securestring",
+            "metadata": {
+                "Description": "Virtual machine administrator password"
+            }
+        },
+        "memcachedVmSize": {
+            "type": "string",
+            "defaultValue": "Standard_A0",
+            "metadata": {
+                "Description": "Size of the memcached virtual machine"
+            }
+        },
+        "apacheVmSize": {
+            "type": "string",
+            "defaultValue": "Standard_A0",
+            "metadata": {
+                "Description": "Size of the Apache virtual machine"
+            }
+        },
+        "numberOfMemcachedInstances": {
+            "type": "int",
+            "defaultValue": 1,
+            "metadata": {
+                "Description": "Number of memcached virtual machines to provision"
+            }
+        },
+        "virtualNetworkName": {
+            "type": "string",
+            "defaultValue": "vnet",
+            "metadata": {
+                "Description": "Virtual network name"
+            }
+        },
+        "addressPrefix": {
+            "type": "string",
+            "defaultValue": "10.1.0.0/16",
+            "metadata": {
+                "Description": "Virtual network address prefix"
+            }
+        },
+        "subnetDmzName": {
+            "type": "string",
+            "defaultValue": "Subnet-DMZ",
+            "metadata": {
+                "Description": "Name of the DMZ subnet for VMs that will be accessible from the web"
+            }
+        },
+        "subnetDmzPrefix": {
+            "type": "string",
+            "defaultValue": "10.1.0.0/24",
+            "metadata": {
+                "Description": "Address prefix for the DMZ subnet"
+            }
+        },
+        "subnetMemcachedName": {
+            "type": "string",
+            "defaultValue": "Subnet-Memcached",
+            "metadata": {
+                "Description": "Name of the Memcached subnet for VMs that are accessible from the DMZ but do not have public IPs"
+            }
+        },
+        "subnetMemcachedPrefix": {
+            "type": "string",
+            "defaultValue": "10.1.1.0/24",
+            "metadata": {
+                "Description": "Address prefix for the Memcached subnet"
+            }
+        }
+    },
+    "variables": {
+        "vmSourceImageName": "b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu-14_04_2_LTS-amd64-server-20150309-en-us-30GB",
+        "sourceImageName": "[concat('/',subscription().subscriptionId,'/services/images/',variables('vmSourceImageName'))]",
+        "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
+        "subnetDmzRef": "[concat(variables('vnetID'),'/subnets/',parameters('subnetDmzName'))]",
+        "subnetMemcachedRef": "[concat(variables('vnetID'),'/subnets/',parameters('subnetMemcachedName'))]",
+        "memcachedMachineNamePrefix": "memcached",
+        "scriptUrlInstallMemcached": "https://raw.githubusercontent.com/azure/azure-quickstart-templates/master/memcached-multi-vm-ubuntu/install_memcached.sh",
+        "scriptUrlInstallApache": "https://raw.githubusercontent.com/azure/azure-quickstart-templates/master/memcached-multi-vm-ubuntu/install_apache.sh"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[parameters('newStorageAccountName')]",
+            "apiVersion": "2014-12-01-preview",
+            "location": "[parameters('location')]",
+            "properties": {
+                "accountType": "Standard_LRS"
+            }
+        },
+        {
+            "apiVersion": "2014-12-01-preview",
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[parameters('virtualNetworkName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[parameters('addressPrefix')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[parameters('subnetDmzName')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('subnetDmzPrefix')]"
+                        }
+                    },
+                    {
+                        "name": "[parameters('subnetMemcachedName')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('subnetMemcachedPrefix')]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "2014-12-01-preview",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "publicip",
+            "location": "[parameters('location')]",
+            "properties": {
+                "publicIPAllocationMethod": "Dynamic",
+                "dnsSettings": {
+                    "domainNameLabel": "[parameters('domainName')]"
+                }
+            }
+        },
+        {
+            "apiVersion": "2014-12-01-preview",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "nicapache",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses','publicip')]"
+                            },
+                            "subnet": {
+                                "id": "[variables('subnetDmzRef')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "2014-12-01-preview",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[concat('nicmemcached', copyindex())]",
+            "location": "[parameters('location')]",
+            "copy": {
+                "name": "memcachedNicLoop",
+                "count": "[parameters('numberOfMemcachedInstances')]"
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[variables('subnetMemcachedRef')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "2014-12-01-preview",
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[parameters('domainName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkInterfaces/', 'nicapache')]",
+                "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('apacheVmSize')]"
+                },
+                "osProfile": {
+                    "computername": "[parameters('domainName')]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]"
+                },
+                "storageProfile": {
+                    "sourceImage": {
+                        "id": "[variables('sourceImageName')]"
+                    },
+                    "destinationVhdsContainer": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/')]"
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces','nicapache')]"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "apiVersion": "2014-12-01-preview",
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[concat(variables('memcachedMachineNamePrefix'), copyindex())]",
+            "location": "[parameters('location')]",
+            "copy": {
+                "name": "memcachedVmLoop",
+                "count": "[parameters('numberOfMemcachedInstances')]"
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkInterfaces/', 'nicmemcached', copyindex())]",
+                "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('memcachedVmSize')]"
+                },
+                "osProfile": {
+                    "computername": "[concat(variables('memcachedMachineNamePrefix'), copyIndex())]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]"
+                },
+                "storageProfile": {
+                    "sourceImage": {
+                        "id": "[variables('sourceImageName')]"
+                    },
+                    "destinationVhdsContainer": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/')]"
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces',concat('nicmemcached', copyindex()))]"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(variables('memcachedMachineNamePrefix'), copyindex(), '/install_memcached')]",
+            "apiVersion": "2014-12-01-preview",
+            "location": "[parameters('location')]",
+            "copy": {
+                "name": "extensionLoop",
+                "count": "[parameters('numberOfMemcachedInstances')]"
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', concat(variables('memcachedMachineNamePrefix'), copyindex()))]",
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('domainName'))]"
+            ],
+            "properties": {
+                "publisher": "Microsoft.OSTCExtensions",
+                "type": "CustomScriptForLinux",
+                "typeHandlerVersion": "1.2",
+                "settings": {
+                    "fileUris": [
+                        "[variables('scriptUrlInstallMemcached')]"
+                    ],
+                    "commandToExecute": "[concat('sh install_memcached.sh ', copyindex(), ' ', reference(concat('nicmemcached', copyindex())).ipConfigurations[0].properties.privateIPAddress, ' ', reference('nicapache').ipConfigurations[0].properties.privateIPAddress)]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(parameters('domainName'), '/install_apache')]",
+            "apiVersion": "2014-12-01-preview",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('domainName'))]"
+            ],
+            "properties": {
+                "publisher": "Microsoft.OSTCExtensions",
+                "type": "CustomScriptForLinux",
+                "typeHandlerVersion": "1.2",
+                "settings": {
+                    "fileUris": [
+                        "[variables('scriptUrlInstallApache')]"
+                    ],
+                    "commandToExecute": "[concat('sh install_apache.sh ', parameters('numberOfMemcachedInstances'), ' ', parameters('subnetMemcachedPrefix'))]"
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "exampleOutput1": { 
+ 			"value": "[variables('sourceImageName')]", 
+			"type" : "string" 
+ 		}
+    }
+}
