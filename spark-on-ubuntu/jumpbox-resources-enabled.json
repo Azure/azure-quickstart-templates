@@ -1,0 +1,143 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "region": {
+            "type": "string",
+            "defaultValue": "West US",
+            "metadata": {
+                "Description": "Location where resources will be provisioned"
+            }
+        },
+        "virtualNetworkName": {
+            "type": "string",
+            "defaultValue": "myVNET",
+            "metadata": {
+                "Description": "The arbitrary name of the virtual network provisioned for the cluster"
+            }
+        },
+        "subnetName": {
+            "type": "string",
+            "defaultValue": "Subnet-1",
+            "metadata": {
+                "Description": "Subnet name for the virtual network that resources will be provisioned in to"
+            }
+        },
+        "storageAccountName": {
+            "type": "string",
+            "defaultValue": "uniquestoragejumpspark",
+            "metadata": {
+                "Description": "Unique namespace for the Storage Account where the Virtual Machine's disks will be placed"
+            }
+        },
+        "adminUsername": {
+            "type": "string",
+            "metadata": {
+                "Description": "Administrator user name used when provisioning virtual machines"
+            }
+        },
+        "adminPassword": {
+            "type": "securestring",
+            "metadata": {
+                "Description": "Administrator password used when provisioning virtual machines"
+            }
+        },
+        "computerNamePrefix": {
+            "type": "string",
+            "metadata": {
+                "Description": "The global VM name prefix"
+            }
+        }
+    },
+    "variables": {
+        "vmStorageAccountContainerName": "vhd",
+        "vmSourceImageName": "b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu-14_04_2_LTS-amd64-server-20150309-en-us-30GB",
+        "sourceImageName": "[concat('/',subscription().subscriptionId,'/services/images/',variables('vmSourceImageName'))]",
+        "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
+        "subnetRef": "[concat(variables('vnetID'),'/subnets/',parameters('subnetName'))]",
+        "vmSize": "Standard_A0"
+    },
+    "resources": [
+        {
+            "apiVersion": "2014-12-01-preview",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "publicIP",
+            "location": "[parameters('region')]",
+            "properties": {
+                "publicIPAllocationMethod": "Dynamic"
+            }
+        },
+        {
+            "apiVersion": "2014-12-01-preview",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "nicJumpbox",
+            "location": "[parameters('region')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/publicIPAddresses/', 'publicIP')]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses','publicIP')]"
+                            },
+                            "subnet": {
+                                "id": "[variables('subnetRef')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "2014-12-01-preview",
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "jumpbox",
+            "location": "[parameters('region')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkInterfaces/', 'nicJumpbox')]"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[variables('vmSize')]",
+                    "platformGuestAgent": "true"
+                },
+                "osProfile": {
+                    "computername": "[concat(parameters('computerNamePrefix'), 'jumpbox')]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]",
+                    "linuxOperatingSystemProfile": {
+                        "disableSshPasswordAuthentication": "false"
+                    }
+                },
+                "storageProfile": {
+                    "sourceImage": {
+                        "id": "[variables('sourceImageName')]"
+                    },
+                    "destinationVhdsContainer": "[concat('https://',parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/')]"
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces','nicJumpbox')]"
+                        }
+                    ],
+                    "inputEndpoints": [
+                        {
+                            "enableDirectServerReturn": "False",
+                            "endpointName": "SSH",
+                            "privatePort": 22,
+                            "publicPort": 22,
+                            "protocol": "tcp"
+                        }
+                    ]
+                }
+            }
+        }
+    ],
+    "outputs": {
+    }
+}
