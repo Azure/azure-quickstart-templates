@@ -1,0 +1,118 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "commonSettings": {
+            "type": "object",
+            "metadata": {
+                "Description": "Common settings object"
+            }
+        },
+        "storageSettings": {
+            "type": "object",
+            "metadata": {
+                "Description": "Storage settings object"
+            }
+        },
+        "networkSettings": {
+            "type": "object",
+            "metadata": {
+                "Description": "Network settings object"
+            }
+        },
+        "machineSettings": {
+            "type": "object",
+            "metadata": {
+                "Description": "Machine settings object"
+            }
+        }
+    },
+    "variables": {
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "nicArbiter",
+            "apiVersion": "2014-12-01-preview",
+            "location": "[parameters('commonSettings').region]",
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipConfigArbiter",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[parameters('networkSettings').subnetRef]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "vmArbiter",
+            "apiVersion": "2014-12-01-preview",
+            "location": "[parameters('commonSettings').region]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkInterfaces/', 'nicArbiter')]"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('machineSettings').vmSize]",
+                    "platformGuestAgent": "true"
+                },
+                "osProfile": {
+                    "computername": "[concat(parameters('machineSettings').machineNamePrefix, 'arbiter')]",
+                    "adminUsername": "[parameters('machineSettings').adminUsername]",
+                    "adminPassword": "[parameters('machineSettings').adminPassword]",
+                    "linuxOperatingSystemProfile": {
+                        "disableSshPasswordAuthentication": "false"
+                    }
+                },
+                "storageProfile": {
+                    "sourceImage": {
+                        "id": "[parameters('machineSettings').osImageName]"
+                    },
+                    "destinationVhdsContainer": "[parameters('storageSettings').destinationVhdsContainer]"
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces','nicArbiter')]"
+                        }
+                    ],
+                    "inputEndpoints": [
+                        {
+                            "enableDirectServerReturn": "False",
+                            "endpointName": "SSH",
+                            "privatePort": 22,
+                            "publicPort": 22,
+                            "protocol": "tcp"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "vmArbiter/installmongodb",
+            "apiVersion": "2014-12-01-preview",
+            "location": "[parameters('commonSettings').region]",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', 'vmArbiter')]"
+            ],
+            "properties": {
+                "publisher": "Microsoft.OSTCExtensions",
+                "type": "CustomScriptForLinux",
+                "typeHandlerVersion": "1.2",
+                "settings": {
+                    "fileUris": "[parameters('machineSettings').vmScripts]",
+                    "commandToExecute": "[parameters('machineSettings').commandToExecute]"
+                }
+            }
+        }
+    ],
+    "outputs": {
+    }
+}
