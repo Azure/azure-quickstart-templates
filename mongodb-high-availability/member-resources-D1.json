@@ -33,7 +33,7 @@
         {
             "type": "Microsoft.Network/networkInterfaces",
             "name": "[concat('nicMember', parameters('machineSettings').machineIndex)]",
-            "apiVersion": "2014-12-01-preview",
+            "apiVersion": "2015-05-01-preview",
             "location": "[parameters('commonSettings').region]",
             "properties": {
                 "ipConfigurations": [
@@ -53,7 +53,7 @@
         {
             "type": "Microsoft.Compute/virtualMachines",
             "name": "[concat('vmMember', parameters('machineSettings').machineIndex)]",
-            "apiVersion": "2014-12-01-preview",
+            "apiVersion": "2015-05-01-preview",
             "location": "[parameters('commonSettings').region]",
             "dependsOn": [
                 "[concat('Microsoft.Network/networkInterfaces/', 'nicMember', parameters('machineSettings').machineIndex)]"
@@ -71,8 +71,14 @@
                     "adminPassword": "[parameters('machineSettings').adminPassword]"
                 },
                 "storageProfile": {
-                    "sourceImage": {
-                        "id": "[parameters('machineSettings').osImageName]"
+                    "imageReference": "[parameters('machineSettings').osImageReference]",
+                    "osDisk": {
+                        "name": "osdisk",
+                        "vhd": {
+                            "uri": "[concat(parameters('storageSettings').destinationVhdsContainer, 'member-os-disk.vhd')]"
+                        },
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage"
                     },
                     "dataDisks": [
                         {
@@ -81,7 +87,9 @@
                             "lun": 0,
                             "vhd": {
                                 "Uri": "[concat(parameters('storageSettings').destinationVhdsContainer, 'vm', parameters('machineSettings').machineIndex, 'dataDisk0.vhd')]"
-                            }
+                            },
+                            "caching": "ReadWrite",
+                            "createOption": "Empty"
                         },
                         {
                             "name": "dataDisk1",
@@ -89,10 +97,11 @@
                             "lun": 1,
                             "vhd": {
                                 "Uri": "[concat(parameters('storageSettings').destinationVhdsContainer, 'vm', parameters('machineSettings').machineIndex, 'dataDisk1.vhd')]"
-                            }
+                            },
+                            "caching": "ReadWrite",
+                            "createOption": "Empty"
                         }
-                    ],
-                    "destinationVhdsContainer": "[parameters('storageSettings').destinationVhdsContainer]"
+                    ]
                 },
                 "networkProfile": {
                     "networkInterfaces": [
@@ -106,7 +115,7 @@
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "name": "[concat('vmMember', parameters('machineSettings').machineIndex, '/installmongodb')]",
-            "apiVersion": "2014-12-01-preview",
+            "apiVersion": "2015-05-01-preview",
             "location": "[parameters('commonSettings').region]",
             "dependsOn": [
                 "[concat('Microsoft.Compute/virtualMachines/', 'vmMember', parameters('machineSettings').machineIndex)]"
