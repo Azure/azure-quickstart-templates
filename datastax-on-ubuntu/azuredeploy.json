@@ -6,72 +6,84 @@
       "type": "string",
       "defaultValue": "West US",
       "metadata": {
-          "Description": "Location where resources will be provisioned"
+        "Description": "Location where resources will be provisioned"
       }
     },
     "storageAccountPrefix": {
       "type": "string",
       "defaultValue": "uniqueStorageAccountName",
       "metadata": {
-          "Description": "Unique namespace for the Storage Account where the Virtual Machine's disks will be placed"
+        "Description": "Unique namespace for the Storage Account where the Virtual Machine's disks will be placed"
+      }
+    },
+    "dnsName": {
+      "type": "string",
+      "metadata" : {
+        "Description": "DNS subname for the opserations center public IP"
       }
     },
     "virtualNetworkName": {
       "type": "string",
-      "defaultValue": "myVNET",
+      "defaultValue": "myvnet",
       "metadata": {
-          "Description": "Name of the virtual network provisioned for the cluster"
+        "Description": "Name of the virtual network provisioned for the cluster"
       }
     },
     "adminUsername": {
       "type": "string",
       "metadata": {
-          "Description": "Administrator user name used when provisioning virtual machines"
+        "Description": "Administrator user name used when provisioning virtual machines"
       }
     },
     "adminPassword": {
       "type": "securestring",
       "metadata": {
-          "Description": "Administrator password used when provisioning virtual machines"
+        "Description": "Administrator password used when provisioning virtual machines"
       }
     },
     "opsCenterAdminPassword": {
       "type": "securestring",
       "metadata": {
-          "Description": "Sets the operations center admin user password"
+        "Description": "Sets the operations center admin user password"
       }
     },
     "clusterVmSize": {
-      "type":"string",
+      "type": "string",
       "defaultValue": "Standard_D3",
       "allowedValues": [
+        "Standard_D1",
+        "Standard_D2",
         "Standard_D3",
-        "Standard_D4"
+        "Standard_D4",
+        "Standard_D11",
+        "Standard_D12",
+        "Standard_D13",
+        "Standard_D14"
       ],
       "metadata": {
-          "Description": "The size of the virtual machines used when provisioning cluster nodes"
+        "Description": "The size of the virtual machines used when provisioning cluster nodes"
       }
     },
     "clusterNodeCount": {
       "type": "int",
       "metadata": {
-          "Description": "The number of nodes provisioned in the cluster"
+        "Description": "The number of nodes provisioned in the cluster"
       }
     },
     "clusterName": {
       "type": "string",
       "metadata": {
-          "Description": "The name of the cluster provisioned"
+        "Description": "The name of the cluster provisioned"
       }
     }
   },
   "variables": {
-    "templateBaseUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/datastax-on-ubuntu/master/",
+    "templateBaseUrl": "https://raw.githubusercontent.com/trentmswanson/azure-quickstart-templates/master/datastax-on-ubuntu/",
     "sharedTemplateUrl": "[concat(variables('templateBaseUrl'), 'shared-resources.json')]",
     "clusterNodesTemplateUrl": "[concat(variables('templateBaseUrl'), 'ephemeral-nodes-resources.json')]",
     "opsCenterTemplateUrl": "[concat(variables('templateBaseUrl'), 'opscenter-resources.json')]",
     "opsCenterVmSize": "Standard_A1",
-    "networkSettings":{
+    "networkSettings": {
       "virtualNetworkName": "[parameters('virtualNetworkName')]",
       "addressPrefix": "10.0.0.0/16",
       "subnet": {
@@ -83,22 +95,27 @@
       },
       "statics": {
         "clusterRange": {
-          "base":"10.0.0.",
-          "start":5
+          "base": "10.0.0.",
+          "start": 5
         },
         "opsCenter": "10.0.0.240"
       }
     },
-    "osSettings":{
-        "sourceImage":"/ed8df19a-cf20-4645-80b2-663a99dd9051/services/images/b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu-14_04_2_LTS-amd64-server-20150309-en-us-30GB",
-        "scripts": [
-          "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/datastax-on-ubuntu/dsenode.sh",
-          "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/datastax-on-ubuntu/opscenter.sh",
-          "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/shared_scripts/ubuntu/vm-disk-utils-0.1.sh"
-        ]
+    "osSettings": {
+      "imageReference": {
+        "publisher": "Canonical",
+        "offer": "UbuntuServer",
+        "sku": "14.04.2-LTS",
+        "version": "latest"
+      },
+      "scripts": [
+        "[concat(variables('templateBaseUrl'), 'dsenode.sh')]",
+        "[concat(variables('templateBaseUrl'), 'opscenter.sh')]",
+        "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/shared_scripts/ubuntu/vm-disk-utils-0.1.sh"
+      ]
     },
-    "sharedStorageAccountName":"[concat(parameters('storageAccountPrefix'),'cmn')]",
-    "nodeList":"[concat(variables('networkSettings').statics.clusterRange.base, variables('networkSettings').statics.clusterRange.start, '-', parameters('clusterNodeCount'))]"
+    "sharedStorageAccountName": "[concat(parameters('storageAccountPrefix'),'cmn')]",
+    "nodeList": "[concat(variables('networkSettings').statics.clusterRange.base, variables('networkSettings').statics.clusterRange.start, '-', parameters('clusterNodeCount'))]"
   },
   "resources": [
     {
@@ -185,6 +202,9 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
+          "dnsName": {
+            "value": "[parameters('dnsName')]"
+          },
           "storageAccountName": {
             "value": "[variables('sharedStorageAccountName')]"
           },
@@ -214,9 +234,9 @@
           },
           "opsCenterSettings": {
             "value": {
-              "clusterName":"[parameters('clusterName')]",
-              "nodeList":"[variables('nodeList')]",
-              "adminPassword":"[parameters('opsCenterAdminPassword')]"
+              "clusterName": "[parameters('clusterName')]",
+              "nodeList": "[variables('nodeList')]",
+              "adminPassword": "[parameters('opsCenterAdminPassword')]"
             }
           }
         }
