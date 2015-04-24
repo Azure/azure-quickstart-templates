@@ -13,7 +13,8 @@
 #  3 - p: Cluster node admin password that Operations Center uses for cluster provisioning
 #  4 - d: List of successive cluster IP addresses represented as the starting address and a count used to increment the last octet (10.0.0.5-3)
 #  6 - k: Sets the Operations Center 'admin' password
-#  3 - h  Help 
+#  7 - v: Sets the DSC Version
+#  8 - h  Help 
 # Note : 
 # This script has only been tested on Ubuntu 12.04 LTS and must be root
 ######################################################### 
@@ -66,9 +67,10 @@ EPHEMERAL=0
 DSE_ENDPOINTS=""
 ADMIN_USER=""
 SSH_KEY_PATH=""
+DSC_VERSION="2.1.1"
 
 #Loop through options passed
-while getopts :n:d:u:p:j:k:e optname; do
+while getopts :n:d:u:p:j:v:k:e optname; do
     log "Option $optname set with value ${OPTARG}"
   case $optname in
     n)
@@ -85,6 +87,9 @@ while getopts :n:d:u:p:j:k:e optname; do
       ;;
     k) # Ops Center Admin Password
        OPS_CENTER_ADMIN_PASS=${OPTARG}
+       ;;
+    v) # DSC Version
+       DSC_VERSION=${OPTARG}
        ;;
     e) #place data on local resource disk
       EPHEMERAL=1
@@ -225,7 +230,7 @@ sudo tee provision.json > /dev/null <<EOF
         "username": "${ADMIN_USER}",
         "password": "${ADMIN_PASSWORD}",
         "package": "dsc",
-        "version": "2.1.1"
+        "version": "${DSC_VERSION}"
     },
     "nodes": [
         ${NODE_CONFIG_LIST}
