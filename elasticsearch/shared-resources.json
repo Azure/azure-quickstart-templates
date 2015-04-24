@@ -14,6 +14,14 @@
         "Description": "Network settings object"
       }
     },
+    "loadBalancerType": {
+      "type": "string",
+      "defaultValue": "internal",
+      "allowedValues": [
+        "internal",
+        "external"
+      ]
+    },
     "esDataHaSetName": {
       "type": "string",
       "metadata": {
@@ -25,9 +33,39 @@
       "metadata": {
         "Description": "A shared storage account for images"
       }
+    },
+    "dnsName": {
+      "type": "string"
+    },
+    "ilbIpAddress": {
+      "type": "string"
     }
   },
-  "variables": {},
+  "variables": {
+    "externalFELBConfig": [
+      {
+        "name": "LBFE",
+        "properties": {
+          "publicIPAddress": {
+            "id": "[resourceId('Microsoft.Network/publicIPAddresses','publicIp')]"
+          }
+        }
+      }
+    ],
+    "internalFELBConfig": [
+      {
+        "Name": "LBFE",
+        "Properties": {
+          "subnet": {
+            "Id": "[concat(resourceId('Microsoft.Network/virtualNetworks',parameters('networkSettings').virtualNetworkName), '/subnets/', parameters('networkSettings').subnet.data.name)]"
+          },
+          "privateIPAddress": "[parameters('ilbIpAddress')]",
+          "privateIPAllocationMethod": "Static"
+        }
+      }
+    ],
+    "feLoadBalancerConfig": "[variables(concat(parameters('loadBalancerType'), 'FELBConfig'))]"
+  },
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
@@ -36,6 +74,25 @@
       "location": "[parameters('region')]",
       "properties": {
         "accountType": "Standard_LRS"
+      }
+    },
+    {
+      "apiVersion": "2014-12-01-preview",
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[parameters('esDataHaSetName')]",
+      "location": "[parameters('region')]",
+      "properties": {}
+    },
+    {
+      "apiVersion": "2014-12-01-preview",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "publicIp",
+      "location": "[parameters('region')]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('dnsName')]"
+        }
       }
     },
     {
@@ -67,10 +124,53 @@
     },
     {
       "apiVersion": "2014-12-01-preview",
-      "type": "Microsoft.Compute/availabilitySets",
-      "name": "[parameters('esDataHaSetName')]",
+      "name": "loadBalancer",
+      "type": "Microsoft.Network/loadBalancers",
       "location": "[parameters('region')]",
-      "properties": {}
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', 'publicIp')]"
+      ],
+      "properties": {
+        "frontendIPConfigurations": "[variables('feLoadBalancerConfig')]",
+        "backendAddressPools": [
+          {
+            "name": "LBBE"
+          }
+        ],
+        "inboundNatRules": "parameters('lbManagementRule')",
+        "loadBalancingRules": [
+          {
+            "name": "LBRule",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers','loadBalancer'),'/frontendIPConfigurations/LBFE')]"
+              },
+              "backendAddressPool": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers','loadBalancer'),'/backendAddressPools/LBBE')]"
+              },
+              "protocol": "tcp",
+              "frontendPort": 9200,
+              "backendPort": 9200,
+              "enableFloatingIP": false,
+              "idleTimeoutInMinutes": 5,
+              "probe": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers','loadBalancer'),'/probes/esProbe')]"
+              }
+            }
+          }
+        ],
+        "probes": [
+          {
+            "name": "esProbe",
+            "properties": {
+              "protocol": "tcp",
+              "port": 9200,
+              "intervalInSeconds": 30,
+              "numberOfProbes": 3
+            }
+          }
+        ]
+      }
     }
   ]
 }
