@@ -1,0 +1,214 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "dnsNamePrefix": {
+            "type": "string"
+        },
+        "region": {
+            "type": "string"
+        },
+        "scriptsUri": {
+            "type": "string"
+        },
+        "storageAccount" : {
+            "type": "object"        
+        },   
+        "vmCount": {
+            "type": "int"            
+        },
+        "vmSpec": {
+            "type": "object"
+        },
+        "networkSpec": {
+            "type": "object"
+        },
+        "clusterSpec": {
+            "type": "object"
+        }
+    },
+    "variables": {
+        "vmName": "[concat(parameters('dnsNamePrefix'), '-wn-')]",
+        "nicName": "[concat(variables('vmName'), '-nic')]",
+        "storageAccountName": "[concat(parameters('storageAccount').prefix, 'wn')]",
+
+        "publicIPAddressName": "[concat(variables('vmName'), '-publicIP')]"
+    },
+    "resources": [         
+         {
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[concat(variables('storageAccountName'), copyIndex(1))]",
+            "apiVersion": "2015-05-01-preview",
+            "location": "[parameters('region')]",
+            "copy": {
+                "name": "storageAccountLoop",
+                "count": "[parameters('vmCount')]"
+            },
+            "properties": {
+                "accountType": "[parameters('storageAccount').type]"
+            }
+        },
+        { 
+            "apiVersion": "2015-05-01-preview", 
+            "type": "Microsoft.Network/publicIPAddresses", 
+            "name": "[concat(variables('publicIPAddressName'), copyIndex(1))]", 
+            "location": "[parameters('region')]", 
+            "copy": {
+                "name": "publicIPLoop",
+                "count": "[parameters('vmCount')]"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "Dynamic",
+                "dnsSettings": {
+                    "domainNameLabel": "[concat(parameters('dnsNamePrefix'), '-wn-', copyIndex(1))]"
+                }
+            }
+        }, 
+        { 
+            "apiVersion": "2015-05-01-preview", 
+            "type": "Microsoft.Network/networkInterfaces", 
+            "name": "[concat(variables('nicName'), copyIndex(1))]", 
+            "location": "[parameters('region')]", 
+            "dependsOn": [ 
+                "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'), copyIndex(1))]",
+                "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'), copyIndex(1))]"
+            ], 
+            "copy": {
+                "name": "nameNodeNicLoop",
+                "count": "[parameters('vmCount')]"
+            },
+            "properties": { 
+                "ipConfigurations": [{ 
+                    "name": "ipconfig1", 
+                    "properties": { 
+                        "privateIPAllocationMethod": "Static",        
+                        "privateIPAddress": "[concat(parameters('networkSpec').privateIPPrefix, copyIndex(parameters('networkSpec').dataNodeAddressStart))]",
+                        "subnet": { 
+                            "id": "[concat(resourceId('Microsoft.Network/virtualNetworks',parameters('networkSpec').virtualNetworkName), '/subnets/', parameters('networkSpec').virtualNetworkSubnetName)]"
+                        },
+                        "publicIPAddress": { 
+                            "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat(variables('publicIPAddressName'), copyIndex(1)))]" 
+                        }
+                    } 
+                }] 
+            } 
+        },
+        {
+            "apiVersion": "2015-05-01-preview",
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[concat(variables('vmName'), copyIndex(1))]",
+            "location": "[parameters('region')]",
+            "copy": {
+                "name": "nameNodeNicLoop",
+                "count": "[parameters('vmCount')]"
+            },
+            "dependsOn": [                
+                "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyIndex(1))]",
+                "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'), copyIndex(1))]"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('vmSpec').vmSize]"
+                },
+                "osProfile": {
+                    "computername": "[concat(variables('vmName'), copyIndex(1))]",
+                    "adminUsername": "[parameters('vmSpec').adminUserName]",
+                    "adminPassword": "[parameters('vmSpec').adminPassword]",
+                    "linuxConfiguration" : {
+                        "disablePasswordAuthentication": "true",
+                        "ssh": {
+                            "publicKeys": [
+                                {
+                                    "keyData": "[parameters('vmSpec').publicSSHCert]",
+                                    "path": "[concat('/home/',parameters('vmSpec').adminUserName,'/.ssh/authorized_keys')]"
+                                }
+                            ]
+                        }                       
+                    }
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "OpenLogic", 
+                        "offer": "CentOS", 
+                        "sku": "6.5", 
+                        "version":"6.5.201503" 
+                    },
+                    "osDisk": {
+                        "name": "osdisk", 
+                        "vhd": { 
+                            "uri": "[concat('http://', variables('storageAccountName'), copyIndex(1), '.blob.core.windows.net/vhds/', variables('vmName'), copyIndex(1), '.vhd')]"
+                        }, 
+                        "caching": "ReadWrite", 
+                        "createOption": "FromImage" 
+                    },
+                    "dataDisks": [
+                        {
+                            "name": "datadisk1",
+                            "diskSizeGB": "512",
+                            "lun": 0,
+                            "vhd": {
+                                "Uri": "[concat('http://', variables('storageAccountName'), copyIndex(1), '.blob.core.windows.net/vhds/', variables('vmName'), copyIndex(1), '-datadisk0.vhd')]"
+                            },
+                            "createOption": "Empty"
+                        },
+                        {
+                            "name": "datadisk2",
+                            "diskSizeGB": "512",
+                            "lun": 1,
+                            "vhd": {
+                                "Uri": "[concat('http://', variables('storageAccountName'), copyIndex(1), '.blob.core.windows.net/vhds/', variables('vmName'), copyIndex(1), '-datadisk1.vhd')]"
+                            },
+                            "createOption": "Empty"
+                        }
+                    ]
+                },
+                "networkProfile": {
+                    "networkInterfaces" : [{
+                        "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('nicName'), copyIndex(1)))]"
+                    }],
+                    "inputEndpoints": [
+                        {
+                            "enableDirectServerReturn": "False",
+                            "endpointName": "HDFS.dn.Web.UI",
+                            "privatePort": 50075,
+                            "publicPort": 50075,
+                            "protocol": "tcp"
+                        },
+                        {
+                            "enableDirectServerReturn": "False",
+                            "endpointName": "YARN.nm.Web.UI",
+                            "privatePort": 8042,
+                            "publicPort": 8042,
+                            "protocol": "tcp"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(variables('vmName'), copyIndex(1), '/prepareDisks')]",
+            "apiVersion": "2015-05-01-preview",
+            "location": "[parameters('region')]",
+            "copy": {
+                "name": "nameNodeNicLoop",
+                "count": "[parameters('vmCount')]"
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'), copyIndex(1))]"
+            ],
+            "properties": {
+                "publisher": "Microsoft.OSTCExtensions",
+                "type": "CustomScriptForLinux",
+                "typeHandlerVersion": "1.2",
+                "settings": {
+                    "fileUris": [
+                        "[concat(parameters('scriptsUri'), '/scripts/initialize-node.sh')]",
+                        "[concat(parameters('scriptsUri'), '/scripts/vm-bootstrap.py')]"                        
+                    ],
+                    "commandToExecute": "[concat('sh initialize-node.sh \"', parameters('networkSpec').privateIPPrefix, '\" \"', parameters('dnsNamePrefix'), '\" \"', reference(concat(variables('publicIPAddressName'), copyIndex(1))).dnsSettings.fqdn ,'\" ', parameters('clusterSpec').nameNodeCount, ' ', parameters('clusterSpec').dataNodeCount)]"                                   
+                }
+            }
+        }
+    ]
+}
