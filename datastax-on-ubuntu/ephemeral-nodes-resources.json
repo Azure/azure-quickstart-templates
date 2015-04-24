@@ -37,9 +37,7 @@
     "subnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('subnet').vnet), '/subnets/', parameters('subnet').name)]",
     "storageAccountName": "[concat(parameters('storageAccountPrefix'), parameters('namespace'))]",
     "vmName": "[concat(parameters('namespace'), 'vm')]",
-    "vmRef": "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]",
-    "nicName": "[concat(parameters('namespace'), 'nic')]",
-    "nicRef": "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+    "nicName": "[concat(parameters('namespace'), 'nic')]"
   },
   "resources": [
     {
@@ -64,7 +62,7 @@
     {
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[concat(variables('nicName'), copyindex())]",
+      "name": "[concat(parameters('namespace'), 'nic', copyindex())]",
       "location": "[parameters('region')]",
       "copy": {
         "name": "[concat(parameters('namespace'), 'nicLoop')]",
@@ -88,14 +86,14 @@
     {
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[concat(variables('vmName'), copyindex())]",
+      "name": "[concat(parameters('namespace'), 'vm', copyindex())]",
       "location": "[parameters('region')]",
       "copy": {
         "name": "[concat(parameters('namespace'), 'vmLoop')]",
         "count": "[parameters('nodeCount')]"
       },
       "dependsOn": [
-        "[concat(variables('nicRef'), copyindex())]",
+        "[concat('Microsoft.Network/networkInterfaces/', parameters('namespace'), 'nic', copyindex())]",
         "[concat('Microsoft.Compute/availabilitySets/', parameters('namespace'), 'set')]",
         "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
       ],
@@ -107,7 +105,7 @@
           "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
-          "computername": "[concat(variables('vmName'), copyIndex())]",
+          "computername": "[concat(parameters('namespace'), 'vm', copyIndex())]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]"
         },
@@ -127,7 +125,7 @@
               "diskSizeGB": "1023",
               "lun": 0,
               "vhd": {
-                "Uri": "[concat('http://', variables('storageAccountName'),'.blob.core.windows.net/','vhds/', variables('vmName'), copyindex(),'DataDisk1.vhd')]"
+                "Uri": "[concat('http://', variables('storageAccountName'),'.blob.core.windows.net/','vhds/', variables('vmName, copyindex(),'DataDisk1.vhd')]"
               },
               "caching": "None",
               "createOption": "Empty"
@@ -137,7 +135,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[concat(variables('nicRef'), copyindex())]"
+              "id": "[resourceId('Microsoft.Network/virtualNetworks', concat (variables('nicName'), copyindex()) )]"
             }
           ]
         }
@@ -153,8 +151,8 @@
         "count": "[parameters('nodeCount')]"
       },
       "dependsOn": [
-        "[concat(variables('vmRef'), copyindex())]",
-        "[concat(variables('nicRef'), copyindex())]"
+        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'), copyindex())]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyindex())]"
       ],
       "properties": {
         "publisher": "Microsoft.OSTCExtensions",
