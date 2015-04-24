@@ -1,0 +1,248 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "Description": "Admin username used when provisioning virtual machines"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "Description": "Admin password used when provisioning virtual machines"
+      }
+    },
+    "storageAccountName": {
+      "type": "string",
+      "metadata": {
+        "Description": "Unique namespace for the Storage Account where the Virtual Machine's disks will be placed"
+      }
+    },
+    "region": {
+      "type": "string",
+      "metadata": {
+        "Description": "Location where resources will be provisioned"
+      }
+    },
+    "subnet": {
+      "type": "object",
+      "metadata": {
+        "Description": "The name of the subnet to deploy resources into"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_A1",
+      "metadata": {
+        "Description": "Size of the Elasticsearch data nodes"
+      }
+    },
+    "dataNodes": {
+      "type": "int",
+      "defaultValue": 2,
+      "metadata": {
+        "Description": "Number of Elasticsearch data nodes (2 is the minimum)"
+      }
+    },
+    "osSettings": {
+      "type": "object",
+      "metadata": {
+        "Description": "OS settings to deploy on"
+      }
+    },
+    "esSettings": {
+      "type": "object",
+      "metadata": {
+        "Description": "The name of the elasticsearch cluster"
+      }
+    },
+    "dataDiskSize": {
+      "type": "int",
+      "defaultValue": 100,
+      "metadata": {
+        "Description": "Size of each data disk attached to data nodes in (Gb)"
+      }
+    },
+    "groupName": {
+      "type": "string",
+      "metadata": {
+        "Description": "The group name for this collection of nodes"
+      }
+    },
+    "availabilitySet": {
+      "type": "string",
+      "metadata": {
+        "Description": "The availabilty set to use for the data nodes"
+      }
+    }
+  },
+  "variables": {
+    "vmStorageAccountContainerName": "vhd",
+    "subnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('subnet').vnet), '/subnets/', parameters('subnet').name)]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[concat(parameters('groupName'),parameters('storageAccountName'))]",
+      "apiVersion": "2014-12-01-preview",
+      "location": "[parameters('region')]",
+      "properties": {
+        "accountType": "Standard_LRS"
+      }
+    },
+    {
+      "apiVersion": "2014-12-01-preview",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(parameters('groupName'), 'nic', copyindex())]",
+      "location": "[parameters('region')]",
+      "copy": {
+        "name": "[concat(parameters('groupName'),'nicLoop')]",
+        "count": "[parameters('dataNodes')]"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2014-12-01-preview",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(parameters('groupName'), 'vm', copyindex())]",
+      "location": "[parameters('region')]",
+      "copy": {
+        "name": "[concat(parameters('groupName'), 'virtualMachineLoop')]",
+        "count": "[parameters('dataNodes')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', parameters('groupName'), 'nic', copyindex())]",
+        "[concat('Microsoft.Storage/storageAccounts/', concat(parameters('groupName'),parameters('storageAccountName')))]"
+      ],
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySet'))]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computername": "[concat(parameters('groupName'), 'vm', copyIndex())]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "sourceImage": {
+            "id": "[parameters('osSettings').sourceImage]"
+          },
+          "dataDisks": [
+            {
+              "name": "datadisk1",
+              "diskSizeGB": "[parameters('dataDiskSize')]",
+              "lun": 0,
+              "vhd": {
+                "Uri": "[concat('http://', parameters('groupName'), parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/', parameters('groupName'),'vm', copyindex(),'dataDisk1' ,'.vhd')]"
+              }
+            },
+            {
+              "name": "datadisk2",
+              "diskSizeGB": "[parameters('dataDiskSize')]",
+              "lun": 1,
+              "vhd": {
+                "Uri": "[concat('http://', parameters('groupName'),parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',parameters('groupName'),'vm', copyindex() ,'dataDisk2','.vhd')]"
+              }
+            },
+            {
+              "name": "datadisk3",
+              "diskSizeGB": "[parameters('dataDiskSize')]",
+              "lun": 2,
+              "vhd": {
+                "Uri": "[concat('http://', parameters('groupName'),parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',parameters('groupName'),'vm', copyindex() ,'dataDisk3','.vhd')]"
+              }
+            },
+            {
+              "name": "datadisk4",
+              "diskSizeGB": "[parameters('dataDiskSize')]",
+              "lun": 3,
+              "vhd": {
+                "Uri": "[concat('http://', parameters('groupName'),parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',parameters('groupName'),'vm', copyindex() ,'dataDisk4','.vhd')]"
+              }
+            },{
+              "name": "datadisk5",
+              "diskSizeGB": "[parameters('dataDiskSize')]",
+              "lun": 4,
+              "vhd": {
+                "Uri": "[concat('http://', parameters('groupName'), parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/', parameters('groupName'),'vm', copyindex(),'dataDisk5' ,'.vhd')]"
+              }
+            },
+            {
+              "name": "datadisk6",
+              "diskSizeGB": "[parameters('dataDiskSize')]",
+              "lun": 5,
+              "vhd": {
+                "Uri": "[concat('http://', parameters('groupName'),parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',parameters('groupName'),'vm', copyindex() ,'dataDisk6','.vhd')]"
+              }
+            },
+            {
+              "name": "datadisk7",
+              "diskSizeGB": "[parameters('dataDiskSize')]",
+              "lun": 6,
+              "vhd": {
+                "Uri": "[concat('http://', parameters('groupName'),parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',parameters('groupName'),'vm', copyindex() ,'dataDisk7','.vhd')]"
+              }
+            },
+            {
+              "name": "datadisk8",
+              "diskSizeGB": "[parameters('dataDiskSize')]",
+              "lun": 7,
+              "vhd": {
+                "Uri": "[concat('http://', parameters('groupName'),parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',parameters('groupName'),'vm', copyindex() ,'dataDisk8','.vhd')]"
+              }
+            }
+          ],
+          "destinationVhdsContainer": "[concat('http://',parameters('groupName'),parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/')]"
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('groupName'),'nic', copyindex()))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('groupName'),'vm', copyindex(), '/installelasticsearch')]",
+      "apiVersion": "2014-12-01-preview",
+      "location": "[parameters('region')]",
+      "copy": {
+        "name": "[concat(parameters('groupName'), 'virtualMachineExtensionsLoop')]",
+        "count": "[parameters('dataNodes')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('groupName'), 'vm', copyindex())]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.OSTCExtensions",
+        "type": "CustomScriptForLinux",
+        "typeHandlerVersion": "1.2",
+        "settings": {
+          "fileUris": [
+            "[parameters('osSettings').script]"
+          ],
+          "commandToExecute": "[concat('bash elasticsearch-azure-install.sh -yn ', parameters('esSettings').clusterName, ' -v ', parameters('esSettings').version, ' -d ', parameters('esSettings').discoveryHosts)]"
+        }
+      }
+    }
+  ]
+}

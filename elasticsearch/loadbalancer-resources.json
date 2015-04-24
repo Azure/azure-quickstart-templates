@@ -1,0 +1,128 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "region": {
+      "type": "string",
+      "defaultValue": "West US",
+      "metadata": {
+        "Description": "Location where resources will be provisioned"
+      }
+    },
+    "dnsName": {
+      "type": "string",
+      "metadata": {
+        "Description": "DNS subdomain"
+      }
+    },
+    "nicNamePrefix": {
+      "type": "string",
+      "metadata": {
+        "Description": "Network interface prefix (an index is appended)"
+      }
+    },
+    "internalOrExternal": {
+      "type":"string",
+      "allowedValues":[
+        "internal",
+        "external"
+      ]
+    },
+    "subnet": {
+      "type":"object"
+    },
+    "internalIp": {
+      "type":"string"
+    }
+  },
+  "variables": {
+    "externalFELBConfig":[
+          {
+            "name": "LBFE",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses','publicIp')]"
+              }
+            }
+          }
+        ],
+    "internalFELBConfig":[
+          {
+      
+              "Properties": {
+                 "subnet": {
+                  "Id": "[concat(resourceId('Microsoft.Network/virtualNetworks',parameters('subnet').vnet), '/subnets/', parameters('subnet').name)]"},
+                 "privateIPAddress": "[parameters('internalIp')]",
+                 "privateIPAllocationMethod": "Static"
+              },
+              "Name": "LBFE"
+          }
+      ],
+    "feLoadBalancerConfig":"[variables(concat(parameters('internalOrExternal'), 'FELBConfig'))]",
+  },
+  "resources": [
+    {
+      "apiVersion": "2014-12-01-preview",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "publicIp",
+      "location": "[parameters('region')]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('dnsName')]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2014-12-01-preview",
+      "name": "loadBalancer",
+      "type": "Microsoft.Network/loadBalancers",
+      "location": "[parameters('region')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', 'publicIp')]"
+      ],
+      "properties": {
+        "frontendIPConfigurations": "[variables('feLoadBalancerConfig')]",
+        "backendAddressPools": [
+          {
+            "name": "LBBE",
+            "properties": {
+              "backendIPConfigurations": [
+                {
+                  "id": "[concat(resourceId('Microsoft.Network/networkInterfaces', concat(parameters('nicNamePrefix'), '0')),'/ipConfigurations/ipconfig1')]"
+                },
+                {
+                  "id": "[concat(resourceId('Microsoft.Network/networkInterfaces', concat(parameters('nicNamePrefix'), '1')),'/ipConfigurations/ipconfig1')]"
+                },
+                {
+                  "id": "[concat(resourceId('Microsoft.Network/networkInterfaces', concat(parameters('nicNamePrefix'), '2')),'/ipConfigurations/ipconfig1')]"
+                }
+              ]
+            }
+          }
+        ],
+        "inboundNatRules": "parameters('lbManagementRule')",
+        "loadBalancingRules": [
+          {
+            "name": "LBRule",
+            "properties": {
+              "frontendIPConfigurations": [
+                {
+                  "id": "[concat(resourceId('Microsoft.Network/loadBalancers','loadBalancer'),'/frontendIPConfigurations/LBFE')]"
+                }
+              ],
+              "backendAddressPool": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers','loadBalancer'),'/backendAddressPools/LBBE')]"
+              },
+              "protocol": "tcp",
+              "frontendPort": 9200,
+              "backendPort": 9200,
+              "enableFloatingIP": false,
+              "idleTimeoutInMinutes": 5
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
