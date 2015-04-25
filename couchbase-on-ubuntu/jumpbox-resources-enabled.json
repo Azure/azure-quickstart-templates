@@ -31,28 +31,10 @@
     "variables": {
         "vmStorageAccountContainerName": "vhd",
         "winSourceImageName": "[concat('/',subscription().subscriptionId,'/services/images/a699494373c04fc0bc8f2bb1389d6106__Windows-Server-Technical-Preview-201504.01-en.us-127GB.vhd')]",
-        "jbSubnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks',parameters('networkSettings').virtualNetworkName),'/subnets/jbsubnet')]",
+        "subnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks',parameters('networkSettings').virtualNetworkName),'/subnets/',parameters('networkSettings').subnet.name)]",
         "storageAccountName": "[concat(parameters('storageAccountNamePrefix'), 'jb')]"
     },
     "resources": [{
-        "apiVersion": "2015-05-01-preview",
-        "type": "Microsoft.Network/virtualNetworks",
-        "name": "vnetJbsubnet",
-        "location": "[parameters('commonSettings').region]",
-        "properties": {
-            "addressSpace": {
-                "addressPrefixes": [
-                    "[parameters('networkSettings').addressPrefix]"
-                ]
-            },
-            "subnets": [{
-                "name": "jbsubnet",
-                "properties": {
-                    "addressPrefix": "10.0.10.0/29"
-                }
-            }]
-        }
-    }, {
         "type": "Microsoft.Storage/storageAccounts",
         "name": "[variables('storageAccountName')]",
         "apiVersion": "2015-05-01-preview",
@@ -69,13 +51,12 @@
             "publicIPAllocationMethod": "Dynamic"
         }
     }, {
-        "apiVersion": "2015-05-01-preview",
+        "apiVersion": "2014-12-01-preview",
         "type": "Microsoft.Network/networkInterfaces",
         "name": "nicJumpbox",
         "location": "[parameters('commonSettings').region]",
         "dependsOn": [
-            "[concat('Microsoft.Network/publicIPAddresses/', 'publicIP')]",
-            "vnetJbsubnet"
+            "[concat('Microsoft.Network/publicIPAddresses/', 'publicIP')]"
         ],
         "properties": {
             "ipConfigurations": [{
@@ -86,7 +67,7 @@
                         "id": "[resourceId('Microsoft.Network/publicIPAddresses','publicIP')]"
                     },
                     "subnet": {
-                        "id": "[variables('jbSubnetRef')]"
+                        "id": "[variables('subnetRef')]"
                     }
                 }
             }]
@@ -115,7 +96,14 @@
             },
             "storageProfile": {
                 "imageReference": "[parameters('machineSettings').imageReference]",
-                "destinationVhdsContainer": "[concat('https://' ,variables('storageAccountName'), '.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/')]"
+                "osDisk": {
+                    "name": "osdisk",
+                    "vhd": {
+                        "uri": "[concat('http://', variables('storageAccountName'), '.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/', 'jumpbox-os-disk.vhd')]"
+                    },
+                    "caching": "ReadWrite",
+                    "createOption": "FromImage"
+                }
             },
             "networkProfile": {
                 "networkInterfaces": [{
@@ -139,13 +127,12 @@
             "publicIPAllocationMethod": "Dynamic"
         }
     }, {
-        "apiVersion": "2015-05-01-preview",
+        "apiVersion": "2014-12-01-preview",
         "type": "Microsoft.Network/networkInterfaces",
         "name": "nicWin",
         "location": "[parameters('commonSettings').region]",
         "dependsOn": [
-            "[concat('Microsoft.Network/publicIPAddresses/', 'publicIPWin')]",
-            "vnetJbsubnet"
+            "[concat('Microsoft.Network/publicIPAddresses/', 'publicIPWin')]"
         ],
         "properties": {
             "ipConfigurations": [{
@@ -156,7 +143,7 @@
                         "id": "[resourceId('Microsoft.Network/publicIPAddresses','publicIPWin')]"
                     },
                     "subnet": {
-                        "id": "[variables('jbSubnetRef')]"
+                        "id": "[variables('subnetRef')]"
                     }
                 }
             }]
