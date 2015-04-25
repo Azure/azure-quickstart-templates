@@ -24,6 +24,7 @@ apt-get -y install openjdk-7-jdk
 
 echo "Downloading slave.jar from $MASTERNODE"
 wget http://$MASTERNODE:8080/jnlpJars/slave.jar -O ~/slave.jar
+chmod 777 ~/slave.jar
 
 echo "Executing slave.jar with http://$MASTERNODE:8080/computer/$SLAVENODE/slave-agent.jnlp"
 sudo java -jar ~/slave.jar -jnlpUrl http://$MASTERNODE:8080/computer/$SLAVENODE/slave-agent.jnlp
