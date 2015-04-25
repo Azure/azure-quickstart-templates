@@ -36,7 +36,7 @@ echo "Installing openjdk-7"
 apt-get -y update 
 apt-get -y install openjdk-7-jdk
 
-#### Install Jemkins
+#### Install Jenkins
 echo "Installing Jenkins master"
 wget -q -O - https://jenkins-ci.org/debian/jenkins-ci.org.key | sudo apt-key add -
 sh -c 'echo deb http://pkg.jenkins-ci.org/debian binary/ > /etc/apt/sources.list.d/jenkins.list'
@@ -48,6 +48,6 @@ apt-get -y install jenkins
 echo "Waiting for Jenkins master to start..."
 sleep 60
 
-#### Run groovy script to add nodes
+#### Run groovy script to configure master with $NODECNT dumb slave node(s)
 echo "Configuring Jenkins master with $NODECNT dumb slave node(s)"
 sudo java -jar /var/cache/jenkins/war/WEB-INF/jenkins-cli.jar -s http://localhost:8080 groovy jenkAddNode $NODECNT
