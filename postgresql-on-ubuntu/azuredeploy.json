@@ -40,10 +40,11 @@
       "allowedValues": [
         "Small",
         "Medium",
-        "Large"
+        "Large",
+        "XLarge"
       ],
       "metadata": {
-        "Description": "T-shirt size of the MongoDB deployment"
+        "Description": "T-shirt size of the PostgreSQL deployment"
       }
     },
     "replicatorPassword": {
@@ -57,7 +58,7 @@
         "Disabled"
       ],
       "metadata": {
-        "Description": "The flag allowing to enable or disable provisioning of the jumpbox VM that can be used to access the MongoDB environment"
+        "Description": "The flag allowing to enable or disable provisioning of the jumpbox VM that can be used to access the PostgreSQL environment"
       }
     },
     "virtualNetworkName": {
@@ -69,13 +70,14 @@
     }
   },
   "variables": {
-    "templateBaseUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/postgresql-on-ubuntu/",
+    "templateBaseUrl": "https://raw.githubusercontent.com/trentmswanson/azure-quickstart-templates/master/postgresql-on-ubuntu/",
     "sharedTemplateUrl": "[concat(variables('templateBaseUrl'), 'shared-resources.json')]",
     "tshirtSizeSmall": {
       "vmSize": "Standard_A1",
       "diskSize": 1023,
       "vmTemplate": "[concat(variables('templateBaseUrl'), 'database-2disk-resources.json')]",
       "vmCount": 2,
+      "slaveCount": 1,
       "storage": {
         "name": "[parameters('storageAccountNamePrefix')]",
         "count": 1,
@@ -89,6 +91,7 @@
       "diskSize": 1023,
       "vmTemplate": "[concat(variables('templateBaseUrl'), 'database-8disk-resources.json')]",
       "vmCount": 2,
+      "slaveCount": 1,
       "storage": {
         "name": "[parameters('storageAccountNamePrefix')]",
         "count": 2,
@@ -102,6 +105,7 @@
       "diskSize": 1023,
       "vmTemplate": "[concat(variables('templateBaseUrl'), 'database-16disk-resources.json')]",
       "vmCount": 3,
+      "slaveCount": 2,
       "storage": {
         "name": "[parameters('storageAccountNamePrefix')]",
         "count": 2,
@@ -110,17 +114,35 @@
         "jumpbox": 0
       }
     },
+    "tshirtSizeXLarge": {
+      "vmSize": "Standard_A4",
+      "diskSize": 1023,
+      "vmTemplate": "[concat(variables('templateBaseUrl'), 'database-16disk-resources.json')]",
+      "vmCount": 4,
+      "slaveCount": 3,
+      "storage": {
+        "name": "[parameters('storageAccountNamePrefix')]",
+        "count": 2,
+        "pool": "db",
+        "map": [0,0,1,1],
+        "jumpbox": 0
+      }
+    },
     "tshirtSize": "[variables(concat('tshirtSize', parameters('tshirtSize')))]",
     "jumpboxTemplateEnabled": "jumpbox-resources.json",
     "jumpboxTemplateDisabled": "empty-resources.json",
     "jumpboxTemplateUrl": "[concat(variables('templateBaseUrl'), variables(concat('jumpboxTemplate',parameters('jumpbox'))))]",
-    "ubuntuVMImage": "b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu-14_04_2_LTS-amd64-server-20150309-en-us-30GB",
     "osSettings": {
       "scripts": [
-        "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/postgresql-on-ubuntu/install_postgresql.sh",
+        "[concat(variables('templateBaseUrl'), 'install_postgresql.sh')]",
         "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/shared_scripts/ubuntu/vm-disk-utils-0.1.sh"
       ],
-      "sourceImage": "[concat('/', subscription().subscriptionId, '/services/images/', variables('ubuntuVMImage') )]"
+      "imageReference": {
+        "publisher": "Canonical",
+        "offer": "UbuntuServer",
+        "sku": "14.04.2-LTS",
+        "version": "latest"
+      }
     },
     "networkSettings": {
       "vnetName": "[parameters('virtualNetworkName')]",
@@ -201,7 +223,7 @@
             "value": {
               "region": "[parameters('region')]",
               "adminUsername": "[parameters('adminUsername')]",
-              "namespace": "pg"
+              "namespace": "ms"
             }
           },
           "storageSettings": {
@@ -211,9 +233,68 @@
             "value": {
               "vmSize": "[variables('tshirtSize').vmSize]",
               "diskSize": "[variables('tshirtSize').diskSize]",
-              "vmCount": "[variables('tshirtSize').vmCount]",
+              "vmCount": 1,
               "availabilitySet": "[variables('availabilitySetSettings').name]"
             }
+          },
+          "masterIpAddress": {
+            "value": "0"
+          },
+          "dbType": {
+            "value": "MASTER"
+          }
+        }
+      }
+    },
+    {
+      "name": "slave-node",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', 'master-node')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('tshirtSize').vmTemplate]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "replicatorPassword": {
+            "value": "[parameters('replicatorPassword')]"
+          },
+          "osSettings": {
+            "value": "[variables('osSettings')]"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnets.data]"
+          },
+          "commonSettings": {
+            "value": {
+              "region": "[parameters('region')]",
+              "adminUsername": "[parameters('adminUsername')]",
+              "namespace": "sl"
+            }
+          },
+          "storageSettings": {
+            "value":"[variables('tshirtSize').storage]"
+          },
+          "machineSettings": {
+            "value": {
+              "vmSize": "[variables('tshirtSize').vmSize]",
+              "diskSize": "[variables('tshirtSize').diskSize]",
+              "vmCount": "[variables('tshirtSize').slaveCount]",
+              "availabilitySet": "[variables('availabilitySetSettings').name]"
+            }
+          },
+          "masterIpAddress": {
+            "value": "[reference('master-node').outputs.masterip.value]"
+          },
+          "dbType": {
+            "value": "SLAVE"
           }
         }
       }
