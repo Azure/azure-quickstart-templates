@@ -1,3 +1,4 @@
+# This documentation is in progress and will change. There may be issues deploying this template
 
 # Deploy a Cloudera CDH installation on CentOS virtual machines
 
@@ -48,7 +49,7 @@ The following table outlines the deployment topology characteristics for each su
 | Large | Standard_D14 | 16 | 112 GB | 16x1000 GB | 1 | 2 | 200 |
 
 ##Notes, Known Issues & Limitations
-- All nodes in the cluster have a public IP qaddress.
+- All nodes in the cluster have a public IP address.
 - Using passwords via SSH are disabled.  Private keys should be used to access the nodes in the cluster (See notes below.)
 - The deployment script is not yet idempotent and cannot handle updates (although it currently works for initial provisioning only)
 - SSH key is not yet implemented and the template currently takes a password for the admin user
@@ -94,7 +95,7 @@ Now execute the [upload-keys.ps1](upload-keys.ps1) script found in this reposito
 	# keyName - The name used to identify the key
 	# pfxFile - The pfx file containing the certificate and private key
 
-	.\upload-keys.ps1 "TestKeyGroup" "East Asia" "predeekc123221TestKeyVault" "TestKey" 
+	.\upload-keys.ps1 "TestKeyGroup" "East Asia" "TestKeyVault" "TestKey" 
 	  .\server-cert.pfx
 
 The output of the script will contain a URL that is used for the **keyUri** parameter.  The rest of the the **resourceGroupName** and **keyVaultName** used in the script above will be used for the **keyVaultResourceGroup** and **keyVaultName**.
