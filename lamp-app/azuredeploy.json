@@ -1,0 +1,180 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "newStorageAccountName": {
+            "type": "string",
+            "metadata": {
+            "Description": "The name of a new storage account which will be created."
+          }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "West US",
+            "metadata": {
+              "Description": "The location of the VM, e.g. West US, East US, East Asia etc."
+          }
+        },
+        "adminUsername": {
+            "type": "string",
+            "metadata": {
+              "Description": "User name of the Linux admin user who can log on to the machine."
+          }
+        },
+        "adminPassword": {
+            "type": "securestring",
+            "metadata": {
+              "Description": "Password the Linux admin user who can log on to the machine."
+          }
+        },
+        "mySqlPassword": {
+            "type": "securestring",
+             "metadata": {
+               "Description": "Password for the MySQL admin user account."
+          }
+        },
+        "vmDnsName": {
+            "type": "string",
+             "metadata": {
+               "Description": "Unique name for the machine which will form part of the DNS name."
+          }
+        }
+    },
+    "variables": {
+        "nicName": "myVMNic",
+        "addressPrefix": "10.0.0.0/16",
+        "subnetName": "Subnet-1",
+        "subnetPrefix": "10.0.0.0/24",
+        "imagePublisher": "Canonical",
+	"imageOffer": "UbuntuServer",
+        "imageSKU": "14.04.2-LTS",
+        "storageAccountType": "Standard_LRS",
+        "publicIPAddressName": "myPublicIP",
+        "publicIPAddressType": "Dynamic",
+        "vmName": "[parameters('vmDnsName')]",
+        "vmSize": "Standard_A0",
+        "virtualNetworkName": "MyVNET",
+        "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
+        "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]"
+    },
+    "resources": [{
+        "type": "Microsoft.Storage/storageAccounts",
+        "name": "[parameters('newStorageAccountName')]",
+        "apiVersion": "2015-05-01-preview",
+        "location": "[parameters('location')]",
+        "properties": {
+            "accountType": "[variables('storageAccountType')]"
+        }
+    }, {
+        "apiVersion": "2015-05-01-preview",
+        "type": "Microsoft.Network/publicIPAddresses",
+        "name": "[variables('publicIPAddressName')]",
+        "location": "[parameters('location')]",
+        "properties": {
+            "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+            "dnsSettings": {
+                "domainNameLabel": "[parameters('vmDnsName')]"
+            }
+        }
+    }, {
+        "apiVersion": "2015-05-01-preview",
+        "type": "Microsoft.Network/virtualNetworks",
+        "name": "[variables('virtualNetworkName')]",
+        "location": "[parameters('location')]",
+        "properties": {
+            "addressSpace": {
+                "addressPrefixes": [
+                    "[variables('addressPrefix')]"
+                ]
+            },
+            "subnets": [{
+                "name": "[variables('subnetName')]",
+                "properties": {
+                    "addressPrefix": "[variables('subnetPrefix')]"
+                }
+            }]
+        }
+    }, {
+        "apiVersion": "2015-05-01-preview",
+        "type": "Microsoft.Network/networkInterfaces",
+        "name": "[variables('nicName')]",
+        "location": "[parameters('location')]",
+        "dependsOn": [
+            "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+            "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        ],
+        "properties": {
+            "ipConfigurations": [{
+                "name": "ipconfig1",
+                "properties": {
+                    "privateIPAllocationMethod": "Dynamic",
+                    "publicIPAddress": {
+                        "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+                    },
+                    "subnet": {
+                        "id": "[variables('subnetRef')]"
+                    }
+                }
+            }]
+        }
+    }, {
+        "apiVersion": "2015-05-01-preview",
+        "type": "Microsoft.Compute/virtualMachines",
+        "name": "[variables('vmName')]",
+        "location": "[parameters('location')]",
+        "dependsOn": [
+            "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
+            "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+        ],
+        "properties": {
+            "hardwareProfile": {
+                "vmSize": "[variables('vmSize')]"
+            },
+            "osProfile": {
+                "computername": "[variables('vmName')]",
+                "adminUsername": "[parameters('adminUsername')]",
+                "adminPassword": "[parameters('adminPassword')]"
+            },
+            "storageProfile": {
+                "imageReference": {
+                    "publisher": "[parameters('imagePublisher')]",
+                    "offer": "[parameters('imageOffer')]",
+                    "sku" : "[parameters('imageSKU')]",
+                    "version":"latest"
+                },
+                "osDisk" : {
+                    "name": "osdisk",
+                    "vhd": {
+                       "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/','osdisk.vhd')]"
+                    },
+                    "caching": "ReadWrite",
+                    "createOption": "FromImage"
+                }
+            },
+            "networkProfile": {
+                "networkInterfaces": [{
+                    "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+                }]
+            }
+        }
+    }, {
+        "type": "Microsoft.Compute/virtualMachines/extensions",
+        "name": "[concat(variables('vmName'),'/newuserscript')]",
+        "apiVersion": "2015-05-01-preview",
+        "location": "[parameters('location')]",
+        "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+        ],
+        "properties": {
+            "publisher": "Microsoft.OSTCExtensions",
+            "type": "CustomScriptForLinux",
+            "typeHandlerVersion": "1.2",
+            "settings": {
+                "fileUris": [
+                    "https://raw.githubusercontent.com/azurermtemplates/azurermtemplates/master/deploy-lamp-app/install_lamp.sh"
+                ],
+                "commandToExecute": "[concat('sh install_lamp.sh ', parameters('mySqlPassword'))]"
+            }
+        }
+    }]
+}
