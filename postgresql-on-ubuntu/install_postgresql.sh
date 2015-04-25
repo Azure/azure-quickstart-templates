@@ -62,14 +62,6 @@ while getopts :m:s:t:p: optname; do
   esac
 done
 
-# Node type is an index count and we set the first node up as our master
-if [ $NODETYPE == "0" ];
-then
-NODETYPE="MASTER"
-else
-NODETYPE="SLAVE"
-fi
-
 export PGPASSWORD=$REPLICATORPASSWORD
 
 logger "NOW=$now MASTERIP=$MASTERIP SUBNETADDRESS=$SUBNETADDRESS NODETYPE=$NODETYPE NODEIP=$NODEIP"
