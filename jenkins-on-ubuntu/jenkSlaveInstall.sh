@@ -23,8 +23,8 @@ else
   #log "hostname %{HOSTNAME} added to /etc/hosts"
 fi
 
-$MASTERNODE=$1
-$SLAVENODE=$2
+MASTERNODE=$1
+SLAVENODE=$2
 
 wget http://$MASTERNODE/jnlpJars/slave.jar -O ~/slave.jar
 sudo java -jar slave.jar -jnlpUrl http://$MASTERNODE:8080/computer/$SLAVENODE/slave-agent.jnlp
