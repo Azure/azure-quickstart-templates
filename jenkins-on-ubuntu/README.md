@@ -15,11 +15,15 @@ The example expects the following parameters:
 | adminPassword  | Admin password for the Virtual Machine  |
 | region | Region name where the corresponding Azure artifacts will be created |
 | virtualNetworkName | Name of the Virtual Network that is created and that resources will be deployed in to |
+| masterVmSize | The size of the Jenkins Master node VM.  Default = Standard_D3
+| slaveVmSize | The size of the Jenkins slave node VM(s).  Default = Standard_D3
+| slaveNodes | The number of Jenkins Slave nodes.  Default = 1
 
 Topology
 --------
 
-This template deploys a configurable number of slave nodes of a configurable size.  The master node is exposed on a public IP address that you can access through a browser on port :8080 as well as SSH on the standard port.
+This template deploys a Jenkins master and a configurable number of Jenkins slave nodes.  
+The master node is exposed on a public IP address that you can access through a browser on port :8080 as well as SSH on the standard port.
 
 ##Known Issues and Limitations
 - The template does not currently configure SSL on master or slave nodes.
