@@ -27,5 +27,5 @@ wget http://$MASTERNODE:8080/jnlpJars/slave.jar -O ~/slave.jar
 chmod 777 ~/slave.jar
 
 echo "Executing slave.jar with http://$MASTERNODE:8080/computer/$SLAVENODE/slave-agent.jnlp"
-sudo java -jar ~/slave.jar -jnlpUrl http://$MASTERNODE:8080/computer/$SLAVENODE/slave-agent.jnlp
+su -c "java -jar ~/slave.jar -jnlpUrl http://$MASTERNODE:8080/computer/$SLAVENODE/slave-agent.jnlp"
 
