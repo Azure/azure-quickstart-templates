@@ -17,15 +17,17 @@
 MASTERNODE=$1
 SLAVENODE=$2
 
-#### Install Java
+# Install Java
 echo "Installing openjdk-7"
 apt-get -y update 
 apt-get -y install openjdk-7-jdk
 
+# Download slave.jar from master
 echo "Downloading slave.jar from $MASTERNODE"
 wget http://$MASTERNODE:8080/jnlpJars/slave.jar -O ~/slave.jar
 chmod 777 ~/slave.jar
 
+# Launch slave agent
 echo "Executing slave.jar with http://$MASTERNODE:8080/computer/$SLAVENODE/slave-agent.jnlp"
-su -c "java -jar ~/slave.jar -jnlpUrl http://$MASTERNODE:8080/computer/$SLAVENODE/slave-agent.jnlp"
+sudo java -jar ~/slave.jar -jnlpUrl http://$MASTERNODE:8080/computer/$SLAVENODE/slave-agent.jnlp
 
