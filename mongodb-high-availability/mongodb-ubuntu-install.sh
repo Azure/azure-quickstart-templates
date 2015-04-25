@@ -201,9 +201,6 @@ configure_replicaset()
 	# Stop the currently running MongoDB daemon as we will need to reload its configuration
 	stop_mongodb
 	
-	# Important not to attempt to start the daemon immediately after it was stopped as unclean shutdown may be wrongly perceived
-	sleep 10s
-	
 	# Attempt to start the MongoDB daemon so that configuration changes take effect
 	start_mongodb
 	
@@ -303,6 +300,9 @@ stop_mongodb()
 		
 		kill -15 $MONGOPID
 	fi
+	
+	# Important not to attempt to start the daemon immediately after it was stopped as unclean shutdown may be wrongly perceived
+	sleep 15s	
 }
 
 configure_db_users()
