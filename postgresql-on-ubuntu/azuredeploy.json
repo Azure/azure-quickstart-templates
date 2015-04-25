@@ -40,7 +40,8 @@
       "allowedValues": [
         "Small",
         "Medium",
-        "Large"
+        "Large",
+        "XLarge"
       ],
       "metadata": {
         "Description": "T-shirt size of the PostgreSQL deployment"
@@ -76,6 +77,7 @@
       "diskSize": 1023,
       "vmTemplate": "[concat(variables('templateBaseUrl'), 'database-2disk-resources.json')]",
       "vmCount": 2,
+      "slaveCount": 1,
       "storage": {
         "name": "[parameters('storageAccountNamePrefix')]",
         "count": 1,
@@ -89,6 +91,7 @@
       "diskSize": 1023,
       "vmTemplate": "[concat(variables('templateBaseUrl'), 'database-8disk-resources.json')]",
       "vmCount": 2,
+      "slaveCount": 1,
       "storage": {
         "name": "[parameters('storageAccountNamePrefix')]",
         "count": 2,
@@ -102,11 +105,26 @@
       "diskSize": 1023,
       "vmTemplate": "[concat(variables('templateBaseUrl'), 'database-16disk-resources.json')]",
       "vmCount": 3,
+      "slaveCount": 2,
       "storage": {
         "name": "[parameters('storageAccountNamePrefix')]",
         "count": 2,
         "pool": "db",
         "map": [0,1,1],
+        "jumpbox": 0
+      }
+    },
+    "tshirtSizeXLarge": {
+      "vmSize": "Standard_A4",
+      "diskSize": 1023,
+      "vmTemplate": "[concat(variables('templateBaseUrl'), 'database-16disk-resources.json')]",
+      "vmCount": 4,
+      "slaveCount": 3,
+      "storage": {
+        "name": "[parameters('storageAccountNamePrefix')]",
+        "count": 2,
+        "pool": "db",
+        "map": [0,0,1,1],
         "jumpbox": 0
       }
     },
@@ -205,7 +223,7 @@
             "value": {
               "region": "[parameters('region')]",
               "adminUsername": "[parameters('adminUsername')]",
-              "namespace": "pg"
+              "namespace": "ms"
             }
           },
           "storageSettings": {
@@ -215,9 +233,68 @@
             "value": {
               "vmSize": "[variables('tshirtSize').vmSize]",
               "diskSize": "[variables('tshirtSize').diskSize]",
-              "vmCount": "[variables('tshirtSize').vmCount]",
+              "vmCount": 1,
               "availabilitySet": "[variables('availabilitySetSettings').name]"
             }
+          },
+          "masterIpAddress": {
+            "value": "0"
+          },
+          "dbType": {
+            "value": "MASTER"
+          }
+        }
+      }
+    },
+    {
+      "name": "slave-node",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', 'master-node')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('tshirtSize').vmTemplate]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "replicatorPassword": {
+            "value": "[parameters('replicatorPassword')]"
+          },
+          "osSettings": {
+            "value": "[variables('osSettings')]"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnets.data]"
+          },
+          "commonSettings": {
+            "value": {
+              "region": "[parameters('region')]",
+              "adminUsername": "[parameters('adminUsername')]",
+              "namespace": "sl"
+            }
+          },
+          "storageSettings": {
+            "value":"[variables('tshirtSize').storage]"
+          },
+          "machineSettings": {
+            "value": {
+              "vmSize": "[variables('tshirtSize').vmSize]",
+              "diskSize": "[variables('tshirtSize').diskSize]",
+              "vmCount": "[variables('tshirtSize').slaveCount]",
+              "availabilitySet": "[variables('availabilitySetSettings').name]"
+            }
+          },
+          "masterIpAddress": {
+            "value": "[reference('master-node').outputs.masterip.value]"
+          },
+          "dbType": {
+            "value": "SLAVE"
           }
         }
       }
