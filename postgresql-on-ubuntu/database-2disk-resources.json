@@ -22,6 +22,12 @@
     },
     "replicatorPassword": {
       "type": "securestring"
+    },
+    "masterIpdAddress": {
+      "type": "string"
+    },
+    "offset": {
+      "type": "int"
     }
   },
   "variables": {
@@ -38,7 +44,7 @@
     {
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[concat(variables('nicName'), copyindex())]",
+      "name": "[concat(variables('nicName'), copyindex(parameters('offset')))]",
       "location": "[variables('region')]",
       "copy": {
         "name": "nicCopyLoop",
@@ -61,10 +67,10 @@
     {
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[concat(variables('vmName'), copyindex())]",
+      "name": "[concat(variables('vmName'), copyindex(parameters('offset')))]",
       "location": "[variables('region')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyindex())]"
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyindex(parameters('offset')))]"
       ],
       "copy": {
         "name": "vmCopyLoop",
@@ -78,7 +84,7 @@
           "vmSize": "[parameters('machineSettings').vmSize]"
         },
         "osProfile": {
-          "computername": "[concat(variables('vmName'), copyindex())]",
+          "computername": "[concat(variables('vmName'), copyindex(parameters('offset')))]",
           "adminUsername": "[variables('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]"
         },
@@ -87,7 +93,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://',parameters('storageSettings').name, parameters('storageSettings').map[copyindex()],'.blob.core.windows.net/vhds/', variables('vmName'), copyindex(), '-osdisk.vhd')]"
+              "uri": "[concat('http://',parameters('storageSettings').name, parameters('storageSettings').map[copyindex(parameters('offset'))],'.blob.core.windows.net/vhds/', variables('vmName'), copyindex(parameters('offset')), '-osdisk.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -98,7 +104,7 @@
               "diskSizeGB": "[parameters('machineSettings').diskSize]",
               "lun": 0,
               "vhd": {
-                "Uri": "[concat('http://', parameters('storageSettings').name, parameters('storageSettings').map[copyindex()],'.blob.core.windows.net/vhds/',variables('vmName'), copyindex(),'-datadisk1.vhd')]"
+                "Uri": "[concat('http://', parameters('storageSettings').name, parameters('storageSettings').map[copyindex(parameters('offset'))],'.blob.core.windows.net/vhds/',variables('vmName'), copyindex(parameters('offset')),'-datadisk1.vhd')]"
               },
               "caching": "None",
               "createOption": "Empty"
@@ -108,7 +114,7 @@
               "diskSizeGB": "[parameters('machineSettings').diskSize]",
               "lun": 1,
               "vhd": {
-                "Uri": "[concat('http://', parameters('storageSettings').name, parameters('storageSettings').map[copyindex()],'.blob.core.windows.net/vhds/',variables('vmName'), copyindex(),'-datadisk2.vhd')]"
+                "Uri": "[concat('http://', parameters('storageSettings').name, parameters('storageSettings').map[copyindex(parameters('offset'))],'.blob.core.windows.net/vhds/',variables('vmName'), copyindex(parameters('offset')),'-datadisk2.vhd')]"
               },
               "caching": "None",
               "createOption": "Empty"
@@ -118,7 +124,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'), copyindex()) )]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'), copyindex(parameters('offset'))) )]"
             }
           ]
         }
@@ -126,11 +132,11 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('vmName'), copyindex(), '/install_postgresql')]",
+      "name": "[concat(variables('vmName'), copyindex(parameters('offset')), '/install_postgresql')]",
       "apiVersion": "2015-05-01-preview",
       "location": "[variables('region')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'), copyindex())]"
+        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'), copyindex(parameters('offset')))]"
       ],
       "copy": {
         "name": "scriptCopyLoop",
@@ -142,10 +148,15 @@
         "typeHandlerVersion": "1.2",
         "settings": {
           "fileUris": "[parameters('osSettings').scripts]",
-          "commandToExecute": "[concat('bash install_postgresql.sh -m ', reference(concat(variables('nicName'), 0)).ipConfigurations[0].properties.privateIPAddress, ' -s ', parameters('subnet').prefix, ' -t ', copyindex(), ' -p ', parameters('replicatorPassword') )]"
+          "commandToExecute": "[concat('bash install_postgresql.sh -m ', parameters('masterIpdAddress'), ' -s ', parameters('subnet').prefix, ' -t ', copyindex(parameters('offset')), ' -p ', parameters('replicatorPassword') )]"
         }
       }
     }
   ],
-  "outputs": {}
+  "outputs": {
+    "masterip": {
+      "value": "[reference(concat(variables('nicName'),0)).ipConfigurations[0].properties.privateIPAddress]",
+      "type": "string"
+    }
+  }
 }
