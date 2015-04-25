@@ -5,22 +5,22 @@
 2. Use the imageReference section to refer to your image and add define the osDisk property to the storageProfile. Here's what the new storageProfile looks like
 
 
-    "storageProfile": {
-        "imageReference": {
-            "publisher": "[parameters('imagePublisher')]",
-            "offer": "[parameters('imageOffer')]",
-            "sku" : "[parameters('imageSKU')]",
-            "version":"latest"
-        },
-        "osDisk" : {
-            "name": "osdisk",
-            "vhd": {
-               "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/','osdisk.vhd')]"
-            },
-            "caching": "ReadWrite",
-            "createOption": "FromImage"
-        }
-    }
+      "storageProfile": {
+          "imageReference": {
+              "publisher": "[parameters('imagePublisher')]",
+              "offer": "[parameters('imageOffer')]",
+              "sku" : "[parameters('imageSKU')]",
+              "version":"latest"
+          },
+          "osDisk" : {
+              "name": "osdisk",
+              "vhd": {
+                 "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/','osdisk.vhd')]"
+              },
+              "caching": "ReadWrite",
+              "createOption": "FromImage"
+          }
+      }
 
 
 3. Some common values for publisher, offer, sku for images are
