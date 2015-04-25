@@ -15,6 +15,9 @@
 MASTERNODE=$1
 SLAVENODE=$2
 
+echo "Downloading slave.jar from $MASTERNODE"
 wget http://$MASTERNODE:8080/jnlpJars/slave.jar -O ~/slave.jar
+
+echo "Executing slave.jar with http://$MASTERNODE:8080/computer/$SLAVENODE/slave-agent.jnlp"
 sudo java -jar slave.jar -jnlpUrl http://$MASTERNODE:8080/computer/$SLAVENODE/slave-agent.jnlp
 
