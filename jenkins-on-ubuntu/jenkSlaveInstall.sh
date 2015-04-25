@@ -12,20 +12,9 @@
 # This script has only been tested on Ubuntu 14.04 LTS and must be root
 ####################################################### 
 
-grep -q "${HOSTNAME}" /etc/hosts
-
-if [ $? == 0 ];
-then
-  echo "%{HOSTNAME} found in /etc/hosts"
-else
-  echo "${HOSTNAME} not found in  /etc/hosts"
-  #sudo echo "127.0.0.1 ${HOSTNAME}" >> /etc/hosts
-  #log "hostname %{HOSTNAME} added to /etc/hosts"
-fi
-
 MASTERNODE=$1
 SLAVENODE=$2
 
-wget http://$MASTERNODE/jnlpJars/slave.jar -O ~/slave.jar
+wget http://$MASTERNODE:8080/jnlpJars/slave.jar -O ~/slave.jar
 sudo java -jar slave.jar -jnlpUrl http://$MASTERNODE:8080/computer/$SLAVENODE/slave-agent.jnlp
 
