@@ -49,6 +49,13 @@ The following table outlines the deployment topology characteristics for each su
 An optional single arbiter node is provisioned in addition to the number of members stated above, thus increasing the total number of nodes by 1.
 The size of the arbiter node is standardized as _Standard_A1_. Arbiters do not store the data, they vote in elections for primary and require just a bare minimum machine specification to perform their duties.
 
+Each member node in the deployment will have a MongoDB daemon installed and correctly configured to participate in a replica set. All member nodes except the last one will be provisioned in parallel. During provisioning of the last node, a replica set will be initiated.
+The optional arbiter joins the replica set after it is initiated. To ensure a successful deployment, this template has to serialize the provisioning of all member nodes and the arbiter node as follows:
+
+__(1) MEMBER NODES__ (except last) >>> __(2) LAST MEMBER NODE__ >>> __(3) ARBITER__ (optional)
+
+In the above deployment sequence, steps #1 and #2 will have to complete first before the next step kicks off. As a result, you may be seeing longer-than-desirable deployment times as member node provisioning is not fully parallelized.
+
 ##Notes, Known Issues & Limitations
 - To access the individual MongoDB nodes, you need to use the publicly accessible jumpbox VM and _ssh_ from it into the individual MongoDB instances
 - The minimum architecture of a replica set is comprised of 3 members. A typical 3-member replica set can have either 3 members that hold data, or 2 members that hold data and an arbiter
