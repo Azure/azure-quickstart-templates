@@ -61,18 +61,20 @@
   },
   "variables": {
     "vmStorageAccountContainerName": "vhd",
-    "subnetRef":"[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('subnet').vnet), '/subnets/', parameters('subnet').name)]"
+    "subnetRef":"[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('subnet').vnet), '/subnets/', parameters('subnet').name)]",
+    "storageAccountName":"[parameters('storageAccountName')]",
+    "vmName": "clientVm"
   },
   "resources": [
     {
-      "apiVersion": "2014-12-01-preview",
+      "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Compute/availabilitySets",
       "name": "elasticsearchClient",
       "location": "[parameters('region')]",
       "properties": {}
     },
     {
-      "apiVersion": "2014-12-01-preview",
+      "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(parameters('nicNamePrefix'), copyindex())]",
       "location": "[parameters('region')]",
@@ -100,7 +102,7 @@
       }
     },
     {
-      "apiVersion": "2014-12-01-preview",
+      "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat('clientVm', copyindex())]",
       "location": "[parameters('region')]",
@@ -125,10 +127,15 @@
           "adminPassword": "[parameters('adminPassword')]"
         },
         "storageProfile": {
-          "sourceImage": {
-            "id": "[parameters('osSettings').sourceImage]"
-          },
-          "destinationVhdsContainer": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/')]"
+          "imageReference": "[parameters('osSettings').imageReference]",
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/vhds/', variables('vmName'), copyindex(), '-osdisk.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -142,7 +149,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat('clientVm', copyindex(), '/installelasticsearch')]",
-      "apiVersion": "2014-12-01-preview",
+      "apiVersion": "2015-05-01-preview",
       "location": "[parameters('region')]",
       "copy": {
         "name": "clientVMExtensionsLoop",
