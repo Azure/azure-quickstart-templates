@@ -52,10 +52,16 @@
         "Description": "Elasticsearch deployment platform settings"
       }
     },
-    "nicNamePrefix": {
-      "type": "string",
+    "vmCount": {
+      "type": "int",
       "metadata": {
-        "Description": "Network interface namespace prefix"
+        "Description": "Number of instances to create"
+      }
+    },
+    "lbBackendPools": {
+      "type": "object",
+      "metadata": {
+        "Description": "loadBalancerBackendAddressPools config object"
       }
     }
   },
@@ -63,7 +69,8 @@
     "vmStorageAccountContainerName": "vhd",
     "subnetRef":"[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('subnet').vnet), '/subnets/', parameters('subnet').name)]",
     "storageAccountName":"[parameters('storageAccountName')]",
-    "vmName": "clientVm"
+    "vmName": "clientVm",
+    "nicName": "clientNic"
   },
   "resources": [
     {
@@ -76,11 +83,11 @@
     {
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[concat(parameters('nicNamePrefix'), copyindex())]",
+      "name": "[concat(variables('nicName'), copyindex())]",
       "location": "[parameters('region')]",
       "copy": {
         "name": "clientNodesNicLoop",
-        "count": 3
+        "count": "[parameters('vmCount')]"
       },
       "properties": {
         "ipConfigurations": [
@@ -91,11 +98,7 @@
               "subnet": {
                 "id": "[variables('subnetRef')]"
               },
-              "loadBalancerBackendAddressPools": [
-                {
-                  "id":"[concat(resourceId('Microsoft.Network/loadBalancers','loadBalancer'),'/backendAddressPools/LBBE')]"
-                }
-              ]
+              "loadBalancerBackendAddressPools": "[parameters('lbBackendPools').backendPools]"
             }
           }
         ]
@@ -108,10 +111,10 @@
       "location": "[parameters('region')]",
       "copy": {
         "name": "clientVmLoop",
-        "count": 3
+        "count": "[parameters('vmCount')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', parameters('nicNamePrefix'), copyindex())]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyindex())]",
         "[concat('Microsoft.Compute/availabilitySets/', 'elasticsearchClient')]"
       ],
       "properties": {
@@ -140,7 +143,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('nicNamePrefix'), copyindex()))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('nicName'), copyindex()))]"
             }
           ]
         }
@@ -153,11 +156,11 @@
       "location": "[parameters('region')]",
       "copy": {
         "name": "clientVMExtensionsLoop",
-        "count": 3
+        "count": "[parameters('vmCount')]"
       },
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', 'clientVm', copyindex())]",
-        "[concat('Microsoft.Network/networkInterfaces/', parameters('nicNamePrefix'), copyindex())]"
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyindex())]"
       ],
       "properties": {
         "publisher": "Microsoft.OSTCExtensions",

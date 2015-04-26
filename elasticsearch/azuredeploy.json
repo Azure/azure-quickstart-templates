@@ -66,18 +66,31 @@
         "No"
       ]
     },
-    "vmSizeMasterNodes": {
-      "type": "string",
-      "defaultValue": "Standard_A1",
+    "vmClientNodeCount": {
+      "type": "int",
+      "defaultValue": 3,
+      "allowedValues": [
+        0,
+        3,
+        5,
+        7
+      ],
       "metadata": {
-        "Description": "Size of the Elasticsearch master nodes"
+        "Description": "Size of the Elasticsearch client nodes"
       }
     },
     "vmSizeClientNodes": {
       "type": "string",
       "defaultValue": "Standard_A2",
       "metadata": {
-        "Description": "Size of the Elasticsearch client nodes"
+        "Description": "Size of the Elasticsearch cluster client nodes"
+      }
+    },
+    "vmSizeMasterNodes": {
+      "type": "string",
+      "defaultValue": "Standard_A1",
+      "metadata": {
+        "Description": "Size of the Elasticsearch master nodes"
       }
     },
     "vmSizeDataNodes": {
@@ -161,8 +174,11 @@
     "dataNodeAvailabilitySetName": "dataNodeAvailabilitySet",
     "sharedTemplateUrl": "[concat(variables('templateBaseUrl'), 'shared-resources.json')]",
     "masterTemplateUrl": "[concat(variables('templateBaseUrl'), 'master-nodes-resources.json')]",
-    "clientTemplateUrl": "[concat(variables('templateBaseUrl'), 'client-nodes-resources.json')]",
-    "loadBalancerTemplateUrl": "[concat(variables('templateBaseUrl'), 'loadbalancer-resources.json')]",
+    "clientTemplate0": "empty-resources.json",
+    "clientTemplate3": "client-nodes-resources.json",
+    "clientTemplate5": "client-nodes-resources.json",
+    "clientTemplate7": "client-nodes-resources.json",
+    "clientTemplateUrl": "[concat(variables('templateBaseUrl'), variables(concat('clientTemplate',parameters('vmClientNodeCount'))))]",
     "dataTemplateStandard_D1": "data-nodes-2disk-resources.json",
     "dataTemplateStandard_A2": "data-nodes-4disk-resources.json",
     "dataTemplateStandard_A3": "data-nodes-8disk-resources.json",
@@ -197,7 +213,18 @@
       "discoveryHosts": "[concat(variables('masterNodesIpPrefix'), '-3')]",
       "osProfileConfigKey": "[variables(concat(parameters('OS'), 'OSProfileConfigKey'))]",
       "osProfileConfig": "[variables(concat(parameters('OS'), 'OSProfileConfig'))]"
-    }
+    },
+    "lbBackEndPoolsAdded": {"backendPools": [
+                {
+                  "id":"[concat(resourceId('Microsoft.Network/loadBalancers','loadBalancer'),'/backendAddressPools/LBBE')]"
+                }
+              ]},
+    "lbBackendPoolsRemoved": {"backendPools":[]},
+    "dataLBSettings0":"[variables('lbBackEndPoolsAdded')]",
+    "dataLBSettings3":"[variables('lbBackendPoolsRemoved')]",
+    "dataLBSettings5":"[variables('lbBackendPoolsRemoved')]",
+    "dataLBSettings7":"[variables('lbBackendPoolsRemoved')]",
+    "dataLBSettings": "[variables(concat('dataLBSettings', parameters('vmClientNodeCount')))]"
   },
   "resources": [
     {
@@ -308,9 +335,6 @@
           "subnet": {
             "value": "[variables('networkSettings').subnet.data]"
           },
-          "nicNamePrefix": {
-            "value": "clientNic"
-          },
           "vmSize": {
             "value": "[parameters('vmSizeClientNodes')]"
           },
@@ -319,6 +343,12 @@
           },
           "osSettings": {
             "value": "[variables('osSettings')]"
+          },
+          "vmCount": {
+            "value": "[parameters('vmClientNodeCount')]"
+          },
+          "lbBackendPools": {
+            "value": "[variables('lbBackEndPoolsAdded')]"
           }
         }
       }
@@ -376,6 +406,9 @@
           },
           "osSettings": {
             "value": "[variables('osSettings')]"
+          },
+          "lbBackendPools": {
+            "value": "[variables('dataLBSettings')]"
           }
         }
       }
