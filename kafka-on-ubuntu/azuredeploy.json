@@ -14,6 +14,27 @@
                 "Description": "Administrator password used when provisioning virtual machines"
             }
         },
+        "imagePublisher": {
+            "type": "string",
+            "defaultValue": "Canonical",
+            "metadata": {
+                 "Description": "Image Publisher"
+            }
+        },
+        "imageOffer": {
+            "type": "string",
+            "defaultValue": "UbuntuServer",
+            "metadata": {
+                "Description": "Image Offer"
+            }
+        },
+        "imageSKU": {
+            "type": "string",
+            "defaultValue": "14.04.2-LTS",
+            "metadata": {
+                "Description": "Image SKU"
+            }
+        },
         "storageAccountName": {
             "type": "string",
             "defaultValue": "uniquekafkastoragev12",
@@ -216,7 +237,7 @@
             }
         },
         {
-            "apiVersion": "2014-12-01-preview",
+            "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Network/networkInterfaces",
             "name": "[concat('niczoo', copyindex())]",
             "location": "[parameters('region')]",
@@ -243,7 +264,7 @@
             }
         },
 	{
-            "apiVersion": "2014-12-01-preview",
+            "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Network/networkInterfaces",
             "name": "[concat('nic', copyindex())]",
             "location": "[parameters('region')]",
@@ -270,7 +291,7 @@
             }
 	},
         {
-            "apiVersion": "2014-12-01-preview",
+            "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Compute/virtualMachines",
             "name": "[concat('myvmzoo', copyindex())]",
             "location": "[parameters('region')]",
@@ -287,22 +308,28 @@
                     "id": "[resourceId('Microsoft.Compute/availabilitySets', 'kafkaCluserAS')]"
                 },
                 "hardwareProfile": {
-                    "vmSize": "[variables('vmSize')]",
-                    "platformGuestAgent": "true"
+                    "vmSize": "[variables('vmSize')]"
                 },
                 "osProfile": {
-                    "computername": "[concat(variables('computerNamePrefix'),'z', copyIndex())]",
+                    "computername": "[concat(variables('computerNamePrefix'), copyIndex())]",
                     "adminUsername": "[parameters('adminUsername')]",
                     "adminPassword": "[parameters('adminPassword')]",
-                    "linuxOperatingSystemProfile": {
-                        "disableSshPasswordAuthentication": "false"
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": "false"
                     }
                 },
                 "storageProfile": {
                     "sourceImage": {
                         "id": "[variables('sourceImageName')]"
                     },
-                    "destinationVhdsContainer": "[concat('https://',parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/')]"
+		"osDisk" : {
+		    "name": "osdisk",
+		    "vhd": {
+		       "uri": "[concat('https://',parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/','osdisk', copyindex() ,'.vhd')]"
+		    },
+		    "caching": "ReadWrite",
+		    "createOption": "FromImage"
+			}
                 },
                 "networkProfile": {
                     "networkInterfaces": [
@@ -315,7 +342,7 @@
         },
 	{
 	
-            "apiVersion": "2014-12-01-preview",
+            "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Compute/virtualMachines",
             "name": "[concat('myvm', copyindex())]",
             "location": "[parameters('region')]",
@@ -333,21 +360,28 @@
                     "id": "[resourceId('Microsoft.Compute/availabilitySets', 'kafkaCluserAS')]"
                 },
                 "hardwareProfile": {
-                    "vmSize": "[variables('vmSize')]",
-                    "platformGuestAgent": "true"
+                    "vmSize": "[variables('vmSize')]"
                 },
                 "osProfile": {
                     "computername": "[concat(variables('computerNamePrefix'), copyIndex())]",
                     "adminUsername": "[parameters('adminUsername')]",
                     "adminPassword": "[parameters('adminPassword')]",
-                    "linuxOperatingSystemProfile": {
-                        "disableSshPasswordAuthentication": "false"
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": "false"
                     }
                 },
                 "storageProfile": {
                     "sourceImage": {
                         "id": "[variables('sourceImageName')]"
                     },
+			"osDisk" : {
+			    "name": "osdiskb",
+			    "vhd": {
+			       "uri": "[concat('https://',parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/','osdisksl', copyindex() ,'.vhd')]"
+			    },
+			    "caching": "ReadWrite",
+			    "createOption": "FromImage"
+			},
                     "dataDisks": [
                         {
                             "name": "datadisk1",
@@ -355,11 +389,10 @@
                             "lun": 0,
                             "vhd": {
                                 "Uri": "[concat('https://',parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/','myvm','dataDisk', copyindex() ,'.vhd')]"
-                            }
+                            },
+			    "createOption": "Empty"
                         }
-                    ],
-
-                    "destinationVhdsContainer": "[concat('https://',parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/')]"
+                    ]
                 },
                 "networkProfile": {
                     "networkInterfaces": [
@@ -374,7 +407,7 @@
             
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "name": "[concat('myvmzoo', copyindex(), '/installzoo')]",
-            "apiVersion": "2014-12-01-preview",
+            "apiVersion": "2015-05-01-preview",
             "location": "[parameters('region')]",
             "copy": {
                 "name": "virtualMachineExtensionsLoop",
@@ -399,7 +432,7 @@
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "name": "[concat('myvm', copyindex(), '/installkafka')]",
-            "apiVersion": "2014-12-01-preview",
+            "apiVersion": "2015-05-01-preview",
             "location": "[parameters('region')]",
             "copy": {
                 "name": "virtualMachineExtensionsLoop",
