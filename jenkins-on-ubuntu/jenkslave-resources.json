@@ -1,0 +1,137 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "region": {
+      "type": "string"
+    },
+    "storageAccountName": {
+      "type": "string"
+    },
+    "adminUsername": {
+      "type": "string"
+    },
+    "adminPassword": {
+      "type": "securestring"
+    },
+    "namespace": {
+      "type": "string"
+    },
+    "vmbasename": {
+      "type": "string"
+    },
+    "masterNode": {
+      "type": "string"
+    },
+    "osSettings": {
+      "type": "object"
+    },
+    "vmSize": {
+      "type": "string"
+    },
+    "subnet": {
+      "type": "object"
+    }
+  },
+  "variables": {
+    "subnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('subnet').vnet), '/subnets/', parameters('subnet').name)]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2014-12-01-preview",
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[concat(parameters('namespace'), 'set')]",
+      "location": "[parameters('region')]",
+      "properties": { }
+    },
+    {
+      "apiVersion": "2014-12-01-preview",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'nic')]",
+      "location": "[parameters('region')]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2014-12-01-preview",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(parameters('namespace'), concat(parameters('vmbasename'), 'vm'))]",
+      "location": "[parameters('region')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', concat(parameters('namespace'), concat(parameters('vmbasename'), 'nic')))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computername": "[concat(parameters('namespace'), concat(parameters('vmbasename'), 'vm'))]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "sourceImage": {
+            "id": "[parameters('osSettings').sourceImage]"
+          },
+          "destinationVhdsContainer": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/')]"
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('namespace'), concat(parameters('vmbasename'), 'nic')))]"
+            }
+          ],
+          "inputEndpoints": [
+            {
+              "enableDirectServerReturn": "False",
+              "endpointName": "SSH",
+              "privatePort": 22,
+              "publicPort": 22,
+              "protocol": "tcp"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'vm', '/jenkInstall')]",
+      "apiVersion": "2014-12-01-preview",
+      "location": "[parameters('region')]",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', concat(parameters('namespace'), concat(parameters('vmbasename'), 'vm')))]",
+        "[concat('Microsoft.Network/networkInterfaces/', concat(parameters('namespace'), concat(parameters('vmbasename'), 'nic')))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.OSTCExtensions",
+        "type": "CustomScriptForLinux",
+        "typeHandlerVersion": "1.2",
+        "settings": {
+          "fileUris": "[parameters('osSettings').scripts]",
+          "commandToExecute": "[concat('bash jenkSlaveInstall.sh ', parameters('masterNode'), ' ', parameters('vmbasename') )]"
+        }
+      }
+    }
+
+
+
+
+
+
+
+
+
+  ],
+  "outputs": {}
+}

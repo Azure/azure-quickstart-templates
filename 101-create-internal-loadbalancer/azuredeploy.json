@@ -1,0 +1,154 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-04-01-preview/deploymentTemplate.json",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "defaultValue": "East US",
+            "metadata": {
+                "Description": "Location to deploy to"
+            }
+        },
+        "virtualNetworkName": {
+            "type": "string",
+            "defaultValue": "myVNET",
+            "metadata": {
+                "Description": "VNET name"
+            }
+        },
+        "addressPrefix": {
+            "type": "string",
+            "defaultValue": "10.0.0.0/16",
+            "metadata": {
+                "Description": "address prefix"
+            }
+        },
+        "subnetName": {
+            "type": "string",
+            "defaultValue": "Subnet-1",
+            "metadata": {
+                "Description": "Subnet Name"
+            }
+        },
+        "subnetPrefix": {
+            "type": "string",
+            "defaultValue": "10.0.0.0/24",
+            "metadata": {
+                "Description": "Subnet prefix"
+            }
+        },
+        "loadBalancerName": {
+            "type": "string",
+            "defaultValue": "myLoadBalancer",
+            "metadata": {
+                "Description": "Loadbalancer Name"
+            }
+        },
+        "nicName": {
+            "type": "string",
+            "defaultValue": "myNic",
+            "metadata": {
+                "Description": "NIC name"
+            }
+        }
+    },
+    "variables": {
+        "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
+        "subnetRef": "[concat(variables('vnetID'),'/subnets/',parameters('subnetName'))]",
+        "lbID": "[resourceId('Microsoft.Network/loadBalancers',parameters('loadBalancerName'))]",
+        "nicId": "[resourceId('Microsoft.Network/networkInterfaces',parameters('nicName'))]",
+        "frontEndIPConfigID": "[concat(variables('lbID'),'/frontendIPConfigurations/LBFE')]",
+        "backEndIPConfigID": "[concat(variables('nicId'),'/ipConfigurations/ipconfig1')]"
+    },
+    "resources": [{
+        "apiVersion": "2014-05-01-preview",
+        "type": "Microsoft.Network/virtualNetworks",
+        "name": "[parameters('virtualNetworkName')]",
+        "location": "[parameters('location')]",
+        "properties": {
+            "addressSpace": {
+                "addressPrefixes": [
+                    "[parameters('addressPrefix')]"
+                ]
+            },
+            "subnets": [{
+                "name": "[parameters('subnetName')]",
+                "properties": {
+                    "addressPrefix": "[parameters('subnetPrefix')]"
+                }
+            }]
+        }
+    }, {
+        "apiVersion": "2014-05-01-preview",
+        "type": "Microsoft.Network/networkInterfaces",
+        "name": "[parameters('nicName')]",
+        "location": "[parameters('location')]",
+        "dependsOn": [
+            "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
+        ],
+        "properties": {
+            "ipConfigurations": [{
+                "name": "ipconfig1",
+                "properties": {
+                    "privateIPAllocationMethod": "Dynamic",
+                    "subnet": {
+                        "id": "[variables('subnetRef')]"
+                    }
+                },
+                "loadBalancerBackendAddressPools": [{
+                    "id": "[concat(resourceId('Microsoft.Network/loadBalancers',parameters('loadBalancerName')),'/backendAddressPools/LBBE')]"
+                }]
+            }]
+        }
+    }, {
+        "apiVersion": "2014-05-01-preview",
+        "name": "[parameters('loadBalancerName')]",
+        "type": "Microsoft.Network/loadBalancers",
+        "location": "[parameters('location')]",
+        "dependsOn": [
+            "[concat('Microsoft.Network/networkInterfaces/', parameters('nicName'))]"
+        ],
+        "properties": {
+            "frontendIPConfigurations": [{
+                "name": "LBFE",
+                "properties": {
+                    "subnet": {
+                        "id": "[variables('subnetRef')]"
+                    }
+                }
+            }],
+            "backendAddressPools": [{
+                "name": "LBBE"
+
+            }],
+            "LoadBalancingRules": [{
+                "Properties": {
+                    "FrontendIPConfiguration": {
+                        "Id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancerName')), '/frontendIpConfigurations/LBFE')]"
+                    },
+                    "BackendAddressPool": {
+                        "Id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancerName')), '/backendAddressPools/LBBE')]"
+                    },
+                    "Probe": {
+                        "Id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancerName')), '/probes/lbprobe')]"
+                    },
+                    "Protocol": "Tcp",
+                    "FrontendPort": 80,
+                    "BackendPort": 80,
+                    "IdleTimeoutInMinutes": 15
+
+                },
+                "Name": "lbrule"
+            }],
+            "Probes": [{
+                "Properties": {
+                    "Protocol": "Tcp",
+                    "Port": 80,
+                    "IntervalInSeconds": 15,
+                    "NumberOfProbes": 2
+                },
+                "Name": "lbprobe"
+            }],
+        }
+    }]
+}
