@@ -14,6 +14,27 @@
                 "Description": "Administrator password used when provisioning virtual machines"
             }
         },
+        "imagePublisher": {
+            "type": "string",
+            "defaultValue": "Canonical",
+            "metadata": {
+                 "Description": "Image Publisher"
+            }
+        },
+        "imageOffer": {
+            "type": "string",
+            "defaultValue": "UbuntuServer",
+            "metadata": {
+                "Description": "Image Offer"
+            }
+        },
+        "imageSKU": {
+            "type": "string",
+            "defaultValue": "14.04.2-LTS",
+            "metadata": {
+                "Description": "Image SKU"
+            }
+        },
         "storageAccountName": {
             "type": "string",
             "defaultValue": "uniquesparkstoragev12",
@@ -216,7 +237,7 @@
             }
         },
 	{
-            "apiVersion": "2014-12-01-preview",
+            "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Network/publicIPAddresses",
             "name": "publicIPmaster",
             "location": "[parameters('region')]",
@@ -225,7 +246,7 @@
             }
         },
         {
-            "apiVersion": "2014-12-01-preview",
+            "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Network/networkInterfaces",
             "name": "[concat('nic', copyindex())]",
             "location": "[parameters('region')]",
@@ -256,7 +277,7 @@
             }
         },
 	{
-            "apiVersion": "2014-12-01-preview",
+            "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Network/networkInterfaces",
             "name": "[concat('nicsl', copyindex())]",
             "location": "[parameters('region')]",
@@ -283,7 +304,7 @@
             }
 	},
         {
-            "apiVersion": "2014-12-01-preview",
+            "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Compute/virtualMachines",
             "name": "[concat('myvm', copyindex())]",
             "location": "[parameters('region')]",
@@ -300,33 +321,42 @@
                     "id": "[resourceId('Microsoft.Compute/availabilitySets', 'sparkCluserAS')]"
                 },
                 "hardwareProfile": {
-                    "vmSize": "[variables('vmSize')]",
-                    "platformGuestAgent": "true"
+                    "vmSize": "[variables('vmSize')]"
                 },
                 "osProfile": {
                     "computername": "[concat(variables('computerNamePrefix'), copyIndex())]",
                     "adminUsername": "[parameters('adminUsername')]",
                     "adminPassword": "[parameters('adminPassword')]",
-                    "linuxOperatingSystemProfile": {
-                        "disableSshPasswordAuthentication": "false"
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": "false"
                     }
                 },
-                "storageProfile": {
-                    "sourceImage": {
-                        "id": "[variables('sourceImageName')]"
-                    },
-                    "dataDisks": [
+		"storageProfile": {
+			"imageReference": {
+			    "publisher": "[parameters('imagePublisher')]",
+			    "offer": "[parameters('imageOffer')]",
+			    "sku" : "[parameters('imageSKU')]",
+			    "version":"latest"
+			},
+			"osDisk" : {
+			    "name": "osdisk",
+			    "vhd": {
+			       "uri": "[concat('https://',parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/','osdisk', copyindex() ,'.vhd')]"
+			    },
+			    "caching": "ReadWrite",
+			    "createOption": "FromImage"
+			},
+			"dataDisks": [
                         {
                             "name": "datadisk1",
                             "diskSizeGB": "[parameters('dataDiskSize')]",
                             "lun": 0,
                             "vhd": {
                                 "Uri": "[concat('https://',parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/','myvm','dataDisk', copyindex() ,'.vhd')]"
-                            }
+                            },
+			    "createOption": "Empty"
                         }
                     ],
-
-                    "destinationVhdsContainer": "[concat('https://',parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/')]"
                 },
                 "networkProfile": {
                     "networkInterfaces": [
@@ -347,7 +377,7 @@
             }
         },
 	{
-            "apiVersion": "2014-12-01-preview",
+            "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Compute/virtualMachines",
             "name": "[concat('myvmsl', copyindex())]",
             "location": "[parameters('region')]",
@@ -365,21 +395,28 @@
                     "id": "[resourceId('Microsoft.Compute/availabilitySets', 'sparkCluserAS')]"
                 },
                 "hardwareProfile": {
-                    "vmSize": "[variables('vmSize')]",
-                    "platformGuestAgent": "true"
+                    "vmSize": "[variables('vmSize')]"
                 },
                 "osProfile": {
                     "computername": "[concat(variables('computerNamePrefix'),'sl', copyIndex())]",
                     "adminUsername": "[parameters('adminUsername')]",
                     "adminPassword": "[parameters('adminPassword')]",
-                    "linuxOperatingSystemProfile": {
-                        "disableSshPasswordAuthentication": "false"
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": "false"
                     }
                 },
                 "storageProfile": {
                     "sourceImage": {
                         "id": "[variables('sourceImageName')]"
                     },
+			"osDisk" : {
+			    "name": "osdisksl",
+			    "vhd": {
+			       "uri": "[concat('https://',parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/','osdisksl', copyindex() ,'.vhd')]"
+			    },
+			    "caching": "ReadWrite",
+			    "createOption": "FromImage"
+			},
                     "dataDisks": [
                         {
                             "name": "datadisksl1",
@@ -387,11 +424,10 @@
                             "lun": 0,
                             "vhd": {
                                 "Uri": "[concat('https://',parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/','myvmsl','dataDisk', copyindex() ,'.vhd')]"
-                            }
+                            },
+			    "createOption": "Empty"
                         }
-                    ],
-
-                    "destinationVhdsContainer": "[concat('https://',parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/')]"
+                    ]
                 },
                 "networkProfile": {
                     "networkInterfaces": [
@@ -405,7 +441,7 @@
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "name": "[concat('myvm', copyindex(), '/installsparkmaster')]",
-            "apiVersion": "2014-12-01-preview",
+            "apiVersion": "2015-05-01-preview",
             "location": "[parameters('region')]",
             "copy": {
                 "name": "virtualMachineExtensionsLoopMaster",
@@ -430,7 +466,7 @@
 	{
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "name": "[concat('myvmsl', copyindex(), '/installsparkslave')]",
-            "apiVersion": "2014-12-01-preview",
+            "apiVersion": "2015-05-01-preview",
             "location": "[parameters('region')]",
             "copy": {
                 "name": "virtualMachineExtensionsLoopSlave",
