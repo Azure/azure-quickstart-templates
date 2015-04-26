@@ -11,9 +11,15 @@
         "scriptsUri": {
             "type": "string"
         },
+        "nodeTemplateUri": {
+            "type": "string"
+        },
         "storageAccount" : {
             "type": "object"        
         },   
+        "vmSize": {
+            "type": "string"
+        },
         "vmCount": {
             "type":"int"            
         },
@@ -25,14 +31,11 @@
         },
         "clusterSpec": {
             "type": "object"
-        }
+        }        
     },
     "variables": {
         "vmName": "[concat(parameters('dnsNamePrefix'), '-mn-')]",
-        "nicName": "[concat(variables('vmName'), '-nic')]",
-        "storageAccountName": "[concat(parameters('storageAccount').prefix, 'mn')]",
-
-        "publicIPAddressName": "[concat(variables('vmName'), '-publicIP')]"
+        "storageAccountName": "[concat(parameters('storageAccount').prefix, 'mn')]"
     },
     "resources": [         
         {
@@ -47,127 +50,55 @@
             "properties": {
                 "accountType": "[parameters('storageAccount').type]"
             }
-        },
-        { 
-            "apiVersion": "2015-05-01-preview", 
-            "type": "Microsoft.Network/publicIPAddresses", 
-            "name": "[concat(variables('publicIPAddressName'), copyIndex(2))]", 
-            "location": "[parameters('region')]", 
-            "copy": {
-                "name": "publicIPLoop",
-                "count": "[parameters('vmCount')]"
-            },
-            "properties": { 
-                "publicIPAllocationMethod": "Dynamic", 
-                "dnsSettings": { 
-                    "domainNameLabel": "[concat(parameters('dnsNamePrefix'), '-mn-', copyIndex(2))]" 
-                } 
-            } 
-        }, 
-        { 
-            "apiVersion": "2015-05-01-preview", 
-            "type": "Microsoft.Network/networkInterfaces", 
-            "name": "[concat(variables('nicName'), copyIndex(2))]", 
-            "location": "[parameters('region')]", 
-            "dependsOn": [ 
-                "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'), copyIndex(2))]" 
-            ], 
-            "copy": {
-                "name": "nameNodeNicLoop",
-                "count": "[parameters('vmCount')]"
-            },
-            "properties": { 
-                "ipConfigurations": [{ 
-                    "name": "ipconfig1", 
-                    "properties": { 
-                        "privateIPAllocationMethod": "Static",             
-                        "privateIPAddress": "[concat(parameters('networkSpec').privateIPPrefix, copyIndex(parameters('networkSpec').nameNodeAddressStart))]",
-                        "subnet": { 
-                            "id": "[concat(resourceId('Microsoft.Network/virtualNetworks',parameters('networkSpec').virtualNetworkName), '/subnets/', parameters('networkSpec').virtualNetworkSubnetName)]"
-                        },
-                        "publicIPAddress": { 
-                            "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat(variables('publicIPAddressName'), copyIndex(2)))]" 
-                        }
-                    } 
-                }] 
-            } 
-        },
+        },        
         {
-            "apiVersion": "2015-05-01-preview",
-            "type": "Microsoft.Compute/virtualMachines",
             "name": "[concat(variables('vmName'), copyIndex(2))]",
-            "location": "[parameters('region')]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2015-01-01",
             "copy": {
                 "name": "nameNodeNicLoop",
                 "count": "[parameters('vmCount')]"
             },
             "dependsOn": [                
-                "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyIndex(2))]",
                 "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'), copyIndex(2))]"
             ],
             "properties": {
-                "hardwareProfile": {
-                    "vmSize": "[parameters('vmSpec').vmSize]"
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[parameters('nodeTemplateUri')]",
+                    "contentVersion": "1.0.0.0"
                 },
-                "osProfile": {
-                    "computername": "[concat(variables('vmName'), copyIndex(2))]",
-                    "adminUsername": "[parameters('vmSpec').adminUserName]",
-                    "adminPassword": "[parameters('vmSpec').adminPassword]",
-                    "linuxConfiguration" : {
-                        "disablePasswordAuthentication": "true",
-                        "ssh": {
-                            "publicKeys": [
-                                {
-                                    "keyData": "[parameters('vmSpec').publicSSHCert]",
-                                    "path": "[concat('/home/',parameters('vmSpec').adminUserName,'/.ssh/authorized_keys')]"
-                                }
-                            ]
-                        }                      
+                "parameters": {
+                    "vmName": {
+                        "value": "[concat(variables('vmName'), copyIndex(2))]"
+                    },
+                    "region": {
+                        "value": "[parameters('region')]"
+                    },
+                    "availabilitySet": {
+                        "value": "[parameters('vmSpec').masterNodeASName]"
+                    },                    
+                    "storageAccountName" : {
+                        "value": "[concat(variables('storageAccountName'), copyIndex(2))]"        
+                    },   
+                    "subnetResourceId": {
+                        "value": "[concat(resourceId('Microsoft.Network/virtualNetworks',parameters('networkSpec').virtualNetworkName), '/subnets/', parameters('networkSpec').virtualNetworkSubnetName)]"
+                    },
+                    "dnsName": {
+                        "value": "[concat(parameters('dnsNamePrefix'), '-mn-', copyIndex(2))]"
+                    },
+                    "ipAddress": {
+                        "value": "[concat(parameters('networkSpec').privateIPPrefix, copyIndex(parameters('networkSpec').nameNodeAddressStart))]"
+                    },                    
+                    "vmSize": {
+                        "value": "[parameters('vmSize')]"
+                    },
+                    "vmSpec": {
+                        "value": "[parameters('vmSpec')]"
                     }
-                },
-                "storageProfile": {
-                    "imageReference": {
-                        "publisher": "OpenLogic", 
-                        "offer": "CentOS", 
-                        "sku": "6.5", 
-                        "version":"6.5.201503" 
-                    },
-                    "osDisk": {
-                        "name": "osdisk", 
-                        "vhd": { 
-                            "uri": "[concat('http://', variables('storageAccountName'), copyIndex(2), '.blob.core.windows.net/vhds/', variables('vmName'), copyIndex(2), '.vhd')]"
-                        }, 
-                        "caching": "ReadWrite", 
-                        "createOption": "FromImage" 
-                    },
-                    "dataDisks": [
-                        {
-                            "name": "datadisk1",
-                            "diskSizeGB": "512",
-                            "lun": 0,
-                            "vhd": {
-                                "Uri": "[concat('http://', variables('storageAccountName'), copyIndex(2),  '.blob.core.windows.net/vhds/', variables('vmName'), copyIndex(2), '-datadisk0.vhd')]"
-                            },
-                            "createOption": "Empty"
-                        },
-                        {
-                            "name": "datadisk2",
-                            "diskSizeGB": "512",
-                            "lun": 1,
-                            "vhd": {
-                                "Uri": "[concat('http://', variables('storageAccountName'), copyIndex(2),  '.blob.core.windows.net/vhds/', variables('vmName'), copyIndex(2), '-datadisk1.vhd')]"
-                            },
-                            "createOption": "Empty"                            
-                        }
-                    ]
-                },                
-                "networkProfile": {
-                    "networkInterfaces" : [{
-                        "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('nicName'), copyIndex(2)))]"
-                    }]
                 }
             }
-        },    
+        },
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "name": "[concat(variables('vmName'), copyIndex(2), '/prepareDisks')]",
@@ -178,7 +109,7 @@
                 "count": "[parameters('vmCount')]"
             },
             "dependsOn": [
-                "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'), copyIndex(2))]"
+                "[concat('Microsoft.Resources/deployments/', variables('vmName'), copyIndex(2))]"
             ],
             "properties": {
                 "publisher": "Microsoft.OSTCExtensions",
@@ -189,7 +120,7 @@
                         "[concat(parameters('scriptsUri'), '/scripts/initialize-node.sh')]",
                         "[concat(parameters('scriptsUri'), '/scripts/vm-bootstrap.py')]"
                     ],
-                    "commandToExecute": "[concat('sh initialize-node.sh \"', parameters('networkSpec').privateIPPrefix, '\" \"', parameters('dnsNamePrefix'), '\" \"', reference(concat(variables('publicIPAddressName'), copyIndex(2))).dnsSettings.fqdn, '\" ', parameters('clusterSpec').nameNodeCount, ' ', parameters('clusterSpec').dataNodeCount)]"
+                    "commandToExecute": "[concat('sh initialize-node.sh \"', parameters('networkSpec').privateIPPrefix, '\" \"', parameters('dnsNamePrefix'), '\" \"', reference(concat(variables('vmName'), copyIndex(2))).outputs.fqdn.value, '\" ', parameters('clusterSpec').nameNodeCount, ' ', parameters('clusterSpec').dataNodeCount)]"
                 }
             }
         }
