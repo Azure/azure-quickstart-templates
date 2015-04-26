@@ -1,6 +1,6 @@
 # Deploy Docker Container
 
-[coreysa](https://github.com/coreysa)
+Built by: [coreysa](https://github.com/coreysa)
 
 This template allows you to deploy an Ubuntu VM with Docker (using the Docker extension) and three Docker containers pulled directly from DockerHub and deployed using Docker Compose.
 
