@@ -1,0 +1,335 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "region": {
+      "type": "string",
+      "defaultValue": "West US",
+      "metadata": {
+        "Description": "Location of the resource group and all contained resources"
+      }
+    },
+    "storageAccountNamePrefix": {
+      "type": "string",
+      "metadata": {
+        "Description": "Unique name of the new storage account that will be created to store virtual machine VHDs"
+      }
+    },
+    "domainName": {
+      "type": "string",
+      "metadata": {
+        "Description": "Domain name of the public jumpbox"
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "defaultValue": "azureuser",
+      "metadata": {
+        "Description": "Virtual machine administrator username"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "Description": "Virtual machine administrator password"
+      }
+    },
+    "tshirtSize": {
+      "type": "string",
+      "defaultValue": "Small",
+      "allowedValues": [
+        "Small",
+        "Medium",
+        "Large",
+        "XLarge"
+      ],
+      "metadata": {
+        "Description": "T-shirt size of the Kafka deployment"
+      }
+    },
+    "replicatorPassword": {
+      "type": "securestring"
+    },
+    "jumpbox": {
+      "type": "string",
+      "defaultValue": "Disabled",
+      "allowedValues": [
+        "Enabled",
+        "Disabled"
+      ],
+      "metadata": {
+        "Description": "The flag allowing to enable or disable provisioning of the jumpbox VM that can be used to access the Kafka environment"
+      }
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "defaultValue": "vnet",
+      "metadata": {
+        "Description": "Virtual network name"
+      }
+    }
+  },
+  "variables": {
+    "templateBaseUrl": "https://raw.githubusercontent.com/CognosysTech/azure-quickstart-templates/master/kafka-on-ubuntu-disks/",
+    "sharedTemplateUrl": "[concat(variables('templateBaseUrl'), 'shared-resources.json')]",
+    "tshirtSizeSmall": {
+      "vmSize": "Standard_A1",
+      "diskSize": 1023,
+      "vmTemplate": "[concat(variables('templateBaseUrl'), 'datastore-2disk-resources.json')]",
+      "zookeeperCount": 1,
+      "brokerCount": 3,
+      "storage": {
+        "name": "[parameters('storageAccountNamePrefix')]",
+        "count": 1,
+        "pool": "db",
+        "map": [0,0],
+        "jumpbox": 0
+      }
+    },
+    "tshirtSizeMedium": {
+      "vmSize": "Standard_A3",
+      "diskSize": 1023,
+      "vmTemplate": "[concat(variables('templateBaseUrl'), 'datastore-8disk-resources.json')]",
+      "zookeeperCount": 3,
+      "brokerCount": 5,
+      "storage": {
+        "name": "[parameters('storageAccountNamePrefix')]",
+        "count": 2,
+        "pool": "db",
+        "map": [0,1],
+        "jumpbox": 0
+      }
+    },
+    "tshirtSizeLarge": {
+      "vmSize": "Standard_A4",
+      "diskSize": 1023,
+      "vmTemplate": "[concat(variables('templateBaseUrl'), 'datastore-16disk-resources.json')]",
+      "zookeeperCount":3,
+      "brokerCount": 5,
+      "storage": {
+        "name": "[parameters('storageAccountNamePrefix')]",
+        "count": 2,
+        "pool": "db",
+        "map": [0,1,1],
+        "jumpbox": 0
+      }
+    },
+    "tshirtSizeXLarge": {
+      "vmSize": "Standard_A7",
+      "diskSize": 1023,
+      "vmTemplate": "[concat(variables('templateBaseUrl'), 'datastore-16disk-resources.json')]",
+      "zookeeperCount": 5,
+      "brokerCount": 8,
+      "storage": {
+        "name": "[parameters('storageAccountNamePrefix')]",
+        "count": 2,
+        "pool": "db",
+        "map": [0,0,1,1],
+        "jumpbox": 0
+      }
+    },
+    "tshirtSize": "[variables(concat('tshirtSize', parameters('tshirtSize')))]",
+    "jumpboxTemplateEnabled": "jumpbox-resources.json",
+    "jumpboxTemplateDisabled": "empty-resources.json",
+    "vmTemplatezookeeper": "[concat(variables('templateBaseUrl'), 'zookeeper-resources.json')]",  
+    "jumpboxTemplateUrl": "[concat(variables('templateBaseUrl'), variables(concat('jumpboxTemplate',parameters('jumpbox'))))]",
+    "osSettings": {
+      "scripts": [
+        "[concat(variables('templateBaseUrl'), 'kafka-cluster-install.sh')]",
+        "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/zookeeper/shared_scripts/ubuntu/vm-disk-utils-0.1.sh"
+      ],
+      "imageReference": {
+        "publisher": "Canonical",
+        "offer": "UbuntuServer",
+        "sku": "14.04.2-LTS",
+        "version": "latest"
+      }
+    },
+    "networkSettings": {
+      "vnetName": "[parameters('virtualNetworkName')]",
+      "addressPrefix": "10.0.0.0/16",
+      "subnets": {
+        "dmz": {
+          "name": "dmz",
+          "prefix": "10.0.0.0/24",
+          "vnet": "[parameters('virtualNetworkName')]"
+        },
+        "zookeeper": {
+          "name": "zookeeper",
+          "prefix": "10.0.2.0/24",
+          "vnet": "[parameters('virtualNetworkName')]"
+        },
+        "data": {
+          "name": "data",
+          "prefix": "10.0.1.0/24",
+          "vnet": "[parameters('virtualNetworkName')]"
+        }
+      }
+    },
+    "availabilitySetSettings": {
+      "name": "kafkaAvailabilitySet",
+      "fdCount": 3,
+      "udCount": 5
+    }
+  },
+  "resources": [
+    {
+      "name": "shared",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('sharedTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "storageSettings": {
+            "value": "[variables('tshirtSize').storage]"
+          },
+          "region": {
+            "value": "[parameters('region')]"
+          },
+          "networkSettings": {
+            "value": "[variables('networkSettings')]"
+          },
+          "availabilitySetSettings": {
+            "value": "[variables('availabilitySetSettings')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "zookeeper-node",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', 'shared')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('vmTemplatezookeeper')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "osSettings": {
+            "value": "[variables('osSettings')]"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnets.zookeeper]"
+          },
+          "commonSettings": {
+            "value": {
+              "region": "[parameters('region')]",
+              "adminUsername": "[parameters('adminUsername')]",
+              "namespace": "zk"
+            }
+          },
+          "storageSettings": {
+            "value":"[variables('tshirtSize').storage]"
+          },
+          "machineSettings": {
+            "value": {
+              "vmSize": "[variables('tshirtSize').vmSize]",
+              "diskSize": "[variables('tshirtSize').diskSize]",
+              "vmCount": "[variables('tshirtSize').vmCount]",
+              "availabilitySet": "[variables('availabilitySetSettings').name]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "broker-node",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', 'zookeeper-node')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('tshirtSize').vmTemplate]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "osSettings": {
+            "value": "[variables('osSettings')]"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnets.data]"
+          },
+          "commonSettings": {
+            "value": {
+              "region": "[parameters('region')]",
+              "adminUsername": "[parameters('adminUsername')]",
+              "namespace": "bk"
+            }
+          },
+          "storageSettings": {
+            "value":"[variables('tshirtSize').storage]"
+          },
+          "machineSettings": {
+            "value": {
+              "vmSize": "[variables('tshirtSize').vmSize]",
+              "diskSize": "[variables('tshirtSize').diskSize]",
+              "zookeeperCount": "[variables('tshirtSize').vmCount]",
+              "vmCount": "[variables('tshirtSize').brokerCount]",
+              "availabilitySet": "[variables('availabilitySetSettings').name]",
+	      "ZookeeperSubnet": "[variables('networkSettings').subnets.zookeeper]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "jumpbox",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', 'shared')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('jumpboxTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "storageSettings": {
+            "value": {
+              "name": "[concat(parameters('storageAccountNamePrefix'), variables('tshirtSize').storage.jumpbox)]"
+            }
+          },
+          "dnsName": {
+            "value": "[parameters('domainName')]"
+          },
+          "commonSettings": {
+            "value": {
+              "region": "[parameters('region')]",
+              "adminUsername": "[parameters('adminUsername')]",
+              "namespace": "jumpbox"
+            }
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnets.dmz]"
+          },
+          "osSettings": {
+            "value": "[variables('osSettings')]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}
