@@ -16,7 +16,7 @@ The example expects the following parameters:
 | adminPassword  | Admin password for the Virtual Machine  |
 | region | Region name where the corresponding Azure artifacts will be created |
 | virtualNetworkName | Name of Virtual Network |
-| dataDiskSize | Size of each disk attached to Kafka nodes (in GB) |
+| dataDiskSize | Size of each disk attached to Kafka nodes (in GB) - This will be available in with Disk templates separately |
 | subnetName | Name of the Virtual Network subnet |
 | addressPrefix | The IP address mask used by the Virtual Network |
 | subnetPrefix | The subnet mask used by the Virtual Network subnet |
@@ -31,14 +31,17 @@ Topology
 --------
 
 The deployment topology is comprised of Kafka Brokers and Zookeeper nodes running in the cluster mode.
+Kafka version 0.8.2.1 is the default version and can be changed to any pre-built binaries avaiable on Kafka repo.
+A static IP address will be assigned to each Kafka node in order to work around the current limitation of not being able to dynamically compose a list of IP addresses from within the template (by default, the first node will be assigned the private IP of 10.0.0.10, the second node - 10.0.0.11, and so on)
+A static IP address will be assigned to each Zookeeper node in order to work around the current limitation of not being able to dynamically compose a list of IP addresses from within the template (by default, the first node will be assigned the private IP of 10.0.0.40, the second node - 10.0.0.41, and so on)
 
 NOTE: To access the individual Kafka nodes, you need to use the publicly accessible jumpbox VM and ssh from it into the VM instances running Kafka.
 
+To get start connect to the public ip of Jumpbox with username and password provided during deployment.
+From the jumpbox connect to any of the Kafka brokers eg: ssh 10.0.0.10 ,ssh 10.0.0.11, etc.
+Run the command ps-ef|grep kafka to check that kafka process is running ok.
+
 ##Known Issues and Limitations
-- The deployment script is not yet idempotent and cannot handle updates (it currently works for initial cluster provisioning only)
+- The deployment script is not yet handling data disks and using local storage. There will be a separate checkin for disks as per T shirt sizing.
 - Health monitoring of the Kafka instances is not currently enabled
 - SSH key is not yet implemented and the template currently takes a password for the admin user
-- Kafka cluster is not enabled automatically (due to inability to compose a single list of private IP addresses of all instances from within the ARM template)
-- Kafka version 0.8.2.1 or above is a requirement for the cluster (although the older versions can still be deployed without clustered configuration)
-- A static IP address will be assigned to each Kafka node in order to work around the current limitation of not being able to dynamically compose a list of IP addresses from within the template (by default, the first node will be assigned the private IP of 10.0.0.10, the second node - 10.0.0.11, and so on)
-- A static IP address will be assigned to each Zookeeper node in order to work around the current limitation of not being able to dynamically compose a list of IP addresses from within the template (by default, the first node will be assigned the private IP of 10.0.0.20, the second node - 10.0.0.21, and so on)

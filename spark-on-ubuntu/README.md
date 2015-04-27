@@ -31,15 +31,24 @@ Topology
 --------
 
 The deployment topology is comprised of Master and Slave Instance nodes running in the cluster mode. 
+Spark version 1.2.1 is the default version and can be changed to any pre-built binaries avaiable on Spark repo.
+There is also a provision in the script to uncomment the build from source.
+
+ A static IP address will be assigned to each Spark Master node 10.0.0.10
+ A static IP address will be assigned to each Spark Slave node in order to work around the current limitation of not being able to dynamically compose a list of IP addresses from within the template (by default, the first node will be assigned the private IP of 10.0.0.30, the second node - 10.0.0.31, and so on)
+
+NOTE: To access the individual Kafka nodes, you need to use the publicly accessible jumpbox VM and ssh from it into the VM instances running Kafka.
+
+To get start connect to the public ip of Jumpbox with username and password provided during deployment.
+From the jumpbox connect to any of the Spark workers eg: ssh 10.0.0.30 ,ssh 10.0.0.31, etc.
+Run the command ps-ef|grep spark to check that kafka process is running ok. To connect to master node you can use ssh 10.0.0.10
+
 You can access the Web UI portal by using Public IP alloted to the Master node like this PublicMasterIP:8080
 
 NOTE: To access the individual Spark nodes, you need to use the publicly accessible jumpbox VM and ssh from it into the VM instances running Spark.
 
 ##Known Issues and Limitations
-- The deployment script is not yet idempotent and cannot handle updates (it currently works for initial cluster provisioning only)
-- Health monitoring of the Spark instances is not currently enabled
+- The deployment script is not yet idempotent and cannot handle updates 
 - SSH key is not yet implemented and the template currently takes a password for the admin user
+- The deployment script is not yet handling data disks and using local storage. There will be a separate checkin for disks as per T shirt sizing.
 - Spark cluster is current enabled for one master and multi slaves. 
-- Spark version 1.2.1 or above is a requirement for the cluster (although the older versions can still be deployed without clustered configuration)
-- A static IP address will be assigned to each Spark Master node 10.0.0.10
-- A static IP address will be assigned to each Spark Slave node in order to work around the current limitation of not being able to dynamically compose a list of IP addresses from within the template (by default, the first node will be assigned the private IP of 10.0.0.30, the second node - 10.0.0.31, and so on)
