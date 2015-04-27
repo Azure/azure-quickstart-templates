@@ -76,7 +76,6 @@ Start deployment
                         jumpbox          String                     enabled
                         tshirtSize       String                     S
 
-Outputs           :
 
 Check Deployment 
 ----------------
@@ -104,6 +103,8 @@ There is also a provision in the script to uncomment the build from source.
 
  A static IP address will be assigned to each Spark Master node 10.0.0.10
  A static IP address will be assigned to each Spark Slave node in order to work around the current limitation of not being able to dynamically compose a list of IP addresses from within the template (by default, the first node will be assigned the private IP of 10.0.0.30, the second node - 10.0.0.31, and so on)
+
+To check deployment errors go to the new azure portal and look under Resource Group -> Last deployment -> Check Operation Details
 
 ##Known Issues and Limitations
 - The deployment script is not yet idempotent and cannot handle updates 
