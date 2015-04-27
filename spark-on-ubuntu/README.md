@@ -16,7 +16,7 @@ The example expects the following parameters:
 | adminPassword  | Admin password for the Virtual Machine  |
 | region | Region name where the corresponding Azure artifacts will be created |
 | virtualNetworkName | Name of Virtual Network |
-| dataDiskSize | Size of each disk attached to Spark nodes (in GB) |
+| dataDiskSize | Size of each disk attached to Spark nodes (in GB) - This will be available in with Disk templates separately |
 | subnetName | Name of the Virtual Network subnet |
 | addressPrefix | The IP address mask used by the Virtual Network |
 | subnetPrefix | The subnet mask used by the Virtual Network subnet |
