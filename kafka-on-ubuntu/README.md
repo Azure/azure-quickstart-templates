@@ -33,15 +33,57 @@ The example expects the following parameters:
 | jumpbox | The flag allowing to enable or disable provisioning of the jumpbox VM that can be used to access the Kafka nodes |
 | tshirtSize | The t-shirt size of the Kafka node (small, medium, large) |
 
-Topology
---------
+How to Run the scripts 
+----------------------
 
-The deployment topology is comprised of Kafka Brokers and Zookeeper nodes running in the cluster mode.
-Kafka version 0.8.2.1 is the default version and can be changed to any pre-built binaries avaiable on Kafka repo.
-A static IP address will be assigned to each Kafka node in order to work around the current limitation of not being able to dynamically compose a list of IP addresses from within the template (by default, the first node will be assigned the private IP of 10.0.0.10, the second node - 10.0.0.11, and so on)
-A static IP address will be assigned to each Zookeeper node in order to work around the current limitation of not being able to dynamically compose a list of IP addresses from within the template (by default, the first node will be assigned the private IP of 10.0.0.40, the second node - 10.0.0.41, and so on)
+You can use the Deploy to Azure button or use the below methor with powershell
 
-NOTE: To access the individual Kafka nodes, you need to use the publicly accessible jumpbox VM and ssh from it into the VM instances running Kafka.
+Creating a new deployment with powershell:
+
+Remember to set your Username, Password and Unique Storage Account name in azuredeploy-parameters.json
+
+Create a resource group:
+
+    PS C:\Users\azureuser1> New-AzureResourceGroup -Name "AZKFRKAFKAEA3" -Location 'EastAsia'
+    
+Start deployment 
+    
+    PS C:\Users\azureuser1> New-AzureResourceGroupDeployment -Name AZKFRGKAFKAV2DEP1 -ResourceGroupName "AZKFRGKAFKAEA3" -TemplateFile C:\gitsrc\azure-quickstart-templates\kafka-on-ubuntu\azuredeploy.json -TemplateParameterFile C:\gitsrc\azure-quickstart-templates\kafka-on-ubuntu\azuredeploy-parameters.json -Verbose
+
+    On successful deployment results will be like this
+    DeploymentName    : AZKFRGKAFKAV2DEP1
+    ResourceGroupName : AZKFRGKAFKAEA3
+    ProvisioningState : Succeeded
+    Timestamp         : 4/26/2015 4:40:51 PM
+    Mode              : Incremental
+    TemplateLink      :
+    Parameters        :
+
+                    Name             Type                       Value
+                    ===============  =========================  ==========
+                    adminUsername    String                     adminuser
+                    adminPassword    SecureString
+                    imagePublisher   String                     Canonical
+                    imageOffer       String                     UbuntuServer
+                    imageSKU         String                     14.04.2-LTS
+                    storageAccountName  String                     armdeploykafkastr1
+                    region           String                     West US
+                    virtualNetworkName  String                     kafkaClustVnet
+                    dataDiskSize     Int                        100
+                    addressPrefix    String                     10.0.0.0/16
+                    subnetName       String                     Subnet1
+                    subnetPrefix     String                     10.0.0.0/24
+                    kafkaVersion     String                     3.0.0
+                    kafkaClusterName  String                     kafka-arm-cluster
+                    kafkaZooNodeIPAddressPrefix  String                     10.0.0.4
+                    kafkaNodeIPAddressPrefix  String                     10.0.0.1
+                    jumpbox          String                     enabled
+                    tshirtSize       String                     S
+
+Check Deployment 
+----------------
+
+To access the individual Kafka nodes, you need to use the publicly accessible jumpbox VM and ssh from it into the VM instances running Kafka.
 
 To get started connect to the public ip of Jumpbox with username and password provided during deployment.
 From the jumpbox connect to any of the Kafka brokers eg: ssh 10.0.0.10 ,ssh 10.0.0.11, etc.
@@ -54,7 +96,18 @@ bin/kafka-topics.sh --create --zookeeper 10.0.0.40:2181  --replication-factor 2 
 
 bin/kafka-topics.sh --describe --zookeeper 10.0.0.40:2181  --topic my-replicated-topic1
 
+Topology
+--------
+
+The deployment topology is comprised of Kafka Brokers and Zookeeper nodes running in the cluster mode.
+Kafka version 0.8.2.1 is the default version and can be changed to any pre-built binaries avaiable on Kafka repo.
+A static IP address will be assigned to each Kafka node in order to work around the current limitation of not being able to dynamically compose a list of IP addresses from within the template (by default, the first node will be assigned the private IP of 10.0.0.10, the second node - 10.0.0.11, and so on)
+A static IP address will be assigned to each Zookeeper node in order to work around the current limitation of not being able to dynamically compose a list of IP addresses from within the template (by default, the first node will be assigned the private IP of 10.0.0.40, the second node - 10.0.0.41, and so on)
+
+To check deployment errors go to the new azure portal and look under Resource Group -> Last deployment -> Check Operation Details
+
 ##Known Issues and Limitations
-- The deployment script is not yet handling data disks and using local storage. There will be a separate checkin for disks as per T shirt sizing.
+- The deployment script is not yet handling data disks and using local storage. 
+- There will be a separate checkin for persistant disks as per T shirt sizing.
 - Health monitoring of the Kafka instances is not currently enabled
 - SSH key is not yet implemented and the template currently takes a password for the admin user
