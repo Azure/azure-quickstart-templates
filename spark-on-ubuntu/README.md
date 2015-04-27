@@ -33,6 +33,55 @@ The example expects the following parameters:
 How to Run the scripts 
 ----------------------
 
+You can use the Deploy to Azure button or use the below methor with powershell
+
+Creating a new deployment with powershell:
+
+Remember to set your Username, Password and Unique Storage Account name in azuredeploy-parameters.json
+
+Create a resource group:
+
+PS C:\Users\azureuser1> New-AzureResourceGroup -Name "AZKFRGSPARKEA3" -Location 'EastAsia'
+
+Start deployment 
+
+PS C:\Users\azureuser1> New-AzureResourceGroupDeployment -Name AZKFRGSPARKV2DEP1 -ResourceGroupName "AZKFRGSPARKEA3" -Te
+mplateFile C:\gitsrc\azure-quickstart-templates\spark-on-ubuntu\azuredeploy.json -TemplateParameterFile C:\gitsrc\azure-
+quickstart-templates\spark-on-ubuntu\azuredeploy-parameters.json -Verbose
+
+On successful deployment results will be like this
+DeploymentName    : AZKFRGSPARKV2DEP1
+ResourceGroupName : AZKFRGSPARKEA3
+ProvisioningState : Succeeded
+Timestamp         : 4/27/2015 2:00:48 PM
+Mode              : Incremental
+TemplateLink      :
+Parameters        :
+                    Name             Type                       Value
+                    ===============  =========================  ==========
+                    adminUsername    String                     adminuser
+                    adminPassword    SecureString
+                    imagePublisher   String                     Canonical
+                    imageOffer       String                     UbuntuServer
+                    imageSKU         String                     14.04.2-LTS
+                    storageAccountName  String                     spkldeploysparknnuu1
+                    region           String                     West US
+                    virtualNetworkName  String                     sparkClustVnet
+                    dataDiskSize     Int                        100
+                    addressPrefix    String                     10.0.0.0/16
+                    subnetName       String                     Subnet1
+                    subnetPrefix     String                     10.0.0.0/24
+                    sparkVersion     String                     3.0.0
+                    sparkClusterName  String                     spark-arm-cluster
+                    sparkNodeIPAddressPrefix  String                     10.0.0.1
+                    sparkSlaveNodeIPAddressPrefix  String                     10.0.0.3
+                    jumpbox          String                     enabled
+                    tshirtSize       String                     S
+
+Outputs           :
+
+Check Deployment 
+----------------
 To access the individual Spark nodes, you need to use the publicly accessible jumpbox VM and ssh from it into the VM instances running Spark.
 
 To get started connect to the public ip of Jumpbox with username and password provided during deployment.
