@@ -254,14 +254,13 @@ EOF
 sleep 14
 
 # Login and get session token
-AUTH_SESSION=$(curl -X POST -d '{"username":"admin","password":"admin"}' 'http://127.0.0.1:8888/login' | sed -e 's/^.*"sessionid"[ ]*:[ ]*"//' -e 's/".*//')
+AUTH_SESSION=$(curl -k -X POST -d '{"username":"admin","password":"admin"}' 'https://127.0.0.1:8443/login' | sed -e 's/^.*"sessionid"[ ]*:[ ]*"//' -e 's/".*//')
 
 # Provision a new cluster with the nodes passed
-curl -H "opscenter-session: $AUTH_SESSION" -H "Accept: application/json" -X POST 127.0.0.1:8888/provision -d @provision.json
+curl -k -H "opscenter-session: $AUTH_SESSION" -H "Accept: application/json" -X POST https://127.0.0.1:8443/provision -d @provision.json
 
 #Update the admin password with the one passed as parameter
-curl -H "opscenter-session: $AUTH_SESSION" -H "Accept: application/json" -d "{\"password\": \"$OPS_CENTER_ADMIN_PASS\", \"role\": \"admin\" }" -X PUT http://127.0.0.1:8888/users/admin
-
+curl -k -H "opscenter-session: $AUTH_SESSION" -H "Accept: application/json" -d "{\"password\": \"$OPS_CENTER_ADMIN_PASS\", \"role\": \"admin\" }" -X PUT https://127.0.0.1:8443/users/admin
 
 # If the user is still admin just udpate the password else create a new admin user
 #if ["$OPS_CENTER_ADMIN" == "admin"];
