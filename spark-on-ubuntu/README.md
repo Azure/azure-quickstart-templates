@@ -30,17 +30,56 @@ The example expects the following parameters:
 | jumpbox | The flag allowing to enable or disable provisioning of the jumpbox VM that can be used to access the Spark nodes |
 | tshirtSize | The t-shirt size of the Spark nodes Slaves or workers can be increased (small, medium, large) |
 
-Topology
---------
+How to Run the scripts 
+----------------------
 
-The deployment topology is comprised of Master and Slave Instance nodes running in the cluster mode. 
-Spark version 1.2.1 is the default version and can be changed to any pre-built binaries avaiable on Spark repo.
-There is also a provision in the script to uncomment the build from source.
+You can use the Deploy to Azure button or use the below methor with powershell
 
- A static IP address will be assigned to each Spark Master node 10.0.0.10
- A static IP address will be assigned to each Spark Slave node in order to work around the current limitation of not being able to dynamically compose a list of IP addresses from within the template (by default, the first node will be assigned the private IP of 10.0.0.30, the second node - 10.0.0.31, and so on)
+Creating a new deployment with powershell:
 
-NOTE: To access the individual Kafka nodes, you need to use the publicly accessible jumpbox VM and ssh from it into the VM instances running Kafka.
+Remember to set your Username, Password and Unique Storage Account name in azuredeploy-parameters.json
+
+Create a resource group:
+
+    PS C:\Users\azureuser1> New-AzureResourceGroup -Name "AZKFRGSPARKEA3" -Location 'EastAsia'
+
+Start deployment 
+
+    PS C:\Users\azureuser1> New-AzureResourceGroupDeployment -Name AZKFRGSPARKV2DEP1 -ResourceGroupName "AZKFRGSPARKEA3" -TemplateFile C:\gitsrc\azure-quickstart-templates\spark-on-ubuntu\azuredeploy.json -TemplateParameterFile C:\gitsrc\azure-quickstart-templates\spark-on-ubuntu\azuredeploy-parameters.json -Verbose
+
+    On successful deployment results will be like this
+    DeploymentName    : AZKFRGSPARKV2DEP1
+    ResourceGroupName : AZKFRGSPARKEA3
+    ProvisioningState : Succeeded
+    Timestamp         : 4/27/2015 2:00:48 PM
+    Mode              : Incremental
+    TemplateLink      :
+    Parameters        :
+                        Name             Type                       Value
+                        ===============  =========================  ==========
+                        adminUsername    String                     adminuser
+                        adminPassword    SecureString
+                        imagePublisher   String                     Canonical
+                        imageOffer       String                     UbuntuServer
+                        imageSKU         String                     14.04.2-LTS
+                        storageAccountName  String                     spkldeploysparknnuu1
+                        region           String                     West US
+                        virtualNetworkName  String                     sparkClustVnet
+                        dataDiskSize     Int                        100
+                        addressPrefix    String                     10.0.0.0/16
+                        subnetName       String                     Subnet1
+                        subnetPrefix     String                     10.0.0.0/24
+                        sparkVersion     String                     3.0.0
+                        sparkClusterName  String                     spark-arm-cluster
+                        sparkNodeIPAddressPrefix  String                     10.0.0.1
+                        sparkSlaveNodeIPAddressPrefix  String                     10.0.0.3
+                        jumpbox          String                     enabled
+                        tshirtSize       String                     S
+
+
+Check Deployment 
+----------------
+To access the individual Spark nodes, you need to use the publicly accessible jumpbox VM and ssh from it into the VM instances running Spark.
 
 To get started connect to the public ip of Jumpbox with username and password provided during deployment.
 From the jumpbox connect to any of the Spark workers eg: ssh 10.0.0.30 ,ssh 10.0.0.31, etc.
@@ -55,7 +94,17 @@ cd /usr/local/spark/bin/
 
 sudo ./spark-shell
 
-NOTE: To access the individual Spark nodes, you need to use the publicly accessible jumpbox VM and ssh from it into the VM instances running Spark.
+Topology
+--------
+
+The deployment topology is comprised of Master and Slave Instance nodes running in the cluster mode. 
+Spark version 1.2.1 is the default version and can be changed to any pre-built binaries avaiable on Spark repo.
+There is also a provision in the script to uncomment the build from source.
+
+ A static IP address will be assigned to each Spark Master node 10.0.0.10
+ A static IP address will be assigned to each Spark Slave node in order to work around the current limitation of not being able to dynamically compose a list of IP addresses from within the template (by default, the first node will be assigned the private IP of 10.0.0.30, the second node - 10.0.0.31, and so on)
+
+To check deployment errors go to the new azure portal and look under Resource Group -> Last deployment -> Check Operation Details
 
 ##Known Issues and Limitations
 - The deployment script is not yet idempotent and cannot handle updates 
