@@ -63,6 +63,7 @@ ZOOKEEPER1KAFKA0="0"
 ZOOKEEPER_IP_PREFIX="10.0.0.4"
 INSTANCE_COUNT=1
 ZOOKEEPER_PORT="2181"
+KAFKADIR="/var/lib/kafkadir"
 
 #Loop through options passed
 while getopts :k:b:z:i:c:p:h optname; do
@@ -162,20 +163,20 @@ setup_datadisks() {
 	MOUNTPOINT="/datadisks/disk1"
 
 	# Move database files to the striped disk
-	if [ -L /var/lib/kafkadir ];
+	if [ -L ${KAFKADIR} ];
 	then
-		logger "Symbolic link from /var/lib/kafkadir already exists"
-		echo "Symbolic link from /var/lib/kafkadir already exists"
+		logger "Symbolic link from ${KAFKADIR} already exists"
+		echo "Symbolic link from ${KAFKADIR} already exists"
 	else
 		logger "Moving  data to the $MOUNTPOINT/kafkadir"
 		echo "Moving PostgreSQL data to the $MOUNTPOINT/kafkadir"
 		service postgresql stop
 		mkdir $MOUNTPOINT/kafkadir
-		#mv /var/lib/kafkadir $MOUNTPOINT/kafkadir
+		mv ${KAFKADIR} $MOUNTPOINT/kafkadir
 
 		# Create symbolic link so that configuration files continue to use the default folders
-		logger "Create symbolic link from /var/lib/kafkadir to $MOUNTPOINT/kafkadir"
-		ln -s $MOUNTPOINT/kafkadir /var/lib/kafkadir
+		logger "Create symbolic link from ${KAFKADIR} to $MOUNTPOINT/kafkadir"
+		ln -s $MOUNTPOINT/kafkadir ${KAFKADIR}
 	fi
 }
 
@@ -208,9 +209,8 @@ install_kafka()
 	
 	sed -r -i "s/(broker.id)=(.*)/\1=${BROKER_ID}/g" config/server.properties 
 	sed -r -i "s/(zookeeper.connect)=(.*)/\1=$(join , $(expand_ip_range "${ZOOKEEPER_IP_PREFIX}-${INSTANCE_COUNT}"))/g" config/server.properties 
-#	cp config/server.properties config/server-1.properties 
-#	sed -r -i "s/(broker.id)=(.*)/\1=1/g" config/server-1.properties 
-#	sed -r -i "s/^(port)=(.*)/\1=9093/g" config/server-1.properties````
+	sed -r -i "s/(log.dirs)=(.*)/\1=${KAFKADIR}/g" config/server.properties 
+
 	chmod u+x /usr/local/kafka/kafka_${kafkaversion}-${version}/bin/kafka-server-start.sh
 	/usr/local/kafka/kafka_${kafkaversion}-${version}/bin/kafka-server-start.sh /usr/local/kafka/kafka_${kafkaversion}-${version}/config/server.properties &
 }
@@ -234,6 +234,7 @@ else
 	#
 	#Install kafka
 	#-----------------------
+	mkdir /var/lib/kafkadir
+	setup_datadisks
 	install_kafka
 fi
-
