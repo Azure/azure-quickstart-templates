@@ -44,22 +44,21 @@ Remember to set your Username, Password and Unique Storage Account name in azure
 
 Create a resource group:
 
-PS C:\Users\azureuser1> New-AzureResourceGroup -Name "AZKFRKAFKAEA3" -Location 'EastAsia'
-
+    PS C:\Users\azureuser1> New-AzureResourceGroup -Name "AZKFRKAFKAEA3" -Location 'EastAsia'
+    
 Start deployment 
+    
+    PS C:\Users\azureuser1> New-AzureResourceGroupDeployment -Name AZKFRGKAFKAV2DEP1 -ResourceGroupName "AZKFRGKAFKAEA3" -TemplateFile C:\gitsrc\azure-quickstart-templates\kafka-on-ubuntu\azuredeploy.json -TemplateParameterFile C:\gitsrc\azure-quickstart-templates\kafka-on-ubuntu\azuredeploy-parameters.json -Verbose
 
-PS C:\Users\azureuser1> New-AzureResourceGroupDeployment -Name AZKFRGKAFKAV2DEP1 -ResourceGroupName "AZKFRGKAFKAEA3" -Te
-mplateFile C:\gitsrc\azure-quickstart-templates\kafka-on-ubuntu\azuredeploy.json -TemplateParameterFile C:\gitsrc\azure-
-quickstart-templates\kafka-on-ubuntu\azuredeploy-parameters.json -Verbose
+    On successful deployment results will be like this
+    DeploymentName    : AZKFRGKAFKAV2DEP1
+    ResourceGroupName : AZKFRGKAFKAEA3
+    ProvisioningState : Succeeded
+    Timestamp         : 4/26/2015 4:40:51 PM
+    Mode              : Incremental
+    TemplateLink      :
+    Parameters        :
 
-On successful deployment results will be like this
-DeploymentName    : AZKFRGKAFKAV2DEP1
-ResourceGroupName : AZKFRGKAFKAEA3
-ProvisioningState : Succeeded
-Timestamp         : 4/26/2015 4:40:51 PM
-Mode              : Incremental
-TemplateLink      :
-Parameters        :
                     Name             Type                       Value
                     ===============  =========================  ==========
                     adminUsername    String                     adminuser
