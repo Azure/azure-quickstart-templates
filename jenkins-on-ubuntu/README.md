@@ -4,7 +4,7 @@
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-This template deploys a Jenkins master node on an Ubuntu virtual machines and Jenkin slave nodes on two additional VM. This template also provisions a storage account, virtual network, availability sets, public IP addresses and network interfaces required by the installation.
+This template deploys a Jenkins master node on an Ubuntu virtual machines and multiple Jenkin slave nodes on two additional VM. This template also provisions a storage account, virtual network, availability sets, public IP addresses and network interfaces required by the installation.
 
 The example expects the following parameters:
 
