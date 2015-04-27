@@ -33,15 +33,9 @@ The example expects the following parameters:
 | jumpbox | The flag allowing to enable or disable provisioning of the jumpbox VM that can be used to access the Kafka nodes |
 | tshirtSize | The t-shirt size of the Kafka node (small, medium, large) |
 
-Topology
---------
-
-The deployment topology is comprised of Kafka Brokers and Zookeeper nodes running in the cluster mode.
-Kafka version 0.8.2.1 is the default version and can be changed to any pre-built binaries avaiable on Kafka repo.
-A static IP address will be assigned to each Kafka node in order to work around the current limitation of not being able to dynamically compose a list of IP addresses from within the template (by default, the first node will be assigned the private IP of 10.0.0.10, the second node - 10.0.0.11, and so on)
-A static IP address will be assigned to each Zookeeper node in order to work around the current limitation of not being able to dynamically compose a list of IP addresses from within the template (by default, the first node will be assigned the private IP of 10.0.0.40, the second node - 10.0.0.41, and so on)
-
-NOTE: To access the individual Kafka nodes, you need to use the publicly accessible jumpbox VM and ssh from it into the VM instances running Kafka.
+How to Run the scripts 
+-----------------------
+To access the individual Kafka nodes, you need to use the publicly accessible jumpbox VM and ssh from it into the VM instances running Kafka.
 
 To get started connect to the public ip of Jumpbox with username and password provided during deployment.
 From the jumpbox connect to any of the Kafka brokers eg: ssh 10.0.0.10 ,ssh 10.0.0.11, etc.
@@ -54,7 +48,16 @@ bin/kafka-topics.sh --create --zookeeper 10.0.0.40:2181  --replication-factor 2 
 
 bin/kafka-topics.sh --describe --zookeeper 10.0.0.40:2181  --topic my-replicated-topic1
 
+Topology
+--------
+
+The deployment topology is comprised of Kafka Brokers and Zookeeper nodes running in the cluster mode.
+Kafka version 0.8.2.1 is the default version and can be changed to any pre-built binaries avaiable on Kafka repo.
+A static IP address will be assigned to each Kafka node in order to work around the current limitation of not being able to dynamically compose a list of IP addresses from within the template (by default, the first node will be assigned the private IP of 10.0.0.10, the second node - 10.0.0.11, and so on)
+A static IP address will be assigned to each Zookeeper node in order to work around the current limitation of not being able to dynamically compose a list of IP addresses from within the template (by default, the first node will be assigned the private IP of 10.0.0.40, the second node - 10.0.0.41, and so on)
+
 ##Known Issues and Limitations
-- The deployment script is not yet handling data disks and using local storage. There will be a separate checkin for disks as per T shirt sizing.
+- The deployment script is not yet handling data disks and using local storage. 
+- There will be a separate checkin for persistant disks as per T shirt sizing.
 - Health monitoring of the Kafka instances is not currently enabled
 - SSH key is not yet implemented and the template currently takes a password for the admin user
