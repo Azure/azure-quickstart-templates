@@ -80,8 +80,6 @@ Start deployment
                     jumpbox          String                     enabled
                     tshirtSize       String                     S
 
-Outputs           :
-
 Check Deployment 
 ----------------
 
@@ -105,6 +103,8 @@ The deployment topology is comprised of Kafka Brokers and Zookeeper nodes runnin
 Kafka version 0.8.2.1 is the default version and can be changed to any pre-built binaries avaiable on Kafka repo.
 A static IP address will be assigned to each Kafka node in order to work around the current limitation of not being able to dynamically compose a list of IP addresses from within the template (by default, the first node will be assigned the private IP of 10.0.0.10, the second node - 10.0.0.11, and so on)
 A static IP address will be assigned to each Zookeeper node in order to work around the current limitation of not being able to dynamically compose a list of IP addresses from within the template (by default, the first node will be assigned the private IP of 10.0.0.40, the second node - 10.0.0.41, and so on)
+
+To check deployment errors go to the new azure portal and look under Resource Group -> Last deployment -> Check Operation Details
 
 ##Known Issues and Limitations
 - The deployment script is not yet handling data disks and using local storage. 
