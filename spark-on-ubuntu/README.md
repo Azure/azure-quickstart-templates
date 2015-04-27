@@ -30,17 +30,10 @@ The example expects the following parameters:
 | jumpbox | The flag allowing to enable or disable provisioning of the jumpbox VM that can be used to access the Spark nodes |
 | tshirtSize | The t-shirt size of the Spark nodes Slaves or workers can be increased (small, medium, large) |
 
-Topology
---------
+How to Run the scripts 
+----------------------
 
-The deployment topology is comprised of Master and Slave Instance nodes running in the cluster mode. 
-Spark version 1.2.1 is the default version and can be changed to any pre-built binaries avaiable on Spark repo.
-There is also a provision in the script to uncomment the build from source.
-
- A static IP address will be assigned to each Spark Master node 10.0.0.10
- A static IP address will be assigned to each Spark Slave node in order to work around the current limitation of not being able to dynamically compose a list of IP addresses from within the template (by default, the first node will be assigned the private IP of 10.0.0.30, the second node - 10.0.0.31, and so on)
-
-NOTE: To access the individual Kafka nodes, you need to use the publicly accessible jumpbox VM and ssh from it into the VM instances running Kafka.
+To access the individual Spark nodes, you need to use the publicly accessible jumpbox VM and ssh from it into the VM instances running Spark.
 
 To get started connect to the public ip of Jumpbox with username and password provided during deployment.
 From the jumpbox connect to any of the Spark workers eg: ssh 10.0.0.30 ,ssh 10.0.0.31, etc.
@@ -55,7 +48,15 @@ cd /usr/local/spark/bin/
 
 sudo ./spark-shell
 
-NOTE: To access the individual Spark nodes, you need to use the publicly accessible jumpbox VM and ssh from it into the VM instances running Spark.
+Topology
+--------
+
+The deployment topology is comprised of Master and Slave Instance nodes running in the cluster mode. 
+Spark version 1.2.1 is the default version and can be changed to any pre-built binaries avaiable on Spark repo.
+There is also a provision in the script to uncomment the build from source.
+
+ A static IP address will be assigned to each Spark Master node 10.0.0.10
+ A static IP address will be assigned to each Spark Slave node in order to work around the current limitation of not being able to dynamically compose a list of IP addresses from within the template (by default, the first node will be assigned the private IP of 10.0.0.30, the second node - 10.0.0.31, and so on)
 
 ##Known Issues and Limitations
 - The deployment script is not yet idempotent and cannot handle updates 
