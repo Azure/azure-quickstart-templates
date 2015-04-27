@@ -1,0 +1,181 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "dnsNameforLBIP": {
+            "type": "string",
+            "defaultValue": "uniqueDNSName",
+            "metadata" : {
+                "description" : "Unique DNS name"
+            }
+        },
+        "location": {
+            "type": "string",
+            "allowedValues": ["East US", "West US", "West Europe", "East Asia", "South East Asia"],
+            "metadata" : {
+                "description" : "Location to deploy"
+            }
+
+        },
+        "virtualNetworkName": {
+            "type": "string",
+            "defaultValue": "myVNET",
+            "metadata" : {
+                "description" : "VNET Name"
+            }
+        },
+        "publicIPAddressName": {
+            "type": "string",
+            "defaultValue": "myPublicIP",
+            "metadata" : {
+                "description" : "Public IP Name"
+            }
+        },
+        "addressPrefix": {
+            "type": "string",
+            "defaultValue": "10.0.0.0/16",
+            "metadata" : {
+                "description" : "Address Prefix"
+            }
+        },
+        "subnetName": {
+            "type": "string",
+            "defaultValue": "Subnet-1",
+            "metadata" : {
+                "description" : "Subnet Name"
+            }
+        },
+        "subnetPrefix": {
+            "type": "string",
+            "defaultValue": "10.0.0.0/24",
+            "metadata" : {
+                "description" : "Subnet Prefix"
+            }
+        },
+        "publicIPAddressType": {
+            "type": "string",
+            "defaultValue": "Dynamic",
+            "allowedValues": [
+                "Dynamic",
+                "Static"
+            ],
+            "metadata" : {
+                "description" : "Public IP type"
+            }
+        },
+        "loadBalancerName": {
+            "type": "string",
+            "defaultValue": "myLoadBalancer",
+            "metadata" : {
+                "description" : "Loadbalancer Name"
+            }
+        },
+        "nicName": {
+            "type": "string",
+            "defaultValue": "myNic",
+            "metadata" : {
+                "description" : "NIC name"
+            }
+        }
+    },
+    "variables": {
+        "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
+        "subnetRef": "[concat(variables('vnetID'),'/subnets/',parameters('subnetName'))]",
+        "publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('publicIPAddressName'))]",
+        "lbID": "[resourceId('Microsoft.Network/loadBalancers',parameters('loadBalancerName'))]",
+        "nicId": "[resourceId('Microsoft.Network/networkInterfaces',parameters('nicName'))]",
+        "frontEndIPConfigID": "[concat(variables('lbID'),'/frontendIPConfigurations/LBFE')]",
+        "backEndIPConfigID": "[concat(variables('nicId'),'/ipConfigurations/ipconfig1')]"
+    },
+    "resources": [{
+        "apiVersion": "2015-05-01-preview",
+        "type": "Microsoft.Network/publicIPAddresses",
+        "name": "[parameters('publicIPAddressName')]",
+        "location": "[parameters('location')]",
+        "properties": {
+            "publicIPAllocationMethod": "[parameters('publicIPAddressType')]",
+            "dnsSettings": {
+                "domainNameLabel": "[parameters('dnsNameforLBIP')]"
+            }
+        }
+    }, {
+        "apiVersion": "2015-05-01-preview",
+        "type": "Microsoft.Network/virtualNetworks",
+        "name": "[parameters('virtualNetworkName')]",
+        "location": "[parameters('location')]",
+        "properties": {
+            "addressSpace": {
+                "addressPrefixes": [
+                    "[parameters('addressPrefix')]"
+                ]
+            },
+            "subnets": [{
+                "name": "[parameters('subnetName')]",
+                "properties": {
+                    "addressPrefix": "[parameters('subnetPrefix')]"
+                }
+            }]
+        }
+    }, {
+        "apiVersion": "2015-05-01-preview",
+        "type": "Microsoft.Network/networkInterfaces",
+        "name": "[parameters('nicName')]",
+        "location": "[parameters('location')]",
+        "dependsOn": [
+            "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
+        ],
+        "properties": {
+            "ipConfigurations": [{
+                "name": "ipconfig1",
+                "properties": {
+                    "privateIPAllocationMethod": "Dynamic",
+                    "subnet": {
+                        "id": "[variables('subnetRef')]"
+                    }
+                },
+                "loadBalancerBackendAddressPools": [{
+                    "id": "[concat('Microsoft.Network/loadBalancers/',parameters('loadBalancerName'),'/backendAddressPools/LBBE')]"
+                }],
+                "loadBalancerInboundNatRules": [{
+                    "id": "[concat('Microsoft.Network/loadBalancers/',parameters('loadBalancerName'),'/inboundNatRule/RDP')]"
+                }]
+            }]
+        }
+    }, {
+        "apiVersion": "2015-05-01-preview",
+        "name": "[parameters('loadBalancerName')]",
+        "type": "Microsoft.Network/loadBalancers",
+        "location": "[parameters('location')]",
+        "dependsOn": [
+            "[concat('Microsoft.Network/networkInterfaces/', parameters('nicName'))]",
+            "[concat('Microsoft.Network/publicIPAddresses/', parameters('publicIPAddressName'))]"
+        ],
+        "properties": {
+            "frontendIPConfigurations": [{
+                "name": "LBFE",
+                "properties": {
+                    "publicIPAddress": {
+                        "id": "[variables('publicIPAddressID')]"
+                    }
+                }
+            }],
+            "backendAddressPools": [{
+                    "name": "LBBE"
+                }
+
+            ],
+            "inboundNatRules": [{
+                "name": "RDP",
+                "properties": {
+                    "frontendIPConfiguration": {
+                        "id": "[variables('frontEndIPConfigID')]"
+                    },
+                    "protocol": "tcp",
+                    "frontendPort": 3389,
+                    "backendPort": 3389,
+                    "enableFloatingIP": false
+                }
+            }]
+        }
+    }]
+}
