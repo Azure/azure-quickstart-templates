@@ -1,0 +1,134 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "dnsNameForPublicIP": {
+            "type": "string",
+            "defaultValue": "uniqueDNSNameForPublicIP",
+            "metadata" : {
+              "Description" : "Unique DNS name for Public IP"
+            }
+        },
+        "location": {
+            "type": "string",
+            "allowedValues": ["East US", "West US", "West Europe", "East Asia", "South East Asia"],
+            "metadata" : {
+              "Description" : "Location of deployment"
+            }
+        },
+        "virtualNetworkName" :{
+            "type" : "string",
+            "defaultValue" : "myVNET",
+            "metadata" : {
+              "Description" : "VNET name"
+            }
+        },
+        "publicIPAddressName" : {
+            "type" : "string",
+            "defaultValue" : "myPublicIP",
+            "metadata" : {
+              "Description" : "public IP name"
+            }
+        },
+        "addressPrefix": {
+            "type": "string",
+            "defaultValue": "10.0.0.0/16",
+            "metadata" : {
+              "Description" : "Address Prefix"
+            }
+        },
+        "subnetName": {
+            "type": "string",
+            "defaultValue": "Subnet-1",
+            "metadata" : {
+              "Description" : "Subnet-1 Name"
+            }
+        },
+        "subnetPrefix": {
+            "type": "string",
+            "defaultValue": "10.0.0.0/24",
+            "metadata" : {
+              "Description" : "Subnet prefix"
+            }
+        },
+        "publicIPAddressType": {
+            "type": "string",
+            "defaultValue": "Dynamic",
+            "allowedValues": [
+                "Dynamic",
+                "Static"
+            ],
+            "metadata" : {
+              "Description" : "Type of public IP address"
+            }
+        },
+        "nicName":{
+            "type" : "string",
+            "defaultValue" : "myNic",
+            "metadata" : {
+              "Description" : "Name of NIC"
+            }
+        }
+        },
+    "variables" : {
+        "vnetID":"[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
+        "subnetRef" : "[concat(variables('vnetID'),'/subnets/',parameters('subnetName'))]"
+    },
+    "resources": [
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[parameters('publicIPAddressName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+          "publicIPAllocationMethod": "[parameters('publicIPAddressType')]",
+          "dnsSettings": {
+              "domainNameLabel": "[parameters('dnsNameForPublicIP')]"
+          }
+      }
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[parameters('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+          "addressSpace": {
+              "addressPrefixes": [
+                  "[parameters('addressPrefix')]"
+              ]
+          },
+          "subnets": [
+              {
+                  "name": "[parameters('subnetName')]",
+                  "properties": {
+                      "addressPrefix": "[parameters('subnetPrefix')]"
+                  }
+              }
+          ]
+      }
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[parameters('nicName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+          "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
+      ],
+      "properties": {
+          "ipConfigurations": [
+              {
+                  "name": "ipconfig1",
+                  "properties": {
+                      "privateIPAllocationMethod": "Dynamic",
+                      "subnet": {
+                          "id": "[variables('subnetRef')]"
+                      }
+                  }
+              }
+          ]
+      }
+    },
+    ]
+}
