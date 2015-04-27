@@ -28,12 +28,26 @@
                 "Description": "Password for the Virtual Machines" ,
             } 
         },
-        "vmSourceImageName": {
+        "imagePublisher": {
             "type": "string",
-            "defaultValue": "b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu-14_04_2_LTS-amd64-server-20150309-en-us-30GB",
-            "metadata": { 
-                "Description": "Source Image Name for the VM. Example: b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu-12_04_5-LTS-amd64-server-20140927-en-us-30GB" 
-            } 
+            "defaultValue": "Canonical",
+            "metadata": {
+                 "Description": "Image Publisher"
+            }
+        },
+        "imageOffer": {
+            "type": "string",
+            "defaultValue": "UbuntuServer",
+            "metadata": {
+                "Description": "Image Offer"
+            }
+        },
+        "imageSKU": {
+            "type": "string",
+            "defaultValue": "14.04.2-LTS",
+            "metadata": {
+                "Description": "Image SKU"
+            }
         },
         "location": {
             "type": "string",
@@ -87,7 +101,6 @@
         "vmStorageAccountContainerName": "vhds",
         "publicIPAddressType": "Dynamic",
         "storageAccountType": "Standard_LRS",
-        "sourceImageName": "[concat('/',subscription().subscriptionId,'/services/images/',parameters('vmSourceImageName'))]",
         "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
         "subnet1Ref": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]"
     },
@@ -95,14 +108,14 @@
         {
             "type": "Microsoft.Storage/storageAccounts",
             "name": "[parameters('newStorageAccountName')]",
-            "apiVersion": "2014-12-01-preview",
+            "apiVersion": "2015-05-01-preview",
             "location": "[parameters('location')]",
             "properties": {
                 "accountType": "[variables('storageAccountType')]"
             }
         },
         {
-            "apiVersion": "2014-12-01-preview",
+            "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Network/publicIPAddresses",
             "name": "[parameters('publicIPAddressName')]",
             "location": "[parameters('location')]",
@@ -114,7 +127,7 @@
             }
         },
         {
-            "apiVersion": "2014-12-01-preview",
+            "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Network/virtualNetworks",
             "name": "[parameters('virtualNetworkName')]",
             "location": "[parameters('location')]",
@@ -141,7 +154,7 @@
             }
         },
         {
-            "apiVersion": "2014-12-01-preview",
+            "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Network/networkInterfaces",
             "name": "[parameters('nicName')]",
             "location": "[parameters('location')]",
@@ -167,7 +180,7 @@
             }
         },
         {
-            "apiVersion": "2014-12-01-preview",
+            "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Compute/virtualMachines",
             "name": "[parameters('vmName')]",
             "location": "[parameters('location')]",
@@ -185,10 +198,20 @@
                     "adminPassword": "[parameters('adminPassword')]"
                 },
                 "storageProfile": {
-                    "sourceImage": {
-                        "id": "[variables('sourceImageName')]"
+                    "imageReference": {
+                        "publisher": "[parameters('imagePublisher')]",
+                        "offer": "[parameters('imageOffer')]",
+                        "sku" : "[parameters('imageSKU')]",
+                        "version":"latest"
                     },
-                    "destinationVhdsContainer": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/')]"
+                    "osDisk" : {
+                        "name": "osdisk",
+                        "vhd": {
+                           "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/','osdisk.vhd')]"
+                        },
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage"
+                    }
                 },
                 "networkProfile": {
                     "networkInterfaces": [
@@ -219,7 +242,7 @@
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "name": "[concat(parameters('vmName'),'/installPythonProxy')]",
-            "apiVersion": "2014-12-01-preview",
+            "apiVersion": "2015-05-01-preview",
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
@@ -230,7 +253,7 @@
                 "typeHandlerVersion": "1.2",
                 "settings": {
                     "fileUris": [
-                        "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/python-proxy-on-ubuntu/python-proxy-install-ubuntu.sh"
+                        "https://raw.githubusercontent.com/yuezh/azure-quickstart-templates/master/python-proxy-on-ubuntu/python-proxy-install-ubuntu.sh"
                     ],
                     "commandToExecute": "sh python-proxy-install-ubuntu.sh"
                 }
