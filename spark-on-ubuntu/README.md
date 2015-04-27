@@ -7,6 +7,9 @@
 This template deploys a Spark cluster on the Ubuntu virtual machines. This template also provisions a storage account, virtual network, availability sets, public IP addresses and network interfaces required by the installation.
 The template also creates 1 publicly accessible VM acting as a "jumpbox" and allowing to ssh into the Spark nodes for diagnostics or troubleshooting purposes.
 
+Apache Spark is a fast and general engine for large-scale data processing.
+Spark has an advanced DAG execution engine that supports cyclic data flow and in-memory computing.
+
 The example expects the following parameters:
 
 | Name   | Description    |
@@ -39,11 +42,15 @@ There is also a provision in the script to uncomment the build from source.
 
 NOTE: To access the individual Kafka nodes, you need to use the publicly accessible jumpbox VM and ssh from it into the VM instances running Kafka.
 
-To get start connect to the public ip of Jumpbox with username and password provided during deployment.
+To get started connect to the public ip of Jumpbox with username and password provided during deployment.
 From the jumpbox connect to any of the Spark workers eg: ssh 10.0.0.30 ,ssh 10.0.0.31, etc.
 Run the command ps-ef|grep spark to check that kafka process is running ok. To connect to master node you can use ssh 10.0.0.10
 
 You can access the Web UI portal by using Public IP alloted to the Master node like this PublicMasterIP:8080
+
+To access spark shell:
+cd /usr/local/spark/bin/
+sudo ./spark-shell
 
 NOTE: To access the individual Spark nodes, you need to use the publicly accessible jumpbox VM and ssh from it into the VM instances running Spark.
 
