@@ -1,0 +1,227 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01-preview/deploymentTemplate.json",
+    "contentVersion": "1.0.0.0",
+    "parameters" : {
+		"javaPackageName": {
+			"type": "String",
+            "defaultValue" : "openjdk-7-jdk",
+            "allowedValues": [
+              "openjdk-6-jdk",
+			  "openjdk-7-jdk",
+			  "openjdk-8-jdk"
+            ]
+		},
+	    "tomcatPackageName": {
+			"type": "String",
+            "defaultValue" : "tomcat7",
+            "allowedValues": [
+              "tomcat6",
+			  "tomcat7",
+			  "tomcat8"
+            ]
+		},
+        "location": {
+            "type": "String",
+            "defaultValue" : "West US",
+            "allowedValues": [
+              "West US"
+            ]
+        },
+        "newStorageAccountName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Storage Account"
+            }
+        },
+        "adminUserName": {
+            "type": "string"
+        },
+        "adminPassword": {
+            "type": "securestring"
+        },
+        "imagePublisher": {
+            "type": "string",
+            "defaultValue": "Canonical",
+            "metadata": {
+                 "Description": "Image Publisher"
+            }
+        },
+        "imageOffer": {
+            "type": "string",
+            "defaultValue": "UbuntuServer",
+            "metadata": {
+                "Description": "Image Offer"
+            }
+        },
+        "imageSKU": {
+            "type": "string",
+            "defaultValue": "14.10-DAILY",
+            "metadata": {
+                "Description": "Image SKU"
+            }
+        },
+        "vmDnsName" : {
+            "type" : "string"
+        }
+    },
+    "variables": {
+      "nicName": "myVMNic",
+      "addressPrefix": "10.0.0.0/16",
+      "subnet1Name": "Subnet-1",
+      "subnet1Prefix": "10.0.0.0/24",
+      "subnet2Name": "Subnet-2",
+      "subnet2Prefix": "10.0.1.0/24",
+      "publicIPAddressName": "myPublicIP",
+      "publicIPAddressType": "Dynamic",
+      "vmStorageAccountContainerName": "vhds",
+      "vmName": "[parameters('vmDnsName')]",
+      "vmSize": "Standard_A0",
+      "virtualNetworkName": "MyVNET",
+      "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
+      "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
+      "storageAccountType": "Standard_LRS",
+      "vnetID":"[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
+      "subnet1Ref" : "[concat(variables('vnetID'),'/subnets/',parameters('subnet1Name'))]",
+		  "commandToExecuteCustomScriptWithParams" : "[concat('sh java-tomcat-install.sh'),' ',parameters('javaPackageName'),' ',parameters('tomcatPackageName'))]"
+
+	},
+    "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[parameters('newStorageAccountName')]",
+      "apiVersion": "2015-01-01-preview",
+      "location": "[parameters('location')]",
+      "properties": {
+        "accountType": "[parameters('storageAccountType')]"
+      }
+    },
+    {
+        "apiVersion": "2015-01-01-preview",
+        "type": "Microsoft.Network/publicIPAddresses",
+        "name": "[parameters('publicIPAddressName')]",
+        "location": "[parameters('location')]",
+        "properties": {
+            "publicIPAllocationMethod": "[parameters('publicIPAddressType')]",
+            "dnsSettings": {
+                "domainNameLabel": "[parameters('dnsName')]"
+            }
+        }
+    },
+    {
+      "apiVersion": "2015-01-01-preview",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[parameters('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[parameters('subnet1Name')]",
+            "properties" : {
+                "addressPrefix": "[parameters('subnet1Prefix')]"
+            }
+          },
+          {
+            "name": "[parameters('subnet2Name')]",
+            "properties" : {
+                "addressPrefix": "[parameters('subnet2Prefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+        "apiVersion": "2015-01-01-preview",
+        "type": "Microsoft.Network/networkInterfaces",
+        "name": "[parameters('nicName')]",
+        "location": "[parameters('location')]",
+        "dependsOn": [
+            "[concat('Microsoft.Network/publicIPAddresses/', parameters('publicIPAddressName'))]",
+            "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
+        ],
+        "properties": {
+            "ipConfigurations": [
+            {
+                "name": "ipconfig1",
+                "properties": {
+                    "privateIPAllocationMethod": "Dynamic",
+                    "publicIPAddress": {
+                        "id": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('publicIPAddressName'))]"
+                    },
+                    "subnet": {
+                        "id": "[variables('subnet1Ref')]"
+                    }
+                }
+            }
+            ]
+        }
+    },
+    {
+        "apiVersion": "2015-01-01-preview",
+        "type": "Microsoft.Compute/virtualMachines",
+        "name": "[parameters('vmName')]",
+        "location": "[parameters('location')]",
+        "dependsOn": [
+            "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
+            "[concat('Microsoft.Network/networkInterfaces/', parameters('nicName'))]"
+        ],
+        "properties": {
+            "hardwareProfile": {
+                "vmSize": "[parameters('vmSize')]"
+            },
+            "osProfile": {
+                "computername": "[parameters('vmName')]",
+                "adminUsername": "[parameters('adminUsername')]",
+                "adminPassword": "[parameters('adminPassword')]"
+            },
+            "storageProfile": {
+              "imageReference": {
+                                  "publisher": "[parameters('imagePublisher')]",
+                                  "offer": "[parameters('imageOffer')]",
+                                  "sku" : "[parameters('imageSKU')]",
+                                  "version":"latest"
+                              },
+                "osDisk" : {
+                                    "name": "osdisk1",
+                                    "vhd": {
+                                       "uri": "[[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/','osdisk1spec.vhd')]"
+                                    },
+                                    "caching": "ReadWrite",
+                                    "createOption": "FromImage"
+                                }
+            },
+            "networkProfile": {
+                "networkInterfaces" : [
+                {
+                    "id": "[resourceId('Microsoft.Network/networkInterfaces',parameters('nicName'))]"
+                }
+                ]
+            }
+        }
+    },
+    {
+        "type": "Microsoft.Compute/virtualMachines/extensions",
+        "name": "[concat(parameters('vmName'),'/newuserscript')]",
+        "apiVersion": "2015-01-01-preview",
+        "location": "[parameters('location')]",
+        "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
+        ],
+        "properties": {
+            "publisher": "Microsoft.OSTCExtensions",
+            "type" : "CustomScriptForLinux",
+            "typeHandlerVersion": "1.2",
+            "settings" : {
+				"fileUris": [
+                        "https://raw.githubusercontent.com/snallami/templates/master/ubuntu/java-tomcat-install.sh"
+                    ],
+                    "commandToExecute": "[variables('commandToExecuteCustomScriptWithParams')]"
+            }
+        }
+    }
+    ]
+}
