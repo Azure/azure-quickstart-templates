@@ -728,7 +728,7 @@ def create_blueprint(scenario_id):
        },	 
        {
          "name" : "ZOOKEEPER_CLIENT"
-       }
+      }
       ],
       "cardinality" : "1"
     },
@@ -1750,8 +1750,15 @@ def create_blueprint(scenario_id):
                 "dfs.nfs3.dump.dir" : "/tmp/.hdfs-nfs",
                 "dfs.nfs.exports.allowed.hosts" : "* rw",
                 "dfs.datanode.max.xcievers" : "1024",
-                "dfs.block.access.token.enable" : "false"
+                "dfs.block.access.token.enable" : "false",
+        "dfs.datanode.data.dir": "/disks/0/hadoop/hdfs/data,/disks/1/hadoop/hdfs/data,/disks/2/hadoop/hdfs/data,/disks/3/hadoop/hdfs/data,/disks/4/hadoop/hdfs/data,/disks/5/hadoop/hdfs/data,/disks/6/hadoop/hdfs/data,/disks/7/hadoop/hdfs/data,/disks/8/hadoop/hdfs/data,/disks/9/hadoop/hdfs/data,/disks/10/hadoop/hdfs/data,/disks/11/hadoop/hdfs/data,/disks/12/hadoop/hdfs/data,/disks/13/hadoop/hdfs/data,/disks/14/hadoop/hdfs/data,/disks/15/hadoop/hdfs/data",
+        "dfs.namenode.checkpoint.dir": "/disks/0/hadoop/hdfs/namesecondary",
+        "dfs.namenode.name.dir": "/disks/0/hadoop/hdfs/namenode,/disks/1/hadoop/hdfs/namenode,/disks/2/hadoop/hdfs/namenode,/disks/3/hadoop/hdfs/namenode,/disks/4/hadoop/hdfs/namenode,/disks/5/hadoop/hdfs/namenode,/disks/6/hadoop/hdfs/namenode,/disks/7/hadoop/hdfs/namenode",
+        "dfs.datanode.failed.volumes.tolerated": "6"
             }
+
+            
+      
         },
         {
 		  "global": {
@@ -1783,7 +1790,9 @@ def create_blueprint(scenario_id):
                 "hive.txn.max.open.batch": "1000",
                 "hive.txn.timeout": "300",
                 "hive.security.authorization.enabled": "false",
-                "hive.users.in.admin.role": "hue,hive"
+                "hive.users.in.admin.role": "hue,hive",
+                "hive.metastore.uris" : "thrift://%HOSTGROUP::master_2%:9083"
+                
             }
         },
         {
@@ -1867,6 +1876,51 @@ def create_blueprint(scenario_id):
 
   standard_configurations = [
     {
+        "ams-hbase-env" : {
+            "properties" : {
+                    "hbase_master_heapsize" : "512m",
+                    "hbase_regionserver_heapsize" : "512m",
+                    "hbase_regionserver_xmn_max" : "256m",
+                    "hbase_regionserver_xmn_ratio" : "0.2"
+            }
+        }
+    },
+    {
+        "capacity-scheduler" : {
+            "yarn.scheduler.capacity.root.default.maximum-am-resource-percent" :  "0.5",
+            "yarn.scheduler.capacity.maximum-am-resource-percent" : "0.5"
+        }
+    },
+    {
+        "cluster-env": {
+            "cluster_name": "hdp",
+            "smokeuser": "ambari-qa",
+            "user_group": "hadoop",
+            "security_enabled": "false"
+        }
+    },
+    {
+        "core-site" : {
+            "hadoop.proxyuser.hue.hosts" : "*",
+            "hadoop.proxyuser.hue.groups" : "*",
+            "hadoop.proxyuser.root.hosts" : "*",
+            "hadoop.proxyuser.root.groups" : "*",
+            "hadoop.proxyuser.oozie.hosts" : "*",
+            "hadoop.proxyuser.oozie.groups" : "*",
+            "hadoop.proxyuser.hcat.hosts" : "*",
+            "hadoop.proxyuser.hcat.groups" : "*"
+        }
+    },
+    {
+        "hadoop-env": {
+            "dtnode_heapsize" : "250",
+            "hadoop_heapsize" : "250",
+            "namenode_heapsize" : "250",
+            "namenode_opt_newsize": "50",
+            "namenode_opt_maxnewsize": "100"
+        }
+    },
+    {
       "yarn-site": {
         "yarn.nodemanager.local-dirs": "/disks/0/hadoop/yarn/local,/disks/1/hadoop/yarn/local,/disks/2/hadoop/yarn/local,/disks/3/hadoop/yarn/local,/disks/4/hadoop/yarn/local,/disks/5/hadoop/yarn/local,/disks/6/hadoop/yarn/local,/disks/7/hadoop/yarn/local",
         "yarn.nodemanager.log-dirs": "/disks/0/hadoop/yarn/log,/disks/1/hadoop/yarn/log,/disks/2/hadoop/yarn/log,/disks/3/hadoop/yarn/log,/disks/4/hadoop/yarn/log,/disks/5/hadoop/yarn/log,/disks/6/hadoop/yarn/log,/disks/7/hadoop/yarn/log,/disks/8/hadoop/yarn/log,/disks/9/hadoop/yarn/log,/disks/10/hadoop/yarn/log,/disks/11/hadoop/yarn/log,/disks/12/hadoop/yarn/log,/disks/13/hadoop/yarn/log,/disks/14/hadoop/yarn/log,/disks/15/hadoop/yarn/log",
@@ -1898,7 +1952,8 @@ def create_blueprint(scenario_id):
         "dfs.datanode.data.dir": "/disks/0/hadoop/hdfs/data,/disks/1/hadoop/hdfs/data,/disks/2/hadoop/hdfs/data,/disks/3/hadoop/hdfs/data,/disks/4/hadoop/hdfs/data,/disks/5/hadoop/hdfs/data,/disks/6/hadoop/hdfs/data,/disks/7/hadoop/hdfs/data,/disks/8/hadoop/hdfs/data,/disks/9/hadoop/hdfs/data,/disks/10/hadoop/hdfs/data,/disks/11/hadoop/hdfs/data,/disks/12/hadoop/hdfs/data,/disks/13/hadoop/hdfs/data,/disks/14/hadoop/hdfs/data,/disks/15/hadoop/hdfs/data",
         "dfs.namenode.checkpoint.dir": "/disks/0/hadoop/hdfs/namesecondary",
         "dfs.namenode.name.dir": "/disks/0/hadoop/hdfs/namenode,/disks/1/hadoop/hdfs/namenode,/disks/2/hadoop/hdfs/namenode,/disks/3/hadoop/hdfs/namenode,/disks/4/hadoop/hdfs/namenode,/disks/5/hadoop/hdfs/namenode,/disks/6/hadoop/hdfs/namenode,/disks/7/hadoop/hdfs/namenode",
-        "dfs.datanode.failed.volumes.tolerated": "6"
+        "dfs.datanode.failed.volumes.tolerated": "6",
+        "dfs.nfs3.dump.dir" : "/tmp/.hdfs-nfs"
       }
     },
     {
@@ -1911,9 +1966,14 @@ def create_blueprint(scenario_id):
       }
     },
     {
-      "hbase-site": {
-        "hbase.tmp.dir": "/disks/0/hadoop/hbase"
-      }
+        "hbase-site" : {
+            "hbase.security.authorization": "true",
+            "hbase.rpc.engine": "org.apache.hadoop.hbase.ipc.SecureRpcEngine",
+            "hbase_master_heapsize": "250",
+            "hbase_regionserver_heapsize": "250",
+            "hbase.rpc.protection": "PRIVACY",
+      "hbase.tmp.dir": "/disks/0/hadoop/hbase"
+        }
     },
     {
       "storm-site": {
@@ -1929,7 +1989,8 @@ def create_blueprint(scenario_id):
       "hive-site": {
         "hive.auto.convert.join.noconditionaltask.size" : "716177408",
         "hive.tez.container.size" : "2048",
-        "hive.tez.java.opts" : "-server -Xmx1638m -Djava.net.preferIPv4Stack=true -XX:NewRatio=8 -XX:+UseNUMA -XX:+UseParallelGC"
+        "hive.tez.java.opts" : "-server -Xmx1638m -Djava.net.preferIPv4Stack=true -XX:NewRatio=8 -XX:+UseNUMA -XX:+UseParallelGC",
+        "hive.metastore.uris" : "thrift://%HOSTGROUP::master_3%:9083"
       }
     }
   ]
