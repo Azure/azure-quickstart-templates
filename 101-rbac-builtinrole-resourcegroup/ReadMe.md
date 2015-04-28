@@ -7,7 +7,6 @@ This template assigns Owner, Reader or Contributor access to an existing resourc
 1. Subscription ID
 2. Principal ID
 3. Role Definition ID
-4. Resource Group Name
 
 **Use following powershell command to get Principal ID associated with a user using their email id. Please note, principal id maps to the id inside the directory and can point to a user, service principal, or security group. The ObjectId is the principal ID. 
 
