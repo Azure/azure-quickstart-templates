@@ -72,34 +72,25 @@ Start deployment
     PS C:\Users\azureuser1> New-AzureResourceGroupDeployment -Name AZKFRGKAFKAV2DEP1 -ResourceGroupName "AZKFRGKAFKAEA3" -TemplateFile C:\gitsrc\azure-quickstart-templates\kafka-on-ubuntu-multidisks\azuredeploy.json -TemplateParameterFile C:\gitsrc\azure-quickstart-templates\kafka-on-ubuntu-multidisks\azuredeploy-parameters.json -Verbose
 
     On successful deployment results will be like this
-    DeploymentName    : AZKFRGKAFKAV2DEP1
-    ResourceGroupName : AZKFRGKAFKAEA3
-    ProvisioningState : Succeeded
-    Timestamp         : 4/26/2015 4:40:51 PM
-    Mode              : Incremental
-    TemplateLink      :
-    Parameters        :
 
-                    Name             Type                       Value
-                    ===============  =========================  ==========
-                    adminUsername    String                     adminuser
-                    adminPassword    SecureString
-                    imagePublisher   String                     Canonical
-                    imageOffer       String                     UbuntuServer
-                    imageSKU         String                     14.04.2-LTS
-                    storageAccountName  String                     armdeploykafkastr1
-                    region           String                     West US
-                    virtualNetworkName  String                     kafkaClustVnet
-                    dataDiskSize     Int                        100
-                    addressPrefix    String                     10.0.0.0/16
-                    subnetName       String                     Subnet1
-                    subnetPrefix     String                     10.0.0.0/24
-                    kafkaVersion     String                     3.0.0
-                    kafkaClusterName  String                     kafka-arm-cluster
-                    kafkaZooNodeIPAddressPrefix  String                     10.0.0.4
-                    kafkaNodeIPAddressPrefix  String                     10.0.0.1
-                    jumpbox          String                     enabled
-                    tshirtSize       String                     S
+	DeploymentName    : AZKFRGSPARKV2DEP1
+	ResourceGroupName : AZKFRGSPARKEA1
+	ProvisioningState : Succeeded
+	Timestamp         : 4/28/2015 9:11:19 PM
+	Mode              : Incremental
+	TemplateLink      :
+	Parameters        :
+
+	    Name             Type                       Value
+	    ===============  =========================  ==========
+	    region           String                     West US
+	    storageAccountNamePrefix  String                     cgnarmstrkafkav4
+	    domainName       String                     kafkacgnarmv4
+	    adminUsername    String                     adminuser
+	    adminPassword    SecureString
+	    tshirtSize       String                     Small
+	    jumpbox          String                     Enabled
+	    virtualNetworkName  String                     vnet
 
 Check Deployment 
 ----------------
@@ -113,9 +104,9 @@ You can run the kafka commands like this:
  
 	cd /usr/local/kafka/kafka_2.10-0.8.2.1/
 
-	bin/kafka-topics.sh --create --zookeeper 10.0.0.40:2181  --replication-factor 2 --partitions 1 --topic my-replicated-topic1
+	bin/kafka-topics.sh --create --zookeeper 10.0.1.10:2181  --replication-factor 2 --partitions 1 --topic my-replicated-topic1
 
-	bin/kafka-topics.sh --describe --zookeeper 10.0.0.40:2181  --topic my-replicated-topic1
+	bin/kafka-topics.sh --describe --zookeeper 10.0.1.10:2181  --topic my-replicated-topic1
 
 Topology
 --------

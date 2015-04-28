@@ -63,7 +63,7 @@ KF_VERSION="0.8.2.1"
 BROKER_ID=0
 ZOOKEEPER1KAFKA0="0"
 
-ZOOKEEPER_IP_PREFIX="10.0.0.4"
+ZOOKEEPER_IP_PREFIX="10.0.1.10"
 INSTANCE_COUNT=1
 ZOOKEEPER_PORT="2181"
 KAFKADIR="/var/lib/kafkadir"
@@ -174,9 +174,7 @@ setup_datadisks() {
 		echo "Symbolic link from ${KAFKADIR} already exists"
 	else
 		logger "Moving  data to the $MOUNTPOINT/kafkadir"
-		echo "Moving PostgreSQL data to the $MOUNTPOINT/kafkadir"
-		service postgresql stop
-		mkdir $MOUNTPOINT/kafkadir
+		echo "Moving Kafka data to the $MOUNTPOINT/kafkadir"
 		mv ${KAFKADIR} $MOUNTPOINT/kafkadir
 
 		# Create symbolic link so that configuration files continue to use the default folders
@@ -239,7 +237,7 @@ else
 	#
 	#Install kafka
 	#-----------------------
-	mkdir /var/lib/kafkadir
+	mkdir ${KAFKADIR}
 	setup_datadisks
 	install_kafka
 fi
