@@ -35,6 +35,7 @@ fi
 echo "Installing openjdk-7"
 apt-get -y update 
 apt-get -y install openjdk-7-jdk
+apt-get -y update
 
 #### Install Jenkins
 echo "Installing Jenkins master"

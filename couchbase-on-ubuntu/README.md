@@ -1,4 +1,4 @@
-# Install a Datastax cluster on Ubuntu Virtual Machines using Custom Script Linux Extension
+# Install a Couchbase cluster on Ubuntu Virtual Machines using Custom Script Linux Extension
 
 <a href="https://azuredeploy.net/" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>

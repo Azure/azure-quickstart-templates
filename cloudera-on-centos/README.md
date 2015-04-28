@@ -1,4 +1,4 @@
-# This documentation is in progress and will change. There may be issues deploying this template
+# There may be issues deploying this template
 
 # Deploy a Cloudera CDH installation on CentOS virtual machines
 
@@ -26,7 +26,6 @@ The template expects the following parameters:
 | nodeAddressPrefix | The IP address prefix that will be used for constructing private IP address for each node in the cluster | 10.0.0. |
 | tshirtSize | T-shirt size of the Cloudera cluster (Eval, Small, Medium, Large) | Eval |
 | vmSize | The size of the VMs deployed in the cluster (Defaults to Standard_D14) | Standard_D14 |
-| publicSSHCert | The base64 representation of the certificate used for SSH login. Details in Key Vault and SSH Keys section below. | Read section below |
 | keyVaultResourceGroup | The resource group containing the key vault which provides the private key used for SSH login. | AzureRM-Util |
 | keyVaultName | The name of the key vault which provides the private key  used for SSH login. | AzureRM-Keys |
 | keyUri | The url of the private key used for SSH login. Details in Key Vault and SSH Keys section below. | Read section below |
@@ -48,13 +47,6 @@ The following table outlines the deployment topology characteristics for each su
 | Medium | Standard_D14 | 16 | 112 GB | 16x1000 GB | 1 | 2 | 50 |
 | Large | Standard_D14 | 16 | 112 GB | 16x1000 GB | 1 | 2 | 200 |
 
-##Notes, Known Issues & Limitations
-- All nodes in the cluster have a public IP address.
-- Using passwords via SSH are disabled.  Private keys should be used to access the nodes in the cluster (See notes below.)
-- The deployment script is not yet idempotent and cannot handle updates (although it currently works for initial provisioning only)
-- SSH key is not yet implemented and the template currently takes a password for the admin user
-- If security is a concern, do not use the provided .pfx file
-
 ##Connecting to the cluster
 The machines are named according to a specific pattern.  The master node is named based on parameters and using the. 
 
@@ -74,8 +66,19 @@ The name nodes and data nodes of the cluster use the same pattern, but with -nn 
 
 To connect to the master node via SSH, use the .pem key in the repository if you used the provided key or your own .pem file.  See the section below for more information on SSH keys.
 
-	ssh -i server-cert.pem testuser@clouderatest-mn.westus.cloudapp.azure.com
+	ssh -i server-cert.pem testuser@[dnsNamePrefix]-mn.[region].cloudapp.azure.com
+	
+Once the deployment is complete, you can navigate to the Cloudera portal to watch the operation and track it's status. Be aware that the portal dashboard will report alerts since the services are still being installed.
 
+	http://[dnsNamePrefix]-mn.[region].cloudapp.azure.com:7180
+       
+##Notes, Known Issues & Limitations
+- All nodes in the cluster have a public IP address.
+- Using passwords via SSH are disabled.  Private keys should be used to access the nodes in the cluster (See notes below.)
+- The deployment script is not yet idempotent and cannot handle updates (although it currently works for initial provisioning only)
+- SSH key is not yet implemented and the template currently takes a password for the admin user
+- If security is a concern, do not use the provided .pfx file
+       
 ##Managing SSH Keys
 The Cloudera cluster uses SSH to communicate between machines during the provisioning process. A public/private key pair is used to provide authentication between the machines and must be provided at provisioning time.  A sample .pfx file is included and some steps must be taken to prepare it for use:
 - The pfx file must be uploaded to a key vault
@@ -99,14 +102,6 @@ Now execute the [upload-keys.ps1](upload-keys.ps1) script found in this reposito
 	  .\server-cert.pfx
 
 The output of the script will contain a URL that is used for the **keyUri** parameter.  The rest of the the **resourceGroupName** and **keyVaultName** used in the script above will be used for the **keyVaultResourceGroup** and **keyVaultName**.
-
-###Extracting the certificate from the pfx file
-OpenSSL will extract a certificate from a .pfx and print it to the console.
-
-	# The sample server-cert.pfx has no password
-	openssl pkcs12 -in server-cert.pfx -clcerts -nokeys
-
-The output of this command contains a base64 encoded string representing the certificate.  This string as a single line between the BEGIN CERTIFICATE and END CERTIFICATE delimiters is used for the **publicSSHCert** parameter.  If you use the provided server-cert.pfx file, the default parameter for **publicSSHCert** will work correctly.
 
 ###Extracting the private key from the pfx file
 OpenSSL will also extract the private key that can be used when connecting to the machine via SSL.

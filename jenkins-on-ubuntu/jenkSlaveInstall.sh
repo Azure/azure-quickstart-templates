@@ -29,5 +29,5 @@ chmod 777 ~/slave.jar
 
 # Launch slave agent
 echo "Executing slave.jar with http://$MASTERNODE:8080/computer/$SLAVENODE/slave-agent.jnlp"
-sudo java -jar ~/slave.jar -jnlpUrl http://$MASTERNODE:8080/computer/$SLAVENODE/slave-agent.jnlp
+nohup java -jar ~/slave.jar -jnlpUrl http://$MASTERNODE:8080/computer/$SLAVENODE/slave-agent.jnlp &
 

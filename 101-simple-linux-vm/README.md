@@ -16,4 +16,4 @@ Below are the parameters that the template expects:
 | adminUsername  | Username for the Virtual Machine  |
 | adminPassword  | Password for the Virtual Machine  |
 | dnsNameForPublicIP  | Unique DNS Name for the Public IP used to access the Virtual Machine. |
-| ubuntuOSVersion  | The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version. Allowed values: 12.04.2-LTS, 12.04.3-LTS, 12.04.4-LTS, 12.04.5-LTS, 14.04.2-LTS, 15.04, 12.04-DAILY, 12.04.5-LTS, 14.04.2-LTS, 14.04-DAILY, 14.10-DAILY, 15.04-DAILY |
+| ubuntuOSVersion  | The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version. Allowed values: 12.04.2-LTS, 12.04.3-LTS, 12.04.4-LTS, 12.04.5-LTS, 12.10, 14.04.2-LTS, 14.10, 15.04 |
