@@ -6,7 +6,7 @@ ADMINUSER=$1
 sed -i '/Defaults[[:space:]]\+!*requiretty/s/^/#/' /etc/sudoers
 
 # Mount and format the attached disks
-sh ./prepareDisks.sh
+#sh ./prepareDisks.sh
 
 #use the key from the key vault as the SSH authorized key
 mkdir /home/$ADMINUSER/.ssh

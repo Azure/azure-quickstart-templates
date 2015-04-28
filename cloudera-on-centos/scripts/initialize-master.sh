@@ -37,4 +37,4 @@ done
 
 IFS=',';NODE_IPS="${NODES[*]}";IFS=$' \t\n'
 
-sh bootstrap-cloudera.sh 'cloudera' "$IPPREFIX9:${NAMEPREFIX}-mn:${NAMEPREFIX}-mn.$NAMESUFFIX" $NODE_IPS false testuser >> /home/$ADMINUSER/bootstrap-cloudera.log
+#sh bootstrap-cloudera.sh 'cloudera' "$IPPREFIX9:${NAMEPREFIX}-mn:${NAMEPREFIX}-mn.$NAMESUFFIX" $NODE_IPS false testuser >> /home/$ADMINUSER/bootstrap-cloudera.log
