@@ -1,12 +1,12 @@
-# Deployment of a Premium Windows VM
+# Deployment of a Premium Windows VM with Diagnostics Extension
 
-<a href="https://deploy.azure.com/?repository=https://github.com/Azure/azure-quickstart-templates/tree/master/101-simple-windows-vm" target="_blank">
+<a href="https://deploy.azure.com/?repository=https://github.com/Azure/azure-quickstart-templates/tree/master/201-premium-windows-vm-diagnostics-extension" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
 Built by: [kenazk](https://github.com/kenazk)
 
-This template allows you to deploy a Premium Windows VM using a few different options for the Windows version, using the latest patched version.
+This template allows you to deploy a Premium Windows VM using a few different options for the Windows version, using the latest patched version. In addition, it will provision the Diagnostics Extension on your behlf. 
 
 Below are the parameters that the template expects: 
 
@@ -14,6 +14,7 @@ Below are the parameters that the template expects:
 |:--- |:---|
 | location | Location to deploy to | 
 | newStorageAccountName  | Unique DNS Name for the Storage Account where the Virtual Machine's disks will be placed. |
+| vmDiagnosticsStorageAccountName | Unique DNS name for the Storage Account where the Virtual Machine's diagnostics are placed. | 
 | adminUsername  | Username for the Virtual Machine  |
 | adminPassword  | Password for the Virtual Machine  |
 | dnsNameForPublicIP  | Unique DNS Name for the Public IP used to access the Virtual Machine. |
