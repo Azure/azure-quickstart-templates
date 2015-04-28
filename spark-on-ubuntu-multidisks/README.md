@@ -45,7 +45,7 @@ Create a resource group:
 
 Start deployment 
 
-    PS C:\Users\azureuser1> New-AzureResourceGroupDeployment -Name AZKFRGSPARKV2DEP1 -ResourceGroupName "AZKFRGSPARKEA3" -TemplateFile C:\gitsrc\azure-quickstart-templates\spark-on-ubuntu\azuredeploy.json -TemplateParameterFile C:\gitsrc\azure-quickstart-templates\spark-on-ubuntu\azuredeploy-parameters.json -Verbose
+    PS C:\Users\azureuser1> New-AzureResourceGroupDeployment -Name AZKFRGSPARKV2DEP1 -ResourceGroupName "AZKFRGSPARKEA3" -TemplateFile C:\gitsrc\azure-quickstart-templates\spark-on-ubuntu-multidisks\azuredeploy.json -TemplateParameterFile C:\gitsrc\azure-quickstart-templates\spark-on-ubuntu-multidisks\azuredeploy-parameters.json -Verbose
 
     On successful deployment results will be like this
     DeploymentName    : AZKFRGSPARKV2DEP1
