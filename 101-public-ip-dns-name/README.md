@@ -14,5 +14,4 @@ Below are the parameters that the template expects
 |:--- |:---|
 | dnsNameForPublicIP  | Unique DNS Name for the Public IP used to access the Virtual Machine. |
 | location | location where the resources will be deployed |
-| publicIPAddressName | Name of Public IP Address Name |
 

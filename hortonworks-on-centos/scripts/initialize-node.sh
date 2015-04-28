@@ -19,16 +19,25 @@ sed -i s/SELINUX=enforcing/SELINUX=disabled/ /etc/selinux/config
 chkconfig iptables off
 
 # Start ntpd on boot
-chkconfig ntpd on 
+chkconfig ntpd on
 
+# Install ambari
 sudo yum install -y epel-release
-
 sudo wget http://public-repo-1.hortonworks.com/ambari/centos6/2.x/updates/2.0.0/ambari.repo
 sudo cp ambari.repo /etc/yum.repos.d
 sudo rm -f ambari.repo
-
 sudo yum install -y ambari-agent
 
+# Format and mount the disks
+let i=0 || true
+for disk in $(sfdisk -l | grep "Disk /dev/sd[^ab]" | sed -r "s/Disk (\/dev\/sd.):.*$/\1/");
+do
+  sh ./mountDisk.sh $disk $i 0</dev/null & 
+  let i=(i + 1) || true
+done
+wait
+
+# Format the node IPs and setup the node
 let "MASTERNODES=NAMENODES+1"
 
 MASTER_NODES=()
