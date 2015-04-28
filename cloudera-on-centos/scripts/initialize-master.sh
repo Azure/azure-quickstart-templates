@@ -1,5 +1,4 @@
 #!/bin/bash
-sh ./initialize-node.sh
 
 # Put the command line parameters into named variables
 IPPREFIX=$1
@@ -8,6 +7,8 @@ NAMESUFFIX=$3
 NAMENODES=$4
 DATANODES=$5
 ADMINUSER=$6
+
+sh ./initialize-node.sh $ADMINUSER
 
 # Converts a domain like machine.domain.com to domain.com by removing the machine name
 NAMESUFFIX=`echo $NAMESUFFIX | sed 's/^[^.]*\.//'`
@@ -24,16 +25,16 @@ let "NAMEEND=NAMENODES-1"
 for i in $(seq 0 $NAMEEND)
 do 
   let "IP=i+10"
-  NODES+=("10.0.0.$IP:${NAMEPREFIX}-nn$i:${NAMEPREFIX}-nn$i.$NAMESUFFIX")
+  NODES+=("$IPPREFIX$IP:${NAMEPREFIX}-nn$i:${NAMEPREFIX}-nn$i.$NAMESUFFIX")
 done
 
 let "DATAEND=DATANODES-1"
 for i in $(seq 0 $DATAEND)
 do 
   let "IP=i+20"
-  NODES+=("10.0.0.$IP:${NAMEPREFIX}-dn$i:${NAMEPREFIX}-dn$i.$NAMESUFFIX")
+  NODES+=("$IPPREFIX$IP:${NAMEPREFIX}-dn$i:${NAMEPREFIX}-dn$i.$NAMESUFFIX")
 done
 
 IFS=',';NODE_IPS="${NODES[*]}";IFS=$' \t\n'
 
-sh bootstrap-cloudera.sh 'cloudera' "10.0.0.9:${NAMEPREFIX}-mn:${NAMEPREFIX}-mn.$NAMESUFFIX" $NODE_IPS false testuser >> /home/$ADMINUSER/bootstrap-cloudera.log
+#sh bootstrap-cloudera.sh 'cloudera' "$IPPREFIX9:${NAMEPREFIX}-mn:${NAMEPREFIX}-mn.$NAMESUFFIX" $NODE_IPS false testuser >> /home/$ADMINUSER/bootstrap-cloudera.log
