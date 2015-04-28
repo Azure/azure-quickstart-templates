@@ -20,8 +20,8 @@ The template creates the following deployment resources:
 * Multiple remotely-hosted CustomScriptForLinux extensions to strip the data disks and to install and configure Kafka services
 
 Assuming your domainName parameter was "kafkajumpbox" and region was "West US"
-* Kafka servers will be deployed at IP address in the subnet: 10.0.2.4,10.0.2.5,10.0.2.6, etc.
-* Zookeeper servers will be deployed in the other IP addresses: 10.0.1.5, 10.0.1.6, 10.0.1.7, etc.
+* Kafka servers will be deployed at IP address prefix in the subnet: 10.0.2.10,10.0.2.11,10.0.2.12, etc.
+* Zookeeper servers will be deployed in the other IP addresses: 10.0.1.10, 10.0.1.11, 10.0.1.12, etc.
 * From your computer, SSH into the jumpbox `ssh kafkajumpbox.westus.cloudapp.azure.com`
 * From the jumpbox, SSH into the Kafka server `ssh 10.0.2.4`
 
@@ -69,7 +69,7 @@ Create a resource group:
     
 Start deployment 
     
-    PS C:\Users\azureuser1> New-AzureResourceGroupDeployment -Name AZKFRGKAFKAV2DEP1 -ResourceGroupName "AZKFRGKAFKAEA3" -TemplateFile C:\gitsrc\azure-quickstart-templates\kafka-on-ubuntu\azuredeploy.json -TemplateParameterFile C:\gitsrc\azure-quickstart-templates\kafka-on-ubuntu\azuredeploy-parameters.json -Verbose
+    PS C:\Users\azureuser1> New-AzureResourceGroupDeployment -Name AZKFRGKAFKAV2DEP1 -ResourceGroupName "AZKFRGKAFKAEA3" -TemplateFile C:\gitsrc\azure-quickstart-templates\kafka-on-ubuntu-multidisks\azuredeploy.json -TemplateParameterFile C:\gitsrc\azure-quickstart-templates\kafka-on-ubuntu-multidisks\azuredeploy-parameters.json -Verbose
 
     On successful deployment results will be like this
     DeploymentName    : AZKFRGKAFKAV2DEP1
@@ -107,23 +107,23 @@ Check Deployment
 To access the individual Kafka nodes, you need to use the publicly accessible jumpbox VM and ssh from it into the VM instances running Kafka.
 
 To get started connect to the public ip of Jumpbox with username and password provided during deployment.
-From the jumpbox connect to any of the Kafka brokers eg: ssh 10.0.0.10 ,ssh 10.0.0.11, etc.
+From the jumpbox connect to any of the Kafka brokers eg: SSH into the Kafka server `ssh 10.0.2.4` ,`ssh 10.0.2.5`, etc.
 Run the command ps-ef|grep kafka to check that kafka process is running ok.
 You can run the kafka commands like this:
  
-cd /usr/local/kafka/kafka_2.10-0.8.2.1/
+	cd /usr/local/kafka/kafka_2.10-0.8.2.1/
 
-bin/kafka-topics.sh --create --zookeeper 10.0.0.40:2181  --replication-factor 2 --partitions 1 --topic my-replicated-topic1
+	bin/kafka-topics.sh --create --zookeeper 10.0.0.40:2181  --replication-factor 2 --partitions 1 --topic my-replicated-topic1
 
-bin/kafka-topics.sh --describe --zookeeper 10.0.0.40:2181  --topic my-replicated-topic1
+	bin/kafka-topics.sh --describe --zookeeper 10.0.0.40:2181  --topic my-replicated-topic1
 
 Topology
 --------
 
 The deployment topology is comprised of Kafka Brokers and Zookeeper nodes running in the cluster mode.
 Kafka version 0.8.2.1 is the default version and can be changed to any pre-built binaries avaiable on Kafka repo.
-A static IP address will be assigned to each Kafka node in order to work around the current limitation of not being able to dynamically compose a list of IP addresses from within the template (by default, the first node will be assigned the private IP of 10.0.0.10, the second node - 10.0.0.11, and so on)
-A static IP address will be assigned to each Zookeeper node in order to work around the current limitation of not being able to dynamically compose a list of IP addresses from within the template (by default, the first node will be assigned the private IP of 10.0.0.40, the second node - 10.0.0.41, and so on)
+A static IP address will be assigned to each Kafka node (by default, the first node will be assigned the private IP of 10.0.2.10, the second node - 10.0.2.11, and so on)
+A static IP address will be assigned to each Zookeeper node(by default, the first node will be assigned the private IP of 10.0.1.10, the second node - 10.0.1.11, and so on)
 
 To check deployment errors go to the new azure portal and look under Resource Group -> Last deployment -> Check Operation Details
 
