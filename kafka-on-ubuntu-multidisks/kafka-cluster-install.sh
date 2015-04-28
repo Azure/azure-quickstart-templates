@@ -42,6 +42,9 @@ then
     exit 3
 fi
 
+#Format the data disk
+bash vm-disk-utils-0.1.sh -s
+
 # TEMP FIX - Re-evaluate and remove when possible
 # This is an interim fix for hostname resolution in current VM
 grep -q "${HOSTNAME}" /etc/hosts
@@ -64,6 +67,8 @@ ZOOKEEPER_IP_PREFIX="10.0.0.4"
 INSTANCE_COUNT=1
 ZOOKEEPER_PORT="2181"
 KAFKADIR="/var/lib/kafkadir"
+# sed command issues need escape character \
+KAFKADIRSED="\/var\/lib\/kafkadir"
 
 #Loop through options passed
 while getopts :k:b:z:i:c:p:h optname; do
