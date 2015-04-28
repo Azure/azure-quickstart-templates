@@ -13,7 +13,7 @@ The example expects the following parameters:
 |:--- |:---|:---|
 | adminUsername  | Administrator user name used when provisioning virtual machines | |
 | adminPassword  | Administrator password used when provisioning virtual machines | |
-| storageAccountName  | Unique namespace for the Storage Account where the Virtual Machine's disks will be placed | |
+| storageAccountName | Unique namespace for a new storage account where the virtual machine's disks will be placed (cannot be an existing storage account) | |
 | region | Location where resources will be provisioned | |
 | virtualNetworkName | The arbitrary name of the virtual network provisioned for the Redis cluster | redisVirtNet |
 | addressPrefix | The network address space for the virtual network | 10.0.0.0/16 |

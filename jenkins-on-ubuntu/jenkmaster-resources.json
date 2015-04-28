@@ -17,13 +17,16 @@
     "namespace": {
       "type": "string"
     },
-    "vmbasename": { 
+    "vmbasename": {
       "type": "string"
     },
     "osSettings": {
       "type": "object"
     },
     "vmSize": {
+      "type": "string"
+    },
+    "dnsName": { 
       "type": "string"
     },
     "slaveNodes": {
@@ -41,23 +44,26 @@
   },
   "resources": [
     {
-      "apiVersion": "2014-12-01-preview",
+      "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "jenkMasterPublicIp",
       "location": "[parameters('region')]",
       "properties": {
-        "publicIPAllocationMethod": "Dynamic"
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('dnsName')]"
+        }
       }
     },
     {
-      "apiVersion": "2014-12-01-preview",
+      "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[concat(parameters('namespace'), 'set')]",
       "location": "[parameters('region')]",
       "properties": { }
     },
     {
-      "apiVersion": "2014-12-01-preview",
+      "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(parameters('namespace'), concat(parameters('vmbasename'), 'nic'))]",
       "location": "[parameters('region')]",
@@ -83,9 +89,9 @@
       }
     },
     {
-      "apiVersion": "2014-12-01-preview",
+      "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[concat(parameters('namespace'), concat(parameters('vmbasename'), 'vm'))]",
+      "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'vm')]",
       "location": "[parameters('region')]",
       "dependsOn": [
         "[concat('Microsoft.Network/networkInterfaces/', concat(parameters('namespace'), concat(parameters('vmbasename'), 'nic')))]"
@@ -100,10 +106,15 @@
           "adminPassword": "[parameters('adminPassword')]"
         },
         "storageProfile": {
-          "sourceImage": {
-            "id": "[parameters('osSettings').sourceImage]"
-          },
-          "destinationVhdsContainer": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/')]"
+          "imageReference": "[parameters('osSettings').imageReference]",
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat('http://', parameters('storageAccountName'),'.blob.core.windows.net/vhds/', parameters('vmbasename'), '-osdisk.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -133,7 +144,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'vm', '/jenkInstall')]",
-      "apiVersion": "2014-12-01-preview",
+      "apiVersion": "2015-05-01-preview",
       "location": "[parameters('region')]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', concat(parameters('namespace'), concat(parameters('vmbasename'), 'vm')))]",
@@ -149,7 +160,7 @@
         }
       }
     }
-    
+
 
   ],
   "outputs": {}

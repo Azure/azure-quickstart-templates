@@ -1,6 +1,6 @@
 # Very simple deployment of an Windows VM
 
-<a href="https://azuredeploy.net/?repository=https://github.com/Azure/azure-quickstart-templates/101-simple-windows-vm" target="_blank">
+<a href="https://deploy.azure.com/?repository=https://github.com/Azure/azure-quickstart-templates/tree/master/101-simple-windows-vm" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
