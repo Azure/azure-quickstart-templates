@@ -7,7 +7,7 @@
 
 This advanced template creates a Multi VM Couchbase Cluster,it also configures Ansible so you can easily manage all the VMS. 
 
-This template  creates a new Storage Account, a Virtual Network, an Availability Sets (up to 3 Fault Domains and up to 20 Update Domains), one private NIC per VM, one public IP ,a Load Balancer.You can specify SSH keys to access your Ansible Controller remotely from your latop. Minimun recommded VM Size is Standard_D2 and by default 4 data disks will be attaached to the VM.
+This template  creates a new Storage Account (standard or premium) for all the Couchbase VMS , a Virtual Network, an Availability Sets (up to 3 Fault Domains and up to 20 Update Domains), one private NIC per VM, one public IP ,a Load Balancer.You can specify SSH keys to access your Ansible Controller remotely from your latop. Minimun recommded VM Size is Standard_D2 and by default 4 data disks will be attached to the VM.
 You will need an additional certificate / public key for the Ansible configuration and before executing the template you have to upload them to a Private azure storage account.  
 
 The template uses two Custom Scripts  :
@@ -16,7 +16,7 @@ The template uses two Custom Scripts  :
  * Then, the script will install Couchbase in all the Servers using Ansible and the ansible-couchbase-server  playbook.
  * Before you execute the script, you will need to create a PRIVATE storage account and upload your certificate and public key that ansible will use, as well as the bash scripts and ansible Playbooks.
 
- Once the template finishes, ssh into the AnsibleController VM (by default the load balancer has a NAT rule using the port 64000), then you can manage your VMS with ansible and the root user. For instance : 
+ Once the template finishes, ssh into the AnsibleController VM (by default the load balancer has a NAT rule using the port 64000), then you can manage your VMS with ansible as the root user. For instance : 
 
 ```
 sudo su root
@@ -35,11 +35,14 @@ Below are the parameters that the template expects
 |:--- |:---|
 | location  | Region where you want to create all the resources |
 | storageAccountName  | Name of the storage account , the template will also append the name of the resource group |
-| storageAccountType  | Standard_LRS or Premium_LRS  (* For future versions) |
+| storageAccountType  | Standard_LRS or Premium_LRS  (For Premium, use the DS VMs) |
+| imagePublisher | Canonica (default) or OpenLogic |
+| imageOffer | "UbuntuServer" (default) or CentOS |
+| imageSKU | "12.04.5-LTS" (default) or 6.5 |
 | vmNumberOfDataDisks | Number of Data Disk (* For future versions, today a fixed number of 4 disks will be created) |
 | vmSizeDataDisks  | Size of Data disks : By default 4 data disks will be created |
 | vmFileSystem | ext4 or xfs (* For future versions) |
-| createRAID | True or False. Specify true if you want to RAID all the data disks (* For future versions)  |
+| createRAID | True or False. Specify true if you want to RAID all the data disks (* For future versions, currently if a RAID is created by default)  |
 | vmSize | Size of VMs, minimun size support Standard_D2 |
 | serversRole | Servers role, for instance webtier, database.A tag will be created with the provided value. |
 | serversPurpose | Purpose of the server, for instance DEV, TEST, INT , PRO.A tag () will be created with the provided value . |
