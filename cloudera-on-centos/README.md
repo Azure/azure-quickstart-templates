@@ -26,7 +26,6 @@ The template expects the following parameters:
 | nodeAddressPrefix | The IP address prefix that will be used for constructing private IP address for each node in the cluster | 10.0.0. |
 | tshirtSize | T-shirt size of the Cloudera cluster (Eval, Small, Medium, Large) | Eval |
 | vmSize | The size of the VMs deployed in the cluster (Defaults to Standard_D14) | Standard_D14 |
-| publicSSHCert | The base64 representation of the certificate used for SSH login. Details in Key Vault and SSH Keys section below. | Read section below |
 | keyVaultResourceGroup | The resource group containing the key vault which provides the private key used for SSH login. | AzureRM-Util |
 | keyVaultName | The name of the key vault which provides the private key  used for SSH login. | AzureRM-Keys |
 | keyUri | The url of the private key used for SSH login. Details in Key Vault and SSH Keys section below. | Read section below |
@@ -103,14 +102,6 @@ Now execute the [upload-keys.ps1](upload-keys.ps1) script found in this reposito
 	  .\server-cert.pfx
 
 The output of the script will contain a URL that is used for the **keyUri** parameter.  The rest of the the **resourceGroupName** and **keyVaultName** used in the script above will be used for the **keyVaultResourceGroup** and **keyVaultName**.
-
-###Extracting the certificate from the pfx file
-OpenSSL will extract a certificate from a .pfx and print it to the console.
-
-	# The sample server-cert.pfx has no password
-	openssl pkcs12 -in server-cert.pfx -clcerts -nokeys
-
-The output of this command contains a base64 encoded string representing the certificate.  This string as a single line between the BEGIN CERTIFICATE and END CERTIFICATE delimiters is used for the **publicSSHCert** parameter.  If you use the provided server-cert.pfx file, the default parameter for **publicSSHCert** will work correctly.
 
 ###Extracting the private key from the pfx file
 OpenSSL will also extract the private key that can be used when connecting to the machine via SSL.
