@@ -69,7 +69,7 @@ Create a resource group:
     
 Start deployment 
     
-    PS C:\Users\azureuser1> New-AzureResourceGroupDeployment -Name AZKFRGKAFKAV2DEP1 -ResourceGroupName "AZKFRGKAFKAEA3" -TemplateFile C:\gitsrc\azure-quickstart-templates\kafka-on-ubuntu-multidisks\azuredeploy.json -TemplateParameterFile C:\gitsrc\azure-quickstart-templates\kafka-on-ubuntu-multidisks\azuredeploy-parameters.json -Verbose
+    PS C:\Users\azureuser1> New-AzureResourceGroupDeployment -Name AZKFRGKAFKAV2DEP1 -ResourceGroupName "AZKFRGKAFKAEA3" -TemplateFile C:\gitsrc\azure-quickstart-templates\kafka-ubuntu-multidisks\azuredeploy.json -TemplateParameterFile C:\gitsrc\azure-quickstart-templates\kafka-ubuntu-multidisks\azuredeploy-parameters.json -Verbose
 
     On successful deployment results will be like this
 
