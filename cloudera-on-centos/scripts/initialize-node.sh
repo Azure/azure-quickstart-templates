@@ -2,8 +2,9 @@
 
 ADMINUSER=$1
 
-# Disable the need for a tty when running sudo
+# Disable the need for a tty when running sudo and allow passwordless sudo for the admin user
 sed -i '/Defaults[[:space:]]\+!*requiretty/s/^/#/' /etc/sudoers
+echo "$ADMINUSER ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
 # Mount and format the attached disks
 sh ./prepareDisks.sh
