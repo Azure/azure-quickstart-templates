@@ -1,4 +1,4 @@
-# Advanced Linux Ansible Template : Deploy N Linux VMs and manage them with Ansible
+# Advanced Linux Ansible Template : Setup Ansible to efficiently manage N Linux VMs
 
 <a href="https://azuredeploy.net/" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
@@ -41,7 +41,7 @@ Below are the parameters that the template expects
 | vmNumberOfDataDisks | Number of Data Disk (* For future versions, today a fixed number of 2 disks will be created) |
 | vmSizeDataDisks  | Size of Data disks : By default two data disks will be created |
 | vmFileSystem | ext4 or xfs (* For future versions) |
-| createRAID | True or False. Specify true if you want to RAID all the data disks (* For future versions)  |
+| createRAID | True or False. Specify true if you want to RAID all the data disks (* For future versions,currently if a RAID is created by default)  |
 | vmSize | Size of VMs |
 | serversRole | Servers role, for instance webtier, database.A tag will be created with the provided value. |
 | serversPurpose | Purpose of the server, for instance DEV, TEST, INT , PRO.A tag () will be created with the provided value . |
