@@ -1,6 +1,6 @@
 # Deployment of a Premium Windows VM
 
-<a href="https://deploy.azure.com/?repository=https://github.com/Azure/azure-quickstart-templates/tree/master/101-simple-windows-vm" target="_blank">
+<a href="https://deploy.azure.com/?repository=https://github.com/Azure/azure-quickstart-templates/tree/master/201-premium-windows-vm" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
