@@ -30,6 +30,15 @@ The example expects the following parameters:
 | jumpbox | The flag allowing to enable or disable provisioning of the jumpbox VM that can be used to access the Spark nodes |
 | tshirtSize | The t-shirt size of the Spark nodes Slaves or workers can be increased (small, medium, large) |
 
+The following table outlines the deployment topology characteristics for each supported t-shirt size:
+
+| T-Shirt Size | Database VM Size | CPU Cores | Memory | Data Disks | # of Secondaries | # of Storage Accounts |
+|:--- |:---|:---|:---|:---|:---|:---|:---|:---|
+| Small | Standard_A1 | 1 |1.75 GB | 2x1023 GB | 1 | 1 |
+| Medium | Standard_A3 | 4 | 7 GB | 8x1023 GB | 1 | 2 |
+| Large | Standard_A4 | 8 | 14 GB | 16x1023 GB | 2 | 2 |
+| XLarge | Standard_A4 | 8 | 14 GB | 16x1023 GB | 3 | 4 |
+
 How to Run the scripts 
 ----------------------
 
@@ -99,8 +108,11 @@ The deployment topology is comprised of Master and Slave Instance nodes running 
 Spark version 1.2.1 is the default version and can be changed to any pre-built binaries avaiable on Spark repo.
 There is also a provision in the script to uncomment the build from source.
 
- A static IP address will be assigned to each Spark Master node 10.0.0.10
- A static IP address will be assigned to each Spark Slave node in order to work around the current limitation of not being able to dynamically compose a list of IP addresses from within the template (by default, the first node will be assigned the private IP of 10.0.0.30, the second node - 10.0.0.31, and so on)
+Assuming your domainName parameter was "mypsqljumpbox" and region was "West US"
+* Master Spark server will be deployed at the first available IP address in the subnet: 10.0.1.4
+* Slave Spark servers will be deployed in the other IP addresses: 10.0.1.5, 10.0.1.6, 10.0.1.7, etc.
+* From your computer, SSH into the jumpbox `ssh sparkjumpbox.westus.cloudapp.azure.com`
+* From the jumpbox, SSH into the master Spark server `ssh 10.0.1.4`
 
 To check deployment errors go to the new azure portal and look under Resource Group -> Last deployment -> Check Operation Details
 
