@@ -82,11 +82,9 @@ Check Deployment
 To access the individual Spark nodes, you need to use the publicly accessible jumpbox VM and ssh from it into the VM instances running Spark.
 
 To get started connect to the public ip of Jumpbox with username and password provided during deployment.
-From the jumpbox connect to any of the Spark workers eg: ssh 10.0.0.30 ,ssh 10.0.0.31, etc.
+From the jumpbox connect to any of the Spark workers eg: ssh 10.0.0.5 ,ssh 10.0.0.6, etc.
 Run the command ps-ef|grep spark to check that kafka process is running ok. 
-To connect to master node you can use ssh 10.0.0.10
-
-You can access the Web UI portal by using Public IP alloted to the Master node like this PublicMasterIP:8080
+To connect to master node you can use ssh 10.0.0.4
 
 To access spark shell:
 

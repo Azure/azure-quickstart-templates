@@ -61,7 +61,7 @@ SPK_VERSION="1.2.1"
 MASTER1SLAVE0="-1"
 MASTERIP="10.0.1.4"
 NUMBEROFSLAVES="1"
-DATADIR="/srv"
+DATADIR="/srvdata"
 
 #Loop through options passed
 while getopts :k:m:d:s:h optname; do
