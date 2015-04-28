@@ -211,8 +211,8 @@ install_glusterfs_centos() {
     echo "installing gluster"
     wget --no-cache http://download.gluster.org/pub/gluster/glusterfs/LATEST/CentOS/glusterfs-epel.repo
     mv glusterfs-epel.repo  /etc/yum.repos.d/
-    wget -l 1 -nd -nc -r -A.rpm http://download.gluster.org/pub/gluster/glusterfs/LATEST/RHEL/epel-6/x86_64
-    yum -y install glusterfs-3.6.2-1.el6.x86_64.rpm glusterfs-fuse-3.6.2-1.el6.x86_64.rpm glusterfs-geo-replication-3.6.2-1.el6.x86_64.rpm glusterfs-server-3.6.2-1.el6.x86_64.rpm
+    wget -l 1 -nd -nc -r -A.rpm http://download.gluster.org/pub/gluster/glusterfs/3.6/3.6.3/RHEL/epel-6/x86_64/
+    yum -y install glusterfs-3.6.3-1.el6.x86_64.rpm glusterfs-fuse-3.6.3-1.el6.x86_64.rpm glusterfs-geo-replication-3.6.3-1.el6.x86_64.rpm glusterfs-server-3.6.3-1.el6.x86_64.rpm
 }
 
 configure_gluster() {
