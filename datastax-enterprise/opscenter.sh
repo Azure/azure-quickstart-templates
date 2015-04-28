@@ -267,7 +267,7 @@ EOF
 sleep 14
 
 # Login and get session token
-AUTH_SESSION=$(curl -k -X POST -d '{"username":"admin","password":"Blue1210"}' 'https://127.0.0.1:8443/login' | sed -e 's/^.*"sessionid"[ ]*:[ ]*"//' -e 's/".*//')
+AUTH_SESSION=$(curl -k -X POST -d '{"username":"admin","password":"admin"}' 'https://127.0.0.1:8443/login' | sed -e 's/^.*"sessionid"[ ]*:[ ]*"//' -e 's/".*//')
 
 # Provision a new cluster with the nodes passed
 curl -k -H "opscenter-session: $AUTH_SESSION" -H "Accept: application/json" -X POST https://127.0.0.1:8443/provision -d @provision.json
