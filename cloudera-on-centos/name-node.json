@@ -28,9 +28,32 @@
         "vmName": "[concat(parameters('dnsNamePrefix'), '-nn')]",
         "nicName": "[concat(variables('vmName'), '-nic')]",
         "publicIPAddressName": "[concat(variables('vmName'), '-publicIP')]",
-        "storageAccountName": "[concat(parameters('storageAccount').prefix, 'nn')]"
+        "storageAccountName": "[concat(parameters('storageAccount').prefix, 'nn')]",
+        "securityGroupName": "[concat(parameters('dnsNamePrefix'), '-nn-sg')]"
     },
     "resources": [         
+        {
+            "apiVersion": "2015-05-01-preview",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[variables('securityGroupName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "securityRules": [{
+                    "name": "SSH",
+                    "properties": {
+                        "description": "Allows SSH traffic",
+                        "protocol": "Tcp",
+                        "sourcePortRange": "22",
+                        "destinationPortRange": "22",
+                        "sourceAddressPrefix": "*",
+                        "destinationAddressPrefix": "*",
+                        "access": "Allow",
+                        "priority": 100,
+                        "direction": "Inbound"
+                    }
+                }]
+            }
+        },
         {
             "type": "Microsoft.Storage/storageAccounts",
             "name": "[concat(variables('storageAccountName'), copyIndex())]",
@@ -66,7 +89,8 @@
             "name": "[concat(variables('nicName'), copyIndex())]", 
             "location": "[parameters('region')]", 
             "dependsOn": [ 
-                "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'), copyIndex())]" 
+                "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'), copyIndex())]",
+                "[concat('Microsoft.Network/networkSecurityGroups/', variables('securityGroupName'))]"                
             ], 
             "copy": {
                 "name": "nameNodeNicLoop",
@@ -79,7 +103,10 @@
                         "privateIPAllocationMethod": "Static",             
                         "privateIPAddress": "[concat(parameters('networkSpec').privateIPPrefix, copyIndex(parameters('networkSpec').nameNodeAddressStart))]",
                         "subnet": { 
-                            "id": "[concat(resourceId('Microsoft.Network/virtualNetworks',parameters('networkSpec').virtualNetworkName), '/subnets/', parameters('networkSpec').virtualNetworkSubnetName)]"
+                            "id": "[concat(resourceId('Microsoft.Network/virtualNetworks',parameters('networkSpec').virtualNetworkName), '/subnets/', parameters('networkSpec').virtualNetworkSubnetName)]",
+                            "networkSecurityGroup" : {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('securityGroupName'))]"
+                            }
                         },
                         "publicIPAddress": { 
                             "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat(variables('publicIPAddressName'), copyIndex()))]" 

@@ -28,9 +28,32 @@
         "vmName": "[concat(parameters('dnsNamePrefix'), '-mn')]",
         "publicIPAddressName": "[concat(variables('vmName'), '-publicIP')]",
         "nicName": "[concat(variables('vmName'), '-nic')]",
-        "storageAccountName": "[concat(parameters('storageAccount').prefix, 'mn')]"
+        "storageAccountName": "[concat(parameters('storageAccount').prefix, 'mn')]",
+        "securityGroupName": "[concat(parameters('dnsNamePrefix'), '-mn-sg')]"
     },
     "resources": [
+        {
+            "apiVersion": "2015-05-01-preview",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[variables('securityGroupName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "securityRules": [{
+                    "name": "SSH",
+                    "properties": {
+                        "description": "Allows SSH traffic",
+                        "protocol": "Tcp",
+                        "sourcePortRange": "22",
+                        "destinationPortRange": "22",
+                        "sourceAddressPrefix": "*",
+                        "destinationAddressPrefix": "*",
+                        "access": "Allow",
+                        "priority": 100,
+                        "direction": "Inbound"
+                    }
+                }]
+            }
+        },
         {
             "type": "Microsoft.Storage/storageAccounts",
             "name": "[variables('storageAccountName')]",
@@ -58,7 +81,8 @@
             "name": "[variables('nicName')]", 
             "location": "[parameters('region')]", 
             "dependsOn": [ 
-                "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]" 
+                "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+                "[concat('Microsoft.Network/networkSecurityGroups/', variables('securityGroupName'))]"
             ], 
             "properties": { 
                 "ipConfigurations": [{ 
@@ -70,7 +94,10 @@
                             "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]" 
                         }, 
                         "subnet": { 
-                            "id": "[concat(resourceId('Microsoft.Network/virtualNetworks',parameters('networkSpec').virtualNetworkName), '/subnets/', parameters('networkSpec').virtualNetworkSubnetName)]"
+                            "id": "[concat(resourceId('Microsoft.Network/virtualNetworks',parameters('networkSpec').virtualNetworkName), '/subnets/', parameters('networkSpec').virtualNetworkSubnetName)]",
+                            "networkSecurityGroup" : {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('securityGroupName'))]"
+                            }
                         }
                     } 
                 }] 
