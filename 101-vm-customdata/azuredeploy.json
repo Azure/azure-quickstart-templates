@@ -20,40 +20,19 @@
                 "Description": "User name for the Virtual Machine." 
            } 
         },
-        "customData" : {
-            "type" : "string",
-            "defaultValue" : "ZWNobyBjdXN0b21EYXRh",
-            "metadata": { 
-                 "Description": "Base64 encoded string passed to the Virtual Machine." 
-             } 
-        },
         "adminPassword": {
             "type": "securestring",
              "metadata": { 
                  "Description": "Password for the Virtual Machine." 
              } 
         },
-        "imagePublisher": { 
-             "type": "string", 
-             "defaultValue": "Canonical", 
-             "metadata": { 
-                  "Description": "Image Publisher" 
+        "customData" : {
+            "type" : "string",
+            "defaultValue" : "echo customData",
+            "metadata": { 
+                 "Description": "String passed down to the Virtual Machine." 
              } 
-         }, 
-         "imageOffer": { 
-             "type": "string", 
-             "defaultValue": "UbuntuServer", 
-             "metadata": { 
-                 "Description": "Image Offer" 
-             } 
-         }, 
-         "imageSKU": { 
-             "type": "string", 
-             "defaultValue": "14.04.2-LTS", 
-             "metadata": { 
-                 "Description": "Image SKU" 
-             } 
-         }, 
+        },
         "location": {
             "type": "String",
             "allowedValues": ["East US", "West US", "West Europe", "East Asia", "South East Asia"],
@@ -67,42 +46,19 @@
             "metadata": { 
                  "Description": "VM size" 
              } 
-        },
-        "publicIPAddressName": {
-            "type": "string",
-            "defaultValue" : "myPublicIP",
-            "metadata": { 
-                 "Description": "name of Public IP" 
-             } 
-        },
-        "vmName": {
-            "type": "string",
-            "defaultValue" : "myVM",
-            "metadata": { 
-                 "Description": "VM Name" 
-             } 
-        },
-        "virtualNetworkName":{
-            "type" : "string",
-            "defaultValue" : "myVNET",
-            "metadata": { 
-                 "Description": "VNET name" 
-             } 
-        },
-        "nicName":{
-            "type" : "string",
-            "defaultValue":"myNIC",
-            "metadata": { 
-                 "Description": "NIC name" 
-             } 
         }
     },
     "variables": {
+        "imagePublisher" : "Canonical",
+        "imageOffer" : "UbuntuServer",
+        "imageSKU" :"14.04.2-LTS",
+        "nicName" : "networkInterface1",
+        "vmName" : "vm1",
+        "virtualNetworkName" : "virtualNetwork1",
+        "publicIPAddressName" : "publicIp1",
         "addressPrefix":"10.0.0.0/16",
         "subnet1Name": "Subnet-1",
-        "subnet2Name": "Subnet-2",
         "subnet1Prefix" : "10.0.0.0/24",
-        "subnet2Prefix" : "10.0.1.0/24",
         "vmStorageAccountContainerName": "vhds",
         "publicIPAddressType" : "Dynamic",
         "storageAccountType": "Standard_LRS",
@@ -122,7 +78,7 @@
     {
         "apiVersion": "2014-12-01-preview",
         "type": "Microsoft.Network/publicIPAddresses",
-        "name": "[parameters('publicIPAddressName')]",
+        "name": "[variables('publicIPAddressName')]",
         "location": "[parameters('location')]",
         "properties": {
             "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
@@ -134,7 +90,7 @@
     {
       "apiVersion": "2014-12-01-preview",
       "type": "Microsoft.Network/virtualNetworks",
-      "name": "[parameters('virtualNetworkName')]",
+      "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
       "properties": {
         "addressSpace": {
@@ -148,12 +104,6 @@
             "properties" : {
                 "addressPrefix": "[variables('subnet1Prefix')]"
             }
-          },
-          {
-            "name": "[variables('subnet2Name')]",
-            "properties" : {
-                "addressPrefix": "[variables('subnet2Prefix')]"
-            }
           }
         ]
       }
@@ -161,11 +111,11 @@
     {
         "apiVersion": "2014-12-01-preview",
         "type": "Microsoft.Network/networkInterfaces",
-        "name": "[parameters('nicName')]",
+        "name": "[variables('nicName')]",
         "location": "[parameters('location')]",
         "dependsOn": [
-            "[concat('Microsoft.Network/publicIPAddresses/', parameters('publicIPAddressName'))]",
-            "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
+            "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+            "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
         ],
         "properties": {
             "ipConfigurations": [
@@ -174,7 +124,7 @@
                 "properties": {
                     "privateIPAllocationMethod": "Dynamic",
                     "publicIPAddress": {
-                        "id": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('publicIPAddressName'))]"
+                        "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
                     },
                     "subnet": {
                         "id": "[variables('subnet1Ref')]"
@@ -187,30 +137,30 @@
     {
         "apiVersion": "2014-12-01-preview",
         "type": "Microsoft.Compute/virtualMachines",
-        "name": "[parameters('vmName')]",
+        "name": "[variables('vmName')]",
         "location": "[parameters('location')]",
         "dependsOn": [
             "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
-            "[concat('Microsoft.Network/networkInterfaces/', parameters('nicName'))]"
+            "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
         ],
         "properties": {
             "hardwareProfile": {
                 "vmSize": "[parameters('vmSize')]"
             },
             "osProfile": {
-                "computername": "[parameters('vmName')]",
+                "computername": "[variables('vmName')]",
                 "adminUsername": "[parameters('adminUsername')]",
                 "adminPassword": "[parameters('adminPassword')]",
-                "customData" : "[parameters('customData')]",
+                "customData" : "[base64(parameters('customData'))]",
                 "linuxConfiguration": {
                     "disablePasswordAuthentication": "false"
                 }
             },
             "storageProfile": {
                 "imageReference": { 
-                     "publisher": "[parameters('imagePublisher')]", 
-                     "offer": "[parameters('imageOffer')]", 
-                     "sku" : "[parameters('imageSKU')]", 
+                     "publisher": "[variables('imagePublisher')]", 
+                     "offer": "[variables('imageOffer')]", 
+                     "sku" : "[variables('imageSKU')]", 
                      "version":"latest" 
                  }, 
                  "osDisk" : { 
@@ -225,7 +175,7 @@
             "networkProfile": {
                 "networkInterfaces" : [
                 {
-                    "id": "[resourceId('Microsoft.Network/networkInterfaces',parameters('nicName'))]"
+                    "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
                 }
                 ]
             }
