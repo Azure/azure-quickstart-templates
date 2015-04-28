@@ -17,7 +17,7 @@ DisplayName                    Type                           ObjectId
 <NAME>                                                        xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 
 
-**Use following powershell command to learn about RoleDefinitions. Please note, the template already uses appropriate roleDefinition Id. The applicable RoleDefinition names are avialable in the parameter dropdown. 
+**Use following powershell command to learn about RoleDefinitions. Please note, the template already uses appropriate roleDefinition Id. The applicable RoleDefinition names are available in the parameter dropdown. 
 
 PS C:\> Get-AzureRoleDefinition | fl
 
