@@ -54,37 +54,27 @@ Create a resource group:
 
 Start deployment 
 
-    PS C:\Users\azureuser1> New-AzureResourceGroupDeployment -Name AZKFRGSPARKV2DEP1 -ResourceGroupName "AZKFRGSPARKEA3" -TemplateFile C:\gitsrc\azure-quickstart-templates\spark-on-ubuntu-multidisks\azuredeploy.json -TemplateParameterFile C:\gitsrc\azure-quickstart-templates\spark-on-ubuntu-multidisks\azuredeploy-parameters.json -Verbose
+    PS C:\Users\azureuser1> New-AzureResourceGroupDeployment -Name AZKFRGSPARKV2DEP1 -ResourceGroupName "AZKFRGSPARKEA3" -TemplateFile C:\gitsrc\azure-quickstart-templates\spark-ubuntu-multidisks\azuredeploy.json -TemplateParameterFile C:\gitsrc\azure-quickstart-templates\spark-ubuntu-multidisks\azuredeploy-parameters.json -Verbose
 
     On successful deployment results will be like this
-    DeploymentName    : AZKFRGSPARKV2DEP1
-    ResourceGroupName : AZKFRGSPARKEA3
-    ProvisioningState : Succeeded
-    Timestamp         : 4/27/2015 2:00:48 PM
-    Mode              : Incremental
-    TemplateLink      :
-    Parameters        :
-                        Name             Type                       Value
-                        ===============  =========================  ==========
-                        adminUsername    String                     adminuser
-                        adminPassword    SecureString
-                        imagePublisher   String                     Canonical
-                        imageOffer       String                     UbuntuServer
-                        imageSKU         String                     14.04.2-LTS
-                        storageAccountName  String                     spkldeploysparknnuu1
-                        region           String                     West US
-                        virtualNetworkName  String                     sparkClustVnet
-                        dataDiskSize     Int                        100
-                        addressPrefix    String                     10.0.0.0/16
-                        subnetName       String                     Subnet1
-                        subnetPrefix     String                     10.0.0.0/24
-                        sparkVersion     String                     3.0.0
-                        sparkClusterName  String                     spark-arm-cluster
-                        sparkNodeIPAddressPrefix  String                     10.0.0.1
-                        sparkSlaveNodeIPAddressPrefix  String                     10.0.0.3
-                        jumpbox          String                     enabled
-                        tshirtSize       String                     S
-
+	DeploymentName    : AZKFRGSPARKV2DEP1
+	ResourceGroupName : AZKFRGSPARKEA1
+	ProvisioningState : Succeeded
+	Timestamp         : 4/28/2015 11:36:27 PM
+	Mode              : Incremental
+	TemplateLink      :
+	Parameters        :
+			    Name             Type                       Value
+			    ===============  =========================  ==========
+			    region           String                     West US
+			    storageAccountNamePrefix  String                     cgnsparkstorev1
+			    domainName       String                     cgnsparkv1
+			    adminUsername    String                     adminuser
+			    adminPassword    SecureString
+			    tshirtSize       String                     Small
+			    sparkversion     String                     1.2.1
+			    jumpbox          String                     Enabled
+			    virtualNetworkName  String                     vnet
 
 Check Deployment 
 ----------------
