@@ -4,4 +4,7 @@
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-This template creates a Network Security Group and attaches it to a subnet in the VNET
+This template creates two subnets, a Network Security Group and attaches it to the first subnet in the VNET. For more information on how to configure the Network Security Group, go here:
+
+https://msdn.microsoft.com/en-us/library/azure/dn848316.aspx
+
