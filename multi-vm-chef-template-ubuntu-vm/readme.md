@@ -4,8 +4,9 @@
 |:-----------------|:--------------------------------| :---------------| :---------------|
 | <a href="https://azuredeploy.net/" target="_blank"><img src="http://azuredeploy.net/deploybutton_small.png"/></a> | [kundanap](https://github.com/kundanap) | Provision a Ubuntu VM and  bootstrapp the Chef Agent (https://github.com/Azure/azure-quickstart-templates/tree/master/multi-vm-chef-template-ubuntu-vm)
 
-
 This template provisions multiple Linux Ubuntu VMs on Azure and bootstraps it with Chef client version 1201.12.
+
+The pre-requiste for deploying this template is to having a running Chef server. You can create a hosted Chef account or spin off Chef Server in Azure using the Marketplace image which is free upto 20 nodes. More on Marketplace image : <a href="https://docs.chef.io/azure_portal.html#azure-marketplace" target="_blank">Using Chef Server in the Azure Marketplace</a>
 
 Useful Links for learning about Chef:
 
@@ -19,7 +20,6 @@ Useful Links for learning about Chef:
 
 <a href="http://docs.chef.io/" target="_blank">Chef Documentation</a>
 
- For deploying the Chef agent on a VM, you can create a hosted Chef account or spin off Chef Server in Azure using the Marketplace image which is free upto 20 nodes. More on Marketplace image : <a href="https://docs.chef.io/azure_portal.html#azure-marketplace" target="_blank">Using Chef Server in the Azure Marketplace</a>
 
  This template expects the following parameters:
 
@@ -27,7 +27,7 @@ Useful Links for learning about Chef:
  |:--- |:---|
  | location | Location name where the corresponding Azure artifacts will be created |
  | storage account  | Unique  Name for the Storage Account where the Virtual Machine's disks will be placed |
- | dnsName | DNS subnet name for operations center public IP address |
+ | dnsName | DNS  name for the VM |
  | virtualNetworkName | Name of the Virtual Network that is created and that resources will be deployed in to |
  | adminUsername  | Admin user name for the Virtual Machines  |
  | adminPassword  | Admin password for the Virtual Machines  |
@@ -36,6 +36,7 @@ Useful Links for learning about Chef:
  | image Publisher <Optional> | Publisher for the OS image, the default is Canonical|
  | image Offer <Optional> | The name of the image offer. The default is Ubuntu |
  | image SKU  <Optional> | Version of the image. The default is 14.04.2-LTS |
+ | vmSize  <Optional> | Virtual Machine Size, the default is Standard_A0 |
  | chef_node_name | The name for the node (VM) in the Chef Organization |
  | chef_server_url | Organization URL for the Chef Server. Example "https://ChefServerDnsName.cloudapp.net/organizations/Orgname"|
  | validation_client_name | Validator key name for the organization. Example : MyOrg-validator |

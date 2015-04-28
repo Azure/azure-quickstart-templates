@@ -2,7 +2,7 @@
 
 | Deploy to Azure  | Author                          | Template Name   |
 |:-----------------|:--------------------------------| :---------------| :---------------|
-| <a href="https://azuredeploy.net/" target="_blank"><img src="http://azuredeploy.net/deploybutton_small.png"/></a> | [kundanap](https://github.com/kundanap) | Provision a Ubuntu VM and  bootstrapp the Chef Agent (https://github.com/Azure/azure-quickstart-templates/tree/master/chef-json-parameters-ubuntu-vm) 
+| <a href="https://azuredeploy.net/" target="_blank"><img src="http://azuredeploy.net/deploybutton_small.png"/></a> | [kundanap](https://github.com/kundanap) | Provision a Ubuntu VM and  bootstrapp the Chef Agent (https://github.com/Azure/azure-quickstart-templates/tree/master/chef-json-parameters-ubuntu-vm)
 
 
  This template provisions a Linux Ubuntu VM on Azure and bootstraps it with Chef client version 1201.12.
@@ -27,13 +27,13 @@ Useful Links for learning about Chef:
  |:--- |:---|
  | location | Location name where the corresponding Azure artifacts will be created |
  | storage account  | Unique  Name for the Storage Account where the Virtual Machine's disks will be placed |
- | dnsName | DNS subnet name for operations center public IP address |
- | virtualNetworkName | Name of the Virtual Network that is created and that resources will be deployed in to |
+ | dnsName | DNS name for the VM |
  | adminUsername  | Admin user name for the Virtual Machines  |
  | adminPassword  | Admin password for the Virtual Machine  |
  | image Publisher <Optional> | Publisher for the OS image, the default is Canonical|
  | image Offer <Optional> | The name of the image offer. The default is Ubuntu |
  | image SKU  <Optional> | Version of the image. The default is 14.04.2-LTS |
+ | vm Size  <Optional> | Size of the Virtual Machine. The default is Standard_A0 |
  | chef_node_name | The name for the node (VM) in the Chef Organization |
  | chef_server_url | Organization URL for the Chef Server. Example "https://ChefServerDnsName.cloudapp.net/organizations/Orgname"|
  | validation_client_name | Validator key name for the organization. Example : MyOrg-validator |
