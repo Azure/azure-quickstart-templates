@@ -1,71 +1,65 @@
 {
-    "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json",
+    "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
         "newStorageAccountName": {
             "type": "string",
             "metadata": {
-            "Description": "The name of a new storage account which will be created."
-          }
-        },
-        "location": {
-            "type": "string",
-            "defaultValue": "West US",
-            "metadata": {
-                "description": "Location of all resources created by this template."
+                "Description": "Unique DNS Name for the Storage Account where the Virtual Machine's disks will be placed."
             }
-        },
-        "vmDnsName": {
-            "type": "string",
-             "metadata": {
-               "Description": "Unique name for the machine which will form part of the DNS name."
-          }
         },
         "adminUsername": {
             "type": "string",
-             "metadata": {
-               "Description": "Unique name for the machine which will form part of the DNS name."
-          }
+            "metadata": {
+               "Description": "User name for the Virtual Machine."
+            }
         },
         "adminPassword": {
             "type": "securestring",
             "metadata": {
-              "Description": "Password the Linux admin user who can log on to the machine."
-          }
-        },
-        "imagePublisher": {
-            "type": "string",
-            "defaultValue": "Canonical",
-            "metadata": {
-                 "Description": "Image Publisher"
+                "Description": "Password for the Virtual Machine."
             }
         },
-        "imageOffer": {
+        "dnsNameForPublicIP": {
             "type": "string",
-            "defaultValue": "UbuntuServer",
             "metadata": {
-                "Description": "Image Offer"
+                  "Description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
             }
         },
-        "imageSKU": {
+        "ubuntuOSVersion": {
             "type": "string",
-            "defaultValue": "14.04.2-LTS",
+            "defaultValue": "14.10",
+            "allowedValues": [
+                "12.04.2-LTS",
+                "12.04.3-LTS",
+                "12.04.4-LTS",
+                "12.04.5-LTS",
+		"12.10",
+                "14.04.2-LTS",
+                "14.10",
+                "15.04"
+            ],
             "metadata": {
-                "Description": "Image SKU"
+                "Description": "The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version. Allowed values: 12.04.2-LTS, 12.04.3-LTS, 12.04.4-LTS, 12.04.5-LTS, 12.10, 14.04.2-LTS, 14.10, 15.04."
             }
         }
     },
     "variables": {
+        "location": "West US",
+        "imagePublisher": "Canonical", 
+        "imageOffer": "UbuntuServer", 
+        "OSDiskName": "osdiskforlinuxsimple",
         "nicName": "myVMNic",
-        "addressPrefix": "10.0.0.0/16",
-        "subnetName": "Subnet-1",
+        "addressPrefix": "10.0.0.0/16", 
+        "subnetName": "Subnet",
         "subnetPrefix": "10.0.0.0/24",
-	"storageAccountType": "Standard_LRS",
+        "storageAccountType": "Standard_LRS",
         "publicIPAddressName": "myPublicIP",
         "publicIPAddressType": "Dynamic",
-        "vmName": "[parameters('vmDnsName')]",
+        "vmStorageAccountContainerName": "vhds",
+        "vmName": "MyUbuntuVM",
         "vmSize": "Standard_A0",
-        "virtualNetworkName": "MyVNET",
+        "virtualNetworkName": "MyVNET",        
         "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
         "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]"
     },
@@ -83,11 +77,11 @@
             "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Network/publicIPAddresses",
             "name": "[variables('publicIPAddressName')]",
-            "location": "[parameters('location')]",
+            "location": "[variables('location')]",
             "properties": {
                 "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
                 "dnsSettings": {
-                    "domainNameLabel": "[parameters('vmDnsName')]"
+                    "domainNameLabel": "[parameters('dnsNameForPublicIP')]"
                 }
             }
         },
@@ -116,7 +110,7 @@
             "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Network/networkInterfaces",
             "name": "[variables('nicName')]",
-            "location": "[parameters('location')]",
+            "location": "[variables('location')]",
             "dependsOn": [
                 "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
                 "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
@@ -142,7 +136,7 @@
             "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Compute/virtualMachines",
             "name": "[variables('vmName')]",
-            "location": "[parameters('location')]",
+            "location": "[variables('location')]",
             "dependsOn": [
                 "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
                 "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
@@ -157,21 +151,21 @@
                     "adminPassword": "[parameters('adminPassword')]"
                 },
                 "storageProfile": {
-                   "imageReference": {
-                      "publisher": "[variables('imagePublisher')]",
-                      "offer": "[variables('imageOffer')]",
-                      "sku" : "[variables('imageSKU')]",
-                      "version":"latest"
-                  },
-                  "osDisk" : {
-                     "name": "osdisk",
-                     "vhd": {
-                        "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/','osdisk.vhd')]"
-                     },
-                     "caching": "ReadWrite",
-                     "createOption": "FromImage"
-                 }
-             },
+                    "imageReference": {
+                        "publisher": "[variables('imagePublisher')]",
+                        "offer": "[variables('imageOffer')]",
+                        "sku" : "[parameters('ubuntuOSVersion')]",
+                        "version":"latest"
+                    },
+                   "osDisk" : {
+                        "name": "osdisk",
+                        "vhd": {
+                            "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]"
+                        },
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage"
+                    }
+                },
                 "networkProfile": {
                     "networkInterfaces": [
                         {
