@@ -18,6 +18,6 @@ Below are the parameters that the template expects
 | subscriptionId  | Subscription ID where the template will be deployed |
 | location | location where the resources will be deployed |
 | vmSize | Size of the Virtual Machine |
-| windowsOSVersion | The Windows version for the VM. This will pick a fully patched image of this given Windows version. Allowed values: 2008-R2-SP1, 2012-Datacenter, 2012-R2-Datacenter, Windows-Server-Technical-Preview.|
+| ubuntuOSVersion | The Windows version for the VM. This will pick a fully patched image of this given Windows version. Allowed values: 2008-R2-SP1, 2012-Datacenter, 2012-R2-Datacenter, Windows-Server-Technical-Preview.|
 
 
