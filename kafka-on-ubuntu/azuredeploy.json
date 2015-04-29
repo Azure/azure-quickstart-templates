@@ -1,5 +1,5 @@
 {
-    "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
         "adminUsername": {
@@ -37,7 +37,6 @@
         },
         "storageAccountName": {
             "type": "string",
-            "defaultValue": "uniquekafkastoragev12",
             "metadata": {
                 "Description": "Unique namespace for the Storage Account where the Virtual Machine's disks will be placed"
             }
@@ -54,13 +53,6 @@
             "defaultValue": "myVNETkafka",
             "metadata": {
                 "Description": "The arbitrary name of the virtual network provisioned for the cluster"
-            }
-        },
-        "dataDiskSize": {
-            "type": "int",
-            "defaultValue": 100,
-            "metadata": {
-                "Description": "Size of the data disk attached to Kafka nodes (in GB)"
             }
         },
         "addressPrefix": {
@@ -86,7 +78,8 @@
         },
         "kafkaVersion": {
             "type": "string",
-            "defaultValue": "stable",
+            "defaultValue": "0.8.2.1",
+	    "allowedValues": ["0.8.2.1","0.8.2.0","0.8.1.1"],
             "metadata": {
                 "Description": "The version of the Kafka package to be deployed on the cluster (or use 'stable' to pull in the latest and greatest)"
             }
@@ -137,10 +130,8 @@
     },
     "variables": {
         "vmStorageAccountContainerName": "vhd",
-        "vmSourceImageName": "b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu-14_04_2_LTS-amd64-server-20150309-en-us-30GB",
         "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
         "subnetRef": "[concat(variables('vnetID'),'/subnets/',parameters('subnetName'))]",
-        "sourceImageName": "[concat('/',subscription().subscriptionId,'/services/images/',variables('vmSourceImageName'))]",
         "computerNamePrefix": "kafkanode",
         "scriptUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/kafka-on-ubuntu/",
         "templateUrl": "[variables('scriptUrl')]",
@@ -293,7 +284,7 @@
         {
             "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Compute/virtualMachines",
-            "name": "[concat('myvmzoo', copyindex())]",
+            "name": "[concat('zookprvm', copyindex())]",
             "location": "[parameters('region')]",
             "copy": {
                 "name": "virtualZookeeperMachineLoop",
@@ -319,9 +310,12 @@
                     }
                 },
                 "storageProfile": {
-                    "sourceImage": {
-                        "id": "[variables('sourceImageName')]"
-                    },
+                    "imageReference": {
+			    "publisher": "[parameters('imagePublisher')]",
+			    "offer": "[parameters('imageOffer')]",
+			    "sku" : "[parameters('imageSKU')]",
+			    "version":"latest"
+			},
 		"osDisk" : {
 		    "name": "osdisk",
 		    "vhd": {
@@ -344,7 +338,7 @@
 	
             "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Compute/virtualMachines",
-            "name": "[concat('myvm', copyindex())]",
+            "name": "[concat('brokervm', copyindex())]",
             "location": "[parameters('region')]",
             "copy": {
                 "name": "virtualMachineLoop",
@@ -371,9 +365,12 @@
                     }
                 },
                 "storageProfile": {
-                    "sourceImage": {
-                        "id": "[variables('sourceImageName')]"
-                    },
+                    "imageReference": {
+			    "publisher": "[parameters('imagePublisher')]",
+			    "offer": "[parameters('imageOffer')]",
+			    "sku" : "[parameters('imageSKU')]",
+			    "version":"latest"
+			},
 			"osDisk" : {
 			    "name": "osdiskb",
 			    "vhd": {
@@ -381,18 +378,7 @@
 			    },
 			    "caching": "ReadWrite",
 			    "createOption": "FromImage"
-			},
-                    "dataDisks": [
-                        {
-                            "name": "datadisk1",
-                            "diskSizeGB": "[parameters('dataDiskSize')]",
-                            "lun": 0,
-                            "vhd": {
-                                "Uri": "[concat('https://',parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/','myvm','dataDisk', copyindex() ,'.vhd')]"
-                            },
-			    "createOption": "Empty"
-                        }
-                    ]
+			}
                 },
                 "networkProfile": {
                     "networkInterfaces": [
@@ -406,7 +392,7 @@
         {
             
             "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "[concat('myvmzoo', copyindex(), '/installzoo')]",
+            "name": "[concat('zookprvm', copyindex(), '/installzoo')]",
             "apiVersion": "2015-05-01-preview",
             "location": "[parameters('region')]",
             "copy": {
@@ -414,7 +400,7 @@
                 "count": "[variables('numberOfZookeeperInstances')]"
             },
             "dependsOn": [
-                "[concat('Microsoft.Compute/virtualMachines/', 'myvmzoo', copyindex())]",
+                "[concat('Microsoft.Compute/virtualMachines/', 'zookprvm', copyindex())]",
                 "[concat('Microsoft.Network/networkInterfaces/', 'niczoo', copyindex())]"
             ],
             "properties": {
@@ -431,7 +417,7 @@
         },
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "[concat('myvm', copyindex(), '/installkafka')]",
+            "name": "[concat('brokervm', copyindex(), '/installkafka')]",
             "apiVersion": "2015-05-01-preview",
             "location": "[parameters('region')]",
             "copy": {
@@ -439,7 +425,7 @@
                 "count": "[variables('numberOfKafkaInstances')]"
             },
             "dependsOn": [
-                "[concat('Microsoft.Compute/virtualMachines/', 'myvm', copyindex())]",
+                "[concat('Microsoft.Compute/virtualMachines/', 'brokervm', copyindex())]",
                 "[concat('Microsoft.Network/networkInterfaces/', 'nic', copyindex())]"
             ],
             "properties": {
@@ -450,7 +436,7 @@
                     "fileUris": [
                         "[concat(variables('scriptUrl'), 'kafka-cluster-install.sh')]"
                     ],
-                    "commandToExecute": "[concat('bash kafka-cluster-install.sh -b ',copyindex(),' -c ', variables('numberOfZookeeperInstances'),' -i ', parameters('kafkaZooNodeIPAddressPrefix'))]"
+                    "commandToExecute": "[concat('bash kafka-cluster-install.sh -b ',copyindex(),' -k ',parameters('kafkaVersion'),' -c ', variables('numberOfZookeeperInstances'),' -i ', parameters('kafkaZooNodeIPAddressPrefix'))]"
                 }
             }
         }
