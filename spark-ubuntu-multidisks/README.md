@@ -109,5 +109,4 @@ To check deployment errors go to the new azure portal and look under Resource Gr
 ##Known Issues and Limitations
 - The deployment script is not yet idempotent and cannot handle updates 
 - SSH key is not yet implemented and the template currently takes a password for the admin user
-- The deployment script is not yet handling data disks and using local storage. There will be a separate checkin for disks as per T shirt sizing.
 - Spark cluster is current enabled for one master and multi slaves. 
