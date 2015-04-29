@@ -12,6 +12,7 @@ To make sure your template is added to Azure.com index, please follow these guid
 5. Include a **Readme.md** file that explains how the template works
 6. Template parameters should follow **camelCasing**
 7. Every parameter in the template must have the **description** specified using the metadata property. This looks like below
+
   ```json
   "newStorageAccountName": {
         "type": "string",
@@ -20,6 +21,7 @@ To make sure your template is added to Azure.com index, please follow these guid
         }
   }
   ```
+  
 See the starter template [here](https://github.com/Azure/azure-quickstart-templates/tree/master/100-starter-template-with-validation) for more information on passing validation
 
 
