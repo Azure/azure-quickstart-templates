@@ -4,7 +4,7 @@
 
 This is a repo that contains all the currently available Azure Resource Manager templates contributed by the community. These templates are indexed on Azure.com and available to view here http://azure.microsoft.com/en-us/documentation/templates/
 
-To make sure your template is added to Azure.com index, please follow these guidelines. Any templates that are out of compliance will be added to the **blacklist.json** file and not be indexed on Azure.com
+To make sure your template is added to Azure.com index, please follow these guidelines. Any templates that are out of compliance will be added to the **blacklist** and not be indexed on Azure.com
 
 1.	Every template must be contained in its own **folder**. Name this folder something that describes what your template does. Usually this naming pattern looks like **appName-osName**
 2.	The template file must be named **azuredeploy.json**
@@ -61,9 +61,14 @@ The metadata.json file will be validated using these rules
 *	Must be in yyyy-mm-dd format.
 *	The date must not be in the future to the date of the pull request
 
+## Good practice
+
+* It is a good practice to pass your template through a JSON linter to remove extraneous commas, paranthesis, brackets that may break the "Deploy to Azure" experience
+
 ## Starter template
 
 A starter template is provided [here](https://github.com/Azure/azure-quickstart-templates/tree/master/100-starter-template-with-validation) for you to follow
+
 
 
 ## 101 templates
