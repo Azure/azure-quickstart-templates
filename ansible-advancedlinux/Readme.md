@@ -38,6 +38,7 @@ Below are the parameters that the template expects
 | imagePublisher | Canonical (default) or OpenLogic |
 | imageOffer | "UbuntuServer" (default) or CentOS |
 | imageSKU | "12.04.5-LTS" (default) or 6.5 |
+| publicIPType  | Public IP Type : Dynamic or Static|
 | vmSizeDataDisks  | Size of Data disks : By default two data disks will be created |
 | vmFileSystem | ext4 or xfs (* For future versions) |
 | vmSize | Size of VMs |
