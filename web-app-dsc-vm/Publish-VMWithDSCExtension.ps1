@@ -21,7 +21,7 @@ $additionalParameters["sasToken"]=$DropLocationSasToken
 $additionalParameters["modulesUrl"]=$ModuleURL
 
 Switch-AzureMode AzureResourceManager
-New-AzureResourceGroup -Name "cawadscrg1005" `
+New-AzureResourceGroup -Name "cawadscrg1107" `
                        -Location "westus" `
                        -TemplateFile '.\azuredeploy.json' `
                        -TemplateParameterFile '.\azuredeploy.param.json' `
