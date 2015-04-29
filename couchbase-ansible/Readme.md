@@ -4,6 +4,7 @@
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
+Built by: GONZALORUIZ
 
 This advanced template creates a Multi VM Couchbase Cluster,it also configures Ansible so you can easily manage all the VMS. 
 
@@ -34,7 +35,7 @@ Below are the parameters that the template expects
 | Name   | Description    |
 |:--- |:---|
 | location  | Region where you want to create all the resources |
-| storageAccountName  | Storage account name , the template will also append the name of the resource group |
+| newStorageAccountName  | Storage account name , the template will also append the name of the resource group |
 | storageAccountType  | Standard_LRS or Premium_LRS  (For Premium, use the DS VMs) |
 | imagePublisher | Canonical (default) or OpenLogic |
 | imageOffer | "UbuntuServer" (default) or CentOS |

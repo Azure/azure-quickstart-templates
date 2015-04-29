@@ -4,6 +4,7 @@
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
+Built by: GONZALORUIZ
 
 This advanced template deploys N Linux VMs and it configures Ansible so you can easily manage all the VMS . Don't suffer more pain configuring and managing all your VMs , just use Ansible! Ansible is a very powerful masterless configuration management system based on SSH.
 
@@ -33,7 +34,7 @@ Below are the parameters that the template expects
 | Name   | Description    |
 |:--- |:---|
 | location  | Region where you want to create all the resources |
-| storageAccountName  | Name of the storage account , the template will also append the name of the resource group |
+| newStorageAccountName  | Name of the storage account , the template will also append the name of the resource group |
 | storageAccountType  | Standard_LRS or Premium_LRS.For Premium use a DS VM |
 | imagePublisher | Canonical (default) or OpenLogic |
 | imageOffer | "UbuntuServer" (default) or CentOS |
