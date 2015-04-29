@@ -1,4 +1,4 @@
-# Create a Virtual Machine from a Linux Image with Empty Data Disk
+# Very simple deployment of an Windows VM with a single empty Data Disk and VM Diagnostic extension
 
 <a href="https://azuredeploy.net/" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
