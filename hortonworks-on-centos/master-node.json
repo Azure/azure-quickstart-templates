@@ -32,9 +32,48 @@
     },
     "variables": {
         "vmName": "[concat(parameters('dnsNamePrefix'), '-mn-1')]",                
-        "storageAccountName": "[concat(parameters('storageAccount').prefix, 'mn1')]"
+        "storageAccountName": "[concat(parameters('storageAccount').prefix, 'mn1')]",
+        "securityGroupName": "[concat(parameters('dnsNamePrefix'), '-mn-sg')]"
     },
     "resources": [
+        {
+            "apiVersion": "2015-05-01-preview",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[variables('securityGroupName')]",
+            "location": "[parameters('region')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "SSH",
+                        "properties": {
+                            "description": "Allows SSH traffic",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "22",
+                            "destinationPortRange": "22",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 100,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "Ambari-Server",
+                        "properties": {
+                            "description": "Allows Management.Web.UI traffic",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "8443",
+                            "destinationPortRange": "8443",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 101,
+                            "direction": "Inbound"
+                        }
+                    }                   
+                ]
+            }
+        },
         {
             "type": "Microsoft.Storage/storageAccounts",
             "name": "[variables('storageAccountName')]",
@@ -49,7 +88,8 @@
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2015-01-01",            
             "dependsOn": [                
-                "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
+                "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+                "[concat('Microsoft.Network/networkSecurityGroups/', variables('securityGroupName'))]"
             ],
             "properties": {
                 "mode": "Incremental",
@@ -73,6 +113,9 @@
                     "subnetResourceId": {
                         "value": "[concat(resourceId('Microsoft.Network/virtualNetworks',parameters('networkSpec').virtualNetworkName), '/subnets/', parameters('networkSpec').virtualNetworkSubnetName)]"
                     },
+                    "securityGroupName" : {
+                        "value": "[variables('securityGroupName')]"        
+                    },   
                     "dnsName": {
                         "value": "[concat(parameters('dnsNamePrefix'), '-mn-1')]"
                     },
