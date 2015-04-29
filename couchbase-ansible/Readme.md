@@ -51,7 +51,7 @@ Below are the parameters that the template expects
 | customScriptConfigStorageAccountName |  Storage account name for the Private account that will contain your SSH Keys for ansible and the bash scripts ( Only use a Private storage account, as ssh keys should only be accesible by trusted users) |
 | customScriptConfigStorageAccountKey | Storage account Key  |
 | dnsNameLabel | DNS Name that wil be associated to the Load balancer|
-
+| publicIPType  | Public IP Type : Dynamic or Static|
 
 ##Known Issues and Limitations
 - Fixed number of data disks : This is due to a current template  limitation, this template creates 4 data disks with ReadOnly Caching.
