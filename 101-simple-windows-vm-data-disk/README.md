@@ -1,5 +1,6 @@
 # Very simple deployment of an Windows VM with a single empty Data Disk 
 
+<a href="https://azuredeploy.net" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
