@@ -86,8 +86,6 @@ From the jumpbox connect to any of the Spark workers eg: ssh 10.0.0.30 ,ssh 10.0
 Run the command ps-ef|grep spark to check that kafka process is running ok. 
 To connect to master node you can use ssh 10.0.0.10
 
-You can access the Web UI portal by using Public IP alloted to the Master node like this PublicMasterIP:8080
-
 To access spark shell:
 
 cd /usr/local/spark/bin/
