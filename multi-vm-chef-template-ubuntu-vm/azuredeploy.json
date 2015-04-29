@@ -5,15 +5,30 @@
         "newStorageAccountName": {
             "type": "string",
             "metadata" : {
-              "description": "Unique Storage Account Name for creating the VM"
+              "description": "Unique  Name for the Storage Account where the Virtual Machine's disks will be placed"
             }
         },
         "vmDnsName": {
                 "type": "string",
                 "metadata" : {
-                  "description": "Unique DNS Name"
+                  "description": "DNS  name for the VM"
                 }
         },
+        "numberOfInstances" : {
+          "type": "int",
+          "defaultValue": 2,
+          "metadata": {
+                 "description": "Number of VM instances to create, default is 2"
+            }
+        },
+
+        "availabilitySetName": {
+        "type": "string",
+        "metadata": {
+              "description": "Availability Set name for the VMs"
+                    }
+          },
+
         "adminUserName": {
             "type": "string",
             "metadata" : {
@@ -23,31 +38,31 @@
         "adminPassword": {
             "type": "securestring",
             "metadata" : {
-              "description": "Admin password name for the Virtual Machines"
+              "description": "Admin password for the Virtual Machines"
             }
         },
 
         "imagePublisher": {
            "type": "string",
-           "defaultValue": "MicrosoftWindowsServer",
+           "defaultValue": "Canonical",
            "metadata": {
-                  "description": "Publisher for the OS image, the default is MicrosoftWindowsServer"
+                  "description": " Publisher for the OS image, the default is Canonical"
              }
          },
 
          "imageOffer": {
           "type": "string",
-             "defaultValue": "WindowsServer",
+             "defaultValue": "UbuntuServer",
              "metadata": {
-               "description": "The name of the image offer. The default is WindowsServer "
+               "description": "The name of the image offer. The default is Ubuntu"
             }
          },
 
           "imageSKU": {
           "type": "string",
-                   "defaultValue": "2012-R2-Datacenter",
+                   "defaultValue": "14.04.2-LTS",
            "metadata": {
-                 "description": "Version of the image. The default is 2012-R2-Datacenter"
+                 "description": "Version of the image. The default is 14.04.2-LTS"
              }
          },
 
@@ -55,7 +70,7 @@
           "type": "String",
            "defaultValue" : "West US",
                 "metadata": {
-              "description": "Location for the VM. the default is West US"
+              "description": "Location for the VM, default is West US"
           }
         },
 
@@ -63,25 +78,57 @@
            "type": "string",
              "defaultValue": "Standard_A0",
                 "metadata": {
-                 "description": "VM Size for creating the Virtual Machine. The default is Standard_A0"
+                 "description": "VM Size"
              }
          },
 
-         "puppet_master_server": {
-             "type": "String",
-             "metadata" : {
-               "description" : "Puppet Master URL"
-             }
-         }
+        "chef_node_name": {
+            "type": "string",
+            "metadata" : {
+              "description": "Unique name for the node (VM) in the Chef Organization"
+            }
+        },
+        "chef_server_url": {
+            "type": "string",
+            "metadata" : {
+              "description": "Organization URL for the Chef Server. Example https://ChefServerDnsName.cloudapp.net/organizations/Orgname"
+            }
+        },
+        "validation_client_name": {
+            "type": "string",
+            "metadata" : {
+              "description": "Validator key name for the organization. Example : MyOrg-validator"
+            }
+        },
+        "runlist": {
+            "type": "string",
+            "defaultValue": "recipe[getting-started]",
+            "metadata" : {
+              "description": "Optional Run List to Execute"
+            }
+        },
+        "autoUpdateClient": {
+            "type": "string",
+            "defaultValue": "false",
+            "metadata" : {
+              "description": "Optional Flag for opting into auto updates"
+            }
+        },
+        "validation_key": {
+            "type":  "string",
+            "metadata" : {
+              "description": "JSON Escaped Validation Key"
+            }
+        }
 
     },
     "variables": {
         "vnetID":"[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
         "subnet1Ref" : "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]",
-        "vmExtensionName" : "PuppetEnterpriseAgent",
+        "vmExtensionName" : "LinuxChefExtension",
         "vmName": "[parameters('vmDnsName')]",
         "storageAccountType" : "Standard_LRS",
-        "publicIPAddressName" : "myPublicIP",
+        "publicIPAddressName" : "chefPublicIP",
         "publicIPAddressType" : "Dynamic",
         "vmStorageAccountContainerName" : "vhds",
         "virtualNetworkName" : "MyVNET",
@@ -93,7 +140,7 @@
         "nicName" : "myVMNic",
         "dnsName" : "[variables('subnet1Name')]"
       },
-    "resources": [
+		"resources": [
     {
           "type": "Microsoft.Storage/storageAccounts",
           "name": "[parameters('newStorageAccountName')]",
@@ -103,11 +150,25 @@
           "accountType": "[variables('storageAccountType')]"
        }
     },
+
+     {
+        "type": "Microsoft.Compute/availabilitySets",
+         "name": "[parameters('availabilitySetName')]",
+         "apiVersion": "2015-05-01-preview",
+         "location": "[parameters('location')]",
+         "properties": {}
+     },
+
     {
         "apiVersion": "2015-05-01-preview",
         "type": "Microsoft.Network/publicIPAddresses",
-        "name": "[variables('publicIPAddressName')]",
+        "name": "[concat(variables('publicIPAddressName'),copyIndex())]",
         "location": "[parameters('location')]",
+        "copy": {
+           "name": "publicIPLoop",
+           "count": "[parameters('numberOfInstances')]"
+        },
+
         "properties": {
             "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
             "dnsSettings": {
@@ -145,10 +206,14 @@
     {
         "apiVersion": "2015-05-01-preview",
         "type": "Microsoft.Network/networkInterfaces",
-        "name": "[variables('nicName')]",
+        "name": "[concat(variables('nicName'),copyIndex())]",
         "location": "[parameters('location')]",
+        "copy": {
+           "name": "nicLoop",
+           "count": "[parameters('numberOfInstances')]"
+        },
         "dependsOn": [
-            "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+            "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'),copyIndex())]",
             "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
         ],
         "properties": {
@@ -171,18 +236,26 @@
     {
         "apiVersion": "2015-05-01-preview",
         "type": "Microsoft.Compute/virtualMachines",
-        "name": "[variables('vmName')]",
+        "name": "[concat(variables('vmName'),copyIndex())]",
         "location": "[parameters('location')]",
+        "copy": {
+           "name": "vmLoop",
+           "count": "[parameters('numberOfInstances')]"
+        },
         "dependsOn": [
             "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
-            "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+            "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyIndex())]",
+            "[concat('Microsoft.Compute/availabilitySets/', parameters('availabilitySetName'))]"
         ],
         "properties": {
+          "availabilitySet": {
+                  "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySetName'))]"
+            },
             "hardwareProfile": {
                 "vmSize": "[parameters('vmSize')]"
             },
             "osProfile": {
-                "computername": "[variables('vmName')]",
+                "computername": "[concat(variables('vmName'),copyIndex())]",
                 "adminUsername": "[parameters('adminUsername')]",
                 "adminPassword": "[parameters('adminPassword')]"
             },
@@ -205,28 +278,41 @@
             "networkProfile": {
                 "networkInterfaces" : [
                 {
-                    "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+                    "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'),copyIndex())]"
                 }
                 ]
             }
         }
     },
     {
-        "type": "Microsoft.Compute/virtualMachines/extensions",
-        "name": "[concat(variables('vmName'),'/', variables('vmExtensionName'))]",
-        "apiVersion": "2015-05-01-preview",
-        "location": "[parameters('location')]",
-        "dependsOn": [
-            "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
-        ],
-        "properties": {
-           "publisher": "PuppetLabs",
-           "type": "PuppetEnterpriseAgent",
-           "typeHandlerVersion": "3.2",
-           "settings": {
-             "PUPPET_MASTER_SERVER": "[parameters('puppet_master_server')]"
-           }
-     }
-    }
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(variables('vmName'),copyIndex(),'/', variables('vmExtensionName'))]",
+            "apiVersion": "2015-05-01-preview",
+            "location": "[parameters('location')]",
+            "copy": {
+               "name": "extensionLoop",
+               "count": "[parameters('numberOfInstances')]"
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'), copyIndex())]"
+            ],
+            "properties": {
+                "publisher": "Chef.Bootstrap.WindowsAzure",
+                "type": "LinuxChefClient",
+                "typeHandlerVersion": "1204.12",
+                "settings": {
+                  "bootstrap_options":
+                  {
+                    "chef_node_name" : "[concat(parameters('chef_node_name'),copyIndex())]",
+                    "chef_server_url" : "[parameters('chef_server_url')]",
+                    "validation_client_name" : "[parameters('validation_client_name')]"
+                  },
+                    "runlist": "[parameters('runlist')]"
+                },
+                "protectedSettings": {
+                    "validation_key": "[parameters('validation_key')]"
+                }
+            }
+        }
     ]
 }
