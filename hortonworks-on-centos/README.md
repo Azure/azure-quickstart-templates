@@ -1,4 +1,4 @@
-# This documentation is in progress and will change.  There may be issues deploying this template
+# These templates are currently in testing and will be ready soon. This documentation is in progress and will change.  There may be issues deploying this template
 
 # Deploy a Hortonworks HDP installation on CentOS virtual machines
 
@@ -34,7 +34,7 @@ The template expects the following parameters:
 Topology
 --------
 
-The deployment topology is comprised of a predefined number (as per t-shirt sizing) Hortonworks member nodes configured as a cluster, configured using a set number of master 
+The deployment topology is comprised of a predefined number (as per t-shirt sizing) Hortonworks member nodes configured as a cluster, configured using a set number of master
 and data nodes. Typical setup for Hortonworks uses anywhere from 2 to 8 master nodes with as many data nodes are needed for the size that has been choosen ranging from as
 few as 3 to thousands of data nodes.  The current template will scale at the highest end to 200 data nodes when using the large t-shirt size.
 
