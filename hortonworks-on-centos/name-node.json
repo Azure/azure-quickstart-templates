@@ -35,9 +35,34 @@
     },
     "variables": {
         "vmName": "[concat(parameters('dnsNamePrefix'), '-mn-')]",
-        "storageAccountName": "[concat(parameters('storageAccount').prefix, 'mn')]"
+        "storageAccountName": "[concat(parameters('storageAccount').prefix, 'mn')]",
+        "securityGroupName": "[concat(parameters('dnsNamePrefix'), '-mn2-sg')]"
     },
     "resources": [         
+        {
+            "apiVersion": "2015-05-01-preview",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[variables('securityGroupName')]",
+            "location": "[parameters('region')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "SSH",
+                        "properties": {
+                            "description": "Allows SSH traffic",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "22",
+                            "destinationPortRange": "22",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 100,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        },
         {
             "type": "Microsoft.Storage/storageAccounts",
             "name": "[concat(variables('storageAccountName'), copyIndex(2))]",
@@ -60,7 +85,8 @@
                 "count": "[parameters('vmCount')]"
             },
             "dependsOn": [                
-                "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'), copyIndex(2))]"
+                "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'), copyIndex(2))]",
+                "[concat('Microsoft.Network/networkSecurityGroups/', variables('securityGroupName'))]"
             ],
             "properties": {
                 "mode": "Incremental",
@@ -84,6 +110,9 @@
                     "subnetResourceId": {
                         "value": "[concat(resourceId('Microsoft.Network/virtualNetworks',parameters('networkSpec').virtualNetworkName), '/subnets/', parameters('networkSpec').virtualNetworkSubnetName)]"
                     },
+                    "securityGroupName" : {
+                        "value": "[variables('securityGroupName')]"        
+                    },   
                     "dnsName": {
                         "value": "[concat(parameters('dnsNamePrefix'), '-mn-', copyIndex(2))]"
                     },
@@ -118,6 +147,7 @@
                 "settings": {
                     "fileUris": [
                         "[concat(parameters('scriptsUri'), '/scripts/initialize-node.sh')]",
+                        "[concat(parameters('scriptsUri'), '/scripts/mountDisk.sh')]",
                         "[concat(parameters('scriptsUri'), '/scripts/vm-bootstrap.py')]"
                     ],
                     "commandToExecute": "[concat('sh initialize-node.sh \"', parameters('networkSpec').privateIPPrefix, '\" \"', parameters('dnsNamePrefix'), '\" \"', reference(concat(variables('vmName'), copyIndex(2))).outputs.fqdn.value, '\" ', parameters('clusterSpec').nameNodeCount, ' ', parameters('clusterSpec').dataNodeCount)]"

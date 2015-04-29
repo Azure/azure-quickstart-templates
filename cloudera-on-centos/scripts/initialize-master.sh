@@ -1,5 +1,15 @@
 #!/bin/bash
-sh ./initialize-node.sh
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#   http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# 
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 # Put the command line parameters into named variables
 IPPREFIX=$1
@@ -8,6 +18,8 @@ NAMESUFFIX=$3
 NAMENODES=$4
 DATANODES=$5
 ADMINUSER=$6
+
+sh ./initialize-node.sh $ADMINUSER
 
 # Converts a domain like machine.domain.com to domain.com by removing the machine name
 NAMESUFFIX=`echo $NAMESUFFIX | sed 's/^[^.]*\.//'`
@@ -24,16 +36,16 @@ let "NAMEEND=NAMENODES-1"
 for i in $(seq 0 $NAMEEND)
 do 
   let "IP=i+10"
-  NODES+=("10.0.0.$IP:${NAMEPREFIX}-nn$i:${NAMEPREFIX}-nn$i.$NAMESUFFIX")
+  NODES+=("$IPPREFIX$IP:${NAMEPREFIX}-nn$i:${NAMEPREFIX}-nn$i.$NAMESUFFIX")
 done
 
 let "DATAEND=DATANODES-1"
 for i in $(seq 0 $DATAEND)
 do 
   let "IP=i+20"
-  NODES+=("10.0.0.$IP:${NAMEPREFIX}-dn$i:${NAMEPREFIX}-dn$i.$NAMESUFFIX")
+  NODES+=("$IPPREFIX$IP:${NAMEPREFIX}-dn$i:${NAMEPREFIX}-dn$i.$NAMESUFFIX")
 done
 
 IFS=',';NODE_IPS="${NODES[*]}";IFS=$' \t\n'
 
-sh bootstrap-cloudera.sh 'cloudera' "10.0.0.9:${NAMEPREFIX}-mn:${NAMEPREFIX}-mn.$NAMESUFFIX" $NODE_IPS false testuser >> /home/$ADMINUSER/bootstrap-cloudera.log
+sh bootstrap-cloudera.sh 'cloudera' "${IPPREFIX}9:${NAMEPREFIX}-mn:${NAMEPREFIX}-mn.$NAMESUFFIX" $NODE_IPS false testuser >> /home/$ADMINUSER/bootstrap-cloudera.log

@@ -1,6 +1,29 @@
 #!/bin/bash
 
-# Full Scale 180 Inc.
+# The MIT License (MIT)
+#
+# Copyright (c) 2015 Microsoft Azure
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+#
+#
+# Author: Full Scale 180 Inc.
 
 # You must be root to run this script
 if [ "${UID}" -ne 0 ];
@@ -64,7 +87,7 @@ done
 
 export PGPASSWORD=$REPLICATORPASSWORD
 
-logger "NOW=$now MASTERIP=$MASTERIP SUBNETADDRESS=$SUBNETADDRESS NODETYPE=$NODETYPE NODEIP=$NODEIP"
+logger "NOW=$now MASTERIP=$MASTERIP SUBNETADDRESS=$SUBNETADDRESS NODETYPE=$NODETYPE"
 
 install_postgresql_service() {
 	logger "Start installing PostgreSQL..."
@@ -85,20 +108,20 @@ setup_datadisks() {
 	MOUNTPOINT="/datadisks/disk1"
 
 	# Move database files to the striped disk
-	if [ -L /var/lib/postgresql/9.3 ];
+	if [ -L /var/lib/kafkadir ];
 	then
-		logger "Symbolic link from /var/lib/postgresql/9.3 already exists"
-		echo "Symbolic link from /var/lib/postgresql/9.3 already exists"
+		logger "Symbolic link from /var/lib/kafkadir already exists"
+		echo "Symbolic link from /var/lib/kafkadir already exists"
 	else
-		logger "Moving PostgreSQL data to the $MOUNTPOINT/pgdata/9.3"
-		echo "Moving PostgreSQL data to the $MOUNTPOINT/pgdata/9.3"
+		logger "Moving  data to the $MOUNTPOINT/kafkadir"
+		echo "Moving PostgreSQL data to the $MOUNTPOINT/kafkadir"
 		service postgresql stop
-		mkdir $MOUNTPOINT/pgdata
-		mv /var/lib/postgresql/9.3 $MOUNTPOINT/pgdata
+		mkdir $MOUNTPOINT/kafkadir
+		mv -f /var/lib/kafkadir $MOUNTPOINT/kafkadir
 
 		# Create symbolic link so that configuration files continue to use the default folders
-		logger "Create symbolic link from /var/lib/postgresql/9.3 to $MOUNTPOINT/pgdata/9.3"
-		ln -s $MOUNTPOINT/pgdata/9.3 /var/lib/postgresql/9.3
+		logger "Create symbolic link from /var/lib/kafkadir to $MOUNTPOINT/kafkadir"
+		ln -s $MOUNTPOINT/kafkadir /var/lib/kafkadir
 	fi
 }
 
@@ -162,19 +185,19 @@ configure_streaming_replication() {
 	then
 		# Remove all files from the slave data directory
 		logger "Remove all files from the slave data directory"
-		sudo -u postgres rm -rf /var/lib/postgresql/9.3/main
+		sudo -u postgres rm -rf /var/lib/kafkadir/main
 
 		# Make a binary copy of the database cluster files while making sure the system is put in and out of backup mode automatically
 		logger "Make binary copy of the data directory from master"
-		sudo PGPASSWORD=$PGPASSWORD -u postgres pg_basebackup -h $MASTERIP -D /var/lib/postgresql/9.3/main -U replicator -x
+		sudo PGPASSWORD=$PGPASSWORD -u postgres pg_basebackup -h $MASTERIP -D /var/lib/kafkadir/main -U replicator -x
 		 
 		# Create recovery file
 		logger "Create recovery.conf file"
-		cd /var/lib/postgresql/9.3/main/
+		cd /var/lib/kafkadir/main/
 		
 		sudo -u postgres echo "standby_mode = 'on'" > recovery.conf
 		sudo -u postgres echo "primary_conninfo = 'host=$MASTERIP port=5432 user=replicator password=$PGPASSWORD'" >> recovery.conf
-		sudo -u postgres echo "trigger_file = '/var/lib/postgresql/9.3/main/failover'" >> recovery.conf
+		sudo -u postgres echo "trigger_file = '/var/lib/kafkadir/main/failover'" >> recovery.conf
 	fi
 	
 	logger "Done configuring PostgreSQL streaming replication"

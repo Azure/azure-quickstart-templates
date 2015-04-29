@@ -1,6 +1,6 @@
 # Deploy a highly available MongoDB installation on Ubuntu and CentOS virtual machines
 
-<a href="https://azuredeploy.net/" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmongodb-high-availability%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
@@ -14,7 +14,7 @@ The template expects the following parameters:
 |:--- |:---|:---|
 | adminUsername  | Administrator user name used when provisioning virtual machines (which also becomes a system administrator in MongoDB) | |
 | adminPassword  | Administrator password used when provisioning virtual machines (which is also a password for the system administrator in MongoDB) | |
-| storageAccountName | Unique namespace for the Storage Account where the Virtual Machine's disks will be placed (this name will be used as a prefix to create one or more storage accounts as per t-shirt size) | |
+| storageAccountName | Unique namespace for a new storage account where the virtual machine's disks will be placed (it will be used as a prefix to create one or more new storage accounts as per t-shirt size) | |
 | region | Location where resources will be provisioned | |
 | virtualNetworkName | The arbitrary name of the virtual network provisioned for the MongoDB deployment | mongodbVnet |
 | subnetName | Subnet name for the virtual network that resources will be provisioned in to | mongodbSubnet |

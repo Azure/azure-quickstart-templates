@@ -1,6 +1,27 @@
 #!/bin/bash
 
-#########################################################
+# The MIT License (MIT)
+#
+# Copyright (c) 2015 Microsoft Azure
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+#
 # Script Name: opscenter.sh
 # Author: Trent Swanson - Full Scale 180 Inc github:(trentmswanson)
 # Version: 0.1
@@ -17,7 +38,6 @@
 #  8 - h  Help 
 # Note : 
 # This script has only been tested on Ubuntu 12.04 LTS and must be root
-######################################################### 
 
 help()
 {
@@ -121,6 +141,14 @@ apt-get install opscenter
 
 # Enable authentication in /etc/opscenter/opscenterd.conf
 sed -i '/^\[authentication\]$/,/^\[/ s/^enabled = False/enabled = True/' /etc/opscenter/opscenterd.conf
+
+# Enable SSL - uncomment webserver SSL settings and leave them set to the default
+sed -i '/^\[webserver\]$/,/^\[/ s/^#ssl_keyfile/ssl_keyfile/' /etc/opscenter/opscenterd.conf
+sed -i '/^\[webserver\]$/,/^\[/ s/^#ssl_certfile/ssl_certfile/' /etc/opscenter/opscenterd.conf
+sed -i '/^\[webserver\]$/,/^\[/ s/^#ssl_port/ssl_port/' /etc/opscenter/opscenterd.conf
+
+# Disable HTTP port
+# sed -i '/^\[webserver\]$/,/^\[/ s/^port/#port/' /etc/opscenter/opscenterd.conf
 
 # Start Ops Center
 sudo service opscenterd start
@@ -249,14 +277,13 @@ EOF
 sleep 14
 
 # Login and get session token
-AUTH_SESSION=$(curl -X POST -d '{"username":"admin","password":"admin"}' 'http://127.0.0.1:8888/login' | sed -e 's/^.*"sessionid"[ ]*:[ ]*"//' -e 's/".*//')
+AUTH_SESSION=$(curl -k -X POST -d '{"username":"admin","password":"admin"}' 'https://127.0.0.1:8443/login' | sed -e 's/^.*"sessionid"[ ]*:[ ]*"//' -e 's/".*//')
 
 # Provision a new cluster with the nodes passed
-curl -H "opscenter-session: $AUTH_SESSION" -H "Accept: application/json" -X POST 127.0.0.1:8888/provision -d @provision.json
+curl -k -H "opscenter-session: $AUTH_SESSION" -H "Accept: application/json" -X POST https://127.0.0.1:8443/provision -d @provision.json
 
 #Update the admin password with the one passed as parameter
-curl -H "opscenter-session: $AUTH_SESSION" -H "Accept: application/json" -d "{\"password\": \"$OPS_CENTER_ADMIN_PASS\", \"role\": \"admin\" }" -X PUT http://127.0.0.1:8888/users/admin
-
+curl -k -H "opscenter-session: $AUTH_SESSION" -H "Accept: application/json" -d "{\"password\": \"$OPS_CENTER_ADMIN_PASS\", \"role\": \"admin\" }" -X PUT https://127.0.0.1:8443/users/admin
 
 # If the user is still admin just udpate the password else create a new admin user
 #if ["$OPS_CENTER_ADMIN" == "admin"];

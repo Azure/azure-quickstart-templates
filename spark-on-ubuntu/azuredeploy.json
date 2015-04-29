@@ -1,5 +1,5 @@
 {
-    "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
         "adminUsername": {
@@ -37,7 +37,6 @@
         },
         "storageAccountName": {
             "type": "string",
-            "defaultValue": "uniquesparkstoragev12",
             "metadata": {
                 "Description": "Unique namespace for the Storage Account where the Virtual Machine's disks will be placed"
             }
@@ -54,13 +53,6 @@
             "defaultValue": "myVNETspark",
             "metadata": {
                 "Description": "The arbitrary name of the virtual network provisioned for the cluster"
-            }
-        },
-        "dataDiskSize": {
-            "type": "int",
-            "defaultValue": 100,
-            "metadata": {
-                "Description": "Size of the data disk attached to Spark nodes (in GB)"
             }
         },
         "addressPrefix": {
@@ -86,7 +78,8 @@
         },
         "sparkVersion": {
             "type": "string",
-            "defaultValue": "stable",
+            "defaultValue": "1.2.1",
+	    "allowedValues": ["1.2.1","1.3.0"],
             "metadata": {
                 "Description": "The version of the Spark package to be deployed on the cluster (or use 'stable' to pull in the latest and greatest)"
             }
@@ -137,12 +130,10 @@
     },
     "variables": {
         "vmStorageAccountContainerName": "vhd",
-        "vmSourceImageName": "b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu-14_04_2_LTS-amd64-server-20150309-en-us-30GB",
         "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
         "subnetRef": "[concat(variables('vnetID'),'/subnets/',parameters('subnetName'))]",
-        "sourceImageName": "[concat('/',subscription().subscriptionId,'/services/images/',variables('vmSourceImageName'))]",
         "computerNamePrefix": "sparknode",
-        "scriptUrl": "https://raw.githubusercontent.com/CognosysTech/AzureDeploySparkV3/master/",
+        "scriptUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/spark-on-ubuntu/",
         "templateUrl": "[variables('scriptUrl')]",
         "sharedTemplateName": "shared-resources",
         "jumpboxTemplateName": "jumpbox-resources-",
@@ -236,15 +227,6 @@
                 }
             }
         },
-	{
-            "apiVersion": "2015-05-01-preview",
-            "type": "Microsoft.Network/publicIPAddresses",
-            "name": "publicIPmaster",
-            "location": "[parameters('region')]",
-            "properties": {
-                "publicIPAllocationMethod": "Dynamic"
-            }
-        },
         {
             "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Network/networkInterfaces",
@@ -255,8 +237,7 @@
                 "count": "[variables('numberOfMasterInstances')]"
             },
             "dependsOn": [
-                "[concat('Microsoft.Resources/deployments/', 'shared-resources')]",
-		 "[concat('Microsoft.Network/publicIPAddresses/', 'publicIPmaster')]"
+                "[concat('Microsoft.Resources/deployments/', 'shared-resources')]"
             ],
             "properties": {
                 "ipConfigurations": [
@@ -265,9 +246,6 @@
                         "properties": {
                             "privateIPAllocationMethod": "Static",
                             "privateIPAddress": "[concat(parameters('sparkNodeIPAddressPrefix'), copyindex())]",
-			    "publicIPAddress": {
-                                "id": "[resourceId('Microsoft.Network/publicIPAddresses','publicIPmaster')]"
-                            },
                             "subnet": {
                                 "id": "[variables('subnetRef')]"
                             }
@@ -306,7 +284,7 @@
         {
             "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Compute/virtualMachines",
-            "name": "[concat('myvm', copyindex())]",
+            "name": "[concat('mastervm', copyindex())]",
             "location": "[parameters('region')]",
             "copy": {
                 "name": "virtualMachineLoopMaster",
@@ -345,32 +323,12 @@
 			    },
 			    "caching": "ReadWrite",
 			    "createOption": "FromImage"
-			},
-			"dataDisks": [
-                        {
-                            "name": "datadisk1",
-                            "diskSizeGB": "[parameters('dataDiskSize')]",
-                            "lun": 0,
-                            "vhd": {
-                                "Uri": "[concat('https://',parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/','myvm','dataDisk', copyindex() ,'.vhd')]"
-                            },
-			    "createOption": "Empty"
-                        }
-                    ],
+			}
                 },
                 "networkProfile": {
                     "networkInterfaces": [
                         {
                             "id": "[resourceId('Microsoft.Network/networkInterfaces',concat('nic', copyindex()))]"
-                        }
-                    ],
-                    "inputEndpoints": [
-                        {
-                            "enableDirectServerReturn": "False",
-                            "endpointName": "webportal",
-                            "privatePort": 8080,
-                            "publicPort": 8080,
-                            "protocol": "tcp"
                         }
                     ]
                 }
@@ -379,7 +337,7 @@
 	{
             "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Compute/virtualMachines",
-            "name": "[concat('myvmsl', copyindex())]",
+            "name": "[concat('slavevm', copyindex())]",
             "location": "[parameters('region')]",
             "copy": {
                 "name": "virtualMachineLoop",
@@ -406,9 +364,12 @@
                     }
                 },
                 "storageProfile": {
-                    "sourceImage": {
-                        "id": "[variables('sourceImageName')]"
-                    },
+                    "imageReference": {
+			    "publisher": "[parameters('imagePublisher')]",
+			    "offer": "[parameters('imageOffer')]",
+			    "sku" : "[parameters('imageSKU')]",
+			    "version":"latest"
+			},
 			"osDisk" : {
 			    "name": "osdisksl",
 			    "vhd": {
@@ -416,18 +377,7 @@
 			    },
 			    "caching": "ReadWrite",
 			    "createOption": "FromImage"
-			},
-                    "dataDisks": [
-                        {
-                            "name": "datadisksl1",
-                            "diskSizeGB": "[parameters('dataDiskSize')]",
-                            "lun": 0,
-                            "vhd": {
-                                "Uri": "[concat('https://',parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/','myvmsl','dataDisk', copyindex() ,'.vhd')]"
-                            },
-			    "createOption": "Empty"
-                        }
-                    ]
+			}
                 },
                 "networkProfile": {
                     "networkInterfaces": [
@@ -440,7 +390,7 @@
 	},
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "[concat('myvm', copyindex(), '/installsparkmaster')]",
+            "name": "[concat('mastervm', copyindex(), '/installsparkmaster')]",
             "apiVersion": "2015-05-01-preview",
             "location": "[parameters('region')]",
             "copy": {
@@ -448,7 +398,7 @@
                 "count": "[variables('numberOfMasterInstances')]"
             },
             "dependsOn": [
-                "[concat('Microsoft.Compute/virtualMachines/', 'myvm', copyindex())]",
+                "[concat('Microsoft.Compute/virtualMachines/', 'mastervm', copyindex())]",
                 "[concat('Microsoft.Network/networkInterfaces/', 'nic', copyindex())]"
             ],
             "properties": {
@@ -459,13 +409,13 @@
                     "fileUris": [
                         "[concat(variables('scriptUrl'), 'spark-cluster-install.sh')]"
                     ],
-                    "commandToExecute": "[concat('bash spark-cluster-install.sh -k ',' 1.2.1 ',' -d ', reference('nic0').ipConfigurations[0].properties.privateIPAddress,' -s ',variables('numberOfSlavesInstances'),' -m ', ' 1 ')]"
+                    "commandToExecute": "[concat('bash spark-cluster-install.sh -k ',parameters('sparkVersion'),' -d ', reference('nic0').ipConfigurations[0].properties.privateIPAddress,' -s ',variables('numberOfSlavesInstances'),' -m ', ' 1 ')]"
                 }
             }
         },
 	{
             "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "[concat('myvmsl', copyindex(), '/installsparkslave')]",
+            "name": "[concat('slavevm', copyindex(), '/installsparkslave')]",
             "apiVersion": "2015-05-01-preview",
             "location": "[parameters('region')]",
             "copy": {
@@ -473,7 +423,7 @@
                 "count": "[variables('numberOfSlavesInstances')]"
             },
             "dependsOn": [
-                "[concat('Microsoft.Compute/virtualMachines/', 'myvmsl', copyindex())]",
+                "[concat('Microsoft.Compute/virtualMachines/', 'slavevm', copyindex())]",
                 "[concat('Microsoft.Network/networkInterfaces/', 'nicsl', copyindex())]"
             ],
             "properties": {
@@ -484,7 +434,7 @@
                     "fileUris": [
                         "[concat(variables('scriptUrl'), 'spark-cluster-install.sh')]"
                     ],
-                    "commandToExecute": "[concat('bash spark-cluster-install.sh -k ','1.2.1',' -m ', ' 0 ')]"
+                    "commandToExecute": "[concat('bash spark-cluster-install.sh -k ',parameters('sparkVersion'),' -m ', ' 0 ')]"
                 }
             }
 	}

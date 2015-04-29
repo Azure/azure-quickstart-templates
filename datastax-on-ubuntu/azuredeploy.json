@@ -1,5 +1,5 @@
 {
-  "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "region": {
@@ -82,6 +82,7 @@
     "sharedTemplateUrl": "[concat(variables('templateBaseUrl'), 'shared-resources.json')]",
     "clusterNodesTemplateUrl": "[concat(variables('templateBaseUrl'), 'ephemeral-nodes-resources.json')]",
     "opsCenterTemplateUrl": "[concat(variables('templateBaseUrl'), 'opscenter-resources.json')]",
+    "opsCenterInstallTemplateUrl": "[concat(variables('templateBaseUrl'), 'opscenter-install-resources.json')]",
     "opsCenterVmSize": "Standard_A1",
     "networkSettings": {
       "virtualNetworkName": "[parameters('virtualNetworkName')]",
@@ -193,7 +194,7 @@
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2015-01-01",
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', 'cluster-nodes')]"
+        "[concat('Microsoft.Resources/deployments/', 'shared')]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -228,6 +229,39 @@
           },
           "vmSize": {
             "value": "[variables('opsCenterVmSize')]"
+          },
+          "osSettings": {
+            "value": "[variables('osSettings')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "ops-center-install-nodes",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', 'cluster-nodes')]",
+        "[concat('Microsoft.Resources/deployments/', 'ops-center-nodes')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('opsCenterInstallTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "namespace": {
+            "value": "opc"
+          },
+          "region": {
+            "value": "[parameters('region')]"
           },
           "osSettings": {
             "value": "[variables('osSettings')]"
