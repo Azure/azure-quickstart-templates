@@ -8,8 +8,8 @@ This template deploys GitHub Enterprise on an Ubuntu virtual machine. GitHub Ent
 
 The GitHub Enterprise template expects the following parameters:
 
-| Name   | Description    | Default   |
-|:--- |:---|:---|
+| Name   | Description    |
+|:--- |:---|
 | storageAccountPrefix  | Unique prefix for your Storage Account and DNS name. Must be all lower case letters or numbers. No spaces or special characters.|
 | location | Deployment region. Choose a region with Premium Storage support. Allowed values: "West US", "East US 2", "West Europe", "East China", "Southeast Asia", "West Japan".|
 | vmSize | VM size. Select a DS Series VM with at least 14 GB of RAM. Default value: **"Standard_DS3"**|
