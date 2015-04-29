@@ -1,75 +1,86 @@
 ﻿{
-    "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "subscriptionId": {
-            "type": "string",
-            "metadata": {
-                "Description": "This is your subscriptionId"
-            }
-        },
-        "availabilitySetName": {
-            "type": "string",
-            "metadata": {
-                "Description": "This is the name of the Availability Set"
-            }
-
-        },
-        "newStorageAccountName": {
-            "type": "string",
-            "metadata": {
-                "Description": "This is the name of a storage account"
-            }
-
-        },
-        "storageAccountType": {
-            "type": "string",
-            "defaultValue": "Standard_LRS",
-            "allowedValues": [
-                "Standard_LRS",
-                "Standard_GRS"
-            ],
-            "metadata": {
-                "Description": "This is the name of the storage account type (local or geo)"
-            }
-
-        },
         "virtualNetworkName": {
             "type": "string",
             "metadata": {
-                "Description": "This is the name of the Virtual Network"
+                "description": "This is the name of the Virtual Network"
             }
 
         },
         "networkInterfaceName": {
             "type": "string",
             "metadata": {
-                "Description": "This is the prefix name of the Network interfaces"
+                "description": "This is the prefix name of the Network interfaces"
             }
 
         },
         "loadBalancerName": {
             "type": "string",
             "metadata": {
-                "Description": "This is the name of the load balancer"
+                "description": "This is the name of the load balancer"
             }
 
         },
-
+        "adminUsername": {
+            "type": "string",
+            "metadata": {
+                "description": "Admin username"
+            }
+        },
+        "adminPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Admin password"
+            }
+        },
+        "imagePublisher": {
+            "type": "string",
+            "defaultValue": "MicrosoftWindowsServer",
+            "metadata": {
+                "description": "Image Publisher"
+            }
+        },
+        "vmNamePrefix": {
+            "type": "string",
+            "defaultValue": "BackendVM",
+            "metadata": {
+                "description": "Prefix to use for VM names"
+            }
+        },
+        "imageOffer": {
+            "type": "string",
+            "defaultValue": "WindowsServer",
+            "metadata": {
+                "description": "Image Offer"
+            }
+        },
+        "imageSKU": {
+            "type": "string",
+            "defaultValue": "2012-R2-Datacenter",
+            "metadata": {
+                "description": "Image SKU"
+            }
+        },
         "vmStorageAccountContainerName": {
             "type": "string",
             "defaultValue": "vhds",
             "metadata": {
-                "Description": "This is the storage account container name"
+                "description": "This is the storage account container name"
             }
 
         },
         "vmName": {
             "type": "string",
             "metadata": {
-                "Description": "This is the prefix name for the virtual machines"
+                "description": "This is the prefix name for the virtual machines"
             }
 
+        },
+        "storageAccountName": {
+            "type": "string",
+            "defaultValue": "uniqueStorageAccountName"
         },
         "vmSize": {
             "type": "string",
@@ -82,52 +93,35 @@
                 "Standard_A4"
             ],
             "metadata": {
-                "Description": "This is the allowed list of VM sizes"
-            }
-
-        },
-        "vmSourceImageName": {
-            "type": "string",
-            "defaultValue": "a699494373c04fc0bc8f2bb1389d6106__Windows-Server-2012-Datacenter-201411.01-en.us-127GB.vhd",
-            "metadata": {
-                "Description": "This is the virtual machine image name"
-            }
-
-        },
-        "adminUserName": {
-            "type": "string",
-            "metadata": {
-                "Description": "This is the vms administrator name"
-            }
-
-        },
-        "adminPassword": {
-            "type": "securestring",
-            "metadata": {
-                "Description": "This is the vms password for the administartor account"
+                "description": "This is the allowed list of VM sizes"
             }
 
         }
     },
     "variables": {
-        "sourceImageName": "[concat('/',parameters('subscriptionId'),'/services/images/',parameters('vmSourceImageName'))]",
-        "vm1Name": "[concat(parameters('vmName'),'1')]",
-        "vm2Name": "[concat(parameters('vmName'),'2')]",
-        "vm1NicName": "[concat(parameters('networkInterfaceName'),'1')]",
-        "vm2NicName": "[concat(parameters('networkInterfaceName'),'2')]"
+        "availabilitySetName": "AvSet",
+        "storageAccountType": "Standard_LRS",
+        "subnetName": "backendSubnet",
+        "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
+        "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables ('subnetName'))]",
+        "numberOfInstances": 2,
+        "lbID": "[resourceId('Microsoft.Network/loadBalancers',parameters('loadBalancerName'))]",
+        "frontEndIPConfigID": "[concat(variables('lbID'),'/frontendIPConfigurations/LoadBalancerFrontEnd')]",
+        "lbPoolID": "[concat(variables('lbID'),'/backendAddressPools/LoadBalancerBackend')]",
+        "lbProbeID": "[concat(variables('lbID'),'/probes/tcpProbe')]"
     },
     "resources": [{
             "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Storage/storageAccounts",
-            "name": "[parameters('newStorageAccountName')]",
+            "name": "[parameters('storageAccountName')]",
             "location": "[resourceGroup().location]",
             "properties": {
-                "accountType": "[parameters('storageAccountType')]"
+                "accountType": "[variables('storageAccountType')]"
             }
         }, {
             "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Compute/availabilitySets",
-            "name": "[parameters('availabilitySetName')]",
+            "name": "[variables('availabilitySetName')]",
             "location": "[resourceGroup().location]"
         }, {
             "apiVersion": "2015-05-01-preview",
@@ -141,55 +135,41 @@
                     ]
                 },
                 "subnets": [{
-                    "name": "backendSubnet",
+                    "name": "[variables('subnetName')]",
                     "properties": {
                         "addressPrefix": "10.0.2.0/24"
                     }
                 }]
             }
-        }, {
+        },
+
+        {
             "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Network/networkInterfaces",
-            "name": "[variables('vm1NicName')]",
+            "name": "[concat(parameters('networkInterfaceName'), copyindex())]",
             "location": "[resourceGroup().location]",
+            "copy": {
+                "name": "nicLoop",
+                "count": "[variables('numberOfInstances')]"
+            },
             "dependsOn": [
-                "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
+                "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
+                "[concat('Microsoft.Network/loadBalancers/', parameters('loadBalancerName'))]"
             ],
             "properties": {
-                "IpConfigurations": [{
-                    "Properties": {
+                "ipConfigurations": [{
+                    "name": "ipconfig1",
+                    "properties": {
                         "privateIPAllocationMethod": "Dynamic",
-                        "Subnet": {
-                            "Id": "[concat(resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName')), '/subnets/backendSubnet')]"
-                        }
-                    },
-                    "Name": "ipconfig",
-                    "loadBalancerBackendAddressPools": [{
-                        "id": "[concat(resourceId('Microsoft.Network/loadBalancers',parameters('loadBalancerName')),'/backendAddressPools/LBBE')]"
-                    }]
+                        "subnet": {
+                            "id": "[variables('subnetRef')]"
+                        },
+                        "loadBalancerBackendAddressPools": [{
+                            "id": "[concat(variables('lbID'), '/backendAddressPools/BackendPool1')]"
+                        }],
+                    }
                 }]
-            }
-        }, {
-            "apiVersion": "2015-05-01-preview",
-            "type": "Microsoft.Network/networkInterfaces",
-            "name": "[variables('vm2NicName')]",
-            "location": "[resourceGroup().location]",
-            "dependsOn": [
-                "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
-            ],
-            "properties": {
-                "IpConfigurations": [{
-                    "Properties": {
-                        "privateIPAllocationMethod": "Dynamic",
-                        "Subnet": {
-                            "Id": "[concat(resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName')), '/subnets/backendSubnet')]"
-                        }
-                    },
-                    "Name": "ipconfig",
-                    "loadBalancerBackendAddressPools": [{
-                        "id": "[concat(resourceId('Microsoft.Network/loadBalancers',parameters('loadBalancerName')),'/backendAddressPools/LBBE')]"
-                    }]
-                }]
+
             }
         },
 
@@ -199,120 +179,94 @@
             "name": "[parameters('loadBalancerName')]",
             "location": "[resourceGroup().location]",
             "properties": {
-                "FrontendIpConfigurations": [{
+                "frontendIpConfigurations": [{
 
-                    "Properties": {
+                    "properties": {
                         "subnet": {
                             "Id": "[concat(resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName')), '/subnets/backendSubnet')]"
                         },
                         "privateIPAddress": "10.0.2.6",
                         "privateIPAllocationMethod": "Static"
                     },
-                    "Name": "ilbfrontend"
+                    "name": "LoadBalancerFrontend"
                 }],
-                "BackendAddressPools": [{
-                    "Name": "lbbackendpool"
+                "backendAddressPools": [{
+                    "name": "BackendPool1"
                 }],
-                "LoadBalancingRules": [{
-                    "Properties": {
-                        "FrontendIPConfiguration": {
-                            "Id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancerName')), '/frontendIpConfigurations/ilbfrontend')]"
+                "loadBalancingRules": [{
+                    "properties": {
+                        "frontendIPConfiguration": {
+                            "Id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancerName')), '/frontendIpConfigurations/LoadBalancerFrontend')]"
                         },
-                        "BackendAddressPool": {
-                            "Id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancerName')), '/backendAddressPools/lbbackendpool')]"
+                        "backendAddressPool": {
+                            "Id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancerName')), '/backendAddressPools/BackendPool1')]"
                         },
-                        "Probe": {
+                        "probe": {
                             "Id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancerName')), '/probes/lbprobe')]"
                         },
-                        "Protocol": "Tcp",
-                        "FrontendPort": 80,
-                        "BackendPort": 80,
-                        "IdleTimeoutInMinutes": 15
+                        "protocol": "Tcp",
+                        "frontendPort": 80,
+                        "backendPort": 80,
+                        "idleTimeoutInMinutes": 15
 
                     },
                     "Name": "lbrule"
                 }],
-                "Probes": [{
-                    "Properties": {
-                        "Protocol": "Tcp",
-                        "Port": 80,
-                        "IntervalInSeconds": 15,
-                        "NumberOfProbes": 2
+                "probes": [{
+                    "properties": {
+                        "protocol": "Tcp",
+                        "port": 80,
+                        "intervalInSeconds": 15,
+                        "numberOfProbes": 2
                     },
-                    "Name": "lbprobe"
+                    "name": "lbprobe"
                 }],
             }
         }, {
             "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Compute/virtualMachines",
-            "name": "[variables('vm1Name')]",
+            "name": "[concat(parameters('vmNamePrefix'), copyindex())]",
+            "copy": {
+                "name": "virtualMachineLoop",
+                "count": "[variables('numberOfInstances')]"
+            },
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[concat('Microsoft.Compute/availabilitySets/', parameters('availabilitySetName'))]",
-                "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
-                "[concat('Microsoft.Network/networkInterfaces/', variables('vm1NicName'))]"
+                "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
+                "[concat('Microsoft.Network/networkInterfaces/', parameters('networkInterfaceName'), copyindex())]",
+                "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
             ],
             "properties": {
                 "availabilitySet": {
-                    "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySetName'))]"
+                    "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('availabilitySetName'))]"
                 },
                 "hardwareProfile": {
                     "vmSize": "[parameters('vmSize')]"
                 },
                 "osProfile": {
-                    "computername": "[variables('vm1Name')]",
-                    "adminUsername": "[parameters('adminUserName')]",
-                    "adminPassword": "[parameters('adminPassword')]",
-                    "windowsProfile": {
-                        "provisionVMAgent": "true"
-                    }
+                    "computername": "[concat(parameters('vmNamePrefix'), copyIndex())]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]"
                 },
                 "storageProfile": {
-                    "sourceImage": {
-                        "id": "[variables('sourceImageName')]"
+                    "imageReference": {
+                        "publisher": "[parameters('imagePublisher')]",
+                        "offer": "[parameters('imageOffer')]",
+                        "sku": "[parameters('imageSKU')]",
+                        "version": "latest"
                     },
-                    "destinationVhdsContainer": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/',parameters('vmStorageAccountContainerName'),'/')]"
+                    "osDisk": {
+                        "name": "osdisk",
+                        "vhd": {
+                            "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/','osdisk', copyindex(), '.vhd')]"
+                        },
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage"
+                    }
                 },
                 "networkProfile": {
                     "networkInterfaces": [{
-                        "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vm1NicName'))]"
-                    }]
-                }
-            }
-        }, {
-            "apiVersion": "2015-05-01-preview",
-            "type": "Microsoft.Compute/virtualMachines",
-            "name": "[variables('vm2Name')]",
-            "location": "[resourceGroup().location]",
-            "dependsOn": [
-                "[concat('Microsoft.Compute/availabilitySets/', parameters('availabilitySetName'))]",
-                "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
-                "[concat('Microsoft.Network/networkInterfaces/', variables('vm2NicName'))]"
-            ],
-            "properties": {
-                "availabilitySet": {
-                    "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySetName'))]"
-                },
-                "hardwareProfile": {
-                    "vmSize": "[parameters('vmSize')]"
-                },
-                "osProfile": {
-                    "computername": "[variables('vm2Name')]",
-                    "adminUsername": "[parameters('adminUserName')]",
-                    "adminPassword": "[parameters('adminPassword')]",
-                    "windowsProfile": {
-                        "provisionVMAgent": "true"
-                    }
-                },
-                "storageProfile": {
-                    "sourceImage": {
-                        "id": "[variables('sourceImageName')]"
-                    },
-                    "destinationVhdsContainer": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/',parameters('vmStorageAccountContainerName'),'/')]"
-                },
-                "networkProfile": {
-                    "networkInterfaces": [{
-                        "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vm2NicName'))]"
+                        "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('networkInterfaceName'),copyindex()))]"
                     }]
                 }
             }
