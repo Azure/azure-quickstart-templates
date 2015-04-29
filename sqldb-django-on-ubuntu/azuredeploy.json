@@ -1,5 +1,5 @@
 {
-    "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json",
+   "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json",
     "contentVersion": "1.0.0.0",
     "parameters": {
         "newStorageAccountName": {
@@ -10,6 +10,8 @@
         },
         "location": {
             "type": "string",
+            "defaultValue": "West US",
+            "allowedValues": ["East US", "West US", "West Europe", "East Asia", "South East Asia"],
             "metadata": {
                 "description": "Location of all resources created by this template."
             }
@@ -24,6 +26,27 @@
             "type": "securestring",
             "metadata": {
                 "description": "Password for the Administrator of the VM, must satisfy the password requirements"
+            }
+        },
+        "imagePublisher": {
+            "type": "string",
+            "defaultValue": "Canonical",
+            "metadata": {
+                 "description": "Image Publisher"
+            }
+        },
+        "imageOffer": {
+            "type": "string",
+            "defaultValue": "UbuntuServer",
+            "metadata": {
+                "description": "Image Offer"
+            }
+        },
+        "imageSKU": {
+            "type": "string",
+            "defaultValue": "14.04.2-LTS",
+            "metadata": {
+                "description": "Image SKU"
             }
         },
         "vmDnsName": {
@@ -79,7 +102,6 @@
         "addressPrefix": "10.0.0.0/16",
         "subnetName": "Subnet-1",
         "subnetPrefix": "10.0.0.0/24",
-        "vmSourceImageName": "b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu-14_04_2_LTS-amd64-server-20150309-en-us-30GB",
         "storageAccountType": "Standard_LRS",
         "publicIPAddressName": "myPublicIP",
         "publicIPAddressType": "Dynamic",
@@ -87,7 +109,6 @@
         "vmName": "[parameters('vmDnsName')]",
         "vmSize": "Standard_A0",
         "virtualNetworkName": "MyVNET",
-        "sourceImageName": "[concat('/',subscription().subscriptionId,'/services/images/',variables('vmSourceImageName'))]",
         "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
         "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]"
     },
@@ -134,16 +155,18 @@
       ],
       "type": "Microsoft.Sql/servers"
     },
+
+
     {
         "type": "Microsoft.Storage/storageAccounts",
         "name": "[parameters('newStorageAccountName')]",
-        "apiVersion": "2014-12-01-preview",
+        "apiVersion": "2015-05-01-preview",
         "location": "[parameters('location')]",
         "properties": {
             "accountType": "[variables('storageAccountType')]"
         }
     }, {
-        "apiVersion": "2014-12-01-preview",
+        "apiVersion": "2015-05-01-preview",
         "type": "Microsoft.Network/publicIPAddresses",
         "name": "[variables('publicIPAddressName')]",
         "location": "[parameters('location')]",
@@ -154,7 +177,7 @@
             }
         }
     }, {
-        "apiVersion": "2014-12-01-preview",
+        "apiVersion": "2015-05-01-preview",
         "type": "Microsoft.Network/virtualNetworks",
         "name": "[variables('virtualNetworkName')]",
         "location": "[parameters('location')]",
@@ -172,7 +195,7 @@
             }]
         }
     }, {
-        "apiVersion": "2014-12-01-preview",
+        "apiVersion": "2015-05-01-preview",
         "type": "Microsoft.Network/networkInterfaces",
         "name": "[variables('nicName')]",
         "location": "[parameters('location')]",
@@ -195,7 +218,7 @@
             }]
         }
     }, {
-        "apiVersion": "2014-12-01-preview",
+        "apiVersion": "2015-05-01-preview",
         "type": "Microsoft.Compute/virtualMachines",
         "name": "[variables('vmName')]",
         "location": "[parameters('location')]",
@@ -213,10 +236,21 @@
                 "adminPassword": "[parameters('adminPassword')]"
             },
             "storageProfile": {
-                "sourceImage": {
-                    "id": "[variables('sourceImageName')]"
-                },
-                "destinationVhdsContainer": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/')]"
+              "imageReference": {
+                                  "publisher": "[parameters('imagePublisher')]",
+                                  "offer": "[parameters('imageOffer')]",
+                                  "sku" : "[parameters('imageSKU')]",
+                                  "version":"latest"
+                              },
+                "osDisk" : {
+                                    "name": "osdisk1",
+                                    "vhd": {
+                                       "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/','osdisk1spec.vhd')]"
+                                    },
+                                    "caching": "ReadWrite",
+                                    "createOption": "FromImage"
+                                }
+
             },
             "networkProfile": {
                 "networkInterfaces": [{
@@ -227,7 +261,7 @@
     }, {
         "type": "Microsoft.Compute/virtualMachines/extensions",
         "name": "[concat(variables('vmName'),'/newuserscript')]",
-        "apiVersion": "2014-12-01-preview",
+        "apiVersion": "2015-05-01-preview",
         "location": "[parameters('location')]",
         "dependsOn": [
             "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
@@ -242,8 +276,11 @@
               ],
               "commandToExecute": "[concat('sh install_django.sh ', parameters('vmDnsName'), ' ', parameters('serverName'), ' ', parameters('administratorLogin'), ' ', parameters('administratorLoginPassword'), ' ', parameters('databaseName'))]"
 
-
             }
         }
-    }]
+    }
+
+
+
+    ]
 }
