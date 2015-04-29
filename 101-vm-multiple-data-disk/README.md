@@ -17,5 +17,3 @@ Below are the parameters that the template expects.
 | adminPassword  | Password for the Virtual Machine  |
 | dnsNameForPublicIP  | Unique DNS Name for the Public IP used to access the Virtual Machine. |
 | sizeOfEachDataDiskInGB | Size of each data disk in GB |
-| vmDiagnosticsStorageAccountResourceGroup | Name of the resource group containing the Storage Account to place logs in | 
-| vmDiagnosticsStorageAccountName | Name of the Storage Account to place logs in |
