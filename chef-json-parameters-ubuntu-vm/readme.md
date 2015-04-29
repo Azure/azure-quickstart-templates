@@ -2,7 +2,7 @@
 
 | Deploy to Azure  | Author                          | Template Name   |
 |:-----------------|:--------------------------------| :---------------| :---------------|
-| <a href="https://azuredeploy.net/" target="_blank"><img src="http://azuredeploy.net/deploybutton_small.png"/></a> | [kundanap](https://github.com/kundanap) | Provision a Ubuntu VM and  bootstrapp the Chef Agent (https://github.com/Azure/azure-quickstart-templates/tree/master/chef-json-parameters-ubuntu-vm)
+| <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FDrewm3%2Fazure-quickstart-templates%2Fmaster%2Fchef-json-parameters-ubuntu-vm%2Fazuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton_small.png"/></a> | [kundanap](https://github.com/kundanap) | Provision a Ubuntu VM and  bootstrapp the Chef Agent (https://github.com/Azure/azure-quickstart-templates/tree/master/chef-json-parameters-ubuntu-vm)
 
 
  This template provisions a Linux Ubuntu VM on Azure and bootstraps it with Chef client version 1201.12.

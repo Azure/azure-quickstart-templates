@@ -1,6 +1,6 @@
 # Simple deployment of an Ubuntu VM with Docker
 
-<a href="https://azuredeploy.net/?repository=https://github.com/Azure/azure-quickstart-templates/docker-simple-on-ubuntu" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FDrewm3%2Fazure-quickstart-templates%2Fmaster%2Fdocker-simple-on-ubuntu%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
