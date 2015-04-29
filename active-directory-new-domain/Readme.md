@@ -4,7 +4,7 @@ This template will deploy a new VM (along with a new VNet, Storage Account and L
 
 Click the button below to deploy
 
-<a href="https://azuredeploy.net" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Factive-directory-new-domain%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
@@ -13,7 +13,7 @@ Below are the parameters that the template expects
 | Name   | Description    |
 |:--- |:---|
 | newStorageAccountName    | Name of the storage account to create    |
-| storageAccountType      | Type of the storage account <br> <ul>**Allowed Values**<li>Standard_LRS **(default)**</li><li>Standard_GRS</li><li>"Standard_RAGRS"</li><li>"Standard_ZRS"</li><li>"Premium_RS"</li></ul> |
+| storageAccountType      | Type of the storage account <br> <ul>**Allowed Values**<li>Standard_LRS **(default)**</li><li>Standard_GRS</li><li>"Standard_RAGRS"</li><li>"Standard_ZRS"</li><li>"Premium_LRS"</li></ul> |
 | deploymentLocation  | Location where to deploy the resource <br><ul>**Allowed Values**<li>West US</li><li>East US</li><li>**West Europe (default)**</li><li>East Asia</li><li>Southeast Asia</li>|
 | virtualNetworkName | Name of the Virtual Network |
 | virtualNetworkAddressRange | Virtual Network Address Range <br> <ul><li>10.0.0.0/16 **(default)**</li></ul> |
