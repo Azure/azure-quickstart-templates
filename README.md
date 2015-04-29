@@ -75,7 +75,7 @@ These are simple example templates with single actions for common requirements.
 ## 201 templates
 These are more complex example templates with single actions for more advanced requirements.
 
-| Type | # | Deploy to Azure  | Author                          | Template Name   | Description     |
+| Type | # |  Author                          | Template Name   | Description     |
 |:------|:------|:-----------------|:--------------------------------| :---------------| :---------------|
 | 201 | 1 | [singhkay](https://github.com/singhkay) | [Discover a VMs Private IP Dynamically](https://github.com/Azure/azure-quickstart-templates/tree/master/201-discover-private-ip-dynamically) | This templates discovers a private ip of another VM dynamically|
 | 201 | 2 | [mahthi](https://github.com/mahthi) | [Deploy 2 Windows VMs under Availability Set with NAT Rules through Load balancer](https://github.com/Azure/azure-quickstart-templates/tree/master/201-2-vms-loadbalancer-natrules) | This template allows you to create 2 Windows Virtual Machines in an Availability Set and configure NAT rules through a load balancer. We also use the resource loops capability to create the network interfaces and virtual machines |
@@ -92,7 +92,7 @@ These are more complex example templates with single actions for more advanced r
 ## General Workloads
 You can deploy the template to Azure by clicking the "Deploy to Azure" button below next to each template.
 
-| Type | # | Deploy to Azure  | Author                          | Template Name   | Description     |
+| Type | # | Author                          | Template Name   | Description     |
 |:------|:------|:-----------------|:--------------------------------| :---------------| :---------------|
 | APP | 1 | [singhkay](https://github.com/singhkay) | [VM DSC Extension IIS Server](https://github.com/Azure/azure-quickstart-templates/tree/master/dsc-extension-iis-server-windows-vm) | This template allows you to deploy a VM with with a DSC extension that sets up an IIS server |
 | DEV | 2 | [coreysa](https://github.com/coreysa) | [Deploy from DockerHub](https://github.com/coreysa/deploy-docker-container) | This template allows you to deploy a Docker container from DockerHub using Compose. |
