@@ -103,7 +103,7 @@ create_upstart_task()
 {
     upstart_conf="/etc/init/jenkins_slave.conf"
 
-    log "Creating Upstart conf file $UPSTARTCONF"
+    log "Creating Upstart conf file $upstart_conf"
     echo "# Jenkin Slave"                                                                                 > $upstart_conf
     echo "Description: slave node for Jenkins Continuous Integration Service"                            >> $upstart_conf
     echo ""                                                                                              >> $upstart_conf
@@ -122,12 +122,12 @@ start_slave()
 
 # Primary Install Tasks
 
-if [ ${$MASTERNODE} == "missing" ]; then
+if [ $MASTERNODE == "missing" ]; then
     log "Master node not specified"
     exit 1
 fi
 
-if [ ${$SLAVENAME} == "missing" ]; then
+if [ $SLAVENAME == "missing" ]; then
     log "Slave name not specified"
     exit 2
 fi
