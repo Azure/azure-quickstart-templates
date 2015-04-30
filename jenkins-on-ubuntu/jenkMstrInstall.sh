@@ -53,7 +53,6 @@ log()
     echo "$1"
 }
 
-log "Begin execution of Jenkins install script on ${HOSTNAME}"
 
 #Script Parameters
 NODECNT=0
@@ -77,6 +76,8 @@ while getopts :n:h optname; do
       ;;
   esac
 done
+
+log "Begin execution of Jenkins install script on ${HOSTNAME} with ${NODECNT} slave nodes"
 
 
 # Install openjdk-7
@@ -106,9 +107,9 @@ install_jenkins()
 # Configure jenkins slave nodes
 configure_slave_nodes()
 {
-    if [ ${NODECNT} -ne 0 ]; then
-        log "Configuring Jenkins master with $NODECNT dumb slave node(s)"
-        
+    log "Configuring Jenkins master with $NODECNT dumb slave node(s)"
+
+    if [ ${NODECNT} -ne 0 ]; then        
         # Run groovy script to configure master with $NODECNT dumb slave node(s)
         sudo java -jar /var/cache/jenkins/war/WEB-INF/jenkins-cli.jar -s http://localhost:8080 groovy jenkAddNode.groovy $NODECNT
     fi

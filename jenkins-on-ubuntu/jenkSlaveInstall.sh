@@ -95,7 +95,7 @@ install_java()
 download_slave_jar()
 {
     log "Downloading slave.jar from $MASTERNODE"
-    wget http://$MASTERNODE:8080/jnlpJars/slave.jar -O ~/slave.jar
+    wget http://$MASTERNODE:8080/jnlpJars/slave.jar -O ~/slave.jar > /dev/null
     chmod 777 ~/slave.jar
 }
 
