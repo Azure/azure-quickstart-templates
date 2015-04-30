@@ -2,17 +2,30 @@
 
 # Contributing guide
 
-This is a repo that contains all the currently available Azure Resource Manager templates contributed by the community. We'll soon allow a way for these templates to be indexed on [Azure.com](http://azure.microsoft.com) and be discoverable from there.
+This is a repo that contains all the currently available Azure Resource Manager templates contributed by the community. These templates are indexed on Azure.com and available to view here http://azure.microsoft.com/en-us/documentation/templates/
 
-To make sure your template is added to Azure.com index, please follow these guidelines. Any templates that are out of compliance will be added to the **blacklist.json** file and not be indexed on Azure.com
+To make sure your template is added to Azure.com index, please follow these guidelines. Any templates that are out of compliance will be added to the **blacklist** and not be indexed on Azure.com
 
-1.	Every template must be contained in its own **folder**. Name this folder something that describes what your template does
+1.	Every template must be contained in its own **folder**. Name this folder something that describes what your template does. Usually this naming pattern looks like **appName-osName**
 2.	The template file must be named **azuredeploy.json**
 3.	The template folder must host the **scripts** that are needed for successful template execution
 4.	The template folder must contain a **metadata.json** file to allow the template to be indexed on [Azure.com](http://azure.microsoft.com)
   *	Guidelines on the metadata file below
-5.	Every parameter in the template must have the **description** specified using the metadata property. See the starter template is provided [here](https://github.com/Azure/azure-quickstart-templates/tree/master/100-starter-template-with-validation) on how to do this
-6.	OPTIONAL: The folder may contain a **Readme.md** file for any additional information about the template
+5. Include a **Readme.md** file that explains how the template works
+6. Template parameters should follow **camelCasing**
+7. Every parameter in the template must have the **description** specified using the metadata property. This looks like below
+
+  ```json
+  "newStorageAccountName": {
+        "type": "string",
+        "metadata": {
+            "description": "The name of the new storage account created to store the VMs disks"
+        }
+  }
+  ```
+  
+See the starter template [here](https://github.com/Azure/azure-quickstart-templates/tree/master/100-starter-template-with-validation) for more information on passing validation
+
 
 ## metadata.json file
 
@@ -36,20 +49,29 @@ The metadata.json file will be validated using these rules
 **description**
 *	Cannot be more than 1000 characters
 *	Cannot contain HTML
+* This is used for the template description on the Azure.com index template details page
 
 **summary**
 *	Cannot be more than 200 characters
+* This is shown for template description on the main Azure.com template index page
 
 **githubUsername**
 *	Username must be the same as the username of the author submitting the Pull Request
+* This is used to display template author and Github profile pic in the Azure.com index
 
 **dateUpdated**
 *	Must be in yyyy-mm-dd format.
 *	The date must not be in the future to the date of the pull request
 
+## Good practice
+
+* It is a good practice to pass your template through a JSON linter to remove extraneous commas, paranthesis, brackets that may break the "Deploy to Azure" experience
+
 ## Starter template
 
 A starter template is provided [here](https://github.com/Azure/azure-quickstart-templates/tree/master/100-starter-template-with-validation) for you to follow
+
+
 
 ## 101 templates
 These are simple example templates with single actions for common requirements.
@@ -75,7 +97,7 @@ These are simple example templates with single actions for common requirements.
 ## 201 templates
 These are more complex example templates with single actions for more advanced requirements.
 
-| Type | # | Deploy to Azure  | Author                          | Template Name   | Description     |
+| Type | # |  Author                          | Template Name   | Description     |
 |:------|:------|:-----------------|:--------------------------------| :---------------| :---------------|
 | 201 | 1 | [singhkay](https://github.com/singhkay) | [Discover a VMs Private IP Dynamically](https://github.com/Azure/azure-quickstart-templates/tree/master/201-discover-private-ip-dynamically) | This templates discovers a private ip of another VM dynamically|
 | 201 | 2 | [mahthi](https://github.com/mahthi) | [Deploy 2 Windows VMs under Availability Set with NAT Rules through Load balancer](https://github.com/Azure/azure-quickstart-templates/tree/master/201-2-vms-loadbalancer-natrules) | This template allows you to create 2 Windows Virtual Machines in an Availability Set and configure NAT rules through a load balancer. We also use the resource loops capability to create the network interfaces and virtual machines |
@@ -92,10 +114,10 @@ These are more complex example templates with single actions for more advanced r
 ## General Workloads
 You can deploy the template to Azure by clicking the "Deploy to Azure" button below next to each template.
 
-| Type | # | Deploy to Azure  | Author                          | Template Name   | Description     |
+| Type | # | Author                          | Template Name   | Description     |
 |:------|:------|:-----------------|:--------------------------------| :---------------| :---------------|
 | APP | 1 | [singhkay](https://github.com/singhkay) | [VM DSC Extension IIS Server](https://github.com/Azure/azure-quickstart-templates/tree/master/dsc-extension-iis-server-windows-vm) | This template allows you to deploy a VM with with a DSC extension that sets up an IIS server |
-| DEV | 2 | [coreysa](https://github.com/coreysa) | [Deploy from DockerHub](https://github.com/coreysa/deploy-docker-container) | This template allows you to deploy a Docker container from DockerHub using Compose. |
+| DEV | 2 | [coreysa](https://github.com/coreysa) | [Deploy from DockerHub](https://github.com/Azure/azure-quickstart-templates/tree/master/docker-simple-on-ubuntu) | This template allows you to deploy a Docker container from DockerHub using Compose. |
 | DEV | 3 | [coreysa](https://github.com/coreysa) | [Deploy Ubuntu Azure Dev VM](https://github.com/coreysa/ubuntu-azure-dev-vm) | This template deploys an Ubuntu VM with the Azure Dev tools installed, which includes node. This executes a bash script pulled from GitHub. |
 | DEV | 4 | [coreysa](https://github.com/coreysa) | [Deploy from DockerHub (Simple Template)](https://github.com/coreysa/deploy-docker-container-simple) | This template allows you to deploy a Docker container from DockerHub using Compose with a very small amount of parameters (simple). |
 | 201 | 5 | [coreysa](https://github.com/coreysa) | [Deploy an Ubuntu VM with an additional sudo user](https://github.com/coreysa/ubuntu-azure-add-new-user) | The purpose of this script is to show how to execute a custom script with parameters passed throguh the template that will create an additional user with sudo access. The value of the sample is to show how to pass template parameter based input into a bash Linux script.|
@@ -116,7 +138,7 @@ You can deploy the template to Azure by clicking the "Deploy to Azure" button be
 | DEV | 20 | [anweiss](https://github.com/anweiss) | [Deploy an Ubuntu VM with Drone CI.](https://github.com/Azure/azure-quickstart-templates/tree/master/drone-ubuntu-vm) | This template provisions an Ubuntu Linux VM on Azure and bootstraps it with the latest release of the Drone continuous integration toolset. |
 | APP | 21 | [justintian](https://github.com/justintian) | [Create HPC Cluster on Azure](https://github.com/Azure/azure-quickstart-templates/tree/master/create-hpc-cluster) | This template provisions an HPC Pack Cluster on Azure |
 | 101 | 22 | [singhkay](https://github.com/singhkay) | [Windows VM with Anti-Malware extension](https://github.com/Azure/azure-quickstart-templates/tree/master/anti-malware-extension-windows-vm) | This template creates a Windows VM with Anti-Malware extension|
-| APP | 23 | [arsenvlad](https://github.com/arsenvlad) | [Create PostgreSQL on Ubuntu with one master and 'N' replicas](https://github.com/Azure/azure-quickstart-templates/tree/master/postgresql-multi-vm-ubuntu) | This template allows you to create one master PostgreSQL 9.3 server with streaming-replication to multiple (based on the 'numberOfSlaveInstances' parameter) slave servers in a private-only subnet. Each database server is configured with 2 data disks that are striped into RAID-0 configuration using mdadm. The template also creates one publicly accessible VM to serve as a jumpbox for ssh into the backend database servers. |
+| APP | 23 | [trentmswanson](https://github.com/trentmswanson) [arsenvlad](https://github.com/arsenvlad) | [PostgreSQL 9.3 on Ubuntu VMs](https://github.com/Azure/azure-quickstart-templates/tree/master/postgresql-on-ubuntu) | This template creates one master PostgreSQL 9.3 server with streaming-replication to multiple slave servers. |
 | 101 | 24 | [singhkay](https://github.com/singhkay) | [Create a standard Storage Account](https://github.com/Azure/azure-quickstart-templates/tree/master/101-create-storage-account-standard) | This template creates a Storage Account|
 | 201 | 25 | [trentmswanson](https://github.com/trentmswanson) | [Create Ubuntu vm data disk raid0](https://github.com/Azure/azure-quickstart-templates/tree/master/diskraid-ubuntu-vm) | Create Ubuntu vm data disk raid0|
 | 101 | 26 | [sung-msft](https://github.com/sung-msft) | [Create a Windows VM with Symantec Endpoint Protection extension enabled](https://github.com/Azure/azure-quickstart-templates/tree/master/symantec-extension-windows-vm) | Create a Windows VM with Symantec Endpoint Protection extension enabled|

@@ -24,7 +24,7 @@ The template expects the following parameters:
 | addressPrefix | The network address space for the virtual network | 10.0.0.0/24 |
 | subnetPrefix | The network address space for the virtual subnet | 10.0.0.0/24 |
 | nodeAddressPrefix | The IP address prefix that will be used for constructing private IP address for each node in the cluster | 10.0.0. |
-| tshirtSize | T-shirt size of the Hortonworks cluster (Eval, Small, Medium, large) | Eval |
+| tshirtSize | T-shirt size of the Hortonworks cluster (Eval, Small - coming soon) | Eval |
 | publicSSHCert | The base64 representation of the certificate used for SSH login. Details in Key Vault and SSH Keys section below. | Read section below |
 | keyVaultResourceGroup | The resource group containing the key vault which provides the private key used for SSH login. | AzureRM-Util |
 | keyVaultName | The name of the key vault which provides the private key  used for SSH login. | AzureRM-Keys |
@@ -43,24 +43,22 @@ The following tables outlines the deployment topology characteristics for each s
 | T-Shirt Size | Number of Master Nodes | Number of Worker Nodes |
 |:---|:---|:---|
 | Eval | 2 | 3 |
-| Small | 4 | 9 |
-| Medium | 4 | 99 |
+| Small - coming soon | 4 | 9 |
 
 **Master Nodes**
 
 | T-Shirt Size | Node VM Size | CPU Cores | Memory | Data Disks |
 |:---|:---|:---|:---|:---|
 | Eval | Standard_A3 | 4 | 7GB | 8x1TB |
-| Small | Standard_A6 | 4 | 28GB | 8x1TB |
-| Medium | Standard_A7 | 8 | 56GB | 16x1TB |
+| Small - coming soon | Standard_A6 | 4 | 28GB | 8x1TB |
 
 **Worker Nodes**
 
 | T-Shirt Size | Node VM Size | CPU Cores | Memory | Data Disks |
 |:---|:---|:---|:---|:---|
 | Eval | Standard_A3 | 4 | 7GB | 8x1TB |
-| Small | Standard_A7 | 8 | 56GB | 16x1TB |
-| Medium | Standard_A7 | 8 | 56GB | 16x1TB |
+| Small - coming soon | Standard_A7 | 8 | 56GB | 16x1TB |
+
 
 ##Connecting to the cluster
 The machines are named according to a specific pattern.  The master node is named based on parameters and using the.

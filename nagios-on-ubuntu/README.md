@@ -15,7 +15,7 @@ The template requires the following parameters:
 | storageAccountName | Unique namespace for a new storage account where the virtual machine's disks will be placed (cannot be an existing storage account) |
 | adminUsername  | Admin user name for the virtual machine  |
 | adminPassword  | Admin password for the virtual machine  |
-| region | Region name where the corresponding Azure artifacts will be created |
+| location | Location where the corresponding Azure artifacts will be created |
 | virtualNetworkName | Name of virtual network |
 | subnetName | Name of the virtual network subnet |
 | addressPrefix | The IP address mask used by the virtual network |

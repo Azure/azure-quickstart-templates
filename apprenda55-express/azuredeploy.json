@@ -1,0 +1,227 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01-preview/deploymentTemplate.json",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "platformAdminFirstName": {
+            "type": "string",
+            "metadata": {
+              "description": "This is the first name of the platform administrator."
+            }
+        },
+        "platformAdminLastName": {
+            "type": "string",
+            "metadata": {
+              "description": "This is the last name of the platform administrator"
+            }
+        },
+        "platformAdminEmailAddress": {
+            "type": "string",
+            "metadata": {
+              "description": "This is the email address of the platform administrator. This will be used to log in."
+            }
+        },
+        "platformAdminPassword": {
+            "type": "string",
+            "metadata": {
+              "description": "This is the password of the platform administrator. This will be used to log in."
+            }
+        },
+        "newStorageAccountName": {
+            "type": "string",
+            "metadata": {
+              "description": "This is the name of the storage account the user will place their VMs."
+            }
+        },
+        "adminUsername": {
+            "type": "string",
+            "metadata": {
+              "description": "This is the username of the administrative account."
+            }
+        },
+        "adminPassword": {
+            "type": "securestring",
+            "metadata": {
+              "description": "This is the password of the administrative account."
+            }
+        },
+        "location": {
+            "type": "string",
+            "allowedValues": ["East US", "West US", "West Europe", "East Asia", "Southeast Asia"],
+            "metadata": {
+              "description": "This is the location of the deployed resources."
+            }
+        },
+        "storageAccountType": {
+          "type": "string",
+          "defaultValue": "Standard_LRS",
+          "allowedValues": [
+            "Standard_LRS",
+            "Standard_GRS",
+            "Standard_ZRS"
+          ],
+          "metadata": {
+              "description": "Storage Account type"
+          }
+        },
+        "vmSize": {
+            "type": "string",
+            "allowedValues": ["Standard_A0", "Standard_A1", "Standard_A2", "Standard_A3", "Standard_A4"],
+            "metadata": {
+              "description": "The size of the virtual machine."
+            }
+        },
+        "vmName": {
+            "type": "string",
+            "metadata": {
+              "description": "This is the name of the virtual machine."
+            }
+        }
+    },
+    "variables": {
+            "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
+            "customScriptExtensionVersion": "1.2",
+            "publicIPAddressName": "[concat(parameters('vmName'), 'pubIP')]",
+            "publicIPAddressType": "Dynamic",
+            "addressPrefix": "10.0.0.0/16",
+            "subnet1Name": "Subnet-1",
+            "subnet1Ref": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]",
+            "subnet1Prefix": "10.0.0.0/24",
+            "nicName": "[concat(parameters('vmName'),'Nic')]",
+            "scriptURL": "apprenda60-singlenode.ps1",
+            "scriptName": "apprenda60-singlenode.ps1",
+            "scriptArgs": "[concat('-platformAdminFirstName ',parameters('platformAdminFirstName'),' -platformAdminLastName ',parameters('platformAdminLastName'),' -platformAdminEmailAddress ',parameters('platformAdminEmailAddress'),' -platformAdminPassword ', parameters('platformAdminPassword'))]"
+        },
+    "resources": [
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[parameters('newStorageAccountName')]",
+            "apiVersion": "2015-05-01-preview",
+            "location": "[parameters('location')]",
+            "properties": {
+                "accountType": "[parameters('storageAccountType')]"
+            }
+        },
+        {
+            "apiVersion": "2015-05-01-preview",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[variables('publicIPAddressName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+                "dnsSettings": {
+                    "domainNameLabel": "[parameters('vmName')]"
+                }
+            }
+        },
+        {
+            "apiVersion": "2015-05-01-preview",
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[parameters('virtualNetworkName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('addressPrefix')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[variables('subnet1Name')]",
+                        "properties": {
+                            "addressPrefix": "[variables('subnet1Prefix')]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "2015-05-01-preview",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[variables('nicName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+                "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+                            },
+                            "subnet": {
+                                "id": "[variables('subnet1Ref')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+
+        {
+            "apiVersion": "2015-05-01-preview",
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[parameters('vmName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
+                "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('vmSize')]"
+                },
+                "osProfile": {
+                    "computername": "[parameters('vmName')]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]"
+                },
+                "storageProfile": {
+                  "imageReference": {
+                      "publisher": "MicrosoftWindowsServer",
+                      "offer": "WindowsServer",
+                      "sku" : "2012-R2-Datacenter",
+                      "version":"latest"
+                    },
+                    "osDisk": {
+                        "name": "apprendaosdisk",
+                        "vhd": {
+                            "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/', 'apprendaosdisk.vhd')]"
+                        },
+                        "ostype" : "Windows",
+                        "caching": "ReadWrite",
+                        "createOption" :  "FromImage"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(parameters('vmName'),'/', 'CustomScriptExtension']",
+            "apiVersion": "2015-05-01-preview",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName')]"
+            ],
+            "properties": {
+                "publisher": "Microsoft.Compute",
+                "type": "CustomScriptExtension",
+                "typeHandlerVersion": "[variables('customScriptExtensionVersion')]",
+                "settings": {
+                    "fileUris": [ "[variables('scriptUrl')]" ],
+                    "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -file ',variables('scriptName'),' ',variables('scriptArgs'))]"
+                }
+            }
+        }
+    ]
+}
