@@ -101,7 +101,7 @@ install_jenkins()
     log "Waiting for Jenkins master to start..."
     sleep 60
 }
-
+ 
 
 # Configure jenkins slave nodes
 configure_slave_nodes()
@@ -115,8 +115,8 @@ configure_slave_nodes()
 }
 
 # Primary Install Tasks
-install_java()
-install_jenkins()
-configure_slave_nodes()
+install_java
+install_jenkins
+configure_slave_nodes
 exit 0
 
