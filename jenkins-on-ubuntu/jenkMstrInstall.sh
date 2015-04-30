@@ -109,7 +109,7 @@ configure_slave_nodes()
 {
     log "Configuring Jenkins master with $NODECNT dumb slave node(s)"
 
-    if [ ${NODECNT} -ne 0 ]; then        
+    if [ $NODECNT -gt 0 ]; then        
         # Run groovy script to configure master with $NODECNT dumb slave node(s)
         sudo java -jar /var/cache/jenkins/war/WEB-INF/jenkins-cli.jar -s http://localhost:8080 groovy jenkAddNode.groovy $NODECNT
     fi
