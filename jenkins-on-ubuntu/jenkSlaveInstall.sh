@@ -110,7 +110,7 @@ create_upstart_task()
     echo "start on starting"                                                                             >> $upstart_conf
     echo "script"                                                                                        >> $upstart_conf
     echo "  java -jar ~/slave.jar -jnlpUrl http://$MASTERNODE:8080/computer/$SLAVENAME/slave-agent.jnlp" >> $upstart_conf
-    echo "end script"   
+    echo "end script"                                                                                    >> $upstart_conf
     
     chmod +x $upstart_conf
 }
