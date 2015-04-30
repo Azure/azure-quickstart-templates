@@ -1,7 +1,7 @@
 {
 	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
 	"contentVersion": "1.0.0.0",
-
+	
 	"parameters": {
 		"location": {
 			"type": "string",
@@ -18,7 +18,7 @@
 			}
 		},
 
-		"storageAccountName": {
+		"newStorageAccountName": {
 			"type": "string",
 			"metadata": {
 				"description": "Storage account name pattern.The template will use this value and the resource group name for all the storage accounts."
@@ -58,12 +58,6 @@
 			],
 			"metadata": {
 				"description": "VM Size, for Premium Storage specify DS VMs."
-			}
-		},
-		"serversRole": {
-			"type": "string",
-			"metadata": {
-				"description": "Servers role, for instance webtier, database.A tag will be created with the provided value"
 			}
 		},
 		"vmNamePattern": {
@@ -178,8 +172,17 @@
 				"description": "Private storage account key"
 				}
 		},
-
-
+		"publicIPType": {
+				"type": "string",
+				"allowedValues": [
+					"Static",
+					"Dynamic"
+				],
+				"defaultValue": "Dynamic",
+				"metadata": {
+					"description": "Public facing IP Type."
+				}
+		},
 		"dnsNameLabel": {
 			"type": "string",
 			"metadata": {
@@ -206,7 +209,6 @@
 		"subnet1Prefix":"10.0.1.0/24",
 		"subnet2Prefix":"10.0.2.0/24",
 		"publicIPName": "VIP01",
-		"publicIPType":"Dynamic",
 		"VMIPAddressStart":"10.0.2.2",
 		"vmNICNamePattern":"NICVM",
 		"loadBalancerName":"LB01",
@@ -263,8 +265,8 @@
 		"lbExposedPort": 80,
 		"lbcbaIdleTimeOut": 4,
 
-		"storageAccountName": "[concat(resourceGroup().name,parameters('storageAccountName'),'0')]",
-		"storageRef": "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
+		"newStorageAccountName": "[concat(resourceGroup().name,parameters('newStorageAccountName'),'0')]",
+		"storageRef": "[concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]"
 	},
 
 
@@ -307,7 +309,7 @@
 
 			],
 			"properties": {
-				"publicIPAllocationMethod": "[variables('publicIPType')]",
+				"publicIPAllocationMethod": "[parameters('publicIPType')]",
 				"dnsSettings": {
 					"domainNameLabel": "[variables('DNSNameLB')]"
 				}
@@ -396,7 +398,7 @@
 
 		{
 			"type": "Microsoft.Storage/storageAccounts",
-			"name": "[variables('storageAccountName')]",
+			"name": "[variables('newStorageAccountName')]",
 			"apiVersion": "2015-05-01-preview",
 			"location": "[parameters('location')]",
 			"properties": {
@@ -489,7 +491,7 @@
 	                "osDisk" : {
 	                    "name": "[concat(parameters('vmNamePAttern'),copyIndex(), '-OS')]",
 	                    "vhd": {
-	                       "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',parameters('vmNamePAttern'),copyIndex(),'-OS.vhd')]"
+	                       "uri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',parameters('vmNamePAttern'),copyIndex(),'-OS.vhd')]"
 	                    },
 	                    "caching": "ReadWrite",
 	                    "createOption": "FromImage"
@@ -500,7 +502,7 @@
 							"diskSizeGB": "[parameters('vmSizeDataDisks')]",
 							"lun": 0,
 							"vhd": {
-								"uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',parameters('vmNamePAttern'),copyIndex(),'-Data_1.vhd')]"
+								"uri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',parameters('vmNamePAttern'),copyIndex(),'-Data_1.vhd')]"
 							},
 							"caching": "ReadOnly",
 							"createOption": "Empty"
@@ -510,7 +512,7 @@
 							"diskSizeGB": "[parameters('vmSizeDataDisks')]",
 							"lun": 1,
 							"vhd": {
-								"uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',parameters('vmNamePAttern'),copyIndex(),'-Data_2.vhd')]"
+								"uri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',parameters('vmNamePAttern'),copyIndex(),'-Data_2.vhd')]"
 							},
 							"caching": "ReadOnly",
 							"createOption": "Empty"
@@ -598,7 +600,7 @@
 				"ServerEnvironment" :"[parameters('serversPurpose')]"
 				},
 			"dependsOn": [
-				"[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+				"[concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]",
 				"[resourceId('Microsoft.Network/networkInterfaces','NICAnsibleController')]",
 				"[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]",
 				"VMsLoop"
@@ -636,7 +638,7 @@
 	                "osDisk" : {
 	                    "name": "AnsibleController-OS",
 	                    "vhd": {
-	                       "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/AnsibleController-OS.vhd')]"
+	                       "uri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/AnsibleController-OS.vhd')]"
 	                    },
 	                    "caching": "ReadWrite",
 	                    "createOption": "FromImage"
@@ -674,8 +676,7 @@
 						"[variables('sshRootPubBlobUrl')]",
 						"[variables('sshRootCerBlobUrl')]"
 					],
-					"commandToExecute": "[concat(variables('customScriptAnsibleCommand'),variables('customScriptAnsibleParameters'))]",
-
+					"commandToExecute": "[concat(variables('customScriptAnsibleCommand'),variables('customScriptAnsibleParameters'))]"
 				},
 				"protectedSettings":{
 					"storageAccountName":"[parameters('customScriptConfigStorageAccountName')]",
