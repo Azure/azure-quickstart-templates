@@ -15,7 +15,7 @@ The template expects the following parameters:
 | adminUsername  | Administrator user name used when provisioning virtual machines (which also becomes a system administrator in MongoDB) | |
 | adminPassword  | Administrator password used when provisioning virtual machines (which is also a password for the system administrator in MongoDB) | |
 | storageAccountName | Unique namespace for a new storage account where the virtual machine's disks will be placed (it will be used as a prefix to create one or more new storage accounts as per t-shirt size) | |
-| region | Location where resources will be provisioned | |
+| location | Location where resources will be provisioned | |
 | virtualNetworkName | The arbitrary name of the virtual network provisioned for the MongoDB deployment | mongodbVnet |
 | subnetName | Subnet name for the virtual network that resources will be provisioned in to | mongodbSubnet |
 | addressPrefix | The network address space for the virtual network | 10.0.0.0/16 |
