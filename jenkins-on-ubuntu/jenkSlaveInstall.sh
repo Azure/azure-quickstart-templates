@@ -104,13 +104,13 @@ create_upstart_task()
     upstart_conf="/etc/init/jenkins_slave.conf"
 
     log "Creating Upstart conf file $upstart_conf"
-    sudo echo "# Jenkin Slave"                                                                                 > $upstart_conf
-    sudo echo "Description: slave node for Jenkins Continuous Integration Service"                            >> $upstart_conf
-    sudo echo ""                                                                                              >> $upstart_conf
-    sudo echo "start on starting"                                                                             >> $upstart_conf
-    sudo echo "script"                                                                                        >> $upstart_conf
-    sudo echo "  java -jar ~/slave.jar -jnlpUrl http://$MASTERNODE:8080/computer/$SLAVENAME/slave-agent.jnlp" >> $upstart_conf
-    sudo echo "end script"                                                                                    >> $upstart_conf
+    echo "# Jenkin Slave"                                                                                 > $upstart_conf
+    echo "Description: slave node for Jenkins Continuous Integration Service"                            >> $upstart_conf
+    echo ""                                                                                              >> $upstart_conf
+    echo "start on starting"                                                                             >> $upstart_conf
+    echo "script"                                                                                        >> $upstart_conf
+    echo "  java -jar ~/slave.jar -jnlpUrl http://$MASTERNODE:8080/computer/$SLAVENAME/slave-agent.jnlp" >> $upstart_conf
+    echo "end script"   
     
     chmod +x $upstart_conf
 }
