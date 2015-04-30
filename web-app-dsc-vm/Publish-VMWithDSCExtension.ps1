@@ -24,6 +24,6 @@ Switch-AzureMode AzureResourceManager
 New-AzureResourceGroup -Name "cawadscrg1107" `
                        -Location "westus" `
                        -TemplateFile '.\azuredeploy.json' `
-                       -TemplateParameterFile '.\azuredeploy.param.json' `
+                       -TemplateParameterFile '.\azuredeploy-parameters.json' `
                        @additionalParameters
  
