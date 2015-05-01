@@ -118,8 +118,8 @@ create_upstart_task()
 start_slave()
 {
     log "Executing slave.jar with http://$MASTERNODE:8080/computer/$SLAVENAME/slave-agent.jnlp"
-    # service jenkins_slave start 
-    nohup java -jar ~/slave.jar -jnlpUrl http://$MASTERNODE:8080/computer/$SLAVENAME/slave-agent.jnlp &
+    service jenkins_slave start 
+    # nohup java -jar ~/slave.jar -jnlpUrl http://$MASTERNODE:8080/computer/$SLAVENAME/slave-agent.jnlp &
 }
 
 # Primary Install Tasks
