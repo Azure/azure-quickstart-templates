@@ -252,7 +252,10 @@
         "sshNatRuleName1": "[concat(variables('sshNatRuleName'), '-1')]",
         "sshNatRuleName2": "[concat(variables('sshNatRuleName'), '-2')]",
         "sshNatRuleName3": "[concat(variables('sshNatRuleName'), '-3')]",
-
+        "sshNatRuleID1": "[concat(variables('lbID'),'/inboundNatRules/',variables('sshNatRuleName1'))]",
+        "sshNatRuleID2": "[concat(variables('lbID'),'/inboundNatRules/',variables('sshNatRuleName2'))]",
+        "sshNatRuleID3": "[concat(variables('lbID'),'/inboundNatRules/',variables('sshNatRuleName3'))]",
+        
         "nicName": "[concat(parameters('vmNamePrefix'), '-nic')]",
         "nicName1": "[concat(variables('nicName'),'-1')]",
         "nicName2": "[concat(variables('nicName'),'-2')]",
@@ -346,7 +349,8 @@
             "name": "[variables('nicName1')]",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
+                "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
+                "[concat('Microsoft.Network/loadBalancers/', variables('lbName'))]"
             ],
             "properties": {
                 "ipConfigurations": [
@@ -358,7 +362,17 @@
                             "subnet": {
                                 "id": "[variables('dbSubnetRef')]"
                             }
-                        }
+                        },
+                        "loadBalancerBackendAddressPools": [
+                            {
+                                "id": "[variables('ilbBackendAddressPoolID')]"
+                            }
+                        ],
+                        "loadBalancerInboundNatRules": [
+                            {
+                                "id": "[variables('sshNatRuleID1')]"
+                            }
+                        ]
                     }
                 ]
             }
@@ -369,7 +383,8 @@
             "name": "[variables('nicName2')]",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
+                "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
+                "[concat('Microsoft.Network/loadBalancers/', variables('lbName'))]"
             ],
             "properties": {
                 "ipConfigurations": [
@@ -381,7 +396,17 @@
                             "subnet": {
                                 "id": "[variables('dbSubnetRef')]"
                             }
-                        }
+                        },
+                        "loadBalancerBackendAddressPools": [
+                            {
+                                "id": "[variables('ilbBackendAddressPoolID')]"
+                            }
+                        ],
+                        "loadBalancerInboundNatRules": [
+                            {
+                                "id": "[variables('sshNatRuleID2')]"
+                            }
+                        ]
                     }
                 ]
             }
@@ -392,7 +417,8 @@
             "name": "[variables('nicName3')]",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
+                "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
+                "[concat('Microsoft.Network/loadBalancers/', variables('lbName'))]"
             ],
             "properties": {
                 "ipConfigurations": [
@@ -404,7 +430,17 @@
                             "subnet": {
                                 "id": "[variables('dbSubnetRef')]"
                             }
-                        }
+                        },
+                        "loadBalancerBackendAddressPools": [
+                            {
+                                "id": "[variables('ilbBackendAddressPoolID')]"
+                            }
+                        ],
+                        "loadBalancerInboundNatRules": [
+                            {
+                                "id": "[variables('sshNatRuleID3')]"
+                            }
+                        ]
                     }
                 ]
             }
@@ -672,10 +708,7 @@
             "name": "[variables('lbName')]",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[concat('Microsoft.Network/publicIPAddresses/', variables('lbPublicIPName'))]",
-                "[concat('Microsoft.Network/networkInterfaces/', variables('nicName1'))]",
-                "[concat('Microsoft.Network/networkInterfaces/', variables('nicName2'))]",
-                "[concat('Microsoft.Network/networkInterfaces/', variables('nicName3'))]"
+                "[concat('Microsoft.Network/publicIPAddresses/', variables('lbPublicIPName'))]"
             ],
             "properties": {
                 "frontendIPConfigurations": [
@@ -690,25 +723,7 @@
                 ],
                 "backendAddressPools": [
                     {
-                        "name": "[variables('ilbBackendAddressPoolName')]",
-                        "properties": {
-                            "loadBalancingRules": [
-                                {
-                                    "id": "[variables('ilbRuleID')]"
-                                }
-                            ],
-                            "backendIPConfigurations": [
-                                {
-                                    "id": "[variables('backEndIPConfigNic1')]"
-                                },
-                                {
-                                    "id": "[variables('backEndIPConfigNic2')]"
-                                },
-                                {
-                                    "id": "[variables('backEndIPConfigNic3')]"
-                                }
-                            ]
-                        }
+                        "name": "[variables('ilbBackendAddressPoolName')]"
                     }
                 ],
                 "loadBalancingRules": [
@@ -751,9 +766,6 @@
                             "frontendIPConfiguration": {
                                     "id": "[variables('sshIPConfig')]"
                             },
-                            "backendIPConfiguration": {
-                                "id": "[variables('backEndIPConfigNic1')]"
-                            },
                             "protocol": "tcp",
                             "frontendPort": "[parameters('sshNatRuleFrontEndPort1')]",
                             "backendPort": "[parameters('sshNatRuleBackEndPort')]",
@@ -766,9 +778,6 @@
                             "frontendIPConfiguration": {
                                     "id": "[variables('sshIPConfig')]"
                             },
-                            "backendIPConfiguration": {
-                                "id": "[variables('backEndIPConfigNic2')]"
-                            },
                             "protocol": "tcp",
                             "frontendPort": "[parameters('sshNatRuleFrontEndPort2')]",
                             "backendPort": "[parameters('sshNatRuleBackEndPort')]",
@@ -780,9 +789,6 @@
                         "properties": {
                             "frontendIPConfiguration": {
                                     "id": "[variables('sshIPConfig')]"
-                            },
-                            "backendIPConfiguration": {
-                                "id": "[variables('backEndIPConfigNic3')]"
                             },
                             "protocol": "tcp",
                             "frontendPort": "[parameters('sshNatRuleFrontEndPort3')]",
