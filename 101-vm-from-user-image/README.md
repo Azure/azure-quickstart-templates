@@ -1,6 +1,6 @@
 # Create a Virtual Machine from a User Image
 
-<a href="https://azuredeploy.net/" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-vm-from-user-image%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
@@ -19,11 +19,5 @@ Below are the parameters that the template expects
 | adminUsername  | Username for the Virtual Machines  |
 | adminPassword  | Password for the Virtual Machine  |
 | dnsNameForPublicIP  | Unique DNS Name for the Public IP used to access the Virtual Machine. |
-| subscriptionId  | Subscription ID where the template will be deployed |
-| vmSourceImageName  | Source Image Name for the VM. Example: b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu-12_04_5-LTS-amd64-server-20140927-en-us-30GB |
-| location | location where the resources will be deployed |
-| virtualNetworkName | Name of Virtual Network |
 | vmSize | Size of the Virtual Machine |
-| vmName | Name of Virtual Machine |
-| publicIPAddressName | Name of Public IP Address Name |
-| nicName | Name of Network Interface |
+| 

@@ -1,6 +1,6 @@
 # Install a Redis cluster on Ubuntu Virtual Machines using Custom Script Linux Extension
 
-<a href="https://azuredeploy.net/" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fredis-high-availability%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
@@ -14,7 +14,7 @@ The example expects the following parameters:
 | adminUsername  | Administrator user name used when provisioning virtual machines | |
 | adminPassword  | Administrator password used when provisioning virtual machines | |
 | storageAccountName | Unique namespace for a new storage account where the virtual machine's disks will be placed (cannot be an existing storage account) | |
-| region | Location where resources will be provisioned | |
+| location | Location where resources will be provisioned | |
 | virtualNetworkName | The arbitrary name of the virtual network provisioned for the Redis cluster | redisVirtNet |
 | addressPrefix | The network address space for the virtual network | 10.0.0.0/16 |
 | subnetName | Subnet name for the virtual network that resources will be provisioned in to | redisSubnet1 |

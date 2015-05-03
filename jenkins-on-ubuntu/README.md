@@ -1,6 +1,6 @@
 # Install a Jenkins Master and Slave node on Ubuntu Virtual Machines using Custom Script Linux Extension
 
-<a href="https://azuredeploy.net/" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fjenkins-on-ubuntu%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
@@ -10,7 +10,7 @@ The example expects the following parameters:
 
 | Name   | Description    |
 |:--- |:---|
-| storageAccountPrefix  | Unique DNS Name for the Storage Account where the Virtual Machine's disks will be placed (multiple storage accounts are created with this template using this value as a prefix for the storage account name) |
+| storageAccountPrefix  | Unique DNS Name for the Storage Account where the Virtual Machine's disks will be placed placed (cannot be an existing storage account) |
 | adminUsername  | Admin user name for the Virtual Machines  |
 | adminPassword  | Admin password for the Virtual Machine  |
 | region | Region name where the corresponding Azure artifacts will be created |

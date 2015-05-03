@@ -1,13 +1,12 @@
-<a href="https://azuredeploy.net/" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-rbac-builtinrole-resourcegroup%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
 This template assigns Owner, Reader or Contributor access to an existing resource group. Inputs to this template are following fields:
 
-1. Subscription ID
-2. Principal ID
-3. Role Definition ID
-4. Resource Group Name
+Principal ID
+Role Definition Type
+
 
 **Use following powershell command to get Principal ID associated with a user using their email id. Please note, principal id maps to the id inside the directory and can point to a user, service principal, or security group. The ObjectId is the principal ID. 
 

@@ -28,9 +28,62 @@
         "vmName": "[concat(parameters('dnsNamePrefix'), '-mn')]",
         "publicIPAddressName": "[concat(variables('vmName'), '-publicIP')]",
         "nicName": "[concat(variables('vmName'), '-nic')]",
-        "storageAccountName": "[concat(parameters('storageAccount').prefix, 'mn')]"
+        "storageAccountName": "[concat(parameters('storageAccount').prefix, 'mn')]",
+        "securityGroupName": "[concat(parameters('dnsNamePrefix'), '-mn-sg')]"
     },
     "resources": [
+        {
+            "apiVersion": "2015-05-01-preview",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[variables('securityGroupName')]",
+            "location": "[parameters('region')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "SSH",
+                        "properties": {
+                            "description": "Allows SSH traffic",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "22",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 100,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "Management.Web.UI",
+                        "properties": {
+                            "description": "Allows Management.Web.UI traffic",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "7180",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 101,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "Navigator",
+                        "properties": {
+                            "description": "Allows Navigator traffic",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "7187",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 102,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        },
         {
             "type": "Microsoft.Storage/storageAccounts",
             "name": "[variables('storageAccountName')]",
@@ -58,7 +111,8 @@
             "name": "[variables('nicName')]", 
             "location": "[parameters('region')]", 
             "dependsOn": [ 
-                "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]" 
+                "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+                "[concat('Microsoft.Network/networkSecurityGroups/', variables('securityGroupName'))]"
             ], 
             "properties": { 
                 "ipConfigurations": [{ 
@@ -70,10 +124,13 @@
                             "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]" 
                         }, 
                         "subnet": { 
-                            "id": "[concat(resourceId('Microsoft.Network/virtualNetworks',parameters('networkSpec').virtualNetworkName), '/subnets/', parameters('networkSpec').virtualNetworkSubnetName)]"
-                        }
+                            "id": "[concat(resourceId('Microsoft.Network/virtualNetworks',parameters('networkSpec').virtualNetworkName), '/subnets/', parameters('networkSpec').virtualNetworkSubnetName)]"                            
+                        }                        
                     } 
-                }] 
+                }],
+                "networkSecurityGroup" : {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('securityGroupName'))]"
+                }
             } 
         },
         {
@@ -105,15 +162,7 @@
                         }]
                     }],
                     "linuxConfiguration" : {
-                        "disablePasswordAuthentication": "true",        
-                        "ssh": {
-                            "publicKeys": [
-                                {
-                                    "keyData": "[parameters('vmSpec').publicSSHCert]",
-                                    "path": "[concat('/home/',parameters('vmSpec').adminUserName,'/.ssh/authorized_keys')]"
-                                }
-                            ]
-                        }                     
+                        "disablePasswordAuthentication": "false"
                     }
                 },
                 "storageProfile": {
@@ -121,7 +170,7 @@
                         "publisher": "OpenLogic", 
                         "offer": "CentOS", 
                         "sku": "6.5", 
-                        "version":"6.5.201503" 
+                        "version":"latest" 
                     },
                     "osDisk": {
                         "name": "osdisk", 

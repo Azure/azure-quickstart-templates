@@ -1,6 +1,6 @@
 # Load Balancer with Inbound NAT Rule
 
-<a href="https://azuredeploy.net/" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-loadbalancer-with-nat-rule%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
@@ -12,11 +12,6 @@ Below are the parameters that the template expects
 |:--- |:---|
 | dnsNameforLBIP  | Unique DNS Name for the Load Balancer  |
 | location  | Azure region where the resource will be deployed to  |
-| virtualNetworkName  | Name of the Virtual Network  |
-| publicIPAddressName  | Name of the Public IP Address that will be associated with the Load Balancer |
 | addressPrefix  | Address Prefix for the Virtual Network specified in the CIDR format  |
-| subnetName | Name of the Subnet |
 | subnetPrefix | Prefix for the Subnet specified in CIDR format |
 | publicIPAddressType | Address Type of the Public IP Address - Dynamic or Static |
-| loadBalancerName | Name of the Load Balancer |
-| nicName | Name of the NIC |

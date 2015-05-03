@@ -30,9 +30,62 @@
         "storageAccountName": "[concat(parameters('storageAccount').prefix, 'dn')]",
 
         "publicIPAddressName": "[concat(variables('vmName'), '-publicIP')]",
+        "securityGroupName": "[concat(parameters('dnsNamePrefix'), '-dn-sg')]"
     },
     "resources": [         
-         {
+        {
+            "apiVersion": "2015-05-01-preview",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[variables('securityGroupName')]",
+            "location": "[parameters('region')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "SSH",
+                        "properties": {
+                            "description": "Allows SSH traffic",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "22",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 100,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "HDFS.dn.Web.UI",
+                        "properties": {
+                            "description": "Allow HDFS Web UI traffic",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "50075",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 101,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "YARN.nm.Web.UI",
+                        "properties": {
+                            "description": "Allow YARN Web UI traffic",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "8042",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 102,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
             "type": "Microsoft.Storage/storageAccounts",
             "name": "[concat(variables('storageAccountName'), copyIndex())]",
             "apiVersion": "2015-05-01-preview",
@@ -68,7 +121,7 @@
             "location": "[parameters('region')]", 
             "dependsOn": [ 
                 "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'), copyIndex())]",
-                "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'), copyIndex())]"
+                "[concat('Microsoft.Network/networkSecurityGroups/', variables('securityGroupName'))]"
             ], 
             "copy": {
                 "name": "nameNodeNicLoop",
@@ -84,10 +137,13 @@
                             "id": "[concat(resourceId('Microsoft.Network/virtualNetworks',parameters('networkSpec').virtualNetworkName), '/subnets/', parameters('networkSpec').virtualNetworkSubnetName)]"
                         },
                         "publicIPAddress": { 
-                            "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat(variables('publicIPAddressName'), copyIndex()))]" 
+                            "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat(variables('publicIPAddressName'), copyIndex()))]"
                         }
                     } 
-                }] 
+                }],
+                "networkSecurityGroup" : {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('securityGroupName'))]"
+                }
             } 
         },
         {
@@ -100,7 +156,8 @@
                 "count": "[parameters('vmCount')]"
             },
             "dependsOn": [                
-                "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyIndex())]"
+                "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyIndex())]",
+                "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'), copyIndex())]"
             ],
             "properties": {
                 "availabilitySet": {
@@ -113,16 +170,16 @@
                     "computername": "[concat(variables('vmName'), copyIndex())]",
                     "adminUsername": "[parameters('vmSpec').adminUserName]",
                     "adminPassword": "[parameters('vmSpec').adminPassword]",
-                    "linuxConfiguration" : {
-                        "disablePasswordAuthentication": "true",
-                        "ssh": {
-                            "publicKeys": [
-                                {
-                                    "keyData": "[parameters('vmSpec').publicSSHCert]",
-                                    "path": "[concat('/home/',parameters('vmSpec').adminUserName,'/.ssh/authorized_keys')]"
-                                }
-                            ]
-                        }                          
+                    "secrets": [{
+                        "sourceVault": {
+                            "id": "[parameters('vmSpec').keyVaultResourceId]"
+                        },
+                        "vaultCertificates": [{
+                            "certificateUrl": "[parameters('vmSpec').keyUri]"
+                        }]
+                    }],
+                   "linuxConfiguration" : {
+                        "disablePasswordAuthentication": "false"                        
                     }
                 },
                 "storageProfile": {
@@ -130,7 +187,7 @@
                         "publisher": "OpenLogic", 
                         "offer": "CentOS", 
                         "sku": "6.5", 
-                        "version":"6.5.201503" 
+                        "version":"latest" 
                     },
                     "osDisk": {
                         "name": "osdisk", 
@@ -331,7 +388,7 @@
                         "[concat(parameters('scriptsUri'), '/scripts/prepareDisks.sh')]",
                         "[concat(parameters('scriptsUri'), '/scripts/initialize-node.sh')]"                        
                     ],
-                    "commandToExecute": "sh initialize-node.sh"               
+                    "commandToExecute": "[concat('sh initialize-node.sh \"', parameters('vmSpec').adminUserName, '\"')]"
                 }
             }
         }
