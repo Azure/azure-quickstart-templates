@@ -65,7 +65,6 @@
         },
         "vmSize": {
             "type": "string",
-            "allowedValues": ["Standard_A0", "Standard_A1", "Standard_A2", "Standard_A3", "Standard_A4"],
             "metadata": {
               "description": "The size of the virtual machine."
             }
@@ -75,19 +74,26 @@
             "metadata": {
               "description": "This is the name of the virtual machine."
             }
+        },
+        "virtualNetworkName": {
+           "type" : "string",
+           "metadata" : {
+              "description": "This is the name of the virtual network."
+           }
         }
     },
     "variables": {
+            "platformNode" : "[concat(parameters('vmName'))]",
             "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
             "customScriptExtensionVersion": "1.2",
-            "publicIPAddressName": "[concat(parameters('vmName'), 'pubIP')]",
+            "publicIPAddressName": "[concat(variables('platformNode'), 'pubIP')]",
             "publicIPAddressType": "Dynamic",
             "addressPrefix": "10.0.0.0/16",
             "subnet1Name": "Subnet-1",
             "subnet1Ref": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]",
             "subnet1Prefix": "10.0.0.0/24",
-            "nicName": "[concat(parameters('vmName'),'Nic')]",
-            "scriptURL": "apprenda60-singlenode.ps1",
+            "nicName": "[concat(variables('platformNode'),'Nic')]",
+            "scriptURL": "http://apprendaconfigfiles.blob.core.windows.net/configurationfiles/apprenda60-singlenode.ps1",
             "scriptName": "apprenda60-singlenode.ps1",
             "scriptArgs": "[concat('-platformAdminFirstName ',parameters('platformAdminFirstName'),' -platformAdminLastName ',parameters('platformAdminLastName'),' -platformAdminEmailAddress ',parameters('platformAdminEmailAddress'),' -platformAdminPassword ', parameters('platformAdminPassword'))]"
         },
@@ -109,7 +115,7 @@
             "properties": {
                 "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
                 "dnsSettings": {
-                    "domainNameLabel": "[parameters('vmName')]"
+                    "domainNameLabel": "[variables('platformNode')]"
                 }
             }
         },
@@ -164,7 +170,7 @@
         {
             "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Compute/virtualMachines",
-            "name": "[parameters('vmName')]",
+            "name": "[variables('platformNode')]",
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
@@ -175,7 +181,7 @@
                     "vmSize": "[parameters('vmSize')]"
                 },
                 "osProfile": {
-                    "computername": "[parameters('vmName')]",
+                    "computername": "[variables('platformNode')]",
                     "adminUsername": "[parameters('adminUsername')]",
                     "adminPassword": "[parameters('adminPassword')]"
                 },
@@ -191,7 +197,6 @@
                         "vhd": {
                             "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/', 'apprendaosdisk.vhd')]"
                         },
-                        "ostype" : "Windows",
                         "caching": "ReadWrite",
                         "createOption" :  "FromImage"
                     }
@@ -207,11 +212,11 @@
         },
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "[concat(parameters('vmName'),'/', 'CustomScriptExtension']",
+            "name": "[concat(variables('platformNode'),'/', 'CustomScriptExtension')]",
             "apiVersion": "2015-05-01-preview",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName')]"
+                "[concat('Microsoft.Compute/virtualMachines/', variables('platformNode'))]"
             ],
             "properties": {
                 "publisher": "Microsoft.Compute",
