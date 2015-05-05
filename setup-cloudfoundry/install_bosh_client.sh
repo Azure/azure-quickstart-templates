@@ -7,7 +7,7 @@ sudo npm install azure-cli optimist azure-mgmt-resource retry async azure-common
 pushd .
 mkdir src
 cd src
-git clone https://github.com/abelhu/bosh.git -b azure_cpi_crp
+git clone https://github.com/qingfuwang/bosh.git -b azure_cpi_crp
 cd bosh
 bundle install --local
 

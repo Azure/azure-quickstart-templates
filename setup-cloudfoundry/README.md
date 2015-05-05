@@ -5,6 +5,7 @@
 </a>
 
 This template allows you to setup cloud foundry development envrioment. It will create a vm with public ipaddress,storage account, virutal network, network security group, 3 reserverd public ip address. 
+After deployment finished, You can access the vm by ssh <adminUsername>@<dnsNameForPublicIP>.<locaion>.cloudapp.azure.com
 
 Below are the parameters that the template expects
 
