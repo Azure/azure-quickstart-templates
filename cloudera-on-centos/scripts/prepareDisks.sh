@@ -95,7 +95,7 @@ formatAndMountAllDrives() {
   let i=0 || true
   for x in $(sfdisk -l 2>/dev/null | cut -d' ' -f 2 | grep /dev | grep -v "/dev/sda" | grep -v "/dev/sdb" | sed "s^:^^");
   do
-    echo "$(hostname) : $(x): About to call formatAndMountDrive)"
+    echo "$(hostname) : $x: About to call formatAndMountDrive)"
     formatAndMountDrive $x $i  0</dev/null &
     let i=(i + 1) || true
   done
