@@ -39,10 +39,14 @@ call("chmod 700 myPrivateKey.key",shell=True)
 call("cp myPrivateKey.key ./bosh/.ssh/bosh.key",shell=True)
 call("cp -r ./bosh /home/"+settings['username'],shell=True)
 call("chown -R "+settings['username']+" "+"/home/"+settings['username'],shell=True)
-call("sh bosh/install_bosh_client.sh",shell=True)
+
+call("sudo apt-get install -y nodejs-legacy npm",shell=True)
+call("sudo npm install azure-cli optimist azure-mgmt-resource retry async azure-common",shell=True)  
 
 call(["echo","-H","-u",settings['username'],"bash","-c","azure config mode asm"])
 call( ["sudo","-H","-u",settings['username'],"bash","-c","azure storage container create --container stemcell -a "+settings['storageaccount']+" -k "+settings['storagekey']])
 call( ["sudo","-H","-u",settings['username'],"bash","-c","azure storage blob copy start  --dest-account-name "+settings['storageaccount']+"  --dest-container stemcell --dest-blob stemcell.vhd --source-uri '"+settings['stemcell']+"' --dest-account-key '"+settings['storagekey']+"' --quiet"])
+
+call("sh bosh/install_bosh_client.sh",shell=True)
 
 exit(0)
