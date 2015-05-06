@@ -4,64 +4,59 @@
 
     "parameters": {
 
-        "location": {
-            "type": "string",
-            "defaultValue": "West US",
-            "allowedValues": [
-                "West US",
-                "East US",
-                "West Europe",
-                "East Asia",
-                "Southeast Asia"
-            ],
-            "metadata": {
-                "Description": "The region to deploy the resources into"
-            }
-        },
-
         "publicDnsName": {
             "type": "string",
-            "defaultValue": "rds",
             "metadata": {
-                "Description": "Unique public DNS prefix for the deployment. The fqdn will look something like '<dnsname>.westus.cloudapp.azure.com'. Up to 62 chars, digits or dashes, lowercase, should start with a letter: must conform to '^[a-z][a-z0-9-]{1,61}[a-z0-9]$'."
+                "description": "Unique public DNS prefix for the deployment. The fqdn will look something like '<dnsname>.westus.cloudapp.azure.com'. Up to 62 chars, digits or dashes, lowercase, should start with a letter: must conform to '^[a-z][a-z0-9-]{1,61}[a-z0-9]$'."
             }
         },
-
         "storageAccountName": {
             "type": "string",
-            "defaultValue": "sa",
             "metadata": {
-                "Description": "Name of the Storage Account. This has to be a uinique name, up to 24 chars, all lowercase."
+                "description": "Name of the Storage Account. This has to be a uinique name, up to 24 chars, all lowercase."
             }
         },
 
-        "sourceImageName": {
+        "imagePublisher": {
             "type": "string",
-            "defaultValue": "a699494373c04fc0bc8f2bb1389d6106__Windows-Server-2012-R2-201503.01-en.us-127GB.vhd",
+            "defaultValue": "MicrosoftWindowsServer",
             "metadata": {
-                "Description": "Platform image; this image is used for all the roles: DC, Gateway/Broker, and RD Session Hosts"
+                "description": "Image Publisher"
             }
-
+        },
+        "imageOffer": {
+            "type": "string",
+            "defaultValue": "WindowsServer",
+            "metadata": {
+                "description": "Image Offer"
+            }
+        },
+        "imageSku": {
+            "type": "string",
+            "defaultValue": "2012-R2-Datacenter",
+            "metadata": {
+                "description": "Image SKU"
+            }
         },
 
         "domainName": {
             "type": "string",
             "defaultValue": "contoso.com",
             "metadata": {
-                "Description": "The FQDN of the AD domain"
+                "description": "The FQDN of the AD domain"
             }
         },
         "adminUsername": {
             "type": "string",
             "defaultValue": "cloudguy",
             "metadata": {
-                "Description": "The name of the administrator of the new VM and the domain. Exclusion list: 'administrator'"
+                "description": "The name of the administrator of the new VM and the domain. Exclusion list: 'administrator'"
             }
         },
         "adminPassword": {
             "type": "securestring",
             "metadata": {
-                "Description": "The password for the administrator account of the new VM and the domain"
+                "description": "The password for the administrator account of the new VM and the domain"
             }
         },
 
@@ -69,7 +64,7 @@
             "type": "int",
             "defaultValue": 2,
             "metadata": {
-                "Description": "Number of RDSH instances"
+                "description": "Number of RDSH instances"
             }
         },
         "rdshVmSize": {
@@ -83,9 +78,16 @@
                 "Standard_A4"
             ],
             "metadata": {
-                "Description": "The size of the RDSH VMs"
+                "description": "The size of the RDSH VMs"
             }
+        },
 
+        "assetLocation": {
+            "type": "string",
+            "defaultValue": "https://github.com/mmarch/azure-quickstart-templates/raw/master/rds-deployment",
+            "metadata": {
+                "description": "The location of resources such as templates and DSC modules that the script is dependent"
+            }
         }
     },
 
@@ -96,10 +98,10 @@
     "resources": [
 
         {
-            "apiVersion": "2014-12-01-preview",
+            "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Network/publicIPAddresses",
             "name": "publicIp",
-            "location": "[parameters('location')]",
+            "location": "[resourceGroup().location]",
             "properties": {
                 "publicIPAllocationMethod": "Dynamic",
                 "dnsSettings": {
@@ -107,29 +109,27 @@
                 }
             }
         },
-
         {
-            "apiVersion": "2014-12-01-preview",
+            "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Storage/storageAccounts",
             "name": "[parameters('storageAccountName')]",
-            "location": "[parameters('location')]",
+            "location": "[resourceGroup().location]",
             "properties": {
                 "accountType": "Standard_LRS"
             }
         },
-
         {
-            "apiVersion": "2014-12-01-preview",
+            "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Compute/availabilitySets",
             "name": "availabilityset",
-            "location": "[parameters('location')]"
+            "location": "[resourceGroup().location]"
         },
         
         {
-            "apiVersion": "2014-12-01-preview",
+            "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Network/virtualNetworks",
             "name": "vnet",
-            "location": "[parameters('location')]",
+            "location": "[resourceGroup().location]",
             "properties": {
                 "addressSpace": {
                     "addressPrefixes": [ "10.0.0.0/16" ]
@@ -146,10 +146,10 @@
         },
 
         {
-            "apiVersion": "2014-12-01-preview",
+            "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Network/loadBalancers",
             "name": "loadBalancer",
-            "location": "[parameters('location')]",
+            "location": "[resourceGroup().location]",
             "dependsOn": [
                 "Microsoft.Network/publicIPAddresses/publicIp"
             ],
@@ -211,10 +211,10 @@
         },
 
         {
-            "apiVersion": "2014-12-01-preview",
+            "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Network/networkInterfaces",
             "name": "dc-nif",
-            "location": "[parameters('location')]",
+            "location": "[resourceGroup().location]",
             "dependsOn": [
                 "Microsoft.Network/virtualNetworks/vnet"
             ],
@@ -235,10 +235,10 @@
         },
 
         {
-            "apiVersion": "2014-12-01-preview",
+            "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Compute/virtualMachines",
             "name": "dc-vm",
-            "location": "[parameters('location')]",
+            "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[resourceId('Microsoft.Storage/storageAccounts',parameters('storageAccountName'))]",
                 "[resourceId('Microsoft.Network/networkInterfaces','dc-nif')]"
@@ -250,23 +250,31 @@
                 "osProfile": {
                     "computername": "dc",
                     "adminUsername": "[parameters('adminUsername')]",
-                    "adminPassword": "[parameters('adminPassword')]",
-                    "windowsProfile": {
-                        "provisionVMAgent": "true"
-                    }
+                    "adminPassword": "[parameters('adminPassword')]"
                 },
                 "storageProfile": {
-                    "sourceImage": {
-                        "id": "[concat('/',subscription().subscriptionId,'/services/images/',parameters('sourceImageName'))]"
+                    "imageReference": {
+                        "publisher": "[parameters('imagePublisher')]",
+                        "offer": "[parameters('imageOffer')]",
+                        "sku": "[parameters('imageSku')]",
+                        "version": "latest"
                     },
-                    "destinationVhdsContainer": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/')]",
+                    "osDisk": {
+                        "name": "osdisk",
+                        "vhd": {
+                            "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/dc-vm-os-disk.vhd')]"
+                        },
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage"
+                    },
                     "dataDisks": [
                         {
+                            "name": "dc-vm-data-disk",
                             "vhd": {
-                                "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/dc-vm-data-disk1.vhd')]"
+                                "Uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/dc-vm-data-disk.vhd')]"
                             },
-                            "name": "dc-vm-data-disk1",
                             "caching": "None",
+                            "createOption": "Empty",
                             "diskSizeGB": "1000",
                             "lun": 0
                         }
@@ -284,8 +292,8 @@
                 {
                     "type": "Microsoft.Compute/virtualMachines/extensions",
                     "name": "dc-vm/createadforest",
-                    "apiVersion": "2014-12-01-preview",
-                    "location": "[parameters('location')]",
+                    "apiVersion": "2015-05-01-preview",
+                    "location": "[resourceGroup().location]",
                     "dependsOn": [
                         "[resourceId('Microsoft.Compute/virtualMachines', 'dc-vm')]"
                     ],
@@ -294,7 +302,7 @@
                         "type": "DSC",
                         "typeHandlerVersion": "1.7",
                         "settings": {
-                            "ModulesUrl": "https://raw.githubusercontent.com/azurermtemplates/azurermtemplates/master/activedirectorynewdomain/CreateADPDC.ps1.zip",
+                            "ModulesUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/active-directory-new-domain/CreateADPDC.ps1.zip",
                             "ConfigurationFunction": "CreateADPDC.ps1\\CreateADPDC",
                             "Properties": {
                                 "DomainName": "[parameters('domainName')]",
@@ -324,25 +332,34 @@
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "https://raw.githubusercontent.com/azurermtemplates/azurermtemplates/master/activedirectorynewdomain-ha-2-dc/vnet-with-dns-server.json",
+                    "uri": "[concat(parameters('assetLocation'),'/vnet-with-dns-server.json')]",
                     "contentVersion": "1.0.0.0"
                 },
                 "parameters": {
-                    "deploymentLocation": { "value": "[parameters('location')]" },
-                    "virtualNetworkName": { "value": "vnet" },
-                    "virtualNetworkAddressRange": { "value": "10.0.0.0/16" },
-                    "subnetName": { "value": "Subnet" },
-                    "subnetRange": { "value": "10.0.0.0/24" },
-                    "DNSServerAddress": { "value": [ "10.0.0.8" ] }
+                    "virtualNetworkName": {
+                        "value": "VNET"
+                    },
+                    "virtualNetworkAddressRange": {
+                        "value": "10.0.0.0/16"
+                    },
+                    "subnetName": {
+                        "value": "Subnet"
+                    },
+                    "subnetRange": {
+                        "value": "10.0.0.0/24"
+                    },
+                    "DNSServerAddress": {
+                        "value": [ "10.0.0.8" ]
+                    }
                 }
             }
         },
 
         {
-            "apiVersion": "2014-12-01-preview",
+            "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Network/networkInterfaces",
             "name": "gw-nif",
-            "location": "[parameters('location')]",
+            "location": "[resourceGroup().location]",
             "dependsOn": [
                 "Microsoft.Network/loadBalancers/loadBalancer",
                 "Microsoft.Resources/deployments/updatevnetdns"
@@ -376,10 +393,10 @@
         },
 
         {
-            "apiVersion": "2014-12-01-preview",
+            "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Network/networkInterfaces",
             "name": "cb-nif",
-            "location": "[parameters('location')]",
+            "location": "[resourceGroup().location]",
             "dependsOn": [
                 "Microsoft.Network/loadBalancers/loadBalancer",
                 "Microsoft.Resources/deployments/updatevnetdns"
@@ -410,10 +427,10 @@
         },
 
         {
-            "apiVersion": "2014-12-01-preview",
+            "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Network/networkInterfaces",
             "name": "[concat('rdsh-', copyindex(), '-nif')]",
-            "location": "[parameters('location')]",
+            "location": "[resourceGroup().location]",
             "copy": {
                 "name": "rdsh-nif-loop",
                 "count": "[parameters('numberOfRdshInstances')]"
@@ -437,10 +454,10 @@
         },
 
         {
-            "apiVersion": "2014-12-01-preview",
+            "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Compute/virtualMachines",
             "name": "gw-vm",
-            "location": "[parameters('location')]",
+            "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
                 "[resourceId('Microsoft.Compute/availabilitySets', 'availabilityset')]",
@@ -456,16 +473,23 @@
                 "osProfile": {
                     "computername": "gateway",
                     "adminUsername": "[parameters('adminUsername')]",
-                    "adminPassword": "[parameters('adminPassword')]",
-                    "windowsProfile": {
-                        "provisionVMAgent": "true"
-                    }
+                    "adminPassword": "[parameters('adminPassword')]"
                 },
                 "storageProfile": {
-                    "sourceImage": {
-                        "id": "[concat('/',subscription().subscriptionId,'/services/images/',parameters('sourceImageName'))]"
+                    "imageReference": {
+                        "publisher": "[parameters('imagePublisher')]",
+                        "offer": "[parameters('imageOffer')]",
+                        "sku": "[parameters('imageSKU')]",
+                        "version": "latest"
                     },
-                    "destinationVhdsContainer": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/')]"
+                    "osDisk": {
+                        "name": "osdisk",
+                        "vhd": {
+                            "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/gw-vm-osdisk.vhd')]"
+                        },
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage"
+                    }
                 },
                 "networkProfile": {
                     "networkInterfaces": [
@@ -478,10 +502,10 @@
         },
 
         {
-            "apiVersion": "2014-12-01-preview",
+            "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Compute/virtualMachines",
             "name": "cb-vm",
-            "location": "[parameters('location')]",
+            "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
                 "[resourceId('Microsoft.Compute/availabilitySets', 'availabilityset')]",
@@ -497,16 +521,23 @@
                 "osProfile": {
                     "computername": "broker",
                     "adminUsername": "[parameters('adminUsername')]",
-                    "adminPassword": "[parameters('adminPassword')]",
-                    "windowsProfile": {
-                        "provisionVMAgent": "true"
-                    }
+                    "adminPassword": "[parameters('adminPassword')]"
                 },
                 "storageProfile": {
-                    "sourceImage": {
-                        "id": "[concat('/',subscription().subscriptionId,'/services/images/',parameters('sourceImageName'))]"
+                    "imageReference": {
+                        "publisher": "[parameters('imagePublisher')]",
+                        "offer": "[parameters('imageOffer')]",
+                        "sku": "[parameters('imageSKU')]",
+                        "version": "latest"
                     },
-                    "destinationVhdsContainer": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/')]"
+                    "osDisk": {
+                        "name": "osdisk",
+                        "vhd": {
+                            "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/cb-vm-osdisk.vhd')]"
+                        },
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage"
+                    }
                 },
                 "networkProfile": {
                     "networkInterfaces": [
@@ -519,10 +550,10 @@
         },
 
         {
-            "apiVersion": "2014-12-01-preview",
+            "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Compute/virtualMachines",
             "name": "[concat('rdsh-', copyindex())]",
-            "location": "[parameters('location')]",
+            "location": "[resourceGroup().location]",
             "copy": {
                 "name": "rdsh-vm-loop",
                 "count": "[parameters('numberOfRdshInstances')]"
@@ -559,19 +590,19 @@
 
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "gw-vm/joindomain",
-            "apiVersion": "2014-12-01-preview",
-            "location": "[parameters('location')]",
+            "name": "gw-vm/domainjoin",
+            "apiVersion": "2015-05-01-preview",
+            "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[resourceId('Microsoft.Compute/virtualMachines','gw-vm')]"
             ],
             "properties": {
                 "publisher": "Microsoft.Powershell",
                 "type": "DSC",
-                "typeHandlerVersion": "1.7",
+                "typeHandlerVersion": "1.9",
                 "settings": {
-                    "ModulesUrl": "https://github.com/mmarch/azurermtemplates/raw/master/rds-dc-with-one-vm-domainjoin/Configuration.ps1.zip",
-                    "ConfigurationFunction": "Configuration.ps1\\JoinDomain",
+                    "ModulesUrl": "[concat(parameters('assetLocation'),'/Configuration.zip')]",
+                    "ConfigurationFunction": "Configuration.ps1\\DomainJoin",
                     "Properties": {
                         "DomainName": "[parameters('domainName')]",
                         "AdminCreds": {
@@ -590,36 +621,36 @@
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "name": "gw-vm/gateway",
-            "apiVersion": "2014-12-01-preview",
-            "location": "[parameters('location')]",
+            "apiVersion": "2015-05-01-preview",
+            "location": "[resourceGroup().location]",
             "dependsOn": [
-                "Microsoft.Compute/virtualMachines/gw-vm/extensions/joindomain"
+                "Microsoft.Compute/virtualMachines/gw-vm/extensions/domainjoin"
             ],
             "properties": {
                 "publisher": "Microsoft.Powershell",
                 "type": "DSC",
-                "typeHandlerVersion": "1.7",
+                "typeHandlerVersion": "1.9",
                 "settings": {
-                    "ModulesUrl": "https://github.com/mmarch/azurermtemplates/raw/master/rds-deployment/Configuration.ps1.zip",
+                    "ModulesUrl": "[concat(parameters('assetLocation'),'/Configuration.zip')]",
                     "ConfigurationFunction": "Configuration.ps1\\Gateway"
                 }
             }
         },
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "cb-vm/joindomain",
-            "apiVersion": "2014-12-01-preview",
-            "location": "[parameters('location')]",
+            "name": "cb-vm/domainjoin",
+            "apiVersion": "2015-05-01-preview",
+            "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[resourceId('Microsoft.Compute/virtualMachines','cb-vm')]"
             ],
             "properties": {
                 "publisher": "Microsoft.Powershell",
                 "type": "DSC",
-                "typeHandlerVersion": "1.7",
+                "typeHandlerVersion": "1.9",
                 "settings": {
-                    "ModulesUrl": "https://github.com/mmarch/azurermtemplates/raw/master/rds-dc-with-one-vm-domainjoin/Configuration.ps1.zip",
-                    "ConfigurationFunction": "Configuration.ps1\\JoinDomain",
+                    "ModulesUrl": "[concat(parameters('assetLocation'),'/Configuration.zip')]",
+                    "ConfigurationFunction": "Configuration.ps1\\DomainJoin",
                     "Properties": {
                         "DomainName": "[parameters('domainName')]",
                         "AdminCreds": {
@@ -637,24 +668,24 @@
         },
 
         {
-            "apiVersion": "2014-12-01-preview",
+            "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "copy": {
                 "name": "rdsh-vm-domain-join-loop",
                 "count": "[parameters('numberOfRdshInstances')]"
             },
-            "name": "[concat('rdsh-', copyindex(), '/joindomain')]",
-            "location": "[parameters('location')]",
+            "name": "[concat('rdsh-', copyindex(), '/domainjoin')]",
+            "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[resourceId('Microsoft.Compute/virtualMachines', concat('rdsh-', copyindex()))]"
             ],
             "properties": {
                 "publisher": "Microsoft.Powershell",
                 "type": "DSC",
-                "typeHandlerVersion": "1.7",
+                "typeHandlerVersion": "1.9",
                 "settings": {
-                    "ModulesUrl": "https://github.com/mmarch/azurermtemplates/raw/master/rds-dc-with-one-vm-domainjoin/Configuration.ps1.zip",
-                    "ConfigurationFunction": "Configuration.ps1\\JoinDomain",
+                    "ModulesUrl": "[concat(parameters('assetLocation'),'/Configuration.zip')]",
+                    "ConfigurationFunction": "Configuration.ps1\\DomainJoin",
                     "Properties": {
                         "DomainName": "[parameters('domainName')]",
                         "AdminCreds": {
@@ -674,25 +705,24 @@
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "name": "cb-vm/rdsdeployment",
-            "apiVersion": "2014-12-01-preview",
-            "location": "[parameters('location')]",
+            "apiVersion": "2015-05-01-preview",
+            "location": "[resourceGroup().location]",
             "dependsOn": [
-                "Microsoft.Compute/virtualMachines/gw-vm/extensions/joindomain",
-                "Microsoft.Compute/virtualMachines/cb-vm/extensions/joindomain",
+                "Microsoft.Compute/virtualMachines/gw-vm/extensions/domainjoin",
+                "Microsoft.Compute/virtualMachines/cb-vm/extensions/domainjoin",
                 "rdsh-vm-domain-join-loop"
             ],
             "properties": {
                 "publisher": "Microsoft.Powershell",
                 "type": "DSC",
-                "typeHandlerVersion": "1.7",
+                "typeHandlerVersion": "1.9",
                 "settings": {
-                    "ModulesUrl": "https://github.com/mmarch/azurermtemplates/raw/master/rds-deployment/Configuration.ps1.zip",
+                    "ModulesUrl": "[concat(parameters('assetLocation'),'/Configuration.zip')]",
                     "ConfigurationFunction": "Configuration.ps1\\RemoteDesktopSessionCollection",
                     "Properties": {
                         "sessionHost": "[concat('rdsh-0.',parameters('domainName'))]"
                     }
                 }
-
             }
         }
 

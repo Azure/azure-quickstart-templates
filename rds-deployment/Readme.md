@@ -8,7 +8,7 @@ The template will deploy DC, join all vms to the domain and configure RDS roles 
 
 Click the button below to deploy
 
-<a href="https://azuredeploy.net" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Frds-deployment%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
@@ -16,14 +16,15 @@ Below are the parameters that the template expects
 
 | Name   | Description    |
 |:--- |:---|
-| storageAccountName  | Name of the storage account to create    |
-| location  | Location where to deploy the resource <br><ul>**Allowed Values**<li>**West US (default)**</li><li>East US</li><li>West Europe</li><li>East Asia</li><li>Southeast Asia</li>|
-| domainName | The FQDN of the AD Domain created |
-| adminUsername | Domain admin username |
-| adminPassword | Domain admin password |
-| sourceImageName | Name of image to use for all the vm <br> <ul><li>a699494373c04fc0bc8f2bb1389d6106__Windows-Server-2012-R2-201503.01-en.us-127GB.vhd **(default)**</li></ul>|
 | publicDnsName | The DNS prefix for the public IP address |
+| storageAccountName  | Name of the storage account to create |
+| imageOffer | The Image Offer **(default: WindowsServer)**|
+| imageSKU | The Image SKU |
+| imagePublisher | The name of the pulisher of the OS Image |
 | numberOfRdshInstances | Number of RDSH instances **(default: 2)** |
 | rdshVmSize | The size of the RDSH VMs **(default: Standard_A2)** |
+| domainName | Domain name (e.g. 'contoso.com') |
+| adminUsername | Domain admin username |
+| adminPassword | Domain admin password |
 
 
