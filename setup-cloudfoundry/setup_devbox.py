@@ -47,5 +47,6 @@ call(["echo","-H","-u",settings['username'],"bash","-c","azure config mode asm"]
 call( ["sudo","-H","-u",settings['username'],"bash","-c","azure storage container create --container stemcell -a "+settings['storageaccount']+" -k "+settings['storagekey']])
 call( ["sudo","-H","-u",settings['username'],"bash","-c","azure storage blob copy start  --dest-account-name "+settings['storageaccount']+"  --dest-container stemcell --dest-blob stemcell.vhd --source-uri '"+settings['stemcell']+"' --dest-account-key '"+settings['storagekey']+"' --quiet"])
 
+call("rm -r /tmp; mkdir /mnt/tmp; ln -s /mnt/tmp /tmp; chmod 777 /mnt/tmp ;chmod 777 /tmp", shell=True)
 call("mkdir /mnt/bosh_install; cp install_bosh_client.sh /mnt/bosh_install; cd /mnt/bosh_install ; sh install_bosh_client.sh;",shell=True)
 exit(0)
