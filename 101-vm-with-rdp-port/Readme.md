@@ -3,7 +3,8 @@
 This sample template demonstrates how to create a NAT rule in loadbalancer to allow RDP to a vm.
 
 You can connect to the vm using:
-mstsc.exe /v:<publicDnsName>.<location>.cloudapp.azure.com:<rdpPort>
+
+* mstsc.exe /v:&lt;publicDnsName&gt;.&lt;location&gt;.cloudapp.azure.com:&lt;rdpPort&gt;
 
 
 This template deploys the following resources:
