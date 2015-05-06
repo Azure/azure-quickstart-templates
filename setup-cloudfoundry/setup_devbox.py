@@ -13,11 +13,6 @@ from subprocess import call
 call("mkdir -p ./bosh",shell=True)
 call("mkdir -p ./bosh/.ssh",shell=True)
 
-if not os.path.exists('/bosh_os.tar') and settings['stemcell'].find('bosh_os.tar')>0:
-    call("sh changeOS.sh",shell=True)
-    exit(0)
-
-
 if "some_id" in settings:
     id = settings["some_id"]
     resourcegroup = id.split("/")[4]
@@ -35,6 +30,10 @@ for f in ['micro_bosh.yml','update_os.sh','deploy_micro_bosh.sh','install_bosh_c
 
 with open (os.path.join('bosh','settings'),"w") as tmpfile:
     tmpfile.write(json.dumps(settings, indent=4, sort_keys=True))
+
+if not os.path.exists('/bosh_os.tar') and settings['stemcell'].find('bosh_os.tar')>0:
+    call("sh update_os.sh",shell=True)
+    exit(0)
 
 call("sh create_cert.sh >> ./bosh/micro_bosh.yml",shell=True)
 call("chmod 700 myPrivateKey.key",shell=True)
