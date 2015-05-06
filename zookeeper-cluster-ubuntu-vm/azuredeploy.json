@@ -4,7 +4,6 @@
     "parameters": {
         "location": {
             "type": "string",
-            "defaultValue": "West US",
             "allowedValues": [
                 "West US",
                 "East US",
@@ -29,27 +28,10 @@
                 "description": "Storage Account type"
             }
         },
-        "publicIPAddressType": {
-            "type": "string",
-            "defaultValue": "Dynamic",
-            "allowedValues": [
-                "Dynamic",
-                "Static"
-            ],
-            "metadata": {
-                "description": "Public IP address type"
-            }
-        },
         "vmName": {
             "type": "string",
             "metadata": {
                 "description": "VM name"
-            }
-        },
-        "availabilitySetName": {
-            "type": "string",
-            "metadata": {
-                "description": "Availability Set name"
             }
         },
         "vmSize": {
@@ -91,62 +73,21 @@
             "metadata": {
                 "description": "Admin password"
             }
-        },
-        "virtualNetworkName": {
-            "type": "string",
-            "metadata": {
-                "description": "VNET name"
-            }
-        },
-        "addressPrefix": {
-            "type": "string",
-            "defaultValue": "10.0.0.0/16",
-            "metadata": {
-                "description": "VNET address space"
-            }
-        },
-        "subnet1Name": {
-            "type": "string",
-            "defaultValue": "Subnet-1",
-            "metadata": {
-                "description": "Subnet 1 name"
-            }
-        },
-        "subnet1Prefix": {
-            "type": "string",
-            "defaultValue": "10.0.0.0/24",
-            "metadata": {
-                "description": "Subnet 1 address space"
-            }
-        },
-        "nicName": {
-            "type": "string",
-            "metadata": {
-                "description": "NIC name"
-            }
-        },
-        "vmExtensionName": {
-            "type": "string",
-            "metadata": {
-                "description": "Name of the VM extension"
-            }
-        },
-        "customScriptFilePath": {
-            "type": "string",
-            "metadata": {
-                "description": "Path to the custom script"
-            }
-        },
-        "customScriptCommandToExecute": {
-            "type": "string",
-            "metadata": {
-                "description": "Command to execute the custom script"
-            }
         }
     },
     "variables": {
-        "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
-        "subnet1Ref": "[concat(variables('vnetID'),'/subnets/',parameters('subnet1Name'))]",
+        "availabilitySetName": "zookeeperAvSet",
+        "virtualNetworkName": "zookeeperVNET",
+        "vnetAddressPrefix": "10.0.0.0/16",
+        "publicIPAddressType": "Dynamic",
+        "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
+        "subnet1Name": "Subnet-1",
+        "subnet1Prefix": "10.0.0.0/24",
+        "nicName": "zookeeperNIC",
+        "subnet1Ref": "[concat(variables('vnetID'),'/subnets/', variables('subnet1Name'))]",
+        "customScriptFilePath": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/zookeeper-cluster-ubuntu-vm/zookeeper.sh",
+        "customScriptCommandToExecute": "sh zookeeper.sh ",
+        "vmExtensionName": "zookeeperExtension",
         "scaleNumber": 3
     },
     "resources": [{
@@ -159,7 +100,7 @@
         }
     }, {
         "type": "Microsoft.Compute/availabilitySets",
-        "name": "[parameters('availabilitySetName')]",
+        "name": "[variables('availabilitySetName')]",
         "apiVersion": "2015-05-01-preview",
         "location": "[parameters('location')]",
         "properties": {}
@@ -173,34 +114,34 @@
             "count": "[variables('scaleNumber')]"
         },
         "properties": {
-            "publicIPAllocationMethod": "[parameters('publicIPAddressType')]"
+            "publicIPAllocationMethod": "[variables('publicIPAddressType')]"
         }
     }, {
         "apiVersion": "2015-05-01-preview",
         "type": "Microsoft.Network/virtualNetworks",
-        "name": "[parameters('virtualNetworkName')]",
+        "name": "[variables('virtualNetworkName')]",
         "location": "[parameters('location')]",
         "properties": {
             "addressSpace": {
                 "addressPrefixes": [
-                    "[parameters('addressPrefix')]"
+                    "[variables('vnetAddressPrefix')]"
                 ]
             },
             "subnets": [{
-                "name": "[parameters('subnet1Name')]",
+                "name": "[variables('subnet1Name')]",
                 "properties": {
-                    "addressPrefix": "[parameters('subnet1Prefix')]"
+                    "addressPrefix": "[variables('subnet1Prefix')]"
                 }
             }]
         }
     }, {
         "apiVersion": "2015-05-01-preview",
         "type": "Microsoft.Network/networkInterfaces",
-        "name": "[concat(parameters('nicName'), 0)]",
+        "name": "[concat(variables('nicName'), 0)]",
         "location": "[parameters('location')]",
         "dependsOn": [
             "[concat('Microsoft.Network/publicIPAddresses/', 'publicIP0')]",
-            "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
+            "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
         ],
         "properties": {
             "ipConfigurations": [{
@@ -220,11 +161,11 @@
     }, {
         "apiVersion": "2015-05-01-preview",
         "type": "Microsoft.Network/networkInterfaces",
-        "name": "[concat(parameters('nicName'), 1)]",
+        "name": "[concat(variables('nicName'), 1)]",
         "location": "[parameters('location')]",
         "dependsOn": [
             "[concat('Microsoft.Network/publicIPAddresses/', 'publicIP1')]",
-            "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
+            "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
         ],
         "properties": {
             "ipConfigurations": [{
@@ -244,11 +185,11 @@
     }, {
         "apiVersion": "2015-05-01-preview",
         "type": "Microsoft.Network/networkInterfaces",
-        "name": "[concat(parameters('nicName'), 2)]",
+        "name": "[concat(variables('nicName'), 2)]",
         "location": "[parameters('location')]",
         "dependsOn": [
             "[concat('Microsoft.Network/publicIPAddresses/', 'publicIP2')]",
-            "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
+            "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
         ],
         "properties": {
             "ipConfigurations": [{
@@ -276,12 +217,12 @@
         },
         "dependsOn": [
             "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
-            "[concat('Microsoft.Network/networkInterfaces/', parameters('nicName'), copyindex())]",
-            "[concat('Microsoft.Compute/availabilitySets/', parameters('availabilitySetName'))]"
+            "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyIndex())]",
+            "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
         ],
         "properties": {
             "availabilitySet": {
-                "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySetName'))]"
+                "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySetName'))]"
             },
             "hardwareProfile": {
                 "vmSize": "[parameters('vmSize')]"
@@ -301,7 +242,7 @@
                 "osDisk": {
                     "name": "osdisk",
                     "vhd": {
-                        "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/','osdisk.vhd')]"
+                        "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/', 'osdisk', copyIndex(), '.vhd')]"
                     },
                     "caching": "ReadWrite",
                     "createOption": "FromImage"
@@ -309,13 +250,13 @@
             },
             "networkProfile": {
                 "networkInterfaces": [{
-                    "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('nicName'), copyIndex()))]"
+                    "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'), copyIndex()))]"
                 }]
             }
         }
     }, {
         "type": "Microsoft.Compute/virtualMachines/extensions",
-        "name": "[concat(parameters('vmName'), copyIndex(),'/', parameters('vmExtensionName'))]",
+        "name": "[concat(parameters('vmName'), copyIndex(),'/', variables('vmExtensionName'))]",
         "apiVersion": "2015-05-01-preview",
         "location": "[parameters('location')]",
         "copy": {
@@ -331,9 +272,9 @@
             "typeHandlerVersion": "1.2",
             "settings": {
                 "fileUris": [
-                    "[parameters('customScriptFilePath')]"
+                    "[variables('customScriptFilePath')]"
                 ],
-                "commandToExecute": "[concat(parameters('customScriptCommandToExecute'), copyIndex())]"
+                "commandToExecute": "[concat(variables('customScriptCommandToExecute'), copyIndex())]"
             }
         }
     }]
