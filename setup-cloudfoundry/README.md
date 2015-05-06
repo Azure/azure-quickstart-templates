@@ -5,7 +5,9 @@
 </a>
 
 This template allows you to setup cloud foundry development envrioment. It will create a vm with public ipaddress,storage account, virutal network, network security group, 3 reserverd public ip address. 
-After deployment finished, You can access the vm by ssh <adminUsername>@<dnsNameForPublicIP>.<locaion>.cloudapp.azure.com
+After deployment finished, You can access the vm by ssh adminUsername @ dnsNameForPublicIP.location.cloudapp.azure.com
+Eg ssh azureuser@mybosh.westus.cloudapp.azure.com
+After that Please follow the guidence of how to setup bosh
 
 Below are the parameters that the template expects
 
