@@ -53,7 +53,7 @@ call( ["sudo","-H","-u",settings['username'],"bash","-c","azure storage containe
 call( ["sudo","-H","-u",settings['username'],"bash","-c","azure storage blob copy start  --dest-account-name "+settings['storageaccount']+"  --dest-container stemcell --dest-blob stemcell.vhd --source-uri '"+settings['stemcell']+"' --dest-account-key '"+settings['storagekey']+"' --quiet"])
 call("rm -r /tmp; mkdir /mnt/tmp; ln -s /mnt/tmp /tmp; chmod 777 /mnt/tmp ;chmod 777 /tmp", shell=True)
 
-if not os.path.exists('/bosh_os.tar') and settings['ostar']:
+if not os.path.exists('/bosh_os.tar') and settings.has_key('ostar'):
     call("npm install mt-downloader --save-dev  ",shell=True) 
     call("sh bosh/update_os.sh",shell=True)
     exit(0)
