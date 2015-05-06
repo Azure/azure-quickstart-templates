@@ -19,7 +19,7 @@ Template parameters:
 
 | Name   | Description    |
 |:--- |:---|
-| location  | Location where to deploy the resource <br><ul>**Allowed Values**<li>**West US (default)**</li><li>East US</li><li>West Europe</li><li>East Asia</li><li>Southeast Asia</li>|
+| location  | Location where to deploy the resources |
 | publicDnsName | The DNS prefix for the public IP address |
 | storageAccountName  | Name of the storage account to create |
 | vmName | The name of the VM |
