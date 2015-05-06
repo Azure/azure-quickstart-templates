@@ -4,4 +4,4 @@
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-This template installs a certificate from Azure KeyVault on a Virtual Machine and opens up WinRM HTTP and HTTPS listeners. You need to have a certificate uploaded to Azure KeyVault for this template to work.
+This template installs a certificate from Azure Key Vault on a Virtual Machine and opens up WinRM HTTP and HTTPS listeners. You need to have a certificate uploaded to Azure Key Vault for this template to work.
