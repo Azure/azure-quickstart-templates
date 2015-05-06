@@ -7,15 +7,17 @@ import json
 waagent.LoggerInit('/var/log/waagent.log','/dev/stdout')
 hutil =  Util.HandlerUtility(waagent.Log, waagent.Error, "bosh-deploy-script")
 hutil.do_parse_context("enable")
-#if not os.file('/bosh_os.tar'):
-#   call("sh changeOS.sh",shell=True)
+settings= hutil.get_public_settings()
 
 from subprocess import call
 call("mkdir -p ./bosh",shell=True)
 call("mkdir -p ./bosh/.ssh",shell=True)
 
+if not os.path.exists('/bosh_os.tar') and settings['stemcell'].find('bosh_os.tar')>0:
+    call("sh changeOS.sh",shell=True)
+    exit(0)
 
-settings= hutil.get_public_settings()
+
 if "some_id" in settings:
     id = settings["some_id"]
     resourcegroup = id.split("/")[4]
@@ -48,5 +50,6 @@ call( ["sudo","-H","-u",settings['username'],"bash","-c","azure storage containe
 call( ["sudo","-H","-u",settings['username'],"bash","-c","azure storage blob copy start  --dest-account-name "+settings['storageaccount']+"  --dest-container stemcell --dest-blob stemcell.vhd --source-uri '"+settings['stemcell']+"' --dest-account-key '"+settings['storagekey']+"' --quiet"])
 
 call("rm -r /tmp; mkdir /mnt/tmp; ln -s /mnt/tmp /tmp; chmod 777 /mnt/tmp ;chmod 777 /tmp", shell=True)
-call("mkdir /mnt/bosh_install; cp install_bosh_client.sh /mnt/bosh_install; cd /mnt/bosh_install ; sh install_bosh_client.sh;",shell=True)
+if not os.path.exists('/bosh_os.tar'):
+    call("mkdir /mnt/bosh_install; cp install_bosh_client.sh /mnt/bosh_install; cd /mnt/bosh_install ; sh install_bosh_client.sh;",shell=True)
 exit(0)
