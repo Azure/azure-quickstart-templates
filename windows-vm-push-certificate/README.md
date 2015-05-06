@@ -4,11 +4,11 @@
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-Push a certificate onto a VM. Pass in the URL of the secret in KeyVault.
+Push a certificate onto a VM. Pass in the URL of the secret in Key Vault.
 
 Pre-Requisistes - You need a certificate
 
-These are the steps that need to be followed to upload the certificate into the KeyVault as a secret
+These are the steps that need to be followed to upload the certificate into the Key Vault as a secret
 
 1.	base64 encode the cert file
 2.	Paste the base64 value into data field in this JSON object
