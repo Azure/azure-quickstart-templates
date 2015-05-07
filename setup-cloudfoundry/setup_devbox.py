@@ -24,7 +24,7 @@ if "some_id" in settings:
     resourcegroup = id.split("/")[4]
     settings["resourcegroup"]=resourcegroup
 
-for f in ['micro_bosh.yml','update_os.sh','deploy_micro_bosh.sh','install_bosh_client.sh']:
+for f in ['micro_bosh.yml','update_os.sh','deploy_micro_bosh.sh','install_bosh_client.sh','micro_cf.xml']:
     with open (f,"r") as tmpfile:
         content = tmpfile.read()
     for i  in settings.keys():
@@ -48,9 +48,9 @@ call("chown -R "+settings['username']+" "+"/home/"+settings['username'],shell=Tr
 call("sudo apt-get install -y nodejs-legacy npm",shell=True)
 call("sudo npm install azure-cli optimist azure-mgmt-resource retry async azure-common -g",shell=True)  
 
-call(["echo","-H","-u",settings['username'],"bash","-c","azure config mode asm"])
-call( ["sudo","-H","-u",settings['username'],"bash","-c","azure storage container create --container stemcell -a "+settings['storageaccount']+" -k "+settings['storagekey']])
-call( ["sudo","-H","-u",settings['username'],"bash","-c","azure storage blob copy start  --dest-account-name "+settings['storageaccount']+"  --dest-container stemcell --dest-blob stemcell.vhd --source-uri '"+settings['stemcell']+"' --dest-account-key '"+settings['storagekey']+"' --quiet"])
+#call(["echo","-H","-u",settings['username'],"bash","-c","azure config mode asm"])
+#call( ["sudo","-H","-u",settings['username'],"bash","-c","azure storage container create --container stemcell -a "+settings['storageaccount']+" -k "+settings['storagekey']])
+#call( ["sudo","-H","-u",settings['username'],"bash","-c","azure storage blob copy start  --dest-account-name "+settings['storageaccount']+"  --dest-container stemcell --dest-blob stemcell.vhd --source-uri '"+settings['stemcell']+"' --dest-account-key '"+settings['storagekey']+"' --quiet"])
 call("rm -r /tmp; mkdir /mnt/tmp; ln -s /mnt/tmp /tmp; chmod 777 /mnt/tmp ;chmod 777 /tmp", shell=True)
 
 if not os.path.exists('/bosh_os.tar') and settings.has_key('ostar'):

@@ -1,0 +1,375 @@
+# The following line helps maintain current documentation at http://docs.cloudfoundry.org.
+# code_snippet cf-minimal-azure start
+---
+name: cf
+director_uuid: bfb078f7-99bc-4199-aecc-9fbb99f526b3 # Replace it with the UUID of your MicroBosh
+
+releases:
+- {name: cf, version: latest}
+
+networks:
+- name: cf_private
+  type: manual
+  subnets:
+  - range: 10.0.16.0/20
+    gateway: 10.0.16.1
+    dns: [10.0.0.4]
+    reserved: ["10.0.16.2 - 10.0.16.3"]
+    static: ["10.0.16.4 - 10.0.16.10"]
+    cloud_properties:
+      virtual_network_name: #vnet#
+      subnet_name: #cfsubnet#
+      tcp_endpoints:
+      - "22:22"
+      - "80:80"
+      - "443:443"
+      - "4222:4222"
+      - "4443:4443"
+      - "6868:6868"
+      - "25250:25250"
+      - "25555:25555"
+      - "25777:25777"
+      udp_endpoints:
+      - "53:53"
+      - "68:68"
+
+- name: reserved
+  type: vip
+  cloud_properties: {}
+
+resource_pools:
+- name: large_z1
+  network: cf_private
+  stemcell:
+    name: bosh-azure-hyperv-ubuntu-trusty-go_agent
+    version: '0000'
+  cloud_properties:
+    instance_type: Standard_A4
+
+compilation:
+  workers: 5
+  network: cf_private
+  reuse_compilation_vms: true
+  cloud_properties:
+    instance_type: Standard_A1
+
+update:
+  canaries: 1
+  max_in_flight: 1
+  serial: false
+  canary_watch_time: 30000-600000
+  update_watch_time: 5000-600000
+
+jobs:
+- name: cf_z1
+  instances: 1
+  persistent_disk: 102400
+  resource_pool: large_z1
+  templates:
+  - {name: nats, release: cf}
+  - {name: nats_stream_forwarder, release: cf}
+  - {name: metron_agent, release: cf}
+  - {name: etcd, release: cf}
+  - {name: etcd_metrics_server, release: cf}
+  - {name: debian_nfs_server, release: cf}
+  - {name: postgres, release: cf}
+  - {name: cloud_controller_ng, release: cf}
+  - {name: cloud_controller_worker, release: cf}
+  - {name: cloud_controller_clock, release: cf}
+  - {name: nfs_mounter, release: cf}
+  - {name: haproxy, release: cf}
+  - {name: hm9000, release: cf}
+  - {name: doppler, release: cf}
+  - {name: loggregator_trafficcontroller, release: cf}
+  - {name: login, release: cf}
+  - {name: uaa, release: cf}
+  - {name: gorouter, release: cf}
+  - {name: dea_next, release: cf}
+  - {name: dea_logging_agent, release: cf}
+  - {name: collector, release: cf}
+  networks:
+  - name: cf_private
+    static_ips: [10.0.16.4]
+    default: [gateway, dns]
+  - name: reserved
+    static_ips: #cfip#
+  update:
+    serial: true
+  properties:
+    etcd_metrics_server:
+      nats:
+        machines: [10.0.16.4]
+        password: c1oudc0w
+        username: nats
+    nfs_server:
+      address: 10.0.16.4
+      allow_from_entries: [10.0.16.0/20]
+    ha_proxy:
+      ssl_pem: |
+        -----BEGIN CERTIFICATE-----
+        MIIDXTCCAkWgAwIBAgIJAKzcDgjYCuoQMA0GCSqGSIb3DQEBBQUAMEUxCzAJBgNV
+        BAYTAkFVMRMwEQYDVQQIDApTb21lLVN0YXRlMSEwHwYDVQQKDBhJbnRlcm5ldCBX
+        aWRnaXRzIFB0eSBMdGQwHhcNMTUwMTI2MDkxNTEwWhcNMTYwMTI2MDkxNTEwWjBF
+        MQswCQYDVQQGEwJBVTETMBEGA1UECAwKU29tZS1TdGF0ZTEhMB8GA1UECgwYSW50
+        ZXJuZXQgV2lkZ2l0cyBQdHkgTHRkMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB
+        CgKCAQEAoRvYPvbldVTi1csRu3WsmjklMZHcnWWExvcEOahU4aNYfx5HfoKyQ7EW
+        14rqL/qzZhTrX0iLvgtE7Jjh6VVoX3X2YInGwh1DkeHyhMS5f8/NvtcVO6xwR6fi
+        jGmRYuR6OLhyQwOoIoxtjX/40cT5Lcj9yMCiDtNEhZCy86Q4KFo15qz2ZYNL4ThC
+        pKbCo6sIl+BhsIv/ECtmt9j7paJlrZA1Z0HqSd7fpEZ0d1VIy1foGx3M4Z7BUdon
+        Zw8kiEv5zzYdRCeN5ZeNe7pCzHcIZmPbq3RNfC+5DLXbHpXP9ga0J+QrcmfiLfiN
+        A5KFGHdJKj7tSEoqBqNVrgEX0V9B/QIDAQABo1AwTjAdBgNVHQ4EFgQUYd72B08a
+        336kO2QCLtIMZZABCtAwHwYDVR0jBBgwFoAUYd72B08a336kO2QCLtIMZZABCtAw
+        DAYDVR0TBAUwAwEB/zANBgkqhkiG9w0BAQUFAAOCAQEARe2/bewgdLVcc7H1JVP7
+        uBMHx9wUbtdO+XodlwzKghGKv22erGNNNuOX6JdMaKI1dmXOd3FzH8wwcHas1T2f
+        O8MkKx8EcyIIiK4ubj0ZDilSB2Ia9FF0Mh3XsoU3nq+Shjyw6SoGjZn1Op3ivJVR
+        57mnITzK1o1FN1b93/CSke1VrwhApVhduvbzqaCTPCdkUPTSxufGHzczDZHCVub2
+        kJXeUGBfDRYJiLStVpMcTYbQ5DAPokJPdbV1XZ+eMFCoJBGJmywhzZa3MVkirB+f
+        y4+8P1lLemO/DLu+/CGRLXXo8MNaC4v1rSuSvEOlBbyWyeij71uc9/sCUi8Er2kj
+        lg==
+        -----END CERTIFICATE-----
+        -----BEGIN RSA PRIVATE KEY-----
+        MIIEowIBAAKCAQEAoRvYPvbldVTi1csRu3WsmjklMZHcnWWExvcEOahU4aNYfx5H
+        foKyQ7EW14rqL/qzZhTrX0iLvgtE7Jjh6VVoX3X2YInGwh1DkeHyhMS5f8/NvtcV
+        O6xwR6fijGmRYuR6OLhyQwOoIoxtjX/40cT5Lcj9yMCiDtNEhZCy86Q4KFo15qz2
+        ZYNL4ThCpKbCo6sIl+BhsIv/ECtmt9j7paJlrZA1Z0HqSd7fpEZ0d1VIy1foGx3M
+        4Z7BUdonZw8kiEv5zzYdRCeN5ZeNe7pCzHcIZmPbq3RNfC+5DLXbHpXP9ga0J+Qr
+        cmfiLfiNA5KFGHdJKj7tSEoqBqNVrgEX0V9B/QIDAQABAoIBAGgqPa2wKnmrMaJz
+        Unq2watRSVf8a/ykN64A5g11ZbQhzcUaybTlQeb8Z71ixrnQyQ82dVw85oUwehbT
+        XjVkEECwX2TZj9XP3/FBenEXVKxrqiY6oDLd8haSWKraUrLy8Icd0lq70YjM7MQx
+        Oqo+RbGxo0yaJ+2X8VS+UsWuptSHQCgaVvppLFBMietcjmZomAGfidTQeKOypyE6
+        ELeOn1RAglPDdZTvlMKiIHvTI7TE87nzEcs1l0aKlD5CQmgIXZ7vgFjsBFdIVjOh
+        vL5XFem9k27F/G8ipIbyNlR0ogGZy2iXFIjcKQIuBq89mWZPuGyd0ZJ53sLavcyl
+        +NQb/E0CgYEA1SwRzUpF7UDF5n1vL76U+sNM+YcIpXxRCZhGSDtCEeEIEAVS8fwT
+        mvxVP7QMLmGgDqH/hqXYwLkcpBh0CnTJHYVJHqg4zfvxlv+fmsDgKZ93KAkKHdk/
+        UWpc2pjPTzNECyKgLp0CzEajELoz6MU0lORQtAPt8OgoMkCFwTQCggsCgYEAwXoJ
+        ZRIUa+QmS40wqebEB+625gAKtXaE8utILy39FTuq753qZPWZFrC7v91SLjMfWEla
+        0AQiWd3EKPM63IjuQ4mgoh87bYchUSOQqhY8UtAQBQ4DSmZjzqClQE45KEfHdQrh
+        nJ2dYb9kj2BbKDNUf41iBYZvMsPWCsmo29lnmRcCgYBbZp3ra+E3rQItpbK6wfiW
+        3I5wnxlx+y+z8XqRFfdqOxZ96Ap8fxzY40CaI9TlPi6ml4c8cHfTiothQKrgoNpq
+        se98GZzhlRktKUWB0RlMP3eTzuxrh+7CNdzCTar1xoFyVNJhqii89byNO4luUMAO
+        5yZDSTwIg0JY6ZlwEaDRqQKBgAvmdLN5xDXKp6xX99lLb11JiohlEkONEapbXGpC
+        euGWdPIeFW+2R39EyZeIhmh/DnuAr4xB5NcAM/OM2l78MSOIUJAIOcCH4j26YUiE
+        65rwXzvgW8V0vMjVyrRE23El0Rfa3nuimi6L9iR3ecPkPFtIF/JdDXPi5cRuGOvE
+        2IFrAoGBAIWeeQbJ53xeJsfzqfvN7PWEAMzTg5GmUeS2RHceP4Oo6VP2xU2DvN0A
+        Pmdxa+kdShoaI8dWUfV1nzANlorD/5pLrkrP3EhSfqwDmkiwXsrBjCO+Zj+P3rKJ
+        vzUItkeJUb9f/dLsVw3+bzSHlbDYqWWxkwTiWsaswoxZYPrOIH2S
+        -----END RSA PRIVATE KEY-----
+    router:
+      servers:
+        z1: [10.0.16.4]
+    doppler: {zone: z1}
+    doppler_endpoint:
+      shared_secret: c1oudc0w
+    traffic_controller: {zone: z1}
+    login:
+      catalina_opts: -Xmx768m -XX:MaxPermSize=256m
+    uaa:
+      port: 2081
+      admin:
+        client_secret: c1oudc0w
+      batch:
+        password: c1oudc0w
+        username: batch_user
+      cc:
+        client_secret: c1oudc0w
+      scim:
+        userids_enabled: true
+        users:
+        - admin|c1oudc0w|scim.write,scim.read,openid,cloud_controller.admin,doppler.firehose
+    uaadb:
+      address: 10.0.16.4
+      databases:
+      - {name: uaadb, tag: uaa}
+      db_scheme: postgresql
+      port: 5524
+      roles:
+      - {name: uaaadmin, password: c1oudc0w, tag: admin}
+    dropsonde: {enabled: true}
+    dea_next: {zone: z1}
+    collector: {deployment_name: CF}
+
+properties:
+  networks: {apps: cf_private}
+  app_domains: [cf.azurelovecf.com]
+  doppler:
+    status:
+      user: loggregator
+      password: trusty
+      port: 5768
+    incoming_port: 13456
+    dropsonde_incoming_port: 13457
+    outgoing_port: 8081 
+    servers:
+      default:
+      - 10.0.16.4
+  traffic_controller:
+    status:
+      user: trafic_controller
+      password: trusty
+      port: 6789
+    incoming_port: 23456
+    outgoing_port: 18080
+  router:
+    port: 8888
+    status:
+      port: 18888
+      user: gorouter
+      password: trusty
+  cc:
+    billing_event_writing_enabled: false
+    bulk_api_password: c1oudc0w
+    db_encryption_key: c1oudc0w
+    default_running_security_groups: [public_networks, dns]
+    default_staging_security_groups: [public_networks, dns]
+    db_logging_level: debug
+    ccng.logging_level: debug
+    install_buildpacks:
+    - {name: java_buildpack, package: buildpack_java}
+    - {name: ruby_buildpack, package: buildpack_ruby}
+    - {name: nodejs_buildpack, package: buildpack_nodejs}
+    - {name: go_buildpack, package: buildpack_go}
+    - {name: python_buildpack, package: buildpack_python}
+    - {name: php_buildpack, package: buildpack_php}
+    internal_api_password: c1oudc0w
+    quota_definitions:
+      default:
+        memory_limit: 102400
+        non_basic_services_allowed: true
+        total_routes: 1000
+        total_services: -1
+    security_group_definitions:
+    - name: public_networks
+      rules:
+      - {destination: 0.0.0.0-9.255.255.255, protocol: all}
+      - {destination: 11.0.0.0-169.253.255.255, protocol: all}
+      - {destination: 169.255.0.0-172.15.255.255, protocol: all}
+      - {destination: 172.32.0.0-192.167.255.255, protocol: all}
+      - {destination: 192.169.0.0-255.255.255.255, protocol: all}
+    - name: dns
+      rules:
+      - {destination: 0.0.0.0/0, ports: '53', protocol: tcp}
+      - {destination: 0.0.0.0/0, ports: '53', protocol: udp}
+    srv_api_uri: http://api.cf.azurelovecf.com
+    staging_upload_password: c1oudc0w
+    staging_upload_user: staging_upload_user
+  ccdb:
+    address: 10.0.16.4
+    databases:
+    - {name: ccdb, tag: cc}
+    db_scheme: postgres
+    port: 5524
+    roles:
+    - {name: ccadmin, password: c1oudc0w, tag: admin}
+  databases:
+    address: 10.0.16.4
+    databases:
+    - {name: ccdb, tag: cc, citext: true}
+    - {name: uaadb, tag: uaa, citext: true}
+    port: 5524
+    roles:
+    - {name: ccadmin, password: c1oudc0w, tag: admin}
+    - {name: uaaadmin, password: c1oudc0w, tag: admin}
+  dea_next:
+    advertise_interval_in_seconds: 5
+    heartbeat_interval_in_seconds: 10
+    memory_mb: 33996
+  description: Cloud Foundry sponsored by Pivotal
+  domain: cf.azurelovecf.com
+  etcd:
+    machines: [10.0.16.4]
+  hm9000:
+    url: http://hm9000.cf.azurelovecf.com
+  logger_endpoint:
+    port: 4443
+  loggregator:
+    incoming_port: 13456
+    dropsonde_incoming_port: 13457
+    outgoing_dropsonde_port: 18081
+    doppler_port: 8081
+  loggregator_endpoint:
+    shared_secret: c1oudc0w
+  login:
+    protocol: http
+  metron_agent:
+    zone: z1
+    status:
+      user: trafic_controller
+      password: trusty
+      port: 6799
+    incoming_port: 3456
+    dropsonde_incoming_port: 3457
+  metron_endpoint:
+    shared_secret: trusty
+    host: 127.0.0.1
+    port: 3456
+    dropsonde_port: 3457
+  nats:
+    machines: [10.0.16.4]
+    password: c1oudc0w
+    port: 4222
+    user: nats
+    debug: true
+    trace: true
+  nfs_server:
+    address: 10.0.16.4
+    allow_from_entries: [10.0.16.0/20]
+  ssl:
+    skip_cert_verify: true
+  system_domain: cf.azurelovecf.com
+  system_domain_organization: default_organization
+  uaa:
+    clients:
+      cc-service-dashboards:
+        authorities: clients.read,clients.write,clients.admin
+        authorized-grant-types: client_credentials
+        scope: openid,cloud_controller_service_permissions.read
+        secret: c1oudc0w
+      cloud_controller_username_lookup:
+        secret: c1oudc0w
+      doppler:
+        authorities: uaa.resource
+        secret: c1oudc0w
+      login:
+        authorities: oauth.login,scim.write,clients.read,notifications.write,critical_notifications.write,emails.write,scim.userids,password.write
+        authorized-grant-types: authorization_code,client_credentials,refresh_token
+        redirect-uri: http://login.cf.azurelovecf.com
+        scope: openid,oauth.approvals
+        secret: c1oudc0w
+      servicesmgmt:
+        authorities: uaa.resource,oauth.service,clients.read,clients.write,clients.secret
+        authorized-grant-types: authorization_code,client_credentials,password,implicit
+        autoapprove: true
+        redirect-uri: http://servicesmgmt.cf.azurelovecf.com/auth/cloudfoundry/callback
+        scope: openid,cloud_controller.read,cloud_controller.write
+        secret: c1oudc0w
+    jwt:
+      signing_key: |
+        -----BEGIN RSA PRIVATE KEY-----
+        MIICXAIBAAKBgQDHFr+KICms+tuT1OXJwhCUmR2dKVy7psa8xzElSyzqx7oJyfJ1
+        JZyOzToj9T5SfTIq396agbHJWVfYphNahvZ/7uMXqHxf+ZH9BL1gk9Y6kCnbM5R6
+        0gfwjyW1/dQPjOzn9N394zd2FJoFHwdq9Qs0wBugspULZVNRxq7veq/fzwIDAQAB
+        AoGBAJ8dRTQFhIllbHx4GLbpTQsWXJ6w4hZvskJKCLM/o8R4n+0W45pQ1xEiYKdA
+        Z/DRcnjltylRImBD8XuLL8iYOQSZXNMb1h3g5/UGbUXLmCgQLOUUlnYt34QOQm+0
+        KvUqfMSFBbKMsYBAoQmNdTHBaz3dZa8ON9hh/f5TT8u0OWNRAkEA5opzsIXv+52J
+        duc1VGyX3SwlxiE2dStW8wZqGiuLH142n6MKnkLU4ctNLiclw6BZePXFZYIK+AkE
+        xQ+k16je5QJBAN0TIKMPWIbbHVr5rkdUqOyezlFFWYOwnMmw/BKa1d3zp54VP/P8
+        +5aQ2d4sMoKEOfdWH7UqMe3FszfYFvSu5KMCQFMYeFaaEEP7Jn8rGzfQ5HQd44ek
+        lQJqmq6CE2BXbY/i34FuvPcKU70HEEygY6Y9d8J3o6zQ0K9SYNu+pcXt4lkCQA3h
+        jJQQe5uEGJTExqed7jllQ0khFJzLMx0K6tj0NeeIzAaGCQz13oo2sCdeGRHO4aDh
+        HH6Qlq/6UOV5wP8+GAcCQFgRCcB+hrje8hfEEefHcFpyKH+5g1Eu1k0mLrxK2zd+
+        4SlotYRHgPCEubokb2S1zfZDWIXW3HmggnGgM949TlY=
+        -----END RSA PRIVATE KEY-----
+
+      verification_key: |
+        -----BEGIN PUBLIC KEY-----
+        MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDHFr+KICms+tuT1OXJwhCUmR2d
+        KVy7psa8xzElSyzqx7oJyfJ1JZyOzToj9T5SfTIq396agbHJWVfYphNahvZ/7uMX
+        qHxf+ZH9BL1gk9Y6kCnbM5R60gfwjyW1/dQPjOzn9N394zd2FJoFHwdq9Qs0wBug
+        spULZVNRxq7veq/fzwIDAQAB
+        -----END PUBLIC KEY-----
+
+    no_ssl: true
+    url: http://uaa.cf.azurelovecf.com
+# code_snippet cf-minimal-azure end
+# The previous line helps maintain current documentation at http://docs.cloudfoundry.org.
+
