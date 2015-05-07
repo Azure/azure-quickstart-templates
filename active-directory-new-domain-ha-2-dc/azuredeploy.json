@@ -221,7 +221,7 @@
 			"metadata": {
 				"description": "The location of resources such as templates and DSC modules that the script is dependent"
 			},
-			"defaultValue": "https://raw.githubusercontent.comAzure/azure-quickstart-templates/master/master/active-directory-new-domain-ha-2-dc"
+			"defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/active-directory-new-domain-ha-2-dc"
 		}
 	},
 	"variables": {
@@ -245,6 +245,7 @@
 		"adBDCDataDisk": "ADBDCDataDisk",
 		"adDataDiskSize": 1000,
 		"vnetTemplateUri": "[concat(parameters('AssetLocation'),'/vnet.json')]",
+		"nicTemplateUri": "[concat(parameters('AssetLocation'),'/nic.json')]",
 		"vnetwithDNSTemplateUri": "[concat(parameters('AssetLocation'),'/vnet-with-dns-server.json')]",
 		"adPDCModulesURL": "[concat(parameters('AssetLocation'),'/CreateADPDC.ps1.zip')]",
 		"adPDCConfigurationFunction": "CreateADPDC.ps1\\CreateADPDC",
@@ -558,6 +559,59 @@
 			}
 		},
 		{
+			"name": "UpdateBDCNIC",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2015-01-01",
+			"dependsOn": [
+				"Microsoft.Resources/deployments/UpdateVNetDNS1"
+			],
+			"properties": {
+				"mode": "Incremental",
+				"templateLink": {
+					"uri": "[variables('nicTemplateUri')]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"location": {
+						"value": "[parameters('location')]"
+					},
+					"nicName": {
+						"value": "[parameters('adBDCNicName')]"
+					},
+					"ipConfigurations": {
+						"value": [
+							{
+								"name": "ipconfig1",
+								"properties": {
+									"privateIPAllocationMethod": "Static",
+									"privateIPAddress": "[parameters('adBDCNicIPAddress')]",
+									"subnet": {
+										"id": "[variables('adSubnetRef')]"
+									},
+									"loadBalancerBackendAddressPools": [
+										{
+											"id": "[variables('adBEAddressPoolID')]"
+										}
+									],
+									"loadBalancerInboundNatRules": [
+										{
+											"id": "[variables('adBDCRDPNATRuleID')]"
+										}
+									]
+								}
+							}
+						]
+					},
+					"dnsServers": {
+						"value": [
+								"[parameters('adPDCNicIPAddress')]"
+							]
+					}
+
+				}
+			}
+		},
+		{
 			"apiVersion": "2015-05-01-preview",
 			"type": "Microsoft.Compute/virtualMachines",
 			"name": "[parameters('adBDCVMName')]",
@@ -566,8 +620,7 @@
 				"[resourceId('Microsoft.Storage/storageAccounts',parameters('newStorageAccountName'))]",
 				"[resourceId('Microsoft.Network/networkInterfaces',parameters('adBDCNicName'))]",
 				"[resourceId('Microsoft.Compute/availabilitySets', parameters('adAvailabilitySetName'))]",
-				"[resourceId('Microsoft.Network/loadBalancers',variables('adLBName'))]",
-				"Microsoft.Resources/deployments/UpdateVNetDNS1"
+				"[resourceId('Microsoft.Network/loadBalancers',variables('adLBName'))]"
 			],
 			"properties": {
 				"hardwareProfile": {
@@ -624,7 +677,8 @@
 			"apiVersion": "2015-05-01-preview",
 			"location": "[parameters('location')]",
 			"dependsOn": [
-				"[concat('Microsoft.Compute/virtualMachines/', parameters('adBDCVMName'))]"
+				"[concat('Microsoft.Compute/virtualMachines/', parameters('adBDCVMName'))]",
+				"Microsoft.Resources/deployments/UpdateBDCNIC"
 			],
 			"properties": {
 				"publisher": "Microsoft.Powershell",
