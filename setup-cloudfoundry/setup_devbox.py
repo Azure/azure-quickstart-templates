@@ -25,6 +25,8 @@ if "some_id" in settings:
     settings["resourcegroup"]=resourcegroup
 
 for f in ['micro_bosh.yml','update_os.sh','deploy_micro_bosh.sh','install_bosh_client.sh','micro_cf.xml']:
+    if not os.path.exists(f):
+        continue 
     with open (f,"r") as tmpfile:
         content = tmpfile.read()
     for i  in settings.keys():
