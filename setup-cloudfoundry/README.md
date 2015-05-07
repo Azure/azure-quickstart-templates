@@ -1,4 +1,4 @@
-# Create a Virtual Machine from an Image
+# Setup Micro Bosh Deployment VM
 
 <a href="https://azuredeploy.net/" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
