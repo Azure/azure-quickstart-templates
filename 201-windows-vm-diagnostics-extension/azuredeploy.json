@@ -1,0 +1,223 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "allowedValues": ["West US", "West Europe", "South East Asia"],
+            "metadata": {
+                "description": "Location of Premium storage account"
+            }
+        },
+        "newStorageAccountName": {
+            "type": "string",
+            "metadata": {
+                "description": "Unique DNS Name for the Storage Account where the Virtual Machine's disks will be placed."
+            }
+        },
+        "vmDiagnosticsStorageAccountName" : {
+            "type" : "string",
+            "metadata" : {
+                "description" : "Unique DNS Name for the Storage Account where the Virtual Machine diagnostic information will be placed."
+            }
+        },
+        "adminUsername": {
+            "type": "string",
+            "metadata": {
+               "description": "Username for the Virtual Machine."
+            }
+        },
+        "adminPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Password for the Virtual Machine."
+            }
+        },
+        "dnsNameForPublicIP": {
+            "type": "string",
+            "metadata": {
+                  "description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
+            }
+        },
+        "windowsOSVersion": {
+            "type": "string",
+            "defaultValue": "2012-R2-Datacenter",
+            "allowedValues": [
+                "2008-R2-SP1",
+                "2012-Datacenter",
+                "2012-R2-Datacenter",
+                "Windows-Server-Technical-Preview"
+            ],
+            "metadata": {
+                "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version. Allowed values: 2008-R2-SP1, 2012-Datacenter, 2012-R2-Datacenter, Windows-Server-Technical-Preview."
+            }
+        }
+    },
+    "variables": {
+        "imagePublisher": "MicrosoftWindowsServer",
+        "imageOffer": "WindowsServer",
+        "OSDiskName": "osdiskforwindowssimple",
+        "nicName": "myVMNic",
+        "addressPrefix": "10.0.0.0/16",
+        "subnetName": "Subnet",
+        "subnetPrefix": "10.0.0.0/24",
+        "storageAccountType": "Premium_LRS",
+        "publicIPAddressName": "myPublicIP",
+        "publicIPAddressType": "Dynamic",
+        "vmStorageAccountContainerName": "vhds",
+        "vmName": "MyWindowsVM",
+        "vmSize": "Standard_DS1",
+        "virtualNetworkName": "MyVNET",
+        "resourceId" : "[resourceGroup().id]",
+        "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
+        "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
+        "accountid": "[concat(variables('resourceId'),'/providers/Microsoft.Storage/storageAccounts/', parameters('vmDiagnosticsStorageAccountName'))]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[parameters('newStorageAccountName')]",
+            "apiVersion": "2015-05-01-preview",
+            "location": "[parameters('location')]",
+            "properties": {
+                "accountType": "[variables('storageAccountType')]"
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[parameters('vmDiagnosticsStorageAccountName')]",
+            "apiVersion": "2015-05-01-preview",
+            "location": "[parameters('location')]",
+            "properties": {
+                "accountType": "Standard_LRS"
+            }
+        },
+        {
+            "apiVersion": "2015-05-01-preview",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[variables('publicIPAddressName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+                "dnsSettings": {
+                    "domainNameLabel": "[parameters('dnsNameForPublicIP')]"
+                }
+            }
+        },
+        {
+            "apiVersion": "2015-05-01-preview",
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[variables('virtualNetworkName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('addressPrefix')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[variables('subnetName')]",
+                        "properties": {
+                            "addressPrefix": "[variables('subnetPrefix')]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "2015-05-01-preview",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[variables('nicName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+                "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+                            },
+                            "subnet": {
+                                "id": "[variables('subnetRef')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "2015-05-01-preview",
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[variables('vmName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
+                "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[variables('vmSize')]"
+                },
+                "osProfile": {
+                    "computername": "[variables('vmName')]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "[variables('imagePublisher')]",
+                        "offer": "[variables('imageOffer')]",
+                        "sku" : "[parameters('windowsOSVersion')]",
+                        "version":"latest"
+                    },
+                   "osDisk" : {
+                        "name": "osdisk",
+                        "vhd": {
+                            "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]"
+                        },
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+                        }
+                    ]
+                }
+            }
+        },
+
+        {
+        "type": "Microsoft.Compute/virtualMachines/extensions",
+        "name": "[concat(variables('vmName'),'/vmExtension1')]",
+        "apiVersion": "2015-05-01-preview",
+        "location": "[parameters('location')]",
+        "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+        ],
+        "properties": {
+            "publisher": "Microsoft.Azure.Diagnostics",
+            "type": "IaaSDiagnostics",
+            "typeHandlerVersion": "1.2",
+            "settings": {
+                "xmlCfg":"PFdhZENmZz4NCiAgICAgICAgPERpYWdub3N0aWNNb25pdG9yQ29uZmlndXJhdGlvbiBvdmVyYWxsUXVvdGFJbk1CPSIyNTAwMCI+DQogICAgICAgIDxQZXJmb3JtYW5jZUNvdW50ZXJzIHNjaGVkdWxlZFRyYW5zZmVyUGVyaW9kPSJQVDFNIj4NCiAgICAgICAgICAgIDxQZXJmb3JtYW5jZUNvdW50ZXJDb25maWd1cmF0aW9uIGNvdW50ZXJTcGVjaWZpZXI9IlxQcm9jZXNzb3IoX1RvdGFsKVwlIFByb2Nlc3NvciBUaW1lIiBzYW1wbGVSYXRlPSJQVDFNIiB1bml0PSJwZXJjZW50IiAvPg0KICAgICAgICAgICAgPFBlcmZvcm1hbmNlQ291bnRlckNvbmZpZ3VyYXRpb24gY291bnRlclNwZWNpZmllcj0iXE1lbW9yeVxDb21taXR0ZWQgQnl0ZXMiIHNhbXBsZVJhdGU9IlBUMU0iIHVuaXQ9ImJ5dGVzIi8+DQogICAgICAgICAgICA8L1BlcmZvcm1hbmNlQ291bnRlcnM+DQogICAgICAgICAgICA8RXR3UHJvdmlkZXJzPg0KICAgICAgICAgICAgICAgIDxFdHdFdmVudFNvdXJjZVByb3ZpZGVyQ29uZmlndXJhdGlvbiBwcm92aWRlcj0iU2FtcGxlRXZlbnRTb3VyY2VXcml0ZXIiIHNjaGVkdWxlZFRyYW5zZmVyUGVyaW9kPSJQVDVNIj4NCiAgICAgICAgICAgICAgICAgICAgPEV2ZW50IGlkPSIxIiBldmVudERlc3RpbmF0aW9uPSJFbnVtc1RhYmxlIi8+DQogICAgICAgICAgICAgICAgICAgIDxFdmVudCBpZD0iMiIgZXZlbnREZXN0aW5hdGlvbj0iTWVzc2FnZVRhYmxlIi8+DQogICAgICAgICAgICAgICAgICAgIDxFdmVudCBpZD0iMyIgZXZlbnREZXN0aW5hdGlvbj0iU2V0T3RoZXJUYWJsZSIvPg0KICAgICAgICAgICAgICAgICAgICA8RXZlbnQgaWQ9IjQiIGV2ZW50RGVzdGluYXRpb249IkhpZ2hGcmVxVGFibGUiLz4NCiAgICAgICAgICAgICAgICAgICAgPERlZmF1bHRFdmVudHMgZXZlbnREZXN0aW5hdGlvbj0iRGVmYXVsdFRhYmxlIiAvPg0KICAgICAgICAgICAgICAgIDwvRXR3RXZlbnRTb3VyY2VQcm92aWRlckNvbmZpZ3VyYXRpb24+DQogICAgICAgICAgICA8L0V0d1Byb3ZpZGVycz4NCiAgICAgICAgPC9EaWFnbm9zdGljTW9uaXRvckNvbmZpZ3VyYXRpb24+DQogICAgPC9XYWRDZmc+",
+                "StorageAccount":"[parameters('vmDiagnosticsStorageAccountName')]"
+            },
+            "protectedSettings": {
+                "storageAccountName": "[parameters('vmDiagnosticsStorageAccountName')]",
+                "storageAccountKey": "[listKeys(variables('accountid'),'2015-05-01-preview').key1]",
+                "storageAccountEndPoint": "https://core.windows.net/"
+            }
+        }
+    }
+
+    ]
+}
