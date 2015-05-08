@@ -18,13 +18,13 @@ Template parameters:
 | Name   | Description    |
 |:--- |:---|
 | publicDnsName | The DNS prefix for the public IP address |
-| storageAccountName  | Name of the storage account to create    |
-| vmSize| The size of the virtual machines (default: Standard_A2) |
-| imagePublisher | The name of the pulisher of the OS Image |
-| imageOffer | The Image Offer |
-| imageSKU | The Image SKU || domainName | Domain name (e.g. 'contoso.com') |
+| storageAccount | Name of the storage account to create    |
+| windowsOSVersion| Windows OS version for the VM, allowed values: 2008-R2-SP1, 2012-Datacenter, 2012-R2-Datacenter. |
+| vmSize | The size of the virtual machines (default: Standard_A2) |
+| domainName | Domain name (e.g. 'contoso.com') |
 | adminUsername | Domain admin username |
 | adminPassword | Domain admin password |
+| assetLocation | The location of resources such as templates and DSC modules that the script is dependent |
 
 
 

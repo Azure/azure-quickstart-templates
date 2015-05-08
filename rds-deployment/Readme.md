@@ -17,14 +17,13 @@ Below are the parameters that the template expects
 | Name   | Description    |
 |:--- |:---|
 | publicDnsName | The DNS prefix for the public IP address |
-| storageAccountName  | Name of the storage account to create |
-| imageOffer | The Image Offer **(default: WindowsServer)**|
-| imageSKU | The Image SKU |
-| imagePublisher | The name of the pulisher of the OS Image |
-| numberOfRdshInstances | Number of RDSH instances **(default: 2)** |
-| rdshVmSize | The size of the RDSH VMs **(default: Standard_A2)** |
+| storageAccount | Name of the storage account to create |
 | domainName | Domain name (e.g. 'contoso.com') |
 | adminUsername | Domain admin username |
 | adminPassword | Domain admin password |
+| numberOfRdshInstances | Number of RDSH instances **(default: 2)** |
+| rdshVmSize | The size of the RDSH VMs **(default: Standard_A2)** |
+
+
 
 

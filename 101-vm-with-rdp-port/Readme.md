@@ -21,7 +21,7 @@ Template parameters:
 |:--- |:---|
 | location  | Location where to deploy the resources |
 | publicDnsName | The DNS prefix for the public IP address |
-| storageAccountName  | Name of the storage account to create |
+| storageAccount | Name of the storage account to create |
 | vmName | The name of the VM |
 | imagePublisher | The name of the pulisher of the OS Image |
 | imageOffer | The Image Offer |
