@@ -1,10 +1,10 @@
-# Linux Virtual Machine creation with new version of Azure Linux Agent from Github using Custom Script Linux Extension
+# Linux Virtual Machine creation with new version of Azure Linux Agent from Github using CustomScript Linux Extension
 
 <a href="https://azuredeploy.net/" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-This template creates a Linux Virtual Machine with new version of Azure Linux Agent from Github instead of Linux Distro repository. You need check the Linux Agent release ingithub https://github.com/Azure/WALinuxAgent/releases and point out the agent version via parameter LinuxAgentVersion, the default value is 2.0.12. It's a solution before Linux Agent could update itself automatically to latest version. This template also deploys a Storage Account, Virtual Network, Public IP addresses and a Network Interface.
+This template creates a Linux Virtual Machine with new version of Azure Linux Agent from Github using CustomScript Linux Extension. You need check the Linux Agent release ingithub https://github.com/Azure/WALinuxAgent/releases and point out the agent version via parameter LinuxAgentVersion, the default value is 2.0.12. It's a solution before Linux Agent could update itself automatically to latest version. This template also deploys a Storage Account, Virtual Network, Public IP addresses and a Network Interface.
 
 Below are the parameters that the template expects
 
