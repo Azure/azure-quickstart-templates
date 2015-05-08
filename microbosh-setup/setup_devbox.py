@@ -18,7 +18,7 @@ if "some_id" in settings:
     resourcegroup = id.split("/")[4]
     settings["resourcegroup"]=resourcegroup
 
-for f in ['micro_bosh.yml','update_os.sh','deploy_micro_bosh.sh','install_bosh_client.sh','micro_cf.xml']:
+for f in ['micro_bosh.yml','deploy_micro_bosh.sh',','micro_cf.yml']:
     if not os.path.exists(f):
         continue 
     with open (f,"r") as tmpfile:
@@ -35,9 +35,11 @@ with open (os.path.join('bosh','settings'),"w") as tmpfile:
 
 call("sh create_cert.sh >> ./bosh/micro_bosh.yml",shell=True)
 call("chmod 700 myPrivateKey.key",shell=True)
+call("chmod 744 ./bosh/deploy_micro_bosh.sh",shell=True)
 call("cp myPrivateKey.key ./bosh/.ssh/bosh.key",shell=True)
-call("cp -r ./bosh /home/"+settings['username'],shell=True)
+call("cp -r ./bosh/* /home/"+settings['username'],shell=True)
 call("chown -R "+settings['username']+" "+"/home/"+settings['username'],shell=True)
+
 
 call("rm -r /tmp; mkdir /mnt/tmp; ln -s /mnt/tmp /tmp; chmod 777 /mnt/tmp ;chmod 777 /tmp", shell=True)
 call("mkdir /mnt/bosh_install; cp install_bosh_client.sh /mnt/bosh_install; cd /mnt/bosh_install ; sh install_bosh_client.sh;",shell=True)

@@ -1,4 +1,4 @@
-for f in install_bosh_client.sh micro_bosh.yml create_cert.sh setup_devbox.py  deploy_micro_bosh.sh  micro_cf.xml
+for f in install_bosh_client.sh micro_bosh.yml create_cert.sh setup_devbox.py  deploy_micro_bosh.sh  micro_cf.yml
 do
    wget $1/$f -O $f
 done

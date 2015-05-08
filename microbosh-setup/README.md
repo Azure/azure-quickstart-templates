@@ -4,8 +4,10 @@
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-This template allows you to setup cloud foundry development environment. It will create a vm with public ip address, storage account, virtual network, network security group, 3 reserved public ip 
-After that please follow the guidance of how to setup bosh
+This template allows you to setup cloud foundry development environment. It will create a vm with public ip address, storage account, virtual network, 3 reserved public ip 
+
+After finish the setup, you can download stemcell for azure from http://cloudfoundry.blob.core.windows.net/stemcell/stemcell.tgz
+Then execute "./deploy_micro_bosh.sh stemcell.tgz" in your home directory to deploy microbosh
 
 Below are the parameters that the template expects
 
