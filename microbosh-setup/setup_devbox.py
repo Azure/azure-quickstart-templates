@@ -18,7 +18,7 @@ if "some_id" in settings:
     resourcegroup = id.split("/")[4]
     settings["resourcegroup"]=resourcegroup
 
-for f in ['micro_bosh.yml','deploy_micro_bosh.sh',','micro_cf.yml']:
+for f in ['micro_bosh.yml','deploy_micro_bosh.sh','micro_cf.yml']:
     if not os.path.exists(f):
         continue 
     with open (f,"r") as tmpfile:
