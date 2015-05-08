@@ -33,4 +33,4 @@ Below are the parameters that the template expects
 | vmExtensionName | Name for the Extension |
 | modulesUrl | Url for the DSC configuration module <br> <ul> <li><b>Example:</b> https://xyz.blob.core.windows.net/abc/ContosoWebsite.ps1.zip</li></ul>|
 | sasToken | SAS Token for the DSC configuration module |
-| configurationFunction | Name of the function to run in the DSC configuration <br> <ul> <li><b>Example:</b> ContosoWebsite.ps1/ContosoWebsite </li></ul> |
+| configurationFunction | Name of the function to run in the DSC configuration <br> <ul> <li><b>Example:</b> ContosoWebsite.ps1\\ContosoWebsite </li></ul> |
