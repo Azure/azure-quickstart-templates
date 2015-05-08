@@ -4,8 +4,8 @@
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-This template allows you to setup cloud foundry development envrioment. It will create a vm with public ipaddress,storage account, virutal network, network security group, 3 reserverd public ip 
-After that Please follow the guidence of how to setup bosh
+This template allows you to setup cloud foundry development environment. It will create a vm with public ip address, storage account, virtual network, network security group, 3 reserved public ip 
+After that please follow the guidance of how to setup bosh
 
 Below are the parameters that the template expects
 
