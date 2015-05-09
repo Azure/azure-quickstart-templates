@@ -30,6 +30,7 @@ Below are the parameters that the template expectes.
 | CNPostConfigScript  | post config script on compute node, if user don't need post config, can ignore it. the format should be with full url, like: http://<uri>/<script name> <arguments>  |
 
 # Option 2: Using HPC published head node image and user custom compute node image
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fcreate-hpc-cluster%2FhpcclusterwithcustomCNimage.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
