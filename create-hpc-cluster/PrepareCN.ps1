@@ -10,7 +10,13 @@
     [String] $AdminUserName,
 
     [Parameter(Mandatory=$true)]
-    [String] $AdminPassword
+    [String] $AdminPassword,
+
+    [Parameter(Mandatory=$false)]
+    [String] $PostConfigScript="",
+
+    [Parameter(Mandatory=$false)]
+    [switch] $FromCustomImage
 )
 
 function TraceInfo($log)
@@ -219,6 +225,16 @@ if($domainRole -ne 3)
             {
                 $CNPreparePsFile = "$PSScriptRoot\PrepareCN.ps1"
                 $taskArgs = "-DomainFQDN $DomainFQDN -ClusterName $ClusterName -AdminUserName $AdminUserName -AdminPassword $AdminPassword"
+                if($FromCustomImage.IsPresent)
+                {
+                    $taskArgs += ' -FromCustomImage'
+                }
+
+                if($false -eq [String]::IsNullOrWhiteSpace($PostConfigScript))
+                {
+                    $taskArgs += " -PostConfigScript '$PostConfigScript'"
+                }
+
                 $action = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-ExecutionPolicy Unrestricted -Command `"& '$CNPreparePsFile' $taskArgs`""
                 $trigger = New-ScheduledTaskTrigger -AtStartup
                 TraceInfo "Register task HpcPrepareComputeNode"
@@ -244,8 +260,43 @@ else
 {   
     $datetimestr = (Get-Date).ToString("yyyyMMddHHmmssfff")        
     $script:LogFile = "$env:windir\Temp\HpcPrepareCNLog-$datetimestr.txt"
-    TraceInfo "Start to install compute node"
-    InstallComputeNode $ClusterName "ComputeNode"
-    TraceInfo "Finish to install compute node"    
+    if($FromCustomImage.IsPresent)
+    {
+        TraceInfo "Start to set cluster name to $ClusterName"
+        Set-HpcClusterName.ps1 -ClusterName $ClusterName
+        TraceInfo "Finish to set cluster name"
+    }
+    else
+    {
+        TraceInfo "Start to install compute node"
+        InstallComputeNode $ClusterName "ComputeNode"
+        TraceInfo "Finish to install compute node"
+    }
+
+    if($false -eq [String]::IsNullOrWhiteSpace($PostConfigScript))
+    {
+        $webclient = New-Object System.Net.WebClient
+        $ss = $PostConfigScript -split ' '
+        $fileWithPath = $ss[0]
+        $args = ""
+        if($ss.Count -gt 1)
+        {
+            $args = $ss[1..$($ss.Count-1)] -join ' '
+        }
+
+        $fileName = $($fileWithPath -split '/')[-1]
+        $file = "$env:windir\Temp\$fileName"
+        TraceInfo "download post config script from $fileWithPath"
+        $webclient.DownloadFile($fileWithPath,$file)
+        $command = "$file $args"
+        TraceInfo "execute post config script $command"
+        Invoke-Expression -Command $command
+        TraceInfo "finish to post config script"
+    }
+    else
+    {
+        TraceInfo "PostConfigScript is empty, ignore it!"
+    }
+
     Unregister-ScheduledTask -TaskName "HpcPrepareComputeNode" -Confirm:$false
 }

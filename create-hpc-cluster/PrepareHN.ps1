@@ -21,6 +21,9 @@
     [Parameter(Mandatory=$false, ParameterSetName='Prepare')]
     [String] $Location,
 
+    [Parameter(Mandatory=$false, ParameterSetName='Prepare')]
+    [String] $PostConfigScript="",
+
     [Parameter(Mandatory=$true, ParameterSetName='Prepare')]
     [switch] $NodePrepare,
 
@@ -112,6 +115,8 @@ function PromoteDC
 
 function PrepareHeadNode
 {
+    param
+    (
     [Parameter(Mandatory=$true)]
     [String] $DomainFQDN, 
         
@@ -119,7 +124,11 @@ function PrepareHeadNode
     [String] $AdminUserName,
 
     [Parameter(Mandatory=$true)]
-    [String] $AdminPassword
+    [String] $AdminPassword,
+
+    [Parameter(Mandatory=$false)]
+    [String] $PostConfigScript=""
+    )
 
     Import-Module ScheduledTasks
 
@@ -139,6 +148,11 @@ function PrepareHeadNode
         {
             $HNPreparePsFile = "$PSScriptRoot\PrepareHN.ps1"
             $taskArgs = "-DomainFQDN $DomainFQDN -AdminUserName $AdminUserName -AdminPassword $AdminPassword -NodePrepare"
+            if($false -eq [String]::IsNullOrWhiteSpace($PostConfigScript))
+            {
+                $taskArgs += " -PostConfigScript '$PostConfigScript'"
+            }
+
             $action = New-ScheduledTaskAction -Execute 'PowerShell.exe' -Argument "-ExecutionPolicy Unrestricted -Command `"& '$HNPreparePsFile' $taskArgs`""
             $trigger = New-ScheduledTaskTrigger -AtStartup
             TraceInfo 'Register task HpcPrepareHeadNode'
@@ -156,7 +170,7 @@ function PrepareHeadNode
     else
     {
         $job = Start-Job -ScriptBlock{
-            param($scriptPath, $domainUserCred)
+            param($scriptPath, $domainUserCred, $PostConfigScript)
 
             . "$scriptPath\HpcPrepareUtil.ps1"
             TraceInfo 'register HPC Head Node Preparation Task'
@@ -330,8 +344,32 @@ function PrepareHeadNode
                 Export-Certificate -Cert $cert -FilePath $cerFile | Out-Null
                 $cerContent = [IO.File]::ReadAllBytes($cerFile)
                 TraceInfo "The certificate file with public key was exported: $thumbprint"
-                Remove-Item $cerFile -Force -ErrorAction SilentlyContinue       
+                Remove-Item $cerFile -Force -ErrorAction SilentlyContinue
                 
+                if($false -eq [String]::IsNullOrWhiteSpace($PostConfigScript))
+                {
+                    $webclient = New-Object System.Net.WebClient
+                    $ss = $PostConfigScript -split ' '
+                    $fileWithPath = $ss[0]
+                    $args = ""
+                    if($ss.Count -gt 1)
+                    {
+                        $args = $ss[1..$($ss.Count-1)] -join ' '
+                    }
+
+                    $fileName = $($fileWithPath -split '/')[-1]
+                    $file = "$env:windir\Temp\$fileName"
+                    TraceInfo "download post config script from $fileWithPath"
+                    $webclient.DownloadFile($fileWithPath,$file)
+                    $command = "$file $args"
+                    TraceInfo "execute post config script $command"
+                    Invoke-Expression -Command $command
+                    TraceInfo "finish to post config script"
+                }
+                else
+                {
+                    TraceInfo "PostConfigScript is empty, ignore it!"
+                }                
             }
             else
             {
@@ -344,7 +382,7 @@ function PrepareHeadNode
 
                 throw 'Failed to prepare HPC Head Node'
             }
-        } -ArgumentList $PSScriptRoot,$domainUserCred
+        } -ArgumentList $PSScriptRoot,$domainUserCred,$PostConfigScript
 
         Wait-Job $job
         TraceInfo 'job completed'
@@ -397,7 +435,7 @@ if ($PsCmdlet.ParameterSetName -eq 'Prepare')
         TraceInfo "The information needed for in-box management scripts succcessfully configured."
     }
 
-    PrepareHeadNode -DomainFQDN $DomainFQDN -AdminUserName $AdminUserName -AdminPassword $AdminPassword
+    PrepareHeadNode -DomainFQDN $DomainFQDN -AdminUserName $AdminUserName -AdminPassword $AdminPassword -PostConfigScript $PostConfigScript
 }
 else
 {

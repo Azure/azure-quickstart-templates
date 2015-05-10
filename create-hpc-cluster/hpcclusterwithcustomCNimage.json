@@ -97,6 +97,18 @@
                 "description": "Storage account type"
             }
         },
+        "CNSourceImageName": {
+            "type": "string",
+            "metadata": {
+                "Description": "HPC Compute Node image name"
+            }
+        },
+        "CNSourceImageContainer": {
+            "type": "string",
+            "metadata": {
+                "Description": "HPC Compute Node image name"
+            }
+        },
         "adminUsername": {
             "type": "string",
             "defaultValue": "azureuser",
@@ -132,27 +144,6 @@
                 "description": "Head Node Image SKU"
             }
         },
-        "computeNodeImagePublisher": {
-            "type": "string",
-            "defaultValue": "MicrosoftWindowsServer",
-            "metadata": {
-                 "description": "Compute Node Image Publisher"
-            }
-        },
-        "computeNodeImageOffer": {
-            "type": "string",
-            "defaultValue": "WindowsServer",
-            "metadata": {
-                "description": "Compute Node Image Offer"
-            }
-        },
-        "computeNodeImageSKU": {
-            "type": "string",
-            "defaultValue": "2012-R2-Datacenter",
-            "metadata": {
-                "description": "Compute Node Image SKU"
-            }
-        },
         "HNPostConfigScript": {
             "type": "string", 
             "defaultValue": " ",           
@@ -161,8 +152,8 @@
             }
         },
         "CNPostConfigScript": {
-            "type": "string",
-            "defaultValue": " ",            
+            "type": "string", 
+            "defaultValue": " ",           
             "metadata": {
                 "description": "post config script on compute node"
             }
@@ -170,6 +161,7 @@
     },
 
     "variables": {
+        "CNSourceImageUri": "[concat(parameters('CNSourceImageContainer'), parameters('CNSourceImageName'))]",
         "storageAccountName": "[concat(parameters('namePrefix'), 'sa')]",
         "virtualNetworkName": "[concat(parameters('namePrefix'), 'VNet')]",
         "addressPrefix": "10.0.0.0/16",
@@ -190,7 +182,7 @@
         "customScriptLocation": "http://yongjun.blob.core.windows.net/scripts/",
         "iaasInfoArg": "[concat('-SubscriptionId ', subscription().subscriptionId, ' -VNet ', variables('virtualNetworkName'), ' -Subnet ', variables('subnet1Name'), ' -Location \"', parameters('location'), '\"')]",
         "HNcommandStr": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File PrepareHN.ps1 -DomainFQDN ', variables('dcName'), ' -AdminUserName ', parameters('adminUsername'), ' -AdminPassword \"', parameters('adminPassword'), '\" -PostConfigScript \"', parameters('HNPostConfigScript'), '\" -NodePrepare ', variables('iaasInfoArg'))]",
-        "CNcommandStr": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File PrepareCN.ps1 -DomainFQDN ', variables('dcName'), ' -ClusterName ', variables('vmNameHN'),' -AdminUserName ', parameters('adminUsername'), ' -AdminPassword \"', parameters('adminPassword'), '\" -PostConfigScript \"', parameters('HNPostConfigScript'), '\"')]"
+        "CNcommandStr": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File PrepareCN.ps1 -DomainFQDN ', variables('dcName'), ' -ClusterName ', variables('vmNameHN'),' -AdminUserName ', parameters('adminUsername'), ' -AdminPassword ', parameters('adminPassword'), ' -PostConfigScript \"', parameters('CNPostConfigScript'), '\" -FromCustomImage')]"
     },
 
     "resources": [
@@ -383,20 +375,18 @@
                     "adminPassword": "[parameters('adminPassword')]"
                 },
                 "storageProfile": {
-                  "imageReference": {
-                      "publisher": "[parameters('computeNodeImagePublisher')]",
-                      "offer": "[parameters('computeNodeImageOffer')]",
-                      "sku" : "[parameters('computeNodeImageSKU')]",
-                      "version":"latest"
-                  },
-                  "osDisk" : {
-                      "name": "osdisk",
-                      "vhd": {
-                         "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/vhds',copyIndex(),'/','osdisk.vhd')]"
-                      },
-                      "caching": "ReadWrite",
-                      "createOption": "FromImage"
-                  }
+                    "osDisk": {
+                        "name": "[concat(parameters('computeNamePrefix'),copyindex())]",
+                        "osType": "windows",
+                        "caching": "ReadWrite",
+                        "image": {
+                            "uri": "[variables('CNSourceImageUri')]"
+                        },
+                        "createOption": "FromImage",
+                        "vhd": {
+                            "uri": "[concat(parameters('CNSourceImageContainer'), parameters('computeNamePrefix'), copyindex(), '.vhd')]"
+                        }
+                    }
                 },
                 "networkProfile": {
                     "networkInterfaces": [
