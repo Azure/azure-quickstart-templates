@@ -97,16 +97,16 @@
                 "description": "Storage account type"
             }
         },
-        "CNSourceImageName": {
+        "computeNodeSourceImageName": {
             "type": "string",
             "metadata": {
-                "Description": "HPC Compute Node image name"
+                "description": "HPC Compute Node image name"
             }
         },
-        "CNSourceImageContainer": {
+        "computeNodeSourceImageContainer": {
             "type": "string",
             "metadata": {
-                "Description": "HPC Compute Node image name"
+                "description": "HPC Compute Node image name"
             }
         },
         "adminUsername": {
@@ -144,14 +144,14 @@
                 "description": "Head Node Image SKU"
             }
         },
-        "HNPostConfigScript": {
+        "headNodePostConfigScript": {
             "type": "string", 
             "defaultValue": " ",           
             "metadata": {
                 "description": "post config script on compute node"
             }
         },
-        "CNPostConfigScript": {
+        "computeNodePostConfigScript": {
             "type": "string", 
             "defaultValue": " ",           
             "metadata": {
@@ -161,7 +161,7 @@
     },
 
     "variables": {
-        "CNSourceImageUri": "[concat(parameters('CNSourceImageContainer'), parameters('CNSourceImageName'))]",
+        "computeNodeSourceImageUri": "[concat(parameters('computeNodeSourceImageContainer'), parameters('computeNodeSourceImageName'))]",
         "storageAccountName": "[concat(parameters('namePrefix'), 'sa')]",
         "virtualNetworkName": "[concat(parameters('namePrefix'), 'VNet')]",
         "addressPrefix": "10.0.0.0/16",
@@ -181,8 +181,8 @@
         "vmExtensionName": "customScriptExtension",
         "customScriptLocation": "http://yongjun.blob.core.windows.net/scripts/",
         "iaasInfoArg": "[concat('-SubscriptionId ', subscription().subscriptionId, ' -VNet ', variables('virtualNetworkName'), ' -Subnet ', variables('subnet1Name'), ' -Location \"', parameters('location'), '\"')]",
-        "HNcommandStr": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File PrepareHN.ps1 -DomainFQDN ', variables('dcName'), ' -AdminUserName ', parameters('adminUsername'), ' -AdminPassword \"', parameters('adminPassword'), '\" -PostConfigScript \"', parameters('HNPostConfigScript'), '\" -NodePrepare ', variables('iaasInfoArg'))]",
-        "CNcommandStr": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File PrepareCN.ps1 -DomainFQDN ', variables('dcName'), ' -ClusterName ', variables('vmNameHN'),' -AdminUserName ', parameters('adminUsername'), ' -AdminPassword ', parameters('adminPassword'), ' -PostConfigScript \"', parameters('CNPostConfigScript'), '\" -FromCustomImage')]"
+        "headNodeCommandStr": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File PrepareHN.ps1 -DomainFQDN ', variables('dcName'), ' -AdminUserName ', parameters('adminUsername'), ' -AdminPassword \"', parameters('adminPassword'), '\" -PostConfigScript \"', parameters('headNodePostConfigScript'), '\" -NodePrepare ', variables('iaasInfoArg'))]",
+        "computeNodeCommandStr": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File PrepareCN.ps1 -DomainFQDN ', variables('dcName'), ' -ClusterName ', variables('vmNameHN'),' -AdminUserName ', parameters('adminUsername'), ' -AdminPassword ', parameters('adminPassword'), ' -PostConfigScript \"', parameters('computeNodePostConfigScript'), '\" -FromCustomImage')]"
     },
 
     "resources": [
@@ -322,7 +322,7 @@
                         "[concat(variables('customScriptLocation'), 'HPCHNPrepare.ps1')]",
                         "[concat(variables('customScriptLocation'), 'HpcPrepareUtil.ps1')]"
                     ],
-                    "commandToExecute": "[variables('HNcommandStr')]"
+                    "commandToExecute": "[variables('headNodeCommandStr')]"
                 }
             }
         },
@@ -380,11 +380,11 @@
                         "osType": "windows",
                         "caching": "ReadWrite",
                         "image": {
-                            "uri": "[variables('CNSourceImageUri')]"
+                            "uri": "[variables('computeNodeSourceImageUri')]"
                         },
                         "createOption": "FromImage",
                         "vhd": {
-                            "uri": "[concat(parameters('CNSourceImageContainer'), parameters('computeNamePrefix'), copyindex(), '.vhd')]"
+                            "uri": "[concat(parameters('computeNodeSourceImageContainer'), parameters('computeNamePrefix'), copyindex(), '.vhd')]"
                         }
                     }
                 },
@@ -415,7 +415,7 @@
                 "typeHandlerVersion": "1.2",
                 "settings": {
                     "fileUris": [ "[concat(variables('customScriptLocation'), 'PrepareCN.ps1')]" ],
-                    "commandToExecute": "[variables('CNcommandStr')]"
+                    "commandToExecute": "[variables('computeNodeCommandStr')]"
                 }
             }
         }
