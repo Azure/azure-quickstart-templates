@@ -13,11 +13,6 @@ from subprocess import call
 call("mkdir -p ./bosh",shell=True)
 call("mkdir -p ./bosh/.ssh",shell=True)
 
-if "some_id" in settings:
-    id = settings["some_id"]
-    resourcegroup = id.split("/")[4]
-    settings["resourcegroup"]=resourcegroup
-
 for f in ['micro_bosh.yml','deploy_micro_bosh.sh','micro_cf.yml']:
     if not os.path.exists(f):
         continue 
