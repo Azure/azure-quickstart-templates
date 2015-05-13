@@ -229,8 +229,7 @@
         "sqllbProbeID":"[concat(variables('sqllbID'),'/probes/',variables('SQLAOProbe'))]",
         "sqlBEAddressPoolID":"[concat(variables('sqllbID'),'/backendAddressPools/',variables('LBBE'))]",
         "windowsDiskSize":128,
-        "sqlDataDiskSize":1000,
-        "sqlLogDiskSize":1000,
+        "sqlDiskSize":1000,
         "publicIPAddressName": "publicIP",
         "sqlAvailabilitySetName":"sqlAvailabiltySet",
         "adAvailabilitySetName": "adAvailabiltySet",
@@ -730,121 +729,6 @@
             }
         },
         {
-            "name": "UpdateVNetDNS2",
-            "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2015-01-01",
-            "dependsOn": [
-                "[concat('Microsoft.Compute/virtualMachines/',variables('adBDCVMName'),'/extensions/CreateBDC')]"
-            ],
-            "properties": {
-                "mode": "Incremental",
-                "templateLink": {
-                  "uri": "[variables('vnetwithDNSTemplateUri')]",
-                  "contentVersion": "1.0.0.0"
-                },
-                "parameters": {
-                    "location": {"value":"[parameters('location')]"},
-                    "virtualNetworkName": {"value":"[variables('virtualNetworkName')]"},
-                    "virtualNetworkAddressRange": {"value":"[parameters('virtualNetworkAddressRange')]"},
-                    "subnets": {"value":"[variables('subnets')]"},
-                    "DNSServerAddress": {"value":["[variables('adPDCNicIPAddress')]","[variables('adBDCNicIPAddress')]"]}
-                }
-            }
-        },
-        {
-            "name": "UpdateSQLWNic",
-            "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2015-01-01",
-            "dependsOn": [
-                "Microsoft.Resources/deployments/UpdateVNetDNS2"
-            ],
-            "properties": {
-                "mode": "Incremental",
-                "templateLink": {
-                    "uri": "[variables('nicTemplateURL')]",
-                    "contentVersion": "1.0.0.0"
-                },
-                "parameters": {
-                    "location": {
-                        "value": "[parameters('location')]"
-                    },
-                    "nicName": {
-                        "value": "[variables('sqlwNicName')]"
-                    },
-                    "ipConfigurations": {
-                        "value": [
-                            {
-                                "name": "ipconfig1",
-                                "properties": {
-                                    "privateIPAllocationMethod": "Dynamic",
-                                    "subnet": {
-                                        "id": "[variables('sqlSubnetRef')]"
-                                    }
-                                }
-                            }
-                        ]
-                    },
-                    "dnsServers": {
-                        "value": [
-                                "[parameters('adPDCNICIPAddress')]","[parameters('adBDCNICIPAddress')]"
-                        ]
-                    }
-
-                }
-            }
-        },
-        {
-            "name":  "[concat('Update',variables('sqlVMName'), copyindex(),'-nic')]",
-            "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2015-01-01",
-            "copy": {
-                "name": "sqlnicupdateLoop",
-                "count": "[variables('noOfSqlVMs')]"
-            },
-            "dependsOn": [
-                "Microsoft.Resources/deployments/UpdateVNetDNS2"
-            ],
-            "properties": {
-                "mode": "Incremental",
-                "templateLink": {
-                    "uri": "[variables('nicTemplateURL')]",
-                    "contentVersion": "1.0.0.0"
-                },
-                "parameters": {
-                    "location": {
-                        "value": "[parameters('location')]"
-                    },
-                    "nicName": {
-                        "value": "[concat(variables('sqlVMName'), copyindex(),'-nic')]"
-                    },
-                    "ipConfigurations": {
-                        "value": [
-                            {
-                                "name": "ipconfig1",
-                                "properties": {
-                                    "privateIPAllocationMethod": "Dynamic",
-                                    "subnet": {
-                                        "id": "[variables('sqlSubnetRef')]"
-                                    },
-                                    "loadBalancerBackendAddressPools": [
-                                        {
-                                            "id":"[variables('sqlBEAddressPoolID')]"
-                                        }
-                                    ]
-                                }
-                            }
-                        ]
-                    },
-                    "dnsServers": {
-                        "value": [
-                                "[parameters('adPDCNICIPAddress')]","[parameters('adBDCNICIPAddress')]"
-                        ]
-                    }
-
-                }
-            }
-        },
-        {
             "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Compute/virtualMachines",
             "name": "[concat(variables('sqlVMName'), copyindex())]",
@@ -1094,6 +978,124 @@
                         "AdminPassword": "[parameters('adminPassword')]",
                         "SqlServerServiceAccountPassword": "[parameters('sqlServerServiceAccountPassword')]"
                     }
+                }
+            }
+        },
+        {
+            "name": "UpdateVNetDNS2",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2015-01-01",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/',variables('adBDCVMName'),'/extensions/CreateBDC')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                  "uri": "[variables('vnetwithDNSTemplateUri')]",
+                  "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "location": {"value":"[parameters('location')]"},
+                    "virtualNetworkName": {"value":"[variables('virtualNetworkName')]"},
+                    "virtualNetworkAddressRange": {"value":"[parameters('virtualNetworkAddressRange')]"},
+                    "subnets": {"value":"[variables('subnets')]"},
+                    "DNSServerAddress": {"value":["[variables('adPDCNicIPAddress')]","[variables('adBDCNicIPAddress')]"]}
+                }
+            }
+        },
+        {
+            "name": "UpdateSQLWNic",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2015-01-01",
+            "dependsOn": [
+                "Microsoft.Resources/deployments/UpdateVNetDNS2",
+                "[concat('Microsoft.Compute/virtualMachines/', variables('sqlwVMName'))]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('nicTemplateURL')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "nicName": {
+                        "value": "[variables('sqlwNicName')]"
+                    },
+                    "ipConfigurations": {
+                        "value": [
+                            {
+                                "name": "ipconfig1",
+                                "properties": {
+                                    "privateIPAllocationMethod": "Dynamic",
+                                    "subnet": {
+                                        "id": "[variables('sqlSubnetRef')]"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    "dnsServers": {
+                        "value": [
+                                "[variables('adPDCNICIPAddress')]","[variables('adBDCNICIPAddress')]"
+                        ]
+                    }
+
+                }
+            }
+        },
+        {
+            "name":  "[concat('Update',variables('sqlVMName'), copyindex(),'-nic')]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2015-01-01",
+            "copy": {
+                "name": "sqlnicupdateLoop",
+                "count": "[variables('noOfSqlVMs')]"
+            },
+            "dependsOn": [
+                "Microsoft.Resources/deployments/UpdateVNetDNS2",
+                "[concat('Microsoft.Compute/virtualMachines/', variables('sqlVMName'),copyindex())]"
+
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('nicTemplateURL')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "nicName": {
+                        "value": "[concat(variables('sqlVMName'), copyindex(),'-nic')]"
+                    },
+                    "ipConfigurations": {
+                        "value": [
+                            {
+                                "name": "ipconfig1",
+                                "properties": {
+                                    "privateIPAllocationMethod": "Dynamic",
+                                    "subnet": {
+                                        "id": "[variables('sqlSubnetRef')]"
+                                    },
+                                    "loadBalancerBackendAddressPools": [
+                                        {
+                                            "id":"[variables('sqlBEAddressPoolID')]"
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    },
+                    "dnsServers": {
+                        "value": [
+                                "[variables('adPDCNICIPAddress')]","[variables('adBDCNICIPAddress')]"
+                        ]
+                    }
+
                 }
             }
         }
