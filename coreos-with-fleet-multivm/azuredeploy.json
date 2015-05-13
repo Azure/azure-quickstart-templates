@@ -5,6 +5,7 @@
         "location": {
             "type": "string",
             "defaultValue": "West US",
+            "allowedValues": ["East US", "West US", "West Europe", "East Asia", "South East Asia"],
             "metadata": { 
                  "description": "Location of resources" 
             } 
@@ -16,42 +17,15 @@
                  "description": "Name of the storage account for VM OS Disks"
             } 
         },
-        "vmNamePrefix": {
-            "type": "string",
-            "defaultValue": "core",
-            "metadata": { 
-                 "description": "Prefix for the names of the VMs"
-            } 
-        },
-        "virtualNetworkName": {
-            "type": "string",
-            "defaultValue": "myVNET",
-            "metadata": { 
-                 "description": "Name of the VNET hosting the VMs"
-            } 
-        },
-        "imageSku": {
-            "type": "string",
-            "defaultValue": "Stable",
-            "allowedValues": [ 
-                "Stable", 
-                "Beta", 
-                "Alpha" 
-            ], 
-            "metadata": { 
-                 "description": "Specifies the CoreOS image SKU"
-            } 
-        },
-        "imageVersion": {
-            "type": "string",
-            "defaultValue": "633.1.0",
-            "metadata": { 
-                 "description": "Specifies the CoreOS image version"
-            } 
-        },
         "vmSize": {
             "type": "string",
             "defaultValue": "Standard_A1",
+            "allowedValues": [ 
+                "Standard_A1", 
+                "Standard_A2", 
+                "Standard_A3", 
+                "Standard_A4", 
+            ], 
             "metadata": { 
                  "description": "Instance size for the VMs"
             } 
@@ -76,23 +50,28 @@
                  "description": "Public key for SSH authentication"
             } 
         },
-        "customData": {
+        "discoveryUrl": {
             "type": "string",
             "metadata": { 
-                 "description": "Base64-encoded cloud-config.yaml file to deploy and start Fleet"
+                 "description": "Discovery url for Fleet cluster"
             } 
         }
     },
     "variables": {
+        "virtualNetworkName": "ClusterVNET",
         "addressPrefix": "10.0.0.0/16",
         "subnet1Name": "Subnet-1",
         "subnet1Prefix": "10.0.0.0/24",
-        "vmStorageAccountContainerName": "vhds",
         "publicIPAddressType": "Dynamic",
+        "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
+        "subnet1Ref": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]",
+        "vmNamePrefix": "coreos",
+        "imageSku": "Stable",
+        "vmStorageAccountContainerName": "vhds",
         "storageAccountType": "Standard_LRS",
         "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
-        "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
-        "subnet1Ref": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]"
+        "unitFile": "[concat('#cloud-config\n\ncoreos:\n  etcd:\n    discovery: ', parameters('discoveryUrl'),'\n    addr: $private_ipv4:4001\n    peer-addr: $private_ipv4:7001\n  units:\n    - name: etcd.service\n      command: start\n    - name: fleet.service\n      command: start')]"
+
     },
     "resources": [
         {
@@ -119,7 +98,7 @@
         },
         {
             "type": "Microsoft.Network/virtualNetworks",
-            "name": "[parameters('virtualNetworkName')]",
+            "name": "[variables('virtualNetworkName')]",
             "location": "[parameters('location')]",
             "apiVersion": "2015-05-01-preview",
             "properties": {
@@ -148,7 +127,7 @@
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[concat('Microsoft.Network/publicIPAddresses/', 'publicIP', copyindex())]",
-                "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
+                "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
             ],
             "apiVersion": "2015-05-01-preview",
             "properties": {
@@ -170,7 +149,7 @@
         },
         {
             "type": "Microsoft.Compute/virtualMachines",
-            "name": "[concat(parameters('vmNamePrefix'), copyindex())]",
+            "name": "[concat(variables('vmNamePrefix'), copyindex())]",
             "copy": {
                 "name": "vmLoop",
                 "count": "[parameters('numberOfNodes')]"
@@ -186,9 +165,9 @@
                     "vmSize": "[parameters('vmSize')]"
                 },
                 "osProfile": {
-                    "computername": "[concat(parameters('vmNamePrefix'), copyindex())]",
+                    "computername": "[concat(variables('vmNamePrefix'), copyindex())]",
                     "adminUsername": "[parameters('adminUsername')]",
-                    "customData": "[parameters('customData')]",
+                    "customData": "[base64(variables('unitFile'))]",
                     "linuxConfiguration": {
                         "disablePasswordAuthentication": "true",
                         "ssh": {
@@ -205,13 +184,13 @@
                     "imageReference": {
                         "publisher": "CoreOS",
                         "offer": "CoreOS",
-                        "sku": "[parameters('imageSku')]",
-                        "version": "[parameters('imageVersion')]"
+                        "sku": "[variables('imageSku')]",
+                        "version": "latest"
                     },
                     "osDisk": {
-                        "name": "[concat(parameters('vmNamePrefix'), copyindex())]",
+                        "name": "[concat(variables('vmNamePrefix'), copyindex())]",
                         "vhd": {
-                            "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/',parameters('vmNamePrefix'), copyindex(),'.vhd')]"
+                            "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/',variables('vmNamePrefix'), copyindex(),'.vhd')]"
                         },
                         "caching": "ReadWrite",
                         "createOption": "FromImage"
