@@ -1,0 +1,270 @@
+﻿{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "defaultValue": "West Europe",
+            "allowedValues": [
+                "East US",
+                "West US",
+                "West Europe",
+                "East Asia",
+                "South East Asia"
+            ],
+            "metadata": {
+                "description": "The Azure Location in which to create the environment; needs to match the location of the VNET referenced"
+            }
+        },
+        "environmentName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name to use for the new AppService Environment"
+            }
+        },
+        "ipSslAddressCount": {
+            "type": "int",
+            "defaultValue": "1",
+            "metadata": {
+                "description": "The number of IP Addresses to create for the environment"
+            }
+        },
+        "worker1Size": {
+            "type": "string",
+            "defaultValue": "small",
+            "allowedValues": [
+                "small",
+                "medium",
+                "large"
+            ],
+            "metadata": {
+                "description": "The size of VM to use for Worker Pool 1"
+            }
+        },
+        "worker1count": {
+            "type": "int",
+            "defaultValue": "2",
+            "metadata": {
+                "description": "The number of VM to use for Worker Pool 1"
+            }
+        },
+        "worker2Size": {
+            "type": "string",
+            "defaultValue": "medium",
+            "allowedValues": [
+                "small",
+                "medium",
+                "large"
+            ],
+            "metadata": {
+                "description": "The size of VM to use for Worker Pool 2"
+            }
+        },
+        "worker2count": {
+            "type": "int",
+            "defaultValue": "0",
+            "metadata": {
+                "description": "The number of VM to use for Worker Pool 2"
+            }
+        },
+        "frontendSize": {
+            "type": "string",
+            "defaultValue": "medium",
+            "allowedValues": [
+                "small",
+                "medium",
+                "large"
+            ],
+            "metadata": {
+                "description": "The size of VM to use for FrontEnd Pool"
+            }
+        },
+        "frontendCount": {
+            "type": "int",
+            "defaultValue": "2",
+            "metadata": {
+                "description": "The number of VM to use for FrontEnd Pool"
+            }
+        },
+        "worker3Size": {
+            "type": "string",
+            "defaultValue": "large",
+            "allowedValues": [
+                "small",
+                "medium",
+                "large"
+            ],
+            "metadata": {
+                "description": "The size of VM to use for Worker Pool 3"
+            }
+        },
+        "worker3count": {
+            "type": "int",
+            "defaultValue": "0",
+            "metadata": {
+                "description": "The number of VM to use for Worker Pool 3"
+            }
+        },
+        "vnetName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the VNET onto which to deploy the environment"
+            }
+        },
+        "vnetResourceGroupName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the Resource Group to which the VNET has been deployed"
+            }
+        },
+        "subnetName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the Subnet onto which to deploy the environment"
+            }
+        },
+        "serverFarmName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the AppService Plan to create"
+            }
+        },
+
+        "serverFarmSKU": {
+            "type": "string",
+            "allowedValues": [
+                "Standard",
+                "Premium"
+            ],
+            "metadata": {
+                "description": "The SKU of the AppService Plan to create"
+            }
+        },
+        "serverFarmWorkerSize": {
+            "type": "string",
+            "allowedValues": [
+                "0",
+                "1",
+                "2"
+            ],
+            "defaultValue": "0",
+            "metadata": {
+                "description": "The size of the AppService Plan worker VMs"
+            }
+        },
+        "logicAppName": {
+            "type": "string",
+            "metadata": { 
+                "description" :  "The name of the Logic App to create"
+            }
+        }
+    },
+    "variables": {
+
+    },
+    "resources": [
+        {
+            "apiVersion": "2014-11-01",
+            "name": "[parameters('environmentName')]",
+            "type": "Microsoft.Web/hostingEnvironments",
+            "location": "[parameters('Location')]",
+            "dependsOn": [
+
+            ],
+            "properties": {
+                "Name": "[parameters('environmentName')]",
+                "ipSslAddressCount": "[parameters('ipSslAddressCount')]",
+                "workerPools": [
+                    {
+                        "workerSizeId": 0,
+                        "workerSize": "[parameters('worker1Size')]",
+                        "workerCount": "[parameters('worker1count')]"
+                    },
+                    {
+                        "workerSizeId": 1,
+                        "workerSize": "[parameters('worker2Size')]",
+                        "workerCount": "[parameters('worker2count')]"
+                    },
+                    {
+                        "workerSizeId": 2,
+                        "workerSize": "[parameters('worker3Size')]",
+                        "workerCount": "[parameters('worker3count')]"
+                    }
+                ],
+                "location": "[parameters('Location')]",
+                "MultiSize": "[parameters('frontendSize')]",
+                "MultiRoleCount": "[parameters('frontendCount')]",
+                "VNETName": "[parameters('VNETName')]",
+                "VNetResourceGroupName": "[parameters('VNetResourceGroupName')]",
+                "VNETSubnetName": "[parameters('SubnetName')]"
+            }
+        },
+        {
+            "name": "[parameters('serverFarmName')]",
+            "type": "Microsoft.Web/serverfarms",
+            "location": "[parameters('Location')]",
+            "apiVersion": "2014-06-01",
+            "dependsOn": [
+                "[concat('Microsoft.Web/hostingEnvironments/', parameters('environmentName'))]"
+            ],
+            "tags": {
+                "displayName": "[parameters('serverFarmName')]"
+            },
+            "properties": {
+                "name": "[parameters('serverFarmName')]",
+                "sku": "[parameters('ServerFarmSKU')]",
+                "workerSize": "[parameters('ServerFarmWorkerSize')]",
+                "numberOfWorkers": 1,
+                "hostingEnvironment": "[parameters('environmentName')]",
+                "hostingEnvironmentId": "[resourceId('Microsoft.Web/hostingEnvironments', parameters('environmentName'))]"
+            }
+        },
+        {
+            "name": "ProcessNewFaults",
+            "type": "Microsoft.Logic/workflows",
+            "apiVersion": "2015-02-01-preview",
+            "location": "westeurope",
+            "dependsOn": [ 
+                "[concat('Microsoft.Web/serverfarms/', parameters('serverFarmName'))]"
+            ],
+            "properties": {
+                "sku": {
+                    "name": "Premium",
+                    "plan": {
+                        "id": "[resourceId('Microsoft.Web/ServerFarms',parameters('serverFarmName'))]",
+                        "type": "Microsoft.Web/ServerFarms",
+                        "name": "TflMBaaSFarm"
+                    }
+                },
+                "definition": {
+                    "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2014-12-01-preview/workflowdefinition.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": { },
+                    "triggers": {
+                        "recurrence": {
+                            "recurrence": {
+                                "frequency": "Minute",
+                                "interval": 1
+                            },
+                            "type": "Recurrence"
+                        }
+                    },
+                    "actions": {
+                        "http": {
+                            "type": "Http",
+                            "inputs": {
+                                "method": "GET",
+                                "uri": "http://www.example.com"
+                            },
+                            "conditions": [ ]
+                        }
+                    },
+                    "outputs": { }
+                },
+                "parameters": { }
+            }
+        }
+    ],
+            "outputs": {
+            }
+        }
