@@ -65,7 +65,7 @@ SQLCMD=( """CREATE ROLE hive LOGIN PASSWORD 'hive';""" """CREATE DATABASE hive O
 for SQL in "${SQLCMD[@]}"; do
 	psql -A -t -d scm -U cloudera-scm -h localhost -p 7432 -c "${SQL}" >> /tmp/initialize-cloudera-server.log
 done
-while ! (exec 6<>/dev/tcp/$(hostname)/7180) ; do log 'Waiting for cloudera-scm-server to start...'; sleep 15; done
+while ! (exec 6<>/dev/tcp/localhost/7180) ; do log 'Waiting for cloudera-scm-server to start...'; sleep 15; done
 log "END: master node deployments"
 
 # Set up python
