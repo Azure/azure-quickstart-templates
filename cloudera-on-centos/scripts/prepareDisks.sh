@@ -48,7 +48,7 @@ formatAndMountDrive() {
   echo "$(hostname) : $1 : Formatting drive for ext4" || true
   drive=$1
   echo "$(hostname) : $1 : set drive and execute"
-  mke2fs -F -t ext4 -b 4096 -O sparse_super,dir_index,extent,has_journal,uninit_bg -m1 $drive
+  mke2fs -F -t ext4 -b 4096 -E lazy_itable_init=1 -O sparse_super,dir_index,extent,has_journal,uninit_bg -m1 $drive
   echo "$(hostname) : $1 : should be done formatting now"
 
   echo "$(hostname) : $1 : attempt to format exit code: $?"
