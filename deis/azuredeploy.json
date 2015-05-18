@@ -2,13 +2,6 @@
     "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "location": {
-            "type": "String",
-            "defaultValue": "West US",
-            "metadata": { 
-                 "description": "Location of resources" 
-            } 
-        },
         "newStorageAccountName": {
             "type": "string",
             "metadata": { 
@@ -67,6 +60,27 @@
                  "description": "Number of member nodes"
             },
 			"defaultValue": "3"
+		},
+		"imagePublisher": {
+			"type": "string",
+			"metadata": { 
+                 "description": "VM Image publisher"
+            },
+			"defaultValue": "CoreOS"
+		},
+		"imageOffer":{
+			"type": "string",
+			"metadata": { 
+                 "description": "VM Image offer"
+            },
+			"defaultValue": "CoreOS"
+		},
+		"imageSKU":{
+			"type": "string",
+			"metadata": { 
+                 "description": "VM Image offer"
+            },
+			"defaultValue": "Stable"
 		}
     },
     "variables": {
@@ -86,8 +100,8 @@
         {
             "type": "Microsoft.Storage/storageAccounts",
             "name": "[parameters('newStorageAccountName')]",
-            "location": "[parameters('location')]",
-            "apiVersion": "2014-12-01-preview",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-05-01-preview",
             "properties": {
                 "accountType": "[variables('storageAccountType')]"
             }
@@ -99,8 +113,8 @@
                 "name": "ipLoop",
                 "count": "[parameters('numberOfNodes')]"
             },
-            "location": "[parameters('location')]",
-            "apiVersion": "2014-12-01-preview",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-05-01-preview",
             "properties": {
                 "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
                 "dnsRecord": {
@@ -111,8 +125,8 @@
         {
             "type": "Microsoft.Network/virtualNetworks",
             "name": "[parameters('virtualNetworkName')]",
-            "location": "[parameters('location')]",
-            "apiVersion": "2014-12-01-preview",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-05-01-preview",
             "properties": {
                 "addressSpace": {
                     "addressPrefixes": [
@@ -136,12 +150,12 @@
                 "name": "nicLoop",
                 "count": "[parameters('numberOfNodes')]"
             },
-            "location": "[parameters('location')]",
+            "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[concat('Microsoft.Network/publicIPAddresses/', 'publicIP', copyindex())]",
                 "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
             ],
-            "apiVersion": "2014-12-01-preview",
+            "apiVersion": "2015-05-01-preview",
             "properties": {
                 "ipConfigurations": [
                     {
@@ -166,12 +180,12 @@
                 "name": "virtualMachineLoop",
                 "count": "[parameters('numberOfNodes')]"
             },
-            "location": "[parameters('location')]",
+            "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
                 "[concat('Microsoft.Network/networkInterfaces/', 'nic', copyindex())]"
             ],
-            "apiVersion": "2014-12-01-preview",
+            "apiVersion": "2015-05-01-preview",
             "properties": {
                 "hardwareProfile": {
                     "vmSize": "[parameters('vmSize')]"
@@ -193,10 +207,20 @@
                     }
                 },
                 "storageProfile": {
-                    "sourceImage": {
-                        "id": "[variables('sourceImageName')]"
-                    },
-                    "destinationVhdsContainer": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/')]"
+                    "imageReference": {
+						"publisher": "[parameters('imagePublisher')]",
+						"offer": "[parameters('imageOffer')]",
+						"sku" : "[parameters('imageSKU')]",
+						"version":"latest"
+					},
+					"osDisk" : {
+						"name": "osdisk",
+							"vhd": {
+								"uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/','osdisk', copyindex(),'.vhd')]"
+							},
+						"caching": "ReadWrite",
+						"createOption": "FromImage"
+					}
                 },
                 "networkProfile": {
                     "networkInterfaces": [
