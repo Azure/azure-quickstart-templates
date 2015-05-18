@@ -28,14 +28,19 @@ This template allows you to create a Deis cluster. This template also deploys a 
 You need **deisctl** to control your Deis cluster. *deisctl* is automatically installed in all the cluster nodes. However, it's a good practice to use *deisctl* on a separate administrative machine. Because all nodes are configured with public IP addresses, you'll be able to use *deisctl* from any client machines. The following are the steps of setting up *deisctl* on a separate machine.
 
 1. Install *deisctl*
+
 		mkdir deis
 		cd deis
 		curl -sSL http://deis.io/deisctl/install.sh | sh -s 1.6.1
 		sudo ln -fs $PWD/deisctl /usr/local/bin/deisctl
+
 2. Add private key to ssh agent
+
 		eval `ssh-agent -s`
 		ssh-add [path to the private key file, see step 1 in the previous section]
+
 3. Configure *deisctl*
+
 		export DEISCTL_TUNNEL=[public ip of one of the nodes]
 
 ##Install and start platform
