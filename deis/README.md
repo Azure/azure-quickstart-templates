@@ -9,9 +9,13 @@ This template allows you to create a Deis cluster. This template also deploys a 
 ##Deploy the cluster
 
 1. Generate an OpenSSH key pair:
+
 		ssh-keygen -t rsa -b 4096 -c "[your_email@domain.com]"
+
 2. Generate a certificate using the private key above:
+
 		openssl req -x509 -days 365 -new -key [your private key file] -out [cert file to be generated]
+
 3. Go to https://discovery.etcd.io/new to generate a new cluster token.
 4. Modify **cloud-config.yaml** to replace the existing **discovery** token with the new token.
 5. Modify **azuredeploy-parameters.json**: Open the certificate you created in step 2. Copy all text between  *----BEGIN CERTIFICATE-----* and *-----END CERTIFICATE-----* into the **sshKeyData** parameter (you'll need to remove all newline characters).
@@ -113,8 +117,11 @@ Below are the parameters that the template expects
 2. As you ssh into the machine, verify if Docker daemon is running by running some Docker command such as *docker ps*.
 3. Use *deisctl list* to list all services. Check if all services are running. If you found a service is in faulted state, you can try to use the following commands to find out why the service is failing:
 	- List service journal
+	
 			deisctl journal [service]  #example: deisctl journal builder
+
 	- Restart a service
+	
 			deisctl restart [service] #example: deisctl restart controller
 	
 	>Note: For more information, see http://docs.deis.io/en/latest/troubleshooting_deis/
