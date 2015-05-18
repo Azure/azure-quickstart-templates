@@ -46,27 +46,35 @@ Now you can use **deisctl** to install and start the platform
 
 ##Deploy and scale a Hello World application
 The following steps show how to deploy a "Hello World" Go application to the cluster. The steps are based on: http://docs.deis.io/en/latest/using_deis/using-dockerfiles/#using-dockerfiles.
+
 1. Install **deis**
 		mkdir deis
 		cd deis
 		curl -sSL http://deis.io/deis-cli/install.sh | sh
 		ln -fs $PWD/deis /usr/local/bin/deis
+
 2. Create a new SSH key
 		cd ~/.ssh
 		ssh-keygen (press [Enter]s to use default file names and empty passcode)
+
 3. Add id_rsa.pub to GitHub (using Settings->SSH Keys section on your GitHub account).
+
 4. Register a new user
 		deis register http://[controller ip]:8000
 	> Note: You can use *deisctl list* to locate where the controller is running. Because we don't have DNS resolution (yet), you'll need to use the controller public IP in this case.
+	
 5. Add the SSH key:
 		deis keys:add [path to your id_rsa.pub file in step 3]
+
 6. Create an application:
 		git clone https://github.com/deis/helloworld.git
 		cd helloworld
 		deis create
 		git push deis master
+
 7. Scale the application to 3 instances:
 		deis scale cmd=3
+
 8. Verify if the application is running:
 	> Note: Before we figure out how the load-balancing should be configured without a DNS server, or how to create a DNS server with template, we'll need to ssh into one of the member nodes and use *docker ps* to find out to which port the application instances are listening. It seems to be 49153 in most cases.
 	
