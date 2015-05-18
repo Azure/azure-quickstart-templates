@@ -63,6 +63,8 @@ The following steps show how to deploy a "Hello World" Go application to the clu
 		cd ~/.ssh
 		ssh-keygen (press [Enter]s to use default file names and empty passcode)
 
+	>Note: You can also reuse you existing SSH key.
+
 3. Add id_rsa.pub to GitHub (using Settings->SSH Keys section on your GitHub account).
 
 4. Register a new user
