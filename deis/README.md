@@ -20,7 +20,9 @@ This template allows you to create a Deis cluster. This template also deploys a 
 4. Modify **cloud-config.yaml** to replace the existing **discovery** token with the new token.
 5. Modify **azuredeploy-parameters.json**: Open the certificate you created in step 2. Copy all text between  *----BEGIN CERTIFICATE-----* and *-----END CERTIFICATE-----* into the **sshKeyData** parameter (you'll need to remove all newline characters).
 6. Modify other parameters such as **newStorageAccountName**, **vmNamePrefix**, **virtualNetworkName** to values of your choice. 
-5. Provision the resource group:
+5. Provision the resource group (using Azure PowerShell):
+	
+		.\deploy-deis.ps1 -ResourceGroupName [resource group name] -ResourceGroupLocation "West US" -TemplateFile .\azuredeploy.json -ParametersFile .\azuredeploy-parameters.json -CloudInitFile .\cloud-config.yaml
 
 >Note: If you chose to use the "Deploy to Azure" button experience, you'll need to manually encode **cloud-config.yaml** as a Base64 string and enter the encoded string to the **customData** parameter. Although the template can be updated to use the built-in base64() founction, I found the triple-encoding is rather troublesome especially for readability and maintenance.
 		
