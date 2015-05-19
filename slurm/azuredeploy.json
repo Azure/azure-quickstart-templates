@@ -2,48 +2,16 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "location": {
+        "dnsName": {
             "type": "string",
-            "defaultValue": "West US"
+            "metadata": {
+                "description": "Unique public dns name where the master node will be exposed"
+            }
         },
         "newStorageAccountName": {
             "type": "string",
             "metadata": {
                 "description": "Unique DNS Name for the Storage Account where the Virtual Machine's disks will be placed."
-            }
-        },
-        "publicIPAddressName": {
-            "type": "string",
-            "defaultValue": "publicips"
-        },
-        "publicIPAddressType": {
-            "type": "string",
-            "defaultValue": "Dynamic",
-            "allowedValues": [
-                "Dynamic"
-            ]
-        },
-        "vmStorageAccountContainerName": {
-            "type": "string",
-            "defaultValue": "vhds"
-        },
-        "MasterVMName": {
-            "type": "string",
-            "defaultValue": "master"
-        },
-        "WorkerVMName": {
-            "type": "string",
-            "defaultValue": "worker"
-        },
-        "vmSize": {
-            "type": "string",
-            "defaultValue": "Standard_A1"
-        },
-        "adminUserName": {
-            "type": "string",
-            "defaultValue": "azureuser",
-            "metadata": {
-               "description": "User name for the Virtual Machine."
             }
         },
         "sshKeyData": {
@@ -52,40 +20,76 @@
                "description": "Trusted key for SSH logon"
             }
         },
-        "virtualNetworkName": {
+        "vmSize": {
             "type": "string",
-            "defaultValue": "virtualnetwork"
-        },
-        "addressPrefix": {
-            "type": "string",
-            "defaultValue": "10.0.0.0/16"
-        },
-        "subnetName": {
-            "type": "string",
-            "defaultValue": "Subnet"
-        },
-        "subnetPrefix": {
-            "type": "string",
-            "defaultValue": "10.0.0.0/24"
-        },
-        "dnsName": {
-            "type": "string"
-        },
-        "nicName": {
-            "type": "string",
-            "defaultValue": "nic"
+            "defaultValue": "Standard_A1",
+            "metadata": {
+                "description": "Size of the worker node."
+            }
         },
         "scaleNumber": {
             "type": "int",
-            "defaultValue": 2
+            "defaultValue": 2,
+            "metadata": {
+                "description": "This template create N worker node. Use scaleNumber to specify that N."
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "West US",
+            "metadata": {
+                "description": "This is the location where the availability set will be deployed"
+            }
+        },
+        "MasterVMName": {
+            "type": "string",
+            "defaultValue": "master",
+            "metadata": {
+                "description": "The machine name of the master node - not be confused with dnsName which is public visible name."
+            }
+        },
+        "WorkerVMName": {
+            "type": "string",
+            "defaultValue": "worker",
+            "metadata": {
+                "description": "The machine name of the worker node."
+            }
+        },
+        "adminUserName": {
+            "type": "string",
+            "defaultValue": "azureuser",
+            "metadata": {
+               "description": "User name for the Virtual Machine."
+            }
+        },
+        "addressPrefix": {
+            "type": "string",
+            "defaultValue": "10.0.0.0/16",
+            "metadata": {
+                "description": "The network address space for the virtual network" 
+            }
+        },
+        "subnetPrefix": {
+            "type": "string",
+            "defaultValue": "10.0.0.0/24",
+            "metadata": {
+                "description": "The network address space for the virtual subnet" 
+            }
         }
     },
     "variables": {
         "imagePublisher": "Canonical",
         "imageOffer": "UbuntuServer",
         "ubuntuOSVersion": "15.04",
-        "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
-        "subnetRef": "[concat(variables('vnetID'),'/subnets/',parameters('subnetName'))]",
+        "vmStorageAccountContainerName": "vhd",
+        "OSDiskName": "osdisk",
+        "publicIPAddressType": "Dynamic",
+        "publicIPAddressName": "publicips",
+        "virtualNetworkName": "virtualnetwork",
+        "nicName": "nic",
+        "subnetName": "Subnet",
+        "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
+        "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
         "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
         "templateBaseUrl": "https://raw.githubusercontent.com/YidingZhou/azure-quickstart-templates/master/slurm/",
         "installationCLI": "[concat('sh azurecluster.sh ', parameters('scaleNumber'))]",
@@ -104,7 +108,7 @@
         {
             "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Network/virtualNetworks",
-            "name": "[parameters('virtualNetworkName')]",
+            "name": "[variables('virtualNetworkName')]",
             "location": "[parameters('location')]",
             "properties": {
                 "addressSpace": {
@@ -114,7 +118,7 @@
                 },
                 "subnets": [
                     {
-                        "name": "[parameters('subnetName')]",
+                        "name": "[variables('subnetName')]",
                         "properties": {
                             "addressPrefix": "[parameters('subnetPrefix')]"
                         }
@@ -125,10 +129,10 @@
         {
             "type": "Microsoft.Network/publicIPAddresses",
             "apiVersion": "2015-05-01-preview",
-            "name": "[parameters('publicIPAddressName')]",
+            "name": "[variables('publicIPAddressName')]",
             "location": "[parameters('location')]",
             "properties": {
-                "publicIPAllocationMethod": "[parameters('publicIPAddressType')]",
+                "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
                 "dnsSettings": {
                     "domainNameLabel": "[parameters('dnsName')]"
                 }
@@ -137,11 +141,11 @@
         {
             "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Network/networkInterfaces",
-            "name": "[parameters('nicName')]",
+            "name": "[variables('nicName')]",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[concat('Microsoft.Network/publicIPAddresses/', parameters('publicIPAddressName'))]",
-                "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
+                "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+                "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
             ],
             "properties": {
                 "ipConfigurations": [
@@ -150,7 +154,7 @@
                         "properties": {
                             "privateIPAllocationMethod": "Dynamic",
                             "publicIPAddress": {
-                                "id": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('publicIPAddressName'))]"
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
                             },
                             "subnet": {
                                 "id": "[variables('subnetRef')]"
@@ -167,7 +171,7 @@
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
-                "[concat('Microsoft.Network/networkInterfaces/', parameters('nicName'))]"
+                "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
             ],
             "properties": {
                 "hardwareProfile": {
@@ -207,7 +211,7 @@
                 "networkProfile": {
                     "networkInterfaces": [
                         {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces',parameters('nicName'))]"
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
                         }
                     ]
                 }
@@ -236,7 +240,7 @@
         {
             "type": "Microsoft.Network/publicIPAddresses",
             "apiVersion": "2015-05-01-preview",
-            "name": "[concat(parameters('publicIPAddressName'), 'worker', copyIndex())]",
+            "name": "[concat(variables('publicIPAddressName'), 'worker', copyIndex())]",
             "location": "[parameters('location')]",
             "copy": {
                 "name": "foo",
@@ -249,11 +253,11 @@
         {
             "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Network/networkInterfaces",
-            "name": "[concat(parameters('nicName'), 'worker', copyIndex())]",
+            "name": "[concat(variables('nicName'), 'worker', copyIndex())]",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[concat('Microsoft.Network/publicIPAddresses/', parameters('publicIPAddressName'), 'worker', copyIndex())]",
-                "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
+                "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'), 'worker', copyIndex())]",
+                "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
             ],
             "copy": {
                 "name": "foo",
@@ -266,7 +270,7 @@
                         "properties": {
                             "privateIPAllocationMethod": "Dynamic",
                             "publicIPAddress": {
-                                "id": "[concat(resourceId('Microsoft.Network/publicIPAddresses',parameters('publicIPAddressName')), 'worker', copyIndex())]"
+                                "id": "[concat(resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName')), 'worker', copyIndex())]"
                             },
                             "subnet": {
                                 "id": "[variables('subnetRef')]"
@@ -283,7 +287,7 @@
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
-                "[concat('Microsoft.Network/networkInterfaces/', parameters('nicName'), 'worker', copyIndex())]"
+                "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), 'worker', copyIndex())]"
             ],
             "copy": {
                 "name": "foo",
@@ -327,7 +331,7 @@
                 "networkProfile": {
                     "networkInterfaces": [
                         {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('nicName'), 'worker', copyIndex()))]"
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('nicName'), 'worker', copyIndex()))]"
                         }
                     ]
                 }
