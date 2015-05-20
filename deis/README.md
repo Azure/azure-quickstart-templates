@@ -4,7 +4,8 @@
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-This template allows you to create a Deis cluster. This template also deploys a Storage Account, Virtual Network, Public IP addresses and a Network Interface. 
+This template allows you to create a Deis cluster. The cluster is made up by three nodes, which are joined behind a load balancer with a public IP.
+
 
 ##Deploy the cluster
 
@@ -17,14 +18,16 @@ This template allows you to create a Deis cluster. This template also deploys a 
 		openssl req -x509 -days 365 -new -key [your private key file] -out [cert file to be generated]
 
 3. Go to https://discovery.etcd.io/new to generate a new cluster token.
-4. Modify **cloud-config.yaml** to replace the existing **discovery** token with the new token.
-5. Modify **azuredeploy-parameters.json**: Open the certificate you created in step 2. Copy all text between  *----BEGIN CERTIFICATE-----* and *-----END CERTIFICATE-----* into the **sshKeyData** parameter (you'll need to remove all newline characters).
-6. Modify other parameters such as **newStorageAccountName**, **vmNamePrefix**, **virtualNetworkName** to values of your choice. 
-5. Provision the resource group (using Azure PowerShell):
-	
-		.\deploy-deis.ps1 -ResourceGroupName [resource group name] -ResourceGroupLocation "West US" -TemplateFile .\azuredeploy.json -ParametersFile .\azuredeploy-parameters.json -CloudInitFile .\cloud-config.yaml
 
->Note: If you chose to use the "Deploy to Azure" button experience, you'll need to manually encode **cloud-config.yaml** as a Base64 string and enter the encoded string to the **customData** parameter. Although the template can be updated to use the built-in base64() founction, I found the triple-encoding is rather troublesome especially for readability and maintenance.
+4. Modify **cloud-config.yaml** to replace the existing **discovery** token with the new token.
+
+5. Modify **azuredeploy-parameters.json**: Open the certificate you created in step 2. Copy all text between  *----BEGIN CERTIFICATE-----* and *-----END CERTIFICATE-----* into the **sshKeyData** parameter (you'll need to remove all newline characters).
+
+6. Modify other parameters such as **newStorageAccountName**, **vmNamePrefix**, **virtualNetworkName** to values of your choice. 
+
+7. Provision the resource group:
+
+>**Note:** If you chose to use the "Deploy to Azure" button experience, you'll need to manually encode **cloud-config.yaml** as a Base64 string and enter the encoded string to the **customData** parameter. Although the template can be updated to use the built-in base64() founction, I found the triple-encoding is rather troublesome especially for readability and maintenance.
 		
 ##Install the client
 You need **deisctl** to control your Deis cluster. *deisctl* is automatically installed in all the cluster nodes. However, it's a good practice to use *deisctl* on a separate administrative machine. Because all nodes are configured with public IP addresses, you'll be able to use *deisctl* from any client machines. The following are the steps of setting up *deisctl* on a separate machine.
@@ -43,17 +46,21 @@ You need **deisctl** to control your Deis cluster. *deisctl* is automatically in
 
 3. Configure *deisctl*
 
-		export DEISCTL_TUNNEL=[public ip of one of the nodes]
+		export DEISCTL_TUNNEL=[public ip of the load balancer]:2223
+
+	>Note: the template define inbound NAT rules that map 2223 to instance 1, 2224 to instance 2, and 2225 to instance 3. This provides redundancy for using deisctl tool, however this is not load-balanced. This implementation also constraints the number of nodes to 3. This should be fixed, however I don't know what the best way is yet.
 
 ##Install and start platform
 Now you can use **deisctl** to install and start the platform
 
-		deisctl config platform set domain=test.cloudapp.net
+		deisctl config platform set domain=[some domain]
 		deisctl config platform set sshPrivateKey=[path to the private key file]
 		deisctl install platform
 		deisctl start platform
 
->Note: starting the platform takes a while (>10 minutes). Especially, starting the builder service can take a long time. And sometimes it takes a few tries to succeed. If you found the operation seems to hang after a few minutes. You can use *ctrl+c* to break execution of the command and retry. Or, you can use the commands in the debugging tips section to find out the root causes of the problems.
+> **Note:** starting the platform takes a while (>10 minutes). Especially, starting the builder service can take a long time. And sometimes it takes a few tries to succeed. If you found the operation seems to hang after a few minutes. You can use *ctrl+c* to break execution of the command and retry. Or, you can use the commands in the debugging tips section to find out the root causes of the problems.
+
+> **Note:** as we don't have a custom DNS in the template, you should use a domain for which you can define a wildcard A record that points to the load balancer IP. For instance, if your domain is *yourdomain.com*, you should have a A record ***.yourdomain.com** pointing to the load balancer public IP.
 
 ##Deploy and scale a Hello World application
 The following steps show how to deploy a "Hello World" Go application to the cluster. The steps are based on: http://docs.deis.io/en/latest/using_deis/using-dockerfiles/#using-dockerfiles.
@@ -70,15 +77,14 @@ The following steps show how to deploy a "Hello World" Go application to the clu
 		cd ~/.ssh
 		ssh-keygen (press [Enter]s to use default file names and empty passcode)
 
-	>Note: You can also reuse you existing SSH key.
-
 3. Add id_rsa.pub to GitHub (using Settings->SSH Keys section on your GitHub account).
 
+	> **Note**: for step 2 and 3, you can also reuse your existing key.
+	
 4. Register a new user
 
-		deis register http://[controller ip]:8000
-	> Note: You can use *deisctl list* to locate where the controller is running. Because we don't have DNS resolution (yet), you'll need to use the controller public IP in this case.
-	
+		deis register http://deis.[your domain]
+
 5. Add the SSH key:
 
 		deis keys:add [path to your id_rsa.pub file in step 3]
@@ -90,19 +96,20 @@ The following steps show how to deploy a "Hello World" Go application to the clu
 		deis create
 		git push deis master
 
-7. Scale the application to 3 instances:
-
-		deis scale cmd=3
-
-8. Verify if the application is running:
-
-	> Note: Before we figure out how the load-balancing should be configured without a DNS server, or how to create a DNS server with template, we'll need to ssh into one of the member nodes and use *docker ps* to find out to which port the application instances are listening. It seems to be 49153 in most cases.
+7. Verify if the application is running:
 	
-		curl -S http://[public ip of a node]:49153
+		curl -S http://[your application name].[your domain]
 
 	You should see:
 		Welcome to Deis!
 		See the documentation at http://docs.deis.io/ for more information.
+
+	> Note: You can use *deis apps:list* to find out your application name.
+
+8. Scale the application to 3 instances:
+
+		deis scale cmd=3
+
 
 ##Other parameters
 
@@ -123,14 +130,16 @@ Below are the parameters that the template expects
 ##Deis debugging tips
 
 1. First, verify if the VM machines have been provisioned correctly. When you ssh into the machines, you should see the Deis logo as ASCII art. If you don't see it, something has gone wrong with the cloud-init process. Probably you have an invalid cloud-init file.
+
 2. As you ssh into the machine, verify if Docker daemon is running by running some Docker command such as *docker ps*.
+
 3. Use *deisctl list* to list all services. Check if all services are running. If you found a service is in faulted state, you can try to use the following commands to find out why the service is failing:
 	- List service journal
-	
+
 			deisctl journal [service]  #example: deisctl journal builder
 
 	- Restart a service
-	
+
 			deisctl restart [service] #example: deisctl restart controller
 	
 	>Note: For more information, see http://docs.deis.io/en/latest/troubleshooting_deis/
