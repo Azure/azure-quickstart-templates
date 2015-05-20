@@ -17,7 +17,7 @@
         "adminPassword": {
             "type": "securestring",
             "metadata": {
-              "description": "Admin password"
+                "description": "Admin password"
             }
         },
         "vmSize": {
@@ -59,21 +59,7 @@
             "type": "string",
             "defaultValue": "azureuser",
             "metadata": {
-               "description": "User name for the Virtual Machine."
-            }
-        },
-        "addressPrefix": {
-            "type": "string",
-            "defaultValue": "10.0.0.0/16",
-            "metadata": {
-                "description": "The network address space for the virtual network" 
-            }
-        },
-        "subnetPrefix": {
-            "type": "string",
-            "defaultValue": "10.0.0.0/24",
-            "metadata": {
-                "description": "The network address space for the virtual subnet" 
+                "description": "User name for the Virtual Machine."
             }
         }
     },
@@ -85,11 +71,27 @@
         "OSDiskName": "osdisk",
         "publicIPAddressType": "Dynamic",
         "publicIPAddressName": "publicips",
-        "virtualNetworkName": "virtualnetwork",
         "nicName": "nic",
-        "subnetName": "Subnet",
-        "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
-        "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
+        "networkSettings": {
+            "virtualNetworkName": "virtualnetwork",
+            "addressPrefix": "10.0.0.0/16",
+            "subnet": {
+                "dse": {
+                    "name": "dse",
+                    "prefix": "10.0.0.0/24",
+                    "vnet": "virtualnetwork"
+                }
+            },
+            "statics": {
+                "workerRange": {
+                    "base": "10.0.0.",
+                    "start": 5
+                },
+                "master": "10.0.0.254"
+            }
+        },
+        "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('networkSettings').virtualNetworkName)]",
+        "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('networkSettings').subnet.dse.name)]",
         "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
         "templateBaseUrl": "https://raw.githubusercontent.com/YidingZhou/azure-quickstart-templates/master/slurm/",
         "installationCLI": "[concat('sh azuredeploy.sh ', parameters('scaleNumber'))]",
@@ -108,19 +110,19 @@
         {
             "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Network/virtualNetworks",
-            "name": "[variables('virtualNetworkName')]",
+            "name": "[variables('networkSettings').virtualNetworkName]",
             "location": "[parameters('location')]",
             "properties": {
                 "addressSpace": {
                     "addressPrefixes": [
-                        "[parameters('addressPrefix')]"
+                        "[variables('networkSettings').addressPrefix]"
                     ]
                 },
                 "subnets": [
                     {
-                        "name": "[variables('subnetName')]",
+                        "name": "[variables('networkSettings').subnet.dse.name]",
                         "properties": {
-                            "addressPrefix": "[parameters('subnetPrefix')]"
+                            "addressPrefix": "[variables('networkSettings').subnet.dse.prefix]"
                         }
                     }
                 ]
@@ -145,14 +147,15 @@
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
-                "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+                "[concat('Microsoft.Network/virtualNetworks/', variables('networkSettings').virtualNetworkName)]"
             ],
             "properties": {
                 "ipConfigurations": [
                     {
                         "name": "ipconfig1",
                         "properties": {
-                            "privateIPAllocationMethod": "Dynamic",
+                            "privateIPAllocationMethod": "Static",
+                            "privateIPAddress": "[variables('networkSettings').statics.master]",
                             "publicIPAddress": {
                                 "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
                             },
@@ -230,10 +233,10 @@
         {
             "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Network/networkInterfaces",
-            "name": "[concat(variables('nicName'), 'worker', copyIndex())]",
+            "name": "[concat(variables('nicName'), 'worker', copyindex(variables('networkSettings').statics.workerRange.start))]",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+                "[concat('Microsoft.Network/virtualNetworks/', variables('networkSettings').virtualNetworkName)]"
             ],
             "copy": {
                 "name": "foo",
@@ -244,7 +247,8 @@
                     {
                         "name": "ipconfig1",
                         "properties": {
-                            "privateIPAllocationMethod": "Dynamic",
+                            "privateIPAllocationMethod": "Static",
+                            "privateIPAddress": "[concat(variables('networkSettings').statics.workerRange.base, copyindex(variables('networkSettings').statics.workerRange.start))]",
                             "subnet": {
                                 "id": "[variables('subnetRef')]"
                             }
@@ -256,11 +260,11 @@
         {
             "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Compute/virtualMachines",
-            "name": "[concat(parameters('WorkerVMName'), copyIndex())]",
+            "name": "[concat(parameters('WorkerVMName'), copyindex(variables('networkSettings').statics.workerRange.start))]",
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
-                "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), 'worker', copyIndex())]"
+                "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), 'worker', copyindex(variables('networkSettings').statics.workerRange.start))]"
             ],
             "copy": {
                 "name": "foo",
@@ -271,7 +275,7 @@
                     "vmSize": "[parameters('vmSize')]"
                 },
                 "osProfile": {
-                    "computername": "[concat(parameters('WorkerVMname'), copyIndex())]",
+                    "computername": "[concat(parameters('WorkerVMname'), copyindex(variables('networkSettings').statics.workerRange.start))]",
                     "adminUsername": "[parameters('adminUsername')]",
                     "adminPassword": "[parameters('adminPassword')]"
                 },
@@ -285,7 +289,7 @@
                    "osDisk" : {
                         "name": "osdisk",
                         "vhd": {
-                            "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),parameters('WorkerVMname'),copyIndex(),'.vhd')]"
+                            "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),parameters('WorkerVMname'),copyindex(variables('networkSettings').statics.workerRange.start),'.vhd')]"
                         },
                         "caching": "ReadWrite",
                         "createOption": "FromImage"
@@ -294,7 +298,7 @@
                 "networkProfile": {
                     "networkInterfaces": [
                         {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('nicName'), 'worker', copyIndex()))]"
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('nicName'), 'worker', copyindex(variables('networkSettings').statics.workerRange.start)))]"
                         }
                     ]
                 }
