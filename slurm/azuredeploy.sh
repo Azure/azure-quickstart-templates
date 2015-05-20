@@ -1,6 +1,7 @@
 #!/bin/sh
 date > /tmp/dummy 2>&1
 whoami >> /tmp/dummy 2>&1
+echo $@ >> /tmp/dummy 2>&1
 
 if [ "$#" -ne 6 ]; then
   echo "Usage: $0 MASTER_NAME MASTER_IP WORKER_NAME WORKER_IP_BASE WORKER_IP_START NUM_OF_VM " >> /tmp/dummy
