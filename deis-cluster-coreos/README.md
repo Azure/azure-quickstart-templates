@@ -23,7 +23,7 @@ This template allows you to create a Deis cluster. The cluster is made up by thr
 
 5. Modify **azuredeploy-parameters.json**: Open the certificate you created in step 2. Copy all text between  *----BEGIN CERTIFICATE-----* and *-----END CERTIFICATE-----* into the **sshKeyData** parameter (you'll need to remove all newline characters).
 
-6. Modify other parameters such as **newStorageAccountName**, **vmNamePrefix**, **virtualNetworkName** to values of your choice. 
+6. Modify other parameters such as **newStorageAccountName** and **vmNamePrefix** to values of your choice. 
 
 7. Provision the resource group:
 
