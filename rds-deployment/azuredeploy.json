@@ -70,7 +70,8 @@
         "subnetAddressRange": "10.0.0.0/24",
         "dnsServerPrivateIp": "10.0.0.8",
         "subnetName": "Subnet",
-        "subnet-id": "[concat(resourceId('Microsoft.Network/virtualNetworks','VNET'),'/subnets/',variables('subnetName'))]"
+        "subnet-id": "[concat(resourceId('Microsoft.Network/virtualNetworks','VNET'),'/subnets/',variables('subnetName'))]",
+        "scriptArgs": "[concat(' -domain ',parameters('domainName'),' -broker broker.',parameters('domainName'),' -gateway gateway.',parameters('domainName'),' -externalfqdn ',parameters('publicDnsName'),'.westus.cloudapp.azure.com',' -numberOfRdshInstances ',parameters('numberOfRdshInstances') )]"
     },
 
     "resources": [
@@ -674,6 +675,26 @@
                     }
                 }
             }
+        },
+
+        {
+            "apiVersion": "2015-05-01-preview",
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "cb-vm/customscript",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "Microsoft.Compute/virtualMachines/cb-vm/extensions/rdsdeployment"
+            ],
+            "properties": {
+                "publisher": "Microsoft.Compute",
+                "type": "CustomScriptExtension",
+                "typeHandlerVersion": "1.2",
+                "settings": {
+                    "fileUris": [ "[concat(parameters('assetLocation'),'/Configure.ps1')]" ],
+                    "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -file Configure.ps1 ', variables('scriptArgs'))]"
+                }
+            }
         }
+
     ]
 }
