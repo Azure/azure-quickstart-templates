@@ -482,7 +482,7 @@
                 {
                     "apiVersion": "2015-05-01-preview",
                     "type": "Microsoft.Compute/virtualMachines/extensions",
-                    "name": "gw-vm/domainjoin",
+                    "name": "gw-vm/gateway",
                     "location": "[resourceGroup().location]",
                     "dependsOn": [
                         "[resourceId('Microsoft.Compute/virtualMachines', 'gw-vm')]"
@@ -493,7 +493,7 @@
                         "typeHandlerVersion": "1.9",
                         "settings": {
                             "ModulesUrl": "[concat(parameters('assetLocation'),'/Configuration.zip')]",
-                            "ConfigurationFunction": "Configuration.ps1\\DomainJoin",
+                            "ConfigurationFunction": "Configuration.ps1\\Gateway",
                             "Properties": {
                                 "DomainName": "[parameters('domainName')]",
                                 "AdminCreds": {
@@ -558,42 +558,39 @@
                         }
                     ]
                 }
-            }
-        },
-
-        {
-            "apiVersion": "2015-05-01-preview",
-            "type": "Microsoft.Compute/virtualMachines/extensions",
-            "copy": {
-                "name": "rdsh-vm-domain-join-loop",
-                "count": "[parameters('numberOfRdshInstances')]"
             },
-            "name": "[concat('rdsh-', copyindex(), '/domainjoin')]",
-            "location": "[resourceGroup().location]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Compute/virtualMachines', concat('rdsh-', copyindex()))]"
-            ],
-            "properties": {
-                "publisher": "Microsoft.Powershell",
-                "type": "DSC",
-                "typeHandlerVersion": "1.9",
-                "settings": {
-                    "ModulesUrl": "[concat(parameters('assetLocation'),'/Configuration.zip')]",
-                    "ConfigurationFunction": "Configuration.ps1\\DomainJoin",
-                    "Properties": {
-                        "DomainName": "[parameters('domainName')]",
-                        "AdminCreds": {
-                            "UserName": "[parameters('adminUsername')]",
-                            "Password": "PrivateSettingsRef:adminPassword"
+            "resources": [
+                {
+                    "apiVersion": "2015-05-01-preview",
+                    "type": "Microsoft.Compute/virtualMachines/extensions",
+                    "name": "[concat('rdsh-', copyindex(),'/sessionhost')]",
+                    "location": "[resourceGroup().location]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Compute/virtualMachines', concat('rdsh-', copyindex()))]"
+                    ],
+                    "properties": {
+                        "publisher": "Microsoft.Powershell",
+                        "type": "DSC",
+                        "typeHandlerVersion": "1.9",
+                        "settings": {
+                            "ModulesUrl": "[concat(parameters('assetLocation'),'/Configuration.zip')]",
+                            "ConfigurationFunction": "Configuration.ps1\\SessionHost",
+                            "Properties": {
+                                "DomainName": "[parameters('domainName')]",
+                                "AdminCreds": {
+                                    "UserName": "[parameters('adminUsername')]",
+                                    "Password": "PrivateSettingsRef:AdminPassword"
+                                }
+                            }
+                        },
+                        "protectedSettings": {
+                            "Items": {
+                                "AdminPassword": "[parameters('adminPassword')]"
+                            }
                         }
                     }
-                },
-                "protectedSettings": {
-                    "Items": {
-                        "adminPassword": "[parameters('adminPassword')]"
-                    }
                 }
-            }
+            ]
         },
 
 
@@ -650,8 +647,8 @@
             "apiVersion": "2015-05-01-preview",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "Microsoft.Compute/virtualMachines/gw-vm/extensions/domainjoin",
-                "rdsh-vm-domain-join-loop"
+                "Microsoft.Compute/virtualMachines/gw-vm/extensions/gateway",
+                "rdsh-vm-loop"
             ],
             "properties": {
                 "publisher": "Microsoft.Powershell",
@@ -666,8 +663,9 @@
                             "UserName": "[parameters('adminUsername')]",
                             "Password": "PrivateSettingsRef:adminPassword"
                         },
+                        "connectionBroker": "[concat('broker.',parameters('domainName'))]",
                         "webAccessServer": "[concat('gateway.',parameters('domainName'))]",
-                        "sessionHost": "[concat('rdsh-0.',parameters('domainName'))]"
+                        "sessionHostNamingPrefix": "rdsh-"
                     }
                 },
                 "protectedSettings": {
@@ -677,6 +675,5 @@
                 }
             }
         }
-
     ]
 }
