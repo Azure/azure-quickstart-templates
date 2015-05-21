@@ -57,7 +57,7 @@ You need **deisctl** to control your Deis cluster. *deisctl* is automatically in
 
 		export DEISCTL_TUNNEL=[public ip of the load balancer]:2223
 
-	>Note: the template define inbound NAT rules that map 2223 to instance 1, 2224 to instance 2, and 2225 to instance 3. This provides redundancy for using deisctl tool, however this is not load-balanced. This implementation also constraints the number of nodes to 3. This should be fixed, however I don't know what the best way is yet.
+	>Note: the template defines inbound NAT rules that map 2223 to instance 1, 2224 to instance 2, and 2225 to instance 3. This provides redundancy for using deisctl tool, however this is not load-balanced. This implementation also constraints the number of nodes to 3. This should be fixed, however I don't know what the best way is yet.
 
 ##Install and start platform
 Now you can use **deisctl** to install and start the platform
