@@ -23,7 +23,7 @@ echo $MASTER_IP $MASTER_NAME >> /etc/hosts
 sudo -u $ADMIN_USERNAME sh -c "mkdir /home/$ADMIN_USERNAME/.ssh/;echo Host worker\* > /home/$ADMIN_USERNAME/.ssh/config; echo StrictHostKeyChecking no >> /home/$ADMIN_USERNAME/.ssh/config; echo UserKnownHostsFile=/dev/null >> /home/$ADMIN_USERNAME/.ssh/config"
 
 if ! [ -f /home/$ADMIN_USERNAME/.ssh/id_rsa ]; then
-    sudo -u $ADMIN_USERNAME sh -c "ssh-keygen -f id_rsa -t rsa -N ''"
+    sudo -u $ADMIN_USERNAME sh -c "ssh-keygen -f /home/$ADMIN_USERNAME/.ssh/id_rsa -t rsa -N ''"
 fi
 
 sudo apt-get install sshpass -y >> /tmp/dummy 2>&1
