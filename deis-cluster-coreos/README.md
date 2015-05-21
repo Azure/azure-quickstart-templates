@@ -110,6 +110,7 @@ The following steps show how to deploy a "Hello World" Go application to the clu
 		curl -S http://[your application name].[your domain]
 
 	You should see:
+
 		Welcome to Deis!
 		See the documentation at http://docs.deis.io/ for more information.
 
