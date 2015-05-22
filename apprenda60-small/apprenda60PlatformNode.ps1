@@ -13,10 +13,6 @@ param(
 
 Set-ExecutionPolicy unrestricted -Force
 
-# here, we are going to run a script on the domain controller node. 
-
-
-
 # first things first, add the platform node to the domain controller
 $secpw = ConvertTo-SecureString $domainPassword -AsPlainText -Force
 $pscredential = New-Object System.Management.Automation.PSCredential($domainUserName, $secpw)
@@ -24,7 +20,7 @@ Add-Computer -DomainName $domainname -Server $domaincontrollerserver -Credential
 
 # sourced from GetCurrentDirectory.ps1
 $directoryPath = Get-Location
-Set-Variable -name currentpath -Value $directoryPath.path -Scope 1
+Set-Variable -name currentpath -Value $directoryPath.path
 
 # use the same webclient for all downloads
 $webclient = New-Object System.Net.WebClient
@@ -61,8 +57,7 @@ $installConfig.Save($apprendaLocalXml)
 # Download Files
 # -----------------------------------------------------------------
 $directoryPath = Get-Location
-Set-Variable -name currentpath -Value $directoryPath.path -Scope 1
-
+Set-Variable -name currentpath -Value $directoryPath.path
 # Download Apprenda 6.0
 
 $url = "http://docs.apprenda.com/sites/default/files/apprenda-6.0.0.zip"
@@ -144,17 +139,7 @@ $hostsFilePath = "$env:windir\System32\drivers\etc\hosts"
 #sqlps -Command {Invoke-Sqlcmd -ServerInstance "$env:COMPUTERNAME\apprendasql" -Username "sa" -Password "@pp|23n|}4" -Database "Master" -Query "EXEC master..sp_addsrvrolemember @loginame = N'apprendadbuser', @rolename = N'sysadmin'" -QueryTimeout 3}
 #sqlps -Command {Invoke-Sqlcmd -ServerInstance "$env:COMPUTERNAME\apprendasql" -Username "sa" -Password "@pp|23n|}4" -Database "Master" -Query "EXEC master..sp_addsrvrolemember @loginame = N'apprendadbuser', @rolename = N'serveradmin'" -QueryTimeout 3}
 
-# decompress apprenda, and install
-Start-Process -Wait "$installdir\ApprendaInstall.exe" /nr
-# this typically extracts apprenda to a temp directory which can sometimes barf. we'll mitigate this.
-New-Item  C:\Install -type directory
-Move-Item C:\Temp\Apprenda C:\Install\Apprenda -force
-
-$apprendaInstallDir = "C:\Install\Installer"
-Start-Process -Wait $apprendaInstallDir\Apprenda.Wizard.exe Install -autorepair -inputFile $apprendaLocalXml
-$wscript = new-object -comobject wscript.shell
-$wscript.popup(“The Apprenda Operator and Developer portals will now open. Login using '$platformAdminEmailAddress' and password = '$platformAdminPassword'. The SQL Server instance is at '$env:COMPUTERNAME\apprendasql'. Login using 'apprendadbuser' and password '@pp|23n|}4'“,0,”Apprenda Credentials”,1)
-
+& C:\Install\Installer\Apprenda.Wizard.exe Install -autorepair -inputFile $apprendaLocalXml
 start http://apps.apprenda.$env:COMPUTERNAME/SOC
 start http://apps.apprenda.$env:COMPUTERNAME/Developer
 

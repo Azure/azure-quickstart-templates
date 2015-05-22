@@ -133,9 +133,6 @@ $hostsFilePath = "$env:windir\System32\drivers\etc\hosts"
 #sqlps -Command {Invoke-Sqlcmd -ServerInstance "$env:COMPUTERNAME\apprendasql" -Username "sa" -Password "@pp|23n|}4" -Database "Master" -Query "EXEC master..sp_addsrvrolemember @loginame = N'apprendadbuser', @rolename = N'serveradmin'" -QueryTimeout 3}
 
 & C:\Install\Installer\Apprenda.Wizard.exe Install -autorepair -inputFile $apprendaLocalXml
-$wscript = new-object -comobject wscript.shell
-$wscript.popup(“The Apprenda Operator and Developer portals will now open. Login using '$platformAdminEmailAddress' and password = '$platformAdminPassword'. The SQL Server instance is at '$env:COMPUTERNAME\apprendasql'. Login using 'apprendadbuser' and password '@pp|23n|}4'“,0,”Apprenda Credentials”,1)
-
 start http://apps.apprenda.$env:COMPUTERNAME/SOC
 start http://apps.apprenda.$env:COMPUTERNAME/Developer
 
