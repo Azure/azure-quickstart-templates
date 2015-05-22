@@ -134,11 +134,6 @@ Start-Process -Wait .\SQLEXPR_x64_ENU.exe /ConfigurationFile=$sqlUnattendInstall
 $hostsFilePath = "$env:windir\System32\drivers\etc\hosts"
 [System.Net.Dns]::GetHostAddresses($hostname) | foreach { "`n" + $_.IPAddressToString + "`tapps.apprenda.$hostname" | Out-File $hostsFilePath -encoding ASCII -append}
 
-# Set up SQL Administrator Accounts
-#sqlps -Command {Invoke-Sqlcmd -ServerInstance "$env:COMPUTERNAME\apprendasql" -Username "sa" -Password "@pp|23n|}4" -Database "Master" -Query "CREATE LOGIN apprendadbuser WITH PASSWORD = '@pp|23n|}4'" -QueryTimeout 3}
-#sqlps -Command {Invoke-Sqlcmd -ServerInstance "$env:COMPUTERNAME\apprendasql" -Username "sa" -Password "@pp|23n|}4" -Database "Master" -Query "EXEC master..sp_addsrvrolemember @loginame = N'apprendadbuser', @rolename = N'sysadmin'" -QueryTimeout 3}
-#sqlps -Command {Invoke-Sqlcmd -ServerInstance "$env:COMPUTERNAME\apprendasql" -Username "sa" -Password "@pp|23n|}4" -Database "Master" -Query "EXEC master..sp_addsrvrolemember @loginame = N'apprendadbuser', @rolename = N'serveradmin'" -QueryTimeout 3}
-
 & C:\Install\Installer\Apprenda.Wizard.exe Install -autorepair -inputFile $apprendaLocalXml
 start http://apps.apprenda.$env:COMPUTERNAME/SOC
 start http://apps.apprenda.$env:COMPUTERNAME/Developer
