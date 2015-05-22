@@ -39,7 +39,7 @@ This template allows you to create a Deis cluster. The cluster is made up by thr
 >**Note:** If you chose to use the "Deploy to Azure" button experience, you'll need to manually encode **cloud-config.yaml** as a Base64 string and enter the encoded string to the **customData** parameter. Although the template can be updated to use the built-in base64() founction, I found the triple-encoding is rather troublesome especially for readability and maintenance.
 		
 ##Install the client
-You need **deisctl** to control your Deis cluster. *deisctl* is automatically installed in all the cluster nodes. However, it's a good practice to use *deisctl* on a separate administrative machine. Because all nodes are configured with public IP addresses, you'll be able to use *deisctl* from any client machines. The following are the steps of setting up *deisctl* on a separate machine.
+You need **deisctl** to control your Deis cluster. *deisctl* is automatically installed in all the cluster nodes. However, it's a good practice to use *deisctl* on a separate administrative machine. Because all nodes are configured with only private IP addresses, you'll need to use SSH tunneling through the load balancer, which has a public IP, to the node machines. The following are the steps of setting up *deisctl* on a separate machine.
 
 1. Install *deisctl*
 
@@ -57,7 +57,7 @@ You need **deisctl** to control your Deis cluster. *deisctl* is automatically in
 
 		export DEISCTL_TUNNEL=[public ip of the load balancer]:2223
 
-	>Note: the template defines inbound NAT rules that map 2223 to instance 1, 2224 to instance 2, and 2225 to instance 3. This provides redundancy for using deisctl tool, however this is not load-balanced. This implementation also constraints the number of nodes to 3. This should be fixed, however I don't know what the best way is yet.
+	>Note: the template defines inbound NAT rules that map 2223 to instance 1, 2224 to instance 2, and 2225 to instance 3. This provides redundancy for using the deisctl tool. Becuase of the limitation of NAT rule syntax, this implementation is constrianed to 3 nodes. If you want to have more nodes, you'll need to modify the NAT rules to define a new rule for each of the new nodes. This should be fixed, however I don't know what the best way is yet. A possible fix is to define two VM types. The first VM type will be defined with NAT rules to support the deisctl tool, while the second VM type will act as regular nodes.
 
 ##Install and start platform
 Now you can use **deisctl** to install and start the platform
