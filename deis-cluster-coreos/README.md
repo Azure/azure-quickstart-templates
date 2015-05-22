@@ -23,7 +23,7 @@ This template allows you to create a Deis cluster. The cluster is made up by thr
 
 5. Modify **azuredeploy-parameters.json**: Open the certificate you created in step 2. Copy all text between  *----BEGIN CERTIFICATE-----* and *-----END CERTIFICATE-----* into the **sshKeyData** parameter (you'll need to remove all newline characters).
 
-6. Modify other parameters such as **newStorageAccountName** and **vmNamePrefix** to values of your choice. 
+6. Modify other parameters such as **newStorageAccountName** and **publicDomainName** to values of your choice. 
 
 7. Provision the resource group:
 
@@ -127,15 +127,13 @@ Below are the parameters that the template expects
 
 | Name   | Description    |
 |:--- |:---|
-| location | location where the resources will be deployed |
-| newStorageAccountName | new storage account for the VMs OS disk |
-| vmNamePrefix | prefix for the names of each VM |
-| virtualNetworkName | name for the new VNET |
-| vmSourceImageName | name of the CoreOS image |
-| vmSize | Instance size for the VMs |
 | adminUsername | Name of the admin user | 
-| sshKeyData | Explained above |
 | customData | Explained above |
+| newStorageAccountName | new storage account for the VMs OS disk |
+| numberOfNodes | Number of member nodes. Currently only 3-node clusters are supported |
+| publicDomainName | public domain name to be assoicated with the load balancer IP |
+| sshKeyData | Explained above |
+| vmSize | Instance size for the VMs |
 
 ##Deis debugging tips
 
