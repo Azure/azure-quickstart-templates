@@ -10,7 +10,7 @@ This template creates a new AppService Environment on a specified Subnet in a pr
 It proceeds to create an AppService hosting plan preparing the environment to recieve Web, API and Logic apps.
 Finally - it deploys a sample Logic app that calls http://www.example.com on a schedule
 
-The template assumes a 'Classic' network has been pre-provisioned that includes a subnet onto which to deploy the environment.
+The template assumes a network was created using the ClassicNetwork provider (or using V1 network on the portal) and that it includes a subnet onto which to deploy the environment.
 
 Below are the parameters that the template expects
 
