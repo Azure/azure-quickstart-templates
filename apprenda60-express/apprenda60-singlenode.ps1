@@ -7,11 +7,12 @@ param(
     $platformAdminPassword = "@ppm5205"
 )
 
-Set-ExecutionPolicy unrestricted -Force
+# start transcript for the install
+Start-Transcript -Path .\InstallOutput.txt
 
 # sourced from GetCurrentDirectory.ps1
-$directoryPath = Get-Location
-Set-Variable -name currentpath -Value $directoryPath.path -Scope 1
+$directoryPath = Get-Locationd
+Set-Variable -name currentpath -Value $directoryPath.path
 
 # use the same webclient for all downloads
 $webclient = New-Object System.Net.WebClient
@@ -48,7 +49,7 @@ $installConfig.Save($apprendaLocalXml)
 # Download Files
 # -----------------------------------------------------------------
 $directoryPath = Get-Location
-Set-Variable -name currentpath -Value $directoryPath.path -Scope 1
+Set-Variable -name currentpath -Value $directoryPath.path
 
 # Download Apprenda 6.0
 
@@ -131,14 +132,7 @@ $hostsFilePath = "$env:windir\System32\drivers\etc\hosts"
 #sqlps -Command {Invoke-Sqlcmd -ServerInstance "$env:COMPUTERNAME\apprendasql" -Username "sa" -Password "@pp|23n|}4" -Database "Master" -Query "EXEC master..sp_addsrvrolemember @loginame = N'apprendadbuser', @rolename = N'sysadmin'" -QueryTimeout 3}
 #sqlps -Command {Invoke-Sqlcmd -ServerInstance "$env:COMPUTERNAME\apprendasql" -Username "sa" -Password "@pp|23n|}4" -Database "Master" -Query "EXEC master..sp_addsrvrolemember @loginame = N'apprendadbuser', @rolename = N'serveradmin'" -QueryTimeout 3}
 
-# decompress apprenda, and install
-Start-Process -Wait "$installdir\ApprendaInstall.exe" /nr
-# this typically extracts apprenda to a temp directory which can sometimes barf. we'll mitigate this.
-New-Item  C:\Install -type directory
-Move-Item C:\Temp\Apprenda C:\Install\Apprenda -force
-
-$apprendaInstallDir = "C:\Install\Installer"
-Start-Process -Wait $apprendaInstallDir\Apprenda.Wizard.exe Install -autorepair -inputFile $apprendaLocalXml
+& C:\Install\Installer\Apprenda.Wizard.exe Install -autorepair -inputFile $apprendaLocalXml
 $wscript = new-object -comobject wscript.shell
 $wscript.popup(“The Apprenda Operator and Developer portals will now open. Login using '$platformAdminEmailAddress' and password = '$platformAdminPassword'. The SQL Server instance is at '$env:COMPUTERNAME\apprendasql'. Login using 'apprendadbuser' and password '@pp|23n|}4'“,0,”Apprenda Credentials”,1)
 
@@ -158,4 +152,8 @@ $Shortcut2.Save()
 catch [Exception]
 {
     throw
+}
+finally
+{
+    Stop-Transcript
 }
