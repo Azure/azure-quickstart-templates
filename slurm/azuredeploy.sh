@@ -74,6 +74,7 @@ lastvm=`expr $NUM_OF_VM - 1`
 sed -i -- 's/__WORKERNODES__/'"$WORKER_NAME"'[0-'"$lastvm"']/g' $SLURMCONF >> /tmp/dummy 2>&1
 sudo cp -f $SLURMCONF /etc/slurm-llnl/slurm.conf >> /tmp/dummy 2>&1
 sudo chown slurm /etc/slurm-llnl/slurm.conf >> /tmp/dummy 2>&1
+sudo chmod o+w /var/spool # Write access for slurmctld log. Consider switch log file to another location
 sudo -u slurm /usr/sbin/slurmctld >> /tmp/dummy 2>&1 # Start the master daemon service
 sudo slurmd >> /tmp/dummy 2>&1 # Start the node
 
@@ -98,6 +99,7 @@ do
       sudo chown munge /etc/munge/munge.key
       sudo chgrp munge /etc/munge/munge.key
       sudo rm -f /tmp/munge.key
+      sudo /usr/sbin/munged --force # ignore egregrious security warning
       sudo cp -f /tmp/slurm.conf /etc/slurm-llnl/slurm.conf
       sudo chown slurm /etc/slurm-llnl/slurm.conf
       sudo slurmd
