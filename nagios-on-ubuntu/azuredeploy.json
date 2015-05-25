@@ -1,65 +1,70 @@
 {
-    "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
         "adminUsername": {
             "type": "string",
             "metadata": {
-                "Description": "Administrator user name used when provisioning virtual machines"
+                "description": "Administrator user name used when provisioning virtual machines"
             }
         },
         "adminPassword": {
             "type": "securestring",
             "metadata": {
-                "Description": "Administrator password used when provisioning virtual machines"
+                "description": "Administrator password used when provisioning virtual machines"
             }
         },
         "storageAccountName": {
             "type": "string",
-            "defaultValue": "uniqueStorageAccountName",
             "metadata": {
-                "Description": "Unique namespace for the Storage Account where the Virtual Machine's disks will be placed"
+                "description": "Unique namespace for the Storage Account where the Virtual Machine's disks will be placed"
             }
         },
-        "region": {
+        "location": {
             "type": "string",
-            "defaultValue": "West US",
+            "allowedValues": [
+                "West US",
+                "East US",
+                "East Asia",
+                "Southeast Asia",
+                "West Europe"
+            ],
             "metadata": {
-                "Description": "Location where resources will be provisioned"
+                "description": "Location where resources will be provisioned"
             }
         },
         "virtualNetworkName": {
             "type": "string",
             "defaultValue": "myVNET",
             "metadata": {
-                "Description": "The arbitrary name of the virtual network provisioned for the cluster"
+                "description": "The arbitrary name of the virtual network provisioned for the cluster"
             }
         },
         "addressPrefix": {
             "type": "string",
             "defaultValue": "10.0.0.0/16",
             "metadata": {
-                "Description": "The network address space for the virtual network"
+                "description": "The network address space for the virtual network"
             }
         },
         "subnetName": {
             "type": "string",
             "defaultValue": "Subnet-1",
             "metadata": {
-                "Description": "Subnet name for the virtual network that resources will be provisioned in to"
+                "description": "Subnet name for the virtual network that resources will be provisioned in to"
             }
         },
         "subnetPrefix": {
             "type": "string",
             "defaultValue": "10.0.0.0/24",
             "metadata": {
-                "Description": "Address space for the virtual network subnet"
+                "description": "Address space for the virtual network subnet"
             }
         },
         "domainName": {
             "type": "string",
             "metadata": {
-                "Description": "Domain name of the publicly accessible Apache web server hosting Nagios"
+                "description": "Domain name of the publicly accessible Apache web server hosting Nagios"
             }
         },
         "tshirtSize": {
@@ -73,7 +78,7 @@
                 "XXLarge"
             ],
             "metadata": {
-                "Description": "T-shirt size of the Nagios deployment"
+                "description": "T-shirt size of the Nagios deployment"
             }
         }
     },
@@ -107,14 +112,15 @@
             "vmSize": "Standard_D4"
         },
         "numberOfInstances": "[variables(concat('tshirtSize', parameters('tshirtSize'))).numberOfInstances]",
-        "vmSize": "[variables(concat('tshirtSize', parameters('tshirtSize'))).vmSize]"
+        "vmSize": "[variables(concat('tshirtSize', parameters('tshirtSize'))).vmSize]",
+        "securityGroupName": "nagiosNSG"
     },
     "resources": [
         {
             "type": "Microsoft.Storage/storageAccounts",
             "name": "[parameters('storageAccountName')]",
             "apiVersion": "2015-05-01-preview",
-            "location": "[parameters('region')]",
+            "location": "[parameters('location')]",
             "properties": {
                 "accountType": "Standard_LRS"
             }
@@ -123,7 +129,7 @@
             "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Network/virtualNetworks",
             "name": "[parameters('virtualNetworkName')]",
-            "location": "[parameters('region')]",
+            "location": "[parameters('location')]",
             "properties": {
                 "addressSpace": {
                     "addressPrefixes": [
@@ -144,7 +150,7 @@
             "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Network/publicIPAddresses",
             "name": "[concat('publicIP', copyIndex())]",
-            "location": "[parameters('region')]",
+            "location": "[parameters('location')]",
             "copy": {
                 "name": "publicIPLoop",
                 "count": "[variables('numberOfInstances')]"
@@ -158,16 +164,41 @@
         },
         {
             "apiVersion": "2015-05-01-preview",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[variables('securityGroupName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "SSH",
+                        "properties": {
+                            "description": "Allows SSH traffic",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "22",
+                            "destinationPortRange": "22",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 100,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Network/networkInterfaces",
             "name": "[concat('nic', copyindex())]",
-            "location": "[parameters('region')]",
+            "location": "[parameters('location')]",
             "copy": {
                 "name": "nicLoop",
                 "count": "[variables('numberOfInstances')]"
             },
             "dependsOn": [
                 "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
-                "[concat('Microsoft.Network/publicIPAddresses/', 'publicIP', copyindex())]"
+                "[concat('Microsoft.Network/publicIPAddresses/', 'publicIP', copyindex())]",
+                "[concat('Microsoft.Network/networkSecurityGroups/', variables('securityGroupName'))]"
             ],
             "properties": {
                 "ipConfigurations": [
@@ -177,6 +208,9 @@
                             "privateIPAllocationMethod": "Dynamic",
                             "publicIPAddress": {
                                 "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat('publicIP', copyindex()))]"
+                            },
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('securityGroupName'))]"
                             },
                             "subnet": {
                                 "id": "[variables('subnetRef')]"
@@ -190,7 +224,7 @@
             "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Compute/virtualMachines",
             "name": "[concat('nagiosSrv', copyindex())]",
-            "location": "[parameters('region')]",
+            "location": "[parameters('location')]",
             "copy": {
                 "name": "virtualMachineLoop",
                 "count": "[variables('numberOfInstances')]"
@@ -227,16 +261,7 @@
                 "networkProfile": {
                     "networkInterfaces": [
                         {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces',concat('nic', copyindex()))]"
-                        }
-                    ],
-                    "inputEndpoints": [
-                        {
-                            "enableDirectServerReturn": "False",
-                            "endpointName": "SSH",
-                            "privatePort": 22,
-                            "publicPort": 22,
-                            "protocol": "tcp"
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat('nic', copyindex()))]"
                         }
                     ]
                 }
@@ -246,7 +271,7 @@
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "name": "[concat('nagiosSrv', copyindex(), '/installnagios')]",
             "apiVersion": "2015-05-01-preview",
-            "location": "[parameters('region')]",
+            "location": "[parameters('location')]",
             "copy": {
                 "name": "virtualMachineExtensionsLoop",
                 "count": "[variables('numberOfInstances')]"

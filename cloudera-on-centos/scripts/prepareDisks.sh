@@ -48,7 +48,7 @@ formatAndMountDrive() {
   echo "$(hostname) : $1 : Formatting drive for ext4" || true
   drive=$1
   echo "$(hostname) : $1 : set drive and execute"
-  mke2fs -F -t ext4 -b 4096 -O sparse_super,dir_index,extent,has_journal -m1 $drive
+  mke2fs -F -t ext4 -b 4096 -E lazy_itable_init=1 -O sparse_super,dir_index,extent,has_journal,uninit_bg -m1 $drive
   echo "$(hostname) : $1 : should be done formatting now"
 
   echo "$(hostname) : $1 : attempt to format exit code: $?"
@@ -95,7 +95,7 @@ formatAndMountAllDrives() {
   let i=0 || true
   for x in $(sfdisk -l 2>/dev/null | cut -d' ' -f 2 | grep /dev | grep -v "/dev/sda" | grep -v "/dev/sdb" | sed "s^:^^");
   do
-    echo "$(hostname) : $(x): About to call formatAndMountDrive)"
+    echo "$(hostname) : $x: About to call formatAndMountDrive)"
     formatAndMountDrive $x $i  0</dev/null &
     let i=(i + 1) || true
   done
