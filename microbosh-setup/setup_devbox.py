@@ -37,5 +37,5 @@ call("chown -R "+settings['username']+" "+"/home/"+settings['username'],shell=Tr
 
 
 call("rm -r /tmp; mkdir /mnt/tmp; ln -s /mnt/tmp /tmp; chmod 777 /mnt/tmp ;chmod 777 /tmp", shell=True)
-call("mkdir /mnt/bosh_install; cp install_bosh_client.sh /mnt/bosh_install; cd /mnt/bosh_install ; sh install_bosh_client.sh >~/install.log 2>&1;",shell=True)
+call("mkdir /mnt/bosh_install; cp install_bosh_client.sh /mnt/bosh_install; cd /mnt/bosh_install ; sh install_bosh_client.sh >/home/"+settings['username']+"/install.log 2>&1;",shell=True)
 exit(0)
