@@ -52,7 +52,7 @@ i=0
 while [ $i -lt $NUM_OF_VM ]
 do
    workerip=`expr $i + $WORKER_IP_START`
-   echo 'I update host - $WORKER_NAME'$i >> /tmp/dummy 2>&1
+   echo 'I update host - '$WORKER_NAME$i >> /tmp/dummy 2>&1
    echo $WORKER_IP_BASE$workerip $WORKER_NAME$i >> /etc/hosts
    sudo -u $ADMIN_USERNAME sh -c "sshpass -p '$ADMIN_PASSWORD' ssh-copy-id $WORKER_NAME$i"
    i=`expr $i + 1`
@@ -81,17 +81,24 @@ sudo slurmd >> /tmp/dummy 2>&1 # Start the node
 
 # Install slurm on all nodes by running apt-get
 # Also push munge key and slurm.conf to them
+echo "Prepare the local copy of munge key" >> /tmp/dummy 2>&1 
+
 mungekey=/tmp/munge.key.$$
 sudo cp -f /etc/munge/munge.key $mungekey
 sudo chown $ADMIN_USER $mungekey
+
+echo "Start looping all workers" >> /tmp/dummy 2>&1 
+
 i=0
 while [ $i -lt $NUM_OF_VM ]
 do
    worker=$WORKER_NAME$i
 
+   echo "SCP to $worker"  >> /tmp/dummy 2>&1 
    sudo -u $ADMIN_USER scp $mungekey $ADMIN_USER@$worker:/tmp/munge.key >> /tmp/dummy 2>&1 
    sudo -u $ADMIN_USER scp $SLURMCONF $ADMIN_USER@$worker:/tmp/slurm.conf >> /tmp/dummy 2>&1
 
+   echo "Remote execute on $worker" >> /tmp/dummy 2>&1 
    sudo -u $ADMIN_USERNAME ssh $ADMIN_USERNAME@$worker >> /tmp/dummy 2>&1 << 'ENDSSH1'
       sudo chmod g-w /var/log
       sudo apt-get update
