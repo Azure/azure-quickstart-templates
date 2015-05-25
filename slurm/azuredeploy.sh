@@ -76,6 +76,7 @@ sudo cp -f $SLURMCONF /etc/slurm-llnl/slurm.conf >> /tmp/dummy 2>&1
 sudo chown slurm /etc/slurm-llnl/slurm.conf >> /tmp/dummy 2>&1
 sudo chmod o+w /var/spool # Write access for slurmctld log. Consider switch log file to another location
 sudo -u slurm /usr/sbin/slurmctld >> /tmp/dummy 2>&1 # Start the master daemon service
+sudo munged --force >> /tmp/dummy 2>&1 # Start munged
 sudo slurmd >> /tmp/dummy 2>&1 # Start the node
 
 # Install slurm on all nodes by running apt-get
