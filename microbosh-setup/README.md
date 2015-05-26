@@ -6,8 +6,8 @@
 
 This template allows you to setup cloud foundry development environment. It will create a vm with public ip address, storage account, virtual network, 3 reserved public ip 
 
-After finish the setup, you can download stemcell for azure from http://cloudfoundry.blob.core.windows.net/stemcell/stemcell.tgz
-Then execute "./deploy_micro_bosh.sh stemcell.tgz" in your home directory to deploy microbosh
+After the VM is created, you can logon to the VM and see ~/install.log to check whether the installation is finished. 
+After the installation is finished, you can execute "./deploy_micro_bosh.sh ~/stemcell.tgz" in your home directory to deploy microbosh.
 
 Below are the parameters that the template expects
 
