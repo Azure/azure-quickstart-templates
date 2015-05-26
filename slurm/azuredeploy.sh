@@ -32,6 +32,7 @@ TEMPLATE_BASE=$9
 
 # Update master node
 echo $MASTER_IP $MASTER_NAME >> /etc/hosts
+echo $MASTER_IP $MASTER_NAME > /tmp/hosts.$$
 
 # Update ssh config file to ignore unknow host
 # Note all settings are for azureuser, NOT root
@@ -54,6 +55,7 @@ do
    workerip=`expr $i + $WORKER_IP_START`
    echo 'I update host - '$WORKER_NAME$i >> /tmp/azuredeploy.log.$$ 2>&1
    echo $WORKER_IP_BASE$workerip $WORKER_NAME$i >> /etc/hosts
+   echo $WORKER_IP_BASE$workerip $WORKER_NAME$i >> /tmp/hosts.$$
    sudo -u $ADMIN_USERNAME sh -c "sshpass -p '$ADMIN_PASSWORD' ssh-copy-id $WORKER_NAME$i"
    i=`expr $i + 1`
 done
@@ -97,9 +99,11 @@ do
    echo "SCP to $worker"  >> /tmp/azuredeploy.log.$$ 2>&1 
    sudo -u $ADMIN_USERNAME scp $mungekey $ADMIN_USERNAME@$worker:/tmp/munge.key >> /tmp/azuredeploy.log.$$ 2>&1 
    sudo -u $ADMIN_USERNAME scp $SLURMCONF $ADMIN_USERNAME@$worker:/tmp/slurm.conf >> /tmp/azuredeploy.log.$$ 2>&1
+   sudo -u $ADMIN_USERNAME scp /tmp/hosts.$$ $ADMIN_USERNAME@$worker:/tmp/hosts >> /tmp/azuredeploy.log.$$ 2>&1
 
    echo "Remote execute on $worker" >> /tmp/azuredeploy.log.$$ 2>&1 
    sudo -u $ADMIN_USERNAME ssh $ADMIN_USERNAME@$worker >> /tmp/azuredeploy.log.$$ 2>&1 << 'ENDSSH1'
+      sudo cat /tmp/hosts >> /etc/hosts
       sudo chmod g-w /var/log
       sudo apt-get update
       sudo apt-get install slurm-llnl -y
