@@ -1,0 +1,120 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "defaultValue": "West US",
+            "metadata": {
+                "description": "Location of the Virtual Machine and the Cache."
+            }
+        },
+        "cacheName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Cache cluster."
+            }
+        },
+        "cacheSkuName": {
+            "type": "string",
+            "allowedValues": ["Basic", "Standard"],
+            "defaultValue": "Standard"
+        },
+        "cacheFamily": {
+            "type": "string",
+            "allowedValues": ["C"],
+            "defaultValue": "C"
+        },
+        "cacheCapacity": {
+            "type": "int",
+            "allowedValues": [0, 1, 2, 3, 4, 5, 6],
+            "defaultValue": 0
+        },
+        "cacheRedisVersion": {
+            "type": "string",
+            "allowedValues": ["2.8"],
+            "defaultValue": "2.8"
+        },
+        "newStorageAccountName": {
+            "type": "string",
+            "metadata": {
+                "description": "Unique DNS Name for the Storage Account where the Virtual Machine's disks will be placed."
+            }
+        },
+        "adminUsername": {
+            "type": "string",
+            "metadata": {
+               "description": "User name for the Virtual Machine."
+            }
+        },
+        "adminPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Password for the Virtual Machine."
+            }
+        },
+        "dnsNameForPublicIP": {
+            "type": "string",
+            "metadata": {
+                  "description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
+            }
+        },
+        "ubuntuOSVersion": {
+            "type": "string",
+            "defaultValue": "14.10",
+            "allowedValues": [
+                "12.04.2-LTS",
+                "12.04.3-LTS",
+                "12.04.4-LTS",
+                "12.04.5-LTS",
+				"12.10",
+                "14.04.2-LTS",
+                "14.10",
+                "15.04"
+            ],
+            "metadata": {
+                "description": "The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version. Allowed values: 12.04.2-LTS, 12.04.3-LTS, 12.04.4-LTS, 12.04.5-LTS, 12.10, 14.04.2-LTS, 14.10, 15.04."
+            }
+        }
+    },
+    "variables": {
+        "cacheTemplate": "https://gallerystoreprodch.blob.core.windows.net/prod-microsoft-windowsazure-gallery/Microsoft.Cache.1.0.4/DeploymentTemplates/NewRedisCache.json",
+        "linuxvmTemplate": "https://github.com/vflorusso/azure-quickstart-templates/tree/master/101-simple-linux-vm"
+    },
+    "resources": [
+        { 
+            "apiVersion": "2015-01-01", 
+            "name": "myLinuxVm", 
+            "type": "Microsoft.Resources/deployments", 
+            "properties": { 
+                "mode": "incremental", 
+                "templateLink": {"uri":"[variables('linuxvmTemplate')]","contentVersion":"1.0.0.0"}, 
+                "parameters": {
+                        "location":{"value": "[parameters('location')]"},
+                        "newStorageAccountName": {"value": "[parameters('newStorageAccountName')]"},
+                        "adminUsername": {"value": "[parameters('adminUsername')]"},
+                        "adminPassword": {"value": "[parameters('adminPassword')]"},
+                        "dnsNameForPublicIP": {"value": "[parameters('dnsNameForPublicIP')]"},
+                        "ubuntuOSVersion": {"value": "[parameters('ubuntuOSVersion')]"}
+                }
+            } 
+        },
+        { 
+            "apiVersion": "2015-01-01", 
+            "name": "myCache", 
+            "type": "Microsoft.Resources/deployments", 
+            "properties": { 
+                "mode": "incremental", 
+                "templateLink": {"uri":"[variables('cacheTemplate')]","contentVersion":"1.0.0.0"}, 
+                "parameters": { 
+                        "cacheLocation": {"value": "[variables('location')]"},
+                        "cacheName": {"value": "[parameters('cacheName')]"},
+                        "skuName": {"value": "[parameters('cacheSkuName')]"},
+                        "family": {"value": "[parameters('cacheFamily')]"},
+                        "capacity": {"value": "[parameters('cacheCapacity')]"},
+                        "redisVersion": {"value": "[parameters('cacheRedisVersion')]"}
+                }
+            } 
+        } 
+    ]
+}
