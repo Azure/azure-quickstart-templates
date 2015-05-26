@@ -103,7 +103,7 @@ do
 
    echo "Remote execute on $worker" >> /tmp/azuredeploy.log.$$ 2>&1 
    sudo -u $ADMIN_USERNAME ssh $ADMIN_USERNAME@$worker >> /tmp/azuredeploy.log.$$ 2>&1 << 'ENDSSH1'
-      sudo cat /tmp/hosts >> /etc/hosts
+      sudo sh -c "cat /tmp/hosts >> /etc/hosts"
       sudo chmod g-w /var/log
       sudo apt-get update
       sudo apt-get install slurm-llnl -y
