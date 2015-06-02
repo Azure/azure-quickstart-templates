@@ -31,21 +31,41 @@ This template is entirely serial due to some issues between the platform agent a
 + 	The image configuration is defined in variables - details below - but the scripts that configure this deployment have only been tested with these versions and may not work on other images.
 
 
-Click the button below to deploy
+Click the button below to deploy from the portal
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsql-server-always-on-dsc%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsql-server-2014-alwayson-dsc%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
 
-## Deploying from PowerShell
-```Powershell
+## Deploying from PowerShell 
 
-New-AzureResourceGroup -Name
+For details on how to install and configure Azure Powershell see [here].(https://azure.microsoft.com/en-us/documentation/articles/powershell-install-configure/)
+
+Launch a PowerShell console
+
+Ensure that you are in Resource Manager Mode
+
+```PowerShell
+
+Switch-AzureMode AzureResourceManager
+
+```
+Change working folder to the folder containing this template
+
+```PowerShell
+
+New-AzureResourceGroup -Name "<new resourcegroup name>" -Location "<new resourcegroup location>"  -TemplateParameterFile .\azuredeploy-parameters.json -TemplateFile .\azuredeploy.json
 
 ```
 
-## Deploying from Azure CLI
+You will be prompted for the following parameters
+
++ **newStorageAccountNamePrefix:** - specify the prefix for the new storage account names
++ **locationFromTemplate:** - specify a valid location for the deployment
++ **adminPassword:** - the administrator password for the VMs and Domain
++ **sqlServerServiceAccountPassword:** the password for the account that SQL Server will run as
++ **dnsPrefix:** the DNS prefix for the public IP address used for RDP
 
 ## Parameters
 
