@@ -1,0 +1,261 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "siteName": {
+            "type": "string",
+            "metadata": {
+                "description": "DNS name of the new Web App."
+            }
+        },
+        "hostingPlanName": {
+            "type": "string",
+            "metadata": {
+                "description": "The hosting plan for the Web App."
+            }
+        },
+        "siteLocation": {
+            "type": "string",
+            "metadata": {
+                "description": "The location of the Web App and the Azure Redis Cache instance."
+            }
+        },
+        "sku": {
+            "type": "string",
+            "allowedValues": [
+                "Free",
+                "Shared",
+                "Basic",
+                "Standard"
+            ],
+            "defaultValue": "Free",
+            "metadata": {
+                "description": "The SKU of the Web App (Free, Shared, Basic, or Standard). The default is Free."
+            }
+        },
+        "workerSize": {
+            "type": "string",
+            "allowedValues": [
+                "0",
+                "1",
+                "2"
+            ],
+            "defaultValue": "0",
+            "metadata": {
+                "description": "The worker size of the Web App (0, 1, or 2). The default is 0."
+            }
+        },
+        "redisCacheName": {
+            "type": "string",
+            "metadata": {
+                "description": "DNS name of the new Azure Redis Cache instance."
+            }
+        },
+        "redisCacheSKU": {
+            "type": "string",
+            "allowedValues": [ "Basic", "Standard" ],
+            "defaultValue": "Basic",
+            "metadata": {
+                "description": "The cache offering of the new Azure Redis Cache instance (Basic or Standard). The default is Basic."
+            }
+        },
+        "redisCacheFamily": {
+            "type": "string",
+            "allowedValues": [ "C" ],
+            "defaultValue": "C",
+            "metadata": {
+                "description": "The Redis cache family. 'C' is the only allowed value and is the default."
+            }
+        },
+        "redisCacheCapacity": {
+            "type": "int",
+            "allowedValues": [ 0, 1, 2, 3, 4, 5, 6 ],
+            "defaultValue": 0,
+            "metadata": {
+                "description": "The size of the new Azure Redis Cache instance. 0 = 250 MB, 1 = 1 GB, 2 = 2.5 GB, 3 = 6 GB, 4 = 13 GB, 5 = 26 GB, 6 = 53 GB. The default is 0."
+            }
+        },
+        "redisCacheVersion": {
+            "type": "string",
+            "allowedValues": [ "2.8" ],
+            "defaultValue": "2.8",
+            "metadata": {
+                "description": "The Redis server version for the new cache. 2.8 is the only allowed value and it is the default."
+            }
+        },
+        "SqlServerName": {
+            "type": "string",
+            "metadata": {
+                "description": "The Redis server version for the new cache. 2.8 is the only allowed value and it is the default."
+            }
+        },
+        "administratorLogin": {
+            "type": "string",
+            "metadata": {
+                "description": "The Redis server version for the new cache. 2.8 is the only allowed value and it is the default."
+            }
+        },
+        "administratorLoginPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The Redis server version for the new cache. 2.8 is the only allowed value and it is the default."
+            }
+        },
+        "databaseName": {
+            "type": "string",
+            "metadata": {
+                "description": "The Redis server version for the new cache. 2.8 is the only allowed value and it is the default."
+            }
+        },
+        "collation": {
+            "type": "string",
+            "defaultValue": "SQL_Latin1_General_CP1_CI_AS",
+            "metadata": {
+                "description": "The Redis server version for the new cache. 2.8 is the only allowed value and it is the default."
+            }
+        },
+        "edition": {
+            "type": "string",
+            "defaultValue": "Web",
+            "metadata": {
+                "description": "The Redis server version for the new cache. 2.8 is the only allowed value and it is the default."
+            }
+        },
+        "maxSizeBytes": {
+            "type": "string",
+            "defaultValue": "1073741824",
+            "metadata": {
+                "description": "The Redis server version for the new cache. 2.8 is the only allowed value and it is the default."
+            }
+        },
+        "requestedServiceObjectiveId": {
+            "type": "string",
+            "defaultValue": "910b4fcb-8a29-4c3e-958f-f7ba794388b2",
+            "metadata": {
+                "description": "The Redis server version for the new cache. 2.8 is the only allowed value and it is the default."
+            }
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "2014-04-01-preview",
+            "name": "[parameters('redisCacheName')]",
+            "type": "Microsoft.Cache/Redis",
+            "location": "[parameters('siteLocation')]",
+            "properties": {
+                "sku": {
+                    "name": "[parameters('redisCacheSKU')]",
+                    "family": "[parameters('redisCacheFamily')]",
+                    "capacity": "[parameters('redisCacheCapacity')]"
+                },
+                "redisVersion": "[parameters('redisCacheVersion')]",
+                "enableNonSslPort": true
+            }
+        },
+        {
+            "name": "[parameters('SqlServerName')]",
+            "type": "Microsoft.Sql/servers",
+            "location": "[parameters('siteLocation')]",
+            "apiVersion": "2014-04-01-preview",
+            "properties": {
+                "administratorLogin": "[parameters('administratorLogin')]",
+                "administratorLoginPassword": "[parameters('administratorLoginPassword')]"
+            },
+            "resources": [
+                {
+                    "name": "[parameters('databaseName')]",
+                    "type": "databases",
+                    "location": "[parameters('siteLocation')]",
+                    "apiVersion": "2.0",
+                    "dependsOn": [
+                        "[concat('Microsoft.Sql/servers/', parameters('SqlServerName'))]"
+                    ],
+                    "properties": {
+                        "edition": "[parameters('edition')]",
+                        "collation": "[parameters('collation')]",
+                        "maxSizeBytes": "[parameters('maxSizeBytes')]",
+                        "requestedServiceObjectiveId": "[parameters('requestedServiceObjectiveId')]"
+                    }
+                },
+                {
+                    "apiVersion": "2.0",
+                    "dependsOn": [
+                        "[concat('Microsoft.Sql/servers/', parameters('SqlServerName'))]"
+                    ],
+                    "location": "[parameters('siteLocation')]",
+                    "name": "AllowAllWindowsAzureIps",
+                    "properties": {
+                        "endIpAddress": "0.0.0.0",
+                        "startIpAddress": "0.0.0.0"
+                    },
+                    "type": "firewallrules"
+                }
+            ]
+        },
+        {
+            "apiVersion": "2014-06-01",
+            "name": "[parameters('hostingPlanName')]",
+            "type": "Microsoft.Web/serverfarms",
+            "location": "[parameters('siteLocation')]",
+            "properties": {
+                "name": "[parameters('hostingPlanName')]",
+                "sku": "[parameters('sku')]",
+                "workerSize": "[parameters('workerSize')]",
+                "numberOfWorkers": 1
+            }
+        },
+        {
+            "apiVersion": "2014-06-01",
+            "name": "[parameters('siteName')]",
+            "type": "Microsoft.Web/sites",
+            "location": "[parameters('siteLocation')]",
+            "dependsOn": [
+                "[concat('Microsoft.Web/serverFarms/', parameters('hostingPlanName'))]"
+            ],
+            "tags": {
+                "[concat('hidden-related:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]": "empty"
+            },
+            "properties": {
+                "name": "[parameters('siteName')]",
+                "serverFarm": "[parameters('hostingPlanName')]",
+                "hostingEnvironment": "[parameters('hostingEnvironment')]"
+            },
+            "properties": {
+                "name": "[parameters('siteName')]",
+                "serverFarm": "[parameters('hostingPlanName')]",
+                "hostingEnvironment": "[parameters('hostingEnvironment')]"
+
+            },
+            "resources": [
+                {
+                    "apiVersion": "2014-06-01",
+                    "type": "config",
+                    "name": "web",
+                    "dependsOn": [
+                        "[concat('Microsoft.Web/sites/', parameters('siteName'))]"
+                    ],
+                    "properties": {
+                        "appSettings": [
+                            {
+                                "name": "REDIS_HOST",
+                                "value": "[concat(parameters('siteName'), '.redis.cache.windows.net:6379')]"
+                            },
+                            {
+                                "name": "REDIS_KEY",
+                                "value": "[listKeys(resourceId('Microsoft.Cache/Redis', parameters('siteName')), '2014-04-01').primaryKey]"
+                            }
+                        ],
+                        "connectionStrings": [
+                            {
+                                "ConnectionString": "[concat('Data Source=tcp:', reference(concat('Microsoft.Sql/servers/', parameters('SqlServerName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', parameters('databaseName'), ';User Id=', parameters('administratorLogin'), '@', parameters('SqlServerName'), ';Password=', parameters('administratorLoginPassword'), ';')]",
+                                "Name": "DefaultConnection",
+                                "Type": 2
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    ]
+}
+
