@@ -6,7 +6,7 @@
 
 Push a certificate onto a VM. Pass in the URL of the secret in Key Vault.
 
-Pre-Requisistes - You need a certificate
+Pre-Requisistes - You need a certificate. A self-signed test certificate can be created by following this guide - https://msdn.microsoft.com/en-us/library/ff699202.aspx
 
 These are the steps that need to be followed to upload the certificate into the Key Vault as a secret
 
