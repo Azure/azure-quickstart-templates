@@ -1,11 +1,29 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json",
     "contentVersion": "1.0.0.0",
     "parameters": {
         "newStorageAccountName": {
             "type": "string",
             "metadata": {
                 "description": "Unique DNS Name for the Storage Account where the Virtual Machine's disks will be placed."
+            }
+        },
+        "adminUserName": {
+            "type": "string",
+            "metadata": {
+                "description": "User name for the Virtual Machine."
+            }
+        },
+        "adminPassword": {
+            "type": "string",
+            "metadata": {
+                "description": "Password for the Virtual Machine."
+            }
+        },
+        "sshKeyData": {
+            "type": "string",
+            "metadata": {
+                "description": "SSH public key. Can be generated from puttygen.exe. The format expected is of type - ssh-rsa <key> rsa-key-20150605"
             }
         },
         "location": {
@@ -21,22 +39,17 @@
                 "description": "Location of resources"
             }
         },
-        "adminUsername": {
+        "vmSize": {
             "type": "string",
+            "defaultValue": "Standard_A2",
             "metadata": {
-                "description": "User name for the Virtual Machine."
+                "description": "Size of the VM"
             }
         },
-        "adminPassword": {
-            "type": "securestring",
-            "metadata": {
-                "description": "Password for the Virtual Machine."
-            }
-        },
-        "dnsNameForPublicIP": {
+        "vmName": {
             "type": "string",
             "metadata": {
-                "description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
+                "description": "Name of the VM"
             }
         },
         "ubuntuOSVersion": {
@@ -56,20 +69,20 @@
     "variables": {
         "imagePublisher": "Canonical",
         "imageOffer": "UbuntuServer",
-        "OSDiskName": "osdiskforlinuxsimple",
-        "nicName": "myVMNic",
+        "osDiskName": "osDisk1",
         "addressPrefix": "10.0.0.0/16",
-        "subnetName": "Subnet",
-        "subnetPrefix": "10.0.0.0/24",
-        "storageAccountType": "Standard_LRS",
-        "publicIPAddressName": "myPublicIP",
-        "publicIPAddressType": "Dynamic",
+        "subnet1Name": "Subnet-1",
+        "subnet1Prefix": "10.0.0.0/24",
         "vmStorageAccountContainerName": "vhds",
-        "vmName": "MyUbuntuVM",
-        "vmSize": "Standard_A0",
-        "virtualNetworkName": "MyVNET",
-        "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
-        "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]"
+        "nicName": "sshNIC",
+        "publicIPAddressName": "sshPublicIP",
+        "publicIPAddressType": "Dynamic",
+        "storageAccountType": "Standard_LRS",
+        "virtualNetworkName": "sshVNET",
+        "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
+        "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
+        "subnet1Ref": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]"
+
     },
     "resources": [{
         "type": "Microsoft.Storage/storageAccounts",
@@ -85,10 +98,7 @@
         "name": "[variables('publicIPAddressName')]",
         "location": "[parameters('location')]",
         "properties": {
-            "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
-            "dnsSettings": {
-                "domainNameLabel": "[parameters('dnsNameForPublicIP')]"
-            }
+            "publicIPAllocationMethod": "[variables('publicIPAddressType')]"
         }
     }, {
         "apiVersion": "2015-05-01-preview",
@@ -102,9 +112,9 @@
                 ]
             },
             "subnets": [{
-                "name": "[variables('subnetName')]",
+                "name": "[variables('subnet1Name')]",
                 "properties": {
-                    "addressPrefix": "[variables('subnetPrefix')]"
+                    "addressPrefix": "[variables('subnet1Prefix')]"
                 }
             }]
         }
@@ -123,10 +133,10 @@
                 "properties": {
                     "privateIPAllocationMethod": "Dynamic",
                     "publicIPAddress": {
-                        "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+                        "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
                     },
                     "subnet": {
-                        "id": "[variables('subnetRef')]"
+                        "id": "[variables('subnet1Ref')]"
                     }
                 }
             }]
@@ -134,7 +144,7 @@
     }, {
         "apiVersion": "2015-05-01-preview",
         "type": "Microsoft.Compute/virtualMachines",
-        "name": "[variables('vmName')]",
+        "name": "[parameters('vmName')]",
         "location": "[parameters('location')]",
         "dependsOn": [
             "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
@@ -142,12 +152,21 @@
         ],
         "properties": {
             "hardwareProfile": {
-                "vmSize": "[variables('vmSize')]"
+                "vmSize": "[parameters('vmSize')]"
             },
             "osProfile": {
-                "computername": "[variables('vmName')]",
+                "computername": "[parameters('vmName')]",
                 "adminUsername": "[parameters('adminUsername')]",
-                "adminPassword": "[parameters('adminPassword')]"
+                "adminPassword": "[parameters('adminPassword')]",
+                "linuxConfiguration": {
+                    "disablePasswordAuthentication": "true",
+                    "ssh": {
+                        "publicKeys": [{
+                            "path": "[variables('sshKeyPath')]",
+                            "keyData": "[parameters('sshKeyData')]"
+                        }]
+                    }
+                }
             },
             "storageProfile": {
                 "imageReference": {
@@ -159,7 +178,7 @@
                 "osDisk": {
                     "name": "osdisk",
                     "vhd": {
-                        "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]"
+                        "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/', variables('osDiskName'),'.vhd')]"
                     },
                     "caching": "ReadWrite",
                     "createOption": "FromImage"
@@ -167,27 +186,8 @@
             },
             "networkProfile": {
                 "networkInterfaces": [{
-                    "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+                    "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
                 }]
-            }
-        }
-    }, {
-        "type": "Microsoft.Compute/virtualMachines/extensions",
-        "name": "[concat(variables('vmName'),'/newuserscript')]",
-        "apiVersion": "2015-05-01-preview",
-        "location": "[parameters('location')]",
-        "dependsOn": [
-            "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
-        ],
-        "properties": {
-            "publisher": "Microsoft.OSTCExtensions",
-            "type": "CustomScriptForLinux",
-            "typeHandlerVersion": "1.2",
-            "settings": {
-                "fileUris": [
-                    "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/apache2-on-ubuntu-vm/install_apache.sh"
-                ],
-                "commandToExecute": "sh install_apache.sh"
             }
         }
     }]
