@@ -24,7 +24,7 @@
         "adminUsername": {
             "type": "string",
             "metadata": {
-               "description": "User name for the Virtual Machine."
+                "description": "User name for the Virtual Machine."
             }
         },
         "adminPassword": {
@@ -36,24 +36,20 @@
         "dnsNameForPublicIP": {
             "type": "string",
             "metadata": {
-                  "description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
+                "description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
             }
         },
         "ubuntuOSVersion": {
             "type": "string",
             "defaultValue": "14.10",
             "allowedValues": [
-                "12.04.2-LTS",
-                "12.04.3-LTS",
-                "12.04.4-LTS",
                 "12.04.5-LTS",
-		"12.10",
                 "14.04.2-LTS",
                 "14.10",
                 "15.04"
             ],
             "metadata": {
-                "description": "The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version. Allowed values: 12.04.2-LTS, 12.04.3-LTS, 12.04.4-LTS, 12.04.5-LTS, 12.10, 14.04.2-LTS, 14.10, 15.04."
+                "description": "The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version. Allowed values: 12.04.5-LTS, 14.04.2-LTS, 14.10, 15.04."
             }
         }
     },
@@ -75,137 +71,124 @@
         "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
         "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]"
     },
-    "resources": [
-        {
-            "type": "Microsoft.Storage/storageAccounts",
-            "name": "[parameters('newStorageAccountName')]",
-            "apiVersion": "2015-05-01-preview",
-            "location": "[parameters('location')]",
-            "properties": {
-                "accountType": "[variables('storageAccountType')]"
-            }
-        },
-        {
-            "apiVersion": "2015-05-01-preview",
-            "type": "Microsoft.Network/publicIPAddresses",
-            "name": "[variables('publicIPAddressName')]",
-            "location": "[parameters('location')]",
-            "properties": {
-                "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
-                "dnsSettings": {
-                    "domainNameLabel": "[parameters('dnsNameForPublicIP')]"
-                }
-            }
-        },
-        {
-            "apiVersion": "2015-05-01-preview",
-            "type": "Microsoft.Network/virtualNetworks",
-            "name": "[variables('virtualNetworkName')]",
-            "location": "[parameters('location')]",
-            "properties": {
-                "addressSpace": {
-                    "addressPrefixes": [
-                        "[variables('addressPrefix')]"
-                    ]
-                },
-                "subnets": [
-                    {
-                        "name": "[variables('subnetName')]",
-                        "properties": {
-                            "addressPrefix": "[variables('subnetPrefix')]"
-                        }
-                    }
-                ]
-            }
-        },
-        {
-            "apiVersion": "2015-05-01-preview",
-            "type": "Microsoft.Network/networkInterfaces",
-            "name": "[variables('nicName')]",
-            "location": "[parameters('location')]",
-            "dependsOn": [
-                "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
-                "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
-            ],
-            "properties": {
-                "ipConfigurations": [
-                    {
-                        "name": "ipconfig1",
-                        "properties": {
-                            "privateIPAllocationMethod": "Dynamic",
-                            "publicIPAddress": {
-                                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
-                            },
-                            "subnet": {
-                                "id": "[variables('subnetRef')]"
-                            }
-                        }
-                    }
-                ]
-            }
-        },
-        {
-            "apiVersion": "2015-05-01-preview",
-            "type": "Microsoft.Compute/virtualMachines",
-            "name": "[variables('vmName')]",
-            "location": "[parameters('location')]",
-            "dependsOn": [
-                "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
-                "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
-            ],
-            "properties": {
-                "hardwareProfile": {
-                    "vmSize": "[variables('vmSize')]"
-                },
-                "osProfile": {
-                    "computername": "[variables('vmName')]",
-                    "adminUsername": "[parameters('adminUsername')]",
-                    "adminPassword": "[parameters('adminPassword')]"
-                },
-                "storageProfile": {
-                    "imageReference": {
-                        "publisher": "[variables('imagePublisher')]",
-                        "offer": "[variables('imageOffer')]",
-                        "sku" : "[parameters('ubuntuOSVersion')]",
-                        "version":"latest"
-                    },
-                   "osDisk" : {
-                        "name": "osdisk",
-                        "vhd": {
-                            "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]"
-                        },
-                        "caching": "ReadWrite",
-                        "createOption": "FromImage"
-                    }
-                },
-                "networkProfile": {
-                    "networkInterfaces": [
-                        {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
-                        }
-                    ]
-                }
-            }
-        },
-	{
-            "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "[concat(variables('vmName'),'/newuserscript')]",
-            "apiVersion": "2015-05-01-preview",
-            "location": "[parameters('location')]",
-            "dependsOn": [
-                "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
-            ],
-            "properties": {
-                "publisher": "Microsoft.OSTCExtensions",
-                "type": "CustomScriptForLinux",
-                "typeHandlerVersion": "1.2",
-                "settings": {
-                    "fileUris": [
-                        "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/apache2-on-ubuntu-vm/install_apache.sh"
-                    ],
-                    "commandToExecute": "sh install_apache.sh"
-                }
+    "resources": [{
+        "type": "Microsoft.Storage/storageAccounts",
+        "name": "[parameters('newStorageAccountName')]",
+        "apiVersion": "2015-05-01-preview",
+        "location": "[parameters('location')]",
+        "properties": {
+            "accountType": "[variables('storageAccountType')]"
+        }
+    }, {
+        "apiVersion": "2015-05-01-preview",
+        "type": "Microsoft.Network/publicIPAddresses",
+        "name": "[variables('publicIPAddressName')]",
+        "location": "[parameters('location')]",
+        "properties": {
+            "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+            "dnsSettings": {
+                "domainNameLabel": "[parameters('dnsNameForPublicIP')]"
             }
         }
-    ]
+    }, {
+        "apiVersion": "2015-05-01-preview",
+        "type": "Microsoft.Network/virtualNetworks",
+        "name": "[variables('virtualNetworkName')]",
+        "location": "[parameters('location')]",
+        "properties": {
+            "addressSpace": {
+                "addressPrefixes": [
+                    "[variables('addressPrefix')]"
+                ]
+            },
+            "subnets": [{
+                "name": "[variables('subnetName')]",
+                "properties": {
+                    "addressPrefix": "[variables('subnetPrefix')]"
+                }
+            }]
+        }
+    }, {
+        "apiVersion": "2015-05-01-preview",
+        "type": "Microsoft.Network/networkInterfaces",
+        "name": "[variables('nicName')]",
+        "location": "[parameters('location')]",
+        "dependsOn": [
+            "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+            "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        ],
+        "properties": {
+            "ipConfigurations": [{
+                "name": "ipconfig1",
+                "properties": {
+                    "privateIPAllocationMethod": "Dynamic",
+                    "publicIPAddress": {
+                        "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+                    },
+                    "subnet": {
+                        "id": "[variables('subnetRef')]"
+                    }
+                }
+            }]
+        }
+    }, {
+        "apiVersion": "2015-05-01-preview",
+        "type": "Microsoft.Compute/virtualMachines",
+        "name": "[variables('vmName')]",
+        "location": "[parameters('location')]",
+        "dependsOn": [
+            "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
+            "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+        ],
+        "properties": {
+            "hardwareProfile": {
+                "vmSize": "[variables('vmSize')]"
+            },
+            "osProfile": {
+                "computername": "[variables('vmName')]",
+                "adminUsername": "[parameters('adminUsername')]",
+                "adminPassword": "[parameters('adminPassword')]"
+            },
+            "storageProfile": {
+                "imageReference": {
+                    "publisher": "[variables('imagePublisher')]",
+                    "offer": "[variables('imageOffer')]",
+                    "sku": "[parameters('ubuntuOSVersion')]",
+                    "version": "latest"
+                },
+                "osDisk": {
+                    "name": "osdisk",
+                    "vhd": {
+                        "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]"
+                    },
+                    "caching": "ReadWrite",
+                    "createOption": "FromImage"
+                }
+            },
+            "networkProfile": {
+                "networkInterfaces": [{
+                    "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+                }]
+            }
+        }
+    }, {
+        "type": "Microsoft.Compute/virtualMachines/extensions",
+        "name": "[concat(variables('vmName'),'/newuserscript')]",
+        "apiVersion": "2015-05-01-preview",
+        "location": "[parameters('location')]",
+        "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+        ],
+        "properties": {
+            "publisher": "Microsoft.OSTCExtensions",
+            "type": "CustomScriptForLinux",
+            "typeHandlerVersion": "1.2",
+            "settings": {
+                "fileUris": [
+                    "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/apache2-on-ubuntu-vm/install_apache.sh"
+                ],
+                "commandToExecute": "sh install_apache.sh"
+            }
+        }
+    }]
 }

@@ -1,7 +1,31 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json",
     "contentVersion": "1.0.0.0",
     "parameters": {
+        "newStorageAccountName": {
+            "type": "string",
+            "metadata": {
+                "description": "Unique DNS Name for the Storage Account where the Virtual Machine's disks will be placed."
+            }
+        },
+        "adminUserName": {
+            "type": "string",
+            "metadata": {
+                "description": "User name for the Virtual Machine."
+            }
+        },
+        "adminPassword": {
+            "type": "string",
+            "metadata": {
+                "description": "Password for the Virtual Machine."
+            }
+        },
+        "sshKeyData": {
+            "type": "string",
+            "metadata": {
+                "description": "SSH public key. Can be generated from puttygen.exe. The format expected is of type - ssh-rsa <key> rsa-key-20150605"
+            }
+        },
         "location": {
             "type": "string",
             "allowedValues": [
@@ -12,20 +36,14 @@
                 "Southeast Asia"
             ],
             "metadata": {
-                "description": "Location where resources will be deployed"
+                "description": "Location of resources"
             }
         },
-        "newStorageAccountName": {
+        "vmSize": {
             "type": "string",
+            "defaultValue": "Standard_A2",
             "metadata": {
-                "description": "Name of the storage account"
-            }
-        },
-        "storageAccountType": {
-            "type": "string",
-            "defaultValue": "Standard_LRS",
-            "metadata": {
-                "description": "Type of the storage account"
+                "description": "Size of the VM"
             }
         },
         "vmName": {
@@ -34,57 +52,37 @@
                 "description": "Name of the VM"
             }
         },
-        "vmSize": {
+        "ubuntuOSVersion": {
             "type": "string",
-            "defaultValue": "Standard_D2",
+            "defaultValue": "14.10",
+            "allowedValues": [
+                "12.04.5-LTS",
+                "14.04.2-LTS",
+                "14.10",
+                "15.04"
+            ],
             "metadata": {
-                "description": "Size of the VM"
-            }
-        },
-        "adminUsername": {
-            "type": "string",
-            "metadata": {
-                "description": "Admin Username"
-            }
-        },
-        "adminPassword": {
-            "type": "securestring",
-            "metadata": {
-                "description": "Admin Password"
-            }
-        },
-        "vaultName": {
-            "type": "string",
-            "metadata": {
-                "description": "Name of Key Vault that has a secret"
-            }
-        },
-        "vaultResourceGroup": {
-            "type": "string",
-            "metadata": {
-                "description": "Resource Group of Key Vault that has a secret"
-            }
-        },
-        "secretUrlWithVersion": {
-            "type": "string",
-            "metadata": {
-                "description": "Url of the certificate in Key Vault"
+                "description": "The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version. Allowed values: 12.04.5-LTS, 14.04.2-LTS, 14.10, 15.04."
             }
         }
     },
     "variables": {
-        "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
-        "subnet1Ref": "[concat(variables('vnetID'),'/subnets/', variables('subnet1Name'))]",
-        "nicName": "certNIC",
-        "subnet1Prefix": "10.0.0.0/24",
-        "subnet1Name": "Subnet-1",
-        "virtualNetworkName": "certVNET",
+        "imagePublisher": "Canonical",
+        "imageOffer": "UbuntuServer",
+        "osDiskName": "osDisk1",
         "addressPrefix": "10.0.0.0/16",
-        "imagePublisher": "MicrosoftWindowsServer",
-        "imageOffer": "WindowsServer",
-        "imageSKU": "2012-R2-Datacenter",
-        "publicIPName": "certPublicIP",
-        "publicIPAddressType": "Dynamic"
+        "subnet1Name": "Subnet-1",
+        "subnet1Prefix": "10.0.0.0/24",
+        "vmStorageAccountContainerName": "vhds",
+        "nicName": "sshNIC",
+        "publicIPAddressName": "sshPublicIP",
+        "publicIPAddressType": "Dynamic",
+        "storageAccountType": "Standard_LRS",
+        "virtualNetworkName": "sshVNET",
+        "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
+        "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
+        "subnet1Ref": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]"
+
     },
     "resources": [{
         "type": "Microsoft.Storage/storageAccounts",
@@ -92,12 +90,12 @@
         "apiVersion": "2015-05-01-preview",
         "location": "[parameters('location')]",
         "properties": {
-            "accountType": "[parameters('storageAccountType')]"
+            "accountType": "[variables('storageAccountType')]"
         }
     }, {
         "apiVersion": "2015-05-01-preview",
         "type": "Microsoft.Network/publicIPAddresses",
-        "name": "[variables('publicIPName')]",
+        "name": "[variables('publicIPAddressName')]",
         "location": "[parameters('location')]",
         "properties": {
             "publicIPAllocationMethod": "[variables('publicIPAddressType')]"
@@ -126,7 +124,7 @@
         "name": "[variables('nicName')]",
         "location": "[parameters('location')]",
         "dependsOn": [
-            "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPName'))]",
+            "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
             "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
         ],
         "properties": {
@@ -135,7 +133,7 @@
                 "properties": {
                     "privateIPAllocationMethod": "Dynamic",
                     "publicIPAddress": {
-                        "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPName'))]"
+                        "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
                     },
                     "subnet": {
                         "id": "[variables('subnet1Ref')]"
@@ -160,31 +158,31 @@
                 "computername": "[parameters('vmName')]",
                 "adminUsername": "[parameters('adminUsername')]",
                 "adminPassword": "[parameters('adminPassword')]",
-                "secrets": [{
-                    "sourceVault": {
-                        "id": "[resourceId(parameters('vaultResourceGroup'), 'Microsoft.KeyVault/vaults', parameters('vaultName'))]"
-                    },
-                    "vaultCertificates": [{
-                        "certificateUrl": "[parameters('secretUrlWithVersion')]",
-                        "certificateStore": "My"
-                    }]
-                }]
+                "linuxConfiguration": {
+                    "disablePasswordAuthentication": "true",
+                    "ssh": {
+                        "publicKeys": [{
+                            "path": "[variables('sshKeyPath')]",
+                            "keyData": "[parameters('sshKeyData')]"
+                        }]
+                    }
+                }
             },
             "storageProfile": {
-              "imageReference": {
-                  "publisher": "[variables('imagePublisher')]",
-                  "offer": "[variables('imageOffer')]",
-                  "sku" : "[variables('imageSKU')]",
-                  "version":"latest"
-              },
-              "osDisk" : {
-                  "name": "osdisk",
-                  "vhd": {
-                     "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/','osdisk.vhd')]"
-                  },
-                  "caching": "ReadWrite",
-                  "createOption": "FromImage"
-              }
+                "imageReference": {
+                    "publisher": "[variables('imagePublisher')]",
+                    "offer": "[variables('imageOffer')]",
+                    "sku": "[parameters('ubuntuOSVersion')]",
+                    "version": "latest"
+                },
+                "osDisk": {
+                    "name": "osdisk",
+                    "vhd": {
+                        "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/', variables('osDiskName'),'.vhd')]"
+                    },
+                    "caching": "ReadWrite",
+                    "createOption": "FromImage"
+                }
             },
             "networkProfile": {
                 "networkInterfaces": [{
