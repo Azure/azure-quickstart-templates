@@ -17,5 +17,8 @@ Below are the parameters that the template expects
 | adminUsername  | Username for the Virtual Machine  |
 | adminPassword  | Password for the Virtual Machine  |
 | dnsNameForPublicIP  | Unique DNS Name for the Public IP used to access the Virtual Machine. |
-| ubuntuOSVersion  | The Ubuntu version for deploying the Docker containers. This will pick a fully patched image of this given Ubuntu version. Allowed values: 14.04.2-LTS, 14.04-DAILY, 15.04, 14.10. |
+| api_key  | API key is required by the Datadog Agent to submit metrics and events to Datadog. The key can be obtained from: https://app.datadoghq.com |
+
+To get a DataDog account, you need to visit https://app.datadoghq.com, sign up for the service to get your API Key which you can use above for your deployment. For more details on DataDog integration with Azure, visit the documenation under: http://docs.datadoghq.com/integrations/azure/
+
 
