@@ -10,10 +10,12 @@ apt-get -y install mysql-server
 
 # Create database & grant permission to root
 
-echo "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%';" >permis.sql
+
+echo "use mysql;">permis.sql
+echo "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%';" >>permis.sql
 echo "flush privileges;" >>permis.sql
 echo "create database VehicleRental;" >>permis.sql
-echo "exit"
+echo "exit">>permis.sql
 
 #print
 
@@ -23,8 +25,6 @@ echo ****************************************
 #restart mysql service
 
 sudo service mysql restart
-
-
 
 
 # call permis.sql
