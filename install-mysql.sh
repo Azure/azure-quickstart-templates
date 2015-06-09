@@ -11,6 +11,10 @@ echo mysql-server-5.6 mysql-server/root_password_again password $dbpass | debcon
 # install the LAMP stack
 apt-get -y install mysql-server
 
+#change the bind address
+
+sudo sed -i "s/bind-address.*/bind-address = 0.0.0.0/" /etc/mysql/my.cnf 
+
 
 # Create database & grant permission to root
 
