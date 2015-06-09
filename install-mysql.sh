@@ -24,6 +24,12 @@ echo ****************************************
 
 sudo service mysql restart
 
+#change root passsword
+
+mysqladmin -u root password Welcome123
+
+
+
 
 
 # call permis.sql
