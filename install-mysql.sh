@@ -25,6 +25,8 @@ echo ****************************************
 sudo service mysql restart
 
 
+
+
 # call permis.sql
 mysql <permis.sql
 
