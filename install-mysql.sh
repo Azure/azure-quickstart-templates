@@ -24,13 +24,6 @@ echo ****************************************
 
 sudo service mysql restart
 
-#change root passsword
-
-mysqladmin -u root password Welcome123
-
-
-
-
 
 # call permis.sql
 mysql <permis.sql
@@ -48,6 +41,11 @@ sudo sed -i "s/bind-address.*/bind-address = 0.0.0.0/" /etc/mysql/my.cnf
 #restart mysql service
 
 sudo service mysql restart
+
+
+#change root passsword
+
+mysqladmin -u root password Welcome123
 
 
 #print
