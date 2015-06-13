@@ -36,16 +36,16 @@ let "NAMEEND=NAMENODES-1"
 for i in $(seq 0 $NAMEEND)
 do 
   let "IP=i+10"
-  NODES+=("$IPPREFIX$IP:${NAMEPREFIX}-nn$i:${NAMEPREFIX}-nn$i.$NAMESUFFIX")
+  NODES+=("$IPPREFIX$IP:${NAMEPREFIX}-nn$i:${NAMEPREFIX}-nn$i")
 done
 
 let "DATAEND=DATANODES-1"
 for i in $(seq 0 $DATAEND)
 do 
   let "IP=i+20"
-  NODES+=("$IPPREFIX$IP:${NAMEPREFIX}-dn$i:${NAMEPREFIX}-dn$i.$NAMESUFFIX")
+  NODES+=("$IPPREFIX$IP:${NAMEPREFIX}-dn$i:${NAMEPREFIX}-dn$i")
 done
 
 IFS=',';NODE_IPS="${NODES[*]}";IFS=$' \t\n'
 
-sh bootstrap-cloudera.sh 'cloudera' "${IPPREFIX}9:${NAMEPREFIX}-mn:${NAMEPREFIX}-mn.$NAMESUFFIX" $NODE_IPS false $ADMINUSER >> /home/$ADMINUSER/bootstrap-cloudera.log
+sh bootstrap-cloudera.sh 'cloudera' "${IPPREFIX}9:${NAMEPREFIX}-mn:${NAMEPREFIX}-mn" $NODE_IPS false $ADMINUSER >> /home/$ADMINUSER/bootstrap-cloudera.log
