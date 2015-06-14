@@ -73,7 +73,7 @@ IFS=','
 
 for node in $ClusterNodes
 do
-  remote=$(echo "$node" | sed 's/:/ /' | sed 's/:/ /' | cut -d ' ' -f 2)
+  remote=$(echo "$node" | sed 's/:/ /' | sed 's/:/ /' | cut -d ' ' -f 1)
   log "Copy hosts file to: $remote"
   scp -o StrictHostKeyChecking=no -i /home/$User/.ssh/id_rsa /etc/hosts $User@$remote:/tmp/hosts 
   ssh -o StrictHostKeyChecking=no -i /home/$User/.ssh/id_rsa -t -t $User@$remote sudo cp /tmp/hosts /etc/hosts 
