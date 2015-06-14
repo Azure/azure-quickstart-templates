@@ -20,6 +20,15 @@ echo "$ADMINUSER ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 # Mount and format the attached disks
 sh ./prepareDisks.sh
 
+# Create Impala scratch directory
+numDataDirs=$(ls -la / | grep data | wc -l)
+let endLoopIter=(numDataDirs - 1)
+for x in $(seq 0 $endLoopIter)
+do 
+  mkdir -p /data${x}/impala/scratch
+  chmod 777 /data${x}/impala/scratch
+done
+
 #use the key from the key vault as the SSH authorized key
 mkdir /home/$ADMINUSER/.ssh
 chown $ADMINUSER /home/$ADMINUSER/.ssh

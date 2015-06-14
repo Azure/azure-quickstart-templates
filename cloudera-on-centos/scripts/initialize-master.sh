@@ -48,4 +48,4 @@ done
 
 IFS=',';NODE_IPS="${NODES[*]}";IFS=$' \t\n'
 
-sh bootstrap-cloudera.sh 'cloudera' "${IPPREFIX}9:${NAMEPREFIX}-mn:${NAMEPREFIX}-mn" $NODE_IPS false $ADMINUSER >> /home/$ADMINUSER/bootstrap-cloudera.log
+sh bootstrap-cloudera.sh 'cloudera' "${IPPREFIX}9:${NAMEPREFIX}-mn:${NAMEPREFIX}-mn" $NODE_IPS false $ADMINUSER >> /home/$ADMINUSER/bootstrap-cloudera.log 2>&1

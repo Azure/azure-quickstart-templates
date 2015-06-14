@@ -91,27 +91,27 @@ sudo service ntpd status
 #chmod 777 ./diskFormatAndMount.sh
 #log "Done chmodding run file"
 
-ClusterNodes=("${ClusterNodes[@]}" $ManagementNode)
+#ClusterNodes=("${ClusterNodes[@]}" $ManagementNode)
 
 #./diskFormatAndMount.sh ${ClusterNodes[@]}
 
-log "Just completed formatting all disks in cluster"
+#log "Just completed formatting all disks in cluster"
 
-log "END: Copy hosts file to all nodes"
+#log "END: Copy hosts file to all nodes"
 
-log "BEGIN: Create Impala Scratch Directories"
-numDataDirs=$(ls -la / | grep data | wc -l)
-let endLoopIter=(numDataDirs - 1)
+#log "BEGIN: Create Impala Scratch Directories"
+#numDataDirs=$(ls -la / | grep data | wc -l)
+#let endLoopIter=(numDataDirs - 1)
 
-for node in $Worker_IP
-do
-  remote=$(echo "$node" | sed 's/:/ /' | sed 's/:/ /' | cut -d ' ' -f 2)
-  log "Creating Impala directories on $remote" 
-  ssh -o StrictHostKeyChecking=no -i /home/$User/.ssh/id_rsa -t -t $User@$remote 'numDataDirs=$(ls -la / | grep data | wc -l); let endLoopIter=(numDataDirs - 1); for x in $(seq 0 $endLoopIter); do sudo mkdir -p /data${x}/impala/scratch; sudo chmod 777 /data${x}/impala/scratch; ls -la /data${x}/impala/; done';
+#for node in $Worker_IP
+#do
+#  remote=$(echo "$node" | sed 's/:/ /' | sed 's/:/ /' | cut -d ' ' -f 2)
+#  log "Creating Impala directories on $remote" 
+#  ssh -o StrictHostKeyChecking=no -i /home/$User/.ssh/id_rsa -t -t $User@$remote 'numDataDirs=$(ls -la / | grep data | wc -l); let endLoopIter=(numDataDirs - 1); for x in $(seq 0 $endLoopIter); do sudo mkdir -p /data${x}/impala/scratch; sudo chmod 777 /data${x}/impala/scratch; ls -la /data${x}/impala/; done';
 
-done
+#done
 
-log "END: Create Impala Scratch Directories"
+#log "END: Create Impala Scratch Directories"
 
 IFS=$OIFS
 
