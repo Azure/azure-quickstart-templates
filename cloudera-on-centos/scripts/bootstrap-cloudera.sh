@@ -75,12 +75,24 @@ for node in $ClusterNodes
 do
   remote=$(echo "$node" | sed 's/:/ /' | sed 's/:/ /' | cut -d ' ' -f 1)
   log "Copy hosts file to: $remote"
-  scp -o StrictHostKeyChecking=no -i /home/$User/.ssh/id_rsa /etc/hosts $User@$remote:/tmp/hosts 
+  n=0
+  until [ $n -ge 5 ]
+  do
+      scp -o StrictHostKeyChecking=no -i /home/$User/.ssh/id_rsa /etc/hosts $User@$remote:/tmp/hosts && break
+      n=$[$n+1]
+      sleep 15
+  done
+  if [ $n -ge 5 ]; then log "scp error $remote, exiting..." & exit 1; fi
   ssh -o StrictHostKeyChecking=no -i /home/$User/.ssh/id_rsa -t -t $User@$remote sudo cp /tmp/hosts /etc/hosts 
+  if [ $? -ne 0 ]; then log "ssh 1 error $remote, exiting..." & exit 1; fi
   ssh -o StrictHostKeyChecking=no -i /home/$User/.ssh/id_rsa -t -t $User@$remote "sudo bash -c 'echo never > /sys/kernel/mm/transparent_hugepage/enabled'"
+  if [ $? -ne 0 ]; then log "ssh 2 error $remote, exiting..." & exit 1; fi
   ssh -o StrictHostKeyChecking=no -i /home/$User/.ssh/id_rsa -t -t $User@$remote "echo vm.swappiness=1 | sudo tee -a /etc/systctl.conf; sudo echo 1 | sudo tee /proc/sys/vm/swappiness"
+  if [ $? -ne 0 ]; then log "ssh 3 error $remote, exiting..." & exit 1; fi
   ssh -o StrictHostKeyChecking=no -i /home/$User/.ssh/id_rsa -t -t $User@$remote "sudo ifconfig -a >> initialIfconfig.out; who -b >> initialRestart.out"
+  if [ $? -ne 0 ]; then log "ssh 4 error $remote, exiting..." & exit 1; fi
   ssh -o StrictHostKeyChecking=no -i /home/$User/.ssh/id_rsa -t -t $User@$remote "sudo yum install -y ntp; sudo service ntpd start; sudo service ntpd status"
+  if [ $? -ne 0 ]; then log "ssh 5 error $remote, exiting..." & exit 1; fi
 done
 
 sudo yum install -y ntp
