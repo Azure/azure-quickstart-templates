@@ -4,7 +4,7 @@
 execname=$0
 
 log() {
-  echo "[${execname}] $@" 
+  echo "$(date): [${execname}] $@" 
 }
 
 log "BEGIN: Processing text stream from Azure ARM call"
@@ -88,7 +88,7 @@ do
       sudo ifconfig -a >> initialIfconfig.out; who -b >> initialRestart.out
       exit 0
 EOF
-  if [ $? -ne 0 ]; then log "ssh 4 error $remote, exiting..." & exit 1; fi
+  if [ $? -ne 0 ]; then log "ssh error $remote, exiting..." & exit 1; fi
 done
 
 IFS=$OIFS

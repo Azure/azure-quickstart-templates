@@ -48,4 +48,6 @@ done
 
 IFS=',';NODE_IPS="${NODES[*]}";IFS=$' \t\n'
 
+echo "$(date): calling bootstrap_cloudera"
 sh bootstrap-cloudera.sh 'cloudera' "${IPPREFIX}9:${NAMEPREFIX}-mn:${NAMEPREFIX}-mn" $NODE_IPS false $ADMINUSER >> /home/$ADMINUSER/bootstrap-cloudera.log 2>&1
+echo "$(date): done bootstrap_cloudera"

@@ -1642,21 +1642,27 @@ def parse_options():
     # print cmx_config_options
     return options
 
+def log(msg):
+    print time.strftime("%X") + ": " + msg
 
 def main():
     # Parse user options
+    log("parse_options")
     options = parse_options()
 
     # Prepare Cloudera Manager Server:
     # 1. Initialise Cluster and set Cluster name: 'Cluster 1'
     # 3. Add hosts into: 'Cluster 1'
     # 4. Deploy latest parcels into : 'Cluster 1'
+    log("init_cluster")
     init_cluster()
     add_hosts_to_cluster()
     # Deploy CDH Parcel
+    log("deploy_parcel")
     deploy_parcel(parcel_product=cmx.parcel[0]['product'],
                   parcel_version=cmx.parcel[0]['version'])
 
+    log("setup_management")
     # Example CM API to setup Cloudera Manager Management services - not installing 'ACTIVITYMONITOR'
     mgmt_roles = ['SERVICEMONITOR', 'ALERTPUBLISHER', 'EVENTSERVER', 'HOSTMONITOR']
     if management.licensed():
@@ -1676,6 +1682,7 @@ def main():
     # Step-Through - Setup services in order of service dependencies
     # Zookeeper, hdfs, HBase, Solr, Spark, Yarn,
     # Hive, Sqoop, Sqoop Client, Impala, Oozie, Hue
+    log("setup_components")
     setup_zookeeper()
     setup_hdfs()
     setup_hbase()
@@ -1711,6 +1718,7 @@ def main():
     # deploy_parcel(parcel_product=cmx.parcel[1]['product'],parcel_version=cmx.parcel[1]['version'])
 
     # Restart Cluster and Deploy Cluster wide client config
+    log("restart_cluster")
     cdh.restart_cluster()
 
     # Other examples of CM API

@@ -3,7 +3,7 @@
 execname=$0
 
 log() {
-  echo "[${execname}] $@" >> /tmp/initialize-cloudera-server.log
+  echo "$(date): [${execname}] $@" >> /tmp/initialize-cloudera-server.log
 }
 
 #fail on any error
