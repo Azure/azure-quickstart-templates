@@ -62,10 +62,8 @@ do
 done
 IFS=OIFS
 worker_ip=$(echo "${wip_string%?}")
-#echo "$worker_ip"
 log "Worker ip to be supplied to next script: $worker_ip"
 
-log "END: processing text stream from Azure ARM call"
 log "BEGIN: Copy hosts file to all nodes"
 
 OIFS=$IFS
@@ -83,47 +81,15 @@ do
       sleep 15
   done
   if [ $n -ge 5 ]; then log "scp error $remote, exiting..." & exit 1; fi
-  ssh -o StrictHostKeyChecking=no -i /home/$User/.ssh/id_rsa -t -t $User@$remote sudo cp /tmp/hosts /etc/hosts 
-  if [ $? -ne 0 ]; then log "ssh 1 error $remote, exiting..." & exit 1; fi
-  ssh -o StrictHostKeyChecking=no -i /home/$User/.ssh/id_rsa -t -t $User@$remote "sudo bash -c 'echo never > /sys/kernel/mm/transparent_hugepage/enabled'"
-  if [ $? -ne 0 ]; then log "ssh 2 error $remote, exiting..." & exit 1; fi
-  ssh -o StrictHostKeyChecking=no -i /home/$User/.ssh/id_rsa -t -t $User@$remote "echo vm.swappiness=1 | sudo tee -a /etc/systctl.conf; sudo echo 1 | sudo tee /proc/sys/vm/swappiness"
-  if [ $? -ne 0 ]; then log "ssh 3 error $remote, exiting..." & exit 1; fi
-  ssh -o StrictHostKeyChecking=no -i /home/$User/.ssh/id_rsa -t -t $User@$remote "sudo ifconfig -a >> initialIfconfig.out; who -b >> initialRestart.out"
+  ssh -o StrictHostKeyChecking=no -i /home/$User/.ssh/id_rsa -t -t $User@$remote << EOF
+      sudo cp /tmp/hosts /etc/hosts 
+      sudo bash -c 'echo never > /sys/kernel/mm/transparent_hugepage/enabled'
+      echo vm.swappiness=1 | sudo tee -a /etc/systctl.conf; sudo echo 1 | sudo tee /proc/sys/vm/swappiness
+      sudo ifconfig -a >> initialIfconfig.out; who -b >> initialRestart.out
+      exit 0
+EOF
   if [ $? -ne 0 ]; then log "ssh 4 error $remote, exiting..." & exit 1; fi
-  ssh -o StrictHostKeyChecking=no -i /home/$User/.ssh/id_rsa -t -t $User@$remote "sudo yum install -y ntp; sudo service ntpd start; sudo service ntpd status"
-  if [ $? -ne 0 ]; then log "ssh 5 error $remote, exiting..." & exit 1; fi
 done
-
-sudo yum install -y ntp
-sudo service ntpd start
-sudo service ntpd status
-
-#log "About to format all disks in cluster"
-#chmod 777 ./diskFormatAndMount.sh
-#log "Done chmodding run file"
-
-#ClusterNodes=("${ClusterNodes[@]}" $ManagementNode)
-
-#./diskFormatAndMount.sh ${ClusterNodes[@]}
-
-#log "Just completed formatting all disks in cluster"
-
-#log "END: Copy hosts file to all nodes"
-
-#log "BEGIN: Create Impala Scratch Directories"
-#numDataDirs=$(ls -la / | grep data | wc -l)
-#let endLoopIter=(numDataDirs - 1)
-
-#for node in $Worker_IP
-#do
-#  remote=$(echo "$node" | sed 's/:/ /' | sed 's/:/ /' | cut -d ' ' -f 2)
-#  log "Creating Impala directories on $remote" 
-#  ssh -o StrictHostKeyChecking=no -i /home/$User/.ssh/id_rsa -t -t $User@$remote 'numDataDirs=$(ls -la / | grep data | wc -l); let endLoopIter=(numDataDirs - 1); for x in $(seq 0 $endLoopIter); do sudo mkdir -p /data${x}/impala/scratch; sudo chmod 777 /data${x}/impala/scratch; ls -la /data${x}/impala/; done';
-
-#done
-
-#log "END: Create Impala Scratch Directories"
 
 IFS=$OIFS
 

@@ -29,6 +29,10 @@ do
   chmod 777 /data${x}/impala/scratch
 done
 
+yum install -y ntp
+service ntpd start
+service ntpd status
+
 #use the key from the key vault as the SSH authorized key
 mkdir /home/$ADMINUSER/.ssh
 chown $ADMINUSER /home/$ADMINUSER/.ssh
