@@ -76,19 +76,11 @@ do
   n=0
   until [ $n -ge 5 ]
   do
-      scp -o StrictHostKeyChecking=no -i /home/$User/.ssh/id_rsa /etc/hosts $User@$remote:/tmp/hosts && break
+      scp -o StrictHostKeyChecking=no -i /home/$User/.ssh/id_rsa /etc/hosts $User@$remote:/etc/hosts && break
       n=$[$n+1]
       sleep 15
   done
   if [ $n -ge 5 ]; then log "scp error $remote, exiting..." & exit 1; fi
-  ssh -o StrictHostKeyChecking=no -i /home/$User/.ssh/id_rsa -t -t $User@$remote << EOF
-      sudo cp /tmp/hosts /etc/hosts 
-      sudo bash -c 'echo never > /sys/kernel/mm/transparent_hugepage/enabled'
-      echo vm.swappiness=1 | sudo tee -a /etc/systctl.conf; sudo echo 1 | sudo tee /proc/sys/vm/swappiness
-      sudo ifconfig -a >> initialIfconfig.out; who -b >> initialRestart.out
-      exit 0
-EOF
-  if [ $? -ne 0 ]; then log "ssh error $remote, exiting..." & exit 1; fi
 done
 
 IFS=$OIFS

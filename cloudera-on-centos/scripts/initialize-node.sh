@@ -33,6 +33,10 @@ yum install -y ntp
 service ntpd start
 service ntpd status
 
+echo never > /sys/kernel/mm/transparent_hugepage/enabled
+echo vm.swappiness=1 | tee -a /etc/systctl.conf; echo 1 | tee /proc/sys/vm/swappiness
+ifconfig -a >> initialIfconfig.out; who -b >> initialRestart.out
+
 #use the key from the key vault as the SSH authorized key
 mkdir /home/$ADMINUSER/.ssh
 chown $ADMINUSER /home/$ADMINUSER/.ssh
