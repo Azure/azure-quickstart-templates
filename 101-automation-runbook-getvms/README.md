@@ -15,4 +15,4 @@ The runbook provides an example of how you can authenticate to Azure and use Azu
 The credential should contain the username and password of the Azure AD organizalation ID to connect to Azure.  To learn about how to create this user, see [Get set up to automate Azure]("http://aka.ms/getsetuptoautomate") and check out this blog post [Authenticating to Azure using Active Directory]("http://azure.microsoft.com/blog/2014/08/27/azure-automation-authenticating-to-azure-using-azure-active-directory/").  
 
 ###Job
-A job will be triggered once the other resources are deployed.  The job needs a unique GUID as the jobName.  You can use this to identify the job later in your script and to retrieve the job output.  
+A job will be triggered once the other resources are deployed.  The job needs a unique GUID as the jobId.  You can use this to identify the job later in your script and to retrieve the job output.  
