@@ -101,7 +101,7 @@
             "properties": { 
                 "publicIPAllocationMethod": "Dynamic", 
                 "dnsSettings": { 
-                    "domainNameLabel": "[concat(parameters('dnsNamePrefix'), '-mn')]" 
+                    "domainNameLabel": "[variables('vmName')]" 
                 } 
             } 
         }, 
@@ -138,7 +138,7 @@
             "type": "Microsoft.Compute/virtualMachines",
             "name": "[variables('vmName')]",
             "location": "[parameters('region')]",
-            "dependsOn": [                
+            "dependsOn": [
                 "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]",
                 "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
             ],
@@ -153,32 +153,36 @@
                     "computername": "[variables('vmName')]",
                     "adminUsername": "[parameters('vmSpec').adminUserName]",
                     "adminPassword": "[parameters('vmSpec').adminPassword]",
-                    "secrets": [{
-                        "sourceVault": {
-                            "id": "[parameters('vmSpec').keyVaultResourceId]"
-                        },
-                        "vaultCertificates": [{
-                            "certificateUrl": "[parameters('vmSpec').keyUri]"
-                        }]
-                    }],
-                    "linuxConfiguration" : {
+                    "secrets": [
+                        {
+                            "sourceVault": {
+                                "id": "[parameters('vmSpec').keyVaultResourceId]"
+                            },
+                            "vaultCertificates": [
+                                {
+                                    "certificateUrl": "[parameters('vmSpec').keyUri]"
+                                }
+                            ]
+                        }
+                    ],
+                    "linuxConfiguration": {
                         "disablePasswordAuthentication": "false"
                     }
                 },
                 "storageProfile": {
                     "imageReference": {
-                        "publisher": "OpenLogic", 
-                        "offer": "CentOS", 
-                        "sku": "6.5", 
-                        "version":"latest" 
+                        "publisher": "OpenLogic",
+                        "offer": "CentOS",
+                        "sku": "6.5",
+                        "version": "latest"
                     },
                     "osDisk": {
-                        "name": "osdisk", 
-                        "vhd": { 
+                        "name": "osdisk",
+                        "vhd": {
                             "uri": "[concat('http://', variables('storageAccountName'), '.blob.core.windows.net/vhds/', variables('vmName'), '.vhd')]"
-                        }, 
-                        "caching": "ReadWrite", 
-                        "createOption": "FromImage" 
+                        },
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage"
                     },
                     "dataDisks": [
                         {
@@ -328,9 +332,11 @@
                     ]
                 },
                 "networkProfile": {
-                    "networkInterfaces" : [{
-                        "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
-                    }],
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+                        }
+                    ],
                     "inputEndpoints": [
                         {
                             "enableDirectServerReturn": "False",
@@ -359,7 +365,7 @@
         },
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "[concat(parameters('dnsNamePrefix'), '-mn', '/prepareDisks')]",
+            "name": "[concat(variables('vmName'), '/prepareDisks')]",
             "apiVersion": "2015-05-01-preview",
             "location": "[parameters('region')]",
             "dependsOn": [
@@ -371,9 +377,30 @@
                 "typeHandlerVersion": "1.2",
                 "settings": {
                     "fileUris": [
-                        "[concat(parameters('scriptsUri'), '/scripts/initialize-master.sh')]",                        
-                        "[concat(parameters('scriptsUri'), '/scripts/initialize-node.sh')]",     
                         "[concat(parameters('scriptsUri'), '/scripts/prepareDisks.sh')]",
+                        "[concat(parameters('scriptsUri'), '/scripts/initialize-node.sh')]"                        
+                    ],
+                    "commandToExecute": "[concat('sh initialize-node.sh \"', parameters('vmSpec').adminUserName, '\"')]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(variables('vmName'), '/bootstrapCloudera')]",
+            "apiVersion": "2015-05-01-preview",
+            "location": "[parameters('region')]",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'), '/extensions/prepareDisks')]",
+                "Microsoft.Resources/deployments/data-node",
+                "Microsoft.Resources/deployments/name-node"
+            ],
+            "properties": {
+                "publisher": "Microsoft.OSTCExtensions",
+                "type": "CustomScriptForLinux",
+                "typeHandlerVersion": "1.2",
+                "settings": {
+                    "fileUris": [
+                        "[concat(parameters('scriptsUri'), '/scripts/initialize-master.sh')]",                        
                         "[concat(parameters('scriptsUri'), '/scripts/bootstrap-cloudera.sh')]",
                         "[concat(parameters('scriptsUri'), '/scripts/initialize-cloudera-server.sh')]",
                         "[concat(parameters('scriptsUri'), '/scripts/cmxDeployOnIbiza.py')]"

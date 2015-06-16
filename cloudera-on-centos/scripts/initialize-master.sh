@@ -19,8 +19,6 @@ NAMENODES=$4
 DATANODES=$5
 ADMINUSER=$6
 
-sh ./initialize-node.sh $ADMINUSER
-
 # Converts a domain like machine.domain.com to domain.com by removing the machine name
 NAMESUFFIX=`echo $NAMESUFFIX | sed 's/^[^.]*\.//'`
 
