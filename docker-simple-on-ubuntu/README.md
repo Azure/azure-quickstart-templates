@@ -4,9 +4,10 @@
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-Built by: [coreysa](https://github.com/coreysa)
+Built by: [coreysa](https://github.com/coreysa), [ahmetalpbalkan](https://github.com/ahmetalpbalkan)
 
-This template allows you to deploy an Ubuntu VM with Docker (using the Docker extension) and three Docker containers pulled directly from DockerHub and deployed using Docker Compose.
+This template allows you to deploy an Ubuntu VM with Docker (using the Docker Extension) installed.
+You can run docker commands by connecting to the virtual machine with SSH.
 
 Below are the parameters that the template expects
 
@@ -18,6 +19,3 @@ Below are the parameters that the template expects
 | adminPassword  | Password for the Virtual Machine  |
 | dnsNameForPublicIP  | Unique DNS Name for the Public IP used to access the Virtual Machine. |
 | ubuntuOSVersion  | The Ubuntu version for deploying the Docker containers. This will pick a fully patched image of this given Ubuntu version. Allowed values: 14.04.2-LTS, 14.04-DAILY, 15.04, 14.10. |
-| dockerHubImage1  | The name of the first DockerHub image to pass through to Docker compose on the VM. |
-| dockerHubImage2  | The second DockerHub image. |
-| dockerHubImage3  | The third DockerHub image. |
