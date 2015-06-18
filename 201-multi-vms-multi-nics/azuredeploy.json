@@ -1,0 +1,432 @@
+﻿{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "MultiNicStorageAccountName": {
+            "type": "string",
+            "metadata": {
+                "description": "Storageaccount name for the deployment - mainly used for VHD storage"
+            }
+        },
+        "AdminUserName": {
+            "type": "string",
+            "metadata": {
+                "description": "Username for the administrator login to the systems"
+            }
+        },
+        "AdminPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Password for the administrator login to the systems"
+            }
+        },
+        "publicDnsName": {
+            "type": "string",
+            "metadata": {
+                "description": "Unique public DNS prefix for the deployment. The fqdn will look something like '<dnsname>.westus.cloudapp.azure.com'. Up to 62 chars, digits or dashes, lowercase, should start with a letter: must conform to '^[a-z][a-z0-9-]{1,61}[a-z0-9]$'."
+            }
+        },
+        "rdpPort": {
+            "type": "int",
+            "defaultValue": 50001,
+            "metadata": {
+                "description": "Public port number for RDP"
+            }
+        }
+    },
+    "variables": {
+        "Virtual NetworkPrefix": "10.0.0.0/16",
+        "Virtual NetworkSubnetZoneAPrefix": "10.0.0.0/24",
+        "Virtual NetworkSubnetZoneBPrefix": "10.0.1.0/24",
+        "Virtual NetworkSubnetWebsPrefix": "10.0.2.0/24",
+        "Virtual NetworkSubnetOperationsPrefix": "10.0.3.0/24",
+        "FirewallsImagePublisher": "MicrosoftWindowsServer",
+        "FirewallsImageOffer": "WindowsServer",
+        "FirewallsOSDiskName": "FirewallsOSDisk",
+        "FirewallsVmSize": "Standard_D3",
+        "FirewallsWindowsOSVersion": "2012-R2-Datacenter",
+        "VnetID": "[resourceId('Microsoft.Network/virtualNetworks', 'MultiNICVNET')]",
+        "ZoneASubnetRef": "[concat(variables('VnetID'), '/subnets/', 'ZoneA')]",
+        "ZoneBSubnetRef": "[concat(variables('VnetID'), '/subnets/', 'ZoneB')]",
+        "FirewallsStorageAccountContainerName": "vhds",
+        "WebsImagePublisher": "MicrosoftWindowsServer",
+        "WebsImageOffer": "WindowsServer",
+        "WebsOSDiskName": "WebsOSDisk",
+        "WebsVmSize": "Standard_D2",
+        "WebsWindowsOSVersion": "2012-R2-Datacenter",
+        "WebsSubnetRef": "[concat(variables('VnetID'), '/subnets/', 'Webs')]",
+        "OperationsSubnetRef": "[concat(variables('VnetID'), '/subnets/', 'Operations')]",
+        "WebsStorageAccountContainerName": "vhds",
+        "OperationsVMSize": "Standard_D2",
+        "OperationsImagePublisher": "MicrosoftWindowsServer",
+        "OperationsImageOffer": "WindowsServer",
+        "OperationsOSDiskName": "WebsOSDisk",
+        "OperationsStorageAccountContainerName": "vhds",
+        "OperationsWindowsOSVersion": "2012-R2-Datacenter"
+    },
+    "resources": [
+        {
+            "name": "[parameters('MultiNicStorageAccountName')]",
+            "type": "Microsoft.Storage/storageAccounts",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-05-01-preview",
+            "dependsOn": [ ],
+            "tags": {
+                "displayName": "Storage Account"
+            },
+            "properties": {
+                "accountType": "Standard_LRS"
+            }
+        },
+        {
+            "apiVersion": "2015-05-01-preview",
+            "type": "Microsoft.Network/PublicIpAddresses",
+            "name": "PublicIp",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "PublicIpAllocationMethod": "Dynamic",
+                "dnsSettings": {
+                    "domainNameLabel": "[parameters('publicDnsName')]"
+                }
+            }
+        },
+        {
+            "name": "MultiNICVNET",
+            "type": "Microsoft.Network/virtualNetworks",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-05-01-preview",
+            "dependsOn": [ ],
+            "tags": {
+                "displayName": "Virtual Network"
+            },
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('Virtual NetworkPrefix')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "ZoneA",
+                        "properties": {
+                            "addressPrefix": "[variables('Virtual NetworkSubnetZoneAPrefix')]"
+                        }
+                    },
+                    {
+                        "name": "ZoneB",
+                        "properties": {
+                            "addressPrefix": "[variables('Virtual NetworkSubnetZoneBPrefix')]"
+                        }
+                    },
+                    {
+                        "name": "Webs",
+                        "properties": {
+                            "addressPrefix": "[variables('Virtual NetworkSubnetWebsPrefix')]"
+                        }
+                    },
+                    {
+                        "name": "Operations",
+                        "properties": {
+                            "addressPrefix": "[variables('Virtual NetworkSubnetOperationsPrefix')]"
+                        }
+                    },
+                ]
+            }
+        },
+        {
+            "name": "[concat('FirewallNIC0', copyIndex())]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-05-01-preview",
+            "copy": {
+                "name": "niccopy",
+                "count": 2
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Network/virtualNetworks/', 'MultiNICVNET')]"
+            ],
+            "tags": {
+                "displayName": "Firewall Nics 0X"
+            },
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Static",
+                            "privateIPAddress": "[concat('10.0.0.10', copyIndex())]",
+                            "subnet": {
+                                "id": "[variables('ZoneASubnetRef')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[concat('FirewallNIC1', copyIndex())]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-05-01-preview",
+            "copy": {
+                "name": "niccopy",
+                "count": 2
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Network/virtualNetworks/', 'MultiNICVNET')]"
+            ],
+            "tags": {
+                "displayName": "Firewall Nics 1X"
+            },
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Static",
+                            "privateIPAddress": "[concat('10.0.1.11', copyIndex())]",
+                            "subnet": {
+                                "id": "[variables('ZoneBSubnetRef')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[concat('FW', copyIndex())]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-05-01-preview",
+            "copy": {
+                "name": "fwvmcopy",
+                "count": 2
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Storage/storageAccounts/', parameters('MultiNicStorageAccountName'))]",
+                "[concat('Microsoft.Network/networkInterfaces/', 'FirewallNIC0', copyIndex())]",
+                "[concat('Microsoft.Network/networkInterfaces/', 'FirewallNIC1', copyIndex())]",
+                "[concat('Microsoft.Compute/availabilitySets/', 'FWAvailSet')]"
+            ],
+            "tags": {
+                "displayName": "Firewalls"
+            },
+            "properties": {
+                "availabilitySet": {
+                    "id": "[resourceId('Microsoft.Compute/availabilitySets', 'FWAvailSet')]"
+                },
+                "hardwareProfile": {
+                    "vmSize": "[variables('FirewallsVmSize')]"
+                },
+                "osProfile": {
+                    "computername": "[concat('FW', copyIndex())]",
+                    "adminUsername": "[parameters('AdminUserName')]",
+                    "adminPassword": "[parameters('AdminPassword')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "[variables('FirewallsImagePublisher')]",
+                        "offer": "[variables('FirewallsImageOffer')]",
+                        "sku": "[variables('FirewallsWindowsOSVersion')]",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "FirewallsOSDisk",
+                        "vhd": {
+                            "uri": "[concat('http://', parameters('MultiNicStorageAccountName'), '.blob.core.windows.net/', variables('FirewallsStorageAccountContainerName'), '/', variables('FirewallsOSDiskName'), copyIndex(), '.vhd')]"
+                        },
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat('FirewallNIC0', copyIndex()))]",
+                            "properties": {
+                                "Primary": true
+                            }
+                        },
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat('FirewallNIC1', copyIndex()))]",
+                            "properties": {
+                                "Primary": false
+                            }
+                        }
+                    ]
+                }
+            }
+
+        },
+        {
+            "name": "[concat('WebNIC', copyIndex())]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-05-01-preview",
+            "copy": {
+                "name": "niccopy",
+                "count": 2
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Network/virtualNetworks/', 'MultiNICVNET')]"
+            ],
+            "tags": {
+                "displayName": "Web Nics"
+            },
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[variables('WebsSubnetRef')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[concat('Web', copyIndex())]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-05-01-preview",
+            "copy": {
+                "name": "Webvmcopy",
+                "count": 2
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Storage/storageAccounts/', parameters('MultiNicStorageAccountName'))]",
+                "[concat('Microsoft.Network/networkInterfaces/', 'WebNIC', copyIndex())]",
+                "[concat('Microsoft.Compute/virtualMachines/', 'FW0')]"
+            ],
+            "tags": {
+                "displayName": "Webs"
+            },
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[variables('WebsVmSize')]"
+                },
+                "osProfile": {
+                    "computername": "[concat('Web', copyIndex())]",
+                    "adminUsername": "[parameters('AdminUserName')]",
+                    "adminPassword": "[parameters('AdminPassword')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "[variables('WebsImagePublisher')]",
+                        "offer": "[variables('WebsImageOffer')]",
+                        "sku": "[variables('WebsWindowsOSVersion')]",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "WebsOSDisk",
+                        "vhd": {
+                            "uri": "[concat('http://', parameters('MultiNicStorageAccountName'), '.blob.core.windows.net/', variables('WebsStorageAccountContainerName'), '/', variables('WebsOSDiskName'), copyIndex(), '.vhd')]"
+                        },
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat('WebNIC', copyIndex()))]"
+                        }
+                    ]
+                }
+            }
+
+        },
+        {
+            "name": "FWAvailSet",
+            "type": "Microsoft.Compute/availabilitySets",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-05-01-preview",
+            "dependsOn": [ ],
+            "tags": {
+                "displayName": "Firewall Availability Set"
+            }
+        },
+        {
+            "name": "OpsNic",
+            "type": "Microsoft.Network/networkInterfaces",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-05-01-preview",
+            "dependsOn": [
+                "[concat('Microsoft.Network/virtualNetworks/', 'MultiNICVNET')]",
+                "[concat('Microsoft.Network/PublicIpAddresses/', 'PublicIp')]"
+            ],
+            "tags": {
+                "displayName": "Ops Nics"
+            },
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "PublicIpAddress": {
+                                "id": "[resourceId('Microsoft.Network/PublicIpAddresses','PublicIp')]"
+                            },
+                            "subnet": {
+                                "id": "[variables('OperationsSubnetRef')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "OperationsVM",
+            "type": "Microsoft.Compute/virtualMachines",
+            "location": "[resourceGroup().location]",
+            "apiVersion": "2015-05-01-preview",
+            "dependsOn": [
+                "[concat('Microsoft.Storage/storageAccounts/', parameters('MultiNicStorageAccountName'))]",
+                "[concat('Microsoft.Network/networkInterfaces/', 'OpsNic')]",
+                "[concat('Microsoft.Compute/virtualMachines/', 'FW0')]"
+            ],
+            "tags": {
+                "displayName": "Operations VM"
+            },
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[variables('OperationsVmSize')]"
+                },
+                "osProfile": {
+                    "computername": "OperationsVM",
+                    "adminUsername": "[parameters('AdminUserName')]",
+                    "adminPassword": "[parameters('AdminPassword')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "[variables('OperationsImagePublisher')]",
+                        "offer": "[variables('OperationsImageOffer')]",
+                        "sku": "[variables('OperationsWindowsOSVersion')]",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "OperationsOSDisk",
+                        "vhd": {
+                            "uri": "[concat('http://', parameters('MultiNicStorageAccountName'), '.blob.core.windows.net/', variables('OperationsStorageAccountContainerName'), '/', variables('OperationsOSDiskName'), '.vhd')]"
+                        },
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', 'OpsNic')]"
+                        }
+                    ]
+                }
+            }
+
+        }
+    ],
+    "outputs": {
+    }
+}
