@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# This script can be found on https://github.com/YidingZhou/azure-quickstart-templates/blob/master/torque/azuredeploy.sh
+# This script can be found on https://github.com/Azure/azure-quickstart-templates/blob/master/torque-cluster/azuredeploy.sh
 # This script is part of azure deploy ARM template
 # This script assumes the Linux distribution to be Ubuntu (or at least have apt-get support)
 # This script will install Torque on a Linux cluster deployed on a set of Azure VMs
