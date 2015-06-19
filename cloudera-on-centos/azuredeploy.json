@@ -83,13 +83,19 @@
             "defaultValue": "Eval", 
             "allowedValues": [
                 "Eval",
-                "Small",
-                "Medium"
+                "Prod"
             ], 
             "metadata": { 
-                "description": "T-shirt size of the Cloudera cluster (Eval, Small, Medium)" 
+                "description": "T-shirt size of the Cloudera cluster (Eval, Prod)" 
             } 
         }, 
+        "numberOfDataNodes": {
+            "type": "int",
+            "defaultValue": 3,
+            "metadata": { 
+                "description": "Number of data nodes for Prod, default to 3" 
+            } 
+        },
         "vmSize": {
             "type": "string",
             "defaultValue": "Standard_D14",
@@ -126,16 +132,14 @@
             "type": "[parameters('storageAccountType')]"
         },
         "clusterTshirtSizeEval": {
-            "nameNodeCount": 2,
-            "dataNodeCount": 3                
+            "nameNodeCount": 1,
+            "dataNodeCount": "[parameters('numberOfDataNodes')]",
+            "highAvailability":  false                
         },
-        "clusterTshirtSizeSmall": {
+        "clusterTshirtSizeProd": {
             "nameNodeCount": 2,
-            "dataNodeCount": 7            
-        },
-        "clusterTshirtSizeMedium": {
-            "nameNodeCount": 2,
-            "dataNodeCount": 26            
+            "dataNodeCount": "[parameters('numberOfDataNodes')]",            
+            "highAvailability":  true                
         },
         "clusterSpec": "[variables(concat('clusterTshirtSize', parameters('tshirtSize')))]",        
         "vmSpec": {
@@ -272,7 +276,7 @@
             "name": "master-node",
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2015-01-01",
-            "dependsOn": [
+            "dependsOn": [                
                 "Microsoft.Resources/deployments/shared-resources"
             ],
             "properties": {
@@ -292,44 +296,52 @@
                         "value": "[variables('scriptsUri')]"
                     },
                     "storageAccount" : {
-                        "value": "[variables('storageAccount')]"
+                        "value": "[variables('storageAccount')]"        
                     },
                     "vmSpec": {
                         "value": "[variables('vmSpec')]"
                     },
-                    "networkSpec" : {
+                    "networkSpec": {
                         "value": "[variables('networkSpec')]"
                     },
-                    "clusterSpec" : {
+                    "clusterSpec": {
                         "value": "[variables('clusterSpec')]"
-                    }
+                    }                    
                 }
             }
         },
         {
-            "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "[concat(parameters('dnsNamePrefix'), '-mn', '/bootstrapCloudera')]",
-            "apiVersion": "2015-05-01-preview",
-            "location": "[parameters('region')]",
-            "dependsOn": [
-                "Microsoft.Resources/deployments/data-node",
-                "Microsoft.Resources/deployments/name-node",
-                "Microsoft.Resources/deployments/master-node"
+            "name": "setup-cloudera",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2015-01-01",
+            "dependsOn": [                
+                "Microsoft.Resources/deployments/shared-resources"
             ],
             "properties": {
-                "publisher": "Microsoft.OSTCExtensions",
-                "type": "CustomScriptForLinux",
-                "typeHandlerVersion": "1.2",
-                "settings": {
-                    "fileUris": [
-                        "[concat(parameters('scriptsUri'), '/scripts/initialize-master.sh')]",
-                        "[concat(parameters('scriptsUri'), '/scripts/initialize-node.sh')]",
-                        "[concat(parameters('scriptsUri'), '/scripts/prepareDisks.sh')]",
-                        "[concat(parameters('scriptsUri'), '/scripts/bootstrap-cloudera.sh')]",
-                        "[concat(parameters('scriptsUri'), '/scripts/initialize-cloudera-server.sh')]",
-                        "[concat(parameters('scriptsUri'), '/scripts/cmxDeployOnIbiza.py')]"
-                    ],
-                    "commandToExecute": "[concat('sh bootstrap-cloudera.sh \"', variables('networkSpec').privateIPPrefix, '\" \"', parameters('dnsNamePrefix'), '\" \"', reference('master-node').outputs.fqdn.value, '\" ', variables('clusterSpec').nameNodeCount, ' ', variables('clusterSpec').dataNodeCount, ' \"', variables('vmSpec').adminUserName, '\" >> /home/$ADMINUSER/bootstrap-cloudera.log 2>&1')]"
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(variables('scriptsUri'), '/setup-cloudera.json')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "dnsNamePrefix": {
+                        "value": "[parameters('dnsNamePrefix')]"
+                    },
+                    "region": {
+                        "value": "[parameters('region')]"
+                    },
+                    "scriptsUri": {
+                        "value": "[variables('scriptsUri')]"
+                    },
+                    "vmSpec": {
+                        "value": "[variables('vmSpec')]"
+                    },
+                    "networkSpec": {
+                        "value": "[variables('networkSpec')]"
+                    },
+                    "clusterSpec": {
+                        "value": "[variables('clusterSpec')]"
+                    }                    
                 }
             }
         }
