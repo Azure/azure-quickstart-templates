@@ -4,4 +4,6 @@
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-This is a starter template that shows how to create a DNS zone and some records using Azure DNS.  To read back the zone, see the PowerShell example code in AzureDNSExample.ps1, it also show how ot use powershell to create the resource group.
+This is a starter template that shows how to create a DNS zone and some records using Azure DNS.  
+
+AzureDNSExample.ps1 includes some PowerShell code to read back the records in the zone.
