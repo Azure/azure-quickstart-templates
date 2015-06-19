@@ -11,7 +11,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-ADMINUSER=$1
+IPPREFIX=$1
+NAMEPREFIX=$2
+NAMESUFFIX=$3
+NAMENODES=$4
+DATANODES=$5
+ADMINUSER=$6
 
 # Disable the need for a tty when running sudo and allow passwordless sudo for the admin user
 sed -i '/Defaults[[:space:]]\+!*requiretty/s/^/#/' /etc/sudoers
@@ -50,3 +55,34 @@ chmod 600 /home/$ADMINUSER/.ssh/authorized_keys
 sed -i "s/UsePAM\s*yes/UsePAM no/" /etc/ssh/sshd_config
 sed -i "s/PasswordAuthentication\s*yes/PasswordAuthentication no/" /etc/ssh/sshd_config
 /etc/init.d/sshd restart
+
+#Generate IP Addresses for the cloudera setup
+NODES=()
+
+NODES+=("${IPPREFIX}9:${NAMEPREFIX}-mn.$NAMESUFFIX:${NAMEPREFIX}-mn")
+
+let "NAMEEND=NAMENODES-1"
+for i in $(seq 0 $NAMEEND)
+do 
+  let "IP=i+10"
+  NODES+=("$IPPREFIX$IP:${NAMEPREFIX}-nn$i.$NAMESUFFIX:${NAMEPREFIX}-nn$i")
+done
+
+let "DATAEND=DATANODES-1"
+for i in $(seq 0 $DATAEND)
+do 
+  let "IP=i+20"
+  NODES+=("$IPPREFIX$IP:${NAMEPREFIX}-dn$i.$NAMESUFFIX:${NAMEPREFIX}-dn$i")
+done
+
+OIFS=$IFS
+IFS=',';NODE_IPS="${NODES[*]}";IFS=$' \t\n'
+
+IFS=','
+for x in $NODE_IPS
+do
+  line=$(echo "$x" | sed 's/:/ /' | sed 's/:/ /')
+  echo "$line" >> /etc/hosts
+done
+IFS=OIFS
+
