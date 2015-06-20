@@ -50,7 +50,7 @@ openssl rsa -in $file -outform PEM > $key
 NODES=()
 
 let "NAMEEND=NAMENODES-1"
-for i in $(seq 0 $NAMEEND)
+for i in $(seq 1 $NAMEEND)
 do 
   let "IP=i+10"
   NODES+=("$IPPREFIX$IP:${NAMEPREFIX}-nn$i.$NAMESUFFIX:${NAMEPREFIX}-nn$i")
