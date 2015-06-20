@@ -18,6 +18,9 @@ NAMENODES=$4
 DATANODES=$5
 ADMINUSER=$6
 
+# Converts a domain like machine.domain.com to domain.com by removing the machine name
+NAMESUFFIX=`echo $NAMESUFFIX | sed 's/^[^.]*\.//'`
+
 # Disable the need for a tty when running sudo and allow passwordless sudo for the admin user
 sed -i '/Defaults[[:space:]]\+!*requiretty/s/^/#/' /etc/sudoers
 echo "$ADMINUSER ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
