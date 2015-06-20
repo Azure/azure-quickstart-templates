@@ -35,10 +35,15 @@ ManagementNode="${IPPREFIX}9:${NAMEPREFIX}-mn.$NAMESUFFIX:${NAMEPREFIX}-mn"
 # Converts a domain like machine.domain.com to domain.com by removing the machine name
 NAMESUFFIX=`echo $NAMESUFFIX | sed 's/^[^.]*\.//'`
 
+log "set private key"
 #use the key from the key vault as the SSH private key
 openssl rsa -in /var/lib/waagent/*.prv -out /home/$ADMINUSER/.ssh/id_rsa
 chmod 600 /home/$ADMINUSER/.ssh/id_rsa
 chown $ADMINUSER /home/$ADMINUSER/.ssh/id_rsa
+
+file="/home/$ADMINUSER/.ssh/id_rsa"
+key="/tmp/id_rsa.pem"
+openssl rsa -in $file -outform PEM > $key
 
 #Generate IP Addresses for the cloudera setup
 NODES=()
@@ -60,12 +65,6 @@ done
 IFS=',';NODE_IPS="${NODES[*]}";IFS=$' \t\n'
 
 log "BEGIN: Processing text stream from Azure ARM call"
-
-
-log "set private key"
-file="/home/$User/.ssh/id_rsa"
-key="/tmp/id_rsa.pem"
-openssl rsa -in $file -outform PEM > $key
 
 log "remove requiretty"
 sed -i 's^requiretty^!requiretty^g' /etc/sudoers
