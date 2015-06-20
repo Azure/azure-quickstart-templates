@@ -30,10 +30,11 @@ log() {
   echo "$(date): [${execname}] $@" 
 }
 
-ManagementNode="${IPPREFIX}9:${NAMEPREFIX}-mn.$NAMESUFFIX:${NAMEPREFIX}-mn"
-
 # Converts a domain like machine.domain.com to domain.com by removing the machine name
 NAMESUFFIX=`echo $NAMESUFFIX | sed 's/^[^.]*\.//'`
+
+ManagementNode="${IPPREFIX}10:${NAMEPREFIX}-nn0.$NAMESUFFIX:${NAMEPREFIX}-nn0"
+mip=$(echo "$ManagementNode" | sed 's/:/ /' | sed 's/:/ /' | cut -d ' ' -f 1)
 
 log "set private key"
 #use the key from the key vault as the SSH private key
@@ -63,14 +64,6 @@ do
 done
 
 IFS=',';NODE_IPS="${NODES[*]}";IFS=$' \t\n'
-
-log "BEGIN: Processing text stream from Azure ARM call"
-
-log "remove requiretty"
-sed -i 's^requiretty^!requiretty^g' /etc/sudoers
-log "done removing requiretty"
-
-mip=$(echo "$ManagementNode" | sed 's/:/ /' | sed 's/:/ /' | cut -d ' ' -f 1)
 
 wip_string=''
 OIFS=$IFS

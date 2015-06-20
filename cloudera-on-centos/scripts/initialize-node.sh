@@ -21,6 +21,34 @@ ADMINUSER=$6
 # Converts a domain like machine.domain.com to domain.com by removing the machine name
 NAMESUFFIX=`echo $NAMESUFFIX | sed 's/^[^.]*\.//'`
 
+#Generate IP Addresses for the cloudera setup
+NODES=()
+
+let "NAMEEND=NAMENODES-1"
+for i in $(seq 0 $NAMEEND)
+do 
+  let "IP=i+10"
+  NODES+=("$IPPREFIX$IP:${NAMEPREFIX}-nn$i.$NAMESUFFIX:${NAMEPREFIX}-nn$i")
+done
+
+let "DATAEND=DATANODES-1"
+for i in $(seq 0 $DATAEND)
+do 
+  let "IP=i+20"
+  NODES+=("$IPPREFIX$IP:${NAMEPREFIX}-dn$i.$NAMESUFFIX:${NAMEPREFIX}-dn$i")
+done
+
+OIFS=$IFS
+IFS=',';NODE_IPS="${NODES[*]}";IFS=$' \t\n'
+
+IFS=','
+for x in $NODE_IPS
+do
+  line=$(echo "$x" | sed 's/:/ /' | sed 's/:/ /')
+  echo "$line" >> /etc/hosts
+done
+IFS=OIFS
+
 # Disable the need for a tty when running sudo and allow passwordless sudo for the admin user
 sed -i '/Defaults[[:space:]]\+!*requiretty/s/^/#/' /etc/sudoers
 echo "$ADMINUSER ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
@@ -59,33 +87,4 @@ sed -i "s/UsePAM\s*yes/UsePAM no/" /etc/ssh/sshd_config
 sed -i "s/PasswordAuthentication\s*yes/PasswordAuthentication no/" /etc/ssh/sshd_config
 /etc/init.d/sshd restart
 
-#Generate IP Addresses for the cloudera setup
-NODES=()
-
-NODES+=("${IPPREFIX}9:${NAMEPREFIX}-mn.$NAMESUFFIX:${NAMEPREFIX}-mn")
-
-let "NAMEEND=NAMENODES-1"
-for i in $(seq 0 $NAMEEND)
-do 
-  let "IP=i+10"
-  NODES+=("$IPPREFIX$IP:${NAMEPREFIX}-nn$i.$NAMESUFFIX:${NAMEPREFIX}-nn$i")
-done
-
-let "DATAEND=DATANODES-1"
-for i in $(seq 0 $DATAEND)
-do 
-  let "IP=i+20"
-  NODES+=("$IPPREFIX$IP:${NAMEPREFIX}-dn$i.$NAMESUFFIX:${NAMEPREFIX}-dn$i")
-done
-
-OIFS=$IFS
-IFS=',';NODE_IPS="${NODES[*]}";IFS=$' \t\n'
-
-IFS=','
-for x in $NODE_IPS
-do
-  line=$(echo "$x" | sed 's/:/ /' | sed 's/:/ /')
-  echo "$line" >> /etc/hosts
-done
-IFS=OIFS
 
