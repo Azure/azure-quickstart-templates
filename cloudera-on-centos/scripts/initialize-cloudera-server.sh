@@ -53,7 +53,8 @@ log "Set cloudera-manager.repo to CM v5"
 yum clean all >> /tmp/initialize-cloudera-server.log
 rpm --import http://archive.cloudera.com/cdh5/redhat/6/x86_64/cdh/RPM-GPG-KEY-cloudera >> /tmp/initialize-cloudera-server.log
 wget http://archive.cloudera.com/cm5/redhat/6/x86_64/cm/cloudera-manager.repo -O /etc/yum.repos.d/cloudera-manager.repo >> /tmp/initialize-cloudera-server.log
-yum install -y oracle-j2sdk* cloudera-manager-daemons cloudera-manager-server cloudera-manager-server-db* >> /tmp/initialize-cloudera-server.log
+sleep 20s
+yum install -y oracle-j2sdk* cloudera-manager-daemons cloudera-manager-server cloudera-manager-server-db* >> /tmp/initialize-cloudera-server.log 2>> /tmp/initialize-cloudera-server.err
 
 log "start cloudera-scm-server-db and cloudera-scm-server services"
 service cloudera-scm-server-db start >> /tmp/initialize-cloudera-server.log
@@ -89,12 +90,4 @@ if $HA; then
 else
     python cmxDeployOnIbiza.py -n "$ClusterName" -u $User -k "$key" -m "$mip" -w "$worker_ip" >> /tmp/initialize-cloudera-server.log 2>> /tmp/initialize-cloudera-server.err
 fi
-
-
-# Sleep for a while to give the agents enough time to check in with the master.
-# sleep_time=1800
-# echo "Sleeping for $sleep_time seconds so that script does not report back to Ibiza portal that work is finished."
-# sleep $sleep_time
-# echo "Done sleeping. Reporting back to Ibiza portal to let end user know that cluster is coming up."
-
 log "END: CM deployment ended"
