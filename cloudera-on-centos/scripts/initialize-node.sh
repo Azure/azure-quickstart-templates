@@ -56,9 +56,6 @@ echo "$ADMINUSER ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 # Mount and format the attached disks
 sh ./prepareDisks.sh
 
-service network restart
-service network status
-
 # Create Impala scratch directory
 numDataDirs=$(ls -la / | grep data | wc -l)
 let endLoopIter=(numDataDirs - 1)
@@ -89,5 +86,3 @@ chmod 600 /home/$ADMINUSER/.ssh/authorized_keys
 sed -i "s/UsePAM\s*yes/UsePAM no/" /etc/ssh/sshd_config
 sed -i "s/PasswordAuthentication\s*yes/PasswordAuthentication no/" /etc/ssh/sshd_config
 /etc/init.d/sshd restart
-
-
