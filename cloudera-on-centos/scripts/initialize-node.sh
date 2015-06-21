@@ -56,6 +56,9 @@ echo "$ADMINUSER ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 # Mount and format the attached disks
 sh ./prepareDisks.sh
 
+service network restart
+service network status
+
 # Create Impala scratch directory
 numDataDirs=$(ls -la / | grep data | wc -l)
 let endLoopIter=(numDataDirs - 1)
