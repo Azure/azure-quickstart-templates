@@ -73,6 +73,8 @@ yum install -y ntp
 service ntpd start
 service ntpd status
 
+yum install -y microsoft-hyper-v
+
 echo never > /sys/kernel/mm/transparent_hugepage/enabled
 echo vm.swappiness=1 | tee -a /etc/systctl.conf; echo 1 | tee /proc/sys/vm/swappiness
 ifconfig -a >> initialIfconfig.out; who -b >> initialRestart.out
@@ -87,6 +89,6 @@ chown $ADMINUSER /home/$ADMINUSER/.ssh/authorized_keys
 chmod 600 /home/$ADMINUSER/.ssh/authorized_keys
 
 #disable password authentication in ssh
-sed -i "s/UsePAM\s*yes/UsePAM no/" /etc/ssh/sshd_config
-sed -i "s/PasswordAuthentication\s*yes/PasswordAuthentication no/" /etc/ssh/sshd_config
-/etc/init.d/sshd restart
+#sed -i "s/UsePAM\s*yes/UsePAM no/" /etc/ssh/sshd_config
+#sed -i "s/PasswordAuthentication\s*yes/PasswordAuthentication no/" /etc/ssh/sshd_config
+#/etc/init.d/sshd restart

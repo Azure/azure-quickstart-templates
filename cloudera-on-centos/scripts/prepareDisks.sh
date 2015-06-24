@@ -21,8 +21,8 @@ mountDrive() {
   driveName=$1
   driveId=$2
   echo "$(hostname) : /data${2} :About to mount drive"
-  mount -o noatime -t ext4 ${1} /data${2}
-  echo "$driveName   /data${2}    ext4   defaults,noatime 1 2" | sudo tee -a /etc/fstab
+  mount -o noatime,barrier=0 -t ext4 ${1} /data${2}
+  echo "$driveName   /data${2}    ext4   defaults,noatime,barrier=0 1 2" | sudo tee -a /etc/fstab
   cat /etc/fstab
   echo "$(hostname) : /data${2} : Done mounting drive"
 
@@ -58,8 +58,8 @@ formatAndMountDrive() {
   mkdir -p /data${2}
   chmod 777 /data${2}
   echo "$(hostname) : $1 : after data creation for id $2: $?"
-  mount -o noatime -t ext4 $drive /data${2}
-  echo "$drive   /data${2}    ext4   defaults,noatime 1 2" | sudo tee -a /etc/fstab
+  mount -o noatime,barrier=0 -t ext4 $drive /data${2}
+  echo "$drive   /data${2}    ext4   defaults,noatime,barrier=0 1 2" | sudo tee -a /etc/fstab
   echo "$(hostname) : $1 : after mounting for id $2 exit code: $?"
   echo "$(hostname) : $1 : Done operating on drive $1. Here is df -h"
   df -h
