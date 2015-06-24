@@ -57,16 +57,16 @@ echo "$ADMINUSER ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 sh ./prepareDisks.sh
 
 echo "Done preparing disks.  Now ls -la looks like this:"
-ls -la
+ls -la /
 # Create Impala scratch directory
 numDataDirs=$(ls -la / | grep data | wc -l)
 echo "numDataDirs:" $numDataDirs
 let endLoopIter=(numDataDirs - 1)
 for x in $(seq 0 $endLoopIter)
 do 
-  echo ${x}
-  mkdir -p /data${x}/impala/scratch
-  chmod 777 /data${x}/impala/scratch
+  echo mkdir -p /data${x}/impala/scratch 
+  #mkdir -p /data${x}/impala/scratch
+  #chmod 777 /data${x}/impala/scratch
 done
 
 yum install -y ntp
