@@ -1,0 +1,151 @@
+﻿{
+    "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "siteName": {
+            "type": "string",
+            "metadata": { 
+                "description": "The name of the web app that you wish to create."
+            }
+        },
+        "hostingPlanName": {
+            "type": "string",
+            "metadata": { 
+                "description": "The name of the App Service plan to use for hosting the web app."
+            }
+        },
+        "siteLocation": {
+            "type": "string",
+            "metadata": { 
+                "description": "The location to use for creating the web app and hosting plan. It must be one of the Azure locations that support web apps."
+            }
+        },
+        "sku": {
+            "type": "string",
+            "allowedValues": [
+                "Free",
+                "Shared",
+                "Basic",
+                "Standard"
+            ],
+            "defaultValue": "Free",
+            "metadata": { 
+                "description": "The pricing tier for the hosting plan."
+            }
+        },
+        "workerSize": {
+            "type": "string",
+            "allowedValues": [
+                "0",
+                "1",
+                "2"
+            ],
+            "defaultValue": "0",
+            "metadata": { 
+                "description": "The instance size of the hosting plan (small, medium, or large)."
+            }
+        },
+        "redisCacheName": {
+            "type": "string",
+            "metadata": { 
+                "description": "The name of the Azure Redis Cache to create."
+            }
+        },
+        "redisCacheSKU": {
+            "type": "string",
+            "allowedValues": [ "Basic", "Standard" ],
+            "defaultValue": "Basic",
+            "metadata": { 
+                "description": "The pricing tier of the new Azure Redis Cache."
+            }
+        },
+        "redisCacheFamily": {
+            "type": "string",
+            "allowedValues": [ "C" ],
+            "defaultValue": "C",
+            "metadata": { 
+                "description": "The family for the sku."
+            }
+        },
+        "redisCacheCapacity": {
+            "type": "int",
+            "allowedValues": [ 0, 1, 2, 3, 4, 5, 6 ],
+            "defaultValue": 0,
+            "metadata": { 
+                "description": "The size of the new Azure Redis Cache instance. "
+            }
+        },
+        "redisCacheVersion": {
+            "type": "string",
+            "allowedValues": [ "2.8" ],
+            "defaultValue": "2.8",
+            "metadata": { 
+                "description": "The Redis server version of the new cache."
+            }
+        }
+    },
+    "resources": [
+        {
+            "apiVersion": "2014-04-01-preview",
+            "name": "[parameters('redisCacheName')]",
+            "type": "Microsoft.Cache/Redis",
+            "location": "[parameters('siteLocation')]",
+            "properties": {
+                "sku": {
+                    "name": "[parameters('redisCacheSKU')]",
+                    "family": "[parameters('redisCacheFamily')]",
+                    "capacity": "[parameters('redisCacheCapacity')]"
+                },
+                "redisVersion": "[parameters('redisCacheVersion')]",
+                "enableNonSslPort": true
+            }
+        },
+        {
+            "apiVersion": "2014-06-01",
+            "name": "[parameters('hostingPlanName')]",
+            "type": "Microsoft.Web/serverfarms",
+            "location": "[parameters('siteLocation')]",
+            "properties": {
+                "name": "[parameters('hostingPlanName')]",
+                "sku": "[parameters('sku')]",
+                "workerSize": "[parameters('workerSize')]",
+                "numberOfWorkers": 1
+            }
+        },
+        {
+            "apiVersion": "2014-06-01",
+            "name": "[parameters('siteName')]",
+            "type": "Microsoft.Web/sites",
+            "location": "[parameters('siteLocation')]",
+            "dependsOn": [
+                "[concat('Microsoft.Web/serverFarms/', parameters('hostingPlanName'))]"
+            ],
+            "properties": {
+                "name": "[parameters('siteName')]",
+                "serverFarm": "[parameters('hostingPlanName')]"
+            },
+            "resources": [
+                {
+                    "apiVersion": "2014-04-01",
+                    "type": "config",
+                    "name": "web",
+                    "dependsOn": [
+                        "[concat('Microsoft.Web/sites/', parameters('siteName'))]"
+                    ],
+                    "properties": {
+                        "appSettings": [
+                            {
+                                "name": "REDIS_HOST",
+                                "value": "[concat(parameters('siteName'), '.redis.cache.windows.net:6379')]"
+                            },
+                            {
+                                "name": "REDIS_KEY",
+                                "value": "[listKeys(resourceId('Microsoft.Cache/Redis', parameters('siteName')), '2014-04-01').primaryKey]"
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    ]
+}
