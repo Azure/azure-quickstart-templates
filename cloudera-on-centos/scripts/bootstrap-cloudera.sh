@@ -75,7 +75,7 @@ do
   wip_string+=$(echo "$line" | cut -d ' ' -f 1 | sed 's/$/,/')
   log "current wip_string is: $wip_string"
 done
-IFS=OIFS
+IFS=${OIFS}
 worker_ip=$(echo "${wip_string%?}")
 log "Worker ip to be supplied to next script: $worker_ip"
 

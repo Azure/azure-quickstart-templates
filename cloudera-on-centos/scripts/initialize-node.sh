@@ -47,7 +47,7 @@ do
   line=$(echo "$x" | sed 's/:/ /' | sed 's/:/ /')
   echo "$line" >> /etc/hosts
 done
-IFS=OIFS
+IFS=${OIFS}
 
 # Disable the need for a tty when running sudo and allow passwordless sudo for the admin user
 sed -i '/Defaults[[:space:]]\+!*requiretty/s/^/#/' /etc/sudoers
@@ -65,8 +65,8 @@ let endLoopIter=(numDataDirs - 1)
 for x in $(seq 0 $endLoopIter)
 do 
   echo mkdir -p /data${x}/impala/scratch 
-  #mkdir -p /data${x}/impala/scratch
-  #chmod 777 /data${x}/impala/scratch
+  mkdir -p /data${x}/impala/scratch
+  chmod 777 /data${x}/impala/scratch
 done
 
 yum install -y ntp
