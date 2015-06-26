@@ -24,5 +24,7 @@ After the template is deployed you can
 2. Open another tab in Internet Explorer and browse to http://localhost:9080/PSDSCComplianceServer.svc to test if the deployment was successful.
 
 For further information on the DSC Pull server look here:
+
 [PowerShell DSC Resource for configuring Pull Server environment](http://blogs.msdn.com/b/powershell/archive/2013/11/21/powershell-dsc-resource-for-configuring-pull-server-environment.aspx)
+
 [How to retrieve node information from DSC pull server](http://blogs.msdn.com/b/powershell/archive/2014/05/29/how-to-retrieve-node-information-from-pull-server.aspx)
