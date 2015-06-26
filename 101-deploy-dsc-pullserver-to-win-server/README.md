@@ -7,14 +7,20 @@ This example uses the xPSDesiredStateConfiguration Module available in the Power
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-Note: There are a few workarounds in the dsc script to make this work on the Windows Server that you need to be aware of.
+*Note*: There are a few workarounds in the dsc script to make this work on the Windows Server that you need to be aware of.
+
 1. The appcmd command is used to unlock a few entries in IIS.
+
 2. The Pull Server and Compliance Server "dbprovider" is changed to "System.Data.OleDb".
+
 3. The Pull Server and Compliance Server "dbconnectionstr" is changed to use the Provider "Microsoft.Jet.OLEDB.4.0" 
+
 4. The Compliance Server authentication has been changed to anonymous as this machine is not domain joined.
 
 After the template is deployed you can 
+
 1. Open the Internet Explorer and browse to http://localhost:8080/PSDSCPullServer.svc to test if the deployment was successful.
+
 2. Open another tab in Internet Explorer and browse to http://localhost:9080/PSDSCComplianceServer.svc to test if the deployment was successful.
 
 For further information on the DSC Pull server look here:
