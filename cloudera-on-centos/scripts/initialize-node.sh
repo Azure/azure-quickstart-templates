@@ -69,14 +69,25 @@ do
   chmod 777 /data${x}/impala/scratch
 done
 
+setenforce 0 >> /tmp/setenforce.out
+cat /etc/selinux/config > /tmp/beforeSelinux.out
+sed -i 's^SELINUX=enforcing^SELINUX=disabled^g' /etc/selinux/config || true
+cat /etc/selinux/config > /tmp/afterSeLinux.out
+
+/etc/init.d/iptables save
+/etc/init.d/iptables stop
+chkconfig iptables off
+
 yum install -y ntp
 service ntpd start
 service ntpd status
 
 yum install -y microsoft-hyper-v
 
-echo never > /sys/kernel/mm/transparent_hugepage/enabled
-echo vm.swappiness=1 | tee -a /etc/systctl.conf; echo 1 | tee /proc/sys/vm/swappiness
+echo never | tee -a /sys/kernel/mm/transparent_hugepage/enabled
+echo "echo never | tee -a /sys/kernel/mm/transparent_hugepage/enabled" | tee -a /etc/rc.local
+echo vm.swappiness=1 | tee -a /etc/sysctl.conf
+echo 1 | tee /proc/sys/vm/swappiness
 ifconfig -a >> initialIfconfig.out; who -b >> initialRestart.out
 
 echo net.ipv4.tcp_timestamps=0 >> /etc/sysctl.conf
