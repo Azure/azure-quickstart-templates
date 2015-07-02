@@ -16,7 +16,11 @@ Note: The Recommended limit of number of disks per Storage Account is 40.
 
 Switch-AzureMode -Name AzureResourceManager
 
-3) Deploy this template using the command below
+3) Create the Resource Group
+
+New-AzureResourceGroup -ResourceGroupName testvmrg -Location "West US"
+
+4) Deploy this template using the command below
 
 New-AzureResourceGroupDeployment -Name testvmdeploy -ResourceGroupName testvmrg -TemplateUri "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/resource-loop-vms-vnet-aset/azuredeploy.json"
 
