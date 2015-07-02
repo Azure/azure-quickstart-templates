@@ -18,7 +18,7 @@ Switch-AzureMode -Name AzureResourceManager
 
 3) Deploy this template using the command below
 
-New-AzureResourceGroupDeployment -Name coreyDeploy -ResourceGroupName coreytestlooprg1 -TemplateUri "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/resource-loop-vms-vnet-aset/azuredeploy.json"
+New-AzureResourceGroupDeployment -Name testvmdeploy -ResourceGroupName testvmrg -TemplateUri "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/resource-loop-vms-vnet-aset/azuredeploy.json"
 
 
 # Parameters for the template
