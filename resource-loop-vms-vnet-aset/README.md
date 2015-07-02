@@ -8,7 +8,20 @@ This template allows you to create 'N' number of Virtual Machines in an availabi
 
 Note: The Recommended limit of number of disks per Storage Account is 40.
 
-Below are the parameters that the template expects
+# PowerShell Commands to deploy the template:
+
+1) Download the Latest PowerShell from here and install - http://azure.microsoft.com/en-us/downloads/
+
+2) Run PowerShell and switch to Azure Ressource Manager mode using the command the following command
+
+Switch-AzureMode -Name AzureResourceManager
+
+3) Deploy this template using the command below
+
+New-AzureResourceGroupDeployment -Name coreyDeploy -ResourceGroupName coreytestlooprg1 -TemplateUri "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/resource-loop-vms-vnet-aset/azuredeploy.json"
+
+
+# Parameters for the template
 
 | Name   | Description    |
 |:--- |:---|
