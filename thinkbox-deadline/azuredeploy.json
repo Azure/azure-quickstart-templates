@@ -1,0 +1,387 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+
+    "parameters": {
+
+        "location": 
+        {
+            "type": "string",
+            "allowedValues": 
+            [
+                "West US",
+                "East US",
+                "West Europe",
+                "East Asia",
+                "Southeast Asia"
+            ],
+            "metadata": 
+            {
+                "description": "The region to deploy the resources into"
+            }
+        },
+
+        "publicDnsName": 
+        {
+            "type": "string",
+            "metadata": 
+            {
+                "description": "Unique public DNS prefix for the deployment. The fqdn will look something like '<dnsname>.westus.cloudapp.azure.com'. Up to 62 chars, digits or dashes, lowercase, should start with a letter: must conform to '^[a-z][a-z0-9-]{1,61}[a-z0-9]$'."
+            }
+        },
+
+        "storageAccount": 
+        {
+            "type": "string",
+            "metadata": 
+            {
+                "description": "Name of the Storage Account. This has to be a uinique name, up to 24 chars, all lowercase."
+            }
+        },
+
+        "adminUsername": 
+        {
+            "type": "string",
+            "metadata": 
+            {
+                "description": "The name of the administrator of the new VM. Exclusion list: 'admin','administrator'"
+            }
+        },
+        "adminPassword": 
+        {
+            "type": "securestring",
+            "metadata": 
+            {
+                "description": "The password for the administrator account of the new VM"
+            }
+        },
+
+        "numberOfSlaves":
+        {
+            "type": "int",
+            "metadata": 
+            {
+                "description": "The number of slave vms to start."
+            }
+        }
+    },
+
+    "variables": {
+        "vnetAddressRange": "10.0.0.0/16",
+        "subnetAddressRange": "10.0.0.0/24",
+        "subnetName":  "Subnet",
+        "subnet-id": "[concat(resourceId('Microsoft.Network/virtualNetworks','VNET'),'/subnets/',variables('subnetName'))]"
+    },
+
+    "resources": [
+
+        {
+            "apiVersion": "2015-05-01-preview",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "publicIp",
+            "location": "[parameters('location')]",
+            "properties": {
+                "publicIPAllocationMethod": "Dynamic",
+                "dnsSettings": {
+                    "domainNameLabel": "[parameters('publicDnsName')]"
+                }
+            }
+        },
+
+        {
+            "apiVersion": "2015-05-01-preview",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[concat('publicIp', copyindex())]",
+            "location": "[parameters('location')]",
+            "copy":
+            {
+                "name": "ipLoop",
+                "count": "[parameters('numberOfSlaves')]"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "Dynamic",
+                "dnsSettings": {
+                    "domainNameLabel": "[concat(parameters('publicDnsName'), copyindex())]"
+                }
+            }
+        },
+
+        {
+            "apiVersion": "2015-05-01-preview",
+            "type": "Microsoft.Compute/availabilitySets",
+            "name": "availSet",
+            "location": "[parameters('location')]",
+            "properties": { }
+        },
+
+        {
+            "apiVersion": "2015-05-01-preview",
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[parameters('storageAccount')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "accountType": "Standard_LRS"
+            }
+        },
+
+        {
+        	"apiVersion": "2015-05-01-preview",
+        	"type": "Microsoft.Network/networkSecurityGroups",
+        	"name": "nsg",
+        	"location": "[parameters('location')]",
+        	"properties": 
+        	{
+        		"securityRules":
+        		[
+        			{
+        				"name": "mongo",
+        				"properties":
+        				{
+        					"protocol": "Tcp",
+        					"sourcePortRange": "*",
+        					"destinationPortRange": "27070",
+        					"sourceAddressPrefix": "*",
+        					"destinationAddressPrefix": "*",
+        					"access": "Allow",
+        					"priority": 100,
+        					"direction": "Inbound"
+        				}
+        			},
+                    {
+                        "name": "rdp",
+                        "properties":
+                        {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "3389",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 200,
+                            "direction": "Inbound"
+                        }
+                    }
+        		]
+        	}
+    	},
+
+        {
+            "apiVersion": "2015-05-01-preview",
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "VNET",
+            "dependsOn":
+            [
+            	"Microsoft.Network/networkSecurityGroups/nsg"
+        	],
+            "location": "[parameters('location')]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [ "[variables('vnetAddressRange')]" ]
+                },
+                "subnets": [
+                    {
+                        "name": "Subnet",
+                        "properties": {
+                            "addressPrefix": "[variables('subnetAddressRange')]",
+                            "networkSecurityGroup":
+                            {
+                            	"id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'nsg')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+
+        {
+            "apiVersion": "2015-05-01-preview",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "nif",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "Microsoft.Network/virtualNetworks/VNET",
+                "Microsoft.Network/publicIPAddresses/publicIp"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[variables('subnet-id')]"
+                            },
+                            "publicIPAddress":
+                            {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'publicIp')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+
+
+        {
+            "apiVersion": "2015-05-01-preview",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[concat('nif', copyindex())]",
+            "location": "[parameters('location')]",
+            "copy":
+            {
+                "name": "nicLoop",
+                "count": "[parameters('numberOfSlaves')]"
+            },
+            "dependsOn": [
+                "Microsoft.Network/virtualNetworks/VNET",
+                "[concat('Microsoft.Network/publicIPAddresses/publicIp', copyindex())]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[variables('subnet-id')]"
+                            },
+                            "publicIPAddress":
+                            {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat('publicIp', copyindex()))]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+
+        {
+            "apiVersion": "2015-05-01-preview",
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "azure-repo",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts',parameters('storageAccount'))]",
+                "Microsoft.Network/networkInterfaces/nif",
+                "Microsoft.Compute/availabilitySets/availSet"
+            ],
+            "properties": {
+                "availabilitySet" :
+                {
+                    "id": "[resourceId('Microsoft.Compute/availabilitySets', 'availSet')]"
+                },
+                "hardwareProfile": {
+                    "vmSize": "Standard_A2"
+                },
+                "osProfile": {
+                    "computername": "azure-repo",
+                    "adminUsername": "[parameters('adminUserName')]",
+                    "adminPassword": "[parameters('adminPassword')]"
+                },
+                "storageProfile": {
+                    "osDisk": {
+                        "name": "osdisk",
+                        "osType": "Windows",
+                        "vhd": {
+                            "uri": "[concat('http://',parameters('storageAccount'),'.blob.core.windows.net/vhds/repo-osdisk.vhd')]"
+                        },
+                        "image":
+                        {
+                            "uri": "https://deadline.blob.core.windows.net/deadline72/azure-repo.vhd"
+                        },
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces','nif')]"
+                        }
+                    ]
+                }
+            }
+        },
+
+        {
+            "apiVersion": "2015-05-01-preview",
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "azure-repo/autoconf",
+            "location": "[parameters('location')]",
+            "dependsOn": 
+            [
+                "Microsoft.Compute/virtualMachines/azure-repo"
+            ],
+            "properties":
+            {
+                "publisher": "Microsoft.Compute",
+                "type": "CustomScriptExtension",
+                "typeHandlerVersion": "1.4",
+                "settings":
+                {
+                    "fileUris": 
+                    [ 
+                        "https://deadline.blob.core.windows.net/scripts/repo-autoconf.py"
+                    ],
+                    "commandToExecute": "[concat('python', ' repo-autoconf.py')]"
+                }
+            }
+        },
+
+        {
+            "apiVersion": "2015-05-01-preview",
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[concat('azure-slave', copyindex())]",
+            "location": "[parameters('location')]",
+            "copy":
+            {
+                "name": "nicLoop",
+                "count": "[parameters('numberOfSlaves')]"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts',parameters('storageAccount'))]",
+                "[concat('Microsoft.Network/networkInterfaces/nif', copyindex())]",
+                "Microsoft.Compute/availabilitySets/availSet",
+                "Microsoft.Compute/virtualMachines/azure-repo",
+                "Microsoft.Compute/virtualMachines/azure-repo/extensions/autoconf"
+            ],
+            "properties": {
+                "availabilitySet" :
+                {
+                    "id": "[resourceId('Microsoft.Compute/availabilitySets', 'availSet')]"
+                },
+                "hardwareProfile": {
+                    "vmSize": "Standard_A2"
+                },
+                "osProfile": {
+                    "computername": "[concat('azure-slave', copyindex())]",
+                    "adminUsername": "[parameters('adminUserName')]",
+                    "adminPassword": "[parameters('adminPassword')]",
+                    "customData" : "[base64(reference('nif').ipConfigurations[0].properties.privateIPAddress)]"
+                },
+                "storageProfile": {
+                    "osDisk": {
+                        "name": "osdisk",
+                        "osType": "Windows",
+                        "vhd": {
+                            "uri": "[concat('http://',parameters('storageAccount'),'.blob.core.windows.net/vhds/azure-slave', copyindex(), '-osdisk.vhd')]"
+                        },
+                        "image":
+                        {
+                            "uri": "https://deadline.blob.core.windows.net/deadline72/azure-slave.vhd"
+                        },
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat('nif', copyindex()))]"
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+}
