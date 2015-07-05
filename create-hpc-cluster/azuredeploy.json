@@ -18,7 +18,7 @@
                 "West Europe"
             ],
             "metadata": {
-                "description": "Location where resources will be deployed"
+                "description": "Location where the HPC cluster will be deployed"
             }
         },
         "headNodeVMSize": {
@@ -41,14 +41,25 @@
                 "Standard_D14"
             ],
             "metadata": {
-                "description": "Headnode VM role size"
+                "description": "The VM role size of the head node"
             }
+        },
+        "computeNodeImage":
+        {
+            "type": "string",
+            "allowedValues": [
+                "NormalComputeNode",
+                "ComputeNodeWithExcel"
+            ],
+            "metadata": {
+                "description": "The VM image of the compute nodes"
+            }        
         },
         "computeNodeNumber": {
             "type": "int",
             "defaultValue": 2,
             "metadata": {
-                "description": "Compute nodes number"
+                "description": "The number of the compute nodes"
             }
         },
         "computeNodeVMSize": {
@@ -76,101 +87,35 @@
                 "Standard_D14"
             ],
             "metadata": {
-                "description": "Compute node VM role size"
-            }
-        },
-        "computeNamePrefix": {
-            "type": "string",
-            "defaultValue": "AzureCN-",
-            "metadata": {
-                "description": "Compute node VM name prefix"
-            }
-        },
-        "storageAccountType": {
-            "type": "string",
-            "defaultValue": "Standard_LRS",
-            "allowedValues": [
-                "Standard_LRS",
-                "Standard_GRS"
-            ],
-            "metadata": {
-                "description": "Storage account type"
+                "description": "The VM role size of the compute nodes"
             }
         },
         "adminUsername": {
             "type": "string",
             "defaultValue": "azureuser",
             "metadata": {
-                "description": "Admin user name"
+                "description": "The user name of the administrator"
             }
         },
         "adminPassword": {
             "type": "securestring",
             "defaultValue": "!!123abc",
             "metadata": {
-                "description": "Admin password"
-            }
-        },
-        "headNodeImagePublisher": {
-            "type": "string",
-            "defaultValue": "MicrosoftWindowsServerHPCPack",
-            "metadata": {
-                 "description": "Head Node Image Publisher"
-            }
-        },
-        "headNodeImageOffer": {
-            "type": "string",
-            "defaultValue": "WindowsServerHPCPack",
-            "metadata": {
-                "description": "Head Node Image Offer"
-            }
-        },
-        "headNodeImageSKU": {
-            "type": "string",
-            "defaultValue": "2012R2",
-            "metadata": {
-                "description": "Head Node Image SKU"
-            }
-        },
-        "computeNodeImagePublisher": {
-            "type": "string",
-            "defaultValue": "MicrosoftWindowsServer",
-            "metadata": {
-                 "description": "Compute Node Image Publisher"
-            }
-        },
-        "computeNodeImageOffer": {
-            "type": "string",
-            "defaultValue": "WindowsServer",
-            "metadata": {
-                "description": "Compute Node Image Offer"
-            }
-        },
-        "computeNodeImageSKU": {
-            "type": "string",
-            "defaultValue": "2012-R2-Datacenter",
-            "metadata": {
-                "description": "Compute Node Image SKU"
+                "description": "The password of the administrator"
             }
         },
         "headNodePostConfigScript": {
             "type": "string", 
             "defaultValue": " ",           
             "metadata": {
-                "description": "post config script on compute node"
-            }
-        },
-        "computeNodePostConfigScript": {
-            "type": "string",
-            "defaultValue": " ",            
-            "metadata": {
-                "description": "post config script on compute node"
+                "description": "post config script on the head node"
             }
         }
     },
 
     "variables": {
         "storageAccountName": "[concat(parameters('namePrefix'), 'sa')]",
+        "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts',variables('storageAccountName'))]",
         "virtualNetworkName": "[concat(parameters('namePrefix'), 'VNet')]",
         "addressPrefix": "10.0.0.0/16",
         "subnet1Name": "Subnet-1",
@@ -181,16 +126,23 @@
         "publicIPAddressName": "[concat(parameters('namePrefix'), '-PublicIP-VM')]",
         "publicIPAddressNameHN": "[concat(variables('publicIPAddressName'),'-HN')]",
         "dnsName": "[concat(parameters('namePrefix'), 'ep')]",
-        "domainNameHN": "[concat(variables('dnsName'),'-hn')]",
         "nicName": "[concat(parameters('namePrefix'),'-nic')]",
         "nicNameHN": "[concat(variables('nicName'),'-hn')]",
         "vmNameHN": "[concat(parameters('namePrefix'),'hn')]",
-        "dcName": "[concat(parameters('namePrefix'),'dc.local')]",
+        "privateDomainFQDN": "hpctest.local",
         "vmExtensionName": "customScriptExtension",
-        "customScriptLocation": "http://yongjun.blob.core.windows.net/scripts/",
+        "computeNamePrefix": "IaaSCN-",
+        "availableCNImageSkus": {
+            "NormalComputeNode": "TechnicalPreviewCN",
+            "ComputeNodeWithExcel": "TechnicalPreviewCNExcel"
+        },
+        "computeNodeImageSku": "[variables('availableCNImageSkus')[parameters('computeNodeImage')]]",
+        "adminBase64Password": "[base64(parameters('adminPassword'))]",
+        "customScriptLocation": "https://suzhuhpcshare.blob.core.windows.net/scripts/",
         "iaasInfoArg": "[concat('-SubscriptionId ', subscription().subscriptionId, ' -VNet ', variables('virtualNetworkName'), ' -Subnet ', variables('subnet1Name'), ' -Location \"', parameters('location'), '\"')]",
-        "headNodeCommandStr": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File PrepareHN.ps1 -DomainFQDN ', variables('dcName'), ' -AdminUserName ', parameters('adminUsername'), ' -AdminPassword \"', parameters('adminPassword'), '\" -PostConfigScript \"', parameters('headNodePostConfigScript'), '\" -NodePrepare ', variables('iaasInfoArg'))]",
-        "computeNodeCommandStr": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File PrepareCN.ps1 -DomainFQDN ', variables('dcName'), ' -ClusterName ', variables('vmNameHN'),' -AdminUserName ', parameters('adminUsername'), ' -AdminPassword \"', parameters('adminPassword'), '\" -PostConfigScript \"', parameters('computeNodePostConfigScript'), '\"')]"
+        "headNodeCommandStr": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File PrepareHN.ps1 -DomainFQDN ', variables('privateDomainFQDN'), ' -AdminUserName ', parameters('adminUsername'), ' -AdminBase64Password \"', variables('adminBase64Password'), '\" -PostConfigScript \"', parameters('headNodePostConfigScript'), '\" -NodePrepare ', variables('iaasInfoArg'))]",
+        "storageConnStrPrefix": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=')]",
+        "computeNodeCommandStr": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File PrepareCN.ps1 -DomainFQDN ', variables('privateDomainFQDN'), ' -ClusterName ', variables('vmNameHN'),' -AdminUserName ', parameters('adminUsername'), ' -AdminBase64Password \"', variables('adminBase64Password'), '\"')]"
     },
 
     "resources": [
@@ -200,7 +152,7 @@
             "apiVersion": "2015-05-01-preview",
             "location": "[parameters('location')]",
             "properties": {
-                "accountType": "[parameters('storageAccountType')]"
+                "accountType": "Standard_LRS"
             }
         },
 
@@ -237,7 +189,7 @@
             "properties": {
                 "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
                 "dnsSettings": {
-                    "domainNameLabel": "[variables('domainNameHN')]"
+                    "domainNameLabel": "[variables('vmNameHN')]"
                 }
             }
         },
@@ -288,9 +240,9 @@
                 },
                 "storageProfile": {
                   "imageReference": {
-                      "publisher": "[parameters('headNodeImagePublisher')]",
-                      "offer": "[parameters('headNodeImageOffer')]",
-                      "sku" : "[parameters('headNodeImageSKU')]",
+                      "publisher": "MicrosoftWindowsServerHPCPack",
+                      "offer": "WindowsServerHPCPack",
+                      "sku" : "TechnicalPreview",
                       "version":"latest"
                   },
                   "osDisk" : {
@@ -330,7 +282,7 @@
                         "[concat(variables('customScriptLocation'), 'HPCHNPrepare.ps1')]",
                         "[concat(variables('customScriptLocation'), 'HpcPrepareUtil.ps1')]"
                     ],
-                    "commandToExecute": "[variables('headNodeCommandStr')]"
+                    "commandToExecute": "[concat(variables('headNodeCommandStr'), ' -AzureStorageConnStr \"', variables('storageConnStrPrefix'), listKeys(variables('storageAccountId'),'2015-05-01-preview').key1, '\" -PublicDnsName ', reference(variables('publicIPAddressNameHN')).dnsSettings.fqdn)]"
                 }
             }
         },
@@ -363,7 +315,7 @@
         {
             "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Compute/virtualMachines",
-            "name": "[concat(parameters('computeNamePrefix'), copyIndex())]",
+            "name": "[concat(variables('computeNamePrefix'), copyIndex())]",
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[concat('Microsoft.Compute/virtualMachines/', variables('vmNameHN'))]",
@@ -378,15 +330,16 @@
                     "vmSize": "[parameters('computeNodeVMSize')]"
                 },
                 "osProfile": {
-                    "computername": "[concat(parameters('computeNamePrefix'), copyIndex())]",
+                    "computername": "[concat(variables('computeNamePrefix'), copyIndex())]",
                     "adminUsername": "[parameters('adminUsername')]",
-                    "adminPassword": "[parameters('adminPassword')]"
+                    "adminPassword": "[parameters('adminPassword')]",
+                    "customData" : "[base64(concat('HPCClusterName=', variables('vmNameHN')))]"
                 },
                 "storageProfile": {
                   "imageReference": {
-                      "publisher": "[parameters('computeNodeImagePublisher')]",
-                      "offer": "[parameters('computeNodeImageOffer')]",
-                      "sku" : "[parameters('computeNodeImageSKU')]",
+                      "publisher": "MicrosoftWindowsServerHPCPack",
+                      "offer": "WindowsServerHPCPack",
+                      "sku" : "[variables('computeNodeImageSku')]",
                       "version":"latest"
                   },
                   "osDisk" : {
@@ -409,11 +362,11 @@
         },
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "[concat(concat(parameters('computeNamePrefix'), copyIndex()),'/', variables('vmExtensionName'))]",
+            "name": "[concat(concat(variables('computeNamePrefix'), copyIndex()),'/', variables('vmExtensionName'))]",
             "apiVersion": "2015-05-01-preview",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[concat('Microsoft.Compute/virtualMachines/', parameters('computeNamePrefix'), copyIndex())]"
+                "[concat('Microsoft.Compute/virtualMachines/', variables('computeNamePrefix'), copyIndex())]"
             ],
             "copy": {
                 "name": "CN",
