@@ -2,10 +2,10 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "namePrefix": {
+        "clusterName": {
             "type": "string",
             "metadata": {
-                "description": "Name prefix for all new resources"
+                "description": "The HPC cluster name, also used as the public DNS name prefix for the cluster, the FQDN looks like <clusterName>.<location>.cloudapp.azure.com. It must contain between 3 and 15 characters with letters, numbers, and hyphens, start with a letter and end with a letter or a number."
             }
         },
         "location": {
@@ -114,22 +114,21 @@
     },
 
     "variables": {
-        "storageAccountName": "[concat(parameters('namePrefix'), 'sa')]",
+        "storageAccountName": "[concat(parameters('clusterName'), 'sa')]",
         "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts',variables('storageAccountName'))]",
-        "virtualNetworkName": "[concat(parameters('namePrefix'), 'VNet')]",
+        "virtualNetworkName": "[concat(parameters('clusterName'), 'VNet')]",
         "addressPrefix": "10.0.0.0/16",
         "subnet1Name": "Subnet-1",
         "subnet1Prefix":"10.0.0.0/24",
         "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
         "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]",
         "publicIPAddressType":  "Dynamic",
-        "publicIPAddressName": "[concat(parameters('namePrefix'), '-PublicIP-VM')]",
+        "publicIPAddressName": "[concat(parameters('clusterName'), '-PublicIP-VM')]",
         "publicIPAddressNameHN": "[concat(variables('publicIPAddressName'),'-HN')]",
-        "dnsName": "[concat(parameters('namePrefix'), 'ep')]",
-        "nicName": "[concat(parameters('namePrefix'),'-nic')]",
+        "dnsName": "[concat(parameters('clusterName'), 'ep')]",
+        "nicName": "[concat(parameters('clusterName'),'-nic')]",
         "nicNameHN": "[concat(variables('nicName'),'-hn')]",
-        "vmNameHN": "[concat(parameters('namePrefix'),'hn')]",
-        "privateDomainFQDN": "hpctest.local",
+        "privateDomainFQDN": "hpcdomain.local",
         "vmExtensionName": "customScriptExtension",
         "computeNamePrefix": "IaaSCN-",
         "availableCNImageSkus": {
@@ -142,7 +141,7 @@
         "iaasInfoArg": "[concat('-SubscriptionId ', subscription().subscriptionId, ' -VNet ', variables('virtualNetworkName'), ' -Subnet ', variables('subnet1Name'), ' -Location \"', parameters('location'), '\"')]",
         "headNodeCommandStr": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File PrepareHN.ps1 -DomainFQDN ', variables('privateDomainFQDN'), ' -AdminUserName ', parameters('adminUsername'), ' -AdminBase64Password \"', variables('adminBase64Password'), '\" -PostConfigScript \"', parameters('headNodePostConfigScript'), '\" -NodePrepare ', variables('iaasInfoArg'))]",
         "storageConnStrPrefix": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=')]",
-        "computeNodeCommandStr": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File PrepareCN.ps1 -DomainFQDN ', variables('privateDomainFQDN'), ' -ClusterName ', variables('vmNameHN'),' -AdminUserName ', parameters('adminUsername'), ' -AdminBase64Password \"', variables('adminBase64Password'), '\"')]"
+        "computeNodeCommandStr": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File PrepareCN.ps1 -DomainFQDN ', variables('privateDomainFQDN'), ' -ClusterName ', parameters('clusterName'),' -AdminUserName ', parameters('adminUsername'), ' -AdminBase64Password \"', variables('adminBase64Password'), '\"')]"
     },
 
     "resources": [
@@ -189,7 +188,7 @@
             "properties": {
                 "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
                 "dnsSettings": {
-                    "domainNameLabel": "[variables('vmNameHN')]"
+                    "domainNameLabel": "[parameters('clusterName')]"
                 }
             }
         },
@@ -223,7 +222,7 @@
         {
             "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Compute/virtualMachines",
-            "name": "[variables('vmNameHN')]",
+            "name": "[parameters('clusterName')]",
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[concat('Microsoft.Network/networkInterfaces/', variables('nicNameHN'))]",
@@ -234,7 +233,7 @@
                     "vmSize": "[parameters('headNodeVMSize')]"
                 },
                 "osProfile": {
-                    "computername": "[variables('vmNameHN')]",
+                    "computername": "[parameters('clusterName')]",
                     "adminUsername": "[parameters('adminUsername')]",
                     "adminPassword": "[parameters('adminPassword')]"
                 },
@@ -266,11 +265,11 @@
         },
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "[concat(variables('vmNameHN'),'/', variables('vmExtensionName'))]",
+            "name": "[concat(parameters('clusterName'),'/', variables('vmExtensionName'))]",
             "apiVersion": "2015-05-01-preview",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[concat('Microsoft.Compute/virtualMachines/', variables('vmNameHN'))]"
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('clusterName'))]"
             ],
             "properties": {
                 "publisher": "Microsoft.Compute",
@@ -318,7 +317,7 @@
             "name": "[concat(variables('computeNamePrefix'), copyIndex())]",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[concat('Microsoft.Compute/virtualMachines/', variables('vmNameHN'))]",
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('clusterName'))]",
                 "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyIndex())]"
             ],
             "copy": {
@@ -333,7 +332,7 @@
                     "computername": "[concat(variables('computeNamePrefix'), copyIndex())]",
                     "adminUsername": "[parameters('adminUsername')]",
                     "adminPassword": "[parameters('adminPassword')]",
-                    "customData" : "[base64(concat('HPCClusterName=', variables('vmNameHN')))]"
+                    "customData" : "[base64(concat('HPCClusterName=', parameters('clusterName')))]"
                 },
                 "storageProfile": {
                   "imageReference": {

@@ -11,7 +11,7 @@ Below are the parameters that the template expectes.
 
 | Name   | Description    |
 |:--- |:---|
-| namePrefix | The prefix of the resources(storage account, virtual network, virtual machine etc) to be created. |
+| clusterName | The HPC cluster name, also used as the public DNS name prefix for the cluster, the FQDN looks like <clusterName>.<location>.cloudapp.azure.com. It must contain between 3 and 15 characters with letters, numbers, and hyphens, start with a letter and end with a letter or a number. |
 | location | location where the resources will be deployed |
 | headNodeVMSize | Size of the head node Virtual Machine |
 | computeNodeImage | The VM image of the compute nodes |
