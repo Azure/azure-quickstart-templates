@@ -5,20 +5,7 @@
         "clusterName": {
             "type": "string",
             "metadata": {
-                "description": "The HPC cluster name, also used as the public DNS name prefix for the cluster, the FQDN looks like '<clusterName>.<location>.cloudapp.azure.com'. It must contain between 3 and 15 characters with letters, numbers, and hyphens, start with a letter and end with a letter or a number."
-            }
-        },
-        "location": {
-            "type": "string",
-            "allowedValues": [
-                "West US",
-                "East US",
-                "East Asia",
-                "Southeast Asia",
-                "West Europe"
-            ],
-            "metadata": {
-                "description": "Location where the HPC cluster will be deployed"
+                "description": "The HPC cluster name, also used as the public DNS name prefix for the cluster, the FQDN looks like 'clusterName.westus.cloudapp.azure.com'. It must contain between 3 and 15 characters with letters, numbers, and hyphens, start with a letter and end with a letter or a number."
             }
         },
         "headNodeVMSize": {
@@ -138,7 +125,7 @@
         "computeNodeImageSku": "[variables('availableCNImageSkus')[parameters('computeNodeImage')]]",
         "adminBase64Password": "[base64(parameters('adminPassword'))]",
         "customScriptLocation": "https://suzhuhpcshare.blob.core.windows.net/scripts/",
-        "iaasInfoArg": "[concat('-SubscriptionId ', subscription().subscriptionId, ' -VNet ', variables('virtualNetworkName'), ' -Subnet ', variables('subnet1Name'), ' -Location \"', parameters('location'), '\"')]",
+        "iaasInfoArg": "[concat('-SubscriptionId ', subscription().subscriptionId, ' -VNet ', variables('virtualNetworkName'), ' -Subnet ', variables('subnet1Name'), ' -Location \"', resourceGroup().location, '\"')]",
         "headNodeCommandStr": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File PrepareHN.ps1 -DomainFQDN ', variables('privateDomainFQDN'), ' -AdminUserName ', parameters('adminUsername'), ' -AdminBase64Password \"', variables('adminBase64Password'), '\" -PostConfigScript \"', parameters('headNodePostConfigScript'), '\" -NodePrepare ', variables('iaasInfoArg'))]",
         "storageConnStrPrefix": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=')]",
         "computeNodeCommandStr": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File PrepareCN.ps1 -DomainFQDN ', variables('privateDomainFQDN'), ' -ClusterName ', parameters('clusterName'),' -AdminUserName ', parameters('adminUsername'), ' -AdminBase64Password \"', variables('adminBase64Password'), '\"')]"
@@ -149,7 +136,7 @@
             "type": "Microsoft.Storage/storageAccounts",
             "name": "[variables('storageAccountName')]",
             "apiVersion": "2015-05-01-preview",
-            "location": "[parameters('location')]",
+            "location": "[resourceGroup().location]",
             "properties": {
                 "accountType": "Standard_LRS"
             }
@@ -159,7 +146,7 @@
             "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Network/virtualNetworks",
             "name": "[variables('virtualNetworkName')]",
-            "location": "[parameters('location')]",
+            "location": "[resourceGroup().location]",
             "properties": {
                 "addressSpace": {
                     "addressPrefixes": [
@@ -184,7 +171,7 @@
             "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Network/publicIPAddresses",
             "name": "[variables('publicIPAddressNameHN')]",
-            "location": "[parameters('location')]",
+            "location": "[resourceGroup().location]",
             "properties": {
                 "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
                 "dnsSettings": {
@@ -197,7 +184,7 @@
             "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Network/networkInterfaces",
             "name": "[variables('nicNameHN')]",
-            "location": "[parameters('location')]",
+            "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressNameHN'))]"
             ],
@@ -223,7 +210,7 @@
             "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Compute/virtualMachines",
             "name": "[parameters('clusterName')]",
-            "location": "[parameters('location')]",
+            "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[concat('Microsoft.Network/networkInterfaces/', variables('nicNameHN'))]",
                 "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
@@ -267,7 +254,7 @@
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "name": "[concat(parameters('clusterName'),'/', variables('vmExtensionName'))]",
             "apiVersion": "2015-05-01-preview",
-            "location": "[parameters('location')]",
+            "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[concat('Microsoft.Compute/virtualMachines/', parameters('clusterName'))]"
             ],
@@ -289,7 +276,7 @@
             "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Network/networkInterfaces",
             "name": "[concat(variables('nicName'), copyIndex())]",
-            "location": "[parameters('location')]",
+            "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[concat('Microsoft.Network/networkInterfaces/', variables('nicNameHN'))]"
             ],
@@ -315,7 +302,7 @@
             "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Compute/virtualMachines",
             "name": "[concat(variables('computeNamePrefix'), copyIndex())]",
-            "location": "[parameters('location')]",
+            "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[concat('Microsoft.Compute/virtualMachines/', parameters('clusterName'))]",
                 "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyIndex())]"
@@ -363,7 +350,7 @@
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "name": "[concat(concat(variables('computeNamePrefix'), copyIndex()),'/', variables('vmExtensionName'))]",
             "apiVersion": "2015-05-01-preview",
-            "location": "[parameters('location')]",
+            "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[concat('Microsoft.Compute/virtualMachines/', variables('computeNamePrefix'), copyIndex())]"
             ],
