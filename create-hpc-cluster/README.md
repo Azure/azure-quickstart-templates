@@ -11,7 +11,7 @@ Below are the parameters that the template expectes.
 
 | Name   | Description    |
 |:--- |:---|
-| clusterName | The HPC cluster name, also used as the public DNS name prefix for the cluster, the FQDN looks like 'clusterName.westus.cloudapp.azure.com'. It must contain between 3 and 15 characters with letters, numbers, and hyphens, start with a letter and end with a letter or a number. |
+| clusterName | The unique HPC Pack cluster name. It is also used as the public DNS name prefix for the cluster, for example, the public DNS name is 'CLUSTERNAME.westus.cloudapp.azure.com' if the location of the resource group is 'West US'. It must contain between 3 and 15 characters with letters, numbers, and hyphens, start with a letter and end with a letter or a number. |
 | privateDomainName | The fully qualified domain name (FQDN) for the private domain forest which will be created by this template, for example 'hpcdomain.local' |
 | headNodeVMSize | Size of the head node Virtual Machine |
 | computeNodeImage | The VM image of the compute nodes |
@@ -19,4 +19,4 @@ Below are the parameters that the template expectes.
 | computeNodeVMSize | Size of the compute node Virtual Machine |
 | adminUsername  | Username for the Virtual Machines  |
 | adminPassword  | Password for the Virtual Machines  |
-| headNodePostConfigScript  | The public url of the script which will be run on the head node after it is configured. You can also specify arguments for the script, for example 'http://www.consto.com/mypostscript.ps1 -Arg1 arg1 -Arg2 arg2'. |
+| headNodePostConfigScript  | Optional, specify the script url and command line if you want to run your custom script on the head node after it is configured. The script url must be public available, and you can also specify arguments for the script, for example 'http://www.consto.com/mypostscript.ps1 -Arg1 arg1 -Arg2 arg2'. |
