@@ -8,6 +8,13 @@
                 "description": "The HPC cluster name, also used as the public DNS name prefix for the cluster, the FQDN looks like 'clusterName.westus.cloudapp.azure.com'. It must contain between 3 and 15 characters with letters, numbers, and hyphens, start with a letter and end with a letter or a number."
             }
         },
+        "privateDomainName": {
+            "type": "string",
+            "defaultValue": "hpcdomain.local",
+            "metadata": {
+                "description": "The fully qualified domain name (FQDN) for the private domain forest which will be created by this template, for example 'hpcdomain.local'."
+            }
+        },
         "headNodeVMSize": {
             "type": "string",
             "defaultValue": "Standard_A4",
@@ -86,7 +93,7 @@
         },
         "adminPassword": {
             "type": "securestring",
-            "defaultValue": "!!123abc",
+            "defaultValue": "Pa$$word!23",
             "metadata": {
                 "description": "The password of the administrator"
             }
@@ -95,7 +102,7 @@
             "type": "string", 
             "defaultValue": " ",           
             "metadata": {
-                "description": "post config script on the head node"
+                "description": "The public url of the script which will be run on the head node after it is configured. You can also specify arguments for the script, for example 'http://www.consto.com/mypostscript.ps1 -Arg1 arg1 -Arg2 arg2'."
             }
         }
     },
@@ -115,7 +122,6 @@
         "dnsName": "[concat(parameters('clusterName'), 'ep')]",
         "nicName": "[concat(parameters('clusterName'),'-nic')]",
         "nicNameHN": "[concat(variables('nicName'),'-hn')]",
-        "privateDomainFQDN": "hpcdomain.local",
         "vmExtensionName": "customScriptExtension",
         "computeNamePrefix": "IaaSCN-",
         "availableCNImageSkus": {
@@ -126,9 +132,9 @@
         "adminBase64Password": "[base64(parameters('adminPassword'))]",
         "customScriptLocation": "https://suzhuhpcshare.blob.core.windows.net/scripts/",
         "iaasInfoArg": "[concat('-SubscriptionId ', subscription().subscriptionId, ' -VNet ', variables('virtualNetworkName'), ' -Subnet ', variables('subnet1Name'), ' -Location \"', resourceGroup().location, '\"')]",
-        "headNodeCommandStr": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File PrepareHN.ps1 -DomainFQDN ', variables('privateDomainFQDN'), ' -AdminUserName ', parameters('adminUsername'), ' -AdminBase64Password \"', variables('adminBase64Password'), '\" -PostConfigScript \"', parameters('headNodePostConfigScript'), '\" -NodePrepare ', variables('iaasInfoArg'))]",
+        "headNodeCommandStr": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File PrepareHN.ps1 -DomainFQDN ', parameters('privateDomainName'), ' -AdminUserName ', parameters('adminUsername'), ' -AdminBase64Password \"', variables('adminBase64Password'), '\" -PostConfigScript \"', parameters('headNodePostConfigScript'), '\" -NodePrepare ', variables('iaasInfoArg'))]",
         "storageConnStrPrefix": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=')]",
-        "computeNodeCommandStr": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File PrepareCN.ps1 -DomainFQDN ', variables('privateDomainFQDN'), ' -ClusterName ', parameters('clusterName'),' -AdminUserName ', parameters('adminUsername'), ' -AdminBase64Password \"', variables('adminBase64Password'), '\"')]"
+        "computeNodeCommandStr": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File PrepareCN.ps1 -DomainFQDN ', parameters('privateDomainName'), ' -ClusterName ', parameters('clusterName'),' -AdminUserName ', parameters('adminUsername'), ' -AdminBase64Password \"', variables('adminBase64Password'), '\"')]"
     },
 
     "resources": [
