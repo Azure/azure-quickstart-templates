@@ -16,6 +16,7 @@ The template expects the following parameters:
 | adminUsername  | Administrator user name used when provisioning virtual machines | testuser |
 | adminPassword  | Administrator password used when provisioning virtual machines | Eur32#1e |
 | storageAccountPrefix | Unique namespace for the Storage Account where the Virtual Machine's disks will be placed | defaultStorageAccountPrefix |
+| numberOfDataNodes | Number of data nodes to provision in the cluster | 3 |
 | dnsNamePrefix | Unique public dns name where the Virtual Machines will be exposed | defaultDnsNamePrefix |
 | region | Azure data center location where resources will be provisioned |  |
 | storageAccountType | The type of the Storage Account to be created | Standard_LRS |
