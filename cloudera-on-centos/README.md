@@ -34,19 +34,19 @@ The template expects the following parameters:
 Topology
 --------
 
-The deployment topology is comprised of a predefined number (as per t-shirt sizing) Cloudera member nodes configured as a cluster, configured using a set number of master,
-name and data nodes. Typical setup for Cloudera uses one master node and 2 name nodes with as many data nodes are needed for the size that has been choosen ranging from as
+The deployment topology is comprised of a predefined number (as per t-shirt sizing) Cloudera member nodes configured as a cluster, configured using a set number of manager,
+name and data nodes. Typical setup for Cloudera uses one manager node and 2 name nodes with as many data nodes are needed for the size that has been choosen ranging from as
 few as 3 to thousands of data nodes.  The current template will scale at the highest end to 200 data nodes when using the large t-shirt size.
 
 The following table outlines the deployment topology characteristics for each supported t-shirt size:
 
-| T-Shirt Size | Member Node VM Size | CPU Cores | Memory | Data Disks | # of Master Node VMs | # of Name Node VMs |
+| T-Shirt Size | Member Node VM Size | CPU Cores | Memory | Data Disks | # of Manager Node VMs | # of Name Node VMs |
 |:--- |:---|:---|:---|:---|:---|:---|:---|
 | Eval | Standard_D14 | 16 | 112 GB | 16x1000 GB | 1 | 1 primary, 1 secondary (non-HA) |
 | Prod | Standard_D14 | 16 | 112 GB | 16x1000 GB | 1 | 1 primary, 1 standby (HA) |
 
 ##Connecting to the cluster
-The machines are named according to a specific pattern.  The master node is named based on parameters and using the.
+The machines are named according to a specific pattern.  The manager node is named based on parameters and using the.
 
 	[dnsNamePrefix]-nn0.[region].cloudapp.azure.com
 
@@ -62,7 +62,7 @@ The rest of the name nodes and data nodes of the cluster use the same pattern, w
 	clouderatest-dn1.westus.cloudapp.azure.com
 	clouderatest-dn2.westus.cloudapp.azure.com
 
-To connect to the master node via SSH, use the .pem key in the repository if you used the provided key or your own .pem file.  See the section below for more information on SSH keys.
+To connect to the manager node via SSH, use the .pem key in the repository if you used the provided key or your own .pem file.  See the section below for more information on SSH keys.
 
 	ssh -i server-cert.pem testuser@[dnsNamePrefix]-nn0.[region].cloudapp.azure.com
 
