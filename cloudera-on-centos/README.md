@@ -24,7 +24,7 @@ The template expects the following parameters:
 | addressPrefix | The network address space for the virtual network | 10.0.0.0/24 |
 | subnetPrefix | The network address space for the virtual subnet | 10.0.0.0/24 |
 | nodeAddressPrefix | The IP address prefix that will be used for constructing private IP address for each node in the cluster | 10.0.0. |
-| tshirtSize | T-shirt size of the Cloudera cluster (Eval, Small - coming soon) | Eval |
+| tshirtSize | T-shirt size of the Cloudera cluster (Eval, Prod) | Eval |
 | vmSize | The size of the VMs deployed in the cluster (Defaults to Standard_D14) | Standard_D14 |
 | keyVaultResourceGroup | The resource group containing the key vault which provides the private key used for SSH login. | AzureRM-Util |
 | keyVaultName | The name of the key vault which provides the private key  used for SSH login. | AzureRM-Keys |
@@ -40,35 +40,35 @@ few as 3 to thousands of data nodes.  The current template will scale at the hig
 
 The following table outlines the deployment topology characteristics for each supported t-shirt size:
 
-| T-Shirt Size | Member Node VM Size | CPU Cores | Memory | Data Disks | # of Master Node VMs | # of Name Node VMs | # of Data Node VMs |
+| T-Shirt Size | Member Node VM Size | CPU Cores | Memory | Data Disks | # of Master Node VMs | # of Name Node VMs |
 |:--- |:---|:---|:---|:---|:---|:---|:---|
-| Eval | Standard_D14 | 16 | 112 GB | 16x1000 GB | 1 | 2 | 3 |
-| Small - coming soon | Standard_D14 | 16 | 112 GB | 16x1000 GB | 1 | 2 | 9 |
+| Eval | Standard_D14 | 16 | 112 GB | 16x1000 GB | 1 | 1 primary, 1 secondary (non-HA) |
+| Prod | Standard_D14 | 16 | 112 GB | 16x1000 GB | 1 | 1 primary, 1 standby (HA) |
 
 ##Connecting to the cluster
 The machines are named according to a specific pattern.  The master node is named based on parameters and using the.
 
-	[dnsNamePrefix]-mn.[region].cloudapp.azure.com
+	[dnsNamePrefix]-nn0.[region].cloudapp.azure.com
 
 If the dnsNamePrefix was clouderatest in the West US region, the machine will be located at:
 
-	clouderatest-mn.westus.cloudapp.azure.com
-
-The name nodes and data nodes of the cluster use the same pattern, but with -nn and -dn extensions followed by their number.  For example:
-
 	clouderatest-nn0.westus.cloudapp.azure.com
+
+The rest of the name nodes and data nodes of the cluster use the same pattern, with -nn and -dn extensions followed by their number.  For example:
+
 	clouderatest-nn1.westus.cloudapp.azure.com
+	clouderatest-nn2.westus.cloudapp.azure.com
 	clouderatest-dn0.westus.cloudapp.azure.com
 	clouderatest-dn1.westus.cloudapp.azure.com
 	clouderatest-dn2.westus.cloudapp.azure.com
 
 To connect to the master node via SSH, use the .pem key in the repository if you used the provided key or your own .pem file.  See the section below for more information on SSH keys.
 
-	ssh -i server-cert.pem testuser@[dnsNamePrefix]-mn.[region].cloudapp.azure.com
+	ssh -i server-cert.pem testuser@[dnsNamePrefix]-nn0.[region].cloudapp.azure.com
 
 Once the deployment is complete, you can navigate to the Cloudera portal to watch the operation and track it's status. Be aware that the portal dashboard will report alerts since the services are still being installed.
 
-	http://[dnsNamePrefix]-mn.[region].cloudapp.azure.com:7180
+	http://[dnsNamePrefix]-nn0.[region].cloudapp.azure.com:7180
 
 ##Notes, Known Issues & Limitations
 - All nodes in the cluster have a public IP address.
