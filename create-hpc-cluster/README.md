@@ -15,6 +15,7 @@ Below are the parameters that the template expectes.
 | privateDomainName | The fully qualified domain name (FQDN) for the private domain forest which will be created by this template, for example 'hpcdomain.local'. |
 | headNodeVMSize | Size of the head node Virtual Machine |
 | computeNodeImage | The VM image of the compute nodes |
+| computeNodeNamePrefix | The name prefix of the compute nodes. It can contain letters, numbers and hyphens, and must start with a letter, up to 13 characters, for example, if 'IaaSCN-' is specified, the compute node names will be 'IaaSCN-1', 'IaaSCN-2', ... |
 | computeNodeNumber | Number of compute nodes to be deployed |
 | computeNodeVMSize | Size of the compute node Virtual Machine |
 | adminUsername  | Username for the Virtual Machines  |

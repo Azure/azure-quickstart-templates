@@ -10,9 +10,9 @@
         },
         "privateDomainName": {
             "type": "string",
-            "defaultValue": "hpcdomain.local",
+            "defaultValue": "hpc.local",
             "metadata": {
-                "description": "The fully qualified domain name (FQDN) for the private domain forest which will be created by this template, for example 'hpcdomain.local'."
+                "description": "The fully qualified domain name (FQDN) for the private domain forest which will be created by this template, for example 'hpc.local'."
             }
         },
         "headNodeVMSize": {
@@ -42,13 +42,20 @@
         {
             "type": "string",
             "allowedValues": [
-                "NormalComputeNode",
+                "ComputeNode",
                 "ComputeNodeWithExcel"
             ],
             "metadata": {
                 "description": "The VM image of the compute nodes"
             }        
         },
+        "computeNodeNamePrefix": {
+            "type": "string",        
+            "defaultValue": "IaaSCN-",
+            "metadata": {
+                "description": "The name prefix of the compute nodes. It can contain letters, numbers and hyphens and must start with a letter, up to 13 characters. For example, if 'IaaSCN-' is specified, the compute node names will be 'IaaSCN-1', 'IaaSCN-2', ..."
+            }
+        },         
         "computeNodeNumber": {
             "type": "int",
             "defaultValue": 2,
@@ -123,9 +130,8 @@
         "nicName": "[concat(parameters('clusterName'),'-nic')]",
         "nicNameHN": "[concat(variables('nicName'),'-hn')]",
         "vmExtensionName": "customScriptExtension",
-        "computeNamePrefix": "IaaSCN-",
         "availableCNImageSkus": {
-            "NormalComputeNode": "TechnicalPreviewCN",
+            "ComputeNode": "TechnicalPreviewCN",
             "ComputeNodeWithExcel": "TechnicalPreviewCNExcel"
         },
         "computeNodeImageSku": "[variables('availableCNImageSkus')[parameters('computeNodeImage')]]",
@@ -307,7 +313,7 @@
         {
             "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Compute/virtualMachines",
-            "name": "[concat(variables('computeNamePrefix'), copyIndex())]",
+            "name": "[concat(parameters('computeNodeNamePrefix'), copyIndex())]",
             "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[concat('Microsoft.Compute/virtualMachines/', parameters('clusterName'))]",
@@ -322,7 +328,7 @@
                     "vmSize": "[parameters('computeNodeVMSize')]"
                 },
                 "osProfile": {
-                    "computername": "[concat(variables('computeNamePrefix'), copyIndex())]",
+                    "computername": "[concat(parameters('computeNodeNamePrefix'), copyIndex())]",
                     "adminUsername": "[parameters('adminUsername')]",
                     "adminPassword": "[parameters('adminPassword')]",
                     "customData" : "[base64(concat('HPCClusterName=', parameters('clusterName')))]"
@@ -354,11 +360,11 @@
         },
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "[concat(concat(variables('computeNamePrefix'), copyIndex()),'/', variables('vmExtensionName'))]",
+            "name": "[concat(parameters('computeNodeNamePrefix'), copyIndex(), '/', variables('vmExtensionName'))]",
             "apiVersion": "2015-05-01-preview",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[concat('Microsoft.Compute/virtualMachines/', variables('computeNamePrefix'), copyIndex())]"
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('computeNodeNamePrefix'), copyIndex())]"
             ],
             "copy": {
                 "name": "CN",
