@@ -11,8 +11,8 @@ Below are the parameters that the template expectes.
 
 | Name   | Description    |
 |:--- |:---|
-| clusterName | The unique HPC Pack cluster name. It is also used as the public DNS name prefix for the cluster, for example, the public DNS name is 'CLUSTERNAME.westus.cloudapp.azure.com' if the location of the resource group is 'West US'. It must contain between 3 and 15 characters with letters, numbers, and hyphens, start with a letter and end with a letter or a number. |
-| privateDomainName | The fully qualified domain name (FQDN) for the private domain forest which will be created by this template, for example 'hpcdomain.local' |
+| clusterName | The unique HPC Pack cluster name. It is also used as the public DNS name prefix for the cluster, for example, the public DNS name is '&lt;clusterName&gt;.westus.cloudapp.azure.com' if the resource group location is 'West US'. It must contain between 3 and 15 characters with lowercase letters and numbers, and must start with a letter. |
+| privateDomainName | The fully qualified domain name (FQDN) for the private domain forest which will be created by this template, for example 'hpcdomain.local'. |
 | headNodeVMSize | Size of the head node Virtual Machine |
 | computeNodeImage | The VM image of the compute nodes |
 | computeNodeNumber | Number of compute nodes to be deployed |
