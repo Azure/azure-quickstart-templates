@@ -2,6 +2,12 @@
 	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
 	"contentVersion": "1.0.0.0",
 	"parameters": {
+		"sharepointFarmName" : {
+			"type":"string",
+			"metadata" : {
+				"Description" : "The name of the Sharepoint farm"
+			}
+		},
 		"newStorageAccountName": {
 			"type": "string",
 			"metadata": {
@@ -76,27 +82,6 @@
 				"Description": "The IP address of the new AD VM"
 			},
 			"defaultValue": "10.0.0.4"
-		},
-		"adVMName": {
-			"type": "string",
-			"metadata": {
-				"Description": "The name of the AD VM created"
-			},
-			"defaultValue": "adserver"
-		},
-		"sqlVMName": {
-			"type": "string",
-			"metadata": {
-				"Description": "The name of the SQL VM created"
-			},
-			"defaultValue": "sqlserver"
-		},
-		"spVMName": {
-			"type": "string",
-			"metadata": {
-				"Description": "The name of the SP VM created"
-			},
-			"defaultValue": "spserver"
 		},
 		"adminUsername": {
 			"type": "string",
@@ -286,6 +271,9 @@
 		}
 	},
 	"variables": {
+		"adVMName" : "[concat(parameters('sharepointFarmName'),'-adserver')]",
+		"sqlVMName" : "[concat(parameters('sharepointFarmName'),'-sqlserver')]",
+		"spVMName" : "[concat(parameters('sharepointFarmName'),'-spserver')]",
 		"AssetLocation" : "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sharepoint-three-vm",
 		"LBFE": "LBFE",
 		"LBBE": "LBBE",
@@ -684,7 +672,7 @@
 		{
 			"apiVersion": "2015-05-01-preview",
 			"type": "Microsoft.Compute/virtualMachines",
-			"name": "[parameters('adVMName')]",
+			"name": "[variables('adVMName')]",
 			"location": "[parameters('location')]",
 			"dependsOn": [
 				"[resourceId('Microsoft.Storage/storageAccounts',parameters('newStorageAccountName'))]",
@@ -700,7 +688,7 @@
 					"id": "[resourceId('Microsoft.Compute/availabilitySets', variables('adAvailabilitySetName'))]"
 				},
 				"osProfile": {
-					"computername": "[parameters('adVMName')]",
+					"computername": "[variables('adVMName')]",
 					"adminUsername": "[parameters('adminUsername')]",
 					"adminPassword": "[parameters('adminPassword')]"
 				},
@@ -714,7 +702,7 @@
 					"osDisk": {
 						"name": "osdisk",
 						"vhd": {
-							"uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/',parameters('adVMName'),'-osdisk.vhd')]"
+							"uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/',variables('adVMName'),'-osdisk.vhd')]"
 						},
 						"caching": "ReadWrite",
 						"createOption": "FromImage"
@@ -724,7 +712,7 @@
 							"vhd": {
 								"uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/', variables('adDataDisk'),'-1.vhd')]"
 							},
-							"name": "[concat(parameters('adVMName'),'-data-disk1')]",
+							"name": "[concat(variables('adVMName'),'-data-disk1')]",
 							"caching": "None",
 							"createOption": "empty",
 							"diskSizeGB": "[variables('adDataDiskSize')]",
@@ -743,11 +731,11 @@
 			"resources": [
 				{
 					"type": "Microsoft.Compute/virtualMachines/extensions",
-					"name": "[concat(parameters('adVMName'),'/InstallDomainController')]",
+					"name": "[concat(variables('adVMName'),'/InstallDomainController')]",
 					"apiVersion": "2015-05-01-preview",
 					"location": "[parameters('location')]",
 					"dependsOn": [
-						"[resourceId('Microsoft.Compute/virtualMachines', parameters('adVMName'))]"
+						"[resourceId('Microsoft.Compute/virtualMachines', variables('adVMName'))]"
 					],
 					"properties": {
 						"publisher": "Microsoft.Powershell",
@@ -778,7 +766,7 @@
 			"type": "Microsoft.Resources/deployments",
 			"apiVersion": "2015-01-01",
 			"dependsOn": [
-				"[concat('Microsoft.Compute/virtualMachines/', parameters('adVMName'),'/extensions/InstallDomainController')]"
+				"[concat('Microsoft.Compute/virtualMachines/', variables('adVMName'),'/extensions/InstallDomainController')]"
 			],
 			"properties": {
 				"mode": "Incremental",
@@ -810,7 +798,7 @@
 		{
 			"apiVersion": "2015-05-01-preview",
 			"type": "Microsoft.Compute/virtualMachines",
-			"name": "[parameters('sqlVMName')]",
+			"name": "[variables('sqlVMName')]",
 			"location": "[parameters('location')]",
 			"dependsOn": [
 				"[resourceId('Microsoft.Storage/storageAccounts',parameters('newStorageAccountName'))]",
@@ -826,7 +814,7 @@
 					"id": "[resourceId('Microsoft.Compute/availabilitySets', variables('sqlAvailabilitySetName'))]"
 				},
 				"osProfile": {
-					"computername": "[parameters('sqlVMName')]",
+					"computername": "[variables('sqlVMName')]",
 					"adminUsername": "[parameters('adminUsername')]",
 					"adminPassword": "[parameters('adminPassword')]"
 				},
@@ -840,7 +828,7 @@
 					"osDisk": {
 						"name": "osdisk",
 						"vhd": {
-							"uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/',parameters('sqlVMName'),'-osdisk.vhd')]"
+							"uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/',variables('sqlVMName'),'-osdisk.vhd')]"
 						},
 						"caching": "ReadWrite",
 						"createOption": "FromImage"
@@ -850,7 +838,7 @@
 							"vhd": {
 								"uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/', variables('sqlDataDisk'), '-1.vhd')]"
 							},
-							"name": "[concat(parameters('sqlVMName'),'-data-disk1')]",
+							"name": "[concat(variables('sqlVMName'),'-data-disk1')]",
 							"createOption": "empty",
 							"caching": "None",
 							"diskSizeGB": "[variables('sqlDataDiskSize')]",
@@ -860,7 +848,7 @@
 							"vhd": {
 								"uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/', variables('sqlLogDisk'), '-1.vhd')]"
 							},
-							"name": "[concat(parameters('sqlVMName'),'-log-disk1')]",
+							"name": "[concat(variables('sqlVMName'),'-log-disk1')]",
 							"createOption": "empty",
 							"caching": "None",
 							"diskSizeGB": "[variables('sqlLogDiskSize')]",
@@ -879,11 +867,11 @@
 		},
 		{
 			"type": "Microsoft.Compute/virtualMachines/extensions",
-			"name": "[concat(parameters('sqlVMName'),'/CreateSQLServer')]",
+			"name": "[concat(variables('sqlVMName'),'/CreateSQLServer')]",
 			"apiVersion": "2015-05-01-preview",
 			"location": "[parameters('location')]",
 			"dependsOn": [
-				"[concat('Microsoft.Compute/virtualMachines/', parameters('sqlVMName'))]",
+				"[concat('Microsoft.Compute/virtualMachines/', variables('sqlVMName'))]",
 				"Microsoft.Resources/deployments/UpdateVNetDNS"
 			],
 			"properties": {
@@ -921,14 +909,14 @@
 		{
 			"apiVersion": "2015-05-01-preview",
 			"type": "Microsoft.Compute/virtualMachines",
-			"name": "[parameters('spVMName')]",
+			"name": "[variables('spVMName')]",
 			"location": "[parameters('location')]",
 			"dependsOn": [
 				"[resourceId('Microsoft.Storage/storageAccounts',parameters('newStorageAccountName'))]",
 				"[resourceId('Microsoft.Network/networkInterfaces',variables('spNicName'))]",
 				"[resourceId('Microsoft.Compute/availabilitySets', variables('spAvailabilitySetName'))]",
 				"Microsoft.Resources/deployments/UpdateVNetDNS",
-				"[concat('Microsoft.Compute/virtualMachines/', parameters('sqlVMName'),'/extensions/CreateSQLServer')]"
+				"[concat('Microsoft.Compute/virtualMachines/', variables('sqlVMName'),'/extensions/CreateSQLServer')]"
 			],
 			"properties": {
 				"hardwareProfile": {
@@ -938,7 +926,7 @@
 					"id": "[resourceId('Microsoft.Compute/availabilitySets', variables('spAvailabilitySetName'))]"
 				},
 				"osProfile": {
-					"computername": "[parameters('spVMName')]",
+					"computername": "[variables('spVMName')]",
 					"adminUsername": "[parameters('adminUsername')]",
 					"adminPassword": "[parameters('adminPassword')]"
 				},
@@ -952,7 +940,7 @@
 					"osDisk": {
 						"name": "osdisk",
 						"vhd": {
-							"uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/',parameters('spVMName'),'-osdisk.vhd')]"
+							"uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/',variables('spVMName'),'-osdisk.vhd')]"
 						},
 						"caching": "ReadWrite",
 						"createOption": "FromImage"
@@ -960,9 +948,9 @@
 					"dataDisks": [
 						{
 							"vhd": {
-								"uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/',parameters('spVMName'),'-', variables('spDataDisk'),'-1.vhd')]"
+								"uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/',variables('spVMName'),'-', variables('spDataDisk'),'-1.vhd')]"
 							},
-							"name": "[concat(parameters('spVMName'),'-data-disk1')]",
+							"name": "[concat(variables('spVMName'),'-data-disk1')]",
 							"createOption": "empty",
 							"caching": "None",
 							"diskSizeGB": "[variables('spDataDiskSize')]",
@@ -981,11 +969,11 @@
 			"resources": [
 				{
 					"type": "Microsoft.Compute/virtualMachines/extensions",
-					"name": "[concat(parameters('spVMName'),'/ConfigureSPServer')]",
+					"name": "[concat(variables('spVMName'),'/ConfigureSPServer')]",
 					"apiVersion": "2015-05-01-preview",
 					"location": "[parameters('location')]",
 					"dependsOn": [
-						"[concat('Microsoft.Compute/virtualMachines/', parameters('spVMName'))]"
+						"[concat('Microsoft.Compute/virtualMachines/', variables('spVMName'))]"
 					],
 					"properties": {
 						"publisher": "Microsoft.Powershell",
@@ -1014,7 +1002,7 @@
 								},
 								"DatabaseName": "[parameters('configDatabaseName')]",
 								"AdministrationContentDatabaseName": "[parameters('administrationContentDatabaseName')]",
-								"DatabaseServer": "[concat(parameters('sqlVMName'),'.',parameters('domainName'))]",
+								"DatabaseServer": "[concat(variables('sqlVMName'),'.',parameters('domainName'))]",
 								"Configuration": "[concat('{\"roles\":[{\"type\":\"application\",\"properties\":{\"fqdn\":\"',reference(variables('sppublicIPAddressName')).dnsSettings.fqdn,'\",\"port\":',variables('spCentralAdminPort'),'}},{\"type\":\"web\",\"properties\":{\"webApp\":{\"name\":\"spARM\",\"applicationPool\":\"spARM AppPool\",\"applicationPoolAccount\":\"', parameters('sharePointFarmAccountUserName'),'\",\"url\":\"http://',reference(variables('sppublicIPAddressName')).dnsSettings.fqdn,'\",\"port\":80,\"hostHeader\":\"',reference(variables('sppublicIPAddressName')).dnsSettings.fqdn,'\",\"databaseName\":\"',parameters('contentDatabaseName'),'\"},\"site\":{\"name\":\"spARM\",\"template\":\"',parameters('spSiteTemplateName'),'\",\"url\":\"http://',reference(variables('sppublicIPAddressName')).dnsSettings.fqdn,'\",\"ownerAliasDomain\":\"',parameters('domainName'),'\",\"ownerAliasUserName\":\"',parameters('sharePointFarmAccountUserName'),'\",\"secondaryOwnerAliasDomain\":\"',parameters('domainName'),'\",\"secondaryOwnerAliasUserName\":\"',parameters('adminUserName'),'\"}}}],\"configureForHa\":\"False\",\"loadBalancedSetProbePort\":0}')]"
 							}
 						},
