@@ -17,12 +17,12 @@ Please make sure the subscription you use allows to create requested number of v
 ##Usage
 After successful dbX cluster deployment you can manage your cluster SQL database via console or www (the passwords for all the default users are as provided in parameters on template deployment).
 
-<b> For www access please allow for secure certificate exception when asked.</b>
+_For www access please allow for secure certificate exception when asked._
 
 ###Cluster Management
-* via www please login as dbxdba using URL: https://&lt head node name&gt.&lt location&gt.cloudapp.azure.com:2400/xdadm
+* via www please login as dbxdba using URL: https://<head node name>.<location>.cloudapp.azure.com:2400/xdadm
 * via console please login as 'azure-user' to control the cluster
 
 ###Database Query
-* via www please login as dbxdba using URL: https://&lt head node name&gt.&lt location&gt.cloudapp.azure.com:2400/xdqry
+* via www please login as dbxdba using URL: https://<head node name>.<location>.cloudapp.azure.com:2400/xdqry
 * via console please login as 'dbxdba' to process SQL requests
