@@ -32,4 +32,4 @@ _For www access please allow for secure certificate exception when asked._
 *   via console please login as 'dbxdba' to process SQL requests
 
 ##Want to know more - visit our website
-[![xTremedata Inc](https://raw.githubusercontent.com/xtremedata/azure-quickstart-templates/master/dbx-cluster-centos/DBXLogo_RGB.png")](http://xtremedata.com) 
+[![XtremeData Inc](https://raw.githubusercontent.com/xtremedata/azure-quickstart-templates/master/dbx-cluster-centos/XtremeDataLogo_woTag_RGB_sm.png")](http://xtremedata.com) 
