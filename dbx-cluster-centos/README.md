@@ -21,7 +21,7 @@ _For www access please allow for secure certificate exception when asked._
 
 ###Cluster Management
 * via www please login as dbxdba using URL: https://*head_node_name*.*location*.cloudapp.azure.com:2400/xdadm
-* via console please login as 'azure-user' to control the cluster
+* via console please login as 'azure-user' to manage the cluster
 
 ###Database Query
 * via www please login as dbxdba using URL: https://*head_node_name*.*location*.cloudapp.azure.com:2400/xdqry

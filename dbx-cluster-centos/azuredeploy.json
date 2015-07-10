@@ -23,8 +23,6 @@
             "type": "String",
             "defaultValue": "Premium_LRS",
             "allowedValues": [
-                "Standard_LRS",
-                "Standard_GRS",
                 "Premium_LRS"
             ],
             "metadata": {
@@ -63,6 +61,7 @@
             "defaultValue": "Standard_DS14",
             "allowedValues": [
                 "Standard_DS12",
+                "Standard_DS13",
                 "Standard_DS14"
             ],
             "metadata": {
@@ -92,7 +91,7 @@
     },
     "variables": {
         "suffix": "x16",
-        "srcImage": "https://dbxpub.blob.core.windows.net/imgs/dbx-v4b-2-os-2015-07-02.vhd?sv=2014-02-14&sr=c&sig=B11Xdp4QSrseFFWzqp582bABTW%2BGySYsUba99r1B4ug%3D&st=2015-07-02T05%3A00%3A00Z&se=2016-07-10T05%3A00%3A00Z&sp=rd",
+        "srcImage": "https://dbxpub.blob.core.windows.net:443/imgs/dbx-v4b-2-os-2015-07-02.vhd?se=2015-08-15T00%3A00%3A00Z&sp=r&sv=2014-02-14&sr=b&sig=F%2FGN2RcN0Guii2Vmt9UI%2BELgrzVnlWvaLFM%2B%2F7KHEIE%3D",
         "vnetAddressSpace": "10.0.0.0/16",
         "subnetAddressSpace": "10.0.0.0/24",
         "subnetAddressPrefix": "10.0.0",
@@ -118,7 +117,7 @@
     },
     "resources": [
         {
-            "apiVersion": "2015-05-01-preview",
+            "apiVersion": "2015-05-01",
             "type": "Microsoft.Storage/storageAccounts",
             "name": "[variables('storageAccountName')]",
             "location": "[parameters('location')]",
@@ -127,7 +126,7 @@
             }
         },
         {
-            "apiVersion": "2015-05-01-preview",
+            "apiVersion": "2015-05-01",
             "type": "Microsoft.Compute/availabilitySets",
             "name": "[variables('availabilitySetSettings').name]",
             "location": "[parameters('location')]",
@@ -137,7 +136,7 @@
             }
         },
         {
-            "apiVersion": "2015-05-01-preview",
+            "apiVersion": "2015-05-01",
             "type": "Microsoft.Network/virtualNetworks",
             "name": "[variables('vnetName')]",
             "location": "[parameters('location')]",
@@ -158,7 +157,7 @@
             }
         },
         {
-            "apiVersion": "2015-05-01-preview",
+            "apiVersion": "2015-05-01",
             "type": "Microsoft.Network/publicIPAddresses",
             "name": "[concat('imghlpr', variables('suffix'))]",
             "location": "[parameters('location')]",
@@ -171,7 +170,7 @@
             }
         },
         {
-            "apiVersion": "2015-05-01-preview",
+            "apiVersion": "2015-05-01",
             "type": "Microsoft.Network/networkInterfaces",
             "name": "nic-imghlpr",
             "location": "[parameters('location')]",
@@ -200,7 +199,7 @@
         {
             "type": "Microsoft.Compute/virtualMachines",
             "name": "[concat(variables('hostName'),'-imghlpr')]",
-            "apiVersion": "2015-05-01-preview",
+            "apiVersion": "2015-05-01",
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
@@ -240,7 +239,7 @@
             }
         },
         {
-            "apiVersion": "2015-05-01-preview",
+            "apiVersion": "2015-05-01",
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "name": "[concat(variables('hostName'),'-imghlpr', '/imghlpr')]",
             "location": "[parameters('location')]",
@@ -255,14 +254,14 @@
                     "fileUris": [
                         "[concat(variables('templateURLBase'),'/azure-imghlpr.sh')]"
                     ],
-                    "commandToExecute": "[concat('bash azure-imghlpr.sh ', variables('storageAccountName'),' ',listKeys(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2015-05-01-preview').key1,' ', variables('srcImage') )]"
+                    "commandToExecute": "[concat('bash azure-imghlpr.sh ', variables('storageAccountName'),' ',listKeys(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2015-05-01').key1,' ', variables('srcImage') )]"
                 }
             }
         },
 
 
         {
-            "apiVersion": "2015-05-01-preview",
+            "apiVersion": "2015-05-01",
             "type": "Microsoft.Network/publicIPAddresses",
             "name": "[concat('dbx-ip', variables('suffix'), '-', copyindex())]",
             "location": "[parameters('location')]",
@@ -279,7 +278,7 @@
             }
         },
         {
-            "apiVersion": "2015-05-01-preview",
+            "apiVersion": "2015-05-01",
             "type": "Microsoft.Network/networkInterfaces",
             "name": "[concat('nic', copyindex())]",
             "location": "[parameters('location')]",
@@ -312,7 +311,7 @@
         {
             "type": "Microsoft.Compute/virtualMachines",
             "name": "[concat(variables('hostName'),'-',copyindex())]",
-            "apiVersion": "2015-05-01-preview",
+            "apiVersion": "2015-05-01",
             "location": "[parameters('location')]",
             "dependsOn": [ 
                 "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
@@ -369,6 +368,46 @@
                             },
                             "caching": "None",
                             "createOption": "Empty"
+                        },
+                        {
+                            "name": "datadisk2",
+                            "diskSizeGB": "[parameters('dataDiskSize')]",
+                            "lun": 2,
+                            "vhd": {
+                                "Uri": "[concat('http://', variables('storageAccountName'), '.blob.core.windows.net/vhds/', variables('hostName'),'-',copyindex(), '-datadisk2.vhd')]"
+                            },
+                            "caching": "None",
+                            "createOption": "Empty"
+                        },
+                        {
+                            "name": "datadisk3",
+                            "diskSizeGB": "[parameters('dataDiskSize')]",
+                            "lun": 3,
+                            "vhd": {
+                                "Uri": "[concat('http://', variables('storageAccountName'), '.blob.core.windows.net/vhds/', variables('hostName'),'-',copyindex(), '-datadisk3.vhd')]"
+                            },
+                            "caching": "None",
+                            "createOption": "Empty"
+                        },
+                        {
+                            "name": "datadisk4",
+                            "diskSizeGB": "[parameters('dataDiskSize')]",
+                            "lun": 4,
+                            "vhd": {
+                                "Uri": "[concat('http://', variables('storageAccountName'), '.blob.core.windows.net/vhds/', variables('hostName'),'-',copyindex(), '-datadisk4.vhd')]"
+                            },
+                            "caching": "None",
+                            "createOption": "Empty"
+                        },
+                        {
+                            "name": "datadisk5",
+                            "diskSizeGB": "[parameters('dataDiskSize')]",
+                            "lun": 5,
+                            "vhd": {
+                                "Uri": "[concat('http://', variables('storageAccountName'), '.blob.core.windows.net/vhds/', variables('hostName'),'-',copyindex(), '-datadisk5.vhd')]"
+                            },
+                            "caching": "None",
+                            "createOption": "Empty"
                         }
                     ]
                 },
@@ -382,7 +421,7 @@
             }
         },
         {
-            "apiVersion": "2015-05-01-preview",
+            "apiVersion": "2015-05-01",
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "name": "[concat(variables('hostName'),'-',copyindex(), '/dbx-setup')]",
             "location": "[parameters('location')]",
