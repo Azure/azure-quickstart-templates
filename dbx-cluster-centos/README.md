@@ -20,9 +20,16 @@ After successful dbX cluster deployment you can manage your cluster SQL database
 _For www access please allow for secure certificate exception when asked._
 
 ###Cluster Management
-* via www please login as dbxdba using URL: https://*head_node_name*.*location*.cloudapp.azure.com:2400/xdadm
-* via console please login as 'azure-user' to manage the cluster
+*   via www please login as dbxdba using URL: https://*'dns_name'*x16-0.*'location'*.cloudapp.azure.com:2400/xdadm
+
+    e.g. default: https://dbxx16-0.westus.cloudapp.azure.com:2400/xdadm
+*   via console please login as 'azure-user' to manage the cluster
 
 ###Database Query
-* via www please login as dbxdba using URL: https://*head_node_name*.*location*.cloudapp.azure.com:2400/xdqry
-* via console please login as 'dbxdba' to process SQL requests
+*   via www please login as dbxdba using URL: https://*'dns_name'*x16-0.*'location'*.cloudapp.azure.com:2400/xdqry
+
+    e.g. default: https://dbxx16-0.westus.cloudapp.azure.com:2400/xdqry
+*   via console please login as 'dbxdba' to process SQL requests
+
+##Want to know more - visit our website
+[![xTremedata Inc](https://raw.githubusercontent.com/xtremedata/azure-quickstart-templates/master/dbx-cluster-centos/DBXLogo_RGB.png")](http://xtremedata.com) 
