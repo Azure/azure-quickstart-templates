@@ -8,7 +8,7 @@ This template deploys Xtremedata dbX cluster (a parallel relational database) wi
 
 ##Requirements
 *   Please make sure the subscription you use allows to create requested number of virtual machines of the selected size - otherwise the deployment will fail.
-*   Please change default names when deploying more then one dbX cluster per resource group.
+*   Please change the default names when deploying more then one dbX cluster.
 
 ###Default cluster requirements
 * 1 x DS1 helper VM
@@ -20,7 +20,7 @@ After successful dbX cluster deployment you can manage your cluster SQL database
 
 dbX cluster head (the master node) is always the first created - with index '0'. Please use this node for cluster management and SQL queries. Access to this node can be:
 
-*   either via public DNS name *{entered_domain_name}x16-0.{resource group}.{location}.cloudapp.azure.com*
+*   either via public DNS name *{entered_domain_name}x16-0.{location}.cloudapp.azure.com*
 *   or via public IP address (available on the Azure console)
 
 dbX cluster management and SQL queries can be done:
