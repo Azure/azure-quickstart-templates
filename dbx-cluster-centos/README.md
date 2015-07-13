@@ -29,12 +29,12 @@ dbX cluster head (the master node) is always the first created - with index '0'.
 _For web management console please accept the secure certificate exception when asked._
 
 ###Cluster Management
-*   via web management console please login as dbxdba using URL: https://{head IP or DNS}:2400/xdadm
-*   via ssh please login as 'azure-user' to manage the cluster
+*   via web management console please login as _dbxdba_ using URL: _https://{head IP or DNS}:2400/xdadm_
+*   via ssh please login as _azure-user_ to manage the cluster
 
 ###Database Query
-*   via web management console please login as dbxdba using URL: https://{head IP or DNS}:2400/xdqry
-*   via ssh please login as 'dbxdba' to process SQL requests
+*   via web management console please login as _dbxdba_ using URL: _https://{head IP or DNS}:2400/xdqry_
+*   via ssh please login as _dbxdba_ to process SQL requests
 
 ##Want to know more - visit our website
 [![XtremeData Inc](https://raw.githubusercontent.com/xtremedata/azure-quickstart-templates/master/dbx-cluster-centos/XtremeDataLogo_woTag_RGB_sm.png)](http://xtremedata.com) 
