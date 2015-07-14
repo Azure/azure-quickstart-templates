@@ -1,10 +1,10 @@
-# Xtremedata Inc dbX cluster template
+# XtremeData Inc dbX cluster template
 
 Create dbX cluster (please be patient, deployment of a trial version takes about 30 minutes)
 
 [![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fxtremedata%2Fazure-quickstart-templates%2Fmaster%2Fdbx-cluster-centos%2Fazuredeploy.json) 
 
-This template deploys Xtremedata dbX cluster (a parallel relational database) with provided configuration parameters.
+This template deploys XtremeData dbX cluster (a parallel relational database) with provided configuration parameters.
 
 ##Requirements
 *   Please make sure the subscription you use allows creation of the requested number of virtual
