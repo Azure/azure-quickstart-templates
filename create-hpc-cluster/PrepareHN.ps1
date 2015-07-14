@@ -6,8 +6,12 @@
     [Parameter(Mandatory=$true, ParameterSetName='Prepare')]
     [String] $AdminUserName,
 
+    # The admin password is in base64 string
     [Parameter(Mandatory=$true, ParameterSetName='Prepare')]
-    [String] $AdminPassword,
+    [String] $AdminBase64Password,
+
+    [Parameter(Mandatory=$false, ParameterSetName='Prepare')]
+    [String] $PublicDnsName,
 
     [Parameter(Mandatory=$false, ParameterSetName='Prepare')]
     [String] $SubscriptionId,
@@ -20,6 +24,9 @@
 
     [Parameter(Mandatory=$false, ParameterSetName='Prepare')]
     [String] $Location,
+
+    [Parameter(Mandatory=$false, ParameterSetName='Prepare')]
+    [String] $AzureStorageConnStr="",
 
     [Parameter(Mandatory=$false, ParameterSetName='Prepare')]
     [String] $PostConfigScript="",
@@ -44,7 +51,10 @@ function PromoteDC
         [String] $AdminUserName,
 
         [Parameter(Mandatory=$true)]
-        [String] $AdminPassword
+        [String] $AdminPassword,
+
+        [Parameter(Mandatory=$false)]
+        [String] $DNSForwarder=""
     )
 
     $localAdminCred = New-Object -TypeName System.Management.Automation.PSCredential `
@@ -98,12 +108,40 @@ function PromoteDC
             }
         }
 
-        $forwarders = (Get-DnsServerForwarder).IPAddress
-        if($null -ne $forwarders)
+        if($null -eq (Get-DnsServerForwarder).IPAddress)
         {
-           TraceInfo "Removing DNS forwarders from the domain controller: $forwarders"
-           Remove-DnsServerForwarder -IPAddress $forwarders -Force
-        }        
+            # Cannot use @((Get-DnsServerForwarder).IPAddress) in this case, because it will get an array with a $null element
+            $orgFwdIPs = @()
+        }
+        else
+        {
+            $orgFwdIPs = @((Get-DnsServerForwarder).IPAddress)
+        }
+
+        $newFwdIPs = @()
+        foreach($fwdIP in $orgFwdIPs)
+        {
+            if(($fwdIP -eq "fec0:0:0:ffff::1") -or ($fwdIP -eq "fec0:0:0:ffff::2") -or ($fwdIP -eq "fec0:0:0:ffff::3"))
+            {
+                TraceInfo "Removing DNS forwarder from the domain controller: $fwdIP"
+                Remove-DnsServerForwarder -IPAddress $fwdIP -Force
+            }
+            else
+            {
+                $newFwdIPs += $fwdIP
+            }
+        }
+        
+        if(-not [string]::IsNullOrEmpty($DNSForwarder))
+        {
+            $fwdIP = [IPAddress]$DNSForwarder
+            if($newFwdIPs -notcontains $fwdIP)
+            {
+                TraceInfo "Adding DNS forwarder to the domain controller: $fwdIP"
+                $newFwdIPs += $fwdIP
+                Set-DnsServerForwarder -IPAddress $newFwdIPs -Confirm:$false
+            }
+        }
     }
     catch
     {
@@ -118,13 +156,19 @@ function PrepareHeadNode
     param
     (
     [Parameter(Mandatory=$true)]
-    [String] $DomainFQDN, 
+    [String] $DomainFQDN,
+
+    [Parameter(Mandatory=$true)]
+    [String] $PublicDnsName,
         
     [Parameter(Mandatory=$true)]
     [String] $AdminUserName,
 
     [Parameter(Mandatory=$true)]
-    [String] $AdminPassword,
+    [String] $AdminBase64Password,
+
+    [Parameter(Mandatory=$false)]
+    [String] $AzureStorageConnStr="",
 
     [Parameter(Mandatory=$false)]
     [String] $PostConfigScript=""
@@ -132,6 +176,7 @@ function PrepareHeadNode
 
     Import-Module ScheduledTasks
 
+    $AdminPassword = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($AdminBase64Password))
     $domainNetBios = $DomainFQDN.Split('.')[0].ToUpper()
     $domainUserCred = New-Object -TypeName System.Management.Automation.PSCredential `
             -ArgumentList @("$domainNetBios\$AdminUserName", (ConvertTo-SecureString -String $AdminPassword -AsPlainText -Force))
@@ -142,13 +187,17 @@ function PrepareHeadNode
     if($domainRole -ne 5)
     {
         # join the domain
-        PromoteDC -DomainFQDN $DomainFQDN -AdminUserName $AdminUserName -AdminPassword $AdminPassword
+        PromoteDC -DomainFQDN $DomainFQDN -AdminUserName $AdminUserName -AdminPassword $AdminPassword -DNSForwarder "8.8.8.8"
         $task = Get-ScheduledTask -TaskName 'HpcPrepareHeadNode' -ErrorAction SilentlyContinue
         if($null -eq $task)
         {
             $HNPreparePsFile = "$PSScriptRoot\PrepareHN.ps1"
-            $taskArgs = "-DomainFQDN $DomainFQDN -AdminUserName $AdminUserName -AdminPassword $AdminPassword -NodePrepare"
-            if($false -eq [String]::IsNullOrWhiteSpace($PostConfigScript))
+            $taskArgs = "-DomainFQDN $DomainFQDN -PublicDnsName $PublicDnsName -AdminUserName $AdminUserName -AdminBase64Password $AdminBase64Password -NodePrepare"
+            if(-not [string]::IsNullOrEmpty($AzureStorageConnStr))
+            {
+                $taskArgs += " -AzureStorageConnStr '$AzureStorageConnStr'"
+            }
+            if(-not [String]::IsNullOrEmpty($PostConfigScript))
             {
                 $taskArgs += " -PostConfigScript '$PostConfigScript'"
             }
@@ -157,20 +206,25 @@ function PrepareHeadNode
             $trigger = New-ScheduledTaskTrigger -AtStartup
             TraceInfo 'Register task HpcPrepareHeadNode'
             Register-ScheduledTask -TaskName 'HpcPrepareHeadNode' -Action $action -User 'NT AUTHORITY\SYSTEM' -Trigger $trigger -RunLevel Highest *>$script:PrepareNodeLogFile    
+            if(-not $?)
+            {
+                TraceInfo 'Failed to schedule task to prepare head node'
+                throw
+            }
         }
         else
         {
-            TraceInfo 'Task HpcPrepareHeadNode is already existed'
+            TraceInfo 'Task HpcPrepareHeadNode already exists'
         }
 
         # restart HN
         TraceInfo 'Restarting Domain controller node to apply changes......'
-        Start-Process -FilePath 'cmd.exe' -ArgumentList '/c shutdown /r /t 30'
+        Start-Process -FilePath 'cmd.exe' -ArgumentList '/c shutdown /r /t 60'
     }
     else
     {
-        $job = Start-Job -ScriptBlock{
-            param($scriptPath, $domainUserCred, $PostConfigScript)
+        $job = Start-Job -ScriptBlock {
+            param($scriptPath, $domainUserCred, $AzureStorageConnStr, $PublicDnsName, $PostConfigScript)
 
             . "$scriptPath\HpcPrepareUtil.ps1"
             TraceInfo 'register HPC Head Node Preparation Task'
@@ -181,7 +235,8 @@ function PrepareHeadNode
             Register-ScheduledTask -TaskName 'HPCPrepare' -Action $action -User $domainUserCred.UserName -Password $domainUserCred.GetNetworkCredential().Password -RunLevel Highest *>$script:PrepareNodeLogFile
             if(-not $?)
             {
-                throw 'Failed to schedule HPC Head Node Preparation Task'
+                TraceInfo 'Failed to schedule HPC Head Node Preparation Task'
+                throw
             }
 
             TraceInfo 'HPC Head Node Preparation Task scheduled'
@@ -296,6 +351,48 @@ function PrepareHeadNode
                 New-HpcNodeTemplate -Name 'Default ComputeNode Template' -Description 'This is the default compute node template' -ErrorAction SilentlyContinue
                 TraceInfo "'Default ComputeNode Template' created"
 
+                # Disable the ComputeNode role for head node.
+                Set-HpcNode -Name $env:COMPUTERNAME -Role BrokerNode
+                TraceInfo "Disabled ComputeNode role for head node"
+
+                #set azure stroage connection string
+                if(-not [string]::IsNullOrEmpty($AzureStorageConnStr))
+                {
+                    Set-HpcClusterProperty -AzureStorageConnectionString $AzureStorageConnStr
+                    TraceInfo "Azure storage connection string configured"
+                }
+
+                $hpcBinPath = [System.IO.Path]::Combine($env:CCP_HOME, 'Bin')
+                $restWebCert = Get-ChildItem -Path Cert:\LocalMachine\My | ?{($_.Subject -eq "CN=$PublicDnsName") -and $_.HasPrivateKey} | select -First(1)
+                if($null -eq $restWebCert)
+                {
+                    TraceInfo "Generating a self-signed certificate(CN=$PublicDnsName) for the HPC web service ..."
+                    $thumbprint = . $hpcBinPath\New-HpcCert.ps1 -MachineName $PublicDnsName -SelfSigned
+                    TraceInfo "A self-signed certificate $thumbprint was created and installed"
+                }
+                else
+                {
+                    TraceInfo "Use the existing certificate $thumbprint (CN=$PublicDnsName) for the HPC web service."
+                    $thumbprint = $restWebCert.Thumbprint
+                }
+        
+                TraceInfo 'Enabling HPC Pack web portal ...'
+                . $hpcBinPath\Set-HPCWebComponents.ps1 -Service Portal -enable -Certificate $thumbprint | Out-Null
+                TraceInfo 'HPC Pack web portal enabled.'
+
+                TraceInfo 'Starting HPC web service ...'
+                Set-Service -Name 'HpcWebService' -StartupType Automatic | Out-Null
+                Start-Service -Name 'HpcWebService' | Out-Null
+                TraceInfo 'HPC web service started.'
+
+                TraceInfo 'Enabling HPC Pack REST API ...'
+                . $hpcBinPath\Set-HPCWebComponents.ps1 -Service REST -enable -Certificate $thumbprint | Out-Null
+                TraceInfo 'HPC Pack REST API enabled.'
+
+                TraceInfo 'Restarting HPCScheduler service ...'
+                Restart-Service -Name 'HpcScheduler' -Force | Out-Null
+                TraceInfo 'HPCScheduler service restarted.'
+
                 # register scheduler task to bring node online
                 $task = Get-ScheduledTask -TaskName 'HpcNodeOnlineCheck' -ErrorAction SilentlyContinue
                 if($null -eq $task)
@@ -314,38 +411,9 @@ function PrepareHeadNode
                 }
                 else
                 {
-                    TraceInfo 'Task HpcNodeOnlineCheck is already existed'
+                    TraceInfo 'Task HpcNodeOnlineCheck already exists'
                 }
-        
-                TraceInfo 'Generating a self-signed certificate for the HPC web service ...'
-                $hpcBinPath = [System.IO.Path]::Combine($env:CCP_HOME, 'Bin')
-                $thumbprint = . $hpcBinPath\New-HpcCert.ps1 -MachineName $dnsHostName -SelfSigned
-                TraceInfo "A self-signed certificate $thumbprint was created and installed"
 
-                TraceInfo 'Enabling HPC Pack web portal ...'
-                . $hpcBinPath\Set-HPCWebComponents.ps1 -Service Portal -enable -Certificate $thumbprint | Out-Null
-                TraceInfo 'HPC Pack web portal enabled.'
-
-                TraceInfo 'Starting HPC web service ...'
-                Set-Service -Name 'HpcWebService' -StartupType Automatic | Out-Null
-                Start-Service -Name 'HpcWebService' | Out-Null
-                TraceInfo 'HPC web service started.'
-
-                TraceInfo 'Enabling HPC Pack REST API ...'
-                . $hpcBinPath\Set-HPCWebComponents.ps1 -Service REST -enable -Certificate $thumbprint | Out-Null
-                TraceInfo 'HPC Pack REST API enabled.'
-
-                TraceInfo 'Restarting HPCScheduler service ...'
-                Restart-Service -Name 'HpcScheduler' -Force | Out-Null
-                TraceInfo 'HPCScheduler service restarted.'
-
-                $cert = Get-ChildItem -Path Cert:\LocalMachine\My\$thumbprint
-                $cerFile = "$env:TEMP\hpcwebcomponent_{0}.cer" -f (Get-Random)
-                Export-Certificate -Cert $cert -FilePath $cerFile | Out-Null
-                $cerContent = [IO.File]::ReadAllBytes($cerFile)
-                TraceInfo "The certificate file with public key was exported: $thumbprint"
-                Remove-Item $cerFile -Force -ErrorAction SilentlyContinue
-                
                 if($false -eq [String]::IsNullOrWhiteSpace($PostConfigScript))
                 {
                     $webclient = New-Object System.Net.WebClient
@@ -382,7 +450,7 @@ function PrepareHeadNode
 
                 throw 'Failed to prepare HPC Head Node'
             }
-        } -ArgumentList $PSScriptRoot,$domainUserCred,$PostConfigScript
+        } -ArgumentList $PSScriptRoot,$domainUserCred,$AzureStorageConnStr,$PublicDnsName,$PostConfigScript
 
         Wait-Job $job
         TraceInfo 'job completed'
@@ -435,7 +503,8 @@ if ($PsCmdlet.ParameterSetName -eq 'Prepare')
         TraceInfo "The information needed for in-box management scripts succcessfully configured."
     }
 
-    PrepareHeadNode -DomainFQDN $DomainFQDN -AdminUserName $AdminUserName -AdminPassword $AdminPassword -PostConfigScript $PostConfigScript
+    TraceInfo "PrepareHeadNode -DomainFQDN $DomainFQDN -PublicDnsName $PublicDnsName -AdminUserName $AdminUserName -AdminBase64Password $AdminBase64Password -PostConfigScript $PostConfigScript -AzureStorageConnStr $AzureStorageConnStr"
+    PrepareHeadNode -DomainFQDN $DomainFQDN -PublicDnsName $PublicDnsName -AdminUserName $AdminUserName -AdminBase64Password $AdminBase64Password -PostConfigScript $PostConfigScript -AzureStorageConnStr $AzureStorageConnStr
 }
 else
 {
