@@ -81,13 +81,21 @@
         "tshirtSize": { 
             "type": "string", 
             "defaultValue": "Eval", 
-            "allowedValues": [ 
-                "Eval"
+            "allowedValues": [
+                "Eval",
+                "Prod"
             ], 
             "metadata": { 
-                "description": "T-shirt size of the Cloudera cluster (Eval, Small, Medium)" 
+                "description": "T-shirt size of the Cloudera cluster (Eval, Prod)" 
             } 
         }, 
+        "numberOfDataNodes": {
+            "type": "int",
+            "defaultValue": 3,
+            "metadata": { 
+                "description": "Number of data nodes for Prod, default to 3" 
+            } 
+        },
         "vmSize": {
             "type": "string",
             "defaultValue": "Standard_D14",
@@ -124,16 +132,14 @@
             "type": "[parameters('storageAccountType')]"
         },
         "clusterTshirtSizeEval": {
-            "nameNodeCount": 2,
-            "dataNodeCount": 3                
+            "nameNodeCount": 3,
+            "dataNodeCount": "[parameters('numberOfDataNodes')]",
+            "highAvailability":  "false"                
         },
-        "clusterTshirtSizeSmall": {
-            "nameNodeCount": 2,
-            "dataNodeCount": 7            
-        },
-        "clusterTshirtSizeMedium": {
-            "nameNodeCount": 2,
-            "dataNodeCount": 50            
+        "clusterTshirtSizeProd": {
+            "nameNodeCount": 3,
+            "dataNodeCount": "[parameters('numberOfDataNodes')]",            
+            "highAvailability":  "true"                
         },
         "clusterSpec": "[variables(concat('clusterTshirtSize', parameters('tshirtSize')))]",        
         "vmSpec": {
@@ -143,14 +149,13 @@
             "adminPassword": "[parameters('adminPassword')]",
             "keyVaultResourceId": "[resourceId(parameters('keyVaultResourceGroup'), 'Microsoft.KeyVault/vaults', parameters('keyVaultName'))]",
             "keyUri": "[parameters('keyUri')]",            
-            "masterNodeASName": "[concat(parameters('dnsNamePrefix'), '-mnAS')]",
+            "nameNodeASName": "[concat(parameters('dnsNamePrefix'), '-nnAS')]",
             "dataNodeASName": "[concat(parameters('dnsNamePrefix'), '-dnAS')]"            
         },
         "networkSpec": {
             "addressPrefix": "[parameters('addressPrefix')]",
-            "subnetPrefix": "[parameters('subnetPrefix')]",            
+            "subnetPrefix": "[parameters('subnetPrefix')]",
             "privateIPPrefix": "[parameters('nodeAddressPrefix')]",
-            "masterNodeAddress": 9,
             "nameNodeAddressStart": 10,
             "dataNodeAddressStart": 20,
             "virtualNetworkName": "[parameters('virtualNetworkName')]",
@@ -175,8 +180,8 @@
                     "networkSpec": {
                         "value": "[variables('networkSpec')]"
                     },
-                    "masterNodeASName": {
-                        "value": "[variables('vmSpec').masterNodeASName]"
+                    "nameNodeASName": {
+                        "value": "[variables('vmSpec').nameNodeASName]"
                     },
                     "dataNodeASName": {
                         "value": "[variables('vmSpec').dataNodeASName]"
@@ -218,6 +223,9 @@
                     },
                     "networkSpec": {
                         "value": "[variables('networkSpec')]"
+                    },
+                    "clusterSpec": {
+                        "value": "[variables('clusterSpec')]"
                     }      
                 }
             }
@@ -256,22 +264,25 @@
                     },
                     "networkSpec": {
                         "value": "[variables('networkSpec')]"
+                    },
+                    "clusterSpec": {
+                        "value": "[variables('clusterSpec')]"
                     }                    
                 }
             }
         },
         {
-            "name": "master-node",
+            "name": "setup-cloudera",
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2015-01-01",
-            "dependsOn": [                                
+            "dependsOn": [                
                 "Microsoft.Resources/deployments/data-node",
                 "Microsoft.Resources/deployments/name-node"
             ],
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "[concat(variables('scriptsUri'), '/master-node.json')]",
+                    "uri": "[concat(variables('scriptsUri'), '/setup-cloudera.json')]",
                     "contentVersion": "1.0.0.0"
                 },
                 "parameters": {
@@ -284,18 +295,18 @@
                     "scriptsUri": {
                         "value": "[variables('scriptsUri')]"
                     },
-                    "storageAccount" : {
-                        "value": "[variables('storageAccount')]"        
-                    },
                     "vmSpec": {
                         "value": "[variables('vmSpec')]"
                     },
-                    "networkSpec" : {
+                    "networkSpec": {
                         "value": "[variables('networkSpec')]"
                     },
-                    "clusterSpec" : {
+                    "clusterSpec": {
                         "value": "[variables('clusterSpec')]"
-                    }            
+                    },
+                    "fqdn": {
+                        "value": "[reference('name-node').outputs.fqdn.value]"
+                    }                    
                 }
             }
         }

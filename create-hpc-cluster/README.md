@@ -11,48 +11,13 @@ Below are the parameters that the template expectes.
 
 | Name   | Description    |
 |:--- |:---|
-| namePrefix | The prefix of the resources(storage account, virtual network, virtual machine etc) to be created. |
-| location | location where the resources will be deployed |
+| clusterName | The unique HPC Pack cluster name. It is also used as the public DNS name prefix for the cluster, for example, the public DNS name is '&lt;clusterName&gt;.westus.cloudapp.azure.com' if the resource group location is 'West US'. It must contain between 3 and 15 characters with lowercase letters and numbers, and must start with a letter. |
+| privateDomainName | The fully qualified domain name (FQDN) for the private domain forest which will be created by this template, for example 'hpcdomain.local'. |
 | headNodeVMSize | Size of the head node Virtual Machine |
+| computeNodeImage | The VM image of the compute nodes |
+| computeNodeNamePrefix | The name prefix of the compute nodes. It can contain letters, numbers and hyphens, and must start with a letter, up to 13 characters, for example, if 'IaaSCN-' is specified, the compute node names will be 'IaaSCN-1', 'IaaSCN-2', ... |
 | computeNodeNumber | Number of compute nodes to be deployed |
 | computeNodeVMSize | Size of the compute node Virtual Machine |
-| computeNamePrefix | Compute node name prefix |
-| storageAccountType | Storage Account type |
 | adminUsername  | Username for the Virtual Machines  |
 | adminPassword  | Password for the Virtual Machines  |
-| headNodeImagePublisher  | head node image publisher, default is MicrosoftWindowsServerHPCPack, user should keep it as default  |
-| headNodeImageOffer  | head node image offer, default is WindowsServerHPCPack, user should keep it as default  |
-| headNodeImageSKU  | head node image sku, default is 2012 R2  |
-| computeNodeImagePublisher  | compute node image publisher, default is MicrosoftWindowsServer, user should keep it as default  |
-| computeNodeImageOffer  | compute node image offer, default is WindowsServer, user should keep it as default  |
-| computeNodeImageSKU  | compute node image sku, default is 2012-R2-Datacenter  |
-| headNodePostConfigScript  | post config script on head node, if user don't need post config, can ignore it. the format should be with full url and arguments  |
-| computeNodePostConfigScript  | post config script on compute node, if user don't need post config, can ignore it. the format should be with full url and arguments  |
-
-# Other Option: Using HPC published head node image and user custom compute node image
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fcreate-hpc-cluster-custom-image%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
-</a>
-
-This template allows you to create one HPC Cluster
-
-Below are the parameters that the template expectes.
-
-| Name   | Description    |
-|:--- |:---|
-| namePrefix | The prefix of the resources(storage account, virtual network, virtual machine etc) to be created. |
-| location | location where the resources will be deployed |
-| headNodeVMSize | Size of the head node Virtual Machine |
-| computeNodeNumber | Number of compute nodes to be deployed |
-| computeNodeVMSize | Size of the compute node Virtual Machine |
-| computeNamePrefix | Compute node name prefix |
-| storageAccountType | Storage Account type |
-| adminUsername  | Username for the Virtual Machines  |
-| adminPassword  | Password for the Virtual Machines  |
-| computeNodeSourceImageName  | user custom compute node image name  |
-| computeNodeSourceImageContainer  | the path of the container which contains user custom iamge, format like   https://<storageAccount>.blob.core.windows.net/<container name>/|
-| headNodeImagePublisher  | head node image publisher, default is MicrosoftWindowsServerHPCPack, user should keep it as default  |
-| headNodeImageOffer  | head node image offer, default is WindowsServerHPCPack, user should keep it as default  |
-| headNodeImageSKU  | head node image sku, default is 2012 R2  |
-| headNodePostConfigScript  | post config script on head node, if user don't need post config, can ignore it. the format should be with full url and arguments  |
-| computeNodePostConfigScript  | post config script on compute node, if user don't need post config, can ignore it. the format should be with full url and arguments  |
+| headNodePostConfigScript  | Optional, specify the script url and command line if you want to run your custom script on the head node after it is configured. The script url must be public available, and you can also specify arguments for the script, for example 'http://www.consto.com/mypostscript.ps1 -Arg1 arg1 -Arg2 arg2'. |
