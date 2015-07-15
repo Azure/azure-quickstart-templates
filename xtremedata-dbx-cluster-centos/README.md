@@ -25,7 +25,6 @@ dbX cluster head (the master node) is always the first created - with index '0'.
 *   either via public DNS name *{entered_domain_name}x16-0.{location}.cloudapp.azure.com*
 *   or via public IP address (available on the Azure console)
 
-
 _For web management console please accept the secure certificate exception when asked._
 
 ###Cluster Management
@@ -35,6 +34,11 @@ _For web management console please accept the secure certificate exception when 
 ###Database Query
 *   via web management console please login as _dbxdba_ using URL: _https://{head IP or DNS}:2400/xdqry_
 *   via ssh please login as _dbxdba_ to process SQL requests
+
+###Working with dbX
+*   to use dbX one has to first create a server using one of the defined node sets
+*   created server acquires role name and password as the user who created it
+*   to use the web query console not locally one has to add a proper access control rule (by default only local access is allowed)
 
 ##Want to know more - visit our website
 [![XtremeData Inc](https://raw.githubusercontent.com/xtremedata/azure-quickstart-templates/master/xtremedata-dbx-cluster-centos/XtremeDataLogo_woTag_RGB_sm.png)](http://xtremedata.com) 
