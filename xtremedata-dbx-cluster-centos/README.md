@@ -2,7 +2,7 @@
 
 Create dbX cluster (please be patient, deployment of a trial version takes about 30 minutes)
 
-[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fxtremedata%2Fazure-quickstart-templates%2Fmaster%2Fxtremedata-dbx-cluster-centos%2Fazuredeploy.json) 
+[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fxtremedata-dbx-cluster-centos%2Fazuredeploy.json) 
 
 This template deploys XtremeData dbX cluster (a parallel relational database) with provided configuration parameters.
 
@@ -41,4 +41,4 @@ _For web management console please accept the secure certificate exception when 
 *   to use the web query console not locally one has to add a proper access control rule (by default only local access is allowed)
 
 ##Want to know more - visit our website
-[![XtremeData Inc](https://raw.githubusercontent.com/xtremedata/azure-quickstart-templates/master/xtremedata-dbx-cluster-centos/XtremeDataLogo_woTag_RGB_sm.png)](http://xtremedata.com) 
+[![XtremeData Inc](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/xtremedata-dbx-cluster-centos/XtremeDataLogo_woTag_RGB_sm.png)](http://xtremedata.com) 
