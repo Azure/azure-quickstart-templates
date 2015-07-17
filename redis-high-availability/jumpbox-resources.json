@@ -1,5 +1,5 @@
-{
-    "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+{ 
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
         "commonSettings": {
@@ -34,14 +34,39 @@
         }
     },
     "variables": {
-        "vmSize": "Standard_A0"
+        "vmSize": "Standard_A0",
+        "securityGroupName": "jumpboxNSG"
     },
     "resources": [
         {
             "apiVersion": "2015-05-01-preview",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[variables('securityGroupName')]",
+            "location": "[parameters('commonSettings').location]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "SSH",
+                        "properties": {
+                            "description": "Allows SSH traffic",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "22",
+                            "destinationPortRange": "22",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 100,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Network/publicIPAddresses",
             "name": "jumpboxPublicIP",
-            "location": "[parameters('commonSettings').region]",
+            "location": "[parameters('commonSettings').location]",
             "properties": {
                 "publicIPAllocationMethod": "Dynamic"
             }
@@ -50,9 +75,10 @@
             "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Network/networkInterfaces",
             "name": "jumpboxNIC",
-            "location": "[parameters('commonSettings').region]",
+            "location": "[parameters('commonSettings').location]",
             "dependsOn": [
-                "[concat('Microsoft.Network/publicIPAddresses/', 'jumpboxPublicIP')]"
+                "[concat('Microsoft.Network/publicIPAddresses/', 'jumpboxPublicIP')]",
+                "[concat('Microsoft.Network/networkSecurityGroups/', variables('securityGroupName'))]"
             ],
             "properties": {
                 "ipConfigurations": [
@@ -62,6 +88,9 @@
                             "privateIPAllocationMethod": "Dynamic",
                             "publicIPAddress": {
                                 "id": "[resourceId('Microsoft.Network/publicIPAddresses','jumpboxPublicIP')]"
+                            },
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('securityGroupName'))]"
                             },
                             "subnet": {
                                 "id": "[parameters('networkSettings').subnetRef]"
@@ -75,7 +104,7 @@
             "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Compute/virtualMachines",
             "name": "jumpboxVM",
-            "location": "[parameters('commonSettings').region]",
+            "location": "[parameters('commonSettings').location]",
             "dependsOn": [
                 "[concat('Microsoft.Network/networkInterfaces/', 'jumpboxNIC')]"
             ],
