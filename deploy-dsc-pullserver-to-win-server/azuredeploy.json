@@ -2,14 +2,14 @@
     "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "StorageName": {
+        "storageName": {
             "type": "string",
             "defaultValue": "pctst03stor",
             "metadata": {
                 "description": "The name of the new storage account created to store the VMs disks"
             }
         },
-        "StorageType": {
+        "storageType": {
             "type": "string",
             "defaultValue": "Standard_LRS",
             "allowedValues": [
@@ -23,7 +23,6 @@
         },
         "location": {
             "type": "string",
-            "defaultValue": "West Europe",
             "allowedValues": [
                 "East US",
                 "West US",
@@ -35,47 +34,20 @@
                 "description": "The location for the vms and other artefacts to be created."
             }
         },
-        "AdminUserName": {
+        "adminUserName": {
             "type": "string",
             "defaultValue": "domadm",
             "metadata": {
                 "description": "The admin user name for the VM created."
             }
         },
-        "AdminPassword": {
+        "adminPassword": {
             "type": "securestring",
             "metadata": {
                 "description": "The admin password for the VM created."
             }
         },
-        "WindowsOSVersion": {
-            "type": "string",
-            "defaultValue": "2012-R2-Datacenter",
-            "allowedValues": [
-                "2008-R2-SP1",
-                "2012-Datacenter",
-                "2012-R2-Datacenter",
-                "Windows-Server-Technical-Preview"
-            ],
-            "metadata": {
-                "description": "The version of the Windows OS for the VM."
-            }
-        },
-        "ImagePublisher": {
-            "type": "string",
-            "defaultValue": "MicrosoftWindowsServer",
-            "metadata": {
-                "description": "The publisher of the vm."
-            }
-        },
-        "ImageOffer": {
-            "type": "string",
-            "defaultValue": "WindowsServer",
-            "metadata": {
-                "description": "The image used for the Windows vm."
-            }
-        },
-        "VmSize": {
+        "vmSize": {
             "type": "string",
             "defaultValue": "Standard_D2",
             "allowedValues": [
@@ -106,20 +78,6 @@
             "metadata": {
                 "description": "The name of the public ip address"
             }
-        },
-        "deployDSCPullServerConfigurationFile": {
-            "type": "string",
-            "defaultValue": "https://raw.githubusercontent.com/tcsatheesh/azure-quickstart-templates/master/101-deploy-dsc-pullserver-to-win-server/ConfigurePullServer.ps1.zip",
-            "metadata": {
-                "description": "The location of the pull server configuration module."
-            }
-        },
-        "deployDSCPullServerConfigurationFunction": {
-            "type": "string",
-            "defaultValue": "ConfigurePullServer.ps1\\ConfigurePullServer",
-            "metadata": {
-                "description": "The dsc configuration that implements the pull server."
-            }
         }
     },
     "variables": {
@@ -135,11 +93,18 @@
         "dscPullSrvSubnetRef": "[concat(variables('dscPullSrvVnetID'), '/subnets/', variables('VirtualNetworkSubnet1Name'))]",
         "dscPullSrvStorageAccountContainerName": "vhds",
         "dscPullSrvNicName": "[concat(parameters('dscPullSrvName'), 'NetworkInterface')]",
-        "dscPullIPName": "dscPullIP"
+        "dscPullIPName": "dscPullIP",
+        
+        "deployDSCPullServerConfigurationFile": "https://raw.githubusercontent.com/tcsatheesh/azure-quickstart-templates/master/101-deploy-dsc-pullserver-to-win-server/ConfigurePullServer.ps1.zip",
+        "deployDSCPullServerConfigurationFunction": "ConfigurePullServer.ps1\\ConfigurePullServer",
+        
+        "windowsOSVersion": "2012-R2-Datacenter",
+        "imagePublisher": "MicrosoftWindowsServer",
+        "imageOffer": "WindowsServer"
     },
     "resources": [
         {
-            "name": "[parameters('StorageName')]",
+            "name": "[parameters('storageName')]",
             "type": "Microsoft.Storage/storageAccounts",
             "location": "[parameters('location')]",
             "apiVersion": "2015-05-01-preview",
@@ -148,7 +113,7 @@
                 "displayName": "Storage"
             },
             "properties": {
-                "accountType": "[parameters('StorageType')]"
+                "accountType": "[parameters('storageType')]"
             }
         },
         {
@@ -217,7 +182,7 @@
             "location": "[parameters('location')]",
             "apiVersion": "2015-05-01-preview",
             "dependsOn": [
-                "[concat('Microsoft.Storage/storageAccounts/', parameters('StorageName'))]",
+                "[concat('Microsoft.Storage/storageAccounts/', parameters('storageName'))]",
                 "[concat('Microsoft.Network/networkInterfaces/', variables('dscPullSrvNicName'))]"
             ],
             "tags": {
@@ -225,24 +190,24 @@
             },
             "properties": {
                 "hardwareProfile": {
-                    "vmSize": "[parameters('VmSize')]"
+                    "vmSize": "[parameters('vmSize')]"
                 },
                 "osProfile": {
                     "computername": "[parameters('dscPullSrvName')]",
-                    "adminUsername": "[parameters('AdminUsername')]",
-                    "adminPassword": "[parameters('AdminPassword')]"
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]"
                 },
                 "storageProfile": {
                     "imageReference": {
-                        "publisher": "[parameters('ImagePublisher')]",
-                        "offer": "[parameters('ImageOffer')]",
-                        "sku": "[parameters('WindowsOSVersion')]",
+                        "publisher": "[variables('imagePublisher')]",
+                        "offer": "[variables('imageOffer')]",
+                        "sku": "[variables('windowsOSVersion')]",
                         "version": "latest"
                     },
                     "osDisk": {
                         "name": "dscPullSrvOSDisk",
                         "vhd": {
-                            "uri": "[concat('http://', parameters('StorageName'), '.blob.core.windows.net/', variables('dscPullSrvStorageAccountContainerName'), '/', variables('dscPullSrvOSDiskName'), '.vhd')]"
+                            "uri": "[concat('http://', parameters('storageName'), '.blob.core.windows.net/', variables('dscPullSrvStorageAccountContainerName'), '/', variables('dscPullSrvOSDiskName'), '.vhd')]"
                         },
                         "caching": "ReadWrite",
                         "createOption": "FromImage"
@@ -273,8 +238,8 @@
                         "type": "DSC",
                         "typeHandlerVersion": "1.9",
                         "settings": {
-                            "modulesUrl": "[parameters('deployDSCPullServerConfigurationFile')]",
-                            "configurationFunction": "[parameters('deployDSCPullServerConfigurationFunction')]",
+                            "modulesUrl": "[variables('deployDSCPullServerConfigurationFile')]",
+                            "configurationFunction": "[variables('deployDSCPullServerConfigurationFunction')]",
                             "properties": { }
                         },
                         "protectedSettings": { }
