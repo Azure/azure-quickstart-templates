@@ -1,41 +1,60 @@
-from Utils.WAAgentUtil import waagent
-import Utils.HandlerUtil as Util
-import commands
 import os
 import re
 import json
-waagent.LoggerInit('/var/log/waagent.log','/dev/stdout')
+from subprocess import call
+from Utils.WAAgentUtil import waagent
+import Utils.HandlerUtil as Util
+
+
+call("mkdir -p ./bosh", shell=True)
+
+# Get settings from CustomScriptForLinux extension configurations
+waagent.LoggerInit('/var/log/waagent.log', '/dev/stdout')
 hutil =  Util.HandlerUtility(waagent.Log, waagent.Error, "bosh-deploy-script")
 hutil.do_parse_context("enable")
-settings= hutil.get_public_settings()
-
-from subprocess import call
-call("mkdir -p ./bosh",shell=True)
-call("mkdir -p ./bosh/.ssh",shell=True)
-
-for f in ['micro_bosh.yml','deploy_micro_bosh.sh','micro_cf.yml']:
-    if not os.path.exists(f):
-        continue 
-    with open (f,"r") as tmpfile:
-        content = tmpfile.read()
-    for i  in settings.keys():
-        if i == 'fileUris':
-           continue
-        content=re.compile(re.escape("#"+i+"#"), re.IGNORECASE).sub(settings[i],content)
-    with open (os.path.join('bosh',f),"w") as tmpfile:
-        tmpfile.write(content)
-
-with open (os.path.join('bosh','settings'),"w") as tmpfile:
+settings = hutil.get_public_settings()
+with open (os.path.join('bosh','settings'), "w") as tmpfile:
     tmpfile.write(json.dumps(settings, indent=4, sort_keys=True))
+username = settings["username"]
+home_dir = "/home/{0}".format(username)
+cf_ip = settings["cf-ip"]
+#dns_ip = settings["dns-ip"]
+import re,urllib2
+dns_ip = re.search('\d+\.\d+\.\d+\.\d+',urllib2.urlopen("http://www.whereismyip.com").read()).group(0)
 
-call("sh create_cert.sh >> ./bosh/micro_bosh.yml",shell=True)
-call("chmod 700 myPrivateKey.key",shell=True)
-call("chmod 744 ./bosh/deploy_micro_bosh.sh",shell=True)
-call("cp myPrivateKey.key ./bosh/.ssh/bosh.key",shell=True)
-call("cp -r ./bosh/* /home/"+settings['username'],shell=True)
-call("chown -R "+settings['username']+" "+"/home/"+settings['username'],shell=True)
+# Generate the private key and certificate
+call("sh create_cert.sh", shell=True)
+call("cp bosh.key ./bosh/bosh", shell=True)
+with open ('bosh_cert.pem', 'r') as tmpfile:
+    ssh_cert = tmpfile.read()
+ssh_cert = "|\n" + ssh_cert
+ssh_cert="\n        ".join([line for line in ssh_cert.split('\n')])
 
+# Render the yml template for bosh-init
+bosh_template = 'bosh.yml'
+if os.path.exists(bosh_template):
+    with open (bosh_template, 'r') as tmpfile:
+        contents = tmpfile.read()
+    for k in ["RESOURCE-GROUP-NAME", "STORAGE-ACCESS-KEY", "STORAGE-ACCOUNT-NAME", "SUBNET-NAME", "SUBNET-NAME-FOR-CF", "SUBSCRIPTION-ID", "VNET-NAME"]:
+        v = settings[k]
+        contents = re.compile(re.escape(k)).sub(v, contents)
+    contents = re.compile(re.escape("SSH-CERTIFICATE")).sub(ssh_cert, contents)
+    with open (os.path.join('bosh', bosh_template), 'w') as tmpfile:
+        tmpfile.write(contents)
 
-call("rm -r /tmp; mkdir /mnt/tmp; ln -s /mnt/tmp /tmp; chmod 777 /mnt/tmp ;chmod 777 /tmp", shell=True)
-call("mkdir /mnt/bosh_install; cp install_bosh_client.sh /mnt/bosh_install; cd /mnt/bosh_install ; sh install_bosh_client.sh >/home/"+settings['username']+"/install.log 2>&1;",shell=True)
-exit(0)
+# Copy all the files in ./bosh into the home directory
+call("cp -r ./bosh/* {0}".format(home_dir), shell=True)
+call("chown -R {0} {1}".format(username, home_dir), shell=True)
+
+# Install bosh_cli and bosh-init
+#call("rm -r /tmp; mkdir /mnt/tmp; ln -s /mnt/tmp /tmp; chmod 777 /mnt/tmp; chmod 777 /tmp", shell=True)
+call("mkdir /mnt/bosh_install; cp init.sh /mnt/bosh_install; cd /mnt/bosh_install ; sh init.sh >{0}/install.log 2>&1;".format(home_dir), shell=True)
+
+# Update motd
+call("cp -f 98-msft-love-cf /etc/update-motd.d/", shell=True)
+call("chmod 755 /etc/update-motd.d/98-msft-love-cf", shell=True)
+
+# Setup the devbox as a DNS
+enable_dns = settings["enable-dns"]
+if enable_dns:
+    call("python setup_dns.py -d cf.azurelovecf.com -i 10.0.16.4 -e {0} -n {1} >/dev/null 2>&1".format(cf_ip, dns_ip), shell=True)
