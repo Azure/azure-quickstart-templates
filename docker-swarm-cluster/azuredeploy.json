@@ -93,6 +93,13 @@
             "metadata": {
                 "description": "Password of the root user account inside the virtual machines"
             }
+        },
+        "installDockerScript": {
+            "type": "string",
+            "defaultValue": "https://raw.githubusercontent.com/jangelfdez/azure-quickstart-templates/master/docker-swarm-cluster/install-docker-node.sh",
+            "metadata": {
+                "description": "Link to the Shell script used to install the latest experimental release of Docker inside the nodes"
+            }
         }
 
     },
@@ -186,7 +193,7 @@
                     }
                 ]
             }
-        },
+        }, /*
         {
             "name": "[concat('swarm-node-', copyIndex(1))]",
             "type": "Microsoft.Compute/virtualMachines",
@@ -255,9 +262,9 @@
                 }
             ]
 
-        },
+        }, */
         {
-            "name": "swarm-manage-nic",
+            "name": "swarm-master-nic",
             "type": "Microsoft.Network/networkInterfaces",
             "apiVersion": "2015-05-01-preview",
             "location": "[parameters('location')]",
@@ -267,7 +274,7 @@
             "properties": {
                 "ipConfigurations": [
                     {
-                        "name": "swarm-manage-nic-privateIp",
+                        "name": "swarm-master-nic-privateIp",
                         "properties": {
                             "privateIPAllocationMethod": "Dynamic",
                             "subnet": {
@@ -315,7 +322,7 @@
                 "networkProfile": {
                     "networkInterfaces": [
                         {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces', swarm-master-nic",
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', 'swarm-master-nic')]",
                             "properties": {
                                 "primary": "true"
                             }
@@ -325,7 +332,7 @@
             },
             "resources": [
                 {
-                    "name": "dockerVmExtension",
+                    "name": "dockerInstallExtension",
                     "type": "extensions",
                     "apiVersion": "2015-05-01-preview",
                     "location": "[parameters('location')]",
@@ -333,11 +340,16 @@
                         "Microsoft.Compute/virtualMachines/swarm-master"
                     ],
                     "properties": {
-                        "publisher": "Microsoft.Azure.Extensions",
-                        "type": "DockerExtension",
-                        "typeHandlerVersion": "1.0",
+                        "publisher": "Microsoft.OSTCExtensions",
+                        "type": "CustomScriptForLinux",
+                        "typeHandlerVersion": "1.2",
                         "autoUpgradeMinorVersion": "true",
-                        "settings": { }
+                        "settings": {
+                            "fileUris": [
+                                "https://raw.githubusercontent.com/jangelfdez/azure-quickstart-templates/master/docker-swarm-cluster/install-docker-node.sh"
+                            ],
+                            "commandToExecute": "[concat('sh install-docker-node.sh ', parameters('adminUsername'), ' ',  parameters('adminPassword'))]"
+                        }
                     }
                 }
             ]
