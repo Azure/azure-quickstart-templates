@@ -100,6 +100,21 @@
             "metadata": {
                 "description": "Link to the Shell script used to install the latest experimental release of Docker inside the nodes"
             }
+        },
+        "swarm-master-publicIpDnsName": {
+            "type": "string",
+            "defaultValue": "dockerSwarmCluster",
+            "metadata": {
+                "description":  "Name of the DNS assigned to the master node to be able to access through internet"
+            }
+
+        },
+        "swarm-master-publicIpName": {
+            "type": "string",
+            "defaultValue": "swarm-master-publicIp",
+            "metadata": {
+                "description": "Name of the public Ip assigned to the master node"
+            }
         }
 
     },
@@ -173,27 +188,21 @@
             }
         },
         {
-            "name": "swarm-manage-nic",
-            "type": "Microsoft.Network/networkInterfaces",
-            "apiVersion": "2015-05-01-preview",
+            "name": "[parameters('swarm-master-publicIpName')]",
+            "type": "Microsoft.Network/publicIPAddresses",
             "location": "[parameters('location')]",
-            "dependsOn": [
-                "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
-            ],
+            "apiVersion": "2015-05-01-preview",
+            "dependsOn": [ ],
+            "tags": {
+                "displayName": "[parameters('swarm-master-publicIpName')]"
+            },
             "properties": {
-                "ipConfigurations": [
-                    {
-                        "name": "swarm-manage-nic-privateIp",
-                        "properties": {
-                            "privateIPAllocationMethod": "Dynamic",
-                            "subnet": {
-                                "id": "[resourceId('Microsoft.Network/virtualnetworks/subnets', parameters('virtualNetworkName'), parameters('subnetSwarmName'))]"
-                            }
-                        }
-                    }
-                ]
+                "publicIPAllocationMethod": "Dynamic",
+                "dnsSettings": {
+                    "domainNameLabel": "[parameters('swarm-master-publicIpDnsName')]"
+                }
             }
-        }, /*
+        },
         {
             "name": "[concat('swarm-node-', copyIndex(1))]",
             "type": "Microsoft.Compute/virtualMachines",
@@ -245,7 +254,7 @@
             },
             "resources": [
                 {
-                    "name": "dockerVmExtension",
+                    "name": "dockerIntallExtension",
                     "type": "extensions",
                     "apiVersion": "2015-05-01-preview",
                     "location": "[parameters('location')]",
@@ -253,32 +262,42 @@
                         "[concat('Microsoft.Compute/virtualMachines/swarm-node-', copyIndex(1))]"
                     ],
                     "properties": {
-                        "publisher": "Microsoft.Azure.Extensions",
-                        "type": "DockerExtension",
-                        "typeHandlerVersion": "1.0",
+                        "publisher": "Microsoft.OSTCExtensions",
+                        "type": "CustomScriptForLinux",
+                        "typeHandlerVersion": "1.2",
                         "autoUpgradeMinorVersion": "true",
-                        "settings": { }
+                        "settings": {
+                            "fileUris": [
+                                "https://raw.githubusercontent.com/jangelfdez/azure-quickstart-templates/master/docker-swarm-cluster/install-docker-node.sh"
+                            ],
+                            "commandToExecute": "[concat('sh install-docker-node.sh ',  parameters('adminUsername'))]"
+                        }
                     }
                 }
             ]
 
-        }, */
+        },
         {
             "name": "swarm-master-nic",
             "type": "Microsoft.Network/networkInterfaces",
             "apiVersion": "2015-05-01-preview",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
+                "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
+                "[concat('Microsoft.Network/publicIPAddresses/', parameters('swarm-master-publicIpName'))]"
             ],
             "properties": {
                 "ipConfigurations": [
                     {
                         "name": "swarm-master-nic-privateIp",
                         "properties": {
-                            "privateIPAllocationMethod": "Dynamic",
+                            "privateIPAddress": "10.0.1.100",
+                            "privateIPAllocationMethod": "Static",
                             "subnet": {
                                 "id": "[resourceId('Microsoft.Network/virtualnetworks/subnets', parameters('virtualNetworkName'), parameters('subnetSwarmName'))]"
+                            },
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('swarm-master-publicIpName'))]"
                             }
                         }
                     }
@@ -290,9 +309,14 @@
             "type": "Microsoft.Compute/virtualMachines",
             "apiVersion": "2015-05-01-preview",
             "location": "[parameters('location')]",
+            "copy": {
+                "name": "swarm-vm-copy",
+                "count": "[parameters('swarmNodesNumber')]"
+            },
             "dependsOn": [
                 "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
-                "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
+                "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
+                "[concat('Microsoft.Network/virtualMachines/', concat('swarm-node-', copyIndex(1)))]"
             ],
             "properties": {
                 "hardwareProfile": {
@@ -346,7 +370,7 @@
                         "autoUpgradeMinorVersion": "true",
                         "settings": {
                             "fileUris": [
-                                "https://raw.githubusercontent.com/jangelfdez/azure-quickstart-templates/master/docker-swarm-cluster/install-docker-node.sh"
+                                "https://raw.githubusercontent.com/jangelfdez/azure-quickstart-templates/master/docker-swarm-cluster/install-docker-master.sh"
                             ],
                             "commandToExecute": "[concat('sh install-docker-node.sh ', parameters('adminUsername'), ' ',  parameters('adminPassword'))]"
                         }
@@ -354,5 +378,6 @@
                 }
             ]
         }
+
     ]
 }
