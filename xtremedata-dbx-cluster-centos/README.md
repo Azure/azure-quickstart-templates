@@ -1,5 +1,7 @@
 # XtremeData Inc dbX cluster template
 
+*This template is using a custom CentOS 6 image that includes the XtremeData dbX software and relevant scripts. Since currently it is not possible to create VMs using a custom "user image" that is located in a different storage account, this template demonstrates a workaround to use a small helper VM and simple bash script using Azure CLI to copy the image from the XtremeData's storage account to the newly created storage account defined in the template prior to the creation of the rest of the VMs from that image.*
+
 Create dbX cluster (please be patient, deployment of a trial version takes about 30 minutes)
 
 [![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fxtremedata%2Fazure-quickstart-templates%2Fmaster%2Fxtremedata-dbx-cluster-centos%2Fazuredeploy.json) 
@@ -22,7 +24,7 @@ web management console (the passwords for all the default users are as provided 
 
 dbX cluster head (the master node) is always the first created - with index '0'. Please use this node for cluster management and SQL queries. Access to this node can be:
 
-*   either via public DNS name *{entered_domain_name}x16-0.{location}.cloudapp.azure.com*
+*   either via public DNS name *{entered_domain_name}.{location}.cloudapp.azure.com*
 *   or via public IP address (available on the Azure console)
 
 _For web management console please accept the secure certificate exception when asked._

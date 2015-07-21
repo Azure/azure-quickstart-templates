@@ -14,26 +14,9 @@
         },
         "newStorageAccountName": {
             "type": "String",
-            "defaultValue": "dbxstrg",
+            "defaultValue": "",
             "metadata": {
                 "description": "Prefix for new storage account that will be created to store virtual machine VHDs"
-            }
-        },
-        "storageAccountType": {
-            "type": "String",
-            "defaultValue": "Premium_LRS",
-            "allowedValues": [
-                "Premium_LRS"
-            ],
-            "metadata": {
-                "description": "Azure cloud storage account type"
-            }
-        },
-        "hostName": {
-            "type": "String",
-            "defaultValue": "dbxvm",
-            "metadata": {
-                "description": "Prefix for dbX cluster nodes virtual machines name"
             }
         },
         "domainName": {
@@ -41,13 +24,6 @@
             "defaultValue": "dbx",
             "metadata": {
                 "description": "Prefix for dbX cluster public domain name"
-            }
-        },
-        "vnetName": {
-            "type": "String",
-            "defaultValue": "dbxvn",
-            "metadata": {
-                "description": "Prefix for dbX cluster network resources"
             }
         },
         "adminPassword": {
@@ -68,16 +44,6 @@
                 "description": "dbX cluster node type"
             }
         },
-        "dataDiskSize": {
-            "type": "int",
-            "defaultValue": 128,
-            "allowedValues": [
-                128
-            ],
-            "metadata": {
-                "description": "Size of each of the two data disks, in GB"
-            }
-        },
         "vmCount": {
             "type": "int",
             "defaultValue": 2,
@@ -89,9 +55,13 @@
             }
         }
     },
+
     "variables": {
-        "suffix": "x16",
+        "suffix": "",
         "srcImage": "https://dbxpub.blob.core.windows.net:443/imgs/dbx-v4b-2-os-2015-07-15.vhd?se=2015-10-15T00%3A00%3A00Z&sp=r&sv=2014-02-14&sr=b&sig=iNDInvOf7Qab1iqAhISgadD3TEKGgtZl9kR9ZsHXDlQ%3D",
+        "suffixes": ["","1","2","3","4","5","6","7","8","9"],
+        "pub_ports": [22, 5001, 5002, 5003, 5004, 5005, 5006, 5007, 5008, 5009],
+        "storageAccountType": "Premium_LRS",
         "vnetAddressSpace": "10.0.0.0/16",
         "subnetAddressSpace": "10.0.0.0/24",
         "subnetAddressPrefix": "10.0.0",
@@ -108,13 +78,15 @@
             "version": "latest"
         },
         "storageAccountName": "[concat(parameters('newStorageAccountName'), variables('suffix') )]",
+        "dataDiskSize": 128,
         "osImage": "[concat('http://',parameters('newStorageAccountName'),variables('suffix'),'.blob.core.windows.net/img/os-disk-img.vhd')]",
-        "vnetName": "[concat(parameters('vnetName'), variables('suffix') )]",
-        "hostName": "[concat(parameters('hostName'), variables('suffix') )]",
+        "vnetName": "[concat(parameters('domainName'), '.vn')]",
+        "hostName": "[concat(parameters('domainName'), '.vm')]",
         "templateURLBase": "https://raw.githubusercontent.com/xtremedata/azure-quickstart-templates/master/xtremedata-dbx-cluster-centos",
         "adminUsername": "azure-user",
-        "customData": "aGVsbG8gZnJvbSBPbGVnCg=="
+        "customData": "WHRyZW1lRGF0YSBJbmM="
     },
+
     "resources": [
         {
             "apiVersion": "2015-05-01-preview",
@@ -122,7 +94,7 @@
             "name": "[variables('storageAccountName')]",
             "location": "[parameters('location')]",
             "properties": {
-                "accountType": "[parameters('storageAccountType')]"
+                "accountType": "[variables('storageAccountType')]"
             }
         },
         {
@@ -263,17 +235,17 @@
         {
             "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Network/publicIPAddresses",
-            "name": "[concat('dbx-ip', variables('suffix'), '-', copyindex())]",
+            "name": "[concat('dbx-ip', variables('suffix'), copyindex())]",
             "location": "[parameters('location')]",
             "copy": {
-              "name": "ipAddrLoop",
-              "count": "[parameters('vmCount')]"
+                "name" : "pIPAddrLoop",
+                "count": "[parameters('vmCount')]"
             },
             "properties": {
                 "publicIPAllocationMethod": "Dynamic",
                 "idleTimeoutInMinutes": 4,
                 "dnsSettings": {
-                    "domainNameLabel": "[concat(parameters('domainName'), variables('suffix'),'-',copyindex())]"
+                    "domainNameLabel": "[concat(parameters('domainName'), variables('suffix'), variables('suffixes')[copyindex()])]"
                 }
             }
         },
@@ -284,7 +256,7 @@
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
-                "[concat('Microsoft.Network/publicIPAddresses/', 'dbx-ip', variables('suffix'), '-', copyindex())]"
+                "[concat('Microsoft.Network/publicIPAddresses/', 'dbx-ip', variables('suffix'), copyindex())]"
             ],
             "copy": {
               "name": "nicLoop",
@@ -298,7 +270,7 @@
                             "privateIPAllocationMethod": "Static",
                             "privateIPAddress": "[concat(variables('subnetAddressPrefix'),'.', copyindex(10))]",
                             "publicIPAddress": {
-                                "id": "[concat(resourceGroup().id, '/providers/Microsoft.Network/publicIPAddresses/', 'dbx-ip', variables('suffix'), '-', copyindex())]"
+                                "id": "[concat(resourceGroup().id, '/providers/Microsoft.Network/publicIPAddresses/', 'dbx-ip', variables('suffix'), copyindex())]"
                             },
                             "subnet": {
                                 "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('vnetName')), '/subnets/', variables('subnetName'))]"
@@ -351,7 +323,7 @@
                     "dataDisks": [
                         {
                             "name": "datadisk0",
-                            "diskSizeGB": "[parameters('dataDiskSize')]",
+                            "diskSizeGB": "[variables('dataDiskSize')]",
                             "lun": 0,
                             "vhd": {
                                 "Uri": "[concat('http://', variables('storageAccountName'), '.blob.core.windows.net/vhds/', variables('hostName'),'-',copyindex(), '-datadisk0.vhd')]"
@@ -361,7 +333,7 @@
                         },
                         {
                             "name": "datadisk1",
-                            "diskSizeGB": "[parameters('dataDiskSize')]",
+                            "diskSizeGB": "[variables('dataDiskSize')]",
                             "lun": 1,
                             "vhd": {
                                 "Uri": "[concat('http://', variables('storageAccountName'), '.blob.core.windows.net/vhds/', variables('hostName'),'-',copyindex(), '-datadisk1.vhd')]"
@@ -371,7 +343,7 @@
                         },
                         {
                             "name": "datadisk2",
-                            "diskSizeGB": "[parameters('dataDiskSize')]",
+                            "diskSizeGB": "[variables('dataDiskSize')]",
                             "lun": 2,
                             "vhd": {
                                 "Uri": "[concat('http://', variables('storageAccountName'), '.blob.core.windows.net/vhds/', variables('hostName'),'-',copyindex(), '-datadisk2.vhd')]"
@@ -381,7 +353,7 @@
                         },
                         {
                             "name": "datadisk3",
-                            "diskSizeGB": "[parameters('dataDiskSize')]",
+                            "diskSizeGB": "[variables('dataDiskSize')]",
                             "lun": 3,
                             "vhd": {
                                 "Uri": "[concat('http://', variables('storageAccountName'), '.blob.core.windows.net/vhds/', variables('hostName'),'-',copyindex(), '-datadisk3.vhd')]"
@@ -391,7 +363,7 @@
                         },
                         {
                             "name": "datadisk4",
-                            "diskSizeGB": "[parameters('dataDiskSize')]",
+                            "diskSizeGB": "[variables('dataDiskSize')]",
                             "lun": 4,
                             "vhd": {
                                 "Uri": "[concat('http://', variables('storageAccountName'), '.blob.core.windows.net/vhds/', variables('hostName'),'-',copyindex(), '-datadisk4.vhd')]"
@@ -401,7 +373,7 @@
                         },
                         {
                             "name": "datadisk5",
-                            "diskSizeGB": "[parameters('dataDiskSize')]",
+                            "diskSizeGB": "[variables('dataDiskSize')]",
                             "lun": 5,
                             "vhd": {
                                 "Uri": "[concat('http://', variables('storageAccountName'), '.blob.core.windows.net/vhds/', variables('hostName'),'-',copyindex(), '-datadisk5.vhd')]"
@@ -415,6 +387,22 @@
                     "networkInterfaces": [
                         {
                             "id": "[resourceId('Microsoft.Network/networkInterfaces',concat('nic',copyindex()))]"
+                        }
+                    ],
+                    "inputEndpoints": [
+                        {
+                            "enableDirectServerReturn": "False",
+                            "endpointName": "SSH",
+                            "privatePort": 22,
+                            "publicPort": "[variables('pub_ports')[copyindex()]]",
+                            "protocol": "tcp"
+                        },
+                        {
+                            "enableDirectServerReturn": "False",
+                            "endpointName": "xdadm",
+                            "privatePort": 2400,
+                            "publicPort": 2400,
+                            "protocol": "https"
                         }
                     ]
                 }
@@ -445,8 +433,6 @@
                 }
             }
         }
-
-
     ]
 }
 
