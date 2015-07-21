@@ -8,6 +8,6 @@ sudo docker pull swarm
 
 CLUSTERID="$(sudo docker run --rm swarm create)"
 
-docker run -H tcp://10.0.1.4:2375 -d swarm join --addr="10.0.1.4" token://$CLUSTERID
-docker run -H tcp://10.0.1.5:2375 -d swarm join --addr="10.0.1.5" token://$CLUSTERID
-docker run -H tcp://10.0.1.6:2375 -d swarm join --addr="10.0.1.6" token://$CLUSTERID
+docker -H tcp://10.0.1.4:2375 run -d swarm join --addr="10.0.1.4:2375" token://$CLUSTERID
+docker -H tcp://10.0.1.5:2375 run -d swarm join --addr="10.0.1.5:2375" token://$CLUSTERID
+docker -H tcp://10.0.1.6:2375 run -d swarm join --addr="10.0.1.6:2375" token://$CLUSTERID
