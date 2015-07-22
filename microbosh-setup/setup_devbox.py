@@ -59,4 +59,3 @@ if enable_dns:
     # Update motd
     call("cp -f 98-msft-love-cf /etc/update-motd.d/", shell=True)
     call("chmod 755 /etc/update-motd.d/98-msft-love-cf", shell=True)
-    call("shutdown -r 1 &", shell=True)
