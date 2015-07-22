@@ -9,13 +9,9 @@ Below are the parameters that the template expects
 | Name                      | Description                                               |
 |:-------------------------:|:---------------------------------------------------------:|
 | location                  | Azure region where the resource will be deployed to       |
-| applicationGatewayName    | Name of Application Gateway                               |
-| publicIPAddressName       | Name of Public IP address resource                        |
-| virtualNetworkName        | Name of Virtual Network                                   |
-| subnetName                | Name of Subnet                                            |
 | addressPrefix             | Prefix for the address in CIDR format                     |
 | subnetPrefix              | Prefix for the subnet in CIDR format                      |
 | skuName                   | Sku Name                                                  |
 | capacity                  | Number of instances                                       |
 | backendIpAddress1         | IP Address for Backend Server 1                           |
-| backendIpAddress1         | IP Address for Backend Server 2                           |
+| backendIpAddress2         | IP Address for Backend Server 2                           |
