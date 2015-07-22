@@ -1,10 +1,10 @@
-# XtremeData Inc dbX Cluster [Preview on Azure] Template
+# XtremeData dbX Cluster [Preview on Azure] Template
 
-This template deploys XtremeData dbX cluster (an MPP relational database) with the provided configuration parameters in the West US region.
+This template deploys XtremeData dbX cluster (MPP data warehouse) with the provided configuration parameters in the West US region.
 
 *The template is using a custom CentOS 6 image that includes the XtremeData dbX software and relevant scripts. Since currently it is not possible to create VMs using a custom "user image" that is located in a different storage account, this template demonstrates a workaround to use a small helper VM and simple bash script using Azure CLI to copy the image from the XtremeData's storage account to the newly created storage account defined in the template prior to the creation of the rest of the VMs from that image.*
 
-Create the dbX cluster (please be patient, deployment of this preview version takes about 30 minutes)
+Create the dbX cluster (Please be patient - this is preview of deployment on Azure. It takes about 30 minutes)
 
 NOTE: You may need to be already logged into your Azure account before hitting the below "deploy" button in order for the Azure deployment screen to come up.
 
