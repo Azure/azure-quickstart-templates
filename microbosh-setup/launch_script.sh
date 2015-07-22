@@ -1,4 +1,4 @@
-for f in bosh.yml create_cert.sh setup_devbox.py init.sh 98-msft-love-cf
+for f in bosh.yml create_cert.sh setup_devbox.py init.sh deploy_bosh.sh 98-msft-love-cf
 do
    wget $1/$f -O $f
 done
