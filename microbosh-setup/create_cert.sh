@@ -8,5 +8,3 @@ Soft
 SShKey
 test@abc.com
 EndOfMessage
-
-chmod 400 bosh
