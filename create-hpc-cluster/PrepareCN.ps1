@@ -48,6 +48,9 @@ if($domainRole -ne 3)
         catch
         {
             TraceInfo "Join domain failed, will try after 10 seconds, $_"
+            # Flush the DNS cache in case the cached head node ip is wrong.
+            # Do not use Clear-DnsClientCache because it is not supported in Windows Server 2008 R2
+            Start-Process -FilePath ipconfig -ArgumentList "/flushdns" -Wait -NoNewWindow | Out-Null
             Start-Sleep -Seconds 10
         }
     }
