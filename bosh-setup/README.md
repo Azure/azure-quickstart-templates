@@ -23,3 +23,7 @@ Below are the parameters that the template expects
 | adminUsername  | Username for the Virtual Machines  |
 | adminPassword  | Password for the Virtual Machine  |
 | enableDNSOnDevbox | A default DNS will be setup in the devbox if it is true |
+
+Note:
+
+You can set enableDNSOnDevbox true to configure your dev-box as a DNS server for testing quickly. You should reboot the dev-box manually after the DNS is deployed. And if your dev-box reboots, its public IP address may change. You need to manually update it in /etc/bind/cf.com.wan.
