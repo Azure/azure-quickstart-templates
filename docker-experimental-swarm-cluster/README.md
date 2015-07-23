@@ -1,7 +1,4 @@
-# Docker Swarm Cluster
-
-
-
+# Docker Experimental Swarm Cluster
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmongodb-on-centosdocker-swarm-cluster%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
@@ -9,11 +6,15 @@
 
 Swarm is the clustering technolgy used with Docker to create clusters to deploy our containers. This template deploys the infrastructure to build a cluster with a management node and three cluster nodes. You can customize the number of nodes using the parameters. This template also deploys a Storage Account, Virtual Network, a Public IP address and the Network Interfaces required.
 
+**This templates uses the latest release of Docker through it's experimental channel**
+
+After the deployment, you can connect through SSH to the master nodes and manage the Swarm Cluster through the port 5005
+
 Below are the parameters that the template accepts.
 
-### Parameters you should modify
+### Parameters you should provide
 
-This parameters are defined by default but they should change to avoid collisions with others resources deployed to Azure by other users.
+This parameters are not defined by default and you should add. Remember to select a unique name to avoid collisions with others resources deployed to Azure by other users.
 
 | Name   | Description    |
 |:--- |:---|
