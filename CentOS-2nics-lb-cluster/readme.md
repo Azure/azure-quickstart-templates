@@ -4,7 +4,7 @@
 
 
 
-This template deploys a 2-10-node CentOS 6.5 cluster using the ARM "copy" feature. Each node has 2 network cards:
+This template deploys a 2-10-node CentOS 6.5 cluster using the [Azure Resource Manager (ARM)](https://azure.microsoft.com/en-us/documentation/articles/resource-group-overview/) "copy" feature. Each node has 2 network cards:
 
 * The first one is on a "public" subnet.
 * The second one is on a "private" subnet.
