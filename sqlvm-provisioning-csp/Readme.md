@@ -9,7 +9,7 @@ Requires the latest Azure PowerShell SDK http://azure.microsoft.com/en-us/downlo
 
 Click the button below to deploy from the portal
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsql-server-2014-alwayson-dsc%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsqlvm-provisioning-csp%2FSQLServerVMDeployment.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
