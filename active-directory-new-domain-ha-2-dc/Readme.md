@@ -38,7 +38,7 @@ Below are the parameters that the template expects
 | dnsPrefix | The DNS prefix for the public IP address used by the Load Balancer |
 | pdcRDPPort | The public RDP port for the PDC VM |
 | bdcRDPPort | The public RDP port for the BDC VM |
-| AssetLocation | The location of resources such as templates and DSC modules that the script is dependent <br> <ul><li> **https://raw.githubusercontent.com/azurermtemplates/azurermtemplates/master/activedirectorynewdomain-ha-2-dc (default)**</li></ul> |
+| AssetLocation | The location of resources such as templates and DSC modules that the script is dependent <br> <ul><li> **https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/active-directory-new-domain-ha-2-dc (default)**</li></ul> |
 
 
 # Known Issues

@@ -4,7 +4,9 @@
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-This template allows you to create a Virtual Machines with multiple (2) network interfaces (NICs), and RDP connectable with a configured load balancer and an inbound NAT rule. More NICs can easily  be added with this template. This template also deploys a Storage Account, Virtual Network, Public IP address, and 2 Network Interfaces (front-end and back-end).| Name   | Description    |
+This template allows you to create a Virtual Machines with multiple (2) network interfaces (NICs), and RDP connectable with a configured load balancer and an inbound NAT rule. More NICs can easily  be added with this template. This template also deploys a Storage Account, Virtual Network, Public IP address, and 2 Network Interfaces (front-end and back-end).
+
+| Name   | Description    |
 |:--- |:---|
 | storageAccountName  | Unique DNS Name for the Storage Account where the Virtual Machine's disks will be placed. |
 | adminUsername  | Username for the Virtual Machines  |

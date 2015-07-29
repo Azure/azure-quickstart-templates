@@ -10,7 +10,7 @@
     [Parameter(Mandatory=$true, ParameterSetName='Prepare')]
     [String] $AdminBase64Password,
 
-    [Parameter(Mandatory=$false, ParameterSetName='Prepare')]
+    [Parameter(Mandatory=$true, ParameterSetName='Prepare')]
     [String] $PublicDnsName,
 
     [Parameter(Mandatory=$false, ParameterSetName='Prepare')]
@@ -31,8 +31,8 @@
     [Parameter(Mandatory=$false, ParameterSetName='Prepare')]
     [String] $PostConfigScript="",
 
-    [Parameter(Mandatory=$true, ParameterSetName='Prepare')]
-    [switch] $NodePrepare,
+    [Parameter(Mandatory=$false, ParameterSetName='Prepare')]
+    [Switch] $UnsecureDNSUpdate,
 
     [Parameter(Mandatory=$true, ParameterSetName='NodeState')]
     [switch] $NodeStateCheck
@@ -171,7 +171,10 @@ function PrepareHeadNode
     [String] $AzureStorageConnStr="",
 
     [Parameter(Mandatory=$false)]
-    [String] $PostConfigScript=""
+    [String] $PostConfigScript="",
+
+    [Parameter(Mandatory=$false)]
+    [Switch] $UnsecureDNSUpdate
     )
 
     Import-Module ScheduledTasks
@@ -192,7 +195,11 @@ function PrepareHeadNode
         if($null -eq $task)
         {
             $HNPreparePsFile = "$PSScriptRoot\PrepareHN.ps1"
-            $taskArgs = "-DomainFQDN $DomainFQDN -PublicDnsName $PublicDnsName -AdminUserName $AdminUserName -AdminBase64Password $AdminBase64Password -NodePrepare"
+            $taskArgs = "-DomainFQDN $DomainFQDN -PublicDnsName $PublicDnsName -AdminUserName $AdminUserName -AdminBase64Password $AdminBase64Password"
+            if($UnsecureDNSUpdate)
+            {
+                $taskArgs += " -UnsecureDNSUpdate"
+            }
             if(-not [string]::IsNullOrEmpty($AzureStorageConnStr))
             {
                 $taskArgs += " -AzureStorageConnStr '$AzureStorageConnStr'"
@@ -448,9 +455,54 @@ function PrepareHeadNode
                     Get-Content -Path "$env:windir\Temp\HPCHeadNodePrepare.log" | Write-Verbose -Verbose
                 }
 
-                throw 'Failed to prepare HPC Head Node'
+                throw "Failed to prepare HPC Head Node"
             }
         } -ArgumentList $PSScriptRoot,$domainUserCred,$AzureStorageConnStr,$PublicDnsName,$PostConfigScript
+
+
+        if($UnsecureDNSUpdate.IsPresent)
+        {
+            TraceInfo "Waiting for default zone directory partitions ready"
+            $retry = 0
+            while ($true)
+            {
+                try
+                {
+                    $ddzState = (Get-DnsServerDirectoryPartition -Name "DomainDnsZones.$DomainFQDN").State
+                    $fdzState = (Get-DnsServerDirectoryPartition -Name "ForestDnsZones.$DomainFQDN").State
+                    if (0 -eq $ddzState -and 0 -eq $fdzState)
+                    {
+                        TraceInfo "Default zone directory partitions ready"
+                        break
+                    }
+
+                    TraceInfo "Default zone directory partitions are not ready. DomainDnsZones: $ddzState ForestDnsZones: $fdzState"
+                }
+                catch
+                {
+                    TraceInfo "Exception while getting zone directory partitions state: $($_ | Out-String)"
+                }
+                if ($retry++ -lt 60)
+                {
+                    TraceInfo "Retry after 10 seconds"
+                    Start-Sleep -Seconds 10
+                }
+                else
+                {
+                    throw "Default zone directory partitions not ready after 20 retries"
+                }
+            }
+
+            try
+            {
+                Set-DnsServerPrimaryZone -Name $DomainFQDN -DynamicUpdate NonsecureAndSecure -ErrorAction Stop
+                TraceInfo "Updated DNS DynamicUpdate to NonsecureAndSecure"
+            }
+            catch
+            {
+                TraceInfo "Failed to update DNS DynamicUpdate to NonsecureAndSecure: $_"
+            }
+        }
 
         Wait-Job $job
         TraceInfo 'job completed'
@@ -490,7 +542,7 @@ function NodeStateCheck
 Set-StrictMode -Version 3
 if ($PsCmdlet.ParameterSetName -eq 'Prepare')
 {
-    if([string]::IsNullOrEmpty($SubscriptionId) -eq $false)
+    if(-not [string]::IsNullOrEmpty($SubscriptionId))
     {
         New-Item -Path HKLM:\SOFTWARE\Microsoft\HPC -Name IaaSInfo -Force | Out-Null
         Set-ItemProperty -Path HKLM:\SOFTWARE\Microsoft\HPC\IaaSInfo -Name SubscriptionId -Value $SubscriptionId
@@ -503,8 +555,8 @@ if ($PsCmdlet.ParameterSetName -eq 'Prepare')
         TraceInfo "The information needed for in-box management scripts succcessfully configured."
     }
 
-    TraceInfo "PrepareHeadNode -DomainFQDN $DomainFQDN -PublicDnsName $PublicDnsName -AdminUserName $AdminUserName -AdminBase64Password $AdminBase64Password -PostConfigScript $PostConfigScript -AzureStorageConnStr $AzureStorageConnStr"
-    PrepareHeadNode -DomainFQDN $DomainFQDN -PublicDnsName $PublicDnsName -AdminUserName $AdminUserName -AdminBase64Password $AdminBase64Password -PostConfigScript $PostConfigScript -AzureStorageConnStr $AzureStorageConnStr
+    TraceInfo "PrepareHeadNode -DomainFQDN $DomainFQDN -PublicDnsName $PublicDnsName -AdminUserName $AdminUserName -PostConfigScript $PostConfigScript -AzureStorageConnStr $AzureStorageConnStr -UnsecureDNSUpdate:$UnsecureDNSUpdate"
+    PrepareHeadNode -DomainFQDN $DomainFQDN -PublicDnsName $PublicDnsName -AdminUserName $AdminUserName -AdminBase64Password $AdminBase64Password -PostConfigScript $PostConfigScript -AzureStorageConnStr $AzureStorageConnStr -UnsecureDNSUpdate:$UnsecureDNSUpdate
 }
 else
 {

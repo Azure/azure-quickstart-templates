@@ -1,11 +1,9 @@
-# Create HPC Cluster
-
-# Using HPC published head node image
+# Create HPC cluster with Windows compute nodes
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fcreate-hpc-cluster%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-This template allows you to create one HPC Cluster
+This template allows you to create an HPC cluster with Windows compute nodes. You can choose HPC Pack 2012 R2 Compute Node image or HPC Pack 2012 R2 Compute Node with Excel image to deploy compute nodes.
 
 Below are the parameters that the template expectes.
 
@@ -15,7 +13,7 @@ Below are the parameters that the template expectes.
 | privateDomainName | The fully qualified domain name (FQDN) for the private domain forest which will be created by this template, for example 'hpcdomain.local'. |
 | headNodeVMSize | Size of the head node Virtual Machine |
 | computeNodeImage | The VM image of the compute nodes |
-| computeNodeNamePrefix | The name prefix of the compute nodes. It can contain letters, numbers and hyphens, and must start with a letter, up to 13 characters, for example, if 'IaaSCN-' is specified, the compute node names will be 'IaaSCN-1', 'IaaSCN-2', ... |
+| computeNodeNamePrefix | The name prefix of the compute nodes. It can contain letters, numbers and hyphens, and must start with a letter, up to 13 characters, for example, if 'IaaSCN-' is specified, the compute node names will be 'IaaSCN-0', 'IaaSCN-1', ... |
 | computeNodeNumber | Number of compute nodes to be deployed |
 | computeNodeVMSize | Size of the compute node Virtual Machine |
 | adminUsername  | Username for the Virtual Machines  |
