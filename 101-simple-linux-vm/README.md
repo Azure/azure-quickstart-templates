@@ -9,7 +9,7 @@ Built by: [coreysa](https://github.com/coreysa)
 
 This template allows you to deploy a simple Linux VM using a few different options for the Ubuntu Linux version, using the latest patched version. This will deploy in West US on a D1 VM Size.
 
-Below are the parameters that the template expects: 
+Below are the parameters that the template expects:
 
 | Name   | Description    |
 |:--- |:---|
@@ -17,4 +17,4 @@ Below are the parameters that the template expects:
 | adminUsername  | Username for the Virtual Machine  |
 | adminPassword  | Password for the Virtual Machine  |
 | dnsNameForPublicIP  | Unique DNS Name for the Public IP used to access the Virtual Machine. |
-| ubuntuOSVersion  | The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version. Allowed values: 12.04.2-LTS, 12.04.3-LTS, 12.04.4-LTS, 12.04.5-LTS, 12.10, 14.04.2-LTS, 14.10, 15.04 |
+| ubuntuOSVersion  | The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version. Allowed values: 12.04.5-LTS, 14.04.2-LTS, 15.04 |
