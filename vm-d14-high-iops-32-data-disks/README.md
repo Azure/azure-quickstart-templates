@@ -26,4 +26,4 @@ Below are the parameters that the template expects
 | vmName | Name for the VM |
 | virtualNetworkName | Name of the Virtual Network |
 | nicName | Name for the Network Interface |
-| modulesUrl | Url for the DSC configuration module <br> <ul> <li><b>https://github.com/jvallery/azurermtemplates/blob/master/vm-high-iops-data-disks/StoragePool.ps1.zip?raw=true</li></ul>|
+| modulesUrl | Url for the DSC configuration module <br> <ul> <li><b>https://github.com/Azure/azure-quickstart-templates/blob/master/vm-d14-high-iops-32-data-disks/StoragePool.ps1.zip?raw=true</li></ul>|
