@@ -18,4 +18,6 @@ Below are the parameters in the template you should or need to change from the d
 | VMAdminPassword  | Password for the Virtual Machine  |
 | VMIPPublicDnsName  | Unique DNS Name for the Public IP used to access the Virtual Machine |
 | VSOAccount  | The Visual Studio Online account name, that is, the first part of yourvsoaccount.visualstudio.com |
+| VSOUser  | The Visual Studio Online user configured as Alternate authentication credentials |
+| VSOPass  | The Visual Studio Online password configured as Alternate authentication credentials |
 | PoolName  | The Visual Studio Online build agent pool for this build agent to join |
