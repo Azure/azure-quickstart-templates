@@ -32,7 +32,6 @@
 | 0b11de9248dd4d87b18621318e037d37__RightImage-Ubuntu-14.04-x64-v14.2.1                         | RightScaleLinux        | RightImage-Ubuntu         | 14.04                         | 14.2.1          |
 | 2b171e93f07c4903bcad35bda10acf22__CoreOS-Stable-633.1.0                                       | CoreOS                 | CoreOS                    | Stable                        | 633.1.0         |
 | b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu-14_04_2_LTS-amd64-server-20150309-en-us-30GB         | Canonical              | UbuntuServer              | 14.04.2-LTS                   | 14.04.201503090 |
-| b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu-14_10-amd64-server-20150416-en-us-30GB               | Canonical              | UbuntuServer              | 14.10                         | 14.10.201504160 |
 | b39f27a8b8c64d52b05eac6a62ebad85__Ubuntu-15_04-amd64-server-20150422-en-us-30GB               | Canonical              | UbuntuServer              | 15.04                         | 15.04.201504220 |
 | c6e0f177abd8496e934234bd27f46c5d__SharePoint-2013-Trial-1-20-2015                             | MicrosoftSharePoint    | MicrosoftSharePointServer | 2013                          | 1.0.0           |
 | fb83b3509582419d99629ce476bcb5c8__SQL-Server-2014-RTM-12.0.2430.0-DW-ENU-Win2012R2-cy14su11   | MicrosoftSQLServer     | SQL2014-WS2012R2          | Enterprise-Optimized-for-DW   | 12.0.2430       |
