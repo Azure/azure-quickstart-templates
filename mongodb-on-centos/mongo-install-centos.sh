@@ -1,3 +1,4 @@
+
 #Modify Sudoers file to not require tty for shell script execution on CentOS
 # sudo sed -i '/Defaults[[:space:]]\+requiretty/s/^/#/' /etc/sudoers
 
@@ -15,4 +16,4 @@ echo "enabled=1" >> /etc/yum.repos.d/mongodb.repo
 yum -y update
 
 #Install Mongo DB
-yum install -y mongo-org
+yum install -y mongodb-org

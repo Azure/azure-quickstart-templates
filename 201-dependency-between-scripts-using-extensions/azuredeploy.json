@@ -1,59 +1,59 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-    "contentVersion": "1.0.0.0",
-    "parameters" : {
-        "newStorageAccountName": {
-            "type": "string",
-            "metadata": {
-                "description": "This is the name of the your storage account"
-            }
-        },
-        "dnsNameForPublicIP" : {
-            "type": "string",
-            "metadata": {
-                "description": "This is the unique DNS name of the for the public IP for your VM"
-            }
-        },
-        "adminUserName": {
-            "type": "string",
-            "metadata": {
-                "description": "This is the the username you wish to assign to your VMs admin account"
-            }
-        },
-        "adminPassword": {
-            "type": "securestring",
-            "metadata": {
-                "description": "This is the the password you wish to assign to your VMs admin account"
-            }
-        },
-        "vmSize": {
-            "type": "string",
-            "metadata": {
-                "description": "Size of VM"
-            }
-        }
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "newStorageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "This is the name of the your storage account"
+      }
     },
-    "variables": {
-        "location": "West US",
-        "addressPrefix":"10.0.0.0/16",
-        "imagePublisher": "Canonical",
-        "imageVersion": "latest",
-        "imageSKU": "12.04.5-LTS",
-        "imageOffer": "UbuntuServer",
-        "subnet1Name": "Subnet-1",
-        "subnet1Prefix" : "10.0.0.0/24",
-        "vmStorageAccountContainerName": "vhds",
-        "publicIPAddressType" : "Dynamic",
-        "publicIPAddressName": "myPublicIP",
-        "storageAccountType": "Standard_LRS",
-        "vmName": "myVM",
-        "virtualNetworkName": "myVNET",
-        "nicName": "myVMNic",
-        "vnetID":"[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
-        "subnet1Ref" : "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]"
+    "dnsNameForPublicIP": {
+      "type": "string",
+      "metadata": {
+        "description": "This is the unique DNS name of the for the public IP for your VM"
+      }
     },
-
-    "resources": [
+    "adminUserName": {
+      "type": "string",
+      "metadata": {
+        "description": "This is the the username you wish to assign to your VMs admin account"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "This is the the password you wish to assign to your VMs admin account"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "metadata": {
+        "description": "Size of VM"
+      }
+    }
+  },
+  "variables": {
+    "location": "West US",
+    "addressPrefix": "10.0.0.0/16",
+    "imagePublisher": "Canonical",
+    "imageVersion": "latest",
+    "imageSKU": "12.04.5-LTS",
+    "imageOffer": "UbuntuServer",
+    "subnet1Name": "Subnet-1",
+    "subnet1Prefix": "10.0.0.0/24",
+    "vmStorageAccountContainerName": "vhds",
+    "publicIPAddressType": "Dynamic",
+    "publicIPAddressName": "myPublicIP",
+    "storageAccountType": "Standard_LRS",
+    "vmName": "myVM",
+    "virtualNetworkName": "myVNET",
+    "nicName": "myVMNic",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
+    "subnet1Ref": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]",
+    "installMongoTemplateurl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-dependency-between-scripts-using-extensions/install-mongo.json"
+  },
+  "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[parameters('newStorageAccountName')]",
@@ -64,16 +64,16 @@
       }
     },
     {
-        "apiVersion": "2015-05-01-preview",
-        "type": "Microsoft.Network/publicIPAddresses",
-        "name": "[variables('publicIPAddressName')]",
-        "location": "[variables('location')]",
-        "properties": {
-            "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
-            "dnsSettings": {
-                "domainNameLabel": "[parameters('dnsNameForPublicIP')]"
-            }
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIPAddressName')]",
+      "location": "[variables('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('dnsNameForPublicIP')]"
         }
+      }
     },
     {
       "apiVersion": "2015-05-01-preview",
@@ -89,121 +89,124 @@
         "subnets": [
           {
             "name": "[variables('subnet1Name')]",
-            "properties" : {
-                "addressPrefix": "[variables('subnet1Prefix')]"
+            "properties": {
+              "addressPrefix": "[variables('subnet1Prefix')]"
             }
           }
         ]
       }
     },
     {
-        "apiVersion": "2015-05-01-preview",
-        "type": "Microsoft.Network/networkInterfaces",
-        "name": "[variables('nicName')]",
-        "location": "[variables('location')]",
-        "dependsOn": [
-            "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
-            "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
-        ],
-        "properties": {
-            "ipConfigurations": [
-            {
-                "name": "ipconfig1",
-                "properties": {
-                    "privateIPAllocationMethod": "Dynamic",
-                    "publicIPAddress": {
-                        "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
-                    },
-                    "subnet": {
-                        "id": "[variables('subnet1Ref')]"
-                    }
-                }
-            }
-            ]
-        }
-    },
-    {
-        "apiVersion": "2015-05-01-preview",
-        "type": "Microsoft.Compute/virtualMachines",
-        "name": "[variables('vmName')]",
-        "location": "[variables('location')]",
-        "dependsOn": [
-            "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
-            "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
-        ],
-        "properties": {
-            "hardwareProfile": {
-                "vmSize": "[parameters('vmSize')]"
-            },
-            "osProfile": {
-                "computername": "[variables('vmName')]",
-                "adminUsername": "[parameters('adminUsername')]",
-                "adminPassword": "[parameters('adminPassword')]"
-            },
-            "storageProfile": {
-                "imageReference": {
-                     "publisher": "[variables('imagePublisher')]",
-                     "offer": "[variables('imageOffer')]",
-                     "sku" : "[variables('imageSKU')]",
-                     "version":"[variables('imageVersion')]"
-                },
-                "osDisk" : {
-                    "name": "osdisk1",
-                    "vhd": {
-                       "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/','osdisk1.vhd')]"
-                    },
-                    "caching": "ReadWrite",
-                    "createOption": "FromImage"
-                }
-            },
-            "networkProfile": {
-                "networkInterfaces" : [
-                {
-                    "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
-                }
-                ]
-            }
-        }
-    },
-    {
-            "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "[concat(variables('vmName'),'/configuremongo')]",
-            "apiVersion": "2015-05-01-preview",
-            "location": "[variables('location')]",
-            "dependsOn": [
-                "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
-            ],
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nicName')]",
+      "location": "[variables('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
             "properties": {
-                "publisher": "Microsoft.OSTCExtensions",
-                "type": "CustomScriptForLinux",
-                "typeHandlerVersion": "1.2",
-                "settings": {
-                    "fileUris": [
-                        "https://raw.githubusercontent.com/azurermtemplates/azurermtemplates/master/dependency-between-scripts-using-extensions/mongo-configure-ubuntu.sh"
-                    ],
-                    "commandToExecute": "sh mongo-configure-ubuntu.sh"
-                }
-            }
-        },
-      {
-          "type": "Microsoft.Compute/virtualMachines/extensions",
-          "name": "[concat(variables('vmName'),'/installmongo')]",
-          "apiVersion": "2015-05-01-preview",
-          "location": "[variables('location')]",
-          "dependsOn": [
-              "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'),'/extensions/configuremongo')]"
-          ],
-          "properties": {
-              "publisher": "Microsoft.OSTCExtensions",
-              "type": "CustomScriptForLinux",
-              "typeHandlerVersion": "1.2",
-              "settings": {
-                  "fileUris": [
-                      "https://raw.githubusercontent.com/azurermtemplates/azurermtemplates/master/dependency-between-scripts-using-extensions/mongo-install-ubuntu.sh"
-                  ],
-                  "commandToExecute": "sh mongo-install-ubuntu.sh"
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+              },
+              "subnet": {
+                "id": "[variables('subnet1Ref')]"
               }
+            }
           }
+        ]
       }
-    ]
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('vmName')]",
+      "location": "[variables('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computername": "[variables('vmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[variables('imageSKU')]",
+            "version": "[variables('imageVersion')]"
+          },
+          "osDisk": {
+            "name": "osdisk1",
+            "vhd": {
+              "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/','osdisk1.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('vmName'),'/configuremongo')]",
+      "apiVersion": "2015-05-01-preview",
+      "location": "[variables('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.OSTCExtensions",
+        "type": "CustomScriptForLinux",
+        "typeHandlerVersion": "1.2",
+        "settings": {
+          "fileUris": [
+            "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-dependency-between-scripts-using-extensions/mongo-configure-ubuntu.sh"
+          ],
+          "commandToExecute": "sh mongo-configure-ubuntu.sh"
+        }
+      }
+    },
+    {
+      "name": "installmongo",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'),'/extensions/configuremongo')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('installMongoTemplateurl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[variables('location')]"
+          },
+          "vmName": {
+            "value": "[variables('vmName')]"
+          }
+        }
+      }
+    }
+  ]
 }

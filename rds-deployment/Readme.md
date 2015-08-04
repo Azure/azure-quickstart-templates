@@ -17,7 +17,7 @@ Below are the parameters that the template expects
 | Name   | Description    |
 |:--- |:---|
 | publicDnsName | The DNS prefix for the public IP address |
-| storageAccount | Name of the storage account to create |
+| newStorageAccountName | Name of the storage account to create |
 | domainName | Domain name (e.g. 'contoso.com') |
 | adminUsername | Domain admin username |
 | adminPassword | Domain admin password |
