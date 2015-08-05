@@ -22,9 +22,9 @@ If you are not familiar with Docker Swarm, please
 | `adminUsername` | SSH user for the Virtual Machines.  |
 | `sshPublicKey` | SSH key for the Virtual Machines.  |
 | `dnsName` | Unique DNS Name for the Swarm Management endpoint and the load balancer for slave nodes. |
-| `dockerCa`  | Base64-encoded Docker CA certificate (`ca.pem`) for the Docker engines and Swarm managers. Leave empty to create an insecure Docker cluster. |
-| `dockerCert`  | Base64-encoded Docker TLS Certificate (`cert.pem`) for the Docker engines and Swarm managers. Leave empty to create an insecure Docker cluster. |
-| `dockerKey` | Base64-encoded Docker TLS Key (`key.pem`) for the Docker engines and Swarm managers. Leave empty to create an insecure Docker cluster. |
+| `dockerCa`  | Base64-encoded Docker CA certificate (`ca.pem`) for the Docker engines and Swarm managers. |
+| `dockerCert`  | Base64-encoded Docker TLS Certificate (`cert.pem`) for the Docker engines and Swarm managers. |
+| `dockerKey` | Base64-encoded Docker TLS Key (`key.pem`) for the Docker engines and Swarm managers. |
 
 ## Cluster Properties
 
