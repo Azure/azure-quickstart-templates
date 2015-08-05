@@ -38,13 +38,13 @@ mip=$(echo "$ManagementNode" | sed 's/:/ /' | sed 's/:/ /' | cut -d ' ' -f 1)
 
 log "set private key"
 #use the key from the key vault as the SSH private key
-openssl rsa -in /var/lib/waagent/*.prv -out /home/$ADMINUSER/.ssh/id_rsa
-chmod 600 /home/$ADMINUSER/.ssh/id_rsa
-chown $ADMINUSER /home/$ADMINUSER/.ssh/id_rsa
+#openssl rsa -in /var/lib/waagent/*.prv -out /home/$ADMINUSER/.ssh/id_rsa
+#chmod 600 /home/$ADMINUSER/.ssh/id_rsa
+#chown $ADMINUSER /home/$ADMINUSER/.ssh/id_rsa
 
-file="/home/$ADMINUSER/.ssh/id_rsa"
-key="/tmp/id_rsa.pem"
-openssl rsa -in $file -outform PEM > $key
+#file="/home/$ADMINUSER/.ssh/id_rsa"
+#key="/tmp/id_rsa.pem"
+#openssl rsa -in $file -outform PEM > $key
 
 #Generate IP Addresses for the cloudera setup
 NODES=()
@@ -80,6 +80,6 @@ worker_ip=$(echo "${wip_string%?}")
 log "Worker ip to be supplied to next script: $worker_ip"
 
 log "BEGIN: Starting detached script to finalize initialization"
-sh initialize-cloudera-server.sh "$CLUSTERNAME" "$key" "$mip" "$worker_ip" $HA $ADMINUSER $PASSWORD >/dev/null 2>&1
+sh initialize-cloudera-server.sh "$CLUSTERNAME" "$PASSWORD" "$mip" "$worker_ip" $HA $ADMINUSER $PASSWORD >/dev/null 2>&1
 log "END: Detached script to finalize initialization running. PID: $!"
 
