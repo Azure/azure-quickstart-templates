@@ -11,7 +11,7 @@ $password = ConvertTo-SecureString '{your password}' -AsPlainText -Force
 
 New-AzureResourceGroup `
     -Name '{Resource Group Name}' `
-    -TemplateFile '{path to github}\azure-quickstart-templates\201-publiclb-webfarm-nsg\NRPDemo-PublicLB-NSG-Website-Ignite.json' `
+    -TemplateFile '{path to github}\azure-quickstart-templates\201-publiclb-webfarm-nsg\azuredeploy.json' `
     -Location '{Azure Region}' `
     -namePrefix '{Name Prefix}' `
     -newStorageAccountName '{New Storage Account Name}' `
