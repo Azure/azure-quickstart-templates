@@ -93,8 +93,8 @@ if $HA; then
 fi
 log $logCmd
 if $HA; then
-    python cmxDeployOnIbiza.py -n "$ClusterName" -u $User -k "$key" -m "$mip" -w "$worker_ip" -a >> /tmp/initialize-cloudera-server.log 2>> /tmp/initialize-cloudera-server.err
+    python cmxDeployOnIbiza.py -n "$ClusterName" -u $User -m "$mip" -w "$worker_ip" -p "$Password" -a >> /tmp/initialize-cloudera-server.log 2>> /tmp/initialize-cloudera-server.err
 else
-    python cmxDeployOnIbiza.py -n "$ClusterName" -u $User -k "$key" -m "$mip" -w "$worker_ip" >> /tmp/initialize-cloudera-server.log 2>> /tmp/initialize-cloudera-server.err
+    python cmxDeployOnIbiza.py -n "$ClusterName" -u $User -m "$mip" -w "$worker_ip" -p "$Password" >> /tmp/initialize-cloudera-server.log 2>> /tmp/initialize-cloudera-server.err
 fi
 log "END: CM deployment ended"
