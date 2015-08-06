@@ -80,6 +80,6 @@ worker_ip=$(echo "${wip_string%?}")
 log "Worker ip to be supplied to next script: $worker_ip"
 
 log "BEGIN: Starting detached script to finalize initialization"
-sh initialize-cloudera-server.sh "$CLUSTERNAME" "$PASSWORD" "$mip" "$worker_ip" $HA $ADMINUSER $PASSWORD >/dev/null 2>&1
+sh initialize-cloudera-server.sh "$CLUSTERNAME" "$key" "$mip" "$worker_ip" $HA $ADMINUSER $PASSWORD >/dev/null 2>&1
 log "END: Detached script to finalize initialization running. PID: $!"
 
