@@ -6,7 +6,7 @@
 
 Based on the 101-simple-windows-vm template built by: [coreysa](https://github.com/coreysa)
 
-This template allows you to deploy a simple Windows VM and execute a custom script using the custom script extension. Note the script must be in stored in a azure blob storage.
+This template allows you to deploy a simple Windows VM and execute a custom powershell script using the custom script extension. Note the script must be in stored in a azure blob storage.
 
 Below are the parameters that the template expects:
 
