@@ -6,13 +6,12 @@
 
 Built by: [paulbouwer](https://github.com/paulbouwer)
 
-This template allows you to deploy a single Octopus Deploy 3.0 server with a trial license. This will deploy on a single Windows Server 2012R2 VM (Standard D2) and SQL DB (S1 tier).
+This template allows you to deploy a single Octopus Deploy 3.0 server with a trial license. This will deploy on a single Windows Server 2012R2 VM (Standard D2) and SQL DB (S1 tier) into the location specified for the Resource Group.
 
 Below are the parameters that the template expects: 
 
 | Name   | Description    |
 |:--- |:---|
-| location  | Location of the Octopus Deploy server. Default value: **West US**. |
 | vmStorageAccountName  | Unique DNS Name for the Storage Account that will hold the Octopus Deploy Virtual Machine Disks.  |
 | vmAdminUsername  | Admin username for the Octopus Deploy Virtual Machine. Azure will not allow common usernames like 'admin' or 'administrator' so ensure you pick something else. Default value: **octoadmin**. |
 | vmAdminPassword  | Admin password for the Octopus Deploy Virtual Machine. |

@@ -2,25 +2,6 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "location": {
-      "type": "string",
-      "allowedValues": [
-        "Central US",
-        "East Asia",
-        "East US",
-        "East US 2",
-        "Japan East",
-        "Japan West",
-        "North Europe",
-        "South Central US",
-        "Southeast Asia",
-        "West Europe",
-        "West US"
-      ],
-      "metadata": {
-        "description": "Location of the Octopus Deploy server."
-      }
-    },
     "vmStorageAccountName": {
       "type": "string",      
       "metadata": {
@@ -98,50 +79,38 @@
     }
   },
   "variables": {
-    "location": "[parameters('location')]",
+    "location": "[resourceGroup().location]",
     "vmImagePublisher": "MicrosoftWindowsServer",
     "vmImageOffer": "WindowsServer",
     "vmOSDiskName": "osdiskforwindowssimple",
     "vmWindowsOSVersion": "2012-R2-Datacenter",
-    "vmStorageAccountName": "[parameters('vmStorageAccountName')]",
     "vmStorageAccountType": "Standard_LRS",
     "vmStorageAccountContainerName": "vhds",
     "vmName": "OctopusDeploy",
     "vmSize": "Standard_D2",
-    "vmAdminUsername": "[parameters('vmAdminUsername')]",
-    "vmAdminPassword": "[parameters('vmAdminPassword')]",
     "networkNicName": "OctopusDeployNIC",
     "networkAddressPrefix": "10.0.0.0/16",
     "networkSubnetName": "OctopusDeploySubnet",
     "networkSubnetPrefix": "10.0.0.0/24",
-    "networkPublicIPDnsName": "[parameters('networkDnsName')]",
     "networkPublicIPAddressName": "OctopusDeployPublicIP",
     "networkPublicIPAddressType": "Dynamic",
     "networkVNetName": "OctopusDeployVNET",
     "networkVNetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('networkVNetName'))]",
     "networkSubnetRef": "[concat(variables('networkVNetID'),'/subnets/',variables('networkSubnetName'))]",
-    "sqlServerName": "[parameters('sqlServerName')]",
-    "sqlAdminUsername": "[parameters('sqlAdminUsername')]",
-    "sqlAdminPassword": "[parameters('sqlAdminPassword')]",
     "sqlDbName": "OctopusDeploy",
     "sqlDbEdition": "Standard",
     "sqlDbCollation": "SQL_Latin1_General_CP1_CI_AS",
     "sqlDbMaxSizeBytes": "268435456000",
     "sqldbEditionPerformanceLevel": "1B1EBD4D-D903-4BAA-97F9-4EA675F5E928",
-    "sqlDbConnectionString": "[concat('Data Source=tcp:', variables('sqlServerName'), '.database.windows.net,1433;Database=', variables('sqlDbName'), ';User Id=', variables('sqlAdminUsername'), '@', variables('sqlServerName'), ';Password=', variables('sqlAdminPassword'), ';Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]",    
-    "licenseFullName": "[parameters('licenseFullName')]",
-    "licenseOrganisationName": "[parameters('licenseOrganisationName')]",
-    "licenseEmailAddress": "[parameters('licenseEmailAddress')]",
-    "octopusAdminUsername": "[parameters('octopusAdminUsername')]",
-    "octopusAdminPassword": "[parameters('octopusAdminPassword')]",
+    "sqlDbConnectionString": "[concat('Data Source=tcp:', parameters('sqlServerName'), '.database.windows.net,1433;Database=', variables('sqlDbName'), ';User Id=', parameters('sqlAdminUsername'), '@', parameters('sqlServerName'), ';Password=', parameters('sqlAdminPassword'), ';Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]",    
     "installerUri": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/octopusdeploy3-single-vm-windows/Install-OctopusDeploy.ps1",
-    "installerCommand": "[concat('powershell.exe -File Install-OctopusDeploy.ps1 ', base64(variables('sqlDbConnectionString')), ' ', base64(variables('licenseFullName')), ' ', base64(variables('licenseOrganisationName')), ' ', base64(variables('licenseEmailAddress')), ' ', base64(variables('octopusAdminUsername')), ' ', base64(variables('octopusAdminPassword')), ' 2>&1 > D:\\Install-OctopusDeploy.ps1.log ')]"
+    "installerCommand": "[concat('powershell.exe -File Install-OctopusDeploy.ps1 ', base64(variables('sqlDbConnectionString')), ' ', base64(parameters('licenseFullName')), ' ', base64(parameters('licenseOrganisationName')), ' ', base64(parameters('licenseEmailAddress')), ' ', base64(parameters('octopusAdminUsername')), ' ', base64(parameters('octopusAdminPassword')), ' 2>&1 > D:\\Install-OctopusDeploy.ps1.log ')]"
   },
   "resources": [
     {
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('vmStorageAccountName')]",
+      "name": "[parameters('vmStorageAccountName')]",
       "location": "[variables('location')]",
       "tags": {
         "env": "trial",
@@ -163,7 +132,7 @@
       "properties": {
         "publicIPAllocationMethod": "[variables('networkPublicIPAddressType')]",
         "dnsSettings": {
-          "domainNameLabel": "[variables('networkPublicIPDnsName')]"
+          "domainNameLabel": "[parameters('networkDnsName')]"
         }
       }
     },
@@ -232,7 +201,7 @@
         "vendor": "Octopus Deploy"
       },
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('vmStorageAccountName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', parameters('vmStorageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('networkNicName'))]"
       ],
       "properties": {
@@ -241,8 +210,8 @@
         },
         "osProfile": {
           "computername": "[variables('vmName')]",
-          "adminUsername": "[variables('vmAdminUsername')]",
-          "adminPassword": "[variables('vmAdminPassword')]"
+          "adminUsername": "[parameters('vmAdminUsername')]",
+          "adminPassword": "[parameters('vmAdminPassword')]"
         },
         "storageProfile": {
           "imageReference": {
@@ -254,7 +223,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://',variables('vmStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('vmOSDiskName'),'.vhd')]"
+              "uri": "[concat('http://',parameters('vmStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('vmOSDiskName'),'.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -276,7 +245,7 @@
       "location": "[variables('location')]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]",
-        "[concat('Microsoft.Sql/servers/', variables('sqlServerName'), '/databases/', variables('sqlDbName'))]"
+        "[concat('Microsoft.Sql/servers/', parameters('sqlServerName'), '/databases/', variables('sqlDbName'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Compute",
@@ -294,7 +263,7 @@
     {
       "apiVersion": "2014-04-01-preview",
       "type": "Microsoft.Sql/servers",
-      "name": "[variables('sqlServerName')]",
+      "name": "[parameters('sqlServerName')]",
       "location": "[variables('location')]",
       "tags": {
         "env": "trial",
@@ -302,8 +271,8 @@
       },
       "properties": {
         "version": "12.0",
-        "administratorLogin": "[variables('sqlAdminUsername')]",
-        "administratorLoginPassword": "[variables('sqlAdminPassword')]"
+        "administratorLogin": "[parameters('sqlAdminUsername')]",
+        "administratorLoginPassword": "[parameters('sqlAdminPassword')]"
       },
       "resources": [
         {
@@ -316,7 +285,7 @@
             "vendor": "Octopus Deploy"
           },
           "dependsOn": [
-            "[concat('Microsoft.Sql/servers/', variables('sqlServerName'))]"
+            "[concat('Microsoft.Sql/servers/', parameters('sqlServerName'))]"
           ],
           "properties": {
             "edition": "[variables('sqlDbEdition')]",
@@ -329,7 +298,7 @@
           "type": "firewallrules",
           "apiVersion": "2014-04-01-preview",
           "dependsOn": [
-            "[concat('Microsoft.Sql/servers/', variables('sqlServerName'))]"
+            "[concat('Microsoft.Sql/servers/', parameters('sqlServerName'))]"
           ],
           "location": "[variables('location')]",
           "name": "AllowAllWindowsAzureIps",
