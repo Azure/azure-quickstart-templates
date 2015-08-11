@@ -131,6 +131,7 @@
         "publicIPAddressType": "Dynamic",
         "publicIPAddressName": "[concat(parameters('clusterName'), '-PublicIP-VM')]",
         "publicIPAddressNameHN": "[concat(variables('publicIPAddressName'),'-HN')]",
+        "availabilitySetName": "[concat(parameters('clusterName'), 'AVSet')]",
         "dnsName": "[concat(parameters('clusterName'), 'ep')]",
         "nicName": "[concat(parameters('clusterName'),'-nic')]",
         "nicNameHN": "[concat(variables('nicName'),'-hn')]",
@@ -181,6 +182,13 @@
             "properties": {
                 "accountType": "Standard_LRS"
             }
+        },
+
+        {
+            "type": "Microsoft.Compute/availabilitySets",
+            "name": "[variables('availabilitySetName')]",
+            "apiVersion": "2015-05-01-preview",
+            "location": "[resourceGroup().location]"
         },
 
         {
@@ -253,10 +261,14 @@
             "name": "[parameters('clusterName')]",
             "location": "[resourceGroup().location]",
             "dependsOn": [
+                "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]",
                 "[concat('Microsoft.Network/networkInterfaces/', variables('nicNameHN'))]",
                 "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
             ],
             "properties": {
+                "availabilitySet": {
+                    "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySetName'))]"
+                },
                 "hardwareProfile": {
                     "vmSize": "[parameters('headNodeVMSize')]"
                 },
@@ -345,6 +357,7 @@
             "name": "[concat(parameters('computeNodeNamePrefix'), copyIndex())]",
             "location": "[resourceGroup().location]",
             "dependsOn": [
+                "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]",
                 "[concat('Microsoft.Compute/virtualMachines/', parameters('clusterName'))]",
                 "[concat('Microsoft.Compute/virtualMachines/', parameters('clusterName'), '/extensions/configureHeadNode')]",
                 "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyIndex())]"
@@ -354,6 +367,9 @@
                 "count": "[parameters('computeNodeNumber')]"
             },
             "properties": {
+                "availabilitySet": {
+                    "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySetName'))]"
+                },
                 "hardwareProfile": {
                     "vmSize": "[parameters('computeNodeVMSize')]"
                 },

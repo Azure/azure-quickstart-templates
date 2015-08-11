@@ -115,7 +115,7 @@
     },
 
     "variables": {
-        "storageAccountName": "[concat(parameters('clusterName'), 'sa')]",
+        "storageAccountName": "[concat(toLower(parameters('clusterName')), 'sa')]",
         "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts',variables('storageAccountName'))]",
         "virtualNetworkName": "[concat(parameters('clusterName'), 'VNet')]",
         "addressPrefix": "10.0.0.0/16",
@@ -126,6 +126,7 @@
         "publicIPAddressType": "Dynamic",
         "publicIPAddressName": "[concat(parameters('clusterName'), '-PublicIP-VM')]",
         "publicIPAddressNameHN": "[concat(variables('publicIPAddressName'),'-HN')]",
+        "availabilitySetName": "[concat(parameters('clusterName'), 'AVSet')]",
         "dnsName": "[concat(parameters('clusterName'), 'ep')]",
         "nicName": "[concat(parameters('clusterName'),'-nic')]",
         "nicNameHN": "[concat(variables('nicName'),'-hn')]",
@@ -151,6 +152,13 @@
             "properties": {
                 "accountType": "Standard_LRS"
             }
+        },
+
+        {
+            "type": "Microsoft.Compute/availabilitySets",
+            "name": "[variables('availabilitySetName')]",
+            "apiVersion": "2015-05-01-preview",
+            "location": "[resourceGroup().location]"
         },
 
         {
@@ -223,10 +231,14 @@
             "name": "[parameters('clusterName')]",
             "location": "[resourceGroup().location]",
             "dependsOn": [
+                "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]",
                 "[concat('Microsoft.Network/networkInterfaces/', variables('nicNameHN'))]",
                 "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
             ],
             "properties": {
+                "availabilitySet": {
+                    "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySetName'))]"
+                },
                 "hardwareProfile": {
                     "vmSize": "[parameters('headNodeVMSize')]"
                 },
@@ -315,6 +327,7 @@
             "name": "[concat(parameters('computeNodeNamePrefix'), copyIndex())]",
             "location": "[resourceGroup().location]",
             "dependsOn": [
+                "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]",
                 "[concat('Microsoft.Compute/virtualMachines/', parameters('clusterName'))]",
                 "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyIndex())]"
             ],
@@ -323,6 +336,9 @@
                 "count": "[parameters('computeNodeNumber')]"
             },
             "properties": {
+                "availabilitySet": {
+                    "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySetName'))]"
+                },
                 "hardwareProfile": {
                     "vmSize": "[parameters('computeNodeVMSize')]"
                 },
@@ -330,7 +346,7 @@
                     "computername": "[concat(parameters('computeNodeNamePrefix'), copyIndex())]",
                     "adminUsername": "[parameters('adminUsername')]",
                     "adminPassword": "[parameters('adminPassword')]",
-                    "customData": "[base64(concat('HPCClusterName=', parameters('clusterName')))]"
+                    "customData": "[base64(concat('HPCClusterName=', parameters('clusterName'), '\r\nImageCategory=public\r\nImageName=WindowsServerHPCPack-', variables('computeNodeImageSku'), '\r\nVMSize=', parameters('computeNodeVMSize')))]"
                 },
                 "storageProfile": {
                     "imageReference": {
