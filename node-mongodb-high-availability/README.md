@@ -16,7 +16,7 @@ The Node.js service exposes a REST GET endpoint that deletes, inserts and retrie
 
 Credentials - 
 The adminUsername and adminPassword are administrators of all the VM's, the MongoDB database and the Tasks database.
-These credentials are hard coded in the connection string in the Node js server, in /opt/api.js. Modify according to adminUsername:adminPassword you entered in the parameters.
+These credentials are hard coded in the connection string in the Node js server, in /opt/app.js. Modify according to adminUsername:adminPassword you entered in the parameters.
 Please do not use a question mark in the adminUsername and/or the adminPassword. 
 
 Navigate to /opt and run sudo nodejs app.js.
