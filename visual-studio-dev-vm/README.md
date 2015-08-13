@@ -14,6 +14,6 @@ Below are the parameters in the template you should or need to change from the d
 | Name   | Description    |
 |:--- |:---|
 | storageName | Unique DNS Name for the Storage Account where the Virtual Machine's disks will be placed. |
-| VMAdminUserName  | Username for the Virtual Machine  |
-| VMAdminPassword  | Password for the Virtual Machine  |
-| VMIPPublicDnsName  | Unique DNS Name for the Public IP used to access the Virtual Machine.
+| vmAdminUserName  | Username for the Virtual Machine  |
+| vmAdminPassword  | Password for the Virtual Machine  |
+| vmIPPublicDnsName  | Unique DNS Name for the Public IP used to access the Virtual Machine.
