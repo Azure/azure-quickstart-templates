@@ -12,8 +12,7 @@ The template also provisions storage accounts, virtual network, availability set
 In addition, and when explicitly enabled, the template can create one publicly accessible "jumpbox" VM allowing to ssh into the MongoDB nodes for diagnostics or troubleshooting purposes.
 
 The template also creates a Linux VM, using a few different options for the Ubuntu Linux version, in the same virtual network and location as the MongoDB cluster. The VM size is D1.
-A Node.js (Express) server is installed on it that connects to the MongoDB.
-The Node.js service exposes a REST GET endpoint that deletes, inserts and retrieves 3 tasks from a Tasks database.
+A Node.js (Express) service is installed on it, exposes a REST GET endpoint that connects to the MongoDB and then deletes, inserts and retrieves 3 tasks from a Tasks database.
 SSH into the Ubuntu VM (using Putty www.putty.org), navigate to /opt/app.js and modify the workload as needed.
 
 Credentials - 
@@ -22,7 +21,7 @@ These credentials are hard coded in the connection string in the Node js server,
 Please do not use a question mark in the adminUsername and/or the adminPassword. 
 
 Navigate to /opt and run sudo nodejs app.js.
-Open a browser with the public IP of the MyUbuntuVM machine from the Azure portal, on port 8080. You should get a JSON file with 3 tasks.
+Open a browser with the public IP of the MyUbuntuVM machine from the Azure portal, on port 8080. You should get a JSON response with 3 tasks.
 
 The template expects the following parameters:
 
