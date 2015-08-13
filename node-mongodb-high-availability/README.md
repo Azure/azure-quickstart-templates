@@ -11,8 +11,10 @@ The template creates a multi-server MongoDB deployment on Ubuntu and CentOS virt
 The template also provisions storage accounts, virtual network, availability set, network interfaces, VMs, disks and other infrastructure and runtime resources required by the installation.
 In addition, and when explicitly enabled, the template can create one publicly accessible "jumpbox" VM allowing to ssh into the MongoDB nodes for diagnostics or troubleshooting purposes.
 
-The template also creates a Linux/Ubuntu VM in the same virtual network and installs a Node.js (Express) server on it that connects to the MongoDB cluster.
-The Node.js service exposes a REST GET endpoint that deletes, inserts and retrieves 3 tasks from a Tasks database. SSH into the Ubuntu VM (using Putty www.putty.org), navigate to /opt/app.js and modify the workload as needed.
+The template also creates a Linux VM, using a few different options for the Ubuntu Linux version, in the same virtual network and location as the MongoDB cluster. The VM size is D1.
+A Node.js (Express) server is installed on it that connects to the MongoDB.
+The Node.js service exposes a REST GET endpoint that deletes, inserts and retrieves 3 tasks from a Tasks database.
+SSH into the Ubuntu VM (using Putty www.putty.org), navigate to /opt/app.js and modify the workload as needed.
 
 Credentials - 
 The adminUsername and adminPassword are administrators of all the VM's, the MongoDB database and the Tasks database.
