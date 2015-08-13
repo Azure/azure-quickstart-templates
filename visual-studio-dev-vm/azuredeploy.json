@@ -1,6 +1,6 @@
 {
   "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-  "contentVersion": "1.0.0.0",
+  "contentVersion": "1.0.0.1",
   "parameters": {
     "storageName": {
       "type": "string",
@@ -19,45 +19,47 @@
         "description": "Which type of storage you want to use"
       }
     },
-    "DeployLocation": {
+    "deployLocation": {
       "type": "string",
       "allowedValues": [
-        "East US",
+        "East US 2",
         "West US",
         "West Europe",
-        "East Asia",
-        "South East Asia"
+        "South East Asia",
+        "Japan East",
+        "Japan West",
+        "Australia East"
       ],
       "metadata": {
-        "description": "Which datacentner you would like to deploy to"
+        "description": "Which datacenter you would like to deploy to? Only locations where premium storage are supported are listed. See azure.microsoft.com/en-us/regions/#services"
       }
     },
-    "VMName": {
+    "vmName": {
       "type": "string",
       "metadata": {
         "description": "Local name for the VM can be whatever you want"
       }
     },
-    "VMAdminUserName": {
+    "vmAdminUserName": {
       "type": "string",
       "metadata": {
         "description": "VM admin user name"
       }
     },
-    "VMAdminPassword": {
+    "vmAdminPassword": {
       "type": "securestring",
       "metadata": {
         "description": "VM admin password. The supplied password must be between 8-123 characters long and must satisfy at least 3 of password complexity requirements from the following: 1) Contains an uppercase character 2) Contains a lowercase character 3) Contains a numeric digit 4) Contains a special character."
       }
     },
-    "VMSize": {
+    "vmSize": {
       "type": "string",
       "metadata": {
-        "description": "Desired Size of the VM. any valid option accepted but if you choose premium storage type you must choose a DS class VM size."
+        "description": "Desired Size of the VM. Any valid option accepted but if you choose premium storage type you must choose a DS class VM size."
       },
       "defaultValue": "Standard_DS2"
     },
-    "VMVisualStudioVersion": {
+    "vmVisualStudioVersion": {
       "type": "string",
       "defaultValue": "VS-2015-Community-AzureSDK-2.7-WS2012R2",
       "allowedValues": [
@@ -72,7 +74,7 @@
         "description": "Which version of Visual Studio you would like to deploy"
       }
     },
-    "VMIPPublicDnsName": {
+    "vmIPPublicDnsName": {
       "type": "string",
       "metadata": {
         "description": "Globally unique name for per region for the public IP address. For instance, myVMuniqueIP.westus.cloudapp.azure.com. It must conform to the following regular expression: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$."
@@ -80,25 +82,25 @@
     }
   },
   "variables": {
-    "Vnet01Prefix": "10.0.0.0/16",
-    "Vnet01Subnet1Name": "Subnet-1",
-    "Vnet01Subnet1Prefix": "10.0.0.0/24",
-    "VMImagePublisher": "MicrosoftVisualStudio",
-    "VMImageOffer": "VisualStudio",
-    "VMOSDiskName": "VMOSDisk",
-    "VMVnetID": "[resourceId('Microsoft.Network/virtualNetworks', 'Vnet01')]",
-    "VMSubnetRef": "[concat(variables('VMVnetID'), '/subnets/', variables('Vnet01Subnet1Name'))]",
-    "VMStorageAccountContainerName": "vhds",
-    "VMNicName": "[concat(parameters('VMName'), 'NetworkInterface')]",
-    "VMIP01Name": "VMIP01"
+    "vnet01Prefix": "10.0.0.0/16",
+    "vnet01Subnet1Name": "Subnet-1",
+    "vnet01Subnet1Prefix": "10.0.0.0/24",
+    "vmImagePublisher": "MicrosoftVisualStudio",
+    "vmImageOffer": "VisualStudio",
+    "vmOSDiskName": "VMOSDisk",
+    "vmVnetID": "[resourceId('Microsoft.Network/virtualNetworks', 'Vnet01')]",
+    "vmSubnetRef": "[concat(variables('VMVnetID'), '/subnets/', variables('Vnet01Subnet1Name'))]",
+    "vmStorageAccountContainerName": "vhds",
+    "vmNicName": "[concat(parameters('VMName'), 'NetworkInterface')]",
+    "vmIP01Name": "VMIP01"
   },
   "resources": [
     {
       "name": "[parameters('storageName')]",
       "type": "Microsoft.Storage/storageAccounts",
-      "location": "[parameters('DeployLocation')]",
+      "location": "[parameters('deployLocation')]",
       "apiVersion": "2015-05-01-preview",
-      "dependsOn": [],
+      "dependsOn": [ ],
       "tags": {
         "displayName": "Storage01"
       },
@@ -109,34 +111,35 @@
     {
       "name": "VNet01",
       "type": "Microsoft.Network/virtualNetworks",
-      "location": "[parameters('DeployLocation')]",
+      "location": "[parameters('deployLocation')]",
       "apiVersion": "2015-05-01-preview",
-      "dependsOn": [],
+      "dependsOn": [ ],
       "tags": {
-        "displayName": "Vnet01"
+        "displayName": "VNet01"
       },
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
-            "[variables('Vnet01Prefix')]"
+            "[variables('vnet01Prefix')]"
           ]
         },
-        "subnets": {
-          "name": "[variables('Vnet01Subnet1Name')]",
-          "properties": {
-            "addressPrefix": "[variables('Vnet01Subnet1Prefix')]"
-          }
-        }
+        "subnets": [
+          {
+            "name": "[variables('vnet01Subnet1Name')]",
+            "properties": {
+              "addressPrefix": "[variables('vnet01Subnet1Prefix')]"
+            }
+          }]
       }
     },
     {
-      "name": "[variables('VMNicName')]",
+      "name": "[variables('vmNicName')]",
       "type": "Microsoft.Network/networkInterfaces",
-      "location": "[parameters('DeployLocation')]",
+      "location": "[parameters('deployLocation')]",
       "apiVersion": "2015-05-01-preview",
       "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/', 'Vnet01')]",
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('VMIP01Name'))]"
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('vmIP01Name'))]"
       ],
       "tags": {
         "displayName": "VMNic01"
@@ -148,10 +151,10 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "subnet": {
-                "id": "[variables('VMSubnetRef')]"
+                "id": "[variables('vmSubnetRef')]"
               },
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('VMIP01Name'))]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmIP01Name'))]"
               }
             }
           }
@@ -159,37 +162,37 @@
       }
     },
     {
-      "name": "[parameters('VMName')]",
+      "name": "[parameters('vmName')]",
       "type": "Microsoft.Compute/virtualMachines",
-      "location": "[parameters('DeployLocation')]",
+      "location": "[parameters('deployLocation')]",
       "apiVersion": "2015-05-01-preview",
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', parameters('storageName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('VMNicName'))]"
+        "[concat('Microsoft.Network/networkInterfaces/', variables('vmNicName'))]"
       ],
       "tags": {
         "displayName": "VM01"
       },
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[parameters('VMSize')]"
+          "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
-          "computername": "[parameters('VMName')]",
-          "adminUsername": "[parameters('VMAdminUsername')]",
-          "adminPassword": "[parameters('VMAdminPassword')]"
+          "computername": "[parameters('vmName')]",
+          "adminUsername": "[parameters('vmAdminUsername')]",
+          "adminPassword": "[parameters('vmAdminPassword')]"
         },
         "storageProfile": {
           "imageReference": {
-            "publisher": "[variables('VMImagePublisher')]",
-            "offer": "[variables('VMImageOffer')]",
-            "sku": "[parameters('VMVisualStudioVersion')]",
+            "publisher": "[variables('vmImagePublisher')]",
+            "offer": "[variables('vmImageOffer')]",
+            "sku": "[parameters('vmVisualStudioVersion')]",
             "version": "latest"
           },
           "osDisk": {
             "name": "VMOSDisk",
             "vhd": {
-              "uri": "[concat('http://', parameters('storageName'), '.blob.core.windows.net/', variables('VMStorageAccountContainerName'), '/', variables('VMOSDiskName'), '.vhd')]"
+              "uri": "[concat('http://', parameters('storageName'), '.blob.core.windows.net/', variables('vmStorageAccountContainerName'), '/', variables('vmOSDiskName'), '.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -198,26 +201,26 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('VMNicName'))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vmNicName'))]"
             }
           ]
         }
       },
-      "resources": []
+      "resources": [ ]
     },
     {
-      "name": "[variables('VMIP01Name')]",
+      "name": "[variables('vmIP01Name')]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "location": "[parameters('DeployLocation')]",
+      "location": "[parameters('deployLocation')]",
       "apiVersion": "2015-05-01-preview",
-      "dependsOn": [],
+      "dependsOn": [ ],
       "tags": {
         "displayName": "VMIP01"
       },
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
-          "domainNameLabel": "[parameters('VMIPPublicDnsName')]"
+          "domainNameLabel": "[parameters('vmIPPublicDnsName')]"
         }
       }
     }
