@@ -83,6 +83,8 @@
     "vhdBlobContainer": "vhds",
     "mastersLbName": "swarm-lb-masters",
     "mastersLbID": "[resourceId('Microsoft.Network/loadBalancers',variables('mastersLbName'))]",
+    "mastersLbIPConfigName": "MastersLBFrontEnd",
+    "mastersLbIPConfigID": "[concat(variables('mastersLbID'),'/frontendIPConfigurations/', variables('mastersLbIPConfigName'))]",
     "mastersLbBackendPoolName": "swarm-master-pool",
     "slavesLbName": "swarm-lb-slaves",
     "slavesLbID": "[resourceId('Microsoft.Network/loadBalancers',variables('slavesLbName'))]",
@@ -219,19 +221,6 @@
     },
     {
       "apiVersion": "2015-05-01-preview",
-      "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[concat(variables('vmNameMaster'), copyIndex(), '-ip')]",
-      "location": "[resourceGroup().location]",
-      "copy": {
-        "name": "ipLoopMaster",
-        "count": "[variables('masterCount')]"
-      },
-      "properties": {
-        "publicIPAllocationMethod": "Dynamic"
-      }
-    },
-    {
-      "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('vmNameMaster'), copyIndex(), '-nic')]",
       "location": "[resourceGroup().location]",
@@ -241,8 +230,7 @@
       },
       "dependsOn": [
         "[concat('Microsoft.Network/loadBalancers/', variables('mastersLbName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
-        "[concat('Microsoft.Network/publicIPAddresses/',concat(variables('vmNameMaster'), copyIndex(), '-ip'))]"
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -251,15 +239,17 @@
             "properties": {
               "privateIPAllocationMethod": "Static",
               "privateIPAddress": "[concat('10.0.0.', copyIndex(4))]",
-              "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat(variables('vmNameMaster'), copyIndex(), '-ip'))]"
-              },
               "subnet": {
                 "id": "[variables('subnetRefMaster')]"
               },
               "loadBalancerBackendAddressPools": [
                 {
                   "id": "[concat(variables('mastersLbID'), '/backendAddressPools/', variables('mastersLbBackendPoolName'))]"
+                }
+              ],
+              "loadBalancerInboundNatRules": [
+                {
+                  "id": "[concat(variables('mastersLbID'),'/inboundNatRules/SSH-',variables('vmNameMaster'),copyindex())]"
                 }
               ]
             }
@@ -278,7 +268,7 @@
       "properties": {
         "frontendIPConfigurations": [
           {
-            "name": "LoadBalancerFrontEnd",
+            "name": "[variables('mastersLbIPConfigName')]",
             "properties": {
               "publicIPAddress": {
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('managementPublicIPAddrName'))]"
@@ -312,7 +302,7 @@
               "enableFloatingIP": false,
               "idleTimeoutInMinutes": 5,
               "frontendIPConfiguration": {
-                "id": "[concat(variables('mastersLbID'),'/frontendIPConfigurations/LoadBalancerFrontEnd')]"
+                "id": "[variables('mastersLbIPConfigID')]"
               },
               "backendAddressPool": {
                 "id": "[concat(variables('mastersLbID'),'/backendAddressPools/', variables('mastersLbBackendPoolName'))]"
@@ -320,6 +310,44 @@
               "probe": {
                 "id": "[concat(variables('mastersLbID'), '/probes/swarm-probe')]"
               }
+            }
+          }
+        ],
+        "inboundNatRules": [
+          {
+            "name": "[concat('SSH-',variables('vmNameMaster'), '0')]",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[variables('mastersLbIPConfigID')]"
+              },
+              "protocol": "tcp",
+              "frontendPort": 2200,
+              "backendPort": 22,
+              "enableFloatingIP": false
+            }
+          },
+          {
+            "name": "[concat('SSH-',variables('vmNameMaster'), '1')]",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[variables('mastersLbIPConfigID')]"
+              },
+              "protocol": "tcp",
+              "frontendPort": 2201,
+              "backendPort": 22,
+              "enableFloatingIP": false
+            }
+          },
+          {
+            "name": "[concat('SSH-',variables('vmNameMaster'), '2')]",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[variables('mastersLbIPConfigID')]"
+              },
+              "protocol": "tcp",
+              "frontendPort": 2202,
+              "backendPort": 22,
+              "enableFloatingIP": false
             }
           }
         ]

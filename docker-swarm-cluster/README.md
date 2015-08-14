@@ -34,14 +34,22 @@ The template provisions 3 Swarm manager VMs that use [Consul](https://consul.io/
 for discovery and leader election. These VMs are in an [Avabilability Set][av-set]
 to achieve the highest uptime.
 
-Each manager VM has a public IP address. However, it's recommended to talk to the
-Swarm manager using the DNS adddress emitted in the deployment output rather than
-directly talking to each Swarm Manager. This DNS address is [load balanced][az-lb]
-among the Swarm managers (described later).
-
 Each Swarm manager VM is of size `Standard_A0` as they are not running any workloads
-except Swarm Manager and Consul. Manager node VMs have static private IP addresses
+except the Swarm Manager and Consul containers. Manager node VMs have static private IP addresses
 `10.0.0.4`, `10.0.0.5` and `10.0.0.6` and they are in the same [Virtual Network][az-vnet] as slave nodes.
+
+**Accessing manager VMs:** Swarm manager nodes (`swarm-master-*` VMs) do not have
+public IP addresses. However they are NAT'ted behind an Azure Load Balancer. You
+can SSH into them using the domain name (emitted in the template deployment output) or
+the Public IP address of `swarm-lb-masters` (can be found on the Azure Portal).
+
+Port numbers of each master VM is described in the following table:
+
+| VM   | SSH command |
+|:--- |:---|
+| `swarm-master-0`  | `ssh <username>@<IP> -p 2200` |
+| `swarm-master-1`  | `ssh <username>@<IP> -p 2201` |
+| `swarm-master-2`  | `ssh <username>@<IP> -p 2202` |
 
 #### Configuring Authentication
 
