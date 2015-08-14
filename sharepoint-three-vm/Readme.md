@@ -57,9 +57,8 @@ storageAccountType      | Type of the storage account <br> <ul>**Allowed Values*
 | adDNSPrefix | The DNS prefix for the public IP address used by the Load Balancer for AD |
 | adSQLPrefix | The DNS prefix for the public IP address used by the Load Balancer for SQL |
 | adSPPrefix | The DNS prefix for the public IP address used by the Load Balancer for SP |
-| AssetLocation | The location of resources such as templates and DSC modules that the script is dependent <br> <ul><li> **https://raw.githubusercontent.com/azurermtemplates/azurermtemplates/master/sharepoint-three-vm (default)**</li></ul> |
+| AssetLocation | The location of resources such as templates and DSC modules that the script is dependent <br> <ul><li> **https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sharepoint-three-vm (default)**</li></ul> |
 
 #Known Issues
 
 This template has a lot of serial behaviour due to some concurrency issues with the DSC extensions, this will be fixed in the future which will make execution time much shorter
-
