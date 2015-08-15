@@ -297,7 +297,7 @@ echo "vm.max_map_count = 262144" >> /etc/sysctl.conf
 #TODO: Move this to an init.d script so we can handle instance size increases
 ES_HEAP=`free -m |grep Mem | awk '{if ($2/2 >31744)  print 31744;else print $2/2;}'`
 log "Configure elasticsearch heap size - $ES_HEAP"
-echo "ES_HEAP_SIZE=${ES_HEAP}/" >> /etc/default/elasticseach
+echo "ES_HEAP_SIZE=${ES_HEAP}m" >> /etc/default/elasticsearch
 
 #Optionally Install Marvel
 if [ "${INSTALL_MARVEL}" == "yes" ];
