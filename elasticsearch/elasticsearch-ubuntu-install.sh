@@ -170,7 +170,7 @@ install_java()
     apt-get -y update  > /dev/null
     echo debconf shared/accepted-oracle-license-v1-1 select true | sudo debconf-set-selections
     echo debconf shared/accepted-oracle-license-v1-1 seen true | sudo debconf-set-selections
-    apt-get -y install oracle-java7-installer  > /dev/null
+    apt-get -y install oracle-java8-installer  > /dev/null
 }
 
 # Install Elasticsearch
