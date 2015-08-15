@@ -108,7 +108,7 @@ while getopts :n:d:v:l:xyzsh optname; do
     y) #client node
       CLIENT_ONLY_NODE=1
       ;;
-    z) #client node
+    z) #data node
       DATA_NODE=1
       ;;
     s) #use OS striped disk volumes
