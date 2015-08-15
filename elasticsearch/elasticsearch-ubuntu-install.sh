@@ -79,7 +79,7 @@ fi
 
 #Script Parameters
 CLUSTER_NAME="elasticsearch"
-ES_VERSION="1.5.0"
+ES_VERSION="1.7.0"
 DISCOVERY_ENDPOINTS=""
 INSTALL_MARVEL="no" #We use this because of ARM template limitation
 CLIENT_ONLY_NODE=0
