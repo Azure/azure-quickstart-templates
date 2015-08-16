@@ -45,11 +45,13 @@ app.get('/', function (req, res) {
                 else if (result.length) {
                     console.log('Found:', result);
                     res.status(200).json(result);
+                    db.close();
                 }
                 else {
                     console.log('No document(s) found with defined "find" criteria!');
+                    db.close();
                 }
-                db.close();
+                
             });
         });
     });
