@@ -1,6 +1,6 @@
 # Deploy a Node js service connected to a highly available MongoDB installation on Ubuntu and CentOS virtual machines
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FOzGitele%2Fazure-quickstart-templates%2Fmaster%2Fnode-mongodb-high-availability%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fnode-mongodb-high-availability%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
