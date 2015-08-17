@@ -1,6 +1,6 @@
 # Create a web app on Azure with GoLang extension
 
-<a href="https://azuredeploy.net/" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/github.com/Azure/azure-quickstart-templates/blob/master/101-webapp-with-golang/azuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
