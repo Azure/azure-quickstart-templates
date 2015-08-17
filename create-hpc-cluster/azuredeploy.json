@@ -93,14 +93,12 @@
     },
     "adminUsername": {
       "type": "string",
-      "defaultValue": "azureuser",
       "metadata": {
         "description": "The user name of the administrator"
       }
     },
     "adminPassword": {
       "type": "securestring",
-      "defaultValue": "Pa$$word123",
       "metadata": {
         "description": "The password of the administrator"
       }
@@ -114,7 +112,8 @@
     }
   },
   "variables": {
-    "storageAccountName": "[concat(parameters('clusterName'), 'sa')]",
+    "apiVersion": "2015-05-01-preview",
+    "storageAccountName": "[toLower(concat(parameters('clusterName'), 'sa', replace(resourceGroup().location, ' ', '')))]",
     "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts',variables('storageAccountName'))]",
     "virtualNetworkName": "[concat(parameters('clusterName'), 'VNet')]",
     "addressPrefix": "10.0.0.0/16",
@@ -125,6 +124,7 @@
     "publicIPAddressType": "Dynamic",
     "publicIPAddressName": "[concat(parameters('clusterName'), '-PublicIP-VM')]",
     "publicIPAddressNameHN": "[concat(variables('publicIPAddressName'),'-HN')]",
+    "availabilitySetName": "[concat(parameters('clusterName'), 'AVSet')]",
     "dnsName": "[concat(parameters('clusterName'), 'ep')]",
     "nicName": "[concat(parameters('clusterName'),'-nic')]",
     "nicNameHN": "[concat(variables('nicName'),'-hn')]",
@@ -144,14 +144,20 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('storageAccountName')]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "location": "[resourceGroup().location]",
       "properties": {
         "accountType": "Standard_LRS"
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[variables('availabilitySetName')]",
+      "apiVersion": "[variables('apiVersion')]",
+      "location": "[resourceGroup().location]"
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[resourceGroup().location]",
@@ -178,7 +184,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressNameHN')]",
       "location": "[resourceGroup().location]",
@@ -190,7 +196,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicNameHN')]",
       "location": "[resourceGroup().location]",
@@ -216,15 +222,19 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('clusterName')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
+        "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicNameHN'))]",
         "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
       ],
       "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySetName'))]"
+        },
         "hardwareProfile": {
           "vmSize": "[parameters('headNodeVMSize')]"
         },
@@ -261,7 +271,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('clusterName'),'/configureHeadNode')]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', parameters('clusterName'))]"
@@ -276,12 +286,12 @@
             "[concat(variables('customScriptLocation'), 'HPCHNPrepare.ps1')]",
             "[concat(variables('customScriptLocation'), 'HpcPrepareUtil.ps1')]"
           ],
-          "commandToExecute": "[concat(variables('headNodeCommandStr'), ' -AzureStorageConnStr \"', variables('storageConnStrPrefix'), listKeys(variables('storageAccountId'),'2015-05-01-preview').key1, '\" -PublicDnsName ', reference(variables('publicIPAddressNameHN')).dnsSettings.fqdn)]"
+          "commandToExecute": "[concat(variables('headNodeCommandStr'), ' -AzureStorageConnStr \"', variables('storageConnStrPrefix'), listKeys(variables('storageAccountId'),variables('apiVersion')).key1, '\" -PublicDnsName ', reference(variables('publicIPAddressNameHN')).dnsSettings.fqdn)]"
         }
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('nicName'), copyIndex())]",
       "location": "[resourceGroup().location]",
@@ -307,11 +317,12 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(parameters('computeNodeNamePrefix'), copyIndex())]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
+        "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]",
         "[concat('Microsoft.Compute/virtualMachines/', parameters('clusterName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyIndex())]"
       ],
@@ -320,6 +331,9 @@
         "count": "[parameters('computeNodeNumber')]"
       },
       "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySetName'))]"
+        },
         "hardwareProfile": {
           "vmSize": "[parameters('computeNodeVMSize')]"
         },
@@ -327,7 +341,7 @@
           "computername": "[concat(parameters('computeNodeNamePrefix'), copyIndex())]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]",
-          "customData": "[base64(concat('HPCClusterName=', parameters('clusterName')))]"
+          "customData": "[base64(concat('HPCClusterName=', parameters('clusterName'), '\r\nImageCategory=public\r\nImageName=WindowsServerHPCPack-', variables('computeNodeImageSku'), '\r\nVMSize=', parameters('computeNodeVMSize')))]"
         },
         "storageProfile": {
           "imageReference": {
@@ -357,7 +371,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('computeNodeNamePrefix'), copyIndex(), '/configureComputeNode')]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', parameters('clusterName'), '/extensions/configureHeadNode')]",
