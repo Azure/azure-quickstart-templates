@@ -1,0 +1,217 @@
+﻿{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "sqlVMNamePrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "The prefix of  VM name for Sql Cluster"
+      }
+    },
+
+    "domainName": {
+      "type": "string",
+      "metadata": {
+        "description": "The domain name"
+      }
+    },
+    
+    "dnsPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "The DNS Prefix for the Public IP Address"
+      }
+    },
+
+    "sharePath": {
+      "type": "string",
+      "metadata": {
+        "description": "The share path"
+      }
+    },
+    
+    "sqlwVMName": {
+      "type": "string",
+      "metadata": {
+        "description": "The VM name of Sql Witness server"
+      }
+    },
+
+    "sqlLBName": {
+      "type": "string",
+      "metadata": {
+        "description": "the load balancer name for SQL Cluster"
+      }
+    },
+
+    "sqlLBIPAddress": {
+      "type": "string",
+      "metadata": {
+        "description": "The VM name of Sql Witness server"
+      }
+    },
+
+    "dnsServerName": {
+      "type": "string",
+      "metadata": {
+        "description": "The Dns Server Name"
+      }
+    },
+
+    "dataBaseNames": {
+      "type": "array",
+      "metadata": {
+        "description": "An array of databases name, each database will be created and added to the availability group"
+      },
+      "defaultValue": [ "testdb1", "testdb2" ]
+    },
+
+    "location": {
+      "type": "string",
+      "allowedValues": [
+        "West US",
+        "East US",
+        "West Europe",
+        "East Asia",
+        "Southeast Asia"
+      ],
+      "metadata": {
+        "description": "The region to deploy the resources into"
+      }
+    },
+
+    "sqlServerServiceAccountUserName": {
+      "type": "string",
+      "metadata": {
+        "description": "The SQL Server Service account name"
+      },
+      "defaultValue": "sqlservice"
+    },
+
+    "sqlServerServiceAccountPassword":{
+			"type": "securestring",
+			"metadata": {
+				"description": "The SQL Server Service account password"
+			}
+		},
+
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the Administrator of the new VMs and Domain"
+      }
+    },
+
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The password for the Administrator account of the new VMs and Domain"
+      }
+    },
+
+    "assetLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The location of resources that the script is dependent on such as linked templates and DSC modules"
+      },
+      "defaultValue": "http://honcaotemplate.blob.core.windows.net/templates"
+    }
+  },
+  "variables": {
+    "sqlAOPrepareModulesURL":"[concat(parameters('assetLocation'),'/PrepareAlwaysOnSqlServer.ps1.zip')]",
+    "sqlAOPrepareConfigurationFunction": "PrepareAlwaysOnSqlServer.ps1\\PrepareAlwaysOnSqlServer",
+    "sqlAOEPName": "[concat(parameters('dnsPrefix'),'-hadr')]",
+    "createClusterModulesURL":"[concat(parameters('assetLocation'),'/CreateFailoverCluster.ps1.zip')]",
+    "createClusterConfigurationFunction": "CreateFailoverCluster.ps1\\CreateFailoverCluster",
+    "clusterName": "[concat(parameters('dnsPrefix'),'-fc')]",
+    "sqlAOAGName": "[concat(parameters('dnsPrefix'),'-ag')]",
+    "sqlAOListenerName":"[concat(parameters('dnsPrefix'),'ag-listener')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('sqlVMNamePrefix'),'0/sqlAOPrepare')]",
+      "apiVersion": "2015-05-01-preview",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+      ],
+      "properties": {
+        "publisher": "Microsoft.Powershell",
+        "type": "DSC",
+        "typeHandlerVersion": "1.7",
+        "settings": {
+          "modulesUrl": "[variables('sqlAOPrepareModulesURL')]",
+          "configurationFunction": "[variables('sqlAOPrepareConfigurationFunction')]",
+          "properties": {
+            "domainName": "[parameters('domainName')]",
+            "sqlAlwaysOnEndpointName": "[variables('sqlAOEPName')]",
+            "adminCreds": {
+              "userName": "[parameters('adminUserName')]",
+              "password": "PrivateSettingsRef:adminPassword"
+            },
+            "sqlServiceCreds": {
+              "userName": "[parameters('sqlServerServiceAccountUserName')]",
+              "password": "PrivateSettingsRef:sqlServerServiceAccountPassword"
+            }
+          }
+        },
+        "protectedSettings": {
+          "items": {
+            "adminPassword": "[parameters('adminPassword')]",
+            "sqlServerServiceAccountPassword": "[parameters('sqlServerServiceAccountPassword')]"
+          }
+        }
+      }
+    },
+    {
+			"type": "Microsoft.Compute/virtualMachines/extensions",
+			"name": "[concat(parameters('sqlVMNamePrefix'),'1/CreateCluster')]",
+			"apiVersion": "2015-05-01-preview",
+			"location": "[parameters('location')]",
+			"dependsOn":[
+				"[concat('Microsoft.Compute/virtualMachines/',parameters('sqlVMNamePrefix'),'0/extensions/sqlAOPrepare')]"
+			],
+			"properties": {
+				"publisher": "Microsoft.Powershell",
+				"type": "DSC",
+				"typeHandlerVersion": "1.7",
+				"settings": {
+					"modulesUrl": "[variables('createClusterModulesURL')]",
+					"configurationFunction": "[variables('createClusterConfigurationFunction')]",
+					"properties": {
+						"domainName": "[parameters('domainName')]",
+						"clusterName":"[variables('clusterName')]",
+						"sharePath":"[concat('\\\\',parameters('sqlwVMName'),'\\',parameters('sharePath'))]",
+						"nodes":["[concat(parameters('sqlVMNamePrefix'),'0')]","[concat(parameters('sqlVMNamePrefix'),'1')]"],
+						"sqlAlwaysOnEndpointName":"[variables('sqlAOEPName')]",
+						"sqlAlwaysOnAvailabilityGroupName":"[variables('sqlAOAGName')]",
+						"sqlAlwaysOnAvailabilityGroupListenerName":"[variables('sqlAOListenerName')]",
+						"sqlAlwaysOnAvailabilityGroupListenerPort":1433,
+						"lbName":"[parameters('sqlLBName')]",
+						"lbAddress":"[parameters('sqlLBIPAddress')]",
+						"primaryReplica":"[concat(parameters('sqlVMNamePrefix'),'1')]",
+						"secondaryReplica":"[concat(parameters('sqlVMNamePrefix'),'0')]",
+						"databaseNames":"[parameters('databaseNames')]",
+						"dnsServerName":"[parameters('dnsServerName')]",
+						"adminCreds":{
+							"userName": "[parameters('adminUserName')]",
+							"password": "PrivateSettingsRef:adminPassword"
+						},
+						"sQLServiceCreds":{
+							"userName": "[parameters('sqlServerServiceAccountUserName')]",
+							"password": "PrivateSettingsRef:sqlServerServiceAccountPassword"
+						}
+					}
+				},
+				"protectedSettings": {
+					"items": {
+						"adminPassword": "[parameters('adminPassword')]",
+						"sqlServerServiceAccountPassword": "[parameters('sqlServerServiceAccountPassword')]"
+					}
+				}
+			}
+		}
+  ],
+    "outputs": {
+    }
+}
