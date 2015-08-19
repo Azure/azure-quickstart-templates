@@ -53,9 +53,9 @@ Port numbers of each master VM is described in the following table:
 
 #### Configuring Authentication
 
-It is highly recommended to provide `dockerCa`, `dockerCert`, `dockerKey` parameters
-in the template. Otherwise the created Docker Swarm cluster will be open to anyone
-in public Internet without any authentication.
+This template requires the Docker certs triplet (`ca.pem`, `cert.pem`, `key.pem`)
+to secure the Swarm managers and the communication with Docker engines on each Swarm
+node. Please refer to [Docker documentation on generating TLS certs][tls].
 
 These certificates are used to configure each Docker Engine and Docker Swarm
 Manager endpoints using TLS authentication. Once the cluster is created, you
@@ -108,3 +108,4 @@ Portal.
 [av-set]: https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-manage-availability/
 [az-lb]: https://azure.microsoft.com/en-us/documentation/articles/load-balancer-overview/
 [az-vnet]: http://azure.microsoft.com/en-us/documentation/services/virtual-network/
+[tls]: https://docs.docker.com/articles/https/#create-a-ca-server-and-client-keys-with-openssl
