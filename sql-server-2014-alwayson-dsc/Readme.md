@@ -33,7 +33,7 @@ This template is entirely serial due to some issues between the platform agent a
 
 Click the button below to deploy from the portal
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsql-server-2014-alwayson-dsc%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fgithub.com%2Fhongbincao%2Fazure-quickstart-templates%2Fblob%2FMAS.Workloads%2Fsql-server-2014-alwayson-dsc%2FCollaborationTemplate.json " target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
