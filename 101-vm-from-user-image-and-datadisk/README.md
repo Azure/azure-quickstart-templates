@@ -12,6 +12,7 @@ Below are the parameters that the template expects
 
 | Name   | Description    |
 |:--- |:---|
+| vmName | Name of the Virtual Machine |
 | userImageStorageAccountName  | Name of the Storage Account where the User Image disk is placed. |
 | userImageStorageContainerName  | Name of the Container Name in the Storage Account where the User Image disk is placed. |
 | userImageVhdName  | Name of the user OS Image VHD file. |
