@@ -9,7 +9,7 @@ Based on the https://github.com/Azure/azure-quickstart-templates/tree/master/win
 This template allows you to deploy a Windows VM (default name adPDC) with a new Active Directory forest/domain. This is done by Desired State Configuration (CreateADPDC.ps1.zip).
 The second VM with SQL (default name adPDC) is configured powershell script (skrypt.ps1). The scripts must be in stored in a azure blob storage.
 
-You can connect to the AD by Remote Desktop (modify default FQDN armadsqltst.westeurope.cloudapp.azure.com).
+You can connect to the AD by Remote Desktop (by your domainName.location.cloudapp.azure.com eg.: armadsqltst.westeurope.cloudapp.azure.com).
 Default username: adarmtest\adAdministrator
 Default password (please change it, but please notice that the password, SQLusername, SQL installation file and adPDC IP is also hardcoded in skrypt.ps1): Pa##w0rd
 
@@ -33,11 +33,11 @@ Step by step to deploy this template:
 
 
 IMPORTANT IMPORTANT IMPORTANT:
-All parameters have default values, so no one parameter is expected. Probably you have to modify newStorageAccountName and dnsPrefix, bacause they can be taken.
+All parameters have default values, only * parameters are necessary.
 
 | Name   | Description    |
 |:--- |:---|
-| newStorageAccountName | The name of the new storage account created to store the VMs disks |
+| newStorageAccountName* | The name of the new storage account created to store the VMs disks |
 | storageAccountType | The type of the Storage Account created |
 | location | The region to deploy the resources into |
 | virtualNetworkName | The name of the Virtual Network to Create |
@@ -59,7 +59,7 @@ All parameters have default values, so no one parameter is expected. Probably yo
 | imageOffer | Image Offer |
 | imageSKU | Image SKU |
 | adAvailabilitySetName | The name of the availability set that the AD VM is created in |
-| domainName | The FQDN of the AD Domain created  |
+| domainName* | The FQDN of the AD Domain created  |
 | dnsPrefix | The DNS prefix for the public IP address used by the Load Balancer |
 | pdcRDPPort | The public RDP port for the PDC VM |
 | SQLRDPPort | The public RDP port for the SQL VM |
