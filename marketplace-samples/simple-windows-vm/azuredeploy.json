@@ -57,18 +57,11 @@
         "description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
       }
     },
-    "publicIPAddress": {
-      "type": "string",
-      "metadata": {
-        "description": "The IP address of the new SQL ILB"
-      },
-      "defaultValue":"10.0.0.6"
-    },
     "existingIPRGName" : {
       "type" : "string",
       "defaultValue" : ""
     },
-    "existingIPAddressName" : {
+    "publicIPAddressName" : {
       "type" : "string"
     },
     "publicIPNewOrExisting": {
@@ -100,7 +93,15 @@
     "vmSize": "Standard_A2",
     "virtualNetworkName": "MyVNET",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
-    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]"
+    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
+    "lbSettings" : {
+			"rdpLBFE":"rdpLBFE",
+			"rdpLBName" : "rdpLoadBalancer",
+      "lbID": "[resourceId('Microsoft.Network/loadBalancers',parameters('lbName'))]",
+      "frontEndIPConfigID": "[concat(variables('lbID'),'/frontendIPConfigurations/LoadBalancerFrontEnd')]",
+      "lbPoolID": "[concat(variables('lbID'),'/backendAddressPools/BackendPool1')]",
+      "lbProbeID": "[concat(variables('lbID'),'/probes/tcpProbe')]"
+		}
   },
   "resources": [
     {
@@ -124,6 +125,131 @@
         }
       }
     },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "name": "[variables('lbSettings').rdpLBName]",
+      "type": "Microsoft.Network/loadBalancers",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', parameters('publicIPAddressName'))]"
+      ],
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "LoadBalancerFrontEnd",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[variables('publicIPAddressID')]"
+              }
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "BackendPool1"
+          }
+        ],
+        "inboundNatRules": [
+          {
+            "name": "RDP-VM0",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[variables('frontEndIPConfigID')]"
+              },
+              "protocol": "tcp",
+              "frontendPort": 50001,
+              "backendPort": 3389,
+              "enableFloatingIP": false
+            }
+          },
+          {
+            "name": "RDP-VM1",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[variables('frontEndIPConfigID')]"
+              },
+              "protocol": "tcp",
+              "frontendPort": 50002,
+              "backendPort": 3389,
+              "enableFloatingIP": false
+            }
+          }
+        ],
+        "loadBalancingRules": [
+          {
+            "name": "LBRule",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[variables('frontEndIPConfigID')]"
+              },
+              "backendAddressPool": {
+                "id": "[variables('lbPoolID')]"
+              },
+              "protocol": "tcp",
+              "frontendPort": 80,
+              "backendPort": 80,
+              "enableFloatingIP": false,
+              "idleTimeoutInMinutes": 5,
+              "probe": {
+                "id": "[variables('lbProbeID')]"
+              }
+            }
+          }
+        ],
+        "probes": [
+          {
+            "name": "tcpProbe",
+            "properties": {
+              "protocol": "tcp",
+              "port": 80,
+              "intervalInSeconds": "5",
+              "numberOfProbes": "2"
+            }
+          }
+        ]
+      }
+    },
+    {
+			"apiVersion": "2015-05-01-preview",
+			"name": "[variables('lbSettings').rdpLBName]",
+			"type": "Microsoft.Network/loadBalancers",
+			"location": "[parameters('location')]",
+			"dependsOn": [
+				"[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+			],
+			"properties": {
+				"frontendIPConfigurations": [
+					{
+						"name": "[variables('lbSettings').rdpLBFE]",
+						"properties": {
+							"publicIPAddress": {
+								"id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+							}
+						}
+					}
+				],
+				"backendAddressPools": [
+					{
+						"name": "[variables('lbSettings').adLBBE]"
+
+					}
+				],
+				"inboundNatRules": [
+					{
+						"name": "[variables('RDPNAT')]",
+						"properties": {
+							"frontendIPConfiguration": {
+								"id": "[variables('derivedIds').rdplbFEConfigID]"
+							},
+							"protocol": "tcp",
+							"frontendPort": "[variables('vmSettings').rdpPort]",
+							"backendPort": 3389,
+							"enableFloatingIP": false
+						}
+					}
+				]
+			}
+		},
     {
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/virtualNetworks",
