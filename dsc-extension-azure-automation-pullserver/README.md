@@ -10,6 +10,8 @@ This template configures an existing Virtual Machine Local Configuration Manager
 
 For more information on Azure Automation DSC, please see the following: <a href="http://aka.ms/DSCLearnMore" target="_blank">Azure Automation DSC Overview</a>
 
+<b>DISCLAIMER:</b> This template does not create a new VM, it only includes what is necessary to create/update a DSC VM Extension for an existing VM. The contents of this template can be leveraged as part of a VM creation template, either by nesting, or copying/pasting the relevant template metadata.
+
 Below are the parameters that the template expects:
 
 | Name   | Description    |
