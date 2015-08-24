@@ -85,6 +85,27 @@ internet by creating probes and load balancing rules on this Load Balancer
 resource. Load balancer's public DNS address is emitted as an output of the
 template deployment.
 
+#### How to SSH into Swarm Slave Nodes
+
+Since Swarm slave VMs do not have public IP addresses, you first need to SSH into
+Swarm manager VMs (described above) to SSH into Swarm nodes.
+
+You just need to use `ssh -A` to SSH into one of the masters, and from that point
+on you can reach any other VM in the cluster as shown below:
+
+```sh
+$ ## <-- You are on your development machine
+$
+$ ssh -A <username>@<masters-IP> -p 2200
+azureuser@swarm-master-0 ~ $ ## <-- You are on Swarm master
+azureuser@swarm-master-0 ~ $ ssh <username>@swarm-node-3
+azureuser@swarm-node-3 ~ $ ## <-- You are now on a Swarm slave
+```
+
+Swarm node hostnames are numbered starting from 0, such as: `swarm-node-0`,
+`swarm-node-1`, ..., `swarm-node-19` etc. You can see the VM names on the
+Azure Portal as well.
+
 ## Output
 
 The template deployment will output two values:
