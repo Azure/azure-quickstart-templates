@@ -8,16 +8,34 @@
                 "description": "Connect to your cluster using dnsName.cloudapp.net"
             }
         },
-        "userName": {
+        "vmUserName": {
             "type": "string",
             "metadata": {
                 "description": "user name to ssh to the VMs"
             }
         },
-        "password": {
+        "vmPassword": {
             "type": "securestring",
             "metadata": {
                 "description": "password to ssh to the VMs"
+            }
+        },
+        "mysqlRootPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "mysql root user password"
+            }
+        },
+        "mysqlReplicationPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "mysql replication user password"
+            }
+        },
+        "mysqlProbePassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "mysql probe password"
             }
         },
         "vmSize": {
@@ -116,20 +134,6 @@
                 "description": "MySQL public port"
             }
         },
-        "mysqlBackEndPort": {
-            "type": "int",
-            "defaultValue": 3306,
-            "metadata": {
-                "description": "MySQL private port"
-            }
-        },
-        "probePort": {
-            "type": "int",
-            "defaultValue": 9200,
-            "metadata": {
-                "description": "cluster health check probe port exposed to load balancer"
-            }
-        },
         "sshNatRuleFrontEndPort1": {
             "type": "int",
             "defaultValue": 64001,
@@ -142,13 +146,6 @@
             "defaultValue": 64002,
             "metadata": {
                 "description": "public ssh port for VM2"
-            }
-        },
-        "sshNatRuleBackEndPort": {
-            "type": "int",
-            "defaultValue": 22,
-            "metadata": {
-                "description": "private ssh port for the VMs"
             }
         },
         "customScriptFilePath": {
@@ -274,7 +271,7 @@
               ],
               "loadBalancerInboundNatRules": [
                 {
-                  "id": "[concat(variables('lbID'),'/inboundNatRules/',variables('sshNatRuleName'), copyIndex())]"
+                  "id": "[concat(variables('lbID'),'/inboundNatRules/',parameters('dnsName'), 'NatRule', copyIndex())]"
                 }
               ]
             }
@@ -305,8 +302,8 @@
         },
         "osProfile": {
           "computername": "[concat(parameters('dnsName'), copyIndex())]",
-          "adminUsername": "[parameters('userName')]",
-          "adminPassword": "[parameters('password')]"
+          "adminUsername": "[parameters('vmUserName')]",
+          "adminPassword": "[parameters('vmPassword')]"
         },
         "storageProfile": {
           "imageReference": {
@@ -373,7 +370,7 @@
           "fileUris": [
             "[parameters('customScriptFilePath')]"
           ],
-          "commandToExecute": "[concat(parameters('customScriptCommandToExecute'), ' ', copyIndex(), ' ', parameters('mysqlConfigFilePath'))]"
+          "commandToExecute": "[concat(parameters('customScriptCommandToExecute'), ' ', copyIndex(1), ' ', parameters('vmIPPrefix'), copyIndex(parameters('vmIPStartAddress')), ' ', parameters('mysqlConfigFilePath'), ' ', parameters('mysqlReplicationPassword'), ' ', parameters('mysqlRootPassword'), ' ', parameters('mysqlProbePassword'), ' ', parameters('vmIPPrefix'), parameters('vmIPStartAddress'))]"
         }
       }
     },
@@ -410,7 +407,7 @@
               },
               "protocol": "tcp",
               "frontendPort": "[parameters('sshNatRuleFrontEndPort1')]",
-              "backendPort": "[parameters('sshNatRuleBackEndPort')]",
+              "backendPort": 22,
               "enableFloatingIP": false
             }
           },
@@ -422,7 +419,7 @@
               },
               "protocol": "tcp",
               "frontendPort": "[parameters('sshNatRuleFrontEndPort2')]",
-              "backendPort": "[parameters('sshNatRuleBackEndPort')]",
+              "backendPort": 22,
               "enableFloatingIP": false
             }
           }
@@ -439,7 +436,7 @@
               },
               "protocol": "tcp",
               "frontendPort": "[parameters('mysqlFrontEndPort')]",
-              "backendPort": "[parameters('mysqlBackEndPort')]",
+              "backendPort": 3306,
               "enableFloatingIP": false,
               "idleTimeoutInMinutes": 4,
               "probe": {
@@ -453,7 +450,7 @@
             "name": "[variables('probeName')]",
             "properties": {
               "protocol": "http",
-              "port": "[parameters('probePort')]",
+              "port": 9200,
               "intervalInSeconds": 10,
               "numberOfProbes": 20,
               "requestPath": "/"

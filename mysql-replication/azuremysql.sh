@@ -1,4 +1,4 @@
-#!/bin/bash
+﻿#!/bin/bash
 
 # This script is only tested on CentOS 6.5 and Ubuntu 12.04 LTS with Percona XtraDB Cluster 5.6.
 # You can customize variables such as MOUNTPOINT, RAIDCHUNKSIZE and so on to your needs.
@@ -9,8 +9,11 @@
 
 NODEID=${1}
 NODEADDRESS=${2}
-NODENAME=$(hostname)
 MYCNFTEMPLATE=${3}
+RPLPWD=${4}
+ROOTPWD=${5}
+PROBEPWD=${6}
+MASTERIP=${7}
 
 MOUNTPOINT="/datadrive"
 RAIDCHUNKSIZE=512
@@ -208,6 +211,105 @@ install_mysql_centos() {
     yum -y install xinetd
 }
 
+create_mysql_probe() {
+# create a probe user with minimum privilege
+    mysql -u root <<-EOF
+CREATE USER 'rpluser'@'%' IDENTIFIED BY '${RPLPWD}';
+GRANT REPLICATION SLAVE ON *.* TO 'rpluser'@'%';
+FLUSH PRIVILEGES;
+EOF
+
+# create a probe script
+    cat <<EOF >/usr/bin/mysqlprobe
+#!/bin/bash
+ 
+MYSQL_HOST="host or ip"
+MYSQL_USERNAME="${PROBEUSER}"
+MYSQL_PASSWORD="${PROBEPWD}"
+ 
+ERROR_MSG=`/usr/bin/mysqladmin --host=$MYSQL_HOST --port=3306 --user=$MYSQL_USERNAME --password=$MYSQL_PASSWORD status 2>/dev/null`
+#ERROR_MSG=`/usr/bin/mysql --host=$MYSQL_HOST --port=$MYSQL_PORT --user=$MYSQL_USERNAME --password=$MYSQL_PASSWORD -e "show databases;" 2>/dev/null`
+ 
+if [ "$ERROR_MSG" != "" ]
+then
+        # mysql is fine, return http 200
+        echo -en "HTTP/1.1 200 OK\r\n"
+        echo -en "Content-Type: Content-Type: text/plain\r\n"
+        echo -en "Connection: close\r\n"
+        echo -en "Content-Length: 19\r\n"
+        echo -en "\r\n"
+        echo -en "MySQL is running.\r\n"
+        sleep 0.1
+        exit 0
+else
+        # mysql is down, return http 503
+        echo -en "HTTP/1.1 503 Service Unavailable\r\n"
+        echo -en "Content-Type: Content-Type: text/plain\r\n"
+        echo -en "Connection: close\r\n"
+        echo -en "Content-Length: 16\r\n"
+        echo -en "\r\n"
+        echo -en "MySQL is down.\r\n"
+        sleep 0.1
+        exit 1
+fi
+EOF
+
+chmod 755 /usr/bin/mysqlprobe
+
+# create a http service that runs the script
+    cat <<EOF >/etc/xinetd.d/mysqlprobe
+# default: on
+# description: mysqlprobe
+service mysqlprobe
+{
+        disable = no
+        flags = REUSE
+        socket_type = stream
+        port = 9200
+        wait = no
+        user = nobody
+        server = /usr/bin/mysqlprobe
+        log_on_failure += USERID
+        only_from = 0.0.0.0/0
+        per_source = UNLIMITED
+}
+EOF
+
+# add the service to xinet
+    grep "mysqlprobe" /etc/services >/dev/null 2>&1
+    if [ ${?} -ne 0 ];
+    then
+        sed -i "\$amysqlprobe  9200\/tcp  #mysqlprobe" /etc/services
+    fi
+    service xinetd restart
+}
+
+secure_mysql() {
+    mysql -u root <<-EOF
+UPDATE mysql.user SET Password='${ROOTPWD}' WHERE User='root';
+DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');
+DELETE FROM mysql.user WHERE User='';
+DELETE FROM mysql.db WHERE Db='test' OR Db='test\_%';
+FLUSH PRIVILEGES;
+EOF
+}
+
+configure_mysql_replication() {
+if [ ${NODEID} -eq 1 ];
+then
+    mysql -u root <<-EOF
+CREATE USER 'rpluser'@'%' IDENTIFIED BY '${RPLPWD}';
+GRANT REPLICATION SLAVE ON *.* TO 'rpluser'@'%';
+FLUSH PRIVILEGES;
+EOF
+else
+    mysql -u root <<-EOF
+change master to master_host='${MASTERIP}', master_port=3306, master_user=rpluser, master_password='${RPLPWD}', master_auto_position=1;
+START slave;
+EOF
+fi
+}
+
 configure_mysql() {
     /etc/init.d/mysql status
 	if [ ${?} -eq 0 ];
@@ -226,31 +328,12 @@ configure_mysql() {
     then
         install_mysql_ubuntu
     fi
-    /etc/init.d/mysql stop
     chmod o+x "${MOUNTPOINT}/mysql"
-    
-    grep "mysqlchk" /etc/services >/dev/null 2>&1
-    if [ ${?} -ne 0 ];
-    then
-        sed -i "\$amysqlchk  9200\/tcp  #mysqlchk" /etc/services
-    fi
-    service xinetd restart
+    /etc/init.d/mysql start
 
-    /etc/init.d/mysql $MYSQLSTARTUP
-    if [ $MYSQLSTARTUP == "bootstrap-pxc" ];
-    then
-        if [ $sstmethod != "mysqldump" ];
-        then
-            echo "CREATE USER '${sstauth[0]}'@'localhost' IDENTIFIED BY '${sstauth[1]}';" > /tmp/bootstrap-pxc.sql
-            echo "GRANT RELOAD, LOCK TABLES, REPLICATION CLIENT ON *.* TO '${sstauth[0]}'@'localhost';" >> /tmp/bootstrap-pxc.sql
-        fi
-        echo "CREATE USER 'clustercheckuser'@'localhost' identified by 'clustercheckpassword!';" >> /tmp/bootstrap-pxc.sql
-        echo "GRANT PROCESS on *.* to 'clustercheckuser'@'localhost';" >> /tmp/bootstrap-pxc.sql
-        echo "CREATE USER 'test'@'%' identified by '${sstauth[1]}';" >> /tmp/bootstrap-pxc.sql
-        echo "GRANT select on *.* to 'test'@'%';" >> /tmp/bootstrap-pxc.sql
-        echo "FLUSH PRIVILEGES;" >> /tmp/bootstrap-pxc.sql
-        mysql < /tmp/bootstrap-pxc.sql
-    fi
+    configure_mysql_replication
+    secure_mysql
+    create_mysql_probe
 }
 
 check_os
@@ -261,6 +344,6 @@ then
 else
     configure_network
     configure_disks
-    configure_mysql
+    #configure_mysql
 fi
 
