@@ -14,7 +14,7 @@ Below are the parameters that the template expects:
 
 | Name   | Description    |
 |:--- |:---|
-| location  | Location of the existing Virtual Machine |
+| location  | Location of the existing Virtual Machine. <br> <ul>**Allowed Values**<li>East US</li><li>West US **(default)**</li><li>West Europe</li><li>East Asia</li><li>Southeast Asia</li></ul> |
 | vmName | Name of the existing VM to apply the DSC configuration to |
 | modulesUrl | URL for the DSC configuration package. NOTE: Can be a Github url(raw) to the zip file <br> <ul> <li><b>Example:</b> https://xyz.blob.core.windows.net/abc/UpdateLCMforAAPull.zip</li></ul>|
 | configurationFunction | DSC configuration function to call. Should contain filename and function in <br> <ul> <li><b>Format Example:</b> UpdateLCMforAAPull.ps1\\ConfigureLCMforAAPull **(default)**</li></ul> |
