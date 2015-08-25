@@ -17,8 +17,8 @@
     "osType": {
       "type": "string",
       "allowedValues": [
-        "windows",
-        "linux"
+        "Windows",
+        "Linux"
       ],
       "metadata": {
         "description": "Type of OS on the existing vhd"
@@ -39,14 +39,82 @@
     }
   },
   "variables": {
-    "nicName": "networkInterface1"
+    "api-version": "2015-06-15",
+    "addressPrefix": "10.0.0.0/16",
+    "subnetName": "Subnet",
+    "subnetPrefix": "10.0.0.0/24",
+    "publicIPAddressName": "specializedVMPublicIP",
+    "publicIPAddressType": "Dynamic",
+    "virtualNetworkName": "specializedVMVNET",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
+    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
+    "nicName": "specializedVMNic"
   },
   "resources": [
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('api-version')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "[variables('api-version')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nicName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+              },
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "[variables('api-version')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIPAddressName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]"
+      }
+    },
+    {
+      "apiVersion": "[variables('api-version')]",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('vmName')]",
       "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+      ],
       "properties": {
         "hardwareProfile": {
           "vmSize": "[parameters('vmSize')]"
@@ -65,7 +133,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
             }
           ]
         }

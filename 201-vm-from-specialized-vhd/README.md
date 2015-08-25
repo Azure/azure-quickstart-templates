@@ -4,6 +4,6 @@
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-Prerequisite - Resource Group with a Storage Account with the VHD, NIC already exist.
+Prerequisite - VHD file that you want to create a VM from already exists in a storage account.
 
-This template creates a VM from a specialized VHD. The VHD file can be located in a storage account using a tool such as Azure Storage Explorer http://azurestorageexplorer.codeplex.com/ 
+This template creates a VM from a specialized VHD. The VHD file can be located in a storage account using a tool such as Azure Storage Explorer http://azurestorageexplorer.codeplex.com/

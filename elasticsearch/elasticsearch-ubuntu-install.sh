@@ -79,7 +79,7 @@ fi
 
 #Script Parameters
 CLUSTER_NAME="elasticsearch"
-ES_VERSION="1.5.0"
+ES_VERSION="1.7.0"
 DISCOVERY_ENDPOINTS=""
 INSTALL_MARVEL="no" #We use this because of ARM template limitation
 CLIENT_ONLY_NODE=0
@@ -170,7 +170,7 @@ install_java()
     apt-get -y update  > /dev/null
     echo debconf shared/accepted-oracle-license-v1-1 select true | sudo debconf-set-selections
     echo debconf shared/accepted-oracle-license-v1-1 seen true | sudo debconf-set-selections
-    apt-get -y install oracle-java7-installer  > /dev/null
+    apt-get -y install oracle-java8-installer  > /dev/null
 }
 
 # Install Elasticsearch
@@ -297,7 +297,7 @@ echo "vm.max_map_count = 262144" >> /etc/sysctl.conf
 #TODO: Move this to an init.d script so we can handle instance size increases
 ES_HEAP=`free -m |grep Mem | awk '{if ($2/2 >31744)  print 31744;else print $2/2;}'`
 log "Configure elasticsearch heap size - $ES_HEAP"
-echo "ES_HEAP_SIZE=${ES_HEAP}/" >> /etc/default/elasticseach
+echo "ES_HEAP_SIZE=${ES_HEAP}m" >> /etc/default/elasticsearch
 
 #Optionally Install Marvel
 if [ "${INSTALL_MARVEL}" == "yes" ];

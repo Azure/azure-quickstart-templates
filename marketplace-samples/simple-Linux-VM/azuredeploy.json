@@ -11,7 +11,7 @@
     "adminUsername": {
       "type": "string",
       "metadata": {
-        "description": "Username for the Virtual Machine."
+        "description": "User name for the Virtual Machine."
       }
     },
     "adminPassword": {
@@ -26,69 +26,24 @@
         "description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
       }
     },
-    "vmName": {
+    "ubuntuOSVersion": {
       "type": "string",
-      "defaultValue": "myVM",
-      "metadata": {
-        "Description": "Vitual machine's unique name."
-      }
-    },
-    "location": {
-      "type": "string",
+      "defaultValue": "14.04.2-LTS",
       "allowedValues": [
-        "East US",
-        "West US",
-        "West Europe",
-        "East Asia",
-        "South East Asia"
+        "12.04.5-LTS",
+        "14.04.2-LTS",
+        "15.04"
       ],
       "metadata": {
-        "description": "This is the location where the availability set will be deployed"
-      }
-    },
-    "vmSize": {
-      "type": "string",
-      "defaultValue": "Standard_D1",
-      "metadata": {
-        "Description": "Virtual machine size"
-      }
-    },
-    "windowsOSVersion": {
-      "type": "string",
-      "defaultValue": "2012-R2-Datacenter",
-      "allowedValues": [
-        "2008-R2-SP1",
-        "2012-Datacenter",
-        "2012-R2-Datacenter",
-        "Windows-Server-Technical-Preview"
-      ],
-      "metadata": {
-        "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version. Allowed values: 2008-R2-SP1, 2012-Datacenter, 2012-R2-Datacenter, Windows-Server-Technical-Preview."
-      }
-    },
-    "client_rb": {
-      "type": "string",
-      "metadata": {
-        "Description": "JSON escaped string value of the client.rb file to pass"
-      }
-    },
-    "runlist": {
-      "type": "string",
-      "metadata": {
-        "Description": "Chef runlist to be used on the VM"
-      }
-    },
-    "validation_key": {
-      "type": "string",
-      "metadata": {
-        "Description": "Chef validation key"
+        "description": "The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version. Allowed values: 12.04.5-LTS, 14.04.2-LTS, 15.04."
       }
     }
   },
   "variables": {
-    "imagePublisher": "MicrosoftWindowsServer",
-    "imageOffer": "WindowsServer",
-    "OSDiskName": "osdiskforwindowssimple",
+    "location": "West US",
+    "imagePublisher": "Canonical",
+    "imageOffer": "UbuntuServer",
+    "OSDiskName": "osdiskforlinuxsimple",
     "nicName": "myVMNic",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet",
@@ -97,6 +52,7 @@
     "publicIPAddressName": "myPublicIP",
     "publicIPAddressType": "Dynamic",
     "vmStorageAccountContainerName": "vhds",
+    "vmName": "MyUbuntuVM",
     "vmSize": "Standard_D1",
     "virtualNetworkName": "MyVNET",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
@@ -107,7 +63,7 @@
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[parameters('newStorageAccountName')]",
       "apiVersion": "2015-05-01-preview",
-      "location": "[parameters('location')]",
+      "location": "[variables('location')]",
       "properties": {
         "accountType": "[variables('storageAccountType')]"
       }
@@ -116,7 +72,7 @@
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
-      "location": "[parameters('location')]",
+      "location": "[variables('location')]",
       "properties": {
         "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
         "dnsSettings": {
@@ -128,7 +84,7 @@
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
-      "location": "[parameters('location')]",
+      "location": "[variables('location')]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -149,7 +105,7 @@
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
-      "location": "[parameters('location')]",
+      "location": "[variables('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
@@ -174,8 +130,8 @@
     {
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[parameters('vmName')]",
-      "location": "[parameters('location')]",
+      "name": "[variables('vmName')]",
+      "location": "[variables('location')]",
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
@@ -185,7 +141,7 @@
           "vmSize": "[variables('vmSize')]"
         },
         "osProfile": {
-          "computername": "[parameters('vmName')]",
+          "computername": "[variables('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]"
         },
@@ -193,7 +149,7 @@
           "imageReference": {
             "publisher": "[variables('imagePublisher')]",
             "offer": "[variables('imageOffer')]",
-            "sku": "[parameters('windowsOSVersion')]",
+            "sku": "[parameters('ubuntuOSVersion')]",
             "version": "latest"
           },
           "osDisk": {
@@ -211,27 +167,6 @@
               "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
             }
           ]
-        }
-      }
-    },
-    {
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(parameters('vmName'),'/', 'chefExtension')]",
-      "apiVersion": "2015-05-01-preview",
-      "location": "[parameters('location')]",
-      "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
-      ],
-      "properties": {
-        "publisher": "Chef.Bootstrap.WindowsAzure",
-        "type": "ChefClient",
-        "typeHandlerVersion": "1210.12",
-        "settings": {
-          "client_rb": "[parameters('client_rb')]",
-          "runlist": "[parameters('runlist')]"
-        },
-        "protectedSettings": {
-          "validation_key": "[parameters('validation_key')]"
         }
       }
     }
