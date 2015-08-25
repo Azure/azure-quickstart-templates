@@ -205,9 +205,14 @@ install_mysql_centos() {
         return
     fi
     echo "installing mysql"
-    wget -O mysql-5.6.rpm https://dev.mysql.com/get/Downloads/MySQL-5.6/MySQL-server-5.6.26-1.el6.i686.rpm
-    rpm -ivh mysql-5.6.rpm
+    wget https://dev.mysql.com/get/Downloads/MySQL-5.6/MySQL-5.6.26-1.el6.x86_64.rpm-bundle.tar
+    tar -xvf MySQL-5.6.26-1.el6.x86_64.rpm-bundle.tar
+    rpm -ivh MySQL-server-5.6.26-1.el6.x86_64.rpm
     yum -y install mysql-server
+    rpm -ivh MySQL-client-5.6.26-1.el6.x86_64.rpm
+    yum -y install mysql-client
+    mysql_secret=${awk '/password/{print $NF}' /root/.mysql_secret}
+    mysqladmin -u root --password=${mysql_secret} password ${ROOTPWD}
     yum -y install xinetd
 }
 
@@ -223,14 +228,14 @@ EOF
     cat <<EOF >/usr/bin/mysqlprobe
 #!/bin/bash
  
-MYSQL_HOST="host or ip"
-MYSQL_USERNAME="${PROBEUSER}"
+MYSQL_HOST="${NODEADDRESS}"
+MYSQL_USERNAME="probeuser"
 MYSQL_PASSWORD="${PROBEPWD}"
- 
-ERROR_MSG=`/usr/bin/mysqladmin --host=$MYSQL_HOST --port=3306 --user=$MYSQL_USERNAME --password=$MYSQL_PASSWORD status 2>/dev/null`
-#ERROR_MSG=`/usr/bin/mysql --host=$MYSQL_HOST --port=$MYSQL_PORT --user=$MYSQL_USERNAME --password=$MYSQL_PASSWORD -e "show databases;" 2>/dev/null`
- 
-if [ "$ERROR_MSG" != "" ]
+
+ERROR_MSG=\`/usr/bin/mysqladmin --host=\${MYSQL_HOST} --port=3306 --user=\${MYSQL_USERNAME} --password=\${MYSQL_PASSWORD} status 2>/dev/null\`
+#ERROR_MSG=\`/usr/bin/mysql --host=\${MYSQL_HOST} --port=3306 --user=\${MYSQL_USERNAME} --password=\${MYSQL_PASSWORD} -e "show databases;" 2>/dev/null\`
+
+if [ "\$ERROR_MSG" != "" ]
 then
         # mysql is fine, return http 200
         echo -en "HTTP/1.1 200 OK\r\n"
@@ -284,27 +289,17 @@ EOF
     service xinetd restart
 }
 
-secure_mysql() {
-    mysql -u root <<-EOF
-UPDATE mysql.user SET Password='${ROOTPWD}' WHERE User='root';
-DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');
-DELETE FROM mysql.user WHERE User='';
-DELETE FROM mysql.db WHERE Db='test' OR Db='test\_%';
-FLUSH PRIVILEGES;
-EOF
-}
-
 configure_mysql_replication() {
 if [ ${NODEID} -eq 1 ];
 then
-    mysql -u root <<-EOF
-CREATE USER 'rpluser'@'%' IDENTIFIED BY '${RPLPWD}';
+    mysql -u root -p"${ROOTPWD}" <<EOF
+CREATE USER 'rpluser'@'%' IDENTIFIED BY "${RPLPWD}";
 GRANT REPLICATION SLAVE ON *.* TO 'rpluser'@'%';
 FLUSH PRIVILEGES;
 EOF
 else
-    mysql -u root <<-EOF
-change master to master_host='${MASTERIP}', master_port=3306, master_user=rpluser, master_password='${RPLPWD}', master_auto_position=1;
+    mysql -u root -p"${ROOTPWD}" <<EOF
+change master to master_host="${MASTERIP}", master_port=3306, master_user=rpluser, master_password="${RPLPWD}", master_auto_position=1;
 START slave;
 EOF
 fi
@@ -312,10 +307,10 @@ fi
 
 configure_mysql() {
     /etc/init.d/mysql status
-	if [ ${?} -eq 0 ];
+    if [ ${?} -eq 0 ];
     then
-	   return
-	fi
+       return
+    fi
     create_mycnf
 
     mkdir "${MOUNTPOINT}/mysql"
@@ -332,7 +327,6 @@ configure_mysql() {
     /etc/init.d/mysql start
 
     configure_mysql_replication
-    secure_mysql
     create_mysql_probe
 }
 
@@ -344,6 +338,6 @@ then
 else
     configure_network
     configure_disks
-    #configure_mysql
+    configure_mysql
 fi
 
