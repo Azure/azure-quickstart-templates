@@ -36,6 +36,7 @@
     },
     "vmCount" : {
       "type" : "int",
+      "defaultValue": 2,
       "metadata" : {
         "description" : "Number of VMs to deploy"
       }
@@ -44,6 +45,17 @@
       "type": "string",
       "metadata": {
         "description": "Name of storage account"
+      }
+    },
+    "storageAccountNewOrExisting" : {
+      "type": "string",
+      "defaultValue" : "new",
+      "allowedValues" : [
+        "new",
+        "existing"
+      ],
+      "metadata": {
+        "Description": "Indicates whether the Storage Account is new or existing"
       }
     },
     "storageAccountType": {
@@ -57,7 +69,8 @@
       "type": "string",
       "metadata": {
         "description": "Resource Group of the Existing VM."
-      }
+      },
+      "defaultValue" : ""
     },
     "dnsNameForPublicIP": {
       "type": "string",
@@ -80,7 +93,7 @@
         "existing"
       ],
       "metadata": {
-        "Description": "Indicates whether the Sharepoint farm's IP is new or existing"
+        "Description": "Indicates whether the public IP is new or existing"
       }
     },
     "baseUrl" : {
@@ -103,10 +116,8 @@
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet-1",
     "subnetPrefix": "10.0.0.0/24",
-    "publicIPAddressType": "Dynamic",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('vnetName'))]",
     "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables ('subnetName'))]",
-    "publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('publicIPAddressName'))]",
     "lbID": "[resourceId('Microsoft.Network/loadBalancers',variables('lbName'))]",
     "frontEndIPConfigID": "[concat(variables('lbID'),'/frontendIPConfigurations/LoadBalancerFrontEnd')]",
     "lbPoolID": "[concat(variables('lbID'),'/backendAddressPools/BackendPool1')]",
@@ -143,23 +154,40 @@
 			}
 		},
     {
+      "name": "publicIPSetup",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('publicIPAdressSetupURL')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+			    "location": {
+			      "value" : "[parameters('location')]"
+			    },
+			    "publicIPAddressName": {
+			      "value" : "[parameters('publicIPAddressName')]"
+			    },
+			    "publicIPAddressType" : {
+			      "value" : "Dynamic"
+			    },
+			    "dnsPrefix" : {
+			      "value" : "[parameters('dnsNameForPublicIP')]"
+			    },
+			    "publicIpRGName" : {
+			    	"value" : "[parameters('existingIPRGName')]"
+			    }
+        }
+      }
+    },
+    {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('availabilitySetName')]",
       "apiVersion": "2015-05-01-preview",
       "location": "[parameters('location')]",
       "properties": {}
-    },
-    {
-      "apiVersion": "2015-05-01-preview",
-      "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[parameters('publicIPAddressName')]",
-      "location": "[parameters('location')]",
-      "properties": {
-        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
-        "dnsSettings": {
-          "domainNameLabel": "[parameters('dnsNameForPublicIP')]"
-        }
-      }
     },
     {
       "apiVersion": "2015-05-01-preview",
@@ -225,7 +253,7 @@
       "type": "Microsoft.Network/loadBalancers",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', parameters('publicIPAddressName'))]"
+        "publicIPSetup"
       ],
       "properties": {
         "frontendIPConfigurations": [
@@ -233,7 +261,7 @@
             "name": "LoadBalancerFrontEnd",
             "properties": {
               "publicIPAddress": {
-                "id": "[variables('publicIPAddressID')]"
+                "id": "[reference('publicIPSetup').outputs.resourceId.value]"
               }
             }
           }
