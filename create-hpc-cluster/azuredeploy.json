@@ -113,7 +113,9 @@
   },
   "variables": {
     "apiVersion": "2015-05-01-preview",
-    "storageAccountName": "[toLower(concat(parameters('clusterName'), 'sa', replace(resourceGroup().location, ' ', '')))]",
+    "storageAccountName": "[toLower(concat(parameters('clusterName'), replace(resourceGroup().location, ' ', ''), 'sa'))]",
+    "cnStorageAccountPrefix": "[concat(variables('storageAccountName'), 'cn')]",
+    "cnStorageAccountNumber": "[add(div(parameters('computeNodeNumber'), 10), 1)]",
     "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts',variables('storageAccountName'))]",
     "virtualNetworkName": "[concat(parameters('clusterName'), 'VNet')]",
     "addressPrefix": "10.0.0.0/16",
@@ -290,6 +292,21 @@
         }
       }
     },
+
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[concat(variables('cnStorageAccountPrefix'), copyIndex())]",
+      "apiVersion": "[variables('apiVersion')]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "CNStorageAccounts",
+        "count": "[variables('cnStorageAccountNumber')]"
+      },
+      "properties": {
+        "accountType": "Standard_LRS"
+      }
+    },
+
     {
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/networkInterfaces",
@@ -324,7 +341,8 @@
       "dependsOn": [
         "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]",
         "[concat('Microsoft.Compute/virtualMachines/', parameters('clusterName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyIndex())]"
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyIndex())]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('cnStorageAccountPrefix'), div(copyIndex(), 10))]"
       ],
       "copy": {
         "name": "CN",
@@ -353,7 +371,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/vhds',copyIndex(),'/','osdisk.vhd')]"
+              "uri": "[concat('http://',variables('cnStorageAccountPrefix'),div(copyIndex(), 10),'.blob.core.windows.net/vhds',copyIndex(),'/','osdisk.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
