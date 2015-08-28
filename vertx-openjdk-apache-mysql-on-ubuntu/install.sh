@@ -19,7 +19,7 @@ apt-get install openjdk-7-jdk -y
 apt-get install apache2-utils -y
 mkdir /usr/local/vertx && cd /usr/local/vertx
 wget -qO- -O tmp.zip $vertx_download_location && unzip tmp.zip && rm tmp.zip
-export PATH=/usr/local/vertx/$vertx_version/bin:$PATH
+ln -sT /usr/local/vertx/vert.x-2.1.5/bin/vertx /usr/local/bin/vertx
 
 # Install MySQL Server in non-interactive mode
 export DEBIAN_FRONTEND=noninteractive
