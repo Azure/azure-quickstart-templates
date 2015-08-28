@@ -28,4 +28,4 @@ echo "mysql-server-$mysql_version mysql-server/root_password_again password $mys
 apt-get install mysql-server -y
 
 # Edit crontab to start MySQL Server service automatically on boot
-crontab -l | { cat; echo "@reboot service mysql start"; } | crontab -
+(crontab -l 2>/dev/null; echo "@reboot service mysql start") | crontab -
