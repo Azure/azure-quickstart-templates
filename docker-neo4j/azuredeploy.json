@@ -88,68 +88,28 @@
                 "metadata": {
                     "description": "User password for sample VM"
                 }
-            },
-            "newStorageAccountName": {
-                "type": "string",
-                "metadata": {
-                    "description": "Stoarge Account Name for VM Disk"
-                }
-            },
-            "storageAccountType": {
-                "type": "string",
-                "allowedValues": [
-                    "Standard_LRS",
-                    "Standard_GRS",
-                    "Standard_RAGRS",
-                    "Premium_LRS"
-                ],
-                "metadata": {
-                    "description": "The type of the Storage Account created"
-                },
-                "defaultValue": "Standard_LRS"
-            },
-            "networkSecurityGroupName": {
-                "type": "string",
-                "metadata": {
-                    "description": "Name of the network security group."
-                },
-                "defaultValue": "myNSG"
-            },
-            "networkInterfaceName": {
-                "type": "string",
-                "metadata": {
-                    "description": "Name of the network security group."
-                },
-                "defaultValue": "myVMNic"
-            },
-            "publicIPAddressName": {
-                "type": "string",
-                "metadata": {
-                    "description": "Name of the public IP address"
-                },
-                "defaultValue": "myPublicIP"
             }
         },
         "variables": {
+            "apiVersion": "2015-05-01-preview",
             "imagePublisher": "Canonical",
             "imageOffer": "UbuntuServer",
             "ubuntuOSVersion": "15.04",    
             "OSDiskName": "osDisk",
-            "nsgName": "[parameters('networkSecurityGroupName')]",
-            "nicName": "[concat(parameters('vmName'),parameters('networkInterfaceName'))]",
-            "dockerExtensionName": "DockerExtension",
+            "nsgName": "[concat(parameters('vmName'),'NeoNSG')]",
+            "nicName": "[concat(parameters('vmName'),'NeoNIC')]",             "dockerExtensionName": "DockerExtension",
             "azureVMUtilsName": "vmCustomizationExt",
             "azureVMUtilsScriptUrl": "https://github.com/Azure/docker-neo4j/raw/master/extras/setup_data_disk.sh",
             "addressPrefix": "10.0.0.0/16",
             "subnetName": "Subnet",
             "subnetPrefix": "10.0.0.0/24",
             "storageAccountType": "Standard_LRS",
-            "publicIPAddressName": "[concat(parameters('vmName'),parameters('publicIPAddressName'))]",
+            "publicIPAddressName": "[concat(parameters('vmName'),'NeoPublicIP')]",
             "publicIPAddressType": "Dynamic",
             "vmStorageAccountContainerName": "vhds",
             "vmName": "[parameters('vmName')]",
             "vmSize": "[parameters('vmSize')]",
-            "virtualNetworkName": "MyVNET",
+            "virtualNetworkName": "[concat(parameters('vmName'),'NeoVNET')]",
             "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
             "nsgID": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('nsgName'))]",
             "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
@@ -160,14 +120,14 @@
         {
             "type": "Microsoft.Storage/storageAccounts",
             "name": "[parameters('newStorageAccountName')]",
-            "apiVersion": "2015-05-01-preview",
+            "apiVersion": "[variables('apiVersion')]",
             "location": "[parameters('location')]",
             "properties": {
                 "accountType": "[variables('storageAccountType')]"
             }
         },
         {
-            "apiVersion": "2015-05-01-preview",
+            "apiVersion": "[variables('apiVersion')]",
             "type": "Microsoft.Network/publicIPAddresses",
             "name": "[variables('publicIPAddressName')]",
             "location": "[parameters('location')]",
@@ -179,7 +139,7 @@
             }
         },
         {
-            "apiVersion": "2015-05-01-preview",
+            "apiVersion": "[variables('apiVersion')]",
             "type": "Microsoft.Network/virtualNetworks",
             "name": "[variables('virtualNetworkName')]",
             "location": "[parameters('location')]",
@@ -206,7 +166,7 @@
             }
         },
         {
-            "apiVersion": "2015-05-01-preview",
+            "apiVersion": "[variables('apiVersion')]",
             "type": "Microsoft.Network/networkInterfaces",
             "name": "[variables('nicName')]",
             "location": "[parameters('location')]",
@@ -232,7 +192,7 @@
             }
         },
         {
-            "apiVersion": "2015-05-01-preview",
+            "apiVersion": "[variables('apiVersion')]",
             "type": "Microsoft.Network/networkSecurityGroups",
             "name": "[variables('nsgName')]",
             "location": "[parameters('location')]",
@@ -298,7 +258,7 @@
             }
         },
         {
-            "apiVersion": "2015-05-01-preview",
+            "apiVersion": "[variables('apiVersion')]",
             "type": "Microsoft.Compute/virtualMachines",
             "name": "[variables('vmName')]",
             "location": "[parameters('location')]",
@@ -354,7 +314,7 @@
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "name": "[concat(variables('vmName'),'/', variables('azureVMUtilsName'))]",
-            "apiVersion": "2015-05-01-preview",
+            "apiVersion": "[variables('apiVersion')]",
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
@@ -363,6 +323,7 @@
                 "publisher": "Microsoft.OSTCExtensions",
                 "type": "CustomScriptForLinux",
                 "typeHandlerVersion": "1.2",
+                "autoUpgradeMinorVersion": true,
                 "settings": {
                     "fileUris": [
                         "[variables('azureVMUtilsScriptUrl')]"
@@ -374,7 +335,7 @@
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "name": "[concat(variables('vmName'),'/', variables('dockerExtensionName'))]",
-            "apiVersion": "2015-05-01-preview",
+            "apiVersion": "[variables('apiVersion')]",
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[concat('Microsoft.Compute/virtualMachines/',variables('vmName'),'/','extensions/',variables('azureVMUtilsName'))]"
