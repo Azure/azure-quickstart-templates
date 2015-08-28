@@ -15,8 +15,6 @@ vertx_download_location="https://bintray.com/artifact/download/vertx/downloads/$
 # Install Vert.x, OpenJDK 7, and Apache
 apt-get update
 apt-get install unzip -y
-
-# Default download location for Vert.x, change it if you want to use an alternative location
 apt-get install openjdk-7-jdk -y
 apt-get install apache2-utils -y
 mkdir /usr/local/vertx && cd /usr/local/vertx
