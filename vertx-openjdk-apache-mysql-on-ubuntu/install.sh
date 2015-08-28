@@ -28,6 +28,3 @@ apt-get install mysql-server -y
 
 # Edit crontab to start MySQL Server service automatically on boot
 crontab -l | { cat; echo "@reboot service mysql start"; } | crontab -
-
-
-wget -qO- -O tmp.zip https://bintray.com/artifact/download/vertx/downloads/$vertx_filename && unzip tmp.zip && rm tmp.zip
