@@ -18,6 +18,7 @@ apt-get install unzip -y
 # Default download location for Vert.x, change it if you want to use an alternative location
 apt-get install openjdk-7-jdk -y
 apt-get install apache2-utils -y
+mkdir vertx && cd vertx
 wget -qO- -O tmp.zip $vertx_download_location && unzip tmp.zip && rm tmp.zip
 
 # Install MySQL Server in non-interactive mode
