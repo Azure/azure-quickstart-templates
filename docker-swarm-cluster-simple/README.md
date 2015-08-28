@@ -6,7 +6,9 @@ This is a sample template to create a Docker Swarm cluster on Azure. It uses Doc
 
 Once your Swarm has been created you will have a resource group containing three VMs acting as nodes and a fourth whcih is your swarm master. To connect to this swarm with Docker you need to set your environment with:
 
+```
 export DOCKER_TLS_VERIFY=
 export DOCKER_HOST="tcp://YOURDNSNAMEmmaster.westus.cloudapp.azure.com:2376"
+```
 
 Note this turns off TLS (i.e. it is insecure) - do not use in production. You need to replace 'YOURDNSNAME' with the DNS name you provide in the parameters.
