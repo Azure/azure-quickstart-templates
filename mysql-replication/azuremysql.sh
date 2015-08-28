@@ -199,7 +199,7 @@ install_mysql_ubuntu() {
 }
 
 install_mysql_centos() {
-    yum list installed mysql-community-server.x86_64
+    yum list installed MySQL-server-5.6.26-1.el6.x86_64
     if [ ${?} -eq 0 ];
     then
         return
@@ -208,21 +208,24 @@ install_mysql_centos() {
     wget https://dev.mysql.com/get/Downloads/MySQL-5.6/MySQL-5.6.26-1.el6.x86_64.rpm-bundle.tar
     tar -xvf MySQL-5.6.26-1.el6.x86_64.rpm-bundle.tar
     rpm -ivh MySQL-server-5.6.26-1.el6.x86_64.rpm
-    yum -y install mysql-server
+    yum -y install MySQL-server-5.6.26-1.el6.x86_64
     rpm -ivh MySQL-client-5.6.26-1.el6.x86_64.rpm
-    yum -y install mysql-client
-    mysql_secret=${awk '/password/{print $NF}' /root/.mysql_secret}
+    yum -y install MySQL-client-5.6.26-1.el6.x86_64
+    mysql_secret=$(awk '/password/{print $NF}' /root/.mysql_secret)
     mysqladmin -u root --password=${mysql_secret} password ${ROOTPWD}
     yum -y install xinetd
 }
 
 create_mysql_probe() {
+if [ ${NODEID} -eq 1 ];
+then
 # create a probe user with minimum privilege
     mysql -u root <<-EOF
-CREATE USER 'rpluser'@'%' IDENTIFIED BY '${RPLPWD}';
-GRANT REPLICATION SLAVE ON *.* TO 'rpluser'@'%';
+CREATE USER 'probeuser'@'%' IDENTIFIED BY '${PROBEPWD}';
+GRANT SELECT ON *.* TO 'probeuser'@'%';
 FLUSH PRIVILEGES;
 EOF
+fi
 
 # create a probe script
     cat <<EOF >/usr/bin/mysqlprobe
@@ -299,7 +302,7 @@ FLUSH PRIVILEGES;
 EOF
 else
     mysql -u root -p"${ROOTPWD}" <<EOF
-change master to master_host="${MASTERIP}", master_port=3306, master_user=rpluser, master_password="${RPLPWD}", master_auto_position=1;
+change master to master_host="'${MASTERIP}'", master_port=3306, master_user='rpluser', master_password="'${RPLPWD}'", master_auto_position=1;
 START slave;
 EOF
 fi
