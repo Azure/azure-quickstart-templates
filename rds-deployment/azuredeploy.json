@@ -10,7 +10,7 @@
                 "description": "Unique public DNS prefix for the deployment. The fqdn will look something like '<dnsname>.westus.cloudapp.azure.com'. Up to 62 chars, digits or dashes, lowercase, should start with a letter: must conform to '^[a-z][a-z0-9-]{1,61}[a-z0-9]$'."
             }
         },
-        "storageAccount": {
+        "newStorageAccountName": {
             "type": "string",
             "metadata": {
                 "description": "Name of the Storage Account. This has to be a uinique name, up to 24 chars, all lowercase."
@@ -70,7 +70,8 @@
         "subnetAddressRange": "10.0.0.0/24",
         "dnsServerPrivateIp": "10.0.0.8",
         "subnetName": "Subnet",
-        "subnet-id": "[concat(resourceId('Microsoft.Network/virtualNetworks','VNET'),'/subnets/',variables('subnetName'))]"
+        "subnet-id": "[concat(resourceId('Microsoft.Network/virtualNetworks','VNET'),'/subnets/',variables('subnetName'))]",
+        "publicIpRef": "publicIp"
     },
 
     "resources": [
@@ -78,7 +79,7 @@
         {
             "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Network/publicIPAddresses",
-            "name": "publicIp",
+            "name": "[variables('publicIpRef')]",
             "location": "[resourceGroup().location]",
             "properties": {
                 "publicIPAllocationMethod": "Dynamic",
@@ -90,7 +91,7 @@
         {
             "apiVersion": "2015-05-01-preview",
             "type": "Microsoft.Storage/storageAccounts",
-            "name": "[parameters('storageAccount')]",
+            "name": "[parameters('newStorageAccountName')]",
             "location": "[resourceGroup().location]",
             "properties": {
                 "accountType": "Standard_LRS"
@@ -110,7 +111,8 @@
             "location": "[resourceGroup().location]",
             "properties": {
                 "addressSpace": {
-                    "addressPrefixes": [ "[variables('vnetAddressRange')]"
+                    "addressPrefixes": [
+                        "[variables('vnetAddressRange')]"
                     ]
                 },
                 "subnets": [
@@ -130,7 +132,7 @@
             "name": "loadBalancer",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "Microsoft.Network/publicIPAddresses/publicIp"
+                "[concat('Microsoft.Network/publicIPAddresses/',variables('publicIpRef'))]"
             ],
             "properties": {
                 "frontendIPConfigurations": [
@@ -138,7 +140,7 @@
                         "name": "LBFE",
                         "properties": {
                             "publicIPAddress": {
-                                "id": "[resourceId('Microsoft.Network/publicIPAddresses','publicIp')]"
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIpRef'))]"
                             }
                         }
                     }
@@ -170,18 +172,6 @@
                             "protocol": "udp",
                             "frontendPort": 3391,
                             "backendPort": 3391,
-                            "enableFloatingIP": false
-                        }
-                    },
-                    {
-                        "name": "rdp",
-                        "properties": {
-                            "frontendIPConfiguration": {
-                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers','loadBalancer'),'/frontendIPConfigurations/LBFE')]"
-                            },
-                            "protocol": "tcp",
-                            "frontendPort": 50001,
-                            "backendPort": 3389,
                             "enableFloatingIP": false
                         }
                     }
@@ -219,7 +209,7 @@
             "name": "dc-vm",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[resourceId('Microsoft.Storage/storageAccounts',parameters('storageAccount'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts',parameters('newStorageAccountName'))]",
                 "[resourceId('Microsoft.Network/networkInterfaces','dc-nif')]"
             ],
             "properties": {
@@ -241,7 +231,7 @@
                     "osDisk": {
                         "name": "osdisk",
                         "vhd": {
-                            "uri": "[concat('http://',parameters('storageAccount'),'.blob.core.windows.net/vhds/dc-vm-os-disk.vhd')]"
+                            "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/dc-vm-os-disk.vhd')]"
                         },
                         "caching": "ReadWrite",
                         "createOption": "FromImage"
@@ -250,7 +240,7 @@
                         {
                             "name": "dc-vm-data-disk",
                             "vhd": {
-                                "Uri": "[concat('http://',parameters('storageAccount'),'.blob.core.windows.net/vhds/dc-vm-data-disk.vhd')]"
+                                "Uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/dc-vm-data-disk.vhd')]"
                             },
                             "caching": "None",
                             "createOption": "Empty",
@@ -279,7 +269,7 @@
                     "properties": {
                         "publisher": "Microsoft.Powershell",
                         "type": "DSC",
-                        "typeHandlerVersion": "1.9",
+                        "typeHandlerVersion": "1.10",
                         "settings": {
                             "ModulesUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/active-directory-new-domain/CreateADPDC.ps1.zip",
                             "ConfigurationFunction": "CreateADPDC.ps1\\CreateADPDC",
@@ -377,7 +367,6 @@
             "name": "cb-nif",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "Microsoft.Network/loadBalancers/loadBalancer",
                 "Microsoft.Resources/deployments/updatevnetdns"
             ],
             "properties": {
@@ -388,17 +377,7 @@
                             "privateIPAllocationMethod": "Dynamic",
                             "subnet": {
                                 "id": "[variables('subnet-id')]"
-                            },
-                            "loadBalancerBackendAddressPools": [
-                                {
-                                    "id": "[concat(resourceId('Microsoft.Network/loadBalancers','loadBalancer'),'/backendAddressPools/LBBAP')]"
-                                }
-                            ],
-                            "loadBalancerInboundNatRules": [
-                                {
-                                    "id": "[concat(resourceId('Microsoft.Network/loadBalancers','loadBalancer'),'/inboundNatRules/rdp')]"
-                                }
-                            ]
+                            }
                         }
                     }
                 ]
@@ -438,7 +417,7 @@
             "name": "gw-vm",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccount'))]",
+                "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
                 "[resourceId('Microsoft.Compute/availabilitySets', 'availabilityset')]",
                 "Microsoft.Network/networkInterfaces/gw-nif"
             ],
@@ -464,7 +443,7 @@
                     "osDisk": {
                         "name": "osdisk",
                         "vhd": {
-                            "uri": "[concat('http://',parameters('storageAccount'),'.blob.core.windows.net/vhds/gw-vm-osdisk.vhd')]"
+                            "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/gw-vm-osdisk.vhd')]"
                         },
                         "caching": "ReadWrite",
                         "createOption": "FromImage"
@@ -482,7 +461,7 @@
                 {
                     "apiVersion": "2015-05-01-preview",
                     "type": "Microsoft.Compute/virtualMachines/extensions",
-                    "name": "gw-vm/domainjoin",
+                    "name": "gw-vm/gateway",
                     "location": "[resourceGroup().location]",
                     "dependsOn": [
                         "[resourceId('Microsoft.Compute/virtualMachines', 'gw-vm')]"
@@ -490,10 +469,10 @@
                     "properties": {
                         "publisher": "Microsoft.Powershell",
                         "type": "DSC",
-                        "typeHandlerVersion": "1.9",
+                        "typeHandlerVersion": "2.1",
                         "settings": {
                             "ModulesUrl": "[concat(parameters('assetLocation'),'/Configuration.zip')]",
-                            "ConfigurationFunction": "Configuration.ps1\\DomainJoin",
+                            "ConfigurationFunction": "Configuration.ps1\\Gateway",
                             "Properties": {
                                 "DomainName": "[parameters('domainName')]",
                                 "AdminCreds": {
@@ -522,7 +501,7 @@
                 "count": "[parameters('numberOfRdshInstances')]"
             },
             "dependsOn": [
-                "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccount'))]",
+                "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
                 "[concat('Microsoft.Network/networkInterfaces/', 'rdsh-', copyindex(), '-nif')]"
 
             ],
@@ -545,7 +524,7 @@
                     "osDisk": {
                         "name": "osdisk",
                         "vhd": {
-                            "uri": "[concat('http://',parameters('storageAccount'),'.blob.core.windows.net/vhds/rdsh-',copyindex(),'-osdisk.vhd')]"
+                            "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/rdsh-',copyindex(),'-osdisk.vhd')]"
                         },
                         "caching": "ReadWrite",
                         "createOption": "FromImage"
@@ -558,42 +537,39 @@
                         }
                     ]
                 }
-            }
-        },
-
-        {
-            "apiVersion": "2015-05-01-preview",
-            "type": "Microsoft.Compute/virtualMachines/extensions",
-            "copy": {
-                "name": "rdsh-vm-domain-join-loop",
-                "count": "[parameters('numberOfRdshInstances')]"
             },
-            "name": "[concat('rdsh-', copyindex(), '/domainjoin')]",
-            "location": "[resourceGroup().location]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Compute/virtualMachines', concat('rdsh-', copyindex()))]"
-            ],
-            "properties": {
-                "publisher": "Microsoft.Powershell",
-                "type": "DSC",
-                "typeHandlerVersion": "1.9",
-                "settings": {
-                    "ModulesUrl": "[concat(parameters('assetLocation'),'/Configuration.zip')]",
-                    "ConfigurationFunction": "Configuration.ps1\\DomainJoin",
-                    "Properties": {
-                        "DomainName": "[parameters('domainName')]",
-                        "AdminCreds": {
-                            "UserName": "[parameters('adminUsername')]",
-                            "Password": "PrivateSettingsRef:adminPassword"
+            "resources": [
+                {
+                    "apiVersion": "2015-05-01-preview",
+                    "type": "Microsoft.Compute/virtualMachines/extensions",
+                    "name": "[concat('rdsh-', copyindex(),'/sessionhost')]",
+                    "location": "[resourceGroup().location]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Compute/virtualMachines', concat('rdsh-', copyindex()))]"
+                    ],
+                    "properties": {
+                        "publisher": "Microsoft.Powershell",
+                        "type": "DSC",
+                        "typeHandlerVersion": "2.1",
+                        "settings": {
+                            "ModulesUrl": "[concat(parameters('assetLocation'),'/Configuration.zip')]",
+                            "ConfigurationFunction": "Configuration.ps1\\SessionHost",
+                            "Properties": {
+                                "DomainName": "[parameters('domainName')]",
+                                "AdminCreds": {
+                                    "UserName": "[parameters('adminUsername')]",
+                                    "Password": "PrivateSettingsRef:AdminPassword"
+                                }
+                            }
+                        },
+                        "protectedSettings": {
+                            "Items": {
+                                "AdminPassword": "[parameters('adminPassword')]"
+                            }
                         }
                     }
-                },
-                "protectedSettings": {
-                    "Items": {
-                        "adminPassword": "[parameters('adminPassword')]"
-                    }
                 }
-            }
+            ]
         },
 
 
@@ -603,7 +579,7 @@
             "name": "cb-vm",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccount'))]",
+                "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
                 "[resourceId('Microsoft.Compute/availabilitySets', 'availabilityset')]",
                 "Microsoft.Network/networkInterfaces/cb-nif"
             ],
@@ -629,7 +605,7 @@
                     "osDisk": {
                         "name": "osdisk",
                         "vhd": {
-                            "uri": "[concat('http://',parameters('storageAccount'),'.blob.core.windows.net/vhds/cb-vm-osdisk.vhd')]"
+                            "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/cb-vm-osdisk.vhd')]"
                         },
                         "caching": "ReadWrite",
                         "createOption": "FromImage"
@@ -650,13 +626,13 @@
             "apiVersion": "2015-05-01-preview",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "Microsoft.Compute/virtualMachines/gw-vm/extensions/domainjoin",
-                "rdsh-vm-domain-join-loop"
+                "Microsoft.Compute/virtualMachines/gw-vm/extensions/gateway",
+                "rdsh-vm-loop"
             ],
             "properties": {
                 "publisher": "Microsoft.Powershell",
                 "type": "DSC",
-                "typeHandlerVersion": "1.9",
+                "typeHandlerVersion": "2.1",
                 "settings": {
                     "ModulesUrl": "[concat(parameters('assetLocation'),'/Configuration.zip')]",
                     "ConfigurationFunction": "Configuration.ps1\\RDSDeployment",
@@ -666,8 +642,11 @@
                             "UserName": "[parameters('adminUsername')]",
                             "Password": "PrivateSettingsRef:adminPassword"
                         },
+                        "connectionBroker": "[concat('broker.',parameters('domainName'))]",
                         "webAccessServer": "[concat('gateway.',parameters('domainName'))]",
-                        "sessionHost": "[concat('rdsh-0.',parameters('domainName'))]"
+                        "externalfqdn": "[reference(variables('publicIpRef')).dnsSettings.fqdn]",
+                        "sessionHostNamingPrefix": "rdsh-",
+                        "numberOfRdshInstances": "[parameters('numberOfRdshInstances')]"
                     }
                 },
                 "protectedSettings": {

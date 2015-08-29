@@ -21,8 +21,8 @@ mountDrive() {
   driveName=$1
   driveId=$2
   echo "$(hostname) : /data${2} :About to mount drive"
-  mount -o noatime -t ext4 ${1} /data${2}
-  echo "$driveName   /data${2}    ext4   defaults,noatime 1 2" | sudo tee -a /etc/fstab
+  mount -o noatime,barrier=0 -t ext4 ${1} /data${2}
+  echo "$driveName   /data${2}    ext4   defaults,noatime,discard,barrier=0 0 0" | sudo tee -a /etc/fstab
   cat /etc/fstab
   echo "$(hostname) : /data${2} : Done mounting drive"
 
@@ -48,7 +48,7 @@ formatAndMountDrive() {
   echo "$(hostname) : $1 : Formatting drive for ext4" || true
   drive=$1
   echo "$(hostname) : $1 : set drive and execute"
-  mke2fs -F -t ext4 -b 4096 -O sparse_super,dir_index,extent,has_journal -m1 $drive
+  mke2fs -F -t ext4 -b 4096 -E lazy_itable_init=1 -O sparse_super,dir_index,extent,has_journal,uninit_bg -m1 $drive
   echo "$(hostname) : $1 : should be done formatting now"
 
   echo "$(hostname) : $1 : attempt to format exit code: $?"
@@ -58,8 +58,8 @@ formatAndMountDrive() {
   mkdir -p /data${2}
   chmod 777 /data${2}
   echo "$(hostname) : $1 : after data creation for id $2: $?"
-  mount -o noatime -t ext4 ${1} /data${2}
-  echo "$driveName   /data${2}    ext4   defaults,noatime 1 2" | sudo tee -a /etc/fstab
+  mount -o noatime,barrier=0 -t ext4 $drive /data${2}
+  echo "$drive   /data${2}    ext4   defaults,noatime,discard,barrier=0 0 0" | sudo tee -a /etc/fstab
   echo "$(hostname) : $1 : after mounting for id $2 exit code: $?"
   echo "$(hostname) : $1 : Done operating on drive $1. Here is df -h"
   df -h

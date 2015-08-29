@@ -3,7 +3,7 @@
 execname=$0
 
 log() {
-  echo "[${execname}] $@" >> /tmp/initialize-cloudera-server.log
+  echo "$(date): [${execname}] $@" >> /tmp/initialize-cloudera-server.log
 }
 
 #fail on any error
@@ -53,7 +53,15 @@ log "Set cloudera-manager.repo to CM v5"
 yum clean all >> /tmp/initialize-cloudera-server.log
 rpm --import http://archive.cloudera.com/cdh5/redhat/6/x86_64/cdh/RPM-GPG-KEY-cloudera >> /tmp/initialize-cloudera-server.log
 wget http://archive.cloudera.com/cm5/redhat/6/x86_64/cm/cloudera-manager.repo -O /etc/yum.repos.d/cloudera-manager.repo >> /tmp/initialize-cloudera-server.log
-yum install -y oracle-j2sdk* cloudera-manager-daemons cloudera-manager-server cloudera-manager-server-db* >> /tmp/initialize-cloudera-server.log
+# this often fails so adding retry logic
+n=0
+until [ $n -ge 5 ]
+do
+    yum install -y oracle-j2sdk* cloudera-manager-daemons cloudera-manager-server cloudera-manager-server-db* >> /tmp/initialize-cloudera-server.log 2>> /tmp/initialize-cloudera-server.err && break
+    n=$[$n+1]
+    sleep 15s
+done
+if [ $n -ge 5 ]; then log "scp error $remote, exiting..." & exit 1; fi
 
 log "start cloudera-scm-server-db and cloudera-scm-server services"
 service cloudera-scm-server-db start >> /tmp/initialize-cloudera-server.log
@@ -69,7 +77,7 @@ while ! (exec 6<>/dev/tcp/$(hostname)/7180) ; do log 'Waiting for cloudera-scm-s
 log "END: master node deployments"
 
 # Set up python
-rpm -ivh http://dl.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm >> /tmp/initialize-cloudera-server.log
+rpm -ivh http://dl.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm >> /tmp/initialize-cloudera-server.log 2>> /tmp/initialize-cloudera-server.err
 yum -y install python-pip >> /tmp/initialize-cloudera-server.log
 pip install cm_api >> /tmp/initialize-cloudera-server.log
 
@@ -89,12 +97,4 @@ if $HA; then
 else
     python cmxDeployOnIbiza.py -n "$ClusterName" -u $User -k "$key" -m "$mip" -w "$worker_ip" >> /tmp/initialize-cloudera-server.log 2>> /tmp/initialize-cloudera-server.err
 fi
-
-
-# Sleep for a while to give the agents enough time to check in with the master.
-# sleep_time=1800
-# echo "Sleeping for $sleep_time seconds so that script does not report back to Ibiza portal that work is finished."
-# sleep $sleep_time
-# echo "Done sleeping. Reporting back to Ibiza portal to let end user know that cluster is coming up."
-
 log "END: CM deployment ended"
