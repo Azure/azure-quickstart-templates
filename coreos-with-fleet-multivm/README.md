@@ -1,10 +1,10 @@
-# Deploy a CoreOS cluster hosting Fleet 
+# Deploy a CoreOS cluster hosting Fleet
 
-<a href="https://azuredeploy.net/" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fcoreos-with-fleet-multivm%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-This template allows you to create a CoreOS cluster with Fleet deployed and started on each cluster node. This template also deploys a Storage Account, Virtual Network, Public IP addresses and a Network Interface. 
+This template allows you to create a CoreOS cluster with Fleet deployed and started on each cluster node. This template also deploys a Storage Account, Virtual Network, Public IP addresses and a Network Interface.
 
 You will need to provide a key pair for authentication to the nodes as well as provide a discoveryUrl for the Fleet cluster.
 
@@ -30,6 +30,6 @@ Below are the parameters that the template expects
 | newStorageAccountName | new storage account for the VMs OS disk |
 | vmSize | Instance size for the VMs |
 | numberOfNodes | Number of CoreOS compute nodes to deploy |
-| adminUsername | Name of the admin user | 
+| adminUsername | Name of the admin user |
 | sshKeyData | Explained above |
 | discoveryUrl | Explained above |

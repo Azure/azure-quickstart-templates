@@ -25,15 +25,15 @@ def init_cluster():
     api = ApiResource(server_host=cmx.cm_server, username=cmx.username, password=cmx.password)
     # Update Cloudera Manager configuration
     cm = api.get_cloudera_manager()
-    cm.update_config({"REMOTE_PARCEL_REPO_URLS": "http://archive.cloudera.com/cdh5/parcels/latest/,"
-                                                 "http://archive.cloudera.com/impala/parcels/latest/,"
-                                                 "http://archive.cloudera.com/cdh4/parcels/latest/,"
-                                                 "http://archive.cloudera.com/search/parcels/latest/,"
-                                                 "http://archive.cloudera.com/spark/parcels/latest/,"
-                                                 "http://archive.cloudera.com/sqoop-connectors/parcels/latest/,"
-                                                 "http://archive.cloudera.com/accumulo/parcels/latest/,"
-                                                 "http://archive.cloudera.com/accumulo-c5/parcels/latest,"
-                                                 "http://archive.cloudera.com/gplextras5/parcels/latest",
+    cm.update_config({"REMOTE_PARCEL_REPO_URLS": "http://archive.cloudera.com/cdh5/parcels/{0}/,"
+                                                 "http://archive.cloudera.com/impala/parcels/{0}/,"
+                                                 "http://archive.cloudera.com/cdh4/parcels/{0}/,"
+                                                 "http://archive.cloudera.com/search/parcels/{0}/,"
+                                                 "http://archive.cloudera.com/spark/parcels/{0}/,"
+                                                 "http://archive.cloudera.com/sqoop-connectors/parcels/{0}/,"
+                                                 "http://archive.cloudera.com/accumulo/parcels/{0}/,"
+                                                 "http://archive.cloudera.com/accumulo-c5/parcels/{0},"
+                                                 "http://archive.cloudera.com/gplextras5/parcels/{0}".format(cdhver), 
                       "PHONE_HOME": False, "PARCEL_DISTRIBUTE_RATE_LIMIT_KBS_PER_SECOND": "1024000"})
 
     print "> Initialise Cluster"
@@ -1511,6 +1511,8 @@ class ActiveCommands:
 def parse_options():
     global cmx
     global check, cdh, management
+    global cdhver
+    cdhver = "5.4.2.2"
 
     cmx_config_options = {'ssh_root_password': None, 'ssh_root_user': 'root', 'ssh_private_key': None,
                           'cluster_name': 'Cluster 1', 'cluster_version': 'CDH5',
@@ -1600,11 +1602,11 @@ def parse_options():
 
     # Install CDH5 latest version
     cmx_config_options['parcel'].append(manifest_to_dict(
-        'http://archive.cloudera.com/cdh5/parcels/latest/manifest.json'))
+        'http://archive.cloudera.com/cdh5/parcels/{0}/manifest.json'.format(cdhver)))
 
     # Install GPLEXTRAS5 latest version
     cmx_config_options['parcel'].append(manifest_to_dict(
-        'http://archive.cloudera.com/gplextras5/parcels/latest/manifest.json'))
+        'http://archive.cloudera.com/gplextras5/parcels/{0}/manifest.json'.format(cdhver)))
 
     msg_req_args = "Please specify the required arguments: "
     if cmx_config_options['cm_server'] is None:
@@ -1642,21 +1644,27 @@ def parse_options():
     # print cmx_config_options
     return options
 
+def log(msg):
+    print time.strftime("%X") + ": " + msg
 
 def main():
     # Parse user options
+    log("parse_options")
     options = parse_options()
 
     # Prepare Cloudera Manager Server:
     # 1. Initialise Cluster and set Cluster name: 'Cluster 1'
     # 3. Add hosts into: 'Cluster 1'
     # 4. Deploy latest parcels into : 'Cluster 1'
+    log("init_cluster")
     init_cluster()
     add_hosts_to_cluster()
     # Deploy CDH Parcel
+    log("deploy_parcel")
     deploy_parcel(parcel_product=cmx.parcel[0]['product'],
                   parcel_version=cmx.parcel[0]['version'])
 
+    log("setup_management")
     # Example CM API to setup Cloudera Manager Management services - not installing 'ACTIVITYMONITOR'
     mgmt_roles = ['SERVICEMONITOR', 'ALERTPUBLISHER', 'EVENTSERVER', 'HOSTMONITOR']
     if management.licensed():
@@ -1676,6 +1684,7 @@ def main():
     # Step-Through - Setup services in order of service dependencies
     # Zookeeper, hdfs, HBase, Solr, Spark, Yarn,
     # Hive, Sqoop, Sqoop Client, Impala, Oozie, Hue
+    log("setup_components")
     setup_zookeeper()
     setup_hdfs()
     setup_hbase()
@@ -1711,6 +1720,7 @@ def main():
     # deploy_parcel(parcel_product=cmx.parcel[1]['product'],parcel_version=cmx.parcel[1]['version'])
 
     # Restart Cluster and Deploy Cluster wide client config
+    log("restart_cluster")
     cdh.restart_cluster()
 
     # Other examples of CM API
