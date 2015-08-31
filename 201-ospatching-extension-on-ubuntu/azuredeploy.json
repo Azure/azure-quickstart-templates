@@ -2,17 +2,12 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "newStorageAccountName": {
-      "type": "string",
-      "metadata": {
-        "description": "Unique DNS Name for the Storage Account where the Virtual Machine's disks will be placed."
-      }
-    },
     "location": {
       "type": "string",
       "metadata": {
         "description": "The location where the Virtual Machine will be deployed."
       },
+      "defaultValue": "West US",
       "allowedValues": [
         "Australia East",
         "Australia Southeast",
@@ -31,16 +26,22 @@
         "West US"
       ]
     },
-    "adminUsername": {
+    "username": {
       "type": "string",
       "metadata": {
         "description": "Username for the Virtual Machine."
       }
     },
-    "adminPassword": {
+    "password": {
       "type": "securestring",
       "metadata": {
         "description": "Password for the Virtual Machine."
+      }
+    },
+    "newStorageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Unique DNS Name for the Storage Account where the Virtual Machine's disks will be placed."
       }
     },
     "dnsNameForPublicIP": {
@@ -49,40 +50,47 @@
         "description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
       }
     },
-    "vmSize": {
-      "type": "string",
-      "defaultValue": "Standard_D1",
-      "metadata": {
-        "description": "VM size"
-      },
-      "allowedValues": [
-        "Standard_D1",
-        "Standard_D2",
-        "Standard_D3",
-        "Standard_D4",
-        "Standard_D11",
-        "Standard_D12",
-        "Standard_D13",
-        "Standard_D14"
-      ]
-    },
-    "ubuntuOSVersion": {
-      "type": "string",
-      "defaultValue": "14.04.2-LTS",
-      "metadata": {
-        "description": "The Ubuntu version for deploying the OS patching extension. This will pick a fully patched image of this given Ubuntu version. Allowed values: 14.04.2-LTS, 15.04"
-      },
-      "allowedValues": [
-        "14.04.2-LTS",
-        "15.04"
-      ]
-    },
     "rebootAfterPatch": {
       "type": "string",
       "defaultValue": "Auto",
       "metadata": {
         "description": "The reboot behavior after patching."
+      },
+      "allowedValues": [
+        "RebootIfNeed",
+        "Required",
+        "NotRequired",
+        "Auto"
+      ]
+    },
+    "category": {
+      "type": "string",
+      "defaultValue": "ImportantAndRecommended",
+      "metadata": {
+        "description": "Type of patches to install."
+      },
+      "allowedValues": [
+        "Important",
+        "ImportantAndRecommended"
+      ]
+    },
+    "installDuration": {
+      "type": "string",
+      "defaultValue": "01:00",
+      "metadata": {
+        "description": "The allowed total time for installation."
       }
+    },
+    "oneoff": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Patch the OS immediately."
+      },
+      "allowedValues": [
+        true,
+        false
+      ]
     },
     "dayOfWeek": {
       "type": "string",
@@ -98,17 +106,41 @@
         "description": "Start time of patching."
       }
     },
-    "category": {
+    "idleTestScript": {
       "type": "string",
-      "defaultValue": "ImportantAndRecommended",
+      "defaultValue": "",
       "metadata": {
-        "description": "Type of patches to install."
+        "description": "The uri of the idle test script"
+      }
+    },
+    "healthyTestScript": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The uri of the healthy test script"
+      }
+    },
+    "storageAccountName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The name of storage account."
+      }
+    },
+    "storageAccountKey": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The access key of storage account."
       }
     }
   },
   "variables": {
+    "location": "[parameters('location')]",
+    "vmSize": "Standard_D1",
     "imagePublisher": "Canonical",
     "imageOffer": "UbuntuServer",
+    "ubuntuOSVersion": "14.04.2-LTS",
     "OSDiskName": "osdiskforospatching",
     "nicName": "myVMNic",
     "extensionName": "OSPatching",
@@ -119,7 +151,7 @@
     "publicIPAddressName": "myPublicIP",
     "publicIPAddressType": "Dynamic",
     "vmStorageAccountContainerName": "vhds",
-    "vmName": "MyOSPatchingVM",
+    "vmName": "MyUbuntuVM",
     "virtualNetworkName": "MyVNET",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
     "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]"
@@ -129,7 +161,7 @@
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[parameters('newStorageAccountName')]",
       "apiVersion": "2015-05-01-preview",
-      "location": "[parameters('location')]",
+      "location": "[variables('location')]",
       "properties": {
         "accountType": "[variables('storageAccountType')]"
       }
@@ -138,7 +170,7 @@
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
-      "location": "[parameters('location')]",
+      "location": "[variables('location')]",
       "properties": {
         "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
         "dnsSettings": {
@@ -150,7 +182,7 @@
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
-      "location": "[parameters('location')]",
+      "location": "[variables('location')]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -171,7 +203,7 @@
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
-      "location": "[parameters('location')]",
+      "location": "[variables('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
@@ -197,25 +229,25 @@
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmName')]",
-      "location": "[parameters('location')]",
+      "location": "[variables('location')]",
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[parameters('vmSize')]"
+          "vmSize": "[variables('vmSize')]"
         },
         "osProfile": {
           "computername": "[variables('vmName')]",
-          "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminUsername": "[parameters('username')]",
+          "adminPassword": "[parameters('password')]"
         },
         "storageProfile": {
           "imageReference": {
             "publisher": "[variables('imagePublisher')]",
             "offer": "[variables('imageOffer')]",
-            "sku": "[parameters('ubuntuOSVersion')]",
+            "sku": "[variables('ubuntuOSVersion')]",
             "version": "latest"
           },
           "osDisk": {
@@ -240,24 +272,33 @@
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmName'),'/installospatching')]",
       "apiVersion": "2015-05-01-preview",
-      "location": "[parameters('location')]",
+      "location": "[variables('location')]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
       ],
       "properties": {
         "publisher": "Microsoft.OSTCExtensions",
         "type": "OSPatchingForLinux",
-        "typeHandlerVersion": "1.0",
-        "settings": {},
-        "protectedSettings": {
-          "disabled": "False",
-          "stop": "False",
+        "typeHandlerVersion": "2.0",
+        "settings": {
+          "disabled": false,
+          "stop": false,
           "rebootAfterPatch": "[parameters('rebootAfterPatch')]",
+          "category":  "[parameters('category')]",
+          "installDuration": "[parameters('installDuration')]",
+          "oneoff": "[parameters('oneoff')]",
           "intervalOfWeeks": "1",
           "dayOfWeek": "[parameters('dayOfWeek')]",
           "startTime": "[parameters('startTime')]",
-          "category": "[parameters('category')]",
-          "installDuration": "00:30"
+          "vmStatusTest": {
+            "local": false,
+            "idleTestScript": "[parameters('idleTestScript')]",
+            "healthyTestScript": "[parameters('healthyTestScript')]"
+          }
+        },
+        "protectedSettings": {
+          "storageAccountName": "[parameters('storageAccountName')]",
+          "storageAccountKey": "[parameters('storageAccountKey')]"
         }
       }
     }
