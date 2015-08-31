@@ -13,19 +13,6 @@ the location of the resource group.
 If you are not familiar with Docker Swarm, please
 [read Swarm documentation](http://docs.docker.com/swarm).
 
-## Parameters
-
-| Name   | Description |
-|:--- |:---|
-| `slaveCount`  | Number of the nodes in the Swarm node pool. |
-| `newStorageAccountName`  | Unique name for a new storage account where the VM disks will be stored. |
-| `adminUsername` | SSH user for the Virtual Machines.  |
-| `sshPublicKey` | SSH key for the Virtual Machines.  |
-| `dnsName` | Unique DNS Name for the Swarm Management endpoint and the load balancer for slave nodes. |
-| `dockerCa`  | Base64-encoded Docker CA certificate (`ca.pem`) for the Docker engines and Swarm managers. |
-| `dockerCert`  | Base64-encoded Docker TLS Certificate (`cert.pem`) for the Docker engines and Swarm managers. |
-| `dockerKey` | Base64-encoded Docker TLS Key (`key.pem`) for the Docker engines and Swarm managers. |
-
 ## Cluster Properties
 
 #### Swarm Managers (High Availability Setup)
@@ -121,10 +108,6 @@ This is a [Load Balancer][az-lb] endpoint for the slave nodes in the
 Swarm cluster and has no load balancing rules by default. As you deploy services
 to the cluster, you can create new Load Balancing Rules and Probes from Azure
 Portal.
-
------------------
-
-![Docker Swarm logo](https://github.com/docker/swarm/raw/master/logo.png?raw=true)
 
 [av-set]: https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-manage-availability/
 [az-lb]: https://azure.microsoft.com/en-us/documentation/articles/load-balancer-overview/
