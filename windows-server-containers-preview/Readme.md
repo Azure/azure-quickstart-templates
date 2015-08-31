@@ -1,4 +1,4 @@
-## Windows Server Container Host (Docker Ready)
+## Windows Server Container Host Preview (Docker Ready)
 
 This template will deploy and configure a Windows Server 2016 TP core VM instance with Windows Server Containers. These items are performed by the template:
 
