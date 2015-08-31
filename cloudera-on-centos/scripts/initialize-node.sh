@@ -14,9 +14,10 @@
 IPPREFIX=$1
 NAMEPREFIX=$2
 NAMESUFFIX=$3
-NAMENODES=$4
+MASTERNODES=$4
 DATANODES=$5
 ADMINUSER=$6
+NODETYPE=$7
 
 # Converts a domain like machine.domain.com to domain.com by removing the machine name
 NAMESUFFIX=`echo $NAMESUFFIX | sed 's/^[^.]*\.//'`
@@ -24,11 +25,11 @@ NAMESUFFIX=`echo $NAMESUFFIX | sed 's/^[^.]*\.//'`
 #Generate IP Addresses for the cloudera setup
 NODES=()
 
-let "NAMEEND=NAMENODES-1"
+let "NAMEEND=MASTERNODES-1"
 for i in $(seq 0 $NAMEEND)
 do 
   let "IP=i+10"
-  NODES+=("$IPPREFIX$IP:${NAMEPREFIX}-nn$i.$NAMESUFFIX:${NAMEPREFIX}-nn$i")
+  NODES+=("$IPPREFIX$IP:${NAMEPREFIX}-mn$i.$NAMESUFFIX:${NAMEPREFIX}-mn$i")
 done
 
 let "DATAEND=DATANODES-1"
@@ -53,8 +54,17 @@ IFS=${OIFS}
 sed -i '/Defaults[[:space:]]\+!*requiretty/s/^/#/' /etc/sudoers
 echo "$ADMINUSER ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
-# Mount and format the attached disks
-sh ./prepareDisks.sh
+# Mount and format the attached disks base on node type
+if [ "$NODETYPE" == "masternode" ]
+then
+  bash ./prepare-masternode-disks.sh
+elif [ "$NODETYPE" == "datanode" ]
+then
+  bash ./prepare-datanode-disks.sh
+else
+  echo "#unknown type, default to datanode"
+  bash ./prepare-datanode-disks.sh
+fi
 
 echo "Done preparing disks.  Now ls -la looks like this:"
 ls -la /
@@ -96,7 +106,7 @@ echo net.core.netdev_max_backlog=25000 >> /etc/sysctl.conf
 echo net.core.rmem_max=4194304 >> /etc/sysctl.conf
 echo net.core.wmem_max=4194304 >> /etc/sysctl.conf
 echo net.core.rmem_default=4194304 >> /etc/sysctl.conf
-echo net.core_wmem_default=4194304 >> /etc/sysctl.conf
+echo net.core.wmem_default=4194304 >> /etc/sysctl.conf
 echo net.core.optmem_max=4194304 >> /etc/sysctl.conf
 echo net.ipv4.tcp_rmem="4096 87380 4194304" >> /etc/sysctl.conf
 echo net.ipv4.tcp_wmem="4096 65536 4194304" >> /etc/sysctl.conf
@@ -112,6 +122,11 @@ chmod 700 /home/$ADMINUSER/.ssh
 ssh-keygen -y -f /var/lib/waagent/*.prv > /home/$ADMINUSER/.ssh/authorized_keys
 chown $ADMINUSER /home/$ADMINUSER/.ssh/authorized_keys
 chmod 600 /home/$ADMINUSER/.ssh/authorized_keys
+
+myhostname=`hostname`
+fqdnstring=`python -c "import socket; print socket.getfqdn('$myhostname')"`
+sed -i "s/.*HOSTNAME.*/HOSTNAME=${fqdnstring}/g" /etc/sysconfig/network
+/etc/init.d/network restart
 
 #disable password authentication in ssh
 #sed -i "s/UsePAM\s*yes/UsePAM no/" /etc/ssh/sshd_config

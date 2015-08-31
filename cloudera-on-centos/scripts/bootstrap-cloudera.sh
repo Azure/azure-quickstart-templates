@@ -16,11 +16,13 @@
 IPPREFIX=$1
 NAMEPREFIX=$2
 NAMESUFFIX=$3
-NAMENODES=$4
+MASTERNODES=$4
 DATANODES=$5
 ADMINUSER=$6
 HA=$7
 PASSWORD=$8
+CMUSER=$9
+CMPASSWORD=${10}
 
 CLUSTERNAME=$NAMEPREFIX
 
@@ -33,7 +35,7 @@ log() {
 # Converts a domain like machine.domain.com to domain.com by removing the machine name
 NAMESUFFIX=`echo $NAMESUFFIX | sed 's/^[^.]*\.//'`
 
-ManagementNode="${IPPREFIX}10:${NAMEPREFIX}-nn0.$NAMESUFFIX:${NAMEPREFIX}-nn0"
+ManagementNode="${IPPREFIX}10:${NAMEPREFIX}-mn0.$NAMESUFFIX:${NAMEPREFIX}-mn0"
 mip=$(echo "$ManagementNode" | sed 's/:/ /' | sed 's/:/ /' | cut -d ' ' -f 1)
 
 log "set private key"
@@ -49,11 +51,11 @@ openssl rsa -in $file -outform PEM > $key
 #Generate IP Addresses for the cloudera setup
 NODES=()
 
-let "NAMEEND=NAMENODES-1"
+let "NAMEEND=MASTERNODES-1"
 for i in $(seq 1 $NAMEEND)
 do 
   let "IP=i+10"
-  NODES+=("$IPPREFIX$IP:${NAMEPREFIX}-nn$i.$NAMESUFFIX:${NAMEPREFIX}-nn$i")
+  NODES+=("$IPPREFIX$IP:${NAMEPREFIX}-mn$i.$NAMESUFFIX:${NAMEPREFIX}-mn$i")
 done
 
 let "DATAEND=DATANODES-1"
@@ -78,8 +80,9 @@ done
 IFS=${OIFS}
 worker_ip=$(echo "${wip_string%?}")
 log "Worker ip to be supplied to next script: $worker_ip"
-
+log "Adminuser: $ADMINUSER Adminpassword: $PASSWORD"
 log "BEGIN: Starting detached script to finalize initialization"
-sh initialize-cloudera-server.sh "$CLUSTERNAME" "$key" "$mip" "$worker_ip" $HA $ADMINUSER $PASSWORD >/dev/null 2>&1
+log "CMUSER $CMUSER, CMPASSWORD $CMPASSWORD, ${10}"
+sh initialize-cloudera-server.sh "$CLUSTERNAME" "$key" "$mip" "$worker_ip" $HA $ADMINUSER $PASSWORD $CMUSER $CMPASSWORD>/dev/null 2>&1
 log "END: Detached script to finalize initialization running. PID: $!"
 
