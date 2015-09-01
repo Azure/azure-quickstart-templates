@@ -11,3 +11,4 @@ The interesting portion of this template worth noting is here:
           }
         }
 
+The rest of the template is pretty standard. 
