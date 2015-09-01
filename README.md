@@ -13,7 +13,10 @@ To make sure your template is added to Azure.com index, please follow these guid
   *	Guidelines on the metadata file below
 5. Include a **Readme.md** file that explains how the template works. No need to include the parameters that the template needs. We can render this on Azure.com from the template.
 6. Template parameters should follow **camelCasing**
-7. Every parameter in the template must have the lower-case **description** specified using the metadata property. This looks like below
+7. Try to reduce the **number of parameters** a user has to enter to deploy your template. Make things that do not need to be globally unique such as VNETs, NICs, PublicIPs, Subnets, NSGs as variables.
+8. **Storage account names** need to be lower case and can't contain hyphens (-) in addition to other domain name restrictions. These also need to be globally unique.
+9. Name **variables** using this scheme **templateScenarioResourceName** (e.g. simpleLinuxVMVNET, userRoutesNSG, elasticsearchPublicIP etc.) that describe the scenario rather. This ensures when a user browses all the resources in the Portal there aren't a bunch of resources with the same name (e.g. myVNET, myPublicIP, myNSG)
+10. Every parameter in the template must have the **lower-case description** tag specified using the metadata property. This looks like below
 
   ```json
   "newStorageAccountName": {
@@ -29,9 +32,8 @@ See the starter template [here](https://github.com/Azure/azure-quickstart-templa
 
 ## Best practices
 
-* Try to reduce the number of parameters a user has to enter to deploy your template. Make things that do not need to be globally unique such as VNETs, NICs, PublicIPs, Subnets, NSGs as variables.
-* Storage account names need to be lower case and can't contain hyphens (-) in addition to other domain name restrictions. These also need to be globally unique.
 * It is a good practice to pass your template through a JSON linter to remove extraneous commas, paranthesis, brackets that may break the "Deploy to Azure" experience. Try http://jsonlint.com/ or a linter package for your favorite editing environment (Atom, Sublime Text, Visual Studio etc.)
+* It's also a good idea to format your JSON for better readability. You can use a JSON formatter package for your local editor or [format online using this link](https://www.bing.com/search?q=json+formatter).
 
 ## metadata.json file
 
@@ -68,8 +70,6 @@ The metadata.json file will be validated using these rules
 **dateUpdated**
 *	Must be in yyyy-mm-dd format.
 *	The date must not be in the future to the date of the pull request
-
-
 
 ## Starter template
 
