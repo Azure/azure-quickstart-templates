@@ -32,27 +32,6 @@
       "metadata": {
         "description": "Number of Swarm nodes"
       }
-    },
-    "dockerCa": {
-      "type": "securestring",
-      "defaultValue": "",
-      "metadata": {
-        "description": "Base64-encoded Docker CA certificate (`ca.pem`) for the Docker engines and Swarm managers."
-      }
-    },
-    "dockerCert": {
-      "type": "securestring",
-      "defaultValue": "",
-      "metadata": {
-        "description": "Base64-encoded Docker TLS Certificate (`cert.pem`) for the Docker engines and Swarm managers."
-      }
-    },
-    "dockerKey": {
-      "type": "securestring",
-      "defaultValue": "",
-      "metadata": {
-        "description": "Base64-encoded Docker TLS Key (`key.pem`) for the Docker engines and Swarm managers."
-      }
     }
   },
   "variables": {
@@ -91,7 +70,7 @@
     "slavesLbBackendPoolName": "swarm-slave-pool",
     "sshKeyPath": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
     "consulServerArgs": [
-      "-advertise 10.0.0.4 -bootstrap-expect 3",
+      "-advertise 10.0.0.4 -bootstrap-expect 3 -retry-join 10.0.0.5 -retry-join 10.0.0.6",
       "-advertise 10.0.0.5 -retry-join 10.0.0.4 -retry-join 10.0.0.6",
       "-advertise 10.0.0.6 -retry-join 10.0.0.4 -retry-join 10.0.0.5"
     ]
@@ -189,20 +168,6 @@
       "properties": {
         "securityRules": [
           {
-            "name": "swarmManagementEndpoint",
-            "properties": {
-              "description": "Docker Swarm Manager",
-              "protocol": "Tcp",
-              "sourcePortRange": "*",
-              "destinationPortRange": "2376",
-              "sourceAddressPrefix": "*",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 100,
-              "direction": "Inbound"
-            }
-          },
-          {
             "name": "ssh",
             "properties": {
               "description": "SSH",
@@ -279,38 +244,6 @@
         "backendAddressPools": [
           {
             "name": "[variables('mastersLbBackendPoolName')]"
-          }
-        ],
-        "probes": [
-          {
-            "name": "swarm-probe",
-            "properties": {
-              "protocol": "Tcp",
-              "port": 2376,
-              "intervalInSeconds": 10,
-              "numberOfProbes": 2
-            }
-          }
-        ],
-        "loadBalancingRules": [
-          {
-            "name": "SwarmManagerHTTP",
-            "properties": {
-              "protocol": "tcp",
-              "frontendPort": 2376,
-              "backendPort": 2376,
-              "enableFloatingIP": false,
-              "idleTimeoutInMinutes": 5,
-              "frontendIPConfiguration": {
-                "id": "[variables('mastersLbIPConfigID')]"
-              },
-              "backendAddressPool": {
-                "id": "[concat(variables('mastersLbID'),'/backendAddressPools/', variables('mastersLbBackendPoolName'))]"
-              },
-              "probe": {
-                "id": "[concat(variables('mastersLbID'), '/probes/swarm-probe')]"
-              }
-            }
           }
         ],
         "inboundNatRules": [
@@ -569,9 +502,9 @@
             },
             "swarm": {
               "image": "swarm:0.4.0",
-              "command": "[concat('--debug manage --tls --tlscacert /etc/docker/ca.pem --tlscert /etc/docker/cert.pem --tlskey /etc/docker/key.pem --replication --advertise ', reference(concat(variables('vmNameMaster'), copyIndex(), '-nic')).ipConfigurations[0].properties.privateIPAddress, ':2376 consul://10.0.0.4:8500/nodes')]",
+              "command": "[concat('--debug manage --replication --advertise ', reference(concat(variables('vmNameMaster'), copyIndex(), '-nic')).ipConfigurations[0].properties.privateIPAddress, ':2375 consul://10.0.0.4:8500/nodes')]",
               "ports": [
-                "2376:2375"
+                "2375:2375"
               ],
               "links": [
                 "consul"
@@ -581,13 +514,6 @@
               ],
               "restart": "always"
             }
-          }
-        },
-        "protectedSettings": {
-          "certs": {
-            "ca": "[parameters('dockerCa')]",
-            "cert": "[parameters('dockerCert')]",
-            "key": "[parameters('dockerKey')]"
           }
         }
       }
@@ -619,21 +545,30 @@
               "command": "[concat('join --advertise=', reference(concat(variables('vmNameSlave'), copyIndex(), '-nic')).ipConfigurations[0].properties.privateIPAddress, ':2375 consul://10.0.0.4:8500/nodes')]"
             }
           }
-        },
-        "protectedSettings": {
-          "certs": {
-            "ca": "[parameters('dockerCa')]",
-            "cert": "[parameters('dockerCert')]",
-            "key": "[parameters('dockerKey')]"
-          }
         }
       }
     }
   ],
   "outputs": {
-    "SwarmManagerDockerEndpoint": {
+    "sshTunnelCmd": {
       "type": "string",
-      "value": "[concat('tcp://', reference(variables('managementPublicIPAddrName')).dnsSettings.fqdn, ':2376')]"
+      "value": "[concat('ssh -L 2375:swarm-master-0:2375 -N ', parameters('adminUsername'), '@', reference(variables('managementPublicIPAddrName')).dnsSettings.fqdn, ' -p 2200')]"
+    },
+    "dockerCmd": {
+      "type": "string",
+      "value": "docker -H tcp://localhost:2375 info"
+    },
+    "sshMaster0": {
+      "type": "string",
+      "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(variables('managementPublicIPAddrName')).dnsSettings.fqdn, ' -p 2200')]"
+    },
+    "sshMaster1": {
+      "type": "string",
+      "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(variables('managementPublicIPAddrName')).dnsSettings.fqdn, ' -p 2201')]"
+    },
+    "sshMaster2": {
+      "type": "string",
+      "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(variables('managementPublicIPAddrName')).dnsSettings.fqdn, ' -p 2202')]"
     },
     "SwarmSlavesDNS": {
       "type": "string",
