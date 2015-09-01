@@ -1,4 +1,4 @@
-# Deploy a Node js service connected to a highly available MongoDB installation on Ubuntu and CentOS virtual machines
+# Deploy a Node js service connected to a highly available MongoDB installation on Ubuntu virtual machine
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fnode-mongodb-high-availability%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
@@ -41,7 +41,6 @@ The template expects the following parameters:
 | ubuntuOSVersion | The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version. Allowed values: 12.04.2-LTS, 12.04.3-LTS, 12.04.4-LTS, 12.04.5-LTS, 12.10, 14.04.2-LTS, 14.10, 15.04 |
 | jumpbox | The flag allowing to enable or disable provisioning of the jumpbox VM that can be used to access the MongoDB environment | Disabled | 
 | tshirtSize | The t-shirt size of the MongoDB deployment (_XSmall_, _Small_, _Medium_, _Large_, _XLarge_, _XXLarge_) | XSmall |
-| osFamily | The target OS for the virtual machines running MongoDB (_Ubuntu_ or _CentOS_) | Ubuntu |
 | mongodbVersion | The version of the MongoDB packages to be deployed | 3.0.2 |
 | replicaSetName | The name of the MongoDB replica set | rs0 |
 | replicaSetKey | The shared secret key for the MongoDB replica set (6-1024 characters) |||
