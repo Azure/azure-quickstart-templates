@@ -5,7 +5,7 @@
 </a>
 
 This template deploys a configuration of a Node.js front-end server that interacts with a MongoDB cluster. The template is a merge
-of 2 templates - <a href="https://github.com/Azure/azure-quickstart-templates/tree/master/mongodb-high-availability">azure-quickstart-templates/mongodb-high-availability</a> and <a href="https://github.com/Azure/azure-quickstart-templates/tree/master/101-simple-linux-vm">101-simple-linux-vm</a>.
+of 2 templates - <a href="https://github.com/OzGitele/azure-quickstart-templates/tree/master/mongodb-high-availability">azure-quickstart-templates/mongodb-high-availability</a> and <a href="https://github.com/Azure/azure-quickstart-templates/tree/master/101-simple-linux-vm">101-simple-linux-vm</a>.
 
 The template creates a multi-server MongoDB deployment on Ubuntu and CentOS virtual machines, and configures the MongoDB installation for high availability using a replica set.
 The template also provisions storage accounts, virtual network, availability set, network interfaces, VMs, disks and other infrastructure and runtime resources required by the installation.
