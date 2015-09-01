@@ -6,7 +6,7 @@
 
 Built by: [Bin Xia](https://github.com/bingosummer)
 
-This template uses the Azure Linux VMAccess extension to deploy an Linux VM. Azure Linux VMAccess extension provides several ways to allow owner of the VM to get the SSH access back.
+This template uses the Azure Linux [VMAccess extension](https://github.com/Azure/azure-linux-extensions/tree/master/VMAccess) to deploy an Linux VM. Azure Linux VMAccess extension provides several ways to allow owner of the VM to get the SSH access back.
 
 What you can do using the VMAccess extension:
 
@@ -38,10 +38,10 @@ Azure CLI or Powershell is recommended to deploy the template.
 
 1. Using Azure CLI
 
-https://azure.microsoft.com/en-us/documentation/articles/xplat-cli-azure-resource-manager/
+  https://azure.microsoft.com/en-us/documentation/articles/xplat-cli-azure-resource-manager/
 
 2. Using Powershell
 
-https://azure.microsoft.com/en-us/documentation/articles/powershell-azure-resource-manager/
+  https://azure.microsoft.com/en-us/documentation/articles/powershell-azure-resource-manager/
 
 
