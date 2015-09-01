@@ -113,7 +113,7 @@
   },
   "variables": {
     "apiVersion": "2015-05-01-preview",
-    "storageAccountName": "[toLower(concat(parameters('clusterName'), replace(resourceGroup().location, ' ', ''), 'sa'))]",
+    "storageAccountName": "[toLower(concat(parameters('clusterName'), 'sa'))]",
     "cnStorageAccountPrefix": "[concat(variables('storageAccountName'), 'cn')]",
     "cnStorageAccountNumber": "[add(div(parameters('computeNodeNumber'), 10), 1)]",
     "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts',variables('storageAccountName'))]",
@@ -130,6 +130,34 @@
     "dnsName": "[concat(parameters('clusterName'), 'ep')]",
     "nicName": "[concat(parameters('clusterName'),'-nic')]",
     "nicNameHN": "[concat(variables('nicName'),'-hn')]",
+    "vmSizeRDMAStates": {
+      "Standard_A1": "disabled",
+      "Standard_A2": "disabled",
+      "Standard_A3": "disabled",
+      "Standard_A4": "disabled",
+      "Standard_A5": "disabled",
+      "Standard_A6": "disabled",
+      "Standard_A7": "disabled",
+      "Standard_A8": "enabled",
+      "Standard_A9": "enabled",
+      "Standard_A10": "disabled",
+      "Standard_A11": "disabled",
+      "Standard_D1": "disabled",
+      "Standard_D2": "disabled",
+      "Standard_D3": "disabled",
+      "Standard_D4": "disabled",
+      "Standard_D11": "disabled",
+      "Standard_D12": "disabled",
+      "Standard_D13": "disabled",
+      "Standard_D14": "disabled"
+    },
+    "avSetJumpBox": {
+      "disabled-disabled": "disabled",
+      "disabled-enabled": "enabled",
+      "enabled-disabled": "enabled",
+      "enabled-enabled": "enabled"
+    },
+    "avSetState": "[variables('avSetJumpBox')[concat(variables('vmSizeRDMAStates')[parameters('headNodeVMSize')], '-', variables('vmSizeRDMAStates')[parameters('computeNodeVMSize')])]]",
     "availableCNImageSkus": {
       "ComputeNode": "2012R2CN",
       "ComputeNodeWithExcel": "2012R2CNExcel"
@@ -151,12 +179,6 @@
       "properties": {
         "accountType": "Standard_LRS"
       }
-    },
-    {
-      "type": "Microsoft.Compute/availabilitySets",
-      "name": "[variables('availabilitySetName')]",
-      "apiVersion": "[variables('apiVersion')]",
-      "location": "[resourceGroup().location]"
     },
     {
       "apiVersion": "[variables('apiVersion')]",
@@ -223,60 +245,79 @@
         ]
       }
     },
+
     {
-      "apiVersion": "[variables('apiVersion')]",
-      "type": "Microsoft.Compute/virtualMachines",
-      "name": "[parameters('clusterName')]",
-      "location": "[resourceGroup().location]",
-      "dependsOn": [
-        "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicNameHN'))]",
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
-      ],
+      "apiVersion": "2015-01-01",
+      "type": "Microsoft.Resources/deployments",
+      "name": "createAvailabilitySet",
       "properties": {
-        "availabilitySet": {
-          "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySetName'))]"
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('customScriptLocation'), 'availabilityset-', variables('avSetState'), '.json')]",
+          "contentVersion": "1.0.0.0"
         },
-        "hardwareProfile": {
-          "vmSize": "[parameters('headNodeVMSize')]"
-        },
-        "osProfile": {
-          "computername": "[parameters('clusterName')]",
-          "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
-        },
-        "storageProfile": {
-          "imageReference": {
-            "publisher": "MicrosoftWindowsServerHPCPack",
-            "offer": "WindowsServerHPCPack",
-            "sku": "2012R2",
-            "version": "latest"
+        "parameters": {
+          "apiVersion": {
+            "value": "[variables('apiVersion')]"
           },
-          "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/headnode/','osdisk.vhd')]"
-            },
-            "caching": "ReadOnly",
-            "createOption": "FromImage"
+          "availabilitySetName": {
+            "value": "[variables('availabilitySetName')]"
           }
-        },
-        "networkProfile": {
-          "networkInterfaces": [
-            {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicNameHN'))]"
-            }
-          ]
         }
       }
     },
+
+    {
+      "apiVersion": "2015-01-01",
+      "type": "Microsoft.Resources/deployments",
+      "name": "createHeadNode",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicNameHN'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+        "Microsoft.Resources/deployments/createAvailabilitySet"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('customScriptLocation'), 'headnode-rdma-', variables('vmSizeRDMAStates')[parameters('headNodeVMSize')], '.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "apiVersion": {
+            "value": "[variables('apiVersion')]"
+          },
+          "vmName": {
+            "value": "[parameters('clusterName')]"
+          },
+          "vmSize": {
+            "value": "[parameters('headNodeVMSize')]"
+          },
+          "storageAccountName": {
+            "value": "[variables('storageAccountName')]"
+          },
+          "nicName": {
+            "value": "[variables('nicNameHN')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "availabilitySetName": {
+            "value": "[variables('availabilitySetName')]"
+          }
+        }
+      }
+    },
+
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('clusterName'),'/configureHeadNode')]",
       "apiVersion": "[variables('apiVersion')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('clusterName'))]"
+        "Microsoft.Resources/deployments/createHeadNode"
       ],
       "properties": {
         "publisher": "Microsoft.Compute",
@@ -333,14 +374,13 @@
         ]
       }
     },
+
     {
-      "apiVersion": "[variables('apiVersion')]",
-      "type": "Microsoft.Compute/virtualMachines",
-      "name": "[concat(parameters('computeNodeNamePrefix'), copyIndex())]",
-      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-01-01",
+      "type": "Microsoft.Resources/deployments",
+      "name": "[concat('create', parameters('computeNodeNamePrefix'), copyIndex())]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]",
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('clusterName'))]",
+        "Microsoft.Resources/deployments/createAvailabilitySet",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyIndex())]",
         "[concat('Microsoft.Storage/storageAccounts/', variables('cnStorageAccountPrefix'), div(copyIndex(), 10))]"
       ],
@@ -349,43 +389,55 @@
         "count": "[parameters('computeNodeNumber')]"
       },
       "properties": {
-        "availabilitySet": {
-          "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySetName'))]"
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('customScriptLocation'), 'windowsnode-rdma-', variables('vmSizeRDMAStates')[parameters('computeNodeVMSize')], '.json')]",
+          "contentVersion": "1.0.0.0"
         },
-        "hardwareProfile": {
-          "vmSize": "[parameters('computeNodeVMSize')]"
-        },
-        "osProfile": {
-          "computername": "[concat(parameters('computeNodeNamePrefix'), copyIndex())]",
-          "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]",
-          "customData": "[base64(concat('HPCClusterName=', parameters('clusterName'), '\r\nImageCategory=public\r\nImageName=WindowsServerHPCPack-', variables('computeNodeImageSku'), '\r\nVMSize=', parameters('computeNodeVMSize')))]"
-        },
-        "storageProfile": {
-          "imageReference": {
-            "publisher": "MicrosoftWindowsServerHPCPack",
-            "offer": "WindowsServerHPCPack",
-            "sku": "[variables('computeNodeImageSku')]",
-            "version": "latest"
+        "parameters": {
+          "apiVersion": {
+            "value": "[variables('apiVersion')]"
           },
-          "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat('http://',variables('cnStorageAccountPrefix'),div(copyIndex(), 10),'.blob.core.windows.net/vhds',copyIndex(),'/','osdisk.vhd')]"
-            },
-            "caching": "ReadWrite",
-            "createOption": "FromImage"
+          "vmName": {
+            "value": "[concat(parameters('computeNodeNamePrefix'), copyIndex())]"
+          },
+          "vmSize": {
+            "value": "[parameters('computeNodeVMSize')]"
+          },
+          "storageAccountName": {
+            "value": "[concat(variables('cnStorageAccountPrefix'), div(copyIndex(), 10))]"
+          },
+          "imgPublisher": {
+            "value": "MicrosoftWindowsServerHPCPack"
+          },
+          "imgOffer": {
+            "value": "WindowsServerHPCPack"
+          },
+          "imgSku": {
+            "value": "[variables('computeNodeImageSku')]"
+          },
+          "imgVersion": {
+            "value": "latest"
+          },
+          "nicName": {
+            "value": "[concat(variables('nicName'), copyIndex())]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "availabilitySetName": {
+            "value": "[variables('availabilitySetName')]"
+          },
+          "customData": { 
+            "value": "[base64(concat('HPCClusterName=', parameters('clusterName'), '\r\nImageCategory=public\r\nImageName=WindowsServerHPCPack-', variables('computeNodeImageSku'), '\r\nVMSize=', parameters('computeNodeVMSize')))]"
           }
-        },
-        "networkProfile": {
-          "networkInterfaces": [
-            {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('nicName'), copyIndex()))]"
-            }
-          ]
         }
       }
     },
+
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('computeNodeNamePrefix'), copyIndex(), '/configureComputeNode')]",
@@ -393,7 +445,7 @@
       "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', parameters('clusterName'), '/extensions/configureHeadNode')]",
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('computeNodeNamePrefix'), copyIndex())]"
+        "[concat('Microsoft.Resources/deployments/create', parameters('computeNodeNamePrefix'), copyIndex())]"
       ],
       "copy": {
         "name": "CN",
