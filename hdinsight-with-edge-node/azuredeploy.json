@@ -1,0 +1,421 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "type": "string",
+            "defaultValue": "North Europe",
+            "allowedValues": [ "North Europe" ],
+            "metadata": { 
+                "description": "The location where all azure resources will be deployed."
+            }
+        },
+        "vnetName": {
+            "type": "string",
+            "metadata": { 
+                "description": "The name of the virtual network that will be created and have the cluster and edge node deployed into."
+            }
+        },
+        "vnetAddressSpace": {
+            "type": "string",
+            "defaultValue": "10.0.0.0/16",
+            "metadata": { 
+                "description": "The virtual network's address range in CIDR notion. It must be contained in one of the standard private address spaces: 10.0.0.0/8, 172.160.0.0/12, or 192.168.0.0/16."
+            }
+        },
+        "vnetSubnetName": {
+            "type": "string",
+            "defaultValue": "default",
+            "metadata": { 
+                "description": "The name of the subnet to create in the virtual network."
+            }
+        },
+        "vnetSubnetAddressRange": {
+            "type": "string",
+            "defaultValue": "10.0.0.0/24",
+            "metadata": { 
+                "description": "The subnet's address range in CIDR notation. It must be contained by the address space of the virtual network."
+            }
+        },
+        "clusterName": {
+            "type": "string",
+            "metadata": { 
+                "description": "The name of the HDInsight cluster to create."
+            }
+        },
+        "clusterLoginUserName": {
+            "type": "string",
+            "defaultValue": "admin",
+            "metadata": { 
+                "description": "These credentials can be used to submit jobs to the cluster and to log into cluster dashboards."
+            }
+        },
+        "clusterLoginPassword": {
+            "type": "securestring",
+            "metadata": { 
+                "description": "The password for the cluster login."
+            }
+        },
+        "sshUserName": {
+            "type": "string",
+            "defaultValue": "hdiuser",
+            "metadata": { 
+                "description": "These credentials can be used to remotely access the cluster and the edge node virtual machine."
+            }
+        },
+        "sshPassword": {
+            "type": "securestring",
+            "metadata": { 
+                "description": "The password for the ssh user."
+            }
+        },
+        "clusterStorageAccountName": {
+            "type": "string",
+            "metadata": { 
+                "description": "The name of the storage account to be created and be used as the cluster's storage."
+            }
+        },
+        "clusterStorageType": {
+            "type": "string",
+            "defaultValue": "Standard_LRS",
+            "allowedValues": [
+                "Standard_LRS",
+                "Standard_GRS",
+                "Standard_ZRS"
+            ]
+        },
+        "clusterWorkerNodeCount": {
+            "type": "int",
+            "defaultValue": 4,
+            "metadata": { 
+                "description": "The number of nodes in the HDInsight cluster."
+            }
+        },
+        "edgeNodeVhdStorageName": {
+            "type": "string",
+            "metadata": { 
+                "description": "The name of the storage account to be created and used to store the vhd of the edge node virtual machine."
+            }
+        },
+        "edgeNodeVhdStorageType": {
+            "type": "string",
+            "defaultValue": "Standard_LRS",
+            "allowedValues": [
+                "Standard_LRS",
+                "Standard_GRS",
+                "Standard_ZRS"
+            ]
+        },
+        "edgeNodeVirtualMachineName": {
+            "type": "string",
+            "metadata": { 
+                "description": "The name of the edge node virtual machine."
+            }
+        },
+        "edgeNodeVirturalMachineUbuntuOSVersion": {
+            "type": "string",
+            "defaultValue": "14.04.2-LTS",
+            "allowedValues": [
+                "12.04.2-LTS",
+                "12.04.3-LTS",
+                "12.04.4-LTS",
+                "12.04.5-LTS",
+                "14.04.2-LTS"
+            ]
+        },
+        "appInstallScriptUri": {
+            "type": "string",
+            "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/hdinsight-with-edge-node/connectToWasb.sh",
+            "metadata": { 
+                "description": "A public http(s) uri that points to a script that will install an app on the edge node."
+            }
+        }
+    },
+    "variables": {
+        "edgeNodeStorageAccountContainerName": "vhds",
+        "edgeNodeImagePublisher": "Canonical",
+        "edgeNodeImageOffer": "UbuntuServer",
+        "edgeNodeVmSize": "Standard_D1",
+        "edgeNodeExtensionName": "edgeNodeSetup",
+        "edgeNodeOSDiskName": "[parameters('edgeNodeVirtualMachineName')]",
+        "edgeNodeNicName": "[concat(parameters('edgeNodeVirtualMachineName'), 'nic')]",
+        "edgeNodePublicIpName": "[concat(variables('edgeNodeNicName'), 'publicip')]",
+        "edgeNodeNicSSHSGName": "[concat(variables('edgeNodeNicName'), 'ssh')]"
+    },
+    "resources": [
+        {
+            "name": "[parameters('vnetName')]",
+            "type": "Microsoft.Network/virtualNetworks",
+            "location": "[parameters('location')]",
+            "apiVersion": "2015-05-01-preview",
+            "dependsOn": [ ],
+            "tags": { },
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[parameters('vnetAddressSpace')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[parameters('vnetSubnetName')]",
+                        "properties": {
+                            "addressPrefix": "[parameters('vnetSubnetAddressRange')]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[parameters('clusterStorageAccountName')]",
+            "type": "Microsoft.Storage/storageAccounts",
+            "location": "[parameters('location')]",
+            "apiVersion": "2015-05-01-preview",
+            "dependsOn": [ ],
+            "tags": { },
+            "properties": {
+                "accountType": "[parameters('clusterStorageType')]"
+            }
+        },
+        {
+            "name": "[parameters('clusterName')]",
+            "type": "Microsoft.HDInsight/clusters",
+            "location": "[parameters('location')]",
+            "apiVersion": "2015-03-01-preview",
+            "dependsOn": [
+                "[concat('Microsoft.Storage/storageAccounts/',parameters('clusterStorageAccountName'))]",
+                "[concat('Microsoft.Network/virtualNetworks/',parameters('vnetName'))]"
+            ],
+            "tags": { },
+            "properties": {
+                "clusterVersion": "3.2",
+                "osType": "Linux",
+                "clusterDefinition": {
+                    "kind": "hadoop",
+
+                    "configurations": {
+                        "gateway": {
+                            "restAuthCredential.isEnabled": true,
+                            "restAuthCredential.username": "[parameters('clusterLoginUserName')]",
+                            "restAuthCredential.password": "[parameters('clusterLoginPassword')]"
+                        }
+                    }
+                },
+                "storageProfile": {
+                    "storageaccounts": [
+                        {
+                            "name": "[concat(parameters('clusterStorageAccountName'),'.blob.core.windows.net')]",
+                            "isDefault": true,
+                            "container": "[parameters('clusterName')]",
+                            "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('clusterStorageAccountName')), '2015-05-01-preview').key1]"
+                        }
+                    ]
+                },
+                "computeProfile": {
+                    "roles": [
+                        {
+                            "name": "headnode",
+                            "targetInstanceCount": "1",
+                            "hardwareProfile": {
+                                "vmSize": "Large"
+                            },
+                            "osProfile": {
+                                "linuxOperatingSystemProfile": {
+                                    "username": "[parameters('sshUserName')]",
+                                    "password": "[parameters('sshPassword')]"
+                                }
+                            },
+                            "virtualNetworkProfile": {
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]",
+                                "subnet": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName')), '/subnets/', parameters('vnetSubnetName'))]"
+                            }
+                        },
+                        {
+                            "name": "workernode",
+                            "targetInstanceCount": "[parameters('clusterWorkerNodeCount')]",
+                            "hardwareProfile": {
+                                "vmSize": "Large"
+                            },
+                            "osProfile": {
+                                "linuxOperatingSystemProfile": {
+                                    "username": "[parameters('sshUserName')]",
+                                    "password": "[parameters('sshPassword')]"
+                                }
+                            },
+                            "virtualNetworkProfile": {
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]",
+                                "subnet": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName')), '/subnets/', parameters('vnetSubnetName'))]"
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "name": "[parameters('edgeNodeVhdStorageName')]",
+            "type": "Microsoft.Storage/storageAccounts",
+            "location": "[parameters('location')]",
+            "apiVersion": "2015-05-01-preview",
+            "dependsOn": [ ],
+            "tags": { },
+            "properties": {
+                "accountType": "[parameters('edgeNodeVhdStorageType')]"
+            }
+        },
+        {
+            "name": "[variables('edgeNodePublicIpName')]",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "location": "[parameters('location')]",
+            "apiVersion": "2015-05-01-preview",
+            "dependsOn": [
+                    "[concat('Microsoft.Network/virtualNetworks/',parameters('vnetName'))]"
+            ],
+            "tags": { },
+            "properties": {
+                "publicIPAllocationMethod": "Dynamic",
+                "dnsSettings": {
+                    "domainNameLabel": "[concat(parameters('edgeNodeVirtualMachineName'),'-ssh')]"
+                }
+            }
+        },
+        {
+            "apiVersion": "2015-05-01-preview",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[variables('edgeNodeNicSSHSGName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "SSH",
+                        "properties": {
+                            "description": "Allows SSH traffic",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "22",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 100,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[variables('edgeNodeNicName')]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "location": "[parameters('location')]",
+            "apiVersion": "2015-05-01-preview",
+            "dependsOn": [
+                "[concat('Microsoft.Network/publicIPAddresses/', variables('edgeNodePublicIpName'))]",
+                "[concat('Microsoft.Network/networkSecurityGroups/', variables('edgeNodeNicSSHSGName'))]"
+            ],
+            "tags": { },
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName')), '/subnets/', parameters('vnetSubnetName'))]"
+                            },
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('edgeNodePublicIpName'))]"
+                            }
+                        }
+                    }
+                ],
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('edgeNodeNicSSHSGName'))]"
+                }
+            }
+        },
+        {
+            "name": "[parameters('edgeNodeVirtualMachineName')]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "location": "[parameters('location')]",
+            "apiVersion": "2015-05-01-preview",
+            "dependsOn": [
+                "[concat('Microsoft.Storage/storageAccounts/', parameters('edgeNodeVhdStorageName'))]",
+                "[concat('Microsoft.Network/networkInterfaces/', variables('edgeNodeNicName'))]"
+            ],
+            "tags": { },
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[variables('edgeNodeVmSize')]"
+                },
+                "osProfile": {
+                    "computername": "[parameters('edgeNodeVirtualMachineName')]",
+                    "adminUsername": "[parameters('sshUserName')]",
+                    "adminPassword": "[parameters('sshPassword')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "[variables('edgeNodeImagePublisher')]",
+                        "offer": "[variables('edgeNodeImageOffer')]",
+                        "sku": "[parameters('edgeNodeVirturalMachineUbuntuOSVersion')]",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "edgeNodeOSDisk",
+                        "vhd": {
+                            "uri": "[concat('http://', parameters('edgeNodeVhdStorageName'), '.blob.core.windows.net/', variables('edgeNodeStorageAccountContainerName'), '/', variables('edgeNodeOSDiskName'), '.vhd')]"
+                        },
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('edgeNodeNicName'))]"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(parameters('edgeNodeVirtualMachineName'),'/',variables('edgeNodeExtensionName'))]",
+            "apiVersion": "2015-05-01-preview",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('edgeNodeVirtualMachineName'))]",
+                "[concat('Microsoft.HDInsight/clusters/',parameters('clusterName'))]"
+            ],
+            "properties": {
+                "publisher": "Microsoft.OSTCExtensions",
+                "type": "CustomScriptForLinux",
+                "typeHandlerVersion": "1.2",
+                "settings": {
+                    "fileUris": [
+                        "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/hdinsight-with-edge-node/edgeNodeSetup.sh",
+                        "[parameters('appInstallScriptUri')]"
+                    ],
+                    "commandToExecute": "[concat('sudo -E bash edgeNodeSetup.sh ', parameters('clusterName'),' ', parameters('sshUserName'),' ', parameters('sshPassword'),' ',parameters('appInstallScriptUri'))]"
+                }
+            }
+        }
+
+    ],
+    "outputs": {
+        "vnet": {
+            "type": "object",
+            "value": "[reference(resourceId('Microsoft.Network/virtualNetworks',parameters('vnetName')))]"
+        },
+        "cluster":{
+            "type" : "object",
+            "value" : "[reference(resourceId('Microsoft.HDInsight/clusters',parameters('clusterName')))]"
+        },
+        "edgeNodePublicIp": {
+            "type": "object",
+            "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('edgeNodePublicIpName')))]"
+        },
+        "edgeNode": {
+            "type": "object",
+            "value": "[reference(resourceId('Microsoft.Compute/virtualMachines',parameters('edgeNodeVirtualMachineName')))]"
+        }
+    }
+}
