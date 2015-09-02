@@ -6,7 +6,7 @@
 
 This template configures an existing Virtual Machine Local Configuration Manager (LCM) via the DSC extension, registering it to an existing Azure Automation Account DSC Pull Server.
 
-<b>NOTE:</b> The DSC configuration module requires three specific Azure Automation DSC parameters: Registration Key, Registration URL, and Configuration Function. These prerequisites are available only after successful creation and configuration of an Azure Automation Account for Azure Automation DSC.
+<b>NOTE:</b> The DSC configuration module requires three specific Azure Automation DSC parameters: Registration Key, Registration URL, and Node Configuration Name. These prerequisites are available only after successful creation and configuration of an Azure Automation Account for Azure Automation DSC.
 
 For more information on Azure Automation DSC, please see the following: <a href="http://aka.ms/DSCLearnMore" target="_blank">Azure Automation DSC Overview</a>
 
