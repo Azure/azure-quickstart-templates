@@ -1,5 +1,4 @@
-sudo apt-get -y update
-sudo apt-get -y upgrade
+
 
 cd /
 sudo mv /var/lib/waagent/Microsoft.OSTCExtensions.CustomScriptForLinux-1.2.2.0/download/0/app.js /opt/app.js
