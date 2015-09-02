@@ -4,21 +4,9 @@
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-This template shows a simple example abouht how to deploy [CustomScript extension](https://github.com/Azure/azure-linux-extensions/tree/master/CustomScript) to an Linux VM.
+[CustomScript Extension](https://github.com/Azure/azure-linux-extensions/tree/master/CustomScript) allows the owner of the Azure Virtual Machines to run customized scripts in the VM.
 
-## Parameters
-
-| Name   | Description    |
-|:--- |:---|
-| location  | The location where the Virtual Machine will be deployed | 
-| username  | Username for the Virtual Machine  |
-| password  | Password for the Virtual Machine  |
-| newStorageAccountName  | Unique DNS Name for the Storage Account where the Virtual Machine's disks will be placed |
-| dnsNameForPublicIP | Unique DNS Name for the Public IP used to access the Virtual Machine |
-| fileUris | The uris of files. Splited by blank |
-| commandToExecute | The command to execute |
-| storageAccountName | The name of storage account |
-| storageAccountKey | The access key of storage account |
+This template shows a simple example abouht how to deploy CustomScript extension to an Linux VM.
 
 ## Deploy
 
