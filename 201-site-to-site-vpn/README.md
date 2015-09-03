@@ -9,30 +9,3 @@ This template will create a Virtual Network, a subnet for the network, a Virtual
 Please note that you must have a Public IP for your other network's VPN gateway and cannot be behind an NAT.
 
 Although only the parameters in [azuredeploy-parameters.json](./azure-deploy-parameters.json) are necessary, you can override the defaults of any of the template parameters below:
-
-| Name   | Description    |
-|:--- |:---|
-| location | Region where the resources will be deployed |
-| vpnType | Route based, or policy based |
-| subscriptionId | Subscription ID |
-| localGatewayName | Name for gateway connected to other Network |
-| localGatewayIpAddress | Public IP address of other network Gateway |
-| localAddressPrefix | CIDR block of other network address space |
-| virtualNetworkName | Name for new virtual network |
-| azureVNetAddressPrefix | CIDR block for new Azure VNet |
-| subnetName | Name for Azure VM subnet |
-| subnetPrefix | CIDR block for Azure VM subnet |
-| gatewaySubnet | Name for gatway subnet |
-| gatewaySubnetPrefix | CIDR block for Azure gateway subnet |
-| gatewayPublicIPName | Name for public IP resource for the Azure gateway |
-| gatewayName | Name for the gateway connected to the new VNet |
-| connectionName | Name for the new connection between Azure VNet and other network |
-| vmName | Virtual Machine Name |
-| vmSize | Shared key for IPSec connection |
-| adminUsername | Username for test Virtual Machine |
-| adminPassword | Password for test Virtual Machine |
-| imagePublisher | VM Image publisher |
-| imageOffer | VM Image offer |
-| imageSKU | VM Image SKU |
-| newStorageAccountName | Storage Account Name for VM Disk |
-| storageAccountType | Storage Account Type for VM Disk |
