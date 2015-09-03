@@ -1,5 +1,9 @@
 ## Windows Server Container Host Preview (Docker Ready)
 
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/windows-server-containers-preview/azuredeploy.json" target="_blank">
+    <img src="http://azuredeploy.net/deploybutton.png"/>
+</a>
+
 This template will deploy and configure a Windows Server 2016 TP core VM instance with Windows Server Containers. These items are performed by the template:
 
 - Deploy the TP2 Windows Server Container Image.
