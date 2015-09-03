@@ -10,26 +10,6 @@ Spark has an advanced DAG execution engine that supports cyclic data flow and in
 This template deploys a Spark cluster on the Ubuntu virtual machines. This template also provisions a storage account, virtual network, availability sets, public IP addresses and network interfaces required by the installation.
 The template also creates 1 publicly accessible VM acting as a "jumpbox" and allowing to ssh into the Spark nodes for diagnostics or troubleshooting purposes.
 
-The example expects the following parameters:
-
-| Name   | Description    |
-|:--- |:---|
-| storageAccountName  | Unique DNS Name for the Storage Account where the Virtual Machine's disks will be placed |
-| adminUsername  | Admin user name for the Virtual Machines  |
-| adminPassword  | Admin password for the Virtual Machine  |
-| region | Region name where the corresponding Azure artifacts will be created |
-| virtualNetworkName | Name of Virtual Network |
-| dataDiskSize | Size of each disk attached to Spark nodes (in GB) - This will be available in with Disk templates separately |
-| subnetName | Name of the Virtual Network subnet |
-| addressPrefix | The IP address mask used by the Virtual Network |
-| subnetPrefix | The subnet mask used by the Virtual Network subnet |
-| sparkVersion | Spark version number to be installed |
-| sparkClusterName | Name of the Spark cluster |
-| sparkNodeIPAddressPrefix | The IP address prefix that will be used for constructing a static private IP address for Master node in the cluster |
-| sparkSlaveNodeIPAddressPrefix | The IP address prefix that will be used for constructing a static private IP address for Slave node in the cluster |
-| jumpbox | The flag allowing to enable or disable provisioning of the jumpbox VM that can be used to access the Spark nodes |
-| tshirtSize | The t-shirt size of the Spark nodes Slaves or workers can be increased (small, medium, large) |
-
 The following table outlines the deployment topology characteristics for each supported t-shirt size:
 
 | T-Shirt Size | Database VM Size | CPU Cores | Memory | Data Disks | # of Secondaries | # of Storage Accounts |
@@ -39,7 +19,7 @@ The following table outlines the deployment topology characteristics for each su
 | Large | Standard_A4 | 8 | 14 GB | 16x1023 GB | 2 | 2 |
 | XLarge | Standard_A4 | 8 | 14 GB | 16x1023 GB | 3 | 4 |
 
-How to Run the scripts 
+How to Run the scripts
 ----------------------
 
 You can use the Deploy to Azure button or use the below methor with powershell
@@ -52,7 +32,7 @@ Create a resource group:
 
     PS C:\Users\azureuser1> New-AzureResourceGroup -Name "AZKFRGSPARKEA3" -Location 'EastAsia'
 
-Start deployment 
+Start deployment
 
     PS C:\Users\azureuser1> New-AzureResourceGroupDeployment -Name AZKFRGSPARKV2DEP1 -ResourceGroupName "AZKFRGSPARKEA3" -TemplateFile C:\gitsrc\azure-quickstart-templates\spark-ubuntu-multidisks\azuredeploy.json -TemplateParameterFile C:\gitsrc\azure-quickstart-templates\spark-ubuntu-multidisks\azuredeploy-parameters.json -Verbose
 
@@ -76,13 +56,13 @@ Start deployment
 			    jumpbox          String                     Enabled
 			    virtualNetworkName  String                     vnet
 
-Check Deployment 
+Check Deployment
 ----------------
 To access the individual Spark nodes, you need to use the publicly accessible jumpbox VM and ssh from it into the VM instances running Spark.
 
 To get started connect to the public ip of Jumpbox with username and password provided during deployment.
 From the jumpbox connect to any of the Spark workers eg: ssh 10.0.0.5 ,ssh 10.0.0.6, etc.
-Run the command ps-ef|grep spark to check that kafka process is running ok. 
+Run the command ps-ef|grep spark to check that kafka process is running ok.
 To connect to master node you can use ssh 10.0.0.4
 
 To access spark shell:
@@ -94,7 +74,7 @@ sudo ./spark-shell
 Topology
 --------
 
-The deployment topology is comprised of Master and Slave Instance nodes running in the cluster mode. 
+The deployment topology is comprised of Master and Slave Instance nodes running in the cluster mode.
 Spark version 1.2.1 is the default version and can be changed to any pre-built binaries avaiable on Spark repo.
 There is also a provision in the script to uncomment the build from source.
 
@@ -107,6 +87,6 @@ Assuming your domainName parameter was "mypsqljumpbox" and region was "West US"
 To check deployment errors go to the new azure portal and look under Resource Group -> Last deployment -> Check Operation Details
 
 ##Known Issues and Limitations
-- The deployment script is not yet idempotent and cannot handle updates 
+- The deployment script is not yet idempotent and cannot handle updates
 - SSH key is not yet implemented and the template currently takes a password for the admin user
-- Spark cluster is current enabled for one master and multi slaves. 
+- Spark cluster is current enabled for one master and multi slaves.

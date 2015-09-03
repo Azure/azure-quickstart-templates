@@ -121,20 +121,6 @@ The following steps show how to deploy a "Hello World" Go application to the clu
 		deis scale cmd=3
 
 
-##Other parameters
-
-Below are the parameters that the template expects
-
-| Name   | Description    |
-|:--- |:---|
-| adminUsername | Name of the admin user |
-| customData | Explained above |
-| newStorageAccountName | new storage account for the VMs OS disk |
-| numberOfNodes | Number of member nodes. Currently only 3-node clusters are supported |
-| publicDomainName | public domain name to be assoicated with the load balancer IP |
-| sshKeyData | Explained above |
-| vmSize | Instance size for the VMs |
-
 ##Deis debugging tips
 
 1. First, verify if the VM machines have been provisioned correctly. When you ssh into the machines, you should see the Deis logo as ASCII art. If you don't see it, something has gone wrong with the cloud-init process. Probably you have an invalid cloud-init file.

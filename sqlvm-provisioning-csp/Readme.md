@@ -25,7 +25,7 @@ This solution includes 3 files required for deployment and 1 example powershell 
 +   CreateSQLVMExample.ps1
     Sample PowerShell script to help user execute the PowerShell cmdlet
 
-## Deploying from PowerShell 
+## Deploying from PowerShell
 
 For details on how to install and configure Azure Powershell see [here].(https://azure.microsoft.com/en-us/documentation/articles/powershell-install-configure/)
 
@@ -62,25 +62,6 @@ If you have updated the CreateSQLVMExample.ps1 file, run that file to deploy the
 
 ```
 
-## Parameters
-
-|Name|Description                                        |
-|:----|:-------------------------------------------------|
-|SubscriptionId|Subscription ID of subscription used for deployment|
-|ResourceGroupName|Name of Resource Group which the resources will contained in|
-|TemplatePath|Path of the JSON template file in this repo|
-|VmName|Name of Virtual Machine|
-|VmSize|Size of Virtual Machine (https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-size-specs/)|
-|VmLocation|Region in which the VM will be provisioned|
-|Username|Virtual Machine admin user|
-|Password|Virtual Machine admin password|
-|StorageName|Name of Azure Storage Account|
-|StorageType|Type of Azure Storage Account <ul><li>Standard_LRS</li><li>Standard_GRS</li><li>Standard_RAGRS</li><li>Premium_LRS</li></ul>|
-|VnetName|Azure Virtual Network name|
-|NetworkAddressSpace|Virtual Network address space|
-|SubnetName|Virtual Network subnet name|
-|SubnetAddressPrefix|Virtual Network subnet address|
-
 ## Additional Notes
 
 +   Supported Images
@@ -113,12 +94,12 @@ If you have updated the CreateSQLVMExample.ps1 file, run that file to deploy the
     +   Public DNS Entry
     +   Virtual Network
     +   Subnet
-+   Add Virtual Machine using OS Image and existing VNET / Subnet 
++   Add Virtual Machine using OS Image and existing VNET / Subnet
     In this scenario, the following resources are created:
     +   Virtual Machine using OS image with no data disks
     +   Public DNS Entry
     +   Storage
-+   Add Virtual Machine using OS Image to existing VNET / Subnet and Storage 
++   Add Virtual Machine using OS Image to existing VNET / Subnet and Storage
     In this scenario, the following resources are created:
     +   Virtual Machine using OS image with no data disks
     +   Public DNS Entry
@@ -129,22 +110,18 @@ If you have updated the CreateSQLVMExample.ps1 file, run that file to deploy the
     +   Storage
     +   Virtual Network
     +   Subnet
-+   Add Virtual Machine using Platform Image and existing Storage 
++   Add Virtual Machine using Platform Image and existing Storage
     In this scenario, the following resources are created:
     +   Virtual Machine using Platform Image
     +   Public DNS Entry
     +   Virtual Network
     +   Subnet
-+   Add Virtual Machine using Platform Image and existing VNET / Subnet 
++   Add Virtual Machine using Platform Image and existing VNET / Subnet
     In this scenario, the following resources are created:
     +   Virtual Machine using Platform image
     +   Public DNS Entry
     +   Storage
-+   Add Virtual Machine using Platform Image to existing VNET / Subnet and Storage 
++   Add Virtual Machine using Platform Image to existing VNET / Subnet and Storage
     In this scenario, the following resources are created:
     +   Virtual Machine using Platform image
     +   Public DNS Entry
-
-
-
-

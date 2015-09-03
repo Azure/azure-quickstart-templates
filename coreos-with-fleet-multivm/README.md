@@ -21,15 +21,3 @@ The discoveryUrl specifies the url where the Fleet cluster keeps internal config
 https://discovery.etcd.io/dcf78d9803b417e1a3eeb15987bdf82f
 
 This discoveryUrl must be copied in its entirety into the discoveryUrl parameter.
-
-Below are the parameters that the template expects
-
-| Name   | Description    |
-|:--- |:---|
-| location | location where the resources will be deployed |
-| newStorageAccountName | new storage account for the VMs OS disk |
-| vmSize | Instance size for the VMs |
-| numberOfNodes | Number of CoreOS compute nodes to deploy |
-| adminUsername | Name of the admin user |
-| sshKeyData | Explained above |
-| discoveryUrl | Explained above |
