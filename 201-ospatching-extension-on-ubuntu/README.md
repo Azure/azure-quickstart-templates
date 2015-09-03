@@ -4,31 +4,9 @@
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-Built by: [Thomas Shao](https://github.com/thomas1206)
-
 Azure Linux [OSPatching extension](https://github.com/Azure/azure-linux-extensions/tree/master/OSPatching) enables the Azure VM administrators to automate the VM OS updates with the customized configurations.
 
-This template shows a simple example abouht how to deploy OSPatching extension to an Linux VM.
-
-## Parameters
-
-| Name   | Description    |
-|:--- |:---|
-| location | The location where the Virtual Machine will be deployed |
-| username  | Username for the Virtual Machine  |
-| password  | Password for the Virtual Machine  |
-| newStorageAccountName  | Unique DNS Name for the Storage Account where the Virtual Machine's disks will be placed |
-| dnsNameForPublicIP | Unique DNS Name for the Public IP used to access the Virtual Machine |
-| rebootAfterPatch | The reboot behavior after patching |
-| category | Type of patches to install |
-| installDuration | The allowed total time for installation |
-| oneoff | Patch the OS immediately |
-| dayOfWeek | The patching date (of the week). You can specify multiple days in a week |
-| startTime | Start time of patching |
-| idleTestScript | The uri of the idle test script |
-| healthyTestScript | The uri of the healthy test script |
-| storageAccountName | The name of storage account |
-| storageAccountKey | The access key of storage account |
+This template shows a simple example to deploy OSPatching Extension on an Linux VM.
 
 ## Deploy
 
