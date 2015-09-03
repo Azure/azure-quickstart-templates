@@ -1,4 +1,4 @@
-# Simple deployment of an Ubuntu VM with Custom Script extension
+# A sample to run scripts in private Azure Storage using CustomScript Extension
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-customscript-extension-on-ubuntu%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
@@ -6,7 +6,7 @@
 
 [CustomScript Extension](https://github.com/Azure/azure-linux-extensions/tree/master/CustomScript) allows the owner of the Azure Virtual Machines to run customized scripts in the VM.
 
-This template shows a simple example abouht how to deploy CustomScript extension to an Linux VM.
+This template shows a simple example to run scripts which are stored in private Azure Storage.
 
 ## Deploy
 
