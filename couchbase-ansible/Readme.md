@@ -4,8 +4,6 @@
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-Built by: [GONZALORUIZ](https://github.com/GONZALORUIZ)
-
 This advanced template creates a Multi VM Couchbase Cluster,it also configures Ansible so you can easily manage all the VMS.
 
 This template  creates a new Storage Account (standard or premium) for all the Couchbase VMS , a Virtual Network, an Availability Sets (3 Fault Domains and up to 10 Update Domains), one private NIC per VM, one public IP and Load Balancer.You can specify SSH keys to access the Ansible Controller remotely. Minimun recommded VM Size is Standard_D2 and 4 data disks will be attached to each Couchbase VM and a RAID device will be created with all the disks.

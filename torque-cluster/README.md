@@ -1,7 +1,5 @@
 # Deploy a Torque cluster
 
-Built by: [YidingZhou](https://github.com/YidingZhou)
-
 <a href="http://www.adaptivecomputing.com/products/open-source/torque/">Torque</a> (Terascale Open-source Resource and QUEue Manager) is an open source distributed resource manager providing control over batch jobs and distributed compute nodes. This templates will deploy a Torque cluster in Azure based on CentOS 6.6. See <a href="http://docs.adaptivecomputing.com/torque/5-1-0/help.htm">Adaptive Computing</a> website for more detail.
 
 ##Deploy
