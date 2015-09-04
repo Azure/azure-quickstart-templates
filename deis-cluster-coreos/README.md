@@ -39,7 +39,7 @@ This template allows you to create a Deis cluster. The cluster is made up by thr
 >**Note:** If you chose to use the "Deploy to Azure" button experience, you'll need to manually encode **cloud-config.yaml** as a Base64 string and enter the encoded string to the **customData** parameter. Although the template can be updated to use the built-in base64() founction, I found the triple-encoding is rather troublesome especially for readability and maintenance.
 
 ##Install the client
-You need **deisctl** to control your Deis cluster. *deisctl* is automatically installed in all the cluster nodes. However, it's a good practice to use *deisctl* on a separate administrative machine. Because all nodes are configured with only private IP addresses, you'll need to use SSH tunneling through the load balancer, which has a public IP, to the node machines. The following are the steps of setting up *deisctl* on a separate machine.
+You need **deisctl** to control your Deis cluster. *deisctl* is automatically installed in all the cluster nodes. However, it's a good practice to use *deisctl* on a separate administrative machine. Because all nodes are configured with only private IP addresses, you'll need to use an SSH tunnel through the load balancer, which has a public IP, to the node machines. The following are the steps of setting up *deisctl* on a separate machine.
 
 1. Install *deisctl*
 
@@ -123,11 +123,11 @@ The following steps show how to deploy a "Hello World" Go application to the clu
 
 ##Deis debugging tips
 
-1. First, verify if the VM machines have been provisioned correctly. When you ssh into the machines, you should see the Deis logo as ASCII art. If you don't see it, something has gone wrong with the cloud-init process. Probably you have an invalid cloud-init file.
+1. First, verify that the VM machines have been provisioned correctly. When you SSH into the machines, you should see the Deis logo as ASCII art. If you don't see it, something has gone wrong with the cloud-init process. You probably have an invalid cloud-init file.
 
-2. As you ssh into the machine, verify if Docker daemon is running by running some Docker command such as *docker ps*.
+2. When you SSH into the machine, verify that the Docker daemon is running by running a Docker command such as *docker ps*.
 
-3. Use *deisctl list* to list all services. Check if all services are running. If you found a service is in faulted state, you can try to use the following commands to find out why the service is failing:
+3. Use *deisctl list* to list all services. Check that all services are running. If you find a service in a faulted state, you can try to using the following commands to find out why the service is failing:
 	- List service journal
 
 			deisctl journal [service]  #example: deisctl journal builder
