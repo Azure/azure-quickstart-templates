@@ -207,6 +207,7 @@ install_mysql_centos() {
     echo "installing mysql"
     wget https://dev.mysql.com/get/Downloads/MySQL-5.6/MySQL-5.6.26-1.el6.x86_64.rpm-bundle.tar
     tar -xvf MySQL-5.6.26-1.el6.x86_64.rpm-bundle.tar
+    rpm -e --nodeps mysql-libs-5.1.73-3.el6_5.x86_64
     rpm -ivh MySQL-server-5.6.26-1.el6.x86_64.rpm
     yum -y install MySQL-server-5.6.26-1.el6.x86_64
     rpm -ivh MySQL-client-5.6.26-1.el6.x86_64.rpm
@@ -220,7 +221,7 @@ create_mysql_probe() {
 if [ ${NODEID} -eq 1 ];
 then
 # create a probe user with minimum privilege
-    mysql -u root <<-EOF
+    mysql -u root -p"${ROOTPWD}" <<-EOF
 CREATE USER 'probeuser'@'%' IDENTIFIED BY '${PROBEPWD}';
 GRANT SELECT ON *.* TO 'probeuser'@'%';
 FLUSH PRIVILEGES;
@@ -327,6 +328,7 @@ configure_mysql() {
         install_mysql_ubuntu
     fi
     chmod o+x "${MOUNTPOINT}/mysql"
+    chown -R mysql:mysql "${MOUNTPOINT}/mysql"
     /etc/init.d/mysql start
 
     configure_mysql_replication
