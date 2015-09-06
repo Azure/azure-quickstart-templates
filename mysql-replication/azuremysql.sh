@@ -199,7 +199,7 @@ install_mysql_ubuntu() {
 }
 
 install_mysql_centos() {
-    yum list installed MySQL-server-5.6.26-1.el6.x86_64
+    rpm -qa |grep MySQL-server-5.6.26-1.el6.x86_64
     if [ ${?} -eq 0 ];
     then
         return
@@ -209,11 +209,7 @@ install_mysql_centos() {
     tar -xvf MySQL-5.6.26-1.el6.x86_64.rpm-bundle.tar
     rpm -e --nodeps mysql-libs-5.1.73-3.el6_5.x86_64
     rpm -ivh MySQL-server-5.6.26-1.el6.x86_64.rpm
-    yum -y install MySQL-server-5.6.26-1.el6.x86_64
     rpm -ivh MySQL-client-5.6.26-1.el6.x86_64.rpm
-    yum -y install MySQL-client-5.6.26-1.el6.x86_64
-    mysql_secret=$(awk '/password/{print $NF}' /root/.mysql_secret)
-    mysqladmin -u root --password=${mysql_secret} password ${ROOTPWD}
     yum -y install xinetd
 }
 
@@ -315,11 +311,15 @@ configure_mysql() {
     then
        return
     fi
-    create_mycnf
 
     mkdir "${MOUNTPOINT}/mysql"
     ln -s "${MOUNTPOINT}/mysql" /var/lib/mysql
     chmod o+x /var/lib/mysql
+    groupadd mysql
+    useradd -r -g mysql mysql
+    chmod o+x "${MOUNTPOINT}/mysql"
+    chown -R mysql:mysql "${MOUNTPOINT}/mysql"
+
     if [ $iscentos -eq 0 ];
     then
         install_mysql_centos
@@ -327,9 +327,11 @@ configure_mysql() {
     then
         install_mysql_ubuntu
     fi
-    chmod o+x "${MOUNTPOINT}/mysql"
-    chown -R mysql:mysql "${MOUNTPOINT}/mysql"
+
+    create_mycnf
     /etc/init.d/mysql start
+    mysql_secret=$(awk '/password/{print $NF}' /root/.mysql_secret)
+    mysqladmin -u root --password=${mysql_secret} password ${ROOTPWD}
 
     configure_mysql_replication
     create_mysql_probe
