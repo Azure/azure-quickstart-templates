@@ -217,7 +217,7 @@ create_mysql_probe() {
 if [ ${NODEID} -eq 1 ];
 then
 # create a probe user with minimum privilege
-    mysql -u root -p"${ROOTPWD}" <<-EOF
+    mysql -u root -p"${ROOTPWD}" <<EOF
 CREATE USER 'probeuser'@'%' IDENTIFIED BY '${PROBEPWD}';
 GRANT SELECT ON *.* TO 'probeuser'@'%';
 FLUSH PRIVILEGES;
@@ -332,6 +332,14 @@ configure_mysql() {
     /etc/init.d/mysql start
     mysql_secret=$(awk '/password/{print $NF}' ${HOME}/.mysql_secret)
     mysqladmin -u root --password=${mysql_secret} password ${ROOTPWD}
+    mysql -u root -p"${ROOTPWD}" <<EOF
+SET PASSWORD FOR 'root'@'127.0.0.1' = PASSWORD('${ROOTPWD}');
+SET PASSWORD FOR 'root'@'::1' = PASSWORD('${ROOTPWD}');
+SET PASSWORD FOR 'root'@'${HOSTNAME}' = PASSWORD('${ROOTPWD}');
+CREATE USER 'root'@'%' IDENTIFIED BY '${ROOTPWD}';
+GRANT ALL PRIVILEGES ON *.* TO 'root'@'%';
+FLUSH PRIVILEGES;
+EOF
 
     configure_mysql_replication
     create_mysql_probe
