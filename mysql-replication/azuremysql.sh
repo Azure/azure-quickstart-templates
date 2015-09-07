@@ -15,7 +15,6 @@ ROOTPWD=${5}
 PROBEPWD=${6}
 MASTERIP=${7}
 
-echo " home is ${HOME} "
 MOUNTPOINT="/datadrive"
 RAIDCHUNKSIZE=512
 
@@ -331,7 +330,7 @@ configure_mysql() {
 
     create_mycnf
     /etc/init.d/mysql start
-    mysql_secret=$(awk '/password/{print $NF}' /root/.mysql_secret)
+    mysql_secret=$(awk '/password/{print $NF}' ${HOME}/.mysql_secret)
     mysqladmin -u root --password=${mysql_secret} password ${ROOTPWD}
 
     configure_mysql_replication
