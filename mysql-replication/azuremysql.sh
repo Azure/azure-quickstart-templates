@@ -335,7 +335,6 @@ configure_mysql() {
     mysql -u root -p"${ROOTPWD}" <<EOF
 SET PASSWORD FOR 'root'@'127.0.0.1' = PASSWORD('${ROOTPWD}');
 SET PASSWORD FOR 'root'@'::1' = PASSWORD('${ROOTPWD}');
-SET PASSWORD FOR 'root'@'${HOSTNAME}' = PASSWORD('${ROOTPWD}');
 CREATE USER 'root'@'%' IDENTIFIED BY '${ROOTPWD}';
 GRANT ALL PRIVILEGES ON *.* TO 'root'@'%';
 FLUSH PRIVILEGES;
