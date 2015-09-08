@@ -335,9 +335,9 @@ configure_mysql() {
     create_mycnf
     /etc/init.d/mysql start
     mysql_secret=$(awk '/password/{print $NF}' ${HOME}/.mysql_secret)
+    mysqladmin -u root --password=${mysql_secret} password ${ROOTPWD}
 if [ ${NODEID} -eq 1 ];
 then
-    mysqladmin -u root --password=${mysql_secret} password ${ROOTPWD}
     mysql -u root -p"${ROOTPWD}" <<EOF
 SET PASSWORD FOR 'root'@'127.0.0.1' = PASSWORD('${ROOTPWD}');
 SET PASSWORD FOR 'root'@'::1' = PASSWORD('${ROOTPWD}');
