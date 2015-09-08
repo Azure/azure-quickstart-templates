@@ -210,6 +210,10 @@ install_mysql_centos() {
     rpm -e --nodeps mysql-libs-5.1.73-3.el6_5.x86_64
     rpm -ivh MySQL-server-5.6.26-1.el6.x86_64.rpm
     rpm -ivh MySQL-client-5.6.26-1.el6.x86_64.rpm
+	wget http://dev.mysql.com/get/Downloads/Connector-Python/mysql-connector-python-2.0.4-1.el6.noarch.rpm
+	rpm -ivh mysql-connector-python-2.0.4-1.el6.noarch.rpm
+	wget http://dev.mysql.com/get/Downloads/MySQLGUITools/mysql-utilities-1.5.5-1.el6.noarch.rpm
+	rpm -ivh mysql-utilities-1.5.5-1.el6.noarch.rpm
     yum -y install xinetd
 }
 
@@ -331,6 +335,8 @@ configure_mysql() {
     create_mycnf
     /etc/init.d/mysql start
     mysql_secret=$(awk '/password/{print $NF}' ${HOME}/.mysql_secret)
+if [ ${NODEID} -eq 1 ];
+then
     mysqladmin -u root --password=${mysql_secret} password ${ROOTPWD}
     mysql -u root -p"${ROOTPWD}" <<EOF
 SET PASSWORD FOR 'root'@'127.0.0.1' = PASSWORD('${ROOTPWD}');
@@ -339,7 +345,7 @@ CREATE USER 'root'@'%' IDENTIFIED BY '${ROOTPWD}';
 GRANT ALL PRIVILEGES ON *.* TO 'root'@'%';
 FLUSH PRIVILEGES;
 EOF
-
+fi
     configure_mysql_replication
     create_mysql_probe
 }
