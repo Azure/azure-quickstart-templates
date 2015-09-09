@@ -15,7 +15,6 @@ fi
 echo "Installing sshpass"
 apt-get -y -qq install sshpass
 
-
 #Copying configs
 echo "Copying configs and cluster resources local"
 tmpFilePath=~/tmpConfigs
@@ -26,36 +25,19 @@ do
 	mkdir -p "$tmpFilePath/$path"
 	sshpass -p $clusterSshPw scp -r $clusterSshUser@$clusterSshHostName:"$path/*" "$tmpFilePath$path"
 done
+
+#Get the decrypt utilities from the cluster
+wasbDecryptScript=$(grep "shellkeyprovider" -A1 ${tmpFilePath}/etc/hadoop/conf/core-site.xml | perl -ne "s/<\/?value>//g and print" | sed 's/^[ \t]*//;s/[ \t]*$//')
+decryptUtils=$(dirname $wasbDecryptScript)
+echo "WASB Decrypt Utils being copied locally from $decryptUtils on the headnode"
+
+echo "Copying decrypt utilities for WASB storage"
+mkdir -p "$tmpFilePath/$decryptUtils"
+sshpass -p $clusterSshPw scp -r $clusterSshUser@$clusterSshHostName:"$decryptUtils/*" "$tmpFilePath$decryptUtils"
+
+#Copy all from the temp directory into the final directory
 cp -r $tmpFilePath/* /
 rm -rf $tmpFilePath
-
-#Decrypt and replace keys
-echo "Decrypting storage keys"
-
-#Get the decrypt script on the cluster
-wasbDecryptScript=$(grep "shellkeyprovider" -A1 ${targetFilePath}/core-site.xml | perl -ne "s/<\/?value>//g and print" | sed 's/^[ \t]*//;s/[ \t]*$//')
-echo $wasbDecryptScript
-
-#Get a list of all the keys in the core-site file
-#For each key it will create two entries in the array; the first will be the property name; the second will be the value
-accountsAndKeys=($(sed -ne '/<name>fs.azure.account.key\..*.blob.core.windows.net/,/<\/value>/ p' "${targetFilePath}/core-site.xml"))
-accountAndKeysLen=${#accountsAndKeys[@]}
-
-index="0"
-while [ $index -lt $accountAndKeysLen ]
-do
-    propertyName=$(echo ${accountsAndKeys[$index]} | perl -ne "s/<\/?name>//g and print")
-    encryptedKey=$(echo ${accountsAndKeys[$index+1]} | perl -ne "s/<\/?value>//g and print")
-    echo "Decrypting key"
-    decryptedKey=$(sshpass -p $clusterSshPw ssh $clusterSshUser@$clusterSshHostName "${wasbDecryptScript} ${encryptedKey}")
-    escapedKey=${decryptedKey//\//\\/}
-    #Actually replace decrypted key
-    perl -i -00pe "s/.*<name>$propertyName<\/name>\n.*<value>.*<\/value>\n/      <name>$propertyName<\/name>\n      <value>$escapedKey<\/value>\n/" ${targetFilePath}/core-site.xml
-    index=$[$index+2]
-done
-
-#Remove the key provider from the config
-perl -i -00pe 's/.*<property>\n.*fs.azure.account.keyprovider.*\n.*\n.*<\/property>\n.*\n//' ${targetFilePath}/core-site.xml
 
 #Install Java
 echo "Installing Java"
