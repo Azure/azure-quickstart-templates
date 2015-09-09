@@ -23,12 +23,13 @@ apt-get -y -qq install sshpass
 
 #Copying configs
 echo "Copying configs and cluster resources local"
+tmpFilePath=~/tmpConfigs
 mkdir -p $tmpFilePath
 RESOURCEPATHS=(/etc/hadoop/conf /etc/hive/conf /var/lib/ambari-server/resources/scripts)
 for path in "${CONFIGPATHS[@]}"
 do
 	mkdir -p "$tmpFilePath/$path"
-	sshpass -p $clusterSshPw scp $clusterSshUser@$clusterSshHostName:"$path/*" "/$path"
+	sshpass -p $clusterSshPw scp -r $clusterSshUser@$clusterSshHostName:"$path/*" "$tmpFilePath$path"
 done
 cp -r $tmpFilePath/* /
 rm -rf $tmpFilePath
