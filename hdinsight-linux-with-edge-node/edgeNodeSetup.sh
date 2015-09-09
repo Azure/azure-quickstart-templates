@@ -4,7 +4,7 @@ clusterSshPw=$3
 appInstallScriptUri=$4
 
 #Make the file path for the configs to be copied to
-targetFilePath=/etc/hadoop/conf
+targetFilePath=/etc
 mkdir -p $targetFilePath
 echo "Created $targetFilePath for configs to be placed"
 
@@ -22,11 +22,15 @@ apt-get -y -qq install sshpass
 
 
 #Copying configs
-echo "Copying configs local"
-tmpFilePath=~/tmpConfigs
+echo "Copying configs and cluster resources local"
 mkdir -p $tmpFilePath
-sshpass -p $clusterSshPw scp $clusterSshUser@$clusterSshHostName:/etc/hadoop/conf/*.xml $tmpFilePath
-cp $tmpFilePath/* $targetFilePath
+RESOURCEPATHS=(/etc/hadoop/conf /etc/hive/conf /var/lib/ambari-server/resources/scripts)
+for path in "${CONFIGPATHS[@]}"
+do
+	mkdir -p "$tmpFilePath/$path"
+	sshpass -p $clusterSshPw scp $clusterSshUser@$clusterSshHostName:"$path/*" "/$path"
+done
+cp -r $tmpFilePath/* /
 rm -rf $tmpFilePath
 
 #Decrypt and replace keys
