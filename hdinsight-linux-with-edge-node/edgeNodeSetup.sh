@@ -3,11 +3,6 @@ clusterSshUser=$2
 clusterSshPw=$3
 appInstallScriptUri=$4
 
-#Make the file path for the configs to be copied to
-targetFilePath=/etc
-mkdir -p $targetFilePath
-echo "Created $targetFilePath for configs to be placed"
-
 clusterSshHostName="$clustername-ssh.azurehdinsight.net"
 echo "Adding cluster host to known hosts if not exist"
 knownHostKey=$(ssh-keygen -H -F $clusterSshHostName 2>/dev/null)
@@ -26,7 +21,7 @@ echo "Copying configs and cluster resources local"
 tmpFilePath=~/tmpConfigs
 mkdir -p $tmpFilePath
 RESOURCEPATHS=(/etc/hadoop/conf /etc/hive/conf /var/lib/ambari-server/resources/scripts)
-for path in "${CONFIGPATHS[@]}"
+for path in "${RESOURCEPATHS[@]}"
 do
 	mkdir -p "$tmpFilePath/$path"
 	sshpass -p $clusterSshPw scp -r $clusterSshUser@$clusterSshHostName:"$path/*" "$tmpFilePath$path"
