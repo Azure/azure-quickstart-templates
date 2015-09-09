@@ -13,5 +13,7 @@ The edge node has the following cluster configurations located locally on the no
 
 Additionally, the edge node has WebWasb, a WebHDFS implementation over the WASB Storage System. <br />
 WebWasb allows you to access and execute commands against the default WASB container of the cluster using the WebHDFS interface.<br />
-WebWasb can be accessed using localhost as the hostname and 50073 as the port name.<br /><br />
+
+
+WebWasb can be accessed using localhost as the hostname and 50073 as the port name.
 As an example, if you wanted to list all files and directories at the root of the cluster's storage account, you could execute <pre>curl http://localhost:50073/WebWasb/webhdfs/v1/?op=LISTSTATUS</pre>
