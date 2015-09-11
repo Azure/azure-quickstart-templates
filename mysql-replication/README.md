@@ -13,18 +13,18 @@ This template deploys a MySQL replication environment with one master and one sl
   - Configures a http based health probe for each MySQL instance that can be used to monitor MySQL health
 
 ### How to Deploy
-You can deploy the template with Azure Portal, or PowerShell, or Azure cross platform command line tools.  The example here uses the command line tool to deploy. 
+You can deploy the template with Azure Portal, or PowerShell, or Azure cross platform command line tools.  The example here uses PowerShell to deploy. 
 
 **Default deployment**
 * Open Azure command line tool, and log in.
 * Create a resource group: 
 ```sh
-> azure config mode arm
-> azure group create -n "mysqlrg" -l "East US"
+> switch-azuremode AzureResourceManager
+> New-AzureResourceGroup -Name "mysqlrg"-Location "East US"
 ```
 * Create a deployment:
 ```sh
-> azure group deployment create -g "mysqlrg" --template-uri "url to azuredeploy.json" -e "parameter file ex. azuredeploy-parameters.json"
+> New-AzureResourceGroupDeployment -ResourceGroupName mysqlrg -TemplateFile .\azuredeploy.json -TemplateParameterFile .\azuredeploy-parameters.json
 ```
 **Custom deployment**
 * Take a look at AzureDeploy.json to see if you need to make any customization that's not exposed through the template parameters, for example, disk configurations.  If you do, copy down the template and make modifications locally.
@@ -51,12 +51,12 @@ You can deploy the template with Azure Portal, or PowerShell, or Azure cross pla
 High availability and fail over are no different from other GTID based MySQL replication.  What's specific to Azure is that in order for the applications to access the current master server without changing their configurations, the NAT rules of the load balancer must be updated in the case of failover: 
 * Remove the NAT rule for the old master from the load balancer so that applications can't access the failed master
 ```sh
-$nic0=Get-AzureNetworkInterface -Name $mysqlrg-nic0 -ResourceGroupName mysqlrg
-$nic1=Get-AzureNetworkInterface -Name $mysqlrg-nic1 -ResourceGroupName mysqlrg
+> $nic0=Get-AzureNetworkInterface -Name $mysqlrg-nic0 -ResourceGroupName mysqlrg
+> $nic1=Get-AzureNetworkInterface -Name $mysqlrg-nic1 -ResourceGroupName mysqlrg
 
-$rule0=$nic0.IpConfigurations[0].LoadBalancerInboundNatRules[1]
-$nic0.IpConfigurations[0].LoadBalancerInboundNatRules.removeRange(1,1)
-Set-AzureNetworkInterface $nic0
+> $rule0=$nic0.IpConfigurations[0].LoadBalancerInboundNatRules[1]
+> $nic0.IpConfigurations[0].LoadBalancerInboundNatRules.removeRange(1,1)
+> Set-AzureNetworkInterface $nic0
 ```
 * Fail over MySQL from the old master to the new master
 ```sh
@@ -65,13 +65,13 @@ mysql> change master to master_host='10.0.1.5', master_user='admin', master_pass
 ```
 * Switch the old master's NAT rule with the new master
 ```sh
->$rule1=$nic1.IpConfigurations[0].LoadBalancerInboundNatRules[1]
->$nic1.IpConfigurations[0].LoadBalancerInboundNatRules.removeRange(1,1)
->$nic1.IpConfigurations[0].LoadBalancerInboundNatRules.add($rule0)
->Set-AzureNetworkInterface $nic0
+> $rule1=$nic1.IpConfigurations[0].LoadBalancerInboundNatRules[1]
+> $nic1.IpConfigurations[0].LoadBalancerInboundNatRules.removeRange(1,1)
+> $nic1.IpConfigurations[0].LoadBalancerInboundNatRules.add($rule0)
+> Set-AzureNetworkInterface $nic0
 
->$nic0.IpConfigurations[0].LoadBalancerInboundNatRules.add($rule1)
->Set-AzureNetworkInterface $nic0
+> $nic0.IpConfigurations[0].LoadBalancerInboundNatRules.add($rule1)
+> Set-AzureNetworkInterface $nic0
 ```
 * Add the old master back to replication as a slave
 ```sh
