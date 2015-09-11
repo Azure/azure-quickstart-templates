@@ -79,6 +79,19 @@ mysql> stop slave;
 mysql> change master to master_host='10.0.1.5', master_user='admin', master_password='secret', master_auto_position=1;  
 mysql> start slave;
 ```
+* Verify replication is properly restored by running the following commands and make sure there is no error:
+```sh
+> mysqlrplshow --master=admin:secret@10.0.1.4 --discover-slaves-login=admin:secret 
+```
+on the master:
+```sh
+mysql> show master status\G;
+```
+on the slave:
+```sh
+mysql> show slave status\G;
+```
+
 
 License
 ----
