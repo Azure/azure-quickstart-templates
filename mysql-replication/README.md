@@ -38,7 +38,7 @@ You can deploy the template with Azure Portal, or PowerShell, or Azure cross pla
 ```sh
 > mysql -h mysqldns.eastus.cloudapp.azure.com -u admin -p 
 ```
-* You can access the VMs through ssh.  Within the VM you can check MySQL health probe by running, for example, the following command, and it should return 200 to indicate MySQL is healthy.
+* You can access the VMs through ssh.  By default, public ssh ports are 64001 and 64002 for the 2 VMs. Within the VM you can check MySQL health probe by running, for example, the following command, and it should return 200 to indicate MySQL is healthy.
 ```sh
 > wget http://10.0.1.4:9200  
 ```
