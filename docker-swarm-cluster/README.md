@@ -16,7 +16,11 @@ running containers on Swarm managers and nodes.
 
 ## Cluster Properties
 
-#### Swarm Managers (High Availability Setup)
+This template creates the following cluster topology:
+
+[![docker-swarm-azure](img/cluster-network.png)](img/cluster-network.png)
+
+#### Swarm Managers
 
 The template provisions 3 Swarm manager VMs that use
 [Consul](https://consul.io/) for discovery and leader election. These VMs are in
