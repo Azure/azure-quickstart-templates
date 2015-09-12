@@ -4,26 +4,26 @@
     "parameters": {
         "WebAppPrefix": {
             "type": "string",
-              "metadata": {
-            "description": "Give a unique name that will be used to create the web endpoint for your Logic app. As this is used in a DNS name it must be globally unique."
-            }
-        },
-        "QueueName": {
-            "type": "string",
             "metadata": {
-                "description": "The name of the queue you would like to drop the messages dropped into. The queue must already exist before you run the Logic app."
+                "description": "Give a unique name that will be used to create the web endpoint for your Logic app. As this is used in a DNS name it must be globally unique."
             }
         },
-        "StorageAccountName": {
-            "type": "string",
-            "metadata": {
-                "description": "The name of the storage account that contains the queue."
-            }
-        },
-        "StorageAccountKey": {
+        "TwilioAccountSID": {
             "type": "securestring",
             "metadata": {
-                "description": "The primary or secondary shared access key of the storage account that contains the queue."
+                "description": "The AccountSID from your Twilio API credentials. You can retrieve it at: https://www.twilio.com/user/account/settings"
+            }
+        },
+        "TwilioAuthToken": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The AuthToken from your Twilio API credentials. You can retrieve it at: https://www.twilio.com/user/account/settings"
+            }
+        },
+        "PhoneNumber": {
+            "type": "string",
+            "metadata": {
+                "description": "The Phone number you want to alert. You need to verify this number at https://www.twilio.com/user/account/phone-numbers/verified before you can use it from the Logic app."
             }
         }
     },
@@ -401,23 +401,16 @@
                         }
                     },
                     "actions": {
-                        "queueconnector": {
-                            "type": "ApiApp",
+                       "http": {
+                            "type": "Http",
                             "inputs": {
-                                "apiVersion": "2015-01-14",
-                                "host": {
-                                    "id": "[concat(resourceGroup().id, '/providers/Microsoft.AppService/apiApps/','QueueConnector')]",
-                                    "gateway": "[concat('https://', reference(resourceId('Microsoft.Web/sites', concat(parameters('WebAppPrefix'), 'gateway'))).hostNames[0])]"
+                                "method": "POST",
+                                "uri": "https://www.googleapis.com/urlshortener/v1/url?key=AIzaSyBkT1BRbA-uULHz8HMUAi0ywJtpNLXHShI",
+                                "headers": {
+                                    "Content-Type": "application/json"
                                 },
-                                "operation": "Messages_SendMessage",
-                                "parameters": {
-                                    "queueName": "[parameters('QueueName')]",
-                                    "messageText": "@{triggers().outputs.body.Content}"
-                                },
-                                "authentication": {
-                                    "type": "Raw",
-                                    "scheme": "Zumo",
-                                    "parameter": "@parameters('token')"
+                                "body": {
+                                    "longUrl": "https://portal.azure.com/#resource@{parse(triggerBody().Content).context.resourceID}"
                                 }
                             },
                             "conditions": [
@@ -425,6 +418,29 @@
                                     "expression": "@equals(parameters('token'),triggerBody().QueryParameters.token)"
                                 }
                             ]
+                        },
+                        "twilioconnector": {
+                            "type": "ApiApp",
+                            "inputs": {
+                                "apiVersion": "2015-01-14",
+                                "host": {
+                                    "id": "[concat(resourceGroup().id, '/providers/Microsoft.AppService/apiApps/','TwilioConnector')]",
+                                    "gateway": "[concat('https://', reference(resourceId('Microsoft.Web/sites', concat(parameters('WebAppPrefix'), 'gateway'))).hostNames[0])]"
+                                },
+                                "operation": "SendMessage",
+                                "parameters": {
+                                    "sendMessageRequest": {
+                                        "From": "[parameters('PhoneNumber')]",
+                                        "To": "[parameters('PhoneNumber')]",
+                                        "Body": "Azure alert activated. Details: @{body('http').id}"
+                                    }
+                                },
+                                "authentication": {
+                                    "type": "Raw",
+                                    "scheme": "Zumo",
+                                    "parameter": "@parameters('token')"
+                                }
+                            }
                         }
                     },
                     "outputs": {}

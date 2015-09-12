@@ -8,3 +8,15 @@
 </a>
 
 This template allows you to create a Logic app that has a webhook. When the Logic app is triggered, it will add the payload you pass to an Azure Storage queue that you specify. You can add this webhook to an Azure Alert and then whenever the Alert fires, you'll get that item in the queue.
+
+## Call from your Alerts
+
+To call this whenever your Alert fires, you need to paste in the webhook URI into the alert:
+
+1. Once the template has completed, navigate to the resource group you deployed it to.
+2. In the **Essentials** click on the **Last deployment** link. 
+3. Select the top deployment.
+4. This should show you the Outputs for the deployment. Copy the output called **WebHookURI**. 
+5. Navigate to the alert you want to trigger the Logic app and select **Edit**.
+6. Scroll to the bottom and paste in the **WebHook**. 
+7. Click save.

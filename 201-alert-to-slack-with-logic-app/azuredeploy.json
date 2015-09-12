@@ -4,26 +4,14 @@
     "parameters": {
         "WebAppPrefix": {
             "type": "string",
-              "metadata": {
-            "description": "Give a unique name that will be used to create the web endpoint for your Logic app. As this is used in a DNS name it must be globally unique."
+            "metadata": {
+                "description": "Give a unique name that will be used to create the web endpoint for your Logic app. As this is used in a DNS name it must be globally unique."
             }
         },
-        "QueueName": {
+        "SlackChannel": {
             "type": "string",
-            "metadata": {
-                "description": "The name of the queue you would like to drop the messages dropped into. The queue must already exist before you run the Logic app."
-            }
-        },
-        "StorageAccountName": {
-            "type": "string",
-            "metadata": {
-                "description": "The name of the storage account that contains the queue."
-            }
-        },
-        "StorageAccountKey": {
-            "type": "securestring",
-            "metadata": {
-                "description": "The primary or secondary shared access key of the storage account that contains the queue."
+            "metadata" : {
+            	"description" : "Which #channel you want to post to. Be sure to include the \"#\"."
             }
         }
     },
@@ -223,26 +211,24 @@
         {
             "type": "Microsoft.Web/sites",
             "apiVersion": "2015-04-01",
-            "name": "[concat(parameters('WebAppPrefix'),'queue')]",
+            "name": "[concat(parameters('WebAppPrefix'),'slack')]",
             "location": "[resourceGroup().location]",
             "kind": "apiApp",
-            "dependsOn": [
-                "[resourceId('Microsoft.AppService/gateways', concat(parameters('WebAppPrefix'),'gateway'))]"
-            ],
+            "tags": {
+                "packageId": "SlackConnector"
+            },
             "resources": [
                 {
                     "type": "siteextensions",
-                    "tags": {
-                        "displayName": "APIAppExtension"
-                    },
-                    "apiVersion": "2015-04-01",
-                    "name": "Microsoft.ApiApp",
+                    "apiVersion": "2015-02-01",
+                    "name": "SlackConnector",
                     "dependsOn": [
-                        "[resourceId('Microsoft.Web/sites', concat(parameters('WebAppPrefix'),'queue'))]"
+                        "[resourceId('Microsoft.Web/sites', concat(parameters('WebAppPrefix'),'slack'))]"
                     ],
                     "properties": {
                         "type": "WebRoot",
-                        "feed_url": "http://apiapps-preview.nuget.org/api/v2/"
+                        "feed_url": "http://apiapps-preview.nuget.org/api/v2/",
+                        "version": "0.0.587"
                     }
                 },
                 {
@@ -250,25 +236,16 @@
                     "apiVersion": "2015-01-01",
                     "name": "Microsoft.Resources/apiApp",
                     "dependsOn": [
-                        "[resourceId('Microsoft.Web/sites',  concat(parameters('WebAppPrefix'),'queue'))]"
+                        "[resourceId('Microsoft.Web/sites', concat(parameters('WebAppPrefix'),'slack'))]"
                     ],
                     "properties": {
-                        "targetId": "[resourceId('Microsoft.AppService/apiapps', 'QueueConnector')]"
-                    }
-                },
-                {
-                    "apiVersion": "2015-04-01",
-                    "name": "web",
-                    "type": "sourcecontrols",
-                    "dependsOn": [
-                        "[resourceId('Microsoft.Web/Sites', concat(parameters('WebAppPrefix'),'queue'))]"
-                    ],
-                    "properties": {
-                        "RepoUrl": "https://github.com/logicappsio/AzureQueueSample",
-                        "branch": "master",
-                        "IsManualIntegration": true
+                        "targetId": "[resourceId('Microsoft.AppService/apiapps', 'SlackConnector')]"
                     }
                 }
+            ],
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', parameters('WebAppPrefix'))]",
+                "[resourceId('Microsoft.AppService/gateways', concat(parameters('WebAppPrefix'),'gateway'))]"
             ],
             "properties": {
                 "gatewaySiteName": "[concat(parameters('WebAppPrefix'),'gateway')]",
@@ -277,7 +254,7 @@
                     "appSettings": [
                         {
                             "name": "EMA_MicroserviceId",
-                            "value": "QueueConnector"
+                            "value": "SlackConnector"
                         },
                         {
                             "name": "EMA_Secret",
@@ -290,10 +267,6 @@
                         {
                             "name": "WEBSITE_START_SCM_ON_SITE_CREATION",
                             "value": "1"
-                        },
-                        {
-                            "name": "StorageConnectionString",
-                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',parameters('StorageAccountName'),';AccountKey=',parameters('StorageAccountKey') ,';')]"
                         }
                     ]
                 }
@@ -302,7 +275,7 @@
         {
             "type": "Microsoft.AppService/apiapps",
             "apiVersion": "2015-03-01-preview",
-            "name": "QueueConnector",
+            "name": "SlackConnector",
             "location": "[resourceGroup().location]",
             "resources": [
                 {
@@ -310,28 +283,26 @@
                     "apiVersion": "2015-01-01",
                     "name": "Microsoft.Resources/apiAppSite",
                     "dependsOn": [
-                        "[resourceId('Microsoft.AppService/apiapps', 'QueueConnector')]"
+                        "[resourceId('Microsoft.AppService/apiapps', 'SlackConnector')]"
                     ],
                     "properties": {
-                        "targetId": "[resourceId('Microsoft.Web/sites', concat(parameters('WebAppPrefix'),'queue'))]"
+                        "targetId": "[resourceId('Microsoft.Web/sites', concat(parameters('WebAppPrefix'),'slack'))]"
                     }
                 }
             ],
             "dependsOn": [
-                "[resourceId('Microsoft.Web/sites/siteextensions', concat(parameters('WebAppPrefix'),'queue'), 'Microsoft.ApiApp')]"
+                "[resourceId('Microsoft.Web/sites/siteextensions', concat(parameters('WebAppPrefix'),'slack'), 'SlackConnector')]"
             ],
             "properties": {
                 "package": {
-                    "id": "Microsoft.ApiApp"
+                    "id": "SlackConnector"
                 },
-                "accessLevel": "PublicAnonymous",
                 "host": {
-                    "resourceName": "[concat(parameters('WebAppPrefix'),'queue')]"
+                    "resourceName": "[concat(parameters('WebAppPrefix'),'slack')]"
                 },
                 "gateway": {
                     "resourceName": "[concat(parameters('WebAppPrefix'),'gateway')]"
-                },
-                "dependencies": []
+                }
             }
         },
         {
@@ -341,7 +312,7 @@
             "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[resourceId('Microsoft.AppService/apiApps', 'HTTPListener')]",
-                "[resourceId('Microsoft.AppService/apiApps', 'QueueConnector')]"
+                "[resourceId('Microsoft.AppService/apiApps', 'SlackConnector')]"
             ],
             "properties": {
                 "sku": {
@@ -401,23 +372,16 @@
                         }
                     },
                     "actions": {
-                        "queueconnector": {
-                            "type": "ApiApp",
+                        "http": {
+                            "type": "Http",
                             "inputs": {
-                                "apiVersion": "2015-01-14",
-                                "host": {
-                                    "id": "[concat(resourceGroup().id, '/providers/Microsoft.AppService/apiApps/','QueueConnector')]",
-                                    "gateway": "[concat('https://', reference(resourceId('Microsoft.Web/sites', concat(parameters('WebAppPrefix'), 'gateway'))).hostNames[0])]"
+                                "method": "POST",
+                                "uri": "https://www.googleapis.com/urlshortener/v1/url?key=AIzaSyBkT1BRbA-uULHz8HMUAi0ywJtpNLXHShI",
+                                "headers": {
+                                    "Content-Type": "application/json"
                                 },
-                                "operation": "Messages_SendMessage",
-                                "parameters": {
-                                    "queueName": "[parameters('QueueName')]",
-                                    "messageText": "@{triggers().outputs.body.Content}"
-                                },
-                                "authentication": {
-                                    "type": "Raw",
-                                    "scheme": "Zumo",
-                                    "parameter": "@parameters('token')"
+                                "body": {
+                                    "longUrl": "https://portal.azure.com/#resource@{parse(triggerBody().Content).context.resourceID}"
                                 }
                             },
                             "conditions": [
@@ -425,6 +389,24 @@
                                     "expression": "@equals(parameters('token'),triggerBody().QueryParameters.token)"
                                 }
                             ]
+                        },
+                        "slackconnector": {
+                            "type": "ApiApp",
+                            "inputs": {
+                                "apiVersion": "2015-01-14",
+                                "host": {
+                                    "id": "[concat(resourceGroup().id, '/providers/Microsoft.AppService/apiApps/','SlackConnector')]",
+                                    "gateway": "[concat('https://', reference(resourceId('Microsoft.Web/sites', concat(parameters('WebAppPrefix'), 'gateway'))).hostNames[0])]"
+                                },
+                                "operation": "PostMessage",
+                                "parameters": {
+                                    "input": {
+                                        "Text": "Azure alert activated. Details: @{body('http').id}",
+                                        "Channel": "[parameters('SlackChannel')]"
+                                    }
+                                }
+                            },
+                            "conditions": [ ]
                         }
                     },
                     "outputs": {}
