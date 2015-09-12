@@ -1,0 +1,431 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "QueueName": {
+            "type": "string",
+                  "metadata": {
+        "description": "The name of the queue you would like to drop the messages dropped into. The queue must already exist before you run the Logic app."
+      }
+        },
+        "StorageAccountName": {
+            "type": "string",
+             "metadata": {
+        "description": "The name of the storage account that contains the queue."
+      }
+        },
+        "StorageAccountKey": {
+            "type": "securestring",
+             "metadata": {
+        "description": "The primary or secondary shared access key of the storage account that contains the queue."
+      }
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.Web/serverfarms",
+            "apiVersion": "2015-04-01",
+            "name": "[resourceGroup().name]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "sku": "Standard",
+                "workerSize": "0"
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "2015-04-01",
+            "name": "[concat(resourceGroup().name,'gateway')]",
+            "location": "[resourceGroup().location]",
+            "kind": "gateway",
+            "resources": [
+                {
+                    "type": "providers/links",
+                    "apiVersion": "2015-01-01",
+                    "name": "Microsoft.Resources/gateway",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/sites', concat(resourceGroup().name, 'gateway'))]"
+                    ],
+                    "properties": {
+                        "targetId": "[resourceId('Microsoft.AppService/gateways', concat(resourceGroup().name, 'gateway'))]"
+                    }
+                }
+            ],
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', resourceGroup().name)]"
+            ],
+            "properties": {
+                "gatewaySiteName": "[concat(resourceGroup().name,'gateway')]",
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', resourceGroup().name)]",
+                "siteConfig": {
+                    "appSettings": [
+                        {
+                            "name": "ApiAppsGateway_EXTENSION_VERSION",
+                            "value": "latest"
+                        },
+                        {
+                            "name": "EmaStorage",
+                            "value": "D:\\home\\data\\apiapps"
+                        },
+                        {
+                            "name": "WEBSITE_START_SCM_ON_SITE_CREATION",
+                            "value": "1"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "type": "Microsoft.AppService/gateways",
+            "apiVersion": "2015-03-01-preview",
+            "name": "[concat(resourceGroup().name,'gateway')]",
+            "location": "[resourceGroup().location]",
+            "resources": [
+                {
+                    "type": "providers/links",
+                    "apiVersion": "2015-01-01",
+                    "name": "Microsoft.Resources/gatewaySite",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.AppService/gateways', concat(resourceGroup().name,'gateway'))]"
+                    ],
+                    "properties": {
+                        "targetId": "[resourceId('Microsoft.Web/sites', concat(resourceGroup().name,'gateway'))]"
+                    }
+                },
+                {
+                    "type": "tokens",
+                    "apiVersion": "2015-03-01-preview",
+                    "location": "[resourceGroup().location]",
+                    "name": "AlertLogicApp",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.AppService/gateways', concat(resourceGroup().name,'gateway'))]"
+                    ]
+                }
+            ],
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', concat(resourceGroup().name,'gateway'))]"
+            ],
+            "properties": {
+                "host": {
+                    "resourceName": "[concat(resourceGroup().name,'gateway')]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "2015-04-01",
+            "name": "[concat(resourceGroup().name,'httplistener')]",
+            "location": "[resourceGroup().location]",
+            "kind": "apiApp",
+            "tags": {
+                "packageId": "HTTPListener"
+            },
+            "resources": [
+                {
+                    "type": "siteextensions",
+                    "apiVersion": "2015-02-01",
+                    "name": "HTTPListener",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/sites', concat(resourceGroup().name,'httplistener'))]"
+                    ],
+                    "properties": {
+                        "type": "WebRoot",
+                        "feed_url": "http://apiapps-preview.nuget.org/api/v2/",
+                        "version": "0.0.651"
+                    }
+                },
+                {
+                    "type": "providers/links",
+                    "apiVersion": "2015-01-01",
+                    "name": "Microsoft.Resources/apiApp",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/sites', concat(resourceGroup().name,'httplistener'))]"
+                    ],
+                    "properties": {
+                        "targetId": "[resourceId('Microsoft.AppService/apiapps', 'HTTPListener')]"
+                    }
+                }
+            ],
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', resourceGroup().name)]",
+                "[resourceId('Microsoft.AppService/gateways', concat(resourceGroup().name,'gateway'))]"
+            ],
+            "properties": {
+                "gatewaySiteName": "[concat(resourceGroup().name,'gateway')]",
+                "serverFarmId": "[resourceGroup().name]",
+                "siteConfig": {
+                    "appSettings": [
+                        {
+                            "name": "EMA_MicroserviceId",
+                            "value": "HTTPListener"
+                        },
+                        {
+                            "name": "EMA_Secret",
+                            "value": "e90a052c266ecbcff6870c8c89780ee02d628c923dc1e2bbb91103062fa976ae"
+                        },
+                        {
+                            "name": "EMA_RuntimeUrl",
+                            "value": "[concat('https://', reference(resourceId('Microsoft.Web/sites', concat(resourceGroup().name,'gateway'))).hostNames[0])]"
+                        },
+                        {
+                            "name": "WEBSITE_START_SCM_ON_SITE_CREATION",
+                            "value": "1"
+                        },
+                        {
+                            "name": "AutoResponse",
+                            "value": "true"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "type": "Microsoft.AppService/apiapps",
+            "apiVersion": "2015-03-01-preview",
+            "name": "HTTPListener",
+            "location": "[resourceGroup().location]",
+            "resources": [
+                {
+                    "type": "providers/links",
+                    "apiVersion": "2015-01-01",
+                    "name": "Microsoft.Resources/apiAppSite",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.AppService/apiapps', 'HTTPListener')]"
+                    ],
+                    "properties": {
+                        "targetId": "[resourceId('Microsoft.Web/sites', concat(resourceGroup().name,'httplistener'))]"
+                    }
+                }
+            ],
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites/siteextensions', concat(resourceGroup().name,'httplistener'), 'HTTPListener')]"
+            ],
+            "properties": {
+                "package": {
+                    "id": "HTTPListener"
+                },
+                "accessLevel": "PublicAnonymous",
+                "host": {
+                    "resourceName": "[concat(resourceGroup().name,'httplistener')]"
+                },
+                "gateway": {
+                    "resourceName": "[concat(resourceGroup().name,'gateway')]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Web/sites",
+            "apiVersion": "2015-04-01",
+            "name": "[concat(resourceGroup().name,'queue')]",
+            "location": "[resourceGroup().location]",
+            "kind": "apiApp",
+            "dependsOn": [
+                "[resourceId('Microsoft.AppService/gateways', concat(resourceGroup().name,'gateway'))]"
+            ],
+            "resources": [
+                {
+                    "type": "siteextensions",
+                    "tags": {
+                        "displayName": "APIAppExtension"
+                    },
+                    "apiVersion": "2015-04-01",
+                    "name": "Microsoft.ApiApp",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/sites', concat(resourceGroup().name,'queue'))]"
+                    ],
+                    "properties": {
+                        "type": "WebRoot",
+                        "feed_url": "http://apiapps-preview.nuget.org/api/v2/"
+                    }
+                },
+                {
+                    "type": "providers/links",
+                    "apiVersion": "2015-01-01",
+                    "name": "Microsoft.Resources/apiApp",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/sites',  concat(resourceGroup().name,'queue'))]"
+                    ],
+                    "properties": {
+                        "targetId": "[resourceId('Microsoft.AppService/apiapps', 'QueueConnector')]"
+                    }
+                },
+                {
+                    "apiVersion": "2015-04-01",
+                    "name": "web",
+                    "type": "sourcecontrols",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/Sites', concat(resourceGroup().name,'queue'))]"
+                    ],
+                    "properties": {
+                        "RepoUrl": "https://github.com/logicappsio/AzureQueueSample",
+                        "branch": "master",
+                        "IsManualIntegration": true
+                    }
+                }
+            ],
+            "properties": {
+                "gatewaySiteName": "[concat(resourceGroup().name,'gateway')]",
+                "serverFarmId": "[resourceGroup().name]",
+                "siteConfig": {
+                    "appSettings": [
+                        {
+                            "name": "EMA_MicroserviceId",
+                            "value": "QueueConnector"
+                        },
+                        {
+                            "name": "EMA_Secret",
+                            "value": "e90a052c266ecbcff6870c8c89780ee02d628c923dc1e2bbb91103062fa976ae"
+                        },
+                        {
+                            "name": "EMA_RuntimeUrl",
+                            "value": "[concat('https://', reference(resourceId('Microsoft.Web/sites', concat(resourceGroup().name,'gateway'))).hostNames[0])]"
+                        },
+                        {
+                            "name": "WEBSITE_START_SCM_ON_SITE_CREATION",
+                            "value": "1"
+                        },
+                        {
+                            "name": "StorageConnectionString",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',parameters('StorageAccountName'),';AccountKey=',parameters('StorageAccountKey') ,';')]"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "type": "Microsoft.AppService/apiapps",
+            "apiVersion": "2015-03-01-preview",
+            "name": "QueueConnector",
+            "location": "[resourceGroup().location]",
+            "resources": [
+                {
+                    "type": "providers/links",
+                    "apiVersion": "2015-01-01",
+                    "name": "Microsoft.Resources/apiAppSite",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.AppService/apiapps', 'QueueConnector')]"
+                    ],
+                    "properties": {
+                        "targetId": "[resourceId('Microsoft.Web/sites', concat(resourceGroup().name,'queue'))]"
+                    }
+                }
+            ],
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites/siteextensions', concat(resourceGroup().name,'queue'), 'Microsoft.ApiApp')]"
+            ],
+            "properties": {
+                "package": {
+                    "id": "Microsoft.ApiApp"
+                },
+                "accessLevel": "PublicAnonymous",
+                "host": {
+                    "resourceName": "[concat(resourceGroup().name,'queue')]"
+                },
+                "gateway": {
+                    "resourceName": "[concat(resourceGroup().name,'gateway')]"
+                },
+                "dependencies": []
+            }
+        },
+        {
+            "type": "Microsoft.Logic/workflows",
+            "apiVersion": "2015-02-01-preview",
+            "name": "AlertLogicApp",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.AppService/apiApps', 'HTTPListener')]",
+                "[resourceId('Microsoft.AppService/apiApps', 'QueueConnector')]"
+            ],
+            "properties": {
+                "sku": {
+                    "name": "Standard",
+                    "plan": {
+                        "id": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/',resourceGroup().name)]"
+                    }
+                },
+                "definition": {
+                    "$schema": "http://schema.management.azure.com/providers/Microsoft.Logic/schemas/2014-12-01-preview/workflowdefinition.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "token": {
+                            "defaultValue": "[reference(resourceId('Microsoft.AppService/gateways/tokens', concat(resourceGroup().name, 'gateway'), 'AlertLogicApp')).token]",
+                            "type": "String",
+                            "metadata": {
+                                "token": {
+                                    "name": "token"
+                                }
+                            }
+                        }
+                    },
+                    "triggers": {
+                        "httplistener": {
+                            "type": "ApiApp",
+                            "inputs": {
+                                "apiVersion": "2015-01-14",
+                                "host": {
+                                    "id": "[concat(resourceGroup().id, '/providers/Microsoft.AppService/apiApps/','HTTPListener')]",
+                                    "gateway": "[concat('https://', reference(resourceId('Microsoft.Web/sites', concat(resourceGroup().name, 'gateway'))).hostNames[0])]"
+                                },
+                                "operation": "Trigger",
+                                "parameters": {
+                                    "triggerId": "@workflow().name",
+                                    "parameters": {
+                                        "callbackUrl": "@accessKeys('default').primary.secretRunUri",
+                                        "inputs": {
+                                            "HttpMethod": "Post"
+                                        }
+                                    }
+                                },
+                                "authentication": {
+                                    "type": "Raw",
+                                    "scheme": "Zumo",
+                                    "parameter": "@parameters('token')"
+                                }
+                            },
+                            "recurrence": {
+                                "frequency": "Hour",
+                                "interval": 1
+                            },
+                            "conditions": [
+                                {
+                                    "expression": "@bool('false')"
+                                }
+                            ]
+                        }
+                    },
+                    "actions": {
+                        "queueconnector": {
+                            "type": "ApiApp",
+                            "inputs": {
+                                "apiVersion": "2015-01-14",
+                                "host": {
+                                    "id": "[concat(resourceGroup().id, '/providers/Microsoft.AppService/apiApps/','TwilioConnector')]",
+                                    "gateway": "[concat('https://', reference(resourceId('Microsoft.Web/sites', concat(resourceGroup().name, 'gateway'))).hostNames[0])]"
+                                },
+                                "operation": "Messages_SendMessage",
+                                "parameters": {
+                                    "queueName": "[parameters('QueueName')]",
+                                    "messageText": "@{triggers().outputs.body.Content}"
+                                },
+                                "authentication": {
+                                    "type": "Raw",
+                                    "scheme": "Zumo",
+                                    "parameter": "@parameters('token')"
+                                }
+                            }
+                        }
+                    },
+                    "outputs": {}
+                },
+                "parameters": {}
+            }
+        }
+    ],
+    "outputs": {
+        "webhookURI": {
+            "type": "string",
+            "value": "[concat('https://', reference(resourceId('Microsoft.Web/sites', concat(resourceGroup().name, 'httplistener'))).hostNames[0],'?token=', reference(resourceId('Microsoft.AppService/gateways/tokens', concat(resourceGroup().name, 'gateway'), 'AlertLogicApp')).token )]"
+        }
+    }
+}
