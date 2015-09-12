@@ -92,15 +92,9 @@
         },
         "edgeNodeVirtualMachineName": {
             "type": "string",
+			"defaultValue": "huevm",
             "metadata": { 
-                "description": "The name of the edge node virtual machine."
-            }
-        },
-        "hueEdgeNodeVirtualMachineName": {
-            "type": "string",
-			"defaultValue": "hueedgenode",
-            "metadata": { 
-                "description": "The name of the edge node virtual machine where Hue is going to be installed."
+                "description": "The name of the edge node virtual machine where Hue app is installed."
             }
         },
         "edgeNodeVirtualMachineSize": {
@@ -119,42 +113,16 @@
             "metadata": { 
                 "description": "The size of the edge node virtual machine."
             }
-        },
-        "edgeNodeSetupScriptUri": {
-            "type": "string",
-            "defaultValue": "https://raw.githubusercontent.com/ezubatov/azure-quickstart-templates/master/hdinsight-linux-with-edge-node/connectToWASB.sh",
-            "metadata": { 
-                "description": "A public http(s) uri that points to a script that will install an app on the edge node."
-            }
-        },
-        "hueEdgeNodeSetupScriptUri": {
-            "type": "string",
-            "defaultValue": "https://raw.githubusercontent.com/ezubatov/azure-quickstart-templates/master/hdinsight-linux-with-hue-on-edge-node/install-hue-edge-v01.sh",
-            "metadata": { 
-                "description": "A public http(s) uri that points to a script that will install Hue app on the edge node."
-            }
         }
     },
     "variables": {
-		"oldApiVersion": "2015-01-01",
-        "defaultApiVersion": "2015-05-01-preview",
-        "clusterApiVersion": "2015-03-01-preview",
-        "clusterVNetName": "[concat(parameters('clusterName'),'-vnet')]",
-        "edgeNodeStorageAccountContainerName": "vhds",
-        "edgeNodeImagePublisher": "Canonical",
-        "edgeNodeImageOffer": "UbuntuServer",
-        "edgeNodeImageSku": "12.04.5-LTS",
-        "edgeNodeExtensionName": "edgeNodeSetup",
-        "edgeNodeOSDiskName": "[concat(parameters('clusterName'), '-', parameters('hueEdgeNodeVirtualMachineName'))]",
-        "edgeNodeNicName": "[concat(variables('clusterVNetName'), '-', parameters('hueEdgeNodeVirtualMachineName'), '-nic')]",
-        "edgeNodePublicIpName": "[concat(variables('edgeNodeNicName'), '-publicip')]",
-        "edgeNodeNicSSHSGName": "[concat(variables('edgeNodeNicName'), '-sshrule')]"
+		"defaultApiVersion": "2015-01-01",
     },
     "resources": [
         {
             "name": "HDInsightDeployment",
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "[variables('oldApiVersion')]",
+            "apiVersion": "[variables('defaultApiVersion')]",
             "dependsOn": [
             ],
             "properties": {
@@ -178,154 +146,11 @@
 					"edgeNodeVhdStorageAccountName": { "value": "[parameters('edgeNodeVhdStorageAccountName')]" },
 					"edgeNodeVirtualMachineName": { "value": "[parameters('edgeNodeVirtualMachineName')]" },
 					"edgeNodeVirtualMachineSize": { "value": "[parameters('edgeNodeVirtualMachineSize')]" },
-					"edgeNodeSetupScriptUri": { "value": "[parameters('edgeNodeSetupScriptUri')]" }
-                }
-            }
-        },
-        {
-            "name": "[variables('edgeNodePublicIpName')]",
-            "type": "Microsoft.Network/publicIPAddresses",
-            "location": "[parameters('location')]",
-            "apiVersion": "[variables('defaultApiVersion')]",
-            "dependsOn": [
-                    "Microsoft.Resources/deployments/HDInsightDeployment"
-            ],
-            "tags": { },
-            "properties": {
-                "publicIPAllocationMethod": "Dynamic",
-                "dnsSettings": {
-                    "domainNameLabel": "[concat(parameters('clusterName'), '-', parameters('hueEdgeNodeVirtualMachineName'))]"
-                }
-            }
-        },
-        {
-            "apiVersion": "[variables('defaultApiVersion')]",
-            "type": "Microsoft.Network/networkSecurityGroups",
-            "name": "[variables('edgeNodeNicSSHSGName')]",
-            "location": "[parameters('location')]",
-            "properties": {
-                "securityRules": [
-                    {
-                        "name": "SSH",
-                        "properties": {
-                            "description": "Allows SSH traffic",
-                            "protocol": "Tcp",
-                            "sourcePortRange": "*",
-                            "destinationPortRange": "22",
-                            "sourceAddressPrefix": "*",
-                            "destinationAddressPrefix": "*",
-                            "access": "Allow",
-                            "priority": 100,
-                            "direction": "Inbound"
-                        }
-                    }
-                ]
-            }
-        },
-        {
-            "name": "[variables('edgeNodeNicName')]",
-            "type": "Microsoft.Network/networkInterfaces",
-            "location": "[parameters('location')]",
-            "apiVersion": "[variables('defaultApiVersion')]",
-            "dependsOn": [
-                "[concat('Microsoft.Network/publicIPAddresses/', variables('edgeNodePublicIpName'))]",
-                "[concat('Microsoft.Network/networkSecurityGroups/', variables('edgeNodeNicSSHSGName'))]"
-            ],
-            "tags": { },
-            "properties": {
-                "ipConfigurations": [
-                    {
-                        "name": "ipconfig1",
-                        "properties": {
-                            "privateIPAllocationMethod": "Dynamic",
-                            "subnet": {
-                                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName')), '/subnets/', parameters('clusterVNetSubnetName'))]"
-                            },
-                            "publicIPAddress": {
-                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('edgeNodePublicIpName'))]"
-                            }
-                        }
-                    }
-                ],
-                "networkSecurityGroup": {
-                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('edgeNodeNicSSHSGName'))]"
-                }
-            }
-        },
-        {
-            "name": "[parameters('hueEdgeNodeVirtualMachineName')]",
-            "type": "Microsoft.Compute/virtualMachines",
-            "location": "[parameters('location')]",
-            "apiVersion": "[variables('defaultApiVersion')]",
-            "dependsOn": [
-                "[concat('Microsoft.Network/networkInterfaces/', variables('edgeNodeNicName'))]"
-            ],
-            "tags": { },
-            "properties": {
-                "hardwareProfile": {
-                    "vmSize": "[parameters('edgeNodeVirtualMachineSize')]"
-                },
-                "osProfile": {
-                    "computername": "[parameters('hueEdgeNodeVirtualMachineName')]",
-                    "adminUsername": "[parameters('sshUserName')]",
-                    "adminPassword": "[parameters('sshPassword')]"
-                },
-                "storageProfile": {
-                    "imageReference": {
-                        "publisher": "[variables('edgeNodeImagePublisher')]",
-                        "offer": "[variables('edgeNodeImageOffer')]",
-                        "sku": "[variables('edgeNodeImageSku')]",
-                        "version": "latest"
-                    },
-                    "osDisk": {
-                        "name": "edgeNodeOSDisk",
-                        "vhd": {
-                            "uri": "[concat('http://', parameters('edgeNodeVhdStorageAccountName'), '.blob.core.windows.net/', variables('edgeNodeStorageAccountContainerName'), '/', variables('edgeNodeOSDiskName'), '.vhd')]"
-                        },
-                        "caching": "ReadWrite",
-                        "createOption": "FromImage"
-                    }
-                },
-                "networkProfile": {
-                    "networkInterfaces": [
-                        {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('edgeNodeNicName'))]"
-                        }
-                    ]
-                }
-            }
-        },
-        {
-            "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "[concat(parameters('hueEdgeNodeVirtualMachineName'),'/',variables('edgeNodeExtensionName'))]",
-            "apiVersion": "[variables('defaultApiVersion')]",
-            "location": "[parameters('location')]",
-            "dependsOn": [
-                "[concat('Microsoft.Compute/virtualMachines/', parameters('hueEdgeNodeVirtualMachineName'))]"
-            ],
-            "properties": {
-                "publisher": "Microsoft.OSTCExtensions",
-                "type": "CustomScriptForLinux",
-                "typeHandlerVersion": "1.2",
-                "settings": {
-                    "fileUris": [
-                        "https://raw.githubusercontent.com/ezubatov/azure-quickstart-templates/master/hdinsight-linux-with-edge-node/edgeNodeSetup.sh",
-                        "[parameters('hueEdgeNodeSetupScriptUri')]"
-                    ],
-                    "commandToExecute": "[concat('sudo -E bash edgeNodeSetup.sh ', parameters('clusterName'),' ', parameters('sshUserName'),' ', parameters('sshPassword'),' ', parameters('clusterLoginUserName'),' ', parameters('clusterLoginPassword'),' ',parameters('hueEdgeNodeSetupScriptUri'))]"
+					"edgeNodeSetupScriptUri": { "value": "https://raw.githubusercontent.com/ezubatov/azure-quickstart-templates/master/hdinsight-linux-with-hue-on-edge-node/install-hue-edge-v01.sh" }
                 }
             }
         }
-
     ],
     "outputs": {
-        "edgeNodePublicIp": {
-            "type": "object",
-            "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('edgeNodePublicIpName')))]"
-        },
-        "edgeNode": {
-            "type": "object",
-            "value": "[reference(resourceId('Microsoft.Compute/virtualMachines',parameters('hueEdgeNodeVirtualMachineName')))]"
-        }
     }
 }

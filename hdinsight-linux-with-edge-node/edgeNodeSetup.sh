@@ -1,9 +1,9 @@
-clustername=$1
-clusterSshUser=$2
-clusterSshPw=$3
-clusterLogin=$4
-clusterPassword=$5
-appInstallScriptUri=$6
+appInstallScriptUri=$1
+clustername=$2
+clusterSshUser=$3
+clusterSshPw=$4
+clusterLogin=$5
+clusterPassword=$6
 
 clusterSshHostName="$clustername-ssh.azurehdinsight.net"
 echo "Adding cluster host to known hosts if not exist"
