@@ -220,29 +220,27 @@
                 }
             }
         },
-        {
+                {
             "type": "Microsoft.Web/sites",
             "apiVersion": "2015-04-01",
-            "name": "[concat(parameters('WebAppPrefix'),'queue')]",
+            "name": "[concat(parameters('WebAppPrefix'),'twilio')]",
             "location": "[resourceGroup().location]",
             "kind": "apiApp",
-            "dependsOn": [
-                "[resourceId('Microsoft.AppService/gateways', concat(parameters('WebAppPrefix'),'gateway'))]"
-            ],
+            "tags": {
+                "packageId": "TwilioConnector"
+            },
             "resources": [
                 {
                     "type": "siteextensions",
-                    "tags": {
-                        "displayName": "APIAppExtension"
-                    },
-                    "apiVersion": "2015-04-01",
-                    "name": "Microsoft.ApiApp",
+                    "apiVersion": "2015-02-01",
+                    "name": "TwilioConnector",
                     "dependsOn": [
-                        "[resourceId('Microsoft.Web/sites', concat(parameters('WebAppPrefix'),'queue'))]"
+                        "[resourceId('Microsoft.Web/sites', concat(parameters('WebAppPrefix'),'twilio'))]"
                     ],
                     "properties": {
                         "type": "WebRoot",
-                        "feed_url": "http://apiapps-preview.nuget.org/api/v2/"
+                        "feed_url": "http://apiapps-preview.nuget.org/api/v2/",
+                        "version": "0.0.587"
                     }
                 },
                 {
@@ -250,25 +248,16 @@
                     "apiVersion": "2015-01-01",
                     "name": "Microsoft.Resources/apiApp",
                     "dependsOn": [
-                        "[resourceId('Microsoft.Web/sites',  concat(parameters('WebAppPrefix'),'queue'))]"
+                        "[resourceId('Microsoft.Web/sites', concat(parameters('WebAppPrefix'),'twilio'))]"
                     ],
                     "properties": {
-                        "targetId": "[resourceId('Microsoft.AppService/apiapps', 'QueueConnector')]"
-                    }
-                },
-                {
-                    "apiVersion": "2015-04-01",
-                    "name": "web",
-                    "type": "sourcecontrols",
-                    "dependsOn": [
-                        "[resourceId('Microsoft.Web/Sites', concat(parameters('WebAppPrefix'),'queue'))]"
-                    ],
-                    "properties": {
-                        "RepoUrl": "https://github.com/logicappsio/AzureQueueSample",
-                        "branch": "master",
-                        "IsManualIntegration": true
+                        "targetId": "[resourceId('Microsoft.AppService/apiapps', 'TwilioConnector')]"
                     }
                 }
+            ],
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', parameters('WebAppPrefix'))]",
+                "[resourceId('Microsoft.AppService/gateways', concat(parameters('WebAppPrefix'),'gateway'))]"
             ],
             "properties": {
                 "gatewaySiteName": "[concat(parameters('WebAppPrefix'),'gateway')]",
@@ -277,7 +266,7 @@
                     "appSettings": [
                         {
                             "name": "EMA_MicroserviceId",
-                            "value": "QueueConnector"
+                            "value": "HTTPListener"
                         },
                         {
                             "name": "EMA_Secret",
@@ -292,8 +281,12 @@
                             "value": "1"
                         },
                         {
-                            "name": "StorageConnectionString",
-                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=',parameters('StorageAccountName'),';AccountKey=',parameters('StorageAccountKey') ,';')]"
+                            "name": "AccountSid",
+                            "value": "[parameters('TwilioAccountSID')]"
+                        },
+                        {
+                            "name": "AuthToken",
+                            "value": "[parameters('TwilioAuthToken')]"
                         }
                     ]
                 }
@@ -302,7 +295,7 @@
         {
             "type": "Microsoft.AppService/apiapps",
             "apiVersion": "2015-03-01-preview",
-            "name": "QueueConnector",
+            "name": "TwilioConnector",
             "location": "[resourceGroup().location]",
             "resources": [
                 {
@@ -310,28 +303,26 @@
                     "apiVersion": "2015-01-01",
                     "name": "Microsoft.Resources/apiAppSite",
                     "dependsOn": [
-                        "[resourceId('Microsoft.AppService/apiapps', 'QueueConnector')]"
+                        "[resourceId('Microsoft.AppService/apiapps', 'TwilioConnector')]"
                     ],
                     "properties": {
-                        "targetId": "[resourceId('Microsoft.Web/sites', concat(parameters('WebAppPrefix'),'queue'))]"
+                        "targetId": "[resourceId('Microsoft.Web/sites', concat(parameters('WebAppPrefix'),'twilio'))]"
                     }
                 }
             ],
             "dependsOn": [
-                "[resourceId('Microsoft.Web/sites/siteextensions', concat(parameters('WebAppPrefix'),'queue'), 'Microsoft.ApiApp')]"
+                "[resourceId('Microsoft.Web/sites/siteextensions', concat(parameters('WebAppPrefix'),'twilio'), 'TwilioConnector')]"
             ],
             "properties": {
                 "package": {
-                    "id": "Microsoft.ApiApp"
+                    "id": "TwilioConnector"
                 },
-                "accessLevel": "PublicAnonymous",
                 "host": {
-                    "resourceName": "[concat(parameters('WebAppPrefix'),'queue')]"
+                    "resourceName": "[concat(parameters('WebAppPrefix'),'twilio')]"
                 },
                 "gateway": {
                     "resourceName": "[concat(parameters('WebAppPrefix'),'gateway')]"
-                },
-                "dependencies": []
+                }
             }
         },
         {
@@ -341,7 +332,7 @@
             "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[resourceId('Microsoft.AppService/apiApps', 'HTTPListener')]",
-                "[resourceId('Microsoft.AppService/apiApps', 'QueueConnector')]"
+                "[resourceId('Microsoft.AppService/apiApps', 'TwilioConnector')]"
             ],
             "properties": {
                 "sku": {
