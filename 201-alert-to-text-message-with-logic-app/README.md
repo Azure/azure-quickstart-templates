@@ -15,7 +15,7 @@ This template uses the Twilio service to send the text message. If you don't hav
 
 Once you have signed up for the free trial, you'll need to [verify the phone number that you want to send the alerts to](https://www.twilio.com/user/account/phone-numbers/verified).
 
-Finally, you will need to copy-and-paste the  **AccountSID** and the **AuthToken** from [the settings page](https://www.twilio.com/user/account/settings) into your template. 
+Next, you will need to copy-and-paste the  **AccountSID** and the **AuthToken** from [the settings page](https://www.twilio.com/user/account/settings) into your template.   Finally, you need to copy-and-paste your [Twilio account phone number](https://www.twilio.com/user/account/phone-numbers/incoming) into the template as well. When you get the text message, this is the phone number it will appear *From*.
 
 ## Call from your Alerts
 
