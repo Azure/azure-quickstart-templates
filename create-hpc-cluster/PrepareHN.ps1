@@ -32,6 +32,9 @@
     [String] $PostConfigScript="",
 
     [Parameter(Mandatory=$false, ParameterSetName='Prepare')]
+    [String] $CNSize="",
+
+    [Parameter(Mandatory=$false, ParameterSetName='Prepare')]
     [Switch] $UnsecureDNSUpdate,
 
     [Parameter(Mandatory=$true, ParameterSetName='NodeState')]
@@ -174,6 +177,9 @@ function PrepareHeadNode
     [String] $PostConfigScript="",
 
     [Parameter(Mandatory=$false)]
+    [String] $CNSize="",
+
+    [Parameter(Mandatory=$false)]
     [Switch] $UnsecureDNSUpdate
     )
 
@@ -204,7 +210,11 @@ function PrepareHeadNode
             {
                 $taskArgs += " -AzureStorageConnStr '$AzureStorageConnStr'"
             }
-            if(-not [String]::IsNullOrEmpty($PostConfigScript))
+            if(-not [String]::IsNullOrEmpty($CNSize))
+            {
+                $taskArgs += " -CNSize $CNSize"
+            }
+            if(-not [String]::IsNullOrWhiteSpace($PostConfigScript))
             {
                 $taskArgs += " -PostConfigScript '$PostConfigScript'"
             }
@@ -231,7 +241,7 @@ function PrepareHeadNode
     else
     {
         $job = Start-Job -ScriptBlock {
-            param($scriptPath, $domainUserCred, $AzureStorageConnStr, $PublicDnsName, $PostConfigScript)
+            param($scriptPath, $domainUserCred, $AzureStorageConnStr, $PublicDnsName, $PostConfigScript, $CNSize)
 
             . "$scriptPath\HpcPrepareUtil.ps1"
             TraceInfo 'register HPC Head Node Preparation Task'
@@ -319,23 +329,20 @@ function PrepareHeadNode
                 Add-PSSnapin Microsoft.HPC
                 # setting network topology to 5 (enterprise)
                 TraceInfo 'Setting HPC cluster network topologogy...'
+                $nics = @(Get-WmiObject win32_networkadapterconfiguration -filter "IPEnabled='true' AND DHCPEnabled='true'")
+                if ($nics.Count -ne 1)
+                {
+                    throw "Cannot find a suitable network adapter for enterprise topology"
+                }
+                $startTime = Get-Date
                 while($true)
                 {
-                    $nics = [System.Net.NetworkInformation.NetworkInterface]::GetAllNetworkInterfaces() | `
-                            Where-Object {($_.NetworkInterfaceType -eq 'Ethernet') -and ($_.GetIPProperties().UnicastAddresses.PrefixOrigin -contains 'Dhcp')}
-    
-                    $nics = @($nics)
-                    if (@($nics).Count -ne 1)
-                    {
-                        throw 'Cannot find a suitable network adapter for enterprise topology'
-                    }
-
                     Set-HpcNetwork -Topology 'Enterprise' -Enterprise $nics.Description -EnterpriseFirewall $true -ErrorAction SilentlyContinue 
                     $topo = Get-HpcNetworkTopology -ErrorAction SilentlyContinue
                     if ([String]::IsNullOrWhiteSpace($topo))
                     {
-                        TraceInfo 'Setting network topologogy failed, will retry after 5 seconds'
-                        Start-Sleep -Seconds 5
+                        TraceInfo "Failed to set Hpc network topology, maybe the head node is still on initialization, retry after 10 seconds"
+                        Start-Sleep -Seconds 10
                     }
                     else
                     {
@@ -400,6 +407,27 @@ function PrepareHeadNode
                 Restart-Service -Name 'HpcScheduler' -Force | Out-Null
                 TraceInfo 'HPCScheduler service restarted.'
 
+                # If the VMSize of the compute nodes is A8/A9, set the MPI net mask.
+                if($CNSize -match "(A8|A9)$")
+                {
+                    $mpiNetMask = "172.16.0.0/255.255.0.0"
+                    ## Wait for the completion of the "Updating cluster configuration" operation after setting network topology,
+                    ## because in the operation, the CCP_MPI_NETMASK may be reset.
+                    $waitLoop = 0
+                    while ($null -eq (Get-HpcOperation -StartTime $startTime -State Committed | ?{$_.Name -eq "Updating cluster configuration"}))
+                    {
+                        if($waitLoop++ -ge 10)
+                        {
+                            break
+                        }
+
+                        Start-Sleep -Seconds 10
+                    }
+
+                    Set-HpcClusterProperty -Environment "CCP_MPI_NETMASK=$mpiNetMask"  | Out-Null
+                    TraceInfo "Set cluster environment CCP_MPI_NETMASK to $mpiNetMask"
+                }
+
                 # register scheduler task to bring node online
                 $task = Get-ScheduledTask -TaskName 'HpcNodeOnlineCheck' -ErrorAction SilentlyContinue
                 if($null -eq $task)
@@ -421,7 +449,7 @@ function PrepareHeadNode
                     TraceInfo 'Task HpcNodeOnlineCheck already exists'
                 }
 
-                if($false -eq [String]::IsNullOrWhiteSpace($PostConfigScript))
+                if(-not [String]::IsNullOrWhiteSpace($PostConfigScript))
                 {
                     $webclient = New-Object System.Net.WebClient
                     $ss = $PostConfigScript -split ' '
@@ -457,7 +485,7 @@ function PrepareHeadNode
 
                 throw "Failed to prepare HPC Head Node"
             }
-        } -ArgumentList $PSScriptRoot,$domainUserCred,$AzureStorageConnStr,$PublicDnsName,$PostConfigScript
+        } -ArgumentList $PSScriptRoot,$domainUserCred,$AzureStorageConnStr,$PublicDnsName,$PostConfigScript,$CNSize
 
 
         if($UnsecureDNSUpdate.IsPresent)
@@ -555,8 +583,9 @@ if ($PsCmdlet.ParameterSetName -eq 'Prepare')
         TraceInfo "The information needed for in-box management scripts succcessfully configured."
     }
 
-    TraceInfo "PrepareHeadNode -DomainFQDN $DomainFQDN -PublicDnsName $PublicDnsName -AdminUserName $AdminUserName -PostConfigScript $PostConfigScript -AzureStorageConnStr $AzureStorageConnStr -UnsecureDNSUpdate:$UnsecureDNSUpdate"
-    PrepareHeadNode -DomainFQDN $DomainFQDN -PublicDnsName $PublicDnsName -AdminUserName $AdminUserName -AdminBase64Password $AdminBase64Password -PostConfigScript $PostConfigScript -AzureStorageConnStr $AzureStorageConnStr -UnsecureDNSUpdate:$UnsecureDNSUpdate
+    TraceInfo "PrepareHeadNode -DomainFQDN $DomainFQDN -PublicDnsName $PublicDnsName -AdminUserName $AdminUserName -CNSize $CNSize -UnsecureDNSUpdate:$UnsecureDNSUpdate -PostConfigScript $PostConfigScript"
+    PrepareHeadNode -DomainFQDN $DomainFQDN -PublicDnsName $PublicDnsName -AdminUserName $AdminUserName -AdminBase64Password $AdminBase64Password `
+        -PostConfigScript $PostConfigScript -AzureStorageConnStr $AzureStorageConnStr -UnsecureDNSUpdate:$UnsecureDNSUpdate -CNSize $CNSize
 }
 else
 {

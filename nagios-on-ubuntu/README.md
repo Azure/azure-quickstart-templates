@@ -8,21 +8,6 @@ This template deploys Nagios Core, a host/service/network monitoring solution re
 
 Visit the Nagios homepage at http://www.nagios.org for documentation, new releases, bug reports, information on discussion forums, and more.
 
-The template requires the following parameters:
-
-| Name   | Description    |
-|:--- |:---|
-| storageAccountName | Unique namespace for a new storage account where the virtual machine's disks will be placed (cannot be an existing storage account) |
-| adminUsername  | Admin user name for the virtual machine  |
-| adminPassword  | Admin password for the virtual machine  |
-| location | Location where the corresponding Azure artifacts will be created |
-| virtualNetworkName | Name of virtual network |
-| subnetName | Name of the virtual network subnet |
-| addressPrefix | The IP address mask used by the virtual network |
-| subnetPrefix | The subnet mask used by the virtual network subnet |
-| domainName | Domain name of the publicly accessible Apache web server hosting Nagios |
-| tshirtSize | T-shirt size of the Nagios deployment |
-
 Topology
 --------
 The Nagios deployment topology is comprised of a single VM instance that can be customized and scaled up using the _tshirtSize_ parameter. The following table outlines the VM characteristics for each supported t-shirt size:

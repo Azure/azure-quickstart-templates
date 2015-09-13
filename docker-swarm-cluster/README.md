@@ -4,44 +4,35 @@
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-*(Built by: [ahmetalpbalkan](https://github.com/ahmetalpbalkan), [garimakhulbe](https://github.com/garimakhulbe))*
-
-This template deploys a [Docker Swarm](http://docs.docker.com/swarm) cluster
-on Azure with multiple manager nodes and specified number of slave nodes in
-the location of the resource group.
+This template deploys a [Docker Swarm](http://docs.docker.com/swarm) cluster on
+Azure with 3 Swarm managers and specified number of Swarm nodes in the location
+of the resource group.
 
 If you are not familiar with Docker Swarm, please
 [read Swarm documentation](http://docs.docker.com/swarm).
 
-## Parameters
-
-| Name   | Description |
-|:--- |:---|
-| `slaveCount`  | Number of the nodes in the Swarm node pool. |
-| `newStorageAccountName`  | Unique name for a new storage account where the VM disks will be stored. |
-| `adminUsername` | SSH user for the Virtual Machines.  |
-| `sshPublicKey` | SSH key for the Virtual Machines.  |
-| `dnsName` | Unique DNS Name for the Swarm Management endpoint and the load balancer for slave nodes. |
-| `dockerCa`  | Base64-encoded Docker CA certificate (`ca.pem`) for the Docker engines and Swarm managers. |
-| `dockerCert`  | Base64-encoded Docker TLS Certificate (`cert.pem`) for the Docker engines and Swarm managers. |
-| `dockerKey` | Base64-encoded Docker TLS Key (`key.pem`) for the Docker engines and Swarm managers. |
+The template uses [CoreOS](https://coreos.com) as the host operating system for
+running containers on Swarm managers and nodes.
 
 ## Cluster Properties
 
 #### Swarm Managers (High Availability Setup)
 
-The template provisions 3 Swarm manager VMs that use [Consul](https://consul.io/)
-for discovery and leader election. These VMs are in an [Avabilability Set][av-set]
-to achieve the highest uptime.
+The template provisions 3 Swarm manager VMs that use
+[Consul](https://consul.io/) for discovery and leader election. These VMs are in
+an [Avabilability Set][av-set] to achieve the highest uptime.
 
-Each Swarm manager VM is of size `Standard_A0` as they are not running any workloads
-except the Swarm Manager and Consul containers. Manager node VMs have static private IP addresses
-`10.0.0.4`, `10.0.0.5` and `10.0.0.6` and they are in the same [Virtual Network][az-vnet] as slave nodes.
+Each Swarm manager VM is of size `Standard_A0` as they are not running any
+workloads except the Swarm Manager and Consul containers. Manager node VMs have
+static private IP addresses `10.0.0.4`, `10.0.0.5` and `10.0.0.6` and they are
+in the same [Virtual Network][az-vnet] as Swarm nodes.
 
-**Accessing manager VMs:** Swarm manager nodes (`swarm-master-*` VMs) do not have
-public IP addresses. However they are NAT'ted behind an Azure Load Balancer. You
-can SSH into them using the domain name (emitted in the template deployment output) or
-the Public IP address of `swarm-lb-masters` (can be found on the Azure Portal).
+#### How to SSH into Swarm Manager Nodes
+
+Swarm manager nodes (`swarm-master-*` VMs) do not have public IP addresses.
+However they are NAT'ted behind an Azure Load Balancer. You can SSH into them
+using the domain name (emitted in the template deployment output) or the Public
+IP address of `swarm-lb-masters` (can be found on the Azure Portal).
 
 Port numbers of each master VM is described in the following table:
 
@@ -51,47 +42,37 @@ Port numbers of each master VM is described in the following table:
 | `swarm-master-1`  | `ssh <username>@<IP> -p 2201` |
 | `swarm-master-2`  | `ssh <username>@<IP> -p 2202` |
 
-#### Configuring Authentication
+#### Swarm Worker Nodes
 
-This template requires the Docker certs triplet (`ca.pem`, `cert.pem`, `key.pem`)
-to secure the Swarm managers and the communication with Docker engines on each Swarm
-node. Please refer to [Docker documentation on generating TLS certs][tls].
+You can configure `nodeCount` parameter to create as many Swarm worker instances
+you like. Each Swarm worker VM is of size `Standard_A2`.
 
-These certificates are used to configure each Docker Engine and Docker Swarm
-Manager endpoints using TLS authentication. Once the cluster is created, you
-can use the DNS address in the output as follows to talk to the Docker Swarm Managers:
+Nodes in the Swarm cluster accepting Docker workloads do not have public IP
+addresses, and are accessible through Swarm manager VMs over SSH. In order to
+access a worker node, you need to SSH into a master VM and use worker node VMs
+private IP address to SSH from there (using the same SSH key you used for
+authenticating into master). Alternatively, you can establish an SSH Tunnel on
+your development machine and directly connect to the worker VM using its private
+IP address.
 
-    docker -H tcp://<dnsName>-manage.cloudapp.azure.com:2376 --tls ps
+Virtual Machines of Swarm worker nodes have private IP addresses `192.168.0.*`
+and are in the same [Virtual Network][az-vnet] with the manager nodes. These
+nodes are in an [Availability Set][av-set] to ensure highest uptime and fault
+domains.
 
-#### Swarm Slave Nodes
+The swarm worker VMs node VMs have are behind a load balancer
+(called `swarm-lb-nodes`). Any multi-instance services deployed across worker
+VMs can be served to the public internet by creating probes and load balancing
+rules on this Load Balancer resource. Load balancer's public DNS address is
+emitted as an output of the template deployment.
 
-You can configure `slaveCount` parameter to create as many instances you like.
-Each Swarm slave VM is of size `Standard_A2`.
+#### How to SSH into Swarm Worker Nodes
 
-Slave nodes do not have public IP addresses, and are accessible through Swarm
-manager VMs over SSH. In order to access a slave VM, you need to SSH into a
-master VM and use slave VMs private IP address to SSH from there (using the
-same SSH key you used for authenticating into master). Alternatively, you can
-establish an SSH Tunnel on your development machine and directly connect to
-the slave VM using its private IP address.
+Since Swarm worker nodes do not have public IP addresses, you first need to SSH
+into Swarm manager VMs (described above) to SSH into Swarm nodes.
 
-Slave node VMs have private IP addresses `192.168.0.*` and are in the same
-[Virtual Network][az-vnet] with the manager nodes. Slave nodes are in an
-[Availability Set][av-set] to ensure highest uptime and fault domains.
-
-Slave node VMs have are behind a load balancer (called `swarm-lb-slaves`). Any
-multi-instance services deployed across slave VMs can be served to the public
-internet by creating probes and load balancing rules on this Load Balancer
-resource. Load balancer's public DNS address is emitted as an output of the
-template deployment.
-
-#### How to SSH into Swarm Slave Nodes
-
-Since Swarm slave VMs do not have public IP addresses, you first need to SSH into
-Swarm manager VMs (described above) to SSH into Swarm nodes.
-
-You just need to use `ssh -A` to SSH into one of the masters, and from that point
-on you can reach any other VM in the cluster as shown below:
+You just need to use `ssh -A` to SSH into one of the masters, and from that
+point on you can reach any other VM in the cluster as shown below:
 
 ```sh
 $ ## <-- You are on your development machine
@@ -99,34 +80,34 @@ $
 $ ssh -A <username>@<masters-IP> -p 2200
 azureuser@swarm-master-0 ~ $ ## <-- You are on Swarm master
 azureuser@swarm-master-0 ~ $ ssh <username>@swarm-node-3
-azureuser@swarm-node-3 ~ $ ## <-- You are now on a Swarm slave
+azureuser@swarm-node-3 ~ $ ## <-- You are now on a Swarm worker node
 ```
+
+The `-A` argument enables forwarding of authentication credentials so that just
+by authenticating to manager VM, you can access Swarm worker VMs from there.
 
 Swarm node hostnames are numbered starting from 0, such as: `swarm-node-0`,
 `swarm-node-1`, ..., `swarm-node-19` etc. You can see the VM names on the
 Azure Portal as well.
 
-## Output
+## Connecting the Cluster
 
-The template deployment will output two values:
+If the template deploys successfully it will have output values `"sshTunnelCmd"`
+and `"dockerCmd"`. The tunnel command will create a SSH tunnel to Docker Swarm
+Manager (this command will keep running with no output):
 
-#### 1. `SwarmManagerDockerEndpoint`
+    ssh -L 2375:swarm-master-0:2375 -N core@<<DNSNAME>>-manage.westus.cloudapp.azure.com -p 2200
 
-This is in `tcp://<hostname>:2376` format and can be directly used in Docker
-client to target managers of the Swarm cluster.
+After this you can refer to `dockerCmd` output which shows you how to run
+commands on the Docker Swarm cluster:
 
-#### 2. `SwarmSlavesDNS`
+    docker -H tcp://localhost:2375 info
 
-This is a [Load Balancer][az-lb] endpoint for the slave nodes in the
-Swarm cluster and has no load balancing rules by default. As you deploy services
-to the cluster, you can create new Load Balancing Rules and Probes from Azure
-Portal.
+This also can be executed in the shorthand form:
 
------------------
-
-![Docker Swarm logo](https://github.com/docker/swarm/raw/master/logo.png?raw=true)
+    export DOCKER_HOST=:2375
+    docker info
 
 [av-set]: https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-manage-availability/
 [az-lb]: https://azure.microsoft.com/en-us/documentation/articles/load-balancer-overview/
 [az-vnet]: http://azure.microsoft.com/en-us/documentation/services/virtual-network/
-[tls]: https://docs.docker.com/articles/https/#create-a-ca-server-and-client-keys-with-openssl

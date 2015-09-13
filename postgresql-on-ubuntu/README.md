@@ -37,20 +37,6 @@ sudo -u postgres psql
 select * from table1;
 ```
 
-Template expects the following parameters
-
-| Name   | Description    |
-|:--- |:---|
-| region | Location where the resources will be deployed |
-| storageAccountNamePrefix  | Unique DNS name for the Storage Account where the Virtual Machines' disks will be placed |
-| domainName | Domain name of the publicly accessible jumpbox VM {domainName}.{region}.cloudapp.azure.com (e.g. mydomainname.westus.cloudapp.azure.com)|
-| adminUsername  | Username for the Virtual Machines  |
-| adminPassword  | Password for the Virtual Machine  |
-| tshirtSize  | Size of deployment to provision |
-| replicatorPassword | Password to use for the pgsql replication user (replicator) |
-| jumpbox | Enable jumpbox |
-| virtualNetworkName | Virtual network name |
-
 The following table outlines the deployment topology characteristics for each supported t-shirt size:
 
 | T-Shirt Size | Database VM Size | CPU Cores | Memory | Data Disks | # of Secondaries | # of Storage Accounts |
