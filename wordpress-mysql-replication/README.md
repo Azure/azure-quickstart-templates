@@ -11,7 +11,7 @@ This template deploys a WordPress site in Azure backed by MySQL replication with
   - Configures a http based health probe for each MySQL instance that can be used to monitor MySQL health
 
 ### How to Deploy
-* This template takes a dependency on [MySQL-replication](http://https://github.com/liupeirong/azure-quickstart-templates/tree/master/mysql-replication) in this repo. Refer to the README of MySQL-Replication template to customize MySQL deployment as necessary and how to failover, backup, and restore.
+* This template takes a dependency on the [MySQL-replication template](https://github.com/liupeirong/azure-quickstart-templates/tree/master/mysql-replication). Refer to the README of MySQL-Replication template to customize MySQL deployment as necessary and how to failover, backup, and restore.
 
 
 
