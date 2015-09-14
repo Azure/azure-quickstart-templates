@@ -8,6 +8,13 @@
         "description": "Unique DNS Name Prefix for the Storage Account where the Virtual Machine's disks will be placed.  StorageAccounts may contain at most variables('vmsPerStorageAccount')"
       }
     },
+    "adminUsername": {
+      "type": "string",
+      "defaultValue": "azureuser",
+      "metadata": {
+        "description": "User name for the Virtual Machine."
+      }
+    },
     "adminPassword": {
       "type": "securestring",
       "metadata": {
@@ -28,9 +35,9 @@
     },
     "agentCount": {
       "type": "int",
-      "defaultValue": 0,
+      "defaultValue": 1,
       "metadata": {
-        "description": "The number of mesos masters for the cluster."
+        "description": "The number of mesos agents for the cluster."
       }
     },
     "masterCount": {
@@ -45,15 +52,16 @@
         "description": "The number of mesos masters for the cluster."
       }
     },
-    "jumpboxCount": {
-      "type": "int",
-      "defaultValue": 0,
+    "jumpboxConfiguration": {
+      "type": "string",
+      "defaultValue": "windows",
       "allowedValues": [
-        0,
-        1
+        "none",
+        "linux",
+        "windows"
       ],
       "metadata": {
-        "description": "The number of mesos masters for the cluster."
+        "description": "Choose to have a jumpbox for debugging on the private subnet."
       }
     },
     "masterConfiguration": {
@@ -71,6 +79,7 @@
       "type": "string",
       "defaultValue": "Standard_D1",
       "allowedValues": [
+        "Standard_A1",
         "Standard_D1",
         "Standard_D2",
         "Standard_D3",
@@ -88,6 +97,7 @@
       "type": "string",
       "defaultValue": "Standard_D1",
       "allowedValues": [
+        "Standard_A1",
         "Standard_D1",
         "Standard_D2",
         "Standard_D3",
@@ -98,13 +108,14 @@
         "Standard_D14"
       ],
       "metadata": {
-        "description": "The size of the Virtual Machine."
+        "description": "The size of the Virtual Machine for the master."
       }
     },
     "jumpboxVMSize": {
       "type": "string",
       "defaultValue": "Standard_D2",
       "allowedValues": [
+        "Standard_A1",
         "Standard_D1",
         "Standard_D2",
         "Standard_D3",
@@ -115,18 +126,39 @@
         "Standard_D14"
       ],
       "metadata": {
-        "description": "The size of the Virtual Machine."
+        "description": "The size of the Virtual Machine for the jumpbox."
       }
     },
     "clusterPrefix": {
       "type": "string",
+      "defaultValue": "c1",
       "metadata": {
         "description": "The prefix to identify the cluster."
+      }
+    },
+    "swarmEnabled": {
+      "type": "string",
+      "defaultValue": "false",
+      "metadata": {
+        "description": "Flag for enabling the Docker Swarm framework."
+      }
+    },
+    "marathonEnabled": {
+      "type": "string",
+      "defaultValue": "true",
+      "metadata": {
+        "description": "Flag for enabling the Marathon framework."
+      }
+    },
+    "chronosEnabled": {
+      "type": "string",
+      "defaultValue": "true",
+      "metadata": {
+        "description": "Flag for enabling the Chronos framework."
       }
     }
   },
   "variables": {
-    "adminUsername": "azureuser",
     "masterVMNamePrefix": "[concat(parameters('clusterPrefix'),'master')]",
     "agentVMNamePrefix": "[concat(parameters('clusterPrefix'),'agent')]",
     "jumpboxVMNamePrefix": "[concat(parameters('clusterPrefix'),'jumpbox')]",
@@ -151,8 +183,7 @@
       "agent-0.json",
       "agent-gt0.json"
     ],
-    "agentFile": "[variables('agentFiles')[mod(add(parameters('agentCount'),2),add(parameters('agentCount'),1))]]",
-    "validateNoMoreThan50Agents": "[div(1,div(50,parameters('agentCount')))]"
+    "agentFile": "[variables('agentFiles')[mod(add(parameters('agentCount'),2),add(parameters('agentCount'),1))]]"
   },
   "resources": [
     {
@@ -182,6 +213,20 @@
               "destinationAddressPrefix": "*",
               "access": "Allow",
               "priority": 200,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "rdp",
+            "properties": {
+              "description": "RDP",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3389",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 300,
               "direction": "Inbound"
             }
           }
@@ -234,7 +279,7 @@
             "value": "[concat(parameters('newStorageAccountNamePrefix'), '0')]"
           },
           "adminUsername": {
-            "value": "[variables('adminUsername')]"
+            "value": "[parameters('adminUsername')]"
           },
           "adminPassword": {
             "value": "[parameters('adminPassword')]"
@@ -269,11 +314,23 @@
           "osImageOffer": {
             "value": "[variables('osImageOffer')]"
           },
-          "osImageSKU" : {
+          "osImageSKU": {
             "value": "[variables('osImageSKU')]"
           },
-          "osImageVersion" : {
+          "osImageVersion": {
             "value": "[variables('osImageVersion')]"
+          },
+          "customScriptLocation": {
+            "value": "[variables('customScriptLocation')]"
+          },
+          "swarmEnabled": {
+            "value": "[parameters('swarmEnabled')]"
+          },
+          "marathonEnabled": {
+            "value": "[parameters('marathonEnabled')]"
+          },
+          "chronosEnabled": {
+            "value": "[parameters('chronosEnabled')]"
           }
         }
       }
@@ -296,7 +353,7 @@
             "value": "[concat(parameters('newStorageAccountNamePrefix'))]"
           },
           "adminUsername": {
-            "value": "[variables('adminUsername')]"
+            "value": "[parameters('adminUsername')]"
           },
           "adminPassword": {
             "value": "[parameters('adminPassword')]"
@@ -336,6 +393,18 @@
           },
           "osImageVersion" : {
             "value": "[variables('osImageVersion')]"
+          },
+          "customScriptLocation": {
+            "value": "[variables('customScriptLocation')]"
+          },
+          "swarmEnabled": {
+            "value": "[parameters('swarmEnabled')]"
+          },
+          "marathonEnabled": {
+            "value": "[parameters('marathonEnabled')]"
+          },
+          "chronosEnabled": {
+            "value": "[parameters('chronosEnabled')]"
           }
         }
       }
@@ -351,7 +420,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('customScriptLocation'), 'jumpbox-', parameters('jumpboxCount'), '.json')]",
+          "uri": "[concat(variables('customScriptLocation'), 'jumpbox-', parameters('jumpboxConfiguration'), '.json')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -359,7 +428,7 @@
             "value": "[concat(parameters('newStorageAccountNamePrefix'), '0')]"
           },
           "adminUsername": {
-            "value": "[variables('adminUsername')]"
+            "value": "[parameters('adminUsername')]"
           },
           "adminPassword": {
             "value": "[parameters('adminPassword')]"
@@ -382,17 +451,8 @@
           "jumpboxVMNamePrefix": {
             "value": "[variables('jumpboxVMNamePrefix')]"
           },
-          "osImagePublisher": {
-            "value": "[variables('osImagePublisher')]"
-          },
-          "osImageOffer": {
-            "value": "[variables('osImageOffer')]"
-          },
-          "osImageSKU" : {
-            "value": "[variables('osImageSKU')]"
-          },
-          "osImageVersion" : {
-            "value": "[variables('osImageVersion')]"
+          "customScriptLocation": {
+            "value": "[variables('customScriptLocation')]"
           }
         }
       }
