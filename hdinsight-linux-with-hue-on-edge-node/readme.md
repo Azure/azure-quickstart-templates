@@ -14,6 +14,14 @@ The edge node has the following cluster configurations located locally on the no
 Additionally, the edge node has WebWasb, a WebHDFS implementation over the WASB Storage System. <br />
 WebWasb allows you to access and execute commands against the default WASB container of the cluster using the WebHDFS interface.<br />
 
-
 WebWasb can be accessed using localhost as the hostname and 50073 as the port name.
 As an example, if you wanted to list all files and directories at the root of the cluster's storage account, you could execute <pre>curl http://localhost:50073/WebWasb/webhdfs/v1/?op=LISTSTATUS</pre>
+
+Most important part of this template is that:
+Hue application is being installed on the edge node VM. It listens on port 8888.
+To be able to access the Hue app from outside of the vnet we recommend to use SSH tunneling to redirect traffic from client to edge node.
+SSH tunneling can be established with using Putty client application.
+Edge node DNS name has following schema:
+<your cluster name>-huevm.<region>.cloudapp.azure.com
+Where <your cluster name> is the name of the cluster provisioned using this template.
+<region> is a region used during deployment (example: westus)
