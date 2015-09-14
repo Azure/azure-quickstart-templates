@@ -434,6 +434,7 @@ host    all         all         127.0.0.1/32          md5  \ ' $DATA_DIR/pg_hba.
 
 #configure the postgresql server to start at boot
 sudo /sbin/chkconfig postgresql on
+sudo service postgresql restart
 
 create_scm_db $SCM_PWD
 create_mgmt_role_db ACTIVITYMONITOR amon

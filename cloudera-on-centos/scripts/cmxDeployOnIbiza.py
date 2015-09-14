@@ -1,10 +1,10 @@
 #!/usr/bin/env python
-#
-
+# 
 __version__ = '0.11.2803'
 
 import socket
 import re
+import urllib
 import urllib2
 from optparse import OptionParser
 import hashlib
@@ -16,6 +16,8 @@ from time import sleep
 from cm_api.api_client import ApiResource, ApiException
 from cm_api.endpoints.hosts import *
 from cm_api.endpoints.services import ApiServiceSetupInfo, ApiService
+
+diskcount=10
 
 LOG_DIR='/log/cloudera'
 def init_cluster():
@@ -247,20 +249,17 @@ def setup_hdfs(HA):
         default_name_dir_list = ""
         default_snn_dir_list = ""
         default_data_dir_list = ""
-        bashCommand="ls -la / | grep data | wc -l > count.out"
 
-        os.system(bashCommand)
-        f = open('count.out', 'r')
-        count=f.readline().rstrip('\n')
 
         dfs_name_dir_list = default_name_dir_list
         dfs_snn_dir_list = default_snn_dir_list
         dfs_data_dir_list = default_data_dir_list
 
-        for x in range(int(count)):
-          dfs_name_dir_list+=",/data%d/dfs/nn" % (x)
-          dfs_snn_dir_list+=",/data%d/dfs/snn" % (x)
+        for x in range(int(diskcount)):
           dfs_data_dir_list+=",/data%d/dfs/dn" % (x)
+
+        dfs_name_dir_list+=",/data/dfs/nn"
+        dfs_snn_dir_list+=",/data/dfs/snn"
 
         #No HA, using POC setup, all service in one master node aka the cm host
         if not HA:
@@ -526,15 +525,10 @@ def setup_yarn(HA):
 
         # empty list so it won't use ephemeral drive
         default_yarn_dir_list = ""
-        bashCommand="ls -la / | grep data | wc -l > count2.out"
-
-        os.system(bashCommand)
-        f = open('count2.out', 'r')
-        count=f.readline().rstrip('\n')
 
         yarn_dir_list = default_yarn_dir_list
 
-        for x in range(int(count)):
+        for x in range(int(diskcount)):
           yarn_dir_list+=",/data%d/yarn/nm" % (x)
 
         cmhost= management.get_cmhost()
@@ -773,17 +767,12 @@ def setup_impala(HA):
     """
 
     default_impala_dir_list = ""
-    bashCommand="ls -la / | grep data | wc -l > count3.out"
-
-    os.system(bashCommand)
-    f = open('count3.out', 'r')
-    count=f.readline().rstrip('\n')
 
     impala_dir_list = default_impala_dir_list
 
-    for x in range(int(count)):
+    for x in range(int(diskcount)):
         impala_dir_list+="/data%d/impala/scratch" % (x)
-        max_count=int(count)-1
+        max_count=int(diskcount)-1
         if x < max_count:
           impala_dir_list+=","
           print "x is %d. Adding comma" % (x)
@@ -936,10 +925,15 @@ def setup_hdfs_ha():
         print "> Setup HDFS-HA"
         hdfs = cdh.get_service_type('HDFS')
         zookeeper = cdh.get_service_type('ZOOKEEPER')
+
         # Requirement Hive/Hue
         hive = cdh.get_service_type('HIVE')
         hue = cdh.get_service_type('HUE')
         hosts = management.get_hosts()
+
+        nn=[x for x in hosts if x.id == 0 ][0]
+        snn=[x for x in hosts if x.id == 1 ][0]
+        cm=management.get_cmhost()
 
         if len(hdfs.get_roles_by_type("NAMENODE")) != 2:
             # QJM require 3 nodes
@@ -958,10 +952,10 @@ def setup_hdfs_ha():
 
             # hdfs-JOURNALNODE - Default Group
             role_group = hdfs.get_role_config_group("%s-JOURNALNODE-BASE" % hdfs.name)
-            role_group.update_config({"dfs_journalnode_edits_dir": "/mnt/resource/dfs/jn"})
+            role_group.update_config({"dfs_journalnode_edits_dir": "/data/dfs/jn"})
 
             cmd = hdfs.enable_nn_ha(hdfs.get_roles_by_type("NAMENODE")[0].name, standby_host_id,
-                                    "nameservice1", [dict(jnHostId=jn[0]), dict(jnHostId=jn[1]), dict(jnHostId=jn[2])],
+                                    "nameservice1", [dict(jnHostId=nn_host_id), dict(jnHostId=sndnn_host_id), dict(jnHostId=cm.hostId)],
                                     zk_service_name=zookeeper.name)
             check.status_for_command("Enable HDFS-HA - [ http://%s:7180/cmf/command/%s/details ]" %
                                      (socket.getfqdn(cmx.cm_server), cmd.id), cmd)
@@ -1166,6 +1160,7 @@ def teardown(keep_cluster=True):
 
         print "Deleting cluster: %s" % cmx.cluster_name
         api.delete_cluster(cmx.cluster_name)
+
 
 
 class ManagementActions:
@@ -1613,6 +1608,23 @@ class ActiveCommands:
                         else "  [%s] %s - %s" % (resMsg['id'], resMsg['resultMessage'], resMsg['roleRef']['roleName'])
                 self._child_cmd(self._api.get("/commands/%s" % resMsg['id'])['children']['items'])
 
+def display_eula():
+
+    fname=raw_input("Please enter your first name: ")
+    lname=raw_input("Please enter your last name: ")
+    company=raw_input("Please enter your company: ")
+    email=raw_input("Please enter your email: ")
+    phone=raw_input("Please enter your phone: ")
+    jobrole=raw_input("Please enter your jobrole: ")
+    jobfunction=raw_input("Please enter your jobfunction: ")
+    accepted=raw_input("Please enter yes to accept EULA: ")
+    if accepted =='yes' and fname and lname and company and email and phone and jobrole and jobfunction:
+       postEulaInfo(fname, lname, company, email,
+                    jobrole, jobfunction, phone)
+       return True
+    else:
+        return False
+
 
 def parse_options():
     global cmx
@@ -1623,7 +1635,9 @@ def parse_options():
     cmx_config_options = {'ssh_root_password': None, 'ssh_root_user': 'root', 'ssh_private_key': None,
                           'cluster_name': 'Cluster 1', 'cluster_version': 'CDH5',
                           'username': 'cmadmin', 'password': 'cmpassword', 'cm_server': None,
-                          'host_names': None, 'license_file': None, 'parcel': []}
+                          'host_names': None, 'license_file': None, 'parcel': [], 'company': None,
+                          'email': None, 'phone': None, 'fname': None, 'lname': None, 'jobrole': None,
+                          'jobfunction': None, 'do_post':True}
 
     def cmx_args(option, opt_str, value, *args, **kwargs):
         if option.dest == 'host_names':
@@ -1717,6 +1731,22 @@ def parse_options():
                       callback=cmx_args, help='Set Cloudera Manager Username')
     parser.add_option('-s', '--cm-password', dest='password', type="string", action='callback',
                       callback=cmx_args, help='Set Cloudera Manager Password')
+    parser.add_option('-r', '--email-address', dest='email', type="string", action='callback',
+                      callback=cmx_args, help='Set email address')
+    parser.add_option('-b', '--business-phone', dest='phone', type="string", action='callback',
+                      callback=cmx_args, help='Set phone')
+    parser.add_option('-f', '--first-name', dest='fname', type="string", action='callback',
+                      callback=cmx_args, help='Set first name')
+    parser.add_option('-t', '--last-name', dest='lname', type="string", action='callback',
+                      callback=cmx_args, help='Set last name')
+    parser.add_option('-o', '--job-role', dest='jobrole', type="string", action='callback',
+                      callback=cmx_args, help='Set job role')
+    parser.add_option('-i', '--job-function', dest='jobfunction', type="string", action='callback',
+                      callback=cmx_args, help='Set job function')
+    parser.add_option('-y', '--company', dest='company', type="string", action='callback',
+                      callback=cmx_args, help='Set job function')
+    parser.add_option('-e', '--accept-eula', dest='accepted', action="store_true", default=False,
+                      help='Must accept eula before install')
 
     (options, args) = parser.parse_args()
 
@@ -1738,6 +1768,19 @@ def parse_options():
             parser.error(msg_req_args + "-w/--host-names")
         elif cmx_config_options['ssh_private_key'] and cmx_config_options['ssh_root_password']:
             parser.error(msg_req_args + "-p/--ssh-root-password _OR_ -k/--ssh-private-key")
+    if (cmx_config_options['email'] is None or cmx_config_options['phone'] is None or
+        cmx_config_options['fname'] is None or cmx_config_options['lname'] is None or
+        cmx_config_options['jobrole'] is None or cmx_config_options['jobfunction'] is None or
+        cmx_config_options['company'] is None or
+        options.accepted is not True):
+
+        eula_result=display_eula()
+        if(eula_result):
+            cmx_config_options['do_post']=False
+        else:
+            parser.error(msg_req_args + 'please provide email, phone, firstname, lastname, jobrole, jobfunction, company and accept eula'+
+                         '-r/--email-address, -b/--business-phone, -f/--first-name, -t/--last-name, -o/--job-role, -i/--job-function,'+
+                         '-y/--company, -e/--accept-eula')
 
     # Management services password. They are required when adding Management services
     management = ManagementActions
@@ -1769,11 +1812,33 @@ def parse_options():
 def log(msg):
     print time.strftime("%X") + ": " + msg
 
+def postEulaInfo(firstName, lastName, emailAddress, company,jobRole, jobFunction, businessPhone):
+    elqFormName='Cloudera_Azure_EULA'
+    elqSiteID='1465054361'
+    cid='70134000001PsLS'
+    url = 'https://s1465054361.t.eloqua.com/e/f2'
+    data = urllib.urlencode({'elqFormName': elqFormName,
+                             'elqSiteID': elqSiteID,
+                             'cid': cid,
+                             'firstName': firstName,
+                             'lastName': lastName,
+                             'company': company,
+                             'emailAddress': emailAddress,
+                             'jobRole': jobRole,
+                             'jobFunction': jobFunction,
+                             'businessPhone': businessPhone
+                            })
+    results = urllib2.urlopen(url, data)
+    with open('results.html', 'w') as f:
+        log(results.read())
+
 def main():
     # Parse user options
     log("parse_options")
     options = parse_options()
-
+    if(cmx.do_post):
+        postEulaInfo(cmx.fname, cmx.lname, cmx.company, cmx.email,
+                     cmx.jobrole, cmx.jobfunction, cmx.phone)
     # Prepare Cloudera Manager Server:
     # 1. Initialise Cluster and set Cluster name: 'Cluster 1'
     # 3. Add hosts into: 'Cluster 1'
