@@ -6,18 +6,18 @@
 
 This template deploys a MySQL replication environment with one master and one slave servers.  It has the following capabilities:
 
-  - Supports CentOS 6 and MySQL 5.6
-  - Supports GTID based replication
-  - Deploys 2 VMs in an Azure VNet, each has 2 data disks striped into Raid0
-  - Deploys a load balancer in front of the 2 VMs, so that the VMs are not directly exposed to the internet.  MySQL and SSH ports is exposed through the load balancer using Network Security Group rules
-  - Configures a http based health probe for each MySQL instance that can be used to monitor MySQL health
+- Supports CentOS 6 and MySQL 5.6
+- Supports GTID based replication
+- Deploys 2 VMs in an Azure VNet, each has 2 data disks striped into Raid0
+- Deploys a load balancer in front of the 2 VMs, so that the VMs are not directly exposed to the internet.  MySQL and SSH ports is exposed through the load balancer using Network Security Group rules
+- Configures a http based health probe for each MySQL instance that can be used to monitor MySQL health
 
 ### How to Deploy
-You can deploy the template with Azure Portal, or PowerShell, or Azure cross platform command line tools.  The example here uses PowerShell to deploy. 
+You can deploy the template with Azure Portal, or PowerShell, or Azure cross platform command line tools.  The example here uses PowerShell to deploy.
 
 **Default deployment**
 * Open Azure command line tool, and log in.
-* Create a resource group: 
+* Create a resource group:
 ```sh
 > switch-azuremode AzureResourceManager
 > New-AzureResourceGroup -Name "mysqlrg"-Location "East US"
@@ -29,26 +29,34 @@ You can deploy the template with Azure Portal, or PowerShell, or Azure cross pla
 **Custom deployment**
 * Take a look at AzureDeploy.json to see if you need to make any customization that's not exposed through the template parameters, for example, disk configurations.  If you do, copy down the template and make modifications locally.
 * Take a look at AzureMysql.sh.  This script configures network and disks within the VM, as well as installs and configures MySQL. You can customize it to meet your own requirements.
-* Take a look at my.cnf.template.  This is the template for /etc/my.cnf.  Empty parameters will be automatically filled during deployment.  You can also add your own parameters. 
+* Take a look at my.cnf.template.  This is the template for /etc/my.cnf.  Empty parameters will be automatically filled during deployment.  You can also add your own parameters.
 * If you make changes to AzureMysql.sh or my.cnf.template, you need to put the modified file in your own GitHub repo or Azure storage account, and modify the parameters "customScriptFilePath" and "mysqlConfigFilePath" to point to your file location.
 * Once you are done with customization, deploy using the same commands as default deployment.
 
 ### How to Access MySQL
-* Access MySQL using the public DNS name.  By default, the master server can be accessed at port 3306, and the slave server 3307.  By default, a user "admin" is created with all privileges to access from remote hosts. For example, access the master with the following command: 
+* Access MySQL using the public DNS name.  By default, the master server can be accessed at port 3306, and the slave server 3307.  By default, a user "admin" is created with all privileges to access from remote hosts. For example, access the master with the following command:
 ```sh
-> mysql -h mysqldns.eastus.cloudapp.azure.com -u admin -p 
+> mysql -h mysqldns.eastus.cloudapp.azure.com -u admin -p
 ```
 * You can access the VMs through ssh.  By default, public ssh ports are 64001 and 64002 for the 2 VMs. Within the VM you can check MySQL health probe by running, for example, the following command, and it should return 200 to indicate MySQL is healthy.
 ```sh
-> wget http://10.0.1.4:9200  
+> wget http://10.0.1.4:9200
+> wget http://10.0.1.5:9200
 ```
 * Ensure replication topology is properly configured:
 ```sh
-> mysqlrplshow --master=admin:secret@10.0.1.4 --discover-slaves-login=admin:secret 
+> mysqlrplshow --master=admin:secret@10.0.1.4 --discover-slaves-login=admin:secret
+```
+
+### How to Monitor MySQL Health
+* MySQL health can be checked by issuing HTTP query to the MySQL probes and verify query returns 200 status code.  Replace the following with your own dns name, and location.
+```sh
+> wget http://mysqldns.eastus.cloudapp.azure.com:9200
+> wget http://mysqldns.eastus.cloudapp.azure.com:9201
 ```
 
 ### How to Failover
-High availability and fail over are no different from other GTID based MySQL replication.  What's specific to Azure is that in order for the applications to access the current master server without changing their configurations, the NAT rules of the load balancer must be updated in the case of failover: 
+High availability and fail over are no different from other GTID based MySQL replication.  What's specific to Azure is that in order for the applications to access the current master server without changing their configurations, the NAT rules of the load balancer must be updated in the case of failover:
 * Remove the NAT rule for the old master from the load balancer so that applications can't access the failed master
 ```sh
 > $nic0=Get-AzureNetworkInterface -Name $mysqlrg-nic0 -ResourceGroupName mysqlrg
@@ -61,7 +69,7 @@ High availability and fail over are no different from other GTID based MySQL rep
 * Fail over MySQL from the old master to the new master
 ```sh
 mysql> stop slave;
-mysql> change master to master_host='10.0.1.5', master_user='admin', master_password='secret', master_auto_position=1;  
+mysql> change master to master_host='10.0.1.5', master_user='admin', master_password='secret', master_auto_position=1;
 ```
 * Switch the old master's NAT rule with the new master
 ```sh
@@ -76,12 +84,12 @@ mysql> change master to master_host='10.0.1.5', master_user='admin', master_pass
 * Add the old master back to replication as a slave
 ```sh
 mysql> stop slave;
-mysql> change master to master_host='10.0.1.5', master_user='admin', master_password='secret', master_auto_position=1;  
+mysql> change master to master_host='10.0.1.5', master_user='admin', master_password='secret', master_auto_position=1;
 mysql> start slave;
 ```
 * Verify replication is properly restored by running the following commands and make sure there is no error:
 ```sh
-> mysqlrplshow --master=admin:secret@10.0.1.4 --discover-slaves-login=admin:secret 
+> mysqlrplshow --master=admin:secret@10.0.1.4 --discover-slaves-login=admin:secret
 ```
 on the master:
 ```sh
