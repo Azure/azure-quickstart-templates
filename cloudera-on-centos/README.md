@@ -4,7 +4,7 @@
 Once the trial has concluded, the Cloudera Enterprise features will be disabled until you obtain and upload a license.
 
 # By clicking "Deploy to Azure" you agree to the Terms and Conditions below.
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fnetwmr01%2Fcloudera-on-centos%2Fmaster%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fcloudera-on-centos%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png" />
 </a>
 
@@ -69,7 +69,8 @@ THE “EFFECTIVE DATE” OF THIS AGREEMENT IS THE DATE YOU FIRST DOWNLOAD ANY OF
 
 
 # Readme
-This template creates a multi-server Cloudera CDH 5.3.3 Apache Hadoop deployment on CentOS virtual machines, and configures the CDH installation for a high availability cluster.
+This template creates a multi-server Cloudera CDH 5.4.x Apache Hadoop deployment on CentOS virtual machines, and configures the CDH installation for either POC or high availability production cluster.
+
 The template also provisions storage accounts, virtual network, availability set, network interfaces, VMs, disks and other infrastructure and runtime resources required by the installation.
 
 The template expects the following parameters:
@@ -78,6 +79,8 @@ The template expects the following parameters:
 |:--- |:---|:---|
 | adminUsername  | Administrator user name used when provisioning virtual machines | testuser |
 | adminPassword  | Administrator password used when provisioning virtual machines | Eur32#1e |
+| cmUsername | Cloudera Manager username | cmadmin |
+| cmPassword | Cloudera Manager password | cmpassword |
 | storageAccountPrefix | Unique namespace for the Storage Account where the Virtual Machine's disks will be placed | defaultStorageAccountPrefix |
 | numberOfDataNodes | Number of data nodes to provision in the cluster | 3 |
 | dnsNamePrefix | Unique public dns name where the Virtual Machines will be exposed | defaultDnsNamePrefix |
@@ -89,10 +92,7 @@ The template expects the following parameters:
 | subnetPrefix | The network address space for the virtual subnet | 10.0.0.0/24 |
 | nodeAddressPrefix | The IP address prefix that will be used for constructing private IP address for each node in the cluster | 10.0.0. |
 | tshirtSize | T-shirt size of the Cloudera cluster (Eval, Prod) | Eval |
-| vmSize | The size of the VMs deployed in the cluster (Defaults to Standard_D14) | Standard_D14 |
-| keyVaultResourceGroup | The resource group containing the key vault which provides the private key used for SSH login. | AzureRM-Util |
-| keyVaultName | The name of the key vault which provides the private key  used for SSH login. | AzureRM-Keys |
-| keyUri | The url of the private key used for SSH login. Details in Key Vault and SSH Keys section below. | Read section below |
+| vmSize | The size of the VMs deployed in the cluster (Defaults to Standard_DS14) | Standard_DS14 |
 
 
 Topology
@@ -106,66 +106,36 @@ The following table outlines the deployment topology characteristics for each su
 
 | T-Shirt Size | Member Node VM Size | CPU Cores | Memory | Data Disks | # of Manager Node VMs | # of Name Node VMs |
 |:--- |:---|:---|:---|:---|:---|:---|:---|
-| Eval | Standard_D14 | 16 | 112 GB | 16x1000 GB | 1 | 1 primary, 1 secondary (non-HA) |
-| Prod | Standard_D14 | 16 | 112 GB | 16x1000 GB | 1 | 1 primary, 1 standby (HA) |
+| Eval | Standard_D14 | 10 | 112 GB | 16x1000 GB | 1 | 1 (primary, secondary, cloudera manager) |
+| Prod | Standard_D14 | 10 | 112 GB | 16x1000 GB | 3 | 1 primary, 1 standby (HA), 1 cloudera manager |
 
 ##Connecting to the cluster
 The machines are named according to a specific pattern.  The manager node is named based on parameters and using the.
 
-	[dnsNamePrefix]-nn0.[region].cloudapp.azure.com
+	[dnsNamePrefix]-mn0.[region].cloudapp.azure.com
 
 If the dnsNamePrefix was clouderatest in the West US region, the machine will be located at:
 
-	clouderatest-nn0.westus.cloudapp.azure.com
+	clouderatest-mn0.westus.cloudapp.azure.com
 
-The rest of the name nodes and data nodes of the cluster use the same pattern, with -nn and -dn extensions followed by their number.  For example:
+The rest of the name nodes and data nodes of the cluster use the same pattern, with -mn and -dn extensions followed by their number.  For example:
 
-	clouderatest-nn1.westus.cloudapp.azure.com
-	clouderatest-nn2.westus.cloudapp.azure.com
+    clouderatest-mn0.westus.cloudapp.azure.com
+	clouderatest-mn1.westus.cloudapp.azure.com
+	clouderatest-mn2.westus.cloudapp.azure.com
 	clouderatest-dn0.westus.cloudapp.azure.com
 	clouderatest-dn1.westus.cloudapp.azure.com
 	clouderatest-dn2.westus.cloudapp.azure.com
 
-To connect to the manager node via SSH, use the .pem key in the repository if you used the provided key or your own .pem file.  See the section below for more information on SSH keys.
+To connect to the manager node via SSH, use the username and password used for deployment
 
-	ssh -i server-cert.pem testuser@[dnsNamePrefix]-nn0.[region].cloudapp.azure.com
+	ssh testuser@[dnsNamePrefix]-mn0.[region].cloudapp.azure.com
 
 Once the deployment is complete, you can navigate to the Cloudera portal to watch the operation and track it's status. Be aware that the portal dashboard will report alerts since the services are still being installed.
 
-	http://[dnsNamePrefix]-nn0.[region].cloudapp.azure.com:7180
+	http://[dnsNamePrefix]-mn0.[region].cloudapp.azure.com:7180
 
 ##Notes, Known Issues & Limitations
 - All nodes in the cluster have a public IP address.
-- Using passwords via SSH are disabled.  Private keys should be used to access the nodes in the cluster (See notes below.)
 - The deployment script is not yet idempotent and cannot handle updates (although it currently works for initial provisioning only)
 - SSH key is not yet implemented and the template currently takes a password for the admin user
-- If security is a concern, do not use the provided .pfx file
-
-##Managing SSH Keys
-The Cloudera cluster uses SSH to communicate between machines during the provisioning process. A public/private key pair is used to provide authentication between the machines and must be provided at provisioning time.  A sample .pfx file is included and some steps must be taken to prepare it for use:
-- The pfx file must be uploaded to a key vault
-- The certificate must be extracted and provided as a parameter to the deployment
-- The private key can be extracted and used to connect to the cluster via SSH
-
-###Uploading the .pfx to the Key Vault
-Creating the Key Vault and uploading the .pfx is done using a set of PowerShell scripts available [here](https://gallery.technet.microsoft.com/scriptcenter/Azure-Key-Vault-Powershell-1349b091).  Download these scripts and load them into a PowerShell instance using the following script.
-
-	import-module .\KeyVaultManager
-
-Now execute the [upload-keys.ps1](upload-keys.ps1) script found in this repository with the following parameters.
-
-	# resourceGroupName - the name of the resource group that will hold the key
-	# region - Must be the same resource the cluster will be on
-	# keyVaultName - A unique key vault name between 3-24 alpha-numeric characters
-	# keyName - The name used to identify the key
-	# pfxFile - The pfx file containing the certificate and private key
-
-	.\upload-keys.ps1 "TestKeyGroup" "East Asia" "TestKeyVault" "TestKey"
-	  .\server-cert.pfx
-
-The output of the script will contain a URL that is used for the **keyUri** parameter.  The rest of the the **resourceGroupName** and **keyVaultName** used in the script above will be used for the **keyVaultResourceGroup** and **keyVaultName**.
-
-###Extracting the private key from the pfx file
-OpenSSL will also extract the private key that can be used when connecting to the machine via SSL.
-
-	 openssl pkcs12 -in server-cert.pfx -nocerts | openssl rsa -out server-cert.pem
