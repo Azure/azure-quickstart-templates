@@ -22,6 +22,6 @@ Hue application is being installed on the edge node VM. It listens on port 8888.
 To be able to access the Hue app from outside of the vnet we recommend to use SSH tunneling to redirect traffic from client to edge node.<br />
 SSH tunneling can be established with using Putty client application.<br />
 Edge node DNS name has following schema:<br />
-<your cluster name>-huevm.<region>.cloudapp.azure.com<br />
-Where <your cluster name> is the name of the cluster provisioned using this template.<br />
-<region> is a region used during deployment (example: westus)<br />
+&lt;your cluster name&gt;-huevm.&lt;region&gt;.cloudapp.azure.com<br />
+Where &lt;your cluster name&gt; is the name of the cluster provisioned using this template.<br />
+&lt;region&gt; is a region used during deployment (example: westus)<br />
