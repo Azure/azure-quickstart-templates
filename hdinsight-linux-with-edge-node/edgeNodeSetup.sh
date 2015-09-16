@@ -35,6 +35,16 @@ echo "Copying decrypt utilities for WASB storage"
 mkdir -p "$tmpFilePath/$decryptUtils"
 sshpass -p $clusterSshPw scp -r $clusterSshUser@$clusterSshHostName:"$decryptUtils/*" "$tmpFilePath$decryptUtils"
 
+#Get hadoop symbolic links from the cluster
+mkdir -p "$tmpFilePath/usr/bin"
+sshpass -p $clusterSshPw ssh $clusterSshUser@$clusterSshHostName "find /usr/bin -readable -lname '/usr/hdp/*' -exec test -e {} \; -print" | while read fileName ; do sshpass -p $clusterSshPw scp $clusterSshUser@$clusterSshHostName:$fileName "$tmpFilePath$fileName" ; done
+
+#Get the hadoop binaries from the cluster
+binariesLocation=$(grep HADOOP_HOME "$tmpFilePath/usr/bin/hadoop" -m 1 | sed 's/.*:-//;s/\(.*\)hadoop}/\1/;s/\(.*\)\/.*\1/')
+binariesParentDir=$(dirname $binariesLocation)
+mkdir -p "$tmpFilePath$binariesLocation"
+sshpass -p $clusterSshPw rsync -rLa --rsync-path='sudo rsync' $clusterSshUser@$clusterSshHostName:"$binariesLocation" "$tmpFilePath$binariesLocation"
+
 #Copy all from the temp directory into the final directory
 cp -r $tmpFilePath/* /
 rm -rf $tmpFilePath
