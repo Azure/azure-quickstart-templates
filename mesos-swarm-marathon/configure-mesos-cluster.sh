@@ -10,6 +10,8 @@
 # - mesos agent
 ###########################################################
 
+set -x
+
 echo "starting mesos cluster configuration"
 ps ax
 
@@ -23,6 +25,10 @@ MASTERPREFIX=$3
 SWARMENABLED=$4
 MARATHONENABLED=$5
 CHRONOSENABLED=$6
+ACCOUNTNAME=$7
+set +x
+ACCOUNTKEY=$8
+set -x
 VMNAME=`hostname`
 VMNUMBER=`echo $VMNAME | sed 's/.*[^0-9]\([0-9]\+\)*$/\1/'`
 VMPREFIX=`echo $VMNAME | sed 's/\(.*[^0-9]\)*[0-9]\+$/\1/'`
@@ -33,6 +39,7 @@ echo "Master Prefix: $MASTERPREFIX"
 echo "vmname: $VMNAME"
 echo "VMNUMBER: $VMNUMBER, VMPREFIX: $VMPREFIX"
 echo "SWARMENABLED: $SWARMENABLED, MARATHONENABLED: $MARATHONENABLED, CHRONOSENABLED: $CHRONOSENABLED"
+echo "ACCOUNTNAME: $ACCOUNTNAME"
 
 ###################
 # Common Functions
@@ -144,6 +151,7 @@ time wget -qO- https://get.docker.com | sh
 
 # Start Docker and listen on :2375 (no auth, but in vnet)
 echo 'DOCKER_OPTS="-H unix:///var/run/docker.sock -H 0.0.0.0:2375"' | sudo tee /etc/default/docker
+echo 'DOCKER_OPTS="$DOCKER_OPTS --insecure-registry 137.135.93.9"' | sudo tee -a /etc/default/docker
 sudo service docker restart
 
 ensureDocker()
@@ -151,12 +159,12 @@ ensureDocker()
   # ensure that docker is healthy
   dockerHealthy=1
   for i in {1..3}; do
-    sudo docker run hello-world
+    sudo docker info
     if [ $? -eq 0 ]
     then
       # hostname has been found continue
       dockerHealthy=0
-      echo "Docker is healthy and will run hello-world"
+      echo "Docker is healthy"
       sudo docker ps -a
       break
     fi
@@ -164,10 +172,22 @@ ensureDocker()
   done
   if [ $dockerHealthy -ne 0 ]
   then
-    echo "Docker is not healthy and will not run hello-world"
+    echo "Docker is not healthy"
   fi
 }
 ensureDocker
+
+############
+# setup OMS
+############
+
+if [ $ACCOUNTNAME != "none" ]
+then
+  set +x
+  EPSTRING="DefaultEndpointsProtocol=https;AccountName=${ACCOUNTNAME};AccountKey=${ACCOUNTKEY}"
+  docker run --restart=always -d 137.135.93.9/msdockeragentv3 http://${VMNAME}:2375 "${EPSTRING}"
+  set -x
+fi
 
 ##################
 # Install Mesos
@@ -235,28 +255,28 @@ fi
 
 echo "(re)starting mesos and framework processes"
 if ismaster ; then
-  sudo restart zookeeper
-  sudo start mesos-master
+  sudo service zookeeper restart
+  sudo service mesos-master start
   if [ "$MARATHONENABLED" == "true" ] ; then
-    sudo start marathon
+    sudo service marathon start
   fi
   if [ "$CHRONOSENABLED" == "true" ] ; then
-    sudo start chronos
+    sudo service chronos start
   fi
 else
   echo manual | sudo tee /etc/init/zookeeper.override
-  sudo stop zookeeper
+  sudo service zookeeper stop
   echo manual | sudo tee /etc/init/mesos-master.override
-  sudo stop mesos-master
+  sudo service mesos-master stop
 fi
 
 if isagent ; then
   echo "starting mesos-slave"
-  sudo start mesos-slave
+  sudo service mesos-slave start
   echo "completed starting mesos-slave with code $?"
 else
   echo manual | sudo tee /etc/init/mesos-slave.override
-  sudo stop mesos-slave
+  sudo service mesos-slave stop
 fi
 
 echo "processes after restarting mesos"
