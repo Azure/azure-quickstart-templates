@@ -10,7 +10,6 @@
 # - mesos agent
 ###########################################################
 
-# print commands and arguments as they are executed
 set -x
 
 echo "starting mesos cluster configuration"

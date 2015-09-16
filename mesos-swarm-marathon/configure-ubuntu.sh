@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# print commands and arguments as they are executed
 set -x
 
 echo "starting ubuntu devbox install on pid $$"
