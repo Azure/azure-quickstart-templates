@@ -1,5 +1,5 @@
 {
-  "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json",
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "redisCacheName": {
@@ -11,7 +11,7 @@
     "redisCacheLocation": {
       "type": "string",
       "metadata": {
-        "description": "The location of the Redics Cache. For best perfomance, use the same location as the app to be used with the cache."
+        "description": "The location of the Redis Cache. For best perfomance, use the same location as the app to be used with the cache."
       }
     },
     "redisCacheSKU": {
@@ -20,7 +20,7 @@
         "Basic",
         "Standard"
       ],
-      "defaultValue": "Basic",
+      "defaultValue": "Standard",
       "metadata": {
         "description": "The pricing tier of the new Azure Redis Cache."
       }
@@ -43,7 +43,7 @@
         5,
         6
       ],
-      "defaultValue": 0,
+      "defaultValue": 1,
       "metadata": {
         "description": "The size of the new Azure Redis Cache instance. "
       }
@@ -51,26 +51,65 @@
     "redisCacheVersion": {
       "type": "string",
       "defaultValue": "2.8",
-      "metadata": {
+     "metadata": {
         "description": "The Redis server version of the new cache."
+      }
+    },
+    "diagnosticsStorageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Existing storage account for diagnostics."
+      }
+    },
+    "enableNonSslPort": {
+      "type": "bool",
+      "metadata": {
+        "description": "A boolean value that indicates whether to allow access via non-SSL ports."
+      }
+    },
+    "diagnosticsStatus": {
+      "type": "string",
+      "defaultValue": "ON",
+      "allowedValues": [
+            "ON",
+            "OFF"
+        ],
+      "metadata": {
+        "description": "A value that indicates whether diagnostices is enabled. Use ON or OFF."
       }
     }
   },
   "resources": [
     {
-      "apiVersion": "2014-04-01-preview",
+      "apiVersion": "2015-08-01",
       "name": "[parameters('redisCacheName')]",
       "type": "Microsoft.Cache/Redis",
       "location": "[parameters('redisCacheLocation')]",
       "properties": {
-        "sku": {
-          "name": "[parameters('redisCacheSKU')]",
-          "family": "[parameters('redisCacheFamily')]",
-          "capacity": "[parameters('redisCacheCapacity')]"
-        },
+        "enableNonSslPort": "[parameters('enableNonSslPort')]",
         "redisVersion": "[parameters('redisCacheVersion')]",
-        "enableNonSslPort": true
-      }
+        "sku": {
+          "capacity": "[parameters('redisCacheCapacity')]",
+          "family": "[parameters('redisCacheFamily')]",
+          "name": "[parameters('redisCacheSKU')]"
+        }
+      },
+              "resources": [
+          {
+            "apiVersion": "2014-04-01",
+            "type": "diagnosticSettings",
+            "name": "service", 
+            "location": "[parameters('redisCacheLocation')]",
+            "dependsOn": [
+              "[concat('Microsoft.Cache/Redis/', parameters('redisCacheName'))]"
+            ],
+            "properties": {
+              "status": "[parameters('diagnosticsStatus')]",
+              "storageAccountName": "[parameters('diagnosticsStorageAccountName')]",
+              "retention": "30"
+            }
+          }
+        ]
     }
   ]
 }

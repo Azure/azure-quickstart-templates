@@ -23,7 +23,7 @@
     "dnsNameForJumpboxPublicIP": {
       "type": "string",
       "metadata": {
-        "description": "Unique DNS Name for the Public IP used to access the jumpbox."
+        "description": "Sets the Domain name label for the jumpbox.  The concatenation of the domain name label and the regionalized DNS zone make up the fully qualified domain name associated with the public IP address."
       }
     },
     "jumpboxVMSize": {
@@ -56,33 +56,19 @@
         "description": "The vm name prefix that identifies the jumpbox."
       }
     },
-    "osImagePublisher": {
+    "customScriptLocation": {
       "type": "string",
       "metadata": {
-        "description": "The publisher name to identify the OS image."
-      }
-    },
-    "osImageOffer": {
-      "type": "string",
-      "metadata": {
-        "description": "The offer name to identify the OS image."
-      }
-    },
-    "osImageSKU": {
-      "type": "string",
-      "metadata": {
-        "description": "The sku to identify the OS image."
-      }
-    },
-    "osImageVersion": {
-      "type": "string",
-      "metadata": {
-        "description": "The version to identify the OS image."
+        "description": "The github location for the shell scripts."
       }
     }
   },
   "variables": {
-    "vmName": "[concat(parameters('jumpboxVMNamePrefix'), '1')]"
+    "vmName": "[concat(parameters('jumpboxVMNamePrefix'), '1')]",
+    "osImagePublisher": "MicrosoftVisualStudio",
+    "osImageOffer": "VisualStudio",
+    "osImageSKU": "VS-2015-Enterprise-AzureSDK-2.7-WS2012R2",
+    "osImageVersion": "latest"
   },
   "resources": [
     {
@@ -142,10 +128,10 @@
         },
         "storageProfile": {
           "imageReference": {
-            "publisher": "[parameters('osImagePublisher')]",
-            "offer": "[parameters('osImageOffer')]",
-            "sku": "[parameters('osImageSKU')]",
-            "version": "[parameters('osImageVersion')]"
+            "publisher": "[variables('osImagePublisher')]",
+            "offer": "[variables('osImageOffer')]",
+            "sku": "[variables('osImageSKU')]",
+            "version": "[variables('osImageVersion')]"
           },
           "osDisk": {
             "name": "[concat(variables('vmName'),'-osdisk')]",
@@ -162,23 +148,6 @@
               "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('vmName'), '-nic'))]"
             }
           ]
-        }
-      }
-    },
-    {
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('vmName'), '/configurejumpbox')]",
-      "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
-      "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
-      ],
-      "properties": {
-        "publisher": "Microsoft.OSTCExtensions",
-        "type": "CustomScriptForLinux",
-        "typeHandlerVersion": "1.2",
-        "settings": {
-          "commandToExecute": "/bin/bash -c 'wget --tries 20 --retry-connrefused --waitretry=15 -qO- https://raw.githubusercontent.com/anhowe/ubuntu-devbox/master/configure-ubuntu.sh | nohup /bin/bash > /var/log/azure/firstinstall.log 2>&1 &'"
         }
       }
     }
