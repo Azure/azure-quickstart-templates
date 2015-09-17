@@ -9,29 +9,6 @@
 This template creates a multi-server Cloudera CDH 5.3.3 Apache Hadoop deployment on CentOS virtual machines, and configures the CDH installation for a high availability cluster.
 The template also provisions storage accounts, virtual network, availability set, network interfaces, VMs, disks and other infrastructure and runtime resources required by the installation.
 
-The template expects the following parameters:
-
-| Name   | Description | Default Value |
-|:--- |:---|:---|
-| adminUsername  | Administrator user name used when provisioning virtual machines | testuser |
-| adminPassword  | Administrator password used when provisioning virtual machines | Eur32#1e |
-| storageAccountPrefix | Unique namespace for the Storage Account where the Virtual Machine's disks will be placed | defaultStorageAccountPrefix |
-| numberOfDataNodes | Number of data nodes to provision in the cluster | 3 |
-| dnsNamePrefix | Unique public dns name where the Virtual Machines will be exposed | defaultDnsNamePrefix |
-| region | Azure data center location where resources will be provisioned |  |
-| storageAccountType | The type of the Storage Account to be created | Standard_LRS |
-| virtualNetworkName | The name of the virtual network provisioned for the deployment | clouderaVnet |
-| subnetName | Subnet name for the virtual network where resources will be provisioned | clouderaSubnet |
-| addressPrefix | The network address space for the virtual network | 10.0.0.0/24 |
-| subnetPrefix | The network address space for the virtual subnet | 10.0.0.0/24 |
-| nodeAddressPrefix | The IP address prefix that will be used for constructing private IP address for each node in the cluster | 10.0.0. |
-| tshirtSize | T-shirt size of the Cloudera cluster (Eval, Prod) | Eval |
-| vmSize | The size of the VMs deployed in the cluster (Defaults to Standard_D14) | Standard_D14 |
-| keyVaultResourceGroup | The resource group containing the key vault which provides the private key used for SSH login. | AzureRM-Util |
-| keyVaultName | The name of the key vault which provides the private key  used for SSH login. | AzureRM-Keys |
-| keyUri | The url of the private key used for SSH login. Details in Key Vault and SSH Keys section below. | Read section below |
-
-
 Topology
 --------
 
