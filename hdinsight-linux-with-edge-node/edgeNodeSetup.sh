@@ -62,7 +62,7 @@ rm -f $bitsFileName
 sshpass -p $clusterSshPw ssh $clusterSshUser@$clusterSshHostName "rm -rf ~/$tmpRemoteFolderName"
 
 #Copy all from the temp directory into the final directory
-cp -r $tmpFilePath/* /
+cp -rf $tmpFilePath/* /
 rm -rf $tmpFilePath
 
 #Install Java
