@@ -52,9 +52,6 @@ tar -zxvf $bitsFileName -C /
 rm -f $bitsFileName
 sshpass -p $clusterSshPw ssh $clusterSshUser@$clusterSshHostName "rm -rf ~/tmpHdpBits"
 
-
-mkdir -p "$tmpFilePath$binariesLocation"
-sshpass -p $clusterSshPw rsync -rLa --rsync-path='sudo rsync' $clusterSshUser@$clusterSshHostName:"$binariesLocation" "$tmpFilePath$binariesLocation"
 #Copy all from the temp directory into the final directory
 cp -r $tmpFilePath/* /
 rm -rf $tmpFilePath
