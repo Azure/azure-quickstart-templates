@@ -42,11 +42,14 @@ sshpass -p $clusterSshPw ssh $clusterSshUser@$clusterSshHostName "find /usr/bin 
 #Get the hadoop binaries from the cluster
 binariesLocation=$(grep HADOOP_HOME "$tmpFilePath/usr/bin/hadoop" -m 1 | sed 's/.*:-//;s/\(.*\)hadoop}/\1/;s/\(.*\)\/.*/\1/')
 #Zip the files
+echo "Zipping binaries on headnode"
 bitsFileName=hdpBits.tar.gz
 sshpass -p $clusterSshPw ssh $clusterSshUser@$clusterSshHostName "mkdir ~/tmpHdpBits; tar -cvzf ~/tmpHdpBits/$bitsFileName $binariesLocation &>/dev/null"
 #Copy the binaries
+echo "Copying binaries from headnode"
 sshpass -p $clusterSshPw scp $clusterSshUser@$clusterSshHostName:"~/tmpHdpBits/$bitsFileName" .
 #Unzip the binaries
+echo "Unzipping binaries"
 tar -zxvf $bitsFileName -C /
 #Remove the temporary folders
 rm -f $bitsFileName
