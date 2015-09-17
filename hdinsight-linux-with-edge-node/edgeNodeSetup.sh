@@ -41,10 +41,20 @@ sshpass -p $clusterSshPw ssh $clusterSshUser@$clusterSshHostName "find /usr/bin 
 
 #Get the hadoop binaries from the cluster
 binariesLocation=$(grep HADOOP_HOME "$tmpFilePath/usr/bin/hadoop" -m 1 | sed 's/.*:-//;s/\(.*\)hadoop}/\1/;s/\(.*\)\/.*/\1/')
-binariesParentDir=$(dirname $binariesLocation)
+#Zip the files
+bitsFileName=hdpBits.tar.gz
+sshpass -p $clusterSshPw ssh $clusterSshUser@$clusterSshHostName "mkdir ~/tmpHdpBits; tar -cvzf ~/tmpHdpBits/$bitsFileName $binariesLocation &>/dev/null"
+#Copy the binaries
+sshpass -p $clusterSshPw scp $clusterSshUser@$clusterSshHostName:"~/tmpHdpBits/$bitsFileName" .
+#Unzip the binaries
+tar -zxvf $bitsFileName -C /
+#Remove the temporary folders
+rm -f $bitsFileName
+sshpass -p $clusterSshPw ssh $clusterSshUser@$clusterSshHostName "rm -rf ~/tmpHdpBits"
+
+
 mkdir -p "$tmpFilePath$binariesLocation"
 sshpass -p $clusterSshPw rsync -rLa --rsync-path='sudo rsync' $clusterSshUser@$clusterSshHostName:"$binariesLocation" "$tmpFilePath$binariesLocation"
-
 #Copy all from the temp directory into the final directory
 cp -r $tmpFilePath/* /
 rm -rf $tmpFilePath
