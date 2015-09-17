@@ -1,46 +1,22 @@
 ﻿{
-  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "stdStorageName": {
-      "type": "string",
-      "defaultValue": "testvnetstoragestd",
+    "webCount": {
+      "type": "int",
+      "defaultValue": 2,
       "metadata": {
-        "description": "Name for simple storage account."
+        "description": "Number of VMs to be deployed to the front end subnet."
       }
     },
-    "stdStorageType": {
-      "type": "string",
-      "defaultValue": "Standard_LRS",
-      "allowedValues": [
-        "Standard_LRS",
-        "Standard_GRS",
-        "Standard_ZRS"
-      ],
+    "sqlCount": {
+      "type": "int",
+      "defaultValue": 2,
       "metadata": {
-        "description": "Type for simple storage account."
+        "description": "Number of VMs to be deployed to the back end subnet."
       }
     },
-    "prmStorageName": {
-      "type": "string",
-      "defaultValue": "testvnetstorageprm",
-      "metadata": {
-        "description": "Name for simple storage account."
-      }
-    },
-    "prmStorageType": {
-      "type": "string",
-      "defaultValue": "Premium_LRS",
-      "allowedValues": [
-        "Premium_LRS",
-        "Premium_GRS",
-        "Premium_ZRS"
-      ],
-      "metadata": {
-        "description": "Type for simple storage account."
-      }
-    },
-      "vnetName": {
+    "vnetName": {
       "type": "string",
       "defaultValue": "TestVNet",
       "metadata": {
@@ -82,22 +58,54 @@
         "description": "CIDR address prefix for the back end subnet."
       }
     },
-    "webCount": {
-      "type": "int",
-      "defaultValue": 2,
+    "frontEndNSGName": {
+      "type": "string",
+      "defaultValue": "NSG-BackEnd",
       "metadata": {
-        "description": "Number of VMs to be deployed to the front end subnet."
+        "description": "Name for the NSG used to allow remote RDP"
       }
     },
-    "sqlCount": {
-      "type": "int",
-      "defaultValue": 2,
+    "backEndNSGName": {
+      "type": "string",
+      "defaultValue": "NSG-FrontEnd",
       "metadata": {
-        "description": "Number of VMs to be deployed to the back end subnet."
+        "description": "Name for the NSG used to allow access to web servers on port 80"
       }
+    },
+    "stdStorageName": {
+      "type": "string",
+      "defaultValue": "testvnetstoragestd",
+      "metadata": {
+        "description": "Name for simple storage account."
+      }
+    },
+    "stdStorageType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_GRS",
+        "Standard_ZRS"
+      ]
+    },
+    "prmStorageName": {
+      "type": "string",
+      "defaultValue": "testvnetstorageprm",
+      "metadata": {
+        "description": "Name for simple storage account."
+      }
+    },
+    "prmStorageType": {
+      "type": "string",
+      "defaultValue": "Premium_LRS",
+      "allowedValues": [
+        "Premium_LRS",
+        "Premium_GRS",
+        "Premium_ZRS"
+      ]
     }
   },
-"variables": {
+  "variables": {
     "webVMSettings": {
       "vmSize": "Standard_A1",
       "adminUsername": "adminuser",
@@ -128,67 +136,47 @@
       "avsetName": "sqlAvSet"
     },
     "location": "[resourceGroup().location]",
-    "vmStorageAccountContainerName": "vhds"
+    "vmStorageAccountContainerName": "vhds",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('vnetName'))]",
+    "frontEndSubnetRef": "[concat(variables('vnetID'),'/subnets/',parameters('frontEndSubnetName'))]",
+    "backEndSubnetRef": "[concat(variables('vnetID'),'/subnets/',parameters('backEndSubnetName'))]",
+    "templateBaseUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-IaaS-WebFrontEnd-SQLBackEnd/"
   },
   "resources": [
-  {
-    "name": "[parameters('stdStorageName')]",
-    "type": "Microsoft.Storage/storageAccounts",
-    "location": "[resourceGroup().location]",
-    "apiVersion": "2015-05-01-preview",
-    "dependsOn": [ ],
-    "tags": {
-        "displayName": "Storage Account - Simple"
-    },
-    "properties": {
-      "accountType": "[parameters('stdStorageType')]"
-    }
-  },
     {
-      "name": "[parameters('prmStorageName')]",
-      "type": "Microsoft.Storage/storageAccounts",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2015-05-01-preview",
-      "dependsOn": [ ],
-      "tags": {
-        "displayName": "Storage Account - Premium"
-      },
+      "apiVersion": "2015-01-01",
+      "name": "storageTemplate",
+      "type": "Microsoft.Resources/deployments",
       "properties": {
-        "accountType": "[parameters('prmStorageType')]"
-      }
-    },
-    {
-      "apiVersion": "2015-05-01-preview",
-      "type": "Microsoft.Network/virtualNetworks",
-      "name": "[parameters('vnetName')]",
-      "location": "[resourceGroup().location]",
-      "tags": {
-        "displayName": "VNet"
-      },
-      "properties": {
-        "addressSpace": {
-          "addressPrefixes": [
-            "[parameters('vnetPrefix')]"
-          ]
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('templateBaseUrl'),'Storage.json')]",
+          "contentVersion": "1.0.0.0"
         },
-        "subnets": [
-          {
-            "name": "[parameters('frontEndSubnetName')]",
-            "properties": {
-              "addressPrefix": "[parameters('frontEndSubnetPrefix')]"
-            }
-          },
-          {
-            "name": "[parameters('backEndSubnetName')]",
-            "properties": {
-              "addressPrefix": "[parameters('backEndSubnetPrefix')]"
-            }
-          }
-        ]
+        "parametersLink": {
+          "uri": "[concat(variables('templateBaseUrl'),'Storage-param.json')]",
+          "contentVersion": "1.0.0.0"
+        }
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2015-01-01",
+      "name": "vnetTemplate",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('templateBaseUrl'),'NSG.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parametersLink": {
+          "uri": "[concat(variables('templateBaseUrl'),'NSG-param.json')]",
+          "contentVersion": "1.0.0.0"
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[variables('location')]",
       "name": "[concat(variables('webVMSettings').pipName, copyindex(1))]",
@@ -204,7 +192,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[variables('location')]",
       "name": "[concat(variables('sqlVMSettings').pipName, copyindex(1))]",
@@ -220,7 +208,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "location": "[variables('location')]",
       "tags": {
@@ -229,7 +217,7 @@
       "name": "[concat(variables('webVMSettings').nicName, copyindex(1))]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', variables('webVMSettings').pipName, copyindex(1))]",
-        "[concat('Microsoft.Network/virtualNetworks/', parameters('vnetName'))]"
+        "[concat('Microsoft.Resources/deployments/', 'vnetTemplate')]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -241,7 +229,7 @@
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat(variables('webVMSettings').pipName, copyindex(1)))]"
               },
               "subnet": {
-                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks',parameters('vnetName')),'/subnets/',parameters('frontEndSubnetName'))]"
+                "id": "[variables('frontEndSubnetRef')]"
               }
             }
           }
@@ -253,7 +241,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "location": "[variables('location')]",
       "tags": {
@@ -262,7 +250,7 @@
       "name": "[concat(variables('sqlVMSettings').nicName, copyindex(1))]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', variables('sqlVMSettings').pipName, copyindex(1))]",
-        "[concat('Microsoft.Network/virtualNetworks/', parameters('vnetName'))]"
+        "[concat('Microsoft.Resources/deployments/', 'vnetTemplate')]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -274,7 +262,7 @@
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat(variables('sqlVMSettings').pipName, copyindex(1)))]"
               },
               "subnet": {
-                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks',parameters('vnetName')),'/subnets/',parameters('backEndSubnetName'))]"
+                "id": "[variables('backEndSubnetRef')]"
               }
             }
           }
@@ -286,7 +274,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('webVMSettings').avsetName]",
       "location": "[variables('location')]",
@@ -296,7 +284,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('sqlVMSettings').avsetName]",
       "location": "[variables('location')]",
@@ -306,7 +294,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2015-06-15",
       "name": "[concat(variables('webVMSettings').vmName,copyindex(1))]",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[variables('location')]",
@@ -317,7 +305,7 @@
       "dependsOn": [
         "[concat('Microsoft.Network/networkInterfaces/', variables('webVMSettings').nicName, copyindex(1))]",
         "[concat('Microsoft.Compute/availabilitySets/', variables('webVMSettings').avsetName)]",
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('stdStorageName'))]"
+        "[concat('Microsoft.Resources/deployments/', 'storageTemplate')]"
       ],
       "tags": {
         "displayName": "VMs - Web"
@@ -360,7 +348,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2015-06-15",
       "name": "[concat(variables('sqlVMSettings').vmName,copyindex(1))]",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[variables('location')]",
@@ -371,7 +359,7 @@
       "dependsOn": [
         "[concat('Microsoft.Network/networkInterfaces/', variables('sqlVMSettings').nicName, copyindex(1))]",
         "[concat('Microsoft.Compute/availabilitySets/', variables('sqlVMSettings').avsetName)]",
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('prmStorageName'))]"
+        "[concat('Microsoft.Resources/deployments/', 'storageTemplate')]"
       ],
       "tags": {
         "displayName": "VMs - SQL"
@@ -413,7 +401,7 @@
               "createOption": "Empty",
               "lun": 0
             },
-           {
+            {
               "vhd": {
                 "uri": "[concat('http://', parameters('prmStorageName'), '.blob.core.windows.net/', variables('vmStorageAccountContainerName'), '/', variables('sqlVMSettings').datadisk, copyindex(1),'-2','.vhd')]"
               },
