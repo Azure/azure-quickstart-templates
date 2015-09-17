@@ -40,7 +40,7 @@ mkdir -p "$tmpFilePath/usr/bin"
 sshpass -p $clusterSshPw ssh $clusterSshUser@$clusterSshHostName "find /usr/bin -readable -lname '/usr/hdp/*' -exec test -e {} \; -print" | while read fileName ; do sshpass -p $clusterSshPw scp $clusterSshUser@$clusterSshHostName:$fileName "$tmpFilePath$fileName" ; done
 
 #Get the hadoop binaries from the cluster
-binariesLocation=$(grep HADOOP_HOME "$tmpFilePath/usr/bin/hadoop" -m 1 | sed 's/.*:-//;s/\(.*\)hadoop}/\1/;s/\(.*\)\/.*\1/')
+binariesLocation=$(grep HADOOP_HOME "$tmpFilePath/usr/bin/hadoop" -m 1 | sed 's/.*:-//;s/\(.*\)hadoop}/\1/;s/\(.*\)\/.*/\1/')
 binariesParentDir=$(dirname $binariesLocation)
 mkdir -p "$tmpFilePath$binariesLocation"
 sshpass -p $clusterSshPw rsync -rLa --rsync-path='sudo rsync' $clusterSshUser@$clusterSshHostName:"$binariesLocation" "$tmpFilePath$binariesLocation"
