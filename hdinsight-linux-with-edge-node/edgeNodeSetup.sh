@@ -44,16 +44,22 @@ binariesLocation=$(grep HADOOP_HOME "$tmpFilePath/usr/bin/hadoop" -m 1 | sed 's/
 #Zip the files
 echo "Zipping binaries on headnode"
 bitsFileName=hdpBits.tar.gz
-sshpass -p $clusterSshPw ssh $clusterSshUser@$clusterSshHostName "mkdir ~/tmpHdpBits; tar -cvzf ~/tmpHdpBits/$bitsFileName $binariesLocation &>/dev/null"
+loggingBitsFileName=loggingBits.tar.gz
+tmpRemoteFolderName=tmpBits
+sshpass -p $clusterSshPw ssh $clusterSshUser@$clusterSshHostName "mkdir ~/$tmpRemoteFolderName"
+sshpass -p $clusterSshPw ssh $clusterSshUser@$clusterSshHostName "tar -cvzf ~/$tmpRemoteFolderName/$bitsFileName $binariesLocation &>/dev/null"
+sshpass -p $clusterSshPw ssh $clusterSshUser@$clusterSshHostName "tar -cvzf ~/$tmpRemoteFolderName/$loggingBitsFileName /usr/lib/hdinsight-logging &>/dev/null"
 #Copy the binaries
 echo "Copying binaries from headnode"
-sshpass -p $clusterSshPw scp $clusterSshUser@$clusterSshHostName:"~/tmpHdpBits/$bitsFileName" .
+sshpass -p $clusterSshPw scp $clusterSshUser@$clusterSshHostName:"~/$tmpRemoteFolderName/$bitsFileName" .
+sshpass -p $clusterSshPw scp $clusterSshUser@$clusterSshHostName:"~/$tmpRemoteFolderName/$loggingBitsFileName" .
 #Unzip the binaries
 echo "Unzipping binaries"
-tar -zxvf $bitsFileName -C /
+tar -xhzvf $bitsFileName -C /
+tar -xhzvf $loggingBitsFileName -C /
 #Remove the temporary folders
 rm -f $bitsFileName
-sshpass -p $clusterSshPw ssh $clusterSshUser@$clusterSshHostName "rm -rf ~/tmpHdpBits"
+sshpass -p $clusterSshPw ssh $clusterSshUser@$clusterSshHostName "rm -rf ~/$tmpRemoteFolderName"
 
 #Copy all from the temp directory into the final directory
 cp -r $tmpFilePath/* /
