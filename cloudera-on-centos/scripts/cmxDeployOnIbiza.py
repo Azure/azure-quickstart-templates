@@ -1866,8 +1866,8 @@ def main():
     # Upload license or Begin Trial
     if options.license_file:
         management.upload_license()
-        _OR_
-        begin_trial()
+    else:
+        management.begin_trial()
 
     # Step-Through - Setup services in order of service dependencies
     # Zookeeper, hdfs, HBase, Solr, Spark, Yarn,
