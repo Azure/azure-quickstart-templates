@@ -91,6 +91,7 @@ chkconfig iptables off
 yum install -y ntp
 service ntpd start
 service ntpd status
+chkconfig ntpd on
 
 yum install -y microsoft-hyper-v
 

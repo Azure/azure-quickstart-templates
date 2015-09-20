@@ -855,7 +855,8 @@ def setup_oozie():
         cmhost= management.get_cmhost()
         for rcg in [x for x in service.get_all_role_config_groups()]:
             if rcg.roleType == "OOZIE_SERVER":
-                rcg.update_config({"oozie_log_dir": LOG_DIR+"/oozie"})
+                rcg.update_config({"oozie_log_dir": LOG_DIR+"/oozie",
+                                   "oozie_data_dir": LOG_DIR+"/lib/oozie/data"})
                 cdh.create_service_role(service, rcg.roleType, cmhost)
 
         check.status_for_command("Creating Oozie database", service.create_oozie_db())
@@ -1238,11 +1239,14 @@ class ManagementActions:
                 group.update_config({"mgmt_log_dir": LOG_DIR+"/cloudera-scm-alertpublisher"})
             elif group.roleType == "EVENTSERVER":
                 group.update_config({"event_server_heapsize": "215964392",
-                                     "mgmt_log_dir": LOG_DIR+"/cloudera-scm-eventserver"})
+                                     "mgmt_log_dir": LOG_DIR+"/cloudera-scm-eventserver",
+                                     "eventserver_index_dir": LOG_DIR+"/lib/cloudera-scm-eventserver"})
             elif group.roleType == "HOSTMONITOR":
-                group.update_config({"mgmt_log_dir": LOG_DIR+"/cloudera-scm-firehose"})
+                group.update_config({"mgmt_log_dir": LOG_DIR+"/cloudera-scm-firehose",
+                                     "firehose_storage_dir": LOG_DIR+"/lib/cloudera-service-monitor"})
             elif group.roleType == "SERVICEMONITOR":
-                group.update_config({"mgmt_log_dir": LOG_DIR+"/cloudera-scm-firehose"})
+                group.update_config({"mgmt_log_dir": LOG_DIR+"/cloudera-scm-firehose",
+                                     "firehose_storage_dir": LOG_DIR+"/lib/cloudera-service-monitor"})
             elif group.roleType == "NAVIGATOR" and management.licensed():
                 group.update_config({})
             elif group.roleType == "NAVIGATORMETADATASERVER" and management.licensed():
@@ -1253,6 +1257,7 @@ class ManagementActions:
                                      "headlamp_database_password": cmx.rman_password,
                                      "headlamp_database_type": "postgresql",
                                      "headlamp_database_user": "rman",
+                                     "headlamp_scratch_dir": LOG_DIR+"/lib/cloudera-scm-headlamp",
                                      "mgmt_log_dir": LOG_DIR+"/cloudera-scm-headlamp"})
             elif group.roleType == "OOZIE":
                 group.update_config({"oozie_database_host": "%s:5432" % socket.getfqdn(cmx.cm_server),
