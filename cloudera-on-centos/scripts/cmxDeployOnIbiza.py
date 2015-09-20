@@ -1243,7 +1243,7 @@ class ManagementActions:
                                      "eventserver_index_dir": LOG_DIR+"/lib/cloudera-scm-eventserver"})
             elif group.roleType == "HOSTMONITOR":
                 group.update_config({"mgmt_log_dir": LOG_DIR+"/cloudera-scm-firehose",
-                                     "firehose_storage_dir": LOG_DIR+"/lib/cloudera-service-monitor"})
+                                     "firehose_storage_dir": LOG_DIR+"/lib/cloudera-host-monitor"})
             elif group.roleType == "SERVICEMONITOR":
                 group.update_config({"mgmt_log_dir": LOG_DIR+"/cloudera-scm-firehose",
                                      "firehose_storage_dir": LOG_DIR+"/lib/cloudera-service-monitor"})
