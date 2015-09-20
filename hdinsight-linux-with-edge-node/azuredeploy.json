@@ -4,7 +4,7 @@
     "parameters": {
         "location": {
             "type": "string",
-            "allowedValues": [ 
+            "allowedValues": [
                 "Central US",
                 "East Asia",
                 "East US",
@@ -15,41 +15,52 @@
                 "Southeast Asia",
                 "West Europe",
                 "West US"
-                ],
-            "metadata": { 
+            ],
+            "metadata": {
                 "description": "The location where all azure resources will be deployed."
             }
         },
         "clusterVNetAddressSpace": {
             "type": "string",
             "defaultValue": "10.0.0.0/16",
-            "metadata": { 
+            "metadata": {
                 "description": "The virtual network's address range in CIDR notion. It must be contained in one of the standard private address spaces: 10.0.0.0/8, 172.160.0.0/12, or 192.168.0.0/16."
             }
         },
         "clusterVNetSubnetName": {
             "type": "string",
             "defaultValue": "default",
-            "metadata": { 
+            "metadata": {
                 "description": "The name of the subnet to create in the virtual network."
             }
         },
         "clusterVNetSubnetAddressRange": {
             "type": "string",
             "defaultValue": "10.0.0.0/24",
-            "metadata": { 
+            "metadata": {
                 "description": "The subnet's address range in CIDR notation. It must be contained by the address space of the virtual network."
             }
         },
         "clusterName": {
             "type": "string",
-            "metadata": { 
+            "metadata": {
                 "description": "The name of the HDInsight cluster to create."
+            }
+        },
+        "clusterType": {
+            "type": "string",
+            "defaultValue": "hadoop",
+            "allowedValues": [
+                "hadoop",
+                "hbase"
+            ],
+            "metadata": {
+                "description": "The type of HDInsight cluster to create."
             }
         },
         "clusterLoginUserName": {
             "type": "string",
-            "metadata": { 
+            "metadata": {
                 "description": "These credentials can be used to submit jobs to the cluster and to log into cluster dashboards."
             }
         },
@@ -61,7 +72,7 @@
         },
         "sshUserName": {
             "type": "string",
-            "metadata": { 
+            "metadata": {
                 "description": "These credentials can be used to remotely access the cluster and the edge node virtual machine."
             }
         },
@@ -73,33 +84,33 @@
         },
         "clusterStorageAccountName": {
             "type": "string",
-            "metadata": { 
+            "metadata": {
                 "description": "The name of the storage account to be created and be used as the cluster's storage."
             }
         },
         "clusterWorkerNodeCount": {
             "type": "int",
             "defaultValue": 4,
-            "metadata": { 
+            "metadata": {
                 "description": "The number of nodes in the HDInsight cluster."
             }
         },
         "edgeNodeVhdStorageAccountName": {
             "type": "string",
-            "metadata": { 
+            "metadata": {
                 "description": "The name of the storage account to be created and used to store the vhd of the edge node virtual machine."
             }
         },
         "edgeNodeVirtualMachineName": {
             "type": "string",
-            "metadata": { 
+            "metadata": {
                 "description": "The name of the edge node virtual machine."
             }
         },
         "edgeNodeVirtualMachineSize": {
             "type": "string",
             "defaultValue": "Standard_D1",
-             "allowedValues": [
+            "allowedValues": [
                 "Standard_A1",
                 "Standard_A2",
                 "Standard_A3",
@@ -108,8 +119,8 @@
                 "Standard_D2",
                 "Standard_D3",
                 "Standard_D4"
-              ],
-            "metadata": { 
+            ],
+            "metadata": {
                 "description": "The size of the edge node virtual machine."
             }
         },
@@ -126,6 +137,8 @@
         "clusterApiVersion": "2015-03-01-preview",
         "clusterVNetName": "[concat(parameters('clusterName'),'-vnet')]",
         "edgeNodeStorageAccountContainerName": "vhds",
+        "hadoopZookeeperSize": "Small",
+        "hbaseZookeeperSize": "Medium",
         "edgeNodeImagePublisher": "Canonical",
         "edgeNodeImageOffer": "UbuntuServer",
         "edgeNodeImageSku": "12.04.5-LTS",
@@ -184,7 +197,7 @@
                 "clusterVersion": "3.2",
                 "osType": "Linux",
                 "clusterDefinition": {
-                    "kind": "hadoop",
+                    "kind": "[parameters('clusterType')]",
 
                     "configurations": {
                         "gateway": {
@@ -208,7 +221,7 @@
                     "roles": [
                         {
                             "name": "headnode",
-                            "targetInstanceCount": "1",
+                            "targetInstanceCount": "2",
                             "hardwareProfile": {
                                 "vmSize": "Large"
                             },
@@ -228,6 +241,23 @@
                             "targetInstanceCount": "[parameters('clusterWorkerNodeCount')]",
                             "hardwareProfile": {
                                 "vmSize": "Large"
+                            },
+                            "osProfile": {
+                                "linuxOperatingSystemProfile": {
+                                    "username": "[parameters('sshUserName')]",
+                                    "password": "[parameters('sshPassword')]"
+                                }
+                            },
+                            "virtualNetworkProfile": {
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName'))]",
+                                "subnet": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName')), '/subnets/', parameters('clusterVNetSubnetName'))]"
+                            }
+                        },
+                        {
+                            "name": "zookeepernode",
+                            "targetInstanceCount": "3",
+                            "hardwareProfile": {
+                                "vmSize": "[variables(concat(parameters('clusterType'),'ZookeeperSize'))]"
                             },
                             "osProfile": {
                                 "linuxOperatingSystemProfile": {
@@ -261,7 +291,7 @@
             "location": "[parameters('location')]",
             "apiVersion": "[variables('defaultApiVersion')]",
             "dependsOn": [
-                    "[concat('Microsoft.Network/virtualNetworks/',variables('clusterVNetName'))]"
+                "[concat('Microsoft.Network/virtualNetworks/',variables('clusterVNetName'))]"
             ],
             "tags": { },
             "properties": {
@@ -387,7 +417,7 @@
                         "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/hdinsight-linux-with-edge-node/edgeNodeSetup.sh",
                         "[parameters('edgeNodeSetupScriptUri')]"
                     ],
-                    "commandToExecute": "[concat('sudo -E bash edgeNodeSetup.sh ', parameters('clusterName'),' ', parameters('sshUserName'),' ', parameters('sshPassword'),' ',parameters('edgeNodeSetupScriptUri'))]"
+                    "commandToExecute": "[concat('sudo -E bash edgeNodeSetup.sh ',parameters('edgeNodeSetupScriptUri'),' ',parameters('clusterName'),' ',parameters('sshUserName'),' ',parameters('sshPassword'),' ',parameters('clusterLoginUserName'),' ',parameters('clusterLoginPassword'))]"
                 }
             }
         }
