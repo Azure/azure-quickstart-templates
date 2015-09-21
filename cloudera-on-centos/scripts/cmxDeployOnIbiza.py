@@ -1755,11 +1755,11 @@ def parse_options():
 
     # Install CDH5 latest version
     cmx_config_options['parcel'].append(manifest_to_dict(
-        'http://archive.cloudera.com/cdh5/parcels/{latest_supported}/manifest.json'))
+        'http://archive.cloudera.com/cdh5/parcels/5/manifest.json'))
 
     # Install GPLEXTRAS5 latest version
     cmx_config_options['parcel'].append(manifest_to_dict(
-        'http://archive.cloudera.com/gplextras5/parcels/{latest_supported}/manifest.json'))
+        'http://archive.cloudera.com/gplextras5/parcels/5/manifest.json'))
 
     msg_req_args = "Please specify the required arguments: "
     if cmx_config_options['cm_server'] is None:
