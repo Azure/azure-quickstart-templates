@@ -22,7 +22,7 @@ mountDrive() {
   driveId=$2
   echo "$(hostname) : /data${2} :About to mount drive"
   mount -o noatime,barrier=0 -t ext4 ${1} /data${2}
-  UUID=`lsblk -no UUID $driveName`
+  UUID=`sudo lsblk -no UUID $driveName`
   echo "UUID=$UUID  /data${2}    ext4   defaults,noatime,discard,barrier=0 0 0" | sudo tee -a /etc/fstab
   cat /etc/fstab
   echo "$(hostname) : /data${2} : Done mounting drive"
@@ -60,7 +60,7 @@ formatAndMountDrive() {
   chmod 777 /data${2}
   echo "$(hostname) : $1 : after data creation for id $2: $?"
   mount -o noatime,barrier=0 -t ext4 $drive /data${2}
-  UUID=`lsblk -no UUID $drive`
+  UUID=`sudo lsblk -no UUID $drive`
   echo "UUID=$UUID   /data${2}    ext4   defaults,noatime,discard,barrier=0 0 0" | sudo tee -a /etc/fstab
   echo "$(hostname) : $1 : after mounting for id $2 exit code: $?"
   echo "$(hostname) : $1 : Done operating on drive $1. Here is df -h"
@@ -100,7 +100,7 @@ mountDriveForLogCloudera()
 	mkdir /log
 	mkdir $dirname
 	mount -o noatime,barrier=1 -t ext4 $drivename $dirname
-	UUID=`lsblk -no UUID $drivename`
+	UUID=`sudo lsblk -no UUID $drivename`
     echo "UUID=$UUID   $dirname    ext4   defaults,noatime,barrier=0 0 1" | sudo tee -a /etc/fstab
 	mkdir /log/cloudera
 	ln -s /log/cloudera /opt/cloudera
