@@ -22,7 +22,8 @@ mountDrive() {
   driveId=$2
   echo "$(hostname) : /data${2} :About to mount drive"
   mount -o noatime,barrier=0 -t ext4 ${1} /data${2}
-  echo "$driveName   /data${2}    ext4   defaults,noatime,discard,barrier=0 0 0" | sudo tee -a /etc/fstab
+  UUID=`lsblk -no UUID $driveName`
+  echo "UUID=$UUID   /data${2}    ext4   defaults,noatime,discard,barrier=0 0 0" | sudo tee -a /etc/fstab
   cat /etc/fstab
   echo "$(hostname) : /data${2} : Done mounting drive"
 
@@ -59,7 +60,8 @@ formatAndMountDrive() {
   chmod 777 /data${2}
   echo "$(hostname) : $1 : after data creation for id $2: $?"
   mount -o noatime,barrier=0 -t ext4 $drive /data${2}
-  echo "$drive   /data${2}    ext4   defaults,noatime,discard,barrier=0 0 0" | sudo tee -a /etc/fstab
+  UUID=`lsblk -no UUID $drive`
+  echo "UUID=$UUID   /data${2}    ext4   defaults,noatime,discard,barrier=0 0 0" | sudo tee -a /etc/fstab
   echo "$(hostname) : $1 : after mounting for id $2 exit code: $?"
   echo "$(hostname) : $1 : Done operating on drive $1. Here is df -h"
   df -h
@@ -110,7 +112,8 @@ mountDriveForLogCloudera()
 	mkdir /log
 	mkdir $dirname
 	mount -o noatime,barrier=1 -t ext4 $drivename $dirname
-	echo "$drivename   $dirname    ext4   defaults,noatime,barrier=0 0 1" | sudo tee -a /etc/fstab
+	UUID=`lsblk -no UUID $drivename`
+	echo "UUID=$UUID   $dirname    ext4   defaults,noatime,barrier=0 0 1" | sudo tee -a /etc/fstab
 	mkdir /log/cloudera
 	ln -s /log/cloudera /opt/cloudera
 }
@@ -122,7 +125,8 @@ mountDriveForZookeeper()
 	mke2fs -F -t ext4 -b 4096 -E lazy_itable_init=1 -O sparse_super,dir_index,extent,has_journal,uninit_bg -m1 $drivename
 	mkdir $dirname
 	mount -o noatime,barrier=1 -t ext4 $drivename $dirname
-	echo "$drivename   $dirname    ext4   defaults,noatime,barrier=0 0 1" | sudo tee -a /etc/fstab
+	UUID=`lsblk -no UUID $drivename`
+	echo "UUID=$UUID   $dirname    ext4   defaults,noatime,barrier=0 0 1" | sudo tee -a /etc/fstab
 }
 
 
@@ -135,7 +139,8 @@ mountDriveForQJN()
 	mkdir /data
 	mkdir $dirname
 	mount -o noatime,barrier=1 -t ext4 $drivename $dirname
-	echo "$drivename   $dirname    ext4   defaults,noatime,barrier=0 0 1" | sudo tee -a /etc/fstab
+	UUID=`lsblk -no UUID $drivename`
+	echo "UUID=$UUID   $dirname    ext4   defaults,noatime,barrier=0 0 1" | sudo tee -a /etc/fstab
 }
 
 mountDriveForPostgres()
@@ -145,7 +150,8 @@ mountDriveForPostgres()
 	mke2fs -F -t ext4 -b 4096 -E lazy_itable_init=1 -O sparse_super,dir_index,extent,has_journal,uninit_bg -m1 $drivename
 	mkdir $dirname
 	mount -o noatime,barrier=1 -t ext4 $drivename $dirname
-	echo "$drivename   $dirname    ext4   defaults,noatime,barrier=0 0 1" | sudo tee -a /etc/fstab
+	UUID=`lsblk -no UUID $drivename`
+	echo "UUID=$UUID   $dirname    ext4   defaults,noatime,barrier=0 0 1" | sudo tee -a /etc/fstab
 }
 
 mountMasterBundle()
