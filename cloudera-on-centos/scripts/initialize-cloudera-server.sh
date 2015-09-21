@@ -17,6 +17,17 @@ HA=$5
 User=$6
 Password=$7
 
+cmUser=$8
+cmPassword=$9
+
+EMAILADDRESS=${10}
+BUSINESSPHONE=${11}
+FIRSTNAME=${12}
+LASTNAME=${13}
+JOBROLE=${14}
+JOBFUNCTION=${15}
+COMPANY=${16}
+
 log "BEGIN: master node deployments"
 
 log "Beginning process of disabling SELinux"
@@ -57,24 +68,36 @@ wget http://archive.cloudera.com/cm5/redhat/6/x86_64/cm/cloudera-manager.repo -O
 n=0
 until [ $n -ge 5 ]
 do
-    yum install -y oracle-j2sdk* cloudera-manager-daemons cloudera-manager-server cloudera-manager-server-db* >> /tmp/initialize-cloudera-server.log 2>> /tmp/initialize-cloudera-server.err && break
+    yum install -y oracle-j2sdk* cloudera-manager-daemons cloudera-manager-server >> /tmp/initialize-cloudera-server.log 2>> /tmp/initialize-cloudera-server.err && break
     n=$[$n+1]
     sleep 15s
 done
 if [ $n -ge 5 ]; then log "scp error $remote, exiting..." & exit 1; fi
 
-log "start cloudera-scm-server-db and cloudera-scm-server services"
-service cloudera-scm-server-db start >> /tmp/initialize-cloudera-server.log
+#######################################################################################################################
+log "installing external DB"
+sudo yum install postgresql-server -y
+bash install-postgresql.sh >> /tmp/initialize-cloudera-server.log 2>> /tmp/initialize-cloudera-server.err
+#restart to make sure all configuration take effects
+sudo service postgresql restart
+
+log "finished installing external DB"
+#######################################################################################################################
+
+log "start cloudera-scm-server services"
+#service cloudera-scm-server-db start >> /tmp/initialize-cloudera-server.log
 service cloudera-scm-server start >> /tmp/initialize-cloudera-server.log
 
-log "Create HIVE metastore DB Cloudera embedded PostgreSQL"
-export PGPASSWORD=$(head -1 /var/lib/cloudera-scm-server-db/data/generated_password.txt)
-SQLCMD=( """CREATE ROLE hive LOGIN PASSWORD 'hive';""" """CREATE DATABASE hive OWNER hive ENCODING 'UTF8';""" """ALTER DATABASE hive SET standard_conforming_strings = off;""" )
-for SQL in "${SQLCMD[@]}"; do
-	psql -A -t -d scm -U cloudera-scm -h localhost -p 7432 -c "${SQL}" >> /tmp/initialize-cloudera-server.log
-done
+#log "Create HIVE metastore DB Cloudera embedded PostgreSQL"
+#export PGPASSWORD=$(head -1 /var/lib/cloudera-scm-server-db/data/generated_password.txt)
+#SQLCMD=( """CREATE ROLE hive LOGIN PASSWORD 'hive';""" """CREATE DATABASE hive OWNER hive ENCODING 'UTF8';""" """ALTER DATABASE hive SET standard_conforming_strings = off;""" )
+#for SQL in "${SQLCMD[@]}"; do
+#	psql -A -t -d scm -U cloudera-scm -h localhost -p 5432 -c "${SQL}" >> /tmp/initialize-cloudera-server.log
+#done
 while ! (exec 6<>/dev/tcp/$(hostname)/7180) ; do log 'Waiting for cloudera-scm-server to start...'; sleep 15; done
 log "END: master node deployments"
+
+
 
 # Set up python
 rpm -ivh http://dl.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm >> /tmp/initialize-cloudera-server.log 2>> /tmp/initialize-cloudera-server.err
@@ -87,14 +110,16 @@ touch /tmp/readyFile
 
 # Execute script to deploy Cloudera cluster
 log "BEGIN: CM deployment - starting"
-logCmd="Command: python cmxDeployOnIbiza.py -n "\""$ClusterName"\"" -u "\""$User"\"" -k "\""$key"\"" -m "\""$mip"\"" -w "\""$worker_ip"\"""
+log "myCMusername: $cmUser, myCMpassword: $cmPassword"
+# mingrui changed command to print both key info and password.
+logCmd="Command: python cmxDeployOnIbiza.py -n "\""$ClusterName"\"" -u "\""$User"\"" -p "\""$Password"\"" -k "\""$key"\"" -m "\""$mip"\"" -w "\""$worker_ip"\"" -c " \""$cmUser"\"" -s "\""$cmPassword"\"""
 if $HA; then
     logCmd="$logCmd -a"
 fi
 log $logCmd
 if $HA; then
-    python cmxDeployOnIbiza.py -n "$ClusterName" -u $User -k "$key" -m "$mip" -w "$worker_ip" -a >> /tmp/initialize-cloudera-server.log 2>> /tmp/initialize-cloudera-server.err
+    python cmxDeployOnIbiza.py -n "$ClusterName" -u $User -p $Password  -m "$mip" -w "$worker_ip" -a -c $cmUser -s $cmPassword -e -r "$EMAILADDRESS" -b "$BUSINESSPHONE" -f "$FIRSTNAME" -t "$LASTNAME" -o "$JOBROLE" -i "$JOBFUNCTION" -y "$COMPANY">> /tmp/initialize-cloudera-server.log 2>> /tmp/initialize-cloudera-server.err
 else
-    python cmxDeployOnIbiza.py -n "$ClusterName" -u $User -k "$key" -m "$mip" -w "$worker_ip" >> /tmp/initialize-cloudera-server.log 2>> /tmp/initialize-cloudera-server.err
+    python cmxDeployOnIbiza.py -n "$ClusterName" -u $User -p $Password  -m "$mip" -w "$worker_ip" -c $cmUser -s $cmPassword -e -r "$EMAILADDRESS" -b "$BUSINESSPHONE" -f "$FIRSTNAME" -t "$LASTNAME" -o "$JOBROLE" -i "$JOBFUNCTION" -y "$COMPANY">> /tmp/initialize-cloudera-server.log 2>> /tmp/initialize-cloudera-server.err
 fi
 log "END: CM deployment ended"
