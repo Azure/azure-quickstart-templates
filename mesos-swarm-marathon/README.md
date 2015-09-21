@@ -26,7 +26,7 @@ You can see the following parts:
 4. **Docker on port 2375** - The Docker engine runs containerized workloads and each Master and Agent run the Docker engine.  Mesos runs Docker workloads, and examples on how to do this are provided in the Marathon and Chronos walkthrough sections of this readme.
 5. **Swarm on port 2376** - Swarm is an experimental framework from Docker used for scheduling docker style workloads.  The Swarm framework is disabled by default because it has a showstopper bug where it grabs all the resources [link to Swarm show stopper!](https://github.com/docker/swarm/issues/1183).  As a workaround, you will notice in the walkthrough below, you can run your Docker workloads in Marathon and Chronos.
 
-All VMs are on the same private subnet, 10.0.0.0/24, and fully accessible to each other.
+All VMs are on the same private subnet, 10.0.0.0/18, and fully accessible to each other.
 
 # Installation Notes
 
@@ -34,9 +34,6 @@ Here are notes for troubleshooting:
  * the installation log for the linux jumpbox, masters, and agents are in /var/log/azure/cluster-bootstrap.log
  * event though the VMs finish quickly Mesos can take 5-15 minutes to install, check /var/log/azure/cluster-bootstrap.log for the completion status.
  * the linux jumpbox is based on https://github.com/Azure/azure-quickstart-templates/tree/master/ubuntu-desktop and will take 1 hour to configure.  Visit https://github.com/Azure/azure-quickstart-templates/tree/master/ubuntu-desktop to learn how to know when setup is completed, and then how to access the desktop via VNC and an SSH tunnel.
- * if using a Windows jumpbox the explorer browser in windows needs to be setup in compatibility mode, otherwise the Mesos UI will not display.  After starting the browser go to settings, compatibility mode and ensure "Display intranet sites in compability mode" is unchecked
-
- ![Image of disabling windows compatibility](https://raw.githubusercontent.com/anhowe/mesos-scalable-cluster/master/images/windows-compatibility.png)
 
 # Mesos Cluster with Marathon Walkthrough
 
@@ -143,6 +140,14 @@ Before running this walkthrough ensure you have created a cluster choosing "true
 7. Browse to http://c1master1:5050/, and see the "hello-world" process that has just completed.  Browse to Log:
 
  ![Image of docker hello world using Swarm](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/mesos-swarm-marathon/images/completed-hello-world.png)
+
+ # Sample Workloads
+
+ Try the following workloads to test your new mesos cluster.  Run these on Marathon using the examples above
+
+ 1. **Folding@Home** - [docker run â€“d rgardler/fah](https://hub.docker.com/r/rgardler/fah/) - Folding@Home is searching for a cure for Cancer, Alzheimers, Parkinsons and other such diseases. Donate some compute time to this fantastic effort.
+
+ 2. **Mount Azure Files volume within Docker Container** - [docker run --privileged anhowe/azure-file-workload STORAGEACCOUNTNAME STORAGEACCOUNTKEY SHARENAME](https://github.com/anhowe/azure-file-workload) - From each container mount your Azure storage by using Azure files
 
 # Questions
 **Q.** Why is there a jumpbox?
