@@ -247,6 +247,47 @@ if ismaster  && [ "$MARATHONENABLED" == "true" ] ; then
   echo $zkmarathonconfig | sudo tee /etc/marathon/conf/zk
 fi
 
+#########################################
+# Configure Mesos Master and Frameworks
+#########################################
+if ismaster ; then
+  # Download and install mesos-dns
+  sudo mkdir -p /usr/local/mesos-dns
+  sudo wget https://github.com/mesosphere/mesos-dns/releases/download/v0.2.0/mesos-dns-v0.2.0-linux-amd64.tgz
+  sudo tar zxvf mesos-dns-v0.2.0-linux-amd64.tgz
+  sudo mv mesos-dns-v0.2.0-linux-amd64 /usr/local/mesos-dns/mesos-dns
+  RESOLVER=`cat /etc/resolv.conf | grep nameserver | tail -n 1 | awk '{print $2}'`
+  echo "
+ {
+  \"zk\": \"zk://127.0.0.1:2181/mesos\",
+  \"refreshSeconds\": 60,
+  \"ttl\": 60,
+  \"domain\": \"mesos\",
+  \"port\": 53,
+  \"resolvers\": [\"$RESOLVER\"],
+  \"timeout\": 5,
+  \"listener\": \"0.0.0.0\",
+  \"email\": \"root.mesos-dns.mesos\"
+ }
+" > mesos-dns.json
+  sudo mv mesos-dns.json /usr/local/mesos-dns/mesos-dns.json
+
+  echo "
+description \"mesos dns\"
+
+# Start just after the System-V jobs (rc) to ensure networking and zookeeper
+# are started. This is as simple as possible to ensure compatibility with
+# Ubuntu, Debian, CentOS, and RHEL distros. See:
+# http://upstart.ubuntu.com/cookbook/#standard-idioms
+start on stopped rc RUNLEVEL=[2345]
+respawn
+
+exec /usr/local/mesos-dns/mesos-dns -config /usr/local/mesos-dns/mesos-dns.json" > mesos-dns.conf
+  sudo mv mesos-dns.conf /etc/init
+  sudo service mesos-dns start
+fi
+
+
 #########################
 # Configure Mesos Agent
 #########################
@@ -255,6 +296,16 @@ if isagent ; then
   echo "docker,mesos" | sudo tee /etc/mesos-slave/containerizers
   hostname -i | sudo tee /etc/mesos-slave/ip
   hostname -i | sudo tee /etc/mesos-slave/hostname
+
+  # Add mesos-dns IP addresses at the top of resolv.conf
+  RESOLV_TMP=resolv.conf.temp
+  rm -f $RESOLV_TMP
+  for i in `seq $MASTERCOUNT` ; do
+      echo nameserver `getent hosts ${MASTERPREFIX}${i} | awk '{ print $1 }'` >> $RESOLV_TMP
+  done
+
+  cat /etc/resolv.conf >> $RESOLV_TMP
+  mv $RESOLV_TMP /etc/resolv.conf
 fi
 
 ##############################################
