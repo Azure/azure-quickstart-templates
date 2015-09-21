@@ -110,7 +110,7 @@ mountDriveForLogCloudera()
 	mkdir /log
 	mkdir $dirname
 	mount -o noatime,barrier=1 -t ext4 $drivename $dirname
-	echo "$drivename   $dirname    ext4   defaults,noatime, barrier=0 0 1" | sudo tee -a /etc/fstab
+	echo "$drivename   $dirname    ext4   defaults,noatime,barrier=0 0 1" | sudo tee -a /etc/fstab
 	mkdir /log/cloudera
 	ln -s /log/cloudera /opt/cloudera
 }
@@ -122,7 +122,7 @@ mountDriveForZookeeper()
 	mke2fs -F -t ext4 -b 4096 -E lazy_itable_init=1 -O sparse_super,dir_index,extent,has_journal,uninit_bg -m1 $drivename
 	mkdir $dirname
 	mount -o noatime,barrier=1 -t ext4 $drivename $dirname
-	echo "$drivename   $dirname    ext4   defaults,noatime, barrier=0 0 1" | sudo tee -a /etc/fstab
+	echo "$drivename   $dirname    ext4   defaults,noatime,barrier=0 0 1" | sudo tee -a /etc/fstab
 }
 
 
@@ -135,7 +135,7 @@ mountDriveForQJN()
 	mkdir /data
 	mkdir $dirname
 	mount -o noatime,barrier=1 -t ext4 $drivename $dirname
-	echo "$drivename   $dirname    ext4   defaults,noatime, barrier=0 0 1" | sudo tee -a /etc/fstab
+	echo "$drivename   $dirname    ext4   defaults,noatime,barrier=0 0 1" | sudo tee -a /etc/fstab
 }
 
 mountDriveForPostgres()
@@ -145,7 +145,7 @@ mountDriveForPostgres()
 	mke2fs -F -t ext4 -b 4096 -E lazy_itable_init=1 -O sparse_super,dir_index,extent,has_journal,uninit_bg -m1 $drivename
 	mkdir $dirname
 	mount -o noatime,barrier=1 -t ext4 $drivename $dirname
-	echo "$drivename   $dirname    ext4   defaults,noatime, barrier=0 0 1" | sudo tee -a /etc/fstab
+	echo "$drivename   $dirname    ext4   defaults,noatime,barrier=0 0 1" | sudo tee -a /etc/fstab
 }
 
 mountMasterBundle()
