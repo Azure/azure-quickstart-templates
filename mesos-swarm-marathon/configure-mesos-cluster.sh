@@ -13,6 +13,7 @@
 set -x
 
 echo "starting mesos cluster configuration"
+date
 ps ax
 
 #############
@@ -128,7 +129,11 @@ zkhosts()
     then
       zkhosts="${zkhosts},"
     fi
-    zkhosts="${zkhosts}${MASTERPREFIX}${i}:2181"
+
+    IPADDR=`getent hosts ${MASTERPREFIX}${i} | awk '{ print $1 }'`
+    zkhosts="${zkhosts}${IPADDR}:2181"
+    # due to mesos team experience ip addresses are chosen over dns names
+    #zkhosts="${zkhosts}${MASTERPREFIX}${i}:2181"
   done
   echo $zkhosts
 }
@@ -215,7 +220,10 @@ if ismaster ; then
   echo $VMNUMBER | sudo tee /etc/zookeeper/conf/myid
   for i in `seq 1 $MASTERCOUNT` ;
   do
-    echo "server.${i}=${MASTERPREFIX}${i}:2888:3888" | sudo tee -a /etc/zookeeper/conf/zoo.cfg
+    IPADDR=`getent hosts ${MASTERPREFIX}${i} | awk '{ print $1 }'`
+    echo "server.${i}=${IPADDR}:2888:3888" | sudo tee -a /etc/zookeeper/conf/zoo.cfg
+    # due to mesos team experience ip addresses are chosen over dns names
+    #echo "server.${i}=${MASTERPREFIX}${i}:2888:3888" | sudo tee -a /etc/zookeeper/conf/zoo.cfg
   done
 fi
 
@@ -226,7 +234,7 @@ if ismaster ; then
   quorum=`expr $MASTERCOUNT / 2 + 1`
   echo $quorum | sudo tee /etc/mesos-master/quorum
   hostname -i | sudo tee /etc/mesos-master/ip
-  hostname | sudo tee /etc/mesos-master/hostname
+  hostname -i | sudo tee /etc/mesos-master/hostname
   echo 'Mesos Cluster on Microsoft Azure' | sudo tee /etc/mesos-master/cluster
 fi
 
@@ -246,7 +254,7 @@ if isagent ; then
   # Add docker containerizer
   echo "docker,mesos" | sudo tee /etc/mesos-slave/containerizers
   hostname -i | sudo tee /etc/mesos-slave/ip
-  hostname | sudo tee /etc/mesos-slave/hostname
+  hostname -i | sudo tee /etc/mesos-slave/hostname
 fi
 
 ##############################################
@@ -305,5 +313,5 @@ fi
 echo "processes at end of script"
 ps ax
 echo "Finished installing and configuring docker and swarm"
-
+date
 echo "completed mesos cluster configuration"
