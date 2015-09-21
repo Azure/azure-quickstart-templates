@@ -98,7 +98,7 @@ mountDriveForLogCloudera()
 	mkdir /log
 	mkdir $dirname
 	mount -o noatime,barrier=1 -t ext4 $drivename $dirname
-	echo "$drivename   $dirname    ext4   defaults,noatime, barrier=0 0 1" | sudo tee -a /etc/fstab
+	echo "$drivename   $dirname    ext4   defaults,noatime,barrier=0 0 1" | sudo tee -a /etc/fstab
 	mkdir /log/cloudera
 	ln -s /log/cloudera /opt/cloudera
 
