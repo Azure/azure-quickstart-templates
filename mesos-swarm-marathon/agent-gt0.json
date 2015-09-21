@@ -130,7 +130,9 @@
     }
   },
   "variables": {
-    "availabilitySet": "agentAvailabilitySet",
+    "scaleSetName": "scaleSet",
+    "virtualNetworkName": "VNET",
+    "subnetName": "Subnet",
     "vmsPerStorageAccount": 15,
     "storageAccountsCount": "[add(div(parameters('agentCount'), variables('vmsPerStorageAccount')), mod(add(mod(parameters('agentCount'), variables('vmsPerStorageAccount')),2), add(mod(parameters('agentCount'), variables('vmsPerStorageAccount')),1)))]",
     "storageAccountType": "Standard_GRS",
@@ -141,7 +143,7 @@
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[concat(parameters('newStorageAccountNamePrefix'),copyIndex(1))]",
+      "name": "[parameters('newStorageAccountNamePrefix')]",
       "apiVersion": "2015-05-01-preview",
       "location": "[resourceGroup().location]",
       "copy": {
@@ -153,98 +155,73 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Compute/availabilitySets",
-      "name": "[variables('availabilitySet')]",
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Compute/virtualMachineScaleSets",
+      "name": "[variables('scaleSetName')]",
       "location": "[resourceGroup().location]",
-      "properties": {}
-    },
-    {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Network/networkInterfaces",
-      "name": "[concat(parameters('agentVMNamePrefix'), copyIndex(1), '-nic')]",
-      "location": "[resourceGroup().location]",
-      "copy": {
-        "name": "nicLoopNode",
-        "count": "[parameters('agentCount')]"
-      },
-      "properties": {
-        "ipConfigurations": [
-          {
-            "name": "ipConfigNode",
-            "properties": {
-              "privateIPAllocationMethod": "Static",
-              "privateIPAddress": "[concat(split(parameters('subnetPrefix'),'0/24')[0], copyIndex(parameters('agentFirstAddr')))]",
-              "subnet": {
-                "id": "[parameters('subnetRef')]"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Compute/virtualMachines",
-      "name": "[concat(parameters('agentVMNamePrefix'), copyIndex(1))]",
-      "location": "[resourceGroup().location]",
-      "copy": {
-        "name": "vmLoopNode",
-        "count": "[parameters('agentCount')]"
-      },
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountNamePrefix'),add(1,div(copyIndex(),variables('vmsPerStorageAccount'))))]",
-        "[concat('Microsoft.Network/networkInterfaces/', parameters('agentVMNamePrefix'), copyIndex(1), '-nic')]",
-        "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySet'))]"
+        "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountNamePrefix'))]"
       ],
+      "sku": {
+        "name": "[parameters('agentVMSize')]",
+        "tier": "Standard",
+        "capacity": "[parameters('agentCount')]"
+      },
       "properties": {
-        "availabilitySet": {
-          "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('availabilitySet'))]"
+        "upgradePolicy": {
+           "mode": "Automatic"
         },
-        "hardwareProfile": {
-          "vmSize": "[parameters('agentVMSize')]"
-        },
-        "osProfile": {
-          "computername": "[concat(parameters('agentVMNamePrefix'), copyIndex(1))]",
-          "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
-        },
-        "storageProfile": {
-          "imageReference": {
-            "publisher": "[parameters('osImagePublisher')]",
-            "offer": "[parameters('osImageOffer')]",
-            "sku": "[parameters('osImageSKU')]",
-            "version": "[parameters('osImageVersion')]"
-          },
-          "osDisk": {
-            "name": "[concat(parameters('agentVMNamePrefix'), copyIndex(1),'-osdisk')]",
-            "vhd": {
-              "uri": "[concat('http://', parameters('newStorageAccountNamePrefix'),add(1,div(copyIndex(),variables('vmsPerStorageAccount'))), '.blob.core.windows.net/vhds/', parameters('masterVMNamePrefix'), copyIndex(1), '-osdisk.vhd')]"
+        "virtualMachineProfile": {
+          "storageProfile": {
+            "osDisk": {
+              "vhdContainers": [
+                "[concat('https://', parameters('newStorageAccountNamePrefix'), '.blob.core.windows.net/vmss')]"
+               ],
+               "name": "vmssosdisk",
+               "caching": "ReadOnly",
+               "createOption": "FromImage"
+              },
+              "imageReference": {
+                "publisher": "[parameters('osImagePublisher')]",
+                "offer": "[parameters('osImageOffer')]",
+                "sku": "[parameters('osImageSKU')]",
+                "version": "[parameters('osImageVersion')]"
+              }
             },
-            "caching": "ReadWrite",
-            "createOption": "FromImage"
+           "osProfile": {
+              "computernamePrefix": "[parameters('agentVMNamePrefix')]",
+             "adminUsername": "[parameters('adminUsername')]",
+             "adminPassword": "[parameters('adminPassword')]"
+           },
+           "networkProfile": {
+              "networkInterfaceConfigurations": [
+              {
+                 "name": "[variables('scaleSetName')]",
+                "properties": {
+                   "ipConfigurations": [
+                   {
+                     "name": "[variables('scaleSetName')]",
+                       "properties": {
+                         "subnet": {
+                           "Id": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'), '/subnets/', variables('subnetName'))]"
+                         }
+                       }
+                    }
+                    ]
+                 }
+               }
+            ]
           }
-        },
-        "networkProfile": {
-          "networkInterfaces": [
-            {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('agentVMNamePrefix'), copyIndex(1), '-nic'))]"
-            }
-          ]
         }
       }
     },
     {
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(parameters('agentVMNamePrefix'), copyIndex(1), '/configureagent')]",
-      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/virtualMachineScaleSets/extensions",
+      "name": "[concat(variables('scaleSetName'), '/configureagent')]",
+      "apiVersion": "2015-05-01-preview",
       "location": "[resourceGroup().location]",
-      "copy": {
-        "name": "vmLoopNode",
-        "count": "[parameters('agentCount')]"
-      },
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('agentVMNamePrefix'), copyIndex(1))]"
+	        	"[concat('Microsoft.Compute/virtualMachineScaleSets/', variables('scaleSetName'))]"
       ],
       "properties": {
         "publisher": "Microsoft.OSTCExtensions",
