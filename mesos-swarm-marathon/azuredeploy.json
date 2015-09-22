@@ -1,0 +1,401 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "newStorageAccountNamePrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Unique DNS Name Prefix for the Storage Account where the Virtual Machine's disks will be placed.  StorageAccounts may contain at most variables('vmsPerStorageAccount')"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the Virtual Machine."
+      }
+    },
+    "dnsNameForJumpboxPublicIP": {
+      "type": "string",
+      "metadata": {
+        "description": "Unique DNS Name for the Public IP used to access the Jumpbox."
+      }
+    },
+    "dnsNameForContainerServicePublicIP": {
+      "type": "string",
+      "metadata": {
+        "description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
+      }
+    },
+    "agentCount": {
+      "type": "int",
+      "defaultValue": 0,
+      "metadata": {
+        "description": "The number of mesos masters for the cluster."
+      }
+    },
+    "masterCount": {
+      "type": "int",
+      "defaultValue": 1,
+      "allowedValues": [
+        1,
+        3,
+        5
+      ],
+      "metadata": {
+        "description": "The number of mesos masters for the cluster."
+      }
+    },
+    "jumpboxCount": {
+      "type": "int",
+      "defaultValue": 0,
+      "allowedValues": [
+        0,
+        1
+      ],
+      "metadata": {
+        "description": "The number of mesos masters for the cluster."
+      }
+    },
+    "masterConfiguration": {
+      "type": "string",
+      "defaultValue": "masters-are-agents",
+      "allowedValues": [
+        "masters-are-agents",
+        "masters-are-not-agents"
+      ],
+      "metadata": {
+        "description": "Specify whether masters should act as agents or not."
+      }
+    },
+    "agentVMSize": {
+      "type": "string",
+      "defaultValue": "Standard_D1",
+      "allowedValues": [
+        "Standard_D1",
+        "Standard_D2",
+        "Standard_D3",
+        "Standard_D4",
+        "Standard_D11",
+        "Standard_D12",
+        "Standard_D13",
+        "Standard_D14"
+      ],
+      "metadata": {
+        "description": "The size of the Virtual Machine."
+      }
+    },
+    "masterVMSize": {
+      "type": "string",
+      "defaultValue": "Standard_D1",
+      "allowedValues": [
+        "Standard_D1",
+        "Standard_D2",
+        "Standard_D3",
+        "Standard_D4",
+        "Standard_D11",
+        "Standard_D12",
+        "Standard_D13",
+        "Standard_D14"
+      ],
+      "metadata": {
+        "description": "The size of the Virtual Machine."
+      }
+    },
+    "jumpboxVMSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2",
+      "allowedValues": [
+        "Standard_D1",
+        "Standard_D2",
+        "Standard_D3",
+        "Standard_D4",
+        "Standard_D11",
+        "Standard_D12",
+        "Standard_D13",
+        "Standard_D14"
+      ],
+      "metadata": {
+        "description": "The size of the Virtual Machine."
+      }
+    },
+    "clusterPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "The prefix to identify the cluster."
+      }
+    }
+  },
+  "variables": {
+    "adminUsername": "azureuser",
+    "masterVMNamePrefix": "[concat(parameters('clusterPrefix'),'master')]",
+    "agentVMNamePrefix": "[concat(parameters('clusterPrefix'),'agent')]",
+    "jumpboxVMNamePrefix": "[concat(parameters('clusterPrefix'),'jumpbox')]",
+    "osImagePublisher": "Canonical",
+    "osImageOffer": "UbuntuServer",
+    "osImageSKU": "14.04.3-LTS",
+    "osImageVersion": "latest",
+    "virtualNetworkName": "VNET",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
+    "subnetName": "Subnet",
+    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
+    "addressPrefix": "10.0.0.0/16",
+    "subnetPrefix": "10.0.0.0/24",
+    "jumpboxAddr": 4,
+    "masterFirstAddr": 5,
+    "agentFirstAddr": 100,
+    "nsgName": "node-nsg",
+    "nsgID": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('nsgName'))]",
+    "storageAccountType": "Standard_GRS",
+    "customScriptLocation": "https://raw.githubusercontent.com/anhowe/mesos-scalable-cluster/master/",
+    "agentFiles": [
+      "agent-0.json",
+      "agent-gt0.json"
+    ],
+    "agentFile": "[variables('agentFiles')[mod(add(parameters('agentCount'),2),add(parameters('agentCount'),1))]]",
+    "validateNoMoreThan50Agents": "[div(1,div(50,parameters('agentCount')))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[concat(parameters('newStorageAccountNamePrefix'),'0')]",
+      "apiVersion": "2015-05-01-preview",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "accountType": "[variables('storageAccountType')]"
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('nsgName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "ssh",
+            "properties": {
+              "description": "SSH",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 200,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[variables('nsgID')]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[variables('nsgID')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-01-01",
+      "type": "Microsoft.Resources/deployments",
+      "name": "createMasterNodes",
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountNamePrefix'), '0')]",
+        "[variables('vnetID')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('customScriptLocation'), 'master.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "newStorageAccountName": {
+            "value": "[concat(parameters('newStorageAccountNamePrefix'), '0')]"
+          },
+          "adminUsername": {
+            "value": "[variables('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "dnsNameForContainerServicePublicIP": {
+            "value": "[parameters('dnsNameForContainerServicePublicIP')]"
+          },
+          "masterVMSize": {
+            "value": "[parameters('masterVMSize')]"
+          },
+          "masterCount": {
+            "value": "[parameters('masterCount')]"
+          },
+          "masterConfiguration": {
+            "value": "[parameters('masterConfiguration')]"
+          },
+          "subnetPrefix": {
+            "value": "[variables('subnetPrefix')]"
+          },
+          "subnetRef": {
+            "value": "[variables('subnetRef')]"
+          },
+          "masterFirstAddr": {
+            "value": "[variables('masterFirstAddr')]"
+          },
+          "masterVMNamePrefix": {
+            "value": "[variables('masterVMNamePrefix')]"
+          },
+          "osImagePublisher": {
+            "value": "[variables('osImagePublisher')]"
+          },
+          "osImageOffer": {
+            "value": "[variables('osImageOffer')]"
+          },
+          "osImageSKU" : {
+            "value": "[variables('osImageSKU')]"
+          },
+          "osImageVersion" : {
+            "value": "[variables('osImageVersion')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-01-01",
+      "type": "Microsoft.Resources/deployments",
+      "name": "createAgents",
+      "dependsOn": [
+        "[variables('vnetID')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('customScriptLocation'), variables('agentFile'))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "newStorageAccountNamePrefix": {
+            "value": "[concat(parameters('newStorageAccountNamePrefix'))]"
+          },
+          "adminUsername": {
+            "value": "[variables('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "agentVMSize": {
+            "value": "[parameters('agentVMSize')]"
+          },
+          "agentCount": {
+            "value": "[parameters('agentCount')]"
+          },
+          "masterCount": {
+            "value": "[parameters('masterCount')]"
+          },
+          "subnetPrefix": {
+            "value": "[variables('subnetPrefix')]"
+          },
+          "subnetRef": {
+            "value": "[variables('subnetRef')]"
+          },
+          "agentFirstAddr": {
+            "value": "[variables('agentFirstAddr')]"
+          },
+          "masterVMNamePrefix": {
+            "value": "[variables('masterVMNamePrefix')]"
+          },
+          "agentVMNamePrefix": {
+            "value": "[variables('agentVMNamePrefix')]"
+          },
+          "osImagePublisher": {
+            "value": "[variables('osImagePublisher')]"
+          },
+          "osImageOffer": {
+            "value": "[variables('osImageOffer')]"
+          },
+          "osImageSKU" : {
+            "value": "[variables('osImageSKU')]"
+          },
+          "osImageVersion" : {
+            "value": "[variables('osImageVersion')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-01-01",
+      "type": "Microsoft.Resources/deployments",
+      "name": "createJumpbox",
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountNamePrefix'), '0')]",
+        "[variables('vnetID')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('customScriptLocation'), 'jumpbox-', parameters('jumpboxCount'), '.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "newStorageAccountName": {
+            "value": "[concat(parameters('newStorageAccountNamePrefix'), '0')]"
+          },
+          "adminUsername": {
+            "value": "[variables('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "dnsNameForJumpboxPublicIP": {
+            "value": "[parameters('dnsNameForJumpboxPublicIP')]"
+          },
+          "jumpboxVMSize": {
+            "value": "[parameters('jumpboxVMSize')]"
+          },
+          "subnetPrefix": {
+            "value": "[variables('subnetPrefix')]"
+          },
+          "subnetRef": {
+            "value": "[variables('subnetRef')]"
+          },
+          "jumpboxAddr": {
+            "value": "[variables('jumpboxAddr')]"
+          },
+          "jumpboxVMNamePrefix": {
+            "value": "[variables('jumpboxVMNamePrefix')]"
+          },
+          "osImagePublisher": {
+            "value": "[variables('osImagePublisher')]"
+          },
+          "osImageOffer": {
+            "value": "[variables('osImageOffer')]"
+          },
+          "osImageSKU" : {
+            "value": "[variables('osImageSKU')]"
+          },
+          "osImageVersion" : {
+            "value": "[variables('osImageVersion')]"
+          }
+        }
+      }
+    }
+  ]
+}
