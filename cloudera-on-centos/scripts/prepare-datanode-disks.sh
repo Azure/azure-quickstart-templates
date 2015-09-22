@@ -90,10 +90,24 @@ unmountAllDrives() {
   df -h
 }
 
+mountDriveForLogCloudera()
+{
+	dirname=/log
+	drivename=/dev/sdc
+	mke2fs -F -t ext4 -b 4096 -E lazy_itable_init=1 -O sparse_super,dir_index,extent,has_journal,uninit_bg -m1 $drivename
+	mkdir /log
+	mkdir $dirname
+	mount -o noatime,barrier=1 -t ext4 $drivename $dirname
+	echo "$drivename   $dirname    ext4   defaults,noatime, barrier=0 0 1" | sudo tee -a /etc/fstab
+	mkdir /log/cloudera
+	ln -s /log/cloudera /opt/cloudera
+
+}
+
 formatAndMountAllDrives() {
   echo "Entered formatAndMountAllDrives on `hostname`"
   let i=0 || true
-  for x in $(sfdisk -l 2>/dev/null | cut -d' ' -f 2 | grep /dev | grep -v "/dev/sda" | grep -v "/dev/sdb" | sed "s^:^^");
+  for x in $(sfdisk -l 2>/dev/null | cut -d' ' -f 2 | grep /dev | grep -v "/dev/sda" | grep -v "/dev/sdb" | grep -v "/dev/sdc" | sed "s^:^^");
   do
     echo "$(hostname) : $x: About to call formatAndMountDrive)"
     formatAndMountDrive $x $i  0</dev/null &
@@ -103,5 +117,5 @@ formatAndMountAllDrives() {
 }
 END
 
-bash -c "source ./inputs2.sh; helloFromInputs; printFstab; unmountAllDrives;  formatAndMountAllDrives;"
+bash -c "source ./inputs2.sh; helloFromInputs; printFstab; unmountAllDrives; mountDriveForLogCloudera; formatAndMountAllDrives;"
 exit 0  # and this is useful
