@@ -30,6 +30,9 @@ ACCOUNTNAME=$7
 set +x
 ACCOUNTKEY=$8
 set -x
+AZUREUSER=$9
+SSHKEY=${10}
+HOMEDIR="/home/$AZUREUSER"
 VMNAME=`hostname`
 VMNUMBER=`echo $VMNAME | sed 's/.*[^0-9]\([0-9]\+\)*$/\1/'`
 VMPREFIX=`echo $VMNAME | sed 's/\(.*[^0-9]\)*[0-9]\+$/\1/'`
@@ -41,6 +44,27 @@ echo "vmname: $VMNAME"
 echo "VMNUMBER: $VMNUMBER, VMPREFIX: $VMPREFIX"
 echo "SWARMENABLED: $SWARMENABLED, MARATHONENABLED: $MARATHONENABLED, CHRONOSENABLED: $CHRONOSENABLED"
 echo "ACCOUNTNAME: $ACCOUNTNAME"
+
+###################
+# setup ssh access
+###################
+
+SSHDIR=$HOMEDIR/.ssh
+AUTHFILE=$SSHDIR/authorized_keys
+if [ `echo $SSHKEY | sed 's/^\(ssh-rsa \).*/\1/'` == "ssh-rsa" ] ; then
+  if [ ! -d $SSHDIR ] ; then
+    sudo -i -u $AZUREUSER mkdir $SSHDIR
+    sudo -i -u $AZUREUSER chmod 700 $SSHDIR
+  fi
+
+  if [ ! -e $AUTHFILE ] ; then
+    sudo -i -u $AZUREUSER touch $AUTHFILE
+    sudo -i -u $AZUREUSER chmod 600 $AUTHFILE
+  fi
+  echo $SSHKEY | sudo -i -u $AZUREUSER tee -a $AUTHFILE
+else
+  echo "no valid key data"
+fi
 
 ###################
 # Common Functions
@@ -156,6 +180,7 @@ time wget -qO- https://get.docker.com | sh
 
 # Start Docker and listen on :2375 (no auth, but in vnet)
 echo 'DOCKER_OPTS="-H unix:///var/run/docker.sock -H 0.0.0.0:2375"' | sudo tee /etc/default/docker
+# the following insecure registry is for OMS
 echo 'DOCKER_OPTS="$DOCKER_OPTS --insecure-registry 137.135.93.9"' | sudo tee -a /etc/default/docker
 sudo service docker restart
 
