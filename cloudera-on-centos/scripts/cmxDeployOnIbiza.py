@@ -567,7 +567,7 @@ def setup_yarn(HA):
 #                    cdh.create_service_role(service, rcg.roleType, host)
             if rcg.roleType == "GATEWAY":
                 # yarn-GATEWAY - Default Group
-                rcg.update_config({"mapred_reduce_tasks": "505413632", "mapred_submit_replication": "3"})
+                rcg.update_config({"mapred_submit_replication": "3"})
                 for host in management.get_hosts(include_cm_host=True):
                     cdh.create_service_role(service, rcg.roleType, host)
 
