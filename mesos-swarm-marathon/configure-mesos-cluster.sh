@@ -256,19 +256,19 @@ if ismaster ; then
   sudo wget https://github.com/mesosphere/mesos-dns/releases/download/v0.2.0/mesos-dns-v0.2.0-linux-amd64.tgz
   sudo tar zxvf mesos-dns-v0.2.0-linux-amd64.tgz
   sudo mv mesos-dns-v0.2.0-linux-amd64 /usr/local/mesos-dns/mesos-dns
-  RESOLVER=`cat /etc/resolv.conf | grep nameserver | tail -n 1 | awk '{print $2}'`
+
   echo "
- {
+{
   \"zk\": \"zk://127.0.0.1:2181/mesos\",
-  \"refreshSeconds\": 60,
-  \"ttl\": 60,
+  \"refreshSeconds\": 1,
+  \"ttl\": 0,
   \"domain\": \"mesos\",
   \"port\": 53,
-  \"resolvers\": [\"$RESOLVER\"],
-  \"timeout\": 5,
+  \"timeout\": 1,
   \"listener\": \"0.0.0.0\",
-  \"email\": \"root.mesos-dns.mesos\"
- }
+  \"email\": \"root.mesos-dns.mesos\",
+  \"externalon\": false
+}
 " > mesos-dns.json
   sudo mv mesos-dns.json /usr/local/mesos-dns/mesos-dns.json
 
