@@ -234,7 +234,7 @@ if ismaster ; then
   quorum=`expr $MASTERCOUNT / 2 + 1`
   echo $quorum | sudo tee /etc/mesos-master/quorum
   hostname -i | sudo tee /etc/mesos-master/ip
-  hostname -i | sudo tee /etc/mesos-master/hostname
+  hostname | sudo tee /etc/mesos-master/hostname
   echo 'Mesos Cluster on Microsoft Azure' | sudo tee /etc/mesos-master/cluster
 fi
 
@@ -294,8 +294,14 @@ fi
 if isagent ; then
   # Add docker containerizer
   echo "docker,mesos" | sudo tee /etc/mesos-slave/containerizers
+  # Add resources configuration
+  if ismaster ; then
+    echo "ports:[1-21,23-4399,4401-5049,5052-8079,8081-32000]" | sudo tee /etc/mesos-slave/resources
+  else
+    echo "ports:[1-21,23-5050,5052-32000]" | sudo tee /etc/mesos-slave/resources
+  fi
   hostname -i | sudo tee /etc/mesos-slave/ip
-  hostname -i | sudo tee /etc/mesos-slave/hostname
+  hostname | sudo tee /etc/mesos-slave/hostname
 
   # Add mesos-dns IP addresses at the top of resolv.conf
   RESOLV_TMP=resolv.conf.temp
