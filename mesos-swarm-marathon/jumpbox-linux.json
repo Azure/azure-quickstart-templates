@@ -23,7 +23,7 @@
     "dnsNameForJumpboxPublicIP": {
       "type": "string",
       "metadata": {
-        "description": "Unique DNS Name for the Public IP used to access the jumpbox."
+        "description": "Sets the Domain name label for the jumpbox.  The concatenation of the domain name label and the regionalized DNS zone make up the fully qualified domain name associated with the public IP address."
       }
     },
     "jumpboxVMSize": {
@@ -56,33 +56,34 @@
         "description": "The vm name prefix that identifies the jumpbox."
       }
     },
-    "osImagePublisher": {
+    "customScriptLocation": {
       "type": "string",
       "metadata": {
-        "description": "The publisher name to identify the OS image."
+        "description": "The github location for the shell scripts."
       }
     },
-    "osImageOffer": {
+    "masterVMNamePrefix": {
       "type": "string",
       "metadata": {
-        "description": "The offer name to identify the OS image."
+        "description": "The vm name prefix of the master"
       }
     },
-    "osImageSKU": {
+    "sshRSAPublicKey": {
       "type": "string",
       "metadata": {
-        "description": "The sku to identify the OS image."
-      }
-    },
-    "osImageVersion": {
-      "type": "string",
-      "metadata": {
-        "description": "The version to identify the OS image."
+        "description": "Configure all linux machines with the SSH rsa public key string.  Use 'disabled' to not configure access with SSH rsa public key."
       }
     }
   },
   "variables": {
-    "vmName": "[concat(parameters('jumpboxVMNamePrefix'), '1')]"
+    "vmName": "[concat(parameters('jumpboxVMNamePrefix'), '1')]",
+    "osImagePublisher": "Canonical",
+    "osImageOffer": "UbuntuServer",
+    "osImageSKU": "14.04.3-LTS",
+    "osImageVersion": "latest",
+    "wgetCommandPrefix": "[concat('wget --tries 20 --retry-connrefused --waitretry=15 -qO- ', parameters('customScriptLocation'), 'configure-ubuntu.sh | nohup /bin/bash -s ')]",
+    "wgetCommandPostfix":  " >> /var/log/azure/cluster-bootstrap.log 2>&1 &'",
+    "commandPrefix": "/bin/bash -c '"
   },
   "resources": [
     {
@@ -111,7 +112,7 @@
             "name": "ipConfig",
             "properties": {
               "privateIPAllocationMethod": "Static",
-              "privateIPAddress": "[concat(split(parameters('subnetPrefix'),'0/24')[0], parameters('jumpboxAddr'))]",
+              "privateIPAddress": "[concat(split(parameters('subnetPrefix'),'0/18')[0], parameters('jumpboxAddr'))]",
               "publicIPAddress": {
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('dnsNameForJumpboxPublicIP'))]"
               },
@@ -142,10 +143,10 @@
         },
         "storageProfile": {
           "imageReference": {
-            "publisher": "[parameters('osImagePublisher')]",
-            "offer": "[parameters('osImageOffer')]",
-            "sku": "[parameters('osImageSKU')]",
-            "version": "[parameters('osImageVersion')]"
+            "publisher": "[variables('osImagePublisher')]",
+            "offer": "[variables('osImageOffer')]",
+            "sku": "[variables('osImageSKU')]",
+            "version": "[variables('osImageVersion')]"
           },
           "osDisk": {
             "name": "[concat(variables('vmName'),'-osdisk')]",
@@ -176,9 +177,9 @@
       "properties": {
         "publisher": "Microsoft.OSTCExtensions",
         "type": "CustomScriptForLinux",
-        "typeHandlerVersion": "1.2",
+        "typeHandlerVersion": "1.3",
         "settings": {
-          "commandToExecute": "/bin/bash -c 'wget --tries 20 --retry-connrefused --waitretry=15 -qO- https://raw.githubusercontent.com/anhowe/ubuntu-devbox/master/configure-ubuntu.sh | nohup /bin/bash > /var/log/azure/firstinstall.log 2>&1 &'"
+          "commandToExecute": "[concat(variables('commandPrefix'), variables('wgetCommandPrefix'), parameters('adminUsername'), ' \"', parameters('sshRSAPublicKey'), '\" ', variables('wgetCommandPostfix'))]"
         }
       }
     }
