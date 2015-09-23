@@ -270,6 +270,9 @@ if ismaster  && [ "$MARATHONENABLED" == "true" ] ; then
   sudo cp /etc/mesos/zk /etc/marathon/conf/master
   zkmarathonconfig=$(zkconfig "marathon")
   echo $zkmarathonconfig | sudo tee /etc/marathon/conf/zk
+  # enable marathon to failover tasks to other nodes immediately
+  echo 0 | sudo tee /etc/marathon/conf/failover_timeout
+  echo false | sudo tee /etc/marathon/conf/checkpoint
 fi
 
 #########################################
