@@ -13,6 +13,7 @@
 set -x
 
 echo "starting mesos cluster configuration"
+date
 ps ax
 
 #############
@@ -29,6 +30,9 @@ ACCOUNTNAME=$7
 set +x
 ACCOUNTKEY=$8
 set -x
+AZUREUSER=$9
+SSHKEY=${10}
+HOMEDIR="/home/$AZUREUSER"
 VMNAME=`hostname`
 VMNUMBER=`echo $VMNAME | sed 's/.*[^0-9]\([0-9]\+\)*$/\1/'`
 VMPREFIX=`echo $VMNAME | sed 's/\(.*[^0-9]\)*[0-9]\+$/\1/'`
@@ -40,6 +44,27 @@ echo "vmname: $VMNAME"
 echo "VMNUMBER: $VMNUMBER, VMPREFIX: $VMPREFIX"
 echo "SWARMENABLED: $SWARMENABLED, MARATHONENABLED: $MARATHONENABLED, CHRONOSENABLED: $CHRONOSENABLED"
 echo "ACCOUNTNAME: $ACCOUNTNAME"
+
+###################
+# setup ssh access
+###################
+
+SSHDIR=$HOMEDIR/.ssh
+AUTHFILE=$SSHDIR/authorized_keys
+if [ `echo $SSHKEY | sed 's/^\(ssh-rsa \).*/\1/'` == "ssh-rsa" ] ; then
+  if [ ! -d $SSHDIR ] ; then
+    sudo -i -u $AZUREUSER mkdir $SSHDIR
+    sudo -i -u $AZUREUSER chmod 700 $SSHDIR
+  fi
+
+  if [ ! -e $AUTHFILE ] ; then
+    sudo -i -u $AZUREUSER touch $AUTHFILE
+    sudo -i -u $AZUREUSER chmod 600 $AUTHFILE
+  fi
+  echo $SSHKEY | sudo -i -u $AZUREUSER tee -a $AUTHFILE
+else
+  echo "no valid key data"
+fi
 
 ###################
 # Common Functions
@@ -128,7 +153,11 @@ zkhosts()
     then
       zkhosts="${zkhosts},"
     fi
-    zkhosts="${zkhosts}${MASTERPREFIX}${i}:2181"
+
+    IPADDR=`getent hosts ${MASTERPREFIX}${i} | awk '{ print $1 }'`
+    zkhosts="${zkhosts}${IPADDR}:2181"
+    # due to mesos team experience ip addresses are chosen over dns names
+    #zkhosts="${zkhosts}${MASTERPREFIX}${i}:2181"
   done
   echo $zkhosts
 }
@@ -151,6 +180,7 @@ time wget -qO- https://get.docker.com | sh
 
 # Start Docker and listen on :2375 (no auth, but in vnet)
 echo 'DOCKER_OPTS="-H unix:///var/run/docker.sock -H 0.0.0.0:2375"' | sudo tee /etc/default/docker
+# the following insecure registry is for OMS
 echo 'DOCKER_OPTS="$DOCKER_OPTS --insecure-registry 137.135.93.9"' | sudo tee -a /etc/default/docker
 sudo service docker restart
 
@@ -215,7 +245,10 @@ if ismaster ; then
   echo $VMNUMBER | sudo tee /etc/zookeeper/conf/myid
   for i in `seq 1 $MASTERCOUNT` ;
   do
-    echo "server.${i}=${MASTERPREFIX}${i}:2888:3888" | sudo tee -a /etc/zookeeper/conf/zoo.cfg
+    IPADDR=`getent hosts ${MASTERPREFIX}${i} | awk '{ print $1 }'`
+    echo "server.${i}=${IPADDR}:2888:3888" | sudo tee -a /etc/zookeeper/conf/zoo.cfg
+    # due to mesos team experience ip addresses are chosen over dns names
+    #echo "server.${i}=${MASTERPREFIX}${i}:2888:3888" | sudo tee -a /etc/zookeeper/conf/zoo.cfg
   done
 fi
 
@@ -239,14 +272,71 @@ if ismaster  && [ "$MARATHONENABLED" == "true" ] ; then
   echo $zkmarathonconfig | sudo tee /etc/marathon/conf/zk
 fi
 
+#########################################
+# Configure Mesos Master and Frameworks
+#########################################
+if ismaster ; then
+  # Download and install mesos-dns
+  sudo mkdir -p /usr/local/mesos-dns
+  sudo wget https://github.com/mesosphere/mesos-dns/releases/download/v0.2.0/mesos-dns-v0.2.0-linux-amd64.tgz
+  sudo tar zxvf mesos-dns-v0.2.0-linux-amd64.tgz
+  sudo mv mesos-dns-v0.2.0-linux-amd64 /usr/local/mesos-dns/mesos-dns
+
+  echo "
+{
+  \"zk\": \"zk://127.0.0.1:2181/mesos\",
+  \"refreshSeconds\": 1,
+  \"ttl\": 0,
+  \"domain\": \"mesos\",
+  \"port\": 53,
+  \"timeout\": 1,
+  \"listener\": \"0.0.0.0\",
+  \"email\": \"root.mesos-dns.mesos\",
+  \"externalon\": false
+}
+" > mesos-dns.json
+  sudo mv mesos-dns.json /usr/local/mesos-dns/mesos-dns.json
+
+  echo "
+description \"mesos dns\"
+
+# Start just after the System-V jobs (rc) to ensure networking and zookeeper
+# are started. This is as simple as possible to ensure compatibility with
+# Ubuntu, Debian, CentOS, and RHEL distros. See:
+# http://upstart.ubuntu.com/cookbook/#standard-idioms
+start on stopped rc RUNLEVEL=[2345]
+respawn
+
+exec /usr/local/mesos-dns/mesos-dns -config /usr/local/mesos-dns/mesos-dns.json" > mesos-dns.conf
+  sudo mv mesos-dns.conf /etc/init
+  sudo service mesos-dns start
+fi
+
+
 #########################
 # Configure Mesos Agent
 #########################
 if isagent ; then
   # Add docker containerizer
   echo "docker,mesos" | sudo tee /etc/mesos-slave/containerizers
+  # Add resources configuration
+  if ismaster ; then
+    echo "ports:[1-21,23-4399,4401-5049,5052-8079,8081-32000]" | sudo tee /etc/mesos-slave/resources
+  else
+    echo "ports:[1-21,23-5050,5052-32000]" | sudo tee /etc/mesos-slave/resources
+  fi
   hostname -i | sudo tee /etc/mesos-slave/ip
   hostname | sudo tee /etc/mesos-slave/hostname
+
+  # Add mesos-dns IP addresses at the top of resolv.conf
+  RESOLV_TMP=resolv.conf.temp
+  rm -f $RESOLV_TMP
+  for i in `seq $MASTERCOUNT` ; do
+      echo nameserver `getent hosts ${MASTERPREFIX}${i} | awk '{ print $1 }'` >> $RESOLV_TMP
+  done
+
+  cat /etc/resolv.conf >> $RESOLV_TMP
+  mv $RESOLV_TMP /etc/resolv.conf
 fi
 
 ##############################################
@@ -305,5 +395,5 @@ fi
 echo "processes at end of script"
 ps ax
 echo "Finished installing and configuring docker and swarm"
-
+date
 echo "completed mesos cluster configuration"
