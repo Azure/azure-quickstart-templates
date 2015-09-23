@@ -1,6 +1,6 @@
-# Simple deployment of an Ubuntu VM with DSC Linux Extension, configuration files are placed in public place (Github or anything else)
+# Simple deployment of an Ubuntu VM with DSC Linux Extension, configuration files are placed in Azure Storage
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-dsc-linux-extension-public-storage-on-ubuntu%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-dsc-linux-azure-storage-on-ubuntu%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
@@ -8,9 +8,10 @@ This template uses the Azure [DSC for Linux Extension](https://github.com/Azure/
 
 With this template, you could:
 
-1. Push MOF configurations to the Linux VM, the MOF files should be placed in public place
-2. Distribute MOF configurations to the Linux VM with Pull Servers, the meta MOF files should be placed in public place
-3. Install custom DSC modules to the Linux VM, the resource module files should be placed in public place
+1. Push MOF configurations to the Linux VM, the MOF files should be placed in Azure Storage
+2. Distribute MOF configurations to the Linux VM with Pull Servers, the meta MOF files should be placed in Azure Storage
+3. Install custom DSC modules to the Linux VM, the resource module files should be placed in Azure Storage
+
 
 How to deploy
 
