@@ -3,14 +3,14 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
 
-    "VMNamePrefix": {
+    "vmNamePrefix": {
       "type": "string",
       "metadata": {
         "description": "The Prefix of the VM Name"
       },
       "defaultValue": "ADVM"
     },
-    "AvailabilitySetName": {
+    "availabilitySetName": {
       "type": "string",
       "metadata": {
         "description": "The Available Set Name"
@@ -18,21 +18,21 @@
       "defaultValue": "ADAvailableSet"
     },
 
-    "WindowsImagePublisher": {
+    "windowsImagePublisher": {
       "type": "string",
       "metadata": {
         "description": "The Publisher of Windows Image"
       },
       "defaultValue": "MicrosoftWindowsServer"
     },
-    "WindowsImageOffer": {
+    "windowsImageOffer": {
       "type": "string",
       "metadata": {
         "description": "The offer of Windows Image"
       },
       "defaultValue": "WindowsServer"
     },
-    "WindowsImageSKU": {
+    "windowsImageSKU": {
       "type": "string",
       "metadata": {
         "description": "The SKU Name of Windows Image"
@@ -40,7 +40,7 @@
       "defaultValue": "2012-R2-Datacenter"
     },
 
-    "WindowsImageVersion": {
+    "windowsImageVersion": {
       "type": "string",
       "metadata": {
         "description": "The Version of Windows Image"
@@ -87,17 +87,24 @@
       "allowedValues": [
         "West US",
         "East US",
+        "East US 2",
+        "Central US",
+        "South Central US",
+        "North Central US",
+        "North Europe",
         "West Europe",
         "East Asia",
         "Southeast Asia",
-        "East US 2"
+        "Japan East",
+        "Japan West",
+        "Southeast Asia"
       ],
       "metadata": {
         "description": "The region to deploy the resources into"
       }
     },
 
-    "VMSize": {
+    "vmSize": {
       "type": "string",
       "allowedValues": [
         "Standard_D1",
@@ -128,7 +135,7 @@
         "description": "The DNS Prefix for the Public IP Address"
       }
     },
-    "SubnetUri": {
+    "subnetUri": {
       "type": "string",
       "metadata": {
         "description": "the reference to the subnet"
@@ -152,7 +159,7 @@
   "variables": {
     "windowsDiskSize": 128,
     "publicLBName": "ADPublicLoadBalancer",
-    "publicIPAddressName": "[concat(parameters('AvailabilitySetName'), 'PublicIp')]",
+    "publicIPAddressName": "[concat(parameters('availabilitySetName'), 'PublicIp')]",
     "lbFE": "ADLBFE",
     "lbBE": "ADLBBE",
     "rpdNAT": "ADRDPNAT",
@@ -161,7 +168,7 @@
     "rdpPort": 3389,
     "publicBEAddressPoolID": "[concat(variables('publiclbID'),'/backendAddressPools/',variables('lbBE'))]",
     "adRDPNATRuleID": "[concat(variables('publiclbID'),'/inboundNatRules/',variables('rpdNAT'))]",
-    "ADNicName": "ADMachine-Nic-",
+    "adDNicName": "ADMachine-Nic-",
     "vmContainerName": "vhds"
   },
   "resources": [
@@ -188,7 +195,7 @@
     },
     {
       "type": "Microsoft.Compute/availabilitySets",
-      "name": "[parameters('AvailabilitySetName')]",
+      "name": "[parameters('availabilitySetName')]",
       "apiVersion": "2015-05-01-preview",
       "location": "[parameters('location')]"
     },
@@ -233,7 +240,7 @@
       }
     },
     {
-      "name": "[concat(variables('ADNicName'), '0')]",
+      "name": "[concat(variables('adDNicName'), '0')]",
       "type": "Microsoft.Network/networkInterfaces",
       "location": "[parameters('location')]",
       "dependsOn": [
@@ -248,7 +255,7 @@
               "privateIPAllocationMethod": "Static",
               "privateIPAddress": "[parameters('primaryAdIpAddress')]",
               "subnet": {
-                "id": "[parameters('SubnetUri')]"
+                "id": "[parameters('subnetUri')]"
               },
               "loadBalancerBackendAddressPools": [
                 {
@@ -266,7 +273,7 @@
       }
     },
     {
-      "name": "[concat(variables('ADNicName'), 1)]",
+      "name": "[concat(variables('adDNicName'), 1)]",
       "type": "Microsoft.Network/networkInterfaces",
       "location": "[parameters('location')]",
       "dependsOn": [
@@ -281,7 +288,7 @@
               "privateIPAllocationMethod": "Static",
               "privateIPAddress": "[parameters('secondaryIpAddress')]",
               "subnet": {
-                "id": "[parameters('SubnetUri')]"
+                "id": "[parameters('subnetUri')]"
               }
             }
           }
@@ -291,12 +298,12 @@
     {
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[concat(parameters('VMNamePrefix'), copyindex())]",
+      "name": "[concat(parameters('vmNamePrefix'), copyindex())]",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts',parameters('storageAccount'))]",
-        "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('ADNicName'), copyindex()))]",
-        "[resourceId('Microsoft.Compute/availabilitySets', parameters('AvailabilitySetName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('adDNicName'), copyindex()))]",
+        "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySetName'))]",
         "[resourceId('Microsoft.Network/loadBalancers',variables('publicLBName'))]"
       ],
       "copy": {
@@ -305,27 +312,27 @@
       },
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[parameters('VMSize')]"
+          "vmSize": "[parameters('vmSize')]"
         },
         "availabilitySet": {
-          "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('AvailabilitySetName'))]"
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySetName'))]"
         },
         "osProfile": {
-          "computerName": "[concat(parameters('VMNamePrefix'), copyindex())]",
+          "computerName": "[concat(parameters('vmNamePrefix'), copyindex())]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]"
         },
         "storageProfile": {
           "imageReference": {
-            "publisher": "[parameters('WindowsImagePublisher')]",
-            "offer": "[parameters('WindowsImageOffer')]",
-            "sku": "[parameters('WindowsImageSKU')]",
-            "version": "[parameters('WindowsImageVersion')]"
+            "publisher": "[parameters('windowsImagePublisher')]",
+            "offer": "[parameters('windowsImageOffer')]",
+            "sku": "[parameters('windowsImageSKU')]",
+            "version": "[parameters('windowsImageVersion')]"
           },
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://',parameters('storageAccount'),'.blob.core.windows.net/',variables('vmContainerName'),'/', parameters('VMNamePrefix'), copyindex(),'-osdisk.vhd')]"
+              "uri": "[concat('http://',parameters('storageAccount'),'.blob.core.windows.net/',variables('vmContainerName'),'/', parameters('vmNamePrefix'), copyindex(),'-osdisk.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -333,9 +340,9 @@
           "dataDisks": [
             {
               "vhd": {
-                "uri": "[concat('http://',parameters('storageAccount'),'.blob.core.windows.net/',variables('vmContainerName'),'/', parameters('VMNamePrefix'), copyindex(),'data-1.vhd')]"
+                "uri": "[concat('http://',parameters('storageAccount'),'.blob.core.windows.net/',variables('vmContainerName'),'/', parameters('vmNamePrefix'), copyindex(),'data-1.vhd')]"
               },
-              "name": "[concat(parameters('VMNamePrefix'), copyindex(),'-data-disk1')]",
+              "name": "[concat(parameters('vmNamePrefix'), copyindex(),'-data-disk1')]",
               "createOption": "empty",
               "caching": "None",
               "diskSizeGB": "[variables('windowsDiskSize')]",
@@ -346,7 +353,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('ADNicName'), copyindex()))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('adDNicName'), copyindex()))]"
             }
           ]
         }
@@ -355,11 +362,11 @@
   ],
   "outputs": {
     "PrimaryAdVmName": {
-      "value": "[reference(concat(parameters('VMNamePrefix'), '0'))]",
+      "value": "[reference(concat(parameters('vmNamePrefix'), '0'))]",
       "type": "string"
     },
     "SecondaryAdVmName": {
-        "value": "[reference(concat(parameters('VMNamePrefix'), '1'))]",
+        "value": "[reference(concat(parameters('vmNamePrefix'), '1'))]",
         "type": "string"
      }
 

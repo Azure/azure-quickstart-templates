@@ -2,21 +2,21 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "VmNetworkSubnet": {
+    "vmNetworkSubnet": {
       "type": "string",
       "metadata": {
         "description": "The address range of the subnet static IPs are allocated from in the new VNET"
       },
       "defaultValue": "10.0.0.0/24"
     },
-    "VMNamePrefix": {
+    "vmNamePrefix": {
       "type": "string",
       "metadata": {
         "description": "The Prefix of the VM Name"
       },
       "defaultValue": "ADVM"
     },
-    "AvailabilitySetName": {
+    "availabilitySetName": {
       "type": "string",
       "metadata": {
         "description": "The Available Set Name"
@@ -24,21 +24,21 @@
       "defaultValue": "ADAvailableSet"
     },
 
-    "WindowsImagePublisher": {
+    "windowsImagePublisher": {
       "type": "string",
       "metadata": {
         "description": "The Publisher of Windows Image"
       },
       "defaultValue": "MicrosoftWindowsServer"
     },
-    "WindowsImageOffer": {
+    "windowsImageOffer": {
       "type": "string",
       "metadata": {
         "description": "The offer of Windows Image"
       },
       "defaultValue": "WindowsServer"
     },
-    "WindowsImageSKU": {
+    "windowsImageSKU": {
       "type": "string",
       "metadata": {
         "description": "The SKU Name of Windows Image"
@@ -46,7 +46,7 @@
       "defaultValue": "2012-R2-Datacenter"
     },
 
-    "WindowsImageVersion": {
+    "windowsImageVersion": {
       "type": "string",
       "metadata": {
         "description": "The Version of Windows Image"
@@ -54,21 +54,21 @@
       "defaultValue": "latest"
     },
 
-    "StorageAccountName": {
+    "storageAccountName": {
       "type": "string",
       "metadata": {
         "description": "The Storage Account Name"
       }
     },
 
-    "DomainName": {
+    "domainName": {
       "type": "string",
       "metadata": {
         "description": "The Domain Name"
       }
     },
 
-    "DomainBIOSName": {
+    "domainBIOSName": {
       "type": "string",
       "metadata": {
         "description": "The Domain BIOS Name"
@@ -94,8 +94,16 @@
       "allowedValues": [
         "West US",
         "East US",
+        "East US 2",
+        "Central US",
+        "South Central US",
+        "North Central US",
+        "North Europe",
         "West Europe",
         "East Asia",
+        "Southeast Asia",
+        "Japan East",
+        "Japan West",
         "Southeast Asia"
       ],
       "metadata": {
@@ -103,7 +111,7 @@
       }
     },
 
-    "VMSize": {
+    "vmSize": {
       "type": "string",
       "allowedValues": [
         "Standard_D1",
@@ -142,24 +150,24 @@
       {
         "name": "[variables('staticSubnetName')]",
         "properties": {
-          "addressPrefix": "[parameters('VmNetworkSubnet')]"
+          "addressPrefix": "[parameters('vmNetworkSubnet')]"
         }
       }
     ],
     "publicLBName" : "ADPublicLoadBalancer",
     "virtualNetworkName": "ADVNET",
-    "publicIPAddressName": "[concat(parameters('AvailabilitySetName'), 'PublicIp')]",
+    "publicIPAddressName": "[concat(parameters('availabilitySetName'), 'PublicIp')]",
     "lbFE": "ADLBFE",
     "lbBE": "ADLBBE",
     "rpdNAT": "ADRDPNAT",
     "publiclbID":"[resourceId('Microsoft.Network/loadBalancers',variables('publicLBName'))]",
     "publiclbFEConfigID": "[concat(variables('publiclbID'),'/frontendIPConfigurations/',variables('lbFE'))]",
     "rdpPort": 3389,
-    "VnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
-		"staticSubnetRef": "[concat(variables('VnetID'),'/subnets/',variables('staticSubnetName'))]",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
+		"staticSubnetRef": "[concat(variables('vnetID'),'/subnets/',variables('staticSubnetName'))]",
     "publicBEAddressPoolID": "[concat(variables('publiclbID'),'/backendAddressPools/',variables('lbBE'))]",
     "adRDPNATRuleID": "[concat(variables('publiclbID'),'/inboundNatRules/',variables('rpdNAT'))]",
-    "ADNicName": "ADMachine-Nic-",
+    "adDNicName": "ADMachine-Nic-",
 
     "vmContainerName": "vhds"
   },
@@ -178,7 +186,7 @@
     },
     {
       "type": "Microsoft.Compute/availabilitySets",
-      "name": "[parameters('AvailabilitySetName')]",
+      "name": "[parameters('availabilitySetName')]",
       "apiVersion": "2015-05-01-preview",
       "location": "[parameters('location')]"
     },
@@ -237,7 +245,7 @@
       }
     },
     {
-      "name": "[concat(variables('ADNicName'), copyindex())]",
+      "name": "[concat(variables('adDNicName'), copyindex())]",
       "type": "Microsoft.Network/networkInterfaces",
       "location": "[parameters('location')]",
       "dependsOn": [
@@ -277,12 +285,12 @@
     {
 			"apiVersion": "2015-05-01-preview",
 			"type": "Microsoft.Compute/virtualMachines",
-			"name": "[concat(parameters('VMNamePrefix'), copyindex())]",
+			"name": "[concat(parameters('vmNamePrefix'), copyindex())]",
 			"location": "[parameters('location')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts',parameters('StorageAccountName'))]",
-        "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('ADNicName'), copyindex()))]",
-        "[resourceId('Microsoft.Compute/availabilitySets', parameters('AvailabilitySetName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts',parameters('storageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('adDNicName'), copyindex()))]",
+        "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySetName'))]",
         "[resourceId('Microsoft.Network/loadBalancers',variables('publicLBName'))]"
       ],
       "copy": {
@@ -297,21 +305,21 @@
 					"id": "[resourceId('Microsoft.Compute/availabilitySets', variables('adAvailabilitySetName'))]"
 				},
 				"osProfile": {
-					"computername": "[concat(parameters('VMNamePrefix'), copyindex())]",
+					"computername": "[concat(parameters('vmNamePrefix'), copyindex())]",
 					"adminUsername": "[parameters('adminUsername')]",
 					"adminPassword": "[parameters('adminPassword')]"
 				},
 				"storageProfile": {
 					"imageReference": {
-						"publisher": "[parameters('WindowsImagePublisher')]",
-						"offer": "[parameters('WindowsImageOffer')]",
-						"sku": "[parameters('WindowsImageSKU')]",
-						"version": "[parameters('WindowsImageVersion')]"
+						"publisher": "[parameters('windowsImagePublisher')]",
+						"offer": "[parameters('windowsImageOffer')]",
+						"sku": "[parameters('windowsImageSKU')]",
+						"version": "[parameters('windowsImageVersion')]"
 					},
 					"osDisk": {
 						"name": "osdisk",
 						"vhd": {
-							"uri": "[concat('http://',parameters('StorageAccountName'),'.blob.core.windows.net/',variables('vmContainerName'),'/', parameters('VMNamePrefix'), copyindex(),'-osdisk.vhd')]"
+							"uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmContainerName'),'/', parameters('vmNamePrefix'), copyindex(),'-osdisk.vhd')]"
 						},
 						"caching": "ReadWrite",
 						"createOption": "FromImage"
@@ -319,9 +327,9 @@
 					"dataDisks": [
 						{
 							"vhd": {
-								"uri":"[concat('http://',parameters('StorageAccountName'),'.blob.core.windows.net/',variables('vmContainerName'),'/', parameters('VMNamePrefix'), copyindex(),'data-1.vhd')]"
+								"uri":"[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmContainerName'),'/', parameters('vmNamePrefix'), copyindex(),'data-1.vhd')]"
 								},
-							"name":"[concat(parameters('VMNamePrefix'), copyindex(),'-data-disk1')]",
+							"name":"[concat(parameters('vmNamePrefix'), copyindex(),'-data-disk1')]",
 							"createOption": "empty",
 							"caching" : "None",
 							"diskSizeGB": "[variables('windowsDiskSize')]",
@@ -332,7 +340,7 @@
 				"networkProfile": {
 					"networkInterfaces": [
 						{
-							"id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('ADNicName'), copyindex()))]"
+							"id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('adDNicName'), copyindex()))]"
 						}
 					]
 				}
