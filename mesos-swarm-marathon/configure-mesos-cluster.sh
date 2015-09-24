@@ -111,8 +111,29 @@ ensureAzureNetwork()
     ip a
     exit 2
   fi
+  # ensure the host ip can resolve
+  networkHealthy=1
+  for i in {1..120}; do
+    hostname -i
+    if [ $? -eq 0 ]
+    then
+      # hostname has been found continue
+      networkHealthy=0
+      echo "the network is healthy"
+      break
+    fi
+    sleep 1
+  done
+  if [ $networkHealthy -ne 0 ]
+  then
+    echo "the network is not healthy, cannot resolve ip address, aborting install"
+    ifconfig
+    ip a
+    exit 2
+  fi
 }
 ensureAzureNetwork
+HOSTADDR=`hostname -i`
 
 ismaster ()
 {
@@ -169,6 +190,12 @@ zkconfig()
   zkconfigstr="zk://${zkhosts}/${postfix}"
   echo $zkconfigstr
 }
+
+######################
+# resolve self in DNS
+######################
+
+echo "$HOSTADDR $VMNAME" | sudo tee -a /etc/hosts
 
 ################
 # Install Docker
@@ -272,7 +299,7 @@ if ismaster  && [ "$MARATHONENABLED" == "true" ] ; then
   echo $zkmarathonconfig | sudo tee /etc/marathon/conf/zk
   # enable marathon to failover tasks to other nodes immediately
   echo 0 | sudo tee /etc/marathon/conf/failover_timeout
-  echo false | sudo tee /etc/marathon/conf/checkpoint
+  #echo false | sudo tee /etc/marathon/conf/checkpoint
 fi
 
 #########################################
