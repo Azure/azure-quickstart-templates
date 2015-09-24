@@ -36,7 +36,7 @@ bosh_template = 'bosh.yml'
 if os.path.exists(bosh_template):
     with open (bosh_template, 'r') as tmpfile:
         contents = tmpfile.read()
-    for k in ["RESOURCE-GROUP-NAME", "STORAGE-ACCESS-KEY", "STORAGE-ACCOUNT-NAME", "SUBNET-NAME", "SUBNET-NAME-FOR-CF", "SUBSCRIPTION-ID", "VNET-NAME"]:
+    for k in ["RESOURCE-GROUP-NAME", "STORAGE-ACCESS-KEY", "STORAGE-ACCOUNT-NAME", "SUBNET-NAME", "SUBNET-NAME-FOR-CF", "SUBSCRIPTION-ID", "VNET-NAME", "TENANT-ID", "CLIENT-ID", "CLIENT-SECRET"]:
         v = settings[k]
         contents = re.compile(re.escape(k)).sub(v, contents)
     contents = re.compile(re.escape("SSH-CERTIFICATE")).sub(ssh_cert, contents)
