@@ -6,7 +6,7 @@ import traceback
 from subprocess import call
 from Utils.WAAgentUtil import waagent
 import Utils.HandlerUtil as Util
-
+from azure.storage import BlobService
 
 call("mkdir -p ./bosh", shell=True)
 call("chmod +x deploy_bosh.sh", shell=True)
@@ -22,6 +22,13 @@ with open (os.path.join('bosh','settings'), "w") as tmpfile:
 username = settings["username"]
 home_dir = os.path.join("/home", username)
 install_log = os.path.join(home_dir, "install.log")
+
+# Prepare the containers
+storage_account_name = settings["STORAGE-ACCOUNT-NAME"]
+storage_access_key = settings["STORAGE-ACCESS-KEY"]
+blob_service = BlobService(storage_account_name, storage_access_key)
+blob_service.create_container('bosh')
+blob_service.create_container('stemcell')
 
 # Generate the private key and certificate
 call("sh create_cert.sh", shell=True)
