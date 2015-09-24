@@ -10,9 +10,9 @@ This template goes one step further: it both creates a new Reserved IP and assig
 
 Three parameters are needed in support of the "previously existing Reserved IP" use case:
 
-1. Existing\_IP\_Subscription_ID - subscription ID of the subscription with the previously existing Reserved IP
-2. Existing\_IP\_Reserved\_RG\_Name - name of the resource group with the previously existing Reserved IP
-3. Existing\_IP\_Reserved\_Name - name of the previously existing Reserved IP
+1. Existing\_RIP\_SubID - subscription ID of the subscription with the previously existing Reserved IP
+2. Existing\_RIP\_Resource\_Group\_Name - name of the resource group with the previously existing Reserved IP
+3. Existing\_RIP\_Name - name of the previously existing Reserved IP
 
 
 
