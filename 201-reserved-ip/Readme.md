@@ -10,10 +10,21 @@ This template goes one step further: it both creates a new Reserved IP and assig
 
 Three parameters are needed in support of the "previously existing Reserved IP" use case:
 
-1. Existing\_RIP\_SubID - subscription ID of the subscription with the previously existing Reserved IP
-2. Existing\_RIP\_Resource\_Group\_Name - name of the resource group with the previously existing Reserved IP
-3. Existing\_RIP\_Name - name of the previously existing Reserved IP
+1. existingRIPSubId - subscription ID of the subscription with the previously existing Reserved IP
+2. existingRIPResourceGroupName - name of the resource group with the previously existing Reserved IP
+3. existingRIPName - name of the previously existing Reserved IP
 
+# How to Create 'Existing' Reserved IP
+
+1. Create a resource group (or use an existing one)
+
+`New-AzureResourceGroup -Name ExistingReservedIP -Location 'West US'`
+
+2. Create a statically allocated PIP in that RG
+
+`New-AzurePublicIpAddress -ResourceGroupName ExistingReservedIPRG -Name goliveRIP -Location 'West US'`  
+
+This step is mandatory for the template to work as designed.
 
 
 Click the button below to deploy
