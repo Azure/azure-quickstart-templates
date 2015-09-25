@@ -1,5 +1,5 @@
 {
-   "$schema":"http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+   "$schema":"http://schema.management.azure.com/schemas/2015-01-01-preview/deploymentTemplate.json#",
    "contentVersion":"1.0.0.0",
    "parameters":{
       "siteName":{
@@ -15,13 +15,6 @@
             "description":"Name of azure web app service plan"
          }
       },
-      "serverFarmResourceGroup":{
-         "type":"string",
-         "defaultValue":"",
-         "metadata":{
-            "description":"Name of your resource group"
-         }
-      },
       "siteLocation":{
          "type":"string",
          "metadata":{
@@ -34,7 +27,6 @@
             "Standard",
             "Premium"
          ],
-         "defaultValue":"Standard",
          "defaultValue":"Standard",
          "metadata":{
             "description":"Choose either Standard or Premium Azure Web Apps pricing tiers. It defaults to Standard"
@@ -84,32 +76,15 @@
             "description":"Database Name"
          }
       },
-      "collation":{
-         "type":"string",
-         "defaultValue":"SQL_Latin1_General_CP1_CI_AS",
-         "metadata":{
-            "description":"SQL DB Collation"
-         }
-      },
       "edition":{
          "type":"string",
+         "allowedValues":[
+            "Standard",
+            "Premium"
+         ],
          "defaultValue":"Standard",
          "metadata":{
-            "description":"SQL DB Sku : Standard"
-         }
-      },
-      "maxSizeBytes":{
-         "type":"string",
-         "defaultValue":"1073741824",
-         "metadata":{
-            "description":"Maximum Size Bytes"
-         }
-      },
-      "requestedServiceObjectiveId":{
-         "type":"string",
-         "defaultValue":"910b4fcb-8a29-4c3e-958f-f7ba794388b2",
-         "metadata":{
-            "description":"Requested Service Objective Id"
+            "description":"SQL DB Sku : Standard,Premium"
          }
       },
       "storageName":{
@@ -148,13 +123,6 @@
          },
          "defaultValue":"Standard"
       },
-      "redisCacheFamily":{
-         "type":"string",
-         "defaultValue":"C",
-         "metadata":{
-            "description":"Redis Cache Family - C such as  C0, C1 etc"
-         }
-      },
       "redisCacheCapacity":{
          "type":"int",
          "allowedValues":[
@@ -167,24 +135,17 @@
             6
          ],
          "metadata":{
-            "description":"Redis Cache Capacity  , supported values from 0 to 6"
+            "description":"Redis Cache Capacity  , supported values from 0 to 6 represnting cache tier name C0 to C6 "
          },
          "defaultValue":0
       },
-      "redisCacheVersion":{
-         "type":"string",
-         "defaultValue":"2.8",
-         "metadata":{
-            "description":"Redis Cache version 2.8"
-         }
-      },
-      "NonAdmin_DatabaseUsername":{
+      "NonAdminDatabaseUsername":{
          "type":"string",
          "metadata":{
             "description":"Non-admin Database User. Must be Unique"
          }
       },
-      "NonAdmin_DatabasePassword":{
+      "NonAdminDatabasePassword":{
          "type":"securestring",
          "metadata":{
             "description":"Non-admin Database User password"
@@ -196,14 +157,14 @@
          "apiVersion":"2014-04-01-preview",
          "name":"[parameters('redisCacheName')]",
          "type":"Microsoft.Cache/Redis",
-         "location":"[parameters('siteLocation')]",
+         "location":"[resourceGroup().location]",
          "properties":{
             "sku":{
                "name":"[parameters('redisCacheSKU')]",
-               "family":"[parameters('redisCacheFamily')]",
+               "family":"C",
                "capacity":"[parameters('redisCacheCapacity')]"
             },
-            "redisVersion":"[parameters('redisCacheVersion')]",
+            "redisVersion":"2.8",
             "enableNonSslPort":true
          }
       },
@@ -227,9 +188,9 @@
                ],
                "properties":{
                   "edition":"[parameters('edition')]",
-                  "collation":"[parameters('collation')]",
-                  "maxSizeBytes":"[parameters('maxSizeBytes')]",
-                  "requestedServiceObjectiveId":"[parameters('requestedServiceObjectiveId')]"
+                  "collation":"SQL_Latin1_General_CP1_CI_AS",
+                  "maxSizeBytes":"1073741824",
+                  "requestedServiceObjectiveId":"910b4fcb-8a29-4c3e-958f-f7ba794388b2"
                }
             },
             {
@@ -251,7 +212,7 @@
          "apiVersion":"2014-06-01",
          "type":"Microsoft.ClassicStorage/storageAccounts",
          "name":"[parameters('storageName')]",
-         "location":"[parameters('siteLocation')]",
+         "location":"[resourceGroup().location]",
          "properties":{
             "accountType":"[parameters('storageAccountType')]"
          }
@@ -260,7 +221,7 @@
          "apiVersion":"2014-06-01",
          "name":"[parameters('hostingPlanName')]",
          "type":"Microsoft.Web/serverFarms",
-         "location":"[parameters('siteLocation')]",
+         "location":"[resourceGroup().location]",
          "properties":{
             "name":"[parameters('hostingPlanName')]",
             "sku":"[parameters('sku')]",
@@ -273,16 +234,16 @@
          "apiVersion":"2015-02-01",
          "name":"[parameters('siteName')]",
          "type":"Microsoft.Web/Sites",
-         "location":"[parameters('siteLocation')]",
+         "location":"[resourceGroup().location]",
          "tags":{
-            "[concat('hidden-related:', '/subscriptions/', subscription().subscriptionId,'/resourcegroups/', parameters('serverFarmResourceGroup'), '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]":"empty"
+            "[concat('hidden-related:', '/subscriptions/', subscription().subscriptionId,'/resourcegroups/', resource.id(), '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]":"empty"
          },
          "dependsOn":[
             "[concat('Microsoft.Web/serverFarms/', parameters('hostingPlanName'))]"
          ],
          "properties":{
             "name":"[parameters('siteName')]",
-            "serverFarmId":"[concat('/subscriptions/', subscription().subscriptionId,'/resourcegroups/', parameters('serverFarmResourceGroup'), '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]",
+            "serverFarmId":"[concat('/subscriptions/', subscription().subscriptionId,'/resourcegroups/',resource.id() , '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]",
             "hostingEnvironment":""
          },
          "resources":[
@@ -303,8 +264,8 @@
                      "Application Path":"[parameters('siteName')]",
                      "Database Server":"[reference(concat('Microsoft.Sql/servers/', parameters('serverName'))).fullyQualifiedDomainName]",
                      "Database Name":"[parameters('databaseName')]",
-                     "Database Username":"[parameters('NonAdmin_DatabaseUsername')]",
-                     "Database Password":"[parameters('NonAdmin_DatabasePassword')]",
+                     "Database Username":"[parameters('NonAdminDatabaseUsername')]",
+                     "Database Password":"[parameters('NonAdminDatabasePassword')]",
                      "Database Administrator":"[parameters('administratorLogin')]",
                      "Database Administrator Password":"[parameters('administratorLoginPassword')]",
                      "azurestoragerootUrl":"[concat('https://',parameters('storageName'), '.blob.core.windows.net')]",
@@ -358,7 +319,7 @@
          "type":"microsoft.insights/autoscalesettings",
          "location":"East US",
          "tags":{
-            "[concat('hidden-link:', '/subscriptions/', subscription().subscriptionId,'/resourcegroups/', parameters('serverFarmResourceGroup'), '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]":"Resource"
+            "[concat('hidden-link:', '/subscriptions/', subscription().subscriptionId,'/resourcegroups/', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]":"Resource"
          },
          "dependsOn":[
             "[concat('Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]"
@@ -376,7 +337,7 @@
                      {
                         "metricTrigger":{
                            "metricName":"CpuPercentage",
-                           "metricResourceUri":"[concat('/subscriptions/', subscription().subscriptionId,'/resourcegroups/', parameters('serverFarmResourceGroup'),  '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]",
+                           "metricResourceUri":"[concat('/subscriptions/', subscription().subscriptionId,'/resourcegroups/', resourceGroup().id,  '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]",
                            "timeGrain":"PT1M",
                            "statistic":"Average",
                            "timeWindow":"PT10M",
@@ -394,7 +355,7 @@
                      {
                         "metricTrigger":{
                            "metricName":"CpuPercentage",
-                           "metricResourceUri":"[concat('/subscriptions/', subscription().subscriptionId,'/resourcegroups/', parameters('serverFarmResourceGroup'), '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]",
+                           "metricResourceUri":"[concat('/subscriptions/', subscription().subscriptionId,'/resourcegroups/', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]",
                            "timeGrain":"PT1M",
                            "statistic":"Average",
                            "timeWindow":"PT1H",
@@ -414,7 +375,7 @@
             ],
             "enabled":false,
             "name":"[concat(parameters('hostingPlanName'), '-', resourceGroup().name)]",
-            "targetResourceUri":"[concat('/subscriptions/', subscription().subscriptionId,'/resourcegroups/', parameters('serverFarmResourceGroup'), '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]"
+            "targetResourceUri":"[concat('/subscriptions/', subscription().subscriptionId,'/resourcegroups/', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]"
          }
       },
       {
@@ -493,7 +454,7 @@
          "type":"microsoft.insights/alertrules",
          "location":"East US",
          "tags":{
-            "[concat('hidden-link:', '/subscriptions/', subscription().subscriptionId,'/resourcegroups/', parameters('serverFarmResourceGroup'), '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]":"Resource"
+            "[concat('hidden-link:', '/subscriptions/', subscription().subscriptionId,'/resourcegroups/', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]":"Resource"
          },
          "dependsOn":[
             "[concat('Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]"
@@ -506,7 +467,7 @@
                "odata.type":"Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.ThresholdRuleCondition",
                "dataSource":{
                   "odata.type":"Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.RuleMetricDataSource",
-                  "resourceUri":"[concat('/subscriptions/', subscription().subscriptionId,'/resourcegroups/', parameters('serverFarmResourceGroup'), '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]",
+                  "resourceUri":"[concat('/subscriptions/', subscription().subscriptionId,'/resourcegroups/', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]",
                   "metricName":"CpuPercentage"
                },
                "operator":"GreaterThan",
@@ -528,7 +489,7 @@
          "type":"microsoft.insights/alertrules",
          "location":"East US",
          "tags":{
-            "[concat('hidden-link:', '/subscriptions/', subscription().subscriptionId,'/resourcegroups/', parameters('serverFarmResourceGroup'), '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]":"Resource"
+            "[concat('hidden-link:', '/subscriptions/', subscription().subscriptionId,'/resourcegroups/', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]":"Resource"
          },
          "dependsOn":[
             "[concat('Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]"
@@ -541,7 +502,7 @@
                "odata.type":"Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.ThresholdRuleCondition",
                "dataSource":{
                   "odata.type":"Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.RuleMetricDataSource",
-                  "resourceUri":"[concat('/subscriptions/', subscription().subscriptionId,'/resourcegroups/', parameters('serverFarmResourceGroup'), '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]",
+                  "resourceUri":"[concat('/subscriptions/', subscription().subscriptionId,'/resourcegroups/', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]",
                   "metricName":"HttpQueueLength"
                },
                "operator":"GreaterThan",
