@@ -24,19 +24,34 @@ You can see the following parts:
 2. **Marathon on port 8080** - Marathon is a scheduler for Mesos that is equivalent to init on a single linux machine: it schedules long running tasks for the whole cluster.
 3. **Chronos on port 4400** - Chronos is a scheduler for Mesos that is equivalent to cron on a single linux machine: it schedules periodic tasks for the whole cluster.
 4. **Docker on port 2375** - The Docker engine runs containerized workloads and each Master and Agent run the Docker engine.  Mesos runs Docker workloads, and examples on how to do this are provided in the Marathon and Chronos walkthrough sections of this readme.
-5. **Swarm on port 2376** - Swarm is an experimental framework from Docker used for scheduling docker style workloads.  This framework is buggy and is disabled by default in the parameters.  You will notice in the walkthrough below, you can run your Docker workloads in Marathon and Chronos.
+5. **Swarm on port 2376** - Swarm is an experimental framework from Docker used for scheduling docker style workloads.  The Swarm framework is disabled by default because it has a showstopper bug where it grabs all the resources [link to Swarm show stopper!](https://github.com/docker/swarm/issues/1183).  As a workaround, you will notice in the walkthrough below, you can run your Docker workloads in Marathon and Chronos.
 
-All VMs are on the same private subnet, 10.0.0.0/24, and fully accessible to each other.
+All VMs are on the same private subnet, 10.0.0.0/18, and fully accessible to each other.
 
 # Installation Notes
 
 Here are notes for troubleshooting:
- * the installation log for the linux jumpbox, masters, and agents are in /var/log/azure/firstinstall.log
- * event though the VMs finish quickly Mesos can take 5-15 minutes to install, check /var/log/azure/firstinstall.log for the completion status.
+ * the installation log for the linux jumpbox, masters, and agents are in /var/log/azure/cluster-bootstrap.log
+ * event though the VMs finish quickly Mesos can take 5-15 minutes to install, check /var/log/azure/cluster-bootstrap.log for the completion status.
  * the linux jumpbox is based on https://github.com/Azure/azure-quickstart-templates/tree/master/ubuntu-desktop and will take 1 hour to configure.  Visit https://github.com/Azure/azure-quickstart-templates/tree/master/ubuntu-desktop to learn how to know when setup is completed, and then how to access the desktop via VNC and an SSH tunnel.
- * if using a Windows jumpbox the explorer browser in windows needs to be setup in compatibility mode, otherwise the Mesos UI will not display.  After starting the browser go to settings, compatibility mode and ensure "Display intranet sites in compability mode" is unchecked
 
- ![Image of disabling windows compatibility](https://raw.githubusercontent.com/anhowe/mesos-scalable-cluster/master/images/windows-compatibility.png)
+# Template Parameters
+When you launch the installation of the cluster, you need to specify the following parameters:
+* `newStorageAccountNamePrefix`: make sure this is a unique identifier. Azure Storage's accounts are global so make sure you use a prefix that is unique to your account otherwise there is a good change it will clash with names already in use.
+* `adminUsername`: self-explanatory. This is the account used on all VMs in the cluster including the jumpbox
+* `adminPassword`: self-explanatory
+* `dnsNameForContainerServicePublicIP`: this is the public DNS name for the jumpbox that you will use to connect to the cluster. You just need to specify an unique name, the FQDN will be created by adding the necessary subdomains based on where the cluster is going to be created. Ex. <userID>MesosCluster, Azure will add westus.cloudapp.azure.com to create the FQDN for the jumpbox.
+* `dnsNameForJumpboxPublicIP`: this is the public DNS name for the entrypoint that SWARM is going to use to deploy containers in the cluster.
+* `agentCount`: the number of Mesos Agents that you want to create in the cluster
+* `masterCount`: Number of Masters. Currently the template supports 3 configurations: 1, 3 and 5 Masters cluster configuration.
+* `jumpboxConfiguration`: You can choose if you want the jumpbox to be Windows or Linux. It is recommended that you pick the Jumpbox OS to be the same of the OS that you are using in your dev machine.
+* `masterConfiguration`: You can specify if you want Masters to be Agents as well. This is a Mesos supported configuration otherwise Masters will not be used to run workloads.
+* `agentVMSize`: The type of VM that you want to use for each node in the cluster. The default size is D1 (1 core 3.5GB RAM) but you can change that if you expect to run workloads that require more RAM or CPU resources.
+* `jumpboxVMSize`: size of the jumpbox machine, the default is D2 (2 cores, 7GB RAM)
+* `clusterPrefix`: this is the prefix that will be used to create all VM names. You can use the prefix to easily identify the machines that belongs to a specific cluster. If, for instance, prefix is 'c1', machines will be created as c1master1, c1master2, ...c1agent1, c1agent5, ...
+* `swarmEnabled`: you can enable Swarm as a framework in the cluster
+* `marathonEnabled`: true if you want to enable the Marathon framework in the cluster
+* `chronosEnabled`: true if you want to enable the Chronos framework in the cluster
 
 # Mesos Cluster with Marathon Walkthrough
 
@@ -54,7 +69,7 @@ Before running the walkthrough ensure you have chosen "true" for "marathonEnable
  ![Image of public ip addresses in portal](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/mesos-swarm-marathon/images/portal-publicipaddresses.png)
 
 2. Connect to your cluster
- 1. linux jumpbox - start a VNC to the jumpbox using instructions https://github.com/Azure/azure-quickstart-templates/tree/master/ubuntu-desktop.  The jumpbox takes an hour to configure.  If the desktop is not ready, you can tail /var/log/azure/firstinstall.log to watch installation.
+ 1. linux jumpbox - start a VNC to the jumpbox using instructions https://github.com/Azure/azure-quickstart-templates/tree/master/ubuntu-desktop.  The jumpbox takes an hour to configure.  If the desktop is not ready, you can tail /var/log/azure/cluster-bootstrap.log to watch installation.
  2. windows jumpbox - remote desktop to the windows jumpbox
  3. no jumpbox - SSH to port 2211 on your NAT creating a tunnel to port 5050 and port 8080.  Then use the browser of your desktop to browse these ports.
 
@@ -144,6 +159,14 @@ Before running this walkthrough ensure you have created a cluster choosing "true
 
  ![Image of docker hello world using Swarm](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/mesos-swarm-marathon/images/completed-hello-world.png)
 
+# Sample Workloads
+
+Try the following workloads to test your new mesos cluster.  Run these on Marathon using the examples above
+
+1. **Folding@Home** - [docker run rgardler/fah](https://hub.docker.com/r/rgardler/fah/) - Folding@Home is searching for a cure for Cancer, Alzheimers, Parkinsons and other such diseases. Donate some compute time to this fantastic effort.
+
+2. **Mount Azure Files volume within Docker Container** - [docker run --privileged anhowe/azure-file-workload STORAGEACCOUNTNAME STORAGEACCOUNTKEY SHARENAME](https://github.com/anhowe/azure-file-workload) - From each container mount your Azure storage by using Azure files
+
 # Questions
 **Q.** Why is there a jumpbox?
 
@@ -152,4 +175,4 @@ Before running this walkthrough ensure you have created a cluster choosing "true
 
 **Q.** My cluster just completed but Mesos is not up.
 
-**A.** After your template finishes, your cluster is still running installation.  You can run "tail -f /var/log/azure/firstinstall.log" to verify the status has completed.
+**A.** After your template finishes, your cluster is still running installation.  You can run "tail -f /var/log/azure/cluster-bootstrap.log" to verify the status has completed.

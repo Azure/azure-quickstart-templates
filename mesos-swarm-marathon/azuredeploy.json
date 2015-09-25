@@ -5,7 +5,7 @@
     "newStorageAccountNamePrefix": {
       "type": "string",
       "metadata": {
-        "description": "Unique DNS Name Prefix for the Storage Account where the Virtual Machine's disks will be placed.  StorageAccounts may contain at most variables('vmsPerStorageAccount')"
+        "description": "Globally Unique DNS Name Prefix for the Storage Account where the Virtual Machine's disks will be placed.  An integer will be appended to the end.  StorageAccounts may contain at most variables('vmsPerStorageAccount')"
       }
     },
     "adminUsername": {
@@ -24,20 +24,20 @@
     "dnsNameForJumpboxPublicIP": {
       "type": "string",
       "metadata": {
-        "description": "Unique DNS Name for the Public IP used to access the Jumpbox."
+        "description": "Sets the Domain name label for the jumpbox.  The concatenation of the domain name label and the regionalized DNS zone make up the fully qualified domain name associated with the public IP address."
       }
     },
     "dnsNameForContainerServicePublicIP": {
       "type": "string",
       "metadata": {
-        "description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
+        "description": "Sets the Domain name label for the container service.  The concatenation of the domain name label and the regionalized DNS zone make up the fully qualified domain name associated with the public IP address."
       }
     },
     "agentCount": {
       "type": "int",
       "defaultValue": 1,
       "metadata": {
-        "description": "The number of mesos agents for the cluster."
+        "description": "The number of Mesos agents for the cluster."
       }
     },
     "masterCount": {
@@ -49,7 +49,7 @@
         5
       ],
       "metadata": {
-        "description": "The number of mesos masters for the cluster."
+        "description": "The number of Mesos masters for the cluster."
       }
     },
     "jumpboxConfiguration": {
@@ -66,7 +66,7 @@
     },
     "masterConfiguration": {
       "type": "string",
-      "defaultValue": "masters-are-agents",
+      "defaultValue": "masters-are-not-agents",
       "allowedValues": [
         "masters-are-agents",
         "masters-are-not-agents"
@@ -139,6 +139,10 @@
     "swarmEnabled": {
       "type": "string",
       "defaultValue": "false",
+      "allowedValues": [
+        "true",
+        "false"
+      ],
       "metadata": {
         "description": "Flag for enabling the Docker Swarm framework."
       }
@@ -146,6 +150,10 @@
     "marathonEnabled": {
       "type": "string",
       "defaultValue": "true",
+      "allowedValues": [
+        "true",
+        "false"
+      ],
       "metadata": {
         "description": "Flag for enabling the Marathon framework."
       }
@@ -153,8 +161,19 @@
     "chronosEnabled": {
       "type": "string",
       "defaultValue": "true",
+      "allowedValues": [
+        "true",
+        "false"
+      ],
       "metadata": {
         "description": "Flag for enabling the Chronos framework."
+      }
+    },
+    "sshRSAPublicKey": {
+      "type": "string",
+      "defaultValue": "disabled",
+      "metadata": {
+        "description": "Configure all linux machines with the SSH rsa public key string.  Use 'disabled' to not configure access with SSH rsa public key."
       }
     }
   },
@@ -171,10 +190,10 @@
     "subnetName": "Subnet",
     "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
     "addressPrefix": "10.0.0.0/16",
-    "subnetPrefix": "10.0.0.0/24",
+    "subnetPrefix": "10.0.0.0/18",
     "jumpboxAddr": 4,
     "masterFirstAddr": 5,
-    "agentFirstAddr": 100,
+    "agentFirstAddr": 50,
     "nsgName": "node-nsg",
     "nsgID": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('nsgName'))]",
     "storageAccountType": "Standard_GRS",
@@ -183,7 +202,9 @@
       "agent-0.json",
       "agent-gt0.json"
     ],
-    "agentFile": "[variables('agentFiles')[mod(add(parameters('agentCount'),2),add(parameters('agentCount'),1))]]"
+    "agentFile": "[variables('agentFiles')[mod(add(parameters('agentCount'),2),add(parameters('agentCount'),1))]]",
+    "omsStorageAccount": "none",
+    "omsStorageAccountKey": "none"
   },
   "resources": [
     {
@@ -331,6 +352,15 @@
           },
           "chronosEnabled": {
             "value": "[parameters('chronosEnabled')]"
+          },
+          "sshRSAPublicKey": {
+            "value": "[parameters('sshRSAPublicKey')]"
+          },
+          "omsStorageAccount": {
+            "value": "[variables('omsStorageAccount')]"
+          },
+          "omsStorageAccountKey": {
+            "value": "[variables('omsStorageAccountKey')]"
           }
         }
       }
@@ -405,6 +435,15 @@
           },
           "chronosEnabled": {
             "value": "[parameters('chronosEnabled')]"
+          },
+          "sshRSAPublicKey": {
+            "value": "[parameters('sshRSAPublicKey')]"
+          },
+          "omsStorageAccount": {
+            "value": "[variables('omsStorageAccount')]"
+          },
+          "omsStorageAccountKey": {
+            "value": "[variables('omsStorageAccountKey')]"
           }
         }
       }
@@ -453,6 +492,12 @@
           },
           "customScriptLocation": {
             "value": "[variables('customScriptLocation')]"
+          },
+          "masterVMNamePrefix": {
+            "value": "[variables('masterVMNamePrefix')]"
+          },
+          "sshRSAPublicKey": {
+            "value": "[parameters('sshRSAPublicKey')]"
           }
         }
       }
