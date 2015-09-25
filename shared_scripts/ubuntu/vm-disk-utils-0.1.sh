@@ -284,7 +284,11 @@ create_striped_volume()
 	[ -d "${MOUNTPOINT}" ] || mkdir -p "${MOUNTPOINT}"
 
 	#Make a file system on the new device
-	mkfs -t ext4 "${MDDEVICE}"
+	STRIDE=128 #(512kB stripe size) / (4kB block size)
+	PARTITIONSNUM=${#PARTITIONS[@]}
+	STRIPEWIDTH=$((${STRIDE} * ${PARTITIONSNUM}))
+
+	mkfs.ext4 -b 4096 -E stride=${STRIDE},stripe-width=${STRIPEWIDTH} "${MDDEVICE}"
 
 	read UUID FS_TYPE < <(blkid -u filesystem ${MDDEVICE}|awk -F "[= ]" '{print $3" "$5}'|tr -d "\"")
 

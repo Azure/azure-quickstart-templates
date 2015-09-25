@@ -6,28 +6,32 @@
     "website": "http://enterprise.github.com",
     "description": "This template deploys the lastest version of GitHub Enterprise on a single, Premium Storage-backed Azure VM."
   },
-  
-  "parameters" : {
+  "parameters": {
     "accountPrefix": {
       "type": "string",
       "metadata": {
-        "Description": "Unique prefix for your Storage Account and DNS name. Must be all lower case letters or numbers. No spaces or special characters."
+        "description": "Unique prefix for your Storage Account and VM name. Must be all lower case letters or numbers. No spaces or special characters."
       }
     },
     "location": {
       "type": "string",
       "metadata": {
-        "Description": "Deployment region. Choose a region with Premium Storage support and IaaS ARM support."
+        "description": "Deployment region. Choose a region with Premium Storage support and IaaS ARM preview support."
       },
-      "defaultValue" : "West US",
+      "defaultValue": "West US",
       "allowedValues": [
-        "West US"
+        "West US",
+        "West Europe",
+        "East US 2",
+        "Southeast Asia",
+        "Japan East",
+        "Japan West"
       ]
     },
     "vmSize": {
       "type": "string",
       "metadata": {
-        "Description": "VM Size. Select a DS Series VM with at least 14 GB of RAM. Default value: Standard_DS3"
+        "description": "VM Size. Select a DS Series VM with at least 14 GB of RAM. Default value: Standard_DS3"
       },
       "defaultValue": "Standard_DS3",
       "allowedValues": [
@@ -41,32 +45,29 @@
     "storageDiskSizeGB": {
       "type": "string",
       "metadata": {
-        "Description": "Select a Premium Storage disk capacity for your source code, in GB. Default value: 512."
+        "description": "Select a Premium Storage disk capacity for your source code, in GB. Default value: 512."
       },
       "defaultValue": "512"
     }
   },
-  
   "variables": {
     "storageAccountType": "Premium_LRS",
-    "storageAccountName": "[concat(parameters('accountPrefix'),'ghestore')]",
+    "storageAccountName": "[concat(replace(replace(replace(toLower(parameters('accountPrefix')),'-',''),'_',''),'.',''),'data')]",
     "vnetName": "ghe-vnet",
-    "vnetID":"[resourceId('Microsoft.Network/virtualNetworks',variables('vnetName'))]",
-    "vnetAddressPrefix":"10.0.0.0/16",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('vnetName'))]",
+    "vnetAddressPrefix": "10.0.0.0/16",
     "subnetName": "ghe-subnet",
     "subnetAddressPrefix": "10.0.0.0/24",
     "publicIPAddressName": "ghe-ip",
     "publicIPAddressType": "Dynamic",
     "dnsNameForPublicIP": "[concat(parameters('accountPrefix'), '-ghe')]",
     "nicName": "ghe-nic",
-    "vmName": "[concat(parameters('accountPrefix'), '-ghe-vm')]",
+    "vmName": "[concat(replace(replace(parameters('accountPrefix'),'.',''),'_','-'), '-ghe-vm')]",
     "dataDiskName": "ghe-data",
-    "dataDiskVHDName":"[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/','data-disks','/',variables('dataDiskName'),'.vhd')]",
-    "osDiskVHDName":"[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/','vhds','/',variables('vmName'),'-os-disk.vhd')]"
+    "dataDiskVHDName": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/','data-disks','/',variables('dataDiskName'),'.vhd')]",
+    "osDiskVHDName": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/','vhds','/',variables('vmName'),'-os-disk.vhd')]"
   },
-  
   "resources": [
-
     {
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Storage/storageAccounts",
@@ -76,7 +77,6 @@
         "accountType": "[variables('storageAccountType')]"
       }
     },
-    
     {
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/publicIPAddresses",
@@ -86,7 +86,6 @@
         "publicIPAllocationMethod": "[variables('publicIPAddressType')]"
       }
     },
-    
     {
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/virtualNetworks",
@@ -101,14 +100,13 @@
         "subnets": [
           {
             "name": "[variables('subnetName')]",
-            "properties" : {
-                "addressPrefix": "[variables('subnetAddressPrefix')]"
+            "properties": {
+              "addressPrefix": "[variables('subnetAddressPrefix')]"
             }
           }
         ]
       }
     },
-      
     {
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/networkInterfaces",
@@ -135,7 +133,6 @@
         ]
       }
     },
-    
     {
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Compute/virtualMachines",
@@ -161,28 +158,28 @@
             "sku": "GitHub-Enterprise",
             "version": "latest"
           },
-          "osDisk" : {
-            "name" : "[concat(variables('vmName'),'-osDisk')]",
-            "caching" : "ReadWrite",
+          "osDisk": {
+            "name": "[concat(variables('vmName'),'-osDisk')]",
+            "caching": "ReadWrite",
             "createOption": "FromImage",
-            "vhd" : {
-              "uri" : "[variables('osDiskVhdName')]"
+            "vhd": {
+              "uri": "[variables('osDiskVhdName')]"
             }
           },
-          "dataDisks" : [
+          "dataDisks": [
             {
-              "name" : "[variables('dataDiskName')]",
-              "diskSizeGB" : "[parameters('storageDiskSizeGB')]",
+              "name": "[variables('dataDiskName')]",
+              "diskSizeGB": "[parameters('storageDiskSizeGB')]",
               "createOption": "empty",
-              "lun" : 0,
-              "vhd":{
-                "uri" : "[variables('dataDiskVHDName')]"
+              "lun": 0,
+              "vhd": {
+                "uri": "[variables('dataDiskVHDName')]"
               }
             }
           ]
         },
         "networkProfile": {
-          "networkInterfaces" : [
+          "networkInterfaces": [
             {
               "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
             }

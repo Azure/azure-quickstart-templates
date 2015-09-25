@@ -5,11 +5,3 @@
 </a>
 
 This template allows you to create a Virtual Network with a single subnet
-
-Below are the parameters that the template expects
-
-| Name   | Description    |
-|:--- |:---|
-| location | Region where the resources will be deployed |
-| addressPrefix | Address prefix for the Virtual Network specified in CIDR format |
-| subnetPrefix | Prefix for the Subnet-1 specified in CIDR format |

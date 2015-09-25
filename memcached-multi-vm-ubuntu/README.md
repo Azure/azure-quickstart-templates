@@ -16,22 +16,3 @@ The template creates the following deployment resources:
 * Multiple remotely-hosted CustomScriptForLinux (install_memcached.sh with passed in parameters) extensions to install and configure the memcached service on each of the numberOfMemcachedInstances VMs
 
 NOTE: In the current version of the template, Apache test page is dynamically configured with the IP addresses of the memcached servers by assuming that they are always deployed into an empty Subnet-Memcached and that the first server is at x.x.x.4, second at x.x.x.5, third at x.x.x.6, etc. IP addresses.
-
-Template expects the following parameters
-
-| Name   | Description    |
-|:--- |:---|
-| newStorageAccountName  | Unique DNS name for the Storage Account where the Virtual Machines' disks will be placed |
-| location | Location where the resources will be deployed |
-| domainName | Domain name of the publicly accessible Apache test web server |
-| adminUsername  | Username for the Virtual Machines  |
-| adminPassword  | Password for the Virtual Machine  |
-| numberOfMemcachedInstances  | Number of memcached servers to create |
-| memcachedVmSize | Size of the memcached virtual machine |
-| apacheVmSize | Size of the Apache virtual machine |
-| virtualNetworkName | Virtual network name |
-| addressPrefix | Address prefix for the virtual network specified in CIDR format |
-| subnetDmzName | Name of Subnet-DMZ where Apache server is deployed |
-| subnetMemcachedName | Name of Subnet-DMZ where memcached servers are deployed |
-| subnetDmzPrefix | Prefix for the Subnet-DMZ specified in CIDR format |
-| subnetMemcachedPrefix | Prefix for the Subnet-Memcached specified in CIDR format |
