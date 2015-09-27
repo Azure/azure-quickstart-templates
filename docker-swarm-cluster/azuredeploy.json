@@ -5,19 +5,19 @@
     "newStorageAccountName": {
       "type": "string",
       "metadata": {
-        "description": "Unique DNS Name for the Storage Account where the Virtual Machines' disks will be stored."
+        "description": "Unique name for a new storage account where the VM disks will be stored."
       }
     },
     "adminUsername": {
       "type": "string",
       "metadata": {
-        "description": "User name for the Virtual Machines."
+        "description": "SSH user for the Virtual Machines."
       }
     },
     "sshPublicKey": {
       "type": "securestring",
       "metadata": {
-        "description": "SSH RSA Public Key to access Swarm manager VMs"
+        "description": "SSH public key for the Virtual Machines."
       }
     },
     "dnsName": {
@@ -26,72 +26,53 @@
         "description": "Unique DNS Name prefix for the Swarm cluster."
       }
     },
-    "slaveCount": {
+    "nodeCount": {
       "type": "int",
       "defaultValue": 3,
       "metadata": {
-        "description": "Number of Swarm nodes"
-      }
-    },
-    "dockerCa": {
-      "type": "securestring",
-      "defaultValue": "",
-      "metadata": {
-        "description": "Base64-encoded Docker TLS CA certificate (~/docker/ca.pem). Leave empty to create an insecure Docker cluster."
-      }
-    },
-    "dockerCert": {
-      "type": "securestring",
-      "defaultValue": "",
-      "metadata": {
-        "description": "Base64-encoded Docker TLS Certificate (~/docker/cert.pem). Leave empty to create an insecure Docker cluster."
-      }
-    },
-    "dockerKey": {
-      "type": "securestring",
-      "defaultValue": "",
-      "metadata": {
-        "description": "Base64-encoded Docker TLS Key (~/docker/ca.pem). Leave empty to create an insecure Docker cluster."
+        "description": "Number of Swarm worker nodes in the cluster."
       }
     }
   },
   "variables": {
     "masterCount": 3,
     "vmNameMaster": "swarm-master-",
-    "vmNameSlave": "swarm-node-",
+    "vmNameNode": "swarm-node-",
     "vmSizeMaster": "Standard_A0",
-    "vmSizeSlave": "Standard_A2",
+    "vmSizeNode": "Standard_A2",
     "availabilitySetMasters": "swarm-masters-set",
-    "availabilitySetSlaves": "swarm-nodes-set",
+    "availabilitySetNodes": "swarm-nodes-set",
     "osImagePublisher": "CoreOS",
     "osImageOffer": "CoreOS",
     "osImageSKU": "Stable",
     "managementPublicIPAddrName": "swarm-lb-masters-ip",
-    "slavesPublicIPAddrName": "swarm-lb-slaves-ip",
+    "nodesPublicIPAddrName": "swarm-lb-nodes-ip",
     "virtualNetworkName": "swarm-vnet",
-    "subnetNameMaster": "subnet-masters",
-    "subnetNameSlave": "subnet-slave",
-    "addressPrefixMaster": "10.0.0.0/16",
-    "addressPrefixSlave": "192.168.0.0/16",
-    "subnetPrefixMaster": "10.0.0.0/24",
-    "subnetPrefixSlave": "192.168.0.0/24",
-    "subnetRefMaster": "[concat(resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName')),'/subnets/',variables('subnetNameMaster'))]",
-    "subnetRefSlave": "[concat(resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName')),'/subnets/',variables('subnetNameSlave'))]",
+    "subnetNameMasters": "subnet-masters",
+    "subnetNameNodes": "subnet-nodes",
+    "addressPrefixMasters": "10.0.0.0/16",
+    "addressPrefixNodes": "192.168.0.0/16",
+    "subnetPrefixMasters": "10.0.0.0/24",
+    "subnetPrefixNodes": "192.168.0.0/24",
+    "subnetRefMaster": "[concat(resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName')),'/subnets/',variables('subnetNameMasters'))]",
+    "subnetRefNodes": "[concat(resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName')),'/subnets/',variables('subnetNameNodes'))]",
     "nsgName": "swarm-nsg",
     "nsgID": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('nsgName'))]",
     "storageAccountType": "Standard_LRS",
     "vhdBlobContainer": "vhds",
     "mastersLbName": "swarm-lb-masters",
     "mastersLbID": "[resourceId('Microsoft.Network/loadBalancers',variables('mastersLbName'))]",
-    "mastersLbBackendPoolName": "swarm-master-pool",
-    "slavesLbName": "swarm-lb-slaves",
-    "slavesLbID": "[resourceId('Microsoft.Network/loadBalancers',variables('slavesLbName'))]",
-    "slavesLbBackendPoolName": "swarm-slave-pool",
+    "mastersLbIPConfigName": "MastersLBFrontEnd",
+    "mastersLbIPConfigID": "[concat(variables('mastersLbID'),'/frontendIPConfigurations/', variables('mastersLbIPConfigName'))]",
+    "mastersLbBackendPoolName": "swarm-masters-pool",
+    "nodesLbName": "swarm-lb-nodes",
+    "nodesLbID": "[resourceId('Microsoft.Network/loadBalancers',variables('nodesLbName'))]",
+    "nodesLbBackendPoolName": "swarm-nodes-pool",
     "sshKeyPath": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
     "consulServerArgs": [
-      "-advertise 10.0.0.4 -bootstrap-expect 3",
-      "-advertise 10.0.0.5 -join 10.0.0.4 -join 10.0.0.6",
-      "-advertise 10.0.0.6 -join 10.0.0.4 -join 10.0.0.5"
+      "-advertise 10.0.0.4 -bootstrap-expect 3 -retry-join 10.0.0.5 -retry-join 10.0.0.6",
+      "-advertise 10.0.0.5 -retry-join 10.0.0.4 -retry-join 10.0.0.6",
+      "-advertise 10.0.0.6 -retry-join 10.0.0.4 -retry-join 10.0.0.5"
     ]
   },
   "resources": [
@@ -113,7 +94,7 @@
     },
     {
       "type": "Microsoft.Compute/availabilitySets",
-      "name": "[variables('availabilitySetSlaves')]",
+      "name": "[variables('availabilitySetNodes')]",
       "apiVersion": "2015-05-01-preview",
       "location": "[resourceGroup().location]",
       "properties": {}
@@ -133,7 +114,7 @@
     {
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[variables('slavesPublicIPAddrName')]",
+      "name": "[variables('nodesPublicIPAddrName')]",
       "location": "[resourceGroup().location]",
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
@@ -153,24 +134,24 @@
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
-            "[variables('addressPrefixMaster')]",
-            "[variables('addressPrefixSlave')]"
+            "[variables('addressPrefixMasters')]",
+            "[variables('addressPrefixNodes')]"
           ]
         },
         "subnets": [
           {
-            "name": "[variables('subnetNameMaster')]",
+            "name": "[variables('subnetNameMasters')]",
             "properties": {
-              "addressPrefix": "[variables('subnetPrefixMaster')]",
+              "addressPrefix": "[variables('subnetPrefixMasters')]",
               "networkSecurityGroup": {
                 "id": "[variables('nsgID')]"
               }
             }
           },
           {
-            "name": "[variables('subnetNameSlave')]",
+            "name": "[variables('subnetNameNodes')]",
             "properties": {
-              "addressPrefix": "[variables('subnetPrefixSlave')]",
+              "addressPrefix": "[variables('subnetPrefixNodes')]",
               "networkSecurityGroup": {
                 "id": "[variables('nsgID')]"
               }
@@ -186,20 +167,6 @@
       "location": "[resourceGroup().location]",
       "properties": {
         "securityRules": [
-          {
-            "name": "swarmManagementEndpoint",
-            "properties": {
-              "description": "Docker Swarm Manager",
-              "protocol": "Tcp",
-              "sourcePortRange": "*",
-              "destinationPortRange": "2376",
-              "sourceAddressPrefix": "*",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 100,
-              "direction": "Inbound"
-            }
-          },
           {
             "name": "ssh",
             "properties": {
@@ -219,19 +186,6 @@
     },
     {
       "apiVersion": "2015-05-01-preview",
-      "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[concat(variables('vmNameMaster'), copyIndex(), '-ip')]",
-      "location": "[resourceGroup().location]",
-      "copy": {
-        "name": "ipLoopMaster",
-        "count": "[variables('masterCount')]"
-      },
-      "properties": {
-        "publicIPAllocationMethod": "Dynamic"
-      }
-    },
-    {
-      "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('vmNameMaster'), copyIndex(), '-nic')]",
       "location": "[resourceGroup().location]",
@@ -241,8 +195,7 @@
       },
       "dependsOn": [
         "[concat('Microsoft.Network/loadBalancers/', variables('mastersLbName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
-        "[concat('Microsoft.Network/publicIPAddresses/',concat(variables('vmNameMaster'), copyIndex(), '-ip'))]"
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -251,15 +204,17 @@
             "properties": {
               "privateIPAllocationMethod": "Static",
               "privateIPAddress": "[concat('10.0.0.', copyIndex(4))]",
-              "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat(variables('vmNameMaster'), copyIndex(), '-ip'))]"
-              },
               "subnet": {
                 "id": "[variables('subnetRefMaster')]"
               },
               "loadBalancerBackendAddressPools": [
                 {
                   "id": "[concat(variables('mastersLbID'), '/backendAddressPools/', variables('mastersLbBackendPoolName'))]"
+                }
+              ],
+              "loadBalancerInboundNatRules": [
+                {
+                  "id": "[concat(variables('mastersLbID'),'/inboundNatRules/SSH-',variables('vmNameMaster'),copyindex())]"
                 }
               ]
             }
@@ -278,7 +233,7 @@
       "properties": {
         "frontendIPConfigurations": [
           {
-            "name": "LoadBalancerFrontEnd",
+            "name": "[variables('mastersLbIPConfigName')]",
             "properties": {
               "publicIPAddress": {
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('managementPublicIPAddrName'))]"
@@ -291,35 +246,41 @@
             "name": "[variables('mastersLbBackendPoolName')]"
           }
         ],
-        "probes": [
+        "inboundNatRules": [
           {
-            "name": "swarm-probe",
+            "name": "[concat('SSH-',variables('vmNameMaster'), '0')]",
             "properties": {
-              "protocol": "Tcp",
-              "port": 2376,
-              "intervalInSeconds": 10,
-              "numberOfProbes": 2
-            }
-          }
-        ],
-        "loadBalancingRules": [
-          {
-            "name": "SwarmManagerHTTP",
-            "properties": {
-              "protocol": "tcp",
-              "frontendPort": 2376,
-              "backendPort": 2376,
-              "enableFloatingIP": false,
-              "idleTimeoutInMinutes": 5,
               "frontendIPConfiguration": {
-                "id": "[concat(variables('mastersLbID'),'/frontendIPConfigurations/LoadBalancerFrontEnd')]"
+                "id": "[variables('mastersLbIPConfigID')]"
               },
-              "backendAddressPool": {
-                "id": "[concat(variables('mastersLbID'),'/backendAddressPools/', variables('mastersLbBackendPoolName'))]"
+              "protocol": "tcp",
+              "frontendPort": 2200,
+              "backendPort": 22,
+              "enableFloatingIP": false
+            }
+          },
+          {
+            "name": "[concat('SSH-',variables('vmNameMaster'), '1')]",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[variables('mastersLbIPConfigID')]"
               },
-              "probe": {
-                "id": "[concat(variables('mastersLbID'), '/probes/swarm-probe')]"
-              }
+              "protocol": "tcp",
+              "frontendPort": 2201,
+              "backendPort": 22,
+              "enableFloatingIP": false
+            }
+          },
+          {
+            "name": "[concat('SSH-',variables('vmNameMaster'), '2')]",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[variables('mastersLbIPConfigID')]"
+              },
+              "protocol": "tcp",
+              "frontendPort": 2202,
+              "backendPort": 22,
+              "enableFloatingIP": false
             }
           }
         ]
@@ -327,11 +288,11 @@
     },
     {
       "apiVersion": "2015-05-01-preview",
-      "name": "[variables('slavesLbName')]",
+      "name": "[variables('nodesLbName')]",
       "type": "Microsoft.Network/loadBalancers",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('slavesPublicIPAddrName'))]"
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('nodesPublicIPAddrName'))]"
       ],
       "properties": {
         "frontendIPConfigurations": [
@@ -339,14 +300,14 @@
             "name": "LoadBalancerFrontEnd",
             "properties": {
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('slavesPublicIPAddrName'))]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('nodesPublicIPAddrName'))]"
               }
             }
           }
         ],
         "backendAddressPools": [
           {
-            "name": "[variables('slavesLbBackendPoolName')]"
+            "name": "[variables('nodesLbBackendPoolName')]"
           }
         ]
       }
@@ -354,28 +315,28 @@
     {
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[concat(variables('vmNameSlave'),copyIndex(), '-nic')]",
+      "name": "[concat(variables('vmNameNode'),copyIndex(), '-nic')]",
       "location": "[resourceGroup().location]",
       "copy": {
-        "name": "nicLoopSlave",
-        "count": "[parameters('slaveCount')]"
+        "name": "nicLoopNode",
+        "count": "[parameters('nodeCount')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/loadBalancers/', variables('slavesLbName'))]",
+        "[concat('Microsoft.Network/loadBalancers/', variables('nodesLbName'))]",
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
       ],
       "properties": {
         "ipConfigurations": [
           {
-            "name": "ipConfigSlave",
+            "name": "ipConfigNode",
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "subnet": {
-                "id": "[variables('subnetRefSlave')]"
+                "id": "[variables('subnetRefNodes')]"
               },
               "loadBalancerBackendAddressPools": [
                 {
-                  "id": "[concat(variables('slavesLbID'), '/backendAddressPools/', variables('slavesLbBackendPoolName'))]"
+                  "id": "[concat(variables('nodesLbID'), '/backendAddressPools/', variables('nodesLbBackendPoolName'))]"
                 }
               ]
             }
@@ -407,8 +368,8 @@
         "osProfile": {
           "computername": "[concat(variables('vmNameMaster'), copyIndex())]",
           "adminUsername": "[parameters('adminUsername')]",
-          "linuxConfiguration":{
-            "disablePasswordAuthentication":"true",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": "true",
             "ssh": {
               "publicKeys": [
                 {
@@ -447,28 +408,28 @@
     {
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[concat(variables('vmNameSlave'), copyIndex())]",
+      "name": "[concat(variables('vmNameNode'), copyIndex())]",
       "location": "[resourceGroup().location]",
       "copy": {
-        "name": "vmLoopSlave",
-        "count": "[parameters('slaveCount')]"
+        "name": "vmLoopNode",
+        "count": "[parameters('nodeCount')]"
       },
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('vmNameSlave'), copyIndex(), '-nic')]"
+        "[concat('Microsoft.Network/networkInterfaces/', variables('vmNameNode'), copyIndex(), '-nic')]"
       ],
       "properties": {
         "availabilitySet": {
-          "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('availabilitySetSlaves'))]"
+          "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('availabilitySetNodes'))]"
         },
         "hardwareProfile": {
-          "vmSize": "[variables('vmSizeSlave')]"
+          "vmSize": "[variables('vmSizeNode')]"
         },
         "osProfile": {
-          "computername": "[concat(variables('vmNameSlave'), copyIndex())]",
+          "computername": "[concat(variables('vmNameNode'), copyIndex())]",
           "adminUsername": "[parameters('adminUsername')]",
-          "linuxConfiguration":{
-            "disablePasswordAuthentication":"true",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": "true",
             "ssh": {
               "publicKeys": [
                 {
@@ -487,9 +448,9 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[concat(variables('vmNameSlave'), copyIndex(),'-osdisk')]",
+            "name": "[concat(variables('vmNameNode'), copyIndex(),'-osdisk')]",
             "vhd": {
-              "uri": "[concat('http://', parameters('newStorageAccountName'), '.blob.core.windows.net/', variables('vhdBlobContainer'), '/slave-', copyIndex(), '-osdisk.vhd')]"
+              "uri": "[concat('http://', parameters('newStorageAccountName'), '.blob.core.windows.net/', variables('vhdBlobContainer'), '/node-', copyIndex(), '-osdisk.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -498,7 +459,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('vmNameSlave'), copyindex(), '-nic'))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('vmNameNode'), copyindex(), '-nic'))]"
             }
           ]
         }
@@ -510,7 +471,7 @@
       "apiVersion": "2015-05-01-preview",
       "location": "[resourceGroup().location]",
       "copy": {
-        "name": "extLoopMaster",
+        "name": "extensionLoopMaster",
         "count": "[variables('masterCount')]"
       },
       "dependsOn": [
@@ -532,8 +493,7 @@
                 "8302:8302",
                 "8302:8302/udp",
                 "8400:8400",
-                "8500:8500",
-                "53:53/udp"
+                "8500:8500"
               ],
               "volumes": [
                 "/data/consul:/data"
@@ -541,10 +501,10 @@
               "restart": "always"
             },
             "swarm": {
-              "image": "swarm",
-              "command": "[concat('--debug manage --tls --tlscacert /etc/docker/ca.pem --tlscert /etc/docker/cert.pem --tlskey /etc/docker/key.pem --replication --advertise ', reference(concat(variables('vmNameMaster'), copyIndex(), '-nic')).ipConfigurations[0].properties.privateIPAddress, ':2376 consul://10.0.0.4:8500,10.0.0.5:8500,10.0.0.6:8500/nodes')]",
+              "image": "swarm:0.4.0",
+              "command": "[concat('--debug manage --replication --advertise ', reference(concat(variables('vmNameMaster'), copyIndex(), '-nic')).ipConfigurations[0].properties.privateIPAddress, ':2375 consul://10.0.0.4:8500/nodes')]",
               "ports": [
-                "2376:2375"
+                "2375:2375"
               ],
               "links": [
                 "consul"
@@ -555,27 +515,20 @@
               "restart": "always"
             }
           }
-        },
-        "protectedSettings": {
-          "certs": {
-            "ca": "[parameters('dockerCa')]",
-            "cert": "[parameters('dockerCert')]",
-            "key": "[parameters('dockerKey')]"
-          }
         }
       }
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('vmNameSlave'), copyIndex(), '/DockerExtension')]",
+      "name": "[concat(variables('vmNameNode'), copyIndex(), '/DockerExtension')]",
       "apiVersion": "2015-05-01-preview",
       "location": "[resourceGroup().location]",
       "copy": {
-        "name": "extLoopSlave",
-        "count": "[parameters('slaveCount')]"
+        "name": "extensionLoopNode",
+        "count": "[parameters('nodeCount')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('vmNameSlave'), copyIndex())]"
+        "[concat('Microsoft.Compute/virtualMachines/', variables('vmNameNode'), copyIndex())]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
@@ -587,30 +540,39 @@
           },
           "compose": {
             "swarm": {
-              "image": "swarm",
+              "image": "swarm:0.4.0",
               "restart": "always",
-              "command": "[concat('--debug join --advertise=', reference(concat(variables('vmNameSlave'), copyIndex(), '-nic')).ipConfigurations[0].properties.privateIPAddress, ':2375 consul://10.0.0.4:8500,10.0.0.5:8500,10.0.0.6:8500/nodes')]"
+              "command": "[concat('join --advertise=', reference(concat(variables('vmNameNode'), copyIndex(), '-nic')).ipConfigurations[0].properties.privateIPAddress, ':2375 consul://10.0.0.4:8500/nodes')]"
             }
-          }
-        },
-        "protectedSettings": {
-          "certs": {
-            "ca": "[parameters('dockerCa')]",
-            "cert": "[parameters('dockerCert')]",
-            "key": "[parameters('dockerKey')]"
           }
         }
       }
     }
   ],
   "outputs": {
-    "SwarmManagerDockerEndpoint": {
+    "sshTunnelCmd": {
       "type": "string",
-      "value": "[concat('tcp://', reference(variables('managementPublicIPAddrName')).dnsSettings.fqdn, ':2376')]"
+      "value": "[concat('ssh -L 2375:swarm-master-0:2375 -N ', parameters('adminUsername'), '@', reference(variables('managementPublicIPAddrName')).dnsSettings.fqdn, ' -p 2200')]"
     },
-    "SwarmSlavesDNS": {
+    "dockerCmd": {
       "type": "string",
-      "value": "[reference(variables('slavesPublicIPAddrName'))]"
+      "value": "docker -H tcp://localhost:2375 info"
+    },
+    "swarmNodesLoadBalancerAddress": {
+      "type": "string",
+      "value": "[reference(variables('nodesPublicIPAddrName')).dnsSettings.fqdn]"
+    },
+    "sshMaster0": {
+      "type": "string",
+      "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(variables('managementPublicIPAddrName')).dnsSettings.fqdn, ' -p 2200')]"
+    },
+    "sshMaster1": {
+      "type": "string",
+      "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(variables('managementPublicIPAddrName')).dnsSettings.fqdn, ' -p 2201')]"
+    },
+    "sshMaster2": {
+      "type": "string",
+      "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(variables('managementPublicIPAddrName')).dnsSettings.fqdn, ' -p 2202')]"
     }
   }
 }

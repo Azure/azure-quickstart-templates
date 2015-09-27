@@ -1,5 +1,5 @@
 {
-  "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json",
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01-preview/deploymentTemplate.json",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "adminUserName": {
@@ -11,71 +11,61 @@
     },
     "adminPassword": {
       "type": "securestring",
-      "defaultValue": "Eur32#1e",
       "metadata": {
         "description": "Admin password for the Virtual Machines"
       }
     },
+    "cmUsername": {
+      "type": "string",
+      "defaultValue": "cmadmin",
+      "metadata": {
+        "description": "User name for the Cloudera Manager"
+      }
+    },
+    "cmPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "password for the Cloudera Manager"
+      }
+    },
     "storageAccountPrefix": {
       "type": "string",
-      "defaultValue": "defaultStorageAccountPrefix",
       "metadata": {
         "description": "Unique namespace for the Storage Account where the Virtual Machine's disks will be placed"
       }
     },
     "dnsNamePrefix": {
       "type": "string",
-      "defaultValue": "defaultDnsNamePrefix",
       "metadata": {
         "description": "Unique public dns name where the Virtual Machines will be exposed"
       }
     },
     "region": {
       "type": "string",
+      "defaultValue": "japanwest",
       "metadata": {
         "description": "Location where resources will be provisioned"
       }
     },
     "storageAccountType": {
       "type": "string",
-      "defaultValue": "Standard_LRS",
+      "defaultValue": "Premium_LRS",
       "metadata": {
         "description": "The type of the Storage Account to be created (Default to Standard_LRS)"
       }
     },
     "virtualNetworkName": {
       "type": "string",
-      "defaultValue": "clouderaVnet",
+      "defaultValue": "clouderavnet",
       "metadata": {
         "description": "The name of the virtual network provisioned for the deployment"
       }
     },
     "subnetName": {
       "type": "string",
-      "defaultValue": "clouderaSubnet",
+      "defaultValue": "clouderasubnet",
       "metadata": {
         "description": "Subnet name for the virtual network where resources will be provisioned"
-      }
-    },
-    "addressPrefix": {
-      "type": "string",
-      "defaultValue": "10.0.0.0/24",
-      "metadata": {
-        "description": "The network address space for the virtual network"
-      }
-    },
-    "subnetPrefix": {
-      "type": "string",
-      "defaultValue": "10.0.0.0/24",
-      "metadata": {
-        "description": "The network address space for the virtual subnet"
-      }
-    },
-    "nodeAddressPrefix": {
-      "type": "string",
-      "defaultValue": "10.0.0.",
-      "metadata": {
-        "description": "The IP address prefix that will be used for constructing private IP address for each node in the cluster"
       }
     },
     "tshirtSize": {
@@ -98,42 +88,119 @@
     },
     "vmSize": {
       "type": "string",
-      "defaultValue": "Standard_D14",
+      "defaultValue": "Standard_DS14",
       "metadata": {
         "description": "The size of the VMs deployed in the cluster (Defaults to Standard_D14)"
       }
+    },
+    "company": {
+      "type": "string",
+      "defaultValue": "Company",
+      "metadata": {
+        "description": "Your Company"
+      }
+    },
+    "emailAddress": {
+      "type": "string",
+      "defaultValue": "email@yourcompany.com",
+      "metadata": {
+        "description": "your email"
+      }
+    },
+    "businessPhone": {
+      "type": "string",
+      "defaultValue": "123456789",
+      "metadata": {
+        "description": "your business phone number"
+      }
+    },
+    "firstName": {
+      "type": "string",
+      "defaultValue": "FirstName",
+      "metadata": {
+        "description": "Your FirstName"
+      }
+    },
+    "lastName": {
+      "type": "string",
+      "defaultValue": "LastName",
+      "metadata": {
+        "description": "Your LastName"
+      }
+    },
+    "jobRole": {
+      "type": "string",
+      "defaultValue": "Administrator",
+      "allowedValues": [
+        "Administrator",
+        "Analyst (Industry/Finance)",
+        "Analyst (Technical)",
+        "Architect",
+        "C level",
+        "Consultant",
+        "Developer",
+        "Director",
+        "Engineer",
+        "Individual contributor",
+        "Manager",
+        "Partner",
+        "Student",
+        "VP"
+      ]
+    },
+    "jobFunction": {
+      "type": "string",
+      "defaultValue": "Analytics / Business Intelligence",
+      "allowedValues": [
+        "Analytics / Business Intelligence",
+        "Big Data / Architecture",
+        "Data Warehouse / Management",
+        "Data Science",
+        "Database",
+        "ETL / ELT",
+        "Infrastructure",
+        "IT",
+        "Marketing / Sales",
+        "Networking",
+        "Manager",
+        "Security / Compliance",
+        "Storage"
+      ]
     }
   },
   "variables": {
-    "scriptsUri": "https://raw.githubusercontent.com/liupeirong/azure-quickstart-templates/master/cloudera-on-centos",
+    "addressPrefix":"10.0.0.0/24",
+    "subnetPrefix":"10.0.0.0/24",
+    "nodeAddressPrefix":"10.0.0.",
+    "scriptsUri": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/cloudera-on-centos",
     "storageAccount": {
       "prefix": "[parameters('storageAccountPrefix')]",
       "type": "[parameters('storageAccountType')]"
     },
     "clusterTshirtSizeEval": {
-      "nameNodeCount": 3,
+      "masterNodeCount": 1,
       "dataNodeCount": "[parameters('numberOfDataNodes')]",
       "highAvailability": "false"
     },
     "clusterTshirtSizeProd": {
-      "nameNodeCount": 3,
+      "masterNodeCount": 3,
       "dataNodeCount": "[parameters('numberOfDataNodes')]",
       "highAvailability": "true"
     },
     "clusterSpec": "[variables(concat('clusterTshirtSize', parameters('tshirtSize')))]",
     "vmSpec": {
       "vmSize": "[parameters('vmSize')]",
-      "privateIPAddressPrefix": "[parameters('nodeAddressPrefix')]",
+      "privateIPAddressPrefix": "[variables('nodeAddressPrefix')]",
       "adminUserName": "[parameters('adminUserName')]",
       "adminPassword": "[parameters('adminPassword')]",
-      "nameNodeASName": "[concat(parameters('dnsNamePrefix'), '-nnAS')]",
+      "masterNodeASName": "[concat(parameters('dnsNamePrefix'), '-mnAS')]",
       "dataNodeASName": "[concat(parameters('dnsNamePrefix'), '-dnAS')]"
     },
     "networkSpec": {
-      "addressPrefix": "[parameters('addressPrefix')]",
-      "subnetPrefix": "[parameters('subnetPrefix')]",
-      "privateIPPrefix": "[parameters('nodeAddressPrefix')]",
-      "nameNodeAddressStart": 10,
+      "addressPrefix": "[variables('addressPrefix')]",
+      "subnetPrefix": "[variables('subnetPrefix')]",
+      "privateIPPrefix": "[variables('nodeAddressPrefix')]",
+      "masterNodeAddressStart": 10,
       "dataNodeAddressStart": 20,
       "virtualNetworkName": "[parameters('virtualNetworkName')]",
       "virtualNetworkSubnetName": "[parameters('subnetName')]"
@@ -157,8 +224,8 @@
           "networkSpec": {
             "value": "[variables('networkSpec')]"
           },
-          "nameNodeASName": {
-            "value": "[variables('vmSpec').nameNodeASName]"
+          "masterNodeASName": {
+            "value": "[variables('vmSpec').masterNodeASName]"
           },
           "dataNodeASName": {
             "value": "[variables('vmSpec').dataNodeASName]"
@@ -167,7 +234,7 @@
       }
     },
     {
-      "name": "name-node",
+      "name": "master-node",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2015-01-01",
       "dependsOn": [
@@ -176,7 +243,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('scriptsUri'), '/name-node.json')]",
+          "uri": "[concat(variables('scriptsUri'), '/master-node.json')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -193,7 +260,7 @@
             "value": "[variables('storageAccount')]"
           },
           "vmCount": {
-            "value": "[variables('clusterSpec').nameNodeCount]"
+            "value": "[variables('clusterSpec').masterNodeCount]"
           },
           "vmSpec": {
             "value": "[variables('vmSpec')]"
@@ -254,7 +321,7 @@
       "apiVersion": "2015-01-01",
       "dependsOn": [
         "Microsoft.Resources/deployments/data-node",
-        "Microsoft.Resources/deployments/name-node"
+        "Microsoft.Resources/deployments/master-node"
       ],
       "properties": {
         "mode": "Incremental",
@@ -282,7 +349,34 @@
             "value": "[variables('clusterSpec')]"
           },
           "fqdn": {
-            "value": "[reference('name-node').outputs.fqdn.value]"
+            "value": "[reference('master-node').outputs.fqdn.value]"
+          },
+          "cmUsername": {
+            "value": "[parameters('cmUsername')]"
+          },
+          "cmPassword": {
+            "value": "[parameters('cmPassword')]"
+          },
+          "company": {
+            "value": "[parameters('Company')]"
+          },
+          "emailAddress": {
+            "value": "[parameters('emailAddress')]"
+          },
+          "businessPhone": {
+            "value": "[parameters('businessPhone')]"
+          },
+          "firstName": {
+            "value": "[parameters('firstName')]"
+          },
+          "lastName": {
+            "value": "[parameters('lastName')]"
+          },
+          "jobRole": {
+            "value": "[parameters('jobRole')]"
+          },
+          "jobFunction": {
+            "value": "[parameters('jobFunction')]"
           }
         }
       }
