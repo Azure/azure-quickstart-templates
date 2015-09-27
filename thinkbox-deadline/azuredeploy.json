@@ -21,6 +21,15 @@
             }
         },
 
+        "clusterName":
+        {
+            "type": "string",
+            "metadata":
+            {
+                "description": "Prefix for all items created by this template."
+            }
+        },
+
         "publicDnsName": 
         {
             "type": "string",
@@ -56,10 +65,29 @@
             }
         },
 
+        "repositoryVMSize":
+        {
+            "type": "string",
+            "defaultValue": "Standard_A1",
+            "metadata":
+            {
+                "description": "Size of the repository."
+            }
+        },
+
+        "slaveVMSize":
+        {
+            "type": "string",
+            "defaultValue": "Standard_A1",
+            "metadata":
+            {
+                "description": "Size of the slave."
+            }
+        },
+
         "numberOfSlaves":
         {
             "type": "int",
-            "defaultValue": 2,
             "metadata": 
             {
                 "description": "The number of slave vms to start."
@@ -69,18 +97,18 @@
 
     "variables": 
     {
-        "virtualNetworkName": "vnet",
+        "virtualNetworkName": "[concat( parameters('clusterName'), '-vnet')]",
         "vnetAddressRange": "10.0.0.0/16",
         "subnetAddressRange": "10.0.0.0/24",
-        "subnetName":  "Subnet",
+        "subnetName":  "[concat( parameters('clusterName'), '-subnet')]",
         "subnet-id": "[concat(resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName')),'/subnets/',variables('subnetName'))]",
         "apiVersion": "2015-05-01-preview",
-        "repositoryName": "azure-repository",
-        "slaveName": "azure-slave",
-        "publicIpName": "publicIp",
-        "availabilitySetName": "availSet",
-        "networkSecurityGroupName": "nsg",
-        "networkInterfaceName": "nif"
+        "repositoryName": "[concat( parameters('clusterName'), '-repository')]",
+        "slaveName": "[concat( parameters('clusterName'), '-slave')]",
+        "publicIpName": "[concat( parameters('clusterName'), '-publicIp')]",
+        "networkSecurityGroupName": "[concat( parameters('clusterName'), '-nsg')]",
+        "networkInterfaceName": "[concat( parameters('clusterName'), '-nif')]",
+        "fullDnsName": "[concat( parameters('clusterName'), parameters('publicDnsName'))]"
     },
 
     "resources": 
@@ -95,7 +123,7 @@
                 "publicIPAllocationMethod": "Dynamic",
                 "dnsSettings": 
                 {
-                    "domainNameLabel": "[parameters('publicDnsName')]"
+                    "domainNameLabel": "[variables('fullDnsName')]"
                 }
             }
         },
@@ -115,17 +143,9 @@
                 "publicIPAllocationMethod": "Dynamic",
                 "dnsSettings": 
                 {
-                    "domainNameLabel": "[concat(parameters('publicDnsName'), copyindex())]"
+                    "domainNameLabel": "[concat(variables('fullDnsName'), copyindex())]"
                 }
             }
-        },
-
-        {
-            "apiVersion": "[variables('apiVersion')]",
-            "type": "Microsoft.Compute/availabilitySets",
-            "name": "[variables('availabilitySetName')]",
-            "location": "[parameters('location')]",
-            "properties": { }
         },
 
         {
@@ -198,7 +218,7 @@
                 "subnets": 
                 [
                     {
-                        "name": "Subnet",
+                        "name": "[variables('subnetName')]",
                         "properties": 
                         {
                             "addressPrefix": "[variables('subnetAddressRange')]",
@@ -292,8 +312,7 @@
             "dependsOn": 
             [
                 "[resourceId('Microsoft.Storage/storageAccounts',parameters('newStorageAccount'))]",
-                "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceName'))]",
-                "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySetName'))]"
+                "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceName'))]"
             ],
             "plan":
             {
@@ -303,13 +322,9 @@
             },
             "properties": 
             {
-                "availabilitySet" :
-                {
-                    "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySetName'))]"
-                },
                 "hardwareProfile": 
                 {
-                    "vmSize": "Standard_A2"
+                    "vmSize": "[parameters('repositoryVMSize')]"
                 },
                 "osProfile": 
                 {
@@ -393,19 +408,14 @@
             "dependsOn": [
                 "[resourceId('Microsoft.Storage/storageAccounts',parameters('newStorageAccount'))]",
                 "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('networkInterfaceName'), copyindex()))]",
-                "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySetName'))]",
                 "[resourceId('Microsoft.Compute/virtualMachines', variables('repositoryName'))]",
                 "[concat( 'Microsoft.Compute/virtualMachines/', variables('repositoryName'), '/extensions/autoconf')]"
             ],
             "properties": 
             {
-                "availabilitySet" :
-                {
-                    "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySetName'))]"
-                },
                 "hardwareProfile": 
                 {
-                    "vmSize": "Standard_A2"
+                    "vmSize": "[parameters('slaveVMSize')]"
                 },
                 "osProfile": 
                 {

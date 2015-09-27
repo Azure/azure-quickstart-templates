@@ -19,8 +19,6 @@ This template will create a SQL Server 2014 Always On Availability Group using t
 
 + 	In default settings for compute require that you have at least 19 cores of free quota to deploy.
 
-+	This template creates an Always On Listener but the deployed Sharepoint Farm does not use it at present, SharePoint is configured as decribed at https://technet.microsoft.com/en-us/library/dd207314(v=office.14).aspx#Configure3, this will be changed in the future.
-
 +	Public Endpoints are created for the SharePoint site that this template creates and for the Central Admin site, however no permissions are given to any user for the new SharePoint site created, these will need to be added from the Central Admin site.
 
 + 	The images used to create this deployment are
@@ -57,7 +55,6 @@ This template will create a SQL Server 2014 Always On Availability Group using t
 |sqlwVMName|The name of the File Share Witness|
 |spwebVMName|The Prefix of the SharePoint Web Server VMs|
 |spappVMName|The Prefix of the SharePoint App Server VMs|
-|rdpPort|The public RDP port for first VM|
 |windowsImagePublisher|The name of the pulisher of the AD and Witness Image|
 |windowsImageOffer|The Offer Name for the Image used by AD and Witness VMs|
 |windowsImageSKU|The Image SKU for the AD and Witness Image|
