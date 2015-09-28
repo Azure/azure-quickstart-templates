@@ -8,6 +8,4 @@ Click the button below to deploy
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-#Known Issues
 
-This template has a lot of serial behaviour due to some concurrency issues with the DSC extensions, this will be fixed in the future which will make execution time much shorter
