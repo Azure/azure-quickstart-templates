@@ -13,20 +13,48 @@
                     "regex": "^[a-z0-9A-Z]{1,30}$",
                     "validationMessage": "Only alphanumeric characters are allowed, and the value must be 1-30 characters long."
                 }
-            },
-            {
-                "name": "dbDNSName",
-                "type": "Microsoft.Common.TextBox",
-                "label": "Database DNS",
-                "toolTip": "MySQL will be accessible from (DatabaseDNS).(location).cloudapp.azure.com:3306",
-                "constraints": {
-                    "required": true,
-                    "regex": "^[a-z0-9A-Z]{1,30}$",
-                    "validationMessage": "Only alphanumeric characters are allowed, and the value must be 1-30 characters long."
-                }
             }
         ],
         "steps": [
+            {
+                "name": "wordpressInfo",
+                "label": "WordPress information",
+                "subLabel": {
+                    "preValidation": "Provide WordPress information",
+                    "postValidation": "Done"
+                },
+                "bladeTitle": "WordPress information",
+                "elements": [
+                    {
+                        "name": "wpDBUser",
+                        "type": "Microsoft.Compute.UserNameTextBox",
+                        "label": "web site db user name",
+                        "defaultValue": "",
+                        "toolTip": "",
+                        "constraints": {
+                            "required": true
+                        },
+                        "osPlatform": "Linux"
+                    },
+                    {
+                        "name": "wpDBPassword",
+                        "type": "Microsoft.Common.PasswordBox",
+                        "label": {
+                            "password": "Web site db user password",
+                            "confirmPassword": "Confirm password"
+                        },
+                        "toolTip": "web site db user password, also used for WebDeploy authentication",
+                        "constraints": {
+                            "required": true,
+                            "regex": "",
+                            "validationMessage": ""
+                        },
+                        "options": {
+                            "hideConfirmation": false
+                        }
+                    }
+                ]
+            },
             {
                 "name": "databaseCluster",
                 "label": "Database cluster information",
@@ -36,6 +64,17 @@
                 },
                 "bladeTitle": "Database cluster information",
                 "elements": [
+                    {
+                        "name": "dbDNSName",
+                        "type": "Microsoft.Common.TextBox",
+                        "label": "Database DNS",
+                        "toolTip": "MySQL will be accessible from (DatabaseDNS).(location).cloudapp.azure.com:3306",
+                        "constraints": {
+                            "required": true,
+                            "regex": "^[a-z0-9A-Z]{1,30}$",
+                            "validationMessage": "Only alphanumeric characters are allowed, and the value must be 1-30 characters long."
+                        }
+                    },
                     {
                         "name": "vmSize",
                         "type": "Microsoft.Compute.SizeSelector",
@@ -60,14 +99,20 @@
                     },
                     {
                         "name": "storageAccountType",
-                        "type": "Microsoft.Storage.StorageAccountSelector",
-                        "label": "Storage account",
-                        "toolTip": "Storage account for the database VMs",
-                        "defaultValue": {
-                            "name": "[concat(basics('dbDNSName'), 'storage')]",
-                            "type": "Premium_LRS"
-                        },
+                        "type": "Microsoft.Common.DropDown",
+                        "label": "Storage account type",
+                        "toolTip": "Storage account type for the database VMs",
                         "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "Standard_LRS",
+                                    "value": "Standard_LRS"
+                                },
+                                {
+                                    "label": "Premium_LRS",
+                                    "value": "Premium_LRS"
+                                }
+                            ],
                             "required": true
                         }
                     },
@@ -98,18 +143,7 @@
                         "options": {
                             "hideConfirmation": false
                         }
-                    }
-                ]
-            },
-            {
-                "name": "databaseCredentials",
-                "label": "Database credentials",
-                "subLabel": {
-                    "preValidation": "Provide database credentials",
-                    "postValidation": "Done"
-                },
-                "bladeTitle": "Database credentials",
-                "elements": [
+                    },
                     {
                         "name": "mysqlPassword",
                         "type": "Microsoft.Common.PasswordBox",
@@ -126,42 +160,15 @@
                         "options": {
                             "hideConfirmation": false
                         }
-                    },
-                    {
-                        "name": "wpDBUser",
-                        "type": "Microsoft.Compute.UserNameTextBox",
-                        "label": "web site db user name",
-                        "defaultValue": "",
-                        "toolTip": "",
-                        "constraints": {
-                            "required": true
-                        },
-                        "osPlatform": "Linux"
-                    },
-                    {
-                        "name": "wpDBPassword",
-                        "type": "Microsoft.Common.PasswordBox",
-                        "label": {
-                            "password": "Web site db user password",
-                            "confirmPassword": "Confirm password"
-                        },
-                        "toolTip": "web site db user password, also used for MySQL replication, probe and WebDeploy authentication",
-                        "constraints": {
-                            "required": true,
-                            "regex": "",
-                            "validationMessage": ""
-                        },
-                        "options": {
-                            "hideConfirmation": false
-                        }
                     }
                 ]
             }
         ],
         "outputs": {
             "siteName": "[basics('webSiteName')]",
-            "dnsName": "[basics('dbDNSName')]",
-            "hostingPlanName": "[basics('dbDNSName')]",
+            "hostingPlanName": "[basics('webSiteName')]",
+            "wpDbUsername": "[steps('wordpressInfo').wpDBUser]",
+            "wpDbPassword": "[steps('wordpressInfo').wpDBPassword]",
             "webDeploy_AuthenticationKey": "[steps('databaseCredentials').wpDBPassword]",
             "webDeploy_SecureAuthenticationKey": "[steps('databaseCredentials').wpDBPassword]",
             "webDeploy_LoggedInKey": "[steps('databaseCredentials').wpDBPassword]",
@@ -170,12 +177,13 @@
             "webDeploy_SecureAuthenticationSalt": "[steps('databaseCredentials').wpDBPassword]",
             "webDeploy_LoggedInSalt": "[steps('databaseCredentials').wpDBPassword]",
             "webDeploy_NonceSalt": "[steps('databaseCredentials').wpDBPassword]",
+            "dnsName": "[steps('databaseCluster').dbDNSName]",
             "vmUserName": "[steps('databaseCluster').vmUsername]",
             "vmPassword": "[steps('databaseCluster').vmPassword]",
-            "mysqlRootPassword": "[steps('databaseCredentials').mysqlPassword]",
-            "mysqlReplicationPassword": "[steps('databaseCredentials').wpDBPassword]",
-            "mysqlProbePassword": "[steps('databaseCredentials').wpDBPassword]",
-            "wpDbPassword": "[steps('databaseCredentials').wpDBPassword]"
+            "storageAccountType": "[steps('databaseCluster').storageAccountType]",
+            "mysqlRootPassword": "[steps('databaseCluster').mysqlPassword]",
+            "mysqlReplicationPassword": "[steps('databaseCluster').mysqlPassword]",
+            "mysqlProbePassword": "[steps('databaseCluster').mysqlPassword]"
         }
     }
 }
