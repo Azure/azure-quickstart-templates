@@ -79,7 +79,7 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[parameters('newStorageAccountName')]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2015-06-15",
       "location": "[resourceGroup().location]",
       "properties": {
         "accountType": "[variables('storageAccountType')]"
@@ -88,19 +88,19 @@
     {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('availabilitySetMasters')]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2015-06-15",
       "location": "[resourceGroup().location]",
       "properties": {}
     },
     {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('availabilitySetNodes')]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2015-06-15",
       "location": "[resourceGroup().location]",
       "properties": {}
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('managementPublicIPAddrName')]",
       "location": "[resourceGroup().location]",
@@ -112,7 +112,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('nodesPublicIPAddrName')]",
       "location": "[resourceGroup().location]",
@@ -124,7 +124,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[resourceGroup().location]",
@@ -161,7 +161,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('nsgName')]",
       "location": "[resourceGroup().location]",
@@ -185,7 +185,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('vmNameMaster'), copyIndex(), '-nic')]",
       "location": "[resourceGroup().location]",
@@ -195,7 +195,8 @@
       },
       "dependsOn": [
         "[concat('Microsoft.Network/loadBalancers/', variables('mastersLbName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+        "[concat('Microsoft.Network/loadBalancers/', variables('mastersLbName'), '/inboundNatRules/',  'SSH-', variables('vmNameMaster'), copyIndex())]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -223,7 +224,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2015-06-15",
       "name": "[variables('mastersLbName')]",
       "type": "Microsoft.Network/loadBalancers",
       "location": "[resourceGroup().location]",
@@ -243,51 +244,35 @@
         ],
         "backendAddressPools": [
           {
-            "name": "[variables('mastersLbBackendPoolName')]"
-          }
-        ],
-        "inboundNatRules": [
-          {
-            "name": "[concat('SSH-',variables('vmNameMaster'), '0')]",
-            "properties": {
-              "frontendIPConfiguration": {
-                "id": "[variables('mastersLbIPConfigID')]"
-              },
-              "protocol": "tcp",
-              "frontendPort": 2200,
-              "backendPort": 22,
-              "enableFloatingIP": false
-            }
-          },
-          {
-            "name": "[concat('SSH-',variables('vmNameMaster'), '1')]",
-            "properties": {
-              "frontendIPConfiguration": {
-                "id": "[variables('mastersLbIPConfigID')]"
-              },
-              "protocol": "tcp",
-              "frontendPort": 2201,
-              "backendPort": 22,
-              "enableFloatingIP": false
-            }
-          },
-          {
-            "name": "[concat('SSH-',variables('vmNameMaster'), '2')]",
-            "properties": {
-              "frontendIPConfiguration": {
-                "id": "[variables('mastersLbIPConfigID')]"
-              },
-              "protocol": "tcp",
-              "frontendPort": 2202,
-              "backendPort": 22,
-              "enableFloatingIP": false
-            }
+          "name": "[variables('mastersLbBackendPoolName')]"
           }
         ]
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/loadBalancers/inboundNatRules",
+      "name": "[concat(variables('mastersLbName'), '/', 'SSH-', variables('vmNameMaster'), copyIndex())]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "lbNatLoopMaster",
+        "count": "[variables('masterCount')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/loadBalancers/', variables('mastersLbName'))]"
+      ],
+      "properties": {
+        "frontendIPConfiguration": {
+          "id": "[variables('mastersLbIPConfigID')]"
+        },
+        "protocol": "tcp",
+        "frontendPort": "[copyIndex(2200)]",
+        "backendPort": 22,
+        "enableFloatingIP": false
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
       "name": "[variables('nodesLbName')]",
       "type": "Microsoft.Network/loadBalancers",
       "location": "[resourceGroup().location]",
@@ -313,7 +298,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('vmNameNode'),copyIndex(), '-nic')]",
       "location": "[resourceGroup().location]",
@@ -345,7 +330,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('vmNameMaster'), copyIndex())]",
       "location": "[resourceGroup().location]",
@@ -406,7 +391,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('vmNameNode'), copyIndex())]",
       "location": "[resourceGroup().location]",
@@ -468,7 +453,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmNameMaster'), copyIndex(), '/DockerExtension')]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2015-06-15",
       "location": "[resourceGroup().location]",
       "copy": {
         "name": "extensionLoopMaster",
@@ -521,7 +506,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmNameNode'), copyIndex(), '/DockerExtension')]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2015-06-15",
       "location": "[resourceGroup().location]",
       "copy": {
         "name": "extensionLoopNode",
@@ -564,15 +549,15 @@
     },
     "sshMaster0": {
       "type": "string",
-      "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(variables('managementPublicIPAddrName')).dnsSettings.fqdn, ' -p 2200')]"
+      "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(variables('managementPublicIPAddrName')).dnsSettings.fqdn, '-A -p 2200')]"
     },
     "sshMaster1": {
       "type": "string",
-      "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(variables('managementPublicIPAddrName')).dnsSettings.fqdn, ' -p 2201')]"
+      "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(variables('managementPublicIPAddrName')).dnsSettings.fqdn, '-A -p 2201')]"
     },
     "sshMaster2": {
       "type": "string",
-      "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(variables('managementPublicIPAddrName')).dnsSettings.fqdn, ' -p 2202')]"
+      "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(variables('managementPublicIPAddrName')).dnsSettings.fqdn, '-A -p 2202')]"
     }
   }
 }
