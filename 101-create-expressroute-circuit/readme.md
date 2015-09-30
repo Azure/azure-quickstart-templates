@@ -9,3 +9,5 @@ This template creates an ExpressRoute Circuit for a specified Service Provider a
 Refer to https://azure.microsoft.com/en-us/documentation/articles/expressroute-introduction/ for more details on ExpressRoute and Circuits.
 
 Refer to https://azure.microsoft.com/en-us/pricing/details/expressroute/ for more details on pricing/SKU of ExpressRoute.
+
+Refer to https://azure.microsoft.com/en-us/documentation/articles/expressroute-locations/ for ExpressRoute partners and peering locations list.
