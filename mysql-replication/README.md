@@ -9,29 +9,29 @@ This template deploys a MySQL replication environment with one master and one sl
 - Supports CentOS 6 and MySQL 5.6
 - Supports GTID based replication
 - Deploys 2 VMs in an Azure VNet, each has 2 data disks striped into Raid0
-- Deploys a load balancer in front of the 2 VMs, so that the VMs are not directly exposed to the internet.  MySQL and SSH ports is exposed through the load balancer using Network Security Group rules
+- Deploys a load balancer in front of the 2 VMs, so that the VMs are not directly exposed to the internet.  MySQL and SSH ports are exposed through the load balancer using Network Security Group rules
 - Configures a http based health probe for each MySQL instance that can be used to monitor MySQL health
 
 ### How to Deploy
 You can deploy the template with Azure Portal, or PowerShell, or Azure cross platform command line tools.  The example here uses PowerShell to deploy.
 
 **Default deployment**
-* Open Azure command line tool, and log in.
+* Open Azure Powershell console, and log in by running Add-AzureAccount command.
 * Create a resource group:
 ```sh
-> switch-azuremode AzureResourceManager
+> Switch-AzureMode AzureResourceManager
 > New-AzureResourceGroup -Name "mysqlrg"-Location "East US"
 ```
 * Create a deployment:
 ```sh
-> New-AzureResourceGroupDeployment -ResourceGroupName mysqlrg -TemplateFile .\azuredeploy.json -TemplateParameterFile .\azuredeploy-parameters.json
+> New-AzureResourceGroupDeployment -ResourceGroupName mysqlrg -TemplateFile .\azuredeploy.json -TemplateParameterFile .\azuredeploy.parameters.json
 ```
 **Custom deployment**
-* Take a look at AzureDeploy.json to see if you need to make any customization that's not exposed through the template parameters, for example, disk configurations.  If you do, copy down the template and make modifications locally.
+* Take a look at AzureDeploy.json to see if you need to make any customization that's not exposed through the template parameters, for example, disk configurations.  If you do, download the template and make modifications locally.
 * Take a look at AzureMysql.sh.  This script configures network and disks within the VM, as well as installs and configures MySQL. You can customize it to meet your own requirements.
 * Take a look at my.cnf.template.  This is the template for /etc/my.cnf.  Empty parameters will be automatically filled during deployment.  You can also add your own parameters.
 * If you make changes to AzureMysql.sh or my.cnf.template, you need to put the modified file in your own GitHub repo or Azure storage account, and modify the parameters "customScriptFilePath" and "mysqlConfigFilePath" to point to your file location.
-* Once you are done with customization, deploy using the same commands as default deployment.
+* Once you are done with customization, deploy using the same command as default deployment.
 
 ### How to Access MySQL
 * Access MySQL using the public DNS name.  By default, the master server can be accessed at port 3306, and the slave server 3307.  By default, a user "admin" is created with all privileges to access from remote hosts. For example, access the master with the following command:
@@ -43,21 +43,21 @@ You can deploy the template with Azure Portal, or PowerShell, or Azure cross pla
 > wget http://10.0.1.4:9200
 > wget http://10.0.1.5:9200
 ```
-* Ensure replication topology is properly configured:
+* Ensure replication topology is properly configured, assuming master is 10.0.1.4:
 ```sh
 > mysqlrplshow --master=admin:secret@10.0.1.4 --discover-slaves-login=admin:secret
 ```
 
 ### How to Monitor MySQL Health
-* MySQL health can be checked by issuing HTTP query to the MySQL probes and verify query returns 200 status code.  Replace the following with your own dns name, and location.
+* MySQL health can be checked by issuing HTTP query to the MySQL probes and verify that the query returns 200 status code.  Replace the following command with your own dns name and location.
 ```sh
 > wget http://mysqldns.eastus.cloudapp.azure.com:9200
 > wget http://mysqldns.eastus.cloudapp.azure.com:9201
 ```
 
 ### How to Failover
-High availability and fail over are no different from other GTID based MySQL replication.  What's specific to Azure is that in order for the applications to access the current master server without changing their configurations, the NAT rules of the load balancer must be updated in the case of failover:
-* Remove the NAT rule for the old master from the load balancer so that applications can't access the failed master
+High availability and failover are no different from other GTID based MySQL replication.  What's specific to Azure is that in order for the applications to access the current master server without changing their configurations, the NAT rules of the load balancer must be updated in the case of failover:
+* Remove the NAT rule for the old master from the load balancer so that applications can't access the failed master, assuming master has $mysqlrg-nic0:
 ```sh
 > $nic0=Get-AzureNetworkInterface -Name $mysqlrg-nic0 -ResourceGroupName mysqlrg
 > $nic1=Get-AzureNetworkInterface -Name $mysqlrg-nic1 -ResourceGroupName mysqlrg
@@ -66,7 +66,7 @@ High availability and fail over are no different from other GTID based MySQL rep
 > $nic0.IpConfigurations[0].LoadBalancerInboundNatRules.removeRange(1,1)
 > Set-AzureNetworkInterface $nic0
 ```
-* Fail over MySQL from the old master to the new master
+* Fail over MySQL from the old master to the new master.  On the slave, run the following, assuming slave 10.0.1.5 is to become the new master:
 ```sh
 mysql> stop slave;
 mysql> change master to master_host='10.0.1.5', master_user='admin', master_password='secret', master_auto_position=1;
@@ -76,20 +76,20 @@ mysql> change master to master_host='10.0.1.5', master_user='admin', master_pass
 > $rule1=$nic1.IpConfigurations[0].LoadBalancerInboundNatRules[1]
 > $nic1.IpConfigurations[0].LoadBalancerInboundNatRules.removeRange(1,1)
 > $nic1.IpConfigurations[0].LoadBalancerInboundNatRules.add($rule0)
-> Set-AzureNetworkInterface $nic0
+> Set-AzureNetworkInterface $nic1
 
 > $nic0.IpConfigurations[0].LoadBalancerInboundNatRules.add($rule1)
 > Set-AzureNetworkInterface $nic0
 ```
-* Add the old master back to replication as a slave
+* Add the old master back to replication as a slave, on the old master, run the following, assuming the new master is 10.0.1.5:
 ```sh
 mysql> stop slave;
 mysql> change master to master_host='10.0.1.5', master_user='admin', master_password='secret', master_auto_position=1;
 mysql> start slave;
 ```
-* Verify replication is properly restored by running the following commands and make sure there is no error:
+* Verify replication is properly restored by running the following command and make sure there is no error, assuming the new master is 10.0.1.5:
 ```sh
-> mysqlrplshow --master=admin:secret@10.0.1.4 --discover-slaves-login=admin:secret
+> mysqlrplshow --master=admin:secret@10.0.1.5 --discover-slaves-login=admin:secret
 ```
 on the master:
 ```sh
