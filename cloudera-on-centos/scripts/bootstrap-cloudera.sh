@@ -47,6 +47,13 @@ mip=$(echo "$ManagementNode" | sed 's/:/ /' | sed 's/:/ /' | cut -d ' ' -f 1)
 
 log "set private key"
 #use the key from the key vault as the SSH private key
+openssl rsa -in /var/lib/waagent/*.prv -out /home/$ADMINUSER/.ssh/id_rsa
+chmod 600 /home/$ADMINUSER/.ssh/id_rsa
+chown $ADMINUSER /home/$ADMINUSER/.ssh/id_rsa
+
+file="/home/$ADMINUSER/.ssh/id_rsa"
+key="/tmp/id_rsa.pem"
+openssl rsa -in $file -outform PEM > $key
 
 #Generate IP Addresses for the cloudera setup
 NODES=()
