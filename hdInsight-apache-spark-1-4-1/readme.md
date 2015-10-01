@@ -10,7 +10,7 @@ Additionally, it sets specific environment variables ($SPARK_HOME, updates $PATH
 <br>
 Please be sure to utlize appropriate Spark core, memory, and executor settings based on your chosen deployment size.<Br>
 
-To launch Spark interactivly, please SSH into the cluster (<clustername>-ssh.azurehdinsight.net) and execute the following commands:<br>
+To launch Spark interactivly, please SSH into the cluster (clustername-ssh.azurehdinsight.net) and execute the following commands:<br>
 
 Sudo -i<Br>
 $SPARK_HOME/bin/spark-shell<br>
