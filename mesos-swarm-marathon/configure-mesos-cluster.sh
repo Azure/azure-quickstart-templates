@@ -256,6 +256,8 @@ CODENAME=$(lsb_release -cs)
 echo "deb http://repos.mesosphere.io/${DISTRO} ${CODENAME} main" | sudo tee /etc/apt/sources.list.d/mesosphere.list
 time sudo apt-get -y update
 if ismaster ; then
+  # Install older version of marathon to avoid impossible java8 dependency
+  time sudo apt-get -y --force-yes install marathon=0.10.1-1.0.416.ubuntu1404
   time sudo apt-get -y --force-yes install mesosphere
 else
   time sudo apt-get -y --force-yes install mesos
