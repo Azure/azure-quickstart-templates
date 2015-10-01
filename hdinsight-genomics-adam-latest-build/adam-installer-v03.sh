@@ -66,7 +66,7 @@ mv /tmp/apache-maven-3.3.3 /maven
 #Install Git and GeneTorrent Download common packages in preperation for ADAM
 apt-get install -y git libboost-filesystem1.48.0 libboost-program-options1.48.0 libboost-regex1.48.0 libboost-system1.48.0 libicu48 libxerces-c3.1 libxqilla6
 download_file https://cghub.ucsc.edu/software/downloads/GeneTorrent/3.8.7/GeneTorrent-download-3.8.7-207-Ubuntu12.04.x86_64.tar.gz /tmp/GeneTorrent-download-3.8.7-207-Ubuntu12.04.x86_64.tar.gz
-untar_file /tmp/GeneTorrent-download-3.8.7-207-Ubuntu12.04.x86_64.tar.gz
+untar_file /tmp/GeneTorrent-download-3.8.7-207-Ubuntu12.04.x86_64.tar.gz /tmp
 mv /tmp/cghub /cghub
 
 #Install ADAM
