@@ -19,13 +19,13 @@ You should see output similar to the following:<br>
 
 
 15/10/01 15:21:34 INFO util.Utils: Successfully started service 'HTTP class server' on port 47985.
-Welcome to
-      ____              __
-     / __/__  ___ _____/ /__
-    _\ \/ _ \/ _ `/ __/  '_/
-   /___/ .__/\_,_/_/ /_/\_\   version 1.4.1
-      /_/
-
+Welcome to<Br>
+ <br>     ____              __
+     / __/__  ___ _____/ /__<br>
+    _\ \/ _ \/ _ `/ __/  '_/<br>
+   /___/ .__/\_,_/_/ /_/\_\   version 1.4.1<br>
+      /_/<Br>
+<br>
 Using Scala version 2.10.4 (OpenJDK 64-Bit Server VM, Java 1.7.0_79)
 Type in expressions to have them evaluated.
 Type :help for more information.
