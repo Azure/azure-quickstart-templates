@@ -1,8 +1,8 @@
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fliupeirong%2Fazure-quickstart-templates%2Fmaster%2Fwordpress-mysql-replication%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Fwordpress-mysql-replication%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-# MySQL Replication Template
+# Deploys a WordPress web site backed by MySQL master-slave replication
 
 This template deploys a WordPress site in Azure backed by MySQL replication with one master and one slave servers.  It has the following capabilities:
 
@@ -11,7 +11,7 @@ This template deploys a WordPress site in Azure backed by MySQL replication with
   - Configures a http based health probe for each MySQL instance that can be used to monitor MySQL health
 
 ### How to Deploy
-* This template takes a dependency on the [MySQL-replication template](https://github.com/liupeirong/azure-quickstart-templates/tree/master/mysql-replication). Refer to the README of MySQL-Replication template to customize MySQL deployment as necessary and how to failover, backup, and restore.
+* This template takes a dependency on the [MySQL-replication template](https://github.com/azure/azure-quickstart-templates/tree/master/mysql-replication). Refer to the README of MySQL-Replication template for how to customize MySQL deployment, and how to failover, backup, and restore.
 
 
 
