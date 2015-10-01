@@ -1,0 +1,56 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "notificationHubNamespace": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Notification Hub Namespace"
+            }
+        },
+        "notificationHubName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the NotificationHub"
+            }
+        }
+    },
+    "variables": {
+        "location": "[resourceGroup().location]",
+        "nhVersion": "[providers('Microsoft.NotificationHubs', 'namespaces').apiVersions[0]]",
+        "defaultSASKeyName": "RootManageSharedAccessKey",
+        "authRuleResourceId": "[resourceId('Microsoft.NotificationHubs/namespaces/authorizationRules', parameters('notificationHubNamespace'), variables('defaultSASKeyName'))]"
+    },
+    "resources": [
+        {
+            "apiVersion": "[variables('nhVersion')]",
+            "name": "[parameters('notificationHubNamespace')]",
+            "type": "Microsoft.NotificationHubs/namespaces",
+            "location": "[variables('location')]",
+            "properties" : { "NamespaceType": "NotificationHub"  },
+            "resources": [
+                {
+                    "apiVersion": "[variables('nhVersion')]",
+                    "name": "[parameters('notificationHubName')]",
+                    "type": "notificationHubs",
+                    "dependsOn": [
+                        "[concat('Microsoft.NotificationHubs/namespaces/', parameters('notificationHubNamespace'))]"
+                    ],
+                    "properties": {
+                        "path": "[parameters('notificationHubName')]"
+                    }
+                }
+            ]
+        }
+    ],
+    "outputs": {
+        "NamespaceConnectionString": {
+            "type": "string",
+            "value": "[listkeys(variables('authRuleResourceId'), variables('nhVersion')).primaryConnectionString]"
+        },
+        "SharedAccessPolicyPrimaryKey": {
+            "type": "string",
+            "value": "[listkeys(variables('authRuleResourceId'), variables('nhVersion')).primaryKey]"
+        }
+    }
+}
