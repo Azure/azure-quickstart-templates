@@ -20,7 +20,7 @@ You should see output similar to the following:<br>
 
 15/10/01 15:21:34 INFO util.Utils: Successfully started service 'HTTP class server' on port 47985.
 Welcome to<Br>
- <br>     ____              __
+      ____              __
      / __/__  ___ _____/ /__<br>
     _\ \/ _ \/ _ `/ __/  '_/<br>
    /___/ .__/\_,_/_/ /_/\_\   version 1.4.1<br>
