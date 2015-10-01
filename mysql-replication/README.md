@@ -59,12 +59,14 @@ You can deploy the template with Azure Portal, or PowerShell, or Azure cross pla
 High availability and failover are no different from other GTID based MySQL replication.  What's specific to Azure is that in order for the applications to access the current master server without changing their configurations, the NAT rules of the load balancer must be updated in the case of failover:
 * Remove the NAT rule for the old master from the load balancer so that applications can't access the failed master, assuming master has $mysqlrg-nic0:
 ```sh
-> $nic0=Get-AzureNetworkInterface -Name $mysqlrg-nic0 -ResourceGroupName mysqlrg
-> $nic1=Get-AzureNetworkInterface -Name $mysqlrg-nic1 -ResourceGroupName mysqlrg
-
-> $rule0=$nic0.IpConfigurations[0].LoadBalancerInboundNatRules[1]
-> $nic0.IpConfigurations[0].LoadBalancerInboundNatRules.removeRange(1,1)
-> Set-AzureNetworkInterface $nic0
+> $nic0=Get-AzureNetworkInterface -Name mysqldns-nic0 -ResourceGroupName mysqlrg
+> $nic1=Get-AzureNetworkInterface -Name mysqldns-nic1 -ResourceGroupName mysqlrg
+...
+# $i is the index of the target nat rule, for full powershell script, see switchMySQLNatRule.sql
+...
+> $rule0=$nic0.IpConfigurations[0].LoadBalancerInboundNatRules[$i]
+> $nic0.IpConfigurations[0].LoadBalancerInboundNatRules.removeRange($i,1)
+> Set-AzureNetworkInterface -NetworkInterface $nic0
 ```
 * Fail over MySQL from the old master to the new master.  On the slave, run the following, assuming slave 10.0.1.5 is to become the new master:
 ```sh
@@ -73,13 +75,16 @@ mysql> change master to master_host='10.0.1.5', master_user='admin', master_pass
 ```
 * Switch the old master's NAT rule with the new master
 ```sh
-> $rule1=$nic1.IpConfigurations[0].LoadBalancerInboundNatRules[1]
-> $nic1.IpConfigurations[0].LoadBalancerInboundNatRules.removeRange(1,1)
+...
+# $j is the index of the target nat rule, for full powershell script, see switchMySQLNatRule.sql
+...
+> $rule1=$nic1.IpConfigurations[0].LoadBalancerInboundNatRules[$j]
+> $nic1.IpConfigurations[0].LoadBalancerInboundNatRules.removeRange($j,1)
 > $nic1.IpConfigurations[0].LoadBalancerInboundNatRules.add($rule0)
-> Set-AzureNetworkInterface $nic1
+> Set-AzureNetworkInterface -NetworkInterface $nic1
 
 > $nic0.IpConfigurations[0].LoadBalancerInboundNatRules.add($rule1)
-> Set-AzureNetworkInterface $nic0
+> Set-AzureNetworkInterface -NetworkInterface $nic0
 ```
 * Add the old master back to replication as a slave, on the old master, run the following, assuming the new master is 10.0.1.5:
 ```sh
