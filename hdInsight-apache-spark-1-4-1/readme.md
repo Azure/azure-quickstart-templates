@@ -23,7 +23,7 @@ Welcome to version 1.4.1<br>
 Using Scala version 2.10.4 (OpenJDK 64-Bit Server VM, Java 1.7.0_79)<br>
 Type in expressions to have them evaluated.<br>
 Type :help for more information.<br>
-15/10/01 15:21:40 INFO spark.SparkContext: Running Spark version 1.4.1<br>
+15/10/01 15:21:40 INFO spark.SparkContext: <b>Running Spark version 1.4.1</b><br>
 <br>...Output Snipped...<br><br>
 scala>
 
