@@ -1747,7 +1747,7 @@ def parse_options():
     parser.add_option('-i', '--job-function', dest='jobfunction', type="string", action='callback',
                       callback=cmx_args, help='Set job function')
     parser.add_option('-y', '--company', dest='company', type="string", action='callback',
-                      callback=cmx_args, help='Set job function')
+                      callback=cmx_args, help='Set company')
     parser.add_option('-e', '--accept-eula', dest='accepted', action="store_true", default=False,
                       help='Must accept eula before install')
 
@@ -1840,7 +1840,7 @@ def main():
     log("parse_options")
     options = parse_options()
     if(cmx.do_post):
-        postEulaInfo(cmx.fname, cmx.lname, cmx.company, cmx.email,
+        postEulaInfo(cmx.fname, cmx.lname, cmx.email, cmx.company,
                      cmx.jobrole, cmx.jobfunction, cmx.phone)
     # Prepare Cloudera Manager Server:
     # 1. Initialise Cluster and set Cluster name: 'Cluster 1'

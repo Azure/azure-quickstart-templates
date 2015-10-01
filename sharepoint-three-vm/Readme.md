@@ -9,3 +9,4 @@ Click the button below to deploy
 </a>
 
 
+Notes: Sharepoint farm name must not contain spaces.
