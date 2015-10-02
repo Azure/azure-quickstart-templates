@@ -61,20 +61,23 @@
   },
   "variables": {
     "vmStorageAccountContainerName": "vhd",
-    "subnetRef":"[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('subnet').vnet), '/subnets/', parameters('subnet').name)]",
+    "subnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('subnet').vnet), '/subnets/', parameters('subnet').name)]",
     "storageAccountName": "[parameters('storageAccountName')]",
     "vmName": "masterVm"
   },
   "resources": [
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/availabilitySets",
       "name": "elasticsearchMaster",
       "location": "[parameters('region')]",
-      "properties": {}
+      "properties": {
+        "platformUpdateDomainCount": 3,
+        "platformFaultDomainCount": 3
+      }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat('masterNodeNic', copyindex())]",
       "location": "[parameters('region')]",
@@ -98,7 +101,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat('masterVm', copyindex())]",
       "location": "[parameters('region')]",
@@ -140,30 +143,27 @@
             }
           ]
         }
-      }
-    },
-    {
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat('masterVm', copyindex(), '/installelasticsearch')]",
-      "apiVersion": "2015-05-01-preview",
-      "location": "[parameters('region')]",
-      "copy": {
-        "name": "masterVMExtensionsLoop",
-        "count": 3
       },
-      "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', 'masterVm', copyindex())]",
-        "[concat('Microsoft.Network/networkInterfaces/', 'masterNodeNic', copyindex())]"
-      ],
-      "properties": {
-        "publisher": "Microsoft.OSTCExtensions",
-        "type": "CustomScriptForLinux",
-        "typeHandlerVersion": "1.2",
-        "settings": {
-          "fileUris": "[parameters('osSettings').scripts]",
-          "commandToExecute": "[concat('bash elasticsearch-ubuntu-install.sh -xn ', parameters('esSettings').clusterName, ' -v ', parameters('esSettings').version, ' -d ', parameters('esSettings').discoveryHosts)]"
+      "resources": [
+        {
+          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "name": "[concat('masterVm', copyindex(), '/installelasticsearch')]",
+          "apiVersion": "2015-06-15",
+          "location": "[parameters('region')]",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', 'masterVm', copyindex())]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.OSTCExtensions",
+            "type": "CustomScriptForLinux",
+            "typeHandlerVersion": "1.2",
+            "settings": {
+              "fileUris": "[parameters('osSettings').scripts]",
+              "commandToExecute": "[concat('bash elasticsearch-ubuntu-install.sh -xn ', parameters('esSettings').clusterName, ' -v ', parameters('esSettings').version, ' -d ', parameters('esSettings').discoveryHosts)]"
+            }
+          }
         }
-      }
+      ]
     }
   ]
 }

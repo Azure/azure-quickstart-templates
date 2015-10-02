@@ -19,8 +19,6 @@ This template will create a SQL Server 2014 Always On Availability Group using t
 
 + 	In default settings for compute require that you have at least 19 cores of free quota to deploy.
 
-+	This template creates an Always On Listener but the deployed Sharepoint Farm does not use it at present, SharePoint is configured as decribed at https://technet.microsoft.com/en-us/library/dd207314(v=office.14).aspx#Configure3, this will be changed in the future.
-
 +	Public Endpoints are created for the SharePoint site that this template creates and for the Central Admin site, however no permissions are given to any user for the new SharePoint site created, these will need to be added from the Central Admin site.
 
 + 	The images used to create this deployment are
@@ -46,46 +44,6 @@ This template will create a SQL Server 2014 Always On Availability Group using t
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-## Parameters
-
-|Name|Description                                        |
-|:----|:-------------------------------------------------|
-|newStorageAccountNamePrefix|The prefix of the new storage account created to store the VMs disks,different storage accounts will be created for AD,SQL and Sharepoint VMs. The same storage account type is used for all machines|
-|storageAccountType|Type of the storage account<ul><li>**Allowed Values**</li><li>Standard_LRS</li><li>Standard_GRS</li><li>Standard_RAGRS</li><li>Standard_ZRS</li><li>Premium_LRS **(default)**</li></ul>|
-|location|Location where to deploy the resource <ul>**Allowed Values**<li>West US</li><li>East US</li><li>West Europe</li><li>East Asia</li><li>Southeast Asia</li>|
-|virtualNetworkAddressRange|Virtual Network Address Range <ul><li>10.0.0.0/16 **(default)**</li></ul>|
-|staticSubnet|Address prefix for subnet that Static IP addresses are taken from <ul><li>10.0.0.0/24 **(default)**</li></ul>|
-|sqlSubnet|Address prefix for subnet that SQL Server and Witness IP addresses are taken from <ul><li>10.0.1.0/24 **(default)**</li></ul>|
-|spwebSubnet|Address prefix for subnet that SharePoint Web Server addresses are taken from <ul><li>10.0.2.0/24 **(default)**</li></ul>|
-|spAppSubnet|Address prefix for subnet that SharePoint App Server  are taken from <ul><li>10.0.3.0/24 **(default)**</li></ul>|
-|adPDCNicIPAddress|The IP address of the new AD PDC <ul><li>**10.0.0.4 (default)**</li></ul>|
-|adBDCNicIPAddress|The IP address of the new AD BDC <ul><li>**10.0.0.5 (default)**</li></ul>|
-|sqlLBNicIPAddress|The IP address of the ILB used for SQL Listener <ul><li>**10.0.0.6 (default)**</li></ul>|
-|adminUsername|Admin username for the VM **This will also be used as the domain admin user name**|
-|adminPassword|Admin password for the VM **This will also be used as the domain admin password and the SafeMode password **|
-|adVMSize|Size of the AD VM <ul>**Allowed Values**<li>Standard_D1 </li><li>Standard_DS1 **(default)**</li><li>Standard_D2</li><li>Standard_DS2</li><li>Standard_D3</li><li>Standard_DS3</li><li>Standard_D4</li><li>Standard_DS11</li><li>Standard_D11</li><li>Standard_DS11</li><li>Standard_D12</li><li>Standard_DS12</li><li>Standard_D13</li><li>Standard_DS13</li><li>Standard_D14</li><li>Standard_DS14</li></ul>|
-|sqlVMSize|Size of the SQL VM <ul>**Allowed Values**<li>Standard_D1 </li><li>Standard_DS1</li><li>Standard_D2</li><li>Standard_DS2</li><li>Standard_D3</li><li>Standard_DS3 **(default)**</li><li>Standard_D4</li><li>Standard_DS11</li><li>Standard_D11</li><li>Standard_DS11</li><li>Standard_D12</li><li>Standard_DS12</li><li>Standard_D13</li><li>Standard_DS13</li><li>Standard_D14</li><li>Standard_DS14</li></ul>|
-|witnessVMSize|Size of the SQL VM <ul>**Allowed Values**<li>Standard_D1 </li><li>Standard_DS1 **(default)**</li><li>Standard_D2</li><li>Standard_DS2</li><li>Standard_D3</li><li>Standard_DS3</li><li>Standard_D4</li><li>Standard_DS11</li><li>Standard_D11</li><li>Standard_DS11</li><li>Standard_D12</li><li>Standard_DS12</li><li>Standard_D13</li><li>Standard_DS13</li><li>Standard_D14</li><li>Standard_DS14</li></ul>|
-|spVMSize|Size of the SharePoint VM <ul>**Allowed Values**<li>Standard_D1 </li><li>Standard_DS1</li><li>Standard_D2</li><li>Standard_DS2 **(default)**</li><li>Standard_D3</li><li>Standard_DS3</li><li>Standard_D4</li><li>Standard_DS11</li><li>Standard_D11</li><li>Standard_DS11</li><li>Standard_D12</li><li>Standard_DS12</li><li>Standard_D13</li><li>Standard_DS13</li><li>Standard_D14</li><li>Standard_DS14</li></ul>|
-|domainName|The FQDN of the AD Domain created|
-|dnsPrefix|The DNS prefix for the public IP address used by the Load Balancer for SharePoint Web site access|
-|rdpDNSPrefix|The DNS prefix for the public IP address used by the Load Balancer for RDP Access|
-|spCentralAdminDNSPrefix|The DNS prefix for the public IP address used by the Load Balancer for SharePoint Central Admin Access|
-|assetLocation|The location of resources such as templates and DSC modules that the script is dependent on|
-|sqlServerServiceAccountUserName|The SQL Server Service account name|
-|sqlServerServiceAccountPassword|The SQL Server Service account password|
-|sharePointSetupUserAccountUserName|The Sharepoint Setup account name|
-|sharePointSetupUserAccountPassword|The Sharepoint Setup account password|
-|sharePointFarmAccountUserName|The Sharepoint Farm account name|
-|sharePointFarmAccountPassword|The Sharepoint Farm account password|
-|sharePointFarmPassphrasePassword|The Sharepoint Farm Passphrase|
-|configDatabaseName|The Sharepoint Configuration Database Name|
-|administrationContentDatabaseName|The Sharepoint Admin Site Database Name|
-|contentDatabaseName|The Sharepoint Content Database Name|
-|spSiteTemplateName|The Sharepoint Content Site Template Name|
-
-
-
 ## Notable Variables
 
 |Name|Description|
@@ -97,7 +55,6 @@ This template will create a SQL Server 2014 Always On Availability Group using t
 |sqlwVMName|The name of the File Share Witness|
 |spwebVMName|The Prefix of the SharePoint Web Server VMs|
 |spappVMName|The Prefix of the SharePoint App Server VMs|
-|rdpPort|The public RDP port for first VM|
 |windowsImagePublisher|The name of the pulisher of the AD and Witness Image|
 |windowsImageOffer|The Offer Name for the Image used by AD and Witness VMs|
 |windowsImageSKU|The Image SKU for the AD and Witness Image|
@@ -110,6 +67,3 @@ This template will create a SQL Server 2014 Always On Availability Group using t
 |windowsDiskSize|The size of the VHD allocated for AD and Witness VMs Data Disk|
 |sqlDiskSize|The size of the the VHD allocated for SQL VMs Data and Log Disks|
 |spDiskSize|The size of the VHD allocated for the SP VMs Data Disk|
-
-
-
