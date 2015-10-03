@@ -64,6 +64,12 @@
                 "description": "Subnet 2 Name"
             }
         },
+        "subnet1StartAddress" : {
+            "type" : "string",
+            "metadata" : {
+                "description" : "Subnet 1 Starting IP Address"
+            }
+        },
         "adminUsername": {
             "type": "string",
             "defaultValue": "",
@@ -301,6 +307,25 @@
             }
         },
         {
+            "type": "Microsoft.Network/routeTables",
+            "name": "[variables('routeTableName')]",
+            "apiVersion": "[variables('apiVer')]",
+            "location": "[parameters('location')]",
+            "dependsOn" : [
+                "[concat('Microsoft.Compute/virtualMachines/',parameters('vmName'))]"
+            ],
+            "properties": {
+                "routes": [{
+                    "name": "VirtualApplianceRouteToCSRVM",
+                    "properties": {
+                        "addressPrefix": "[parameters('subnet2Prefix')]",
+                        "nextHopType": "VirtualAppliance",
+                        "nextHopIpAddress": "[parameters('subnet1StartAddress')]"
+                    }
+                }]
+            }
+        },
+        {
             "name": "SettingUpVirtualNetwork",
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2015-01-01",
@@ -335,9 +360,6 @@
                     "Subnet2Prefix": {
                         "value": "[parameters('Subnet2Prefix')]"
                     },
-                    "nsgId": {
-                        "value": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgname'))]"
-                    },
                     "vnetExistingRGName": {
                         "value": "[parameters('virtualNetworkExistingRGName')]"
                     }
@@ -360,6 +382,9 @@
                             "privateIPAllocationMethod": "Dynamic",
                             "subnet": {
                                 "id": "[reference('Microsoft.Resources/deployments/SettingUpVirtualNetwork','2015-01-01').outputs.subnet1Ref.value]"
+                            },
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgname'))]"
                             }
                         }
                     }
@@ -379,7 +404,8 @@
                     {
                         "name": "ipconfig1",
                         "properties": {
-                            "privateIPAllocationMethod": "Dynamic",
+                            "privateIPAllocationMethod": "Static",
+                            "privateIPAddress" : "[parameters('subnet1StartAddress')]",
                             "subnet": {
                                 "id": "[reference('Microsoft.Resources/deployments/SettingUpVirtualNetwork','2015-01-01').outputs.subnet2Ref.value]"
                             }
