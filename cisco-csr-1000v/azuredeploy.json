@@ -193,7 +193,7 @@
         "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
         "subnet1Ref": "[concat(variables('vnetID'),'/subnets/', parameters('Subnet1Name'))]",
         "subnet2Ref": "[concat(variables('vnetID'),'/subnets/', parameters('Subnet2Name'))]",
-        "nsgname": "DefaultNSG",
+        "nsgname": "[concat(parameters('vmName'),'-SSH-SecurityGroup']",
         "apiVer": "2015-06-15",
         "publicIPAddressType": "Dynamic",
         "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
@@ -285,7 +285,7 @@
         {
             "apiVersion": "[variables('apiVer')]",
             "type": "Microsoft.Network/networkSecurityGroups",
-            "name": "DefaultNSG",
+            "name": "[concat(parameters('vmName'),'-SSH-SecurityGroup']",
             "location": "[parameters('location')]",
             "properties": {
                 "securityRules": [
@@ -307,31 +307,9 @@
             }
         },
         {
-            "type": "Microsoft.Network/routeTables",
-            "name": "[variables('routeTableName')]",
-            "apiVersion": "[variables('apiVer')]",
-            "location": "[parameters('location')]",
-            "dependsOn" : [
-                "[concat('Microsoft.Compute/virtualMachines/',parameters('vmName'))]"
-            ],
-            "properties": {
-                "routes": [{
-                    "name": "VirtualApplianceRouteToCSRVM",
-                    "properties": {
-                        "addressPrefix": "[parameters('subnet2Prefix')]",
-                        "nextHopType": "VirtualAppliance",
-                        "nextHopIpAddress": "[parameters('subnet1StartAddress')]"
-                    }
-                }]
-            }
-        },
-        {
             "name": "SettingUpVirtualNetwork",
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2015-01-01",
-            "dependsOn": [
-                "[concat('Microsoft.Network/networkSecurityGroups/', variables('nsgname'))]"
-            ],
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
@@ -367,12 +345,32 @@
             }
         },
         {
+            "type": "Microsoft.Network/routeTables",
+            "name": "[concat(parameters('vmName'),'-CSR-RouteTable']",
+            "apiVersion": "[variables('apiVer')]",
+            "location": "[parameters('location')]",
+            "dependsOn" : [
+                "[concat('Microsoft.Resources/deployments/', 'SettingUpVirtualNetwork')]"
+            ],
+            "properties": {
+                "routes": [{
+                    "name": "VirtualApplianceRouteToCSRVM",
+                    "properties": {
+                        "addressPrefix": "[parameters('subnet2Prefix')]",
+                        "nextHopType": "VirtualAppliance",
+                        "nextHopIpAddress": "[parameters('subnet1StartAddress')]"
+                    }
+                }]
+            }
+        },
+        {
             "apiVersion": "[variables('apiVer')]",
             "type": "Microsoft.Network/networkInterfaces",
-            "name": "Nic0",
+            "name": "[concat(parameters('vmName'),'-Nic0']",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[concat('Microsoft.Resources/deployments/', 'SettingUpVirtualNetwork')]"
+                "[concat('Microsoft.Resources/deployments/', 'SettingUpVirtualNetwork')]",
+                "[concat('Microsoft.Network/networkSecurityGroups/',concat(parameters('vmName'),'-SSH-SecurityGroup'))]"
             ],
             "properties": {
                 "ipConfigurations": [
@@ -394,7 +392,7 @@
         {
             "apiVersion": "[variables('apiVer')]",
             "type": "Microsoft.Network/networkInterfaces",
-            "name": "Nic1",
+            "name": "[concat(parameters('vmName'),'-Nic1']",
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[concat('Microsoft.Resources/deployments/', 'SettingUpVirtualNetwork')]"
@@ -427,8 +425,8 @@
             },
             "dependsOn": [
                 "[concat('Microsoft.Resources/deployments/', 'SettingUpStorageAccount')]",
-                "[concat('Microsoft.Network/networkInterfaces/Nic0')]",
-                "[concat('Microsoft.Network/networkInterfaces/Nic1')]"
+                "[concat('Microsoft.Network/networkInterfaces/',parameters('vmName'),'-Nic0')]",
+                "[concat('Microsoft.Network/networkInterfaces/',parameters('vmName'),'-Nic1')]"
             ],
             "properties": {
                 "hardwareProfile": {
@@ -457,13 +455,13 @@
                             "properties": {
                                 "primary": true
                             },
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces', 'Nic0')]"
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('vmName'),'-Nic0'))]"
                         },
                         {
                             "properties": {
                                 "primary": false
                             },
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces', 'Nic1')]"
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('vmName'),'-Nic1'))]"
                         }
                     ]
                 },
