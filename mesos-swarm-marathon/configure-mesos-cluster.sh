@@ -258,6 +258,8 @@ time sudo add-apt-repository -y ppa:openjdk-r/ppa
 time sudo apt-get -y update
 time sudo apt-get -y install openjdk-8-jre-headless
 if ismaster ; then
+  # Install older version of marathon to avoid impossible java8 dependency
+  time sudo apt-get -y --force-yes install marathon=0.10.1-1.0.416.ubuntu1404
   time sudo apt-get -y --force-yes install mesosphere
 else
   time sudo apt-get -y --force-yes install mesos
