@@ -111,8 +111,29 @@ ensureAzureNetwork()
     ip a
     exit 2
   fi
+  # ensure the host ip can resolve
+  networkHealthy=1
+  for i in {1..120}; do
+    hostname -i
+    if [ $? -eq 0 ]
+    then
+      # hostname has been found continue
+      networkHealthy=0
+      echo "the network is healthy"
+      break
+    fi
+    sleep 1
+  done
+  if [ $networkHealthy -ne 0 ]
+  then
+    echo "the network is not healthy, cannot resolve ip address, aborting install"
+    ifconfig
+    ip a
+    exit 2
+  fi
 }
 ensureAzureNetwork
+HOSTADDR=`hostname -i`
 
 ismaster ()
 {
@@ -169,6 +190,12 @@ zkconfig()
   zkconfigstr="zk://${zkhosts}/${postfix}"
   echo $zkconfigstr
 }
+
+######################
+# resolve self in DNS
+######################
+
+echo "$HOSTADDR $VMNAME" | sudo tee -a /etc/hosts
 
 ################
 # Install Docker
@@ -227,7 +254,9 @@ sudo apt-key adv --keyserver keyserver.ubuntu.com --recv E56151BF
 DISTRO=$(lsb_release -is | tr '[:upper:]' '[:lower:]')
 CODENAME=$(lsb_release -cs)
 echo "deb http://repos.mesosphere.io/${DISTRO} ${CODENAME} main" | sudo tee /etc/apt/sources.list.d/mesosphere.list
+time sudo add-apt-repository -y ppa:openjdk-r/ppa
 time sudo apt-get -y update
+time sudo apt-get -y install openjdk-8-jre-headless
 if ismaster ; then
   time sudo apt-get -y --force-yes install mesosphere
 else
@@ -270,6 +299,9 @@ if ismaster  && [ "$MARATHONENABLED" == "true" ] ; then
   sudo cp /etc/mesos/zk /etc/marathon/conf/master
   zkmarathonconfig=$(zkconfig "marathon")
   echo $zkmarathonconfig | sudo tee /etc/marathon/conf/zk
+  # enable marathon to failover tasks to other nodes immediately
+  echo 0 | sudo tee /etc/marathon/conf/failover_timeout
+  #echo false | sudo tee /etc/marathon/conf/checkpoint
 fi
 
 #########################################
@@ -281,6 +313,7 @@ if ismaster ; then
   sudo wget https://github.com/mesosphere/mesos-dns/releases/download/v0.2.0/mesos-dns-v0.2.0-linux-amd64.tgz
   sudo tar zxvf mesos-dns-v0.2.0-linux-amd64.tgz
   sudo mv mesos-dns-v0.2.0-linux-amd64 /usr/local/mesos-dns/mesos-dns
+  RESOLVER=`cat /etc/resolv.conf | grep nameserver | tail -n 1 | awk '{print $2}'`
 
   echo "
 {
@@ -292,7 +325,7 @@ if ismaster ; then
   \"timeout\": 1,
   \"listener\": \"0.0.0.0\",
   \"email\": \"root.mesos-dns.mesos\",
-  \"externalon\": false
+  \"resolvers\": [\"$RESOLVER\"]
 }
 " > mesos-dns.json
   sudo mv mesos-dns.json /usr/local/mesos-dns/mesos-dns.json

@@ -121,14 +121,14 @@
     },
     "dataNodeScaleUnits": {
       "type": "int",
-      "defaultValue": 2,
+      "defaultValue": 3,
       "metadata": {
         "description": "This is the number of node scale units (Each scale unit will provision one storage account and number of data nodes configured per unit)"
       }
     },
     "dataNodesPerUnit": {
       "type": "int",
-      "defaultValue": 3,
+      "defaultValue": 1,
       "metadata": {
         "description": "Number of Elasticsearch data nodes to provision with each node scale unit"
       }
@@ -149,9 +149,9 @@
     },
     "esVersion": {
       "type": "string",
-      "defaultValue": "1.7.1",
+      "defaultValue": "1.7.2",
       "allowedValues": [
-        "1.7.1",
+        "1.7.2",
         "1.6.2",
         "1.5.2",
         "1.4.5"
@@ -184,6 +184,11 @@
         }
       }
     },
+    "esSettings": {
+      "clusterName": "[parameters('esClusterName')]",
+      "version": "[parameters('esVersion')]",
+      "discoveryHosts": "[concat(variables('masterNodesIpPrefix'), '-3')]"
+    },
     "dataNodeAvailabilitySetName": "dataNodeAvailabilitySet",
     "sharedTemplateUrl": "[concat(variables('templateBaseUrl'), 'shared-resources.json')]",
     "masterTemplateUrl": "[concat(variables('templateBaseUrl'), 'master-nodes-resources.json')]",
@@ -201,32 +206,62 @@
     "jumpboxTemplateYes": "jumpbox-resources.json",
     "jumpboxTemplateNo": "empty-resources.json",
     "jumpboxTemplateUrl": "[concat(variables('templateBaseUrl'), variables(concat('jumpboxTemplate',parameters('jumpbox'))))]",
-    "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
     "ubuntuScripts": [
       "[concat(variables('templateBaseUrl'), 'elasticsearch-ubuntu-install.sh')]",
       "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/shared_scripts/ubuntu/vm-disk-utils-0.1.sh"
     ],
-    "ubuntuImageReference": {
-      "publisher": "Canonical",
-      "offer": "UbuntuServer",
-      "sku": "14.04.2-LTS",
-      "version": "latest"
+    "ubuntuSettings": {
+      "imageReference":{
+        "publisher": "Canonical",
+        "offer": "UbuntuServer",
+        "sku": "14.04.2-LTS",
+        "version": "latest"
+      },
+      "managementPort":"22",
+      "extentionSettings":{
+        "master": {
+            "publisher": "Microsoft.OSTCExtensions",
+            "type": "CustomScriptForLinux",
+            "typeHandlerVersion": "1.2",
+            "settings": {
+              "fileUris": "[variables('ubuntuScripts')]",
+              "commandToExecute": "[concat('bash elasticsearch-ubuntu-install.sh -xn ', variables('esSettings').clusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').discoveryHosts)]"
+            }
+          },
+        "client": {
+            "publisher": "Microsoft.OSTCExtensions",
+            "type": "CustomScriptForLinux",
+            "typeHandlerVersion": "1.2",
+            "settings": {
+              "fileUris": "[[variables('ubuntuScripts')]",
+              "commandToExecute": "[concat('bash elasticsearch-ubuntu-install.sh -yn ', variables('esSettings').clusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').discoveryHosts)]"
+            }
+          },
+        "data": {
+          "publisher": "Microsoft.OSTCExtensions",
+          "type": "CustomScriptForLinux",
+          "typeHandlerVersion": "1.2",
+          "settings": {
+            "fileUris": "[variables('ubuntuScripts')]",
+            "commandToExecute": "[concat('bash elasticsearch-ubuntu-install.sh -zn ', variables('esSettings').clusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').discoveryHosts)]"
+          }
+        }
+      }
     },
-    "ubuntuOSProfileConfigKey": "linuxConfiguration",
-    "ubuntuOSProfileConfig": {
-      "disablePasswordAuthentication": "false"
+    "windowsSettings": {
+      "imageReference":{
+        "publisher": "MicrosoftWindowsServer",
+        "offer": "WindowsServer",
+        "sku": "2012-R2-Datacenter",
+        "version": "latest"
+      },
+      "extentionSettings":{
+        "master": {},
+        "client": {},
+        "data": {}
+      }
     },
-    "osSettings": {
-      "imageReference": "[variables(concat(parameters('OS'), 'ImageReference'))]",
-      "scripts": "[variables(concat(parameters('OS'), 'Scripts'))]"
-    },
-    "esSettings": {
-      "clusterName": "[parameters('esClusterName')]",
-      "version": "[parameters('esVersion')]",
-      "discoveryHosts": "[concat(variables('masterNodesIpPrefix'), '-3')]",
-      "osProfileConfigKey": "[variables(concat(parameters('OS'), 'OSProfileConfigKey'))]",
-      "osProfileConfig": "[variables(concat(parameters('OS'), 'OSProfileConfig'))]"
-    },
+    "osSettings": "[variables(concat(parameters('OS'), 'Settings'))]",
     "lbBackEndPoolsAdded": {
       "backendPools": [
         {
@@ -281,9 +316,6 @@
           },
           "osSettings": {
             "value": "[variables('osSettings')]"
-          },
-          "esSettings": {
-            "value": "[variables('esSettings')]"
           }
         }
       }
@@ -355,9 +387,6 @@
           "vmSize": {
             "value": "[parameters('vmSizeClientNodes')]"
           },
-          "esSettings": {
-            "value": "[variables('esSettings')]"
-          },
           "osSettings": {
             "value": "[variables('osSettings')]"
           },
@@ -408,9 +437,6 @@
           },
           "dataNodes": {
             "value": "[parameters('dataNodesPerUnit')]"
-          },
-          "esSettings": {
-            "value": "[variables('esSettings')]"
           },
           "dataDiskSize": {
             "value": "[parameters('dataDiskSize')]"
