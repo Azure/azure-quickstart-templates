@@ -1,6 +1,6 @@
 # Create HDInsight Linux cluster running the genomics analysis platform called ADAM
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FExchMaster%2Fazure-quickstart-templates%2Fmaster%2Fhdinsight-genomics-adam-latest-build%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FExchMaster%2Fazure-quickstart-templates%2Fmaster%2Fhdinsight-genomics-adam%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
