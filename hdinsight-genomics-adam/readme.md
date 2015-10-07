@@ -6,4 +6,5 @@
 
 This template creates an HDInsight Linux based cluster and then updates the cluster headnodes with the genomics analysis platform ADAM.  It also deploys Apache Spark 1.4.1 with YARN in support of ADAM.<br>
 <br>
-For more information regarding ADAM, please <a href="https://github.com/bigdatagenomics/adam" target="_blank"><b>click here</b>.</a>
+For more information regarding ADAM, please <a href="https://github.com/bigdatagenomics/adam" target="_blank"><b>click here</b>.</a><br><br>
+To learn more about customizing the installation of HDInsight (Hadoop) linux clusters, please review follow this link: <a href="https://azure.microsoft.com/en-us/documentation/articles/hdinsight-hadoop-customize-cluster-linux/" target="_blank"><b>Click Me</b></a>

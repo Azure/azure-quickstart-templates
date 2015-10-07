@@ -27,5 +27,7 @@ Type :help for more information.<br>
 <br>...Output Snipped...<br><br>
 scala>
 
+To deploy alternative versions of Apache Spark as published by the HDInsight team, please review follow this link: <a href="https://azure.microsoft.com/en-us/documentation/articles/hdinsight-hadoop-customize-cluster-linux/" target="_blank"><b>Click Me</b></a>
+
 
 
