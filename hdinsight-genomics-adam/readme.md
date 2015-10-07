@@ -4,4 +4,6 @@
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-This template creates an HDInsight Linux based cluster and then updates the cluster headnodes with the genomics analysis platoform ADAM.  It also deploys Apache Spark 1.4.1 with YARN in support of ADAM.<br>
+This template creates an HDInsight Linux based cluster and then updates the cluster headnodes with the genomics analysis platform ADAM.  It also deploys Apache Spark 1.4.1 with YARN in support of ADAM.<br>
+<br>
+For more information regarding ADAM, please <a href="https://github.com/bigdatagenomics/adam" target="_blank"><b>click here</b>.</a>
