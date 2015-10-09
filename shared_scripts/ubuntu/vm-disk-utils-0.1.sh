@@ -288,7 +288,7 @@ create_striped_volume()
 	PARTITIONSNUM=${#PARTITIONS[@]}
 	STRIPEWIDTH=$((${STRIDE} * ${PARTITIONSNUM}))
 
-	mkfs.ext4 -b 4096 -E stride=${STRIDE},stripe-width=${STRIPEWIDTH} "${MDDEVICE}"
+	mkfs.ext4 -b 4096 -E stride=${STRIDE},stripe-width=${STRIPEWIDTH},nodiscard "${MDDEVICE}"
 
 	read UUID FS_TYPE < <(blkid -u filesystem ${MDDEVICE}|awk -F "[= ]" '{print $3" "$5}'|tr -d "\"")
 
