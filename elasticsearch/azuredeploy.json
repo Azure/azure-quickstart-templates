@@ -26,7 +26,7 @@
         "description": "Unique namespace for the Storage Account where the Virtual Machine's disks will be placed"
       }
     },
-    "region": {
+    "location": {
       "type": "string",
       "allowedValues": [
         "West US",
@@ -110,34 +110,27 @@
       "defaultValue": "Standard_A2",
       "allowedValues": [
         "Standard_D1",
+        "Standard_D2",
+        "Standard_D3",
+        "Standard_D4",
         "Standard_A2",
         "Standard_A3",
         "Standard_A4",
-        "Standard_A7"
+        "Standard_A7",
+        "Standard_DS2",
+        "Standard_DS3",
+        "Standard_DS4",
+        "Standard_DS13"
       ],
       "metadata": {
         "description": "Size of the Elasticsearch data nodes"
       }
     },
-    "dataNodeScaleUnits": {
+    "vmDataNodeCount": {
       "type": "int",
       "defaultValue": 3,
       "metadata": {
-        "description": "This is the number of node scale units (Each scale unit will provision one storage account and number of data nodes configured per unit)"
-      }
-    },
-    "dataNodesPerUnit": {
-      "type": "int",
-      "defaultValue": 1,
-      "metadata": {
-        "description": "Number of Elasticsearch data nodes to provision with each node scale unit"
-      }
-    },
-    "dataDiskSize": {
-      "type": "int",
-      "defaultValue": 1023,
-      "metadata": {
-        "description": "Size of each data disk attached to data nodes in (Gb)"
+        "description": "Number of Elasticsearch data nodes"
       }
     },
     "esClusterName": {
@@ -164,10 +157,6 @@
   "variables": {
     "templateBaseUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/elasticsearch/",
     "masterNodesIpPrefix": "10.0.0.1",
-    "admin": {
-      "user": "[parameters('adminUsername')]",
-      "password": "[parameters('adminPassword')"
-    },
     "networkSettings": {
       "virtualNetworkName": "[parameters('virtualNetworkName')]",
       "addressPrefix": "10.0.0.0/16",
@@ -189,20 +178,30 @@
       "version": "[parameters('esVersion')]",
       "discoveryHosts": "[concat(variables('masterNodesIpPrefix'), '-3')]"
     },
-    "dataNodeAvailabilitySetName": "dataNodeAvailabilitySet",
     "sharedTemplateUrl": "[concat(variables('templateBaseUrl'), 'shared-resources.json')]",
     "masterTemplateUrl": "[concat(variables('templateBaseUrl'), 'master-nodes-resources.json')]",
-    "clientTemplate0": "empty-resources.json",
-    "clientTemplate3": "client-nodes-resources.json",
-    "clientTemplate5": "client-nodes-resources.json",
-    "clientTemplate7": "client-nodes-resources.json",
-    "clientTemplateUrl": "[concat(variables('templateBaseUrl'), variables(concat('clientTemplate',parameters('vmClientNodeCount'))))]",
-    "dataTemplateStandard_D1": "data-nodes-2disk-resources.json",
-    "dataTemplateStandard_A2": "data-nodes-4disk-resources.json",
-    "dataTemplateStandard_A3": "data-nodes-8disk-resources.json",
-    "dataTemplateStandard_A4": "data-nodes-16disk-resources.json",
-    "dataTemplateStandard_A7": "data-nodes-16disk-resources.json",
-    "dataTemplateUrl": "[concat(variables('templateBaseUrl'), variables(concat('dataTemplate',parameters('vmSizeDataNodes'))))]",
+    "clientTemplates": {
+      "0": "empty-resources.json",
+      "3": "client-nodes-resources.json",
+      "5": "client-nodes-resources.json",
+      "7": "client-nodes-resources.json"
+    },
+    "clientTemplateUrl": "[concat(variables('templateBaseUrl'), variables('clientTemplates')[parameters('vmClientNodeCount')])]",
+    "lbBackEndPoolsAdded": {
+      "backendPools": [
+        {
+          "id": "[concat(resourceId('Microsoft.Network/loadBalancers','loadBalancer'),'/backendAddressPools/LBBE')]"
+        }
+      ]
+    },
+    "lbBackendPoolsRemoved": {
+      "backendPools": []
+    },
+    "dataLBSettings0": "[variables('lbBackEndPoolsAdded')]",
+    "dataLBSettings3": "[variables('lbBackendPoolsRemoved')]",
+    "dataLBSettings5": "[variables('lbBackendPoolsRemoved')]",
+    "dataLBSettings7": "[variables('lbBackendPoolsRemoved')]",
+    "dataLBSettings": "[variables(concat('dataLBSettings', parameters('vmClientNodeCount')))]",
     "jumpboxTemplateYes": "jumpbox-resources.json",
     "jumpboxTemplateNo": "empty-resources.json",
     "jumpboxTemplateUrl": "[concat(variables('templateBaseUrl'), variables(concat('jumpboxTemplate',parameters('jumpbox'))))]",
@@ -255,6 +254,7 @@
         "sku": "2012-R2-Datacenter",
         "version": "latest"
       },
+      "managementPort":"3389",
       "extentionSettings":{
         "master": {},
         "client": {},
@@ -262,21 +262,78 @@
       }
     },
     "osSettings": "[variables(concat(parameters('OS'), 'Settings'))]",
-    "lbBackEndPoolsAdded": {
-      "backendPools": [
-        {
-          "id": "[concat(resourceId('Microsoft.Network/loadBalancers','loadBalancer'),'/backendAddressPools/LBBE')]"
-        }
-      ]
+    "dataSkuSettings": {
+      "Standard_D1": {
+        "dataDisks":2,
+        "nodesPerStorageAccount":6,
+        "storageAccountType":"Standard_LRS"
+      },
+      "Standard_D2": {
+        "dataDisks":4,
+        "nodesPerStorageAccount":4,
+        "storageAccountType":"Standard_LRS"
+      },
+      "Standard_D3": {
+        "dataDisks":8,
+        "nodesPerStorageAccount":3,
+        "storageAccountType":"Standard_LRS"
+      },
+      "Standard_D4": {
+        "dataDisks":16,
+        "nodesPerStorageAccount":2,
+        "storageAccountType":"Standard_LRS"
+      },
+      "Standard_DS1": {
+        "dataDisks":2,
+        "nodesPerStorageAccount":4,
+        "storageAccountType":"Premium_LRS"
+      },
+      "Standard_DS2": {
+        "dataDisks":4,
+        "nodesPerStorageAccount":2,
+        "storageAccountType":"Premium_LRS"
+      }
     },
-    "lbBackendPoolsRemoved": {
-      "backendPools": []
+    "nodesPerStorageAccount":"[variables('dataSkuSettings')[parameters('vmSizeDataNodes')].nodesPerStorageAccount]",
+    "storageBinPackMap": [
+      "[div(sub(add(1, variables('nodePerStorageAccount')), 1), variables('nodePerStorageAccount'))]",
+      "[div(sub(add(2, variables('nodePerStorageAccount')), 1), variables('nodePerStorageAccount'))]",
+      "[div(sub(add(3, variables('nodePerStorageAccount')), 1), variables('nodePerStorageAccount'))]",
+      "[div(sub(add(4, variables('nodePerStorageAccount')), 1), variables('nodePerStorageAccount'))]",
+      "[div(sub(add(5, variables('nodePerStorageAccount')), 1), variables('nodePerStorageAccount'))]",
+      "[div(sub(add(6, variables('nodePerStorageAccount')), 1), variables('nodePerStorageAccount'))]",
+      "[div(sub(add(7, variables('nodePerStorageAccount')), 1), variables('nodePerStorageAccount'))]",
+      "[div(sub(add(8, variables('nodePerStorageAccount')), 1), variables('nodePerStorageAccount'))]",
+      "[div(sub(add(9, variables('nodePerStorageAccount')), 1), variables('nodePerStorageAccount'))]",
+      "[div(sub(add(10, variables('nodePerStorageAccount')), 1), variables('nodePerStorageAccount'))]",
+      "[div(sub(add(11, variables('nodePerStorageAccount')), 1), variables('nodePerStorageAccount'))]",
+      "[div(sub(add(12, variables('nodePerStorageAccount')), 1), variables('nodePerStorageAccount'))]",
+      "[div(sub(add(13, variables('nodePerStorageAccount')), 1), variables('nodePerStorageAccount'))]",
+      "[div(sub(add(14, variables('nodePerStorageAccount')), 1), variables('nodePerStorageAccount'))]",
+      "[div(sub(add(15, variables('nodePerStorageAccount')), 1), variables('nodePerStorageAccount'))]",
+      "[div(sub(add(16, variables('nodePerStorageAccount')), 1), variables('nodePerStorageAccount'))]",
+      "[div(sub(add(17, variables('nodePerStorageAccount')), 1), variables('nodePerStorageAccount'))]",
+      "[div(sub(add(18, variables('nodePerStorageAccount')), 1), variables('nodePerStorageAccount'))]",
+      "[div(sub(add(19, variables('nodePerStorageAccount')), 1), variables('nodePerStorageAccount'))]",
+      "[div(sub(add(20, variables('nodePerStorageAccount')), 1), variables('nodePerStorageAccount'))]",
+      "[div(sub(add(21, variables('nodePerStorageAccount')), 1), variables('nodePerStorageAccount'))]",
+      "[div(sub(add(22, variables('nodePerStorageAccount')), 1), variables('nodePerStorageAccount'))]",
+      "[div(sub(add(23, variables('nodePerStorageAccount')), 1), variables('nodePerStorageAccount'))]",
+      "[div(sub(add(24, variables('nodePerStorageAccount')), 1), variables('nodePerStorageAccount'))]",
+      "[div(sub(add(25, variables('nodePerStorageAccount')), 1), variables('nodePerStorageAccount'))]",
+      "[div(sub(add(26, variables('nodePerStorageAccount')), 1), variables('nodePerStorageAccount'))]",
+      "[div(sub(add(27, variables('nodePerStorageAccount')), 1), variables('nodePerStorageAccount'))]",
+      "[div(sub(add(28, variables('nodePerStorageAccount')), 1), variables('nodePerStorageAccount'))]",
+      "[div(sub(add(29, variables('nodePerStorageAccount')), 1), variables('nodePerStorageAccount'))]",
+      "[div(sub(add(30, variables('nodePerStorageAccount')), 1), variables('nodePerStorageAccount'))]"
+    ],
+    "dataNodeStorageSettings": {
+      "count":"[div(sub(add(variables('vmDataNodeCount'), variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
+      "mapping":"[variables('storageBinPackMap')]",
+      "accountType":"[variables('dataSkuSettings')[parameters('vmSizeDataNodes')].nodesPerStorageAccount]",
+      "prefix":"[parameters('storageAccountPrefix')]"
     },
-    "dataLBSettings0": "[variables('lbBackEndPoolsAdded')]",
-    "dataLBSettings3": "[variables('lbBackendPoolsRemoved')]",
-    "dataLBSettings5": "[variables('lbBackendPoolsRemoved')]",
-    "dataLBSettings7": "[variables('lbBackendPoolsRemoved')]",
-    "dataLBSettings": "[variables(concat('dataLBSettings', parameters('vmClientNodeCount')))]"
+    "dataTemplateUrl": "[concat(variables('templateBaseUrl'), 'data-nodes-', string(variables('dataSkuSettings')[parameters('vmSizeDataNodes')].dataDisks), 'disk-resources.json']"
   },
   "resources": [
     {
@@ -305,8 +362,8 @@
           "masterNodesIpPrefix": {
             "value": "[variables('masterNodesIpPrefix')]"
           },
-          "region": {
-            "value": "[parameters('region')]"
+          "location": {
+            "value": "[parameters('location')]"
           },
           "vmSize": {
             "value": "[parameters('vmSizeMasterNodes')]"
@@ -331,14 +388,11 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "region": {
-            "value": "[parameters('region')]"
+          "location": {
+            "value": "[parameters('location')]"
           },
           "networkSettings": {
             "value": "[variables('networkSettings')]"
-          },
-          "esDataHaSetName": {
-            "value": "[variables('dataNodeAvailabilitySetName')]"
           },
           "storageAccountName": {
             "value": "[concat(parameters('storageAccountPrefix'),'shared')]"
@@ -378,8 +432,8 @@
           "storageAccountName": {
             "value": "[concat(parameters('storageAccountPrefix'),'shared')]"
           },
-          "region": {
-            "value": "[parameters('region')]"
+          "location": {
+            "value": "[parameters('location')]"
           },
           "subnet": {
             "value": "[variables('networkSettings').subnet.data]"
@@ -400,16 +454,12 @@
       }
     },
     {
-      "name": "[concat('data-nodes',copyindex())]",
+      "name": "data-nodes",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2015-01-01",
       "dependsOn": [
         "[concat('Microsoft.Resources/deployments/', 'shared')]"
       ],
-      "copy": {
-        "name": "dataScaleGroupLoop",
-        "count": "[parameters('dataNodeScaleUnits')]"
-      },
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -424,10 +474,10 @@
             "value": "[parameters('adminPassword')]"
           },
           "storageAccountName": {
-            "value": "[concat(parameters('storageAccountPrefix'),'su', copyindex())]"
+            "value": "[concat(parameters('storageAccountPrefix'),'d')]"
           },
-          "region": {
-            "value": "[parameters('region')]"
+          "location": {
+            "value": "[parameters('location')]"
           },
           "subnet": {
             "value": "[variables('networkSettings').subnet.data]"
@@ -435,17 +485,11 @@
           "vmSize": {
             "value": "[parameters('vmSizeDataNodes')]"
           },
-          "dataNodes": {
-            "value": "[parameters('dataNodesPerUnit')]"
-          },
-          "dataDiskSize": {
-            "value": "[parameters('dataDiskSize')]"
+          "vmCount": {
+            "value": "[parameters('vmDataNodeCount')]"
           },
           "groupName": {
-            "value": "[concat('su', copyindex(), 'n')]"
-          },
-          "availabilitySet": {
-            "value": "[variables('dataNodeAvailabilitySetName')]"
+            "value": "data"
           },
           "osSettings": {
             "value": "[variables('osSettings')]"
@@ -479,8 +523,8 @@
           "adminPassword": {
             "value": "[parameters('adminPassword')]"
           },
-          "region": {
-            "value": "[parameters('region')]"
+          "location": {
+            "value": "[parameters('location')]"
           },
           "subnet": {
             "value": "[variables('networkSettings').subnet.data]"
