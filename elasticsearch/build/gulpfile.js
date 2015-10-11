@@ -22,6 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 Created By: Trent Swanson (Full Scale 180 Inc)
+This is a build script for the
 
 */
 
@@ -31,11 +32,13 @@ var yaml = require('yamljs');
 var fs = require('fs');
 var _ = require('lodash');
 	
+// Generates the data node templates with different disk sizes from the YAML template
 gulp.task('datatemplates', function() {
 	var sizes = [
 		2,4,8,16
 	];
 	
+	// This is currently in YAML and an experiment in working with tempaltes in YAML form
 	var dataTemplate = yaml.load('../tmpl/data-nodes.yml');
 	
 	var dataDiskTemplate = JSON.stringify(_.find(dataTemplate.resources,

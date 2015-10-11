@@ -14,13 +14,13 @@
         "description": "Admin password used when provisioning virtual machines"
       }
     },
-    "storageAccountName": {
-      "type": "string",
+    "storageSettings": {
+      "type": "object",
       "metadata": {
-        "description": "Unique namespace for the Storage Account where the Virtual Machine's disks will be placed"
+        "description": "Storage Account Settings"
       }
     },
-    "region": {
+    "location": {
       "type": "string",
       "metadata": {
         "description": "Location where resources will be provisioned"
@@ -43,7 +43,7 @@
       "type": "int",
       "defaultValue": 2,
       "metadata": {
-        "description": "Number of Elasticsearch data nodes (2 is the minimum)"
+        "description": "Number of Elasticsearch data nodes"
       }
     },
     "osSettings": {
@@ -54,7 +54,7 @@
     },
     "dataDiskSize": {
       "type": "int",
-      "defaultValue": 100,
+      "defaultValue": 1023,
       "metadata": {
         "description": "Size of each data disk attached to data nodes in (Gb)"
       }
@@ -81,24 +81,38 @@
   "variables": {
     "vmStorageAccountContainerName": "vhd",
     "subnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('subnet').vnet), '/subnets/', parameters('subnet').name)]",
-    "storageAccountName": "[parameters('storageAccountName')]",
+    "storageAccountName": "[concat(parameters('storageSettings').prefix, 'd']",
     "vmName": "[concat(parameters('groupName'), 'vm')]"
   },
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[concat(parameters('groupName'),parameters('storageAccountName'))]",
+      "name": "[concat(variables('storageAccountName'), copyindex(1))]",
       "apiVersion": "2015-05-01-preview",
-      "location": "[parameters('region')]",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "[concat(parameters('groupName'),'storageLoop')]",
+        "count": "[parameters('storageSettings').count]"
+      },
       "properties": {
-        "accountType": "Standard_LRS"
+        "accountType": "parameters('storageSettings').accountType]"
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[concat(parameters('groupName'), '-set')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "platformUpdateDomainCount": 20,
+        "platformFaultDomainCount": 3
       }
     },
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(parameters('groupName'), 'nic', copyindex())]",
-      "location": "[parameters('region')]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "[concat(parameters('groupName'),'nicLoop')]",
         "count": "[parameters('dataNodes')]"
@@ -122,7 +136,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(parameters('groupName'), 'vm', copyindex())]",
-      "location": "[parameters('region')]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "[concat(parameters('groupName'), 'virtualMachineLoop')]",
         "count": "[parameters('dataNodes')]"
@@ -148,7 +162,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://', parameters('groupName'), variables('storageAccountName'),'.blob.core.windows.net/vhds/', variables('vmName'), copyindex(), '-osdisk.vhd')]"
+              "uri": "[concat('http://', variables('storageAccountName'), parameters('storageSettings').mapping[copyindex()], '.blob.core.windows.net/vhds/', variables('vmName'), copyindex(), '-osdisk.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -159,7 +173,7 @@
               "diskSizeGB": "[parameters('dataDiskSize')]",
               "lun": 0,
               "vhd": {
-                "Uri": "[concat('http://', parameters('groupName'), parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/', parameters('groupName'),'vm', copyindex(),'dataDisk1' ,'.vhd')]"
+                "Uri": "[concat('http://', parameters('storageAccountName'), parameters('storageSettings').mapping[copyindex()],'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/', parameters('groupName'),'vm', copyindex(),'dataDisk1' ,'.vhd')]"
               },
               "caching": "None",
               "createOption": "Empty"
@@ -169,7 +183,7 @@
               "diskSizeGB": "[parameters('dataDiskSize')]",
               "lun": 1,
               "vhd": {
-                "Uri": "[concat('http://', parameters('groupName'),parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',parameters('groupName'),'vm', copyindex() ,'dataDisk2','.vhd')]"
+                "Uri": "[concat('http://', parameters('storageAccountName'), parameters('storageSettings').mapping[copyindex()],'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/', parameters('groupName'),'vm', copyindex(),'dataDisk2' ,'.vhd')]"
               },
               "caching": "None",
               "createOption": "Empty"
@@ -179,7 +193,7 @@
               "diskSizeGB": "[parameters('dataDiskSize')]",
               "lun": 2,
               "vhd": {
-                "Uri": "[concat('http://', parameters('groupName'),parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',parameters('groupName'),'vm', copyindex() ,'dataDisk3','.vhd')]"
+                "Uri": "[concat('http://', parameters('storageAccountName'), parameters('storageSettings').mapping[copyindex()],'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/', parameters('groupName'),'vm', copyindex(),'dataDisk3' ,'.vhd')]"
               },
               "caching": "None",
               "createOption": "Empty"
@@ -189,7 +203,7 @@
               "diskSizeGB": "[parameters('dataDiskSize')]",
               "lun": 3,
               "vhd": {
-                "Uri": "[concat('http://', parameters('groupName'),parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',parameters('groupName'),'vm', copyindex() ,'dataDisk4','.vhd')]"
+                "Uri": "[concat('http://', parameters('storageAccountName'), parameters('storageSettings').mapping[copyindex()],'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/', parameters('groupName'),'vm', copyindex(),'dataDisk4' ,'.vhd')]"
               },
               "caching": "None",
               "createOption": "Empty"
@@ -199,7 +213,7 @@
               "diskSizeGB": "[parameters('dataDiskSize')]",
               "lun": 4,
               "vhd": {
-                "Uri": "[concat('http://', parameters('groupName'), parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/', parameters('groupName'),'vm', copyindex(),'dataDisk5' ,'.vhd')]"
+                "Uri": "[concat('http://', parameters('storageAccountName'), parameters('storageSettings').mapping[copyindex()],'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/', parameters('groupName'),'vm', copyindex(),'dataDisk5' ,'.vhd')]"
               },
               "caching": "None",
               "createOption": "Empty"
@@ -209,7 +223,7 @@
               "diskSizeGB": "[parameters('dataDiskSize')]",
               "lun": 5,
               "vhd": {
-                "Uri": "[concat('http://', parameters('groupName'),parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',parameters('groupName'),'vm', copyindex() ,'dataDisk6','.vhd')]"
+                "Uri": "[concat('http://', parameters('storageAccountName'), parameters('storageSettings').mapping[copyindex()],'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/', parameters('groupName'),'vm', copyindex(),'dataDisk6' ,'.vhd')]"
               },
               "caching": "None",
               "createOption": "Empty"
@@ -219,7 +233,7 @@
               "diskSizeGB": "[parameters('dataDiskSize')]",
               "lun": 6,
               "vhd": {
-                "Uri": "[concat('http://', parameters('groupName'),parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',parameters('groupName'),'vm', copyindex() ,'dataDisk7','.vhd')]"
+                "Uri": "[concat('http://', parameters('storageAccountName'), parameters('storageSettings').mapping[copyindex()],'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/', parameters('groupName'),'vm', copyindex(),'dataDisk7' ,'.vhd')]"
               },
               "caching": "None",
               "createOption": "Empty"
@@ -229,7 +243,7 @@
               "diskSizeGB": "[parameters('dataDiskSize')]",
               "lun": 7,
               "vhd": {
-                "Uri": "[concat('http://', parameters('groupName'),parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',parameters('groupName'),'vm', copyindex() ,'dataDisk8','.vhd')]"
+                "Uri": "[concat('http://', parameters('storageAccountName'), parameters('storageSettings').mapping[copyindex()],'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/', parameters('groupName'),'vm', copyindex(),'dataDisk8' ,'.vhd')]"
               },
               "caching": "None",
               "createOption": "Empty"
@@ -239,7 +253,7 @@
               "diskSizeGB": "[parameters('dataDiskSize')]",
               "lun": 8,
               "vhd": {
-                "Uri": "[concat('http://', parameters('groupName'), parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/', parameters('groupName'),'vm', copyindex(),'dataDisk9' ,'.vhd')]"
+                "Uri": "[concat('http://', parameters('storageAccountName'), parameters('storageSettings').mapping[copyindex()],'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/', parameters('groupName'),'vm', copyindex(),'dataDisk9' ,'.vhd')]"
               },
               "caching": "None",
               "createOption": "Empty"
@@ -249,7 +263,7 @@
               "diskSizeGB": "[parameters('dataDiskSize')]",
               "lun": 9,
               "vhd": {
-                "Uri": "[concat('http://', parameters('groupName'),parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',parameters('groupName'),'vm', copyindex() ,'dataDisk10','.vhd')]"
+                "Uri": "[concat('http://', parameters('storageAccountName'), parameters('storageSettings').mapping[copyindex()],'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/', parameters('groupName'),'vm', copyindex(),'dataDisk10' ,'.vhd')]"
               },
               "caching": "None",
               "createOption": "Empty"
@@ -259,7 +273,7 @@
               "diskSizeGB": "[parameters('dataDiskSize')]",
               "lun": 10,
               "vhd": {
-                "Uri": "[concat('http://', parameters('groupName'),parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',parameters('groupName'),'vm', copyindex() ,'dataDisk11','.vhd')]"
+                "Uri": "[concat('http://', parameters('storageAccountName'), parameters('storageSettings').mapping[copyindex()],'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/', parameters('groupName'),'vm', copyindex(),'dataDisk11' ,'.vhd')]"
               },
               "caching": "None",
               "createOption": "Empty"
@@ -269,7 +283,7 @@
               "diskSizeGB": "[parameters('dataDiskSize')]",
               "lun": 11,
               "vhd": {
-                "Uri": "[concat('http://', parameters('groupName'),parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',parameters('groupName'),'vm', copyindex() ,'dataDisk12','.vhd')]"
+                "Uri": "[concat('http://', parameters('storageAccountName'), parameters('storageSettings').mapping[copyindex()],'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/', parameters('groupName'),'vm', copyindex(),'dataDisk12' ,'.vhd')]"
               },
               "caching": "None",
               "createOption": "Empty"
@@ -279,7 +293,7 @@
               "diskSizeGB": "[parameters('dataDiskSize')]",
               "lun": 12,
               "vhd": {
-                "Uri": "[concat('http://', parameters('groupName'), parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/', parameters('groupName'),'vm', copyindex(),'dataDisk13' ,'.vhd')]"
+                "Uri": "[concat('http://', parameters('storageAccountName'), parameters('storageSettings').mapping[copyindex()],'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/', parameters('groupName'),'vm', copyindex(),'dataDisk13' ,'.vhd')]"
               },
               "caching": "None",
               "createOption": "Empty"
@@ -289,7 +303,7 @@
               "diskSizeGB": "[parameters('dataDiskSize')]",
               "lun": 13,
               "vhd": {
-                "Uri": "[concat('http://', parameters('groupName'),parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',parameters('groupName'),'vm', copyindex() ,'dataDisk14','.vhd')]"
+                "Uri": "[concat('http://', parameters('storageAccountName'), parameters('storageSettings').mapping[copyindex()],'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/', parameters('groupName'),'vm', copyindex(),'dataDisk14' ,'.vhd')]"
               },
               "caching": "None",
               "createOption": "Empty"
@@ -299,7 +313,7 @@
               "diskSizeGB": "[parameters('dataDiskSize')]",
               "lun": 14,
               "vhd": {
-                "Uri": "[concat('http://', parameters('groupName'),parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',parameters('groupName'),'vm', copyindex() ,'dataDisk15','.vhd')]"
+                "Uri": "[concat('http://', parameters('storageAccountName'), parameters('storageSettings').mapping[copyindex()],'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/', parameters('groupName'),'vm', copyindex(),'dataDisk15' ,'.vhd')]"
               },
               "caching": "None",
               "createOption": "Empty"
@@ -309,7 +323,7 @@
               "diskSizeGB": "[parameters('dataDiskSize')]",
               "lun": 15,
               "vhd": {
-                "Uri": "[concat('http://', parameters('groupName'),parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',parameters('groupName'),'vm', copyindex() ,'dataDisk16','.vhd')]"
+                "Uri": "[concat('http://', parameters('storageAccountName'), parameters('storageSettings').mapping[copyindex()],'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/', parameters('groupName'),'vm', copyindex(),'dataDisk16' ,'.vhd')]"
               },
               "caching": "None",
               "createOption": "Empty"
@@ -329,7 +343,7 @@
           "type": "Microsoft.Compute/virtualMachines/extensions",
           "name": "[concat(parameters('groupName'),'vm', copyindex(), '/installelasticsearch')]",
           "apiVersion": "2015-06-15",
-          "location": "[parameters('region')]",
+          "location": "[parameters('location')]",
           "dependsOn": [
             "[concat('Microsoft.Compute/virtualMachines/', parameters('groupName'), 'vm', copyindex())]"
           ],
