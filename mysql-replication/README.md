@@ -1,4 +1,4 @@
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fliupeirong%2Fazure-quickstart-templates%2Fmaster%2Fmysql-replication%2FmainTemplate.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Fmysql-replication%2FmainTemplate.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
@@ -11,6 +11,7 @@ This template deploys a MySQL replication environment with one master and one sl
 - Deploys 2 VMs in an Azure VNet, each has 2 data disks striped into Raid0
 - Deploys a load balancer in front of the 2 VMs, so that the VMs are not directly exposed to the internet.  MySQL and SSH ports are exposed through the load balancer using Network Security Group rules
 - Configures a http based health probe for each MySQL instance that can be used to monitor MySQL health
+- Installs LIS4 driver and reboots each VM 3 minutes after the installation script on each VM completes
 
 ### How to Deploy
 You can deploy the template with Azure Portal, or PowerShell, or Azure cross platform command line tools.  The example here uses PowerShell to deploy.
