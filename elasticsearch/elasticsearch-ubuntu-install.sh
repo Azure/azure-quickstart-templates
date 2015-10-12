@@ -24,17 +24,8 @@
 #
 # Trent Swanson (Full Scale 180 Inc)
 #
-### Remaining work items
-### -Alternate discovery options (Azure Storage)
-### -Implement Idempotency and Configuration Change Support
-### -Implement OS Disk Striping Option (Currently using multiple Elasticsearch data paths)
-### -Implement Non-Durable Option (Put data on resource disk)
-### -Configure Work/Log Paths
-### -Recovery Settings (These can be changed via API)
-
 help()
 {
-    #TODO: Add help text here
     echo "This script installs Elasticsearch cluster on Ubuntu"
     echo "Parameters:"
     echo "-n elasticsearch cluster name"

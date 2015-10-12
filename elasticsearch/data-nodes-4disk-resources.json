@@ -39,7 +39,7 @@
         "description": "Size of the Elasticsearch data nodes"
       }
     },
-    "dataNodes": {
+    "vmCount": {
       "type": "int",
       "defaultValue": 2,
       "metadata": {
@@ -59,16 +59,10 @@
         "description": "Size of each data disk attached to data nodes in (Gb)"
       }
     },
-    "groupName": {
+    "namespace": {
       "type": "string",
       "metadata": {
-        "description": "The group name for this collection of nodes"
-      }
-    },
-    "availabilitySet": {
-      "type": "string",
-      "metadata": {
-        "description": "The availability set to use for the data nodes"
+        "description": "The namespace for resources created by this template"
       }
     },
     "lbBackendPools": {
@@ -82,7 +76,7 @@
     "vmStorageAccountContainerName": "vhd",
     "subnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('subnet').vnet), '/subnets/', parameters('subnet').name)]",
     "storageAccountName": "[concat(parameters('storageSettings').prefix, 'd']",
-    "vmName": "[concat(parameters('groupName'), 'vm')]"
+    "vmName": "[concat(parameters('namespace'), 'vm')]"
   },
   "resources": [
     {
@@ -91,7 +85,7 @@
       "apiVersion": "2015-05-01-preview",
       "location": "[parameters('location')]",
       "copy": {
-        "name": "[concat(parameters('groupName'),'storageLoop')]",
+        "name": "[concat(parameters('namespace'),'storageLoop')]",
         "count": "[parameters('storageSettings').count]"
       },
       "properties": {
@@ -101,7 +95,7 @@
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/availabilitySets",
-      "name": "[concat(parameters('groupName'), '-set')]",
+      "name": "[concat(parameters('namespace'), '-set')]",
       "location": "[parameters('location')]",
       "properties": {
         "platformUpdateDomainCount": 20,
@@ -111,11 +105,11 @@
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[concat(parameters('groupName'), 'nic', copyindex())]",
+      "name": "[concat(parameters('namespace'), 'nic', copyindex())]",
       "location": "[parameters('location')]",
       "copy": {
-        "name": "[concat(parameters('groupName'),'nicLoop')]",
-        "count": "[parameters('dataNodes')]"
+        "name": "[concat(parameters('namespace'),'nicLoop')]",
+        "count": "[parameters('vmCount')]"
       },
       "properties": {
         "ipConfigurations": [
@@ -135,15 +129,15 @@
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[concat(parameters('groupName'), 'vm', copyindex())]",
+      "name": "[concat(parameters('namespace'), 'vm', copyindex())]",
       "location": "[parameters('location')]",
       "copy": {
-        "name": "[concat(parameters('groupName'), 'virtualMachineLoop')]",
-        "count": "[parameters('dataNodes')]"
+        "name": "[concat(parameters('namespace'), 'virtualMachineLoop')]",
+        "count": "[parameters('vmCount')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', parameters('groupName'), 'nic', copyindex())]",
-        "[concat('Microsoft.Storage/storageAccounts/', concat(parameters('groupName'),parameters('storageAccountName')))]"
+        "[concat('Microsoft.Network/networkInterfaces/', parameters('namespace'), 'nic', copyindex())]",
+        "[concat('Microsoft.Storage/storageAccounts/', concat(parameters('namespace'),parameters('storageAccountName')))]"
       ],
       "properties": {
         "availabilitySet": {
@@ -153,7 +147,7 @@
           "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
-          "computername": "[concat(parameters('groupName'), 'vm', copyIndex())]",
+          "computername": "[concat(parameters('namespace'), 'vm', copyIndex())]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]"
         },
@@ -173,7 +167,7 @@
               "diskSizeGB": "[parameters('dataDiskSize')]",
               "lun": 0,
               "vhd": {
-                "Uri": "[concat('http://', parameters('storageAccountName'), parameters('storageSettings').mapping[copyindex()],'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/', parameters('groupName'),'vm', copyindex(),'dataDisk1' ,'.vhd')]"
+                "Uri": "[concat('http://', parameters('storageAccountName'), parameters('storageSettings').mapping[copyindex()],'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/', parameters('namespace'),'vm', copyindex(),'dataDisk1' ,'.vhd')]"
               },
               "caching": "None",
               "createOption": "Empty"
@@ -183,7 +177,7 @@
               "diskSizeGB": "[parameters('dataDiskSize')]",
               "lun": 1,
               "vhd": {
-                "Uri": "[concat('http://', parameters('storageAccountName'), parameters('storageSettings').mapping[copyindex()],'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/', parameters('groupName'),'vm', copyindex(),'dataDisk2' ,'.vhd')]"
+                "Uri": "[concat('http://', parameters('storageAccountName'), parameters('storageSettings').mapping[copyindex()],'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/', parameters('namespace'),'vm', copyindex(),'dataDisk2' ,'.vhd')]"
               },
               "caching": "None",
               "createOption": "Empty"
@@ -193,7 +187,7 @@
               "diskSizeGB": "[parameters('dataDiskSize')]",
               "lun": 2,
               "vhd": {
-                "Uri": "[concat('http://', parameters('storageAccountName'), parameters('storageSettings').mapping[copyindex()],'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/', parameters('groupName'),'vm', copyindex(),'dataDisk3' ,'.vhd')]"
+                "Uri": "[concat('http://', parameters('storageAccountName'), parameters('storageSettings').mapping[copyindex()],'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/', parameters('namespace'),'vm', copyindex(),'dataDisk3' ,'.vhd')]"
               },
               "caching": "None",
               "createOption": "Empty"
@@ -203,7 +197,7 @@
               "diskSizeGB": "[parameters('dataDiskSize')]",
               "lun": 3,
               "vhd": {
-                "Uri": "[concat('http://', parameters('storageAccountName'), parameters('storageSettings').mapping[copyindex()],'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/', parameters('groupName'),'vm', copyindex(),'dataDisk4' ,'.vhd')]"
+                "Uri": "[concat('http://', parameters('storageAccountName'), parameters('storageSettings').mapping[copyindex()],'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/', parameters('namespace'),'vm', copyindex(),'dataDisk4' ,'.vhd')]"
               },
               "caching": "None",
               "createOption": "Empty"
@@ -213,7 +207,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('groupName'),'nic', copyindex()))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('namespace'),'nic', copyindex()))]"
             }
           ]
         }
@@ -221,11 +215,11 @@
       "resources": [
         {
           "type": "Microsoft.Compute/virtualMachines/extensions",
-          "name": "[concat(parameters('groupName'),'vm', copyindex(), '/installelasticsearch')]",
+          "name": "[concat(parameters('namespace'),'vm', copyindex(), '/installelasticsearch')]",
           "apiVersion": "2015-06-15",
           "location": "[parameters('location')]",
           "dependsOn": [
-            "[concat('Microsoft.Compute/virtualMachines/', parameters('groupName'), 'vm', copyindex())]"
+            "[concat('Microsoft.Compute/virtualMachines/', parameters('namespace'), 'vm', copyindex())]"
           ],
           "properties": "[parameters('osSettings').extentionSettings.data]"
         }
