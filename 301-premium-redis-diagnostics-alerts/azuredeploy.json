@@ -1,0 +1,234 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "redisCacheName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the Azure Redis Cache to create."
+      }
+    },
+    "redisCacheLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The location of the Redics Cache. For best perfomance, use the same location as the app to be used with the cache."
+      }
+    },
+    "diagnosticsStorageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Existing storage account for diagnostics."
+      }
+    },
+    "virtualNetwork": {
+      "type": "string",
+      "metadata": {
+        "description": "Existing Virtual Network Name."
+      }
+    },
+    "subnet": {
+      "type": "string",
+      "metadata": {
+        "description": "Existing Subnet Name."
+      }
+    },
+    "staticIP": {
+      "type": "string",
+      "metadata": {
+        "description": "Static IP address that will be assigned to newly provisioned Redis Cache."
+      }
+    },
+    "redisCacheSKU": {
+      "type": "string",
+      "allowedValues": [
+        "Basic",
+        "Standard",
+        "Premium"
+      ],
+      "defaultValue": "Premium",
+      "metadata": {
+        "description": "The pricing tier of the new Azure Redis Cache."
+      }
+    },
+    "redisCacheFamily": {
+      "type": "string",
+      "defaultValue": "P",
+      "metadata": {
+        "description": "The family for the sku."
+      }
+    },
+    "redisCacheCapacity": {
+      "type": "int",
+      "allowedValues": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "defaultValue": 0,
+      "metadata": {
+        "description": "The size of the new Azure Redis Cache instance. "
+      }
+    },
+    "redisCacheVersion": {
+      "type": "string",
+      "defaultValue": "2.8",
+      "metadata": {
+        "description": "The Redis server version of the new cache."
+      }
+    },
+    "enableNonSslPort": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Enable Non-SSL port."
+      }
+    },
+    "diagnosticsStatus": {
+      "type": "string",
+      "defaultValue": "On",
+      "metadata": {
+        "description": "Enable Diagnostics."
+      }
+    }
+  },
+  "resources": [
+    {
+        "apiVersion": "2015-08-01",
+        "name": "[parameters('redisCacheName')]",
+        "type": "Microsoft.Cache/Redis",
+        "location": "[parameters('redisCacheLocation')]",
+        "properties": {
+            "enableNonSslPort": "[parameters('enableNonSslPort')]",
+            "redisVersion": "[parameters('redisCacheVersion')]",
+            "sku": {
+                "capacity": "[parameters('redisCacheCapacity')]",
+                "family": "[parameters('redisCacheFamily')]",
+                "name": "[parameters('redisCacheSKU')]"
+            },
+            "staticIP": "[parameters('staticIP')]",
+            "subnet": "[parameters('subnet')]",
+            "virtualNetwork": "[concat(subscription().id, '/resourceGroups/Default-Networking/providers/Microsoft.ClassicNetwork/virtualNetworks/', parameters('virtualNetwork'))]"
+        },
+        "resources": [
+            {
+                "apiVersion": "2014-04-01",
+                "type": "diagnosticSettings",
+                "name": "service",
+                "location": "[parameters('redisCacheLocation')]",
+                "dependsOn": [
+                    // It must depend on the redis cache resource, or its a validation error.
+                    "[concat('Microsoft.Cache/Redis/', parameters('redisCacheName'))]"
+                ],
+                "properties": {
+                    "status": "[parameters('diagnosticsStatus')]",
+                    "storageAccountName": "[parameters('diagnosticsStorageAccountName')]", //Existing storage account in same subscription
+                    "retention": "30"
+                }
+            }
+        ]
+    },
+    {
+        "apiVersion": "2014-04-01",
+        "name": "[concat('CPU - ', parameters('redisCacheName'))]",
+        "type": "Microsoft.Insights/alertrules",
+        "location": "[parameters('redisCacheLocation')]",
+        "dependsOn": [
+            "[concat('Microsoft.Cache/Redis/', parameters('redisCacheName'))]"
+        ],
+        "tags": {
+            "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Cache/Redis/', parameters('redisCacheName'))]": "Resource"
+        },
+        "properties": {
+            "name": "[concat('CPU - ', parameters('redisCacheName'))]",
+            "description": "[concat('The average CPU is high on ', parameters('redisCacheName'))]",
+            "isEnabled": true,
+            "condition": {
+                "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.ThresholdRuleCondition",
+                "dataSource": {
+                    "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.RuleMetricDataSource",
+                    "resourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Cache/Redis/', parameters('redisCacheName'))]",
+                    "metricName": "percentProcessorTime"
+                },
+                "operator": "GreaterThan",
+                "threshold": 90,
+                "windowSize": "PT10M"
+            },
+            "action": {
+                "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.RuleEmailAction",
+                "sendToServiceOwners": true,
+                "customEmails": [ ]
+            }
+        }
+    },
+    {
+        "apiVersion": "2014-04-01",
+        "name": "[concat('Server Load - ', parameters('redisCacheName'))]",
+        "type": "Microsoft.Insights/alertrules",
+        "location": "[parameters('redisCacheLocation')]",
+        "dependsOn": [
+            "[concat('Microsoft.Cache/Redis/', parameters('redisCacheName'))]"
+        ],
+        "tags": {
+            "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Cache/Redis/', parameters('redisCacheName'))]": "Resource"
+        },
+        "properties": {
+            "name": "[concat('Server Load - ', parameters('redisCacheName'))]",
+            "description": "[concat('The percentage of cycles in which the Redis server is busy processing on ', parameters('redisCacheName'))]",
+            "isEnabled": true,
+            "condition": {
+                "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.ThresholdRuleCondition",
+                "dataSource": {
+                    "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.RuleMetricDataSource",
+                    "resourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Cache/Redis/', parameters('redisCacheName'))]",
+                    "metricName": "serverLoad"
+                },
+                "operator": "GreaterThan",
+                "threshold": 90,
+                "windowSize": "PT10M"
+            },
+            "action": {
+                "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.RuleEmailAction",
+                "sendToServiceOwners": true,
+                "customEmails": [ ]
+            }
+        }
+    },
+    {
+        "apiVersion": "2014-04-01",
+        "name": "[concat('Used Memory - ', parameters('redisCacheName'))]",
+        "type": "Microsoft.Insights/alertrules",
+        "location": "[parameters('redisCacheLocation')]",
+        "dependsOn": [
+        "[concat('Microsoft.Cache/Redis/', parameters('redisCacheName'))]"
+        ],
+        "tags": {
+        "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Cache/Redis/', parameters('redisCacheName'))]": "Resource"
+        },
+        "properties": {
+        "name": "[concat('Used Memory - ', parameters('redisCacheName'))]",
+        "description": "[concat('The amount of cache memory used on ', parameters('redisCacheName'))]",
+        "isEnabled": true,
+        "condition": {
+            "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.ThresholdRuleCondition",
+            "dataSource": {
+            "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.RuleMetricDataSource",
+            "resourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Cache/Redis/', parameters('redisCacheName'))]",
+            "metricName": "usedmemory"
+            },
+            "operator": "GreaterThan",
+            "threshold": 5368709120,
+            "windowSize": "PT5M"
+        },
+        "action": {
+            "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.RuleEmailAction",
+            "sendToServiceOwners": true,
+            "customEmails": []
+        }
+        }
+    }
+  ]
+}
