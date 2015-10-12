@@ -22,8 +22,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 Created By: Trent Swanson (Full Scale 180 Inc)
-This is a build script for the
+This is a build script for the Azure Resource Manager (ARM) templates
 
+Note: This is currently ad-hoc gulp tasks
+	We are considering creating proper gulp modules for working with ARM templates
 */
 
 var gulp = require('gulp');
@@ -32,6 +34,8 @@ var yaml = require('yamljs');
 var fs = require('fs');
 var _ = require('lodash');
 	
+gulp.task('build', ['datatemplates','mocks']);
+
 // Generates the data node templates with different disk sizes from the YAML template
 gulp.task('datatemplates', function() {
 	var sizes = [
@@ -45,13 +49,13 @@ gulp.task('datatemplates', function() {
 		{type: 'Microsoft.Compute/virtualMachines'}
 	).properties.storageProfile.dataDisks[0]);
 	
-	// remove data disks
+	// remove data disks for a 0 disk configuration
 	delete _.find(dataTemplate.resources,
 		{type: 'Microsoft.Compute/virtualMachines'}
 	).properties.storageProfile.dataDisks;
 	
 	// write a zero disk template
-	fs.writeFile('../data-nodes-0disk-resources.json', JSON.stringify(dataTemplate, null, '  '));
+	fs.writeFileSync('../data-nodes-0disk-resources.json', JSON.stringify(dataTemplate, null, '  '));
 	
 	//Create a template for each disk size defined
 	_.forEach(sizes, function(disks) {
@@ -66,6 +70,44 @@ gulp.task('datatemplates', function() {
 			{type: 'Microsoft.Compute/virtualMachines'}
 		).properties.storageProfile.dataDisks = dataDisks;
 		
-		fs.writeFile('../data-nodes-' + disks + 'disk-resources.json', JSON.stringify(dataTemplate, null, '  '));
+		fs.writeFileSync('../data-nodes-' + disks + 'disk-resources.json', JSON.stringify(dataTemplate, null, '  '));
 	});
+});
+
+// Generate mock templates used when testing azuredeploy.json
+gulp.task('mocks', ['datatemplates'], function() {
+	
+	// templates we will generate a mock for
+	// maybe we can update this to scan for all files '*-resources.json'
+	var templates = [
+		"shared",
+		"master-nodes",
+		"client-nodes",
+		"data-nodes-0disk",
+		"data-nodes-2disk",
+		"data-nodes-4disk",
+		"data-nodes-8disk",
+		"data-nodes-16disk",
+		"jumpbox",
+		"empty"
+	];
+	
+	_.forEach(templates, function(resource) {
+		// create and write a mock for each of these used for testing
+		var source = JSON.parse(fs.readFileSync('../' + resource + '-resources.json', 'utf8'));
+		
+		source.variables = {};
+		source.resources = [];
+		source.outputs = {};
+		_.forOwn(source.parameters, function(value, key) {
+			var output = {};
+			output.type = value.type;
+			output.value = '[parameters(\'' + key + '\')]'
+			source.outputs[key] = output;
+		});
+		
+		//update outputs with inputs
+		
+		fs.writeFile('../test/' + resource  + '-resources.json', JSON.stringify(source, null, '  '))
+	})
 });
