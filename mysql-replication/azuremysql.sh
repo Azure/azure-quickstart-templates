@@ -362,6 +362,6 @@ else
     configure_mysql
 	yum -y erase hypervkvpd.x86_64
 	yum -y install microsoft-hyper-v
-	reboot
+	echo "/sbin/reboot" | /usr/bin/at now + 1 min >/dev/null 2>&1
 fi
 
