@@ -91,7 +91,7 @@ log "Worker ip to be supplied to next script: $worker_ip"
 log "Adminuser: $ADMINUSER Adminpassword: $PASSWORD"
 log "BEGIN: Starting detached script to finalize initialization"
 log "CMUSER $CMUSER, CMPASSWORD $CMPASSWORD, ${10}"
-if [ "$INSTALLCDH" == "true" ]
+if [ "$INSTALLCDH" == "True" ]
 then
   sh initialize-cloudera-server.sh "$CLUSTERNAME" "$key" "$mip" "$worker_ip" $HA $ADMINUSER $PASSWORD $CMUSER $CMPASSWORD $EMAILADDRESS $BUSINESSPHONE $FIRSTNAME $LASTNAME $JOBROLE $JOBFUNCTION $COMPANY>/dev/null 2>&1
 fi
