@@ -107,7 +107,7 @@ gulp.task('mocks', ['datatemplates'], function() {
 		});
 		
 		//update outputs with inputs
-		
+		//still working out generating the variables and discovering the types
 		fs.writeFile('../test/' + resource  + '-resources.json', JSON.stringify(source, null, '  '))
 	})
 });
