@@ -360,5 +360,8 @@ else
     configure_network
     configure_disks
     configure_mysql
+	yum -y erase hypervkvpd.x86_64
+	yum -y install microsoft-hyper-v
+	reboot
 fi
 
