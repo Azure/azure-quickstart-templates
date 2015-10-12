@@ -167,18 +167,12 @@
                 "description": "MySQL public port slave"
             }
         },
-        "customScriptFilePath": {
+        "artifactsPath": {
             "type": "string",
-            "defaultValue": "https://raw.githubusercontent.com/azure/azure-quickstart-templates/master/mysql-replication/azuremysql.sh",
+            "defaultValue": "https://raw.githubusercontent.com/azure/azure-quickstart-templates/master/mysql-replication",
             "metadata": {
-                "description": "bash file location to configure the cluster"
-            }
-        },
-        "mysqlConfigFilePath": {
-            "type": "string",
-            "defaultValue": "https://raw.githubusercontent.com/azure/azure-quickstart-templates/master/mysql-replication/my.cnf.template",
-            "metadata": {
-                "description": "my.cnf file location"
+                "description": "template and script file location",
+                "artifactsBaseUrl": "Base URL of the Publisher Template gallery package"
             }
         },
         "customScriptCommandToExecute": {
@@ -187,6 +181,20 @@
             "metadata": {
                 "description": "bash script command line"
             }
+        },
+        "publicIPName": {
+            "type": "string",
+            "defaultValue": "mysqlIP01",
+            "metadata": {
+                "description": "public IP name for MySQL loadbalancer"
+            }
+        },
+        "storageAccountName": {
+            "type": "string",
+            "defaultValue": "mysqlStore01",
+            "metadata": {
+                "description": "Storage account name for the cluster"
+            }
         }
     },
     "variables": {
@@ -194,7 +202,7 @@
         "nodeCount": 2,
         "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
         "dbSubnetRef": "[concat(variables('vnetID'),'/subnets/',parameters('dbSubnetName'))]",
-        "lbPublicIPName": "[concat(variables('lbName'), '-publicIP')]",
+        "lbPublicIPName": "[parameters('publicIPName')]",
         "lbPublicIPRef": "[resourceId('Microsoft.Network/publicIPAddresses',variables('lbPublicIPName'))]",
         "lbName": "[concat(parameters('dnsName'), '-lb')]",
         "lbID": "[resourceId('Microsoft.Network/loadBalancers',variables('lbName'))]",
@@ -206,12 +214,14 @@
         "sshIPConfig": "[concat(variables('lbID'),'/frontendIPConfigurations/',variables('sshIPConfigName'))]",
         "nicName": "[concat(parameters('dnsName'), '-nic')]",
         "availabilitySetName": "[concat(parameters('dnsName'), '-set')]",
-        "vhdContainer": "[concat('http://',parameters('dnsName'),'store.blob.core.windows.net/vhds/')]"
+        "vhdContainer": "[concat('http://',parameters('dnsName'),'store.blob.core.windows.net/vhds/')]",
+        "customScriptFilePath": "[concat(parameters('artifactsPath'), '/azuremysql.sh')]",
+        "mysqlConfigFilePath": "[concat(parameters('artifactsPath'), '/my.cnf.template')]"
     },
     "resources": [
         {
             "type": "Microsoft.Storage/storageAccounts",
-            "name": "[concat(parameters('dnsName'), 'store')]",
+            "name": "[parameters('storageAccountName')]",
             "apiVersion": "2015-05-01-preview",
             "location": "[variables('region')]",
             "properties": {
@@ -391,9 +401,9 @@
                 "typeHandlerVersion": "1.2",
                 "settings": {
                     "fileUris": [
-                        "[parameters('customScriptFilePath')]"
+                        "[variables('customScriptFilePath')]"
                     ],
-                    "commandToExecute": "[concat(parameters('customScriptCommandToExecute'), ' ', copyIndex(1), ' ', parameters('vmIPPrefix'), copyIndex(parameters('vmIPStartAddress')), ' ', parameters('mysqlConfigFilePath'), ' ', parameters('mysqlReplicationPassword'), ' ', parameters('mysqlRootPassword'), ' ', parameters('mysqlProbePassword'), ' ', parameters('vmIPPrefix'), parameters('vmIPStartAddress'))]"
+                    "commandToExecute": "[concat(parameters('customScriptCommandToExecute'), ' ', copyIndex(1), ' ', parameters('vmIPPrefix'), copyIndex(parameters('vmIPStartAddress')), ' ', variables('mysqlConfigFilePath'), ' ', parameters('mysqlReplicationPassword'), ' ', parameters('mysqlRootPassword'), ' ', parameters('mysqlProbePassword'), ' ', parameters('vmIPPrefix'), parameters('vmIPStartAddress'))]"
                 },
                 "protectedSettings": {
                     "Items": {
