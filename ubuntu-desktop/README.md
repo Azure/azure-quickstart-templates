@@ -33,4 +33,6 @@ These instructions walk through on how to setup a fast secure remote desktop ses
  ![Image of adjusting VNC settings](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/ubuntu-desktop/images/vnc-settings.png)
  3. since the ssh provides encryption and to get maximum speed from ssh compression, turn off encrytpion, and open your session to "localhost:1".  ":1" represents port 5901, which you had previously setup with the ssh tunnel:
  ![Image of adjusting VNC connection](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/ubuntu-desktop/images/vnc-connection.png)
- 4. now you should be connected to your session.
+ 4. Click "Connect", and enter "password" for the password.
+ ![Image of VNC authentication dialog](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/ubuntu-desktop/images/vnc-authentication.png)
+ 5. now you should be connected to your session.
