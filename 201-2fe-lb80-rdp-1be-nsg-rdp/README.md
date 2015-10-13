@@ -4,8 +4,5 @@
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-- Create 2 Windows VMs in load balancing with port 80 open 
-- RDP ports 6001 and 6002
-- A backend VM with SQL Server 2014
-- RDP ports 6003 in NSG 
+This template creates 2 Windows VMs with in an Availability Set and a Load Balancer with port 80 open and two RDP connection for the two VMs with port 6001 and 6002 open. It also creates a SQL Server 2014 VM with a NIC that uses a NSG where is defined a Inbound rule for an RDP connection on port 6003.
 
