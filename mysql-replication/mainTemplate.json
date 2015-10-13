@@ -80,18 +80,11 @@
                 "description": "IP address in CIDR for db subnet"
             }
         },
-        "vmIPPrefix": {
+        "dbSubnetStartAddress": {
             "type": "string",
-            "defaultValue": "10.0.1.",
+            "defaultValue": "10.0.1.4",
             "metadata": {
-                "description": "IP address prefix for VMs must be available in db subnet"
-            }
-        },
-        "vmIPStartAddress": {
-            "type": "int",
-            "defaultValue": 4,
-            "metadata": {
-                "description": "start IP address for VMs"
+                "description": "Start IP address in the subnet for the VMs"
             }
         },
         "imagePublisher": {
@@ -216,7 +209,12 @@
         "availabilitySetName": "[concat(parameters('dnsName'), '-set')]",
         "vhdContainer": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/')]",
         "customScriptFilePath": "[concat(parameters('artifactsPath'), '/azuremysql.sh')]",
-        "mysqlConfigFilePath": "[concat(parameters('artifactsPath'), '/my.cnf.template')]"
+        "mysqlConfigFilePath": "[concat(parameters('artifactsPath'), '/my.cnf.template')]",
+
+        "sa": "[parameters('dbSubnetStartAddress')]",
+        "ipOctet01": "[concat(split(variables('sa'), '.')[0], '.', split(variables('sa'), '.')[1], '.')]",
+        "ipOctet2": "[int(split(variables('sa'), '.')[2])]",
+        "ipOctet3": "[int(split(variables('sa'), '.')[3])]"
     },
     "resources": [
         {
@@ -287,7 +285,7 @@
                         "name": "[concat('ipconfig', copyIndex())]",
                         "properties": {
                             "privateIPAllocationMethod": "Static",
-                            "privateIPAddress": "[concat(parameters('vmIPPrefix'), copyIndex(parameters('vmIPStartAddress')))]",
+                            "privateIPAddress": "[concat(variables('ipOctet01'), add(variables('ipOctet2'), div(copyIndex(variables('ipOctet3')), 255)), '.', mod(copyIndex(variables('ipOctet3')), 255))]",
                             "subnet": {
                                 "id": "[variables('dbSubnetRef')]"
                             },
@@ -403,7 +401,7 @@
                     "fileUris": [
                         "[variables('customScriptFilePath')]"
                     ],
-                    "commandToExecute": "[concat(parameters('customScriptCommandToExecute'), ' ', copyIndex(1), ' ', parameters('vmIPPrefix'), copyIndex(parameters('vmIPStartAddress')), ' ', variables('mysqlConfigFilePath'), ' ', parameters('mysqlReplicationPassword'), ' ', parameters('mysqlRootPassword'), ' ', parameters('mysqlProbePassword'), ' ', parameters('vmIPPrefix'), parameters('vmIPStartAddress'))]"
+                    "commandToExecute": "[concat(parameters('customScriptCommandToExecute'), ' ', copyIndex(1), ' ', variables('ipOctet01'), add(variables('ipOctet2'), div(copyIndex(variables('ipOctet3')), 255)), '.', mod(copyIndex(variables('ipOctet3')), 255), ' ', variables('mysqlConfigFilePath'), ' ', parameters('mysqlReplicationPassword'), ' ', parameters('mysqlRootPassword'), ' ', parameters('mysqlProbePassword'), ' ', parameters('dbSubnetStartAddress'))]"
                 },
                 "protectedSettings": {
                     "Items": {
