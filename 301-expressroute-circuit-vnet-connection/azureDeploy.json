@@ -3,13 +3,13 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "location": {
-            "type": "String",
+            "type": "string",
             "metadata": {
                 "description": "Region where the resources will be deployed"
             }
         },
         "gatewayType": {
-            "type": "String",
+            "type": "string",
             "defaultValue": "ExpressRoute",
             "allowedValues": [
                 "Vpn",
@@ -17,6 +17,18 @@
             ],
             "metadata": {
                 "description": "The type of gateway to deploy. For connecting to ExpressRoute circuits, the gateway must be of type ExpressRoute."
+            }
+        },
+        "connectionType": {
+            "type": "string",
+            "defaultValue": "ExpressRoute",
+            "allowedValues": [
+                "IPsec",
+                "Vnet2Vnet",
+                "ExpressRoute"
+            ],
+            "metadata": {
+                "description": "The type of connection. For connecting to ExpressRoute circuits, the connectionType must be of type ExpressRoute."
             }
         },
         "virtualNetworkName": {
@@ -31,7 +43,7 @@
                 "description": "The address space in CIDR notation for the new virtual network."
             }
         },
-        "subnet1Name": {
+        "subnetName": {
             "type": "string",
             "metadata": {
                 "description": "The name of the first subnet in the new virtual network."
@@ -47,7 +59,7 @@
                 "description": "The name of the subnet where Gateway is to be deployed. This must always be named GatewaySubnet."
             }
         },
-        "subnet1Prefix": {
+        "subnetPrefix": {
             "type": "string",
             "metadata": {
                 "description": "The address range in CIDR notation for the first subnet."
@@ -85,12 +97,14 @@
         }
     },
     "variables": {
+    	"apiVersion": "2015-06-15",
         "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
-        "gatewaySubnetRef": "[concat(variables('vnetID'),'/subnets/',parameters('gatewaySubnet'))]"
+        "gatewaySubnetRef": "[concat(variables('vnetID'),'/subnets/',parameters('gatewaySubnet'))]",
+        "routingWeight": 3
     },
     "resources": [
         {
-            "apiVersion": "2015-05-01-preview",
+            "apiVersion": "[variables('apiVersion')]",
             "type": "Microsoft.Network/virtualNetworks",
             "name": "[parameters('virtualNetworkName')]",
             "location": "[parameters('location')]",
@@ -102,9 +116,9 @@
                 },
                 "subnets": [
                     {
-                        "name": "[parameters('subnet1Name')]",
+                        "name": "[parameters('subnetName')]",
                         "properties": {
-                            "addressPrefix": "[parameters('subnet1Prefix')]"
+                            "addressPrefix": "[parameters('subnetPrefix')]"
                         }
                     },
                     {
@@ -117,7 +131,7 @@
             }
         },
         {
-            "apiVersion": "2015-05-01-preview",
+            "apiVersion": "[variables('apiVersion')]",
             "type": "Microsoft.Network/publicIPAddresses",
             "name": "[parameters('gatewayPublicIPName')]",
             "location": "[parameters('location')]",
@@ -126,7 +140,7 @@
             }
         },
         {
-            "apiVersion": "2015-05-01-preview",
+            "apiVersion": "[variables('apiVersion')]",
             "type": "Microsoft.Network/virtualNetworkGateways",
             "name": "[parameters('gatewayName')]",
             "location": "[parameters('location')]",
@@ -153,7 +167,7 @@
             }
         },
         {
-            "apiVersion": "2015-05-01-preview",
+            "apiVersion": "[variables('apiVersion')]",
             "type": "Microsoft.Network/connections",
             "name": "[parameters('connectionName')]",
             "location": "[parameters('location')]",
@@ -167,8 +181,8 @@
                 "peer": {
                     "id": "[resourceId('Microsoft.Network/expressRouteCircuits',parameters('circuitName'))]"
                 },
-                "connectionType": "ExpressRoute",
-                "routingWeight": 3
+                "connectionType": "[parameters('connectionType')]",
+                "routingWeight": "[variables('routingWeight')]"
             }
         }
     ]
