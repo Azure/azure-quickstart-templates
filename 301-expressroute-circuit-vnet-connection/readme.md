@@ -4,4 +4,4 @@ Connect a VNET to an ExpressRoute Circuit - <a href="https://portal.azure.com/#c
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-This template creates a VNET, an ExpresRoute Gateway and a connection to a provisioned and enabled ExpressRoute Circuit.
+This template creates a VNET, an ExpresRoute Gateway and a connection to a provisioned and enabled ExpressRoute Circuit with AzurePrivatePeering configured..
