@@ -71,7 +71,7 @@ DATA_BASE="/datadisks"
 DATA_PATH="/datadrive"
 
 
-while getopts b:sh optname; do
+while getopts b:p:sh optname; do
     log "Option $optname set with value ${OPTARG}"
   case ${optname} in
     b)  #set base path for data disks mount points
@@ -287,7 +287,7 @@ create_striped_volume()
 	mdadm --create ${MDDEVICE} --level 0 --raid-devices ${#PARTITIONS[@]} ${PARTITIONS[*]}
 
 	MOUNTPOINT="${DATA_PATH}"
-	echo "Next mount point appears to be ${MOUNTPOINT}"
+	echo "Mount point appears to be ${MOUNTPOINT}"
 	[ -d "${MOUNTPOINT}" ] || mkdir -p "${MOUNTPOINT}"
 
 	#Make a file system on the new device
