@@ -25,11 +25,11 @@
 # Script Name: vm-disk-utils.sh
 # Author: Trent Swanson - Full Scale 180 Inc github:(trentmswanson)
 # Version: 0.1
-# Last Modified By:       Trent Swanson
+# Last Modified By: Roy Arsan github:(rarsan)
 # Description:
 #  This script automates the partitioning and formatting of data disks
 #  Data disks can be partitioned and formatted as seperate disks or in a RAID0 configuration
-#  The scrtip will scan for unpartitioined and unformatted data disks and partition, format, and add fstab entries
+#  The script will scan for unpartitioned and unformatted data disks and partition, format, and add fstab entries
 # Parameters :
 #  1 - b: The base directory for mount points (default: /datadisks)
 #  2 - s  Create a striped RAID0 Array (No redundancy)
@@ -39,12 +39,13 @@
 
 help()
 {
-    echo "Usage: $(basename $0) [-b data_base] [-h] [-s]"
+    echo "Usage: $(basename $0) [-b data_base | -p data_path] [-h] [-s]"
     echo ""
     echo "Options:"
-    echo "   -b         base directory for mount points (default: /datadisks)"
-    echo "   -h         this help message"
+    echo "   -b         base directory for mount points of separate disks (default: /datadisks). Non-applicable with -s option"
+    echo "   -p         path for mount point of RAID0 drive (default: /datadrive). Applicable with -s option"
     echo "   -s         create a striped RAID array (no redundancy)"
+    echo "   -h         this help message"
 }
 
 log()
@@ -66,12 +67,18 @@ BLACKLIST="/dev/sda|/dev/sdb"
 
 # Base path for data disk mount points
 DATA_BASE="/datadisks"
+# Full path for data drive in case of RAID configuration
+DATA_PATH="/datadrive"
+
 
 while getopts b:sh optname; do
     log "Option $optname set with value ${OPTARG}"
   case ${optname} in
-    b)  #set clsuter name
+    b)  #set base path for data disks mount points
       DATA_BASE=${OPTARG}
+      ;;
+    p)  #set path for data drive single point point
+      DATA_PATH=${OPTARG}
       ;;
     s) #Partition and format data disks as raid set
       RAID_CONFIGURATION=1
@@ -279,7 +286,7 @@ create_striped_volume()
     
 	mdadm --create ${MDDEVICE} --level 0 --raid-devices ${#PARTITIONS[@]} ${PARTITIONS[*]}
 
-	MOUNTPOINT=$(get_next_mountpoint)
+	MOUNTPOINT="${DATA_PATH}"
 	echo "Next mount point appears to be ${MOUNTPOINT}"
 	[ -d "${MOUNTPOINT}" ] || mkdir -p "${MOUNTPOINT}"
 
