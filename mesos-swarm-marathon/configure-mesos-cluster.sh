@@ -254,7 +254,9 @@ sudo apt-key adv --keyserver keyserver.ubuntu.com --recv E56151BF
 DISTRO=$(lsb_release -is | tr '[:upper:]' '[:lower:]')
 CODENAME=$(lsb_release -cs)
 echo "deb http://repos.mesosphere.io/${DISTRO} ${CODENAME} main" | sudo tee /etc/apt/sources.list.d/mesosphere.list
+time sudo add-apt-repository -y ppa:openjdk-r/ppa
 time sudo apt-get -y update
+time sudo apt-get -y install openjdk-8-jre-headless
 if ismaster ; then
   time sudo apt-get -y --force-yes install mesosphere
 else

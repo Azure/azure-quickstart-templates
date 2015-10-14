@@ -2,12 +2,6 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "newStorageAccountName": {
-      "type": "string",
-      "metadata": {
-        "description": "Unique name for a new storage account where the VM disks will be stored."
-      }
-    },
     "adminUsername": {
       "type": "string",
       "metadata": {
@@ -58,6 +52,7 @@
     "subnetRefNodes": "[concat(resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName')),'/subnets/',variables('subnetNameNodes'))]",
     "nsgName": "swarm-nsg",
     "nsgID": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('nsgName'))]",
+    "newStorageAccountName": "[uniqueString(resourceGroup().id, deployment().name)]",
     "storageAccountType": "Standard_LRS",
     "vhdBlobContainer": "vhds",
     "mastersLbName": "swarm-lb-masters",
@@ -78,7 +73,7 @@
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[parameters('newStorageAccountName')]",
+      "name": "[variables('newStorageAccountName')]",
       "apiVersion": "2015-06-15",
       "location": "[resourceGroup().location]",
       "properties": {
@@ -339,7 +334,7 @@
         "count": "[variables('masterCount')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('vmNameMaster'), copyIndex(), '-nic')]",
         "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetMasters'))]"
       ],
@@ -375,7 +370,7 @@
           "osDisk": {
             "name": "[concat(variables('vmNameMaster'), copyIndex(),'-osdisk')]",
             "vhd": {
-              "uri": "[concat('http://', parameters('newStorageAccountName'), '.blob.core.windows.net/', variables('vhdBlobContainer'), '/master-', copyIndex(), '-osdisk.vhd')]"
+              "uri": "[concat('http://', variables('newStorageAccountName'), '.blob.core.windows.net/', variables('vhdBlobContainer'), '/master-', copyIndex(), '-osdisk.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -400,7 +395,7 @@
         "count": "[parameters('nodeCount')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('vmNameNode'), copyIndex(), '-nic')]"
       ],
       "properties": {
@@ -435,7 +430,7 @@
           "osDisk": {
             "name": "[concat(variables('vmNameNode'), copyIndex(),'-osdisk')]",
             "vhd": {
-              "uri": "[concat('http://', parameters('newStorageAccountName'), '.blob.core.windows.net/', variables('vhdBlobContainer'), '/node-', copyIndex(), '-osdisk.vhd')]"
+              "uri": "[concat('http://', variables('newStorageAccountName'), '.blob.core.windows.net/', variables('vhdBlobContainer'), '/node-', copyIndex(), '-osdisk.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
