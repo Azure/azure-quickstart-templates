@@ -1,0 +1,7 @@
+# Create 2 Linux VMs in load balancing with port 80 open and a backend VM with SQL Server 2014.
+
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fpietrobr%2Fazure-quickstart-templates%2Fmaster%2F201-2fe-linux-lb80-ssh-1be-win-nsg-rdp%2Fazuredeploy.json" target="_blank">
+    <img src="http://azuredeploy.net/deploybutton.png"/>
+</a>
+
+This template creates 2 Linux VMs with in an Availability Set and a Load Balancer with port 80 open and two SSH connection for the two VMs with port 6001 and 6002 open. It also creates a SQL Server 2014 VM with a NIC that uses a NSG where is defined a Inbound rule for an RDP connection.
