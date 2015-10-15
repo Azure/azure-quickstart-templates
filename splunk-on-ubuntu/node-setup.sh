@@ -14,7 +14,7 @@ myip="$(ip -4 address show eth0 | sed -rn 's/^[[:space:]]*inet ([[:digit:].]+)[/
 echo "IP: $myip"
 
 # Strip data disks into one volume
-chmod u+x vm-disk-utils-0.1.sh && ./vm-disk-utils-0.1.sh -s -p /opt/splunk
+chmod u+x vm-disk-utils-0.1.sh && ./vm-disk-utils-0.1.sh -s -p /opt
 
 # Install chef client 12.5.1
 wget https://opscode-omnibus-packages.s3.amazonaws.com/ubuntu/10.04/x86_64/chef_12.5.1-1_amd64.deb
