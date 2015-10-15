@@ -84,10 +84,11 @@
     }
   },
   "variables": {
+    "vmName": "vm-splunk",
     "vmStorageAccountContainerName": "vhd",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
     "subnet1Ref": "[concat(variables('vnetID'),'/subnets/',parameters('subnet1Name'))]",
-    "scriptUrl": "https://raw.githubusercontent.com/rarsan/azure-quickstart-templates/master/splunk-on-ubuntu/vm-disk-utils-0.1.sh",
+    "templateURLBase": "https://raw.githubusercontent.com/rarsan/azure-quickstart-templates/master/splunk-on-ubuntu",
     "securityGroupName": "splunk-server-nsg"
   },
   "resources": [
@@ -246,7 +247,7 @@
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "myvm",
+      "name": "[variables('vmName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/networkInterfaces/', 'nic')]",
@@ -257,7 +258,7 @@
           "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
-          "computername": "myvm",
+          "computername": "[variables('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]"
         },
@@ -271,7 +272,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://', parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/', 'myvm', '-osdisk.vhd')]"
+              "uri": "[concat('http://', parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/',variables('vmName'),'-osdisk.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -282,7 +283,7 @@
               "diskSizeGB": "[parameters('dataDiskSize')]",
               "lun": 0,
               "vhd": {
-                "Uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/','myvm','dataDisk1' ,'.vhd')]"
+                "Uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/',variables('vmName'),'dataDisk1','.vhd')]"
               },
               "caching": "None",
               "createOption": "Empty"
@@ -292,7 +293,7 @@
               "diskSizeGB": "[parameters('dataDiskSize')]",
               "lun": 1,
               "vhd": {
-                "Uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/','myvm' ,'dataDisk2','.vhd')]"
+                "Uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/',variables('vmName'),'dataDisk2','.vhd')]"
               },
               "caching": "None",
               "createOption": "Empty"
@@ -310,11 +311,11 @@
       "resources": [
         {
           "type": "Microsoft.Compute/virtualMachines/extensions",
-          "name": "[concat('myvm', '/azureVmUtils')]",
+          "name": "[concat(variables('vmName'), '/node-setup')]",
           "apiVersion": "2015-06-15",
           "location": "[parameters('location')]",
           "dependsOn": [
-            "[concat('Microsoft.Compute/virtualMachines/', 'myvm')]"
+            "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
           ],
           "properties": {
             "publisher": "Microsoft.OSTCExtensions",
@@ -322,9 +323,10 @@
             "typeHandlerVersion": "1.2",
             "settings": {
               "fileUris": [
-                "[variables('scriptUrl')]"
+                "[concat(variables('templateURLBase'),'/vm-disk-utils-0.1.sh')]",
+                "[concat(variables('templateURLBase'),'/node-setup.sh')]"
               ],
-              "commandToExecute": "bash vm-disk-utils-0.1.sh -s -p /opt/splunk"
+              "commandToExecute": "bash node-setup.sh"
             }
           }
         }
