@@ -31,7 +31,6 @@ cat >/etc/chef/node.json <<end
 {
   "splunk": {
     "server": {
-      "runasroot": "false"
     }
   },
   "run_list": [
