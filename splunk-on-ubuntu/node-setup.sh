@@ -40,9 +40,15 @@ cat >/etc/chef/node.json <<end
 }
 end
 
+cat >/etc/chef/client.rb <<end
+log_level :info
+log_location STDOUT
+chef_repo_path "/etc/chef/repo"
+end
+
 # Run chef client in local mode
 cd -
-chef-client -z -j /etc/chef/node.json
+chef-client -z -j /etc/chef/node.json -c /etc/chef/client.rb
 
 echo "node-setup Finished: $*. `date`"
 
