@@ -9,17 +9,27 @@ echo "node-setup Started: $*. `date`"
 
 [ $1 = '-v' ] && shift || quiet='-q'
 
-myip="$(ip -4 address show eth0 | sed -rn 's/^[[:space:]]*inet ([[:digit:].]+)[/[:space:]].*$/\1/p')"
+MYIP="$(ip -4 address show eth0 | sed -rn 's/^[[:space:]]*inet ([[:digit:].]+)[/[:space:]].*$/\1/p')"
+MOUNTPOINT="/datadrive"
+SPLUNK_DB_DIR="/opt/splunk/var/lib"
 
-echo "IP: $myip"
+echo "Current IP: $MYIP"
 
 # Strip data disks into one volume
-chmod u+x vm-disk-utils-0.1.sh && ./vm-disk-utils-0.1.sh -s -p /opt
+chmod u+x vm-disk-utils-0.1.sh && ./vm-disk-utils-0.1.sh -s -p $MOUNTPOINT
+
+echo "Create symbolic link from ${MOUNTPOINT}/splunk_db to ${SPLUNK_DB_DIR}/splunk"
+# Point SPLUNK_DB to striped volume
+mkdir -p $MOUNTPOINT/splunk_db
+mkdir -p $SPLUNK_DB_DIR
+chown splunk:splunk $MOUNTPOINT/splunk_db
+chown splunk:splunk $SPLUNK_DB_DIR
+ln -sf $MOUNTPOINT/splunk_db $SPLUNK_DB_DIR/splunk
 
 # Install chef client 12.5.1
 wget https://opscode-omnibus-packages.s3.amazonaws.com/ubuntu/10.04/x86_64/chef_12.5.1-1_amd64.deb
-# TODO: Check against sha1
 dpkg -i chef_12.5.1-1_amd64.deb
+# TODO: Check against sha1
 
 # Setup chef repo & node attributes
 mkdir -p /etc/chef/repo
