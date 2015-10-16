@@ -22,8 +22,8 @@ echo "Create symbolic link from ${MOUNTPOINT}/splunk_db to ${SPLUNK_DB_DIR}/splu
 # Point SPLUNK_DB to striped volume
 mkdir -p $MOUNTPOINT/splunk_db
 mkdir -p $SPLUNK_DB_DIR
-chown splunk:splunk $MOUNTPOINT/splunk_db
-chown splunk:splunk $SPLUNK_DB_DIR
+chmod 777 $MOUNTPOINT/splunk_db
+chmod 711 $SPLUNK_DB_DIR
 ln -sf $MOUNTPOINT/splunk_db $SPLUNK_DB_DIR/splunk
 
 # Install chef client 12.5.1
@@ -41,6 +41,7 @@ cat >/etc/chef/node.json <<end
 {
   "splunk": {
     "server": {
+      "runasroot": "false"
     }
   },
   "run_list": [
