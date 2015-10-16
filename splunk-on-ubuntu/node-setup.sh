@@ -1,41 +1,139 @@
 #!/bin/bash
 
-# Set up Splunk node
-# Usage:  $0 <splunk_role> <clustername> [<number-of-nodes> <this-node-index>]
+# The MIT License (MIT)
+#
+# Copyright (c) 2015 Splunk Inc.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+#
+# Script Name: node-setup.sh
+# Author: Roy Arsan - Splunk Inc github:(rarsan)
+# Version: 0.1
+# Last Modified By: Roy Arsan
+# Description:
+#  This script sets up a node, and installs & configures Splunk Enterprise via Chef in local mode.
+#  The provisioning depends on a specified role and leverages standard Chef Splunk cookbooks
+# Parameters :
+#  1 - r: role of Splunk server
+#  2 - p: password of Splunk server
+#  3 - i: index of node
+#  4 - h: Help
+# Note : 
+# This script has only been tested on Ubuntu 12.04 LTS & 14.04.2-LTS and must be root
 
 set -e
 
-echo "node-setup Started: $*. `date`"
+help()
+{
+    echo "This script sets up a node, and installs & configures Splunk Enterprise"
+    echo "Usage: "
+    echo "Parameters:"
+    echo "-r role to configure node, supported role(s): splunk_server"
+    echo "-p password for Splunk Enterprise admin"
+    echo "-i index of node"
+    echo "-h help"
+}
 
-[ $1 = '-v' ] && shift || quiet='-q'
+# Log method to control log output
+log()
+{
+    echo "$1"
+}
 
-MYIP="$(ip -4 address show eth0 | sed -rn 's/^[[:space:]]*inet ([[:digit:].]+)[/[:space:]].*$/\1/p')"
+# You must be root to run this script
+if [ "${UID}" -ne 0 ];
+then
+    log "Script executed without root permissions"
+    echo "You must be root to run this program." >&2
+    exit 3
+fi
+
+# Parameters
+MY_IP="$(ip -4 address show eth0 | sed -rn 's/^[[:space:]]*inet ([[:digit:].]+)[/[:space:]].*$/\1/p')"
+
 MOUNTPOINT="/datadrive"
 SPLUNK_DB_DIR="/opt/splunk/var/lib"
 
-echo "Current IP: $MYIP"
+CHEF_PKG_URL="https://opscode-omnibus-packages.s3.amazonaws.com/ubuntu/10.04/x86_64/chef_12.5.1-1_amd64.deb"
+CHEF_PKG_MD5="6360faba9d6358d636be5618eecb21ee1dbdca7d  chef_12.5.1-1_amd64.deb"
+CHEF_REPO_URL="https://github.com/rarsan/chef-repo-splunk/tarball/v0.1"
 
-# Strip data disks into one volume
-chmod u+x vm-disk-utils-0.1.sh && ./vm-disk-utils-0.1.sh -s -p $MOUNTPOINT
+# Arguments
+while getopts :r:u:p:i: optname; do
+  log "Option $optname set with value ${OPTARG}"
+  case $optname in
+    r) #Role of Splunk by which to configure node
+      NODE_ROLE=${OPTARG}
+      ;;
+    p) #Password of Splunk admin
+      ADMIN_PASSWD=${OPTARG}
+      ;;
+    i) #Index of node
+      NODE_INDEX=${OPTARG}
+      ;;
+    h)  #show help
+      help
+      exit 2
+      ;;
+    \?) #unrecognized option - show help
+      echo -e \\n"Option -${BOLD}$OPTARG${NORM} not allowed."
+      help
+      exit 2
+      ;;
+  esac
+done
 
-echo "Create symbolic link from ${MOUNTPOINT}/splunk_db to ${SPLUNK_DB_DIR}/splunk"
-# Point SPLUNK_DB to striped volume
+log "Started node-setup on ${HOSTNAME} with role ${NODE_ROLE}: `date`"
+
+# Update packages & install dependencies
+apt-get -y update
+apt-get install -y curl
+
+# Stripe data disks into one volume & 
+log "Stripe data disks into one volume mounted at ${MOUNTPOINT}"
+chmod u+x vm-disk-utils-0.1.sh && ./vm-disk-utils-0.1.sh -s -p ${MOUNTPOINT}
+
+# Link SPLUNK_DB to striped volume
+log "Create symbolic link from ${MOUNTPOINT}/splunk_db to ${SPLUNK_DB_DIR}/splunk"
 mkdir -p $MOUNTPOINT/splunk_db
 mkdir -p $SPLUNK_DB_DIR
 chmod 777 $MOUNTPOINT/splunk_db
 chmod 711 $SPLUNK_DB_DIR
 ln -sf $MOUNTPOINT/splunk_db $SPLUNK_DB_DIR/splunk
 
-# Install chef client 12.5.1
-wget https://opscode-omnibus-packages.s3.amazonaws.com/ubuntu/10.04/x86_64/chef_12.5.1-1_amd64.deb
+# Download chef client 12.5.1, verify checksum and install package
+# TODO: ADDBACK
+curl -O ${CHEF_PKG_URL}
+# TODO: REMOVEME
+#cp /etc/chef/local-mode-cache/cache/chef_12.5.1-1_amd64.deb .
+echo ${CHEF_PKG_MD5} > /tmp/checksum
+sha1sum -c /tmp/checksum
 dpkg -i chef_12.5.1-1_amd64.deb
-# TODO: Check against sha1
 
-# Setup chef repo & node attributes
+# Download chef repo including cookbooks, roles and default data bags
 mkdir -p /etc/chef/repo
 cd /etc/chef/repo
-curl -sL https://github.com/rarsan/chef-repo-splunk/tarball/v0.1 | tar -xz --strip-components=1
+curl -sL ${CHEF_REPO_URL} | tar -xz --strip-components=1
 tar -xzf berks-package.tar.gz -C cookbooks --strip-components=1
+
+# Update data bag with custom user credentials
+sed -i "s/notarealpassword/${ADMIN_PASSWD}/" /etc/chef/repo/data_bags/vault/splunk__default.json
 
 cat >/etc/chef/node.json <<end
 {
@@ -45,7 +143,7 @@ cat >/etc/chef/node.json <<end
     }
   },
   "run_list": [
-    "role[splunk_server]"
+    "role[${NODE_ROLE}]"
   ]
 }
 end
@@ -56,10 +154,12 @@ log_location STDOUT
 chef_repo_path "/etc/chef/repo"
 end
 
-# Run chef client in local mode
+# Finally install & configure Splunk using chef client in local mode
 cd -
-chef-client -z -j /etc/chef/node.json -c /etc/chef/client.rb
+chef-client -z -c /etc/chef/client.rb -j /etc/chef/node.json
 
-echo "node-setup Finished: $*. `date`"
+# TODO: Cleanup
+
+log "Finished node-setup on ${HOSTNAME} with role ${NODE_ROLE}: `date`"
 
 exit 0
