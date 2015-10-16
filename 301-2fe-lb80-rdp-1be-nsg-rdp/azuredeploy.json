@@ -8,64 +8,8 @@
         "description": "Unique public DNS prefix for the deployment. The fqdn will look something like '<dnsname>.westus.cloudapp.azure.com'. Up to 62 chars, digits or dashes, lowercase, should start with a letter: must conform to '^[a-z][a-z0-9-]{1,61}[a-z0-9]$'."
       }
     },
-    "newStorageAccountName": {
-      "type": "string",
-      "metadata": {
-        "description": "Name of the Storage Account. This has to be a uinique name, up to 24 chars, all lowercase."
-      }
-    },
-    "vmName": {
-      "type": "string",
-      "defaultValue": "vm",
-      "metadata": {
-        "description": "The name of the VM"
-      }
-    },
-    "imagePublisher": {
-      "type": "string",
-      "defaultValue": "MicrosoftWindowsServer",
-      "metadata": {
-        "description": "Image Publisher"
-      }
-    },
-    "imageOffer": {
-      "type": "string",
-      "defaultValue": "WindowsServer",
-      "metadata": {
-        "description": "Image Offer"
-      }
-    },
-    "imageSku": {
-      "type": "string",
-      "defaultValue": "2012-R2-Datacenter",
-      "metadata": {
-        "description": "Image SKU"
-      }
-    },
-    "SQLimagePublisher": {
-      "type": "string",
-      "defaultValue": "MicrosoftSQLServer",
-      "metadata": {
-        "description": "Image Publisher"
-      }
-    },
-    "SQLimageOffer": {
-      "type": "string",
-      "defaultValue": "SQL2014SP1-WS2012R2",
-      "metadata": {
-        "description": "Image Offer"
-      }
-    },
-    "SQLimageSku": {
-      "type": "string",
-      "defaultValue": "Web",
-      "metadata": {
-        "description": "Image SKU"
-      }
-    },
     "adminUsername": {
       "type": "string",
-      "defaultValue": "pietro",
       "metadata": {
         "description": "The name of the administrator of the new VM. Exclusion list: 'admin','administrator'"
       }
@@ -83,12 +27,21 @@
     "subnetName": "Subnet",
     "numberOfInstances": 2,
     "availabilitySetName": "myavlset",
-    "nicsql": "[concat(parameters('vmName'),'sql')]",
-    "subnet-id": "[concat(resourceId('Microsoft.Network/virtualNetworks','VNET'),'/subnets/',variables('subnetName'))]"
+    "vmName" : "vm",
+    "nicsql": "[concat(variables('vmName'),'sql')]",
+    "newStorageAccountName": "mycompanyvm2015",
+    "subnet-id": "[concat(resourceId('Microsoft.Network/virtualNetworks','VNET'),'/subnets/',variables('subnetName'))]",
+    "imagePublisher": "MicrosoftWindowsServer",
+    "imageOffer": "WindowsServer",
+    "imageSku": "2012-R2-Datacenter",
+    "SQLimagePublisher": "MicrosoftSQLServer",
+    "SQLimageOffer": "SQL2014SP1-WS2012R2",
+    "SQLimageSku": "Web",
+    "ApiVersion":  "2015-06-15"
   },
   "resources": [
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('ApiVersion')]",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "publicIp",
       "location": "[resourceGroup().location]",
@@ -100,7 +53,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('ApiVersion')]",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "vmsqlIp",
       "location": "[resourceGroup().location]",
@@ -111,8 +64,8 @@
 
     {
       "type": "Microsoft.Compute/availabilitySets",
-      "name": "myavlset",
-      "apiVersion": "2015-05-01-preview",
+      "name": "[variables('availabilitySetName')]",
+      "apiVersion": "[variables('ApiVersion')]",
       "location": "[resourceGroup().location]",
       "properties": {
         "platformFaultDomainCount": 2
@@ -120,9 +73,9 @@
     },
 
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('ApiVersion')]",
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[parameters('newStorageAccountName')]",
+      "name": "[variables('newStorageAccountName')]",
       "location": "[resourceGroup().location]",
       "properties": {
         "accountType": "Standard_LRS"
@@ -130,7 +83,7 @@
     },
 
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('ApiVersion')]",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "VNET",
       "location": "[resourceGroup().location]",
@@ -152,7 +105,7 @@
     },
 
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('ApiVersion')]",
       "name": "loadBalancer",
       "type": "Microsoft.Network/loadBalancers",
       "location": "[resourceGroup().location]",
@@ -237,7 +190,7 @@
     },
 
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('ApiVersion')]",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "vmsql",
       "location": "[resourceGroup().location]",
@@ -262,9 +215,9 @@
     },
 
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('ApiVersion')]",
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[concat(parameters('vmName'),copyindex())]",
+      "name": "[concat(variables('vmName'),copyindex())]",
       "copy": {
         "name": "netIntLoop",
         "count": "[variables('numberOfInstances')]"
@@ -299,7 +252,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('ApiVersion')]",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicsql')]",
       "location": "[resourceGroup().location]",
@@ -329,15 +282,15 @@
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[concat(parameters('vmName'), copyindex())]",
+      "name": "[concat(variables('vmName'), copyindex())]",
       "copy": {
         "name": "virtualMachineLoop",
         "count": "[variables('numberOfInstances')]"
       },
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts',parameters('newStorageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/',parameters('vmName'),copyindex())]",
+        "[resourceId('Microsoft.Storage/storageAccounts',variables('newStorageAccountName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/',variables('vmName'),copyindex())]",
         "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
       ],
       "properties": {
@@ -348,21 +301,21 @@
           "vmSize": "Standard_A1"
         },
         "osProfile": {
-          "computerName": "[concat(parameters('vmName'), copyindex())]",
+          "computerName": "[concat(variables('vmName'), copyindex())]",
           "adminUsername": "[parameters('adminUserName')]",
           "adminPassword": "[parameters('adminPassword')]"
         },
         "storageProfile": {
           "imageReference": {
-            "publisher": "[parameters('imagePublisher')]",
-            "offer": "[parameters('imageOffer')]",
-            "sku": "[parameters('imageSku')]",
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[variables('imageSku')]",
             "version": "latest"
           },
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/',parameters('vmName'), copyindex(),'-osdisk.vhd')]"
+              "uri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/vhds/',variables('vmName'), copyindex(),'-osdisk.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -371,14 +324,14 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('vmName'),copyindex()))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('vmName'),copyindex()))]"
             }
           ]
         },
         "diagnosticsProfile": {
           "bootDiagnostics": {
             "enabled": "true",
-            "storageUri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net')]"
+            "storageUri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net')]"
           }
         }
       }
@@ -389,7 +342,7 @@
       "name": "vmsql",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts',parameters('newStorageAccountName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts',variables('newStorageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/',variables('nicsql'))]"
       ],
       "properties": {
@@ -397,21 +350,21 @@
           "vmSize": "Standard_A1"
         },
         "osProfile": {
-          "computerName": "[concat(parameters('vmName'), 'sql')]",
+          "computerName": "[concat(variables('vmName'), 'sql')]",
           "adminUsername": "[parameters('adminUserName')]",
           "adminPassword": "[parameters('adminPassword')]"
         },
         "storageProfile": {
           "imageReference": {
-            "publisher": "[parameters('SQLimagePublisher')]",
-            "offer": "[parameters('SQLimageOffer')]",
-            "sku": "[parameters('SQLimageSku')]",
+            "publisher": "[variables('SQLimagePublisher')]",
+            "offer": "[variables('SQLimageOffer')]",
+            "sku": "[variables('SQLimageSku')]",
             "version": "latest"
           },
           "osDisk": {
             "name": "vmsql",
             "vhd": {
-              "uri": "[concat('https://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/',parameters('vmName'), 'sql','.vhd')]"
+              "uri": "[concat('https://',variables('newStorageAccountName'),'.blob.core.windows.net/vhds/',variables('vmName'), 'sql','.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -427,7 +380,7 @@
         "diagnosticsProfile": {
           "bootDiagnostics": {
             "enabled": "true",
-            "storageUri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net')]"
+            "storageUri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net')]"
           }
         }
       }
