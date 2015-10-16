@@ -40,7 +40,7 @@
         },
         "vmSize": {
             "type": "string",
-            "defaultValue": "Standard_A1",
+            "defaultValue": "Standard_D2",
             "metadata": {
                 "description": "size for the VMs"
             }
@@ -80,18 +80,11 @@
                 "description": "IP address in CIDR for db subnet"
             }
         },
-        "vmIPPrefix": {
+        "dbSubnetStartAddress": {
             "type": "string",
-            "defaultValue": "10.0.1.",
+            "defaultValue": "10.0.1.4",
             "metadata": {
-                "description": "IP address prefix for VMs must be available in db subnet"
-            }
-        },
-        "vmIPStartAddress": {
-            "type": "int",
-            "defaultValue": 4,
-            "metadata": {
-                "description": "start IP address for VMs"
+                "description": "Start IP address in the subnet for the VMs"
             }
         },
         "imagePublisher": {
@@ -116,7 +109,7 @@
         },
         "imageSKU": {
             "type": "string",
-            "defaultValue": "6.5",
+            "defaultValue": "6.6",
             "allowedValues": [
                 "6.5",
                 "6.6"
@@ -167,18 +160,12 @@
                 "description": "MySQL public port slave"
             }
         },
-        "customScriptFilePath": {
+        "artifactsPath": {
             "type": "string",
-            "defaultValue": "https://raw.githubusercontent.com/azure/azure-quickstart-templates/master/mysql-replication/azuremysql.sh",
+            "defaultValue": "https://raw.githubusercontent.com/azure/azure-quickstart-templates/master/mysql-replication",
             "metadata": {
-                "description": "bash file location to configure the cluster"
-            }
-        },
-        "mysqlConfigFilePath": {
-            "type": "string",
-            "defaultValue": "https://raw.githubusercontent.com/azure/azure-quickstart-templates/master/mysql-replication/my.cnf.template",
-            "metadata": {
-                "description": "my.cnf file location"
+                "description": "template and script file location",
+                "artifactsBaseUrl": "Base URL of the Publisher Template gallery package"
             }
         },
         "customScriptCommandToExecute": {
@@ -187,6 +174,20 @@
             "metadata": {
                 "description": "bash script command line"
             }
+        },
+        "publicIPName": {
+            "type": "string",
+            "defaultValue": "mysqlIP01",
+            "metadata": {
+                "description": "public IP name for MySQL loadbalancer"
+            }
+        },
+        "storageAccountName": {
+            "type": "string",
+            "defaultValue": "mysqlstore01",
+            "metadata": {
+                "description": "Storage account name for the cluster"
+            }
         }
     },
     "variables": {
@@ -194,7 +195,7 @@
         "nodeCount": 2,
         "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
         "dbSubnetRef": "[concat(variables('vnetID'),'/subnets/',parameters('dbSubnetName'))]",
-        "lbPublicIPName": "[concat(variables('lbName'), '-publicIP')]",
+        "lbPublicIPName": "[parameters('publicIPName')]",
         "lbPublicIPRef": "[resourceId('Microsoft.Network/publicIPAddresses',variables('lbPublicIPName'))]",
         "lbName": "[concat(parameters('dnsName'), '-lb')]",
         "lbID": "[resourceId('Microsoft.Network/loadBalancers',variables('lbName'))]",
@@ -206,12 +207,19 @@
         "sshIPConfig": "[concat(variables('lbID'),'/frontendIPConfigurations/',variables('sshIPConfigName'))]",
         "nicName": "[concat(parameters('dnsName'), '-nic')]",
         "availabilitySetName": "[concat(parameters('dnsName'), '-set')]",
-        "vhdContainer": "[concat('http://',parameters('dnsName'),'store.blob.core.windows.net/vhds/')]"
+        "vhdContainer": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/')]",
+        "customScriptFilePath": "[concat(parameters('artifactsPath'), '/azuremysql.sh')]",
+        "mysqlConfigFilePath": "[concat(parameters('artifactsPath'), '/my.cnf.template')]",
+
+        "sa": "[parameters('dbSubnetStartAddress')]",
+        "ipOctet01": "[concat(split(variables('sa'), '.')[0], '.', split(variables('sa'), '.')[1], '.')]",
+        "ipOctet2": "[int(split(variables('sa'), '.')[2])]",
+        "ipOctet3": "[int(split(variables('sa'), '.')[3])]"
     },
     "resources": [
         {
             "type": "Microsoft.Storage/storageAccounts",
-            "name": "[concat(parameters('dnsName'), 'store')]",
+            "name": "[parameters('storageAccountName')]",
             "apiVersion": "2015-05-01-preview",
             "location": "[variables('region')]",
             "properties": {
@@ -277,7 +285,7 @@
                         "name": "[concat('ipconfig', copyIndex())]",
                         "properties": {
                             "privateIPAllocationMethod": "Static",
-                            "privateIPAddress": "[concat(parameters('vmIPPrefix'), copyIndex(parameters('vmIPStartAddress')))]",
+                            "privateIPAddress": "[concat(variables('ipOctet01'), add(variables('ipOctet2'), div(copyIndex(variables('ipOctet3')), 255)), '.', mod(copyIndex(variables('ipOctet3')), 255))]",
                             "subnet": {
                                 "id": "[variables('dbSubnetRef')]"
                             },
@@ -313,7 +321,7 @@
             },
             "dependsOn": [
                 "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]",
-                "[concat('Microsoft.Storage/storageAccounts/', parameters('dnsName'), 'store')]",
+                "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
                 "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyIndex())]"
             ],
             "properties": {
@@ -388,12 +396,12 @@
             "properties": {
                 "publisher": "Microsoft.OSTCExtensions",
                 "type": "CustomScriptForLinux",
-                "typeHandlerVersion": "1.2",
+                "typeHandlerVersion": "1.3",
                 "settings": {
                     "fileUris": [
-                        "[parameters('customScriptFilePath')]"
+                        "[variables('customScriptFilePath')]"
                     ],
-                    "commandToExecute": "[concat(parameters('customScriptCommandToExecute'), ' ', copyIndex(1), ' ', parameters('vmIPPrefix'), copyIndex(parameters('vmIPStartAddress')), ' ', parameters('mysqlConfigFilePath'), ' ', parameters('mysqlReplicationPassword'), ' ', parameters('mysqlRootPassword'), ' ', parameters('mysqlProbePassword'), ' ', parameters('vmIPPrefix'), parameters('vmIPStartAddress'))]"
+                    "commandToExecute": "[concat(parameters('customScriptCommandToExecute'), ' ', copyIndex(1), ' ', variables('ipOctet01'), add(variables('ipOctet2'), div(copyIndex(variables('ipOctet3')), 255)), '.', mod(copyIndex(variables('ipOctet3')), 255), ' ', variables('mysqlConfigFilePath'), ' ', parameters('mysqlReplicationPassword'), ' ', parameters('mysqlRootPassword'), ' ', parameters('mysqlProbePassword'), ' ', parameters('dbSubnetStartAddress'))]"
                 },
                 "protectedSettings": {
                     "Items": {
