@@ -101,13 +101,12 @@ done
 
 log "Started node-setup on ${HOSTNAME} with role ${NODE_ROLE}: `date`"
 
-# Update packages & install dependencies
-apt-get -y update
-apt-get install -y curl
-
 # Stripe data disks into one volume & 
 log "Stripe data disks into one volume mounted at ${MOUNTPOINT}"
 chmod u+x vm-disk-utils-0.1.sh && ./vm-disk-utils-0.1.sh -s -p ${MOUNTPOINT}
+
+# Update packages & install dependencies
+apt-get -y update && apt-get install -y curl
 
 # Link SPLUNK_DB to striped volume
 log "Create symbolic link from ${MOUNTPOINT}/splunk_db to ${SPLUNK_DB_DIR}/splunk"
