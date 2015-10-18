@@ -72,6 +72,7 @@ SPLUNK_DB_DIR="/opt/splunk/var/lib"
 
 CHEF_PKG_URL="https://opscode-omnibus-packages.s3.amazonaws.com/ubuntu/10.04/x86_64/chef_12.5.1-1_amd64.deb"
 CHEF_PKG_MD5="6360faba9d6358d636be5618eecb21ee1dbdca7d  chef_12.5.1-1_amd64.deb"
+CHEF_PKG_CACHE="/etc/chef/local-mode-cache/cache/chef_12.5.1-1_amd64.deb"
 CHEF_REPO_URL="https://github.com/rarsan/chef-repo-splunk/tarball/v0.2"
 
 # Arguments
@@ -101,7 +102,7 @@ done
 
 log "Started node-setup on ${HOSTNAME} with role ${NODE_ROLE}: `date`"
 
-# Stripe data disks into one volume & 
+# Stripe data disks into one volume
 log "Stripe data disks into one volume mounted at ${MOUNTPOINT}"
 chmod u+x vm-disk-utils-0.1.sh && ./vm-disk-utils-0.1.sh -s -p ${MOUNTPOINT}
 
@@ -117,10 +118,11 @@ chmod 711 $SPLUNK_DB_DIR
 ln -sf $MOUNTPOINT/splunk_db $SPLUNK_DB_DIR/splunk
 
 # Download chef client 12.5.1, verify checksum and install package
-# TODO: ADDBACK
-curl -O ${CHEF_PKG_URL}
-# TODO: REMOVEME
-#cp /etc/chef/local-mode-cache/cache/chef_12.5.1-1_amd64.deb .
+if [ ! -f "${CHEF_PKG_CACHE}"]; then
+  curl -O ${CHEF_PKG_URL}
+else
+  cp ${CHEF_PKG_CACHE} .
+fi
 echo ${CHEF_PKG_MD5} > /tmp/checksum
 sha1sum -c /tmp/checksum
 dpkg -i chef_12.5.1-1_amd64.deb
