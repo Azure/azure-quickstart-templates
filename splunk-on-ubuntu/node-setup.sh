@@ -118,7 +118,7 @@ chmod 711 $SPLUNK_DB_DIR
 ln -sf $MOUNTPOINT/splunk_db $SPLUNK_DB_DIR/splunk
 
 # Download chef client 12.5.1, verify checksum and install package
-if [ ! -f "${CHEF_PKG_CACHE}"]; then
+if [ ! -f "${CHEF_PKG_CACHE}" ]; then
   curl -O ${CHEF_PKG_URL}
 else
   cp ${CHEF_PKG_CACHE} .
