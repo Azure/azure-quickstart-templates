@@ -8,6 +8,12 @@
                 "description": "Connect to your cluster using dnsName.location.cloudapp.azure.com"
             }
         },
+        "location": { 
+            "type": "string",
+            "metadata": {
+                "description": "Location where the MySQL cluster will be deployed to"
+            }
+        },
         "vmUserName": {
             "type": "string",
             "metadata": {
@@ -182,16 +188,15 @@
                 "description": "public IP name for MySQL loadbalancer"
             }
         },
-        "storageAccountName": {
+        "storageAccountPrefix": {
             "type": "string",
-            "defaultValue": "mysqlstore01",
             "metadata": {
-                "description": "Storage account name for the cluster"
+                "description": "Storage account name prefix for the cluster"
             }
         }
     },
     "variables": {
-        "region": "[resourceGroup().location]",
+        "region": "[parameters('location')]",
         "nodeCount": 2,
         "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
         "dbSubnetRef": "[concat(variables('vnetID'),'/subnets/',parameters('dbSubnetName'))]",
@@ -207,7 +212,8 @@
         "sshIPConfig": "[concat(variables('lbID'),'/frontendIPConfigurations/',variables('sshIPConfigName'))]",
         "nicName": "[concat(parameters('dnsName'), '-nic')]",
         "availabilitySetName": "[concat(parameters('dnsName'), '-set')]",
-        "vhdContainer": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/')]",
+        "storageAccountName": "[concat(parameters('storageAccountPrefix'), '0')]",
+        "vhdContainer": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/vhds/')]",
         "customScriptFilePath": "[concat(parameters('artifactsPath'), '/azuremysql.sh')]",
         "mysqlConfigFilePath": "[concat(parameters('artifactsPath'), '/my.cnf.template')]",
 
@@ -219,7 +225,7 @@
     "resources": [
         {
             "type": "Microsoft.Storage/storageAccounts",
-            "name": "[parameters('storageAccountName')]",
+            "name": "[variables('storageAccountName')]",
             "apiVersion": "2015-05-01-preview",
             "location": "[variables('region')]",
             "properties": {
@@ -321,7 +327,7 @@
             },
             "dependsOn": [
                 "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]",
-                "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
+                "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
                 "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyIndex())]"
             ],
             "properties": {
