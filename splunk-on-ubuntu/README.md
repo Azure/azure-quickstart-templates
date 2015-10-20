@@ -10,8 +10,9 @@ The instance has SSH port 22 open as well as port 8000 for HTTP, 9997 for TCP re
 
 Once the deployment is complete, Splunk Enterprise instance can be accessed using the configured DNS address. The DNS address will include the `dnsDomain` and `location` entered as parameters in the format `{dnsDomain}.{location}.cloudapp.azure.com`. If you created a deployment with the dnsName parameter set to "splunk" in the West US region you could access Splunk Enterprise VM at `http://splunk.westus.cloudapp.azure.com:8000`.
 
+NOTE: The template uses Splunk's default certificates to enable HTTPS which will create a browser warning. Please follow instructions in Splunk Docs to secure Splunk Web [with your own SSL certificates](http://docs.splunk.com/Documentation/Splunk/latest/Security/SecureSplunkWebusingasignedcertificate)
+
 ##Known Issues and Limitations
 
-- The template sets up SSH access via admin username/password, and would ideally use an SSH key
-- The template currently does not set up HTTPS access yet. Please follow instructions in Splunk Docs to easily turn on encryption [with default certificates](http://docs.splunk.com/Documentation/Splunk/latest/Security/TurnonbasicencryptionwithSplunkWeb) or [with your own certificates](http://docs.splunk.com/Documentation/Splunk/latest/Security/SecureSplunkWebusingasignedcertificate)
-
+- The template sets up SSH access via admin username/password, and would ideally use an SSH key.
+- The template opens SSH port to the public. You can restrict it to a virtual network and/or a bastion host only.
