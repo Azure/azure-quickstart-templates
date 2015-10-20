@@ -59,14 +59,15 @@
     }
   },
   "variables": {
-    "templateURLBase": "https://raw.githubusercontent.com/rarsan/azure-quickstart-templates/master/splunk-on-ubuntu/",
-    "standaloneTemplateUrl": "[concat(variables('templateURLBase'), 'standalone-instance-resources.json')]",
+    "templateBaseUrl": "https://raw.githubusercontent.com/rarsan/azure-quickstart-templates/master/splunk-on-ubuntu/",
+    "sharedTemplateUrl": "[concat(variables('templateBaseUrl'), 'shared-resources.json')]",
+    "standaloneTemplateUrl": "[concat(variables('templateBaseUrl'), 'standalone-instance-resources.json')]",
     "networkSettings": {
       "virtualNetworkName": "[parameters('virtualNetworkName')]",
       "addressPrefix": "10.0.0.0/16",
       "subnet": {
-        "standalone": {
-          "name": "standalone",
+        "sh": {
+          "name": "sh",
           "prefix": "10.0.0.0/24",
           "vnet": "[parameters('virtualNetworkName')]"
         }
@@ -80,8 +81,8 @@
         "version": "latest"
       },
       "scripts": [
-        "[concat(variables('templateURLBase'),'vm-disk-utils-0.1.sh')]",
-        "[concat(variables('templateURLBase'),'node-setup.sh')]"
+        "[concat(variables('templateBaseUrl'),'vm-disk-utils-0.1.sh')]",
+        "[concat(variables('templateBaseUrl'),'node-setup.sh')]"
       ]
     },
     "splunkSettings": {
@@ -93,33 +94,29 @@
   },
   "resources": [
     {
-      "apiVersion": "2015-05-01-preview",
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('sharedStorageAccountName')]",
-      "location": "[parameters('location')]",
+      "name": "shared",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
       "properties": {
-        "accountType": "[parameters('storageAccountType')]"
-      }
-    },
-    {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Network/virtualNetworks",
-      "name": "[parameters('virtualNetworkName')]",
-      "location": "[parameters('location')]",
-      "properties": {
-        "addressSpace": {
-          "addressPrefixes": [
-            "[variables('networkSettings').addressPrefix]"
-          ]
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('sharedTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
         },
-        "subnets": [
-          {
-            "name": "[variables('networkSettings').subnet.standalone.name]",
-            "properties": {
-              "addressPrefix": "[variables('networkSettings').subnet.standalone.prefix]"
-            }
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "networkSettings": {
+            "value": "[variables('networkSettings')]"
+          },
+          "storageAccountName": {
+            "value": "[variables('sharedStorageAccountName')]"
+          },
+          "storageAccountType": {
+            "value": "[parameters('storageAccountType')]"
           }
-        ]
+        }
       }
     },
     {
@@ -127,8 +124,7 @@
       "type": "Microsoft.Resources/deployments",
       "name": "splunk-deployment",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/',variables('sharedStorageAccountName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/',parameters('virtualNetworkName'))]"
+        "[concat('Microsoft.Resources/deployments/', 'shared')]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -162,7 +158,7 @@
             "value": "[parameters('location')]"
           },
           "subnet": {
-            "value": "[variables('networkSettings').subnet.standalone]"
+            "value": "[variables('networkSettings').subnet.sh]"
           },
           "vmSize": {
             "value": "[parameters('vmSize')]"
