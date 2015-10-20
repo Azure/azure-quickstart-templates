@@ -6,9 +6,14 @@
 
 This template deploys Splunk Enterprise on Ubuntu VM with 2 data drives in RAID0 configuration. The template also provisions a storage account, a virtual network with subnets, public IP address, and network interfaces required.
 
-The instance has SSH port 22 open as well as port 8000 for HTTP, 9997 for TCP receiver traffic, and 8089 for Management.
+Once the deployment is complete, Splunk Enterprise instance can be accessed using the configured DNS address. The DNS address will include the `dnsDomain` and `location` entered as parameters in the format `{dnsDomain}.{location}.cloudapp.azure.com`. If you created a deployment with the dnsName parameter set to "splunk" in the West US region you could access Splunk Enterprise VM at `https://splunk.westus.cloudapp.azure.com`.
 
-Once the deployment is complete, Splunk Enterprise instance can be accessed using the configured DNS address. The DNS address will include the `dnsDomain` and `location` entered as parameters in the format `{dnsDomain}.{location}.cloudapp.azure.com`. If you created a deployment with the dnsName parameter set to "splunk" in the West US region you could access Splunk Enterprise VM at `http://splunk.westus.cloudapp.azure.com:8000`.
+The instance has the following ports open:
+* 22 for SSH
+* 443 for HTTPS
+* 8000 for HTTP
+* 9997 for TCP receiver traffic
+* 8089 for Splunkd Management
 
 NOTE: The template uses Splunk's default certificates to enable HTTPS which will create a browser warning. Please follow instructions in Splunk Docs to secure Splunk Web [with your own SSL certificates](http://docs.splunk.com/Documentation/Splunk/latest/Security/SecureSplunkWebusingasignedcertificate)
 
