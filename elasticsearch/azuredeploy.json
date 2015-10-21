@@ -54,7 +54,8 @@
       "type": "string",
       "defaultValue": "ubuntu",
       "allowedValues": [
-        "ubuntu"
+        "ubuntu",
+        "windows"
       ],
       "metadata": {
         "description": "The operating system to deploy Elasticsearch cluster on"
@@ -160,7 +161,7 @@
     }
   },
   "variables": {
-    "templateBaseUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/elasticsearch/",
+    "templateBaseUrl": "https://raw.githubusercontent.com/kirpasingh/azure-quickstart-templates/master/elasticsearch/",
     "masterNodesIpPrefix": "10.0.0.1",
     "networkSettings": {
       "virtualNetworkName": "[parameters('virtualNetworkName')]",
@@ -214,6 +215,9 @@
       "[concat(variables('templateBaseUrl'), 'elasticsearch-ubuntu-install.sh')]",
       "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/shared_scripts/ubuntu/vm-disk-utils-0.1.sh"
     ],
+    "windowsScripts": [
+      "[concat(variables('templateBaseUrl'), 'elasticsearch-windows-install.ps1')]"
+    ],
     "ubuntuSettings": {
       "imageReference":{
         "publisher": "Canonical",
@@ -261,9 +265,33 @@
       },
       "managementPort":"3389",
       "extentionSettings":{
-        "master": {},
-        "client": {},
-        "data": {}
+        "master": {
+          "publisher": "Microsoft.Compute",
+          "type": "CustomScriptExtension",
+          "typeHandlerVersion": "1.4",
+          "settings": {
+            "fileUris": "[variables('windowsScripts')]",
+            "commandToExecute": "[concat('powershell.exe -File elasticsearch-windows-install.ps1 -elasticSearchVersion ', variables('esSettings').version,' -elasticClusterName ', variables('esSettings').clusterName,' -masterOnlyNode')]"
+          }
+        },
+        "client": {
+          "publisher": "Microsoft.Compute",
+          "type": "CustomScriptExtension",
+          "typeHandlerVersion": "1.4",
+          "settings": {
+            "fileUris": "[variables('windowsScripts')]",
+            "commandToExecute": "[concat('powershell.exe -File elasticsearch-windows-install.ps1 -elasticSearchVersion ', variables('esSettings').version,' -elasticClusterName ', variables('esSettings').clusterName,' -clientOnlyNode')]"
+          }
+        },
+        "data": {
+          "publisher": "Microsoft.Compute",
+          "type": "CustomScriptExtension",
+          "typeHandlerVersion": "1.4",
+          "settings": {
+            "fileUris": "[variables('windowsScripts')]",
+            "commandToExecute": "[concat('powershell.exe -File elasticsearch-windows-install.ps1 -elasticSearchVersion ', variables('esSettings').version,' -elasticClusterName ', variables('esSettings').clusterName,' -dataOnlyNode')]"
+          }
+        }
       }
     },
     "osSettings": "[variables(concat(parameters('OS'), 'Settings'))]",
