@@ -49,9 +49,9 @@ Port numbers of each master VM is described in the following table:
 
 | VM   | SSH command |
 |:--- |:---|
-| `swarm-master-0`  | `ssh <username>@<IP> -p 2200` |
-| `swarm-master-1`  | `ssh <username>@<IP> -p 2201` |
-| `swarm-master-2`  | `ssh <username>@<IP> -p 2202` |
+| `swarm-master-0`  | `ssh <username>@<addr> -p 2200` |
+| `swarm-master-1`  | `ssh <username>@<addr> -p 2201` |
+| `swarm-master-2`  | `ssh <username>@<addr> -p 2202` |
 
 #### Swarm Worker Nodes
 
@@ -120,7 +120,7 @@ If the template successfully deploys, it will have output values
 The `sshTunnelCmd` command will help you create a SSH tunnel to Docker Swarm
 Manager from your machine (this command will keep running with no output):
 
-    $ ssh -L 2375:swarm-master-0:2375 -N core@<<DNSNAME>>-manage.westus.cloudapp.azure.com -p 2200
+    $ ssh -L 2375:swarm-master-0:2375 -N core@swarm-<<DNSNAME>>-manage.westus.cloudapp.azure.com -p 2200
 
 After this you can use `dockerCmd` command that points to localhost, just as
 Swarm managers were running on your development machine:
