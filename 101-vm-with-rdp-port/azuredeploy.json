@@ -1,258 +1,251 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-    "contentVersion": "1.0.0.0",
-
-    "parameters": {
-
-        "location": {
-            "type": "string",
-            "allowedValues": [
-                "West US",
-                "East US",
-                "West Europe",
-                "East Asia",
-                "Southeast Asia"
-            ],
-            "metadata": {
-                "description": "The region to deploy the resources into"
-            }
-        },
-
-        "publicDnsName": {
-            "type": "string",
-            "metadata": {
-                "description": "Unique public DNS prefix for the deployment. The fqdn will look something like '<dnsname>.westus.cloudapp.azure.com'. Up to 62 chars, digits or dashes, lowercase, should start with a letter: must conform to '^[a-z][a-z0-9-]{1,61}[a-z0-9]$'."
-            }
-        },
-
-        "storageAccount": {
-            "type": "string",
-            "metadata": {
-                "description": "Name of the Storage Account. This has to be a uinique name, up to 24 chars, all lowercase."
-            }
-        },
-
-        "vmName": {
-            "type": "string",
-            "defaultValue": "vm",
-            "metadata": {
-                "description": "The name of the VM"
-            }
-        },
-
-        "imagePublisher": {
-            "type": "string",
-            "defaultValue": "MicrosoftWindowsServer",
-            "metadata": {
-                "description": "Image Publisher"
-            }
-        },
-        "imageOffer": {
-            "type": "string",
-            "defaultValue": "WindowsServer",
-            "metadata": {
-                "description": "Image Offer"
-            }
-        },
-        "imageSku": {
-            "type": "string",
-            "defaultValue": "2012-R2-Datacenter",
-            "metadata": {
-                "description": "Image SKU"
-            }
-        },
-
-        "adminUsername": {
-            "type": "string",
-            "defaultValue": "cloudguy",
-            "metadata": {
-                "description": "The name of the administrator of the new VM. Exclusion list: 'admin','administrator'"
-            }
-        },
-        "adminPassword": {
-            "type": "securestring",
-            "metadata": {
-                "description": "The password for the administrator account of the new VM"
-            }
-        },
-
-        "rdpPort": {
-            "type": "int",
-            "defaultValue": 50001,
-            "metadata": {
-                "description": "Public port number for RDP"
-            }
-        }
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "allowedValues": [
+        "West US",
+        "East US",
+        "West Europe",
+        "East Asia",
+        "Southeast Asia"
+      ],
+      "metadata": {
+        "description": "The region to deploy the resources into"
+      }
     },
-
-    "variables": {
-        "vnetAddressRange": "10.0.0.0/16",
-        "subnetAddressRange": "10.0.0.0/24",
-        "subnetName":  "Subnet",
-        "subnet-id": "[concat(resourceId('Microsoft.Network/virtualNetworks','VNET'),'/subnets/',variables('subnetName'))]"
+    "publicDnsName": {
+      "type": "string",
+      "metadata": {
+        "description": "Unique public DNS prefix for the deployment. The fqdn will look something like '<dnsname>.westus.cloudapp.azure.com'. Up to 62 chars, digits or dashes, lowercase, should start with a letter: must conform to '^[a-z][a-z0-9-]{1,61}[a-z0-9]$'."
+      }
     },
-
-    "resources": [
-
-        {
-            "apiVersion": "2015-05-01-preview",
-            "type": "Microsoft.Network/publicIPAddresses",
-            "name": "publicIp",
-            "location": "[parameters('location')]",
-            "properties": {
-                "publicIPAllocationMethod": "Dynamic",
-                "dnsSettings": {
-                    "domainNameLabel": "[parameters('publicDnsName')]"
-                }
-            }
-        },
-
-        {
-            "apiVersion": "2015-05-01-preview",
-            "type": "Microsoft.Storage/storageAccounts",
-            "name": "[parameters('storageAccount')]",
-            "location": "[parameters('location')]",
-            "properties": {
-                "accountType": "Standard_LRS"
-            }
-        },
-
-        {
-            "apiVersion": "2015-05-01-preview",
-            "type": "Microsoft.Network/virtualNetworks",
-            "name": "VNET",
-            "location": "[parameters('location')]",
-            "properties": {
-                "addressSpace": {
-                    "addressPrefixes": [ "[variables('vnetAddressRange')]" ]
-                },
-                "subnets": [
-                    {
-                        "name": "Subnet",
-                        "properties": {
-                            "addressPrefix": "[variables('subnetAddressRange')]"
-                        }
-                    }
-                ]
-            }
-        },
-
-        {
-            "apiVersion": "2015-05-01-preview",
-            "name": "loadBalancer",
-            "type": "Microsoft.Network/loadBalancers",
-            "location": "[parameters('location')]",
-            "dependsOn": [
-                "Microsoft.Network/publicIPAddresses/publicIp"
-            ],
-            "properties": {
-                "frontendIPConfigurations": [
-                    {
-                        "name": "LBFE",
-                        "properties": {
-                            "publicIPAddress": {
-                                "id": "[resourceId('Microsoft.Network/publicIPAddresses','publicIp')]"
-                            }
-                        }
-                    }
-                ],
-                "backendAddressPools": [
-                    {
-                        "name": "LBBAP"
-                    }
-                ],
-                "inboundNatRules": [
-                    {
-                        "name": "rdp",
-                        "properties": {
-                            "frontendIPConfiguration": {
-                                "id": "[concat(resourceId('Microsoft.Network/loadBalancers','loadBalancer'),'/frontendIPConfigurations/LBFE')]"
-                            },
-                            "protocol": "tcp",
-                            "frontendPort": "[parameters('rdpPort')]",
-                            "backendPort": 3389,
-                            "enableFloatingIP": false
-                        }
-                    }
-                ]
-            }
-        },
-
-        {
-            "apiVersion": "2015-05-01-preview",
-            "type": "Microsoft.Network/networkInterfaces",
-            "name": "[concat(parameters('vmName'),'-nif')]",
-            "location": "[parameters('location')]",
-            "dependsOn": [
-                "Microsoft.Network/virtualNetworks/VNET",
-                "Microsoft.Network/loadBalancers/loadBalancer"
-            ],
-            "properties": {
-                "ipConfigurations": [
-                    {
-                        "name": "ipconfig",
-                        "properties": {
-                            "privateIPAllocationMethod": "Dynamic",
-                            "subnet": {
-                                "id": "[variables('subnet-id')]"
-                            },
-                            "loadBalancerBackendAddressPools": [
-                                {
-                                    "id": "[concat(resourceId('Microsoft.Network/loadBalancers','loadBalancer'),'/backendAddressPools/LBBAP')]"
-                                }
-                            ],
-                            "loadBalancerInboundNatRules": [
-                                {
-                                    "id": "[concat(resourceId('Microsoft.Network/loadBalancers','loadBalancer'),'/inboundNatRules/rdp')]"
-                                }
-                            ]
-                        }
-                    }
-                ]
-            }
-        },
-        {
-            "apiVersion": "2015-05-01-preview",
-            "type": "Microsoft.Compute/virtualMachines",
-            "name": "vm",
-            "location": "[parameters('location')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Storage/storageAccounts',parameters('storageAccount'))]",
-                "[concat('Microsoft.Network/networkInterfaces/',parameters('vmName'),'-nif')]"
-            ],
-            "properties": {
-                "hardwareProfile": {
-                    "vmSize": "Standard_A2"
-                },
-                "osProfile": {
-                    "computername": "[parameters('vmName')]",
-                    "adminUsername": "[parameters('adminUserName')]",
-                    "adminPassword": "[parameters('adminPassword')]"
-                },
-                "storageProfile": {
-                    "imageReference": {
-                        "publisher": "[parameters('imagePublisher')]",
-                        "offer": "[parameters('imageOffer')]",
-                        "sku": "[parameters('imageSku')]",
-                        "version": "latest"
-                    },
-                    "osDisk": {
-                        "name": "osdisk",
-                        "vhd": {
-                            "uri": "[concat('http://',parameters('storageAccount'),'.blob.core.windows.net/vhds/',parameters('vmName'),'-osdisk.vhd')]"
-                        },
-                        "caching": "ReadWrite",
-                        "createOption": "FromImage"
-                    }
-                },
-                "networkProfile": {
-                    "networkInterfaces": [
-                        {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('vmName'),'-nif'))]"
-                        }
-                    ]
-                }
-            }
+    "storageAccount": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Storage Account. This has to be a uinique name, up to 24 chars, all lowercase."
+      }
+    },
+    "vmName": {
+      "type": "string",
+      "defaultValue": "vm",
+      "metadata": {
+        "description": "The name of the VM"
+      }
+    },
+    "imagePublisher": {
+      "type": "string",
+      "defaultValue": "MicrosoftWindowsServer",
+      "metadata": {
+        "description": "Image Publisher"
+      }
+    },
+    "imageOffer": {
+      "type": "string",
+      "defaultValue": "WindowsServer",
+      "metadata": {
+        "description": "Image Offer"
+      }
+    },
+    "imageSku": {
+      "type": "string",
+      "defaultValue": "2012-R2-Datacenter",
+      "metadata": {
+        "description": "Image SKU"
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "defaultValue": "cloudguy",
+      "metadata": {
+        "description": "The name of the administrator of the new VM. Exclusion list: 'admin','administrator'"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The password for the administrator account of the new VM"
+      }
+    },
+    "rdpPort": {
+      "type": "int",
+      "defaultValue": 50001,
+      "metadata": {
+        "description": "Public port number for RDP"
+      }
+    }
+  },
+  "variables": {
+    "vnetAddressRange": "10.0.0.0/16",
+    "subnetAddressRange": "10.0.0.0/24",
+    "subnetName": "Subnet",
+    "subnet-id": "[concat(resourceId('Microsoft.Network/virtualNetworks','VNET'),'/subnets/',variables('subnetName'))]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "publicIp",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('publicDnsName')]"
         }
-    ]
+      }
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[parameters('storageAccount')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "accountType": "Standard_LRS"
+      }
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "VNET",
+      "location": "[parameters('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('vnetAddressRange')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "Subnet",
+            "properties": {
+              "addressPrefix": "[variables('subnetAddressRange')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "name": "loadBalancer",
+      "type": "Microsoft.Network/loadBalancers",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "Microsoft.Network/publicIPAddresses/publicIp"
+      ],
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "LBFE",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses','publicIp')]"
+              }
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "LBBAP"
+          }
+        ],
+        "inboundNatRules": [
+          {
+            "name": "rdp",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers','loadBalancer'),'/frontendIPConfigurations/LBFE')]"
+              },
+              "protocol": "tcp",
+              "frontendPort": "[parameters('rdpPort')]",
+              "backendPort": 3389,
+              "enableFloatingIP": false
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(parameters('vmName'),'-nif')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "Microsoft.Network/virtualNetworks/VNET",
+        "Microsoft.Network/loadBalancers/loadBalancer"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('subnet-id')]"
+              },
+              "loadBalancerBackendAddressPools": [
+                {
+                  "id": "[concat(resourceId('Microsoft.Network/loadBalancers','loadBalancer'),'/backendAddressPools/LBBAP')]"
+                }
+              ],
+              "loadBalancerInboundNatRules": [
+                {
+                  "id": "[concat(resourceId('Microsoft.Network/loadBalancers','loadBalancer'),'/inboundNatRules/rdp')]"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "vm",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts',parameters('storageAccount'))]",
+        "[concat('Microsoft.Network/networkInterfaces/',parameters('vmName'),'-nif')]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "Standard_A2"
+        },
+        "osProfile": {
+          "computername": "[parameters('vmName')]",
+          "adminUsername": "[parameters('adminUserName')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[parameters('imagePublisher')]",
+            "offer": "[parameters('imageOffer')]",
+            "sku": "[parameters('imageSku')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat('http://',parameters('storageAccount'),'.blob.core.windows.net/vhds/',parameters('vmName'),'-osdisk.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('vmName'),'-nif'))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+             "enabled": "true",
+             "storageUri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net')]"
+          }
+        }
+      }
+    }
+  ]
 }

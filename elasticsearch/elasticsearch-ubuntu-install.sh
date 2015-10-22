@@ -24,17 +24,8 @@
 #
 # Trent Swanson (Full Scale 180 Inc)
 #
-### Remaining work items
-### -Alternate discovery options (Azure Storage)
-### -Implement Idempotency and Configuration Change Support
-### -Implement OS Disk Striping Option (Currently using multiple Elasticsearch data paths)
-### -Implement Non-Durable Option (Put data on resource disk)
-### -Configure Work/Log Paths
-### -Recovery Settings (These can be changed via API)
-
 help()
 {
-    #TODO: Add help text here
     echo "This script installs Elasticsearch cluster on Ubuntu"
     echo "Parameters:"
     echo "-n elasticsearch cluster name"
@@ -79,7 +70,7 @@ fi
 
 #Script Parameters
 CLUSTER_NAME="elasticsearch"
-ES_VERSION="1.5.0"
+ES_VERSION="1.7.2"
 DISCOVERY_ENDPOINTS=""
 INSTALL_MARVEL="no" #We use this because of ARM template limitation
 CLIENT_ONLY_NODE=0
@@ -108,7 +99,7 @@ while getopts :n:d:v:l:xyzsh optname; do
     y) #client node
       CLIENT_ONLY_NODE=1
       ;;
-    z) #client node
+    z) #data node
       DATA_NODE=1
       ;;
     s) #use OS striped disk volumes
@@ -170,7 +161,7 @@ install_java()
     apt-get -y update  > /dev/null
     echo debconf shared/accepted-oracle-license-v1-1 select true | sudo debconf-set-selections
     echo debconf shared/accepted-oracle-license-v1-1 seen true | sudo debconf-set-selections
-    apt-get -y install oracle-java7-installer  > /dev/null
+    apt-get -y install oracle-java8-installer  > /dev/null
 }
 
 # Install Elasticsearch
@@ -297,7 +288,7 @@ echo "vm.max_map_count = 262144" >> /etc/sysctl.conf
 #TODO: Move this to an init.d script so we can handle instance size increases
 ES_HEAP=`free -m |grep Mem | awk '{if ($2/2 >31744)  print 31744;else print $2/2;}'`
 log "Configure elasticsearch heap size - $ES_HEAP"
-echo "ES_HEAP_SIZE=${ES_HEAP}/" >> /etc/default/elasticseach
+echo "ES_HEAP_SIZE=${ES_HEAP}m" >> /etc/default/elasticsearch
 
 #Optionally Install Marvel
 if [ "${INSTALL_MARVEL}" == "yes" ];
