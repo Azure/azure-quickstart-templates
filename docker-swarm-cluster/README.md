@@ -9,10 +9,12 @@ Azure with 3 Swarm managers and specified number of Swarm nodes in the location
 of the resource group.
 
 If you are not familiar with Docker Swarm, please
-[read Swarm documentation](http://docs.docker.com/swarm).
+[read Swarm documentation](http://docs.docker.com/swarm). The template uses [CoreOS](https://coreos.com)
+as the host operating system for running containers on Swarm managers and nodes.
 
-The template uses [CoreOS](https://coreos.com) as the host operating system for
-running containers on Swarm managers and nodes.
+You can use `ssh-keygen` command on Linux/Mac or Cygwin/MinGW to create public
+and private key pairs. The `sshPublicKey` argument should be contents of the
+`*.pub` file you have.
 
 ## Cluster Properties
 
