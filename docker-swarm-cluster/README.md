@@ -9,10 +9,12 @@ Azure with 3 Swarm managers and specified number of Swarm nodes in the location
 of the resource group.
 
 If you are not familiar with Docker Swarm, please
-[read Swarm documentation](http://docs.docker.com/swarm).
+[read Swarm documentation](http://docs.docker.com/swarm). The template uses [CoreOS](https://coreos.com)
+as the host operating system for running containers on Swarm managers and nodes.
 
-The template uses [CoreOS](https://coreos.com) as the host operating system for
-running containers on Swarm managers and nodes.
+You can use `ssh-keygen` command on Linux/Mac or Cygwin/MinGW to create public
+and private key pairs. The `sshPublicKey` argument should be contents of the
+`*.pub` file you have.
 
 ## Cluster Properties
 
@@ -47,9 +49,9 @@ Port numbers of each master VM is described in the following table:
 
 | VM   | SSH command |
 |:--- |:---|
-| `swarm-master-0`  | `ssh <username>@<IP> -p 2200` |
-| `swarm-master-1`  | `ssh <username>@<IP> -p 2201` |
-| `swarm-master-2`  | `ssh <username>@<IP> -p 2202` |
+| `swarm-master-0`  | `ssh <username>@<addr> -p 2200` |
+| `swarm-master-1`  | `ssh <username>@<addr> -p 2201` |
+| `swarm-master-2`  | `ssh <username>@<addr> -p 2202` |
 
 #### Swarm Worker Nodes
 
@@ -118,7 +120,7 @@ If the template successfully deploys, it will have output values
 The `sshTunnelCmd` command will help you create a SSH tunnel to Docker Swarm
 Manager from your machine (this command will keep running with no output):
 
-    $ ssh -L 2375:swarm-master-0:2375 -N core@<<DNSNAME>>-manage.westus.cloudapp.azure.com -p 2200
+    $ ssh -L 2375:swarm-master-0:2375 -N core@swarm-<<DNSNAME>>-manage.westus.cloudapp.azure.com -p 2200
 
 After this you can use `dockerCmd` command that points to localhost, just as
 Swarm managers were running on your development machine:
