@@ -1631,7 +1631,7 @@ def display_eula():
     jobfunction=raw_input("Please enter your jobfunction: ")
     accepted=raw_input("Please enter yes to accept EULA: ")
     if accepted =='yes' and fname and lname and company and email and phone and jobrole and jobfunction:
-       postEulaInfo(fname, lname, company, email,
+       postEulaInfo(fname, lname, email, company,
                     jobrole, jobfunction, phone)
        return True
     else:
