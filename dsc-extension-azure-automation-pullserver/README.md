@@ -8,7 +8,7 @@ This template configures an existing Virtual Machine Local Configuration Manager
 
 <b>NOTE:</b> The DSC configuration module requires four specific settings:
 
-1. modulesUrl: This parameter sets the URL for the zipped PS1 file responsible for passing the ARM Template values through the DSC VM Extension to configure the LCM, onboarding the VM to Azure Automation DSC. The azuredeploy.parameters.json for this template has the appropriate value for this parameter, as it references the RAW content URL for the provided module here in GitHub.
+1. modulesUrl: This parameter sets the URL for the zipped PS1 file responsible for passing the ARM Template values through the DSC VM Extension to configure the LCM, onboarding the VM to Azure Automation DSC. Both the Default value for this parameter and the azuredeploy.parameters.json for this template has the appropriate value for this parameter, as it references the RAW content URL for the provided module here in GitHub.
 
 2. registrationKey: This parameter, combined with registrationUrl, enables the onboarding of the VM to Azure Automation DSC. This account specific Key can be found within the Azure Portal - Automation Account - All settings - Keys.
 
