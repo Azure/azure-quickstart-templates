@@ -67,7 +67,7 @@ function Download-Jdk($targetDrive, $downloadLocation){
 	# download JDK from a given source URL to destination folder
 	try{
 			$destination = if ($targetDrive -eq $null) {"$env:HOMEDRIVE\Downloads\Java\Jdk-Installer.exe"} else {"$targetDrive`:\Downloads\Java\Jdk-Installer.exe"}
-			$source = if ($downloadLocation -eq $null) {"http://download.oracle.com/otn-pub/java/jdk/8u5-b13/jdk-8u5-windows-i586.exe"} else {$downloadLocation}
+			$source = if ($downloadLocation -eq $null) {"http://download.oracle.com/otn-pub/java/jdk/8u65-b17/jdk-8u65-windows-i586.exe"} else {$downloadLocation}
             
             # create folder if doesn't exists and suppress the output
             $folder = split-path $destination
@@ -93,11 +93,14 @@ function Download-Jdk($targetDrive, $downloadLocation){
 
 function Install-Jdk($sourceLoc, $targetDrive)
 {
-	$installPath = if($targetDrive -eq $null) {"$env:HOMEDRIVE\Program Files\JAVA\JDK"} else {"$targetDrive`:\Program Files\JAVA\JDK"}
+	$installPath = if($targetDrive -eq $null) {"$env:HOMEDRIVE\Program Files (x86)\JAVA\JDK"} else {"$targetDrive`:\Program Files (x86)\JAVA\JDK"}
 
 	try{
-        lmsg "Installing java on the box under $installPath"
-		$proc = Start-Process -FilePath $sourceLoc -ArgumentList "/s INSTALLDIR=`"$installPath`"" -PassThru -Wait 
+        lmsg "Installing java on the box under $installPath..."
+		$proc = Start-Process -FilePath $sourceLoc -ArgumentList "/s INSTALLDIR=`"$installPath`"" -Wait -PassThru
+        $proc.WaitForExit()
+        lmsg "JDK installed under $installPath!"
+        
         #if($proc.ExitCode -ne 0){
             #THROW "JDK installation error"
         #}
