@@ -17,7 +17,14 @@ from cm_api.api_client import ApiResource, ApiException
 from cm_api.endpoints.hosts import *
 from cm_api.endpoints.services import ApiServiceSetupInfo, ApiService
 
-diskcount=10
+def getDataDiskCount():
+    bashCommand="ls -la / | grep data | wc -l > count2.out"
+    os.system(bashCommand)
+    f = open('count2.out', 'r')
+    count=f.readline().rstrip('\n')
+    return count
+
+diskcount=getDataDiskCount()
 
 LOG_DIR='/log/cloudera'
 def init_cluster():
