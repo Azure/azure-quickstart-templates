@@ -207,7 +207,8 @@ install_mysql_centos() {
     echo "installing mysql"
     wget https://dev.mysql.com/get/Downloads/MySQL-5.6/MySQL-5.6.26-1.el6.x86_64.rpm-bundle.tar
     tar -xvf MySQL-5.6.26-1.el6.x86_64.rpm-bundle.tar
-    rpm -e --nodeps mysql-libs-5.1.73-3.el6_5.x86_64
+	curlib=$(rpm -qa |grep mysql-libs-)
+    rpm -e --nodeps $curlib
     rpm -ivh MySQL-server-5.6.26-1.el6.x86_64.rpm
     rpm -ivh MySQL-client-5.6.26-1.el6.x86_64.rpm
 	wget http://dev.mysql.com/get/Downloads/Connector-Python/mysql-connector-python-2.0.4-1.el6.noarch.rpm
@@ -359,5 +360,8 @@ else
     configure_network
     configure_disks
     configure_mysql
+	yum -y erase hypervkvpd.x86_64
+	yum -y install microsoft-hyper-v
+#	echo "/sbin/reboot" | /usr/bin/at now + 3 min >/dev/null 2>&1
 fi
 
