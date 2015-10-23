@@ -2,6 +2,12 @@
   "$schema": "http://schema.management.azure.com/schemas/2015-01-01-preview/deploymentTemplate.json",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "cmHost": {
+      "type": "string",
+      "metadata": {
+        "description": "FQDN of Cloudera Manager Host"
+      }
+    },
     "adminUserName": {
       "type": "string",
       "defaultValue": "testuser",
@@ -51,7 +57,7 @@
       "type": "string",
       "defaultValue": "Premium_LRS",
       "metadata": {
-        "description": "The type of the Storage Account to be created (Default to Standard_LRS)"
+        "description": "The type of the Storage Account to be created (Default to Premium_LRS)"
       }
     },
     "virtualNetworkName": {
@@ -68,22 +74,17 @@
         "description": "Subnet name for the virtual network where resources will be provisioned"
       }
     },
-    "tshirtSize": {
-      "type": "string",
-      "defaultValue": "Eval",
-      "allowedValues": [
-        "Eval",
-        "Prod"
-      ],
-      "metadata": {
-        "description": "T-shirt size of the Cloudera cluster (Eval, Prod)"
-      }
-    },
-    "numberOfDataNodes": {
+    "numberOfDataNodesToAdd": {
       "type": "int",
       "defaultValue": 3,
       "metadata": {
-        "description": "Number of data nodes for Prod, default to 3"
+        "description": "Number of data nodes to add default to 3"
+      }
+    },
+    "dataNodeAddressStart": {
+      "type": "int",
+      "metadata": {
+        "description": "Specify Node Address Start to avoid any conflict"
       }
     },
     "vmSize": {
@@ -175,119 +176,37 @@
     }
   },
   "variables": {
-    "installCDH":"True",
+    "installCDH":"true",
     "addressPrefix":"10.0.0.0/24",
     "subnetPrefix":"10.0.0.0/24",
     "nodeAddressPrefix":"10.0.0.",
-    "scriptsUri": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/cloudera-on-centos",
+    "scriptsUri": "https://raw.githubusercontent.com/netwmr01/azure-quickstart-templates/dev/cloudera-on-centos",
     "storageAccount": {
       "prefix": "[parameters('storageAccountPrefix')]",
       "type": "[parameters('storageAccountType')]"
     },
-    "clusterTshirtSizeEval": {
-      "masterNodeCount": 1,
-      "dataNodeCount": "[parameters('numberOfDataNodes')]",
-      "highAvailability": "false"
-    },
-    "clusterTshirtSizeProd": {
-      "masterNodeCount": 3,
-      "dataNodeCount": "[parameters('numberOfDataNodes')]",
-      "highAvailability": "true"
-    },
-    "clusterSpec": "[variables(concat('clusterTshirtSize', parameters('tshirtSize')))]",
+    "dataNodeCount": "[parameters('numberOfDataNodesToAdd')]",
     "vmSpec": {
       "vmSize": "[parameters('vmSize')]",
       "privateIPAddressPrefix": "[variables('nodeAddressPrefix')]",
       "adminUserName": "[parameters('adminUserName')]",
       "adminPassword": "[parameters('adminPassword')]",
-      "masterNodeASName": "[concat(parameters('dnsNamePrefix'), '-mnAS')]",
       "dataNodeASName": "[concat(parameters('dnsNamePrefix'), '-dnAS')]"
     },
     "networkSpec": {
       "addressPrefix": "[variables('addressPrefix')]",
       "subnetPrefix": "[variables('subnetPrefix')]",
       "privateIPPrefix": "[variables('nodeAddressPrefix')]",
-      "masterNodeAddressStart": 10,
-      "dataNodeAddressStart": 20,
+      "dataNodeAddressStart": "[parameters('dataNodeAddressStart')]",
       "virtualNetworkName": "[parameters('virtualNetworkName')]",
       "virtualNetworkSubnetName": "[parameters('subnetName')]"
     }
   },
   "resources": [
     {
-      "name": "shared-resources",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
-      "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[concat(variables('scriptsUri'), '/shared-resources.json')]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "region": {
-            "value": "[parameters('region')]"
-          },
-          "networkSpec": {
-            "value": "[variables('networkSpec')]"
-          },
-          "masterNodeASName": {
-            "value": "[variables('vmSpec').masterNodeASName]"
-          },
-          "dataNodeASName": {
-            "value": "[variables('vmSpec').dataNodeASName]"
-          }
-        }
-      }
-    },
-    {
-      "name": "master-node",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
-      "dependsOn": [
-        "Microsoft.Resources/deployments/shared-resources"
-      ],
-      "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[concat(variables('scriptsUri'), '/master-node.json')]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "dnsNamePrefix": {
-            "value": "[parameters('dnsNamePrefix')]"
-          },
-          "region": {
-            "value": "[parameters('region')]"
-          },
-          "scriptsUri": {
-            "value": "[variables('scriptsUri')]"
-          },
-          "storageAccount": {
-            "value": "[variables('storageAccount')]"
-          },
-          "vmCount": {
-            "value": "[variables('clusterSpec').masterNodeCount]"
-          },
-          "vmSpec": {
-            "value": "[variables('vmSpec')]"
-          },
-          "networkSpec": {
-            "value": "[variables('networkSpec')]"
-          },
-          "clusterSpec": {
-            "value": "[variables('clusterSpec')]"
-          }
-        }
-      }
-    },
-    {
       "name": "data-node",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2015-01-01",
-      "dependsOn": [
-        "Microsoft.Resources/deployments/shared-resources"
-      ],
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -318,75 +237,6 @@
           },
           "clusterSpec": {
             "value": "[variables('clusterSpec')]"
-          }
-        }
-      }
-    },
-    {
-      "name": "setup-cloudera",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
-      "dependsOn": [
-        "Microsoft.Resources/deployments/data-node",
-        "Microsoft.Resources/deployments/master-node"
-      ],
-      "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[concat(variables('scriptsUri'), '/setup-cloudera.json')]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "dnsNamePrefix": {
-            "value": "[parameters('dnsNamePrefix')]"
-          },
-          "region": {
-            "value": "[parameters('region')]"
-          },
-          "scriptsUri": {
-            "value": "[variables('scriptsUri')]"
-          },
-          "vmSpec": {
-            "value": "[variables('vmSpec')]"
-          },
-          "networkSpec": {
-            "value": "[variables('networkSpec')]"
-          },
-          "clusterSpec": {
-            "value": "[variables('clusterSpec')]"
-          },
-          "fqdn": {
-            "value": "[reference('master-node').outputs.fqdn.value]"
-          },
-          "cmUsername": {
-            "value": "[parameters('cmUsername')]"
-          },
-          "cmPassword": {
-            "value": "[parameters('cmPassword')]"
-          },
-          "company": {
-            "value": "[parameters('Company')]"
-          },
-          "emailAddress": {
-            "value": "[parameters('emailAddress')]"
-          },
-          "businessPhone": {
-            "value": "[parameters('businessPhone')]"
-          },
-          "firstName": {
-            "value": "[parameters('firstName')]"
-          },
-          "lastName": {
-            "value": "[parameters('lastName')]"
-          },
-          "jobRole": {
-            "value": "[parameters('jobRole')]"
-          },
-          "jobFunction": {
-            "value": "[parameters('jobFunction')]"
-          },
-          "installCDH": {
-            "value": "[variables('installCDH')]"
           }
         }
       }
