@@ -66,8 +66,8 @@ function Initialize-Disks{
 function Download-Jdk($targetDrive, $downloadLocation){
 	# download JDK from a given source URL to destination folder
 	try{
-			$destination = if ($targetDrive -eq $null) {"$env:HOMEDRIVE\Downloads\Java\Jdk-Installer.exe"} else {"$targetDrive`:\Downloads\Java\Jdk-Installer.exe"}
-			$source = if ($downloadLocation -eq $null) {"http://download.oracle.com/otn-pub/java/jdk/8u65-b17/jdk-8u65-windows-i586.exe"} else {$downloadLocation}
+			$destination = if ($targetDrive -eq $null) {"$env:HOMEDRIVE\Downloads\Java\jdk-8u65-windows-x64.exe"} else {"$targetDrive`:\Downloads\Java\jdk-8u65-windows-x64.exe"}
+			$source = if ($downloadLocation -eq $null) {"http://download.oracle.com/otn-pub/java/jdk/8u65-b17/jdk-8u65-windows-x64.exe"} else {$downloadLocation}
             
             # create folder if doesn't exists and suppress the output
             $folder = split-path $destination
@@ -93,13 +93,16 @@ function Download-Jdk($targetDrive, $downloadLocation){
 
 function Install-Jdk($sourceLoc, $targetDrive)
 {
-	$installPath = if($targetDrive -eq $null) {"$env:HOMEDRIVE\Program Files (x86)\JAVA\JDK"} else {"$targetDrive`:\Program Files (x86)\JAVA\JDK"}
+	$installPath = if($targetDrive -eq $null) {"$env:HOMEDRIVE\Program Files\Java\Jdk"} else {"$targetDrive`:\Program Files\Java\Jdk"}
+    $logPath = Join-Path $env:HOMEDRIVE -ChildPath "$env:HOMEPATH\java_install_log.txt"
+    $psLog = Join-Path $env:HOMEDRIVE -ChildPath "$env:HOMEPATH\java_install_ps_log.txt"
+    $psErr = Join-Path $env:HOMEDRIVE -ChildPath "$env:HOMEPATH\java_install_ps_err.txt"
 
 	try{
         lmsg "Installing java on the box under $installPath..."
-		$proc = Start-Process -FilePath $sourceLoc -ArgumentList "/s INSTALLDIR=`"$installPath`"" -Wait -PassThru
+		$proc = Start-Process -FilePath $sourceLoc -ArgumentList "/s INSTALLDIR=`"$installPath`" /L `"$logPath`"" -Wait -PassThru -RedirectStandardOutput $psLog -RedirectStandardError $psErr -NoNewWindow
         $proc.WaitForExit()
-        lmsg "JDK installed under $installPath!"
+        lmsg "JDK installed under $installPath" "Log file: $logPath"
         
         #if($proc.ExitCode -ne 0){
             #THROW "JDK installation error"
@@ -161,10 +164,12 @@ function Unzip-Archive($archive, $destination){
 
 function SetEnv-JavaHome($jdkInstallLocation)
 {
-    lmsg "Setting JAVA_HOME in the registry to $jdkInstallLocation..."
-	Set-ItemProperty -Path $regEnvPath -Name JAVA_HOME -Value $jdkInstallLocation
+    $homePath = $jdkInstallLocation
+    #Join-Path $jdkInstallLocation -ChildPath 'jre1.8.0_65'
+    lmsg "Setting JAVA_HOME in the registry to $homePath..."
+	Set-ItemProperty -Path $regEnvPath -Name JAVA_HOME -Value $homePath
     lmsg 'Setting JAVA_HOME for the current session...'
-    Set-Item Env:JAVA_HOME "$jdkInstallLocation"
+    Set-Item Env:JAVA_HOME "$homePath"
 }
 
 function Install-ElasticSearch ($driveLetter, $elasticSearchZip, $subFolder = $elasticSearchBaseFolder)
