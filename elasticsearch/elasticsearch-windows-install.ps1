@@ -94,9 +94,16 @@ function Download-Jdk($targetDrive, $downloadLocation){
 function Install-Jdk($sourceLoc, $targetDrive)
 {
 	$installPath = if($targetDrive -eq $null) {"$env:HOMEDRIVE\Program Files\Java\Jdk"} else {"$targetDrive`:\Program Files\Java\Jdk"}
-    $logPath = Join-Path $env:HOMEDRIVE -ChildPath "$env:HOMEPATH\java_install_log.txt"
-    $psLog = Join-Path $env:HOMEDRIVE -ChildPath "$env:HOMEPATH\java_install_ps_log.txt"
-    $psErr = Join-Path $env:HOMEDRIVE -ChildPath "$env:HOMEPATH\java_install_ps_err.txt"
+    #$logPath = Join-Path $env:HOMEDRIVE -ChildPath "$env:HOMEPATH\java_install_log.txt"
+    #$psLog = Join-Path $env:HOMEDRIVE -ChildPath "$env:HOMEPATH\java_install_ps_log.txt"
+    #$psErr = Join-Path $env:HOMEDRIVE -ChildPath "$env:HOMEPATH\java_install_ps_err.txt"
+
+    $homefolderPath = (Get-Location).Path
+
+    $logPath = "$homefolderPath\java_install_log.txt"
+    $psLog = "$homefolderPath\java_install_ps_log.txt"
+    $psErr = "$homefolderPath\java_install_ps_err.txt"
+
 
 	try{
         lmsg "Installing java on the box under $installPath..."
@@ -240,13 +247,13 @@ function Install-WorkFlow
     $firstDrive = (get-location).Drive.Name
     
     # Download Jdk
-	$jdkSource = Download-Jdk
+	$jdkSource = Download-Jdk $firstDrive
 	
 	# Install Jdk
 	$jdkInstallLocation = Install-Jdk $jdkSource $firstDrive
 
 	# Download elastic search zip
-	$elasticSearchZip = Download-ElasticSearch $elasticSearchVersion
+	$elasticSearchZip = Download-ElasticSearch $elasticSearchVersion $firstDrive
 	
 	# Unzip (install) elastic search
 	if($elasticSearchBaseFolder.Length -eq 0) { $elasticSearchBaseFolder = 'elasticSearch'}
