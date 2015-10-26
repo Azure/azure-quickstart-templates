@@ -24,17 +24,8 @@
 #
 # Trent Swanson (Full Scale 180 Inc)
 #
-### Remaining work items
-### -Alternate discovery options (Azure Storage)
-### -Implement Idempotency and Configuration Change Support
-### -Implement OS Disk Striping Option (Currenlty using multiple Elasticsearch data paths)
-### -Implement Non-Durable Option (Put data on resource disk)
-### -Configure Work/Log Paths
-### -Recovery Settings (These can be changed via API)
-
 help()
 {
-    #TODO: Add help text here
     echo "This script installs Elasticsearch cluster on Ubuntu"
     echo "Parameters:"
     echo "-n elasticsearch cluster name"
@@ -55,7 +46,7 @@ log()
     echo "$1"
 }
 
-log "Begin execution of elasticsearch script extension on ${HOSTNAME}"
+log "Begin execution of Elasticsearch script extension on ${HOSTNAME}"
 
 if [ "${UID}" -ne 0 ];
 then
@@ -79,7 +70,7 @@ fi
 
 #Script Parameters
 CLUSTER_NAME="elasticsearch"
-ES_VERSION="1.5.0"
+ES_VERSION="1.7.2"
 DISCOVERY_ENDPOINTS=""
 INSTALL_MARVEL="no" #We use this because of ARM template limitation
 CLIENT_ONLY_NODE=0
@@ -90,25 +81,25 @@ MASTER_ONLY_NODE=0
 while getopts :n:d:v:l:xyzsh optname; do
     log "Option $optname set with value ${OPTARG}"
   case $optname in
-    n)  #set clsuter name
+    n) #set cluster name
       CLUSTER_NAME=${OPTARG}
       ;;
-    d) #Static dicovery endpoints
+    d) #static discovery endpoints
       DISCOVERY_ENDPOINTS=${OPTARG}
       ;;
-    v)  #elasticsearch version number
+    v) #elasticsearch version number
       ES_VERSION=${OPTARG}
       ;;
-    l)  #install marvel
+    l) #install marvel
       INSTALL_MARVEL=${OPTARG}
       ;;
-    x)  #master node
+    x) #master node
       MASTER_ONLY_NODE=1
       ;;
-    y)  #client node
+    y) #client node
       CLIENT_ONLY_NODE=1
       ;;
-    z)  #client node
+    z) #data node
       DATA_NODE=1
       ;;
     s) #use OS striped disk volumes
@@ -117,7 +108,7 @@ while getopts :n:d:v:l:xyzsh optname; do
     d) #place data on local resource disk
       NON_DURABLE=1
       ;;
-    h)  #show help
+    h) #show help
       help
       exit 2
       ;;
@@ -134,7 +125,7 @@ done
 DATA_BASE="/datadisks"
 
 # Expand a list of successive ip range and filter my local local ip from the list
-# Ip list is represented as a prefix and that is appended wiht a zero to N index
+# Ip list is represented as a prefix and that is appended with a zero to N index
 # 10.0.0.1-3 would be converted to "10.0.0.10 10.0.0.11 10.0.0.12"
 expand_ip_range() {
     IFS='-' read -a HOST_IPS <<< "$1"
@@ -170,7 +161,7 @@ install_java()
     apt-get -y update  > /dev/null
     echo debconf shared/accepted-oracle-license-v1-1 select true | sudo debconf-set-selections
     echo debconf shared/accepted-oracle-license-v1-1 seen true | sudo debconf-set-selections
-    apt-get -y install oracle-java7-installer  > /dev/null
+    apt-get -y install oracle-java8-installer  > /dev/null
 }
 
 # Install Elasticsearch
@@ -210,14 +201,14 @@ install_java
 #-----------------------
 install_es
 
-# Prepare configuratino information
+# Prepare configuration information
 # Configure permissions on data disks for elasticsearch user:group
 #--------------------------
 DATAPATH_CONFIG=""
 if [ -d "${DATA_BASE}" ]; then
     for D in `find /datadisks/ -mindepth 1 -maxdepth 1 -type d`
     do
-        #Configure disk permssions and folder for storage
+        #Configure disk permissions and folder for storage
         setup_data_disk ${D}
         # Add to list for elasticsearch configuration
         DATAPATH_CONFIG+="$D/elasticsearch/data,"
@@ -234,12 +225,12 @@ fi
 S=$(expand_ip_range "$DISCOVERY_ENDPOINTS")
 HOSTS_CONFIG="[\"${S// /\",\"}\"]"
 
-#Format the static discovery host endpooints for elasticsearch configureion ["",""] format
+#Format the static discovery host endpoints for Elasticsearch configuration ["",""] format
 #HOSTS_CONFIG="[\"${DISCOVERY_ENDPOINTS//-/\",\"}\"]"
 
 #Configure Elasticsearch settings
 #---------------------------
-#Backup the current elasticsearch configuration file
+#Backup the current Elasticsearch configuration file
 mv /etc/elasticsearch/elasticsearch.yml /etc/elasticsearch/elasticsearch.bak
 
 # Set cluster and machine names - just use hostname for our node.name
@@ -258,7 +249,7 @@ echo "discovery.zen.ping.multicast.enabled: false" >> /etc/elasticsearch/elastic
 echo "discovery.zen.ping.unicast.hosts: $HOSTS_CONFIG" >> /etc/elasticsearch/elasticsearch.yml
 
 
-# Configure elaticsearch node type
+# Configure Elasticsearch node type
 log "Configure master/client/data node type flags mater-$MASTER_ONLY_NODE data-$DATA_NODE"
 
 if [ ${MASTER_ONLY_NODE} -ne 0 ]; then
@@ -283,7 +274,7 @@ fi
 echo "options timeout:1 attempts:5" >> /etc/resolvconf/resolv.conf.d/head
 resolvconf -u
 
-# Incraese maximum mmap count
+# Increase maximum mmap count
 echo "vm.max_map_count = 262144" >> /etc/sysctl.conf
 
 #"action.disable_delete_all_indices: ${DISABLE_DELETE_ALL}" >> /etc/elasticsearch/elasticsearch.yml
@@ -297,7 +288,7 @@ echo "vm.max_map_count = 262144" >> /etc/sysctl.conf
 #TODO: Move this to an init.d script so we can handle instance size increases
 ES_HEAP=`free -m |grep Mem | awk '{if ($2/2 >31744)  print 31744;else print $2/2;}'`
 log "Configure elasticsearch heap size - $ES_HEAP"
-echo "ES_HEAP_SIZE=${ES_HEAP}/" >> /etc/default/elasticseach
+echo "ES_HEAP_SIZE=${ES_HEAP}m" >> /etc/default/elasticsearch
 
 #Optionally Install Marvel
 if [ "${INSTALL_MARVEL}" == "yes" ];
