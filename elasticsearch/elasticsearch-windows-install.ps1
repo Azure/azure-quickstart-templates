@@ -14,6 +14,7 @@ Param(
     [Parameter(Mandatory=$true)][string]$elasticSearchVersion,
     [string]$jdkDownloadLocation,
 	[string]$elasticSearchBaseFolder,
+    [string]$discoveryEndpoints,
 	[string]$elasticClusterName,
 	[switch]$masterOnlyNode,
 	[switch]$clientOnlyNode,
@@ -99,11 +100,9 @@ function Install-Jdk($sourceLoc, $targetDrive)
     #$psErr = Join-Path $env:HOMEDRIVE -ChildPath "$env:HOMEPATH\java_install_ps_err.txt"
 
     $homefolderPath = (Get-Location).Path
-
     $logPath = "$homefolderPath\java_install_log.txt"
     $psLog = "$homefolderPath\java_install_ps_log.txt"
     $psErr = "$homefolderPath\java_install_ps_err.txt"
-
 
 	try{
         lmsg "Installing java on the box under $installPath..."
@@ -191,6 +190,22 @@ function Install-ElasticSearch ($driveLetter, $elasticSearchZip, $subFolder = $e
 	return $elasticSearchPath
 }
 
+function Implode-Host($discoveryHost)
+{
+    # Discovery host must be in a given format e.g. 10.0.0.4-3 for the below code to work
+    $ipPrefix = $discoveryHost.Substring(0, $discoveryHost.LastIndexOf('.'))
+    $lastDigit = $discoveryHost.Substring($discoveryHost.LastIndexOf('.') + 1, 1)
+    $loop = $discoveryHost.Substring($discoveryHost.LastIndexOf('-') + 1, 1)
+
+    $ipRange = @(0) * $loop
+    for($i=0; $i -lt $loop; $i++)
+    {
+        $ipRange[$i] = "$ipPrefix." + ($i+ $lastDigit)
+    }
+
+    $addresses = $ipRange -join ','
+}
+
 function ElasticSearch-InstallService($scriptPath)
 {
 	# Install and start elastic search as a service
@@ -266,6 +281,9 @@ function Install-WorkFlow
 		
 		# Cluster name
 		if($elasticClusterName.Length -eq 0) 	{ $elasticClusterName = 'elasticsearch_cluster'}
+        
+        # Unicast host setup
+        $ipAddresses = Implode-Host $discoveryEndpoints
 		
 		# Extract install folders
 		$elasticSearchBinParent = (gci -path $elasticSearchInstallLocation -filter "bin" -Recurse).Parent.FullName
@@ -273,30 +291,34 @@ function Install-WorkFlow
 		$elasticSearchConfFile = Join-Path $elasticSearchBinParent -ChildPath "config\elasticsearch.yml"
 		
 		# Set values
-            # Cluster name
-		    (gc $elasticSearchConfFile) | ForEach-Object { $_ -replace "#?\s?cluster.name: .+" , "cluster.name: $elasticClusterName" } | sc $elasticSearchConfFile
-        
-            # Master node, data node or client node
-            if($masterOnlyNode) 
+            lmsg "Configure cluster name to $elasticClusterName"
+            $textToAppend = "`n#### Settings automatically added by deployment script`ncluster.name: $elasticClusterName"
+            if($masterOnlyNode)
             {
-                (gc $elasticSearchConfFile) | ForEach-Object { $_ -replace "#?\s?node.master: .+" , "node.master: true" } | sc $elasticSearchConfFile
-                (gc $elasticSearchConfFile) | ForEach-Object { $_ -replace "#?\s?node.data: .+" , "node.data: false" } | sc $elasticSearchConfFile
+                lmsg 'Configure node as master only'
+                $textToAppend = $textToAppend + "`nnode.master: true`nnode.data: false"
             }
             elseif($dataOnlyNode)
             {
-                (gc $elasticSearchConfFile) | ForEach-Object { $_ -replace "#?\s?node.master: .+" , "node.master: false" } | sc $elasticSearchConfFile
-                (gc $elasticSearchConfFile) | ForEach-Object { $_ -replace "#?\s?node.data: .+" , "node.data: true" } | sc $elasticSearchConfFile
+                lmsg 'Configure node as data only'
+                $textToAppend = $textToAppend + "`nnode.master: false`nnode.data: true"
             }
             elseif($clientOnlyNode)
             {
-                (gc $elasticSearchConfFile) | ForEach-Object { $_ -replace "#?\s?node.master: .+" , "node.master: false" } | sc $elasticSearchConfFile
-                (gc $elasticSearchConfFile) | ForEach-Object { $_ -replace "#?\s?node.data: .+" , "node.data: false" } | sc $elasticSearchConfFile
+                lmsg 'Configure node as client only'
+                $textToAppend = $textToAppend + "`nnode.master: false`nnode.data: false"
             }
             else
             {
-                (gc $elasticSearchConfFile) | ForEach-Object { $_ -replace "#?\s?node.master: .+" , "node.master: true" } | sc $elasticSearchConfFile
-                (gc $elasticSearchConfFile) | ForEach-Object { $_ -replace "#?\s?node.data: .+" , "node.data: true" } | sc $elasticSearchConfFile
+                lmsg 'Configure node as master and data'
+                $textToAppend = $textToAppend + "`nnode.master: true`nnode.data: true"
             }
+
+            $textToAppend = $textToAppend + "`ndiscovery.zen.ping.multicast.enabled: false"
+            $textToAppend = $textToAppend + "`ndiscovery.zen.ping.unicast.hosts: [$ipAddresses]"
+
+
+        Add-Content $elasticSearchConfFile $textToAppend
 	
 	# Install service using the batch file in bin folder
     $scriptPath = Join-Path $elasticSearchBin -ChildPath "service.bat"
