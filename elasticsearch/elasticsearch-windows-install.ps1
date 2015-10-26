@@ -204,6 +204,7 @@ function Implode-Host($discoveryHost)
     }
 
     $addresses = $ipRange -join ','
+    return $addresses
 }
 
 function ElasticSearch-InstallService($scriptPath)
