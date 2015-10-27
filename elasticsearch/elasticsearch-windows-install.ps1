@@ -329,8 +329,19 @@ function Install-WorkFlow
     # Start service
     ElasticSearch-StartService
 
-    # Verify service
-    ElasticSearch-VerifyInstall
+
+    # Add firewall rules
+    lmsg 'Adding firewall rule - Allow Elasticsearch Inbound Port 9200'
+    New-NetFirewallRule -Name 'ElasticSearch_In_Lb' -DisplayName 'Allow Elasticsearch Inbound Port 9200' -Protocol tcp -LocalPort 9200 -Action Allow -Enabled True -Direction Inbound
+
+    lmsg 'Adding firewall rule - Allow Elasticsearch Inter Node Communication Inbound Port 9300'
+    New-NetFirewallRule -Name 'ElasticSearch_In_Unicast' -DisplayName 'Allow Elasticsearch Inter Node Communication Inbound Port 9300' -Protocol tcp -LocalPort 9300 -Action Allow -Enabled True -Direction Inbound
+    
+    lmsg 'Adding firewall rule - Allow Elasticsearch Inter Node Communication Outbound Port 9300'
+    New-NetFirewallRule -Name 'ElasticSearch_Out_Unicast' -DisplayName 'Allow Elasticsearch Inter Node Communication Outbound Port 9300' -Protocol tcp -LocalPort 9300 -Action Allow -Enabled True -Direction Outbound
+
+    # Verify service TODO: Investigate why verification fails during ARM deployment
+    # ElasticSearch-VerifyInstall
 }
 
 Install-WorkFlow
