@@ -18,10 +18,11 @@ from cm_api.endpoints.hosts import *
 from cm_api.endpoints.services import ApiServiceSetupInfo, ApiService
 
 def getDataDiskCount():
-    bashCommand="ls -la / | grep data | wc -l > count2.out"
+    bashCommand="lsblk | grep /data | grep -v /data/ | wc -l > /tmp/count2.out"
     os.system(bashCommand)
-    f = open('count2.out', 'r')
+    f = open('/tmp/count2.out', 'r')
     count=f.readline().rstrip('\n')
+    os.system("rm /tmp/count2.out")
     return count
 
 diskcount=getDataDiskCount()
