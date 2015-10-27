@@ -234,11 +234,12 @@ function ElasticSearch-StartService()
     if($elasticService -ne $null)
     {
         lmsg 'Starting elasticsearch service and setting the startup to automatic...'
-        Start-Service $elasticService
+        $svc = Start-Service $elasticService
+        $svc.WaitForStatus('Started', '00:00:30')
 		Set-Service $elasticService -StartupType Automatic
         
         # Give approximately 20 seconds for service to start before verification
-        Start-Sleep -Seconds 20
+        #Start-Sleep -Seconds 20
     }
 }
 
