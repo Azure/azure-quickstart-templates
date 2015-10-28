@@ -4,26 +4,38 @@
 	"parameters": {
 		"location": {
 			"type": "string",
-			"allowedValues": ["Central US",
-			"East Asia",
-			"East US",
-			"Japan East",
-			"Japan West",
-			"North Europe",
-			"South Central US",
-			"Southeast Asia",
-			"West Europe",
-			"West US"],
+			"allowedValues": [
+				"East Asia",
+				"Southeast Asia",
+				"Central US",
+				"East US",
+				"East US 2",
+				"West US",
+				"North Central US",
+				"South Central US",
+				"North Europe",
+				"West Europe",
+				"Japan West",
+				"Japan East",
+				"Brazil South",
+				"Australia East",
+				"Australia Southeast",
+				"Central India",
+				"West India",
+				"South India"
+			],
 			"metadata": {
 				"description": "The location where all azure resources will be deployed."
 			}
 		},
 		"clusterType": {
 			"type": "string",
-			"allowedValues": ["hadoop",
-			"hbase",
-			"storm",
-			"spark"],
+			"allowedValues": [
+				"hadoop",
+				"hbase",
+				"storm",
+				"spark"
+			],
 			"metadata": {
 				"description": "The type of the HDInsight cluster to create."
 			}
@@ -76,79 +88,83 @@
 		"defaultApiVersion": "2015-05-01-preview",
 		"clusterApiVersion": "2015-03-01-preview"
 	},
-	"resources": [{
-		"name": "[parameters('clusterStorageAccountName')]",
-		"type": "Microsoft.Storage/storageAccounts",
-		"location": "[parameters('location')]",
-		"apiVersion": "[variables('defaultApiVersion')]",
-		"dependsOn": [],
-		"tags": {
-			
+	"resources": [
+		{
+			"name": "[parameters('clusterStorageAccountName')]",
+			"type": "Microsoft.Storage/storageAccounts",
+			"location": "[parameters('location')]",
+			"apiVersion": "[variables('defaultApiVersion')]",
+			"dependsOn": [],
+			"tags": {},
+			"properties": {
+				"accountType": "Standard_LRS"
+			}
 		},
-		"properties": {
-			"accountType": "Standard_LRS"
-		}
-	},
-	{
-		"name": "[parameters('clusterName')]",
-		"type": "Microsoft.HDInsight/clusters",
-		"location": "[parameters('location')]",
-		"apiVersion": "[variables('clusterApiVersion')]",
-		"dependsOn": ["[concat('Microsoft.Storage/storageAccounts/',parameters('clusterStorageAccountName'))]"],
-		"tags": {
-			
-		},
-		"properties": {
-			"clusterVersion": "3.2",
-			"osType": "Linux",
-			"clusterDefinition": {
-				"kind": "[parameters('clusterType')]",
-				"configurations": {
-					"gateway": {
-						"restAuthCredential.isEnabled": true,
-						"restAuthCredential.username": "[parameters('clusterLoginUserName')]",
-						"restAuthCredential.password": "[parameters('clusterLoginPassword')]"
-					}
-				}
-			},
-			"storageProfile": {
-				"storageaccounts": [{
-					"name": "[concat(parameters('clusterStorageAccountName'),'.blob.core.windows.net')]",
-					"isDefault": true,
-					"container": "[parameters('clusterName')]",
-					"key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('clusterStorageAccountName')), variables('defaultApiVersion')).key1]"
-				}]
-			},
-			"computeProfile": {
-				"roles": [{
-					"name": "headnode",
-					"targetInstanceCount": "2",
-					"hardwareProfile": {
-						"vmSize": "Standard_D3"
-					},
-					"osProfile": {
-						"linuxOperatingSystemProfile": {
-							"username": "[parameters('sshUserName')]",
-							"password": "[parameters('sshPassword')]"
+		{
+			"name": "[parameters('clusterName')]",
+			"type": "Microsoft.HDInsight/clusters",
+			"location": "[parameters('location')]",
+			"apiVersion": "[variables('clusterApiVersion')]",
+			"dependsOn": [
+				"[concat('Microsoft.Storage/storageAccounts/',parameters('clusterStorageAccountName'))]"
+			],
+			"tags": {},
+			"properties": {
+				"clusterVersion": "3.2",
+				"osType": "Linux",
+				"clusterDefinition": {
+					"kind": "[parameters('clusterType')]",
+					"configurations": {
+						"gateway": {
+							"restAuthCredential.isEnabled": true,
+							"restAuthCredential.username": "[parameters('clusterLoginUserName')]",
+							"restAuthCredential.password": "[parameters('clusterLoginPassword')]"
 						}
 					}
 				},
-				{
-					"name": "workernode",
-					"targetInstanceCount": "[parameters('clusterWorkerNodeCount')]",
-					"hardwareProfile": {
-						"vmSize": "Standard_D3"
-					},
-					"osProfile": {
-						"linuxOperatingSystemProfile": {
-							"username": "[parameters('sshUserName')]",
-							"password": "[parameters('sshPassword')]"
+				"storageProfile": {
+					"storageaccounts": [
+						{
+							"name": "[concat(parameters('clusterStorageAccountName'),'.blob.core.windows.net')]",
+							"isDefault": true,
+							"container": "[parameters('clusterName')]",
+							"key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('clusterStorageAccountName')), variables('defaultApiVersion')).key1]"
 						}
-					}
-				}]
+					]
+				},
+				"computeProfile": {
+					"roles": [
+						{
+							"name": "headnode",
+							"targetInstanceCount": "2",
+							"hardwareProfile": {
+								"vmSize": "Standard_D3"
+							},
+							"osProfile": {
+								"linuxOperatingSystemProfile": {
+									"username": "[parameters('sshUserName')]",
+									"password": "[parameters('sshPassword')]"
+								}
+							}
+						},
+						{
+							"name": "workernode",
+							"targetInstanceCount": "[parameters('clusterWorkerNodeCount')]",
+							"hardwareProfile": {
+								"vmSize": "Standard_D3"
+							},
+							"osProfile": {
+								"linuxOperatingSystemProfile": {
+									"username": "[parameters('sshUserName')]",
+									"password": "[parameters('sshPassword')]"
+								}
+							}
+						}
+					]
+				}
 			}
 		}
-	}],
+	],
 	"outputs": {
 		"cluster": {
 			"type": "object",
