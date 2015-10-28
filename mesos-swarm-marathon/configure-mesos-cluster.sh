@@ -16,6 +16,8 @@ echo "starting mesos cluster configuration"
 date
 ps ax
 
+SWARM_VERSION="1.0.0-rc2"
+
 #############
 # Parameters
 #############
@@ -254,7 +256,9 @@ sudo apt-key adv --keyserver keyserver.ubuntu.com --recv E56151BF
 DISTRO=$(lsb_release -is | tr '[:upper:]' '[:lower:]')
 CODENAME=$(lsb_release -cs)
 echo "deb http://repos.mesosphere.io/${DISTRO} ${CODENAME} main" | sudo tee /etc/apt/sources.list.d/mesosphere.list
+time sudo add-apt-repository -y ppa:openjdk-r/ppa
 time sudo apt-get -y update
+time sudo apt-get -y install openjdk-8-jre-headless
 if ismaster ; then
   time sudo apt-get -y --force-yes install mesosphere
 else
@@ -404,19 +408,19 @@ echo "processes after restarting mesos"
 ps ax
 
 # Run swarm manager container on port 2376 (no auth)
-if [ ismaster ] && [ "$SWARMENABLED" == "true" ] ; then
-  echo "starting docker swarm"
+if ismaster && [ "$SWARMENABLED" == "true" ] ; then
+  echo "starting docker swarm:$SWARM_VERSION"
   echo "sleep to give master time to come up"
   sleep 10
   echo sudo docker run -d -e SWARM_MESOS_USER=root \
       --restart=always \
-      -p 2376:2375 -p 3375:3375 swarm manage \
+      -p 2376:2375 -p 3375:3375 swarm:$SWARM_VERSION manage \
       -c mesos-experimental \
       --cluster-opt mesos.address=0.0.0.0 \
       --cluster-opt mesos.port=3375 $zkmesosconfig
   sudo docker run -d -e SWARM_MESOS_USER=root \
       --restart=always \
-      -p 2376:2375 -p 3375:3375 swarm manage \
+      -p 2376:2375 -p 3375:3375 swarm:$SWARM_VERSION manage \
       -c mesos-experimental \
       --cluster-opt mesos.address=0.0.0.0 \
       --cluster-opt mesos.port=3375 $zkmesosconfig
