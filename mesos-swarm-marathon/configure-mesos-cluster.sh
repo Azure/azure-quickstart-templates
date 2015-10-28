@@ -408,7 +408,7 @@ echo "processes after restarting mesos"
 ps ax
 
 # Run swarm manager container on port 2376 (no auth)
-if [ ismaster ] && [ "$SWARMENABLED" == "true" ] ; then
+if ismaster && [ "$SWARMENABLED" == "true" ] ; then
   echo "starting docker swarm:$SWARM_VERSION"
   echo "sleep to give master time to come up"
   sleep 10
