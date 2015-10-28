@@ -1,14 +1,55 @@
-﻿<#
+﻿# The MIT License (MIT)
+#
+# Copyright (c) 2015 Microsoft Azure
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+#
+# Kirpa Singh (MSFT)
+#
+
+<#
 	.SYNOPSIS
 		Installs elastic search on the given nodes.
 	.DESCRIPTION
-		This script runs as a VM extension and installs elastic search on the cluster nodes.
-	.PARAMETER SomeParam
-		Description of the parameter.
+		This script runs as a VM extension and installs elastic search on the cluster nodes. It can be used to setup either a single VM (when run as VM extension) or a cluster (when run from within an ARM template)
+	.PARAMETER elasticSearchVersion
+		Version of elasticsearch to install e.g. 1.7.3
+    .PARAMETER jdkDownloadLocation
+        Url of the JDK installer e.g. http://download.oracle.com/otn-pub/java/jdk/8u65-b17/jdk-8u65-windows-x64.exe
+    .PARAMETER elasticSearchBaseFolder
+        Disk location of the base folder of elasticsearch installation.
+    .PARAMETER discoveryEndpoints
+        Formatted string of the allowed subnet addresses for unicast internode communication e.g. 10.0.0.4-3 is expanded to [10.0.0.4,10.0.0.5,10.0.0.6]
+    .PARAMETER elasticClusterName
+        Name of the elasticsearch cluster
+    .PARAMETER masterOnlyNode
+        Setup a VM as master only node
+    .PARAMETER clientOnlyNode
+        Setup a VM as client only node
+    .PARAMETER dataOnlyNode
+        Setup a VM as data only node
 	.EXAMPLE
-		SetupElasticVm.ps1 -elasticVersion '1.7.2' -elasticClusterName 'poltergeist'
-	.LINK
-		<<demo url>>
+		elasticSearchVersion 1.7.2 -elasticClusterName evilescluster -discoveryEndpoints 10.0.0.4-5 -masterOnlyNode
+        Installs 1.7.2 version of elasticsearch with cluster name evilescluster and 5 allowed subnet addresses from 4 to 8. Sets up the VM as master node.
+    .EXAMPLE
+        elasticSearchVersion 1.7.3 -elasticSearchBaseFolder software -elasticClusterName evilescluster -discoveryEndpoints 10.0.0.3-4 -dataOnlyNode
+        Installs 1.7.3 version of elasticsearch with cluster name evilescluster and 4 allowed subnet addresses from 3 to 6. Sets up the VM as data node.
 #>
 Param(
     [Parameter(Mandatory=$true)][string]$elasticSearchVersion,
@@ -25,7 +66,7 @@ Param(
 Set-Variable regEnvPath -Option Constant -Value 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment'
 
 function Log-Output(){
-	$args | Write-Host -ForegroundColor Green
+	$args | Write-Host -ForegroundColor Cyan
 }
 
 function Log-Error(){
@@ -279,7 +320,7 @@ function Install-WorkFlow
 	# Set JAVA_HOME
     SetEnv-JavaHome $jdkInstallLocation
 	
-	# Configure cluster name and properties
+	# Configure cluster name and other properties
 		
 		# Cluster name
 		if($elasticClusterName.Length -eq 0) 	{ $elasticClusterName = 'elasticsearch_cluster'}
@@ -293,44 +334,36 @@ function Install-WorkFlow
 		$elasticSearchConfFile = Join-Path $elasticSearchBinParent -ChildPath "config\elasticsearch.yml"
 		
 		# Set values
-            lmsg "Configure cluster name to $elasticClusterName"
-            $textToAppend = "`n#### Settings automatically added by deployment script`ncluster.name: $elasticClusterName"
-            if($masterOnlyNode)
-            {
-                lmsg 'Configure node as master only'
-                $textToAppend = $textToAppend + "`nnode.master: true`nnode.data: false"
-            }
-            elseif($dataOnlyNode)
-            {
-                lmsg 'Configure node as data only'
-                $textToAppend = $textToAppend + "`nnode.master: false`nnode.data: true"
-            }
-            elseif($clientOnlyNode)
-            {
-                lmsg 'Configure node as client only'
-                $textToAppend = $textToAppend + "`nnode.master: false`nnode.data: false"
-            }
-            else
-            {
-                lmsg 'Configure node as master and data'
-                $textToAppend = $textToAppend + "`nnode.master: true`nnode.data: true"
-            }
+        lmsg "Configure cluster name to $elasticClusterName"
+        $textToAppend = "`n#### Settings automatically added by deployment script`ncluster.name: $elasticClusterName"
+        if($masterOnlyNode)
+        {
+            lmsg 'Configure node as master only'
+            $textToAppend = $textToAppend + "`nnode.master: true`nnode.data: false"
+        }
+        elseif($dataOnlyNode)
+        {
+            lmsg 'Configure node as data only'
+            $textToAppend = $textToAppend + "`nnode.master: false`nnode.data: true"
+        }
+        elseif($clientOnlyNode)
+        {
+            lmsg 'Configure node as client only'
+            $textToAppend = $textToAppend + "`nnode.master: false`nnode.data: false"
+        }
+        else
+        {
+            lmsg 'Configure node as master and data'
+            $textToAppend = $textToAppend + "`nnode.master: true`nnode.data: true"
+        }
 
-            $textToAppend = $textToAppend + "`ndiscovery.zen.ping.multicast.enabled: false"
-            $textToAppend = $textToAppend + "`ndiscovery.zen.ping.unicast.hosts: [$ipAddresses]"
+        $textToAppend = $textToAppend + "`ndiscovery.zen.ping.multicast.enabled: false"
+        $textToAppend = $textToAppend + "`ndiscovery.zen.ping.unicast.hosts: [$ipAddresses]"
 
 
         Add-Content $elasticSearchConfFile $textToAppend
 	
-	# Install service using the batch file in bin folder
-    $scriptPath = Join-Path $elasticSearchBin -ChildPath "service.bat"
-    ElasticSearch-InstallService $scriptPath
-
-    # Start service
-    ElasticSearch-StartService
-
-
-    # Add firewall rules
+	# Add firewall rules
     lmsg 'Adding firewall rule - Allow Elasticsearch Inbound Port 9200'
     New-NetFirewallRule -Name 'ElasticSearch_In_Lb' -DisplayName 'Allow Elasticsearch Inbound Port 9200' -Protocol tcp -LocalPort 9200 -Action Allow -Enabled True -Direction Inbound
 
@@ -340,8 +373,18 @@ function Install-WorkFlow
     lmsg 'Adding firewall rule - Allow Elasticsearch Inter Node Communication Outbound Port 9300'
     New-NetFirewallRule -Name 'ElasticSearch_Out_Unicast' -DisplayName 'Allow Elasticsearch Inter Node Communication Outbound Port 9300' -Protocol tcp -LocalPort 9300 -Action Allow -Enabled True -Direction Outbound
 
+
+    # Install service using the batch file in bin folder
+    $scriptPath = Join-Path $elasticSearchBin -ChildPath "service.bat"
+    ElasticSearch-InstallService $scriptPath
+
+    # Start service
+    ElasticSearch-StartService
+
+
+
     # Verify service TODO: Investigate why verification fails during ARM deployment
-    # ElasticSearch-VerifyInstall
+    ElasticSearch-VerifyInstall
 }
 
 Install-WorkFlow
