@@ -9,14 +9,20 @@ Azure with 3 Swarm managers and specified number of Swarm nodes in the location
 of the resource group.
 
 If you are not familiar with Docker Swarm, please
-[read Swarm documentation](http://docs.docker.com/swarm).
+[read Swarm documentation](http://docs.docker.com/swarm). The template uses [CoreOS](https://coreos.com)
+as the host operating system for running containers on Swarm managers and nodes.
 
-The template uses [CoreOS](https://coreos.com) as the host operating system for
-running containers on Swarm managers and nodes.
+You can use `ssh-keygen` command on Linux/Mac or Cygwin/MinGW to create public
+and private key pairs. The `sshPublicKey` argument should be contents of the
+`*.pub` file you have.
 
 ## Cluster Properties
 
-#### Swarm Managers (High Availability Setup)
+This template creates the following cluster topology:
+
+> [![docker-swarm-azure](img/cluster-network.png)](img/cluster-network.png)
+
+#### Swarm Managers
 
 The template provisions 3 Swarm manager VMs that use
 [Consul](https://consul.io/) for discovery and leader election. These VMs are in
@@ -26,6 +32,11 @@ Each Swarm manager VM is of size `Standard_A0` as they are not running any
 workloads except the Swarm Manager and Consul containers. Manager node VMs have
 static private IP addresses `10.0.0.4`, `10.0.0.5` and `10.0.0.6` and they are
 in the same [Virtual Network][az-vnet] as Swarm nodes.
+
+Swarm managers choose a leader among themselves and coordinate through
+Consul agents running in server mode on each manager VM:
+
+> [![](img/cluster-leader-election.png)](img/cluster-leader-election.png)
 
 #### How to SSH into Swarm Manager Nodes
 
@@ -38,9 +49,9 @@ Port numbers of each master VM is described in the following table:
 
 | VM   | SSH command |
 |:--- |:---|
-| `swarm-master-0`  | `ssh <username>@<IP> -p 2200` |
-| `swarm-master-1`  | `ssh <username>@<IP> -p 2201` |
-| `swarm-master-2`  | `ssh <username>@<IP> -p 2202` |
+| `swarm-master-0`  | `ssh <username>@<addr> -p 2200` |
+| `swarm-master-1`  | `ssh <username>@<addr> -p 2201` |
+| `swarm-master-2`  | `ssh <username>@<addr> -p 2202` |
 
 #### Swarm Worker Nodes
 
@@ -66,6 +77,11 @@ VMs can be served to the public internet by creating probes and load balancing
 rules on this Load Balancer resource. Load balancer's public DNS address is
 emitted as an output of the template deployment.
 
+Swarm nodes join to the Swarm cluster by notifying the Consul agents running
+on master nodes:
+
+> [![](img/cluster-node-discovery.png)](img/cluster-node-discovery.png)
+
 #### How to SSH into Swarm Worker Nodes
 
 Since Swarm worker nodes do not have public IP addresses, you first need to SSH
@@ -90,23 +106,34 @@ Swarm node hostnames are numbered starting from 0, such as: `swarm-node-0`,
 `swarm-node-1`, ..., `swarm-node-19` etc. You can see the VM names on the
 Azure Portal as well.
 
+
 ## Connecting the Cluster
 
-If the template deploys successfully it will have output values `"sshTunnelCmd"`
-and `"dockerCmd"`. The tunnel command will create a SSH tunnel to Docker Swarm
-Manager (this command will keep running with no output):
+Swarm manager VMs only have public address for SSH, therefore to issue Docker
+commands to Swarm Manager, you need to establish an SSH tunnel to these machines:
 
-    ssh -L 2375:swarm-master-0:2375 -N core@<<DNSNAME>>-manage.westus.cloudapp.azure.com -p 2200
+> [![](img/cluster-management.png)](img/cluster-management.png)
 
-After this you can refer to `dockerCmd` output which shows you how to run
-commands on the Docker Swarm cluster:
+If the template successfully deploys, it will have output values
+`"sshTunnelCmd"` and `"dockerCmd"`.
 
-    docker -H tcp://localhost:2375 info
+The `sshTunnelCmd` command will help you create a SSH tunnel to Docker Swarm
+Manager from your machine (this command will keep running with no output):
+
+    $ ssh -L 2375:swarm-master-0:2375 -N core@swarm-<<DNSNAME>>-manage.westus.cloudapp.azure.com -p 2200
+
+After this you can use `dockerCmd` command that points to localhost, just as
+Swarm managers were running on your development machine:
+
+    $ docker -H tcp://localhost:2375 info
 
 This also can be executed in the shorthand form:
 
-    export DOCKER_HOST=:2375
-    docker info
+    $ export DOCKER_HOST=:2375
+    $ docker info
+    ...
+    $ docker ps
+    ...
 
 [av-set]: https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-manage-availability/
 [az-lb]: https://azure.microsoft.com/en-us/documentation/articles/load-balancer-overview/

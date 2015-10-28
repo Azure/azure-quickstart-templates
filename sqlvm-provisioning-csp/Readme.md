@@ -9,7 +9,7 @@ Requires the latest Azure PowerShell SDK http://azure.microsoft.com/en-us/downlo
 
 Click the button below to deploy from the portal
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsqlvm-provisioning-csp%2FSQLServerVMDeployment.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsqlvm-provisioning-csp%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
@@ -20,7 +20,7 @@ This solution includes 3 files required for deployment and 1 example powershell 
     A set of helper functions common in the implementation
 +   New-SqlServerVirtualMachine.ps1
     The PowerShell function that handles deployment of the template
-+   SQLServerVMDeployment.json
++   azuredeploy.json
     ARM CSM v2 template to deploy SQL Server in an Azure VM
 +   CreateSQLVMExample.ps1
     Sample PowerShell script to help user execute the PowerShell cmdlet

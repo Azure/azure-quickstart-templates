@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -x
+
 echo "starting ubuntu devbox install on pid $$"
 date
 ps axjf
@@ -9,9 +11,33 @@ ps axjf
 #############
 
 AZUREUSER=$1
+SSHKEY=$2
 HOMEDIR="/home/$AZUREUSER"
+VMNAME=`hostname`
 echo "User: $AZUREUSER"
 echo "User home dir: $HOMEDIR"
+echo "vmname: $VMNAME"
+
+###################
+# setup ssh access
+###################
+
+SSHDIR=$HOMEDIR/.ssh
+AUTHFILE=$SSHDIR/authorized_keys
+if [ `echo $SSHKEY | sed 's/^\(ssh-rsa \).*/\1/'` == "ssh-rsa" ] ; then
+  if [ ! -d $SSHDIR ] ; then
+    sudo -i -u $AZUREUSER mkdir $SSHDIR
+    sudo -i -u $AZUREUSER chmod 700 $SSHDIR
+  fi
+
+  if [ ! -e $AUTHFILE ] ; then
+    sudo -i -u $AZUREUSER touch $AUTHFILE
+    sudo -i -u $AZUREUSER chmod 600 $AUTHFILE
+  fi
+  echo $SSHKEY | sudo -i -u $AZUREUSER tee -a $AUTHFILE
+else
+  echo "no valid key data"
+fi
 
 ###################
 # Common Functions
@@ -60,6 +86,43 @@ ensureAzureNetwork()
   fi
 }
 ensureAzureNetwork
+
+################
+# Install Docker
+################
+
+echo "Installing and configuring docker and swarm"
+
+time wget -qO- https://get.docker.com | sh
+
+# Start Docker and listen on :2375 (no auth, but in vnet)
+echo 'DOCKER_OPTS="-H unix:///var/run/docker.sock -H 0.0.0.0:2375"' | sudo tee /etc/default/docker
+# the following insecure registry is for OMS
+echo 'DOCKER_OPTS="$DOCKER_OPTS --insecure-registry 137.135.93.9"' | sudo tee -a /etc/default/docker
+sudo service docker restart
+
+ensureDocker()
+{
+  # ensure that docker is healthy
+  dockerHealthy=1
+  for i in {1..3}; do
+    sudo docker info
+    if [ $? -eq 0 ]
+    then
+      # hostname has been found continue
+      dockerHealthy=0
+      echo "Docker is healthy"
+      sudo docker ps -a
+      break
+    fi
+    sleep 10
+  done
+  if [ $dockerHealthy -ne 0 ]
+  then
+    echo "Docker is not healthy"
+  fi
+}
+ensureDocker
 
 ###################################################
 # Update Ubuntu and install all necessary binaries
