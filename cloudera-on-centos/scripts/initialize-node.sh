@@ -11,6 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+echo "initializing nodes..."
 IPPREFIX=$1
 NAMEPREFIX=$2
 NAMESUFFIX=$3
