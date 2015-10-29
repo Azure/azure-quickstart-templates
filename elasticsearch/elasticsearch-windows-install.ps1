@@ -167,7 +167,7 @@ function Install-Jdk($sourceLoc, $targetDrive)
 function Download-ElasticSearch($elasticVersion, $targetDrive){
 	# download ElasticSearch from a given source URL to destination folder
 	try{
-			$source = if ($elasticVersion -eq $null) {"https://download.elasticsearch.org/elasticsearch/release/org/elasticsearch/distribution/zip/elasticsearch/2.0.0/elasticsearch-2.0.0.zip"} else {"https://download.elasticsearch.org/elasticsearch/release/org/elasticsearch/distribution/zip/elasticsearch/2.0.0/elasticsearch-$elasticVersion.zip"}
+			$source = if ($elasticVersion -eq $null) {"https://download.elasticsearch.org/elasticsearch/release/org/elasticsearch/distribution/zip/elasticsearch/2.0.0/elasticsearch-2.0.0.zip"} else {"https://download.elasticsearch.org/elasticsearch/release/org/elasticsearch/distribution/zip/elasticsearch/$elasticVersion/elasticsearch-$elasticVersion.zip"}
 			$destination = if ($targetDrive -eq $null) {"$env:HOMEDRIVE\Downloads\ElasticSearch\Elastic-Search.zip"} else {"$targetDrive`:\Downloads\ElasticSearch\Elastic-Search.zip"}
             
             # create folder if doesn't exists and suppress the output
