@@ -105,10 +105,16 @@ function Initialize-Disks{
     #return $letters[0].ToString()
 }
 
-function Download-Jdk($targetDrive, $downloadLocation){
+function Download-Jdk
+{
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$targetDrive,
+        [string]$downloadLocation
+    )
 	# download JDK from a given source URL to destination folder
 	try{
-			$destination = if ($targetDrive -eq $null) {"$env:HOMEDRIVE\Downloads\Java\jdk-8u65-windows-x64.exe"} else {"$targetDrive`:\Downloads\Java\jdk-8u65-windows-x64.exe"}
+			$destination = "$targetDrive`:\Downloads\Java\jdk-8u65-windows-x64.exe"
 			$source = if ($downloadLocation -eq $null) {"http://download.oracle.com/otn-pub/java/jdk/8u65-b17/jdk-8u65-windows-x64.exe"} else {$downloadLocation}
             
             # create folder if doesn't exists and suppress the output
@@ -120,7 +126,7 @@ function Download-Jdk($targetDrive, $downloadLocation){
 			$client = new-object System.Net.WebClient 
 			$cookie = "oraclelicense=accept-securebackup-cookie"
 
-            lmsg 'Downloading JDK from ' $source ' to ' $destination
+            lmsg "Downloading JDK from $source to $destination"
 
 			$client.Headers.Add([System.Net.HttpRequestHeader]::Cookie, $cookie) 
 			$client.downloadFile($source, $destination)
@@ -133,12 +139,16 @@ function Download-Jdk($targetDrive, $downloadLocation){
 	return $destination
 }
 
-function Install-Jdk($sourceLoc, $targetDrive)
+function Install-Jdk
 {
-	$installPath = if($targetDrive -eq $null) {"$env:HOMEDRIVE\Program Files\Java\Jdk"} else {"$targetDrive`:\Program Files\Java\Jdk"}
-    #$logPath = Join-Path $env:HOMEDRIVE -ChildPath "$env:HOMEPATH\java_install_log.txt"
-    #$psLog = Join-Path $env:HOMEDRIVE -ChildPath "$env:HOMEPATH\java_install_ps_log.txt"
-    #$psErr = Join-Path $env:HOMEDRIVE -ChildPath "$env:HOMEPATH\java_install_ps_err.txt"
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$sourceLoc,
+        [Parameter(Mandatory=$true)]
+        [string]$targetDrive
+    )
+
+	$installPath = "$targetDrive`:\Program Files\Java\Jdk"
 
     $homefolderPath = (Get-Location).Path
     $logPath = "$homefolderPath\java_install_log.txt"
@@ -149,7 +159,7 @@ function Install-Jdk($sourceLoc, $targetDrive)
         lmsg "Installing java on the box under $installPath..."
 		$proc = Start-Process -FilePath $sourceLoc -ArgumentList "/s INSTALLDIR=`"$installPath`" /L `"$logPath`"" -Wait -PassThru -RedirectStandardOutput $psLog -RedirectStandardError $psErr -NoNewWindow
         $proc.WaitForExit()
-        lmsg "JDK installed under $installPath" "Log file: $logPath"
+        lmsg "JDK installed under $installPath" "Log file location: $logPath"
         
         #if($proc.ExitCode -ne 0){
             #THROW "JDK installation error"
@@ -164,11 +174,18 @@ function Install-Jdk($sourceLoc, $targetDrive)
 	return $installPath
 }
 
-function Download-ElasticSearch($elasticVersion, $targetDrive){
+function Download-ElasticSearch
+{
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$elasticVersion,
+        [Parameter(Mandatory=$true)]
+        [string]$targetDrive
+    )
 	# download ElasticSearch from a given source URL to destination folder
 	try{
-			$source = if ($elasticVersion -eq $null) {"https://download.elasticsearch.org/elasticsearch/release/org/elasticsearch/distribution/zip/elasticsearch/2.0.0/elasticsearch-2.0.0.zip"} else {"https://download.elasticsearch.org/elasticsearch/release/org/elasticsearch/distribution/zip/elasticsearch/$elasticVersion/elasticsearch-$elasticVersion.zip"}
-			$destination = if ($targetDrive -eq $null) {"$env:HOMEDRIVE\Downloads\ElasticSearch\Elastic-Search.zip"} else {"$targetDrive`:\Downloads\ElasticSearch\Elastic-Search.zip"}
+			$source = if ($elasticVersion -match '2.0.0') {"https://download.elasticsearch.org/elasticsearch/release/org/elasticsearch/distribution/zip/elasticsearch/$elasticVersion/elasticsearch-$elasticVersion.zip"} else { "https://download.elastic.co/elasticsearch/elasticsearch/elasticsearch-$elasticVersion.zip" }
+			$destination = "$targetDrive`:\Downloads\ElasticSearch\Elastic-Search.zip"
             
             # create folder if doesn't exists and suppress the output
             $folder = split-path $destination
@@ -178,7 +195,7 @@ function Download-ElasticSearch($elasticVersion, $targetDrive){
 
 			$client = new-object System.Net.WebClient 
 
-            lmsg 'Downloading Elasticsearch from ' $source ' to ' $destination
+            lmsg "Downloading Elasticsearch version $elasticVersion from $source to $destination"
 
 			$client.downloadFile($source, $destination)
 		}catch [System.Net.WebException],[System.Exception]{
