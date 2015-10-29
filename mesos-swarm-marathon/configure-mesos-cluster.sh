@@ -16,6 +16,8 @@ echo "starting mesos cluster configuration"
 date
 ps ax
 
+SWARM_VERSION="1.0.0-rc2"
+
 #############
 # Parameters
 #############
@@ -30,6 +32,9 @@ ACCOUNTNAME=$7
 set +x
 ACCOUNTKEY=$8
 set -x
+AZUREUSER=$9
+SSHKEY=${10}
+HOMEDIR="/home/$AZUREUSER"
 VMNAME=`hostname`
 VMNUMBER=`echo $VMNAME | sed 's/.*[^0-9]\([0-9]\+\)*$/\1/'`
 VMPREFIX=`echo $VMNAME | sed 's/\(.*[^0-9]\)*[0-9]\+$/\1/'`
@@ -41,6 +46,27 @@ echo "vmname: $VMNAME"
 echo "VMNUMBER: $VMNUMBER, VMPREFIX: $VMPREFIX"
 echo "SWARMENABLED: $SWARMENABLED, MARATHONENABLED: $MARATHONENABLED, CHRONOSENABLED: $CHRONOSENABLED"
 echo "ACCOUNTNAME: $ACCOUNTNAME"
+
+###################
+# setup ssh access
+###################
+
+SSHDIR=$HOMEDIR/.ssh
+AUTHFILE=$SSHDIR/authorized_keys
+if [ `echo $SSHKEY | sed 's/^\(ssh-rsa \).*/\1/'` == "ssh-rsa" ] ; then
+  if [ ! -d $SSHDIR ] ; then
+    sudo -i -u $AZUREUSER mkdir $SSHDIR
+    sudo -i -u $AZUREUSER chmod 700 $SSHDIR
+  fi
+
+  if [ ! -e $AUTHFILE ] ; then
+    sudo -i -u $AZUREUSER touch $AUTHFILE
+    sudo -i -u $AZUREUSER chmod 600 $AUTHFILE
+  fi
+  echo $SSHKEY | sudo -i -u $AZUREUSER tee -a $AUTHFILE
+else
+  echo "no valid key data"
+fi
 
 ###################
 # Common Functions
@@ -87,8 +113,29 @@ ensureAzureNetwork()
     ip a
     exit 2
   fi
+  # ensure the host ip can resolve
+  networkHealthy=1
+  for i in {1..120}; do
+    hostname -i
+    if [ $? -eq 0 ]
+    then
+      # hostname has been found continue
+      networkHealthy=0
+      echo "the network is healthy"
+      break
+    fi
+    sleep 1
+  done
+  if [ $networkHealthy -ne 0 ]
+  then
+    echo "the network is not healthy, cannot resolve ip address, aborting install"
+    ifconfig
+    ip a
+    exit 2
+  fi
 }
 ensureAzureNetwork
+HOSTADDR=`hostname -i`
 
 ismaster ()
 {
@@ -146,6 +193,12 @@ zkconfig()
   echo $zkconfigstr
 }
 
+######################
+# resolve self in DNS
+######################
+
+echo "$HOSTADDR $VMNAME" | sudo tee -a /etc/hosts
+
 ################
 # Install Docker
 ################
@@ -156,6 +209,7 @@ time wget -qO- https://get.docker.com | sh
 
 # Start Docker and listen on :2375 (no auth, but in vnet)
 echo 'DOCKER_OPTS="-H unix:///var/run/docker.sock -H 0.0.0.0:2375"' | sudo tee /etc/default/docker
+# the following insecure registry is for OMS
 echo 'DOCKER_OPTS="$DOCKER_OPTS --insecure-registry 137.135.93.9"' | sudo tee -a /etc/default/docker
 sudo service docker restart
 
@@ -202,7 +256,9 @@ sudo apt-key adv --keyserver keyserver.ubuntu.com --recv E56151BF
 DISTRO=$(lsb_release -is | tr '[:upper:]' '[:lower:]')
 CODENAME=$(lsb_release -cs)
 echo "deb http://repos.mesosphere.io/${DISTRO} ${CODENAME} main" | sudo tee /etc/apt/sources.list.d/mesosphere.list
+time sudo add-apt-repository -y ppa:openjdk-r/ppa
 time sudo apt-get -y update
+time sudo apt-get -y install openjdk-8-jre-headless
 if ismaster ; then
   time sudo apt-get -y --force-yes install mesosphere
 else
@@ -234,7 +290,7 @@ if ismaster ; then
   quorum=`expr $MASTERCOUNT / 2 + 1`
   echo $quorum | sudo tee /etc/mesos-master/quorum
   hostname -i | sudo tee /etc/mesos-master/ip
-  hostname -i | sudo tee /etc/mesos-master/hostname
+  hostname | sudo tee /etc/mesos-master/hostname
   echo 'Mesos Cluster on Microsoft Azure' | sudo tee /etc/mesos-master/cluster
 fi
 
@@ -245,7 +301,52 @@ if ismaster  && [ "$MARATHONENABLED" == "true" ] ; then
   sudo cp /etc/mesos/zk /etc/marathon/conf/master
   zkmarathonconfig=$(zkconfig "marathon")
   echo $zkmarathonconfig | sudo tee /etc/marathon/conf/zk
+  # enable marathon to failover tasks to other nodes immediately
+  echo 0 | sudo tee /etc/marathon/conf/failover_timeout
+  #echo false | sudo tee /etc/marathon/conf/checkpoint
 fi
+
+#########################################
+# Configure Mesos Master and Frameworks
+#########################################
+if ismaster ; then
+  # Download and install mesos-dns
+  sudo mkdir -p /usr/local/mesos-dns
+  sudo wget https://github.com/mesosphere/mesos-dns/releases/download/v0.2.0/mesos-dns-v0.2.0-linux-amd64.tgz
+  sudo tar zxvf mesos-dns-v0.2.0-linux-amd64.tgz
+  sudo mv mesos-dns-v0.2.0-linux-amd64 /usr/local/mesos-dns/mesos-dns
+  RESOLVER=`cat /etc/resolv.conf | grep nameserver | tail -n 1 | awk '{print $2}'`
+
+  echo "
+{
+  \"zk\": \"zk://127.0.0.1:2181/mesos\",
+  \"refreshSeconds\": 1,
+  \"ttl\": 0,
+  \"domain\": \"mesos\",
+  \"port\": 53,
+  \"timeout\": 1,
+  \"listener\": \"0.0.0.0\",
+  \"email\": \"root.mesos-dns.mesos\",
+  \"resolvers\": [\"$RESOLVER\"]
+}
+" > mesos-dns.json
+  sudo mv mesos-dns.json /usr/local/mesos-dns/mesos-dns.json
+
+  echo "
+description \"mesos dns\"
+
+# Start just after the System-V jobs (rc) to ensure networking and zookeeper
+# are started. This is as simple as possible to ensure compatibility with
+# Ubuntu, Debian, CentOS, and RHEL distros. See:
+# http://upstart.ubuntu.com/cookbook/#standard-idioms
+start on stopped rc RUNLEVEL=[2345]
+respawn
+
+exec /usr/local/mesos-dns/mesos-dns -config /usr/local/mesos-dns/mesos-dns.json" > mesos-dns.conf
+  sudo mv mesos-dns.conf /etc/init
+  sudo service mesos-dns start
+fi
+
 
 #########################
 # Configure Mesos Agent
@@ -253,8 +354,24 @@ fi
 if isagent ; then
   # Add docker containerizer
   echo "docker,mesos" | sudo tee /etc/mesos-slave/containerizers
+  # Add resources configuration
+  if ismaster ; then
+    echo "ports:[1-21,23-4399,4401-5049,5052-8079,8081-32000]" | sudo tee /etc/mesos-slave/resources
+  else
+    echo "ports:[1-21,23-5050,5052-32000]" | sudo tee /etc/mesos-slave/resources
+  fi
   hostname -i | sudo tee /etc/mesos-slave/ip
-  hostname -i | sudo tee /etc/mesos-slave/hostname
+  hostname | sudo tee /etc/mesos-slave/hostname
+
+  # Add mesos-dns IP addresses at the top of resolv.conf
+  RESOLV_TMP=resolv.conf.temp
+  rm -f $RESOLV_TMP
+  for i in `seq $MASTERCOUNT` ; do
+      echo nameserver `getent hosts ${MASTERPREFIX}${i} | awk '{ print $1 }'` >> $RESOLV_TMP
+  done
+
+  cat /etc/resolv.conf >> $RESOLV_TMP
+  mv $RESOLV_TMP /etc/resolv.conf
 fi
 
 ##############################################
@@ -291,19 +408,19 @@ echo "processes after restarting mesos"
 ps ax
 
 # Run swarm manager container on port 2376 (no auth)
-if [ ismaster ] && [ "$SWARMENABLED" == "true" ] ; then
-  echo "starting docker swarm"
+if ismaster && [ "$SWARMENABLED" == "true" ] ; then
+  echo "starting docker swarm:$SWARM_VERSION"
   echo "sleep to give master time to come up"
   sleep 10
   echo sudo docker run -d -e SWARM_MESOS_USER=root \
       --restart=always \
-      -p 2376:2375 -p 3375:3375 swarm manage \
+      -p 2376:2375 -p 3375:3375 swarm:$SWARM_VERSION manage \
       -c mesos-experimental \
       --cluster-opt mesos.address=0.0.0.0 \
       --cluster-opt mesos.port=3375 $zkmesosconfig
   sudo docker run -d -e SWARM_MESOS_USER=root \
       --restart=always \
-      -p 2376:2375 -p 3375:3375 swarm manage \
+      -p 2376:2375 -p 3375:3375 swarm:$SWARM_VERSION manage \
       -c mesos-experimental \
       --cluster-opt mesos.address=0.0.0.0 \
       --cluster-opt mesos.port=3375 $zkmesosconfig
