@@ -115,7 +115,7 @@ function Download-Jdk
 	# download JDK from a given source URL to destination folder
 	try{
 			$destination = "$targetDrive`:\Downloads\Java\jdk-8u65-windows-x64.exe"
-			$source = if ($downloadLocation -eq $null) {"http://download.oracle.com/otn-pub/java/jdk/8u65-b17/jdk-8u65-windows-x64.exe"} else {$downloadLocation}
+			$source = if ($downloadLocation -eq '') {'http://download.oracle.com/otn-pub/java/jdk/8u65-b17/jdk-8u65-windows-x64.exe'} else {$downloadLocation}
             
             # create folder if doesn't exists and suppress the output
             $folder = split-path $destination
