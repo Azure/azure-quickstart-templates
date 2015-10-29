@@ -30,7 +30,7 @@ def getDataDiskCount():
 
     return count
 
-diskcount=getDataDiskCount()
+
 
 LOG_DIR='/log/cloudera'
 def init_cluster():
@@ -1852,6 +1852,9 @@ def main():
     # Parse user options
     log("parse_options")
     options = parse_options()
+    global diskcount
+    diskcount= getDataDiskCount()
+    log("data disk count")
     if(cmx.do_post):
         postEulaInfo(cmx.fname, cmx.lname, cmx.email, cmx.company,
                      cmx.jobrole, cmx.jobfunction, cmx.phone)
