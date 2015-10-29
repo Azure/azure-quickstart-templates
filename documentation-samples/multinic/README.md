@@ -1,13 +1,13 @@
 # MultiNIC
 
-| Parent resource group (see documentation) | <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Ftelmosampaio%2Fazure-templates%2Fmaster%2FIaaS-NSG-UDR%2Fazuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a> |
-| Backend resource group (see documentation) | <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Ftelmosampaio%2Fazure-templates%2Fmaster%2FIaaS-NSG-UDR%2Fazuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a> |
-| Parent resource group | <a href="http://armviz.io/#/?load=https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Ftelmosampaio%2Fazure-templates%2Fmaster%2FIaaS-NSG-UDR%2Fazuredeploy.json" target="_blank"><img src="http://armviz.io/visualizebutton.png"/></a> |
-| Backend resource group | <a href="http://armviz.io/#/?load=https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Ftelmosampaio%2Fazure-templates%2Fmaster%2FIaaS-NSG-UDR%2Fazuredeploy.json" target="_blank"><img src="http://armviz.io/visualizebutton.png"/></a> |
+| Parent resource group (see documentation) | <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdocumentation-samples%2Fmultinic%2Fprerequisites.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a> |
+| Backend resource group (see documentation) | <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdocumentation-samples%2Fmultinic%2Fazuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a> |
+| Parent resource group | <a href="http://armviz.io/#/?load=https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdocumentation-samples%2Fmultinic%2Fprerequisites.json" target="_blank"><img src="http://armviz.io/visualizebutton.png"/></a> |
+| Backend resource group | <a href="http://armviz.io/#/?load=https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdocumentation-samples%2Fmultinic%2Fazuredeploy.json" target="_blank"><img src="http://armviz.io/visualizebutton.png"/></a> |
 
 This template creates a series of multiNIC VMs in a pre-existing subnet based on a documented scenario.
 
-Please visit [multi NIC scenario]() to read the scenario and understand how to use this template.
+Please visit [multi NIC scenario](https://azure.microsoft.com/documentation/articles/virtual-networks-create-multinic-arm-template/) to read the scenario and understand how to use this template.
 
 Below are the parameters that the template expects.
 
