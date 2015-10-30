@@ -24,11 +24,11 @@ def getDataDiskCount():
     bashCommand="lsblk | grep /data | grep -v /data/ | wc -l"
     client=SSHClient()
     client.set_missing_host_key_policy(paramiko.client.AutoAddPolicy())
-    log(cmx.cm_server)
-    log(cmx.cm_server.replace("-mn0", "-dn0"))
-    client.connect(hostname=cmx.cm_server.replace("-mn0", "-dn0"), username=cmx.ssh_root_user, password=cmx.ssh_root_password)
+    log(socket.getfqdn(cmx.cm_server))
+    toconnect=socket.getfqdn(cmx.cm_server).replace("-mn0", "-dn0")
+    log(toconnect)
+    client.connect(toconnect, username=cmx.ssh_root_user, password=cmx.ssh_root_password)
     stdin, stdout, stderr = client.exec_command(bashCommand)
-    log(stderr.readline)
     count=stdout.readline().rstrip('\n')
 
     return count
