@@ -377,6 +377,12 @@ function Install-WorkFlow
         $textToAppend = $textToAppend + "`ndiscovery.zen.ping.multicast.enabled: false"
         $textToAppend = $textToAppend + "`ndiscovery.zen.ping.unicast.hosts: [$ipAddresses]"
 
+        # In ES 2.0 you explicitly need to set network host to _non_loopback_ or the IP address of the host else other nodes cannot communicate
+        if ($elasticSearchVersion -match '2.0.0')
+        {
+            $textToAppend = $textToAppend + "`nnetwork.host: _non_loopback_"
+        }
+
 
         Add-Content $elasticSearchConfFile $textToAppend
 	
