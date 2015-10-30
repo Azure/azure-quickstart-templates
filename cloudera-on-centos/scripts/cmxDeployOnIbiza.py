@@ -24,8 +24,11 @@ def getDataDiskCount():
     bashCommand="lsblk | grep /data | grep -v /data/ | wc -l"
     client=SSHClient()
     client.set_missing_host_key_policy(paramiko.client.AutoAddPolicy())
+    log(cmx.cm_server)
+    log(cmx.cm_server.replace("-mn0", "-dn0"))
     client.connect(hostname=cmx.cm_server.replace("-mn0", "-dn0"), username=cmx.ssh_root_user, password=cmx.ssh_root_password)
     stdin, stdout, stderr = client.exec_command(bashCommand)
+    log(stderr.readline)
     count=stdout.readline().rstrip('\n')
 
     return count
@@ -1854,7 +1857,7 @@ def main():
     options = parse_options()
     global diskcount
     diskcount= getDataDiskCount()
-    log("data disk count"+`diskcount`)
+    log("data_disk_count"+`diskcount`)
     if(cmx.do_post):
         postEulaInfo(cmx.fname, cmx.lname, cmx.email, cmx.company,
                      cmx.jobrole, cmx.jobfunction, cmx.phone)
