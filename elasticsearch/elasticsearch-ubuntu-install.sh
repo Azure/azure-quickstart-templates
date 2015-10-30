@@ -181,7 +181,7 @@ install_es()
 	# With GA of ES 2.0.0 download url has changed so the following check is required
 	downloadUrl=""
 	if [[ "${ES_VERSION}" == \2* ]]; then
-		downloadUrl="https://download.elasticsearch.org/elasticsearch/release/org/elasticsearch/distribution/zip/elasticsearch/$ES_VERSION/elasticsearch-$ES_VERSION.deb"
+		downloadUrl="https://download.elasticsearch.org/elasticsearch/release/org/elasticsearch/distribution/deb/elasticsearch/$ES_VERSION/elasticsearch-$ES_VERSION.deb"
 	else
 		downloadUrl="https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-$ES_VERSION.deb"
 	fi
