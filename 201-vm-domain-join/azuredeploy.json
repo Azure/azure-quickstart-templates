@@ -8,6 +8,12 @@
         "description": "Unique public DNS prefix for the deployment. The fqdn will look something like '<dnsname>.westus.cloudapp.azure.com'. Up to 62 chars, digits or dashes, lowercase, should start with a letter: must conform to '^[a-z][a-z0-9-]{1,61}[a-z0-9]$'."
       }
     },
+    "availabilitySetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Unique name for the availability set for the resources in this resource group."
+      }
+    },
     "storageAccount": {
       "type": "string",
       "metadata": {
@@ -72,6 +78,15 @@
   },
   "resources": [
     {
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[parameters('availabilitySetName')]",
+      "apiVersion": "2015-05-01-preview",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "platformFaultDomainCount": 3
+      }
+    },
+    {
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "publicIp",
@@ -122,6 +137,9 @@
         "Microsoft.Network/publicIPAddresses/publicIp"
       ],
       "properties": {
+        "availabilitySet": {
+          "id": "[parameters('availabilitySetName')]"
+        },
         "frontendIPConfigurations": [
           {
             "name": "LBFE",
@@ -212,6 +230,9 @@
         "hardwareProfile": {
           "vmSize": "[parameters('vmSize')]"
         },
+        "availabilitySet": {
+          "id": "[parameters('availabilitySetName')]"
+        },
         "osProfile": {
           "computername": "dc",
           "adminUsername": "[parameters('adminUsername')]",
@@ -260,26 +281,26 @@
         }
       },
       "resources": [
-          {
-           "type": "extensions",
-           "name": "lcmconfiguration",
-           "apiVersion": "2015-05-01-preview",
-           "location": "[resourceGroup().location]",
-           "dependsOn": [
-               "[concat('Microsoft.Compute/virtualMachines/','dc-vm')]"
-           ],
-           "properties": {
-               "publisher": "Microsoft.Compute",
-               "type": "CustomScriptExtension",
-               "typeHandlerVersion": "1.4",
-               "settings": {
-                   "fileUris": [
-                   "https://github.com/rchaganti/azure-quickstart-templates/raw/master/201-vm-domain-join/LCMConfiguration.ps1"
-               ],
-               "commandToExecute": "powershell.exe -ExecutionPolicy Unrestricted -File LCMConfiguration.ps1"
-             }
-           }
-         },
+        {
+          "type": "extensions",
+          "name": "lcmconfiguration",
+          "apiVersion": "2015-05-01-preview",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/','dc-vm')]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Compute",
+            "type": "CustomScriptExtension",
+            "typeHandlerVersion": "1.4",
+            "settings": {
+              "fileUris": [
+                "https://github.com/rchaganti/azure-quickstart-templates/raw/master/201-vm-domain-join/LCMConfiguration.ps1"
+              ],
+              "commandToExecute": "powershell.exe -ExecutionPolicy Unrestricted -File LCMConfiguration.ps1"
+            }
+          }
+        },
         {
           "type": "extensions",
           "name": "createadforest",
@@ -353,6 +374,7 @@
       "name": "vm-nif",
       "location": "[resourceGroup().location]",
       "dependsOn": [
+        "Microsoft.Network/virtualNetworks/VNET",
         "Microsoft.Network/loadBalancers/loadBalancer",
         "Microsoft.Network/networkInterfaces/dc-nif",
         "Microsoft.Resources/deployments/updatevnetdns"
@@ -393,6 +415,9 @@
       "properties": {
         "hardwareProfile": {
           "vmSize": "[parameters('vmSize')]"
+        },
+        "availabilitySet": {
+          "id": "[parameters('availabilitySetName')]"
         },
         "osProfile": {
           "computername": "vm",
