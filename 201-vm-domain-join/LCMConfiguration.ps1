@@ -8,4 +8,4 @@
 }
 
 DCLCMConfig -OutputPath "${env:Temp}\DCLCMConfig"
-Set-DscLocalConfigurationManager -Path "${env:Temp}\DCLCMConfig"
+Set-DscLocalConfigurationManager -Path "${env:Temp}\DCLCMConfig" -Verbose
