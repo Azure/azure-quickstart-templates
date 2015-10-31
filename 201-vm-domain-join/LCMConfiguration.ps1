@@ -1,10 +1,8 @@
-﻿[DscLocalConfigurationManager()]
-Configuration DCLCMConfig
+﻿Configuration DCLCMConfig
 {
-    Settings
+    LocalConfigurationManager
     {
         RebootNodeIfNeeded = $true
-        ActionAfterReboot = 'ContinueConfiguration'
     }
 
 }
