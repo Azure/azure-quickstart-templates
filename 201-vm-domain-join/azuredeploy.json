@@ -145,7 +145,7 @@
                 "id": "[concat(resourceId('Microsoft.Network/loadBalancers','loadBalancer'),'/frontendIPConfigurations/LBFE')]"
               },
               "protocol": "tcp",
-              "frontendPort": 3389,
+              "frontendPort": 33388,
               "backendPort": 3389,
               "enableFloatingIP": false
             }
@@ -231,24 +231,24 @@
         },
         "diagnosticsProfile": {
           "bootDiagnostics": {
-             "enabled": "true",
-             "storageUri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net')]"
+            "enabled": "true",
+            "storageUri": "[concat('http://',parameters('storageAccount'),'.blob.core.windows.net')]"
           }
         }
       },
       "resources": [
         {
-          "type": "Microsoft.Compute/virtualMachines/extensions",
-          "name": "dc-vm/createadforest",
+          "type": "extensions",
+          "name": "createadforest",
           "apiVersion": "2015-05-01-preview",
           "location": "[resourceGroup().location]",
           "dependsOn": [
-            "[resourceId('Microsoft.Compute/virtualMachines', 'dc-vm')]"
+            "[concat('Microsoft.Compute/virtualMachines/','dc-vm')]"
           ],
           "properties": {
             "publisher": "Microsoft.Powershell",
             "type": "DSC",
-            "typeHandlerVersion": "1.9",
+            "typeHandlerVersion": "2.8",
             "settings": {
               "ModulesUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/active-directory-new-domain/CreateADPDC.ps1.zip",
               "ConfigurationFunction": "CreateADPDC.ps1\\CreateADPDC",
@@ -264,6 +264,27 @@
               "Items": {
                 "AdminPassword": "[parameters('adminPassword')]"
               }
+            }
+          }
+        },
+        {
+          "type": "extensions",
+          "name": "lcmconfiguration",
+          "apiVersion": "2015-05-01-preview",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/','dc-vm')]",
+            "[concat('Microsoft.Compute/virtualMachines/','dc-vm','/extensions/createadforest')]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Compute",
+            "type": "CustomScriptExtension",
+            "typeHandlerVersion": "1.4",
+            "settings": {
+              "fileUris": [
+                "https://github.com/rchaganti/azure-quickstart-templates/raw/master/201-vm-domain-join/restartdc.ps1"
+              ],
+              "commandToExecute": "powershell.exe -ExecutionPolicy Unrestricted -File restartdc.ps1"
             }
           }
         }
@@ -343,6 +364,7 @@
       "name": "vm",
       "location": "[resourceGroup().location]",
       "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/dc-vm')]",
         "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccount'))]",
         "Microsoft.Network/networkInterfaces/vm-nif"
       ],
@@ -391,7 +413,7 @@
       "properties": {
         "publisher": "Microsoft.Powershell",
         "type": "DSC",
-        "typeHandlerVersion": "1.9",
+        "typeHandlerVersion": "2.8",
         "settings": {
           "ModulesUrl": "[concat(parameters('assetLocation'),'/Configuration.zip')]",
           "ConfigurationFunction": "Configuration.ps1\\DomainJoin",

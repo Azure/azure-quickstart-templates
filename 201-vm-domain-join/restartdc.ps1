@@ -1,0 +1,1 @@
+﻿Restart-Computer -Force -Verbose
