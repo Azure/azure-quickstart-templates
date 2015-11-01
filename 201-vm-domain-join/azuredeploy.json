@@ -8,12 +8,6 @@
         "description": "Unique public DNS prefix for the deployment. The fqdn will look something like '<dnsname>.westus.cloudapp.azure.com'. Up to 62 chars, digits or dashes, lowercase, should start with a letter: must conform to '^[a-z][a-z0-9-]{1,61}[a-z0-9]$'."
       }
     },
-    "availabilitySetName": {
-      "type": "string",
-      "metadata": {
-        "description": "Unique name for the availability set for the resources in this resource group."
-      }
-    },
     "storageAccount": {
       "type": "string",
       "metadata": {
@@ -78,15 +72,6 @@
   },
   "resources": [
     {
-      "type": "Microsoft.Compute/availabilitySets",
-      "name": "[parameters('availabilitySetName')]",
-      "apiVersion": "2015-05-01-preview",
-      "location": "[resourceGroup().location]",
-      "properties": {
-        "platformFaultDomainCount": 3
-      }
-    },
-    {
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "publicIp",
@@ -134,13 +119,9 @@
       "type": "Microsoft.Network/loadBalancers",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "Microsoft.Network/publicIPAddresses/publicIp",
-        "[concat('Microsoft.Compute/availabilitySets/', parameters('availabilitySetName'))]"
+        "Microsoft.Network/publicIPAddresses/publicIp"
       ],
       "properties": {
-        "availabilitySet": {
-          "id": "[parameters('availabilitySetName')]"
-        },
         "frontendIPConfigurations": [
           {
             "name": "LBFE",
@@ -168,18 +149,6 @@
               "backendPort": 3389,
               "enableFloatingIP": false
             }
-          },
-          {
-            "name": "rdp-dc-vm",
-            "properties": {
-              "frontendIPConfiguration": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers','loadBalancer'),'/frontendIPConfigurations/LBFE')]"
-              },
-              "protocol": "tcp",
-              "frontendPort": 33389,
-              "backendPort": 3389,
-              "enableFloatingIP": false
-            }
           }
         ]
       }
@@ -190,7 +159,6 @@
       "name": "dc-nif",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "Microsoft.Network/loadBalancers/loadBalancer",
         "Microsoft.Network/virtualNetworks/VNET"
       ],
       "properties": {
@@ -202,17 +170,7 @@
               "privateIPAddress": "[variables('dnsServerPrivateIp')]",
               "subnet": {
                 "id": "[variables('subnet-id')]"
-              },
-              "loadBalancerBackendAddressPools": [
-                {
-                  "id": "[concat(resourceId('Microsoft.Network/loadBalancers','loadBalancer'),'/backendAddressPools/LBBAP')]"
-                }
-              ],
-              "loadBalancerInboundNatRules": [
-                {
-                  "id": "[concat(resourceId('Microsoft.Network/loadBalancers','loadBalancer'),'/inboundNatRules/rdp-dc-vm')]"
-                }
-              ]
+              }
             }
           }
         ]
@@ -225,15 +183,11 @@
       "location": "[resourceGroup().location]",
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts',parameters('storageAccount'))]",
-        "[resourceId('Microsoft.Network/networkInterfaces','dc-nif')]",
-        "[concat('Microsoft.Compute/availabilitySets/', parameters('availabilitySetName'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces','dc-nif')]"
       ],
       "properties": {
         "hardwareProfile": {
           "vmSize": "[parameters('vmSize')]"
-        },
-        "availabilitySet": {
-          "id": "[parameters('availabilitySetName')]"
         },
         "osProfile": {
           "computername": "dc",
@@ -376,7 +330,6 @@
       "name": "vm-nif",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "Microsoft.Network/virtualNetworks/VNET",
         "Microsoft.Network/loadBalancers/loadBalancer",
         "Microsoft.Network/networkInterfaces/dc-nif",
         "Microsoft.Resources/deployments/updatevnetdns"
@@ -412,15 +365,11 @@
       "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccount'))]",
-        "Microsoft.Network/networkInterfaces/vm-nif",
-        "[concat('Microsoft.Compute/availabilitySets/', parameters('availabilitySetName'))]"
+        "Microsoft.Network/networkInterfaces/vm-nif"
       ],
       "properties": {
         "hardwareProfile": {
           "vmSize": "[parameters('vmSize')]"
-        },
-        "availabilitySet": {
-          "id": "[parameters('availabilitySetName')]"
         },
         "osProfile": {
           "computername": "vm",
