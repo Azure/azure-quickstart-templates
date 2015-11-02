@@ -20,12 +20,6 @@
         "description": "Load balancer subdomain name"
       }
     },
-    "storageAccountPrefix": {
-      "type": "string",
-      "metadata": {
-        "description": "Unique namespace for the Storage Account where the Virtual Machine's disks will be placed"
-      }
-    },
     "location": {
       "type": "string",
       "allowedValues": [
@@ -43,9 +37,16 @@
         "description": "Location where resources will be provisioned"
       }
     },
+    "storageAccountPrefix": {
+      "type": "string",
+      "defaultValue": "elastic",
+      "metadata": {
+        "description": "Storage account prefix used when creating the storage accounts used for storing virtual machine disks (must be lowercase charactors or numbers and max length of 7)"
+      }
+    },
     "virtualNetworkName": {
       "type": "string",
-      "defaultValue": "myVNET",
+      "defaultValue": "esvnet",
       "metadata": {
         "description": "Virtual Network"
       }
@@ -173,6 +174,8 @@
   },
   "variables": {
     "templateBaseUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/elasticsearch/",
+    "storageAccountPrefix": "[toLower(parameters('storageAccountPrefix'))]",
+    "storageAccountNameShared": "[concat(variables('storageAccountPrefix'), 's', uniqueString(resourceGroup().id, deployment().name)]",
     "masterNodesIpPrefix": "10.0.0.1",
     "networkSettings": {
       "virtualNetworkName": "[parameters('virtualNetworkName')]",
@@ -441,7 +444,7 @@
       "count":"[div(sub(add(parameters('vmDataNodeCount'), variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
       "mapping":"[variables('storageBinPackMap')]",
       "accountType":"[variables('dataSkuSettings')[parameters('vmSizeDataNodes')].storageAccountType]",
-      "prefix":"[parameters('storageAccountPrefix')]"
+      "prefix":"[concat(variables('storageAccountPrefix'), 'd', uniqueString(resourceGroup().id, deployment().name)]"
     },
     "dataTemplateUrl": "[concat(variables('templateBaseUrl'), 'data-nodes-', string(variables('dataSkuSettings')[parameters('vmSizeDataNodes')].dataDisks), 'disk-resources.json')]"
   },
@@ -461,7 +464,7 @@
         },
         "parameters": {
           "storageAccountName": {
-            "value": "[concat(parameters('storageAccountPrefix'),'shared')]"
+            "value": "[variables('storageAccountNameShared')]"
           },
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
@@ -505,7 +508,7 @@
             "value": "[variables('networkSettings')]"
           },
           "storageAccountName": {
-            "value": "[concat(parameters('storageAccountPrefix'),'shared')]"
+            "value": "[variables('storageAccountNameShared')]"
           },
           "loadBalancerType": {
             "value": "[parameters('loadBalancerType')]"
@@ -540,7 +543,7 @@
             "value": "[parameters('adminPassword')]"
           },
           "storageAccountName": {
-            "value": "[concat(parameters('storageAccountPrefix'),'shared')]"
+            "value": "[variables('storageAccountNameShared')]"
           },
           "location": {
             "value": "[parameters('location')]"
@@ -625,7 +628,7 @@
         },
         "parameters": {
           "storageAccountName": {
-            "value": "[concat(parameters('storageAccountPrefix'),'shared')]"
+            "value": "[variables('storageAccountNameShared')]"
           },
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
