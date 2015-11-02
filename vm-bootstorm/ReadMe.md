@@ -34,7 +34,7 @@ New-AzureRoleAssignment -RoleDefinitionName Owner -ServicePrincipalName https://
 <b>RESULTS</b>
 VM bootstorm results file is uploaded to your Azure Storage Account as a blob with name 'VMBootAllResult.log.ps1.zip'.
 
-##################################################################################################
+
 <b>INVOKE TEMPLATE FROM POWERSHELL</b>
 Add-AzureRmAccount
 
@@ -51,11 +51,11 @@ $jobGUID = [System.Guid]::NewGuid().toString()
 $templateFile = "<LocationToVMBootstormFiles>\azuredeploy.json"
 
 $templateParamObject = @{
-	location = $location
-	vmCount = 2
 	azureAdApplicationId = "<YourAzureAdAppId returned by New-AzureADApplication cmdlet in Azure SPN Configuration>"
 	azureAdApplicationPassword = "<YourAzureAdAppPwd given to New-AzureADApplication cmdlet in Azure SPN Configuration>"
 	tenantId = "<YourAzureSubscriptionTenantId>"
+	location = $location
+	vmCount = 2
 }
 
 Remove-AzureResourceGroup -Name $resourceGroupName -Force -ErrorAction Ignore
@@ -63,3 +63,4 @@ Remove-AzureResourceGroup -Name $resourceGroupName -Force -ErrorAction Ignore
 New-AzureResourceGroup -Name $resourceGroupName -Location $location
 
 New-AzureResourceGroupDeployment -Name $groupDeploymentName -ResourceGroupName $resourceGroupName -TemplateFile $templateFile -TemplateParameterObject $templateParamObject
+##################################################################################################
