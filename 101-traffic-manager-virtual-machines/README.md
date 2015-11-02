@@ -6,5 +6,5 @@
 
 This template shows how to create an Azure Traffic Manager profile to load-balance across a couple of Azure virtual machines.  Each endpoint has an equal weight but different weights can be specified to distribute load non-uniformly.
 
-The accompanying PowerShell script shows how to create a resource group from a template and read back the Traffic Manager profile.
+The accompanying PowerShell script shows how to create a resource group from the template and read back the Traffic Manager profile.
 

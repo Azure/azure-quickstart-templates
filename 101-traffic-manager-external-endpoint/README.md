@@ -4,6 +4,6 @@
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-This template shows how to create an Azure Traffic Manager profile using external endpoints and the performance routing method.  To enable performance-based routing each endpoint needs an "endpointLocation" that specifies the closes Azure region.
+This template shows how to create an Azure Traffic Manager profile using external endpoints and the performance traffic routing method.  To enable performance-based traffic routing, each endpoint needs an "endpointLocation" that specifies the closest Azure region.
 
-The accompanying PowerShell script shows how to create a resource group from a template and read back the Traffic Manager profile.
+The accompanying PowerShell script shows how to create a resource group from the template and read back the Traffic Manager profile.
