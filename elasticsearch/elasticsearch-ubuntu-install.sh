@@ -30,8 +30,8 @@ help()
     echo "Parameters:"
     echo "-n elasticsearch cluster name"
     echo "-d static discovery endpoints 10.0.0.1-3"
-    echo "-v elasticsearch version 1.5.0"
-    echo "-l install marvel yes/no"
+    echo "-v elasticsearch version"
+    echo "-m install marvel yes/no"
     echo "-x configure as a dedicated master node"
     echo "-y configure as client only node (no master, no data)"
     echo "-z configure as data node (no master)"
@@ -70,7 +70,7 @@ fi
 
 #Script Parameters
 CLUSTER_NAME="elasticsearch"
-ES_VERSION="1.7.2"
+ES_VERSION="2.0.0"
 DISCOVERY_ENDPOINTS=""
 INSTALL_MARVEL=0
 CLIENT_ONLY_NODE=0
