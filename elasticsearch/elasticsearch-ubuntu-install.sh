@@ -177,9 +177,18 @@ install_es()
     # if [ -z "$ES_VERSION" ]; then
     #     ES_VERSION="1.5.0"
     # fi
-
+	
+	# With GA of ES 2.0.0 download url has changed so the following check is required
+	downloadUrl=""
+	if [[ "${ES_VERSION}" == \2* ]]; then
+		downloadUrl="https://download.elasticsearch.org/elasticsearch/release/org/elasticsearch/distribution/deb/elasticsearch/$ES_VERSION/elasticsearch-$ES_VERSION.deb"
+	else
+		downloadUrl="https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-$ES_VERSION.deb"
+	fi
+	
     log "Installing Elaticsearch Version - $ES_VERSION"
-    sudo wget -q "https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-$ES_VERSION.deb" -O elasticsearch.deb
+	log "Download location - $downloadUrl"
+    sudo wget -q "$downloadUrl" -O elasticsearch.deb
     sudo dpkg -i elasticsearch.deb
 }
 
