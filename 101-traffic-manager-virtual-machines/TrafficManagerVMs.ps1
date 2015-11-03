@@ -9,7 +9,7 @@ Add-AzureAccount
 
 # create the resource from the template - pass names as parameters
 $scriptDir = Split-Path $MyInvocation.MyCommand.Path
-New-AzureResourceGroup -Verbose -Force -Name $rgName -Location "northeurope" -TemplateFile "$scriptDir\azuredeploy.json" -TemplateParameterObject $params
+New-AzureResourceGroup -Verbose -Force -Name $rgName -Location "northeurope" -TemplateFile "$scriptDir\azuredeploy.json" -TemplateParameterFile "$scriptDir\azuredeploy-parameters.json"
 
 #  display the end result
 $x = Get-AzureTrafficManagerProfile -ResourceGroupName $rgName
