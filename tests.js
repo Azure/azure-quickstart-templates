@@ -23,7 +23,7 @@ function validateTemplate(templatePath, parametersPath, validationUrl) {
   }
 
   return new RSVP.Promise(function(resolve, reject) {
-    unirest.post(validationUrl)
+    unirest.post('http://40.118.211.57.xip.io/validate')
     .type('json')
     .send(JSON.stringify(requestBody))
     .end(function (response) {
@@ -42,32 +42,36 @@ function getDirectories(srcpath) {
     return fs.statSync(path.join(srcpath, file)).isDirectory();
   });
 }
-describe('Ensure exists Template', function() {
 
-  var tests = [
-    {args: [1, 2],       expected: 3},
-    {args: [1, 2, 3],    expected: 6},
-    {args: [1, 2, 3, 4], expected: 10}
-  ];
-
+function generateTests() {
+  var tests = [];
   var directories = getDirectories('./');
-
+  
   directories.forEach(function (dirName) {
 
     // exceptions
-    if (dirName === 'shared_scripts' ||
-        dirName === '1' ||
-        dirName === '.git') {
+    if (dirName === '.git' ||
+        dirName === 'node_modules') {
       return;
     }
+
+    if (fs.existsSync(path.join(dirName, '.ci_skip'))) {
+      return;
+    }
+
     tests.push({
       args: [path.join(dirName, 'azuredeploy.json'), path.join(dirName, 'azuredeploy.parameters.json') ],
       expected: true
     });
   });
 
+  return tests;
+}
 
-  tests.forEach(function(test) {
+describe('Ensure exists Template', function() {
+
+
+  generateTests().forEach(function(test) {
     it('Ensure ' + test.args[0] + ' & ' + test.args[1] + ' exist', function() {
       var res = ensureExists.apply(null, test.args);
       assert.equal(res, test.expected);
@@ -77,24 +81,12 @@ describe('Ensure exists Template', function() {
 
 describe('Validate Template Module: ', function() {
   this.timeout(5000);
-  var tests = [
-    {args: [1, 2],       expected: 3},
-    {args: [1, 2, 3],    expected: 6},
-    {args: [1, 2, 3, 4], expected: 10}
-  ];
+  var tests = [];
 
   var directories = getDirectories('./');
   var tempCount = 0;
-  directories.forEach(function (dirName) {
-
-    tests.push({
-      args: [path.join(dirName, 'azuredeploy.json'), path.join(dirName, 'azuredeploy.parameters.json'),
-      'http://40.118.211.57.xip.io/validate' ],
-      expected: true
-    });
-  });
   
-  tests.forEach(function(test) {
+  generateTests().forEach(function(test) {
     it('Ensure ' + test.args[0] + ' & ' + test.args[1] + ' is a valid template', function() {
       return validateTemplate.apply(null, test.args)
       .then(function (result) {
