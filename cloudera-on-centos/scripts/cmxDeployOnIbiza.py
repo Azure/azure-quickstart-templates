@@ -17,7 +17,15 @@ from cm_api.api_client import ApiResource, ApiException
 from cm_api.endpoints.hosts import *
 from cm_api.endpoints.services import ApiServiceSetupInfo, ApiService
 
-diskcount=10
+def getDataDiskCount():
+    bashCommand="lsblk | grep /data | grep -v /data/ | wc -l > /tmp/count2.out"
+    os.system(bashCommand)
+    f = open('/tmp/count2.out', 'r')
+    count=f.readline().rstrip('\n')
+    os.system("rm /tmp/count2.out")
+    return count
+
+diskcount=getDataDiskCount()
 
 LOG_DIR='/log/cloudera'
 def init_cluster():
@@ -1624,7 +1632,7 @@ def display_eula():
     jobfunction=raw_input("Please enter your jobfunction: ")
     accepted=raw_input("Please enter yes to accept EULA: ")
     if accepted =='yes' and fname and lname and company and email and phone and jobrole and jobfunction:
-       postEulaInfo(fname, lname, company, email,
+       postEulaInfo(fname, lname, email, company,
                     jobrole, jobfunction, phone)
        return True
     else:
@@ -1747,7 +1755,7 @@ def parse_options():
     parser.add_option('-i', '--job-function', dest='jobfunction', type="string", action='callback',
                       callback=cmx_args, help='Set job function')
     parser.add_option('-y', '--company', dest='company', type="string", action='callback',
-                      callback=cmx_args, help='Set job function')
+                      callback=cmx_args, help='Set company')
     parser.add_option('-e', '--accept-eula', dest='accepted', action="store_true", default=False,
                       help='Must accept eula before install')
 
@@ -1840,7 +1848,7 @@ def main():
     log("parse_options")
     options = parse_options()
     if(cmx.do_post):
-        postEulaInfo(cmx.fname, cmx.lname, cmx.company, cmx.email,
+        postEulaInfo(cmx.fname, cmx.lname, cmx.email, cmx.company,
                      cmx.jobrole, cmx.jobfunction, cmx.phone)
     # Prepare Cloudera Manager Server:
     # 1. Initialise Cluster and set Cluster name: 'Cluster 1'
