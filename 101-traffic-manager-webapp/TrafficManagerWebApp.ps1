@@ -1,17 +1,19 @@
 ﻿# parameters 
 $rgName = "TrafficManagerWebAppExample"
 
-#  set ARM mode
-Switch-AzureMode AzureResourceManager
+# import the AzureRM modules
+Import-Module AzureRM.TrafficManager
+Import-Module AzureRM.Resources
 
-#  login and select subscription context
-Add-AzureAccount
+#  login
+Login-AzureRmAccount
 
 # create the resource from the template - pass names as parameters
 $scriptDir = Split-Path $MyInvocation.MyCommand.Path
-New-AzureResourceGroup -Verbose -Force -Name $rgName -Location "northeurope" -TemplateFile "$scriptDir\azuredeploy.json" -TemplateParameterFile "$scriptDir\azuredeploy-parameters.json"
+New-AzureRmResourceGroup -Location "northeurope" -Name $rgName
+New-AzureRmResourceGroupDeployment -Verbose -Force -ResourceGroupName $rgName -TemplateFile "$scriptDir\azuredeploy.json" -TemplateParameterFile "$scriptDir\azuredeploy-parameters.json"
 
 #  display the end result
-$x = Get-AzureTrafficManagerProfile -ResourceGroupName $rgName
+$x = Get-AzureRmTrafficManagerProfile -ResourceGroupName $rgName
 $x
 $x.Endpoints
