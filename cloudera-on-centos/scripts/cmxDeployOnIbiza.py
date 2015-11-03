@@ -11,6 +11,9 @@ import hashlib
 import os
 import sys
 import random
+import paramiko
+from paramiko import SSHClient
+
 from time import sleep
 
 from cm_api.api_client import ApiResource, ApiException
@@ -18,14 +21,19 @@ from cm_api.endpoints.hosts import *
 from cm_api.endpoints.services import ApiServiceSetupInfo, ApiService
 
 def getDataDiskCount():
-    bashCommand="lsblk | grep /data | grep -v /data/ | wc -l > /tmp/count2.out"
-    os.system(bashCommand)
-    f = open('/tmp/count2.out', 'r')
-    count=f.readline().rstrip('\n')
-    os.system("rm /tmp/count2.out")
+    bashCommand="lsblk | grep /data | grep -v /data/ | wc -l"
+    client=SSHClient()
+    client.set_missing_host_key_policy(paramiko.client.AutoAddPolicy())
+    log(socket.getfqdn(cmx.cm_server))
+    toconnect=socket.getfqdn(cmx.cm_server).replace("-mn0", "-dn0")
+    log(toconnect)
+    client.connect(toconnect, username=cmx.ssh_root_user, password=cmx.ssh_root_password)
+    stdin, stdout, stderr = client.exec_command(bashCommand)
+    count=stdout.readline().rstrip('\n')
+
     return count
 
-diskcount=getDataDiskCount()
+
 
 LOG_DIR='/log/cloudera'
 def init_cluster():
@@ -1847,6 +1855,9 @@ def main():
     # Parse user options
     log("parse_options")
     options = parse_options()
+    global diskcount
+    diskcount= getDataDiskCount()
+    log("data_disk_count"+`diskcount`)
     if(cmx.do_post):
         postEulaInfo(cmx.fname, cmx.lname, cmx.email, cmx.company,
                      cmx.jobrole, cmx.jobfunction, cmx.phone)
