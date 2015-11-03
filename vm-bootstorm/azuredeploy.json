@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-  "contentVersion": "1.0.0.0",
+  "contentVersion": "1.15.11.2",
   "parameters": {
     "azureAdApplicationId": {
       "type": "string",
@@ -20,18 +20,31 @@
         "description": "Azure Subscription Tenant Id."
       }
     },
-    "location": {
+    "dnsNameForPublicIP": {
       "type": "string",
-      "defaultValue": "East US 2",
       "metadata": {
-        "description": "Region to deploy VMs."
+        "description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
       }
     },
     "storageAccountName": {
       "type": "string",
-      "defaultValue": "vmbootsa",
       "metadata": {
-        "description": "Unique DNS Name for the Storage Account where the Virtual Machine's disks will be placed."
+        "description": "Unique Storage Account name to place OS disks."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "East US 2",
+      "allowedValues": [
+        "East US 2",
+        "West US",
+        "Central US",
+        "South Central US",
+        "North Central US",
+        "North Europe"
+      ],
+      "metadata": {
+        "description": "Region to deploy VMs."
       }
     },
     "vmOsSku": {
@@ -73,41 +86,6 @@
       "metadata": {
         "description": "Password for the Virtual Machine."
       }
-    },
-    "vmOsDiskName": {
-      "type": "string",
-      "defaultValue": "vmbootosdisk",
-      "metadata": {
-        "description": "Name of the OS disk of a Virtual Machine."
-      }
-    },
-    "dnsNameForPublicIP": {
-      "type": "string",
-      "defaultValue": "vmbootdns",
-      "metadata": {
-        "description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
-      }
-    },
-    "modulesPath": {
-      "type": "string",
-      "defaultValue": "https://raw.githubusercontent.com/dipakmsft/azure-quickstart-templates/master/vm-bootstorm/",
-      "metadata": {
-        "description": "The location of resources where scripts are stored"
-      }
-    },
-    "moduleVMBootAll": {
-      "type": "string",
-      "defaultValue": "VMBootAll.zip",
-      "metadata": {
-        "description": "The module for booting all VMs"
-      }
-    },
-    "configurationFunctionVMBootAll": {
-      "type": "string",
-      "defaultValue": "VMBootAll.ps1\\ConfigureVMBootAll",
-      "metadata": {
-        "description": "DSC configuration function to call. e.g. FileName.ps1\\ConfigurationFunctionName"
-      }
     }
   },
   "variables": {
@@ -121,11 +99,15 @@
     "publicIPAddressType": "Dynamic",
     "vmStorageAccountContainerName": "vmstoraccn",
     "vmSize": "Standard_A2",
+    "vmOsDiskName": "vmbootosdisk",
     "vmNicName": "vmnic",
     "virtualNetworkName": "vmvnet",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
     "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
-    "modulesUrlVMBootAll": "[concat(parameters('modulesPath'),parameters('moduleVMBootAll'))]"
+    "modulesPath": "https://raw.githubusercontent.com/dipakmsft/azure-quickstart-templates/master/vm-bootstorm/",
+    "moduleVMBootAll": "VMBootAll.zip",
+    "modulesUrlVMBootAll": "[concat(variables('modulesPath'),variables('moduleVMBootAll'))]",
+    "configurationFunctionVMBootAll": "VMBootAll.ps1\\ConfigureVMBootAll"
   },
   "resources": [
     {
@@ -250,7 +232,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',parameters('vmOsDiskName'),'.vhd')]"
+              "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('vmOsDiskName'),'.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -339,7 +321,7 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "modulesUrl": "[variables('modulesUrlVMBootAll')]",
-          "configurationFunction": "[parameters('configurationFunctionVMBootAll')]",
+          "configurationFunction": "[variables('configurationFunctionVMBootAll')]",
           "properties": [
             {
               "name": "AzureAdApplicationId",
