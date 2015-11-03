@@ -23,7 +23,7 @@ function validateTemplate(templatePath, parametersPath, validationUrl) {
   }
 
   return new RSVP.Promise(function(resolve, reject) {
-    unirest.post('http://40.118.211.57.xip.io/validate')
+    unirest.post(process.env.VALIDATION_URL)
     .type('json')
     .send(JSON.stringify(requestBody))
     .end(function (response) {
@@ -80,7 +80,7 @@ describe('Ensure exists Template', function() {
 });
 
 describe('Validate Template Module: ', function() {
-  this.timeout(5000);
+  this.timeout(20000);
   var tests = [];
 
   var directories = getDirectories('./');
