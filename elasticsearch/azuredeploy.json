@@ -11,12 +11,13 @@
     "adminPassword": {
       "type": "securestring",
       "metadata": {
-        "description": "Admin SSH key used when provisioning virtual machines"
+        "description": "Admin password used when provisioning virtual machines"
       }
     },
     "location": {
       "type": "string",
       "allowedValues": [
+        "ResourceGroup",
         "West US",
         "East US",
         "East US 2",
@@ -27,8 +28,9 @@
         "Southeast Asia",
         "West Europe"
       ],
+      "defaultValue": "ResourceGroup",
       "metadata": {
-        "description": "Location where resources will be provisioned"
+        "description": "Location where resources will be provisioned.  A value of 'ResourceGroup' will deploy the resource to the same location of the resource group the resources are provisioned into"
       }
     },
     "storageAccountPrefix": {
@@ -167,9 +169,22 @@
     }
   },
   "variables": {
+    "locationMap": {
+        "ResourceGroup":"[resourceGroup().location]",
+        "West US":"[parameters('location')]",
+        "East US":"[parameters('location')]",
+        "East US 2":"[parameters('location')]",
+        "Central US":"[parameters('location')]",
+        "South Central US":"[parameters('location')]",
+        "North Central US":"[parameters('location')]",
+        "East Asia":"[parameters('location')]",
+        "Southeast Asia":"[parameters('location')]",
+        "West Europe":"[parameters('location')]"
+    },
+    "location":"[variables('locationMap')[parameters('location')]]",
     "templateBaseUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/elasticsearch/",
     "storageAccountPrefix": "[toLower(parameters('storageAccountPrefix'))]",
-    "storageAccountNameShared": "[concat(variables('storageAccountPrefix'), 's', uniqueString(resourceGroup().id, deployment().name)]",
+    "storageAccountNameShared": "[concat(variables('storageAccountPrefix'), 's', uniqueString(resourceGroup().id, deployment().name))]",
     "masterNodesIpPrefix": "10.0.0.1",
     "networkSettings": {
       "virtualNetworkName": "[parameters('virtualNetworkName')]",
@@ -438,7 +453,7 @@
       "count":"[div(sub(add(parameters('vmDataNodeCount'), variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
       "mapping":"[variables('storageBinPackMap')]",
       "accountType":"[variables('dataSkuSettings')[parameters('vmSizeDataNodes')].storageAccountType]",
-      "prefix":"[concat(variables('storageAccountPrefix'), 'd', uniqueString(resourceGroup().id, deployment().name)]"
+      "prefix":"[concat(variables('storageAccountPrefix'), 'd', uniqueString(resourceGroup().id, deployment().name))]"
     },
     "dataTemplateUrl": "[concat(variables('templateBaseUrl'), 'data-nodes-', string(variables('dataSkuSettings')[parameters('vmSizeDataNodes')].dataDisks), 'disk-resources.json')]"
   },
@@ -470,7 +485,7 @@
             "value": "[variables('masterNodesIpPrefix')]"
           },
           "location": {
-            "value": "[parameters('location')]"
+            "value": "[variables('location')]"
           },
           "vmSize": {
             "value": "[parameters('vmSizeMasterNodes')]"
@@ -496,7 +511,7 @@
         },
         "parameters": {
           "location": {
-            "value": "[parameters('location')]"
+            "value": "[variables('location')]"
           },
           "networkSettings": {
             "value": "[variables('networkSettings')]"
@@ -509,9 +524,6 @@
           },
           "ilbIpAddress": {
             "value": "10.0.0.100"
-          },
-          "dnsName": {
-            "value": "[parameters('dnsNameforLBIP')]"
           }
         }
       }
@@ -540,7 +552,7 @@
             "value": "[variables('storageAccountNameShared')]"
           },
           "location": {
-            "value": "[parameters('location')]"
+            "value": "[variables('location')]"
           },
           "subnet": {
             "value": "[variables('networkSettings').subnet.data]"
@@ -581,7 +593,7 @@
             "value": "[parameters('adminPassword')]"
           },
           "location": {
-            "value": "[parameters('location')]"
+            "value": "[variables('location')]"
           },
           "storageSettings": {
             "value": "[variables('dataNodeStorageSettings')]"
@@ -631,7 +643,7 @@
             "value": "[parameters('adminPassword')]"
           },
           "location": {
-            "value": "[parameters('location')]"
+            "value": "[variables('location')]"
           },
           "subnet": {
             "value": "[variables('networkSettings').subnet.data]"
