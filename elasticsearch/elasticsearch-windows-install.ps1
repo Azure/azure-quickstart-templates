@@ -59,7 +59,9 @@ Param(
 	[string]$elasticClusterName,
 	[switch]$masterOnlyNode,
 	[switch]$clientOnlyNode,
-	[switch]$dataOnlyNode
+	[switch]$dataOnlyNode,
+	[switch]$installMarvel,
+	[switch]$jmeterConfig
 )
 
 # To set the env vars permanently, need to use registry location
@@ -229,11 +231,24 @@ function Unzip-Archive($archive, $destination){
 function SetEnv-JavaHome($jdkInstallLocation)
 {
     $homePath = $jdkInstallLocation
-    #Join-Path $jdkInstallLocation -ChildPath 'jre1.8.0_65'
+    
     lmsg "Setting JAVA_HOME in the registry to $homePath..."
 	Set-ItemProperty -Path $regEnvPath -Name JAVA_HOME -Value $homePath
+    
     lmsg 'Setting JAVA_HOME for the current session...'
     Set-Item Env:JAVA_HOME "$homePath"
+
+    # Additional check
+    if ([environment]::GetEnvironmentVariable("JAVA_HOME","machine") -eq $null)
+	{
+	    [environment]::setenvironmentvariable("JAVA_HOME",$homePath,"machine")
+	}
+
+    lmsg 'Modifying path variable to point to java executable...'
+    $currentPath = (Get-ItemProperty -Path $regEnvPath -Name PATH).Path
+    $currentPath = $currentPath + ';' + "$homePath\bin"
+    Set-ItemProperty -Path $regEnvPath -Name PATH -Value $currentPath
+    Set-Item Env:PATH "$currentPath"
 }
 
 function Install-ElasticSearch ($driveLetter, $elasticSearchZip, $subFolder = $elasticSearchBaseFolder)
@@ -311,6 +326,76 @@ function ElasticSearch-VerifyInstall()
 	lmsg 'ElasticSearch service response full text: ' $reader.ReadToEnd()
 }
 
+function Jmeter-Download
+{
+	try{
+			$drive = (get-location).Drive.Name
+			$destination = "$drive`:\Downloads\Jmeter\Jmeter_server_agent.zip"
+			$source = 'http://jmeter-plugins.org/downloads/file/ServerAgent-2.2.1.zip'
+            
+            # create folder if doesn't exists and suppress the output
+            $folder = split-path $destination
+            if (!(Test-Path $folder)) {
+                New-Item -Path $folder -ItemType Directory | Out-Null
+            }
+
+			$client = new-object System.Net.WebClient 
+
+            lmsg "Downloading Jmeter SA from $source to $destination"
+
+			$client.downloadFile($source, $destination)
+		}catch [System.Net.WebException],[System.Exception]{
+			lerr $_.Exception.Message
+            lerr $_.Exception.StackTrace
+			Break
+		}
+    
+    return $destination
+}
+
+function Jmeter-Unzip($source)
+{
+    # Unzip now
+    $shell = new-object -com shell.application
+
+	$zip = $shell.NameSpace($source)
+
+	$drive = (get-location).Drive.Name
+    $loc = "$drive`:\jmeter_sa"
+	
+	# Test destination folder
+	if (!(Test-Path $loc))
+	{
+        lmsg "Creating $loc folder"
+		New-Item -Path $loc -ItemType Directory | Out-Null
+    }
+
+	$loc = $shell.NameSpace($loc)
+
+    #TODO a progress dialog pops up though not sure of its effect on the deployment
+	$loc.CopyHere($zip.Items())
+
+    return $loc
+}
+
+function Jmeter-ConfigFirewall
+{
+    lmsg 'Adding firewall rule - Allow Jmeter Inbound Port 4444'
+    New-NetFirewallRule -Name 'Jmeter_ServerAgent_IN' -DisplayName 'Allow Jmeter Inbound Port 4444' -Protocol tcp -LocalPort 4444 -Action Allow -Enabled True -Direction Inbound
+    
+    lmsg 'Adding firewall rule - Allow Jmeter Outbound Port 4444'
+    New-NetFirewallRule -Name 'Jmeter_ServerAgent_OUT' -DisplayName 'Allow Jmeter Outbound Port 4444' -Protocol tcp -LocalPort 4444 -Action Allow -Enabled True -Direction Outbound
+
+}
+
+function Jmeter-Run($target)
+{
+	    cmd.exe /K "$target\startAgent.bat"
+        if ($LASTEXITCODE) {
+            throw "Command '$scriptPath': exit code: $LASTEXITCODE"
+        }
+}
+
 function Install-WorkFlow
 {
 	# Initialize installation drive
@@ -374,6 +459,7 @@ function Install-WorkFlow
             $textToAppend = $textToAppend + "`nnode.master: true`nnode.data: true"
         }
 
+		$textToAppend = $textToAppend + "`ndiscovery.zen.minimum_master_nodes: 2"
         $textToAppend = $textToAppend + "`ndiscovery.zen.ping.multicast.enabled: false"
         $textToAppend = $textToAppend + "`ndiscovery.zen.ping.unicast.hosts: [$ipAddresses]"
 
@@ -385,7 +471,8 @@ function Install-WorkFlow
 
 
         Add-Content $elasticSearchConfFile $textToAppend
-	
+		
+
 	# Add firewall rules
     lmsg 'Adding firewall rule - Allow Elasticsearch Inbound Port 9200'
     New-NetFirewallRule -Name 'ElasticSearch_In_Lb' -DisplayName 'Allow Elasticsearch Inbound Port 9200' -Protocol tcp -LocalPort 9200 -Action Allow -Enabled True -Direction Inbound
@@ -404,6 +491,28 @@ function Install-WorkFlow
     # Start service
     ElasticSearch-StartService
 
+    # Install marvel if specified
+    if ($installMarvel)
+    {
+        if ($elasticSearchVersion -match '2.0.0')
+        {
+            cmd.exe /C "$elasticSearchBin\plugin.bat install license"
+            cmd.exe /C "$elasticSearchBin\plugin.bat install marvel-agent"
+        }
+        else
+        {
+            cmd.exe /C "$elasticSearchBin\plugin.bat -i elasticsearch/marvel/latest"
+        }
+    }		
+		
+	# Temporary measure to configure each ES node for JMeter server agent
+	if ($jmeterConfig)
+	{
+		$jmZip = Jmeter-Download
+		$unzipLocation = Jmeter-Unzip $jmZip
+		Jmeter-ConfigFirewall
+		Jmeter-Run $unzipLocation
+	}
 
 
     # Verify service TODO: Investigate why verification fails during ARM deployment
