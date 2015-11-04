@@ -31,6 +31,11 @@ unzip moodle.zip
 chown -R www-data moodle
 chmod -R 0755 moodle
 
+# create moodledata directory
+mkdir /var/www/moodledata
+chown -R www-data /var/www/moodledata
+chmod -R 777 /var/www/moodledata
+
 # # mount moodledata disk
 # # The ARM script only mounts a single data disk.  It is safe 
 # # to assume that on a new VM, this data disk is located at /dev/sdc.
@@ -65,3 +70,14 @@ chmod -R 0755 moodle
 
 # restart Apache
 apachectl restart
+
+# mount share file on /var/www/moodledata
+SharedStorageAccountName=$2
+SharedAzureFileName=$3
+SharedStorageAccountKey=$4
+sudo apt-get install cifs-utils
+sudo mount -t cifs //$SharedStorageAccountName.file.core.windows.net/$SharedAzureFileName /var/www/moodledata -o vers=2.1,username=$SharedStorageAccountName,password=$SharedStorageAccountKey,dir_mode=0777,file_mode=0777
+	
+#add mount to /etc/fstab to persist across reboots
+sudo chmod 777 /etc/fstab
+sudo echo "//$SharedStorageAccountName.file.core.windows.net/$SharedAzureFileName /var/www/moodledata cifs vers=3.0,username=$SharedStorageAccountName,password=$SharedStorageAccountKey,dir_mode=0777,file_mode=0777" >> /etc/fstab
