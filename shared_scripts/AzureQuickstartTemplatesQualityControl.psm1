@@ -17,6 +17,16 @@ $global:options['CustomArgumentCompleters']['Test-AzureQuickstartTemplate:Templa
 $function:tabexpansion2 = $function:tabexpansion2 -replace 'End\r\n{','End { if ($null -ne $options) { $options += $global:options} else {$options = $global:options}'
 #
 
+function Get-RandomValue 
+{
+	$set = 'abcdefghijklmnopqrstuvwxyz'.ToCharArray() 
+	$result = @()
+	$result += $set | Get-Random
+	$set = 'abcdefghijklmnopqrstuvwxyz0123456789'.ToCharArray()
+	$result += 1..4 | ForEach-Object -Process { $set | Get-Random }  
+	$result -join ''
+}
+
 <#
 .SYNOPSIS
 Executes one or many ARM template(s) deployment.
@@ -56,19 +66,12 @@ param(
 	$TemplateName,
 	[Parameter(Position = 1)]
 	[string]
+	$RandomValue = (Get-RandomValue),
+	[Parameter(Position = 2)]
+	[string]
 	$Location = 'West US'
 )
 	$ErrorActionPreference = 'Stop'
-
-	function Get-RandomValue 
-	{
-	  $set = 'abcdefghijklmnopqrstuvwxyz'.ToCharArray() 
-	  $result = @()
-	  $result += $set | Get-Random
-	  $set = 'abcdefghijklmnopqrstuvwxyz0123456789'.ToCharArray()
-	  $result += 1..4 | ForEach-Object -Process { $set | Get-Random }  
-	  $result -join ''
-	}
 
 
 	if (Get-Command Get-AzureRmContext -ErrorAction SilentlyContinue)
@@ -98,13 +101,14 @@ param(
 	  }
 
 	  #load parameters and replace ##### by random value
-	  $randomValue = Get-RandomValue
 	  $paramFile = Get-Content -Path $templateFolder\azuredeploy.parameters.json -Raw | ConvertFrom-Json
 	  $params = @{}
 	  $paramFile.parameters | Get-Member -MemberType NoteProperty | ForEach-Object -Process {
-		$value = $paramFile.parameters.$($_.Name).value
-		if ($value -eq '#####') {$value = $randomValue}
-		$params[$_.Name] = $value
+		  $value = $paramFile.parameters.$($_.Name).value
+		  if ($value -eq '#####') {
+        $value = $RandomValue
+      }
+		  $params[$_.Name] = $value
 	  }  
 
 	  $resourceGroupName = 'azure-quickstart-templates--{0}' -f $currentTemplateName
@@ -120,3 +124,5 @@ param(
 	  }
 	}
 }
+
+Export-ModuleMember -Function Test-AzureQuickstartTemplate
