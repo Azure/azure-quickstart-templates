@@ -2,13 +2,13 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "dnsname": {
+        "uniqueDnsName": {
             "type": "string",
             "metadata": {
-                "description": "Relative DNS name for the traffic manager profile, resulting FQDN will be <dnsname>.trafficmanager.net, must be globally unique."
+                "description": "Relative DNS name for the traffic manager profile, resulting FQDN will be <uniqueDnsName>.trafficmanager.net, must be globally unique."
             }
         },
-        "dnsnameForWebApp": {
+        "uniqueDnsNameForWebApp": {
             "type": "string",
             "metadata": {
                 "description": "Relative DNS name for the WebApps, must be globally unique.  An index will be appended for each Web App."
@@ -19,7 +19,7 @@
     "variables": {
         "tmApiVersion": "2015-04-28-preview",
         "apiVersion": "2015-08-01",
-        "locations": [ "westus", "eastus" ],
+        "webAppLocations": [ "West US", "East US" ],
         "farmName": "default"
     },
 
@@ -32,7 +32,7 @@
                 "name": "farmloop",
                 "count": 2
             },
-            "location": "[variables('locations')[copyIndex()]]",
+            "location": "[variables('webAppLocations')[copyIndex()]]",
             "sku": {
                 "name": "F1",
                 "tier": "Free"
@@ -40,13 +40,13 @@
         },
         {
             "apiVersion": "[variables('apiVersion')]",
-            "name": "[concat(parameters('dnsnameForWebApp'), copyIndex())]",
+            "name": "[concat(parameters('uniqueDnsNameForWebApp'), copyIndex())]",
             "type": "Microsoft.Web/sites",
             "copy": {
                 "name": "siteloop",
                 "count": 2
             },
-            "location": "[variables('locations')[copyIndex()]]",
+            "location": "[variables('webAppLocations')[copyIndex()]]",
             "dependsOn": [ "[concat('DemoAppServicePlan', copyIndex())]" ],
             "properties": {
                 "serverFarmId": "[concat('DemoAppServicePlan', copyIndex())]"
@@ -58,14 +58,14 @@
             "name": "WebsiteEndpointExample",
             "location": "global",
             "dependsOn": [
-                "[concat('Microsoft.Web/sites/', parameters('dnsnameForWebApp'), '0')]",
-                "[concat('Microsoft.Web/sites/', parameters('dnsnameForWebApp'), '1')]"
+                "[concat('Microsoft.Web/sites/', parameters('uniqueDnsNameForWebApp'), '0')]",
+                "[concat('Microsoft.Web/sites/', parameters('uniqueDnsNameForWebApp'), '1')]"
             ],
             "properties": {
                 "profileStatus": "Enabled",
                 "trafficRoutingMethod": "Priority",
                 "dnsConfig": {
-                    "relativeName": "[parameters('dnsname')]",
+                    "relativeName": "[parameters('uniqueDnsName')]",
                     "ttl": 30
                 },
                 "monitorConfig": {
@@ -78,7 +78,7 @@
                         "name": "endpoint0",
                         "type": "Microsoft.Network/trafficManagerProfiles/azureEndpoints",
                         "properties": {
-                            "targetResourceId": "[resourceId('Microsoft.Web/sites/',concat(parameters('dnsnameForWebApp'), '0'))]",
+                            "targetResourceId": "[resourceId('Microsoft.Web/sites/',concat(parameters('uniqueDnsNameForWebApp'), '0'))]",
                             "endpointStatus": "Enabled",
                             "priority": 1
                         }
@@ -87,7 +87,7 @@
                         "name": "endpoint1",
                         "type": "Microsoft.Network/trafficManagerProfiles/azureEndpoints",
                         "properties": {
-                            "targetResourceId": "[resourceId('Microsoft.Web/sites/',concat(parameters('dnsnameForWebApp'), '1'))]",
+                            "targetResourceId": "[resourceId('Microsoft.Web/sites/',concat(parameters('uniqueDnsNameForWebApp'), '1'))]",
                             "endpointStatus": "Enabled",
                             "priority": 2
                         }
