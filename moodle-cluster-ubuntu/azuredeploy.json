@@ -154,12 +154,13 @@
     "lbDBProbeID": "[concat(variables('lbDBID'),'/probes/tcpProbe')]",
     "lbPoolID": "[concat(variables('lbID'),'/backendAddressPools/LoadBalancerBackend')]",
     "lbDBPoolID": "[concat(variables('lbDBID'),'/backendAddressPools/DBLoadBalancerBackend')]",
+    "SharedAzureFileName": "moodlefileshare",
     "installFrontendScriptName": "install_frontend.sh",
     "installFrontendScriptUri": "[concat('https://raw.githubusercontent.com/vinhub/azure-quickstart-templates/master/moodle-cluster-ubuntu/', variables('installFrontendScriptName'))]",
-    "installFrontendCommand": "[concat('sh ', variables('installFrontendScriptName'), ' ', parameters('mySqlPassword'))]",
+    "installFrontendCommand": "[concat('sh ', variables('installFrontendScriptName'), ' ', parameters('mySqlPassword'), ' ', parameters('newStorageAccountName'), ' ', variables('SharedAzureFileName'))]",
     "installBackendScriptName": "install_backend.sh",
     "installBackendScriptUri": "[concat('https://raw.githubusercontent.com/vinhub/azure-quickstart-templates/master/moodle-cluster-ubuntu/', variables('installBackendScriptName'))]",
-    "installBackendCommand": "[concat('sh ', variables('installBackendScriptName'), ' ', parameters('mySqlPassword'))]"
+    "installBackendCommand": "[concat('sh ', variables('installBackendScriptName'), ' ', parameters('mySqlPassword'), ' ', parameters('newStorageAccountName'), ' ', variables('SharedAzureFileName'))]"
   },
   "resources": [
     {
@@ -468,16 +469,6 @@
             "sku": "[variables('ubuntuOSVersion')]",
             "version": "latest"
           },
-          "dataDisks": [
-          {
-            "name": "[concat(variables('vmName'),'-dataDisk')]",
-            "lun": 0,
-            "createOption": "Attach",            
-            "vhd": {
-              "uri": "[variables('dataDiskUri')]"
-            }
-          }
-          ],
           "osDisk": {
             "name": "osdisk",
             "vhd": {
@@ -516,7 +507,7 @@
           "fileUris": [
             "[variables('installFrontendScriptUri')]"
           ],
-          "commandToExecute": "[variables('installFrontendCommand')]"
+          "commandToExecute": "[concat(variables('installFrontendCommand'), ' ',listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('newStorageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).key1)]"
         }
       },
       "copy": {
@@ -602,17 +593,6 @@
             "sku": "[variables('ubuntuOSVersion')]",
             "version": "latest"
           },
-          "dataDisks": [
-          {
-            "name": "[concat(variables('vmName'),'-dataDisk')]",
-            "lun": 0,
-            "createOption": "Empty",
-            "diskSizeGB": "[variables('dataDiskSizeGB')]",            
-            "vhd": {
-              "uri": "[variables('dataDiskUri')]"
-            }
-          }
-          ],
           "osDisk": {
             "name": "osdisk",
             "vhd": {
@@ -647,7 +627,7 @@
           "fileUris": [
             "[variables('installBackendScriptUri')]"
           ],
-          "commandToExecute": "[variables('installBackendCommand')]"
+          "commandToExecute": "[concat(variables('installBackendCommand'), ' ',listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('newStorageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).key1)]"
         }
       }
     }
