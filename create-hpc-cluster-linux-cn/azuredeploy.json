@@ -118,6 +118,7 @@
   },
   "variables": {
     "apiVersion": "2015-05-01-preview",
+    "location": "[resourceGroup().location]",
     "storageAccountName": "[toLower(concat(parameters('clusterName'), 'sa'))]",
     "cnStorageAccountPrefix": "[concat(variables('storageAccountName'), 'cn')]",
     "cnStorageAccountNumber": "[add(div(parameters('computeNodeNumber'), 10), 1)]",
@@ -205,7 +206,7 @@
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('storageAccountName')]",
       "apiVersion": "[variables('apiVersion')]",
-      "location": "[resourceGroup().location]",
+      "location": "[variables('location')]",
       "properties": {
         "accountType": "Standard_LRS"
       }
@@ -214,17 +215,11 @@
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[variables('location')]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
             "[variables('addressPrefix')]"
-          ]
-        },
-        "dhcpOptions": {
-          "dnsServers": [
-            "10.0.0.4",
-            "8.8.8.8"
           ]
         },
         "subnets": [
@@ -241,7 +236,7 @@
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressNameHN')]",
-      "location": "[resourceGroup().location]",
+      "location": "[variables('location')]",
       "properties": {
         "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
         "dnsSettings": {
@@ -253,7 +248,7 @@
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicNameHN')]",
-      "location": "[resourceGroup().location]",
+      "location": "[variables('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressNameHN'))]"
       ],
@@ -336,6 +331,48 @@
           },
           "availabilitySetName": {
             "value": "[variables('availabilitySetName')]"
+          },
+          "scriptBaseUri": {
+            "value": "[variables('customScriptLocation')]"
+          },
+          "privateDomainName": {
+            "value": "[parameters('privateDomainName')]"
+          }
+        }
+      }
+    },
+
+    {
+      "apiVersion": "2015-01-01",
+      "type": "Microsoft.Resources/deployments",
+      "name": "updateVNetDNS",
+      "dependsOn": [
+        "Microsoft.Resources/deployments/createHeadNode"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('customScriptLocation'),'vnet-with-dns-server.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "virtualNetworkName": {
+            "value": "[variables('virtualNetworkName')]"
+          },
+          "virtualNetworkAddressRange": {
+            "value": "[variables('addressPrefix')]"
+          },
+          "subnetName": {
+            "value": "[variables('subnet1Name')]"
+          },
+          "subnetRange": {
+            "value": "[variables('subnet1Prefix')]"
+          },
+          "DNSServerAddress": {
+            "value": [
+              "10.0.0.4",
+              "8.8.8.8"
+            ]
           }
         }
       }
@@ -345,9 +382,9 @@
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('clusterName'),'/configureHeadNode')]",
       "apiVersion": "[variables('apiVersion')]",
-      "location": "[resourceGroup().location]",
+      "location": "[variables('location')]",
       "dependsOn": [
-        "Microsoft.Resources/deployments/createHeadNode"
+        "Microsoft.Resources/deployments/updateVNetDNS"
       ],
       "properties": {
         "publisher": "Microsoft.Compute",
@@ -368,7 +405,10 @@
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[concat(variables('cnStorageAccountPrefix'), copyIndex())]",
       "apiVersion": "[variables('apiVersion')]",
-      "location": "[resourceGroup().location]",
+      "location": "[variables('location')]",
+      "dependsOn": [
+        "Microsoft.Resources/deployments/updateVNetDNS"
+      ],
       "copy": {
         "name": "CNStorageAccounts",
         "count": "[variables('cnStorageAccountNumber')]"
@@ -379,39 +419,11 @@
     },
 
     {
-      "apiVersion": "[variables('apiVersion')]",
-      "type": "Microsoft.Network/networkInterfaces",
-      "name": "[concat(variables('nicName'), copyIndex())]",
-      "location": "[resourceGroup().location]",
-      "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicNameHN'))]"
-      ],
-      "copy": {
-        "name": "CN",
-        "count": "[parameters('computeNodeNumber')]"
-      },
-      "properties": {
-        "ipConfigurations": [
-          {
-            "name": "IPConfig",
-            "properties": {
-              "privateIPAllocationMethod": "Dynamic",
-              "subnet": {
-                "id": "[variables('subnetRef')]"
-              }
-            }
-          }
-        ]
-      }
-    },
-
-    {
       "apiVersion": "2015-01-01",
       "type": "Microsoft.Resources/deployments",
       "name": "[concat('create', parameters('computeNodeNamePrefix'), copyIndex())]",
       "dependsOn": [
         "Microsoft.Resources/deployments/createAvailabilitySet",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyIndex())]",
         "[concat('Microsoft.Storage/storageAccounts/', variables('cnStorageAccountPrefix'), div(copyIndex(), 10))]"
       ],
       "copy": {
@@ -427,6 +439,15 @@
         "parameters": {
           "apiVersion": {
             "value": "[variables('apiVersion')]"
+          },
+          "location": {
+            "value": "[variables('location')]"
+          },
+          "nicName": {
+            "value": "[concat(variables('nicName'), copyIndex())]"
+          },
+          "subnetId": { 
+            "value": "[variables('subnetRef')]"
           },
           "vmName": {
             "value": "[concat(parameters('computeNodeNamePrefix'), copyIndex())]"
@@ -449,9 +470,6 @@
           "imgVersion": {
             "value": "latest"
           },
-          "nicName": {
-            "value": "[concat(variables('nicName'), copyIndex())]"
-          },
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
           },
@@ -463,55 +481,16 @@
           },
           "customData": { 
             "value": "[base64(concat('HPCClusterName=', parameters('clusterName'), '\r\nImageCategory=public\r\nImageName=', parameters('computeNodeImage'), '\r\nVMSize=', parameters('computeNodeVMSize')))]"
+          },
+          "scriptBaseUri": {
+            "value": "[variables('customScriptLocation')]"
+          },
+          "clusterName": {
+            "value": "[parameters('clusterName')]"
+          },
+          "privateDomainName": {
+            "value": "[parameters('privateDomainName')]"
           }
-        }
-      }
-    },
-
-    {
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(parameters('computeNodeNamePrefix'), copyIndex(), '/updateDNSRecord')]",
-      "apiVersion": "[variables('apiVersion')]",
-      "location": "[resourceGroup().location]",
-      "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('clusterName'), '/extensions/configureHeadNode')]",
-        "[concat('Microsoft.Resources/deployments/create', parameters('computeNodeNamePrefix'), copyIndex())]"
-      ],
-      "copy": {
-        "name": "CN",
-        "count": "[parameters('computeNodeNumber')]"
-      },
-      "properties": {
-        "publisher": "Microsoft.OSTCExtensions",
-        "type": "CustomScriptForLinux",
-        "typeHandlerVersion": "1.3",
-        "settings": {
-          "fileUris": [
-            "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/create-hpc-cluster-linux-cn/updatednsrecord.sh"
-          ],
-          "commandToExecute": "[concat('bash updatednsrecord.sh ', parameters('privateDomainName'), ' ', reference(concat(variables('nicName'), copyIndex())).ipConfigurations[0].properties.privateIPAddress)]"
-        }
-      }
-    },
-
-    {
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(parameters('computeNodeNamePrefix'), copyIndex(), '/installHPCNodeAgent')]",
-      "apiVersion": "[variables('apiVersion')]",
-      "location": "[resourceGroup().location]",
-      "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('computeNodeNamePrefix'), copyIndex(), '/extensions/updateDNSRecord')]"
-      ],
-      "copy": {
-        "name": "CN",
-        "count": "[parameters('computeNodeNumber')]"
-      },
-      "properties": {
-        "publisher": "Microsoft.HpcPack",
-        "type": "LinuxNodeAgent",
-        "typeHandlerVersion": "1.5",
-        "protectedSettings": {
-          "ClusterName": "[concat(parameters('clusterName'), '.', parameters('privateDomainName'))]"
         }
       }
     }
