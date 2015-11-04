@@ -26,27 +26,41 @@
 #
 
 # This is temporary - we will change this to use a local client node on this kibana instance
-ELASTICSEARCH_URL="10.0.1.4"
+ELASTICSEARCH_URL="http://10.0.1.4:9200"
+
+# Install Oracle Java
+add-apt-repository -y ppa:webupd8team/java
+apt-get -y update  > /dev/null
+echo debconf shared/accepted-oracle-license-v1-1 select true | sudo debconf-set-selections
+echo debconf shared/accepted-oracle-license-v1-1 seen true | sudo debconf-set-selections
+apt-get -y install oracle-java8-installer  > /dev/null
 
 sudo groupadd -g 999 kibana
 sudo useradd -u 999 -g 999 kibana
 
 sudo mkdir -p /opt/kibana
 curl -o kibana.tar.gz https://download.elastic.co/kibana/kibana/kibana-4.2.0-linux-x64.tar.gz
-tar xvf kibana.tar.gz -C /opt/kibana/
+tar xvf kibana.tar.gz -C /opt/kibana/ --strip-components=1
 
 sudo chown -R kibana: /opt/kibana
 
 # set the elasticsearch URL
-sed -ri "s!^(elasticsearch_url:).*!\1 '$ELASTICSEARCH_URL'!" /opt/kibana/config/kibana.yml
+mv /opt/kibana/config/kibana.yml /opt/kibana/config/kibana.yml.bak
+echo "elasticsearch.url: \"$ELASTICSEARCH_URL\"" >> /opt/kibana/config/kibana.yml
 
-# add marvel
+# install the marvel plugin
 /opt/kibana/bin/kibana plugin --install elasticsearch/marvel/latest
 
-# setup init script
-cd /etc/init.d && sudo curl -o kibana https://gist.githubusercontent.com/thisismitch/8b15ac909aed214ad04a/raw/fc5025c3fc499ad8262aff34ba7fde8c87ead7c0/kibana-4.x-init
-cd /etc/default && sudo curl -o kibana https://gist.githubusercontent.com/thisismitch/8b15ac909aed214ad04a/raw/fc5025c3fc499ad8262aff34ba7fde8c87ead7c0/kibana-4.x-default
+# Add upstart task and start kibana service
+cat << EOF > /etc/init/kibana.conf
+# kibana
+description "Elasticsearch Kibana Service"
 
-sudo chmod +x /etc/init.d/kibana
-sudo update-rc.d kibana defaults 96 9
+start on starting
+script
+    /opt/kibana/bin/kibana
+end script
+EOF
+
+chmod +x /etc/init/kibana.conf
 sudo service kibana start
