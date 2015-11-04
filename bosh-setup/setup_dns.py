@@ -102,7 +102,7 @@ iface eth0 inet static
    network 10.0.0.0
    gateway 10.0.0.1
 """
-RESOLV_CONF_BASE = '/etc/resolvconf/resolv.conf.d/base'
+RESOLV_CONF = '/etc/resolvconf/resolv.conf.d/head'
 
 
 def set_config(file, contents):
@@ -213,8 +213,7 @@ if __name__ == '__main__':
     set_config(wan_zone_file, wan_zone_conf)
 
     change_eth0_to_static(dns_internal_ip)
-    call('echo "nameserver {0}" > {1}'.format(dns_internal_ip, RESOLV_CONF_BASE), shell=True)
-    call('rm -f /run/resolvconf/resolv.conf', shell=True)
+    call('echo "nameserver {0}" > {1}'.format(dns_internal_ip, RESOLV_CONF), shell=True)
     call('resolvconf -u', shell=True)
     # Restart bind9
     call('/etc/init.d/bind9 restart', shell=True)
