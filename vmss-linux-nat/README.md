@@ -4,4 +4,4 @@
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a><a  target="_blank">
 
-This template allows you to deploy a simple VM Scale Set of Linux VMs using the lastest patched version of Ubuntu Linux 15.04.
+This template allows you to deploy a simple VM Scale Set of Linux VMs using the lastest patched version of Ubuntu Linux 15.04 or 14.02.2-LTS.
