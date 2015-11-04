@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-  "contentVersion": "1.15.11.2",
+  "contentVersion": "1.15.11.3",
   "parameters": {
     "azureAdApplicationId": {
       "type": "string",
@@ -32,19 +32,23 @@
         "description": "Unique Storage Account name to place OS disks."
       }
     },
-    "location": {
+    "vmAdminUsername": {
       "type": "string",
-      "defaultValue": "East US 2",
-      "allowedValues": [
-        "East US 2",
-        "West US",
-        "Central US",
-        "South Central US",
-        "North Central US",
-        "North Europe"
-      ],
       "metadata": {
-        "description": "Region to deploy VMs."
+        "description": "Username for the Virtual Machine."
+      }
+    },
+    "vmAdminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the Virtual Machine."
+      }
+    },
+    "vmCount": {
+      "type": "int",
+      "defaultValue": 2,
+      "metadata": {
+        "description": "Number of VMs to create."
       }
     },
     "vmOsSku": {
@@ -59,30 +63,19 @@
         "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version. Allowed values: 2008-R2-SP1, 2012-Datacenter, 2012-R2-Datacenter."
       }
     },
-    "vmCount": {
-      "type": "int",
-      "defaultValue": 2,
-      "metadata": {
-        "description": "Number of VMs to create."
-      }
-    },
-    "vmAdminUsername": {
+    "location": {
       "type": "string",
+      "defaultValue": "West US",
+      "allowedValues": [
+        "West US",
+        "East US 2",
+        "Central US",
+        "South Central US",
+        "North Central US",
+        "North Europe"
+      ],
       "metadata": {
-        "description": "Username for the Virtual Machine."
-      }
-    },
-    "vmAdminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Password for the Virtual Machine."
-      }
-    },
-    "vmName": {
-      "type": "string",
-      "defaultValue": "vmbootwin",
-      "metadata": {
-        "description": "Name of the Virtual Machine."
+        "description": "Region to deploy VMs."
       }
     }
   },
@@ -97,6 +90,7 @@
     "publicIPAddressName": "vmpublicip",
     "publicIPAddressType": "Dynamic",
     "vmStorageAccountContainerName": "vmstoraccn",
+    "vmName": "vmbootvm",
     "vmSize": "Standard_A2",
     "vmOsDiskName": "vmbootosdisk",
     "vmNicName": "vmnic",
@@ -206,7 +200,7 @@
     {
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[parameters('vmName')]",
+      "name": "[variables('vmName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/',parameters('uniqueStorageAccountName'))]",
@@ -217,7 +211,7 @@
           "vmSize": "[variables('vmSize')]"
         },
         "osProfile": {
-          "computerName": "[parameters('vmName')]",
+          "computerName": "[variables('vmName')]",
           "adminUsername": "[parameters('vmAdminUsername')]",
           "adminPassword": "[parameters('vmAdminPassword')]"
         },
@@ -255,7 +249,7 @@
     {
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[concat(parameters('vmName'),copyIndex())]",
+      "name": "[concat(variables('vmName'),copyIndex())]",
       "location": "[parameters('location')]",
       "copy": {
         "name": "vmLoop",
@@ -270,7 +264,7 @@
           "vmSize": "[variables('vmSize')]"
         },
         "osProfile": {
-          "computerName": "[parameters('vmName')]",
+          "computerName": "[variables('vmName')]",
           "adminUsername": "[parameters('vmAdminUsername')]",
           "adminPassword": "[parameters('vmAdminPassword')]"
         },
@@ -307,11 +301,11 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(parameters('vmName'),'/dscExtension')]",
+      "name": "[concat(variables('vmName'),'/dscExtension')]",
       "apiVersion": "[variables('apiVersion')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/',parameters('vmName'))]"
+        "[concat('Microsoft.Compute/virtualMachines/',variables('vmName'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Powershell",
@@ -339,7 +333,7 @@
             },
             {
               "name": "VMName",
-              "value": "[parameters('vmName')]",
+              "value": "[variables('vmName')]",
               "typeName": "System.String"
             },
             {
