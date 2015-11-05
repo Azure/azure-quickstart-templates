@@ -311,7 +311,7 @@ function ElasticSearch-StartService()
     {
         lmsg 'Starting elasticsearch service and setting the startup to automatic...'
         $svc = Start-Service $elasticService
-        $svc.WaitForStatus('Started', '00:00:30')
+        $svc.WaitForStatus('Started', '00:00:10')
 		Set-Service $elasticService -StartupType Automatic
         
         # Give approximately 20 seconds for service to start before verification
@@ -319,7 +319,7 @@ function ElasticSearch-StartService()
     }
 }
 
-function ElasticSearch-VerifyInstall()
+function ElasticSearch-VerifyInstall
 {
     $esRequest = [System.Net.WebRequest]::Create("http://localhost:9200")
     $esRequest.Method = "GET"
@@ -329,10 +329,9 @@ function ElasticSearch-VerifyInstall()
 	lmsg 'ElasticSearch service response full text: ' $reader.ReadToEnd()
 }
 
-function Jmeter-Download
+function Jmeter-Download($drive)
 {
 	try{
-			$drive = (get-location).Drive.Name
 			$destination = "$drive`:\Downloads\Jmeter\Jmeter_server_agent.zip"
 			$source = 'http://jmeter-plugins.org/downloads/file/ServerAgent-2.2.1.zip'
             
@@ -356,14 +355,13 @@ function Jmeter-Download
     return $destination
 }
 
-function Jmeter-Unzip($source)
+function Jmeter-Unzip($source, $drive)
 {
     # Unzip now
     $shell = new-object -com shell.application
 
 	$zip = $shell.NameSpace($source)
 
-	$drive = (get-location).Drive.Name
     $loc = "$drive`:\jmeter_sa"
 	
 	# Test destination folder
@@ -373,27 +371,30 @@ function Jmeter-Unzip($source)
 		New-Item -Path $loc -ItemType Directory | Out-Null
     }
 
-	$loc = $shell.NameSpace($loc)
+	$locShell = $shell.NameSpace($loc)
 
     #TODO a progress dialog pops up though not sure of its effect on the deployment
-	$loc.CopyHere($zip.Items())
+	$locShell.CopyHere($zip.Items())
 
     return $loc
 }
 
 function Jmeter-ConfigFirewall
 {
-    lmsg 'Adding firewall rule - Allow Jmeter Inbound Port 4444'
-    New-NetFirewallRule -Name 'Jmeter_ServerAgent_IN' -DisplayName 'Allow Jmeter Inbound Port 4444' -Protocol tcp -LocalPort 4444 -Action Allow -Enabled True -Direction Inbound
+    for($i=4440; $i -le 4444; $i++)
+    {
+        lmsg 'Adding firewall rule - Allow Jmeter Inbound Port ' $i
+        New-NetFirewallRule -Name "Jmeter_ServerAgent_IN_$i" -DisplayName "Allow Jmeter Inbound Port $i" -Protocol tcp -LocalPort $i -Action Allow -Enabled True -Direction Inbound
     
-    lmsg 'Adding firewall rule - Allow Jmeter Outbound Port 4444'
-    New-NetFirewallRule -Name 'Jmeter_ServerAgent_OUT' -DisplayName 'Allow Jmeter Outbound Port 4444' -Protocol tcp -LocalPort 4444 -Action Allow -Enabled True -Direction Outbound
-
+        lmsg 'Adding firewall rule - Allow Jmeter Outbound Port ' $i
+        New-NetFirewallRule -Name "Jmeter_ServerAgent_OUT_$i" -DisplayName "Allow Jmeter Outbound Port $i" -Protocol tcp -LocalPort $i -Action Allow -Enabled True -Direction Outbound
+    }
 }
 
-function Jmeter-Run($target)
+function Jmeter-Run($unzipLoc)
 {
-    Start-Process -FilePath "$target\startAgent.bat" -WindowStyle Minimized
+    $targetPath = Join-Path -Path $unzipLoc -ChildPath 'startAgent.bat'
+    Start-Process -FilePath $targetPath -WindowStyle Minimized
 }
 
 function Install-WorkFlow
@@ -512,8 +513,8 @@ function Install-WorkFlow
 	# Temporary measure to configure each ES node for JMeter server agent
 	if ($jmeterConfig)
 	{
-		$jmZip = Jmeter-Download
-		$unzipLocation = Jmeter-Unzip $jmZip
+		$jmZip = Jmeter-Download $firstDrive
+		$unzipLocation = Jmeter-Unzip $jmZip $firstDrive
 		Jmeter-ConfigFirewall
 		Jmeter-Run $unzipLocation
 	}
