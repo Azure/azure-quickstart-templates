@@ -394,6 +394,8 @@ function Jmeter-ConfigFirewall
 function Jmeter-Run($unzipLoc)
 {
     $targetPath = Join-Path -Path $unzipLoc -ChildPath 'startAgent.bat'
+
+    lmsg 'Starting jmeter server agent at ' $targetPath
     Start-Process -FilePath $targetPath -WindowStyle Minimized
 }
 
