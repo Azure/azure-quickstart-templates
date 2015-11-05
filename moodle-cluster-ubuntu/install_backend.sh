@@ -27,35 +27,6 @@ SQL="${Q1}${Q2}${Q3}"
 
 $MYSQL -uroot -p$dbpass -e "$SQL"
 
-# # mount moodledata disk
-# # The ARM script only mounts a single data disk.  It is safe 
-# # to assume that on a new VM, this data disk is located at /dev/sdc.
-
-# # If you have a more complicated setup, then do examine what this
-# # script is doing and modify accordingly.
-
-# # create a partition table for the disk
-# parted -s /dev/sdc mklabel msdos
-
-# # create a single large partition
-# parted -s /dev/sdc mkpart primary ext4 0\% 100\%
-
-# # install the file system
-# mkfs.ext4 /dev/sdc1
-
-# # create the mount point
-# mkdir -p /moodledata
-
-# # mount the disk
-# mount /dev/sdc1 /moodledata/
-
-# # premissions
-# chown -R www-data /moodledata
-# chmod -R 777 /moodledata
-
-# # add mount to /etc/fstab to persist across reboots
-# echo "/dev/sdc1    /moodledata/    ext4    defaults 0 0" >> /etc/fstab
-
 # restart MySQL
 service mysql restart
 
@@ -69,7 +40,7 @@ sudo service mysql start
 # restart Apache
 apachectl restart
 
-# Create file share
+# Create file share that will be used by front end VM's for moodledata directory
 SharedStorageAccountName=$2
 SharedAzureFileName=$3
 SharedStorageAccountKey=$4
