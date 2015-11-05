@@ -269,7 +269,10 @@ else
 fi
 
 echo "discovery.zen.minimum_master_nodes: 2" >> /etc/elasticsearch/elasticsearch.yml
-echo "network.host: _non_loopback_" >> /etc/elasticsearch/elasticsearch.yml
+
+if [[ "${ES_VERSION}" == \2* ]]; then
+    echo "network.host: _non_loopback_" >> /etc/elasticsearch/elasticsearch.yml
+fi
 
 # DNS Retry
 echo "options timeout:1 attempts:5" >> /etc/resolvconf/resolv.conf.d/head
