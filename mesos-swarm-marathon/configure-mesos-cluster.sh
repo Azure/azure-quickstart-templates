@@ -111,8 +111,29 @@ ensureAzureNetwork()
     ip a
     exit 2
   fi
+  # ensure the host ip can resolve
+  networkHealthy=1
+  for i in {1..120}; do
+    hostname -i
+    if [ $? -eq 0 ]
+    then
+      # hostname has been found continue
+      networkHealthy=0
+      echo "the network is healthy"
+      break
+    fi
+    sleep 1
+  done
+  if [ $networkHealthy -ne 0 ]
+  then
+    echo "the network is not healthy, cannot resolve ip address, aborting install"
+    ifconfig
+    ip a
+    exit 2
+  fi
 }
 ensureAzureNetwork
+HOSTADDR=`hostname -i`
 
 ismaster ()
 {
@@ -169,6 +190,12 @@ zkconfig()
   zkconfigstr="zk://${zkhosts}/${postfix}"
   echo $zkconfigstr
 }
+
+######################
+# resolve self in DNS
+######################
+
+echo "$HOSTADDR $VMNAME" | sudo tee -a /etc/hosts
 
 ################
 # Install Docker
@@ -270,6 +297,9 @@ if ismaster  && [ "$MARATHONENABLED" == "true" ] ; then
   sudo cp /etc/mesos/zk /etc/marathon/conf/master
   zkmarathonconfig=$(zkconfig "marathon")
   echo $zkmarathonconfig | sudo tee /etc/marathon/conf/zk
+  # enable marathon to failover tasks to other nodes immediately
+  echo 0 | sudo tee /etc/marathon/conf/failover_timeout
+  #echo false | sudo tee /etc/marathon/conf/checkpoint
 fi
 
 #########################################
@@ -282,18 +312,19 @@ if ismaster ; then
   sudo tar zxvf mesos-dns-v0.2.0-linux-amd64.tgz
   sudo mv mesos-dns-v0.2.0-linux-amd64 /usr/local/mesos-dns/mesos-dns
   RESOLVER=`cat /etc/resolv.conf | grep nameserver | tail -n 1 | awk '{print $2}'`
+
   echo "
- {
+{
   \"zk\": \"zk://127.0.0.1:2181/mesos\",
-  \"refreshSeconds\": 60,
-  \"ttl\": 60,
+  \"refreshSeconds\": 1,
+  \"ttl\": 0,
   \"domain\": \"mesos\",
   \"port\": 53,
-  \"resolvers\": [\"$RESOLVER\"],
-  \"timeout\": 5,
+  \"timeout\": 1,
   \"listener\": \"0.0.0.0\",
-  \"email\": \"root.mesos-dns.mesos\"
- }
+  \"email\": \"root.mesos-dns.mesos\",
+  \"resolvers\": [\"$RESOLVER\"]
+}
 " > mesos-dns.json
   sudo mv mesos-dns.json /usr/local/mesos-dns/mesos-dns.json
 
