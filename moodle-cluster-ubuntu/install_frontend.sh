@@ -31,6 +31,11 @@ unzip moodle.zip
 chown -R www-data moodle
 chmod -R 0755 moodle
 
+# create moodledata directory
+mkdir /var/www/moodledata
+chown -R www-data /var/www/moodledata
+chmod -R 755 /var/www/moodledata
+
 # TODO: create cron entry
 # * * * * *    /usr/bin/php /path/to/moodle/admin/cli/cron.php >/dev/null
 
