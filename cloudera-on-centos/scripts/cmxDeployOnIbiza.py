@@ -206,7 +206,9 @@ def setup_zookeeper(HA):
         
         service.update_config({"zookeeper_datadir_autocreate": True})
 
-
+        # Ensure zookeeper has access to folder
+        os.system("sudo chown zookeeper "+LOG_DIR+"/zookeeper")
+        os.system("sudo chown :zookeeper "+LOG_DIR+"/zookeeper")
 
         # Role Config Group equivalent to Service Default Group
         for rcg in [x for x in service.get_all_role_config_groups()]:
