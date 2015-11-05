@@ -1,12 +1,6 @@
 {
     "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
     "contentVersion": "1.0.0.0",
-    "outputs": {
-        "PublicIPAddress": {
-            "type": "string",
-            "value": "[reference(variables('publicIPAddressID')).IpAddress]"
-        }
-    },
     "parameters": {
         "adminPassword": {
             "metadata": {
@@ -62,6 +56,77 @@
             },
             "type": "string"
         }
+    },
+    "variables": {
+        "customData": "#!/bin/bash",
+        "addressPrefix": "10.0.0.0/16",
+        "externalPrivateAddress": "10.0.1.10",
+        "frontEndIPConfigID": "[concat(variables('lbID'),'/frontendIPConfigurations/LoadBalancerFrontEnd')]",
+        "imageOffer": "check-point-r77-10",
+        "imagePublisher": "checkpoint",
+        "imageReference": "[variables(concat('imageReference',parameters('offer')))]",
+        "imageReferenceR7710BYOL": {
+            "offer": "check-point-r77-10",
+            "publisher": "checkpoint",
+            "sku": "r7710-byol",
+            "version": "latest"
+        },
+        "imageReferenceR7710PAYG": {
+            "offer": "check-point-r77-10",
+            "publisher": "checkpoint",
+            "sku": "r7710-ngtp-payg",
+            "version": "latest"
+        },
+        "internalPrivateAddress": "10.0.2.10",
+        "lbID": "[resourceId('Microsoft.Network/loadBalancers',variables('lbName'))]",
+        "lbName": "frontend-lb",
+        "nic1NamePrefix": "external-nic",
+        "nic2NamePrefix": "internal-nic",
+        "osProfile": "[variables(concat('osprofile',parameters('authenticationType')))]",
+        "osProfilepassword": {
+            "adminPassword": "[parameters('adminPassword')]",
+            "adminUsername": "notused",
+            "computername": "[parameters('vmName')]",
+            "customData": "[base64(variables('customData'))]"
+        },
+        "osProfilesshPublicKey": {
+            "adminUsername": "notused",
+            "computername": "[parameters('vmName')]",
+            "customData": "[base64(variables('customData'))]",
+            "linuxConfiguration": {
+                "disablePasswordAuthentication": "true",
+                "ssh": {
+                    "publicKeys": [
+                        {
+                            "keyData": "[parameters('sshPublicKey')]",
+                            "path": "/home/notused/.ssh/authorized_keys"
+                        }
+                    ]
+                }
+            }
+        },
+        "plan": "[variables(concat('plan',parameters('offer')))]",
+        "planR7710BYOL": {
+            "name": "r7710-byol",
+            "product": "check-point-r77-10",
+            "publisher": "checkpoint"
+        },
+        "planR7710PAYG": {
+            "name": "r7710-ngtp-payg",
+            "product": "check-point-r77-10",
+            "publisher": "checkpoint"
+        },
+        "publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]",
+        "publicIPAddressName": "security-gateway",
+        "storageAccountType": "Standard_LRS",
+        "subnet1Name": "external-subnet",
+        "subnet1Prefix": "10.0.1.0/24",
+        "subnet1Ref": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]",
+        "subnet2Name": "internal-subnet",
+        "subnet2Prefix": "10.0.2.0/24",
+        "subnet2Ref": "[concat(variables('vnetID'),'/subnets/',variables('subnet2Name'))]",
+        "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('vnetName'))]",
+        "vnetName": "vnet"
     },
     "resources": [
         {
@@ -375,75 +440,10 @@
             "type": "Microsoft.Compute/virtualMachines"
         }
     ],
-    "variables": {
-        "customData": "#!/bin/bash",
-        "addressPrefix": "10.0.0.0/16",
-        "externalPrivateAddress": "10.0.1.10",
-        "frontEndIPConfigID": "[concat(variables('lbID'),'/frontendIPConfigurations/LoadBalancerFrontEnd')]",
-        "imageOffer": "check-point-r77-10",
-        "imagePublisher": "checkpoint",
-        "imageReference": "[variables(concat('imageReference',parameters('offer')))]",
-        "imageReferenceR7710BYOL": {
-            "offer": "check-point-r77-10",
-            "publisher": "checkpoint",
-            "sku": "r7710-byol",
-            "version": "latest"
-        },
-        "imageReferenceR7710PAYG": {
-            "offer": "check-point-r77-10",
-            "publisher": "checkpoint",
-            "sku": "r7710-ngtp-payg",
-            "version": "latest"
-        },
-        "internalPrivateAddress": "10.0.2.10",
-        "lbID": "[resourceId('Microsoft.Network/loadBalancers',variables('lbName'))]",
-        "lbName": "frontend-lb",
-        "nic1NamePrefix": "external-nic",
-        "nic2NamePrefix": "internal-nic",
-        "osProfile": "[variables(concat('osprofile',parameters('authenticationType')))]",
-        "osProfilepassword": {
-            "adminPassword": "[parameters('adminPassword')]",
-            "adminUsername": "notused",
-            "computername": "[parameters('vmName')]",
-            "customData": "[base64(variables('customData'))]"
-        },
-        "osProfilesshPublicKey": {
-            "adminUsername": "notused",
-            "computername": "[parameters('vmName')]",
-            "customData": "[base64(variables('customData'))]",
-            "linuxConfiguration": {
-                "disablePasswordAuthentication": "true",
-                "ssh": {
-                    "publicKeys": [
-                        {
-                            "keyData": "[parameters('sshPublicKey')]",
-                            "path": "/home/notused/.ssh/authorized_keys"
-                        }
-                    ]
-                }
-            }
-        },
-        "plan": "[variables(concat('plan',parameters('offer')))]",
-        "planR7710BYOL": {
-            "name": "r7710-byol",
-            "product": "check-point-r77-10",
-            "publisher": "checkpoint"
-        },
-        "planR7710PAYG": {
-            "name": "r7710-ngtp-payg",
-            "product": "check-point-r77-10",
-            "publisher": "checkpoint"
-        },
-        "publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]",
-        "publicIPAddressName": "security-gateway",
-        "storageAccountType": "Standard_LRS",
-        "subnet1Name": "external-subnet",
-        "subnet1Prefix": "10.0.1.0/24",
-        "subnet1Ref": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]",
-        "subnet2Name": "internal-subnet",
-        "subnet2Prefix": "10.0.2.0/24",
-        "subnet2Ref": "[concat(variables('vnetID'),'/subnets/',variables('subnet2Name'))]",
-        "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('vnetName'))]",
-        "vnetName": "vnet"
+    "outputs": {
+        "PublicIPAddress": {
+            "type": "string",
+            "value": "[reference(variables('publicIPAddressID')).IpAddress]"
+        }
     }
 }
