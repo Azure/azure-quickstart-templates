@@ -18,8 +18,8 @@ apt-get -y install apache2 mysql-client mysql-server php5
 apt-get -y install graphviz aspell php5-pspell php5-curl php5-gd php5-intl php5-mysql php5-xmlrpc php5-ldap
 
 # add port 8000 for admin access
-sudo perl -0777 -p -i -e 's/Listen 80/Listen 80\nListen 8080/ig' /etc/apache2/ports.conf
-sudo perl -0777 -p -i -e 's/\*:80/*:80 *:8080/g' /etc/apache2/sites-enabled/000-default.conf
+sudo perl -0755 -p -i -e 's/Listen 80/Listen 80\nListen 8080/ig' /etc/apache2/ports.conf
+sudo perl -0755 -p -i -e 's/\*:80/*:80 *:8080/g' /etc/apache2/sites-enabled/000-default.conf
 
 # install Moodle
 cd /var/www/html
@@ -30,40 +30,6 @@ unzip moodle.zip
 # make the moodle directory writable for owner
 chown -R www-data moodle
 chmod -R 0755 moodle
-
-# create moodledata directory
-mkdir /var/www/moodledata
-chown -R www-data /var/www/moodledata
-chmod -R 777 /var/www/moodledata
-
-# # mount moodledata disk
-# # The ARM script only mounts a single data disk.  It is safe 
-# # to assume that on a new VM, this data disk is located at /dev/sdc.
-
-# # If you have a more complicated setup, then do examine what this
-# # script is doing and modify accordingly.
-
-# # create a partition table for the disk
-# parted -s /dev/sdc mklabel msdos
-
-# # create a single large partition
-# parted -s /dev/sdc mkpart primary ext4 0\% 100\%
-
-# # install the file system
-# mkfs.ext4 /dev/sdc1
-
-# # create the mount point
-# mkdir -p /moodledata
-
-# # mount the disk
-# mount /dev/sdc1 /moodledata/
-
-# # premissions
-# chown -R www-data /moodledata
-# chmod -R 777 /moodledata
-
-# # add mount to /etc/fstab to persist across reboots
-# echo "/dev/sdc1    /moodledata/    ext4    defaults 0 0" >> /etc/fstab
 
 # TODO: create cron entry
 # * * * * *    /usr/bin/php /path/to/moodle/admin/cli/cron.php >/dev/null
@@ -76,8 +42,8 @@ SharedStorageAccountName=$2
 SharedAzureFileName=$3
 SharedStorageAccountKey=$4
 sudo apt-get install cifs-utils
-sudo mount -t cifs //$SharedStorageAccountName.file.core.windows.net/$SharedAzureFileName /var/www/moodledata -o vers=2.1,username=$SharedStorageAccountName,password=$SharedStorageAccountKey,dir_mode=0777,file_mode=0777
+sudo mount -t cifs //$SharedStorageAccountName.file.core.windows.net/$SharedAzureFileName /var/www/moodledata -o vers=2.1,username=$SharedStorageAccountName,password=$SharedStorageAccountKey,dir_mode=0755,file_mode=0755
 	
 #add mount to /etc/fstab to persist across reboots
-sudo chmod 777 /etc/fstab
-sudo echo "//$SharedStorageAccountName.file.core.windows.net/$SharedAzureFileName /var/www/moodledata cifs vers=3.0,username=$SharedStorageAccountName,password=$SharedStorageAccountKey,dir_mode=0777,file_mode=0777" >> /etc/fstab
+sudo chmod 755 /etc/fstab
+sudo echo "//$SharedStorageAccountName.file.core.windows.net/$SharedAzureFileName /var/www/moodledata cifs vers=3.0,username=$SharedStorageAccountName,password=$SharedStorageAccountKey,dir_mode=0755,file_mode=0755" >> /etc/fstab

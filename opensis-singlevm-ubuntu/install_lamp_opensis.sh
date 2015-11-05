@@ -18,7 +18,7 @@ sudo apt-get install unzip
 sudo unzip opensis.zip
 
 # make the opensis-ce directory writable
-sudo chmod -R +777 opensis-ce
+sudo chmod -R +755 opensis-ce
 
 # restart Apache
 apachectl restart

@@ -18,11 +18,11 @@ sudo apt-get install unzip
 sudo unzip opensis.zip
 
 # make the opensis-ce directory writable
-sudo chmod -R +777 opensis-ce
+sudo chmod -R +755 opensis-ce
 
 # add port 8000 for admin access
-sudo perl -0777 -p -i -e 's/Listen 80/Listen 80\nListen 8080/ig' /etc/apache2/ports.conf
-sudo perl -0777 -p -i -e 's/\*:80/*:80 *:8080/g' /etc/apache2/sites-enabled/000-default.conf
+sudo perl -0755 -p -i -e 's/Listen 80/Listen 80\nListen 8080/ig' /etc/apache2/ports.conf
+sudo perl -0755 -p -i -e 's/\*:80/*:80 *:8080/g' /etc/apache2/sites-enabled/000-default.conf
 
 # restart Apache
 apachectl restart
