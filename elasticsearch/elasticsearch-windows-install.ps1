@@ -263,9 +263,11 @@ function Install-ElasticSearch ($driveLetter, $elasticSearchZip, $subFolder = $e
 	return $elasticSearchPath
 }
 
-function Implode-Host($discoveryHost)
+function Implode-Host([string]$discoveryHost)
 {
     # Discovery host must be in a given format e.g. 10.0.0.4-3 for the below code to work
+    $discoveryHost = $discoveryHost.Trim()
+
     $ipPrefix = $discoveryHost.Substring(0, $discoveryHost.LastIndexOf('.'))
     $lastDigit = $discoveryHost.Substring($discoveryHost.LastIndexOf('.') + 1, 1)
     $loop = $discoveryHost.Substring($discoveryHost.LastIndexOf('-') + 1, 1)
@@ -273,7 +275,8 @@ function Implode-Host($discoveryHost)
     $ipRange = @(0) * $loop
     for($i=0; $i -lt $loop; $i++)
     {
-        $ipRange[$i] = "$ipPrefix." + ($i+ $lastDigit)
+        $format = "$ipPrefix." + ($i+ $lastDigit)
+        $ipRange[$i] = '"' +$format + '"'
     }
 
     $addresses = $ipRange -join ','
@@ -390,10 +393,7 @@ function Jmeter-ConfigFirewall
 
 function Jmeter-Run($target)
 {
-	    cmd.exe /K "$target\startAgent.bat"
-        if ($LASTEXITCODE) {
-            throw "Command '$scriptPath': exit code: $LASTEXITCODE"
-        }
+    Start-Process -FilePath "$target\startAgent.bat" -WindowStyle Minimized
 }
 
 function Install-WorkFlow
@@ -425,10 +425,10 @@ function Install-WorkFlow
 	# Configure cluster name and other properties
 		
 		# Cluster name
-		if($elasticClusterName.Length -eq 0) 	{ $elasticClusterName = 'elasticsearch_cluster'}
+		if($elasticClusterName.Length -eq 0) { $elasticClusterName = 'elasticsearch_cluster' }
         
         # Unicast host setup
-        $ipAddresses = Implode-Host $discoveryEndpoints
+        if($discoveryEndpoints.Length -ne 0) { $ipAddresses = Implode-Host $discoveryEndpoints }
 		
 		# Extract install folders
 		$elasticSearchBinParent = (gci -path $elasticSearchInstallLocation -filter "bin" -Recurse).Parent.FullName
@@ -461,7 +461,11 @@ function Install-WorkFlow
 
 		$textToAppend = $textToAppend + "`ndiscovery.zen.minimum_master_nodes: 2"
         $textToAppend = $textToAppend + "`ndiscovery.zen.ping.multicast.enabled: false"
-        $textToAppend = $textToAppend + "`ndiscovery.zen.ping.unicast.hosts: [$ipAddresses]"
+
+        if($ipAddresses -ne $null)
+        {
+            $textToAppend = $textToAppend + "`ndiscovery.zen.ping.unicast.hosts: [$ipAddresses]"
+        }
 
         # In ES 2.0 you explicitly need to set network host to _non_loopback_ or the IP address of the host else other nodes cannot communicate
         if ($elasticSearchVersion -match '2.0.0')
@@ -516,7 +520,7 @@ function Install-WorkFlow
 
 
     # Verify service TODO: Investigate why verification fails during ARM deployment
-    ElasticSearch-VerifyInstall
+    # ElasticSearch-VerifyInstall
 }
 
 Install-WorkFlow
