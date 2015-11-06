@@ -8,7 +8,7 @@
         "description": "Unique public DNS prefix for the deployment. The fqdn will look something like '<dnsname>.westus.cloudapp.azure.com'. Up to 62 chars, digits or dashes, lowercase, should start with a letter: must conform to '^[a-z][a-z0-9-]{1,61}[a-z0-9]$'."
       }
     },
-    "storageAccount": {
+    "newStorageAccount": {
       "type": "string",
       "metadata": {
         "description": "Name of the Storage Account. This has to be a uinique name, up to 24 chars, all lowercase."
@@ -35,14 +35,12 @@
     },
     "domainName": {
       "type": "string",
-      "defaultValue": "contoso.com",
       "metadata": {
         "description": "The FQDN of the AD domain"
       }
     },
     "adminUsername": {
       "type": "string",
-      "defaultValue": "cloudguy",
       "metadata": {
         "description": "The name of the administrator of the new VM and the domain. Exclusion list: 'admin','administrator'"
       }
@@ -55,7 +53,7 @@
     },
     "assetLocation": {
       "type": "string",
-      "defaultValue": "https://github.com/Azure/azure-quickstart-templates/raw/master/201-vm-domain-join",
+      "defaultValue": "https://github.com/Azure/azure-quickstart-templates/raw/master/201-vm-domain-join/",
       "metadata": {
         "description": "The location of resources such as templates and DSC modules that the script is dependent"
       }
@@ -86,7 +84,7 @@
     {
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[parameters('storageAccount')]",
+      "name": "[parameters('newStorageAccount')]",
       "location": "[resourceGroup().location]",
       "properties": {
         "accountType": "Standard_LRS"
@@ -182,7 +180,7 @@
       "name": "dc-vm",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts',parameters('storageAccount'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts',parameters('newStorageAccount'))]",
         "[resourceId('Microsoft.Network/networkInterfaces','dc-nif')]"
       ],
       "properties": {
@@ -204,7 +202,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://',parameters('storageAccount'),'.blob.core.windows.net/vhds/dc-vm-osdisk.vhd')]"
+              "uri": "[concat('http://',parameters('newStorageAccount'),'.blob.core.windows.net/vhds/dc-vm-osdisk.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -213,7 +211,7 @@
             {
               "name": "dc-vm-data-disk1",
               "vhd": {
-                "Uri": "[concat('http://',parameters('storageAccount'),'.blob.core.windows.net/vhds/dc-vm-data-disk1.vhd')]"
+                "Uri": "[concat('http://',parameters('newStorageAccount'),'.blob.core.windows.net/vhds/dc-vm-data-disk1.vhd')]"
               },
               "caching": "None",
               "createOption": "Empty",
@@ -232,7 +230,7 @@
         "diagnosticsProfile": {
           "bootDiagnostics": {
              "enabled": "true",
-             "storageUri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net')]"
+             "storageUri": "[concat('http://',parameters('newStorageAccount'),'.blob.core.windows.net')]"
           }
         }
       },
@@ -248,9 +246,9 @@
           "properties": {
             "publisher": "Microsoft.Powershell",
             "type": "DSC",
-            "typeHandlerVersion": "1.9",
+            "typeHandlerVersion": "2.8",
             "settings": {
-              "ModulesUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/active-directory-new-domain/CreateADPDC.ps1.zip",
+              "ModulesUrl": "[concat(parameters('assetLocation'),'CreateADPDC.ps1.zip')]",
               "ConfigurationFunction": "CreateADPDC.ps1\\CreateADPDC",
               "Properties": {
                 "DomainName": "[parameters('domainName')]",
@@ -279,7 +277,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('assetLocation'),'/vnet-with-dns-server.json')]",
+          "uri": "[concat(parameters('assetLocation'),'vnet-with-dns-server.json')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -343,7 +341,7 @@
       "name": "vm",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccount'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccount'))]",
         "Microsoft.Network/networkInterfaces/vm-nif"
       ],
       "properties": {
@@ -365,7 +363,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://',parameters('storageAccount'),'.blob.core.windows.net/vhds/vm-osdisk.vhd')]"
+              "uri": "[concat('http://',parameters('newStorageAccount'),'.blob.core.windows.net/vhds/vm-osdisk.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -391,9 +389,9 @@
       "properties": {
         "publisher": "Microsoft.Powershell",
         "type": "DSC",
-        "typeHandlerVersion": "1.9",
+        "typeHandlerVersion": "2.8",
         "settings": {
-          "ModulesUrl": "[concat(parameters('assetLocation'),'/Configuration.zip')]",
+          "ModulesUrl": "[concat(parameters('assetLocation'),'Configuration.zip')]",
           "ConfigurationFunction": "Configuration.ps1\\DomainJoin",
           "Properties": {
             "DomainName": "[parameters('domainName')]",
