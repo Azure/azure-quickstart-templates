@@ -10,19 +10,15 @@ Click the deploy button
 
 Set the parameters.  Please note the resource group "blockapps"
 
-![](./readme-images/02-deploy-live-screen.png)
+![](./readme-images/02a-parameters.png)
 
-You can also specify the "dev" image
+Agree to the terms and conditions
 
-![](./readme-images/03-deploy-dev-screen.png)
-
-Confirm your deployment
-
-![](./readme-images/04-confirm-screen.png)
+![](./readme-images/03a-agreement.png)
 
 Watch it deploy
 
-![](./readme-images/05-finished-screen.png)
+![](./readme-images/04a-deploying.png)
 
 Then SSH in from your terminal.  Make sure to request user "strato"
 
