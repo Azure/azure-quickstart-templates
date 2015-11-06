@@ -1,6 +1,4 @@
-[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://azuredeploy.net/)
-
-# WARNING: THIS TEST REPOSITORY IS ONLY FOR INTERNAL MICROSOFT AND BLOCKAPPS USERS
+[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fblockapps-strato%2Fazuredeploy.json)
 
 # A screencap walkthrough of the process:
 
@@ -8,7 +6,7 @@ Click the deploy button
 
 ![](./readme-images/01-deploy-button.png)
 
-Set the parameters.  Please note the resource group "blockapps"
+Set the parameters.  Please note the resource group "blockapps"; at the moment, you must have access to our Azure subscription to make this deployment.
 
 ![](./readme-images/02a-parameters.png)
 
