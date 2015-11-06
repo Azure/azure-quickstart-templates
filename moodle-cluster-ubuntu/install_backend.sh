@@ -32,10 +32,10 @@ service mysql restart
 
 # Allow remote connection
 echo "Updating mysql configs in /etc/mysql/my.cnf."
-sudo sed -i "s/bind-address.*/bind-address = 0.0.0.0/" /etc/mysql/my.cnf
+sed -i "s/bind-address.*/bind-address = 0.0.0.0/" /etc/mysql/my.cnf
 echo "Updated mysql bind address in /etc/mysql/my.cnf to 0.0.0.0 to allow external connections."
-sudo service mysql stop
-sudo service mysql start
+service mysql stop
+service mysql start
 
 # restart Apache
 apachectl restart
@@ -45,8 +45,8 @@ SharedStorageAccountName=$2
 SharedAzureFileName=$3
 SharedStorageAccountKey=$4
 
-sudo apt-get -y install nodejs-legacy
-sudo apt-get -y install npm
-sudo npm install -g azure-cli
+apt-get -y install nodejs-legacy
+apt-get -y install npm
+npm install -g azure-cli
 
-sudo azure storage share create $SharedAzureFileName -a $SharedStorageAccountName -k $SharedStorageAccountKey
+azure storage share create $SharedAzureFileName -a $SharedStorageAccountName -k $SharedStorageAccountKey
