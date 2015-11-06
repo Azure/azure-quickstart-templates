@@ -1,0 +1,231 @@
+{
+    "resources": [
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[variables('storageAccount')]",
+            "apiVersion": "2015-05-01-preview",
+            "location": "[variables('location')]",
+            "properties": {
+                "accountType": "[variables('storageAccountType')]"
+            }
+        },
+        {
+            "apiVersion": "2015-05-01-preview",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[variables('publicIPAddressName')]",
+            "location": "[variables('location')]",
+            "properties": {
+                "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+                "dnsSettings": {
+                    "domainNameLabel": "[variables('dnsNameForPublicIP')]"
+                }
+            }
+        },
+        {
+            "apiVersion": "2015-05-01-preview",
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[variables('virtualNetworkName')]",
+            "location": "[variables('location')]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('virtualNetworkAddressPrefix')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[variables('subnetName')]",
+                        "properties": {
+                            "addressPrefix": "[variables('virtualSubnetAddressPrefix')]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "2015-05-01-preview",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[variables('networkSecurityGroupName')]",
+            "location": "[variables('location')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "AllowSSHIn",
+                        "properties": {
+                            "description": "Allow inbound SSH connections",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "0-65535",
+                            "destinationPortRange": "22",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "direction": "Inbound",
+                            "priority": 100
+                        }
+                    },
+                    {
+                        "name": "AllowHHTPIn",
+                        "properties": {
+                            "description": "Allow inbound HTTP connections",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "0-65535",
+                            "destinationPortRange": "80",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "direction": "Inbound",
+                            "priority": 101
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "2015-05-01-preview",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[variables('networkInterfaceName')]",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[variables('publicIPAddressPath')]",
+                "[variables('virtualNetworkPath')]",
+                "[variables('networkSecurityGroupPath')]"
+            ],
+            "properties": {
+                "networkSecurityGroup" : {
+                    "id" : "[variables('networkSecurityGroupId')]"
+                },
+                "ipConfigurations": [
+                    {
+                        "name": "[variables('ipConfigurationName')]",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[variables('publicIPAddressId')]"
+                            },
+                            "subnet": {
+                                "id": "[variables('subnetId')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },   
+        {
+            "location": "[variables('location')]",
+            "type": "Microsoft.Compute\/virtualMachines",
+            "name": "[variables('name')]",
+            "dependsOn": [
+                "[variables('storageAccountPath')]",
+                "[variables('networkInterfacePath')]"
+            ],
+            "properties": {
+                "provisioningState": 0,
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": false
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[variables('networkInterfaceId')]"
+                        }
+                    ]
+                },
+                "osProfile": {
+                    "computerName": "[variables('name')]",
+                    "adminUsername": "[variables('username')]",
+                    "adminPassword": "[variables('password')]",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": "false"
+                    }
+                },
+                "storageProfile": {
+                    "osDisk": {
+                        "caching": "ReadWrite",
+                        "vhd": {
+                            "uri": "[variables('vhdURI')]"
+                        },
+                        "image": {
+                            "uri": "[variables('imageURI')]"
+                        },
+                        "createOption": "FromImage",
+                        "name" : "[concat(variables('name'), 'osDisk')]",
+                        "osType": "Linux"
+                    }
+                },
+                "hardwareProfile": {
+                    "vmSize": "[variables('vmSize')]"
+                }
+            },
+            "apiVersion": "2015-06-15"
+        }
+    ],
+    "parameters": {
+        "instanceName": {
+            "type": "string",
+            "metadata": {
+                "description" : "What to call this virtual machine"
+            }
+        },
+        "blockchain": {
+            "type": "string",
+            "allowedValues" : ["live", "dev"],
+            "metadata": {
+                "description" : "Which STRATO configuration to enable: 'live' is the Ethereum network; 'dev' is a private developer blockchain"
+            }
+        },
+        "password" : {
+            "type" : "secureString",
+            "metadata" : {
+                "description" : "Password for admin account 'strato'"
+            }
+        }
+    },
+    "variables": {
+        "imageVHDs": {
+            "live" : "strato-live-image-osDisk.3dfba3b1-de95-49d4-8aaa-ea37a17f5eaa.vhd",
+            "dev"  : "strato-dev-image-osDisk.a136c286-678b-48b9-86b9-56052a28d849.vhd"
+        },
+        "imageVHD": "[variables('imageVHDs')[parameters('blockchain')]]",
+        "imageURI": "[concat('https:\/\/', variables('imageStorage'), '.blob.core.windows.net\/system\/Microsoft.Compute/Images/vhds/', variables('imageVHD'))]",
+        "imageStorage": "stratoimages",
+
+        "name" : "[parameters('instanceName')]",
+        "location": "centralus",
+        "vmSize": "Standard_DS3",
+        "username": "strato",
+        "password": "[parameters('password')]",
+        
+        "storageAccount": "[variables('imageStorage')]",
+        "storageAccountPath": "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccount'))]",
+        "vhdURI": "[concat('https:\/\/', variables('storageAccount'), '.blob.core.windows.net\/vhds\/', parameters('instanceName'), '.vhd')]",
+        "storageAccountType": "Premium_LRS",
+
+        "networkInterfaceName": "[concat(variables('name'), 'nic')]",
+        "networkInterfacePath": "[concat('Microsoft.Network/networkInterfaces/', variables('networkInterfaceName'))]",
+        "networkInterfaceId": "[resourceId('Microsoft.Network/networkInterfaces',variables('networkInterfaceName'))]",
+
+        "networkSecurityGroupName": "[concat(variables('name'), 'nsg')]",
+        "networkSecurityGroupPath": "[concat('Microsoft.Network/networkSecurityGroups/', variables('networkSecurityGroupName'))]",
+        "networkSecurityGroupId": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]",
+
+        "ipConfigurationName": "[concat(variables('name'), 'ipconfig')]",
+        "publicIPAddressName": "[concat(variables('name'), 'publicip')]",
+        "publicIPAddressPath": "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+        "publicIPAddressId" : "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]",
+        "publicIPAddressType": "Dynamic",
+        "dnsNameForPublicIP": "[variables('name')]",
+
+        "virtualNetworkName": "stratodeploynet",
+        "virtualNetworkPath": "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+        "vnetId": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
+        "virtualNetworkAddressPrefix": "11.24.0.0/16",
+
+        "subnetName": "stratoinstances",
+        "subnetId": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
+        "virtualSubnetAddressPrefix": "11.24.82.0/24"
+    },
+    "contentVersion": "1.0.0.0",
+    "$schema": "http:\/\/schema.management.azure.com\/schemas\/2014-04-01-preview\/VM_IP.json"
+}
