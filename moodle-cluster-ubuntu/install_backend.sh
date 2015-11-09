@@ -39,7 +39,7 @@ apt-get -y install nodejs-legacy
 apt-get -y install npm
 npm install -g azure-cli
 
-azure storage share create $SharedAzureFileName -a $SharedStorageAccountName -k $SharedStorageAccountKey
+sudo azure storage share create $SharedAzureFileName -a $SharedStorageAccountName -k $SharedStorageAccountKey
 
 # restart MySQL
 service mysql restart
