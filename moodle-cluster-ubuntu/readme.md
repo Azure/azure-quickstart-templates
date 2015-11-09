@@ -16,3 +16,6 @@ Similarly it opens ports 2200 to 2204 on the load balancer which are mapped to p
 
 ## Shared "moodledata" Directory:
 In the clustered configuration, Moodle requires a shared directory (/var/www/moodledata) to store files such as all your site's uploaded files, temporary data, cache, session data etc. The template creates a file share in Azure for this purpose and mounts it on each of the front end VM's and maps it to '/var/www/moodledata' for each VM. Please specify this path during Moodle configuration steps that follow the deployment.
+
+## Workaround for Moodle installer:
+As template opens ports 8080 to 8084 on the load balancer which are mapped to the port 8080 on each of the front end VM's respectively, You have to set up each VM separately using the 808x ports. For each frontend VM, you can go to ip_address_of_loadbalancer:808x/moodle to start congfiguring Moodle.
