@@ -36,8 +36,10 @@ mkdir /var/www/moodledata
 chown -R www-data /var/www/moodledata
 chmod -R 770 /var/www/moodledata
 
-# TODO: create cron entry
-# * * * * *    /usr/bin/php /path/to/moodle/admin/cli/cron.php >/dev/null
+# create cron entry
+# It is scheduled for once per day. It can be changed as needed.
+echo '0 0 * * * php /var/www/html/moodle/admin/cli/cron.php > /dev/null 2>&1' > cronjob
+crontab cronjob
 
 # restart Apache
 apachectl restart
