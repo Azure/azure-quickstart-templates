@@ -24,13 +24,15 @@ These instructions walk through on how to setup a fast secure remote desktop ses
  ![Image of enabling compression in putty](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/ubuntu-desktop/images/putty-compression.png)
  3. Add a tunnel - this enables a secure remote desktop over ssh.
  ![Image of creating a tunnel](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/ubuntu-desktop/images/putty-vnc-tunnel.png)
- 4. save your session
+ 4. save your session:  
  ![Image of saving putty settings](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/ubuntu-desktop/images/putty-vnc-settings.png)
 
 3. Connect to your linux with VNC
  1. Open vnc
  2. Click "options" and ensure best quality is chosen (note that the SSH tunnel you setup previously will handle compression)
- ![Image of adjusting VNC settings](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/ubuntu-desktop/images/vnc-settings.png)
- 3. since the ssh provides encryption and to get maximum speed from ssh compression, turn off encrytpion, and open your session to "localhost:1".  ":1" represents port 5901, which you had previously setup with the ssh tunnel:
- ![Image of adjusting VNC connection](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/ubuntu-desktop/images/vnc-connection.png)
- 4. now you should be connected to your session.
+ ![Image of adjusting VNC settings](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/ubuntu-desktop/images/vnc-settings.png)  
+ 3. since the ssh provides encryption and to get maximum speed from ssh compression, turn off encrytpion, and open your session to "localhost:1".  ":1" represents port 5901, which you had previously setup with the ssh tunnel:  
+ ![Image of adjusting VNC connection](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/ubuntu-desktop/images/vnc-connection.png)  
+ 4. Click "Connect", and enter "password" for the password:  
+ ![Image of VNC authentication dialog](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/ubuntu-desktop/images/vnc-authentication.png)  
+ 5. now you should be connected to your session.

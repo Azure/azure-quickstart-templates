@@ -14,13 +14,6 @@
                 "description": "website host plan"
             }
         },
-        "hostingEnvironment": {
-            "type": "string",
-            "defaultValue": "",
-            "metadata": {
-                "description": "website host environment"
-            }
-        },
         "sku": {
             "type": "string",
             "allowedValues": [
@@ -42,55 +35,55 @@
                 "1",
                 "2"
             ],
-            "defaultValue": "0",
+            "defaultValue": "1",
             "metadata": {
                 "description": "website worker size"
             }
         },
         "webDeploy_AuthenticationKey": {
-            "type": "string",
+            "type": "securestring",
             "metadata": {
                 "description": "webdeploy authentication key"
             }
         },
         "webDeploy_SecureAuthenticationKey": {
-            "type": "string",
+            "type": "securestring",
             "metadata": {
                 "description": "webdeploy secure authentication key"
             }
         },
         "webDeploy_LoggedInKey": {
-            "type": "string",
+            "type": "securestring",
             "metadata": {
                 "description": "webdeploy logged in key"
             }
         },
         "webDeploy_NonceKey": {
-            "type": "string",
+            "type": "securestring",
             "metadata": {
                 "description": "webdeploy nonce key"
             }
         },
         "webDeploy_AuthenticationSalt": {
-            "type": "string",
+            "type": "securestring",
             "metadata": {
                 "description": "webdeploy authentication salt"
             }
         },
         "webDeploy_SecureAuthenticationSalt": {
-            "type": "string",
+            "type": "securestring",
             "metadata": {
                 "description": "webdeploy secure authentication salt"
             }
         },
         "webDeploy_LoggedInSalt": {
-            "type": "string",
+            "type": "securestring",
             "metadata": {
                 "description": "webdeploy logged in salt"
             }
         },
         "webDeploy_NonceSalt": {
-            "type": "string",
+            "type": "securestring",
             "metadata": {
                 "description": "webdeploy nonce salt"
             }
@@ -99,6 +92,19 @@
             "type": "string",
             "metadata": {
                 "description": "Connect to your cluster using dnsName.location.cloudapp.azure.com"
+            }
+        },
+        "location": {
+            "type": "string",
+            "metadata": {
+                "description": "Location where the MySQL cluster will be deployed to"
+            }
+        },
+        "publicIPName": { 
+            "type": "string",
+            "defaultValue": "mysqlIP01",
+            "metadata": {
+                "description": "public IP name for MySQL loadbalancer"
             }
         },
         "wpDbUsername": {
@@ -146,7 +152,7 @@
         },
         "vmSize": {
             "type": "string",
-            "defaultValue": "Standard_A1",
+            "defaultValue": "Standard_D2",
             "metadata": {
                 "description": "size for the VMs"
             }
@@ -156,6 +162,12 @@
             "defaultValue": "Standard_LRS",
             "metadata": {
                 "description": "Storage account type for the cluster"
+            }
+        },
+        "storageAccountPrefix": { 
+            "type": "string",
+            "metadata": {
+                "description": "Storage account name prefix for the cluster"
             }
         },
         "virtualNetworkName": {
@@ -186,18 +198,11 @@
                 "description": "IP address in CIDR for db subnet"
             }
         },
-        "vmIPPrefix": {
+        "dbSubnetStartAddress": {
             "type": "string",
-            "defaultValue": "10.0.1.",
+            "defaultValue": "10.0.1.4",
             "metadata": {
-                "description": "IP address prefix for VMs must be available in db subnet"
-            }
-        },
-        "vmIPStartAddress": {
-            "type": "int",
-            "defaultValue": 4,
-            "metadata": {
-                "description": "start IP address for VMs"
+                "description": "Start IP address for the VMs in db subnet"
             }
         },
         "imagePublisher": {
@@ -222,7 +227,7 @@
         },
         "imageSKU": {
             "type": "string",
-            "defaultValue": "6.5",
+            "defaultValue": "6.6",
             "allowedValues": [
                 "6.5",
                 "6.6"
@@ -280,18 +285,12 @@
                 "description": "file location for mysql template and my.cnf.template"
             }
         },
-        "customScriptCommandToExecute": {
-            "type": "string",
-            "defaultValue": "bash azuremysql.sh",
-            "metadata": {
-                "description": "bash script command line"
-            }
-        },
         "websiteTemplateLocation": {
             "type": "string",
             "defaultValue": "https://raw.githubusercontent.com/azure/azure-quickstart-templates/master/wordpress-mysql-replication",
             "metadata": {
-                "description": "template file location"
+                "description": "template file location",
+                "artifactsBaseUrl": "Base URL of the Publisher Template gallery package"
             }
         }
     },
@@ -308,6 +307,7 @@
                 },
                 "parameters": {
                     "dnsName": { "value": "[parameters('dnsName')]" },
+                    "location": { "value": "[parameters('location')]" },
                     "vmUserName": { "value": "[parameters('vmUserName')]" },
                     "vmPassword": { "value": "[parameters('vmPassword')]" },
                     "mysqlRootPassword": { "value": "[parameters('mysqlRootPassword')]" },
@@ -319,8 +319,7 @@
                     "dbSubnetName": { "value": "[parameters('dbSubnetName')]" },
                     "vnetAddressPrefix": { "value": "[parameters('vnetAddressPrefix')]" },
                     "dbSubnetAddressPrefix": { "value": "[parameters('dbSubnetAddressPrefix')]" },
-                    "vmIPPrefix": { "value": "[parameters('vmIPPrefix')]" },
-                    "vmIPStartAddress": { "value": "[parameters('vmIPStartAddress')]" },
+                    "dbSubnetStartAddress": { "value": "[parameters('dbSubnetStartAddress')]" },
                     "imagePublisher": { "value": "[parameters('imagePublisher')]" },
                     "imageOffer": { "value": "[parameters('imageOffer')]" },
                     "imageSKU": { "value": "[parameters('imageSKU')]" },
@@ -330,9 +329,9 @@
                     "sshNatRuleFrontEndPort1": { "value": "[parameters('sshNatRuleFrontEndPort1')]" },
                     "mysqlProbePort0": { "value": "[parameters('mysqlProbePort0')]" },
                     "mysqlProbePort1": { "value": "[parameters('mysqlProbePort1')]" },
-                    "customScriptFilePath": { "value": "[concat(parameters('mysqlTemplateLocation'), 'azuremysql.sh')]" },
-                    "mysqlConfigFilePath": { "value": "[concat(parameters('mysqlTemplateLocation'), 'my.cnf.template')]" },
-                    "customScriptCommandToExecute": { "value": "[parameters('customScriptCommandToExecute')]" }
+                    "artifactsPath": { "value": "[parameters('mysqlTemplateLocation')]" },
+                    "publicIPName": { "value": "[parameters('publicIPName')]" },
+                    "storageAccountPrefix": { "value": "[parameters('storageAccountPrefix')]" }
                 }
             }
         },
@@ -352,8 +351,7 @@
                 "parameters": {
                     "siteName": { "value": "[parameters('siteName')]" },
                     "hostingPlanName": { "value": "[parameters('hostingPlanName')]" },
-                    "hostingEnvironment": { "value": "[parameters('hostingEnvironment')]" },
-                    "siteLocation": { "value": "[resourceGroup().location]" },
+                    "siteLocation": { "value": "[parameters('location')]" },
                     "serverFarmResourceGroup": { "value": "[resourceGroup().name]" },
                     "sku": { "value": "[parameters('sku')]" },
                     "workerSize": { "value": "[parameters('workerSize')]" },
@@ -365,7 +363,7 @@
                     "webDeploy_SecureAuthenticationSalt": { "value": "[parameters('webDeploy_SecureAuthenticationSalt')]" },
                     "webDeploy_LoggedInSalt": { "value": "[parameters('webDeploy_LoggedInSalt')]" },
                     "webDeploy_NonceSalt": { "value": "[parameters('webDeploy_NonceSalt')]" },
-                    "DbServer": { "value": "[concat(parameters('dnsName'), '.', resourceGroup().location, '.cloudapp.azure.com')]" },
+                    "DbServer": { "value": "[concat(parameters('dnsName'), '.', parameters('location'), '.cloudapp.azure.com')]" },
                     "DbName": { "value": "wordpress" },
                     "DbUsername": { "value": "[parameters('wpDbUsername')]" },
                     "DbPassword": { "value": "[parameters('wpDbPassword')]" },
