@@ -47,7 +47,7 @@ SharedStorageAccountName=$2
 SharedAzureFileName=$3
 SharedStorageAccountKey=$4
 apt-get install cifs-utils
-mount -t cifs //$SharedStorageAccountName.file.core.windows.net/$SharedAzureFileName /var/www/moodledata -o vers=2.1,username=$SharedStorageAccountName,password=$SharedStorageAccountKey,dir_mode=0770,file_mode=0770
+mount -t cifs //$SharedStorageAccountName.file.core.windows.net/$SharedAzureFileName /var/www/moodledata -o uid=$(id -u www-data),vers=2.1,username=$SharedStorageAccountName,password=$SharedStorageAccountKey,dir_mode=0770,file_mode=0770
 	
 #add mount to /etc/fstab to persist across reboots
 chmod 770 /etc/fstab
