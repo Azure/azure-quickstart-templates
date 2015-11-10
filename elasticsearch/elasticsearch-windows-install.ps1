@@ -441,6 +441,11 @@ function Install-WorkFlow
 		# Set values
         lmsg "Configure cluster name to $elasticClusterName"
         $textToAppend = "`n#### Settings automatically added by deployment script`ncluster.name: $elasticClusterName"
+
+        # Use hostname for node name
+        $hostname = (Get-WmiObject -Class Win32_ComputerSystem -Property Name).Name
+        $textToAppend = $textToAppend + "`node.name: $hostname"
+
         if($masterOnlyNode)
         {
             lmsg 'Configure node as master only'
