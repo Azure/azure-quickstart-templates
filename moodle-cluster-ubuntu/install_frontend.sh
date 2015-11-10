@@ -18,8 +18,8 @@ apt-get -y install apache2 mysql-client mysql-server php5
 apt-get -y install graphviz aspell php5-pspell php5-curl php5-gd php5-intl php5-mysql php5-xmlrpc php5-ldap
 
 # add port 8000 for admin access
-sudo perl -0755 -p -i -e 's/Listen 80/Listen 80\nListen 8080/ig' /etc/apache2/ports.conf
-sudo perl -0755 -p -i -e 's/\*:80/*:80 *:8080/g' /etc/apache2/sites-enabled/000-default.conf
+perl -0777 -p -i -e 's/Listen 80/Listen 80\nListen 8080/ig' /etc/apache2/ports.conf
+perl -0777 -p -i -e 's/\*:80/*:80 *:8080/g' /etc/apache2/sites-enabled/000-default.conf
 
 # install Moodle
 cd /var/www/html
@@ -29,15 +29,17 @@ unzip moodle.zip
 
 # make the moodle directory writable for owner
 chown -R www-data moodle
-chmod -R 0755 moodle
+chmod -R 770 moodle
 
 # create moodledata directory
 mkdir /var/www/moodledata
 chown -R www-data /var/www/moodledata
-chmod -R 755 /var/www/moodledata
+chmod -R 770 /var/www/moodledata
 
-# TODO: create cron entry
-# * * * * *    /usr/bin/php /path/to/moodle/admin/cli/cron.php >/dev/null
+# create cron entry
+# It is scheduled for once per day. It can be changed as needed.
+echo '0 0 * * * php /var/www/html/moodle/admin/cli/cron.php > /dev/null 2>&1' > cronjob
+crontab cronjob
 
 # restart Apache
 apachectl restart
@@ -46,9 +48,9 @@ apachectl restart
 SharedStorageAccountName=$2
 SharedAzureFileName=$3
 SharedStorageAccountKey=$4
-sudo apt-get install cifs-utils
-sudo mount -t cifs //$SharedStorageAccountName.file.core.windows.net/$SharedAzureFileName /var/www/moodledata -o vers=2.1,username=$SharedStorageAccountName,password=$SharedStorageAccountKey,dir_mode=0755,file_mode=0755
+apt-get install cifs-utils
+mount -t cifs //$SharedStorageAccountName.file.core.windows.net/$SharedAzureFileName /var/www/moodledata -o uid=$(id -u www-data),vers=2.1,username=$SharedStorageAccountName,password=$SharedStorageAccountKey,dir_mode=0770,file_mode=0770
 	
 #add mount to /etc/fstab to persist across reboots
-sudo chmod 755 /etc/fstab
-sudo echo "//$SharedStorageAccountName.file.core.windows.net/$SharedAzureFileName /var/www/moodledata cifs vers=3.0,username=$SharedStorageAccountName,password=$SharedStorageAccountKey,dir_mode=0755,file_mode=0755" >> /etc/fstab
+chmod 770 /etc/fstab
+echo "//$SharedStorageAccountName.file.core.windows.net/$SharedAzureFileName /var/www/moodledata cifs uid=$(id -u www-data),vers=3.0,username=$SharedStorageAccountName,password=$SharedStorageAccountKey,dir_mode=0770,file_mode=0770" >> /etc/fstab
