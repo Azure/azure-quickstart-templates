@@ -326,16 +326,19 @@ function ElasticSearch-InstallService($scriptPath)
 function ElasticSearch-StartService()
 {
     # Check if the service is installed and start it
-    $elasticService = (get-service | Where-Object {$_.Name -match "elasticsearch"}).Name
+    $elasticService = (get-service | Where-Object {$_.Name -match 'elasticsearch'}).Name
     if($elasticService -ne $null)
     {
         lmsg 'Starting elasticsearch service and setting the startup to automatic...'
-        $svc = Start-Service $elasticService
-        $svc.WaitForStatus('Started', '00:00:10')
-		Set-Service $elasticService -StartupType Automatic
+        Start-Service -Name $elasticService
+        $svc = Get-Service | Where-Object { $_.Name -Match 'elasticsearch'}
         
-        # Give approximately 20 seconds for service to start before verification
-        #Start-Sleep -Seconds 20
+        if($svc -ne $null)
+        {
+            $svc.WaitForStatus('Started', '00:00:10')
+        }
+
+		Set-Service $elasticService -StartupType Automatic | Out-Null
     }
 }
 
@@ -404,10 +407,10 @@ function Jmeter-ConfigFirewall
     for($i=4440; $i -le 4444; $i++)
     {
         lmsg 'Adding firewall rule - Allow Jmeter Inbound Port ' $i
-        New-NetFirewallRule -Name "Jmeter_ServerAgent_IN_$i" -DisplayName "Allow Jmeter Inbound Port $i" -Protocol tcp -LocalPort $i -Action Allow -Enabled True -Direction Inbound
+        New-NetFirewallRule -Name "Jmeter_ServerAgent_IN_$i" -DisplayName "Allow Jmeter Inbound Port $i" -Protocol tcp -LocalPort $i -Action Allow -Enabled True -Direction Inbound | Out-Null
     
         lmsg 'Adding firewall rule - Allow Jmeter Outbound Port ' $i
-        New-NetFirewallRule -Name "Jmeter_ServerAgent_OUT_$i" -DisplayName "Allow Jmeter Outbound Port $i" -Protocol tcp -LocalPort $i -Action Allow -Enabled True -Direction Outbound
+        New-NetFirewallRule -Name "Jmeter_ServerAgent_OUT_$i" -DisplayName "Allow Jmeter Outbound Port $i" -Protocol tcp -LocalPort $i -Action Allow -Enabled True -Direction Outbound | Out-Null
     }
 }
 
@@ -416,18 +419,22 @@ function Jmeter-Run($unzipLoc)
     $targetPath = Join-Path -Path $unzipLoc -ChildPath 'startAgent.bat'
 
     lmsg 'Starting jmeter server agent at ' $targetPath
-    Start-Process -FilePath $targetPath -WindowStyle Minimized
+    Start-Process -FilePath $targetPath -WindowStyle Minimized | Out-Null
 }
 
 function Install-WorkFlow
 {
-	# Initialize installation drive
+	# Start script
+    Startup-Output
 	
-    # Below script should discover raw data disks and format them
+    # Discover raw data disks and format them
     $dc = Initialize-Disks
-
-    # Create data folders
-    $folderPathSetting = (Create-DataFolders $dc 'elasticsearch\data')
+    
+    # Create data folders on raw disks
+    if($dc -gt 0)
+    {
+        $folderPathSetting = (Create-DataFolders $dc 'elasticsearch\data')
+    }
 
 	# Set first drive
     $firstDrive = (get-location).Drive.Name
@@ -470,7 +477,10 @@ function Install-WorkFlow
         $textToAppend = $textToAppend + "`nnode.name: $hostname"
 
         # Set data paths
-        $textToAppend = $textToAppend + "`npath.data: $folderPathSetting"
+        if($folderPathSetting -ne $null)
+        {
+            $textToAppend = $textToAppend + "`npath.data: $folderPathSetting"
+        }
 
         if($masterOnlyNode)
         {
@@ -513,13 +523,13 @@ function Install-WorkFlow
 
 	# Add firewall rules
     lmsg 'Adding firewall rule - Allow Elasticsearch Inbound Port 9200'
-    New-NetFirewallRule -Name 'ElasticSearch_In_Lb' -DisplayName 'Allow Elasticsearch Inbound Port 9200' -Protocol tcp -LocalPort 9200 -Action Allow -Enabled True -Direction Inbound
+    New-NetFirewallRule -Name 'ElasticSearch_In_Lb' -DisplayName 'Allow Elasticsearch Inbound Port 9200' -Protocol tcp -LocalPort 9200 -Action Allow -Enabled True -Direction Inbound | Out-Null
 
     lmsg 'Adding firewall rule - Allow Elasticsearch Inter Node Communication Inbound Port 9300'
-    New-NetFirewallRule -Name 'ElasticSearch_In_Unicast' -DisplayName 'Allow Elasticsearch Inter Node Communication Inbound Port 9300' -Protocol tcp -LocalPort 9300 -Action Allow -Enabled True -Direction Inbound
+    New-NetFirewallRule -Name 'ElasticSearch_In_Unicast' -DisplayName 'Allow Elasticsearch Inter Node Communication Inbound Port 9300' -Protocol tcp -LocalPort 9300 -Action Allow -Enabled True -Direction Inbound | Out-Null
     
     lmsg 'Adding firewall rule - Allow Elasticsearch Inter Node Communication Outbound Port 9300'
-    New-NetFirewallRule -Name 'ElasticSearch_Out_Unicast' -DisplayName 'Allow Elasticsearch Inter Node Communication Outbound Port 9300' -Protocol tcp -LocalPort 9300 -Action Allow -Enabled True -Direction Outbound
+    New-NetFirewallRule -Name 'ElasticSearch_Out_Unicast' -DisplayName 'Allow Elasticsearch Inter Node Communication Outbound Port 9300' -Protocol tcp -LocalPort 9300 -Action Allow -Enabled True -Direction Outbound | Out-Null
 
 
     # Install service using the batch file in bin folder
@@ -555,6 +565,19 @@ function Install-WorkFlow
 
     # Verify service TODO: Investigate why verification fails during ARM deployment
     # ElasticSearch-VerifyInstall
+}
+
+function Startup-Output
+{
+    lmsg 'Install workflow starting with following params:'
+    lmsg "Elasticsearch version: $elasticSearchVersion"
+    if($elasticClusterName.Length -ne 0) { lmsg "Elasticsearch cluster name: $elasticClusterName" }
+    if($jdkDownloadLocation.Length -ne 0) { lmsg "Jdk download location: $jdkDownloadLocation" }
+    if($elasticSearchBaseFolder.Length -ne 0) { lmsg "Elasticsearch base folder: $elasticSearchBaseFolder" }
+    if($discoveryEndpoints.Length -ne 0) { lmsg "Discovery endpoints: $discoveryEndpoints" }
+    if($masterOnlyNode) { lmsg 'Node installation mode: Master' }
+    if($clientOnlyNode) { lmsg 'Node installation mode: Client' }
+    if($dataOnlyNode) { lmsg 'Node installation mode: Data' }
 }
 
 Install-WorkFlow
