@@ -7,7 +7,7 @@
     [string]$sqlInstance = ${Env:\COMPUTERNAME},
     [string]$urlHostName = ${Env:\COMPUTERNAME},
 	[string]$setupAccountName ="contoso\tfssetup",
-	[string]$setupAccountPassword ="password#1",
+	[string]$setupAccountPassword ="Password#1",
     [string]$serviceAccountName = "NT Authority\Network Service",
 	[string]$serviceAccountPassword= "password#1"
 )
@@ -22,6 +22,7 @@ $servicePassword = ConvertTo-SecureString -String $serviceAccountPassword -AsPla
 $serviceCred = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList ($serviceAccountName,$servicePassword)
 
 # start the configuration of the app-tier
-$args = "unattend /configure /type:standard /inputs:UseWss=$useWss;UseReporting=$useReporting;ConfigureWss=$false;SqlInstance=$sqlInstance;UseSqlAlwaysOn=$useSqlAlwaysOn;IsServiceAccountBuiltIn=$isServiceAccountBuiltIn;ServiceAccountName=$serviceAccountName;ServiceAccountPassword=$($serviceCred.GetNetworkCredential().Password)"
-Start-Process -FilePath ".\tfsconfig.exe" -ArgumentList $args -Credential $setupCred
+$inputArgs = "UseWss=$useWss;UseReporting=$useReporting;ConfigureWss=$false;SqlInstance=$sqlInstance;UseSqlAlwaysOn=$useSqlAlwaysOn;IsServiceAccountBuiltIn=$isServiceAccountBuiltIn;ServiceAccountName=$serviceAccountName;ServiceAccountPassword=$($serviceCred.GetNetworkCredential().Password)"
+$tfsConfigArgs = "unattend /configure /type:standard /inputs:`"$inputArgs`""
+Start-Process -FilePath ".\tfsconfig.exe" -ArgumentList $tfsConfigArgs -Credential $setupCred -Wait -WindowStyle Normal -Verbose
 #tfsconfig.exe unattend /configure /type:standard /inputs:"UseWss=$useWss;UseReporting=$useReporting;ConfigureWss=$false;SqlInstance=$sqlInstance;UseSqlAlwaysOn=$useSqlAlwaysOn;IsServiceAccountBuiltIn=$isServiceAccountBuiltIn;ServiceAccountName=$serviceAccountName" /verify
