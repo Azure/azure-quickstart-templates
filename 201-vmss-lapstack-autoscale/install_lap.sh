@@ -10,8 +10,8 @@ apt-get -y install apache2 php5
 
 # write some PHP
 cd /var/www/html
-wget https://raw.githubusercontent.com/azure/azure-quickstart-templates/master/201-vmss-lap-autoscale/index.php
-wget https://raw.githubusercontent.com/azure/azure-quickstart-templates/master/201-vmss-lap-autoscale/do_work.php
+wget https://raw.githubusercontent.com/azure/azure-quickstart-templates/master/201-vmss-lapstack-autoscale/index.php
+wget https://raw.githubusercontent.com/azure/azure-quickstart-templates/master/201-vmss-lapstack-autoscale/do_work.php
 rm /var/www/html/index.html
 # restart Apache
 apachectl restart
