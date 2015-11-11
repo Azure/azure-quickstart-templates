@@ -269,8 +269,9 @@ function Implode-Host([string]$discoveryHost)
     $discoveryHost = $discoveryHost.Trim()
 
     $ipPrefix = $discoveryHost.Substring(0, $discoveryHost.LastIndexOf('.'))
-    $lastDigit = $discoveryHost.Substring($discoveryHost.LastIndexOf('.') + 1, 1)
-    $loop = $discoveryHost.Substring($discoveryHost.LastIndexOf('-') + 1, 1)
+    $dotSplitArr = $discoveryHost.Split('.')
+    $lastDigit = $dotSplitArr[$dotSplitArr.Length-1].Split('-')[0]
+    $loop = $dotSplitArr[$dotSplitArr.Length-1].Split('-')[1]
 
     $ipRange = @(0) * $loop
     for($i=0; $i -lt $loop; $i++)
@@ -444,7 +445,7 @@ function Install-WorkFlow
 
         # Use hostname for node name
         $hostname = (Get-WmiObject -Class Win32_ComputerSystem -Property Name).Name
-        $textToAppend = $textToAppend + "`node.name: $hostname"
+        $textToAppend = $textToAppend + "`nnode.name: $hostname"
 
         if($masterOnlyNode)
         {
