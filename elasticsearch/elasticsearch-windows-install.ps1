@@ -85,16 +85,17 @@ function Initialize-Disks{
     
     # Get letters starting from F
     $label = 'datadisk-'
-    $letters = 70..89 | ForEach-Object { ([char]$_) }
+    $letters = 70..90 | ForEach-Object { ([char]$_) }
     $letterIndex = 0
 	if($disks -ne $null)
 	{
-        lmsg 'Found attached VHDs with raw partition...' $disks
+        $numberedDisks = $disks.Number -join ','
+        lmsg "Found attached VHDs with raw partition and numbers $numberedDisks"
         try{
             foreach($disk in $disks){
                 $driveLetter = $letters[$letterIndex].ToString()
-                lmsg 'Formatting disk...' $driveLetter
-		        $disk | Initialize-Disk -PartitionStyle MBR -PassThru |	New-Partition -UseMaximumSize -DriveLetter $driveLetter | Format-Volume -FileSystem NTFS -NewFileSystemLabel "$label$letterIndex" -Confirm:$false -Force
+                lmsg "Formatting disk...$driveLetter"
+		        $disk | Initialize-Disk -PartitionStyle MBR -PassThru |	New-Partition -UseMaximumSize -DriveLetter $driveLetter | Format-Volume -FileSystem NTFS -NewFileSystemLabel "$label$letterIndex" -Confirm:$false -Force | Out-Null
                 $letterIndex++
             }
         }catch [System.Exception]{
@@ -109,7 +110,7 @@ function Initialize-Disks{
 
 function Create-DataFolders([int]$numDrives, [string]$folder)
 {
-    $letters = 70..89 | ForEach-Object { ([char]$_) }
+    $letters = 70..90 | ForEach-Object { ([char]$_) }
 
     $pathSet = @(0) * $numDrives
     for($i=0;$i -lt $numDrives;$i++)
@@ -119,6 +120,9 @@ function Create-DataFolders([int]$numDrives, [string]$folder)
     }
 
     $retVal = $pathSet -join ','
+
+    lmsg "Created data folders: $retVal" 
+    
     return $retVal
 }
 
@@ -423,7 +427,7 @@ function Install-WorkFlow
     $dc = Initialize-Disks
 
     # Create data folders
-    $folderPathSetting = Create-DataFolders $dc 'elasticsearch\data'
+    $folderPathSetting = (Create-DataFolders $dc 'elasticsearch\data')
 
 	# Set first drive
     $firstDrive = (get-location).Drive.Name
