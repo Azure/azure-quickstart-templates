@@ -104,7 +104,22 @@ function Initialize-Disks{
 		}
 	}
     
-    #return $letters[0].ToString()
+    return $letterIndex
+}
+
+function Create-DataFolders([int]$numDrives, [string]$folder)
+{
+    $letters = 70..89 | ForEach-Object { ([char]$_) }
+
+    $pathSet = @(0) * $numDrives
+    for($i=0;$i -lt $numDrives;$i++)
+    {
+        $pathSet[$i] = $letters[$i] + ':\' + $folder
+        New-Item -Path $pathSet[$i]  -ItemType Directory | Out-Null
+    }
+
+    $retVal = $pathSet -join ','
+    return $retVal
 }
 
 function Download-Jdk
@@ -405,7 +420,10 @@ function Install-WorkFlow
 	# Initialize installation drive
 	
     # Below script should discover raw data disks and format them
-    Initialize-Disks
+    $dc = Initialize-Disks
+
+    # Create data folders
+    $folderPathSetting = Create-DataFolders $dc 'elasticsearch\data'
 
 	# Set first drive
     $firstDrive = (get-location).Drive.Name
@@ -446,6 +464,9 @@ function Install-WorkFlow
         # Use hostname for node name
         $hostname = (Get-WmiObject -Class Win32_ComputerSystem -Property Name).Name
         $textToAppend = $textToAppend + "`nnode.name: $hostname"
+
+        # Set data paths
+        $textToAppend = $textToAppend + "`npath.data: $folderPathSetting"
 
         if($masterOnlyNode)
         {
