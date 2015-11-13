@@ -213,7 +213,7 @@ install_glusterfs_centos() {
     then
         echo "Installing extra packages for enterprise linux"
         wget https://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm
-        sudo rpm -Uvh ./epel-release-latest-6*.rpm
+        rpm -Uvh ./epel-release-latest-6*.rpm
         rm ./epel-release-latest-6*.rpm
         yum -y update
     fi
