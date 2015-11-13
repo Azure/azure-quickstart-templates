@@ -35,7 +35,7 @@ To make sure your template is added to Azure.com index, please follow these guid
   ```
 
 
-See the starter template [here](https://github.com/Azure/azure-quickstart-templates/tree/master/100-starter-template-with-validation) for more information on passing validation
+See the starter template [here](https://github.com/Azure/azure-quickstart-templates/tree/master/100-STARTER-TEMPLATE-with-VALIDATION) for more information on passing validation
 
 ## Best practices
 
