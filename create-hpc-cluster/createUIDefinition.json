@@ -1,0 +1,326 @@
+{
+  "handler": "Microsoft.Compute.MultiVm",
+  "version": "0.0.1-preview",
+  "parameters": {
+    "basics": [
+      {
+        "name": "clusterName",
+        "type": "Microsoft.Common.TextBox",
+        "label": "Cluster name",
+        "toolTip": "The unique HPC Pack cluster name. It is also used as the public DNS name prefix for the cluster, for example, the public DNS name is '&lt;clusterName&gt;.westus.cloudapp.azure.com' if the resource group location is 'West US'. It must contain between 3 and 15 characters with lowercase letters and numbers, and must start with a letter.",
+        "defaultValue": "",
+        "constraints": {
+          "required": true,
+          "regex": "^[a-z][a-z0-9]{2,14}$",
+          "validationMessage": "It must contain between 3 and 15 characters with lowercase letters and numbers, and must start with a letter."
+        }
+      }
+    ],
+    "steps": [
+      {
+        "name": "infrastructureConfig",
+        "label": "Infrastructure settings",
+        "subLabel": {
+          "preValidation": "Configure the infrastructure settings",
+          "postValidation": "Done"
+        },
+        "bladeTitle": "Infrastructure settings",
+        "elements": [
+          {
+            "name": "virtualNetworkName",
+            "type": "Microsoft.Common.TextBox",
+            "label": "Virtual Network name",
+            "toolTip": "Name of the virtual network to be created",
+            "defaultValue": "hpcvnet",
+            "constraints": {
+              "required": true,
+              "regex": "^[a-zA-Z][a-zA-Z0-9-_.]{0,61}[a-zA-Z0-9]$",
+              "validationMessage": "The name must contain between 2 and 63 characters, begin with a letter, end with a letter, number, and may contain only letters, numbers, underscores, periods, or hyphens."
+            }
+          },
+          {
+            "name": "privateDomainName",
+            "type": "Microsoft.Common.TextBox",
+            "label": "Forest root domain name",
+            "toolTip": "The fully qualified domain name (FQDN) for the private domain forest which will be created by this template, for example 'hpc.local'.",
+            "defaultValue": "hpc.local",
+            "constraints": {
+              "required": true,
+              "regex": "^([a-z0-9]+\\.)?([a-z0-9][a-z0-9-]*\\.)+[a-z]{2,6}$",
+              "validationMessage": "Must be a valid fully-qualified domain name."
+            }
+          },
+          {
+            "name": "adminUsername",
+            "type": "Microsoft.Compute.UserNameTextBox",
+            "label": "Username",
+            "toolTip": "Admin username for the virtual machines and the Active Directory domain.",
+            "defaultValue": "hpcadmin",
+            "constraints": {
+              "required": true
+            },
+            "osPlatform": "Windows"
+          },
+          {
+            "name": "adminPassword",
+            "type": "Microsoft.Compute.CredentialsCombo",
+            "label": {
+              "password": "Password",
+              "confirmPassword": "Confirm password"
+            },
+            "toolTip": {
+              "password": "Admin password for the virtual machines and the Active Directory domain."
+            },
+            "osPlatform": "Windows",
+            "constraints": {
+              "required": true
+            }
+          },
+          {
+            "name": "storageAccounts",
+            "type": "Microsoft.Storage.MultiStorageAccountCombo",
+            "label": {
+              "prefix": "Storage account name prefix",
+              "type": "Storage account type"
+            },
+            "toolTip": {
+              "prefix": "The name prefix of the new storage accounts created to store the VMs disks. One storage account dedicated for head node, and one storage account every 10 compute nodes. For example, if 'mystorage' is specified, and there are 22 compute nodes, then 'mystoragehn' for head node, 'mystorage00', 'mystorage01' and 'mystorage02' for compute nodes.",
+              "type": ""
+            },
+            "defaultValue": {
+              "prefix": "",
+              "type": "Standard_LRS"
+            },
+            "constraints": {
+              "allowedTypes": [
+                "Standard_LRS",
+                "Standard_GRS",
+                "Standard_RAGRS"
+              ]
+            },
+            "count": 10
+          }
+        ]
+      },
+      {
+        "name": "headNodeConfig",
+        "label": "Head Node",
+        "subLabel": {
+          "preValidation": "Configure Head node",
+          "postValidation": "Done"
+        },
+        "bladeTitle": "Head Node settings",
+        "elements": [
+          {
+            "name": "headNodeVMSize",
+            "type": "Microsoft.Compute.SizeSelector",
+            "label": "Head node VM Size",
+            "toolTip": "VM Size of the head node",
+            "recommendedSizes": [
+              "Standard_A4",
+              "Standard_D4",
+              "Standard_DS4"
+            ],
+            "constraints": {
+              "allowedSizes": [
+                "Standard_A3",
+                "Standard_A4",
+                "Standard_A5",
+                "Standard_A6",
+                "Standard_A7",
+                "Standard_A8",
+                "Standard_A9",
+                "Standard_A10",
+                "Standard_A11",
+                "Standard_D3",
+                "Standard_D3_v2",
+                "Standard_D4",
+                "Standard_D4_v2",
+                "Standard_D5_v2",
+                "Standard_D12",
+                "Standard_D12_v2",
+                "Standard_D13",
+                "Standard_D13_v2",
+                "Standard_D14",
+                "Standard_D14_v2",
+                "Standard_DS3",
+                "Standard_DS4",
+                "Standard_DS12",
+                "Standard_DS13",
+                "Standard_DS14",
+                "Standard_G2",
+                "Standard_G3",
+                "Standard_G4",
+                "Standard_G5",
+                "Standard_GS2",
+                "Standard_GS3",
+                "Standard_GS4",
+                "Standard_GS5"
+              ]
+            },
+            "osPlatform": "Windows",
+            "imageReference": {
+              "publisher": "MicrosoftWindowsServerHPCPack",
+              "offer": "WindowsServerHPCPack",
+              "sku": "2012R2",
+              "version": "latest"
+            },
+            "count": 1
+          },
+
+          {
+            "name": "headNodePostConfigScript",
+            "type": "Microsoft.Common.TextBox",
+            "label": "Post config script",
+            "toolTip": "Optional, specify the http/https url of the PowerShell script you want to run on the head node after it is configured. The script url must be public available, and you can also specify arguments for the script, for example 'http://www.consto.com/mypostscript.ps1 -Arg1 arg1 -Arg2 arg2'.",
+            "defaultValue": "",
+            "constraints": {
+              "required": false,
+              "regex": "^\\s*(https?://.+\\.ps1(\\s+\\S*)*)?$",
+              "validationMessage": "Must be http/https url and only PowerShell script is supported."
+            }
+          }
+        ]
+      },
+      {
+        "name": "computeNodeConfig",
+        "label": "Compute Nodes",
+        "subLabel": {
+          "preValidation": "Configure compute nodes",
+          "postValidation": "Done"
+        },
+        "bladeTitle": "Compute nodes settings",
+        "elements": [
+          {
+            "name": "computeNodeNamePrefix",
+            "type": "Microsoft.Common.TextBox",
+            "label": "Compute node name prefix",
+            "toolTip": "The name prefix of the compute nodes. It can contain letters, numbers and hyphens and must start with a letter, up to 12 characters. For example, if 'IaaSCN-' is specified, the compute node names will be 'IaaSCN-000', 'IaaSCN-001', ...",
+            "defaultValue": "IaaSCN-",
+            "constraints": {
+              "required": true,
+              "regex": "^[a-zA-Z][a-zA-Z0-9-]{1,11}$",
+              "validationMessage": "It can contain letters, numbers and hyphens and must start with a letter, up to 12 characters."
+            }
+          },
+          {
+            "name": "computeNodeNumber",
+            "type": "Microsoft.Common.TextBox",
+            "label": "Compute node count",
+            "toolTip": "The number of the compute nodes",
+            "defaultValue": "2",
+            "constraints": {
+              "required": true,
+              "regex": "^[1-9][0-9]{0,2}$",
+              "validationMessage": "It shall be an integer between 1 and 999."
+            }
+          },
+          {
+            "name": "computeNodeVMSize",
+            "type": "Microsoft.Compute.SizeSelector",
+            "label": "Compute node VM Size",
+            "toolTip": "The VM role size of the compute nodes",
+            "recommendedSizes": [
+              "Standard_A3",
+              "Standard_A2",
+              "Standard_A4"
+            ],
+            "constraints": {
+              "allowedSizes": [
+                "Standard_A1",
+                "Standard_A2",
+                "Standard_A3",
+                "Standard_A4",
+                "Standard_A5",
+                "Standard_A6",
+                "Standard_A7",
+                "Standard_A8",
+                "Standard_A9",
+                "Standard_A10",
+                "Standard_A11",
+                "Standard_D1",
+                "Standard_D1_v2",
+                "Standard_D2",
+                "Standard_D2_v2",
+                "Standard_D3",
+                "Standard_D3_v2",
+                "Standard_D4",
+                "Standard_D4_v2",
+                "Standard_D5_v2",
+                "Standard_D11",
+                "Standard_D11_v2",
+                "Standard_D12",
+                "Standard_D12_v2",
+                "Standard_D13",
+                "Standard_D13_v2",
+                "Standard_D14",
+                "Standard_D14_v2",
+                "Standard_DS1",
+                "Standard_DS2",
+                "Standard_DS3",
+                "Standard_DS4",
+                "Standard_DS11",
+                "Standard_DS12",
+                "Standard_DS13",
+                "Standard_DS14",
+                "Standard_G1",
+                "Standard_G2",
+                "Standard_G3",
+                "Standard_G4",
+                "Standard_G5",
+                "Standard_GS1",
+                "Standard_GS2",
+                "Standard_GS3",
+                "Standard_GS4",
+                "Standard_GS5"
+              ]
+            },
+            "osPlatform": "Windows",
+            "imageReference": {
+              "publisher": "MicrosoftWindowsServerHPCPack",
+              "offer": "WindowsServerHPCPack",
+              "sku": "2012R2CN",
+              "version": "latest"
+            },
+            "count": 1
+          },
+          {
+            "name": "computeNodeImage",
+            "type": "Microsoft.Common.DropDown",
+            "label": "Compute node VM image",
+            "defaultValue": "ComputeNode",
+            "toolTip": "The VM image of the compute nodes",
+            "constraints": {
+              "allowedValues": [
+                {
+                  "label": "ComputeNode",
+                  "value": "ComputeNode"
+                },
+                {
+                  "label": "ComputeNodeWithExcel",
+                  "value": "ComputeNodeWithExcel"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "outputs": {
+      "clusterName": "[basics('clusterName')]",
+      "location": "[location()]",
+      "virtualNetworkName": "[steps('infrastructureConfig').virtualNetworkName]",
+      "privateDomainName": "[steps('infrastructureConfig').privateDomainName]",
+      "adminUsername": "[steps('infrastructureConfig').adminUsername]",
+      "adminPassword": "[steps('infrastructureConfig').adminPassword.password]",
+      "storageAccountNamePrefix": "[steps('infrastructureConfig').storageAccounts.prefix]",
+      "storageAccountType": "[steps('infrastructureConfig').storageAccounts.type]",
+      "headNodeVMSize": "[steps('headNodeConfig').headNodeVMSize]",
+      "headNodePostConfigScript": "[steps('headNodeConfig').headNodePostConfigScript]",
+      "computeNodeImage": "[steps('computeNodeConfig').computeNodeImage]",
+      "computeNodeNamePrefix": "[steps('computeNodeConfig').computeNodeNamePrefix]",
+      "computeNodeNumber": "[steps('computeNodeConfig').computeNodeNumber]",
+      "computeNodeVMSize": "[steps('computeNodeConfig').computeNodeVMSize]"
+    }
+  }
+}
