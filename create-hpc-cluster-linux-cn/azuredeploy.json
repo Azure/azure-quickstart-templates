@@ -8,35 +8,11 @@
         "description": "The unique HPC Pack cluster name. It is also used as the public DNS name prefix for the cluster, for example, the public DNS name is '&lt;clusterName&gt;.westus.cloudapp.azure.com' if the resource group location is 'West US'. It must contain between 3 and 15 characters with lowercase letters and numbers, and must start with a letter."
       }
     },
-    "virtualNetworkName": {
-      "type": "string",
-      "metadata": {
-        "description": "Name of the virtual network to be created."
-      }
-    },
     "privateDomainName": {
       "type": "string",
       "defaultValue": "hpc.local",
       "metadata": {
         "description": "The fully qualified domain name (FQDN) for the private domain forest which will be created by this template, for example 'hpc.local'."
-      }
-    },
-    "storageAccountNamePrefix": {
-      "type": "string",
-      "metadata": {
-        "description": "The name prefix of the new storage accounts created to store the VMs disks. One storage account dedicated for head node, and one storage account every 10 compute nodes. For example, if 'mystorage' is specified, and there are 22 compute nodes, then 'mystoragehn' for head node, 'mystorage00', 'mystorage01' and 'mystorage02' for compute nodes."
-      }
-    },
-    "storageAccountType": {
-      "type": "string",
-      "defaultValue": "Standard_LRS",
-      "allowedValues": [
-        "Standard_LRS",
-        "Standard_GRS",
-        "Standard_RAGRS"
-      ],
-      "metadata": {
-        "description": "The type of the Storage Account created"
       }
     },
     "headNodeVMSize": {
@@ -82,7 +58,7 @@
       "type": "string",
       "defaultValue": "IaaSLnxCN-",
       "metadata": {
-        "description": "The name prefix of the compute nodes. It can contain letters, numbers and hyphens and must start with a letter, up to 12 characters. For example, if 'IaaSLnxCN-' is specified, the compute node names will be 'IaaSLnxCN-000', 'IaaSLnxCN-001', ..."
+        "description": "The name prefix of the compute nodes. It can contain letters, numbers and hyphens and must start with a letter, up to 13 characters. For example, if 'IaaSLnxCN-' is specified, the compute node names will be 'IaaSLnxCN-0', 'IaaSLnxCN-1', ..."
       }
     },
     "computeNodeNumber": {
@@ -143,14 +119,15 @@
   "variables": {
     "apiVersion": "2015-05-01-preview",
     "location": "[resourceGroup().location]",
-    "nbrCNPerStorageAccount": 10,
-    "cnStorageAccountNumber": "[add(div(parameters('computeNodeNumber'), variables('nbrCNPerStorageAccount')), 1)]",
-    "hnStorageAccountName": "[concat(parameters('storageAccountNamePrefix'), 'hn')]",
-    "hnStorageAccountId": "[resourceId('Microsoft.Storage/storageAccounts',variables('hnStorageAccountName'))]",
+    "storageAccountName": "[toLower(concat(parameters('clusterName'), 'sa'))]",
+    "cnStorageAccountPrefix": "[concat(variables('storageAccountName'), 'cn')]",
+    "cnStorageAccountNumber": "[add(div(parameters('computeNodeNumber'), 10), 1)]",
+    "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts',variables('storageAccountName'))]",
+    "virtualNetworkName": "[concat(parameters('clusterName'), 'VNet')]",
     "addressPrefix": "10.0.0.0/16",
     "subnet1Name": "Subnet-1",
     "subnet1Prefix": "10.0.0.0/24",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
     "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]",
     "publicIPAddressType": "Dynamic",
     "publicIPAddressName": "[concat(parameters('clusterName'), '-PublicIP-VM')]",
@@ -219,24 +196,25 @@
     "computeNodeImageSku": "[variables('linuxImageSkus')[parameters('computeNodeImage')]]",
     "adminBase64Password": "[base64(parameters('adminPassword'))]",
     "customScriptLocation": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/create-hpc-cluster/",
-    "iaasInfoArg": "[concat('-SubscriptionId ', subscription().subscriptionId, ' -VNet ', parameters('virtualNetworkName'), ' -Subnet ', variables('subnet1Name'), ' -Location \"', variables('location'), '\"')]",
+    "iaasInfoArg": "[concat('-SubscriptionId ', subscription().subscriptionId, ' -VNet ', variables('virtualNetworkName'), ' -Subnet ', variables('subnet1Name'), ' -Location \"', resourceGroup().location, '\"')]",
     "headNodeCommandStr": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File PrepareHN.ps1 -DomainFQDN ', parameters('privateDomainName'), ' -AdminUserName ', parameters('adminUsername'), ' -AdminBase64Password \"', variables('adminBase64Password'), '\" -CNSize ', parameters('computeNodeVMSize'), ' -PostConfigScript \"', parameters('headNodePostConfigScript'), '\" -UnsecureDNSUpdate ', variables('iaasInfoArg'))]",
-    "hnStorageConnStrPrefix": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('hnStorageAccountName'), ';AccountKey=')]"
+    "storageConnStrPrefix": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=')]",
+    "computeNodeCommandStr": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File PrepareCN.ps1 -DomainFQDN ', parameters('privateDomainName'), ' -ClusterName ', parameters('clusterName'),' -AdminUserName ', parameters('adminUsername'), ' -AdminBase64Password \"', variables('adminBase64Password'), '\"')]"
   },
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('hnStorageAccountName')]",
+      "name": "[variables('storageAccountName')]",
       "apiVersion": "[variables('apiVersion')]",
       "location": "[variables('location')]",
       "properties": {
-        "accountType": "[parameters('storageAccountType')]"
+        "accountType": "Standard_LRS"
       }
     },
     {
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/virtualNetworks",
-      "name": "[parameters('virtualNetworkName')]",
+      "name": "[variables('virtualNetworkName')]",
       "location": "[variables('location')]",
       "properties": {
         "addressSpace": {
@@ -320,7 +298,7 @@
       "name": "createHeadNode",
       "dependsOn": [
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicNameHN'))]",
-        "[concat('Microsoft.Storage/storageAccounts/', variables('hnStorageAccountName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
         "Microsoft.Resources/deployments/createAvailabilitySet"
       ],
       "properties": {
@@ -340,7 +318,7 @@
             "value": "[parameters('headNodeVMSize')]"
           },
           "storageAccountName": {
-            "value": "[variables('hnStorageAccountName')]"
+            "value": "[variables('storageAccountName')]"
           },
           "nicName": {
             "value": "[variables('nicNameHN')]"
@@ -379,7 +357,7 @@
         },
         "parameters": {
           "virtualNetworkName": {
-            "value": "[parameters('virtualNetworkName')]"
+            "value": "[variables('virtualNetworkName')]"
           },
           "virtualNetworkAddressRange": {
             "value": "[variables('addressPrefix')]"
@@ -418,36 +396,35 @@
             "[concat(variables('customScriptLocation'), 'HPCHNPrepare.ps1')]",
             "[concat(variables('customScriptLocation'), 'HpcPrepareUtil.ps1')]"
           ],
-          "commandToExecute": "[concat(variables('headNodeCommandStr'), ' -AzureStorageConnStr \"', variables('hnStorageConnStrPrefix'), listKeys(variables('hnStorageAccountId'),variables('apiVersion')).key1, '\" -PublicDnsName ', reference(variables('publicIPAddressNameHN')).dnsSettings.fqdn)]"
+          "commandToExecute": "[concat(variables('headNodeCommandStr'), ' -AzureStorageConnStr \"', variables('storageConnStrPrefix'), listKeys(variables('storageAccountId'),variables('apiVersion')).key1, '\" -PublicDnsName ', reference(variables('publicIPAddressNameHN')).dnsSettings.fqdn)]"
         }
       }
     },
 
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[concat(parameters('storageAccountNamePrefix'), padLeft(string(copyIndex()), 2, '0'))]",
+      "name": "[concat(variables('cnStorageAccountPrefix'), copyIndex())]",
       "apiVersion": "[variables('apiVersion')]",
       "location": "[variables('location')]",
       "dependsOn": [
         "Microsoft.Resources/deployments/updateVNetDNS"
       ],
       "copy": {
-        "name": "hpcStorageAccounts",
+        "name": "CNStorageAccounts",
         "count": "[variables('cnStorageAccountNumber')]"
       },
       "properties": {
-        "accountType": "[parameters('storageAccountType')]"
+        "accountType": "Standard_LRS"
       }
     },
 
     {
       "apiVersion": "2015-01-01",
       "type": "Microsoft.Resources/deployments",
-      "name": "[concat('create', parameters('computeNodeNamePrefix'), padLeft(string(copyIndex()), 3, '0'))]",
+      "name": "[concat('create', parameters('computeNodeNamePrefix'), copyIndex())]",
       "dependsOn": [
         "Microsoft.Resources/deployments/createAvailabilitySet",
-        "Microsoft.Resources/deployments/updateVNetDNS",
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountNamePrefix'), padLeft(string(mod(copyIndex(), variables('cnStorageAccountNumber'))), 2, '0'))]"
+        "[concat('Microsoft.Storage/storageAccounts/', variables('cnStorageAccountPrefix'), div(copyIndex(), 10))]"
       ],
       "copy": {
         "name": "CN",
@@ -467,19 +444,19 @@
             "value": "[variables('location')]"
           },
           "nicName": {
-            "value": "[concat(variables('nicName'), padLeft(string(copyIndex()), 3, '0'))]"
+            "value": "[concat(variables('nicName'), copyIndex())]"
           },
-          "subnetId": {
+          "subnetId": { 
             "value": "[variables('subnetRef')]"
           },
           "vmName": {
-            "value": "[concat(parameters('computeNodeNamePrefix'), padLeft(string(copyIndex()), 3, '0'))]"
+            "value": "[concat(parameters('computeNodeNamePrefix'), copyIndex())]"
           },
           "vmSize": {
             "value": "[parameters('computeNodeVMSize')]"
           },
           "storageAccountName": {
-            "value": "[concat(parameters('storageAccountNamePrefix'), padLeft(string(mod(copyIndex(), variables('cnStorageAccountNumber'))), 2, '0'))]"
+            "value": "[concat(variables('cnStorageAccountPrefix'), div(copyIndex(), 10))]"
           },
           "imgPublisher": {
             "value": "[variables('computeNodeImagePublisher')]"
@@ -502,7 +479,7 @@
           "availabilitySetName": {
             "value": "[variables('availabilitySetName')]"
           },
-          "customData": {
+          "customData": { 
             "value": "[base64(concat('HPCClusterName=', parameters('clusterName'), '\r\nImageCategory=public\r\nImageName=', parameters('computeNodeImage'), '\r\nVMSize=', parameters('computeNodeVMSize')))]"
           },
           "scriptBaseUri": {
