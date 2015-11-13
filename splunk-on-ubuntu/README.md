@@ -17,7 +17,11 @@ The instance has the following ports open:
 
 NOTE: The template uses Splunk's default certificates to enable HTTPS which will create a browser warning. Please follow instructions in Splunk Docs to secure Splunk Web [with your own SSL certificates](http://docs.splunk.com/Documentation/Splunk/latest/Security/SecureSplunkWebusingasignedcertificate)
 
-##Known Issues and Limitations
+##Known issues and limitations
 
 - The template sets up SSH access via admin username/password, and would ideally use an SSH key.
 - The template opens SSH port to the public. You can restrict it to a virtual network and/or a bastion host only.
+
+##Third-party software credits
+ - VM utility shell script: MIT license
+ - [Opscode Chef Splunk Cookbook](https://github.com/rarsan/chef-splunk): Apache 2.0 license
