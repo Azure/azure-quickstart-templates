@@ -203,16 +203,26 @@ install_glusterfs_ubuntu() {
 }
 
 install_glusterfs_centos() {
-    yum list installed glusterfs-server-3.6.2-1.el6.x86_64
+    yum list installed glusterfs-server
     if [ ${?} -eq 0 ];
     then
         return
     fi
+    
+    if [ ! -e /etc/yum.repos.d/epel.repo ];
+    then
+        echo "Installing extra packages for enterprise linux"
+        wget https://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm
+        sudo rpm -Uvh ./epel-release-latest-6*.rpm
+        rm ./epel-release-latest-6*.rpm
+        yum -y update
+    fi
+    
     echo "installing gluster"
-    wget --no-cache http://download.gluster.org/pub/gluster/glusterfs/LATEST/CentOS/glusterfs-epel.repo
+    wget --no-cache http://download.gluster.org/pub/gluster/glusterfs/LATEST/EPEL.repo/glusterfs-epel.repo
     mv glusterfs-epel.repo  /etc/yum.repos.d/
-    wget -l 1 -nd -nc -r -A.rpm http://download.gluster.org/pub/gluster/glusterfs/3.6/3.6.3/RHEL/epel-6/x86_64/
-    yum -y install glusterfs-3.6.3-1.el6.x86_64.rpm glusterfs-fuse-3.6.3-1.el6.x86_64.rpm glusterfs-geo-replication-3.6.3-1.el6.x86_64.rpm glusterfs-server-3.6.3-1.el6.x86_64.rpm
+    yum -y update
+    yum -y install glusterfs-cli glusterfs-geo-replication glusterfs-fuse glusterfs-server glusterfs
 }
 
 configure_gluster() {
