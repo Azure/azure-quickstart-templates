@@ -20,6 +20,8 @@ from cm_api.api_client import ApiResource, ApiException
 from cm_api.endpoints.hosts import *
 from cm_api.endpoints.services import ApiServiceSetupInfo, ApiService
 
+LOG_DIR='/log/cloudera'
+
 def getDataDiskCount():
     bashCommand="lsblk | grep /data | grep -v /data/ | wc -l"
     client=SSHClient()
@@ -33,9 +35,17 @@ def getDataDiskCount():
 
     return count
 
+def setZookeeperOwnerDir():
+    client=SSHClient()
+    client.set_missing_host_key_policy(paramiko.client.AutoAddPolicy())
+    toconnect=socket.getfqdn(cmx.cm_server).replace("-mn0", "-mn1")
+    client.connect(toconnect, username=cmx.ssh_root_user, password=cmx.ssh_root_password)
+    client.exec_command("sudo chown zookeeper:zookeeper "+LOG_DIR+"/zookeeper")
+    toconnect=socket.getfqdn(cmx.cm_server).replace("-mn0", "-mn2")
+    client.connect(toconnect, username=cmx.ssh_root_user, password=cmx.ssh_root_password)
+    client.exec_command("sudo chown zookeeper:zookeeper "+LOG_DIR+"/zookeeper")
 
 
-LOG_DIR='/log/cloudera'
 def init_cluster():
     """
     Initialise Cluster
@@ -206,7 +216,9 @@ def setup_zookeeper(HA):
         
         service.update_config({"zookeeper_datadir_autocreate": True})
 
-
+        # Ensure zookeeper has access to folder
+        os.system("sudo chown zookeeper:zookeeper "+LOG_DIR+"/zookeeper")
+        setZookeeperOwnerDir()
 
         # Role Config Group equivalent to Service Default Group
         for rcg in [x for x in service.get_all_role_config_groups()]:
