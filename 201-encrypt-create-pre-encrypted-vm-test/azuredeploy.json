@@ -8,7 +8,7 @@
                 "description": "Name of the Virtual Machine"
             }
         },
-        "newStorageAccountName": {
+        "existingStorageAccountName": {
             "type": "string",
             "metadata": {
                 "description": "Storage account name"
@@ -81,13 +81,14 @@
         }
     },
     "variables": {
-        "storageUri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net')]",
+        "storageUri": "[concat('http://',parameters('existingStorageAccountName'),'.blob.core.windows.net')]",
         "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
         "subnetRef": "[concat(variables('vnetID'),'/subnets/',parameters('subnetName'))]",
         "dnsNameForPublicIP": "[toLower(parameters('vmName'))]",
         "nicName": "[toLower(concat('nic',parameters('vmName')))]",
         "publicIPAddressName": "[toLower(concat('publicIP',parameters('vmName')))]",
-        "publicIPAddressType": "Dynamic"
+        "publicIPAddressType": "Dynamic",
+        "setupVmUrl": "[concat('https://raw.githubusercontent.com/azure/azure-quickstart-templates/master/201-encrypt-create-pre-encrypted-vm-test/setupvm-',parameters('useExistingKek'),'.json')]",
     },
     "resources": [
         {
@@ -128,55 +129,42 @@
             }
         },
         {
-            "apiVersion": "2015-06-15",
-            "type": "Microsoft.Compute/virtualMachines",
-            "name": "[parameters('vmName')]",
-            "location": "[resourceGroup().location]",
-            "dependsOn": [
-                "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
-            ],
+            "name": "setupvmprofile",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2015-01-01",
             "properties": {
-                "hardwareProfile": {
-                    "vmSize": "[parameters('vmSize')]"
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('setupVmUrl')]",
+                    "contentVersion": "1.0.0.0"
                 },
-                "storageProfile": {
-                    "osDisk": {
-                        "name": "osdisk",
-                        "osType": "[parameters('osType')]",
-                        "vhd": {
-                            "uri": "[parameters('osVhdUri')]"
-                        },
-                        "caching": "ReadWrite",
-                        "createOption": "Attach",
-                        "encryptionSettings": {
-                            "diskEncryptionKey": {
-                                "sourceVault": {
-                                    "id": "[parameters('keyVaultResourceID')]"
-                                },
-                                "secretUrl": "[parameters('keyVaultSecretUrl')]"
-                            },
-                            "keyEncryptionKey": {
-                                "sourceVault": {
-                                    "id": "[parameters('keyVaultResourceID')]"
-                                },
-                                "keyUrl": "[parameters('keyVaultKekUrl')]"
-                            }
-                        }
-                    }
-                },
-                "networkProfile": {
-                    "networkInterfaces": [
-                        {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
-                        }
-                    ]
-                },
-                "diagnosticsProfile": {
-                    "bootDiagnostics": {
-                        "enabled": "true",
-                        "storageUri": "[variables('storageUri')]"
+                "parameters": {
+                    "vmName": {
+                        "value": "[parameters('vmName')]"
+                    },
+                    "existingStorageAccountName": {
+                        "value": "[parameters('existingStorageAccountName')]"
+                    },
+                    "osVhdUri": {
+                        "value": "[parameters('osVhdUri')]"
+                    },
+                    "osType": {
+                        "value": "[parameters('osType')]"
+                    },
+                    "vmSize": {
+                        "value": "[parameters('vmSize')]"
+                    },
+                    "keyVaultResourceID": {
+                        "value": "[parameters('keyVaultResourceID')]"
+                    },
+                    "keyVaultSecretUrl": {
+                        "value": "[parameters('keyVaultSecretUrl')]"
+                    },
+                    "keyVaultKekUrl": {
+                        "value": "[parameters('keyVaultKekUrl')]"
                     }
                 }
+
             }
         }
     ]
