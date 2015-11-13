@@ -21,6 +21,14 @@ $serviceCred = New-Object -TypeName System.Management.Automation.PSCredential -A
 Enable-WSManCredSSP -Role Server
 Enable-WSManCredSSP -Role Client -DelegateComputer $Env:COMPUTERNAME
 
+$adminCred = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList ("contoso\hrboyceiii",$servicePassword)
+
+Invoke-Command -ComputerName $Env:COMPUTERNAME -Authentication Credssp -ScriptBlock {
+
+	net group "Administrators" "$using:setupAccountName" /add
+
+} -Verbose -Credential $adminCred
+
 Invoke-Command -ComputerName $Env:COMPUTERNAME -Authentication Credssp -ScriptBlock {
 	Set-Location -Path (Get-Content Env:\ProgramFiles)
 	Set-Location -Path "Microsoft Team Foundation Server 12.0\Tools"
