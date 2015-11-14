@@ -28,7 +28,7 @@ Invoke-Command -ComputerName "localhost" -Authentication Credssp -ScriptBlock {
 
 	net localgroup "Administrators" "$using:setupAccountName" /add
 
-    New-ADUser -UserPrincipalName $using:serviceAccountName -AccountPassword $using:servicePassword -Enabled -Name "tfsservice"
+    New-ADUser -UserPrincipalName $using:serviceAccountName -AccountPassword $using:servicePassword -Enabled $true -Name "tfsservice"
 
 } -Verbose -Credential $adminCred
 
