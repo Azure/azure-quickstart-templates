@@ -28,16 +28,18 @@ Invoke-Command -ComputerName "$env:COMPUTERNAME" -Authentication Negotiate -Scri
 
 	net localgroup "Administrators" "$using:setupAccountName" /add
 
-    New-ADUser -UserPrincipalName $using:serviceAccountName -AccountPassword $using:servicePassword -Enabled $true -Name "tfsservice"
+    New-ADUser -UserPrincipalName $using:serviceAccountName -AccountPassword $using:servicePassword -Enabled $true -Name "tfsservice" -Credential $using:adminCred
 
 } -Verbose -Credential $adminCred
 
-Invoke-Command -ComputerName "$env:COMPUTERNAME" -Authentication Negotiate -ScriptBlock {
+$tfsConfigInputs = "UseWss=$useWss;UseReporting=$useReporting;ConfigureWss=$configureWss;SqlInstance=$sqlInstance;UseSqlAlwaysOn=$useSqlAlwaysOn;IsServiceAccountBuiltIn=$isServiceAccountBuiltIn;ServiceAccountName=$serviceAccountName;ServiceAccountPassword=$(($serviceCred).GetNetworkCredential().Password)"
+
+Invoke-Command -ComputerName "$env:COMPUTERNAME" -Authentication Credssp -ScriptBlock {
 	Set-Location -Path (Get-Content Env:\ProgramFiles)
 	Set-Location -Path "Microsoft Team Foundation Server 12.0\Tools"
 
-	& ".\tfsconfig.exe" unattend /configure /type:standard /inputs:"UseWss=$using:useWss;UseReporting=$using:useReporting;ConfigureWss=$false;SqlInstance=$using:sqlInstance;UseSqlAlwaysOn=$using:useSqlAlwaysOn;IsServiceAccountBuiltIn=$using:isServiceAccountBuiltIn;ServiceAccountName=$using:serviceAccountName;ServiceAccountPassword=$(($using:serviceCred).GetNetworkCredential().Password)"  /verify 2>&1 | Write-Verbose
-	& ".\tfsconfig.exe" unattend /configure /type:standard /inputs:"UseWss=$using:useWss;UseReporting=$using:useReporting;ConfigureWss=$false;SqlInstance=$using:sqlInstance;UseSqlAlwaysOn=$using:useSqlAlwaysOn;IsServiceAccountBuiltIn=$using:isServiceAccountBuiltIn;ServiceAccountName=$using:serviceAccountName;ServiceAccountPassword=$(($using:serviceCred).GetNetworkCredential().Password)"  2>&1 | Write-Verbose
+	& ".\tfsconfig.exe" unattend /configure /type:standard /inputs:"$using:tfsConfigInputs"  /verify 2>&1 | Write-Verbose
+	& ".\tfsconfig.exe" unattend /configure /type:standard /inputs:"$using:tfsConfigInputs"  2>&1 | Write-Verbose
 
 } -Verbose -Credential $setupCred
 
