@@ -24,7 +24,7 @@ Enable-WSManCredSSP -Role Client -DelegateComputer "localhost" -Force
 
 $adminCred = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList ("contoso\hrboyceiii",$servicePassword)
 
-Invoke-Command -ComputerName "localhost" -Authentication Credssp -ScriptBlock {
+Invoke-Command -ComputerName "localhost" -Authentication Kerberos -ScriptBlock {
 
 	net localgroup "Administrators" "$using:setupAccountName" /add
 
@@ -32,7 +32,7 @@ Invoke-Command -ComputerName "localhost" -Authentication Credssp -ScriptBlock {
 
 } -Verbose -Credential $adminCred
 
-Invoke-Command -ComputerName "localhost" -Authentication Credssp -ScriptBlock {
+Invoke-Command -ComputerName "localhost" -Authentication Kerberos -ScriptBlock {
 	Set-Location -Path (Get-Content Env:\ProgramFiles)
 	Set-Location -Path "Microsoft Team Foundation Server 12.0\Tools"
 
