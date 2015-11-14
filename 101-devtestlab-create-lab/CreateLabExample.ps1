@@ -30,28 +30,15 @@ $ErrorActionPreference = "stop"
 # Default exit code
 $ExitCode = 0
 
-# Folder location of this script, the template file and template parameters file.
-$ScriptDir = Split-Path $MyInvocation.MyCommand.Path
-$TemplateFile = Join-Path $ScriptDir -ChildPath "azuredeploy.json"
-$TemplateParameterFile = Join-Path $ScriptDir -ChildPath "azuredeploy.parameters.json"
-
 ##################################################################################################
 
 try
 {
     Login-AzureRmAccount
 
-    $myRGName = "CreateLabExampleRG"
+    Import-Module .\New-AzureDtlLab.ps1
 
-    Write-Host $("Creating a resource group: " + $myRGName)
-    $myRG = New-AzureRmResourceGroup -Name $myRGName -Location "West US"
-
-    Write-Host $("Creating a lab in above resoure group.")
-    $myDeployment = New-AzureRmResourceGroupDeployment -ResourceGroupName $myRGName -TemplateFile $TemplateFile -TemplateParameterFile $TemplateParameterFile -Verbose
-
-    Write-Host $("Displaying the created lab.")
-    $myLabId = $myDeployment.Outputs['labId'].Value
-    Get-AzureRmResource -ResourceId $myLabId
+    New-AzureDtlLab -LabName "ExampleLab1" -LabLocation "West US"
 }
 
 catch
