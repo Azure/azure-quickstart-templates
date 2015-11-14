@@ -22,7 +22,7 @@ Enable-PSRemoting -Force -SkipNetworkProfileCheck
 Enable-WSManCredSSP -Role Server -Force
 Enable-WSManCredSSP -Role Client -DelegateComputer "$env:COMPUTERNAME" -Force
 
-$adminCred = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList ("contoso\hrboyceiii",$servicePassword)
+$adminCred = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList ("contoso\hrboyceiii",$setupPassword)
 
 Invoke-Command -ComputerName "$env:COMPUTERNAME" -Authentication Negotiate -ScriptBlock {
 
