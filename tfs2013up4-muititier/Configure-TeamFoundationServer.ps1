@@ -18,18 +18,21 @@ $setupCred = New-Object -TypeName System.Management.Automation.PSCredential -Arg
 $servicePassword = ConvertTo-SecureString -String $serviceAccountPassword -AsPlainText -Force
 $serviceCred = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList ($serviceAccountName,$servicePassword)
 
-Enable-WSManCredSSP -Role Server
-Enable-WSManCredSSP -Role Client -DelegateComputer $Env:COMPUTERNAME
+Enable-PSRemoting -Force -SkipNetworkProfileCheck
+Enable-WSManCredSSP -Role Server -Force
+Enable-WSManCredSSP -Role Client -DelegateComputer "localhost" -Force
 
 $adminCred = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList ("contoso\hrboyceiii",$servicePassword)
 
-Invoke-Command -ComputerName $Env:COMPUTERNAME -Authentication Credssp -ScriptBlock {
+Invoke-Command -ComputerName "localhost" -Authentication Credssp -ScriptBlock {
 
-	net group "Administrators" "$using:setupAccountName" /add
+	net localgroup "Administrators" "$using:setupAccountName" /add
+
+    New-ADUser -UserPrincipalName $using:serviceAccountName -AccountPassword $using:servicePassword -Enabled -Name "tfsservice"
 
 } -Verbose -Credential $adminCred
 
-Invoke-Command -ComputerName $Env:COMPUTERNAME -Authentication Credssp -ScriptBlock {
+Invoke-Command -ComputerName "localhost" -Authentication Credssp -ScriptBlock {
 	Set-Location -Path (Get-Content Env:\ProgramFiles)
 	Set-Location -Path "Microsoft Team Foundation Server 12.0\Tools"
 
