@@ -20,11 +20,11 @@ $serviceCred = New-Object -TypeName System.Management.Automation.PSCredential -A
 
 Enable-PSRemoting -Force -SkipNetworkProfileCheck
 Enable-WSManCredSSP -Role Server -Force
-Enable-WSManCredSSP -Role Client -DelegateComputer "localhost" -Force
+Enable-WSManCredSSP -Role Client -DelegateComputer "$env:COMPUTERNAME" -Force
 
 $adminCred = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList ("contoso\hrboyceiii",$servicePassword)
 
-Invoke-Command -ComputerName "localhost" -Authentication Kerberos -ScriptBlock {
+Invoke-Command -ComputerName "$env:COMPUTERNAME" -Authentication Kerberos -ScriptBlock {
 
 	net localgroup "Administrators" "$using:setupAccountName" /add
 
@@ -32,7 +32,7 @@ Invoke-Command -ComputerName "localhost" -Authentication Kerberos -ScriptBlock {
 
 } -Verbose -Credential $adminCred
 
-Invoke-Command -ComputerName "localhost" -Authentication Kerberos -ScriptBlock {
+Invoke-Command -ComputerName "$env:COMPUTERNAME" -Authentication Kerberos -ScriptBlock {
 	Set-Location -Path (Get-Content Env:\ProgramFiles)
 	Set-Location -Path "Microsoft Team Foundation Server 12.0\Tools"
 
