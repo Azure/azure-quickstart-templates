@@ -273,7 +273,8 @@ function SetEnv-JavaHome($jdkInstallLocation)
 function SetEnv-HeapSize
 {
     # Obtain total memory in MB and divide in half
-    $halfRam = [math]::Round(((Get-WmiObject Win32_PhysicalMemory | measure-object Capacity -sum).sum/1mb)/2,0)
+    $halfRamCnt = [math]::Round(((Get-WmiObject Win32_PhysicalMemory | measure-object Capacity -sum).sum/1mb)/2,0)
+    $halfRam = $halfRamCnt.ToString() + 'm'
     lmsg "Half of total RAM in system is $halfRam mb."
 
     lmsg "Setting ES_HEAP_SIZE in the registry to $halfRam..."
@@ -370,12 +371,12 @@ function ElasticSearch-StartService()
     if($elasticService -ne $null)
     {
         lmsg 'Starting elasticsearch service...'
-        Start-Service -Name $elasticService
+        Start-Service -Name $elasticService | Out-Null
         $svc = Get-Service | Where-Object { $_.Name -Match 'elasticsearch'}
         
         if($svc -ne $null)
         {
-            $svc.WaitForStatus('Running', '00:00:05')
+            $svc.WaitForStatus('Running', '00:00:10')
         }
 
 		lmsg 'Setting the elasticsearch service startup to automatic...'
@@ -453,6 +454,23 @@ function Jmeter-ConfigFirewall
         lmsg 'Adding firewall rule - Allow Jmeter Outbound Port ' $i
         New-NetFirewallRule -Name "Jmeter_ServerAgent_OUT_$i" -DisplayName "Allow Jmeter Outbound Port $i" -Protocol tcp -LocalPort $i -Action Allow -Enabled True -Direction Outbound | Out-Null
     }
+}
+
+function Elasticsearch-OpenPorts
+{
+	# Add firewall rules
+    lmsg 'Adding firewall rule - Allow Elasticsearch Inbound Port 9200'
+    New-NetFirewallRule -Name 'ElasticSearch_In_Lb' -DisplayName 'Allow Elasticsearch Inbound Port 9200' -Protocol tcp -LocalPort 9200 -Action Allow -Enabled True -Direction Inbound | Out-Null
+
+    lmsg 'Adding firewall rule - Allow Elasticsearch Outbound Port 9200 for Marvel'
+    New-NetFirewallRule -Name 'ElasticSearch_Out_Lb' -DisplayName 'Allow Elasticsearch Outbound Port 9200 for Marvel' -Protocol tcp -LocalPort 9200 -Action Allow -Enabled True -Direction Outbound | Out-Null
+
+    lmsg 'Adding firewall rule - Allow Elasticsearch Inter Node Communication Inbound Port 9300'
+    New-NetFirewallRule -Name 'ElasticSearch_In_Unicast' -DisplayName 'Allow Elasticsearch Inter Node Communication Inbound Port 9300' -Protocol tcp -LocalPort 9300 -Action Allow -Enabled True -Direction Inbound | Out-Null
+    
+    lmsg 'Adding firewall rule - Allow Elasticsearch Inter Node Communication Outbound Port 9300'
+    New-NetFirewallRule -Name 'ElasticSearch_Out_Unicast' -DisplayName 'Allow Elasticsearch Inter Node Communication Outbound Port 9300' -Protocol tcp -LocalPort 9300 -Action Allow -Enabled True -Direction Outbound | Out-Null
+
 }
 
 function Jmeter-Run($unzipLoc)
@@ -561,20 +579,8 @@ function Install-WorkFlow
 
         Add-Content $elasticSearchConfFile $textToAppend
 		
-
-	# Add firewall rules
-    lmsg 'Adding firewall rule - Allow Elasticsearch Inbound Port 9200'
-    New-NetFirewallRule -Name 'ElasticSearch_In_Lb' -DisplayName 'Allow Elasticsearch Inbound Port 9200' -Protocol tcp -LocalPort 9200 -Action Allow -Enabled True -Direction Inbound | Out-Null
-
-    lmsg 'Adding firewall rule - Allow Elasticsearch Outbound Port 9200 for Marvel'
-    New-NetFirewallRule -Name 'ElasticSearch_Out_Lb' -DisplayName 'Allow Elasticsearch Outbound Port 9200 for Marvel' -Protocol tcp -LocalPort 9200 -Action Allow -Enabled True -Direction Outbound | Out-Null
-
-    lmsg 'Adding firewall rule - Allow Elasticsearch Inter Node Communication Inbound Port 9300'
-    New-NetFirewallRule -Name 'ElasticSearch_In_Unicast' -DisplayName 'Allow Elasticsearch Inter Node Communication Inbound Port 9300' -Protocol tcp -LocalPort 9300 -Action Allow -Enabled True -Direction Inbound | Out-Null
-    
-    lmsg 'Adding firewall rule - Allow Elasticsearch Inter Node Communication Outbound Port 9300'
-    New-NetFirewallRule -Name 'ElasticSearch_Out_Unicast' -DisplayName 'Allow Elasticsearch Inter Node Communication Outbound Port 9300' -Protocol tcp -LocalPort 9300 -Action Allow -Enabled True -Direction Outbound | Out-Null
-
+    # Add firewall exceptions
+    Elasticsearch-OpenPorts
 
     # Install service using the batch file in bin folder
     $scriptPath = Join-Path $elasticSearchBin -ChildPath "service.bat"
