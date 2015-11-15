@@ -12,6 +12,8 @@
 	[string]$serviceAccountPassword= "password#1"
 )
 
+$VerbosePreference = "SilentlyContinue"
+
 $setupPassword = ConvertTo-SecureString -String $setupAccountPassword -AsPlainText -Force
 $setupCred = New-Object -TypeName System.Management.Automation.PSCredential -ArgumentList ($setupAccountName,$setupPassword)
 
@@ -28,20 +30,23 @@ Invoke-Command -ComputerName "$env:COMPUTERNAME" -Authentication Negotiate -Scri
 
 	net localgroup "Administrators" "$using:setupAccountName" /add
 
-    New-ADUser -UserPrincipalName $using:serviceAccountName -AccountPassword $using:servicePassword -Enabled $true -Name "tfsservice" -Credential $using:adminCred
+    New-ADUser -UserPrincipalName $using:serviceAccountName -AccountPassword $using:servicePassword -Enabled $true -Name "tfsservice" -Credential $using:adminCred -ErrorAction SilentlyContinue
 
 } -Verbose -Credential $adminCred
 
 $tfsConfigInputs = "UseWss=$useWss;UseReporting=$useReporting;ConfigureWss=$configureWss;SqlInstance=$sqlInstance;UseSqlAlwaysOn=$useSqlAlwaysOn;IsServiceAccountBuiltIn=$isServiceAccountBuiltIn;ServiceAccountName=$serviceAccountName;ServiceAccountPassword=$(($serviceCred).GetNetworkCredential().Password)"
 
-Invoke-Command -ComputerName "$env:COMPUTERNAME" -Authentication Credssp -ScriptBlock {
+Invoke-Command -ComputerName "$env:COMPUTERNAME" -Authentication Negotiate -ScriptBlock {
+
 	Set-Location -Path (Get-Content Env:\ProgramFiles)
 	Set-Location -Path "Microsoft Team Foundation Server 12.0\Tools"
 
-	& ".\tfsconfig.exe" unattend /configure /type:standard /inputs:"$using:tfsConfigInputs"  /verify 2>&1 | Write-Verbose
-	& ".\tfsconfig.exe" unattend /configure /type:standard /inputs:"$using:tfsConfigInputs"  2>&1 | Write-Verbose
+	Write-Verbose "Sending the following arguments to tfsconfig.exe unattend /configure /type:standard /inputs`"$using:tfsConfigInputs`"..."
 
-} -Verbose -Credential $setupCred
+	& ".\tfsconfig.exe" unattend /configure /type:standard /inputs:"$using:tfsConfigInputs" /verify 2>&1 | Write-Verbose
+	& ".\tfsconfig.exe" unattend /configure /type:standard /inputs:"$using:tfsConfigInputs" 2>&1 | Write-Verbose
+
+} -Verbose -Credential $setupCred -EnableNetworkAccess
 
 # start the configuration of the app-tier
 # $inputArgs = "UseWss=$useWss;UseReporting=$useReporting;ConfigureWss=$false;SqlInstance=$sqlInstance;UseSqlAlwaysOn=$useSqlAlwaysOn;IsServiceAccountBuiltIn=$isServiceAccountBuiltIn;ServiceAccountName=$serviceAccountName;ServiceAccountPassword=$($serviceCred.GetNetworkCredential().Password)"
