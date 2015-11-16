@@ -63,6 +63,22 @@ else
 }
 try
 {
+    # Test names for validity
+
+    $newStorageAccountName=$newStorageAccountName.ToLowerInvariant()
+
+    if (Test-AzureName -Storage -Name $newStorageAccountName)
+    {
+        throw "Storage Account Name in use "
+    }
+
+    $scaleSetDNSPrefix=$scaleSetDNSPrefix.ToLowerInvariant()
+
+    if (Test-AzureDnsAvailability -Name $scaleSetDNSPrefix -Location $location)
+    {
+        throw "Scale Set DNS Name in use "
+    }
+
     # Create a new Resource Group
 
     New-AzureResourceGroup -ResourceGroupName $resourceGroupName -Location $location
