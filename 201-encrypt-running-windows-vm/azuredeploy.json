@@ -8,38 +8,49 @@
                 "description": "Name of the virtual machine"
             }
         },
-        "AADClientID": {
+        "aadClientID": {
             "type": "string",
             "metadata": {
                 "description": "Client ID of AAD app which has permissions to KeyVault"
             }
         },
-        "AADClientSecret": {
+        "aadClientSecret": {
             "type": "securestring",
             "metadata": {
                 "description": "Client Secret of AAD app which has permissions to KeyVault"
             }
         },
-        "KeyVaultResourceID": {
+        "keyVaultResourceID": {
             "type": "string",
             "metadata": {
                 "description": "ResourceID of the KeyVault to place the volume encryption key"
             }
         },
-        "KeyVaultURL": {
+        "keyVaultURL": {
             "type": "string",
             "metadata": {
                 "description": "URL of the KeyVault to place the volume encryption key"
             }
         },
-        "KeyEncryptionKeyURL": {
+        "useExistingKek": {
+            "type": "string",
+            "defaultValue": "nokek",
+            "allowedValues": [
+                "nokek",
+                "kek"
+            ],
+            "metadata": {
+                "description": "Select kek if the secret should be encrypted with a key encryption key"
+            }
+        },
+        "keyEncryptionKeyURL": {
             "type": "string",
             "defaultValue": "",
             "metadata": {
                 "description": "URL of the KeyEncryptionKey used to encrypt the volume encryption key"
             }
         },
-        "VolumeType": {
+        "volumeType": {
             "type": "string",
             "defaultValue": "All",
             "metadata": {
@@ -58,7 +69,8 @@
         "extensionName": "AzureDiskEncryption",
         "extensionVersion": "1.0",
         "encryptionOperation": "EnableEncryption",
-        "KeyEncryptionAlgorithm": "RSA-OAEP"
+        "keyEncryptionAlgorithm": "RSA-OAEP",
+        "updateVmUrl": "[concat('https://raw.githubusercontent.com/aravindthoram/azure-quickstart-templates/master/201-encrypt-running-windows-vm/updatevm-',parameters('useExistingKek'),'.json')]"
     },
     "resources": [
         {
@@ -71,44 +83,44 @@
                 "type": "AzureDiskEncryption",
                 "typeHandlerVersion": "[variables('extensionVersion')]",
                 "settings": {
-                    "AADClientID": "[parameters('AADClientID')]",
-                    "KeyVaultURL": "[parameters('KeyVaultURL')]",
-                    "KeyEncryptionKeyURL": "[parameters('KeyEncryptionKeyURL')]",
-                    "KeyEncryptionAlgorithm": "[variables('KeyEncryptionAlgorithm')]",
-                    "VolumeType": "[parameters('VolumeType')]",
+                    "AADClientID": "[parameters('aadClientID')]",
+                    "KeyVaultURL": "[parameters('keyVaultURL')]",
+                    "KeyEncryptionKeyURL": "[parameters('keyEncryptionKeyURL')]",
+                    "KeyEncryptionAlgorithm": "[variables('keyEncryptionAlgorithm')]",
+                    "VolumeType": "[parameters('volumeType')]",
                     "EncryptionOperation": "[variables('encryptionOperation')]",
                     "SequenceVersion": "[parameters('sequenceVersion')]"
                 },
                 "protectedSettings": {
-                    "AADClientSecret": "[parameters('AADClientSecret')]"
+                    "AADClientSecret": "[parameters('aadClientSecret')]"
                 }
             }
         },
         {
-            "apiVersion": "2015-06-15",
-            "type": "Microsoft.Compute/virtualMachines",
-            "name": "[parameters('vmName')]",
-            "location": "[resourceGroup().location]",
+            "name": "updatevm",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2015-01-01",
             "dependsOn": [
                 "[resourceId('Microsoft.Compute/virtualMachines/extensions',  parameters('vmName'), variables('extensionName'))]"
             ],
             "properties": {
-                "storageProfile": {
-                    "osDisk": {
-                        "encryptionSettings": {
-                            "diskEncryptionKey": {
-                                "sourceVault": {
-                                    "id": "[parameters('KeyVaultResourceID')]"
-                                },
-                                "secretUrl": "[reference(resourceId('Microsoft.Compute/virtualMachines/extensions',  parameters('vmName'), variables('extensionName'))).instanceView.statuses[0].message]"
-                            },
-                            "keyEncryptionKey": {
-                                "sourceVault": {
-                                    "id": "[parameters('KeyVaultResourceID')]"
-                                },
-                                "keyUrl": "[parameters('KeyEncryptionKeyURL')]"
-                            }
-                        }
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('updateVmUrl')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "vmName": {
+                        "value": "[parameters('vmName')]"
+                    },
+                    "keyVaultResourceID": {
+                        "value": "[parameters('keyVaultResourceID')]"
+                    },
+                    "keyVaultSecretUrl": {
+                        "value":  "[reference(resourceId('Microsoft.Compute/virtualMachines/extensions',  parameters('vmName'), parameters('extensionName'))).instanceView.statuses[0].message]"
+                    },
+                    "keyVaultKekUrl": {
+                        "value": "[parameters('keyVaultKekURL')]"
                     }
                 }
             }
