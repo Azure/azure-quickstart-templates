@@ -22,7 +22,6 @@
     [string]$scaleSetDNSPrefix,
     [PSCredential]$scaleSetVMCredentials=(Get-Credential -Message 'Enter Credentials for new scale set VMs'),
     [string]$scaleSetTemplate='azuredeploy.json'
-    
 )
 
 function Switch-AzureResourceManagement
@@ -43,7 +42,9 @@ function Switch-AzureServiceManagement
 
 # Check that Azure Module is available
 
-$azureModule=import-module -Name Azure
+Import-Module -Name Azure
+$azureModule=Get-Module -Name Azure
+
 if ($azureModule)
 {
     if ($azureModule.Version.Major -eq 0)
@@ -55,6 +56,7 @@ if ($azureModule)
     {
         $switchMode=$false
         # TODO - Deal with Azure PS v1
+        throw 'Azure PS v1 or greater not supported'
     }
 }
 else
@@ -66,17 +68,22 @@ try
     # Test names for validity
 
     $newStorageAccountName=$newStorageAccountName.ToLowerInvariant()
-
-    if (Test-AzureName -Storage -Name $newStorageAccountName)
+    if (-not (Get-AzureStorageAccount -ResourceGroupName $resourceGroupName -Name $newStorageAccountName -ErrorAction SilentlyContinue))
     {
-        throw "Storage Account Name in use "
+        if (Test-AzureName -Storage -Name $newStorageAccountName -ErrorAction Stop)
+        {
+            throw "Storage Account Name in use "
+        }
     }
 
     $scaleSetDNSPrefix=$scaleSetDNSPrefix.ToLowerInvariant()
 
-    if (Test-AzureDnsAvailability -Name $scaleSetDNSPrefix -Location $location)
+    if (-not (Get-AzurePublicIpAddress  -ResourceGroupName $resourceGroupName|where Location -eq $location).DnsSettings.DomainNameLabel -eq  $scaleSetDNSPrefix)
     {
-        throw "Scale Set DNS Name in use "
+        if (-not (Test-AzureDnsAvailability -DomainQualifiedName $scaleSetDNSPrefix -Location $location -ErrorAction Stop))
+        {
+            throw "Scale Set DNS Name in use "
+        }
     }
 
     # Create a new Resource Group
@@ -100,18 +107,20 @@ try
     $srccontext= New-AzureStorageContext -StorageAccountName $customImageStorageAccountName -Anonymous -Protocol Https
 
     $destcontainer=Get-AzureStorageContainer -Context $destcontext -Name $newImageContainer -ErrorAction SilentlyContinue
+
     if ($destcontainer -eq $null){
 	    New-AzureStorageContainer -Context $destcontext -Name $newImageContainer
     }
-
-    $copystate = Get-AzureStorageBlob -Container $customImageContainer -Context $srccontext -Blob $customImageBlobName|Start-CopyAzureStorageBlob -DestContext $destContext -DestContainer $newImageContainer -DestBlob $newImageBlobName
-    $copystate|Get-AzureStorageBlobCopyState -WaitForComplete
+    
+    Get-AzureStorageBlob -Container $customImageContainer -Context $srccontext -Blob $customImageBlobName|Start-CopyAzureStorageBlob -DestContext $destContext -DestContainer $newImageContainer -DestBlob $newImageBlobName -ErrorVariable $copyerror -ErrorAction Continue|Get-AzureStorageBlobCopyState -WaitForComplete
 
     # Deploy the scale set using the new custom image as the target
 
     $imageSource=(Get-AzureStorageBlob -Container $newImageContainer -Context $destContext -Blob $newImageBlobName).ICloudBlob.StorageUri.PrimaryUri.AbsoluteUri
 
-    $parameters=@{"vmSSName"="$scaleSetName";"instanceCount"="$scaleSetInstanceCount";"vmSize"="$scaleSetVMSize";"dnsNamePrefix"="$scaleSetDNSPrefix";"adminUsername"="$scaleSetVMCredentials.UserName";"adminPassword"="$scaleSetVMCredentials.GetNetworkCredential().Password";"location"="$location";"imageSource"="$imageSource"}
+    Switch-AzureResourceManagement
+
+    $parameters=@{"vmSSName"="$scaleSetName";"instanceCount"=$scaleSetInstanceCount;"vmSize"="$scaleSetVMSize";"dnsNamePrefix"="$scaleSetDNSPrefix";"adminUsername"="$scaleSetVMCredentials.UserName";"adminPassword"="$scaleSetVMCredentials.GetNetworkCredential().Password";"location"="$location";"imageSource"="$imageSource"}
     $templateUri="$repoUri$scaleSetTemplate"
 
     New-AzureResourceGroupDeployment -ResourceGroupName $resourceGroupName -TemplateUri $templateUri -TemplateParameterObject $parameters -Name 'createscaleset'
