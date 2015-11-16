@@ -8,7 +8,7 @@
     [string]$customImageBlobName='IISBase-osDisk.vhd',
     [Parameter(Mandatory=$true)]
     [string]$newStorageAccountName,
-    [string]$newStorageAccountType='"Premium_LRS',
+    [string]$newStorageAccountType='Premium_LRS',
     [string]$newImageContainer='images',
     [string]$newImageBlobName='IISBase-osDisk.vhd',
     [string]$repoUri='https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vmss-windows-customimage/',
