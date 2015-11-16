@@ -186,6 +186,20 @@ activate_secondnic_centos() {
     fi
 }
 
+activate_secondnic_ubuntu() {
+    if [ -n "$SECONDNIC" ];
+    then
+        echo "" >> /etc/network/interfaces
+        echo "auto $SECONDNIC" >> /etc/network/interfaces
+        echo "iface $SECONDNIC inet dhcp" >> /etc/network/interfaces
+        defaultgw=$(ip route show |sed -n "s/^default via //p")
+        declare -a gateway=(${defaultgw// / })
+        echo "" >> /etc/network/interfaces
+        echo "post-up ip route add default via $gateway" >> /etc/network/interfaces
+        /etc/init.d/networking restart    
+    fi
+}
+
 configure_network() {
     open_ports
     if [ $iscentos -eq 0 ];
@@ -194,11 +208,29 @@ configure_network() {
         disable_selinux_centos
     elif [ $isubuntu -eq 0 ];
     then
+        activate_secondnic_ubuntu
         disable_apparmor_ubuntu
     fi
 }
 
 install_glusterfs_ubuntu() {
+    dpkg -l | grep glusterfs
+    if [ ${?} -eq 0 ];
+    then
+        return
+    fi
+
+    if [ ! -e /etc/apt/sources.list.d/gluster* ];
+    then
+        echo "adding gluster ppa"
+        apt-get  -y install python-software-properties
+        apt-add-repository -y ppa:gluster/glusterfs-3.7
+        apt-get -y update
+    fi
+    
+    echo "installing gluster"
+    apt-get -y install glusterfs-server
+    
     return
 }
 
@@ -226,17 +258,22 @@ install_glusterfs_centos() {
 }
 
 configure_gluster() {
-    /etc/init.d/glusterd status
-    if [ ${?} -ne 0 ];
+    if [ $iscentos -eq 0 ];
     then
-        if [ $iscentos -eq 0 ];
+        /etc/init.d/glusterd status
+        if [ ${?} -ne 0 ];
         then
             install_glusterfs_centos
-        elif [ $isubuntu -eq 0 ];
+        fi
+        /etc/init.d/glusterd start        
+    elif [ $isubuntu -eq 0 ];
+    then
+        /etc/init.d/glusterfs-server status
+        if [ ${?} -ne 0 ];
         then
             install_glusterfs_ubuntu
         fi
-        /etc/init.d/glusterd start
+        /etc/init.d/glusterfs-server start
     fi
 
     GLUSTERDIR="${MOUNTPOINT}/brick"
@@ -296,14 +333,21 @@ allow_passwordssh() {
     fi
     sed -i "s/^#PasswordAuthentication.*/PasswordAuthentication yes/I" /etc/ssh/sshd_config
     sed -i "s/^PasswordAuthentication no.*/PasswordAuthentication yes/I" /etc/ssh/sshd_config
-    /etc/init.d/sshd reload
+    if [ $iscentos -eq 0 ];
+    then
+        /etc/init.d/sshd reload
+    elif [ $isubuntu -eq 0 ];
+    then
+        /etc/init.d/ssh reload
+    fi
 }
+
+check_os
 
 # temporary workaround form CRP 
 allow_passwordssh  
 
-check_os
-if [ $iscentos -ne 0 ];
+if [ $iscentos -ne 0 ] && [ $isubuntu -ne 0];
 then
     echo "unsupported operating system"
     exit 1 
