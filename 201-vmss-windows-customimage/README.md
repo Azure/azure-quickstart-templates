@@ -14,7 +14,8 @@ To make it easier to see this template in action there is a  PowerShell script l
 ```
 A sample script with this command can be found at scripts/rundeployscaleset.ps1
 
-The sample WindowS Custom Image is based on Windows Server 2012 R2 and has a simple MVC application installed that will render the name of the server that processed a request, by default this application is exposed on port 80
+The sample Windows Custom Image is based on Windows Server 2012 R2 and has a simple MVC application installed that will render the name of the server that processed a request, by default this application is exposed on port 80
+**Note: This image may not have all the latest windows updates applied to it**
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vmss-windows-customimage%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
