@@ -8,7 +8,8 @@
     [string]$customImageBlobName='IISBase-osDisk.vhd',
     [Parameter(Mandatory=$true)]
     [string]$newStorageAccountName,
-    [string]$newStorageAccountType='Premium_LRS',
+    [Parameter(Mandatory=$true)]
+    [string]$newStorageAccountType,
     [string]$newImageContainer='images',
     [string]$newImageBlobName='IISBase-osDisk.vhd',
     [string]$repoUri='https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vmss-windows-customimage/',
@@ -120,7 +121,7 @@ try
 
     Switch-AzureResourceManagement
 
-    $parameters=@{"vmSSName"="$scaleSetName";"instanceCount"=$scaleSetInstanceCount;"vmSize"="$scaleSetVMSize";"dnsNamePrefix"="$scaleSetDNSPrefix";"adminUsername"="$scaleSetVMCredentials.UserName";"adminPassword"="$scaleSetVMCredentials.GetNetworkCredential().Password";"location"="$location";"imageSource"="$imageSource"}
+    $parameters=@{"vmSSName"="$scaleSetName";"instanceCount"=$scaleSetInstanceCount;"vmSize"="$scaleSetVMSize";"dnsNamePrefix"="$scaleSetDNSPrefix";"adminUsername"=$scaleSetVMCredentials.UserName;"adminPassword"=$scaleSetVMCredentials.GetNetworkCredential().Password;"location"="$location";"imageSource"="$imageSource"}
     $templateUri="$repoUri$scaleSetTemplate"
 
     New-AzureResourceGroupDeployment -ResourceGroupName $resourceGroupName -TemplateUri $templateUri -TemplateParameterObject $parameters -Name 'createscaleset'

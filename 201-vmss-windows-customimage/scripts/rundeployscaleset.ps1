@@ -1,5 +1,11 @@
-﻿
-$scalsetDNS='s'+[System.Guid]::NewGuid().toString()
-$newstorageaccountname=[System.Guid]::NewGuid().toString().Replace('-','').Substring(1,24)
-$newstorageaccountname='a15041784164756b556cc494'
-.\deployscaleset.ps1 -location northeurope -resourceGroupName ssrg1 -repoUri https://raw.githubusercontent.com/simongdavies/azure-quickstart-templates/master/201-vmss-windows-customimage/ -scaleSetName windowscustom -newStorageAccountName $newstorageaccountname -scaleSetVMSize Standard_D1 -scaleSetDNSPrefix $scalsetDNS
+﻿$args=@{
+    'scalesetDNSPrefix'='s'+[System.Guid]::NewGuid().toString();
+    'newStorageAccountName'=[System.Guid]::NewGuid().toString().Replace('-','').Substring(1,24);
+    'resourceGroupName'='ssrg1';
+    'location'='northeurope';
+    'scaleSetName'='windowscustom';
+    'scaleSetVMSize'='Standard_DS1';
+    'newStorageAccountType'='Premium_LRS';'repoUri'='https://raw.githubusercontent.com/simongdavies/azure-quickstart-templates/master/201-vmss-windows-customimage/'
+}
+
+.\deployscaleset.ps1 @args 
