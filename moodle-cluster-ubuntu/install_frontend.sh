@@ -66,4 +66,4 @@ MoodleAdminEmail=$11
 
 cd /var/www/html/moodle
 wwwrootval="http://$LoadbalancerIpAddress:80/moodle"
-sudo -u www-data php admin/cli/install.php --chmod=770 --lang=en --wwwroot=$wwwrootval --dataroot='/var/www/moodledata' --dbhost=$DbIpAddress --dbpass=$dbpass --fullname=$FullNameOfSite --shortname=$ShortNameOfSite --adminuser=$MoodleAdminUser --adminpass=$MoodleAdminPass --adminemail=$MoodleAdminEmail --non-interactive --agree-license --allow-unstable
+sudo -u www-data php admin/cli/install.php --chmod=770 --lang=en --wwwroot=$wwwrootval --dataroot='/var/www/moodledata' --dbhost=$DbIpAddress --dbpass=$dbpass --fullname=$FullNameOfSite --shortname=$ShortNameOfSite --adminuser=$MoodleAdminUser --adminpass=$MoodleAdminPass --adminemail=$MoodleAdminEmail --non-interactive --agree-license --allow-unstable || true
