@@ -32,8 +32,9 @@
 # Parameters :
 #  1 - r: role of Splunk server
 #  2 - p: password of Splunk server
-#  3 - i: index of node
-#  4 - h: Help
+#  3 - c: cluster master ip address (optional)
+#  4 - i: index of node (optional)
+#  5 - h: Help
 # Note : 
 # This script has only been tested on Ubuntu 12.04 LTS & 14.04.2-LTS and must be root
 
@@ -46,6 +47,7 @@ help()
     echo "Parameters:"
     echo "-r role to configure node, supported role(s): splunk_server"
     echo "-p password for Splunk Enterprise admin"
+    echo "-c cluster master ip address"
     echo "-i index of node"
     echo "-h help"
 }
@@ -74,10 +76,11 @@ CHEF_PKG_URL="https://opscode-omnibus-packages.s3.amazonaws.com/ubuntu/10.04/x86
 CHEF_PKG_MD5="6360faba9d6358d636be5618eecb21ee1dbdca7d  chef_12.5.1-1_amd64.deb"
 CHEF_PKG_CACHE="/etc/chef/local-mode-cache/cache/chef_12.5.1-1_amd64.deb"
 
-CHEF_REPO_URL="https://github.com/rarsan/chef-repo-splunk/tarball/v0.3"
+#CHEF_REPO_URL="https://github.com/rarsan/chef-repo-splunk/tarball/v0.3"
+CHEF_REPO_URL="https://github.com/rarsan/chef-repo-splunk/tarball/develop"
 
 # Arguments
-while getopts :r:u:p:i: optname; do
+while getopts :r:p:c:i: optname; do
   log "Option $optname set with value ${OPTARG}"
   case $optname in
     r) #Role of Splunk by which to configure node
@@ -85,6 +88,9 @@ while getopts :r:u:p:i: optname; do
       ;;
     p) #Password of Splunk admin
       ADMIN_PASSWD=${OPTARG}
+      ;;
+    c) #IP of cluster master
+      CLUSTER_MASTER_IP=${OPTARG}
       ;;
     i) #Index of node
       NODE_INDEX=${OPTARG}
@@ -136,6 +142,11 @@ tar -xzf berks-package.tar.gz -C cookbooks --strip-components=1
 
 # Update data bag with custom user credentials
 sed -i "s/notarealpassword/${ADMIN_PASSWD}/" /etc/chef/repo/data_bags/vault/splunk__default.json
+
+# Update placeholder nodes with existing resources data
+if [ -n "${CLUSTER_MASTER_IP}" ]; then
+  sed -i "s/<INSERT_IP_ADDRESS>/${CLUSTER_MASTER_IP}/" /etc/chef/repo/nodes/cluster-master.json
+fi
 
 cat >/etc/chef/node.json <<end
 {
