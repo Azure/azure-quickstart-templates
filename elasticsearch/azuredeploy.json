@@ -11,24 +11,13 @@
     "adminPassword": {
       "type": "securestring",
       "metadata": {
-        "description": "Admin SSH key used when provisioning virtual machines"
-      }
-    },
-    "dnsNameforLBIP": {
-      "type": "string",
-      "metadata": {
-        "description": "Load balancer subdomain name"
-      }
-    },
-    "storageAccountPrefix": {
-      "type": "string",
-      "metadata": {
-        "description": "Unique namespace for the Storage Account where the Virtual Machine's disks will be placed"
+        "description": "Admin password used when provisioning virtual machines"
       }
     },
     "location": {
       "type": "string",
       "allowedValues": [
+        "ResourceGroup",
         "West US",
         "East US",
         "East US 2",
@@ -37,15 +26,17 @@
         "North Central US",
         "East Asia",
         "Southeast Asia",
-        "West Europe"
+        "West Europe",
+        "North Europe"
       ],
+      "defaultValue": "ResourceGroup",
       "metadata": {
-        "description": "Location where resources will be provisioned"
+        "description": "Location where resources will be provisioned.  A value of 'ResourceGroup' will deploy the resource to the same location of the resource group the resources are provisioned into"
       }
     },
     "virtualNetworkName": {
       "type": "string",
-      "defaultValue": "myVNET",
+      "defaultValue": "esvnet",
       "metadata": {
         "description": "Virtual Network"
       }
@@ -54,7 +45,8 @@
       "type": "string",
       "defaultValue": "ubuntu",
       "allowedValues": [
-        "ubuntu"
+        "ubuntu",
+        "windows"
       ],
       "metadata": {
         "description": "The operating system to deploy Elasticsearch cluster on"
@@ -147,9 +139,9 @@
     },
     "esVersion": {
       "type": "string",
-      "defaultValue": "1.7.3",
+      "defaultValue": "2.0.0",
       "allowedValues": [
-        "2.0.0-rc1",
+        "2.0.0",
         "1.7.3",
         "1.6.2",
         "1.5.2"
@@ -157,10 +149,48 @@
       "metadata": {
         "description": "Elasticsearch version to install"
       }
+    },
+    "marvel": {
+      "type":"string",
+      "defaultValue":"no",
+      "allowedValues": [
+        "yes",
+        "no"
+      ],
+      "metadata": {
+        "description": "Install the marvel agenet in the cluster"
+      }
+    },
+    "kibana":{
+      "type":"string",
+      "defaultValue":"no",
+      "allowedValues": [
+        "yes",
+        "no"
+      ],
+      "metadata": {
+        "description": "Provision a machine with Kibana on it"
+      }
     }
   },
   "variables": {
     "templateBaseUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/elasticsearch/",
+    "locationMap": {
+        "ResourceGroup":"[resourceGroup().location]",
+        "West US":"[parameters('location')]",
+        "East US":"[parameters('location')]",
+        "East US 2":"[parameters('location')]",
+        "Central US":"[parameters('location')]",
+        "South Central US":"[parameters('location')]",
+        "North Central US":"[parameters('location')]",
+        "East Asia":"[parameters('location')]",
+        "Southeast Asia":"[parameters('location')]",
+        "West Europe":"[parameters('location')]",
+        "North Europe":"[parameters('location')]"
+    },
+    "location":"[variables('locationMap')[parameters('location')]]",
+    "storageAccountPrefix": "elastic",
+    "storageAccountNameShared": "[concat(variables('storageAccountPrefix'), 's', uniqueString(resourceGroup().id, deployment().name))]",
     "masterNodesIpPrefix": "10.0.0.1",
     "networkSettings": {
       "virtualNetworkName": "[parameters('virtualNetworkName')]",
@@ -210,9 +240,36 @@
     "jumpboxTemplateYes": "jumpbox-resources.json",
     "jumpboxTemplateNo": "empty-resources.json",
     "jumpboxTemplateUrl": "[concat(variables('templateBaseUrl'), variables(concat('jumpboxTemplate',parameters('jumpbox'))))]",
+    "marvelParam": {
+      "ubuntu": {
+        "yes":" -m",
+        "no":""
+      },
+      "windows": {
+        "yes":" -installMarvel",
+        "no":""
+      }
+    },
+    "marvelParamValue": "[variables('marvelParam')[parameters('OS')][parameters('marvel')]]",
+    "kibanaTemplates": {
+      "yes": "kibana-resources.json",
+      "no": "empty-resources.json"
+    },
+    "kibanaTemplateUrl":"[concat(variables('templateBaseUrl'), variables('kibanaTemplates')[parameters('kibana')], '')]",
+    "scriptParams": [
+      "[concat('version=', parameters('esVersion'), ';')]",
+      "[concat('clusterName=', parameters('esClusterName'), ';')]",
+      "[concat('discoveryHosts=', variables('masterNodesIpPrefix'), '-3', ';')]",
+      "[concat('installMarvel=', parameters('marvel'), ';')]"
+    ],
+    "scriptParamString":"[concat(variables('scriptParams')[0], variables('scriptParams')[1], variables('scriptParams')[2], variables('scriptParams')[3] )]",
     "ubuntuScripts": [
       "[concat(variables('templateBaseUrl'), 'elasticsearch-ubuntu-install.sh')]",
+      "[concat(variables('templateBaseUrl'), 'kibana-install.sh')]",
       "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/shared_scripts/ubuntu/vm-disk-utils-0.1.sh"
+    ],
+    "windowsScripts": [
+      "[concat(variables('templateBaseUrl'), 'elasticsearch-windows-install.ps1')]"
     ],
     "ubuntuSettings": {
       "imageReference":{
@@ -229,7 +286,7 @@
             "typeHandlerVersion": "1.2",
             "settings": {
               "fileUris": "[variables('ubuntuScripts')]",
-              "commandToExecute": "[concat('bash elasticsearch-ubuntu-install.sh -xn ', variables('esSettings').clusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').discoveryHosts)]"
+              "commandToExecute": "[concat('bash elasticsearch-ubuntu-install.sh -xn ', variables('esSettings').clusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').discoveryHosts, variables('marvelParamValue'))]"
             }
           },
         "client": {
@@ -238,7 +295,7 @@
             "typeHandlerVersion": "1.2",
             "settings": {
               "fileUris": "[variables('ubuntuScripts')]",
-              "commandToExecute": "[concat('bash elasticsearch-ubuntu-install.sh -yn ', variables('esSettings').clusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').discoveryHosts)]"
+              "commandToExecute": "[concat('bash elasticsearch-ubuntu-install.sh -yn ', variables('esSettings').clusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').discoveryHosts, variables('marvelParamValue'))]"
             }
           },
         "data": {
@@ -247,7 +304,16 @@
           "typeHandlerVersion": "1.2",
           "settings": {
             "fileUris": "[variables('ubuntuScripts')]",
-            "commandToExecute": "[concat('bash elasticsearch-ubuntu-install.sh -zn ', variables('esSettings').clusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').discoveryHosts)]"
+            "commandToExecute": "[concat('bash elasticsearch-ubuntu-install.sh -zn ', variables('esSettings').clusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').discoveryHosts, variables('marvelParamValue'))]"
+          }
+        },
+        "kibana": {
+          "publisher": "Microsoft.OSTCExtensions",
+          "type": "CustomScriptForLinux",
+          "typeHandlerVersion": "1.2",
+          "settings": {
+            "fileUris": "[variables('ubuntuScripts')]",
+            "commandToExecute": "[concat('bash kibana-install.sh')]"
           }
         }
       }
@@ -261,9 +327,33 @@
       },
       "managementPort":"3389",
       "extentionSettings":{
-        "master": {},
-        "client": {},
-        "data": {}
+        "master": {
+          "publisher": "Microsoft.Compute",
+          "type": "CustomScriptExtension",
+          "typeHandlerVersion": "1.4",
+          "settings": {
+            "fileUris": "[variables('windowsScripts')]",
+            "commandToExecute": "[concat('powershell.exe -File elasticsearch-windows-install.ps1 -elasticSearchVersion ', variables('esSettings').version,' -elasticClusterName ', variables('esSettings').clusterName,' -discoveryEndpoints ', variables('esSettings').discoveryHosts, ' -masterOnlyNode -installMarvel')]"
+          }
+        },
+        "client": {
+          "publisher": "Microsoft.Compute",
+          "type": "CustomScriptExtension",
+          "typeHandlerVersion": "1.4",
+          "settings": {
+            "fileUris": "[variables('windowsScripts')]",
+            "commandToExecute": "[concat('powershell.exe -File elasticsearch-windows-install.ps1 -elasticSearchVersion ', variables('esSettings').version,' -elasticClusterName ', variables('esSettings').clusterName,' -discoveryEndpoints ', variables('esSettings').discoveryHosts, ' -clientOnlyNode -installMarvel')]"
+          }
+        },
+        "data": {
+          "publisher": "Microsoft.Compute",
+          "type": "CustomScriptExtension",
+          "typeHandlerVersion": "1.4",
+          "settings": {
+            "fileUris": "[variables('windowsScripts')]",
+            "commandToExecute": "[concat('powershell.exe -File elasticsearch-windows-install.ps1 -elasticSearchVersion ', variables('esSettings').version,' -elasticClusterName ', variables('esSettings').clusterName,' -discoveryEndpoints ', variables('esSettings').discoveryHosts, ' -dataOnlyNode -installMarvel')]"
+          }
+        }
       }
     },
     "osSettings": "[variables(concat(parameters('OS'), 'Settings'))]",
@@ -391,7 +481,7 @@
       "count":"[div(sub(add(parameters('vmDataNodeCount'), variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
       "mapping":"[variables('storageBinPackMap')]",
       "accountType":"[variables('dataSkuSettings')[parameters('vmSizeDataNodes')].storageAccountType]",
-      "prefix":"[parameters('storageAccountPrefix')]"
+      "prefix":"[concat(variables('storageAccountPrefix'), 'd', uniqueString(resourceGroup().id, deployment().name))]"
     },
     "dataTemplateUrl": "[concat(variables('templateBaseUrl'), 'data-nodes-', string(variables('dataSkuSettings')[parameters('vmSizeDataNodes')].dataDisks), 'disk-resources.json')]"
   },
@@ -411,7 +501,7 @@
         },
         "parameters": {
           "storageAccountName": {
-            "value": "[concat(parameters('storageAccountPrefix'),'shared')]"
+            "value": "[variables('storageAccountNameShared')]"
           },
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
@@ -423,7 +513,7 @@
             "value": "[variables('masterNodesIpPrefix')]"
           },
           "location": {
-            "value": "[parameters('location')]"
+            "value": "[variables('location')]"
           },
           "vmSize": {
             "value": "[parameters('vmSizeMasterNodes')]"
@@ -449,22 +539,19 @@
         },
         "parameters": {
           "location": {
-            "value": "[parameters('location')]"
+            "value": "[variables('location')]"
           },
           "networkSettings": {
             "value": "[variables('networkSettings')]"
           },
           "storageAccountName": {
-            "value": "[concat(parameters('storageAccountPrefix'),'shared')]"
+            "value": "[variables('storageAccountNameShared')]"
           },
           "loadBalancerType": {
             "value": "[parameters('loadBalancerType')]"
           },
           "ilbIpAddress": {
             "value": "10.0.0.100"
-          },
-          "dnsName": {
-            "value": "[parameters('dnsNameforLBIP')]"
           }
         }
       }
@@ -490,10 +577,10 @@
             "value": "[parameters('adminPassword')]"
           },
           "storageAccountName": {
-            "value": "[concat(parameters('storageAccountPrefix'),'shared')]"
+            "value": "[variables('storageAccountNameShared')]"
           },
           "location": {
-            "value": "[parameters('location')]"
+            "value": "[variables('location')]"
           },
           "subnet": {
             "value": "[variables('networkSettings').subnet.data]"
@@ -534,7 +621,7 @@
             "value": "[parameters('adminPassword')]"
           },
           "location": {
-            "value": "[parameters('location')]"
+            "value": "[variables('location')]"
           },
           "storageSettings": {
             "value": "[variables('dataNodeStorageSettings')]"
@@ -575,7 +662,7 @@
         },
         "parameters": {
           "storageAccountName": {
-            "value": "[concat(parameters('storageAccountPrefix'),'shared')]"
+            "value": "[variables('storageAccountNameShared')]"
           },
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
@@ -584,13 +671,48 @@
             "value": "[parameters('adminPassword')]"
           },
           "location": {
-            "value": "[parameters('location')]"
+            "value": "[variables('location')]"
           },
           "subnet": {
             "value": "[variables('networkSettings').subnet.data]"
           },
           "osSettings": {
             "value": "[variables('osSettings')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "kibana",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', 'data-nodes')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('kibanaTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "storageAccountName": {
+            "value": "[variables('storageAccountNameShared')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "location": {
+            "value": "[variables('location')]"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnet.data]"
+          },
+          "osSettings": {
+            "value": "[variables('ubuntuSettings')]"
           }
         }
       }

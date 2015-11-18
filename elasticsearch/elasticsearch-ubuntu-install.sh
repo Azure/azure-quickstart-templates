@@ -30,8 +30,8 @@ help()
     echo "Parameters:"
     echo "-n elasticsearch cluster name"
     echo "-d static discovery endpoints 10.0.0.1-3"
-    echo "-v elasticsearch version 1.5.0"
-    echo "-l install marvel yes/no"
+    echo "-v elasticsearch version"
+    echo "-m install marvel yes/no"
     echo "-x configure as a dedicated master node"
     echo "-y configure as client only node (no master, no data)"
     echo "-z configure as data node (no master)"
@@ -70,15 +70,15 @@ fi
 
 #Script Parameters
 CLUSTER_NAME="elasticsearch"
-ES_VERSION="1.7.2"
+ES_VERSION="2.0.0"
 DISCOVERY_ENDPOINTS=""
-INSTALL_MARVEL="no" #We use this because of ARM template limitation
+INSTALL_MARVEL=0
 CLIENT_ONLY_NODE=0
 DATA_NODE=0
 MASTER_ONLY_NODE=0
 
 #Loop through options passed
-while getopts :n:d:v:l:xyzsh optname; do
+while getopts :n:d:v:mxyzsh optname; do
     log "Option $optname set with value ${OPTARG}"
   case $optname in
     n) #set cluster name
@@ -90,8 +90,8 @@ while getopts :n:d:v:l:xyzsh optname; do
     v) #elasticsearch version number
       ES_VERSION=${OPTARG}
       ;;
-    l) #install marvel
-      INSTALL_MARVEL=${OPTARG}
+    m) #install marvel
+      INSTALL_MARVEL=1
       ;;
     x) #master node
       MASTER_ONLY_NODE=1
@@ -167,19 +167,17 @@ install_java()
 # Install Elasticsearch
 install_es()
 {
-    # apt-get install approach
-    # This has the added benefit that is simplifies upgrades (user)
-    # Using the debian package because it's easier to explicitly control version and less changes of nodes with different versions
-    #wget -qO - https://packages.elasticsearch.org/GPG-KEY-elasticsearch | sudo apt-key add -
-    #add-apt-repository "deb http://packages.elasticsearch.org/elasticsearch/1.5/debian stable main"
-    #apt-get update && apt-get install elasticsearch
-
-    # if [ -z "$ES_VERSION" ]; then
-    #     ES_VERSION="1.5.0"
-    # fi
+	
+	# Elasticsearch 2.0.0 uses a different download path
+    if [[ "${ES_VERSION}" == \2* ]]; then
+        DOWNLOAD_URL="https://download.elasticsearch.org/elasticsearch/release/org/elasticsearch/distribution/deb/elasticsearch/$ES_VERSION/elasticsearch-$ES_VERSION.deb"
+    else
+        DOWNLOAD_URL="https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-$ES_VERSION.deb"
+    fi
 
     log "Installing Elaticsearch Version - $ES_VERSION"
-    sudo wget -q "https://download.elasticsearch.org/elasticsearch/elasticsearch/elasticsearch-$ES_VERSION.deb" -O elasticsearch.deb
+	log "Download location - $DOWNLOAD_URL"
+    sudo wget -q "$DOWNLOAD_URL" -O elasticsearch.deb
     sudo dpkg -i elasticsearch.deb
 }
 
@@ -270,6 +268,12 @@ else
     echo "node.data: true" >> /etc/elasticsearch/elasticsearch.yml
 fi
 
+echo "discovery.zen.minimum_master_nodes: 2" >> /etc/elasticsearch/elasticsearch.yml
+
+if [[ "${ES_VERSION}" == \2* ]]; then
+    echo "network.host: _non_loopback_" >> /etc/elasticsearch/elasticsearch.yml
+fi
+
 # DNS Retry
 echo "options timeout:1 attempts:5" >> /etc/resolvconf/resolv.conf.d/head
 resolvconf -u
@@ -291,10 +295,14 @@ log "Configure elasticsearch heap size - $ES_HEAP"
 echo "ES_HEAP_SIZE=${ES_HEAP}m" >> /etc/default/elasticsearch
 
 #Optionally Install Marvel
-if [ "${INSTALL_MARVEL}" == "yes" ];
-    then
+if [ ${INSTALL_MARVEL} -ne 0 ]; then
     log "Installing Marvel Plugin"
-    /usr/share/elasticsearch/bin/plugin -i elasticsearch/marvel/latest
+    if [[ "${ES_VERSION}" == \2* ]]; then
+        /usr/share/elasticsearch/bin/plugin install license
+        /usr/share/elasticsearch/bin/plugin install marvel-agent
+    else
+        /usr/share/elasticsearch/bin/plugin -i elasticsearch/marvel/latest
+    fi
 fi
 
 #Install Monit
