@@ -3,7 +3,7 @@
     Usage
     =====
     
-    - Powershell -executionpolicy bypass -file CreateLabExample.ps1  
+    - Powershell -executionpolicy bypass -file CreateVMExample.ps1  
 
 
     Pre-Requisites
@@ -35,10 +35,12 @@ $ExitCode = 0
 try
 {
     Login-AzureRmAccount
+    
+    Import-Module ..\101-devtestlab-create-lab\Cmdlet-New-AzureDtlLab.ps1 -Verbose
+    Import-Module .\New-AzureDtlVirtualMachine.ps1 -Verbose
 
-    Import-Module .\Cmdlet-New-AzureDtlLab.ps1
-
-    New-AzureDtlLab -LabName "ExampleLab1" -LabLocation "West US" -Verbose
+    $lab = New-AzureDtlLab -LabName "MyExampleLab1" -LabLocation "West US"
+    $vm = New-azureDtlVirtualMachine -VMName "MyLab1" -VMSize "Standard_A4" -Lab $lab -VMTemplateName "MyVMTemplate1"
 }
 
 catch
