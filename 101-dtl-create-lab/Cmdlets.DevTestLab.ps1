@@ -4,7 +4,7 @@
     =============
 
     Login-AzureRmAccount
-    Import-Module .\Cmdlet-DevTestLab.ps1
+    Import-Module .\Cmdlets.DevTestLab.ps1
     Get-AzureDtlLab   
 
 
@@ -381,7 +381,7 @@ function New-AzureDtlLab
     
             # Create the lab in this resource group by deploying the RM template
             Write-Verbose $("Creating new lab '" + $LabName + "'")
-            $rgDeployment = New-AzureRmResourceGroupDeployment -ResourceGroupName $LabName  -TemplateFile $LabCreationTemplateFile -labname $LabName 
+            $rgDeployment = New-AzureRmResourceGroupDeployment -ResourceGroupName $LabName  -TemplateFile $LabCreationTemplateFile -newLabName $LabName 
 
             if (($null -ne $rgDeployment) -and ($null -ne $rgDeployment.Outputs['labId']) -and ($null -ne $rgDeployment.Outputs['labId'].Value))
             {
@@ -518,17 +518,17 @@ function New-AzureDtlVirtualMachine
         {
             "BuiltInUser"
             {
-                $VMCreationTemplateFile = Join-Path $PSScriptRoot -ChildPath "..\101-devtestlab-create-vm-builtin-user\azuredeploy.json" -Resolve
+                $VMCreationTemplateFile = Join-Path $PSScriptRoot -ChildPath "..\101-dtl-create-vm-builtin-user\azuredeploy.json" -Resolve
             }
 
             "UsernamePwd"
             {
-                $VMCreationTemplateFile = Join-Path $PSScriptRoot -ChildPath "..\101-devtestlab-create-vm-username-pwd\azuredeploy.json" -Resolve
+                $VMCreationTemplateFile = Join-Path $PSScriptRoot -ChildPath "..\101-dtl-create-vm-username-pwd\azuredeploy.json" -Resolve
             }
 
             "UsernameSSHKey"
             {
-                $VMCreationTemplateFile = Join-Path $PSScriptRoot -ChildPath "..\101-devtestlab-create-vm-username-ssh\azuredeploy.json" -Resolve
+                $VMCreationTemplateFile = Join-Path $PSScriptRoot -ChildPath "..\101-dtl-create-vm-username-ssh\azuredeploy.json" -Resolve
             }
         }
 
@@ -560,17 +560,17 @@ function New-AzureDtlVirtualMachine
             {
                 "BuiltInUser"
                 {
-                    $rgDeployment = New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $Lab.ResourceGroupName -TemplateFile $VMCreationTemplateFile -vmName $VMName -labName $Lab.ResourceName -vmSize $VMSize -vmTemplateName $VMTemplateName
+                    $rgDeployment = New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $Lab.ResourceGroupName -TemplateFile $VMCreationTemplateFile -newVMName $VMName -existingLabName $Lab.ResourceName -newVMSize $VMSize -existingVMTemplateName $VMTemplateName
                 }
 
                 "UsernamePwd"
                 {
-                    $rgDeployment = New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $Lab.ResourceGroupName -TemplateFile $VMCreationTemplateFile -vmName $VMName -labName $Lab.ResourceName -vmSize $VMSize -vmTemplateName $VMTemplateName -userName $UserName -password $Password
+                    $rgDeployment = New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $Lab.ResourceGroupName -TemplateFile $VMCreationTemplateFile -newVMName $VMName -existingLabName $Lab.ResourceName -newVMSize $VMSize -existingVMTemplateName $VMTemplateName -userName $UserName -password $Password
                 }
 
                 "UsernameSSHKey"
                 {
-                    $rgDeployment = New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $Lab.ResourceGroupName -TemplateFile $VMCreationTemplateFile -vmName $VMName -labName $Lab.ResourceName -vmSize $VMSize -vmTemplateName $VMTemplateName -userName $UserName -sshKey $SSHKey  
+                    $rgDeployment = New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $Lab.ResourceGroupName -TemplateFile $VMCreationTemplateFile -newVMName $VMName -existingLabName $Lab.ResourceName -newVMSize $VMSize -existingVMTemplateName $VMTemplateName -userName $UserName -sshKey $SSHKey  
                 }
             }
 
