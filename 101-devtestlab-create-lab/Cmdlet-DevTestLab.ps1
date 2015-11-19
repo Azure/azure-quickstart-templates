@@ -1,16 +1,21 @@
 <##################################################################################################
 
-    Usage
-    =====
+    Usage Example
+    =============
 
     Login-AzureRmAccount
     Import-Module .\Cmdlet-DevTestLab.ps1
-    New-AzureDtlLab -LabName <lab name> -LabLocation <lab location>   
+    Get-AzureDtlLab   
+
+
+    Help / Documentation
+    ====================
+    - To view a cmdlet's help description: Get-help "cmdlet-name" -Detailed
+    - To view a cmdlet's usage example: Get-help "cmdlet-name" -Examples
 
 
     Pre-Requisites
     ==============
-
     - Please ensure that the powershell execution policy is set to unrestricted or bypass.
     - Please ensure that the latest version of Azure Powershell in installed on the machine.
 
@@ -22,88 +27,79 @@
 
 ##################################################################################################>
 
-function FetchAzureResource
-{
-    Param(
-        [Parameter(Mandatory=$true, ParameterSetName="SingleResourceId")] 
-        [ValidateNotNullOrEmpty()]
-        [string]
-        $ResourceId,
-
-        [Parameter(Mandatory=$true, ParameterSetName="MultipleResourceIds")] 
-        [ValidateNotNullOrEmpty()]
-        [string[]]
-        $ResourceIds
-    )
-
-    switch ($PSCmdlet.ParameterSetName)
-    {
-        "SingleResourceId"
-        {
-            return Get-AzureRmResource -ResourceId $ResourceId -ExpandProperties
-        }
-
-        "MultipleResourceIds"
-        {
-            $resources = @()
-
-            $ResourceIds | % { $resources += Get-AzureRmResource -ResourceId $_ }
-
-            if ($resources.Count -eq 0)
-            {
-                return $null
-            }
-            else
-            {
-                return $resources
-            }
-        }
-    }
-}
-
 function Get-AzureDtlLab
 {
+    <#
+        .SYNOPSIS
+        Gets labs under the current subscription.
+
+        .DESCRIPTION
+        The Get-AzureDtlLab cmdlet does the following: 
+        - Gets a specific lab, if the -LabId parameter is specified.
+        - Gets all labs with matching name, if the -LabName parameter is specified.
+        - Gets all labs with matching name within a resource group, if the -LabName and -LabResourceGroupName parameters are specified.
+        - Gets all labs in a resource group, if the -LabResourceGroupName parameter is specified.
+        - Gets all labs in a location, if the -LabLocation parameter is specified.
+        - Gets all labs within current subscription, if no parameters are specified. 
+
+        .EXAMPLE
+        Get-AzureDtlLab -LabId "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/MyLabRG/providers/Microsoft.DevTestLab/labs/MyLab"
+        Gets a specific lab, identified by the specified resource-id.
+
+        .EXAMPLE
+        Get-AzureDtlLab -LabName "MyLab"
+        Gets all labs with the name "MyLab".
+
+        .EXAMPLE
+        Get-AzureDtlLab -LabName "MyLab" -LabResourceGroupName "MyLabRG"
+        Gets all labs with the name "MyLab" within the resource group "MyLabRG".
+
+        .EXAMPLE
+        Get-AzureDtlLab -LabResourceGroupName "MyLabRG"
+        Gets all labs in the "MyLabRG" resource group.
+
+        .EXAMPLE
+        Get-AzureDtlLab -LabLocation "westus"
+        Gets all labs in the "westus" location.
+
+        .EXAMPLE
+        Get-AzureDtlLab
+        Gets all labs within current subscription (use the Select-AzureRmSubscription cmdlet to change the current subscription).
+
+        .INPUTS
+        None. Currently you cannot pipe objects to this cmdlet (this will be fixed in a future version).  
+    #>
     [CmdletBinding(DefaultParameterSetName="ListAll")]
     Param(
-        # ResourceId of the lab
         [Parameter(Mandatory=$true, ParameterSetName="ListByLabId")] 
         [ValidateNotNullOrEmpty()]
         [string]
+        # The ResourceId of the lab (e.g. "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/MyLabRG/providers/Microsoft.DevTestLab/labs/MyLab").
         $LabId,
 
-        # Name of the lab
         [Parameter(Mandatory=$true, ParameterSetName="ListByLabName")] 
         [ValidateNotNullOrEmpty()]
         [string]
+        # The name of the lab.
         $LabName,
 
-        # Name of the lab's resource group
         [Parameter(Mandatory=$false, ParameterSetName="ListByLabName")] 
         [Parameter(Mandatory=$true, ParameterSetName="ListAllInResourceGroup")] 
         [ValidateNotNullOrEmpty()]
         [string]
+        # The name of the lab's resource group.
         $LabResourceGroupName,
 
-        # Location of the lab
         [Parameter(Mandatory=$true, ParameterSetName="ListAllInLocation")] 
         [ValidateNotNullOrEmpty()]
         [string]
+        # The location of the lab ("westus", "eastasia" etc).
         $LabLocation
     )
 
     PROCESS
     {
-        Write-Verbose "Displaying parameter values"
-        Write-Verbose "==========================="
-        Write-Verbose $("`LabId = " + $LabId)
-        Write-Verbose $("`LabName = " + $LabName)
-        Write-Verbose $("`LabResourceGroupName = " + $LabResourceGroupName)
-        Write-Verbose $("`LabLocation = " + $LabLocation)
-        Write-Verbose "==========================="
-        Write-Verbose "Displaying parameter set values"
-        Write-Verbose "==============================="
-        Write-Verbose $("`$PSCmdlet.ParameterSetName = " + $PSCmdlet.ParameterSetName)
-        Write-Verbose "==============================="
+        Write-Verbose $("Processing cmdlet '" + $PSCmdlet.MyInvocation.InvocationName + "', ParameterSet = '" + $PSCmdlet.ParameterSetName + "'")
 
         # The lab resource type
         $labResourceType = "microsoft.devtestlab/labs"
@@ -167,52 +163,82 @@ function Get-AzureDtlLab
 
 function Get-AzureDtlVirtualMachine
 {
+    <#
+        .SYNOPSIS
+        Gets virtual machines under the current subscription.
+
+        .DESCRIPTION
+        The Get-AzureDtlVirtualMachine cmdlet does the following: 
+        - Gets a specific VM, if the -VMId parameter is specified.
+        - Gets all VMs with matching name, if the -VMName parameter is specified.
+        - Gets all VMs in a lab, if the -LabName parameter is specified.
+        - Gets all VMs in a resource group, if the -VMResourceGroup parameter is specified.
+        - Gets all VMs in a location, if the -VMLocation parameter is specified.
+        - Gets all VMs within current subscription, if no parameters are specified. 
+
+        .EXAMPLE
+        Get-AzureDtlVirtualMachine -VMId "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/MyLabRG/providers/Microsoft.DevTestLab/environments/MyVM"
+        Gets a specific VM, identified by the specified resource-id.
+
+        .EXAMPLE
+        Get-AzureDtlVirtualMachine -VMName "MyVM1"
+        Gets all VMs with the name "MyVM1".
+
+        .EXAMPLE
+        Get-AzureDtlVirtualMachine -LabName "MyLab"
+        Gets all VMs within the lab "MyLab".
+
+        .EXAMPLE
+        Get-AzureDtlVirtualMachine -VMResourceGroupName "MyLabRG"
+        Gets all VMs in the "MyLabRG" resource group.
+
+        .EXAMPLE
+        Get-AzureDtlVirtualMachine -VMLocation "westus"
+        Gets all VMs in the "westus" location.
+
+        .EXAMPLE
+        Get-AzureDtlVirtualMachine
+        Gets all VMs within current subscription (use the Select-AzureRmSubscription cmdlet to change the current subscription).
+
+        .INPUTS
+        None. Currently you cannot pipe objects to this cmdlet (this will be fixed in a future version).  
+    #>
     [CmdletBinding(DefaultParameterSetName="ListAll")]
     Param(
-        # ResourceId of the VM
         [Parameter(Mandatory=$true, ParameterSetName="ListByVMId")] 
         [ValidateNotNullOrEmpty()]
         [string]
+        # The ResourceId of the VM (e.g. "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/MyLabRG/providers/Microsoft.DevTestLab/environments/MyVM").
         $VMId,
 
-        # Name of the VM
         [Parameter(Mandatory=$true, ParameterSetName="ListByVMName")] 
         [ValidateNotNullOrEmpty()]
         [string]
+        # The name of the VM.
         $VMName,
 
-        # Name of the VM
         [Parameter(Mandatory=$true, ParameterSetName="ListAllInLab")] 
         [ValidateNotNullOrEmpty()]
         [string]
+        # Name of the lab.
         $LabName,
 
-        # Name of the VM's resource group
         [Parameter(Mandatory=$true, ParameterSetName="ListAllInResourceGroup")] 
         [ValidateNotNullOrEmpty()]
         [string]
+        # The name of the VM's resource group.
         $VMResourceGroupName,
 
-        # Location of the VM
         [Parameter(Mandatory=$true, ParameterSetName="ListAllInLocation")] 
         [ValidateNotNullOrEmpty()]
         [string]
+        # The location of the VM.
         $VMLocation
     )
 
     PROCESS
     {
-        Write-Verbose "Displaying parameter values"
-        Write-Verbose "==========================="
-        Write-Verbose $("`$VMId = " + $VMId)
-        Write-Verbose $("`$VMName = " + $VMName)
-        Write-Verbose $("`$VMResourceGroupName = " + $VMResourceGroupName)
-        Write-Verbose $("`$VMLocation = " + $VMLocation)
-        Write-Verbose "==========================="
-        Write-Verbose "Displaying parameter set values"
-        Write-Verbose "==============================="
-        Write-Verbose $("`$PSCmdlet.ParameterSetName = " + $PSCmdlet.ParameterSetName)
-        Write-Verbose "==============================="
+        Write-Verbose $("Processing cmdlet '" + $PSCmdlet.MyInvocation.InvocationName + "', ParameterSet = '" + $PSCmdlet.ParameterSetName + "'")
 
         # The DTL resource types
         $labResourceType = "microsoft.devtestlab/labs"
@@ -289,21 +315,39 @@ function Get-AzureDtlVirtualMachine
 
 function New-AzureDtlLab
 {
+    <#
+        .SYNOPSIS
+        Creates a new lab.
+
+        .DESCRIPTION
+        The New-AzureDtlLab cmdlet creates a new lab in the specified location.
+
+        .EXAMPLE
+        New-AzureDtlLab -LabName "MyLab1" -LabLocation "West US"
+        Creates a new lab "MyLab1" in the location "West US".
+
+        .INPUTS
+        None. Currently you cannot pipe objects to this cmdlet (this will be fixed in a future version).  
+    #>
     [CmdletBinding()]
     Param(
-        # Name of DevTestLab instance to be created.
+        [Parameter(Mandatory=$true)] 
         [ValidateNotNullOrEmpty()]
         [string]
+        # Name of lab to be created.
         $LabName,
 
-        # Location where the DevTestLab instance will be created.
+        [Parameter(Mandatory=$true)] 
         [ValidateNotNullOrEmpty()]
         [string]
+        # Location where the lab will be created.
         $LabLocation
     )
 
     PROCESS 
     {
+        Write-Verbose $("Processing cmdlet '" + $PSCmdlet.MyInvocation.InvocationName + "', ParameterSet = '" + $PSCmdlet.ParameterSetName + "'")
+
         # Folder location of VM creation script, the template file and template parameters file.
         $LabCreationTemplateFile = Join-Path $PSScriptRoot -ChildPath "azuredeploy.json"
 
@@ -325,7 +369,8 @@ function New-AzureDtlLab
             $_.ResourceType -eq $labResourceType -and 
             $_.ResourceName -eq $LabName -and 
             $_.ResourceGroupName -eq $LabName -and 
-            $_.Location -eq $LabLocation }
+            $_.Location -eq $LabLocation 
+        }
 
         # If none exist, then create a new one
         if ($null -eq $existingLabs -or 0 -eq $existingLabs.Count)
@@ -360,42 +405,134 @@ function New-AzureDtlLab
 
 function New-AzureDtlVirtualMachine
 {
-    [CmdletBinding(DefaultParameterSetName="UseBuiltInUser")]
+    <#
+        .SYNOPSIS
+        Creates a new virtual machine.
+
+        .DESCRIPTION
+        The New-AzureDtlVirtualMachine cmdlet creates a new VM in a lab (and optionally creates a user account on the VM).
+
+        .EXAMPLE
+        $lab = $null
+
+        $lab = Get-AzureDtlLab -LabName "MyLab"
+        New-AzureDtlVirtualMachine -VMName "MyVM" -VMSize "Standard_A4" -Lab $lab -VMTemplate "MyVMTemplate"
+
+        Creates a new VM "MyVM" from the VM template "MyVMTemplate" in the lab "MyLab".
+        - No new user account is created during the VM creation.
+        - We assume that the original VM template already contains a built-in user account.
+        - We assume that this built-in account can be used to log into the VM after creation.
+
+        .EXAMPLE
+        $lab = $null
+
+        $lab = Get-AzureDtlLab -LabName "MyLab"
+        $secPwd = ConvertTo-SecureString -String "MyPwd" -AsPlainText -Force
+        New-AzureDtlVirtualMachine -VMName "MyVM" -VMSize "Standard_A4" -Lab $lab -VMTemplate "MyVMTemplate" -UserName "MyAdmin" -Password $secPwd
+
+        Creates a new VM "MyVM" from the VM template "MyVMTemplate" in the lab "MyLab".
+        - A new user account is created using the username/password combination specified.
+        - This user account is added to the local administrators group. 
+
+        .EXAMPLE
+        $lab = $null
+
+        $lab = Get-AzureDtlLab -LabName "MyLab"
+        $sshKey = ConvertTo-SecureString -String "MyKey" -AsPlainText -Force
+        New-AzureDtlVirtualMachine -VMName "MyVM" -VMSize "Standard_A4" -Lab $lab -VMTemplate "MyVMTemplate" -UserName "MyAdmin" -SSHKey $sshKey
+
+        Creates a new VM "MyVM" from the VM template "MyVMTemplate" in the lab "MyLab".
+        - A new user account is created using the username/SSH-key combination specified.
+
+        .INPUTS
+        None. Currently you cannot pipe objects to this cmdlet (this will be fixed in a future version).  
+    #>
+    [CmdletBinding(DefaultParameterSetName="BuiltInUser")]
     Param(
-        # Name of virtual machine to be created.
-        [Parameter(Mandatory=$true, ParameterSetName="UseBuiltInUser")] 
-        [Parameter(Mandatory=$true, ParameterSetName="UseUsernamePwd")] 
+        [Parameter(Mandatory=$true, ParameterSetName="BuiltInUser")] 
+        [Parameter(Mandatory=$true, ParameterSetName="UsernamePwd")] 
+        [Parameter(Mandatory=$true, ParameterSetName="UsernameSSHKey")] 
         [ValidateNotNullOrEmpty()]
         [string]
+        # The name of VM to be created.
         $VMName,
 
-        # Size of virtual machine to be created.
-        [Parameter(Mandatory=$true, ParameterSetName="UseBuiltInUser")] 
-        [Parameter(Mandatory=$true, ParameterSetName="UseUsernamePwd")] 
+        [Parameter(Mandatory=$true, ParameterSetName="BuiltInUser")] 
+        [Parameter(Mandatory=$true, ParameterSetName="UsernamePwd")] 
+        [Parameter(Mandatory=$true, ParameterSetName="UsernameSSHKey")] 
         [ValidateNotNullOrEmpty()]
         [string]
+        # The size of VM to be created ("Standard_A0", "Standard_D1_v2", "Standard_D2" etc).
         $VMSize,
 
-        # An existing DevTestLab instance in which the virtual machine will be created.
-        [Parameter(Mandatory=$true, ParameterSetName="UseBuiltInUser")] 
-        [Parameter(Mandatory=$true, ParameterSetName="UseUsernamePwd")] 
+        [Parameter(Mandatory=$true, ParameterSetName="BuiltInUser")] 
+        [Parameter(Mandatory=$true, ParameterSetName="UsernamePwd")] 
+        [Parameter(Mandatory=$true, ParameterSetName="UsernameSSHKey")] 
         [ValidateNotNull()]
+        # An existing lab in which the VM will be created (please use the Get-AzureDtlLab cmdlet to get this lab object).
         $Lab,
 
-        # Name of an existing VM template which will be used to create the virtual machine.
-        # Note: The specified vm template must exist in the lab (identified via the 'labName' parameter)
-        [Parameter(Mandatory=$true, ParameterSetName="UseBuiltInUser")] 
-        [Parameter(Mandatory=$true, ParameterSetName="UseUsernamePwd")] 
+        [Parameter(Mandatory=$true, ParameterSetName="BuiltInUser")] 
+        [Parameter(Mandatory=$true, ParameterSetName="UsernamePwd")] 
+        [Parameter(Mandatory=$true, ParameterSetName="UsernameSSHKey")] 
         [ValidateNotNullOrEmpty()]
         [string]
-        $VMTemplateName
+        # The name of an existing VM template which will be used to create the new VM (this VM template must exist in the lab identified via the '-LabName' parameter).
+        $VMTemplateName,
+
+        [Parameter(Mandatory=$true, ParameterSetName="UsernamePwd")] 
+        [Parameter(Mandatory=$true, ParameterSetName="UsernameSSHKey")] 
+        [ValidateNotNullOrEmpty()]
+        [string]
+        # The user name that will be created on the new VM.
+        $UserName,
+
+        [Parameter(Mandatory=$true, ParameterSetName="UsernamePwd")] 
+        [ValidateNotNullOrEmpty()]
+        [Security.SecureString]
+        # The password for the user to be created.
+        $Password,
+
+        [Parameter(Mandatory=$true, ParameterSetName="UsernameSSHKey")] 
+        [ValidateNotNullOrEmpty()]
+        [Security.SecureString]
+        # The public SSH key for user to be created.
+        $SSHKey
     )
 
     PROCESS 
     {
-        # Folder location of VM creation script, the template file and template parameters file.
-        $VMCreationTemplateFile = Join-Path $PSScriptRoot -ChildPath "azuredeploy.json"
+        Write-Verbose $("Processing cmdlet '" + $PSCmdlet.MyInvocation.InvocationName + "', ParameterSet = '" + $PSCmdlet.ParameterSetName + "'")
 
+        # The DTL resource types
+        $labResourceType = "microsoft.devtestlab/labs"
+        $environmentResourceType = "microsoft.devtestlab/environments"
+
+        # Unique name for the deployment
+        $deploymentName = [Guid]::NewGuid().ToString()
+
+        # Folder location of VM creation script, the template file and template parameters file.
+        $VMCreationTemplateFile = $null
+
+        switch($PSCmdlet.ParameterSetName)
+        {
+            "BuiltInUser"
+            {
+                $VMCreationTemplateFile = Join-Path $PSScriptRoot -ChildPath "..\101-devtestlab-create-vm-builtin-user\azuredeploy.json" -Resolve
+            }
+
+            "UsernamePwd"
+            {
+                $VMCreationTemplateFile = Join-Path $PSScriptRoot -ChildPath "..\101-devtestlab-create-vm-username-pwd\azuredeploy.json" -Resolve
+            }
+
+            "UsernameSSHKey"
+            {
+                $VMCreationTemplateFile = Join-Path $PSScriptRoot -ChildPath "..\101-devtestlab-create-vm-username-ssh\azuredeploy.json" -Resolve
+            }
+        }
+
+        # pre-condition check to ensure that the template file actually exists.
         if ($false -eq (Test-Path -Path $VMCreationTemplateFile))
         {
             Write-Error $("The RM template file could not be located at : '" + $VMCreationTemplateFile + "'")
@@ -405,24 +542,50 @@ function New-AzureDtlVirtualMachine
             Write-Verbose $("The RM template file was located at : '" + $VMCreationTemplateFile + "'")
         }
 
-        # Check if there are any existing labs with same name
-        $existingLabs = Get-AzureRmResource | Where { 
-            $_.ResourceType -eq $labResourceType -and 
-            $_.ResourceName -eq $LabName -and 
-            $_.ResourceGroupName -eq $LabName -and 
-            $_.Location -eq $LabLocation }
+        # Check if there are any existing VMs with same name in the specified lab
+        $existingVMs = Get-AzureDtlVirtualMachine -LabName $Lab.ResourceName | Where {
+            $_.ResourceName -eq $VMName
+        } 
 
-
-
-        # Create the virtual machine in this lab by deploying the RM template
-        Write-Verbose $("Creating new virtual machine '" + $VMName + "'")
-        $rgDeployment = New-AzureRmResourceGroupDeployment -ResourceGroupName $Lab.ResourceGroupName -TemplateFile $VMCreationTemplateFile -vmName $VMName -labName $Lab.ResourceName -vmSize $VMSize -vmTemplateName $VMTemplateName
-
-        if (($null -ne $rgDeployment) -and ($null -ne $rgDeployment.Outputs['vmId']) -and ($null -ne $rgDeployment.Outputs['vmId'].Value))
+        # If none exist, then create a new one
+        if ($null -eq $existingVMs -or 0 -eq $existingVMs.Count)
         {
-            Write-Verbose $("vm id : '" + $rgDeployment.Outputs['vmId'].Value + "'")
+            # Create the virtual machine in this lab by deploying the RM template
+            Write-Verbose $("Creating new virtual machine '" + $VMName + "'")
+            Write-Warning $("Creating new virtual machine '" + $VMName + "'. This may take a couple of minutes.")
 
-            Get-AzureRmResource -ResourceId $rgDeployment.Outputs['vmId'].Value | Write-Output
+            $rgDeployment = $null
+
+            switch($PSCmdlet.ParameterSetName)
+            {
+                "BuiltInUser"
+                {
+                    $rgDeployment = New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $Lab.ResourceGroupName -TemplateFile $VMCreationTemplateFile -vmName $VMName -labName $Lab.ResourceName -vmSize $VMSize -vmTemplateName $VMTemplateName
+                }
+
+                "UsernamePwd"
+                {
+                    $rgDeployment = New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $Lab.ResourceGroupName -TemplateFile $VMCreationTemplateFile -vmName $VMName -labName $Lab.ResourceName -vmSize $VMSize -vmTemplateName $VMTemplateName -userName $UserName -password $Password
+                }
+
+                "UsernameSSHKey"
+                {
+                    $rgDeployment = New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $Lab.ResourceGroupName -TemplateFile $VMCreationTemplateFile -vmName $VMName -labName $Lab.ResourceName -vmSize $VMSize -vmTemplateName $VMTemplateName -userName $UserName -sshKey $SSHKey  
+                }
+            }
+
+            if (($null -ne $rgDeployment) -and ($null -ne $rgDeployment.Outputs['vmId']) -and ($null -ne $rgDeployment.Outputs['vmId'].Value))
+            {
+                Write-Verbose $("vm id : '" + $rgDeployment.Outputs['vmId'].Value + "'")
+
+                Get-AzureRmResource -ResourceId $rgDeployment.Outputs['vmId'].Value | Write-Output
+            }
+        }
+
+        # else display an error
+        else
+        {
+            Write-Error $("One or more VMs with name '" + $VMName + "' already exist in lab '" + $Lab.ResourceName + "'.")
         }
     }
 }
