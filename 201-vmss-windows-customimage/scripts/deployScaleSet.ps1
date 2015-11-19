@@ -66,6 +66,10 @@ else
 }
 try
 {
+     # Create a new Resource Group
+
+    New-AzureResourceGroup -ResourceGroupName $resourceGroupName -Location $location -Force
+
     # Test names for validity
 
     $newStorageAccountName=$newStorageAccountName.ToLowerInvariant()
@@ -86,10 +90,6 @@ try
             throw "Scale Set DNS Name in use "
         }
     }
-
-    # Create a new Resource Group
-
-    New-AzureResourceGroup -ResourceGroupName $resourceGroupName -Location $location
 
     # Create a new Storage Account for the image
     
@@ -117,11 +117,11 @@ try
 
     # Deploy the scale set using the new custom image as the target
 
-    $imageSource=(Get-AzureStorageBlob -Container $newImageContainer -Context $destContext -Blob $newImageBlobName).ICloudBlob.StorageUri.PrimaryUri.AbsoluteUri
+    $sourceImageVhdUri=(Get-AzureStorageBlob -Container $newImageContainer -Context $destContext -Blob $newImageBlobName).ICloudBlob.StorageUri.PrimaryUri.AbsoluteUri
 
     Switch-AzureResourceManagement
 
-    $parameters=@{"vmSSName"="$scaleSetName";"instanceCount"=$scaleSetInstanceCount;"vmSize"="$scaleSetVMSize";"dnsNamePrefix"="$scaleSetDNSPrefix";"adminUsername"=$scaleSetVMCredentials.UserName;"adminPassword"=$scaleSetVMCredentials.GetNetworkCredential().Password;"location"="$location";"imageSource"="$imageSource"}
+    $parameters=@{"vmSSName"="$scaleSetName";"instanceCount"=$scaleSetInstanceCount;"vmSize"="$scaleSetVMSize";"dnsNamePrefix"="$scaleSetDNSPrefix";"adminUsername"=$scaleSetVMCredentials.UserName;"adminPassword"=$scaleSetVMCredentials.GetNetworkCredential().Password;"location"="$location";"sourceImageVhdUri"="$sourceImageVhdUri"}
     $templateUri="$repoUri$scaleSetTemplate"
 
     New-AzureResourceGroupDeployment -ResourceGroupName $resourceGroupName -TemplateUri $templateUri -TemplateParameterObject $parameters -Name 'createscaleset'
