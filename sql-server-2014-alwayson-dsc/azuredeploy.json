@@ -222,9 +222,9 @@
     "sqlLBIPAddress": {
       "type": "string",
       "metadata": {
-        "description": "The address of secondary AD"
+        "description": "The address of ILB for SQL Server AlwaysOn listener"
       },
-      "defaultValue": "10.0.0.6"
+      "defaultValue": "10.0.1.10"
     },
 
     "dataBaseNames": {
@@ -236,10 +236,10 @@
     }
   },
   "variables": {
-    "staticSubnetName": "ADStaticSubnet",
+    "adSubnetName": "ADStaticSubnet",
     "subnets": [
       {
-        "name": "[variables('staticSubnetName')]",
+        "name": "[variables('adSubnetName')]",
         "properties": {
           "addressPrefix": "[parameters('vmNetworkSubnet')]"
         }
@@ -253,7 +253,7 @@
     ],
     "virtualNetworkName": "WorkloadVNET",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
-    "staticSubnetRef": "[concat(variables('vnetID'),'/subnets/',variables('staticSubnetName'))]",
+    "adSubnetRef": "[concat(variables('vnetID'),'/subnets/',variables('adSubnetName'))]",
     "adTemplateURL": "[concat(parameters('assetLocation'),'/ADVmTemplate.json')]",
 
 
@@ -320,8 +320,9 @@
 
     "sqlAOEPName": "[concat(parameters('dnsPrefix'),'-hadr')]",
     "sqlAOAGName": "[concat(parameters('dnsPrefix'),'-ag')]",
-    "sqlAOListenerName":"[concat(parameters('dnsPrefix'),'ag-listener')]"
+    "sqlAOListenerName": "[concat(parameters('dnsPrefix'),'ag-listener')]",
 
+    "sqlAvailabilitySetName": "sqlAvailabilitySet"
   },
 
   "resources": [
@@ -338,6 +339,12 @@
         },
         "subnets": "[variables('subnets')]"
       }
+    },
+    {
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[variables('sqlAvailabilitySetName')]",
+      "apiVersion": "2015-05-01-preview",
+      "location": "[parameters('location')]"
     },
     {
       "name": "[variables('adVmDepoyment')]",
@@ -358,7 +365,7 @@
           "adminPassword": { "value": "[parameters('adminPassword')]" },
           "dnsPrefix": { "value": "[parameters('dnsPrefix')]" },
           "storageAccount": { "value": "[variables('adStorageName')]" },
-          "subnetUri": { "value": "[variables('staticSubnetRef')]" },
+          "subnetUri": { "value": "[variables('adSubnetRef')]" },
           "primaryAdIpAddress": { "value": "[parameters('primaryAdIpAddress')]" },
           "secondaryIpAddress": { "value": "[parameters('secondaryIpAddress')]" },
           "storageAccountType": { "value": "[parameters('storageAccountType')]" },
@@ -372,7 +379,8 @@
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2015-01-01",
       "dependsOn": [
-        "[variables('virtualNetworkName')]"
+        "[variables('virtualNetworkName')]",
+        "[resourceId('Microsoft.Compute/availabilitySets', variables('sqlAvailabilitySetName'))]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -386,10 +394,11 @@
           "adminPassword": { "value": "[parameters('adminPassword')]" },
           "storageAccount": { "value": "[variables('SqlStorageName')]" },
           "nicSubnetUri": { "value": "[variables('sqlSubnetRef')]" },
-          "lbSubnetUri": { "value": "[variables('staticSubnetRef')]" },
+          "lbSubnetUri": { "value": "[variables('sqlSubnetRef')]" },
           "vmNamePrefix": { "value": "[variables('sqlClusterVmNamePrefix')]" },
           "sqlLBIPAddress": { "value": "[parameters('sqlLBIPAddress')]" },
-          "vmSize": { "value": "[parameters('sqlVMSize')]" }
+          "vmSize": { "value": "[parameters('sqlVMSize')]" },
+          "availabilitySetName": { "value": "[variables('sqlAvailabilitySetName')]" }
         }
       }
     },
@@ -398,7 +407,8 @@
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2015-01-01",
       "dependsOn": [
-        "[variables('virtualNetworkName')]"
+        "[variables('virtualNetworkName')]",
+        "[resourceId('Microsoft.Compute/availabilitySets', variables('sqlAvailabilitySetName'))]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -414,7 +424,8 @@
           "subnetUri": { "value": "[variables('sqlSubnetRef')]" },
           "storageAccountType": { "value": "[parameters('storageAccountType')]" },
           "vmNamePrefix": { "value": "[variables('sqlWitnessVmNamePrefix')]" },
-          "vmSize": { "value": "[parameters('sqlWitnessVMSize')]" }
+          "vmSize": { "value": "[parameters('sqlWitnessVMSize')]" },
+          "availabilitySetName": { "value": "[variables('sqlAvailabilitySetName')]" }
         }
       }
     },
