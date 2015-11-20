@@ -8,11 +8,24 @@
                 "description" : "What to call this virtual machine"
             }
         },
+        "storageAccount": {
+            "type": "string",
+            "metadata": {
+                "description" : "The storage account in which to create this VM"
+            }
+        },
         "blockchain": {
             "type": "string",
             "allowedValues" : ["live", "dev"],
             "metadata": {
                 "description" : "Which STRATO configuration to enable: 'live' is the Ethereum network; 'dev' is a private developer blockchain"
+            }
+        },
+        "stratoVersion" : {
+            "type": "string",
+            "allowedValues": ["1.0"],
+            "metadata" : {
+                "description" : "STRATO version"
             }
         },
         "password" : {
@@ -24,13 +37,16 @@
     },
     "variables": {
         "apiVersion" : "2015-06-15",
-        "imageVHDs": {
-            "live" : "strato-live-image-osDisk.3dfba3b1-de95-49d4-8aaa-ea37a17f5eaa.vhd",
-            "dev"  : "strato-dev-image-osDisk.a136c286-678b-48b9-86b9-56052a28d849.vhd"
+        "dockerRepo" : "blockapps/strato",
+        "dockerUser" : "blockappsuser",
+        "dockerPassword" : "blockchain as a service",
+        "dockerEmail" : "blockapps.user@gmail.com",
+        "dockerImage" : "[concat(variables('dockerRepo'), ':ubuntu-', parameters('blockchain'), '-public-', parameters('stratoVersion'))]",
+        "allDockerPorts": {
+            "live": ["80:80", "443:443"],
+            "dev": ["80:80"]
         },
-        "imageVHD": "[variables('imageVHDs')[parameters('blockchain')]]",
-        "imageURI": "[concat('https:\/\/', variables('imageStorage'), '.blob.core.windows.net\/system\/Microsoft.Compute/Images/vhds/', variables('imageVHD'))]",
-        "imageStorage": "stratoimages",
+        "dockerPorts" : "[variables('allDockerPorts')[parameters('blockchain')]]",
 
         "name" : "[parameters('instanceName')]",
         "location": "centralus",
@@ -38,7 +54,7 @@
         "username": "strato",
         "password": "[parameters('password')]",
         
-        "storageAccount": "[variables('imageStorage')]",
+        "storageAccount": "[parameters('storageAccount')]",
         "storageAccountPath": "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccount'))]",
         "vhdURI": "[concat('https:\/\/', variables('storageAccount'), '.blob.core.windows.net\/vhds\/', parameters('instanceName'), '.vhd')]",
         "storageAccountType": "Premium_LRS",
@@ -65,7 +81,11 @@
 
         "subnetName": "stratoinstances",
         "subnetId": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
-        "virtualSubnetAddressPrefix": "11.24.82.0/24"
+        "virtualSubnetAddressPrefix": "11.24.82.0/24",
+
+        "imagePublisher": "Canonical",
+        "imageOffer": "UbuntuServer",
+        "ubuntuOSVersion": "14.04.3-LTS"
     },
     "resources": [
         {
@@ -208,17 +228,19 @@
                     }
                 },
                 "storageProfile": {
+                    "imageReference": {
+                        "publisher": "[variables('imagePublisher')]",
+                        "offer": "[variables('imageOffer')]",
+                        "sku": "[variables('ubuntuOSVersion')]",
+                        "version": "latest"
+                    },
                     "osDisk": {
                         "caching": "ReadWrite",
                         "vhd": {
                             "uri": "[variables('vhdURI')]"
                         },
-                        "image": {
-                            "uri": "[variables('imageURI')]"
-                        },
                         "createOption": "FromImage",
-                        "name" : "[concat(variables('name'), 'osDisk')]",
-                        "osType": "Linux"
+                        "name" : "[concat(variables('name'), 'osDisk')]"
                     }
                 },
                 "hardwareProfile": {
@@ -226,6 +248,47 @@
                 }
             },
             "apiVersion": "[variables('apiVersion')]"
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(variables('name'), '/DockerExtension')]",
+            "apiVersion": "[variables('apiVersion')]",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', variables('name'))]"
+            ],
+            "properties": {
+                "publisher": "Microsoft.Azure.Extensions",
+                "type": "DockerExtension",
+                "typeHandlerVersion": "1.0",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "compose" : {
+                        "strato-vol" : {
+                            "container_name" : "strato-vol",
+                            "entrypoint" : "/bin/true",
+                            "image" : "[variables('dockerImage')]"
+                        },
+                        "strato" : {
+                            "container_name" : "strato",
+                            "stdin_open" : true,
+                            "tty" : true,
+                            "restart" : "always",
+                            "volumes_from" : ["strato-vol"],
+                            "ports": "[variables('dockerPorts')]",
+                            "hostname": "[variables('name')]",
+                            "image" : "[variables('dockerImage')]"
+                        }
+                    }
+                },
+                "protectedSettings": {
+                    "login" : {
+                        "username" : "[variables('dockerUser')]",
+                        "password" : "[variables('dockerPassword')]",
+                        "email" : "[variables('dockerEmail')]"
+                    }
+                }
+            }
         }
     ]
 }
