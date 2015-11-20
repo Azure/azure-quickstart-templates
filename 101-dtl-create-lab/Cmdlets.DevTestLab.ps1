@@ -464,6 +464,9 @@ function New-AzureDtlLab
     {
         Write-Verbose $("Processing cmdlet '" + $PSCmdlet.MyInvocation.InvocationName + "', ParameterSet = '" + $PSCmdlet.ParameterSetName + "'")
 
+        # Unique name for the deployment
+        $deploymentName = [Guid]::NewGuid().ToString()
+
         # Folder location of VM creation script, the template file and template parameters file.
         $LabCreationTemplateFile = Join-Path $PSScriptRoot -ChildPath "azuredeploy.json"
 
@@ -494,7 +497,7 @@ function New-AzureDtlLab
     
             # Create the lab in this resource group by deploying the RM template
             Write-Verbose $("Creating new lab '" + $LabName + "'")
-            $rgDeployment = New-AzureRmResourceGroupDeployment -ResourceGroupName $LabName  -TemplateFile $LabCreationTemplateFile -newLabName $LabName 
+            $rgDeployment = New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $LabName  -TemplateFile $LabCreationTemplateFile -newLabName $LabName 
 
             if (($null -ne $rgDeployment) -and ($null -ne $rgDeployment.Outputs['labId']) -and ($null -ne $rgDeployment.Outputs['labId'].Value))
             {
@@ -559,6 +562,9 @@ function New-AzureDtlVMTemplate
     {
         Write-Verbose $("Processing cmdlet '" + $PSCmdlet.MyInvocation.InvocationName + "', ParameterSet = '" + $PSCmdlet.ParameterSetName + "'")
 
+        # Unique name for the deployment
+        $deploymentName = [Guid]::NewGuid().ToString()
+
         # Folder location of VM creation script, the template file and template parameters file.
         $VMTemplateCreationTemplateFile = Join-Path $PSScriptRoot -ChildPath "..\201-dtl-create-vmtemplate\azuredeploy.json" -Resolve
 
@@ -586,7 +592,7 @@ function New-AzureDtlVMTemplate
 
             # Create the VM Template in the lab's resource group by deploying the RM template
             Write-Verbose $("Creating VM Template '" + $VMTemplateName + "' in lab '" + $lab.ResourceName + "'")
-            $rgDeployment = New-AzureRmResourceGroupDeployment -ResourceGroupName $lab.ResourceGroupName -TemplateFile $VMTemplateCreationTemplateFile -existingLabName $lab.ResourceName -existingVMResourceId $ExistingVM.ResourceId -TemplateName $VMTemplateNameEncoded -TemplateDescription $VMTemplateDescription
+            $rgDeployment = New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $lab.ResourceGroupName -TemplateFile $VMTemplateCreationTemplateFile -existingLabName $lab.ResourceName -existingVMResourceId $VM.ResourceId -templateName $VMTemplateNameEncoded -templateDescription $VMTemplateDescription
 
             if (($null -ne $rgDeployment) -and ($null -ne $rgDeployment.Outputs['vmTemplateId']) -and ($null -ne $rgDeployment.Outputs['vmTemplateId'].Value))
             {
