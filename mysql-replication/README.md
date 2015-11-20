@@ -89,8 +89,9 @@ mysql> change master to master_host='10.0.1.5', master_user='admin', master_pass
 > $nic0.IpConfigurations[0].LoadBalancerInboundNatRules.add($rule1)
 > Set-AzureNetworkInterface -NetworkInterface $nic0
 ```
-Similarly, this can also be done in the Azure portal:
+Similarly, this can also be done in the Azure portal. First update the NSG for the new master:
 ![Alt text](/mysql-replication/screenshots/2updateSlaveNSG.PNG?raw=true "Update the NSG for the new master")
+Then update the NSG for the old master back to valid values: 
 ![Alt text](/mysql-replication/screenshots/3updateOldMasterToSlave.PNG?raw=true "Update the NSG for the old master")
 
 * Add the old master back to replication as a slave, on the old master, run the following, assuming the new master is 10.0.1.5:
