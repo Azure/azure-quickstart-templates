@@ -61,6 +61,18 @@
       "metadata": {
         "description": "The github location for the shell scripts."
       }
+    },
+    "masterVMNamePrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "The vm name prefix of the master"
+      }
+    },
+    "sshRSAPublicKey": {
+      "type": "string",
+      "metadata": {
+        "description": "Configure all linux machines with the SSH rsa public key string.  Use 'disabled' to not configure access with SSH rsa public key."
+      }
     }
   },
   "variables": {
@@ -68,7 +80,9 @@
     "osImagePublisher": "MicrosoftVisualStudio",
     "osImageOffer": "VisualStudio",
     "osImageSKU": "VS-2015-Enterprise-AzureSDK-2.7-WS2012R2",
-    "osImageVersion": "latest"
+    "osImageVersion": "latest",
+    "setBrowserFirstTabDefaultPrefix": "powershell.exe -ExecutionPolicy Unrestricted -command \"New-Item -Path HKLM:'\\SOFTWARE\\Policies\\Microsoft\\Internet Explorer' ; New-Item -Path HKLM:'\\SOFTWARE\\Policies\\Microsoft\\Internet Explorer\\BrowserEmulation' ; New-ItemProperty -Path HKLM:'\\SOFTWARE\\Policies\\Microsoft\\Internet Explorer\\BrowserEmulation' -Name IntranetCompatibilityMode -Value 0 -Type DWord; New-Item -Path HKLM:'\\SOFTWARE\\Policies\\Microsoft\\Internet Explorer\\Main' ; New-ItemProperty -Path HKLM:'\\SOFTWARE\\Policies\\Microsoft\\Internet Explorer\\Main' -Name 'Start Page' -Type String -Value http://\"",
+    "setBrowserFirstTabDefaultPostfix": "1:5050"
   },
   "resources": [
     {
@@ -97,7 +111,7 @@
             "name": "ipConfig",
             "properties": {
               "privateIPAllocationMethod": "Static",
-              "privateIPAddress": "[concat(split(parameters('subnetPrefix'),'0/24')[0], parameters('jumpboxAddr'))]",
+              "privateIPAddress": "[concat(split(parameters('subnetPrefix'),'0/18')[0], parameters('jumpboxAddr'))]",
               "publicIPAddress": {
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('dnsNameForJumpboxPublicIP'))]"
               },
@@ -148,6 +162,23 @@
               "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('vmName'), '-nic'))]"
             }
           ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('vmName'),'/installcustomscript')]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "CustomScriptExtension",
+        "typeHandlerVersion": "1.4",
+        "settings": {
+          "commandToExecute": "[concat(variables('setBrowserFirstTabDefaultPrefix'),parameters('masterVMNamePrefix'),variables('setBrowserFirstTabDefaultPostfix'))]"
         }
       }
     }

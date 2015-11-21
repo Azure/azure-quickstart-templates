@@ -11,15 +11,46 @@ import hashlib
 import os
 import sys
 import random
+import paramiko
+from paramiko import SSHClient
+
 from time import sleep
 
 from cm_api.api_client import ApiResource, ApiException
 from cm_api.endpoints.hosts import *
 from cm_api.endpoints.services import ApiServiceSetupInfo, ApiService
 
-diskcount=10
-
 LOG_DIR='/log/cloudera'
+
+def getDataDiskCount():
+    bashCommand="lsblk | grep /data | grep -v /data/ | wc -l"
+    client=SSHClient()
+    client.set_missing_host_key_policy(paramiko.client.AutoAddPolicy())
+    log(socket.getfqdn(cmx.cm_server))
+    toconnect=socket.getfqdn(cmx.cm_server).replace("-mn0", "-dn0")
+    log(toconnect)
+    client.connect(toconnect, username=cmx.ssh_root_user, password=cmx.ssh_root_password)
+    stdin, stdout, stderr = client.exec_command(bashCommand)
+    count=stdout.readline().rstrip('\n')
+
+    return count
+
+def setZookeeperOwnerDir(HA):
+    os.system("sudo chown zookeeper:zookeeper "+LOG_DIR+"/zookeeper")
+    # setup other masters in HA environment
+    if HA:
+        client=SSHClient()
+        client.set_missing_host_key_policy(paramiko.client.AutoAddPolicy())
+        toconnect=socket.getfqdn(cmx.cm_server).replace("-mn0", "-mn1")
+        client.connect(toconnect, username=cmx.ssh_root_user, password=cmx.ssh_root_password)
+        client.exec_command("sudo chown zookeeper:zookeeper "+LOG_DIR+"/zookeeper")
+        toconnect=socket.getfqdn(cmx.cm_server).replace("-mn0", "-mn2")
+        client.connect(toconnect, username=cmx.ssh_root_user, password=cmx.ssh_root_password)
+        client.exec_command("sudo chown zookeeper:zookeeper "+LOG_DIR+"/zookeeper")
+
+
+
+
 def init_cluster():
     """
     Initialise Cluster
@@ -33,15 +64,15 @@ def init_cluster():
 
     # Update Cloudera Manager configuration
     cm = api.get_cloudera_manager()
-    cm.update_config({"REMOTE_PARCEL_REPO_URLS": "http://archive.cloudera.com/cdh5/parcels/{0}/,"
-                                                 "http://archive.cloudera.com/impala/parcels/{0}/,"
-                                                 "http://archive.cloudera.com/cdh4/parcels/{0}/,"
-                                                 "http://archive.cloudera.com/search/parcels/{0}/,"
-                                                 "http://archive.cloudera.com/spark/parcels/{0}/,"
-                                                 "http://archive.cloudera.com/sqoop-connectors/parcels/{0}/,"
-                                                 "http://archive.cloudera.com/accumulo/parcels/{0}/,"
-                                                 "http://archive.cloudera.com/accumulo-c5/parcels/{0},"
-                                                 "http://archive.cloudera.com/gplextras5/parcels/{0}".format(cdhver), 
+    cm.update_config({"REMOTE_PARCEL_REPO_URLS": "http://archive.cloudera.com/cdh5/parcels/{latest_supported}/,"
+                                                 "http://archive.cloudera.com/impala/parcels/{latest_supported}/,"
+                                                 "http://archive.cloudera.com/cdh4/parcels/{latest_supported}/,"
+                                                 "http://archive.cloudera.com/search/parcels/{latest_supported}/,"
+                                                 "http://archive.cloudera.com/spark/parcels/{latest_supported}/,"
+                                                 "http://archive.cloudera.com/sqoop-connectors/parcels/{latest_supported}/,"
+                                                 "http://archive.cloudera.com/accumulo/parcels/{latest_supported}/,"
+                                                 "http://archive.cloudera.com/accumulo-c5/parcels/{latest_supported},"
+                                                 "http://archive.cloudera.com/gplextras5/parcels/{latest_supported}",
                       "PHONE_HOME": False, "PARCEL_DISTRIBUTE_RATE_LIMIT_KBS_PER_SECOND": "1024000"})
 
     print "> Initialise Cluster"
@@ -190,7 +221,8 @@ def setup_zookeeper(HA):
         
         service.update_config({"zookeeper_datadir_autocreate": True})
 
-
+        # Ensure zookeeper has access to folder
+        setZookeeperOwnerDir(HA)
 
         # Role Config Group equivalent to Service Default Group
         for rcg in [x for x in service.get_all_role_config_groups()]:
@@ -567,7 +599,7 @@ def setup_yarn(HA):
 #                    cdh.create_service_role(service, rcg.roleType, host)
             if rcg.roleType == "GATEWAY":
                 # yarn-GATEWAY - Default Group
-                rcg.update_config({"mapred_reduce_tasks": "505413632", "mapred_submit_replication": "3"})
+                rcg.update_config({"mapred_submit_replication": "3"})
                 for host in management.get_hosts(include_cm_host=True):
                     cdh.create_service_role(service, rcg.roleType, host)
 
@@ -855,7 +887,8 @@ def setup_oozie():
         cmhost= management.get_cmhost()
         for rcg in [x for x in service.get_all_role_config_groups()]:
             if rcg.roleType == "OOZIE_SERVER":
-                rcg.update_config({"oozie_log_dir": LOG_DIR+"/oozie"})
+                rcg.update_config({"oozie_log_dir": LOG_DIR+"/oozie",
+                                   "oozie_data_dir": LOG_DIR+"/lib/oozie/data"})
                 cdh.create_service_role(service, rcg.roleType, cmhost)
 
         check.status_for_command("Creating Oozie database", service.create_oozie_db())
@@ -1238,11 +1271,14 @@ class ManagementActions:
                 group.update_config({"mgmt_log_dir": LOG_DIR+"/cloudera-scm-alertpublisher"})
             elif group.roleType == "EVENTSERVER":
                 group.update_config({"event_server_heapsize": "215964392",
-                                     "mgmt_log_dir": LOG_DIR+"/cloudera-scm-eventserver"})
+                                     "mgmt_log_dir": LOG_DIR+"/cloudera-scm-eventserver",
+                                     "eventserver_index_dir": LOG_DIR+"/lib/cloudera-scm-eventserver"})
             elif group.roleType == "HOSTMONITOR":
-                group.update_config({"mgmt_log_dir": LOG_DIR+"/cloudera-scm-firehose"})
+                group.update_config({"mgmt_log_dir": LOG_DIR+"/cloudera-scm-firehose",
+                                     "firehose_storage_dir": LOG_DIR+"/lib/cloudera-host-monitor"})
             elif group.roleType == "SERVICEMONITOR":
-                group.update_config({"mgmt_log_dir": LOG_DIR+"/cloudera-scm-firehose"})
+                group.update_config({"mgmt_log_dir": LOG_DIR+"/cloudera-scm-firehose",
+                                     "firehose_storage_dir": LOG_DIR+"/lib/cloudera-service-monitor"})
             elif group.roleType == "NAVIGATOR" and management.licensed():
                 group.update_config({})
             elif group.roleType == "NAVIGATORMETADATASERVER" and management.licensed():
@@ -1253,6 +1289,7 @@ class ManagementActions:
                                      "headlamp_database_password": cmx.rman_password,
                                      "headlamp_database_type": "postgresql",
                                      "headlamp_database_user": "rman",
+                                     "headlamp_scratch_dir": LOG_DIR+"/lib/cloudera-scm-headlamp",
                                      "mgmt_log_dir": LOG_DIR+"/cloudera-scm-headlamp"})
             elif group.roleType == "OOZIE":
                 group.update_config({"oozie_database_host": "%s:5432" % socket.getfqdn(cmx.cm_server),
@@ -1619,7 +1656,7 @@ def display_eula():
     jobfunction=raw_input("Please enter your jobfunction: ")
     accepted=raw_input("Please enter yes to accept EULA: ")
     if accepted =='yes' and fname and lname and company and email and phone and jobrole and jobfunction:
-       postEulaInfo(fname, lname, company, email,
+       postEulaInfo(fname, lname, email, company,
                     jobrole, jobfunction, phone)
        return True
     else:
@@ -1629,8 +1666,6 @@ def display_eula():
 def parse_options():
     global cmx
     global check, cdh, management
-    global cdhver
-    cdhver = "5.4.2.2"
 
     cmx_config_options = {'ssh_root_password': None, 'ssh_root_user': 'root', 'ssh_private_key': None,
                           'cluster_name': 'Cluster 1', 'cluster_version': 'CDH5',
@@ -1744,7 +1779,7 @@ def parse_options():
     parser.add_option('-i', '--job-function', dest='jobfunction', type="string", action='callback',
                       callback=cmx_args, help='Set job function')
     parser.add_option('-y', '--company', dest='company', type="string", action='callback',
-                      callback=cmx_args, help='Set job function')
+                      callback=cmx_args, help='Set company')
     parser.add_option('-e', '--accept-eula', dest='accepted', action="store_true", default=False,
                       help='Must accept eula before install')
 
@@ -1752,11 +1787,11 @@ def parse_options():
 
     # Install CDH5 latest version
     cmx_config_options['parcel'].append(manifest_to_dict(
-        'http://archive.cloudera.com/cdh5/parcels/{0}/manifest.json'.format(cdhver)))
+        'http://archive.cloudera.com/cdh5/parcels/5/manifest.json'))
 
     # Install GPLEXTRAS5 latest version
     cmx_config_options['parcel'].append(manifest_to_dict(
-        'http://archive.cloudera.com/gplextras5/parcels/{0}/manifest.json'.format(cdhver)))
+        'http://archive.cloudera.com/gplextras5/parcels/5/manifest.json'))
 
     msg_req_args = "Please specify the required arguments: "
     if cmx_config_options['cm_server'] is None:
@@ -1836,8 +1871,11 @@ def main():
     # Parse user options
     log("parse_options")
     options = parse_options()
+    global diskcount
+    diskcount= getDataDiskCount()
+    log("data_disk_count"+`diskcount`)
     if(cmx.do_post):
-        postEulaInfo(cmx.fname, cmx.lname, cmx.company, cmx.email,
+        postEulaInfo(cmx.fname, cmx.lname, cmx.email, cmx.company,
                      cmx.jobrole, cmx.jobfunction, cmx.phone)
     # Prepare Cloudera Manager Server:
     # 1. Initialise Cluster and set Cluster name: 'Cluster 1'
@@ -1866,8 +1904,8 @@ def main():
     # Upload license or Begin Trial
     if options.license_file:
         management.upload_license()
-        _OR_
-        begin_trial()
+    else:
+        management.begin_trial()
 
     # Step-Through - Setup services in order of service dependencies
     # Zookeeper, hdfs, HBase, Solr, Spark, Yarn,

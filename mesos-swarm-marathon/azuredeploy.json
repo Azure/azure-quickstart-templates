@@ -66,7 +66,7 @@
     },
     "masterConfiguration": {
       "type": "string",
-      "defaultValue": "masters-are-agents",
+      "defaultValue": "masters-are-not-agents",
       "allowedValues": [
         "masters-are-agents",
         "masters-are-not-agents"
@@ -169,21 +169,16 @@
         "description": "Flag for enabling the Chronos framework."
       }
     },
-    "omsStorageAccount": {
+    "sshRSAPublicKey": {
       "type": "string",
-      "defaultValue": "none",
+      "defaultValue": "disabled",
       "metadata": {
-        "description": "The Azure Storage account for OMS log data.  Use 'none' to disable."
-      }
-    },
-    "omsStorageAccountKey": {
-      "type": "securestring",
-      "metadata": {
-        "description": "The Azure Storage account primary or secondary key for OMS log data.  Use 'none' to disable."
+        "description": "Configure all linux machines with the SSH rsa public key string.  Use 'disabled' to not configure access with SSH rsa public key."
       }
     }
   },
   "variables": {
+    "newStorageAccountNamePrefix": "[tolower(parameters('newStorageAccountNamePrefix'))]",
     "masterVMNamePrefix": "[concat(parameters('clusterPrefix'),'master')]",
     "agentVMNamePrefix": "[concat(parameters('clusterPrefix'),'agent')]",
     "jumpboxVMNamePrefix": "[concat(parameters('clusterPrefix'),'jumpbox')]",
@@ -196,24 +191,26 @@
     "subnetName": "Subnet",
     "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
     "addressPrefix": "10.0.0.0/16",
-    "subnetPrefix": "10.0.0.0/24",
+    "subnetPrefix": "10.0.0.0/18",
     "jumpboxAddr": 4,
     "masterFirstAddr": 5,
-    "agentFirstAddr": 100,
+    "agentFirstAddr": 50,
     "nsgName": "node-nsg",
     "nsgID": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('nsgName'))]",
     "storageAccountType": "Standard_GRS",
-    "customScriptLocation": "https://raw.githubusercontent.com/anhowe/mesos-scalable-cluster/master/",
+    "customScriptLocation": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/mesos-swarm-marathon/",
     "agentFiles": [
       "agent-0.json",
       "agent-gt0.json"
     ],
-    "agentFile": "[variables('agentFiles')[mod(add(parameters('agentCount'),2),add(parameters('agentCount'),1))]]"
+    "agentFile": "[variables('agentFiles')[mod(add(parameters('agentCount'),2),add(parameters('agentCount'),1))]]",
+    "omsStorageAccount": "none",
+    "omsStorageAccountKey": "none"
   },
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[concat(parameters('newStorageAccountNamePrefix'),'0')]",
+      "name": "[concat(variables('newStorageAccountNamePrefix'),'0')]",
       "apiVersion": "2015-05-01-preview",
       "location": "[resourceGroup().location]",
       "properties": {
@@ -290,7 +287,7 @@
       "type": "Microsoft.Resources/deployments",
       "name": "createMasterNodes",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountNamePrefix'), '0')]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountNamePrefix'), '0')]",
         "[variables('vnetID')]"
       ],
       "properties": {
@@ -301,7 +298,7 @@
         },
         "parameters": {
           "newStorageAccountName": {
-            "value": "[concat(parameters('newStorageAccountNamePrefix'), '0')]"
+            "value": "[concat(variables('newStorageAccountNamePrefix'), '0')]"
           },
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
@@ -310,7 +307,7 @@
             "value": "[parameters('adminPassword')]"
           },
           "dnsNameForContainerServicePublicIP": {
-            "value": "[parameters('dnsNameForContainerServicePublicIP')]"
+            "value": "[tolower(parameters('dnsNameForContainerServicePublicIP'))]"
           },
           "masterVMSize": {
             "value": "[parameters('masterVMSize')]"
@@ -357,11 +354,14 @@
           "chronosEnabled": {
             "value": "[parameters('chronosEnabled')]"
           },
+          "sshRSAPublicKey": {
+            "value": "[parameters('sshRSAPublicKey')]"
+          },
           "omsStorageAccount": {
-            "value": "[parameters('omsStorageAccount')]"
+            "value": "[variables('omsStorageAccount')]"
           },
           "omsStorageAccountKey": {
-            "value": "[parameters('omsStorageAccountKey')]"
+            "value": "[variables('omsStorageAccountKey')]"
           }
         }
       }
@@ -381,7 +381,7 @@
         },
         "parameters": {
           "newStorageAccountNamePrefix": {
-            "value": "[concat(parameters('newStorageAccountNamePrefix'))]"
+            "value": "[concat(variables('newStorageAccountNamePrefix'))]"
           },
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
@@ -437,11 +437,14 @@
           "chronosEnabled": {
             "value": "[parameters('chronosEnabled')]"
           },
+          "sshRSAPublicKey": {
+            "value": "[parameters('sshRSAPublicKey')]"
+          },
           "omsStorageAccount": {
-            "value": "[parameters('omsStorageAccount')]"
+            "value": "[variables('omsStorageAccount')]"
           },
           "omsStorageAccountKey": {
-            "value": "[parameters('omsStorageAccountKey')]"
+            "value": "[variables('omsStorageAccountKey')]"
           }
         }
       }
@@ -462,7 +465,7 @@
         },
         "parameters": {
           "newStorageAccountName": {
-            "value": "[concat(parameters('newStorageAccountNamePrefix'), '0')]"
+            "value": "[concat(variables('newStorageAccountNamePrefix'), '0')]"
           },
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
@@ -471,7 +474,7 @@
             "value": "[parameters('adminPassword')]"
           },
           "dnsNameForJumpboxPublicIP": {
-            "value": "[parameters('dnsNameForJumpboxPublicIP')]"
+            "value": "[tolower(parameters('dnsNameForJumpboxPublicIP'))]"
           },
           "jumpboxVMSize": {
             "value": "[parameters('jumpboxVMSize')]"
@@ -490,6 +493,12 @@
           },
           "customScriptLocation": {
             "value": "[variables('customScriptLocation')]"
+          },
+          "masterVMNamePrefix": {
+            "value": "[variables('masterVMNamePrefix')]"
+          },
+          "sshRSAPublicKey": {
+            "value": "[parameters('sshRSAPublicKey')]"
           }
         }
       }
