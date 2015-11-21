@@ -64,6 +64,24 @@ function GetLabFromVM_Private
     }
 }
 
+function GetResourceWithProperties_Private
+{
+    Param(
+        [ValidateNotNull()]
+        # ResourceId of an existing Azure RM resource.
+        $Resource
+    )
+
+    if ($null -eq $Resource.Properties)
+    {
+        Get-AzureRmResource -ExpandProperties -ResourceId $Resource.ResourceId -ApiVersion $RequiredApiVersion
+    }
+    else
+    {
+        return $Resource
+    }
+}
+
 ##################################################################################################
 
 function Get-AzureDtlLab
@@ -386,7 +404,7 @@ function Get-AzureDtlVirtualMachine
                 {
                     if ($fetchedLabObj.Count > 1)
                     {
-                        Write-Error $("Multiple labs found with name '" + $LabName + "'")
+                        throw $("Multiple labs found with name '" + $LabName + "'")
                     }
                     else
                     {
@@ -473,7 +491,7 @@ function New-AzureDtlLab
         # Pre-condition check to ensure the RM template file exists.
         if ($false -eq (Test-Path -Path $LabCreationTemplateFile))
         {
-            Write-Error $("The RM template file could not be located at : '" + $LabCreationTemplateFile + "'")
+            throw $("The RM template file could not be located at : '" + $LabCreationTemplateFile + "'")
         }
         else
         {
@@ -512,7 +530,7 @@ function New-AzureDtlLab
         # else display an error
         else
         {
-            Write-Error $("One or more labs with name '" + $LabName + "' already exist at location '" + $LabLocation + "'.")
+            throw $("One or more labs with name '" + $LabName + "' already exist at location '" + $LabLocation + "'.")
         }
     }
 }
@@ -571,7 +589,7 @@ function New-AzureDtlVMTemplate
         # Pre-condition check to ensure the RM template file exists.
         if ($false -eq (Test-Path -Path $VMTemplateCreationTemplateFile))
         {
-            Write-Error $("The RM template file could not be located at : '" + $VMTemplateCreationTemplateFile + "'")
+            throw $("The RM template file could not be located at : '" + $VMTemplateCreationTemplateFile + "'")
         }
         else
         {
@@ -583,7 +601,7 @@ function New-AzureDtlVMTemplate
 
         if ($null -eq $lab)
         {
-            Write-Error $("Unable to find lab '" + $LabName + "'")
+            throw $("Unable to detect lab for VM '" + $VM.ResourceName + "'")
         }
         else
         {
@@ -621,7 +639,8 @@ function New-AzureDtlVirtualMachine
         $lab = $null
 
         $lab = Get-AzureDtlLab -LabName "MyLab"
-        New-AzureDtlVirtualMachine -VMName "MyVM" -VMSize "Standard_A4" -Lab $lab -VMTemplate "MyVMTemplate"
+        $vmtemplate = Get-AzureDtlVMTemplate -Lab $lab -VMTemplateName "MyVMTemplate"
+        New-AzureDtlVirtualMachine -VMName "MyVM" -VMSize "Standard_A4" -Lab $lab -VMTemplate $vmtemplate
 
         Creates a new VM "MyVM" from the VM template "MyVMTemplate" in the lab "MyLab".
         - No new user account is created during the VM creation.
@@ -632,8 +651,9 @@ function New-AzureDtlVirtualMachine
         $lab = $null
 
         $lab = Get-AzureDtlLab -LabName "MyLab"
+        $vmtemplate = Get-AzureDtlVMTemplate -Lab $lab -VMTemplateName "MyVMTemplate"
         $secPwd = ConvertTo-SecureString -String "MyPwd" -AsPlainText -Force
-        New-AzureDtlVirtualMachine -VMName "MyVM" -VMSize "Standard_A4" -Lab $lab -VMTemplate "MyVMTemplate" -UserName "MyAdmin" -Password $secPwd
+        New-AzureDtlVirtualMachine -VMName "MyVM" -VMSize "Standard_A4" -Lab $lab -VMTemplate $vmtemplate -UserName "MyAdmin" -Password $secPwd
 
         Creates a new VM "MyVM" from the VM template "MyVMTemplate" in the lab "MyLab".
         - A new user account is created using the username/password combination specified.
@@ -643,8 +663,9 @@ function New-AzureDtlVirtualMachine
         $lab = $null
 
         $lab = Get-AzureDtlLab -LabName "MyLab"
+        $vmtemplate = Get-AzureDtlVMTemplate -Lab $lab -VMTemplateName "MyVMTemplate"
         $sshKey = ConvertTo-SecureString -String "MyKey" -AsPlainText -Force
-        New-AzureDtlVirtualMachine -VMName "MyVM" -VMSize "Standard_A4" -Lab $lab -VMTemplate "MyVMTemplate" -UserName "MyAdmin" -SSHKey $sshKey
+        New-AzureDtlVirtualMachine -VMName "MyVM" -VMSize "Standard_A4" -Lab $lab -VMTemplate $vmtemplate -UserName "MyAdmin" -SSHKey $sshKey
 
         Creates a new VM "MyVM" from the VM template "MyVMTemplate" in the lab "MyLab".
         - A new user account is created using the username/SSH-key combination specified.
@@ -680,10 +701,10 @@ function New-AzureDtlVirtualMachine
         [Parameter(Mandatory=$true, ParameterSetName="BuiltInUser")] 
         [Parameter(Mandatory=$true, ParameterSetName="UsernamePwd")] 
         [Parameter(Mandatory=$true, ParameterSetName="UsernameSSHKey")] 
-        [ValidateNotNullOrEmpty()]
-        [string]
-        # The name of an existing VM template which will be used to create the new VM (this VM template must exist in the lab identified via the '-LabName' parameter).
-        $VMTemplateName,
+        [ValidateNotNull()]
+        # An existing VM template which will be used to create the new VM (please use the Get-AzureDtlVmTemplate cmdlet to get this VMTemplate object).
+        # Note: This VM template must exist in the lab identified via the '-LabName' parameter.
+        $VMTemplate,
 
         [Parameter(Mandatory=$true, ParameterSetName="UsernamePwd")] 
         [Parameter(Mandatory=$true, ParameterSetName="UsernameSSHKey")] 
@@ -709,8 +730,26 @@ function New-AzureDtlVirtualMachine
     {
         Write-Verbose $("Processing cmdlet '" + $PSCmdlet.MyInvocation.InvocationName + "', ParameterSet = '" + $PSCmdlet.ParameterSetName + "'")
 
-        # Unique name for the deployment
-        $deploymentName = [Guid]::NewGuid().ToString()
+        # Get the same VM template object, but with properties attached.
+        $VMTemplate = GetResourceWithProperties_Private -Resource $VMTemplate
+
+        # Pre-condition checks for linux VHDs.
+        if ("linux" -eq $VMTemplate.Properties.OsType)
+        {
+            if ($false -eq (($PSBoundParameters.ContainsKey("UserName") -and $PSBoundParameters.ContainsKey("Password")) -or ($PSBoundParameters.ContainsKey("UserName") -and $PSBoundParameters.ContainsKey("SSHKey"))))
+            {
+                throw $("The specified VM template '" + $VMTemplate.Name + "' uses a linux VHD. Please specify either the -UserName and -Password parameters or the -UserName and -SSHKey parameters to use this VM template.")
+            }
+        }
+
+        # Pre-condition checks for sysprepped VHDs.
+        if ($true -eq $VMTemplate.Properties.SysPrep)
+        {
+            if ($false -eq ($PSBoundParameters.ContainsKey("UserName") -and $PSBoundParameters.ContainsKey("Password")))
+            {
+                throw $("The specified VM template '" + $VMTemplate.Name + "' uses a sysprepped VHD. Please specify both the -UserName and -Password parameters to use this VM template.")
+            }
+        }
 
         # Folder location of VM creation script, the template file and template parameters file.
         $VMCreationTemplateFile = $null
@@ -757,21 +796,24 @@ function New-AzureDtlVirtualMachine
 
             $rgDeployment = $null
 
+            # Unique name for the deployment
+            $deploymentName = [Guid]::NewGuid().ToString()
+
             switch($PSCmdlet.ParameterSetName)
             {
                 "BuiltInUser"
                 {
-                    $rgDeployment = New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $Lab.ResourceGroupName -TemplateFile $VMCreationTemplateFile -newVMName $VMName -existingLabName $Lab.ResourceName -newVMSize $VMSize -existingVMTemplateName $VMTemplateName
+                    $rgDeployment = New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $Lab.ResourceGroupName -TemplateFile $VMCreationTemplateFile -newVMName $VMName -existingLabName $Lab.ResourceName -newVMSize $VMSize -existingVMTemplateName $VMTemplate.Name
                 }
 
                 "UsernamePwd"
                 {
-                    $rgDeployment = New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $Lab.ResourceGroupName -TemplateFile $VMCreationTemplateFile -newVMName $VMName -existingLabName $Lab.ResourceName -newVMSize $VMSize -existingVMTemplateName $VMTemplateName -userName $UserName -password $Password
+                    $rgDeployment = New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $Lab.ResourceGroupName -TemplateFile $VMCreationTemplateFile -newVMName $VMName -existingLabName $Lab.ResourceName -newVMSize $VMSize -existingVMTemplateName $VMTemplate.Name -userName $UserName -password $Password
                 }
 
                 "UsernameSSHKey"
                 {
-                    $rgDeployment = New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $Lab.ResourceGroupName -TemplateFile $VMCreationTemplateFile -newVMName $VMName -existingLabName $Lab.ResourceName -newVMSize $VMSize -existingVMTemplateName $VMTemplateName -userName $UserName -sshKey $SSHKey  
+                    $rgDeployment = New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $Lab.ResourceGroupName -TemplateFile $VMCreationTemplateFile -newVMName $VMName -existingLabName $Lab.ResourceName -newVMSize $VMSize -existingVMTemplateName $VMTemplate.Name -userName $UserName -sshKey $SSHKey  
                 }
             }
 
