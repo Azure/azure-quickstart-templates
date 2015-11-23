@@ -11,7 +11,7 @@ This template deploys a MySQL replication environment with one master and one sl
 - Deploys 2 VMs in an Azure VNet, each has 2 data disks striped into Raid0
 - Deploys a load balancer in front of the 2 VMs, so that the VMs are not directly exposed to the internet.  MySQL and SSH ports are exposed through the load balancer using Network Security Group rules
 - Configures a http based health probe for each MySQL instance that can be used to monitor MySQL health
-- Installs LIS4 driver and reboots each VM 3 minutes after the installation script on each VM completes
+- Installs LIS4 driver on each VM. Note that the VMs are not automatically rebooted, so LIS4 will not take effect until the next time a VM reboots
 
 ### How to Deploy
 You can deploy the template with Azure Portal, or PowerShell, or Azure cross platform command line tools.  The example here uses PowerShell to deploy.
@@ -58,17 +58,19 @@ You can deploy the template with Azure Portal, or PowerShell, or Azure cross pla
 
 ### How to Failover
 High availability and failover are no different from other GTID based MySQL replication.  What's specific to Azure is that in order for the applications to access the current master server without changing their configurations, the NAT rules of the load balancer must be updated in the case of failover:
-* Remove the NAT rule for the old master from the load balancer so that applications can't access the failed master, assuming master has $mysqlrg-nic0:
+* Remove the NAT rule for the old master from the load balancer so that applications can't access the failed master, assuming master has $mysqlrg-nic0.  For full powershell script, please see [switchMySQLNatRule.ps1](/mysql-replication/switchMySQLNatRule.ps1).
 ```sh
 > $nic0=Get-AzureNetworkInterface -Name mysqldns-nic0 -ResourceGroupName mysqlrg
 > $nic1=Get-AzureNetworkInterface -Name mysqldns-nic1 -ResourceGroupName mysqlrg
 ...
-# $i is the index of the target nat rule, for full powershell script, see switchMySQLNatRule.sql
+# $i is the index of the target nat rule
 ...
 > $rule0=$nic0.IpConfigurations[0].LoadBalancerInboundNatRules[$i]
 > $nic0.IpConfigurations[0].LoadBalancerInboundNatRules.removeRange($i,1)
 > Set-AzureNetworkInterface -NetworkInterface $nic0
 ```
+You can also do this in the Azure portal. Find the current master's MySQL NSG, either delete it or set the ports to some invalid value:
+![Alt text](/mysql-replication/screenshots/1removeOldMasterNSG.PNG?raw=true "Remove or update NSG of the old master")
 * Fail over MySQL from the old master to the new master.  On the slave, run the following, assuming slave 10.0.1.5 is to become the new master:
 ```sh
 mysql> stop slave;
@@ -77,7 +79,7 @@ mysql> change master to master_host='10.0.1.5', master_user='admin', master_pass
 * Switch the old master's NAT rule with the new master
 ```sh
 ...
-# $j is the index of the target nat rule, for full powershell script, see switchMySQLNatRule.sql
+# $j is the index of the target nat rule
 ...
 > $rule1=$nic1.IpConfigurations[0].LoadBalancerInboundNatRules[$j]
 > $nic1.IpConfigurations[0].LoadBalancerInboundNatRules.removeRange($j,1)
@@ -87,6 +89,11 @@ mysql> change master to master_host='10.0.1.5', master_user='admin', master_pass
 > $nic0.IpConfigurations[0].LoadBalancerInboundNatRules.add($rule1)
 > Set-AzureNetworkInterface -NetworkInterface $nic0
 ```
+Similarly, this can also be done in the Azure portal. First update the NSG for the new master:
+![Alt text](/mysql-replication/screenshots/2updateSlaveNSG.PNG?raw=true "Update the NSG for the new master")
+Then update the NSG for the old master back to valid values: 
+![Alt text](/mysql-replication/screenshots/3updateOldMasterToSlave.PNG?raw=true "Update the NSG for the old master")
+
 * Add the old master back to replication as a slave, on the old master, run the following, assuming the new master is 10.0.1.5:
 ```sh
 mysql> stop slave;
