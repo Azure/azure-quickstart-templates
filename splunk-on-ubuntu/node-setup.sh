@@ -113,9 +113,12 @@ log "Started node-setup on ${HOSTNAME} with role ${NODE_ROLE}: `date`"
 log "Striping data disks into one volume mounted at ${MOUNTPOINT}"
 chmod u+x vm-disk-utils-0.1.sh && ./vm-disk-utils-0.1.sh -s -p ${MOUNTPOINT}
 
+log "Checkpoint 1: `date`"
+
 # Update packages & install dependencies
 apt-get -y update && apt-get install -y curl
 
+log "Checkpoint 2: `date`"
 # Link SPLUNK_DB to striped volume
 log "Create symbolic link from ${MOUNTPOINT}/splunk_db to ${SPLUNK_DB_DIR}/splunk"
 mkdir -p $MOUNTPOINT/splunk_db
@@ -134,6 +137,7 @@ echo ${CHEF_PKG_MD5} > /tmp/checksum
 sha1sum -c /tmp/checksum
 dpkg -i chef_12.5.1-1_amd64.deb
 
+log "Checkpoint 3: `date`"
 # Download chef repo including cookbooks, roles and default data bags
 mkdir -p /etc/chef/repo
 cd /etc/chef/repo
@@ -168,6 +172,7 @@ log_location STDOUT
 chef_repo_path "/etc/chef/repo"
 end
 
+log "Checkpoint 4: `date`"
 # Finally install & configure Splunk using chef client in local mode
 cd -
 chef-client -z -c /etc/chef/client.rb -j /etc/chef/node.json
