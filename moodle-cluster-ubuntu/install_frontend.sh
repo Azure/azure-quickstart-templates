@@ -55,9 +55,8 @@ mount -t cifs //$SharedStorageAccountName.file.core.windows.net/$SharedAzureFile
 chmod 770 /etc/fstab
 echo "//$SharedStorageAccountName.file.core.windows.net/$SharedAzureFileName /var/www/moodledata cifs uid=$(id -u www-data),vers=3.0,username=$SharedStorageAccountName,password=$SharedStorageAccountKey,dir_mode=0770,file_mode=0770" >> /etc/fstab
 
-#command line moodle installation
-LoadbalancerIpAddress=$5
-DbIpAddress=$6
+LoadbalancerFqdn=$5
+DbFqdn=$6
 FullNameOfSite=$7
 ShortNameOfSite=$8
 MoodleAdminUser=$9
@@ -65,5 +64,10 @@ MoodleAdminPass=$10
 MoodleAdminEmail=$11
 
 cd /var/www/html/moodle
-wwwrootval="http://$LoadbalancerIpAddress:80/moodle"
+
+#resolve domain name to ip address
+wwwrootval="http://$(resolveip -s $LoadbalancerFqdn):80/moodle"
+DbIpAddress=$(resolveip -s $DbFqdn)
+
+#command line moodle installation
 sudo -u www-data php admin/cli/install.php --chmod=770 --lang=en --wwwroot=$wwwrootval --dataroot='/var/www/moodledata' --dbhost=$DbIpAddress --dbpass=$dbpass --fullname=$FullNameOfSite --shortname=$ShortNameOfSite --adminuser=$MoodleAdminUser --adminpass=$MoodleAdminPass --adminemail=$MoodleAdminEmail --non-interactive --agree-license --allow-unstable || true
