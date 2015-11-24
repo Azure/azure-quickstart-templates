@@ -76,8 +76,7 @@ CHEF_PKG_URL="https://opscode-omnibus-packages.s3.amazonaws.com/ubuntu/10.04/x86
 CHEF_PKG_MD5="6360faba9d6358d636be5618eecb21ee1dbdca7d  chef_12.5.1-1_amd64.deb"
 CHEF_PKG_CACHE="/etc/chef/local-mode-cache/cache/chef_12.5.1-1_amd64.deb"
 
-#CHEF_REPO_URL="https://github.com/rarsan/chef-repo-splunk/tarball/v0.4"
-CHEF_REPO_URL="https://github.com/rarsan/chef-repo-splunk/tarball/develop"
+CHEF_REPO_URL="https://github.com/rarsan/chef-repo-splunk/tarball/v0.4"
 
 # Arguments
 while getopts :r:p:c:i: optname; do
@@ -119,6 +118,7 @@ log "Checkpoint 1: `date`"
 apt-get -y update && apt-get install -y curl
 
 log "Checkpoint 2: `date`"
+
 # Link SPLUNK_DB to striped volume
 log "Create symbolic link from ${MOUNTPOINT}/splunk_db to ${SPLUNK_DB_DIR}/splunk"
 mkdir -p $MOUNTPOINT/splunk_db
@@ -138,6 +138,7 @@ sha1sum -c /tmp/checksum
 dpkg -i chef_12.5.1-1_amd64.deb
 
 log "Checkpoint 3: `date`"
+
 # Download chef repo including cookbooks, roles and default data bags
 mkdir -p /etc/chef/repo
 cd /etc/chef/repo
@@ -173,6 +174,7 @@ chef_repo_path "/etc/chef/repo"
 end
 
 log "Checkpoint 4: `date`"
+
 # Finally install & configure Splunk using chef client in local mode
 cd -
 chef-client -z -c /etc/chef/client.rb -j /etc/chef/node.json
