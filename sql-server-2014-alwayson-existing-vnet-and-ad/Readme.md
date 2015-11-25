@@ -23,7 +23,7 @@ This template is serial in nature for deploying some of the resources, due to so
 
 +	The default settings for storage are to deploy using **premium storage**.  The SQL VMs use two P30 disks each (for data and log).  These sizes can be changed by changing the relevant variables. In addition there is a P10 Disk used for each VM OS Disk.
 
-+ 	The default settings for compute require that you have at least 17 cores of free quota to deploy.
++ 	The default settings for compute require that you have at least 9 cores of free quota to deploy.
 
 + 	The images used to create this deployment are
 	+ 	SQL Server - Latest SQL Server 2014 on Windows Server 2012 R2 Image
