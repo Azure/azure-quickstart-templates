@@ -1,8 +1,18 @@
-wget https://bootstrap.pypa.io/get-pip.py
-python get-pip.py
+#wget https://bootstrap.pypa.io/get-pip.py
+#python get-pip.py
 pip install azure-servicemanagement-legacy
 pip install azure-storage
 pip install requests
 pip install blobxfer
 
-blobxfer.py $1 $2 /mnt/ --remotesource $3 --storageaccountkey $4 --download
+sa_domain=$(echo "$1" | cut -f3 -d/)
+sa_name=$(echo $sa_domain | cut -f1 -d.)
+container_name=$(echo "$1" | cut -f4 -d/)
+blob_name=$(echo "$1" | cut -f5 -d/)
+echo ""
+echo "sa name, container name, blob name:"
+echo $sa_name
+echo $container_name
+echo $blob_name
+
+blobxfer $sa_name $container_name /mnt/ --remoteresource $blob_name --storageaccountkey $2 --download
