@@ -1,8 +1,8 @@
 #wget https://bootstrap.pypa.io/get-pip.py
 #python get-pip.py
-pip install azure-servicemanagement-legacy
-pip install azure-storage
-pip install requests
+#pip install azure-servicemanagement-legacy
+#pip install azure-storage
+#pip install requests
 pip install blobxfer
 
 sa_domain=$(echo "$1" | cut -f3 -d/)
