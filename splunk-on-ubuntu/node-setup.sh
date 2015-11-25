@@ -69,14 +69,13 @@ fi
 # Parameters
 MY_IP="$(ip -4 address show eth0 | sed -rn 's/^[[:space:]]*inet ([[:digit:].]+)[/[:space:]].*$/\1/p')"
 
-MOUNTPOINT="/datadrive"
-SPLUNK_DB_DIR="/opt/splunk/var/lib"
+DATA_MOUNTPOINT="/datadrive"
 
 CHEF_PKG_URL="https://opscode-omnibus-packages.s3.amazonaws.com/ubuntu/10.04/x86_64/chef_12.5.1-1_amd64.deb"
 CHEF_PKG_MD5="6360faba9d6358d636be5618eecb21ee1dbdca7d  chef_12.5.1-1_amd64.deb"
 CHEF_PKG_CACHE="/etc/chef/local-mode-cache/cache/chef_12.5.1-1_amd64.deb"
 
-CHEF_REPO_URL="https://github.com/rarsan/chef-repo-splunk/tarball/v0.4"
+CHEF_REPO_URL="https://github.com/rarsan/chef-repo-splunk/tarball/develop"
 
 # Arguments
 while getopts :r:p:c:i: optname; do
@@ -109,8 +108,8 @@ done
 log "Started node-setup on ${HOSTNAME} with role ${NODE_ROLE}: `date`"
 
 # Stripe data disks into one volume
-log "Striping data disks into one volume mounted at ${MOUNTPOINT}"
-chmod u+x vm-disk-utils-0.1.sh && ./vm-disk-utils-0.1.sh -s -p ${MOUNTPOINT}
+log "Striping data disks into one volume mounted at ${DATA_MOUNTPOINT}"
+chmod u+x vm-disk-utils-0.1.sh && ./vm-disk-utils-0.1.sh -s -p ${DATA_MOUNTPOINT}
 
 log "Checkpoint 1: `date`"
 
@@ -118,14 +117,6 @@ log "Checkpoint 1: `date`"
 apt-get -y update && apt-get install -y curl
 
 log "Checkpoint 2: `date`"
-
-# Link SPLUNK_DB to striped volume
-log "Create symbolic link from ${MOUNTPOINT}/splunk_db to ${SPLUNK_DB_DIR}/splunk"
-mkdir -p $MOUNTPOINT/splunk_db
-mkdir -p $SPLUNK_DB_DIR
-chmod 777 $MOUNTPOINT/splunk_db
-chmod 711 $SPLUNK_DB_DIR
-ln -sf $MOUNTPOINT/splunk_db $SPLUNK_DB_DIR/splunk
 
 # Download chef client 12.5.1, verify checksum and install package
 if [ ! -f "${CHEF_PKG_CACHE}" ]; then
@@ -153,12 +144,17 @@ if [ -n "${CLUSTER_MASTER_IP}" ]; then
   sed -i "s/<INSERT_IP_ADDRESS>/${CLUSTER_MASTER_IP}/" /etc/chef/repo/nodes/cluster-master.json
 fi
 
+# Setup Chef node file with appropriate role and custom attributes
 cat >/etc/chef/node.json <<end
 {
   "splunk": {
     "ssl_options": {
       "enable_ssl": "true",
       "use_default_certs": "true"
+    },
+    "server": {
+      "edit_datastore_dir": "true",
+      "datastore_dir": "${DATA_MOUNTPOINT}"
     }
   },
   "run_list": [
