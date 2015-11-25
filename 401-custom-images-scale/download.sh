@@ -1,3 +1,5 @@
+# accepts a blob uri (MUST HAVE https:// at the beginning) and a key
+
 #wget https://bootstrap.pypa.io/get-pip.py
 #python get-pip.py
 #pip install azure-servicemanagement-legacy
@@ -14,5 +16,7 @@ echo "sa name, container name, blob name:"
 echo $sa_name
 echo $container_name
 echo $blob_name
+
+echo "$container_name,$blob_name" > /mnt/config.txt
 
 blobxfer $sa_name $container_name /mnt/ --remoteresource $blob_name --storageaccountkey $2 --download
