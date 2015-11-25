@@ -85,16 +85,17 @@ function Initialize-Disks{
     
     # Get letters starting from F
     $label = 'datadisk-'
-    $letters = 70..89 | ForEach-Object { ([char]$_) }
+    $letters = 70..90 | ForEach-Object { ([char]$_) }
     $letterIndex = 0
 	if($disks -ne $null)
 	{
-        lmsg 'Found attached VHDs with raw partition...' $disks
+        $numberedDisks = $disks.Number -join ','
+        lmsg "Found attached VHDs with raw partition and numbers $numberedDisks"
         try{
             foreach($disk in $disks){
                 $driveLetter = $letters[$letterIndex].ToString()
-                lmsg 'Formatting disk...' $driveLetter
-		        $disk | Initialize-Disk -PartitionStyle MBR -PassThru |	New-Partition -UseMaximumSize -DriveLetter $driveLetter | Format-Volume -FileSystem NTFS -NewFileSystemLabel "$label$letterIndex" -Confirm:$false -Force
+                lmsg "Formatting disk...$driveLetter"
+		        $disk | Initialize-Disk -PartitionStyle MBR -PassThru |	New-Partition -UseMaximumSize -DriveLetter $driveLetter | Format-Volume -FileSystem NTFS -NewFileSystemLabel "$label$letterIndex" -Confirm:$false -Force | Out-Null
                 $letterIndex++
             }
         }catch [System.Exception]{
@@ -104,7 +105,25 @@ function Initialize-Disks{
 		}
 	}
     
-    #return $letters[0].ToString()
+    return $letterIndex
+}
+
+function Create-DataFolders([int]$numDrives, [string]$folder)
+{
+    $letters = 70..90 | ForEach-Object { ([char]$_) }
+
+    $pathSet = @(0) * $numDrives
+    for($i=0;$i -lt $numDrives;$i++)
+    {
+        $pathSet[$i] = $letters[$i] + ':\' + $folder
+        New-Item -Path $pathSet[$i]  -ItemType Directory | Out-Null
+    }
+
+    $retVal = $pathSet -join ','
+
+    lmsg "Created data folders: $retVal" 
+    
+    return $retVal
 }
 
 function Download-Jdk
@@ -131,7 +150,7 @@ function Download-Jdk
             lmsg "Downloading JDK from $source to $destination"
 
 			$client.Headers.Add([System.Net.HttpRequestHeader]::Cookie, $cookie) 
-			$client.downloadFile($source, $destination)
+			$client.downloadFile($source, $destination) | Out-Null
 		}catch [System.Net.WebException],[System.Exception]{
 			lerr $_.Exception.Message
             lerr $_.Exception.StackTrace
@@ -199,7 +218,7 @@ function Download-ElasticSearch
 
             lmsg "Downloading Elasticsearch version $elasticVersion from $source to $destination"
 
-			$client.downloadFile($source, $destination)
+			$client.downloadFile($source, $destination) | Out-Null
 		}catch [System.Net.WebException],[System.Exception]{
 			lerr $_.Exception.Message
             lerr $_.Exception.StackTrace
@@ -233,15 +252,15 @@ function SetEnv-JavaHome($jdkInstallLocation)
     $homePath = $jdkInstallLocation
     
     lmsg "Setting JAVA_HOME in the registry to $homePath..."
-	Set-ItemProperty -Path $regEnvPath -Name JAVA_HOME -Value $homePath
+	Set-ItemProperty -Path $regEnvPath -Name JAVA_HOME -Value $homePath | Out-Null
     
     lmsg 'Setting JAVA_HOME for the current session...'
-    Set-Item Env:JAVA_HOME "$homePath"
+    Set-Item Env:JAVA_HOME "$homePath" | Out-Null
 
     # Additional check
     if ([environment]::GetEnvironmentVariable("JAVA_HOME","machine") -eq $null)
 	{
-	    [environment]::setenvironmentvariable("JAVA_HOME",$homePath,"machine")
+	    [environment]::setenvironmentvariable("JAVA_HOME",$homePath,"machine") | Out-Null
 	}
 
     lmsg 'Modifying path variable to point to java executable...'
@@ -250,6 +269,27 @@ function SetEnv-JavaHome($jdkInstallLocation)
     Set-ItemProperty -Path $regEnvPath -Name PATH -Value $currentPath
     Set-Item Env:PATH "$currentPath"
 }
+
+function SetEnv-HeapSize
+{
+    # Obtain total memory in MB and divide in half
+    $halfRamCnt = [math]::Round(((Get-WmiObject Win32_PhysicalMemory | measure-object Capacity -sum).sum/1mb)/2,0)
+    $halfRam = $halfRamCnt.ToString() + 'm'
+    lmsg "Half of total RAM in system is $halfRam mb."
+
+    lmsg "Setting ES_HEAP_SIZE in the registry to $halfRam..."
+	Set-ItemProperty -Path $regEnvPath -Name ES_HEAP_SIZE -Value $halfRam | Out-Null
+
+    lmsg 'Setting ES_HEAP_SIZE for the current session...'
+    Set-Item Env:ES_HEAP_SIZE $halfRam | Out-Null
+
+    # Additional check
+    if ([environment]::GetEnvironmentVariable("ES_HEAP_SIZE","machine") -eq $null)
+	{
+	    [environment]::setenvironmentvariable("ES_HEAP_SIZE",$halfRam,"machine") | Out-Null
+	}
+}
+
 
 function Install-ElasticSearch ($driveLetter, $elasticSearchZip, $subFolder = $elasticSearchBaseFolder)
 {
@@ -269,8 +309,9 @@ function Implode-Host([string]$discoveryHost)
     $discoveryHost = $discoveryHost.Trim()
 
     $ipPrefix = $discoveryHost.Substring(0, $discoveryHost.LastIndexOf('.'))
-    $lastDigit = $discoveryHost.Substring($discoveryHost.LastIndexOf('.') + 1, 1)
-    $loop = $discoveryHost.Substring($discoveryHost.LastIndexOf('-') + 1, 1)
+    $dotSplitArr = $discoveryHost.Split('.')
+    $lastDigit = $dotSplitArr[$dotSplitArr.Length-1].Split('-')[0]
+    $loop = $dotSplitArr[$dotSplitArr.Length-1].Split('-')[1]
 
     $ipRange = @(0) * $loop
     for($i=0; $i -lt $loop; $i++)
@@ -283,17 +324,37 @@ function Implode-Host([string]$discoveryHost)
     return $addresses
 }
 
+function Implode-Host2([string]$discoveryHost)
+{
+    # Discovery host must be in a given format e.g. 10.0.0.1-3 for the below code to work
+    # 10.0.0.1-3 would be converted to "10.0.0.10 10.0.0.11 10.0.0.12"
+    $discoveryHost = $discoveryHost.Trim()
+
+    $dashSplitArr = $discoveryHost.Split('-')
+    $prefixAddress = $dashSplitArr[0]
+    $loop = $dashSplitArr[1]
+
+    $ipRange = @(0) * $loop
+    for($i=0; $i -lt $loop; $i++)
+    {
+        $format = "$prefixAddress$i"
+        $ipRange[$i] = '"' +$format + '"'
+    }
+
+    $addresses = $ipRange -join ','
+    return $addresses
+}
+
+
 function ElasticSearch-InstallService($scriptPath)
 {
 	# Install and start elastic search as a service
 	$elasticService = (get-service | Where-Object {$_.Name -match "elasticsearch"}).Name
 	if($elasticService -eq $null) 
     {	
-        #$proc = start-process cmd -argumentlist "/c $scriptpath install" -passthru -nonewwindow -wait
-        #if($proc -ne 0){
-         #   lerr "exception encountered while installing elasticsearch service"
-         #   break
-        #}
+        # First set heap size
+        SetEnv-HeapSize
+
         lmsg 'Installing elasticsearch as a service...'
         cmd.exe /C "$scriptPath install"
         if ($LASTEXITCODE) {
@@ -306,16 +367,20 @@ function ElasticSearch-InstallService($scriptPath)
 function ElasticSearch-StartService()
 {
     # Check if the service is installed and start it
-    $elasticService = (get-service | Where-Object {$_.Name -match "elasticsearch"}).Name
+    $elasticService = (get-service | Where-Object {$_.Name -match 'elasticsearch'}).Name
     if($elasticService -ne $null)
     {
-        lmsg 'Starting elasticsearch service and setting the startup to automatic...'
-        $svc = Start-Service $elasticService
-        $svc.WaitForStatus('Started', '00:00:10')
-		Set-Service $elasticService -StartupType Automatic
+        lmsg 'Starting elasticsearch service...'
+        Start-Service -Name $elasticService | Out-Null
+        $svc = Get-Service | Where-Object { $_.Name -Match 'elasticsearch'}
         
-        # Give approximately 20 seconds for service to start before verification
-        #Start-Sleep -Seconds 20
+        if($svc -ne $null)
+        {
+            $svc.WaitForStatus('Running', '00:00:10')
+        }
+
+		lmsg 'Setting the elasticsearch service startup to automatic...'
+        Set-Service $elasticService -StartupType Automatic | Out-Null
     }
 }
 
@@ -345,7 +410,7 @@ function Jmeter-Download($drive)
 
             lmsg "Downloading Jmeter SA from $source to $destination"
 
-			$client.downloadFile($source, $destination)
+			$client.downloadFile($source, $destination) | Out-Null
 		}catch [System.Net.WebException],[System.Exception]{
 			lerr $_.Exception.Message
             lerr $_.Exception.StackTrace
@@ -384,11 +449,28 @@ function Jmeter-ConfigFirewall
     for($i=4440; $i -le 4444; $i++)
     {
         lmsg 'Adding firewall rule - Allow Jmeter Inbound Port ' $i
-        New-NetFirewallRule -Name "Jmeter_ServerAgent_IN_$i" -DisplayName "Allow Jmeter Inbound Port $i" -Protocol tcp -LocalPort $i -Action Allow -Enabled True -Direction Inbound
+        New-NetFirewallRule -Name "Jmeter_ServerAgent_IN_$i" -DisplayName "Allow Jmeter Inbound Port $i" -Protocol tcp -LocalPort $i -Action Allow -Enabled True -Direction Inbound | Out-Null
     
         lmsg 'Adding firewall rule - Allow Jmeter Outbound Port ' $i
-        New-NetFirewallRule -Name "Jmeter_ServerAgent_OUT_$i" -DisplayName "Allow Jmeter Outbound Port $i" -Protocol tcp -LocalPort $i -Action Allow -Enabled True -Direction Outbound
+        New-NetFirewallRule -Name "Jmeter_ServerAgent_OUT_$i" -DisplayName "Allow Jmeter Outbound Port $i" -Protocol tcp -LocalPort $i -Action Allow -Enabled True -Direction Outbound | Out-Null
     }
+}
+
+function Elasticsearch-OpenPorts
+{
+	# Add firewall rules
+    lmsg 'Adding firewall rule - Allow Elasticsearch Inbound Port 9200'
+    New-NetFirewallRule -Name 'ElasticSearch_In_Lb' -DisplayName 'Allow Elasticsearch Inbound Port 9200' -Protocol tcp -LocalPort 9200 -Action Allow -Enabled True -Direction Inbound | Out-Null
+
+    lmsg 'Adding firewall rule - Allow Elasticsearch Outbound Port 9200 for Marvel'
+    New-NetFirewallRule -Name 'ElasticSearch_Out_Lb' -DisplayName 'Allow Elasticsearch Outbound Port 9200 for Marvel' -Protocol tcp -LocalPort 9200 -Action Allow -Enabled True -Direction Outbound | Out-Null
+
+    lmsg 'Adding firewall rule - Allow Elasticsearch Inter Node Communication Inbound Port 9300'
+    New-NetFirewallRule -Name 'ElasticSearch_In_Unicast' -DisplayName 'Allow Elasticsearch Inter Node Communication Inbound Port 9300' -Protocol tcp -LocalPort 9300 -Action Allow -Enabled True -Direction Inbound | Out-Null
+    
+    lmsg 'Adding firewall rule - Allow Elasticsearch Inter Node Communication Outbound Port 9300'
+    New-NetFirewallRule -Name 'ElasticSearch_Out_Unicast' -DisplayName 'Allow Elasticsearch Inter Node Communication Outbound Port 9300' -Protocol tcp -LocalPort 9300 -Action Allow -Enabled True -Direction Outbound | Out-Null
+
 }
 
 function Jmeter-Run($unzipLoc)
@@ -396,15 +478,22 @@ function Jmeter-Run($unzipLoc)
     $targetPath = Join-Path -Path $unzipLoc -ChildPath 'startAgent.bat'
 
     lmsg 'Starting jmeter server agent at ' $targetPath
-    Start-Process -FilePath $targetPath -WindowStyle Minimized
+    Start-Process -FilePath $targetPath -WindowStyle Minimized | Out-Null
 }
 
 function Install-WorkFlow
 {
-	# Initialize installation drive
+	# Start script
+    Startup-Output
 	
-    # Below script should discover raw data disks and format them
-    Initialize-Disks
+    # Discover raw data disks and format them
+    $dc = Initialize-Disks
+    
+    # Create data folders on raw disks
+    if($dc -gt 0)
+    {
+        $folderPathSetting = (Create-DataFolders $dc 'elasticsearch\data')
+    }
 
 	# Set first drive
     $firstDrive = (get-location).Drive.Name
@@ -431,7 +520,7 @@ function Install-WorkFlow
 		if($elasticClusterName.Length -eq 0) { $elasticClusterName = 'elasticsearch_cluster' }
         
         # Unicast host setup
-        if($discoveryEndpoints.Length -ne 0) { $ipAddresses = Implode-Host $discoveryEndpoints }
+        if($discoveryEndpoints.Length -ne 0) { $ipAddresses = Implode-Host2 $discoveryEndpoints }
 		
 		# Extract install folders
 		$elasticSearchBinParent = (gci -path $elasticSearchInstallLocation -filter "bin" -Recurse).Parent.FullName
@@ -441,6 +530,17 @@ function Install-WorkFlow
 		# Set values
         lmsg "Configure cluster name to $elasticClusterName"
         $textToAppend = "`n#### Settings automatically added by deployment script`ncluster.name: $elasticClusterName"
+
+        # Use hostname for node name
+        $hostname = (Get-WmiObject -Class Win32_ComputerSystem -Property Name).Name
+        $textToAppend = $textToAppend + "`nnode.name: $hostname"
+
+        # Set data paths
+        if($folderPathSetting -ne $null)
+        {
+            $textToAppend = $textToAppend + "`npath.data: $folderPathSetting"
+        }
+
         if($masterOnlyNode)
         {
             lmsg 'Configure node as master only'
@@ -479,17 +579,8 @@ function Install-WorkFlow
 
         Add-Content $elasticSearchConfFile $textToAppend
 		
-
-	# Add firewall rules
-    lmsg 'Adding firewall rule - Allow Elasticsearch Inbound Port 9200'
-    New-NetFirewallRule -Name 'ElasticSearch_In_Lb' -DisplayName 'Allow Elasticsearch Inbound Port 9200' -Protocol tcp -LocalPort 9200 -Action Allow -Enabled True -Direction Inbound
-
-    lmsg 'Adding firewall rule - Allow Elasticsearch Inter Node Communication Inbound Port 9300'
-    New-NetFirewallRule -Name 'ElasticSearch_In_Unicast' -DisplayName 'Allow Elasticsearch Inter Node Communication Inbound Port 9300' -Protocol tcp -LocalPort 9300 -Action Allow -Enabled True -Direction Inbound
-    
-    lmsg 'Adding firewall rule - Allow Elasticsearch Inter Node Communication Outbound Port 9300'
-    New-NetFirewallRule -Name 'ElasticSearch_Out_Unicast' -DisplayName 'Allow Elasticsearch Inter Node Communication Outbound Port 9300' -Protocol tcp -LocalPort 9300 -Action Allow -Enabled True -Direction Outbound
-
+    # Add firewall exceptions
+    Elasticsearch-OpenPorts
 
     # Install service using the batch file in bin folder
     $scriptPath = Join-Path $elasticSearchBin -ChildPath "service.bat"
@@ -524,6 +615,19 @@ function Install-WorkFlow
 
     # Verify service TODO: Investigate why verification fails during ARM deployment
     # ElasticSearch-VerifyInstall
+}
+
+function Startup-Output
+{
+    lmsg 'Install workflow starting with following params:'
+    lmsg "Elasticsearch version: $elasticSearchVersion"
+    if($elasticClusterName.Length -ne 0) { lmsg "Elasticsearch cluster name: $elasticClusterName" }
+    if($jdkDownloadLocation.Length -ne 0) { lmsg "Jdk download location: $jdkDownloadLocation" }
+    if($elasticSearchBaseFolder.Length -ne 0) { lmsg "Elasticsearch base folder: $elasticSearchBaseFolder" }
+    if($discoveryEndpoints.Length -ne 0) { lmsg "Discovery endpoints: $discoveryEndpoints" }
+    if($masterOnlyNode) { lmsg 'Node installation mode: Master' }
+    if($clientOnlyNode) { lmsg 'Node installation mode: Client' }
+    if($dataOnlyNode) { lmsg 'Node installation mode: Data' }
 }
 
 Install-WorkFlow
