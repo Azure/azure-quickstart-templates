@@ -70,6 +70,7 @@ fi
 MY_IP="$(ip -4 address show eth0 | sed -rn 's/^[[:space:]]*inet ([[:digit:].]+)[/[:space:]].*$/\1/p')"
 
 DATA_MOUNTPOINT="/datadrive"
+SPLUNK_DB_DIR="${DATA_MOUNTPOINT}/splunk_db"
 
 CHEF_PKG_URL="https://opscode-omnibus-packages.s3.amazonaws.com/ubuntu/10.04/x86_64/chef_12.5.1-1_amd64.deb"
 CHEF_PKG_MD5="6360faba9d6358d636be5618eecb21ee1dbdca7d  chef_12.5.1-1_amd64.deb"
@@ -107,9 +108,13 @@ done
 
 log "Started node-setup on ${HOSTNAME} with role ${NODE_ROLE}: `date`"
 
-# Stripe data disks into one volume
+# Stripe data disks into one data volume where SPLUNK_DB will reside
 log "Striping data disks into one volume mounted at ${DATA_MOUNTPOINT}"
-chmod u+x vm-disk-utils-0.1.sh && ./vm-disk-utils-0.1.sh -s -p ${DATA_MOUNTPOINT}
+chmod u+x vm-disk-utils-0.1.sh && ./vm-disk-utils-0.1.sh -s -p $DATA_MOUNTPOINT
+
+mkdir -p $SPLUNK_DB_DIR
+chown -R splunk:splunk $SPLUNK_DB_DIR
+chmod 711 $SPLUNK_DB_DIR
 
 log "Checkpoint 1: `date`"
 
@@ -153,8 +158,9 @@ cat >/etc/chef/node.json <<end
       "use_default_certs": "true"
     },
     "server": {
+      "runasroot": "false",
       "edit_datastore_dir": "true",
-      "datastore_dir": "${DATA_MOUNTPOINT}"
+      "datastore_dir": "${SPLUNK_DB_DIR}"
     }
   },
   "run_list": [
@@ -175,7 +181,8 @@ log "Checkpoint 4: `date`"
 cd -
 chef-client -z -c /etc/chef/client.rb -j /etc/chef/node.json
 
-# TODO: Cleanup
+# Remove first time login
+touch /opt/splunk/etc/.ui_login
 
 log "Finished node-setup on ${HOSTNAME} with role ${NODE_ROLE}: `date`"
 
