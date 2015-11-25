@@ -94,11 +94,11 @@ while getopts :r:p:c:i: optname; do
     i) #Index of node
       NODE_INDEX=${OPTARG}
       ;;
-    h)  #show help
+    h) #Show help
       help
       exit 2
       ;;
-    \?) #unrecognized option - show help
+    \?) #Unrecognized option - show help
       echo -e \\n"Option -${BOLD}$OPTARG${NORM} not allowed."
       help
       exit 2
@@ -111,10 +111,6 @@ log "Started node-setup on ${HOSTNAME} with role ${NODE_ROLE}: `date`"
 # Stripe data disks into one data volume where SPLUNK_DB will reside
 log "Striping data disks into one volume mounted at ${DATA_MOUNTPOINT}"
 chmod u+x vm-disk-utils-0.1.sh && ./vm-disk-utils-0.1.sh -s -p $DATA_MOUNTPOINT
-
-mkdir -p $SPLUNK_DB_DIR
-chown -R splunk:splunk $SPLUNK_DB_DIR
-chmod 711 $SPLUNK_DB_DIR
 
 log "Checkpoint 1: `date`"
 
@@ -154,12 +150,11 @@ cat >/etc/chef/node.json <<end
 {
   "splunk": {
     "ssl_options": {
-      "enable_ssl": "true",
-      "use_default_certs": "true"
+      "enable_ssl": true,
+      "use_default_certs": true
     },
     "server": {
-      "runasroot": "false",
-      "edit_datastore_dir": "true",
+      "edit_datastore_dir": true,
       "datastore_dir": "${SPLUNK_DB_DIR}"
     }
   },
