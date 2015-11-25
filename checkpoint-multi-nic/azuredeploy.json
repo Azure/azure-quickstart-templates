@@ -87,12 +87,12 @@
         "osProfilepassword": {
             "adminPassword": "[parameters('adminPassword')]",
             "adminUsername": "notused",
-            "computername": "[parameters('vmName')]",
+            "computerName": "[parameters('vmName')]",
             "customData": "[base64(variables('customData'))]"
         },
         "osProfilesshPublicKey": {
             "adminUsername": "notused",
-            "computername": "[parameters('vmName')]",
+            "computerName": "[parameters('vmName')]",
             "customData": "[base64(variables('customData'))]",
             "linuxConfiguration": {
                 "disablePasswordAuthentication": "true",
@@ -127,9 +127,50 @@
         "subnet2Prefix": "10.0.2.0/24",
         "subnet2ID": "[concat(variables('vnetID'),'/subnets/',variables('subnet2Name'))]",
         "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('vnetName'))]",
-        "vnetName": "vnet"
+        "vnetName": "vnet",
+
+        "externalRouteTableName": "ExternalRouteTable",
+        "externalRouteTableId": "[resourceId('Microsoft.Network/routeTables', variables('externalRouteTableName'))]",
+        "internalRouteTableName": "InternalRouteTable",
+        "internalRouteTableId": "[resourceId('Microsoft.Network/routeTables', variables('internalRouteTableName'))]",
     },
     "resources": [
+        {
+            "apiVersion": "[variables('apiVersion')]",
+            "location": "[resourceGroup().location]",
+            "name": "[variables('externalRouteTableName')]",
+            "properties": {
+                "routes": [
+                    {
+                        "name": "RouteToInernal",
+                        "properties": {
+                            "addressPrefix": "[variables('subnet2Prefix')]",
+                            "nextHopType": "VirtualAppliance",
+                            "nextHopIpAddress": "[variables('externalPrivateAddress')]"
+                        }
+                    }
+                ]
+            },
+            "type": "Microsoft.Network/routeTables"
+        },
+        {
+            "apiVersion": "[variables('apiVersion')]",
+            "location": "[resourceGroup().location]",
+            "name": "[variables('internalRouteTableName')]",
+            "properties": {
+                "routes": [
+                    {
+                        "name": "RouteToExternal",
+                        "properties": {
+                            "addressPrefix": "0.0.0.0/0",
+                            "nextHopType": "VirtualAppliance",
+                            "nextHopIpAddress": "[variables('internalPrivateAddress')]"
+                        }
+                    }
+                ]
+            }
+            "type": "Microsoft.Network/routeTables"
+        },
         {
             "apiVersion": "[variables('apiVersion')]",
             "location": "[resourceGroup().location]",
@@ -143,6 +184,10 @@
             "apiVersion": "[variables('apiVersion')]",
             "location": "[resourceGroup().location]",
             "name": "[variables('vnetName')]",
+            "dependsOn": [
+                "[variables('externalRouteTableID')]",
+                "[variables('internalRouteTableID')]"
+            ],
             "properties": {
                 "addressSpace": {
                     "addressPrefixes": [
@@ -153,13 +198,19 @@
                     {
                         "name": "[variables('subnet1Name')]",
                         "properties": {
-                            "addressPrefix": "[variables('subnet1Prefix')]"
+                            "addressPrefix": "[variables('subnet1Prefix')]",
+                            "routeTable": {
+                                "id": "[variables('externalRouteTableID')]"
+                            }
                         }
                     },
                     {
                         "name": "[variables('subnet2Name')]",
                         "properties": {
-                            "addressPrefix": "[variables('subnet2Prefix')]"
+                            "addressPrefix": "[variables('subnet2Prefix')]",
+                            "routeTable": {
+                                "id": "[variables('internalRouteTableID')]"
+                            }
                         }
                     }
                 ]
