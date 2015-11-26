@@ -9,7 +9,7 @@ Fix naming (e.g. final_vms.json baseTemplateUri isn't a full uri; it's a part of
 
 Remove commented-out lines from scripts
 
-
+vmname/extensions, not extensions/vmname
 
 
 
