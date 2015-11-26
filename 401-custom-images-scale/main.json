@@ -78,6 +78,7 @@
         "ubuntuOSVersion": "15.04",
 
         "commonObjectTemplateUri": "https://raw.githubusercontent.com/gatneil/azure-quickstart-templates/customscale/401-custom-images-scale/common_object.json",
+        "uploadTemplateUri": "https://raw.githubusercontent.com/gatneil/azure-quickstart-templates/customscale/401-custom-images-scale/upload.json",
         "finalTemplateUri": "https://raw.githubusercontent.com/gatneil/azure-quickstart-templates/customscale/401-custom-images-scale/final_vms.json",
 
         "downloadScriptURI": "https://raw.githubusercontent.com/gatneil/azure-quickstart-templates/customscale/401-custom-images-scale/download.sh",
@@ -224,10 +225,9 @@
             }
         },
         {
-            "apiVersion": "2015-05-01-preview",
-            "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "[concat('transfer', parameters('uniqueBit'), 'vm/ul', copyIndex())]",
-            "location": "[variables('location')]",
+            "name": "[concat('upload', copyindex())]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2015-01-01",
             "copy": {
                 "name": "uploadLoop",
                 "count": "[parameters('numberOfSAs')]"
@@ -236,14 +236,17 @@
                 "downloadLoop"
             ],
             "properties": {
-                "publisher": "Microsoft.OSTCExtensions",
-                "type": "CustomScriptForLinux",
-                "typeHandlerVersion": "1.2",
-                "settings": {
-                    "fileUris": [
-                        "[variables('uploadScriptURI')]"
-                    ],
-                    "commandToExecute": "[concat('bash upload.sh ', concat(uniqueString(concat(resourceGroup().id, parameters('uniqueBit'), copyIndex())), parameters('uniqueBit')), ' ', listKeys(concat('Microsoft.Storage/storageAccounts/', concat(uniqueString(concat(resourceGroup().id, parameters('uniqueBit'), copyIndex())), parameters('uniqueBit'))), '2015-05-01-preview').key1)]"
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('uploadTemplateUri')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "location": { "value": "[variables('location')]" },
+                    "extName": { "value": "[concat('transfer', parameters('uniqueBit'), 'vm/ul', copyindex())]" },
+                    "uniqueBit": { "value": "[parameters('uniqueBit')]" },
+                    "index": { "value": "[copyIndex()]" },
+                    "uploadScriptURI": { "value": "[variables('uploadScriptURI')]" }
                 }
             }
         },
