@@ -15,5 +15,7 @@ Remove commented-out lines from scripts
 
 ERRORS
 ======
-when reference script uri that doesn't exist, we get "segment length is wrong", which is bad error message
+listKeys appears to not respect dependsOn
+when reference script uri that doesn't exist, we get "segment length is wrong", which is bad error message -> solved by putting vmname in extension name
 'line 1, column 5211' isn't a useful thing, but it also doesn't put you at the right place anyway (do substitutions happen before counting?)
+dependsOn doesn't work for script extensions; says "does not exist in template"
