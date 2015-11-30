@@ -76,7 +76,7 @@ CHEF_PKG_URL="https://opscode-omnibus-packages.s3.amazonaws.com/ubuntu/10.04/x86
 CHEF_PKG_MD5="6360faba9d6358d636be5618eecb21ee1dbdca7d  chef_12.5.1-1_amd64.deb"
 CHEF_PKG_CACHE="/etc/chef/local-mode-cache/cache/chef_12.5.1-1_amd64.deb"
 
-CHEF_REPO_URL="https://github.com/rarsan/chef-repo-splunk/tarball/develop"
+CHEF_REPO_URL="https://github.com/rarsan/chef-repo-splunk/tarball/v0.5"
 
 # Arguments
 while getopts :r:p:c:i: optname; do
