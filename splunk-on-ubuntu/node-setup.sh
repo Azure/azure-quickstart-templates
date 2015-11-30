@@ -80,7 +80,9 @@ CHEF_REPO_URL="https://github.com/rarsan/chef-repo-splunk/tarball/v0.5"
 
 # Arguments
 while getopts :r:p:c:i: optname; do
-  log "Option $optname set with value ${OPTARG}"
+  if [ $optname != 'p' ]; then
+    log "Option $optname set with value ${OPTARG}"
+  fi
   case $optname in
     r) #Role of Splunk by which to configure node
       NODE_ROLE=${OPTARG}
