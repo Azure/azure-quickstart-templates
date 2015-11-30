@@ -4,18 +4,31 @@
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-This template deploys Splunk Enterprise on Ubuntu VM with 2 data drives in RAID0 configuration. The template also provisions a storage account, a virtual network with subnets, public IP address, and network interfaces required.
+This template deploys Splunk Enterprise on Azure as either **standalone** instance or a 3-node **cluster**. Each instance has eight (8) 1-TB data drives in RAID0 configuration. The template also provisions a storage account, a virtual network with subnets, public IP address, and all network interfaces & security groups required.
 
-Once the deployment is complete, Splunk Enterprise instance can be accessed using the configured DNS address. The DNS address will include the `dnsDomain` and `location` entered as parameters in the format `{dnsDomain}.{location}.cloudapp.azure.com`. If you created a deployment with the dnsName parameter set to "splunk" in the West US region you could access Splunk Enterprise VM at `https://splunk.westus.cloudapp.azure.com`.
-
-The instance has the following ports open:
-* 22 for SSH
-* 443 for HTTPS
-* 8000 for HTTP
-* 9997 for TCP receiver traffic
-* 8089 for Splunkd Management
+Once the deployment is complete, Splunk Enterprise can be accessed using the configured DNS address. The DNS address will include the `domainName` and `location` entered as parameters in the format `{domainName}.{location}.cloudapp.azure.com`. If you created a deployment with the dnsName parameter set to "splunk" in the West US region you could access Splunk Enterprise VM at `https://splunk.westus.cloudapp.azure.com`.
 
 NOTE: The template uses Splunk's default certificates to enable HTTPS which will create a browser warning. Please follow instructions in Splunk Docs to secure Splunk Web [with your own SSL certificates](http://docs.splunk.com/Documentation/Splunk/latest/Security/SecureSplunkWebusingasignedcertificate)
+
+
+### Standalone Mode:
+The instance has the following ports open:
+* 22 for SSH
+* 443 and 8000 for HTTPS & HTTP
+* 9997 for TCP receiver traffic
+* 8089 for Splunkd Management open to VNet
+
+### Cluster Mode:
+Cluster search head & cluster master have the following ports open:
+* 22 for SSH
+* 443 and 8000 for HTTPS & HTTP
+* 8089 for Splunkd Management open to VNet
+
+Cluster peer nodes have the following ports open:
+* 22 for SSH
+* 9997 for TCP receiver traffic
+* 9887 for TCP replication traffic
+* 8089 for Splunkd Management open to VNet
 
 ##Known Issues and Limitations
 
