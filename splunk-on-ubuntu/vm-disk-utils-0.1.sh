@@ -220,88 +220,88 @@ scan_partition_format()
 
     DISKS=($(scan_for_new_disks))
 
-	if [ "${#DISKS}" -eq 0 ];
-	then
-	    log "No unpartitioned disks without filesystems detected"
-	    return
-	fi
-	echo "Disks are ${DISKS[@]}"
-	for DISK in "${DISKS[@]}";
-	do
-	    echo "Working on ${DISK}"
-	    is_partitioned ${DISK}
-	    if [ ${?} -ne 0 ];
-	    then
-	        echo "${DISK} is not partitioned, partitioning"
-	        do_partition ${DISK}
-	    fi
-	    PARTITION=$(fdisk -l ${DISK}|grep -A 1 Device|tail -n 1|awk '{print $1}')
-	    has_filesystem ${PARTITION}
-	    if [ ${?} -ne 0 ];
-	    then
-	        echo "Creating filesystem on ${PARTITION}."
-	#        echo "Press Ctrl-C if you don't want to destroy all data on ${PARTITION}"
-	#        sleep 10
-	        mkfs -j -t ext4 ${PARTITION}
-	    fi
-	    MOUNTPOINT=$(get_next_mountpoint)
-	    echo "Next mount point appears to be ${MOUNTPOINT}"
-	    [ -d "${MOUNTPOINT}" ] || mkdir -p "${MOUNTPOINT}"
-	    read UUID FS_TYPE < <(blkid -u filesystem ${PARTITION}|awk -F "[= ]" '{print $3" "$5}'|tr -d "\"")
-	    add_to_fstab "${UUID}" "${MOUNTPOINT}"
-	    echo "Mounting disk ${PARTITION} on ${MOUNTPOINT}"
-	    mount "${MOUNTPOINT}"
-	done
+    if [ "${#DISKS}" -eq 0 ];
+    then
+        log "No unpartitioned disks without filesystems detected"
+        return
+    fi
+    echo "Disks are ${DISKS[@]}"
+    for DISK in "${DISKS[@]}";
+    do
+        echo "Working on ${DISK}"
+        is_partitioned ${DISK}
+        if [ ${?} -ne 0 ];
+        then
+            echo "${DISK} is not partitioned, partitioning"
+            do_partition ${DISK}
+        fi
+        PARTITION=$(fdisk -l ${DISK}|grep -A 1 Device|tail -n 1|awk '{print $1}')
+        has_filesystem ${PARTITION}
+        if [ ${?} -ne 0 ];
+        then
+            echo "Creating filesystem on ${PARTITION}."
+    #        echo "Press Ctrl-C if you don't want to destroy all data on ${PARTITION}"
+    #        sleep 10
+            mkfs -j -t ext4 ${PARTITION}
+        fi
+        MOUNTPOINT=$(get_next_mountpoint)
+        echo "Next mount point appears to be ${MOUNTPOINT}"
+        [ -d "${MOUNTPOINT}" ] || mkdir -p "${MOUNTPOINT}"
+        read UUID FS_TYPE < <(blkid -u filesystem ${PARTITION}|awk -F "[= ]" '{print $3" "$5}'|tr -d "\"")
+        add_to_fstab "${UUID}" "${MOUNTPOINT}"
+        echo "Mounting disk ${PARTITION} on ${MOUNTPOINT}"
+        mount "${MOUNTPOINT}"
+    done
 }
 
 create_striped_volume()
 {
     DISKS=(${@})
 
-	if [ "${#DISKS[@]}" -eq 0 ];
-	then
-	    log "No unpartitioned disks without filesystems detected"
-	    return
-	fi
+    if [ "${#DISKS[@]}" -eq 0 ];
+    then
+        log "No unpartitioned disks without filesystems detected"
+        return
+    fi
 
-	echo "Disks are ${DISKS[@]}"
+    echo "Disks are ${DISKS[@]}"
 
-	declare -a PARTITIONS
+    declare -a PARTITIONS
 
-	for DISK in "${DISKS[@]}";
-	do
-	    echo "Working on ${DISK}"
-	    is_partitioned ${DISK}
-	    if [ ${?} -ne 0 ];
-	    then
-	        echo "${DISK} is not partitioned, partitioning"
-	        do_partition ${DISK} fd
-	    fi
+    for DISK in "${DISKS[@]}";
+    do
+        echo "Working on ${DISK}"
+        is_partitioned ${DISK}
+        if [ ${?} -ne 0 ];
+        then
+            echo "${DISK} is not partitioned, partitioning"
+            do_partition ${DISK} fd
+        fi
 
-	    PARTITION=$(fdisk -l ${DISK}|grep -A 2 Device|tail -n 1|awk '{print $1}')
-	    PARTITIONS+=("${PARTITION}")
-	done
+        PARTITION=$(fdisk -l ${DISK}|grep -A 2 Device|tail -n 1|awk '{print $1}')
+        PARTITIONS+=("${PARTITION}")
+    done
 
     MDDEVICE=$(get_next_md_device)    
     
-	mdadm --create ${MDDEVICE} --level 0 --raid-devices ${#PARTITIONS[@]} ${PARTITIONS[*]}
+    mdadm --create ${MDDEVICE} --level 0 --raid-devices ${#PARTITIONS[@]} ${PARTITIONS[*]}
 
-	MOUNTPOINT="${DATA_PATH}"
-	echo "Mount point appears to be ${MOUNTPOINT}"
-	[ -d "${MOUNTPOINT}" ] || mkdir -p "${MOUNTPOINT}"
+    MOUNTPOINT="${DATA_PATH}"
+    echo "Mount point appears to be ${MOUNTPOINT}"
+    [ -d "${MOUNTPOINT}" ] || mkdir -p "${MOUNTPOINT}"
 
-	#Make a file system on the new device
-	STRIDE=128 #(512kB stripe size) / (4kB block size)
-	PARTITIONSNUM=${#PARTITIONS[@]}
-	STRIPEWIDTH=$((${STRIDE} * ${PARTITIONSNUM}))
+    #Make a file system on the new device
+    STRIDE=128 #(512kB stripe size) / (4kB block size)
+    PARTITIONSNUM=${#PARTITIONS[@]}
+    STRIPEWIDTH=$((${STRIDE} * ${PARTITIONSNUM}))
 
-	mkfs.ext4 -b 4096 -E stride=${STRIDE},stripe-width=${STRIPEWIDTH} "${MDDEVICE}"
+    mkfs -t ext4 -b 4096 -E lazy_itable_init=1,stride=${STRIDE},stripe-width=${STRIPEWIDTH} "${MDDEVICE}"
 
-	read UUID FS_TYPE < <(blkid -u filesystem ${MDDEVICE}|awk -F "[= ]" '{print $3" "$5}'|tr -d "\"")
+    read UUID FS_TYPE < <(blkid -u filesystem ${MDDEVICE}|awk -F "[= ]" '{print $3" "$5}'|tr -d "\"")
 
-	add_to_fstab "${UUID}" "${MOUNTPOINT}"
+    add_to_fstab "${UUID}" "${MOUNTPOINT}"
 
-	mount "${MOUNTPOINT}"
+    mount "${MOUNTPOINT}"
 }
 
 check_mdadm() {

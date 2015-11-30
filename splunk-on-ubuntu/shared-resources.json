@@ -14,28 +14,32 @@
         "description": "Network settings object"
       }
     },
-    "storageAccountName": {
-      "type": "string",
+    "availabilitySetSettings": {
+      "type": "object",
       "metadata": {
-        "description": "A shared storage account for images"
+        "description": "Availability Set settings object"
       }
     },
-    "storageAccountType": {
-      "type": "string",
+    "storageSettings": {
+      "type": "object",
       "metadata": {
-        "description": "Storage account type which determines data redundancy and underlying drive type"
+        "description": "Storage account(s) name & types for VHDs"
       }
     }
   },
   "variables": {},
   "resources": [
     {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[parameters('storageAccountName')]",
       "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[concat(parameters('storageSettings').name, copyindex())]",
+      "copy": {
+        "name": "storagePoolLoop",
+        "count": "[parameters('storageSettings').count]"
+      },
       "location": "[parameters('location')]",
       "properties": {
-        "accountType": "[parameters('storageAccountType')]"
+        "accountType": "[parameters('storageSettings').type]"
       }
     },
     {
@@ -55,8 +59,24 @@
             "properties": {
               "addressPrefix": "[parameters('networkSettings').subnet.sh.prefix]"
             }
+          },
+          {
+            "name": "[parameters('networkSettings').subnet.idx.name]",
+            "properties": {
+              "addressPrefix": "[parameters('networkSettings').subnet.idx.prefix]"
+            }
           }
         ]
+      }
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[parameters('availabilitySetSettings').name]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "platformFaultDomainCount": "[parameters('availabilitySetSettings').fdCount]",
+        "platformUpdateDomainCount": "[parameters('availabilitySetSettings').udCount]"
       }
     }
   ]

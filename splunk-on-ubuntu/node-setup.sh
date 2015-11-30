@@ -32,8 +32,9 @@
 # Parameters :
 #  1 - r: role of Splunk server
 #  2 - p: password of Splunk server
-#  3 - i: index of node
-#  4 - h: Help
+#  3 - c: cluster master ip address (optional)
+#  4 - i: index of node (optional)
+#  5 - h: Help
 # Note : 
 # This script has only been tested on Ubuntu 12.04 LTS & 14.04.2-LTS and must be root
 
@@ -46,6 +47,7 @@ help()
     echo "Parameters:"
     echo "-r role to configure node, supported role(s): splunk_server"
     echo "-p password for Splunk Enterprise admin"
+    echo "-c cluster master ip address"
     echo "-i index of node"
     echo "-h help"
 }
@@ -67,18 +69,20 @@ fi
 # Parameters
 MY_IP="$(ip -4 address show eth0 | sed -rn 's/^[[:space:]]*inet ([[:digit:].]+)[/[:space:]].*$/\1/p')"
 
-MOUNTPOINT="/datadrive"
-SPLUNK_DB_DIR="/opt/splunk/var/lib"
+DATA_MOUNTPOINT="/datadrive"
+SPLUNK_DB_DIR="${DATA_MOUNTPOINT}/splunk_db"
 
 CHEF_PKG_URL="https://opscode-omnibus-packages.s3.amazonaws.com/ubuntu/10.04/x86_64/chef_12.5.1-1_amd64.deb"
 CHEF_PKG_MD5="6360faba9d6358d636be5618eecb21ee1dbdca7d  chef_12.5.1-1_amd64.deb"
 CHEF_PKG_CACHE="/etc/chef/local-mode-cache/cache/chef_12.5.1-1_amd64.deb"
 
-CHEF_REPO_URL="https://github.com/rarsan/chef-repo-splunk/tarball/v0.3"
+CHEF_REPO_URL="https://github.com/rarsan/chef-repo-splunk/tarball/v0.5"
 
 # Arguments
-while getopts :r:u:p:i: optname; do
-  log "Option $optname set with value ${OPTARG}"
+while getopts :r:p:c:i: optname; do
+  if [ $optname != 'p' ]; then
+    log "Option $optname set with value ${OPTARG}"
+  fi
   case $optname in
     r) #Role of Splunk by which to configure node
       NODE_ROLE=${OPTARG}
@@ -86,14 +90,17 @@ while getopts :r:u:p:i: optname; do
     p) #Password of Splunk admin
       ADMIN_PASSWD=${OPTARG}
       ;;
+    c) #IP of cluster master
+      CLUSTER_MASTER_IP=${OPTARG}
+      ;;
     i) #Index of node
       NODE_INDEX=${OPTARG}
       ;;
-    h)  #show help
+    h) #Show help
       help
       exit 2
       ;;
-    \?) #unrecognized option - show help
+    \?) #Unrecognized option - show help
       echo -e \\n"Option -${BOLD}$OPTARG${NORM} not allowed."
       help
       exit 2
@@ -103,20 +110,16 @@ done
 
 log "Started node-setup on ${HOSTNAME} with role ${NODE_ROLE}: `date`"
 
-# Stripe data disks into one volume
-log "Striping data disks into one volume mounted at ${MOUNTPOINT}"
-chmod u+x vm-disk-utils-0.1.sh && ./vm-disk-utils-0.1.sh -s -p ${MOUNTPOINT}
+# Stripe data disks into one data volume where SPLUNK_DB will reside
+log "Striping data disks into one volume mounted at ${DATA_MOUNTPOINT}"
+chmod u+x vm-disk-utils-0.1.sh && ./vm-disk-utils-0.1.sh -s -p $DATA_MOUNTPOINT
+
+log "Checkpoint 1: `date`"
 
 # Update packages & install dependencies
 apt-get -y update && apt-get install -y curl
 
-# Link SPLUNK_DB to striped volume
-log "Create symbolic link from ${MOUNTPOINT}/splunk_db to ${SPLUNK_DB_DIR}/splunk"
-mkdir -p $MOUNTPOINT/splunk_db
-mkdir -p $SPLUNK_DB_DIR
-chmod 777 $MOUNTPOINT/splunk_db
-chmod 711 $SPLUNK_DB_DIR
-ln -sf $MOUNTPOINT/splunk_db $SPLUNK_DB_DIR/splunk
+log "Checkpoint 2: `date`"
 
 # Download chef client 12.5.1, verify checksum and install package
 if [ ! -f "${CHEF_PKG_CACHE}" ]; then
@@ -128,6 +131,8 @@ echo ${CHEF_PKG_MD5} > /tmp/checksum
 sha1sum -c /tmp/checksum
 dpkg -i chef_12.5.1-1_amd64.deb
 
+log "Checkpoint 3: `date`"
+
 # Download chef repo including cookbooks, roles and default data bags
 mkdir -p /etc/chef/repo
 cd /etc/chef/repo
@@ -137,12 +142,22 @@ tar -xzf berks-package.tar.gz -C cookbooks --strip-components=1
 # Update data bag with custom user credentials
 sed -i "s/notarealpassword/${ADMIN_PASSWD}/" /etc/chef/repo/data_bags/vault/splunk__default.json
 
+# Update placeholder nodes with existing resources data
+if [ -n "${CLUSTER_MASTER_IP}" ]; then
+  sed -i "s/<INSERT_IP_ADDRESS>/${CLUSTER_MASTER_IP}/" /etc/chef/repo/nodes/cluster-master.json
+fi
+
+# Setup Chef node file with appropriate role and custom attributes
 cat >/etc/chef/node.json <<end
 {
   "splunk": {
     "ssl_options": {
-      "enable_ssl": "true",
-      "use_default_certs": "true"
+      "enable_ssl": true,
+      "use_default_certs": true
+    },
+    "server": {
+      "edit_datastore_dir": true,
+      "datastore_dir": "${SPLUNK_DB_DIR}"
     }
   },
   "run_list": [
@@ -157,11 +172,14 @@ log_location STDOUT
 chef_repo_path "/etc/chef/repo"
 end
 
+log "Checkpoint 4: `date`"
+
 # Finally install & configure Splunk using chef client in local mode
 cd -
 chef-client -z -c /etc/chef/client.rb -j /etc/chef/node.json
 
-# TODO: Cleanup
+# Remove first time login
+touch /opt/splunk/etc/.ui_login
 
 log "Finished node-setup on ${HOSTNAME} with role ${NODE_ROLE}: `date`"
 
