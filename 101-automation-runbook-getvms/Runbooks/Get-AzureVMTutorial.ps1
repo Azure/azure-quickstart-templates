@@ -3,11 +3,11 @@
 
 param(
                 [Parameter(Mandatory=$True)]
-                [string]$TransferSA
+                [string]$TransferSA,
                 [Parameter(Mandatory=$True)]
-                [string]$TransferKey
+                [string]$TransferKey,
                 [Parameter(Mandatory=$True)]
-                [string]$DataSA
+                [string]$DataSA,
                 [Parameter(Mandatory=$True)]
                 [string]$DataKey
 )
