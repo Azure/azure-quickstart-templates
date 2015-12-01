@@ -62,6 +62,24 @@
         "description": "Name of the virtual network that the consumer wants to use"
       }
     },
+    "virtualNetworkNewOrExisting" : {
+      "type" : "string",
+      "defaultValue" : "new",
+      "allowedValues": [
+        "new",
+        "existing"
+      ],
+      "metadata": {
+        "description": "Identifies whether to use new or existing Virtual Network"
+      }
+    },
+    "virtualNetworkExistingRGName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Name of resource group of existing Virtual Network (if applicable)"
+      }
+    },
     "vmSize": {
       "type": "string",
       "metadata": {
@@ -72,6 +90,7 @@
   "variables": {
     "templateBaseUrl": "https://raw.githubusercontent.com/rarsan/azure-quickstart-templates/develop/splunk-on-ubuntu/",
     "sharedTemplateUrl": "[concat(variables('templateBaseUrl'), 'shared-resources.json')]",
+    "virtualNetworkTemplateUrl": "[concat(variables('templateBaseUrl'), 'vnet-', parameters('virtualNetworkNewOrExisting'), '.json')]",
     "emptyTemplateUrl": "[concat(variables('templateBaseUrl'), 'empty-resources.json')]",
     "tshirtSizeStandalone": {
       "vmSize": "[parameters('vmSize')]",
@@ -112,7 +131,8 @@
     "tshirtSize": "[variables(concat('tshirtSize', parameters('deploymentSize')))]",
     "networkSettings": {
       "virtualNetworkName": "[parameters('virtualNetworkName')]",
-      "addressPrefix": "10.0.0.0/16",
+      "virtualNetworkExistingRGName": "[parameters('virtualNetworkExistingRGName')]",
+      "virtualNetworkAddressPrefix": "10.0.0.0/16",
       "subnet": {
         "sh": {
           "name": "sh",
@@ -172,9 +192,6 @@
           "location": {
             "value": "[parameters('location')]"
           },
-          "networkSettings": {
-            "value": "[variables('networkSettings')]"
-          },
           "availabilitySetSettings": {
             "value": "[variables('availabilitySetSettings')]"
           },
@@ -185,11 +202,32 @@
       }
     },
     {
+      "name": "virtual-network",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('virtualNetworkTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "networkSettings": {
+            "value": "[variables('networkSettings')]"
+          }
+        }
+      }
+    },
+    {
       "apiVersion": "2015-01-01",
       "type": "Microsoft.Resources/deployments",
       "name": "standalone-deployment",
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', 'shared')]"
+        "[concat('Microsoft.Resources/deployments/', 'shared')]",
+        "[concat('Microsoft.Resources/deployments/', 'virtual-network')]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -243,7 +281,8 @@
       "type": "Microsoft.Resources/deployments",
       "name": "clustermaster-deployment",
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', 'shared')]"
+        "[concat('Microsoft.Resources/deployments/', 'shared')]",
+        "[concat('Microsoft.Resources/deployments/', 'virtual-network')]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -298,6 +337,7 @@
       "name": "clustersearchhead-deployment",
       "dependsOn": [
         "[concat('Microsoft.Resources/deployments/', 'shared')]",
+        "[concat('Microsoft.Resources/deployments/', 'virtual-network')]",
         "[concat('Microsoft.Resources/deployments/', 'clustermaster-deployment')]"
       ],
       "properties": {
@@ -353,6 +393,7 @@
       "name": "clusterpeers-deployment",
       "dependsOn": [
         "[concat('Microsoft.Resources/deployments/', 'shared')]",
+        "[concat('Microsoft.Resources/deployments/', 'virtual-network')]",
         "[concat('Microsoft.Resources/deployments/', 'clustermaster-deployment')]"
       ],
       "properties": {
