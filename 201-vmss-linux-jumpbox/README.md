@@ -11,3 +11,9 @@ ssh {username}@{jumpbox-public-ip-address}
 To ssh into one of the VMs in the scale set, go to resources.azure.com to find the private IP address of the VM, make sure you are ssh'ed into the jumpbox, then execute the following command:
 
 ssh {username}@{vm-private-ip-address}
+
+PARAMETER RESTRICTIONS
+======================
+
+vmssName must be 9 characters in length or shorter.
+instanceCount must be 100 or less.
