@@ -1,0 +1,115 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminUsername": {
+      "type": "string",
+      "defaultValue": "azureuser",
+      "metadata": {
+        "description": "User name for the Virtual Machine."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the Virtual Machine."
+      }
+    },
+    "dnsNamePrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Sets the Domain name prefix for the jumpbox.  The concatenation of the domain name, component, and the regionalized DNS zone make up the fully qualified domain name associated with the public IP address."
+      }
+    },
+    "agentCount": {
+      "type": "int",
+      "defaultValue": 1,
+      "metadata": {
+        "description": "The number of Mesos agents for the cluster.  This value can be from 1 to 100"
+      },
+      "allowedValues": [
+        1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,
+        21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40
+      ]
+    },
+    "masterCount": {
+      "type": "int",
+      "defaultValue": 1,
+      "allowedValues": [
+        1,
+        3,
+        5
+      ],
+      "metadata": {
+        "description": "The number of Mesos masters for the cluster."
+      }
+    },
+    "agentVMSize": {
+      "type": "string",
+      "defaultValue": "Standard_A1",
+      "allowedValues": [
+        "Standard_A1",
+        "Standard_A2",
+        "Standard_A3",
+        "Standard_A4"
+      ],
+      "metadata": {
+        "description": "The size of the Virtual Machine. Allowable machine values are 1 core (A1), 2 core (A2), 4 core (A3), 8 core (A4)."
+      }
+    },
+    "sshRSAPublicKey": {
+      "type": "string",
+      "defaultValue": "disabled",
+      "metadata": {
+        "description": "Configure all linux machines with the SSH rsa public key string.  Use 'disabled' to not configure access with SSH rsa public key."
+      }
+    }
+  },
+  "variables": {
+    "adminPassword":"[parameters('adminPassword')]",
+    "mastersEndpointDNSNamePrefix":"[parameters('dnsNamePrefix'),'mgmt']",
+    "agentsEndpointDNSNamePrefix":"[parameters('dnsNamePrefix'),'agents']",
+    "agentCount":"[parameters('agentCount')]",
+    "masterCount":"[parameters('masterCount')]",
+    "agentVMSize":"[parameters('agentVMSize')]",
+    "sshRSAPublicKey":"[parameters('sshRSAPublicKey')]",
+    "adminUsername":"azureuser"
+  },
+  "resources": [
+    {
+      "apiVersion": "2015-11-01-preview",
+      "type": "Microsoft.ContainerService/containerServices",
+      "location": "[resourceGroup().location]",
+      "name":"[concat('containerservice-',resourceGroup().name)]",
+      "properties": {
+        "orchestratorProfile": {
+          "orchestratorType": "Mesos"
+        },
+        "masterProfile": {
+          "count": "[variables('masterCount')]",
+          "dnsPrefix": "[variables('mastersEndpointDNSNamePrefix')]"
+        },
+        "agentPoolProfiles": [
+          {
+            "name": "agentpools",
+            "count": "[variables('agentCount')]",
+            "vmSize": "[variables('agentVMSize')]",
+            "dnsPrefix": "[variables('agentsEndpointDNSNamePrefix')]"
+          }
+        ]
+      },
+      "linuxProfile": {
+        "adminUsername": "[paravariablesmeters('adminUsername')]",
+        "linuxConfiguration": {
+          "ssh": {
+            "publicKeys": [
+              {
+                "keyData": "[variables('sshRSAPublicKey')]"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}
