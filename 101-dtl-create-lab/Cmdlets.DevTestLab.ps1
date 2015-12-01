@@ -186,64 +186,88 @@ function Get-AzureDtlLab
         [ValidateNotNullOrEmpty()]
         [string]
         # The location of the lab ("westus", "eastasia" etc).
-        $LabLocation
+        $LabLocation,
+
+        [Parameter(Mandatory=$false, ParameterSetName="ListByLabId")] 
+        [Parameter(Mandatory=$false, ParameterSetName="ListByLabName")] 
+        [Parameter(Mandatory=$false, ParameterSetName="ListAllInResourceGroup")] 
+        [Parameter(Mandatory=$false, ParameterSetName="ListAllInLocation")] 
+        [Parameter(Mandatory=$false, ParameterSetName="ListAll")] 
+        [switch]
+        # Optional. If specified, fetches the properties of the lab(s).
+        $ShowProperties
     )
 
     PROCESS
     {
         Write-Verbose $("Processing cmdlet '" + $PSCmdlet.MyInvocation.InvocationName + "', ParameterSet = '" + $PSCmdlet.ParameterSetName + "'")
 
+        $output = $null
+
         switch($PSCmdlet.ParameterSetName)
         {
             "ListByLabId"
             {
-                Get-AzureRmResource | Where { 
+                $output = Get-AzureRmResource | Where { 
                     $_.ResourceType -eq $LabResourceType -and 
                     $_.ResourceId -eq $LabId 
-                } | Write-Output
+                }
             }
                     
             "ListByLabName"
             {
                 if ($PSBoundParameters.ContainsKey("LabResourceGroupName"))
                 {
-                    Get-AzureRmResource | Where { 
+                    $output = Get-AzureRmResource | Where { 
                         $_.ResourceType -eq $LabResourceType -and 
                         $_.ResourceName -eq $LabName -and 
                         $_.ResourceGroupName -eq $LabResourceGroupName 
-                    } | Write-Output                
+                    }
                 }
                 else
                 {
-                    Get-AzureRmResource | Where { 
+                    $output = Get-AzureRmResource | Where { 
                         $_.ResourceType -eq $LabResourceType -and 
                         $_.ResourceName -eq $LabName 
-                    }                 
+                    }     
                 }
             }
 
             "ListAllInResourceGroup"
             {
-                Get-AzureRmResource | Where { 
+                $output = Get-AzureRmResource | Where { 
                     $_.ResourceType -eq $LabResourceType -and 
                     $_.ResourceGroupName -eq $LabResourceGroupName 
-                } | Write-Output
+                }
             }
 
             "ListAllInLocation"
             {
-                Get-AzureRmResource | Where { 
+                $output = Get-AzureRmResource | Where { 
                     $_.ResourceType -eq $LabResourceType -and 
                     $_.Location -eq $LabLocation 
-                } | Write-Output
+                }
             }
 
             "ListAll" 
             {
-                Get-AzureRmResource | Where { 
+                $output = Get-AzureRmResource | Where { 
                     $_.ResourceType -eq $LabResourceType 
-                } | Write-Output
+                }
             }
+        }
+
+        # now let us display the output
+        if ($PSBoundParameters.ContainsKey("ShowProperties"))
+        {
+            foreach ($item in $output)
+            {
+                GetResourceWithProperties_Private -Resource $item | Write-Output
+            }
+        }
+        else
+        {
+            $output | Write-Output
         }
     }
 }
@@ -303,31 +327,53 @@ function Get-AzureDtlVMTemplate
         [Parameter(Mandatory=$true, ParameterSetName="ListByVMTemplateName")] 
         [ValidateNotNull()]
         # An existing lab (please use the Get-AzureDtlLab cmdlet to get this lab object).
-        $Lab
+        $Lab,
+
+        [Parameter(Mandatory=$false, ParameterSetName="ListByVMTemplateId")] 
+        [Parameter(Mandatory=$false, ParameterSetName="ListByVMTemplateName")] 
+        [Parameter(Mandatory=$false, ParameterSetName="ListAllInLab")] 
+        [switch]
+        # Optional. If specified, fetches the properties of the VM template(s).
+        $ShowProperties
     )
 
     PROCESS
     {
         Write-Verbose $("Processing cmdlet '" + $PSCmdlet.MyInvocation.InvocationName + "', ParameterSet = '" + $PSCmdlet.ParameterSetName + "'")
 
+        $output = $null
+
         switch ($PSCmdlet.ParameterSetName)
         {
             "ListByVMTemplateId"
             {
-                Get-AzureRmResource -ResourceId $VMTemplateId -ApiVersion $RequiredApiVersion | Write-Output
+                $output = Get-AzureRmResource -ResourceId $VMTemplateId -ApiVersion $RequiredApiVersion
             }
 
             "ListByVMTemplateName"
             {
-                Get-AzureRmResource -ResourceName $Lab.ResourceName -ResourceGroupName $Lab.ResourceGroupName -ResourceType $VMTemplateResourceType -ApiVersion $RequiredApiVersion | Where {
+                $output = Get-AzureRmResource -ResourceName $Lab.ResourceName -ResourceGroupName $Lab.ResourceGroupName -ResourceType $VMTemplateResourceType -ApiVersion $RequiredApiVersion | Where {
                     $_.Name -eq $VMTemplateName
-                } | Write-Output
+                }
             }
 
             "ListAllInLab"
             {
-                Get-AzureRmResource -ResourceName $Lab.ResourceName -ResourceGroupName $Lab.ResourceGroupName -ResourceType $VMTemplateResourceType -ApiVersion $RequiredApiVersion | Write-Output
+                $output = Get-AzureRmResource -ResourceName $Lab.ResourceName -ResourceGroupName $Lab.ResourceGroupName -ResourceType $VMTemplateResourceType -ApiVersion $RequiredApiVersion
             }
+        }
+
+        # now let us display the output
+        if ($PSBoundParameters.ContainsKey("ShowProperties"))
+        {
+            foreach ($item in $output)
+            {
+                GetResourceWithProperties_Private -Resource $item | Write-Output
+            }
+        }
+        else
+        {
+            $output | Write-Output
         }
     }
 }
@@ -406,29 +452,41 @@ function Get-AzureDtlVirtualMachine
         [ValidateNotNullOrEmpty()]
         [string]
         # The location of the VM.
-        $VMLocation
+        $VMLocation,
+
+        [Parameter(Mandatory=$false, ParameterSetName="ListByVMId")] 
+        [Parameter(Mandatory=$false, ParameterSetName="ListByVMName")] 
+        [Parameter(Mandatory=$false, ParameterSetName="ListAllInLab")] 
+        [Parameter(Mandatory=$false, ParameterSetName="ListAllInResourceGroup")] 
+        [Parameter(Mandatory=$false, ParameterSetName="ListAllInLocation")] 
+        [Parameter(Mandatory=$false, ParameterSetName="ListAll")] 
+        [switch]
+        # Optional. If specified, fetches the properties of the virtual machine(s).
+        $ShowProperties
     )
 
     PROCESS
     {
         Write-Verbose $("Processing cmdlet '" + $PSCmdlet.MyInvocation.InvocationName + "', ParameterSet = '" + $PSCmdlet.ParameterSetName + "'")
 
+        $output = $null
+
         switch($PSCmdlet.ParameterSetName)
         {
             "ListByVMId"
             {
-                Get-AzureRmResource | Where { 
+                $output = Get-AzureRmResource | Where { 
                     $_.ResourceType -eq $EnvironmentResourceType -and 
                     $_.ResourceId -eq $VMId 
-                } | Write-Output
+                }
             }
                     
             "ListByVMName"
             {
-                Get-AzureRmResource | Where { 
+                $output = Get-AzureRmResource | Where { 
                     $_.ResourceType -eq $EnvironmentResourceType -and 
                     $_.ResourceName -eq $VMName 
-                } | Write-Output                
+                }                
             }
 
             "ListAllInLab"
@@ -449,36 +507,49 @@ function Get-AzureDtlVirtualMachine
                         # Note: The -ErrorAction 'SilentlyContinue' ensures that we suppress irrelevant
                         # errors originating while expanding properties (especially in internal test and
                         # pre-production subscriptions).
-                        Get-AzureRmResource -ExpandProperties -ErrorAction "SilentlyContinue" | Where { 
+                        $output = Get-AzureRmResource -ExpandProperties -ErrorAction "SilentlyContinue" | Where { 
                             $_.ResourceType -eq $EnvironmentResourceType -and
                             $_.Properties.LabId -eq $fetchedLabObj.ResourceId
-                        } | Write-Output
+                        }
                     }
                 }
             }
 
             "ListAllInResourceGroup"
             {
-                Get-AzureRmResource | Where { 
+                $output = Get-AzureRmResource | Where { 
                     $_.ResourceType -eq $EnvironmentResourceType -and 
                     $_.ResourceGroupName -eq $VMResourceGroupName 
-                } | Write-Output                
+                }             
             }
 
             "ListAllInLocation"
             {
-                Get-AzureRmResource | Where { 
+                $output = Get-AzureRmResource | Where { 
                     $_.ResourceType -eq $EnvironmentResourceType -and 
                     $_.Location -eq $VMLocation 
-                } | Write-Output
+                }
             }
 
             "ListAll" 
             {
-                Get-AzureRmResource | Where { 
+                $output = Get-AzureRmResource | Where { 
                     $_.ResourceType -eq $EnvironmentResourceType 
-                } | Write-Output 
+                }
             }
+        }
+
+        # now let us display the output
+        if ($PSBoundParameters.ContainsKey("ShowProperties"))
+        {
+            foreach ($item in $output)
+            {
+                GetResourceWithProperties_Private -Resource $item | Write-Output
+            }
+        }
+        else
+        {
+            $output | Write-Output
         }
     }
 }
