@@ -1,16 +1,16 @@
-# Clusters with Mesos Orchestrator and Marathon/Chronos Services
+# Container Service with a Mesos Orchestrator and Marathon/Chronos Frameworks
 
-These Microsoft Azure templates create various cluster combinations with Mesos Orchestrator and Marathon/Chronos services.
+These Microsoft Azure templates create various Azure Container Service combinations with the Mesos Orchestrator and Marathon/Chronos services.
 
-Portal Launch Button|Cluster Type
+Portal Launch Button|Container Service Type
 --- | --- | ---
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Frgardler%2Fazure-quickstart-templates%2Facs%2Facs-mesos-full-template%2Fazuredeploy.windowsjumpbox.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>|Mesos with windows jumpbox
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Frgardler%2Fazure-quickstart-templates%2Facs%2Facs-mesos-full-template%2Fazuredeploy.linuxjumpbox.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>|Mesos with linux jumpbox
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Frgardler%2Fazure-quickstart-templates%2Facs%2Facs-mesos-full-template%2Fazuredeploy.nojumpbox.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>|Mesos with no jumpbox
 
-# Mesos Cluster Walkthrough
+# Mesos Container Service Walkthrough
 
-Once your cluster has been created you will have a resource group containing 3 parts:
+Once your container service has been created you will have a resource group containing 3 parts:
 
 1. a set of 1,3,5 masters in a master specific availability set.  Each master's SSH can be accessed via the public dns address at ports 2200..2204
 
@@ -18,9 +18,9 @@ Once your cluster has been created you will have a resource group containing 3 p
 
 3. if chosen, a windows or linux jumpbox
 
-The following image is an example of a cluster with 1 jumpbox, 3 masters, and 3 agents:
+The following image is an example of a container service with 1 jumpbox, 3 masters, and 3 agents:
 
-![Image of Mesos cluster on azure](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-mesos-full-template/images/mesos.png)
+![Image of Mesos container service on azure](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-mesos-full-template/images/mesos.png)
 
 You can see the following parts:
 
@@ -39,19 +39,19 @@ Here are notes for troubleshooting:
  * the linux jumpbox is based on https://github.com/anhowe/ubuntu-devbox and will take 1 hour to configure.  Visit https://github.com/anhowe/ubuntu-devbox to learn how to know when setup is completed, and then how to access the desktop via VNC and an SSH tunnel.
 
 ## Template Parameters
-When you launch the installation of the cluster, you need to specify the following parameters:
+When you deploy the template you will need to specify the following parameters:
 * `adminPassword`: self-explanatory
 * `dnsNamePrefix`: this is the DNS prefix name that will be used to make up the names for the FQDN for the jumpbox, master endpoints, and the agent endpoints.
-* `agentCount`: the number of Mesos Agents that you want to create in the cluster.  You are allowed to create 1 to 100 agents
-* `masterCount`: Number of Masters. Currently the template supports 3 configurations: 1, 3 and 5 Masters cluster configuration.
-* `agentVMSize`: The type of VM that you want to use for each node in the cluster. The default size is A1 (1 core) but you can change that if you expect to run workloads that require more RAM or CPU resources.
+* `agentCount`: the number of Mesos Agents that you want to create in the container service.  You are allowed to create 1 to 100 agents
+* `masterCount`: Number of Masters. Currently the template supports 3 configurations: 1, 3 and 5 Masters container service configuration.
+* `agentVMSize`: The type of VM that you want to use for each node in the container service. The default size is A1 (1 core) but you can change that if you expect to run workloads that require more RAM or CPU resources.
 * `sshRSAPublicKey`: Configure all linux machines with the SSH rsa public key string.  Use 'disabled' to not configure access with SSH rsa public key.
 
 ## Marathon
 
 This walk through is based the wonderful digital ocean tutorial: https://www.digitalocean.com/community/tutorials/how-to-configure-a-production-ready-mesosphere-cluster-on-ubuntu-14-04
 
-1. Get your endpoints to cluster
+1. Get your endpoints to container service
  1. browse to https://portal.azure.com
 
  2. then click browse all, followed by "resource groups", and choose your resource group
@@ -62,7 +62,7 @@ This walk through is based the wonderful digital ocean tutorial: https://www.dig
 
  ![Image of public ip addresses in portal](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-mesos-full-template/images/portal-publicipaddresses.png)
 
-2. Connect to your cluster
+2. Connect to your container service
  1. linux jumpbox - start a VNC to the jumpbox using instructions https://github.com/anhowe/ubuntu-devbox.  The jumpbox takes an hour to configure.  If the desktop is not ready, you can tail /var/log/azure/cluster-bootstrap.log to watach installation.
  2. windows jumpbox - remote desktop to the windows jumpbox
  3. no jumpbox - SSH to port 2200 on your NAT creating a tunnel to port 5050 and port 8080.  Then use the browser of your desktop to browse these ports.
@@ -75,11 +75,11 @@ This walk through is based the wonderful digital ocean tutorial: https://www.dig
 4. Browse Mesos:
  1. scroll down the page and notice your resources of CPU and memory.  These are your agents
 
- ![Image of Mesos cluster on azure](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-mesos-full-template/images/mesos-webui.png)
+ ![Image of Mesos container service on azure](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-mesos-full-template/images/mesos-webui.png)
 
  2. On top of page, click frameworks and notice your Marathon and Swarm frameworks
 
- ![Image of Mesos cluster frameworks on azure](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-mesos-full-template/images/mesos-frameworks.png)
+ ![Image of Mesos frameworks on azure](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-mesos-full-template/images/mesos-frameworks.png)
 
  3. On top of page, click agents and you can see your agents.  On windows or linux jumpbox you can also drill down into the slave and see its logs.
 
@@ -141,7 +141,7 @@ This walk through is based the wonderful digital ocean tutorial: https://www.dig
 
 # Sample Workloads
 
-Try the following workloads by creating Marathon apps to test your new mesos cluster:
+Try the following workloads by creating Marathon apps to test your new Mesos container service:
 
 1. **Folding@Home** - [docker run rgardler/fah](https://hub.docker.com/r/rgardler/fah/) - Folding@Home is searching for a cure for Cancer, Alzheimers, Parkinsons and other such diseases. Donate some compute time to this fantastic effort.
 
