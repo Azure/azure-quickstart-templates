@@ -12,3 +12,5 @@ This template will deploy and configure a Windows Server 2016 TP4 core VM instan
 - Modify the Docker Daemon configuration file to listen for incoming requests on port 2375 (custom script extension).
 
 Windows Server 2016 TP4 and Windows Server Container are in an early preview release and are not production ready and or supported.
+
+> Microsoft Azure does not support Hyper-V containers. To complete Hyper-V Container exercises, you need an on-prem container host.   
