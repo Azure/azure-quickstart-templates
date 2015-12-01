@@ -117,7 +117,7 @@ This walk through is based the wonderful digital ocean tutorial: https://www.dig
 
 ## Chronos Walkthrough
 
-**Note: As of Dec 1st, 2015, the Chronos UI does not show jobs in Internet Explorer.  The recommendation is to use Chrome or Firefox to run through the below examples**
+**Note: As of Dec 1st, 2015, the Chronos UI does not show jobs in Internet Explorer.  This is tracked in the following issue: https://github.com/mesos/chronos/issues/597.  The recommendation is to use Chrome or Firefox to run through the below examples**
 
 1. On the Mesos UI, browse to "Frameworks" and click on the Chronos URI:
 
