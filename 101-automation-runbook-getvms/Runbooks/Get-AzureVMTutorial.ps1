@@ -1,4 +1,4 @@
-﻿Workflow
+﻿Workflow Get-AzureVMTutorial
 {
 
 param(
