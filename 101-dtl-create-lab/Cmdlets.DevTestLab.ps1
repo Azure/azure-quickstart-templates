@@ -82,6 +82,41 @@ function GetResourceWithProperties_Private
     }
 }
 
+function CreateNewResourceGroup_Private
+{
+    Param(
+        [ValidateNotNullOrEmpty()]
+        [string]
+        # Seed/Prefix for the new resource group name to be generated.
+        $ResourceGroupSeedPrefixName,
+
+        [ValidateNotNullOrEmpty()]
+        [string]
+        # Location where the new resource group will be generated.
+        $Location
+    )
+
+    # Using the seed/prefix, we'll generate a unique random name for the resource group.
+    # We'll then check if there is an existing resource group with the same name.
+    do
+    {
+        # NOTE: Unfortunately the Get-AzureRmResourceGroup cmdlet throws a terminating error 
+        # if the specified resource group name does not exist. So we'll use a try/catch block.
+        try
+        {
+            $randomRGName = $($ResourceGroupSeedPrefixName + (Get-Random).ToString())
+            $randomRG = Get-AzureRmResourceGroup -Name $randomRGName
+        }
+        catch [ArgumentException]
+        {
+            $randomRG = $null
+        }
+    }
+    until ($null -eq $randomRG)
+
+    return (New-AzureRmResourceGroup -Name $randomRGName -Location $Location)
+}
+
 ##################################################################################################
 
 function Get-AzureDtlLab
@@ -498,24 +533,24 @@ function New-AzureDtlLab
             Write-Verbose $("The RM template file was located at : '" + $LabCreationTemplateFile + "'")
         }
 
-        # Check if there are any existing labs with same name, resource group and location
+        # Check if there are any existing labs with same name in the current subscription
         $existingLabs = Get-AzureRmResource | Where { 
             $_.ResourceType -eq $LabResourceType -and 
             $_.ResourceName -eq $LabName -and 
-            $_.ResourceGroupName -eq $LabName -and 
-            $_.Location -eq $LabLocation 
+            $_.SubscriptionId -eq (Get-AzureRmContext).Subscription.SubscriptionId
         }
 
         # If none exist, then create a new one
         if ($null -eq $existingLabs -or 0 -eq $existingLabs.Count)
         {
-            # Create a new resource group with the same name as the lab. 
-            Write-Verbose $("Creating new resoure group '" + $LabName + "' at location '" + $LabLocation + "'")
-            $resourceGroup = New-AzureRmResourceGroup -Name $LabName -Location $LabLocation
+            # Create a new resource group with a unique name (using the lab name as a seed/prefix).
+            Write-Verbose $("Creating new resoure group with seed/prefix '" + $LabName + "' at location '" + $LabLocation + "'")
+            $newResourceGroup = CreateNewResourceGroup_Private -ResourceGroupSeedPrefixName $LabName -Location $LabLocation
+            Write-Verbose $("Created new resoure group '" + $newResourceGroup.ResourceGroupName + "' at location '" + $newResourceGroup.Location + "'")
     
             # Create the lab in this resource group by deploying the RM template
             Write-Verbose $("Creating new lab '" + $LabName + "'")
-            $rgDeployment = New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $LabName  -TemplateFile $LabCreationTemplateFile -newLabName $LabName 
+            $rgDeployment = New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $newResourceGroup.ResourceGroupName  -TemplateFile $LabCreationTemplateFile -newLabName $LabName 
 
             if (($null -ne $rgDeployment) -and ($null -ne $rgDeployment.Outputs['labId']) -and ($null -ne $rgDeployment.Outputs['labId'].Value))
             {
@@ -530,7 +565,7 @@ function New-AzureDtlLab
         # else display an error
         else
         {
-            throw $("One or more labs with name '" + $LabName + "' already exist at location '" + $LabLocation + "'.")
+            throw $("One or more labs with name '" + $LabName + "' already exist in the current subscription '" + (Get-AzureRmContext).Subscription.SubscriptionId + "'.")
         }
     }
 }
@@ -733,23 +768,34 @@ function New-AzureDtlVirtualMachine
         # Get the same VM template object, but with properties attached.
         $VMTemplate = GetResourceWithProperties_Private -Resource $VMTemplate
 
-        # Pre-condition checks for linux VHDs.
-        if ("linux" -eq $VMTemplate.Properties.OsType)
+        if ("Gallery" -eq $VMTemplate.Properties.ImageType)
         {
             if ($false -eq (($PSBoundParameters.ContainsKey("UserName") -and $PSBoundParameters.ContainsKey("Password")) -or ($PSBoundParameters.ContainsKey("UserName") -and $PSBoundParameters.ContainsKey("SSHKey"))))
             {
-                throw $("The specified VM template '" + $VMTemplate.Name + "' uses a linux VHD. Please specify either the -UserName and -Password parameters or the -UserName and -SSHKey parameters to use this VM template.")
+                throw $("The specified VM template '" + $VMTemplate.Name + "' uses an Azure gallery image. Please specify either the -UserName and -Password parameters or the -UserName and -SSHKey parameters to use this VM template.")
+            }
+        }
+        else
+        {
+            # Pre-condition checks for linux VHDs.
+            if ("linux" -eq $VMTemplate.Properties.OsType)
+            {
+                if ($false -eq (($PSBoundParameters.ContainsKey("UserName") -and $PSBoundParameters.ContainsKey("Password")) -or ($PSBoundParameters.ContainsKey("UserName") -and $PSBoundParameters.ContainsKey("SSHKey"))))
+                {
+                    throw $("The specified VM template '" + $VMTemplate.Name + "' uses a linux VHD. Please specify either the -UserName and -Password parameters or the -UserName and -SSHKey parameters to use this VM template.")
+                }
+            }
+
+            # Pre-condition checks for sysprepped VHDs.
+            if ($true -eq $VMTemplate.Properties.SysPrep)
+            {
+                if ($false -eq ($PSBoundParameters.ContainsKey("UserName") -and $PSBoundParameters.ContainsKey("Password")))
+                {
+                    throw $("The specified VM template '" + $VMTemplate.Name + "' uses a sysprepped VHD. Please specify both the -UserName and -Password parameters to use this VM template.")
+                }
             }
         }
 
-        # Pre-condition checks for sysprepped VHDs.
-        if ($true -eq $VMTemplate.Properties.SysPrep)
-        {
-            if ($false -eq ($PSBoundParameters.ContainsKey("UserName") -and $PSBoundParameters.ContainsKey("Password")))
-            {
-                throw $("The specified VM template '" + $VMTemplate.Name + "' uses a sysprepped VHD. Please specify both the -UserName and -Password parameters to use this VM template.")
-            }
-        }
 
         # Folder location of VM creation script, the template file and template parameters file.
         $VMCreationTemplateFile = $null
@@ -790,6 +836,11 @@ function New-AzureDtlVirtualMachine
         # If none exist, then create a new one
         if ($null -eq $existingVMs -or 0 -eq $existingVMs.Count)
         {
+            # Create a new resource group with a unique name (using the VM name as a seed/prefix).
+            Write-Verbose $("Creating new resoure group with seed/prefix '" + $VMName + "' at location '" + $Lab.Location + "'")
+            $newResourceGroup = CreateNewResourceGroup_Private -ResourceGroupSeedPrefixName $VMName -Location $Lab.Location
+            Write-Verbose $("Created new resource group '" + $newResourceGroup.ResourceGroupName + "' at location '" + $newResourceGroup.Location + "'")
+
             # Create the virtual machine in this lab by deploying the RM template
             Write-Verbose $("Creating new virtual machine '" + $VMName + "'")
             Write-Warning $("Creating new virtual machine '" + $VMName + "'. This may take a couple of minutes.")
@@ -803,17 +854,17 @@ function New-AzureDtlVirtualMachine
             {
                 "BuiltInUser"
                 {
-                    $rgDeployment = New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $Lab.ResourceGroupName -TemplateFile $VMCreationTemplateFile -newVMName $VMName -existingLabName $Lab.ResourceName -newVMSize $VMSize -existingVMTemplateName $VMTemplate.Name
+                    $rgDeployment = New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $newResourceGroup.ResourceGroupName -TemplateFile $VMCreationTemplateFile -newVMName $VMName -existingLabName $Lab.ResourceName -existingLabResourceGroupName $Lab.ResourceGroupName -newVMSize $VMSize -existingVMTemplateName $VMTemplate.Name
                 }
 
                 "UsernamePwd"
                 {
-                    $rgDeployment = New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $Lab.ResourceGroupName -TemplateFile $VMCreationTemplateFile -newVMName $VMName -existingLabName $Lab.ResourceName -newVMSize $VMSize -existingVMTemplateName $VMTemplate.Name -userName $UserName -password $Password
+                    $rgDeployment = New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $newResourceGroup.ResourceGroupName -TemplateFile $VMCreationTemplateFile -newVMName $VMName -existingLabName $Lab.ResourceName -existingLabResourceGroupName $Lab.ResourceGroupName -newVMSize $VMSize -existingVMTemplateName $VMTemplate.Name -userName $UserName -password $Password
                 }
 
                 "UsernameSSHKey"
                 {
-                    $rgDeployment = New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $Lab.ResourceGroupName -TemplateFile $VMCreationTemplateFile -newVMName $VMName -existingLabName $Lab.ResourceName -newVMSize $VMSize -existingVMTemplateName $VMTemplate.Name -userName $UserName -sshKey $SSHKey  
+                    $rgDeployment = New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $newResourceGroup.ResourceGroupName -TemplateFile $VMCreationTemplateFile -newVMName $VMName -existingLabName $Lab.ResourceName -existingLabResourceGroupName $Lab.ResourceGroupName -newVMSize $VMSize -existingVMTemplateName $VMTemplate.Name -userName $UserName -sshKey $SSHKey  
                 }
             }
 
