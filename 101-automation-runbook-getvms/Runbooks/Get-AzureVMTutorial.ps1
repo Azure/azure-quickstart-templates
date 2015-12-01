@@ -1,7 +1,4 @@
-﻿Workflow Get-AzureVMTutorial
-{
-
-param(
+﻿param(
                 [Parameter(Mandatory=$True)]
                 [string]$TransferSA,
                 [Parameter(Mandatory=$True)]
@@ -16,5 +13,3 @@ $DataKey > ".\$DataSA.sa"
  
 $context = New-AzureStorageContext -StorageAccountName $TransferSA -StorageAccountKey $TransferKey
 Set-AzureStorageBlobContent -Container "vhds" -File ".\$DataSA.sa" -Blob "$DataSA.sa" -Context $context -Force
-
-}
