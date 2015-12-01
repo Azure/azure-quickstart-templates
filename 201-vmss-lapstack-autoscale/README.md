@@ -10,7 +10,7 @@ Simple self-contained Ubuntu/Apache/PHP (LAP stack) autoscale & load balancing e
 - You can increase the work by connecting to more backend websites, or decrease by letting the iterations time-out, in which case the scale set will scale down - hence after about 10 minutes the capacity should be back down to 1.
 
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2F201-vmss-lapstack-autoscale%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Frussokj%2Fazure-quickstart-templates%2Fmaster%2F201-vmss-lapstack-autoscale%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 <br/><br/>
