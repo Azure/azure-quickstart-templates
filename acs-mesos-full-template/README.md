@@ -109,11 +109,11 @@ This walk through is based the wonderful digital ocean tutorial: https://www.dig
 
 10. The agents have a load balancer exposing port 80, 443, and 8080.  From https://portal.azure.com browse to the loadbalancer and grab its FQDN.  Next browse to your Marathon app, and create a new app specifying the fields below:
 
-![Image of setting up docker application in Marathon](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-mesos-full-template/images/marathon-simpleweb.png)
+ ![Image of setting up docker application in Marathon](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-mesos-full-template/images/marathon-simpleweb.png)
 
 11. Once deployed you can browse to the FQDN and observe the new content on port 80:
 
-![Image of setting up docker application in Marathon](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-mesos-full-template/images/simpleweb.png)
+ ![Image of setting up docker application in Marathon](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-mesos-full-template/images/simpleweb.png)
 
 ## Chronos Walkthrough
 
