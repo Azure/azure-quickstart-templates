@@ -270,7 +270,7 @@ function Get-AzureDtlVMTemplate
         $lab = $null
 
         $lab = Get-AzureDtlLab -LabName "MyLab1"
-        Get-AzureDtlVMTemplate -VMTemplateName "MyVMTemplate1" -Lab $Lab
+        Get-AzureDtlVMTemplate -VMTemplateName "MyVMTemplate1" -Lab $lab
 
         Gets all VM templates with the name "MyVMTemplate1" from the lab "MyLab1".
 
@@ -278,7 +278,7 @@ function Get-AzureDtlVMTemplate
         $lab = $null
 
         $lab = Get-AzureDtlLab -LabName "MyLab1"
-        Get-AzureDtlVMTemplate -Lab $Lab
+        Get-AzureDtlVMTemplate -Lab $lab
 
         Gets all VM templates from the lab "MyLab1".
 
@@ -446,7 +446,10 @@ function Get-AzureDtlVirtualMachine
                         write-Verbose $("Found lab : " + $fetchedLabObj.ResourceName) 
                         write-Verbose $("LabId : " + $fetchedLabObj.ResourceId) 
 
-                        Get-AzureRmResource -ExpandProperties | Where { 
+                        # Note: The -ErrorAction 'SilentlyContinue' ensures that we suppress irrelevant
+                        # errors originating while expanding properties (especially in internal test and
+                        # pre-production subscriptions).
+                        Get-AzureRmResource -ExpandProperties -ErrorAction "SilentlyContinue" | Where { 
                             $_.ResourceType -eq $EnvironmentResourceType -and
                             $_.Properties.LabId -eq $fetchedLabObj.ResourceId
                         } | Write-Output
@@ -587,7 +590,7 @@ function New-AzureDtlVMTemplate
         $lab = $null
 
         $vm = Get-AzureDtlVirtualMachine -VMName "MyVM1"
-        New-AzureDtlVMTemplate -ExistingVM $lab -VMTemplateName "MyVMTemplate1" -VMTemplateDescription "MyDescription"
+        New-AzureDtlVMTemplate -VM $vm -VMTemplateName "MyVMTemplate1" -VMTemplateDescription "MyDescription"
 
         Creates a new VM Template "MyVMTemplate1" from the VM "MyVM1".
 
@@ -828,58 +831,44 @@ function New-AzureDtlVirtualMachine
             Write-Verbose $("The RM template file was located at : '" + $VMCreationTemplateFile + "'")
         }
 
-        # Check if there are any existing VMs with same name in the specified lab
-        $existingVMs = Get-AzureDtlVirtualMachine -LabName $Lab.ResourceName | Where {
-            $_.ResourceName -eq $VMName
-        } 
 
-        # If none exist, then create a new one
-        if ($null -eq $existingVMs -or 0 -eq $existingVMs.Count)
+        # Create a new resource group with a unique name (using the VM name as a seed/prefix).
+        Write-Verbose $("Creating new resoure group with seed/prefix '" + $VMName + "' at location '" + $Lab.Location + "'")
+        $newResourceGroup = CreateNewResourceGroup_Private -ResourceGroupSeedPrefixName $VMName -Location $Lab.Location
+        Write-Verbose $("Created new resource group '" + $newResourceGroup.ResourceGroupName + "' at location '" + $newResourceGroup.Location + "'")
+
+        # Create the virtual machine in this lab by deploying the RM template
+        Write-Verbose $("Creating new virtual machine '" + $VMName + "'")
+        Write-Warning $("Creating new virtual machine '" + $VMName + "'. This may take a couple of minutes.")
+
+        $rgDeployment = $null
+
+        # Unique name for the deployment
+        $deploymentName = [Guid]::NewGuid().ToString()
+
+        switch($PSCmdlet.ParameterSetName)
         {
-            # Create a new resource group with a unique name (using the VM name as a seed/prefix).
-            Write-Verbose $("Creating new resoure group with seed/prefix '" + $VMName + "' at location '" + $Lab.Location + "'")
-            $newResourceGroup = CreateNewResourceGroup_Private -ResourceGroupSeedPrefixName $VMName -Location $Lab.Location
-            Write-Verbose $("Created new resource group '" + $newResourceGroup.ResourceGroupName + "' at location '" + $newResourceGroup.Location + "'")
-
-            # Create the virtual machine in this lab by deploying the RM template
-            Write-Verbose $("Creating new virtual machine '" + $VMName + "'")
-            Write-Warning $("Creating new virtual machine '" + $VMName + "'. This may take a couple of minutes.")
-
-            $rgDeployment = $null
-
-            # Unique name for the deployment
-            $deploymentName = [Guid]::NewGuid().ToString()
-
-            switch($PSCmdlet.ParameterSetName)
+            "BuiltInUser"
             {
-                "BuiltInUser"
-                {
-                    $rgDeployment = New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $newResourceGroup.ResourceGroupName -TemplateFile $VMCreationTemplateFile -newVMName $VMName -existingLabName $Lab.ResourceName -existingLabResourceGroupName $Lab.ResourceGroupName -newVMSize $VMSize -existingVMTemplateName $VMTemplate.Name
-                }
-
-                "UsernamePwd"
-                {
-                    $rgDeployment = New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $newResourceGroup.ResourceGroupName -TemplateFile $VMCreationTemplateFile -newVMName $VMName -existingLabName $Lab.ResourceName -existingLabResourceGroupName $Lab.ResourceGroupName -newVMSize $VMSize -existingVMTemplateName $VMTemplate.Name -userName $UserName -password $Password
-                }
-
-                "UsernameSSHKey"
-                {
-                    $rgDeployment = New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $newResourceGroup.ResourceGroupName -TemplateFile $VMCreationTemplateFile -newVMName $VMName -existingLabName $Lab.ResourceName -existingLabResourceGroupName $Lab.ResourceGroupName -newVMSize $VMSize -existingVMTemplateName $VMTemplate.Name -userName $UserName -sshKey $SSHKey  
-                }
+                $rgDeployment = New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $newResourceGroup.ResourceGroupName -TemplateFile $VMCreationTemplateFile -newVMName $VMName -existingLabName $Lab.ResourceName -existingLabResourceGroupName $Lab.ResourceGroupName -newVMSize $VMSize -existingVMTemplateName $VMTemplate.Name
             }
 
-            if (($null -ne $rgDeployment) -and ($null -ne $rgDeployment.Outputs['vmId']) -and ($null -ne $rgDeployment.Outputs['vmId'].Value))
+            "UsernamePwd"
             {
-                Write-Verbose $("vm id : '" + $rgDeployment.Outputs['vmId'].Value + "'")
+                $rgDeployment = New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $newResourceGroup.ResourceGroupName -TemplateFile $VMCreationTemplateFile -newVMName $VMName -existingLabName $Lab.ResourceName -existingLabResourceGroupName $Lab.ResourceGroupName -newVMSize $VMSize -existingVMTemplateName $VMTemplate.Name -userName $UserName -password $Password
+            }
 
-                Get-AzureRmResource -ResourceId $rgDeployment.Outputs['vmId'].Value | Write-Output
+            "UsernameSSHKey"
+            {
+                $rgDeployment = New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $newResourceGroup.ResourceGroupName -TemplateFile $VMCreationTemplateFile -newVMName $VMName -existingLabName $Lab.ResourceName -existingLabResourceGroupName $Lab.ResourceGroupName -newVMSize $VMSize -existingVMTemplateName $VMTemplate.Name -userName $UserName -sshKey $SSHKey  
             }
         }
 
-        # else display an error
-        else
+        if (($null -ne $rgDeployment) -and ($null -ne $rgDeployment.Outputs['vmId']) -and ($null -ne $rgDeployment.Outputs['vmId'].Value))
         {
-            Write-Error $("One or more VMs with name '" + $VMName + "' already exist in lab '" + $Lab.ResourceName + "'.")
+            Write-Verbose $("vm id : '" + $rgDeployment.Outputs['vmId'].Value + "'")
+
+            Get-AzureRmResource -ResourceId $rgDeployment.Outputs['vmId'].Value | Write-Output
         }
     }
 }
