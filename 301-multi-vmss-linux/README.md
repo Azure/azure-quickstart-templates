@@ -5,3 +5,10 @@
 </a><a  target="_blank">
 
 This template allows you to deploy multiple VM Scale Sets of Linux VMs.
+
+PARAMETER RESTRICTIONS
+======================
+
+vmssPrefix must be 8 characters in length or shorter.
+numberOfVMSS must be 5 or less.
+instanceCountPerVMSS must be 100 or less.
