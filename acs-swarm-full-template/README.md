@@ -38,13 +38,13 @@ The following image is an example of a container service with 3 masters, and 3 a
  4. Type `docker -H 10.0.0.5:2375 run hello-world` to see the hello-world test app run on one of the agents
 
 ## Explore Swarm with a web-based Compose Script, then scale the script to all agents
- 1. create the following docker-compose.yml file with the following content:
+ 1. create the following docker-compose.yml file:
 ```
-web:
-  image: "yeasy/simple-web"
+echo """web:
+  image: \"yeasy/simple-web\"
   ports:
-    - "80:80"
-  restart: "always"
+    - \"80:80\"
+  restart: \"always\" """ > docker-compose.yml
 ```
  3.  type `export DOCKER_HOST=10.0.0.5:2375` so that docker-compose automatically hits the swarm endpoints
  4. type `docker-compose up -d` to create the simple web server.  This will take a few minutes to pull the image
