@@ -151,6 +151,8 @@ Try the following workloads by creating Marathon apps to test your new Mesos con
 
 2. **Mount Azure Files volume within Docker Container** - [docker run --privileged anhowe/azure-file-workload STORAGEACCOUNTNAME STORAGEACCOUNTKEY SHARENAME](https://github.com/anhowe/azure-file-workload) - From each container mount your Azure storage by using Azure files
 
+3. **Explore Docker Hub** - explore Docker Hub for 100,000+ different container workloads: https://hub.docker.com/explore/
+
 # SSH Key Generation
 
 When creating container services, you will need an SSH RSA key for access.  Use the following articles to create your SSH RSA Key:
