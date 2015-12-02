@@ -671,7 +671,7 @@ function New-AzureDtlVMTemplate
     [CmdletBinding()]
     Param(
         [ValidateNotNull()]
-        # An existing VM from which the new VM template will be created (please use the Get-AzureDtlVirtualMachine cmdlet to get this lab object).
+        # An existing VM from which the new VM template will be created (please use the Get-AzureDtlVirtualMachine cmdlet to get this VM object).
         $VM,
 
         [ValidateNotNullOrEmpty()]
