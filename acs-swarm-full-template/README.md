@@ -39,13 +39,13 @@ The following image is an example of a container service with 3 masters, and 3 a
 
 ## Explore Swarm with a web-based Compose Script, then scale the script to all agents
  1. create the following docker-compose.yml file:
-```
+ ```
 echo """web:
   image: \"yeasy/simple-web\"
   ports:
     - \"80:80\"
   restart: \"always\" """ > docker-compose.yml
-```
+ ```
  2.  type `export DOCKER_HOST=10.0.0.5:2375` so that docker-compose automatically hits the swarm endpoints
  4. type `docker-compose up -d` to create the simple web server.  This will take a few minutes to pull the image
  5. once completed, type `docker ps` to see the running image.
