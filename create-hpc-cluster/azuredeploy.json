@@ -5,7 +5,7 @@
     "clusterName": {
       "type": "string",
       "metadata": {
-        "description": "The unique HPC Pack cluster name. It is also used as the public DNS name prefix for the cluster, for example, the public DNS name is '&lt;clusterName&gt;.westus.cloudapp.azure.com' if the resource group location is 'West US'. It must contain between 3 and 15 characters with lowercase letters and numbers, and must start with a letter."
+        "description": "The HPC Pack cluster name. It must be location-wide unique because it is also used as the public DNS name prefix for the cluster, for example, the public DNS name is '&lt;clusterName&gt;.westus.cloudapp.azure.com' if the resource group location is 'West US'. It must contain between 3 and 15 characters with lowercase letters and numbers, and must start with a letter."
       }
     },
     "privateDomainName": {
@@ -29,10 +29,29 @@
         "Standard_A10",
         "Standard_A11",
         "Standard_D3",
+        "Standard_D3_v2",
         "Standard_D4",
+        "Standard_D4_v2",
+        "Standard_D5_v2",
         "Standard_D12",
+        "Standard_D12_v2",
         "Standard_D13",
-        "Standard_D14"
+        "Standard_D13_v2",
+        "Standard_D14",
+        "Standard_D14_v2",
+        "Standard_DS3",
+        "Standard_DS4",
+        "Standard_DS12",
+        "Standard_DS13",
+        "Standard_DS14",
+        "Standard_G2",
+        "Standard_G3",
+        "Standard_G4",
+        "Standard_G5",
+        "Standard_GS2",
+        "Standard_GS3",
+        "Standard_GS4",
+        "Standard_GS5"
       ],
       "metadata": {
         "description": "The VM role size of the head node"
@@ -79,13 +98,40 @@
         "Standard_A10",
         "Standard_A11",
         "Standard_D1",
+        "Standard_D1_v2",
         "Standard_D2",
+        "Standard_D2_v2",
         "Standard_D3",
+        "Standard_D3_v2",
         "Standard_D4",
+        "Standard_D4_v2",
+        "Standard_D5_v2",
         "Standard_D11",
+        "Standard_D11_v2",
         "Standard_D12",
+        "Standard_D12_v2",
         "Standard_D13",
-        "Standard_D14"
+        "Standard_D13_v2",
+        "Standard_D14",
+        "Standard_D14_v2",
+        "Standard_DS1",
+        "Standard_DS2",
+        "Standard_DS3",
+        "Standard_DS4",
+        "Standard_DS11",
+        "Standard_DS12",
+        "Standard_DS13",
+        "Standard_DS14",
+        "Standard_G1",
+        "Standard_G2",
+        "Standard_G3",
+        "Standard_G4",
+        "Standard_G5",
+        "Standard_GS1",
+        "Standard_GS2",
+        "Standard_GS3",
+        "Standard_GS4",
+        "Standard_GS5"
       ],
       "metadata": {
         "description": "The VM role size of the compute nodes"
@@ -118,12 +164,14 @@
     "storageAccountNamePrefix": "[toLower(concat('hpc', uniqueString(resourceGroup().id, parameters('clusterName'))))]",
     "storageAccountType": "Standard_LRS",
     "nbrCNPerStorageAccount": 10,
-    "cnStorageAccountNumber": "[add(div(parameters('computeNodeNumber'), variables('nbrCNPerStorageAccount')), 1)]",
-    "hnStorageAccountName": "[concat(variables('storageAccountNamePrefix'), 'hn')]",
+    "cnStorageAccountNumber": "[add(div(sub(parameters('computeNodeNumber'), 1), variables('nbrCNPerStorageAccount')), 1)]",
+    "cnStorageAccountIndexOffset": 1,
+    "storageAccountIndexWidth": "[length(string(sub(add(variables('cnStorageAccountNumber'), variables('cnStorageAccountIndexOffset')), 1)))]",
+    "hnStorageAccountName": "[concat(variables('storageAccountNamePrefix'), padLeft('0', variables('storageAccountIndexWidth'), '0'))]",
     "hnStorageAccountId": "[resourceId('Microsoft.Storage/storageAccounts',variables('hnStorageAccountName'))]",
     "addressPrefix": "10.0.0.0/16",
     "subnet1Name": "Subnet-1",
-    "subnet1Prefix": "10.0.0.0/24",
+    "subnet1Prefix": "10.0.0.0/22",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
     "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]",
     "publicIPAddressType": "Dynamic",
@@ -146,13 +194,40 @@
       "Standard_A10": "disabled",
       "Standard_A11": "disabled",
       "Standard_D1": "disabled",
+      "Standard_D1_v2": "disabled",
       "Standard_D2": "disabled",
+      "Standard_D2_v2": "disabled",
       "Standard_D3": "disabled",
+      "Standard_D3_v2": "disabled",
       "Standard_D4": "disabled",
+      "Standard_D4_v2": "disabled",
+      "Standard_D5_v2": "disabled",
       "Standard_D11": "disabled",
+      "Standard_D11_v2": "disabled",
       "Standard_D12": "disabled",
+      "Standard_D12_v2": "disabled",
       "Standard_D13": "disabled",
-      "Standard_D14": "disabled"
+      "Standard_D13_v2": "disabled",
+      "Standard_D14": "disabled",
+      "Standard_D14_v2": "disabled",
+      "Standard_DS1": "disabled",
+      "Standard_DS2": "disabled",
+      "Standard_DS3": "disabled",
+      "Standard_DS4": "disabled",
+      "Standard_DS11": "disabled",
+      "Standard_DS12": "disabled",
+      "Standard_DS13": "disabled",
+      "Standard_DS14": "disabled",
+      "Standard_G1": "disabled",
+      "Standard_G2": "disabled",
+      "Standard_G3": "disabled",
+      "Standard_G4": "disabled",
+      "Standard_G5": "disabled",
+      "Standard_GS1": "disabled",
+      "Standard_GS2": "disabled",
+      "Standard_GS3": "disabled",
+      "Standard_GS4": "disabled",
+      "Standard_GS5": "disabled"
     },
     "avSetJumpBox": {
       "disabled-disabled": "disabled",
@@ -388,11 +463,11 @@
 
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[concat(variables('storageAccountNamePrefix'), padLeft(string(copyIndex()), 2, '0'))]",
+      "name": "[concat(variables('storageAccountNamePrefix'), padLeft(string(copyIndex(variables('cnStorageAccountIndexOffset'))), variables('storageAccountIndexWidth'), '0'))]",
       "apiVersion": "[variables('apiVersion')]",
       "location": "[variables('location')]",
       "dependsOn": [
-        "Microsoft.Resources/deployments/updateVNetDNS"
+        "Microsoft.Resources/deployments/createHeadNode"
       ],
       "copy": {
         "name": "hpcStorageAccounts",
@@ -410,7 +485,7 @@
       "dependsOn": [
         "Microsoft.Resources/deployments/createAvailabilitySet",
         "Microsoft.Resources/deployments/updateVNetDNS",
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountNamePrefix'), padLeft(string(mod(copyIndex(), variables('cnStorageAccountNumber'))), 2, '0'))]"
+        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountNamePrefix'), padLeft(string(add(mod(copyIndex(), variables('cnStorageAccountNumber')), variables('cnStorageAccountIndexOffset'))), variables('storageAccountIndexWidth'), '0'))]"
       ],
       "copy": {
         "name": "CN",
@@ -442,7 +517,7 @@
             "value": "[parameters('computeNodeVMSize')]"
           },
           "storageAccountName": {
-            "value": "[concat(variables('storageAccountNamePrefix'), padLeft(string(mod(copyIndex(), variables('cnStorageAccountNumber'))), 2, '0'))]"
+            "value": "[concat(variables('storageAccountNamePrefix'), padLeft(string(add(mod(copyIndex(), variables('cnStorageAccountNumber')), variables('cnStorageAccountIndexOffset'))), variables('storageAccountIndexWidth'), '0'))]"
           },
           "imgPublisher": {
             "value": "[variables('computeNodeImagePublisher')]"
