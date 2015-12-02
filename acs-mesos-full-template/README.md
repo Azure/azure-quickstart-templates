@@ -8,6 +8,8 @@ Portal Launch Button|Container Service Type
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Frgardler%2Fazure-quickstart-templates%2Facs%2Facs-mesos-full-template%2Fazuredeploy.linuxjumpbox.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>|Mesos with linux jumpbox
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Frgardler%2Fazure-quickstart-templates%2Facs%2Facs-mesos-full-template%2Fazuredeploy.nojumpbox.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>|Mesos with no jumpbox
 
+**Installation Note: You will need to provide an SSH RSA public key.  Follow instructions to generate SSH RSA keys in section [SSH Key Generation](#ssh-key-generation)**
+
 # Mesos Container Service Walkthrough
 
 Once your container service has been created you will have a resource group containing 3 parts:
@@ -45,7 +47,7 @@ When you deploy the template you will need to specify the following parameters:
 * `agentCount`: the number of Mesos Agents that you want to create in the container service.  You are allowed to create 1 to 100 agents
 * `masterCount`: Number of Masters. Currently the template supports 3 configurations: 1, 3 and 5 Masters container service configuration.
 * `agentVMSize`: The type of VM that you want to use for each node in the container service. The default size is A1 (1 core) but you can change that if you expect to run workloads that require more RAM or CPU resources.
-* `sshRSAPublicKey`: Configure all linux machines with the SSH rsa public key string.  Use 'disabled' to not configure access with SSH rsa public key.
+* `sshRSAPublicKey`: Configure all linux machines with the SSH rsa public key string.  Use 'disabled' to not configure access with SSH rsa public key.  Refer to the following section on how to generate your key pair: [SSH Key Generation](#ssh-key-generation)
 
 ## Marathon
 
@@ -146,3 +148,11 @@ Try the following workloads by creating Marathon apps to test your new Mesos con
 1. **Folding@Home** - [docker run rgardler/fah](https://hub.docker.com/r/rgardler/fah/) - Folding@Home is searching for a cure for Cancer, Alzheimers, Parkinsons and other such diseases. Donate some compute time to this fantastic effort.
 
 2. **Mount Azure Files volume within Docker Container** - [docker run --privileged anhowe/azure-file-workload STORAGEACCOUNTNAME STORAGEACCOUNTKEY SHARENAME](https://github.com/anhowe/azure-file-workload) - From each container mount your Azure storage by using Azure files
+
+# SSH Key Generation
+
+When creating container services, you will need an SSH RSA key for access.  Use the following articles to create your SSH RSA Key:
+
+1. Windows - https://www.digitalocean.com/community/tutorials/how-to-create-ssh-keys-with-putty-to-connect-to-a-vps
+2. Linux - https://help.ubuntu.com/community/SSH/OpenSSH/Keys#Generating_RSA_Keys
+3. Mac - https://help.github.com/articles/generating-ssh-keys/#platform-mac

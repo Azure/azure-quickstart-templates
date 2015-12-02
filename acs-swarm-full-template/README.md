@@ -6,6 +6,8 @@ Portal Launch Button|Container Service Type
 --- | --- | ---
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Frgardler%2Fazure-quickstart-templates%2Facs%2Facs-swarm-full-template%2Fazuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>|Swarm
 
+**Installation Note: You will need to provide an SSH RSA public key.  Follow instructions to generate SSH RSA keys in section [SSH Key Generation](#ssh-key-generation)**
+
 # Swarm Container Service Walkthrough
 
  Once your container service has been created you will have a resource group containing 2 parts:
@@ -52,3 +54,11 @@ Try the following workloads to test your new Swarm container service.  Run these
 1. **Folding@Home** - [docker run rgardler/fah](https://hub.docker.com/r/rgardler/fah/) - Folding@Home is searching for a cure for Cancer, Alzheimers, Parkinsons and other such diseases. Donate some compute time to this fantastic effort.
 
 2. **Mount Azure Files volume within Docker Container** - [docker run --privileged anhowe/azure-file-workload STORAGEACCOUNTNAME STORAGEACCOUNTKEY SHARENAME](https://github.com/anhowe/azure-file-workload) - From each container mount your Azure storage by using Azure files
+
+# SSH Key Generation
+
+When creating container services, you will need an SSH RSA key for access.  Use the following articles to create your SSH RSA Key:
+
+1. Windows - https://www.digitalocean.com/community/tutorials/how-to-create-ssh-keys-with-putty-to-connect-to-a-vps
+2. Linux - https://help.ubuntu.com/community/SSH/OpenSSH/Keys#Generating_RSA_Keys
+3. Mac - https://help.github.com/articles/generating-ssh-keys/#platform-mac
