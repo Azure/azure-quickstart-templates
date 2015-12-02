@@ -52,7 +52,7 @@ echo """web:
  ![Image of docker ps](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-swarm-full-template/images/dockerps.png)
  6. in your web browser hit the AGENTFQDN endpoint (**not the master FQDN**) you recorded in [step #1](#explore-swarm-with-simple-hello-world)  and you should see the following page, with a counter that increases on each refresh.
  ![Image of the web page](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-swarm-full-template/images/swarmbrowser.png)
- 7. You can now scale the web application by typing `docker-compose scale web=3`, and this will scale to the rest of your agents.  The Azure load balancer will automatically pick up the new containers.
+ 7. You can now scale the web application.  For example, if you have 3 agents, you can type `docker-compose scale web=**3**`, and this will scale to the rest of your agents.  Note that you can only scale up to the number of agents that you have, so if you deployed a single agent, you won't be able to scale up.  The Azure load balancer will automatically pick up the new containers.
  ![Image of docker scaling](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-swarm-full-template/images/dockercomposescale.png)
 
 # Sample Workloads
