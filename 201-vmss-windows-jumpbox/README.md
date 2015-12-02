@@ -6,3 +6,8 @@
 
 This template allows you to deploy a simple VM Scale Set of Windows VMs using the latest patched version of serveral Windows versions. This template also deploys a jumpbox with a public IP address in the same virtual network. You can connect to the jumpbox via this public IP address, then connect from there to VMs in the scale set via private IP addresses.
 
+PARAMETER RESTRICTIONS
+======================
+
+vmssName must be 9 characters in length or shorter. It should also be globally unique across all of Azure. If it isn't globally unique, it is possible that this template will still deploy properly, but we don't recommend relying on this pseudo-probabilistic behavior.
+instanceCount must be 100 or less.
