@@ -18,7 +18,7 @@ Portal Launch Button|Container Service Type
 
 The following image is an example of a container service with 3 masters, and 3 agents:
 
- ![Image of Swarm container service on azure](https://raw.githubusercontent.com/anhowe/scratch/master/mesos-marathon/images/swarm.png)
+ ![Image of Swarm container service on azure](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-swarm-full-template/images/swarm.png)
 
  All VMs are on the same private subnet, 10.0.0.0/18, and fully accessible to each other.
 
@@ -31,10 +31,10 @@ The following image is an example of a container service with 3 masters, and 3 a
     3. then click on "Succeeded" under *last deployment*
     4. then click on the "Microsoft.Template"
     5. now you can copy the output FQDNs and sample SSH commands
-    ![Image of docker scaling](https://raw.githubusercontent.com/anhowe/scratch/master/mesos-marathon/images/findingoutputs.png)
+    ![Image of docker scaling](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-swarm-full-template/images/findingoutputs.png)
  2. SSH to port 2200 of the master FQDN
  3. Type `docker -H 10.0.0.5:2375 info` to see the status of the agent nodes.
- ![Image of docker info](https://raw.githubusercontent.com/anhowe/scratch/master/mesos-marathon/images/dockerinfo.png)
+ ![Image of docker info](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-swarm-full-template/images/dockerinfo.png)
  4. Type `docker -H 10.0.0.5:2375 run hello-world` to see the hello-world test app run on one of the agents
 
 ## Explore Swarm with a web-based Compose Script, then scale the script to all agents
@@ -49,11 +49,11 @@ web:
  3.  type `export DOCKER_HOST=10.0.0.5:2375` so that docker-compose automatically hits the swarm endpoints
  4. type `docker-compose up -d` to create the simple web server.  This will take a few minutes to pull the image
  5. once completed, type `docker ps` to see the running image.
- ![Image of docker ps](https://raw.githubusercontent.com/anhowe/scratch/master/mesos-marathon/images/dockerps.png)
+ ![Image of docker ps](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-swarm-full-template/images/dockerps.png)
  6. in your web browser hit the agent FQDN endpoint you recorded in step #1 and you should see the following page, with a counter that increases on each refresh.
- ![Image of the web page](https://raw.githubusercontent.com/anhowe/scratch/master/mesos-marathon/images/swarmbrowser.png)
+ ![Image of the web page](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-swarm-full-template/images/swarmbrowser.png)
  7. You can now scale the web application by typing `docker-compose scale web=3`, and this will scale to the rest of your agents.  The Azure load balancer will automatically pick up the new containers.
- ![Image of docker scaling](https://raw.githubusercontent.com/anhowe/scratch/master/mesos-marathon/images/dockercomposescale.png)
+ ![Image of docker scaling](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-swarm-full-template/images/dockercomposescale.png)
 
 # Sample Workloads
 
