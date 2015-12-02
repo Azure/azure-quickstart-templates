@@ -24,6 +24,14 @@ The following image is an example of a container service with 3 masters, and 3 a
 
 ## Explore Swarm with Simple hello world
  1. After successfully deploying the template write down the two output master and agent FQDNs.
+  1. If using Powershell or CLI, the output parameters are the last values printed.
+  2. If using Portal, to get the output you need to:
+    1. navigate to "resource group"
+    2. click on the resource group you just created
+    3. then click on "Succeeded" under *last deployment*
+    4. then click on the "Microsoft.Template"
+    5. now you can copy the output FQDNs and sample SSH commands
+    ![Image of docker scaling](https://raw.githubusercontent.com/anhowe/scratch/master/mesos-marathon/images/findingoutputs.png)
  2. SSH to port 2200 of the master FQDN
  3. Type `docker -H 10.0.0.5:2375 info` to see the status of the agent nodes.
  ![Image of docker info](https://raw.githubusercontent.com/anhowe/scratch/master/mesos-marathon/images/dockerinfo.png)
