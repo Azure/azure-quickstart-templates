@@ -27,7 +27,7 @@ The following image is an example of a container service with 1 jumpbox, 3 maste
 
 ![Image of Mesos container service on azure](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-mesos-full-template/images/mesos.png)
 
-You can see the following parts:
+In the image above, you can see the following parts:
 
 1. **Mesos on port 5050** - Mesos is the distributed systems kernel that abstracts cpu, memory and other resources, and offers these to services named "frameworks" for scheduling of workloads.
 2. **Marathon on port 8080** - Marathon is a scheduler for Mesos that is equivalent to init on a single linux machine: it schedules long running tasks for the whole cluster.
@@ -36,16 +36,16 @@ You can see the following parts:
 
 All VMs are on the same private subnet, 10.0.0.0/18, and fully accessible to each other.
 
-## Installation Notes
+## Deployment Notes
 
 Here are notes for troubleshooting:
- * the installation log for the linux jumpbox, masters, and agents are in /var/log/azure/cluster-bootstrap.log
+ * the installation log for the masters, agents, and jumpbox are in /var/log/azure/cluster-bootstrap.log
  * even though the agent VMs finish quickly Mesos can take 5-15 minutes to install, check /var/log/azure/cluster-bootstrap.log for the completion status.
  * the linux jumpbox is based on https://github.com/anhowe/ubuntu-devbox and will take 1 hour to configure.  Visit https://github.com/anhowe/ubuntu-devbox to learn how to know when setup is completed, and then how to access the desktop via VNC and an SSH tunnel.
 
 ## Template Parameters
 When you deploy the template you will need to specify the following parameters:
-* `adminPassword`: self-explanatory
+* `adminPassword`: this is only required for the Windows jumpbox.
 * `dnsNamePrefix`: this is the DNS prefix name that will be used to make up the names for the FQDN for the jumpbox, master endpoints, and the agent endpoints.
 * `agentCount`: the number of Mesos Agents that you want to create in the container service.  You are allowed to create 1 to 100 agents
 * `masterCount`: Number of Masters. Currently the template supports 3 configurations: 1, 3 and 5 Masters container service configuration.
@@ -82,18 +82,18 @@ This walk through is based the wonderful digital ocean tutorial: https://www.dig
 
  ![Image of Mesos container service on azure](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-mesos-full-template/images/mesos-webui.png)
 
- 2. On top of page, click frameworks and notice your Marathon and Swarm frameworks
+ 2. On top of page, click frameworks and notice your Marathon and Chronos frameworks
 
  ![Image of Mesos frameworks on azure](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-mesos-full-template/images/mesos-frameworks.png)
 
- 3. On top of page, click agents and you can see your agents.  On windows or linux jumpbox you can also drill down into the slave and see its logs.
+ 3. On top of page, click agents and you can see your agents.  On windows or linux jumpbox you can also drill down into the agent and see its logs. (Note: "Agents" and "Slaves" are synonymous, and as announced in August 2015 at MesosCon, the word "Slave" will be replaced with "Agent")
 
  ![Image of Mesos agents on azure](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-mesos-full-template/images/mesos-agents.png)
 
-5. browse and explore Marathon UI http://master0:8080 (or if using tunnel http://localhost:8080 )
+5. browse and explore Marathon UI http://NAMEOFMASTERNODE:8080.  The NAMEOFMASTERNODE can be obtained from the "frameworks" page (or if using tunnel http://localhost:8080).
 
 6. start a long running job in Marathon
- 1. click "+New App"
+ 1. click "Create"
  2. type "myfirstapp" for the id
  3. type `/bin/bash -c "for i in {1..5}; do echo MyFirstApp $i; sleep 1; done` for the command
  4. scroll to bottom and click create
