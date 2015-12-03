@@ -1088,19 +1088,32 @@ function Remove-AzureDtlVirtualMachine
         # Next, for each VM... 
         foreach ($vm in $vms)
         {
-            # Pop the confirmation dialog.
-            if ($PSCmdlet.ShouldProcess($vm.ResourceName, "delete VM"))
+            # Get the same VM object, but with properties attached.
+            $vm = GetResourceWithProperties_Private -Resource $vm
+
+            # Ensure that we're able to extract the FQDN of the VM.
+            if (($null -ne $vm) -and ($null -ne $vm.Properties) -and ($null -ne $vm.Properties.Vms) -and ($null -ne $vm.Properties.Vms[0]) -and ($null -ne $vm.Properties.Vms[0].Fqdn))
             {
-                Write-Warning $("Deleting VM '" + $vm.ResourceName + "' ...")
-                Write-Verbose $("Deleting VM '" + $vm.ResourceName + "' ...")
-
-                # Nuke the VM.
-                $result = Remove-AzureRmResource -ResourceId $vm.ResourceId -Force
-
-                if ($true -eq $result)
+                # Pop the confirmation dialog.
+                if ($PSCmdlet.ShouldProcess($vm.ResourceName, "delete VM"))
                 {
-                    Write-Verbose $("Successfully deleted VM '" + $vm.ResourceName + "'")
+                    Write-Warning $("Deleting VM '" + $vm.ResourceName + "' (FQDN = " + $vm.Properties.Vms[0].Fqdn + ") ...")
+                    Write-Verbose $("Deleting VM '" + $vm.ResourceName + "' (FQDN = " + $vm.Properties.Vms[0].Fqdn + ") ...")
+
+                    # Nuke the VM.
+                    $result = Remove-AzureRmResource -ResourceId $vm.ResourceId -Force
+
+                    if ($true -eq $result)
+                    {
+                        Write-Verbose $("Successfully deleted VM '" + $vm.ResourceName + "' (FQDN = " + $vm.Properties.Vms[0].Fqdn + ") ...")
+                    }
                 }
+            }
+
+            # Else display a non-terminating error and skip this VM.
+            else
+            {
+                Write-Error $("Unable to determine the FQDN of the VM '" + $VM.ResourceName + "'.")
             }
         }
     }
