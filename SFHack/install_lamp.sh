@@ -1,5 +1,7 @@
 #!/bin/bash
-ap-get -y update
+apt-get -y update
+
+blargl
 
 # set up a silent install of MySQL
 dbpass=$1
