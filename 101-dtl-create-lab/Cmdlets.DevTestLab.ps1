@@ -689,6 +689,22 @@ function New-AzureDtlVMTemplate
     {
         Write-Verbose $("Processing cmdlet '" + $PSCmdlet.MyInvocation.InvocationName + "', ParameterSet = '" + $PSCmdlet.ParameterSetName + "'")
 
+        # Get the same VM object, but with properties attached.
+        $VM = GetResourceWithProperties_Private -Resource $VM
+
+        # Pre-condition checks to ensure that VM is in a valid state.
+        if (($null -ne $VM) -and ($null -ne $VM.Properties) -and ($null -ne $VM.Properties.ProvisioningState))
+        {
+            if ("succeeded" -ne $VM.Properties.ProvisioningState)
+            {
+                throw $("The provisioning state of the VM '" + $VM.ResourceName + "' is '" + $VM.Properties.ProvisioningState + "'. Hence unable to continue.")
+            }
+        }
+        else
+        {
+            throw $("The provisioning state of the VM '" + $VM.ResourceName + "' could not be determined. Hence unable to continue.")
+        }
+
         # Unique name for the deployment
         $deploymentName = [Guid]::NewGuid().ToString()
 
@@ -842,6 +858,7 @@ function New-AzureDtlVirtualMachine
         # Get the same VM template object, but with properties attached.
         $VMTemplate = GetResourceWithProperties_Private -Resource $VMTemplate
 
+        # Pre-condition checks for azure gallery images.
         if ("Gallery" -eq $VMTemplate.Properties.ImageType)
         {
             if ($false -eq (($PSBoundParameters.ContainsKey("UserName") -and $PSBoundParameters.ContainsKey("Password")) -or ($PSBoundParameters.ContainsKey("UserName") -and $PSBoundParameters.ContainsKey("SSHKey"))))
