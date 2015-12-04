@@ -705,6 +705,12 @@ function New-AzureDtlVMTemplate
             throw $("The provisioning state of the VM '" + $VM.ResourceName + "' could not be determined. Hence unable to continue.")
         }
 
+        # Pre-condition checks to ensure that we're able to extract the Resource Id of the compute VM.
+        if (($null -eq $VM) -or ($null -eq $VM.Properties) -or ($null -eq $VM.Properties.Vms) -or ($null -eq $VM.Properties.Vms[0]) -or ($null -eq $VM.Properties.Vms[0].ComputeId) )
+        {
+            throw $("Unable to determine the Resource Id of the compute VM '" + $VM.ResourceName + "'.")
+        }
+
         # Unique name for the deployment
         $deploymentName = [Guid]::NewGuid().ToString()
 
@@ -735,7 +741,7 @@ function New-AzureDtlVMTemplate
 
             # Create the VM Template in the lab's resource group by deploying the RM template
             Write-Verbose $("Creating VM Template '" + $VMTemplateName + "' in lab '" + $lab.ResourceName + "'")
-            $rgDeployment = New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $lab.ResourceGroupName -TemplateFile $VMTemplateCreationTemplateFile -existingLabName $lab.ResourceName -existingVMResourceId $VM.ResourceId -templateName $VMTemplateNameEncoded -templateDescription $VMTemplateDescription
+            $rgDeployment = New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $lab.ResourceGroupName -TemplateFile $VMTemplateCreationTemplateFile -existingLabName $lab.ResourceName -existingVMResourceId $VM.Properties.Vms[0].ComputeId -templateName $VMTemplateNameEncoded -templateDescription $VMTemplateDescription
 
             if (($null -ne $rgDeployment) -and ($null -ne $rgDeployment.Outputs['vmTemplateId']) -and ($null -ne $rgDeployment.Outputs['vmTemplateId'].Value))
             {
