@@ -76,7 +76,7 @@ CHEF_PKG_URL="https://opscode-omnibus-packages.s3.amazonaws.com/ubuntu/10.04/x86
 CHEF_PKG_MD5="6360faba9d6358d636be5618eecb21ee1dbdca7d  chef_12.5.1-1_amd64.deb"
 CHEF_PKG_CACHE="/etc/chef/local-mode-cache/cache/chef_12.5.1-1_amd64.deb"
 
-CHEF_REPO_URL="https://github.com/rarsan/chef-repo-splunk/tarball/v0.5"
+CHEF_REPO_URL="https://github.com/rarsan/chef-repo-splunk/tarball/v0.6"
 
 # Arguments
 while getopts :r:p:c:i: optname; do
@@ -138,6 +138,7 @@ mkdir -p /etc/chef/repo
 cd /etc/chef/repo
 curl -sL ${CHEF_REPO_URL} | tar -xz --strip-components=1
 tar -xzf berks-package.tar.gz -C cookbooks --strip-components=1
+cd -
 
 # Update data bag with custom user credentials
 sed -i "s/notarealpassword/${ADMIN_PASSWD}/" /etc/chef/repo/data_bags/vault/splunk__default.json
@@ -175,8 +176,10 @@ end
 log "Checkpoint 4: `date`"
 
 # Finally install & configure Splunk using chef client in local mode
-cd -
 chef-client -z -c /etc/chef/client.rb -j /etc/chef/node.json
+
+# Cleanup after ourselves - remove chef repo including data bag
+rm -rf /etc/chef/repo
 
 # Remove first time login
 touch /opt/splunk/etc/.ui_login
