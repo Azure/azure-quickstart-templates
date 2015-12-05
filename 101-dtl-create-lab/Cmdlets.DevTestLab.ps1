@@ -53,14 +53,11 @@ function GetLabFromVM_Private
         $VM
     )
 
-    $vmProperties = Get-AzureRmResource -ExpandProperties | Where {
-        $_.ResourceType -eq $EnvironmentResourceType -and 
-        $_.ResourceId -eq $VM.ResourceId
-    } | Select -Property "Properties"
+    $vm = GetResourceWithProperties_Private -Resource $VM
 
     Get-AzureRmResource | Where {
         $_.ResourceType -eq $LabResourceType -and 
-        $_.ResourceId -eq $vmProperties.Properties.LabId
+        $_.ResourceId -eq $vm.Properties.LabId
     }
 }
 
