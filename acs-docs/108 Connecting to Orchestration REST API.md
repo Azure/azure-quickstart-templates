@@ -18,15 +18,15 @@ All REST API endpoints are located on the masters and so first you need to ident
 
  
 
-![](images\108/media/image1.png)
+![](images/108/media/image1.png)
 
  
 
-![](images\108/media/image2.png)
+![](images/108/media/image2.png)
 
  
 
-![](images\108/media/image3.png)
+![](images/108/media/image3.png)
 
  
 
@@ -76,7 +76,7 @@ For example, to set up a tunnel to the Marathon API in our example cluster:
 
  
 
-![](images\108/media/image4.png)
+![](images/108/media/image4.png)
 
  
 
@@ -94,8 +94,8 @@ The snapshots below walk you through the steps needed to set up a SSH tunnel
 
 .
 
-![](images\108/media/image5.png)
+![](images/108/media/image5.png)
 
  
 
-![](images\108/media/image6.png)
+![](images/108/media/image6.png)

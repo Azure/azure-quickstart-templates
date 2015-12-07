@@ -66,7 +66,7 @@ TEMPLATE\_URI is the location of the deployment file. Note that this must be the
 
  
 
-![](images\105/media/image1.png)
+![](images/105/media/image1.png)
 
  
 

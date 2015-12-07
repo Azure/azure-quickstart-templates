@@ -18,7 +18,7 @@ If you elected to use a Linux Jumpbox then you will use VNC to connect to it. Yo
 
  
 
-![](images\110/media/image1.png)
+![](images/110/media/image1.png)
 
  
 
@@ -38,7 +38,7 @@ Once installed open the client and connect as follows:
 
  
 
-![](images\110/media/image2.png)
+![](images/110/media/image2.png)
 
  
 
@@ -54,7 +54,7 @@ With the password of \`password\`.
 
  
 
-![](images\110/media/image3.png)
+![](images/110/media/image3.png)
 
  
 
@@ -74,7 +74,7 @@ Now you can open a browser and visit:
 
  
 
-![](images\110/media/image4.png)
+![](images/110/media/image4.png)
 
  
 
@@ -96,11 +96,11 @@ In the Azure portal navigate to your Jumpbox within your resource group:
 
  
 
-![](images\110/media/image5.png)
+![](images/110/media/image5.png)
 
  
 
-![](images\110/media/image6.png)
+![](images/110/media/image6.png)
 
  
 
@@ -108,7 +108,7 @@ Click the Connect button:
 
  
 
-![](images\110/media/image7.png)
+![](images/110/media/image7.png)
 
  
 
@@ -116,25 +116,25 @@ Optionally Save the file for easy access later. Open it now.
 
  
 
-![](images\110/media/image8.png)
+![](images/110/media/image8.png)
 
  
 
 Connect:
 
-![](images\110/media/image9.png)
+![](images/110/media/image9.png)
 
  
 
-![](images\110/media/image10.png)
+![](images/110/media/image10.png)
 
  
 
-![](images\110/media/image11.png)
+![](images/110/media/image11.png)
 
  
 
-![](images\110/media/image12.png)
+![](images/110/media/image12.png)
 
 Now you can open a browser and visit:
 
