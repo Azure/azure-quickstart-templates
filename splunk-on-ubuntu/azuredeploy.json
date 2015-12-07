@@ -1,0 +1,449 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Location where resources will be provisioned"
+      }
+    },
+    "storageAccountNamePrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Unique DNS name for the Storage Account where the VM's disks will be placed"
+      }
+    },
+    "storageAccountType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "metadata": {
+        "description": "Storage account type which determines data redundancy and underlying drive type"
+      }
+    },
+    "deploymentSize": {
+      "type": "string",
+      "defaultValue": "Standalone",
+      "allowedValues": [
+        "Standalone",
+        "Cluster"
+      ],
+      "metadata": {
+        "description": "Splunk deployment type"
+      }
+    },
+    "domainName": {
+      "type": "string",
+      "metadata": {
+        "description": "Domain name of the publicly accessible VM in the format: {domainName}.{location}.cloudapp.azure.com For example: mydomainname.westus.cloudapp.azure.com"
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Username for the VMs"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the VMs"
+      }
+    },
+    "splunkAdminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for Splunk admin"
+      }
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the virtual network that the consumer wants to use"
+      }
+    },
+    "virtualNetworkNewOrExisting" : {
+      "type" : "string",
+      "defaultValue" : "new",
+      "allowedValues": [
+        "new",
+        "existing"
+      ],
+      "metadata": {
+        "description": "Identifies whether to use new or existing Virtual Network"
+      }
+    },
+    "virtualNetworkExistingRGName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Name of resource group of existing Virtual Network (if applicable)"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "metadata": {
+        "description": "Size of the virtual machine"
+      }
+    }
+  },
+  "variables": {
+    "templateBaseUrl": "https://raw.githubusercontent.com/rarsan/azure-quickstart-templates/master/splunk-on-ubuntu/",
+    "sharedTemplateUrl": "[concat(variables('templateBaseUrl'), 'shared-resources.json')]",
+    "virtualNetworkTemplateUrl": "[concat(variables('templateBaseUrl'), 'vnet-', parameters('virtualNetworkNewOrExisting'), '.json')]",
+    "emptyTemplateUrl": "[concat(variables('templateBaseUrl'), 'empty-resources.json')]",
+    "tshirtSizeStandalone": {
+      "vmSize": "[parameters('vmSize')]",
+      "diskSize": 1023,
+      "standaloneTemplateUrl": "[concat(variables('templateBaseUrl'), 'standalone-instance-resources.json')]",
+      "clusterMasterTemplateUrl": "[variables('emptyTemplateUrl')]",
+      "clusterSearchheadTemplateUrl": "[variables('emptyTemplateUrl')]",
+      "clusterPeersTemplateUrl": "[variables('emptyTemplateUrl')]",
+      "clusterPeersCount": 0,
+      "storage": {
+        "name": "[parameters('storageAccountNamePrefix')]",
+        "type": "[parameters('storageAccountType')]",
+        "count": 1,
+        "map": [
+          0
+        ]
+      }
+    },
+    "tshirtSizeCluster": {
+      "vmSize": "[parameters('vmSize')]",
+      "diskSize": 1023,
+      "standaloneTemplateUrl": "[variables('emptyTemplateUrl')]",
+      "clusterMasterTemplateUrl": "[concat(variables('templateBaseUrl'), 'clustermaster-resources.json')]",
+      "clusterSearchheadTemplateUrl": "[concat(variables('templateBaseUrl'), 'clustersearchhead-resources.json')]",
+      "clusterPeersTemplateUrl": "[concat(variables('templateBaseUrl'), 'clusterpeers-resources.json')]",
+      "clusterPeersCount": 3,
+      "storage": {
+        "name": "[parameters('storageAccountNamePrefix')]",
+        "type": "[parameters('storageAccountType')]",
+        "count": 2,
+        "map": [
+          0,
+          1,
+          1
+        ]
+      }
+    },
+    "tshirtSize": "[variables(concat('tshirtSize', parameters('deploymentSize')))]",
+    "networkSettings": {
+      "virtualNetworkName": "[parameters('virtualNetworkName')]",
+      "virtualNetworkExistingRGName": "[parameters('virtualNetworkExistingRGName')]",
+      "virtualNetworkAddressPrefix": "10.0.0.0/16",
+      "subnet": {
+        "sh": {
+          "name": "sh",
+          "prefix": "10.0.0.0/24",
+          "vnet": "[parameters('virtualNetworkName')]"
+        },
+        "idx": {
+          "name": "idx",
+          "prefix": "10.0.1.0/24",
+          "vnet": "[parameters('virtualNetworkName')]"
+        }
+      },
+      "statics": {
+        "standaloneIp": "10.0.0.250",
+        "clusterSearchheadIp": "10.0.0.250",
+        "clusterMasterIp": "10.0.1.250",
+        "searchheadIps": {
+          "base": "10.0.0.",
+          "start": 5
+        },
+        "indexerIps": {
+          "base": "10.0.1.",
+          "start": 5
+        }
+      }
+    },
+    "availabilitySetSettings": {
+      "name": "[concat(parameters('virtualNetworkName'), '-default-availabilityset')]",
+      "fdCount": 3,
+      "udCount": 5
+    },
+    "osSettings": {
+      "imageReference": {
+        "publisher": "Canonical",
+        "offer": "UbuntuServer",
+        "sku": "14.04.3-LTS",
+        "version": "latest"
+      },
+      "scripts": [
+        "[concat(variables('templateBaseUrl'),'vm-disk-utils-0.1.sh')]",
+        "[concat(variables('templateBaseUrl'),'node-setup.sh')]"
+      ]
+    }
+  },
+  "resources": [
+    {
+      "name": "shared",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('sharedTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "availabilitySetSettings": {
+            "value": "[variables('availabilitySetSettings')]"
+          },
+          "storageSettings": {
+            "value": "[variables('tshirtSize').storage]"
+          }
+        }
+      }
+    },
+    {
+      "name": "virtual-network",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('virtualNetworkTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "networkSettings": {
+            "value": "[variables('networkSettings')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-01-01",
+      "type": "Microsoft.Resources/deployments",
+      "name": "standalone-deployment",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', 'shared')]",
+        "[concat('Microsoft.Resources/deployments/', 'virtual-network')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('tshirtSize').standaloneTemplateUrl]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "namespace": {
+            "value": "standalone"
+          },
+          "machineSettings": {
+            "value": {
+              "vmSize": "[variables('tshirtSize').vmSize]",
+              "diskSize": "[variables('tshirtSize').diskSize]",
+              "staticIp": "[variables('networkSettings').statics.standaloneIp]",
+              "clusterMasterIp": "NA",
+              "publicDns": "[concat(parameters('domainName'), '')]",
+              "availabilitySet": "[variables('availabilitySetSettings').name]"
+            }
+          },
+          "storageSettings": {
+            "value": "[variables('tshirtSize').storage]"
+          },
+          "osSettings": {
+            "value": "[variables('osSettings')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "splunkAdminPassword": {
+            "value": "[parameters('splunkAdminPassword')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnet.sh]"
+          },
+          "templateBaseUrl": {
+            "value": "[variables('templateBaseUrl')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-01-01",
+      "type": "Microsoft.Resources/deployments",
+      "name": "clustermaster-deployment",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', 'shared')]",
+        "[concat('Microsoft.Resources/deployments/', 'virtual-network')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('tshirtSize').clusterMasterTemplateUrl]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "namespace": {
+            "value": "cm"
+          },
+          "machineSettings": {
+            "value": {
+              "vmSize": "[variables('tshirtSize').vmSize]",
+              "diskSize": "[variables('tshirtSize').diskSize]",
+              "staticIp": "[variables('networkSettings').statics.clusterMasterIp]",
+              "clusterMasterIp": "NA",
+              "publicDns": "[concat(parameters('domainName'), '-cm')]",
+              "availabilitySet": "[variables('availabilitySetSettings').name]"
+            }
+          },
+          "storageSettings": {
+            "value": "[variables('tshirtSize').storage]"
+          },
+          "osSettings": {
+            "value": "[variables('osSettings')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "splunkAdminPassword": {
+            "value": "[parameters('splunkAdminPassword')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnet.idx]"
+          },
+          "templateBaseUrl": {
+            "value": "[variables('templateBaseUrl')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-01-01",
+      "type": "Microsoft.Resources/deployments",
+      "name": "clustersearchhead-deployment",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', 'shared')]",
+        "[concat('Microsoft.Resources/deployments/', 'virtual-network')]",
+        "[concat('Microsoft.Resources/deployments/', 'clustermaster-deployment')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('tshirtSize').clusterSearchheadTemplateUrl]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "namespace": {
+            "value": "csh"
+          },
+          "machineSettings": {
+            "value": {
+              "vmSize": "[variables('tshirtSize').vmSize]",
+              "diskSize": "[variables('tshirtSize').diskSize]",
+              "staticIp": "[variables('networkSettings').statics.clusterSearchheadIp]",
+              "clusterMasterIp": "[variables('networkSettings').statics.clusterMasterIp]",
+              "publicDns": "[concat(parameters('domainName'), '')]",
+              "availabilitySet": "[variables('availabilitySetSettings').name]"
+            }
+          },
+          "storageSettings": {
+            "value": "[variables('tshirtSize').storage]"
+          },
+          "osSettings": {
+            "value": "[variables('osSettings')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "splunkAdminPassword": {
+            "value": "[parameters('splunkAdminPassword')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnet.sh]"
+          },
+          "templateBaseUrl": {
+            "value": "[variables('templateBaseUrl')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-01-01",
+      "type": "Microsoft.Resources/deployments",
+      "name": "clusterpeers-deployment",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', 'shared')]",
+        "[concat('Microsoft.Resources/deployments/', 'virtual-network')]",
+        "[concat('Microsoft.Resources/deployments/', 'clustermaster-deployment')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('tshirtSize').clusterPeersTemplateUrl]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "namespace": {
+            "value": "cp"
+          },
+          "machineSettings": {
+            "value": {
+              "vmSize": "[variables('tshirtSize').vmSize]",
+              "vmCount": "[variables('tshirtSize').clusterPeersCount]",
+              "diskSize": "[variables('tshirtSize').diskSize]",
+              "staticIps": "[variables('networkSettings').statics.indexerIps]",
+              "clusterMasterIp": "[variables('networkSettings').statics.clusterMasterIp]",
+              "publicDns": "[concat(parameters('domainName'), '-cp')]",
+              "availabilitySet": "[variables('availabilitySetSettings').name]"
+            }
+          },
+          "storageSettings": {
+            "value": "[variables('tshirtSize').storage]"
+          },
+          "osSettings": {
+            "value": "[variables('osSettings')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "splunkAdminPassword": {
+            "value": "[parameters('splunkAdminPassword')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnet.idx]"
+          },
+          "templateBaseUrl": {
+            "value": "[variables('templateBaseUrl')]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}
