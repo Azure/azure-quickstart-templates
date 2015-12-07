@@ -880,12 +880,26 @@ function New-AzureDtlVirtualMachine
                 }
             }
 
-            # Pre-condition checks for sysprepped VHDs.
-            if ($true -eq $VMTemplate.Properties.SysPrep)
+            # Pre-condition checks for windows VHDs.
+            else 
             {
-                if ($false -eq ($PSBoundParameters.ContainsKey("UserName") -and $PSBoundParameters.ContainsKey("Password")))
+                # Pre-condition checks for sysprepped Windows VHDs.
+                if ($true -eq $VMTemplate.Properties.SysPrep)
                 {
-                    throw $("The specified VM template '" + $VMTemplate.Name + "' uses a sysprepped VHD. Please specify both the -UserName and -Password parameters to use this VM template.")
+                    if ($false -eq ($PSBoundParameters.ContainsKey("UserName") -and $PSBoundParameters.ContainsKey("Password")))
+                    {
+                        throw $("The specified VM template '" + $VMTemplate.Name + "' uses a sysprepped VHD. Please specify both the -UserName and -Password parameters to use this VM template.")
+                    }
+                }
+
+                # Pre-condition checks for non-sysprepped Windows VHDs.
+                # Note: For non-sysprepped windows VHDs we ignore the username and password and instead use the built-in account.
+                else
+                {
+                    if ($true -eq ($PSBoundParameters.ContainsKey("UserName") -and $PSBoundParameters.ContainsKey("Password")))
+                    {
+                        Write-Warning $("The specified VM template '" + $VMTemplate.Name + "' uses a non-sysprepped VHD with a built-in account. The specified userame and password will not be used.")
+                    }                    
                 }
             }
         }
