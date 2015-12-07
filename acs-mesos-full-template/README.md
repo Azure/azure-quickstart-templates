@@ -50,7 +50,7 @@ When you deploy the template you will need to specify the following parameters:
 * `agentCount`: the number of Mesos Agents that you want to create in the container service.  You are allowed to create 1 to 100 agents
 * `masterCount`: Number of Masters. Currently the template supports 3 configurations: 1, 3 and 5 Masters container service configuration.
 * `agentVMSize`: The type of VM that you want to use for each node in the container service. The default size is A1 (1 core) but you can change that if you expect to run workloads that require more RAM or CPU resources.
-* `sshRSAPublicKey`: Configure all linux machines with the SSH rsa public key string.  Use 'disabled' to not configure access with SSH rsa public key.  Refer to the following section on how to generate your key pair: [SSH Key Generation](#ssh-key-generation)
+* `sshRSAPublicKey`: Configure all linux machines with the SSH rsa public key string.  This is required.  Refer to the following section on how to generate your key pair: [SSH Key Generation](#ssh-key-generation)
 
 ## Marathon
 
