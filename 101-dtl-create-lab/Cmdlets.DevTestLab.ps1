@@ -55,7 +55,7 @@ function GetLabFromVM_Private
 
     $vm = GetResourceWithProperties_Private -Resource $VM
 
-    Get-AzureRmResource | Where {
+    Get-AzureRmResource | Where-Object {
         $_.ResourceType -eq $LabResourceType -and 
         $_.ResourceId -eq $vm.Properties.LabId
     }
@@ -205,7 +205,7 @@ function Get-AzureDtlLab
         {
             "ListByLabId"
             {
-                $output = Get-AzureRmResource | Where { 
+                $output = Get-AzureRmResource | Where-Object { 
                     $_.ResourceType -eq $LabResourceType -and 
                     $_.ResourceId -eq $LabId 
                 }
@@ -215,7 +215,7 @@ function Get-AzureDtlLab
             {
                 if ($PSBoundParameters.ContainsKey("LabResourceGroupName"))
                 {
-                    $output = Get-AzureRmResource | Where { 
+                    $output = Get-AzureRmResource | Where-Object { 
                         $_.ResourceType -eq $LabResourceType -and 
                         $_.ResourceName -eq $LabName -and 
                         $_.ResourceGroupName -eq $LabResourceGroupName 
@@ -223,7 +223,7 @@ function Get-AzureDtlLab
                 }
                 else
                 {
-                    $output = Get-AzureRmResource | Where { 
+                    $output = Get-AzureRmResource | Where-Object { 
                         $_.ResourceType -eq $LabResourceType -and 
                         $_.ResourceName -eq $LabName 
                     }     
@@ -232,7 +232,7 @@ function Get-AzureDtlLab
 
             "ListAllInResourceGroup"
             {
-                $output = Get-AzureRmResource | Where { 
+                $output = Get-AzureRmResource | Where-Object { 
                     $_.ResourceType -eq $LabResourceType -and 
                     $_.ResourceGroupName -eq $LabResourceGroupName 
                 }
@@ -240,7 +240,7 @@ function Get-AzureDtlLab
 
             "ListAllInLocation"
             {
-                $output = Get-AzureRmResource | Where { 
+                $output = Get-AzureRmResource | Where-Object { 
                     $_.ResourceType -eq $LabResourceType -and 
                     $_.Location -eq $LabLocation 
                 }
@@ -248,7 +248,7 @@ function Get-AzureDtlLab
 
             "ListAll" 
             {
-                $output = Get-AzureRmResource | Where { 
+                $output = Get-AzureRmResource | Where-Object { 
                     $_.ResourceType -eq $LabResourceType 
                 }
             }
@@ -349,7 +349,7 @@ function Get-AzureDtlVMTemplate
 
             "ListByVMTemplateName"
             {
-                $output = Get-AzureRmResource -ResourceName $Lab.ResourceName -ResourceGroupName $Lab.ResourceGroupName -ResourceType $VMTemplateResourceType -ApiVersion $RequiredApiVersion | Where {
+                $output = Get-AzureRmResource -ResourceName $Lab.ResourceName -ResourceGroupName $Lab.ResourceGroupName -ResourceType $VMTemplateResourceType -ApiVersion $RequiredApiVersion | Where-Object {
                     $_.Name -eq $VMTemplateName
                 }
             }
@@ -472,7 +472,7 @@ function Get-AzureDtlVirtualMachine
         {
             "ListByVMId"
             {
-                $output = Get-AzureRmResource | Where { 
+                $output = Get-AzureRmResource | Where-Object { 
                     $_.ResourceType -eq $EnvironmentResourceType -and 
                     $_.ResourceId -eq $VMId 
                 }
@@ -480,7 +480,7 @@ function Get-AzureDtlVirtualMachine
                     
             "ListByVMName"
             {
-                $output = Get-AzureRmResource | Where { 
+                $output = Get-AzureRmResource | Where-Object { 
                     $_.ResourceType -eq $EnvironmentResourceType -and 
                     $_.ResourceName -eq $VMName 
                 }                
@@ -490,7 +490,7 @@ function Get-AzureDtlVirtualMachine
             {
                 $fetchedLabObj = Get-AzureDtlLab -LabName $LabName 
 
-                if ($fetchedLabObj -ne $null -and $fetchedLabObj.Count -ne 0)
+                if ($null -ne $fetchedLabObj -and $fetchedLabObj.Count -ne 0)
                 {
                     if ($fetchedLabObj.Count > 1)
                     {
@@ -504,7 +504,7 @@ function Get-AzureDtlVirtualMachine
                         # Note: The -ErrorAction 'SilentlyContinue' ensures that we suppress irrelevant
                         # errors originating while expanding properties (especially in internal test and
                         # pre-production subscriptions).
-                        $output = Get-AzureRmResource -ExpandProperties -ErrorAction "SilentlyContinue" | Where { 
+                        $output = Get-AzureRmResource -ExpandProperties -ErrorAction "SilentlyContinue" | Where-Object { 
                             $_.ResourceType -eq $EnvironmentResourceType -and
                             $_.Properties.LabId -eq $fetchedLabObj.ResourceId
                         }
@@ -514,7 +514,7 @@ function Get-AzureDtlVirtualMachine
 
             "ListAllInResourceGroup"
             {
-                $output = Get-AzureRmResource | Where { 
+                $output = Get-AzureRmResource | Where-Object { 
                     $_.ResourceType -eq $EnvironmentResourceType -and 
                     $_.ResourceGroupName -eq $VMResourceGroupName 
                 }             
@@ -522,7 +522,7 @@ function Get-AzureDtlVirtualMachine
 
             "ListAllInLocation"
             {
-                $output = Get-AzureRmResource | Where { 
+                $output = Get-AzureRmResource | Where-Object { 
                     $_.ResourceType -eq $EnvironmentResourceType -and 
                     $_.Location -eq $VMLocation 
                 }
@@ -530,7 +530,7 @@ function Get-AzureDtlVirtualMachine
 
             "ListAll" 
             {
-                $output = Get-AzureRmResource | Where { 
+                $output = Get-AzureRmResource | Where-Object { 
                     $_.ResourceType -eq $EnvironmentResourceType 
                 }
             }
@@ -605,7 +605,7 @@ function New-AzureDtlLab
         }
 
         # Check if there are any existing labs with same name in the current subscription
-        $existingLabs = Get-AzureRmResource | Where { 
+        $existingLabs = Get-AzureRmResource | Where-Object { 
             $_.ResourceType -eq $LabResourceType -and 
             $_.ResourceName -eq $LabName -and 
             $_.SubscriptionId -eq (Get-AzureRmContext).Subscription.SubscriptionId
