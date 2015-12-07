@@ -10,7 +10,7 @@ We recommended to start with a simple deployment using the template for [Mesos](
 
  
 
-![](images\130/media/image1.png)
+![](images/130/media/image1.png)
 
  
 
@@ -22,7 +22,7 @@ You can edit the AGENTCOUNT parameter to set it anywhere between 1 and 40.
 
  
 
-![](images\130/media/image2.png)
+![](images/130/media/image2.png)
 
  
 
@@ -32,4 +32,4 @@ Say you initially had set AGENTCOUNT to 1, you can increase the number of agents
 
  
 
-![](images\130/media/image3.png)
+![](images/130/media/image3.png)
