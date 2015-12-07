@@ -7,5 +7,5 @@
 This template will create a DocumentDB Account with the name provided, the location set to the same location as the resource group that was used, and the Offer Type set to ***Standard***. 
 
 By not setting the optional Default Consistency Level parameter, the account will be created with the default consistency level of ***Session***.
-If you want to set the Default Consistency Level to another value refer to, [101-create-documentdb-account-ext](https://github.com/Azure/azure-quickstart-templates/tree/master/101-create-documentdb-account-ext) to see how it is done. 
+If you want to set the Default Consistency Level to another value refer to, [101-create-documentdb-account-consistencypolicy](https://github.com/Azure/azure-quickstart-templates/tree/master/101-create-documentdb-account-consistencypolicy) to see how it is done. 
 
