@@ -47,7 +47,7 @@ ssh  -N -f -L 5000:localhost:5901 azureuser@<JUMPBOX_IP>
 
 Go to Finder, and press `Cmd + K`. Then connect to the VNC tunnel, using `password` as the password:
 
-![OSX Connection Dialog](osx-connection-dialog.png)
+![OSX Connection Dialog](images/osx-connection-dialog.png)
 
 Enter the password and you'll be all setup.
 
