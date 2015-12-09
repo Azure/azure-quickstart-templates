@@ -6,3 +6,7 @@
 This template creates one or two Window Server 2012R2 VM(s) with IIS configured using DSC. It will also install one SQL Server 2014 standard edition VM.
 
 A VNET with two subnets, NSG, loader balancer with NATing and probing rules are also created by this template.
+
+
+<!--<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/iis-2vm-sql-1vm/scripts/architecture.png" />-->
+<img src="https://raw.githubusercontent.com/alibaloch/azure-quickstart-templates/master/iis-2vm-sql-1vm/scripts/architecture.png" />
