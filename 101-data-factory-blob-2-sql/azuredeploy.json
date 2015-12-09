@@ -1,0 +1,138 @@
+{
+  "contentVersion": "1.0.0.0",
+  "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+  "parameters": {
+    "dataFactoryName": { "type": "string" },
+    "storageAccountName1": { "type": "string" },
+    "storageAccountKey": { "type": "securestring" },
+    "sqlServerUserName": { "type": "string" },
+    "sqlServerPassword": { "type": "securestring" },
+    "sqlServerName": { "type": "string" },
+    "dbName": { "type": "string" },
+    "folderPathLocation": { "type": "string" },
+    "sqlTable": { "type": "string" },
+    "location":  {"type" :  "string"}
+  },
+  "variables": {
+    "apiVersion": "2014-10-01-preview",
+    "azureSqlLinkedServiceName": "AzureSqlLinkedService",
+    "storageLinkedServiceName": "StorageLinkedService",
+    "BlobInputTableName": "BlobInputTable",
+    "SQLOutputTableName": "SQLOutputTable",
+    "PipelineName": "Pipeline"
+  },
+  "resources": [
+    {
+      "name": "[parameters('dataFactoryName')]",
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.DataFactory/datafactories",
+      "location": "[parameters('location')]",
+      "resources": [
+        {
+          "dependsOn": [ "[concat('Microsoft.DataFactory/dataFactories/', parameters('dataFactoryName'))]" ],
+          "type": "linkedservices",
+          "name": "[variables('azureSqlLinkedServiceName')]",
+          "apiVersion": "[variables('apiVersion')]",
+          "properties": {
+            "type": "AzureSqlLinkedService",
+            "connectionString": "[concat('Server=tcp:',parameters('sqlServerName'),'.database.windows.net,1433;Database=', parameters('dbName'), ';User ID=',parameters('sqlServerUserName'),';Password=',parameters('sqlServerPassword'),';Trusted_Connection=False;Encrypt=True;Connection Timeout=30')]"
+          }
+        },
+        {
+          "dependsOn": [ "[concat('Microsoft.DataFactory/dataFactories/', parameters('dataFactoryName'))]" ],
+          "type": "linkedservices",
+          "name": "[variables('storageLinkedServiceName')]",
+          "apiVersion": "[variables('apiVersion')]",
+          "properties": {
+            "type": "AzureStorageLinkedService",
+            "connectionString": "[concat('DefaultEndpointsProtocol=https;AccountName=',parameters('storageAccountName1'),';AccountKey=',parameters('storageAccountKey'))]"
+          }
+        },
+        {
+          "dependsOn": [
+            "[concat('Microsoft.DataFactory/dataFactories/', parameters('dataFactoryName'))]",
+            "[concat('Microsoft.DataFactory/dataFactories/', parameters('dataFactoryName'), '/linkedServices/', variables('storageLinkedServiceName'))]"
+          ],
+          "type": "tables",
+          "name": "[variables('BlobInputTableName')]",
+          "apiVersion": "[variables('apiVersion')]",
+          "properties": {            
+            "location": {
+              "type": "AzureBlobLocation",
+              "folderPath": "[parameters('folderPathLocation')]",
+              "format": {
+                "type": "TextFormat",
+                "columnDelimiter": ","
+              },
+              "linkedServiceName": "[variables('storageLinkedServiceName')]"
+            },
+            "availability": {
+              "frequency": "Day",
+              "interval": 1
+            }
+          }
+        },
+        {
+          "dependsOn": [
+            "[concat('Microsoft.DataFactory/dataFactories/', parameters('dataFactoryName'))]",
+            "[concat('Microsoft.DataFactory/dataFactories/', parameters('dataFactoryName'), '/linkedServices/', variables('azureSqlLinkedServiceName'))]"
+          ],
+          "type": "tables",
+          "name": "[variables('SQLOutputTableName')]",
+          "apiVersion": "[variables('apiVersion')]",
+          "properties": {            
+            "location": {
+              "type": "AzureSqlTableLocation",
+              "tableName": "[parameters('sqlTable')]",
+              "linkedServiceName": "[variables('azureSqlLinkedServiceName')]"
+            },
+            "availability": {
+              "frequency": "Day",
+              "interval": 1
+            }
+          }
+        },
+        {
+          "dependsOn": [
+            "[concat('Microsoft.DataFactory/dataFactories/', parameters('dataFactoryName'))]",
+            "[concat('Microsoft.DataFactory/dataFactories/', parameters('dataFactoryName'), '/linkedServices/', variables('storageLinkedServiceName'))]",
+            "[concat('Microsoft.DataFactory/dataFactories/', parameters('dataFactoryName'), '/linkedServices/', variables('azureSqlLinkedServiceName'))]",
+            "[concat('Microsoft.DataFactory/dataFactories/', parameters('dataFactoryName'), '/tables/', variables('SQLOutputTableName'))]",
+            "[concat('Microsoft.DataFactory/dataFactories/', parameters('dataFactoryName'), '/tables/', variables('BlobInputTableName'))]"
+          ],
+          "type": "datapipelines",
+          "name": "[variables('PipelineName')]",
+          "apiVersion": "[variables('apiVersion')]",
+          "properties": {
+            "description": "(v1.0) Join the Regional Campaign data and with Enriched Gamer Fact Data and push to Azure SQLD Database",
+            "activities": [
+              {
+                "name": "EgressDataAzure",
+                "description": "Push data frm blob to Sql Azure",
+                "type": "CopyActivity",
+                "inputs": [ { "name": "[variables('BlobInputTableName')]" } ],
+                "outputs": [ { "name": "[variables('SQLOutputTableName')]" } ],
+                "transformation": {
+                  "source": {
+                    "type": "BlobSource"
+                  },
+                  "sink": {
+                    "type": "SqlSink"
+                  }
+                },
+                "Policy": {
+                  "concurrency": 1,
+                  "executionPriorityOrder": "NewestFirst",
+                  "style": "StartOfInterval",
+                  "retry": 0,
+                  "timeout": "01:00:00"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
+ 
