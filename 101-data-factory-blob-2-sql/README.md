@@ -11,3 +11,6 @@ This template creates a very simple Data Factory pipeline that copies data from 
 2. Source CSV file within a blob container 
 3. Azure SQL Database
 4. Target table in the database
+
+Data Factory result diagram:
+![alt tag](images/adfDiagram.PNG)
