@@ -1,0 +1,237 @@
+{
+    "handler": "Microsoft.Compute.MultiVm",
+    "version": "0.0.1-preview",
+    "parameters": {
+        "basics": [
+            {
+                "name": "vmUsername",
+                "type": "Microsoft.Compute.UserNameTextBox",
+                "label": "VM user name",
+                "defaultValue": "",
+                "toolTip": "",
+                "constraints": {
+                    "required": true
+                },
+                "osPlatform": "Linux"
+            },
+            {
+                "name": "vmPassword",
+                "type": "Microsoft.Common.PasswordBox",
+                "label": {
+                    "password": "VM Password",
+                    "confirmPassword": "Confirm password"
+                },
+                "toolTip": "",
+                "constraints": {
+                    "required": true,
+                    "regex": "",
+                    "validationMessage": ""
+                },
+                "options": {
+                    "hideConfirmation": false
+                }
+            }
+        ],
+        "steps": [
+            {
+                "name": "infrastructureInfo",
+                "label": "Infrastructure information",
+                "subLabel": {
+                    "preValidation": "Provide infrastructure information",
+                    "postValidation": "Done"
+                },
+                "bladeTitle": "Infrastructure information",
+                "elements": [
+                    {
+                        "name": "vmSize",
+                        "type": "Microsoft.Compute.SizeSelector",
+                        "label": "Databse VM size",
+                        "toolTip": "",
+                        "recommendedSizes": [
+                            "Standard_D2",
+                            "Standard_DS2",
+                            "Standard_D3",
+                            "Standard_DS3"
+                        ],
+                        "constraints": {
+                            "required": true,
+                            "excludedSizes": [
+                                "Basic_A0",
+                                "ExtraSmall"
+                            ]
+                        },
+                        "osPlatform": "Linux",
+                        "imageReference": {
+                            "publisher": "Canonical",
+                            "offer": "UbuntuServer",
+                            "sku": "14.04.3-LTS"
+                        },
+                        "count": 1
+                    },
+                    {
+                        "name": "storageAccount",
+                        "type": "Microsoft.Storage.MultiStorageAccountCombo",
+                        "label": {
+                            "prefix": "Storage account prefix",
+                            "type": "Storage account type"
+                        },
+                        "toolTip": {
+                            "prefix": "Storage account for the splunk VMs, only new storage account is supported",
+                            "type": "Premium or Standard storage types"
+                        },
+                        "defaultValue": {
+                            "prefix": "change_me_to_be_unique",
+                            "type": "Standard_LRS"
+                        },
+                        "constraints": {
+                            "allowedTypes": [
+                                "Standard_LRS",
+                                "Premium_LRS"
+                            ],
+                            "count": 2,
+                            "required": true
+                        }
+                    },
+                    {
+                        "name": "vnetSpec",
+                        "type": "Microsoft.Network.VirtualNetworkCombo",
+                        "label": {
+                            "virtualNetwork": "Virtual network",
+                            "subnets": "Subnets"
+                        },
+                        "toolTip": {
+                            "virtualNetwork": "",
+                            "subnets": ""
+                        },
+                        "defaultValue": {
+                            "name": "splunkVnet",
+                            "addressPrefixSize": "/16"
+                        },
+                        "constraints": {
+                            "minAddressPrefixSize": "/29"
+                        },
+                        "subnets": {
+                            "subnet1": {
+                                "label": "Search head subnet",
+                                "defaultValue": {
+                                    "name": "shsubnet",
+                                    "addressPrefixSize": "/24"
+                                },
+                                "constraints": {
+                                    "minAddressPrefixSize": "/29",
+                                    "minAddressCount": 1,
+                                    "requireContiguousAddresses": true
+                                }
+                            },
+                            "subnet2": {
+                                "label": "Index subnet",
+                                "defaultValue": {
+                                    "name": "idxsubnet",
+                                    "addressPrefixSize": "/26"
+                                },
+                                "constraints": {
+                                    "minAddressPrefixSize": "/29",
+                                    "minAddressCount": 4,
+                                    "requireContiguousAddresses": true
+                                }
+                            }
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "splunkSettings",
+                "label": "Splunk settings",
+                "subLabel": {
+                    "preValidation": "Provide Splunk settings",
+                    "postValidation": "Done"
+                },
+                "bladeTitle": "Splunk settings",
+                "elements": [
+                    {
+                        "name": "domainName",
+                        "type": "Microsoft.Network.PublicIpAddressCombo",
+                        "label": {
+                            "publicIpAddress": "New public IP name",
+                            "domainNameLabel": "Domain name for Splunk"
+                        },
+                        "toolTip": {
+                            "publicIpAddress": "Only new public IP is currently supported",
+                            "domainNameLabel": "Splunk will be accessible from this domain, for example https://<mydns>.<location>.cloudapp.azure.com"
+                        },
+                        "defaultValue": {
+                            "publicIpAddressName": "searchHeadIp",
+                            "domainNameLabel": "change_me_to_be_unique"
+                        },
+                        "constraints": {
+                            "required": true
+                        },
+                        "options": {
+                            "hideNone": true,
+                            "hideDomainNameLabel": false
+                        }
+                    },
+                    {
+                        "name": "deploymentSize",
+                        "type": "Microsoft.Common.DropDown",
+                        "label": "Splunk deployment type",
+                        "defaultValue": "Standalone",
+                        "toolTip": "",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "Single node",
+                                    "value": "Standalone"
+                                },
+                                {
+                                    "label": "Cluster",
+                                    "value": "Cluster"
+                                }
+                            ],
+                            "required": true
+                        }
+                    },
+                    {
+                        "name": "splunkAdminPassword",
+                        "type": "Microsoft.Common.PasswordBox",
+                        "label": {
+                            "password": "Splunk admin password",
+                            "confirmPassword": "Confirm password"
+                        },
+                        "toolTip": "",
+                        "constraints": {
+                            "required": true,
+                            "regex": "^[^'\\\\]{6,72}$",
+                            "validationMessage": "The password must be between 6 and 72 characters long, and cannot contain the single quote (apostrophe) character."
+                        },
+                        "options": {
+                            "hideConfirmation": false
+                        }
+                    }
+                ]
+            }
+        ],
+        "outputs": {
+            "location": "[location()]",
+            "storageAccountNamePrefix": "[steps('infrastructureInfo').storageAccount.prefix]",
+            "storageAccountType": "[steps('infrastructureInfo').storageAccount.type]",
+            "deploymentSize": "[steps('splunkSettings').deploymentSize]",
+            "domainName": "[steps('splunkSettings').domainName.domainNameLabel]",
+            "publicIPNamePrefix": "[steps('splunkSettings').domainName.publicIpAddressName]",
+            "adminUsername": "[basics('vmUsername')]",
+            "adminPassword": "[basics('vmPassword')]",
+            "splunkAdminPassword": "[steps('splunkSettings').splunkAdminPassword]",
+            "vmSize": "[steps('infrastructureInfo').vmSize]",
+            "virtualNetworkName": "[steps('infrastructureInfo').vnetSpec.name]",
+            "virtualNetworkNewOrExisting": "[steps('infrastructureInfo').vnetSpec.newOrExisting]",
+            "virtualNetworkExistingRGName": "[steps('infrastructureInfo').vnetSpec.resourceGroup]",
+            "virtualNetworkAddressPrefix": "[steps('infrastructureInfo').vnetSpec.addressPrefix]",
+            "subnet1Name": "[steps('infrastructureInfo').vnetSpec.subnets.subnet1.name]",
+            "subnet2Name": "[steps('infrastructureInfo').vnetSpec.subnets.subnet2.name]",
+            "subnet1Prefix": "[steps('infrastructureInfo').vnetSpec.subnets.subnet1.addressPrefix]",
+            "subnet2Prefix": "[steps('infrastructureInfo').vnetSpec.subnets.subnet2.addressPrefix]",
+            "subnet1StartAddress": "[steps('infrastructureInfo').vnetSpec.subnets.subnet1.startAddress]",
+            "subnet2StartAddress": "[steps('infrastructureInfo').vnetSpec.subnets.subnet1.startAddress]"
+        }
+    }
+}
