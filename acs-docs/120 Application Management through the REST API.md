@@ -15,8 +15,8 @@ curl localhost:8080/v2/apps
 Against a new cluster this will return:
 
 ```json
-{"apps":\[\]}
-````
+{"apps":[]}
+```
 
 Deploying a Docker Container
 
