@@ -1,5 +1,5 @@
 ﻿{
-    "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
         "dnsName": {
@@ -8,7 +8,7 @@
                 "description": "Connect to your cluster using dnsName.location.cloudapp.azure.com"
             }
         },
-        "location": { 
+        "location": {
             "type": "string",
             "metadata": {
                 "description": "Location where the MySQL cluster will be deployed to"
@@ -63,6 +63,24 @@
             "defaultValue": "mysqlvnet",
             "metadata": {
                 "description": "Virtual network name for the cluster"
+            }
+        },
+        "vnetNewOrExisting": {
+            "type": "string",
+            "defaultValue": "new",
+            "allowedValues": [
+                "new",
+                "existing"
+            ],
+            "metadata": {
+                "description": "Identifies whether to use new or existing Virtual Network"
+            }
+        },
+        "virtualNetworkExistingRGName": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "If using existing VNet, specifies the resource group for the existing VNet"
             }
         },
         "dbSubnetName": {
@@ -196,10 +214,11 @@
         }
     },
     "variables": {
+        "templateAPIVersion": "2015-01-01",
+        "resourceAPIVersion": "2015-06-15",
+
         "region": "[parameters('location')]",
         "nodeCount": 2,
-        "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
-        "dbSubnetRef": "[concat(variables('vnetID'),'/subnets/',parameters('dbSubnetName'))]",
         "lbPublicIPName": "[parameters('publicIPName')]",
         "lbPublicIPRef": "[resourceId('Microsoft.Network/publicIPAddresses',variables('lbPublicIPName'))]",
         "lbName": "[concat(parameters('dnsName'), '-lb')]",
@@ -218,6 +237,7 @@
         "mysqlConfigFilePath": "[concat(parameters('artifactsPath'), '/my.cnf.template')]",
         "singleQuote": "'",
 
+        "virtualNetworkSetupURL": "[concat(parameters('artifactsPath'),'/vnet-',parameters('vnetNewOrExisting'),'.json')]",
         "sa": "[parameters('dbSubnetStartAddress')]",
         "ipOctet01": "[concat(split(variables('sa'), '.')[0], '.', split(variables('sa'), '.')[1], '.')]",
         "ipOctet2": "[int(split(variables('sa'), '.')[2])]",
@@ -225,16 +245,48 @@
     },
     "resources": [
         {
+            "name": "SettingUpVirtualNetwork",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "[variables('templateAPIVersion')]",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('virtualNetworkSetupURL')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "virtualNetworkName": {
+                        "value": "[parameters('virtualNetworkName')]"
+                    },
+                    "location": {
+                        "value": "[variables('region')]"
+                    },
+                    "virtualNetworkAddressPrefix": {
+                        "value": "[parameters('vnetAddressPrefix')]"
+                    },
+                    "dbSubnetName": {
+                        "value": "[parameters('dbSubnetName')]"
+                    },
+                    "dbSubnetAddressPrefix": {
+                        "value": "[parameters('dbSubnetAddressPrefix')]"
+                    },
+                    "virtualNetworkExistingRGName": {
+                        "value": "[parameters('virtualNetworkExistingRGName')]"
+                    }
+                }
+            }
+        },
+        {
             "type": "Microsoft.Storage/storageAccounts",
             "name": "[variables('storageAccountName')]",
-            "apiVersion": "2015-05-01-preview",
+            "apiVersion": "[variables('resourceAPIVersion')]",
             "location": "[variables('region')]",
             "properties": {
                 "accountType": "[parameters('storageAccountType')]"
             }
         },
         {
-            "apiVersion": "2015-05-01-preview",
+            "apiVersion": "[variables('resourceAPIVersion')]",
             "type": "Microsoft.Network/publicIPAddresses",
             "name": "[variables('lbPublicIPName')]",
             "location": "[variables('region')]",
@@ -248,33 +300,12 @@
         {
             "type": "Microsoft.Compute/availabilitySets",
             "name": "[variables('availabilitySetName')]",
-            "apiVersion": "2015-05-01-preview",
+            "apiVersion": "[variables('resourceAPIVersion')]",
             "location": "[variables('region')]",
             "properties": { }
         },
         {
-            "apiVersion": "2015-05-01-preview",
-            "type": "Microsoft.Network/virtualNetworks",
-            "name": "[parameters('virtualNetworkName')]",
-            "location": "[variables('region')]",
-            "properties": {
-                "addressSpace": {
-                    "addressPrefixes": [
-                        "[parameters('vnetAddressPrefix')]"
-                    ]
-                },
-                "subnets": [
-                    {
-                        "name": "[parameters('dbSubnetName')]",
-                        "properties": {
-                            "addressPrefix": "[parameters('dbSubnetAddressPrefix')]"
-                        }
-                    }
-                ]
-            }
-        },
-        {
-            "apiVersion": "2015-05-01-preview",
+            "apiVersion": "[variables('resourceAPIVersion')]",
             "type": "Microsoft.Network/networkInterfaces",
             "name": "[concat(variables('nicName'), copyIndex())]",
             "location": "[variables('region')]",
@@ -283,7 +314,7 @@
                 "count": "[variables('nodeCount')]"
             },
             "dependsOn": [
-                "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
+                "[concat('Microsoft.Resources/deployments/', 'SettingUpVirtualNetwork')]",
                 "[concat('Microsoft.Network/loadBalancers/', variables('lbName'))]"
             ],
             "properties": {
@@ -294,7 +325,7 @@
                             "privateIPAllocationMethod": "Static",
                             "privateIPAddress": "[concat(variables('ipOctet01'), add(variables('ipOctet2'), div(copyIndex(variables('ipOctet3')), 255)), '.', mod(copyIndex(variables('ipOctet3')), 255))]",
                             "subnet": {
-                                "id": "[variables('dbSubnetRef')]"
+                                "id": "[reference('Microsoft.Resources/deployments/SettingUpVirtualNetwork', variables('templateAPIVersion')).outputs.dbSubnetRef.value]"
                             },
                             "loadBalancerBackendAddressPools": [
                                 {
@@ -320,7 +351,7 @@
         {
             "name": "[concat(parameters('dnsName'), copyIndex())]",
             "type": "Microsoft.Compute/virtualMachines",
-            "apiVersion": "2015-05-01-preview",
+            "apiVersion": "[variables('resourceAPIVersion')]",
             "location": "[variables('region')]",
             "copy": {
                 "name": "vmLoop",
@@ -391,7 +422,7 @@
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "name": "[concat(parameters('dnsName'), copyIndex(), '/setupMySQL')]",
-            "apiVersion": "2015-05-01-preview",
+            "apiVersion": "[variables('resourceAPIVersion')]",
             "location": "[variables('region')]",
             "copy": {
                 "name": "extLoop",
@@ -420,7 +451,7 @@
             }
         },
         {
-            "apiVersion": "2015-05-01-preview",
+            "apiVersion": "[variables('resourceAPIVersion')]",
             "type": "Microsoft.Network/loadBalancers",
             "name": "[variables('lbName')]",
             "location": "[variables('region')]",
