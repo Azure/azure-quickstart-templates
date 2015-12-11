@@ -11,7 +11,7 @@ There are two templates of particular interest:
  
 This will take you to the portal and present a form that looks something like this:
  
- ![Create deployment](images/101/01 - Create - empty.png)
+ ![Create deployment](images/create-mesos-params.png)
  
 To complete the form:
 
