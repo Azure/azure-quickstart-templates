@@ -2,10 +2,11 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "newStorageAccountName": {
+    "storageAccountNamePrefix": {
       "type": "string",
+      "maxLength": 11
       "metadata": {
-        "description": "This is the name of the your storage account"
+        "description": "Name prefix of the Storage Account"
       }
     },
     "vmDnsName": {
@@ -86,12 +87,13 @@
     "virtualNetworkName": "WPVNET",
     "apiVersion": "2015-06-15",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
-    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]"
+    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
+    "storageAccountName": "[replace(replace(tolower(concat(parameters('storageAccountNamePrefix'), uniquestring(resourceGroup().id))), '-',''),'.','')]"
   },
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[parameters('newStorageAccountName')]",
+      "name": "[parameters('storageAccountName')]",
       "apiVersion": "[variables('apiVersion')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -163,7 +165,7 @@
       "name": "[variables('vmName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
       ],
       "properties": {
@@ -185,7 +187,7 @@
           "osDisk": {
             "name": "osdisk1",
             "vhd": {
-              "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/','osdisk1.vhd')]"
+              "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/','osdisk1.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
