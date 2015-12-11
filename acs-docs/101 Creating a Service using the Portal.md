@@ -23,13 +23,8 @@ DNSNAMEPREFIX   | This must be a world unique value. It will be used to create D
 AGENTCOUNT      | This is the number of Virtual Machines to create in your cluster that will host containers
 MASTERCOUNT     | This is the number of Virtual Machines to configure as masters for your cluster. You can select 1, but this will not provide any resilience in your cluster and is only recommended for testing. Most users will want to pick 3 or 5 here.
 SSHRSAPUBLICKEY	| It is recommended that you use SSH for authentication against the Virtual Machines. This is where you add your public key. At the time of writing you can set this to "disabled" which means no SSH key will be used. This is not recommended for production environments. If you need to create an SSH key you can find guidance for [windows](https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-windows-use-ssh-key/) and [Linux](https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-linux-use-ssh-key/) on the Azure documentation site.
- 
-Once completed your parameters form will look something like this:
- 
- ![Create ACS - completed](images/101/02 - Create - parameters completed.png)
- 
- 
-Click OK. The parameters blade will disappear.
+  
+Once you have confirgure your parameters, click OK. The parameters blade will disappear.
  
 If you have more than one subscription ensure the right one is selected in the "subscription" blade:
  
