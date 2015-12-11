@@ -62,9 +62,9 @@
         "description": "Name of the virtual network that the consumer wants to use"
       }
     },
-    "virtualNetworkNewOrExisting" : {
-      "type" : "string",
-      "defaultValue" : "new",
+    "virtualNetworkNewOrExisting": {
+      "type": "string",
+      "defaultValue": "new",
       "allowedValues": [
         "new",
         "existing"
@@ -80,15 +80,79 @@
         "description": "Name of resource group of existing Virtual Network (if applicable)"
       }
     },
+    "virtualNetworkAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/16",
+      "metadata": {
+        "description": "Virtual network address CIDR"
+      }
+    },
+    "subnet1Name": {
+      "type": "string",
+      "defaultValue": "shsubnet",
+      "metadata": {
+        "description": "Subnet for the Search Head"
+      }
+    },
+    "subnet2Name": {
+      "type": "string",
+      "defaultValue": "idxsubnet",
+      "metadata": {
+        "description": "Subnet for the Indexers"
+      }
+    },
+    "subnet1Prefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/24",
+      "metadata": {
+        "description": "Search Head subnet CIDR"
+      }
+    },
+    "subnet2Prefix": {
+      "type": "string",
+      "defaultValue": "10.0.1.0/24",
+      "metadata": {
+        "description": "Indexer subnet CIDR"
+      }
+    },
+    "subnet1StartAddress": {
+      "type": "string",
+      "defaultValue": "10.0.0.20",
+      "metadata": {
+        "description": "Search Head subnet start address"
+      }
+    },
+    "subnet2StartAddress": {
+      "type": "string",
+      "defaultValue": "10.0.1.20",
+      "metadata": {
+        "description": "Indexer subnet start address"
+      }
+    },
     "vmSize": {
       "type": "string",
       "metadata": {
         "description": "Size of the virtual machine"
       }
+    },
+    "publicIPName": {
+      "type": "string",
+      "defaultValue": "splunksh-publicip",
+      "metadata": {
+        "description": "Name of the Search Head public IP address"
+      }
+    },
+    "templateLocation": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/rarsan/azure-quickstart-templates/master/splunk-on-ubuntu/",
+      "metadata": {
+        "description": "Template file location",
+        "artifactsBaseUrl": "Base URL of the Publisher Template gallery package"
+      }
     }
   },
   "variables": {
-    "templateBaseUrl": "https://raw.githubusercontent.com/rarsan/azure-quickstart-templates/develop/splunk-on-ubuntu/",
+    "templateBaseUrl": "[parameters('templateLocation')]",
     "sharedTemplateUrl": "[concat(variables('templateBaseUrl'), 'shared-resources.json')]",
     "virtualNetworkTemplateUrl": "[concat(variables('templateBaseUrl'), 'vnet-', parameters('virtualNetworkNewOrExisting'), '.json')]",
     "emptyTemplateUrl": "[concat(variables('templateBaseUrl'), 'empty-resources.json')]",
@@ -129,33 +193,34 @@
       }
     },
     "tshirtSize": "[variables(concat('tshirtSize', parameters('deploymentSize')))]",
+    "sa2": "[parameters('subnet2StartAddress')]",
+    "ipOctet01": "[concat(split(variables('sa2'), '.')[0], '.', split(variables('sa2'), '.')[1], '.')]",
+    "ipOctet2": "[int(split(variables('sa2'), '.')[2])]",
+    "ipOctet3": "[int(split(variables('sa2'), '.')[3])]",
     "networkSettings": {
       "virtualNetworkName": "[parameters('virtualNetworkName')]",
       "virtualNetworkExistingRGName": "[parameters('virtualNetworkExistingRGName')]",
-      "virtualNetworkAddressPrefix": "10.0.0.0/16",
+      "virtualNetworkAddressPrefix": "[parameters('virtualNetworkAddressPrefix')]",
       "subnet": {
         "sh": {
-          "name": "sh",
-          "prefix": "10.0.0.0/24",
+          "name": "[parameters('subnet1Name')]",
+          "prefix": "[parameters('subnet1Prefix')]",
           "vnet": "[parameters('virtualNetworkName')]"
         },
         "idx": {
-          "name": "idx",
-          "prefix": "10.0.1.0/24",
+          "name": "[parameters('subnet2Name')]",
+          "prefix": "[parameters('subnet2Prefix')]",
           "vnet": "[parameters('virtualNetworkName')]"
         }
       },
       "statics": {
-        "standaloneIp": "10.0.0.250",
-        "clusterSearchheadIp": "10.0.0.250",
-        "clusterMasterIp": "10.0.1.250",
-        "searchheadIps": {
-          "base": "10.0.0.",
-          "start": 5
-        },
+        "standaloneIp": "[parameters('subnet1StartAddress')]",
+        "clusterSearchheadIp": "[parameters('subnet1StartAddress')]",
+        "clusterMasterIp": "[parameters('subnet2StartAddress')]",
         "indexerIps": {
-          "base": "10.0.1.",
-          "start": 5
+          "ipOctet01": "[variables('ipOctet01')]",
+          "ipOctet2": "[add(variables('ipOctet2'), div(add(variables('ipOctet3'), 1), 255))]",
+          "ipOctet3": "[mod(add(variables('ipOctet3'), 1), 255)]"
         }
       }
     },
@@ -246,6 +311,7 @@
               "staticIp": "[variables('networkSettings').statics.standaloneIp]",
               "clusterMasterIp": "NA",
               "publicDns": "[concat(parameters('domainName'), '')]",
+              "publicIPName": "[concat(parameters('publicIPName'), '')]",
               "availabilitySet": "[variables('availabilitySetSettings').name]"
             }
           },
@@ -301,6 +367,7 @@
               "staticIp": "[variables('networkSettings').statics.clusterMasterIp]",
               "clusterMasterIp": "NA",
               "publicDns": "[concat(parameters('domainName'), '-cm')]",
+              "publicIPName": "[concat(parameters('publicIPName'), '-cm')]",
               "availabilitySet": "[variables('availabilitySetSettings').name]"
             }
           },
@@ -357,6 +424,7 @@
               "staticIp": "[variables('networkSettings').statics.clusterSearchheadIp]",
               "clusterMasterIp": "[variables('networkSettings').statics.clusterMasterIp]",
               "publicDns": "[concat(parameters('domainName'), '')]",
+              "publicIPName": "[concat(parameters('publicIPName'), '')]",
               "availabilitySet": "[variables('availabilitySetSettings').name]"
             }
           },
@@ -414,6 +482,7 @@
               "staticIps": "[variables('networkSettings').statics.indexerIps]",
               "clusterMasterIp": "[variables('networkSettings').statics.clusterMasterIp]",
               "publicDns": "[concat(parameters('domainName'), '-cp')]",
+              "publicIPName": "[concat(parameters('publicIPName'), '-cp')]",
               "availabilitySet": "[variables('availabilitySetSettings').name]"
             }
           },
@@ -445,5 +514,5 @@
       }
     }
   ],
-  "outputs": {}
+  "outputs": { }
 }
