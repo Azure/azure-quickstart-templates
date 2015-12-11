@@ -53,14 +53,11 @@ function GetLabFromVM_Private
         $VM
     )
 
-    $vmProperties = Get-AzureRmResource -ExpandProperties | Where {
-        $_.ResourceType -eq $EnvironmentResourceType -and 
-        $_.ResourceId -eq $VM.ResourceId
-    } | Select -Property "Properties"
+    $vm = GetResourceWithProperties_Private -Resource $VM
 
-    Get-AzureRmResource | Where {
+    Get-AzureRmResource | Where-Object {
         $_.ResourceType -eq $LabResourceType -and 
-        $_.ResourceId -eq $vmProperties.Properties.LabId
+        $_.ResourceId -eq $vm.Properties.LabId
     }
 }
 
@@ -208,7 +205,7 @@ function Get-AzureDtlLab
         {
             "ListByLabId"
             {
-                $output = Get-AzureRmResource | Where { 
+                $output = Get-AzureRmResource | Where-Object { 
                     $_.ResourceType -eq $LabResourceType -and 
                     $_.ResourceId -eq $LabId 
                 }
@@ -218,7 +215,7 @@ function Get-AzureDtlLab
             {
                 if ($PSBoundParameters.ContainsKey("LabResourceGroupName"))
                 {
-                    $output = Get-AzureRmResource | Where { 
+                    $output = Get-AzureRmResource | Where-Object { 
                         $_.ResourceType -eq $LabResourceType -and 
                         $_.ResourceName -eq $LabName -and 
                         $_.ResourceGroupName -eq $LabResourceGroupName 
@@ -226,7 +223,7 @@ function Get-AzureDtlLab
                 }
                 else
                 {
-                    $output = Get-AzureRmResource | Where { 
+                    $output = Get-AzureRmResource | Where-Object { 
                         $_.ResourceType -eq $LabResourceType -and 
                         $_.ResourceName -eq $LabName 
                     }     
@@ -235,7 +232,7 @@ function Get-AzureDtlLab
 
             "ListAllInResourceGroup"
             {
-                $output = Get-AzureRmResource | Where { 
+                $output = Get-AzureRmResource | Where-Object { 
                     $_.ResourceType -eq $LabResourceType -and 
                     $_.ResourceGroupName -eq $LabResourceGroupName 
                 }
@@ -243,7 +240,7 @@ function Get-AzureDtlLab
 
             "ListAllInLocation"
             {
-                $output = Get-AzureRmResource | Where { 
+                $output = Get-AzureRmResource | Where-Object { 
                     $_.ResourceType -eq $LabResourceType -and 
                     $_.Location -eq $LabLocation 
                 }
@@ -251,7 +248,7 @@ function Get-AzureDtlLab
 
             "ListAll" 
             {
-                $output = Get-AzureRmResource | Where { 
+                $output = Get-AzureRmResource | Where-Object { 
                     $_.ResourceType -eq $LabResourceType 
                 }
             }
@@ -352,7 +349,7 @@ function Get-AzureDtlVMTemplate
 
             "ListByVMTemplateName"
             {
-                $output = Get-AzureRmResource -ResourceName $Lab.ResourceName -ResourceGroupName $Lab.ResourceGroupName -ResourceType $VMTemplateResourceType -ApiVersion $RequiredApiVersion | Where {
+                $output = Get-AzureRmResource -ResourceName $Lab.ResourceName -ResourceGroupName $Lab.ResourceGroupName -ResourceType $VMTemplateResourceType -ApiVersion $RequiredApiVersion | Where-Object {
                     $_.Name -eq $VMTemplateName
                 }
             }
@@ -475,7 +472,7 @@ function Get-AzureDtlVirtualMachine
         {
             "ListByVMId"
             {
-                $output = Get-AzureRmResource | Where { 
+                $output = Get-AzureRmResource | Where-Object { 
                     $_.ResourceType -eq $EnvironmentResourceType -and 
                     $_.ResourceId -eq $VMId 
                 }
@@ -483,7 +480,7 @@ function Get-AzureDtlVirtualMachine
                     
             "ListByVMName"
             {
-                $output = Get-AzureRmResource | Where { 
+                $output = Get-AzureRmResource | Where-Object { 
                     $_.ResourceType -eq $EnvironmentResourceType -and 
                     $_.ResourceName -eq $VMName 
                 }                
@@ -493,7 +490,7 @@ function Get-AzureDtlVirtualMachine
             {
                 $fetchedLabObj = Get-AzureDtlLab -LabName $LabName 
 
-                if ($fetchedLabObj -ne $null -and $fetchedLabObj.Count -ne 0)
+                if ($null -ne $fetchedLabObj -and $fetchedLabObj.Count -ne 0)
                 {
                     if ($fetchedLabObj.Count > 1)
                     {
@@ -507,7 +504,7 @@ function Get-AzureDtlVirtualMachine
                         # Note: The -ErrorAction 'SilentlyContinue' ensures that we suppress irrelevant
                         # errors originating while expanding properties (especially in internal test and
                         # pre-production subscriptions).
-                        $output = Get-AzureRmResource -ExpandProperties -ErrorAction "SilentlyContinue" | Where { 
+                        $output = Get-AzureRmResource -ExpandProperties -ErrorAction "SilentlyContinue" | Where-Object { 
                             $_.ResourceType -eq $EnvironmentResourceType -and
                             $_.Properties.LabId -eq $fetchedLabObj.ResourceId
                         }
@@ -517,7 +514,7 @@ function Get-AzureDtlVirtualMachine
 
             "ListAllInResourceGroup"
             {
-                $output = Get-AzureRmResource | Where { 
+                $output = Get-AzureRmResource | Where-Object { 
                     $_.ResourceType -eq $EnvironmentResourceType -and 
                     $_.ResourceGroupName -eq $VMResourceGroupName 
                 }             
@@ -525,7 +522,7 @@ function Get-AzureDtlVirtualMachine
 
             "ListAllInLocation"
             {
-                $output = Get-AzureRmResource | Where { 
+                $output = Get-AzureRmResource | Where-Object { 
                     $_.ResourceType -eq $EnvironmentResourceType -and 
                     $_.Location -eq $VMLocation 
                 }
@@ -533,7 +530,7 @@ function Get-AzureDtlVirtualMachine
 
             "ListAll" 
             {
-                $output = Get-AzureRmResource | Where { 
+                $output = Get-AzureRmResource | Where-Object { 
                     $_.ResourceType -eq $EnvironmentResourceType 
                 }
             }
@@ -608,7 +605,7 @@ function New-AzureDtlLab
         }
 
         # Check if there are any existing labs with same name in the current subscription
-        $existingLabs = Get-AzureRmResource | Where { 
+        $existingLabs = Get-AzureRmResource | Where-Object { 
             $_.ResourceType -eq $LabResourceType -and 
             $_.ResourceName -eq $LabName -and 
             $_.SubscriptionId -eq (Get-AzureRmContext).Subscription.SubscriptionId
@@ -883,12 +880,26 @@ function New-AzureDtlVirtualMachine
                 }
             }
 
-            # Pre-condition checks for sysprepped VHDs.
-            if ($true -eq $VMTemplate.Properties.SysPrep)
+            # Pre-condition checks for windows VHDs.
+            else 
             {
-                if ($false -eq ($PSBoundParameters.ContainsKey("UserName") -and $PSBoundParameters.ContainsKey("Password")))
+                # Pre-condition checks for sysprepped Windows VHDs.
+                if ($true -eq $VMTemplate.Properties.SysPrep)
                 {
-                    throw $("The specified VM template '" + $VMTemplate.Name + "' uses a sysprepped VHD. Please specify both the -UserName and -Password parameters to use this VM template.")
+                    if ($false -eq ($PSBoundParameters.ContainsKey("UserName") -and $PSBoundParameters.ContainsKey("Password")))
+                    {
+                        throw $("The specified VM template '" + $VMTemplate.Name + "' uses a sysprepped VHD. Please specify both the -UserName and -Password parameters to use this VM template.")
+                    }
+                }
+
+                # Pre-condition checks for non-sysprepped Windows VHDs.
+                # Note: For non-sysprepped windows VHDs we ignore the username and password and instead use the built-in account.
+                else
+                {
+                    if ($true -eq ($PSBoundParameters.ContainsKey("UserName") -and $PSBoundParameters.ContainsKey("Password")))
+                    {
+                        Write-Warning $("The specified VM template '" + $VMTemplate.Name + "' uses a non-sysprepped VHD with a built-in account. The specified userame and password will not be used.")
+                    }                    
                 }
             }
         }
@@ -1097,29 +1108,19 @@ function Remove-AzureDtlVirtualMachine
             # Get the same VM object, but with properties attached.
             $vm = GetResourceWithProperties_Private -Resource $vm
 
-            # Ensure that we're able to extract the FQDN of the VM.
-            if (($null -ne $vm) -and ($null -ne $vm.Properties) -and ($null -ne $vm.Properties.Vms) -and ($null -ne $vm.Properties.Vms[0]) -and ($null -ne $vm.Properties.Vms[0].Fqdn))
+            # Pop the confirmation dialog.
+            if ($PSCmdlet.ShouldProcess($vm.ResourceName, "delete VM"))
             {
-                # Pop the confirmation dialog.
-                if ($PSCmdlet.ShouldProcess($vm.ResourceName, "delete VM"))
+                Write-Warning $("Deleting VM '" + $vm.ResourceName + "' (Id = " + $vm.ResourceId + ") ...")
+                Write-Verbose $("Deleting VM '" + $vm.ResourceName + "' (Id = " + $vm.ResourceId + ") ...")
+
+                # Nuke the VM.
+                $result = Remove-AzureRmResource -ResourceId $vm.ResourceId -Force
+
+                if ($true -eq $result)
                 {
-                    Write-Warning $("Deleting VM '" + $vm.ResourceName + "' (FQDN = " + $vm.Properties.Vms[0].Fqdn + ") ...")
-                    Write-Verbose $("Deleting VM '" + $vm.ResourceName + "' (FQDN = " + $vm.Properties.Vms[0].Fqdn + ") ...")
-
-                    # Nuke the VM.
-                    $result = Remove-AzureRmResource -ResourceId $vm.ResourceId -Force
-
-                    if ($true -eq $result)
-                    {
-                        Write-Verbose $("Successfully deleted VM '" + $vm.ResourceName + "' (FQDN = " + $vm.Properties.Vms[0].Fqdn + ") ...")
-                    }
+                    Write-Verbose $("Successfully deleted VM '" + $vm.ResourceName + "' (Id = " + $vm.ResourceId + ") ...")
                 }
-            }
-
-            # Else display a non-terminating error and skip this VM.
-            else
-            {
-                Write-Error $("Unable to determine the FQDN of the VM '" + $VM.ResourceName + "'.")
             }
         }
     }
