@@ -128,7 +128,6 @@ To ensure your template passes, special placeholder values are required when dep
 - **GEN_UNIQUE** - use this placeholder for new storage account names, domain names for public ips and other fields that need a unique name
 - **GEN_SSH_PUB_KEY** - use this placeholder if you need an SSH public key
 - **GEN_PASSWORD** - use this placeholder if you need an azure-compatible password for a VM
-```
 
 Here's an exmaple in an `azuredeploy.parameters.json` file:
 
