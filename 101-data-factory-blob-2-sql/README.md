@@ -4,7 +4,7 @@
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-This template creates a very simple Data Factory pipeline that copies data from a file in a Blob Storage into a SQL Database table.
+This template creates a very simple Data Factory pipeline that copies data from a file in a Blob Storage into a SQL Database table. Prior to  executing this make sure you have a Storage Account and a SQL Database provisioned. 
 
 ## Prerequisites:
 1. Azure Storage
