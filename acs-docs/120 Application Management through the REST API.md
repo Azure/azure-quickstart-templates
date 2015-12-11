@@ -2,7 +2,7 @@
 
 ACS exposes the REST endpoints but they are not open to the outside world. In order to use these endpoints you must first create an SSH tunnel through which calls will be made, see [108: Connecting to Orchestration REST API](108 Connecting to Orchestration REST API.md).
 
-Marathon REST API
+##Marathon REST API
 
 Once you have a tunnel open you can run commands on your local machine to interact with the [Marathon API](https://mesosphere.github.io/marathon/docs/generated/api.html). Of course you can also SSH into your management endpoint and work from, but generally we prefer to open a tunnel, it prevents inadvertently changing something on the master. It also means you can use your preferred OS as your client.
 
@@ -18,7 +18,7 @@ Against a new cluster this will return:
 {"apps":[]}
 ```
 
-Deploying a Docker Container
+##Deploying a Docker Container
 
 To deploy a Docker container using Marathon you first need to create a \`marathon.json\` file. For this tutorial we'll use one from a Demo application I have built. Copy <https://raw.githubusercontent.com/rgardler/AzureDevTestDeploy/master/marathon/marathon.json> to a local file ant then run:
 
