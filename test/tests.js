@@ -1,14 +1,30 @@
 /*global describe, it*/
 var assert = require('assert'),
   fs = require('fs'),
+  execSync = require('child_process').execSync,
   path = require('path'),
   RSVP = require('rsvp'),
   unirest = require('unirest'),
   skeemas = require('skeemas'),
-  git = require('git-utils'),
   debug = require('debug')('validator'),
   parallel = require('mocha.parallel');
 
+function getModifiedPaths() {
+  assert.ok(process.env.TRAVIS_COMMIT_RANGE, 'VALIDATE_MODIFIED_ONLY requires TRAVIS_COMMIT_RANGE to be set to [START_COMMIT_HASH]...[END_COMMIT_HASH]');
+  var rangeStart = process.env.TRAVIS_COMMIT_RANGE.split('...')[0];
+  var rangeEnd = process.env.TRAVIS_COMMIT_RANGE.split('...')[1];
+  var stdout = execSync('git diff --name-only ' + rangeStart + ' ' + rangeEnd, {
+    encoding: 'utf8'
+  });
+  var lines = stdout.split('\n');
+  var result = {};
+
+  for (var i = 0; i < lines.length; i += 1) {
+    result[lines[i]] = lines[i];
+  }
+
+  return result;
+}
 // Tries to parse a json string and asserts with a friendly
 // message if something is wrong
 function tryParse(fileName, jsonStringData) {
@@ -297,11 +313,10 @@ describe('Template', function () {
   var modifiedPaths;
 
   if (process.env.VALIDATE_MODIFIED_ONLY) {
-    var repo = git.open('./');
     var count = 0;
     // we automatically reset to the beginning of the commit range
     // so this includes all file paths that have changed for the CI run
-    modifiedPaths = repo.getStatus();
+    modifiedPaths = getModifiedPaths();
     debug(modifiedPaths);
     for (var i in modifiedPaths) {
       if (typeof i === 'string') {
