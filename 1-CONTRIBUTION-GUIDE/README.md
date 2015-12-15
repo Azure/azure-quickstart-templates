@@ -35,7 +35,7 @@ To make sure your template is added to Azure.com index, please follow these guid
   * Please fill out the values for the parameters according to rules defined in the template (allowed values etc.), For parameters without rules, a simple "changeme" will do as the acomghbot only checks for sytactic correctness using the ARM Validate Template [API](https://msdn.microsoft.com/en-us/library/azure/dn790547.aspx)
 4. The template folder must host the **scripts** that are needed for successful template execution
 5. The template folder must contain a **metadata.json** file to allow the template to be indexed on [Azure.com](http://azure.microsoft.com)
-  *	Guidelines on the metadata file below
+  * Guidelines on the metadata file below
 6. Include a **Readme.md** file that explains how the template works. No need to include the parameters that the template needs. We can render this on Azure.com from the template.
 7. Template parameters should follow **camelCasing**
 8. Try to reduce the **number of parameters** a user has to enter to deploy your template. Make things that do not need to be globally unique such as VNETs, NICs, PublicIPs, Subnets, NSGs as variables.
@@ -58,7 +58,7 @@ See the starter template [here](https://github.com/Azure/azure-quickstart-templa
 
 ## Best practices
 
-* It is a good practice to pass your template through a JSON linter to remove extraneous commas, paranthesis, brackets that may break the "Deploy to Azure" experience. Try http://jsonlint.com/ or a linter package for your favorite editing environment (Atom, Sublime Text, Visual Studio etc.)
+* It is a good practice to pass your template through a JSON linter to remove extraneous commas, parenthesis, brackets that may break the "Deploy to Azure" experience. Try http://jsonlint.com/ or a linter package for your favorite editing environment (Atom, Sublime Text, Visual Studio etc.)
 * It's also a good idea to format your JSON for better readability. You can use a JSON formatter package for your local editor or [format online using this link](https://www.bing.com/search?q=json+formatter).
 
 ## metadata.json file
@@ -78,24 +78,24 @@ To be more consistent with the Visual Studio and Gallery experience we're updati
 The metadata.json file will be validated using these rules
 
 **itemDisplayName**
-*	Cannot be more than 60 characters
+* Cannot be more than 60 characters
 
 **description**
-*	Cannot be more than 1000 characters
-*	Cannot contain HTML
+* Cannot be more than 1000 characters
+* Cannot contain HTML
 * This is used for the template description on the Azure.com index template details page
 
 **summary**
-*	Cannot be more than 200 characters
+* Cannot be more than 200 characters
 * This is shown for template description on the main Azure.com template index page
 
 **githubUsername**
-*	Username must be the same as the username of the author submitting the Pull Request
+* Username must be the same as the username of the author submitting the Pull Request
 * This is used to display template author and Github profile pic in the Azure.com index
 
 **dateUpdated**
-*	Must be in yyyy-mm-dd format.
-*	The date must not be in the future to the date of the pull request
+* Must be in yyyy-mm-dd format.
+* The date must not be in the future to the date of the pull request
 
 ## Starter template
 
@@ -125,11 +125,12 @@ We are in the process of activating automated template validation through Travis
 
 To ensure your template passes, special placeholder values are required when deploying a template, depending what the parameter is used for:
 
-- **GEN_UNIQUE** - use this placeholder for new storage account names, domain names for public ips and other fields that need a unique name
+- **GEN_UNIQUE** - use this placeholder for new storage account names, domain names for public ips and other fields that need a unique name. The value will always be alpha numeric value with a length of 18 characters.
 - **GEN_SSH_PUB_KEY** - use this placeholder if you need an SSH public key
 - **GEN_PASSWORD** - use this placeholder if you need an azure-compatible password for a VM
+- **GEN_UNIQUE_[N]** - use this placeholder for new storage account names, domain names for public ips and other fields that need a unique name. The value will always be alpha numeric value with a length of `[N]`, where `[N]` can be any number from 3 to 32 inclusive.
 
-Here's an exmaple in an `azuredeploy.parameters.json` file:
+Here's an example in an `azuredeploy.parameters.json` file:
 
 ```
 {
@@ -149,7 +150,7 @@ Here's an exmaple in an `azuredeploy.parameters.json` file:
       "value": "GEN_SSH_PUB_KEY"
     },
     "dnsNameForPublicIP": {
-      "value": "GEN_UNIQUE"
+      "value": "GEN_UNIQUE_13"
     }
   }
 }
