@@ -4,4 +4,4 @@
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-This template creates a new encrypted windows vm using the server 2k12 gallery image. It internally calls the "201-encrypt-running-windows-vm" template.
+This template creates a new encrypted windows vm using the server 2k12 gallery image.
