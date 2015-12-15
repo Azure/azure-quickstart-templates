@@ -96,7 +96,7 @@ Before running the walkthrough ensure you have chosen "true" for "marathonEnable
 6. start a long running job in Marathon
  1. click "+New App"
  2. type "myfirstapp" for the id
- 3. type "/bin/bash "for i in {1..5}; do echo MyFirstApp $i; sleep 1; done" for the command
+ 3. type "/bin/bash -c "for i in {1..5}; do echo MyFirstApp $i; sleep 1; done" for the command
  4. scroll to bottom and click create
 
  ![Image of Marathon new app dialog](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/mesos-swarm-marathon/images/marathon-newapp.png)
