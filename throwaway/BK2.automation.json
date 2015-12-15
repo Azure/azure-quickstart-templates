@@ -1,0 +1,80 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string"
+    },
+    "uniqueBit": {
+      "type": "string"
+    },
+    "transferSA": {
+      "type": "string"
+    },
+    "numberOfSAs": {
+      "type": "int"
+    },
+    "runbookScriptURI": {
+      "type": "string"
+    }
+  },
+  "resources": [
+    {
+        "name": "[concat(parameters('uniqueBit'), 'aa')]",
+        "type": "Microsoft.Automation/automationAccounts",
+        "apiVersion": "2015-01-01-preview",
+        "location": "[parameters('location')]",
+        "properties": {
+            "sku": {
+                "name": "Free"
+            }
+        }
+    },
+    {
+        "name": "[concat(parameters('uniqueBit'), 'aa/transferrb')]",
+        "type": "Microsoft.Automation/automationAccounts/runbooks",
+        "apiVersion": "2015-01-01-preview",
+        "location": "[parameters('location')]",
+        "dependsOn": [
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('uniqueBit'), 'aa')]"
+        ],
+        "properties": {
+            "runbookType": "Script",
+            "logProgress": "false",
+            "logVerbose": "false",
+            "description": "Custom image deployment helper.",
+            "publishContentLink": {
+                "uri": "[parameters('runbookScriptURI')]",
+                "version": "1.0.0.0"
+            }
+        }
+    },
+    {
+        "name": "[concat(parameters('uniqueBit'), 'aa/00000000-0000-0000-', padLeft(copyindex(), 4, '0'), '-', padLeft(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(uniquestring(string(copyindex()), parameters('uniquebit')),'g',''),'h',''),'i',''),'j',''),'k',''),'l',''),'m',''),'n',''),'o',''),'p',''),'q',''),'r',''),'s',''),'t',''),'u',''),'v',''),'w',''),'x',''),'y',''),'z',''), 12, '0'))]",
+        "type": "Microsoft.Automation/automationAccounts/jobs",
+        "apiVersion": "2015-01-01-preview",
+        "location": "[parameters('location')]",
+        "dependsOn": [
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('uniqueBit'), 'aa')]",
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('uniqueBit'), 'aa/runbooks/transferrb')]"
+        ],
+        "copy": {
+            "name": "automationLoop",
+            "count": "[parameters('numberOfSAs')]"
+        },
+        "properties": {
+            "runbook": {
+                "name": "transferrb"
+            },
+            "parameters": {
+                "TransferSA": "[parameters('transferSA')]",
+                "TransferKey": "[listKeys(concat('Microsoft.Storage/storageAccounts/', parameters('transferSA')), '2015-05-01-preview').key1]",
+                "DataSA": "[concat(uniqueString(concat(resourceGroup().id, parameters('uniqueBit'), copyindex())), parameters('uniqueBit'))]",
+                "DataKey": "[listKeys(concat('Microsoft.Storage/storageAccounts/', concat(uniqueString(concat(resourceGroup().id, parameters('uniqueBit'), copyindex())), parameters('uniqueBit'))), '2015-05-01-preview').key1]"
+            }
+        }
+    }
+  ]
+}
+
+
