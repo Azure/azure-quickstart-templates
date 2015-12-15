@@ -2,28 +2,10 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "newStorageAccountName": {
-      "type": "string",
-      "metadata": {
-        "description": "Unique name for a new storage account where the VM disks will be stored."
-      }
-    },
-    "adminUsername": {
-      "type": "string",
-      "metadata": {
-        "description": "SSH user for the Virtual Machines."
-      }
-    },
     "sshPublicKey": {
       "type": "securestring",
       "metadata": {
         "description": "SSH public key for the Virtual Machines."
-      }
-    },
-    "dnsName": {
-      "type": "string",
-      "metadata": {
-        "description": "Unique DNS Name prefix for the Swarm cluster."
       }
     },
     "nodeCount": {
@@ -36,6 +18,7 @@
   },
   "variables": {
     "masterCount": 3,
+    "adminUsername": "azureuser",
     "vmNameMaster": "swarm-master-",
     "vmNameNode": "swarm-node-",
     "vmSizeMaster": "Standard_A0",
@@ -58,6 +41,8 @@
     "subnetRefNodes": "[concat(resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName')),'/subnets/',variables('subnetNameNodes'))]",
     "nsgName": "swarm-nsg",
     "nsgID": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('nsgName'))]",
+    "newStorageAccountName": "[uniqueString(resourceGroup().id, deployment().name)]",
+    "clusterFqdn": "[concat('swarm-',uniqueString(resourceGroup().id, deployment().name))]",
     "storageAccountType": "Standard_LRS",
     "vhdBlobContainer": "vhds",
     "mastersLbName": "swarm-lb-masters",
@@ -68,7 +53,7 @@
     "nodesLbName": "swarm-lb-nodes",
     "nodesLbID": "[resourceId('Microsoft.Network/loadBalancers',variables('nodesLbName'))]",
     "nodesLbBackendPoolName": "swarm-nodes-pool",
-    "sshKeyPath": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+    "sshKeyPath": "[concat('/home/', variables('adminUsername'), '/.ssh/authorized_keys')]",
     "consulServerArgs": [
       "-advertise 10.0.0.4 -bootstrap-expect 3 -retry-join 10.0.0.5 -retry-join 10.0.0.6",
       "-advertise 10.0.0.5 -retry-join 10.0.0.4 -retry-join 10.0.0.6",
@@ -78,7 +63,7 @@
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[parameters('newStorageAccountName')]",
+      "name": "[variables('newStorageAccountName')]",
       "apiVersion": "2015-06-15",
       "location": "[resourceGroup().location]",
       "properties": {
@@ -107,7 +92,7 @@
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
-          "domainNameLabel": "[concat(parameters('dnsName'), '-manage')]"
+          "domainNameLabel": "[concat(variables('clusterFqdn'), '-manage')]"
         }
       }
     },
@@ -119,7 +104,7 @@
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
-          "domainNameLabel": "[parameters('dnsName')]"
+          "domainNameLabel": "[variables('clusterFqdn')]"
         }
       }
     },
@@ -339,7 +324,7 @@
         "count": "[variables('masterCount')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('vmNameMaster'), copyIndex(), '-nic')]",
         "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetMasters'))]"
       ],
@@ -351,8 +336,8 @@
           "vmSize": "[variables('vmSizeMaster')]"
         },
         "osProfile": {
-          "computername": "[concat(variables('vmNameMaster'), copyIndex())]",
-          "adminUsername": "[parameters('adminUsername')]",
+          "computerName": "[concat(variables('vmNameMaster'), copyIndex())]",
+          "adminUsername": "[variables('adminUsername')]",
           "linuxConfiguration": {
             "disablePasswordAuthentication": "true",
             "ssh": {
@@ -375,7 +360,7 @@
           "osDisk": {
             "name": "[concat(variables('vmNameMaster'), copyIndex(),'-osdisk')]",
             "vhd": {
-              "uri": "[concat('http://', parameters('newStorageAccountName'), '.blob.core.windows.net/', variables('vhdBlobContainer'), '/master-', copyIndex(), '-osdisk.vhd')]"
+              "uri": "[concat('http://', variables('newStorageAccountName'), '.blob.core.windows.net/', variables('vhdBlobContainer'), '/master-', copyIndex(), '-osdisk.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -400,7 +385,7 @@
         "count": "[parameters('nodeCount')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('vmNameNode'), copyIndex(), '-nic')]"
       ],
       "properties": {
@@ -411,8 +396,8 @@
           "vmSize": "[variables('vmSizeNode')]"
         },
         "osProfile": {
-          "computername": "[concat(variables('vmNameNode'), copyIndex())]",
-          "adminUsername": "[parameters('adminUsername')]",
+          "computerName": "[concat(variables('vmNameNode'), copyIndex())]",
+          "adminUsername": "[variables('adminUsername')]",
           "linuxConfiguration": {
             "disablePasswordAuthentication": "true",
             "ssh": {
@@ -435,7 +420,7 @@
           "osDisk": {
             "name": "[concat(variables('vmNameNode'), copyIndex(),'-osdisk')]",
             "vhd": {
-              "uri": "[concat('http://', parameters('newStorageAccountName'), '.blob.core.windows.net/', variables('vhdBlobContainer'), '/node-', copyIndex(), '-osdisk.vhd')]"
+              "uri": "[concat('http://', variables('newStorageAccountName'), '.blob.core.windows.net/', variables('vhdBlobContainer'), '/node-', copyIndex(), '-osdisk.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -486,8 +471,8 @@
               "restart": "always"
             },
             "swarm": {
-              "image": "swarm:0.4.0",
-              "command": "[concat('--debug manage --replication --advertise ', reference(concat(variables('vmNameMaster'), copyIndex(), '-nic')).ipConfigurations[0].properties.privateIPAddress, ':2375 consul://10.0.0.4:8500/nodes')]",
+              "image": "swarm:1.0.0",
+              "command": "[concat('manage --replication --advertise ', reference(concat(variables('vmNameMaster'), copyIndex(), '-nic')).ipConfigurations[0].properties.privateIPAddress, ':2375 consul://10.0.0.4:8500/nodes')]",
               "ports": [
                 "2375:2375"
               ],
@@ -525,7 +510,7 @@
           },
           "compose": {
             "swarm": {
-              "image": "swarm:0.4.0",
+              "image": "swarm:1.0.0",
               "restart": "always",
               "command": "[concat('join --advertise=', reference(concat(variables('vmNameNode'), copyIndex(), '-nic')).ipConfigurations[0].properties.privateIPAddress, ':2375 consul://10.0.0.4:8500/nodes')]"
             }
@@ -537,7 +522,7 @@
   "outputs": {
     "sshTunnelCmd": {
       "type": "string",
-      "value": "[concat('ssh -L 2375:swarm-master-0:2375 -N ', parameters('adminUsername'), '@', reference(variables('managementPublicIPAddrName')).dnsSettings.fqdn, ' -p 2200')]"
+      "value": "[concat('ssh -L 2375:swarm-master-0:2375 -N ', variables('adminUsername'), '@', reference(variables('managementPublicIPAddrName')).dnsSettings.fqdn, ' -p 2200')]"
     },
     "dockerCmd": {
       "type": "string",
@@ -549,15 +534,15 @@
     },
     "sshMaster0": {
       "type": "string",
-      "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(variables('managementPublicIPAddrName')).dnsSettings.fqdn, '-A -p 2200')]"
+      "value": "[concat('ssh ', variables('adminUsername'), '@', reference(variables('managementPublicIPAddrName')).dnsSettings.fqdn, ' -A -p 2200')]"
     },
     "sshMaster1": {
       "type": "string",
-      "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(variables('managementPublicIPAddrName')).dnsSettings.fqdn, '-A -p 2201')]"
+      "value": "[concat('ssh ', variables('adminUsername'), '@', reference(variables('managementPublicIPAddrName')).dnsSettings.fqdn, ' -A -p 2201')]"
     },
     "sshMaster2": {
       "type": "string",
-      "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(variables('managementPublicIPAddrName')).dnsSettings.fqdn, '-A -p 2202')]"
+      "value": "[concat('ssh ', variables('adminUsername'), '@', reference(variables('managementPublicIPAddrName')).dnsSettings.fqdn, ' -A -p 2202')]"
     }
   }
 }

@@ -2,10 +2,28 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "apiVersion": { 
+    "apiVersion": {
       "type": "string",
       "metadata": {
         "description": "The API version"
+      }
+    },
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "The location in which the resources are created"
+      }
+    },
+    "nicName": {
+      "type": "string",
+      "metadata": {
+        "description": "The network interface name for the VM"
+      }
+    },
+    "subnetId": {
+      "type": "string",
+      "metadata": {
+        "description": "The Id of the subnet in which the node is created"
       }
     },
     "vmName": {
@@ -50,12 +68,6 @@
         "description": "The version of the VM image"
       }
     },
-    "nicName": {
-      "type": "string",
-      "metadata": {
-        "description": "The network interface name"
-      }
-    },
     "adminUsername": {
       "type": "string",
       "metadata": {
@@ -74,10 +86,28 @@
         "description": "The availability set name"
       }
     },
-    "customData": { 
+    "customData": {
       "type": "string",
       "metadata": {
         "description": "The custom data in base64 format"
+      }
+    },
+    "scriptBaseUri": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI of the script"
+      }
+    },
+    "clusterName": { 
+      "type": "string",
+      "metadata": {
+        "description": "The HPC cluster name"
+      }
+    },
+    "privateDomainName": {
+      "type": "string",
+      "metadata": {
+        "description": "The fully qualified domain name (FQDN) for the private domain forest which will be created by this template, for example 'hpc.local'."
       }
     }
   },
@@ -85,9 +115,32 @@
   "resources": [
     {
       "apiVersion": "[parameters('apiVersion')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[parameters('nicName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "IPConfig",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[parameters('subnetId')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+
+    {
+      "apiVersion": "[parameters('apiVersion')]",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('vmName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', parameters('nicName'))]"
+      ],
       "properties": {
         "availabilitySet": {
           "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySetName'))]"
@@ -96,7 +149,7 @@
           "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
-          "computername": "[parameters('vmName')]",
+          "computerName": "[parameters('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]",
           "customData": "[parameters('customData')]",
@@ -127,7 +180,47 @@
             }
           ]
         }
-      }
+      },
+      "resources": [
+        {
+          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "name": "[concat(parameters('vmName'), '/updateDNSRecord')]",
+          "apiVersion": "[parameters('apiVersion')]",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.OSTCExtensions",
+            "type": "CustomScriptForLinux",
+            "typeHandlerVersion": "1.3",
+            "settings": {
+              "fileUris": [
+                "[concat(parameters('scriptBaseUri'), 'updatednsrecord.sh')]"
+              ],
+              "commandToExecute": "[concat('bash updatednsrecord.sh ', parameters('privateDomainName'), ' ', reference(parameters('nicName')).ipConfigurations[0].properties.privateIPAddress)]"
+            }
+          }
+        },
+        {
+          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "name": "[concat(parameters('vmName'), '/installHPCNodeAgent')]",
+          "apiVersion": "[parameters('apiVersion')]",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]",
+            "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'), '/extensions/updateDNSRecord')]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.HpcPack",
+            "type": "LinuxNodeAgent",
+            "typeHandlerVersion": "1.5",
+            "protectedSettings": {
+              "ClusterName": "[concat(parameters('clusterName'), '.', parameters('privateDomainName'))]"
+            }
+          }
+        }
+      ]
     }
   ]
 }

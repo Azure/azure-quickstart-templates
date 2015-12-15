@@ -11,15 +11,46 @@ import hashlib
 import os
 import sys
 import random
+import paramiko
+from paramiko import SSHClient
+
 from time import sleep
 
 from cm_api.api_client import ApiResource, ApiException
 from cm_api.endpoints.hosts import *
 from cm_api.endpoints.services import ApiServiceSetupInfo, ApiService
 
-diskcount=10
-
 LOG_DIR='/log/cloudera'
+
+def getDataDiskCount():
+    bashCommand="lsblk | grep /data | grep -v /data/ | wc -l"
+    client=SSHClient()
+    client.set_missing_host_key_policy(paramiko.client.AutoAddPolicy())
+    log(socket.getfqdn(cmx.cm_server))
+    toconnect=socket.getfqdn(cmx.cm_server).replace("-mn0", "-dn0")
+    log(toconnect)
+    client.connect(toconnect, username=cmx.ssh_root_user, password=cmx.ssh_root_password)
+    stdin, stdout, stderr = client.exec_command(bashCommand)
+    count=stdout.readline().rstrip('\n')
+
+    return count
+
+def setZookeeperOwnerDir(HA):
+    os.system("sudo chown zookeeper:zookeeper "+LOG_DIR+"/zookeeper")
+    # setup other masters in HA environment
+    if HA:
+        client=SSHClient()
+        client.set_missing_host_key_policy(paramiko.client.AutoAddPolicy())
+        toconnect=socket.getfqdn(cmx.cm_server).replace("-mn0", "-mn1")
+        client.connect(toconnect, username=cmx.ssh_root_user, password=cmx.ssh_root_password)
+        client.exec_command("sudo chown zookeeper:zookeeper "+LOG_DIR+"/zookeeper")
+        toconnect=socket.getfqdn(cmx.cm_server).replace("-mn0", "-mn2")
+        client.connect(toconnect, username=cmx.ssh_root_user, password=cmx.ssh_root_password)
+        client.exec_command("sudo chown zookeeper:zookeeper "+LOG_DIR+"/zookeeper")
+
+
+
+
 def init_cluster():
     """
     Initialise Cluster
@@ -190,7 +221,8 @@ def setup_zookeeper(HA):
         
         service.update_config({"zookeeper_datadir_autocreate": True})
 
-
+        # Ensure zookeeper has access to folder
+        setZookeeperOwnerDir(HA)
 
         # Role Config Group equivalent to Service Default Group
         for rcg in [x for x in service.get_all_role_config_groups()]:
@@ -1624,7 +1656,7 @@ def display_eula():
     jobfunction=raw_input("Please enter your jobfunction: ")
     accepted=raw_input("Please enter yes to accept EULA: ")
     if accepted =='yes' and fname and lname and company and email and phone and jobrole and jobfunction:
-       postEulaInfo(fname, lname, company, email,
+       postEulaInfo(fname, lname, email, company,
                     jobrole, jobfunction, phone)
        return True
     else:
@@ -1747,7 +1779,7 @@ def parse_options():
     parser.add_option('-i', '--job-function', dest='jobfunction', type="string", action='callback',
                       callback=cmx_args, help='Set job function')
     parser.add_option('-y', '--company', dest='company', type="string", action='callback',
-                      callback=cmx_args, help='Set job function')
+                      callback=cmx_args, help='Set company')
     parser.add_option('-e', '--accept-eula', dest='accepted', action="store_true", default=False,
                       help='Must accept eula before install')
 
@@ -1839,8 +1871,11 @@ def main():
     # Parse user options
     log("parse_options")
     options = parse_options()
+    global diskcount
+    diskcount= getDataDiskCount()
+    log("data_disk_count"+`diskcount`)
     if(cmx.do_post):
-        postEulaInfo(cmx.fname, cmx.lname, cmx.company, cmx.email,
+        postEulaInfo(cmx.fname, cmx.lname, cmx.email, cmx.company,
                      cmx.jobrole, cmx.jobfunction, cmx.phone)
     # Prepare Cloudera Manager Server:
     # 1. Initialise Cluster and set Cluster name: 'Cluster 1'
