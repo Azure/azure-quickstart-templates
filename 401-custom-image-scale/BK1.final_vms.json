@@ -1,0 +1,110 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01-preview/deploymentTemplate.json",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "uniqueBit": {
+            "type": "string"
+        },
+        "commonObjectTemplateUri": {
+            "type": "string"
+        },
+        "numberOfSAs": {
+            "type": "int"
+        },
+        "instanceCountPerSA": {
+            "type": "int"
+        },
+        "vmSize": {
+            "type": "string"
+        },
+        "OSType": {
+            "type": "string"
+        },
+        "deploymentType": {
+            "type": "string"
+        },
+        "blobName": {
+            "type": "string"
+        },
+        "vnetName": {
+            "type": "string"
+        },
+        "addressPrefix": {
+            "type": "string"
+        },
+        "subnetName": {
+            "type": "string"
+        },
+        "subnetPrefix": {
+            "type": "string"
+        },
+        "location": {
+            "type": "string"
+        },
+        "adminUsername": {
+            "type": "string"
+        },
+        "adminPassword": {
+            "type": "securestring"
+        }
+    },
+    "variables": {
+        "baseTemplateUri": "https://raw.githubusercontent.com/AlanSt/azure-quickstart-templates/401gen/001/vm_base",
+        "location": "[resourceGroup().location]"
+    },
+    "resources": [
+        {
+            "name": "[concat(parameters('uniqueBit'), 'fullbase')]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2015-01-01",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[parameters('commonObjectTemplateUri')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "uniqueBit": { "value": "[parameters('uniqueBit')]" },
+                    "numberOfSAs": { "value": "[parameters('numberOfSAs')]" },
+                    "vnetName": { "value": "[parameters('vnetName')]" },
+                    "addressPrefix": { "value": "[parameters('addressPrefix')]" },
+                    "subnetName": { "value": "[parameters('subnetName')]" },
+                    "subnetPrefix": { "value": "[parameters('subnetPrefix')]" },
+                    "location": { "value": "[parameters('location')]" }
+                }
+            }
+        },
+        {
+            "name": "[concat('clusterSet', copyindex())]",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2015-01-01",
+            "copy": {
+                "name": "deploymentLoop",
+                "count": "[parameters('numberOfSAs')]"
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Resources/deployments/', parameters('uniqueBit'), 'fullbase')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(variables('baseTemplateUri'), parameters('deploymentType'), '.json')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "clusterName": { "value": "[concat(parameters('uniqueBit'), padLeft(copyindex(), 2, '0'))]" },
+                    "sourceImageURI": { "value": "[concat('https://',uniqueString(concat(resourceGroup().id, parameters('uniqueBit'), copyIndex())), parameters('uniqueBit'),'.blob.core.windows.net/vhds/',parameters('blobName'))]" },
+                    "instanceCountPerSA": { "value": "[parameters('instanceCountPerSA')]" },
+                    "vmSize": { "value": "[parameters('vmSize')]" },
+                    "OSType": { "value": "[parameters('OSType')]" },
+                    "vnetName": { "value": "[parameters('vnetName')]" },
+                    "subnetName": { "value": "[parameters('subnetName')]" },
+                    "location": { "value": "[parameters('location')]" },
+                    "adminUsername": { "value": "[parameters('adminUsername')]" },
+                    "adminPassword": { "value": "[parameters('adminPassword')]" }
+                }
+            }
+        }
+    ]
+}
+
