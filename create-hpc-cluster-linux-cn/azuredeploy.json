@@ -5,7 +5,7 @@
     "clusterName": {
       "type": "string",
       "metadata": {
-        "description": "The HPC Pack cluster name. It must be location-wide unique because it is also used as the public DNS name prefix for the cluster, for example, the public DNS name is '&lt;clusterName&gt;.westus.cloudapp.azure.com' if the resource group location is 'West US'. It must contain between 3 and 15 characters with lowercase letters and numbers, and must start with a letter."
+        "description": "The HPC Pack cluster name. It must be unique in the location because it is also used as the public DNS name prefix for the cluster. For example, the public DNS name is '&lt;clustername&gt;.westus.cloudapp.azure.com' if the location is 'West US'. It must contain between 3 and 15 characters with lowercase letters and numbers, and must start with a letter."
       }
     },
     "privateDomainName": {
@@ -154,7 +154,7 @@
       "type": "string",
       "defaultValue": " ",
       "metadata": {
-        "description": "Optional, specify the http/https url of the PowerShell script you want to run on the head node after it is configured. The script url must be public available, and you can also specify arguments for the script, for example 'http://www.consto.com/mypostscript.ps1 -Arg1 arg1 -Arg2 arg2'."
+        "description": "Optional URL of a public available PowerShell script you want to run on the head node after it is configured. You can also specify arguments for the script, for example 'http://www.consto.com/mypostscript.ps1 -Arg1 arg1 -Arg2 arg2'."
       }
     }
   },
@@ -164,7 +164,7 @@
     "virtualNetworkName": "[concat(parameters('clusterName'), 'VNet')]",
     "storageAccountNamePrefix": "[toLower(concat('hpc', uniqueString(resourceGroup().id, parameters('clusterName'))))]",
     "storageAccountType": "Standard_LRS",
-    "nbrCNPerStorageAccount": 10,
+    "nbrCNPerStorageAccount": 20,
     "cnStorageAccountNumber": "[add(div(sub(parameters('computeNodeNumber'), 1), variables('nbrCNPerStorageAccount')), 1)]",
     "cnStorageAccountIndexOffset": 1,
     "storageAccountIndexWidth": "[length(string(sub(add(variables('cnStorageAccountNumber'), variables('cnStorageAccountIndexOffset')), 1)))]",
@@ -178,7 +178,9 @@
     "publicIPAddressType": "Dynamic",
     "publicIPAddressName": "[concat(parameters('clusterName'), '-PublicIP-VM')]",
     "publicIPAddressNameHN": "[concat(variables('publicIPAddressName'),'-HN')]",
-    "availabilitySetName": "[concat(parameters('clusterName'), 'AVSet')]",
+    "availabilitySetNamePrefix": "[concat(parameters('clusterName'), '-AVSet')]",
+    "nbrVMPerAvailabilitySet": 50,
+    "availabilitySetNumber": "[add(div(parameters('computeNodeNumber'), variables('nbrVMPerAvailabilitySet')), 1)]",
     "dnsName": "[concat(parameters('clusterName'), 'ep')]",
     "nicName": "[concat(parameters('clusterName'),'-nic')]",
     "nicNameHN": "[concat(variables('nicName'),'-hn')]",
@@ -230,13 +232,13 @@
       "Standard_GS4": "disabled",
       "Standard_GS5": "disabled"
     },
-    "avSetJumpBox": {
+    "hnRDMAJumpBox": {
       "disabled-disabled": "disabled",
-      "disabled-enabled": "enabled",
-      "enabled-disabled": "enabled",
+      "disabled-enabled": "disabled",
+      "enabled-disabled": "disabled",
       "enabled-enabled": "enabled"
     },
-    "avSetState": "[variables('avSetJumpBox')[concat(variables('vmSizeRDMAStates')[parameters('headNodeVMSize')], '-', variables('vmSizeRDMAStates')[parameters('computeNodeVMSize')])]]",
+    "hnRDMAState": "[variables('hnRDMAJumpBox')[concat(variables('vmSizeRDMAStates')[parameters('headNodeVMSize')], '-', variables('vmSizeRDMAStates')[parameters('computeNodeVMSize')])]]",
     "linuxImagePublishers": {
       "CentOS_6.6": "OpenLogic",
       "CentOS_7.0": "OpenLogic",
@@ -269,7 +271,7 @@
     "computeNodeImageSku": "[variables('linuxImageSkus')[parameters('computeNodeImage')]]",
     "adminBase64Password": "[base64(parameters('adminPassword'))]",
     "customScriptLocation": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/create-hpc-cluster/",
-    "iaasInfoArg": "[concat('-SubscriptionId ', subscription().subscriptionId, ' -VNet ', variables('virtualNetworkName'), ' -Subnet ', variables('subnet1Name'), ' -Location \"', variables('location'), '\"')]",
+    "iaasInfoArg": "[concat('-SubscriptionId ', subscription().subscriptionId, ' -VNet ', variables('virtualNetworkName'), ' -Subnet ', variables('subnet1Name'), ' -ResourceGroup ', resourceGroup().name, ' -Location \"', variables('location'), '\"')]",
     "headNodeCommandStr": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File PrepareHN.ps1 -DomainFQDN ', parameters('privateDomainName'), ' -AdminUserName ', parameters('adminUsername'), ' -AdminBase64Password \"', variables('adminBase64Password'), '\" -CNSize ', parameters('computeNodeVMSize'), ' -PostConfigScript \"', parameters('headNodePostConfigScript'), '\" -UnsecureDNSUpdate ', variables('iaasInfoArg'))]",
     "hnStorageConnStrPrefix": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('hnStorageAccountName'), ';AccountKey=')]"
   },
@@ -346,11 +348,11 @@
     {
       "apiVersion": "2015-01-01",
       "type": "Microsoft.Resources/deployments",
-      "name": "createAvailabilitySet",
+      "name": "createAvailabilitySets",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('customScriptLocation'), 'availabilityset-', variables('avSetState'), '.json')]",
+          "uri": "[concat(variables('customScriptLocation'), 'availabilitySets.json')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -360,8 +362,11 @@
           "location": {
             "value": "[variables('location')]"
           },
-          "availabilitySetName": {
-            "value": "[variables('availabilitySetName')]"
+          "availabilitySetNamePrefix": {
+            "value": "[variables('availabilitySetNamePrefix')]"
+          },
+          "availabilitySetNumber": {
+            "value": "[variables('availabilitySetNumber')]"
           }
         }
       }
@@ -374,12 +379,12 @@
       "dependsOn": [
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicNameHN'))]",
         "[concat('Microsoft.Storage/storageAccounts/', variables('hnStorageAccountName'))]",
-        "Microsoft.Resources/deployments/createAvailabilitySet"
+        "Microsoft.Resources/deployments/createAvailabilitySets"
       ],
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('customScriptLocation'), 'headnode-rdma-', variables('vmSizeRDMAStates')[parameters('headNodeVMSize')], '.json')]",
+          "uri": "[concat(variables('customScriptLocation'), 'headnode-rdma-', variables('hnRDMAState'), '.json')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -408,7 +413,7 @@
             "value": "[parameters('adminPassword')]"
           },
           "availabilitySetName": {
-            "value": "[variables('availabilitySetName')]"
+            "value": "[concat(variables('availabilitySetNamePrefix'), '000')]"
           },
           "scriptBaseUri": {
             "value": "[variables('customScriptLocation')]"
@@ -507,9 +512,9 @@
       "type": "Microsoft.Resources/deployments",
       "name": "[concat('create', parameters('computeNodeNamePrefix'), padLeft(string(copyIndex()), 3, '0'))]",
       "dependsOn": [
-        "Microsoft.Resources/deployments/createAvailabilitySet",
+        "Microsoft.Resources/deployments/createAvailabilitySets",
         "Microsoft.Resources/deployments/updateVNetDNS",
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountNamePrefix'), padLeft(string(add(mod(copyIndex(), variables('cnStorageAccountNumber')), variables('cnStorageAccountIndexOffset'))), variables('storageAccountIndexWidth'), '0'))]"
+        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountNamePrefix'), padLeft(string(add(div(copyIndex(), variables('nbrCNPerStorageAccount')), variables('cnStorageAccountIndexOffset'))), variables('storageAccountIndexWidth'), '0'))]"
       ],
       "copy": {
         "name": "CN",
@@ -518,7 +523,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('customScriptLocation'), 'linuxnode-rdma-', variables('vmSizeRDMAStates')[parameters('computeNodeVMSize')], '.json')]",
+          "uri": "[concat(variables('customScriptLocation'), 'linuxnode.json')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -541,7 +546,7 @@
             "value": "[parameters('computeNodeVMSize')]"
           },
           "storageAccountName": {
-            "value": "[concat(variables('storageAccountNamePrefix'), padLeft(string(add(mod(copyIndex(), variables('cnStorageAccountNumber')), variables('cnStorageAccountIndexOffset'))), variables('storageAccountIndexWidth'), '0'))]"
+            "value": "[concat(variables('storageAccountNamePrefix'), padLeft(string(add(div(copyIndex(), variables('nbrCNPerStorageAccount')), variables('cnStorageAccountIndexOffset'))), variables('storageAccountIndexWidth'), '0'))]"
           },
           "imgPublisher": {
             "value": "[variables('computeNodeImagePublisher')]"
@@ -562,7 +567,7 @@
             "value": "[parameters('adminPassword')]"
           },
           "availabilitySetName": {
-            "value": "[variables('availabilitySetName')]"
+            "value": "[concat(variables('availabilitySetNamePrefix'), padLeft(string(div(add(copyIndex(), 1), variables('nbrVMPerAvailabilitySet'))), 3, '0'))]"
           },
           "customData": {
             "value": "[base64(concat('HPCClusterName=', parameters('clusterName'), '\r\nImageCategory=public\r\nImageName=', parameters('computeNodeImage'), '\r\nVMSize=', parameters('computeNodeVMSize')))]"
