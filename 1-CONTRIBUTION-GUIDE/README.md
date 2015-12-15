@@ -42,9 +42,9 @@ To make sure your template is added to Azure.com index, please follow these guid
   * If you must include a parameter, please include a default value as well. See the next rule for naming convention for the default values.
 9. Name **variables** using this scheme **templateScenarioResourceName** (e.g. simpleLinuxVMVNET, userRoutesNSG, elasticsearchPublicIP etc.) that describe the scenario rather. This ensures when a user browses all the resources in the Portal there aren't a bunch of resources with the same name (e.g. myVNET, myPublicIP, myNSG)
 10. **Storage account names** need to be lower case and can't contain hyphens (-) in addition to other domain name restrictions. These also need to be globally unique.
-11. **Passwords** must be passed into parameters of type `securestring`. 
+11. **Passwords** must be passed into parameters of type `securestring`.
     * Passwords must also be passed to customScriptExtension using the `commandToExecute` property in `protectedSettings`. This will look like below
-    
+
     ```
      "properties": {
        "publisher": "Microsoft.OSTCExtensions",
@@ -144,11 +144,10 @@ We are in the process of activating automated template validation through Travis
 
 To ensure your template passes, special placeholder values are required when deploying a template, depending what the parameter is used for:
 
-- **GEN_UNIQUE** - use this placeholder for new storage account names, domain names for public ips and other fields that need a unique name. The value will always be alpha numeric value with a length of 18 characters.
-- **GEN_UNIQUE_[N]** - use this placeholder for new storage account names, domain names for public ips and other fields that need a unique name. The value will always be alpha numeric value with a length of `[N]`, where `[N]` can be any number from 3 to 32 inclusive.
-- **GEN_SSH_PUB_KEY** - use this placeholder if you need an SSH public key
-- **GEN_PASSWORD** - use this placeholder if you need an azure-compatible password for a VM
-
+- **GEN-UNIQUE** - use this placeholder for new storage account names, domain names for public ips and other fields that need a unique name. The value will always be alpha numeric value with a length of 18 characters.
+- **GEN-UNIQUE-[N]** - use this placeholder for new storage account names, domain names for public ips and other fields that need a unique name. The value will always be alpha numeric value with a length of `[N]`, where `[N]` can be any number from 3 to 32 inclusive.
+- **GEN-SSH-PUB-KEY** - use this placeholder if you need an SSH public key
+- **GEN-PASSWORD** - use this placeholder if you need an azure-compatible password for a VM
 
 Here's an example in an `azuredeploy.parameters.json` file:
 
@@ -158,7 +157,7 @@ Here's an example in an `azuredeploy.parameters.json` file:
   "contentVersion": "1.0.0.0",
   "parameters": {
     "newStorageAccountName":{
-      "value": "GEN_UNIQUE"
+      "value": "GEN-UNIQUE"
     },
     "location": {
       "value": "West US"
@@ -167,10 +166,10 @@ Here's an example in an `azuredeploy.parameters.json` file:
       "value": "sedouard"
     },
     "sshKeyData": {
-      "value": "GEN_SSH_PUB_KEY"
+      "value": "GEN-SSH-PUB-KEY"
     },
     "dnsNameForPublicIP": {
-      "value": "GEN_UNIQUE_13"
+      "value": "GEN-UNIQUE-13"
     }
   }
 }
