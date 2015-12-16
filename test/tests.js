@@ -176,8 +176,8 @@ function validateTemplate(templatePath, parametersPath) {
 function timedOutput(onOff, intervalObject) {
   if (onOff) {
     return setInterval(function () {
-      console.log('...');
-    }, 30 * 1000);
+      process.stdout.write('...');
+    }, 60 * 1000);
   } else {
     clearTimeout(intervalObject);
   }
