@@ -39,7 +39,7 @@ Now you can access the Marathon API on \[DNSPREFIX\]man.\[REGION\].cloudapp.azur
 For example, to set up a tunnel to the Marathon API in our example cluster:
 
 ```
-ssh -L 8080:localhost:8080 -n azureuser@acsexampleman.japaneast.cloudapp.azure.com -p 2211
+ssh -L 8080:localhost:8080 -n azureuser@acsexamplemgmt.japaneast.cloudapp.azure.com -p 2211
 ```
 
 ![](images/108/media/image4.png)
