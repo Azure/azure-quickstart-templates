@@ -32,14 +32,14 @@ DNSPREFIX is the DNS prefix you provided when you deployed the cluster
 
 REGION is the region in which your resource group is located
 
-SSH_PORT is either 22 (for the Jumpbox) or 2211, 2212 … 2215 for master0, master1 … master4 REST API's respectively
+SSH_PORT is either 22 (for the Jumpbox) or 2200, 2201 … 2204 for master0, master1 … master4 REST API's respectively
 
 Now you can access the Marathon API on \[DNSPREFIX\]man.\[REGION\].cloudapp.azure.com using ```localhost:8080```
 
 For example, to set up a tunnel to the Marathon API in our example cluster:
 
 ```
-ssh -L 8080:localhost:8080 -n azureuser@acsexamplemgmt.japaneast.cloudapp.azure.com -p 2211
+ssh -L 8080:localhost:8080 -n azureuser@acsexamplemgmt.japaneast.cloudapp.azure.com -p 2200
 ```
 
 ![](images/108/media/image4.png)
