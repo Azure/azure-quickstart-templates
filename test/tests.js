@@ -11,9 +11,7 @@ var assert = require('assert'),
 
 function getModifiedPaths() {
   assert.ok(process.env.TRAVIS_COMMIT_RANGE, 'VALIDATE_MODIFIED_ONLY requires TRAVIS_COMMIT_RANGE to be set to [START_COMMIT_HASH]...[END_COMMIT_HASH]');
-  var rangeStart = process.env.TRAVIS_COMMIT_RANGE.split('...')[0];
-  var rangeEnd = process.env.TRAVIS_COMMIT_RANGE.split('...')[1];
-  var stdout = execSync('git diff --name-only ' + rangeStart + ' ' + rangeEnd, {
+  var stdout = execSync('git diff --name-only ' + process.env.TRAVIS_COMMIT_RANGE, {
     encoding: 'utf8'
   });
   var lines = stdout.split('\n');
