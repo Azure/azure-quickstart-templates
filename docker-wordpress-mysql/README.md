@@ -10,6 +10,9 @@ and starts a WordPress container listening an port 80 which uses MySQL database 
 in a separate but linked Docker container, which are created using [Docker Compose][compose]
 capabilities of the [Azure Docker Extension][ext].
 
+Note: Be careful when you define the value of "dnsNameForPublicIP" parameter, it should match with the following regular expression: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$ or it will raise an error.
 
 [ext]: https://github.com/Azure/azure-docker-extension
 [compose]: https://docs.docker.com/compose
+
+
