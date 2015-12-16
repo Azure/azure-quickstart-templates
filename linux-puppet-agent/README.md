@@ -8,12 +8,6 @@
 
 This template installs the Puppet Agent in a Linux VM using a shell script that is stored in public storage(e.g. Github or a public container in Azure blob storage).
 
-## Pre-Deployment Instructions
-
-1. Copy the shell script (install_puppet_agent.sh) into a publicly accessible location, such as Github or a public container in Azure blob storage.
-
-2. If you want to use Azure CLI or PowerShell deployment, you may want to edit the parameters file for convenience.
-
 ## Deploy
 
 1. Using Azure CLI
