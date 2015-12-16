@@ -63,7 +63,7 @@ Where `GROUP_NAME` is the name of the resource group you want to create, and `RE
 Once you have a Resource Group you can create your cluster with:
  
 ```powershell
-New-AzureRm,ResourceGroupDeployment -Name DEPLOYMENT_NAME -ResourceGroupName RESOURCE_GROUP_NAME -TemplateUri TEMPLATE_URI
+New-AzureRmResourceGroupDeployment -Name DEPLOYMENT_NAME -ResourceGroupName RESOURCE_GROUP_NAME -TemplateUri TEMPLATE_URI
  ```
  
 ###Dynamic Template Parameters
