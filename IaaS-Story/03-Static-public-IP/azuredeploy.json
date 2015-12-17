@@ -30,8 +30,9 @@
         "description": "CIDR address prefix for the front end subnet."
       }
     },
-    "stdStorageName": {
+    "stdStorageNamePrefix": {
       "type": "string",
+      "maxLength": 11,
       "metadata": {
         "description": "Name for standard storage account."
       }
@@ -99,13 +100,14 @@
     "vmStorageAccountContainerName": "vhds",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('vnetName'))]",
     "frontEndSubnetRef": "[concat(variables('vnetID'),'/subnets/',parameters('frontEndSubnetName'))]",
-    "webVMSetting": "[variables('webVMSettings')[parameters('osType')]]"
+    "webVMSetting": "[variables('webVMSettings')[parameters('osType')]]",
+    "stdStorageName": "[replace(replace(tolower(concat(parameters('storageAccountNamePrefix'), uniquestring(resourceGroup().id))), '-',''),'.','')]"
   },
     "resources": [
       {
-        "apiVersion": "2015-05-01-preview",
+        "apiVersion": "2015-06-15",
         "type": "Microsoft.Storage/storageAccounts",
-        "name": "[parameters('stdStorageName')]",
+        "name": "[variables('stdStorageName')]",
         "location": "[resourceGroup().location]",
         "tags": {
           "displayName": "Storage Account - Simple"
@@ -187,7 +189,7 @@
         "location": "[variables('location')]",
         "dependsOn": [
           "[concat('Microsoft.Network/networkInterfaces/', variables('webVMSetting').nicName)]",
-          "[concat('Microsoft.Storage/storageAccounts/', parameters('stdStorageName'))]"
+          "[concat('Microsoft.Storage/storageAccounts/', variables('stdStorageName'))]"
         ],
         "tags": {
           "displayName": "VM - Web"
@@ -211,7 +213,7 @@
             "osDisk": {
               "name": "[variables('webVMSetting').osdisk]",
               "vhd": {
-                "uri": "[concat('http://', parameters('stdStorageName'), '.blob.core.windows.net/', variables('vmStorageAccountContainerName'), '/', variables('webVMSetting').osdisk,'.vhd')]"
+                "uri": "[concat('http://', variables('stdStorageName'), '.blob.core.windows.net/', variables('vmStorageAccountContainerName'), '/', variables('webVMSetting').osdisk,'.vhd')]"
               },
               "caching": "ReadWrite",
               "createOption": "FromImage"
