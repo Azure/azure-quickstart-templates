@@ -308,7 +308,7 @@ function groupTests(modifiedPaths) {
 }
 
 describe('Template', function () {
-  this.timeout(3600 * 1000);
+  this.timeout(7100 * 1000);
 
   var modifiedPaths;
 
