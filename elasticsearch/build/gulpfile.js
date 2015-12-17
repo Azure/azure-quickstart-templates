@@ -89,6 +89,7 @@ gulp.task('mocks', ['datatemplates'], function() {
 		"data-nodes-8disk",
 		"data-nodes-16disk",
 		"jumpbox",
+		"kibana",
 		"empty"
 	];
 	

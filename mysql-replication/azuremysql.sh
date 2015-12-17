@@ -235,7 +235,7 @@ fi
  
 MYSQL_HOST="${NODEADDRESS}"
 MYSQL_USERNAME="probeuser"
-MYSQL_PASSWORD="${PROBEPWD}"
+MYSQL_PASSWORD='${PROBEPWD}'
 
 ERROR_MSG=\`/usr/bin/mysqladmin --host=\${MYSQL_HOST} --port=3306 --user=\${MYSQL_USERNAME} --password=\${MYSQL_PASSWORD} status 2>/dev/null\`
 #ERROR_MSG=\`/usr/bin/mysql --host=\${MYSQL_HOST} --port=3306 --user=\${MYSQL_USERNAME} --password=\${MYSQL_PASSWORD} -e "show databases;" 2>/dev/null\`
@@ -362,6 +362,6 @@ else
     configure_mysql
 	yum -y erase hypervkvpd.x86_64
 	yum -y install microsoft-hyper-v
-	echo "/sbin/reboot" | /usr/bin/at now + 3 min >/dev/null 2>&1
+#	echo "/sbin/reboot" | /usr/bin/at now + 3 min >/dev/null 2>&1
 fi
 
