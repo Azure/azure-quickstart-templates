@@ -23,18 +23,3 @@ New-AzureResourceGroup -ResourceGroupName testvmrg -Location "West US"
 4) Deploy this template using the command below
 
 New-AzureResourceGroupDeployment -Name testvmdeploy -ResourceGroupName testvmrg -TemplateUri "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/resource-loop-vms-vnet-aset/azuredeploy.json"
-
-
-# Parameters for the template
-
-| Name   | Description    |
-|:--- |:---|
-| newStorageAccountName  | Unique DNS Name for the Storage Account where the Virtual Machine's disks will be placed. |
-| adminUsername  | Username for the Virtual Machines  |
-| adminPassword  | Password for the Virtual Machine  |
-| numberOfInstances  | Number of Virtual Machine instances to create  |
-| region | Region where the resources will be deployed |
-| vmSize | Size of the Virtual Machine |
-| imagePublisher | Name of Image Publisher |
-| imageOffer | Name of Image Publisher offer |
-| imageSKU | Name of SKU for the selected offer |
