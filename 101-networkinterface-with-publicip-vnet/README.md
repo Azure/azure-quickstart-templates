@@ -5,14 +5,3 @@
 </a>
 
 This template allows you to create a Network Inerface in a Virtual Network referencing a Public IP Address.
-
-Below are the parameters that the template expects
-
-| Name   | Description    |
-|:--- |:---|
-| dnsNameforPublicIP  | Unique DNS Name for the Public IP Address |
-| location  | Azure region where the resource will be deployed to  |
-| addressPrefix  | Address Prefix for the Virtual Network specified in the CIDR format  |
-| subnetPrefix | Prefix for the Subnet specified in CIDR format |
-| publicIPAddressType | Address Type of the Public IP Address - Dynamic or Static |
-

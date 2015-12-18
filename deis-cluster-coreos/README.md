@@ -1,6 +1,6 @@
 # Deploy a Deis cluster
 
-<a href="https://azuredeploy.net/" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdeis-cluster-coreos%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
@@ -17,13 +17,13 @@ This template allows you to create a Deis cluster. The cluster is made up by thr
 
 		openssl req -x509 -days 365 -new -key [your private key file] -out [cert file to be generated]
 
-3. Go to https://discovery.etcd.io/new to generate a new cluster token.
+3. Go to https://discovery.etcd.io/new to generate a discovery URL.
 
-4. Modify **cloud-config.yaml** to replace the existing **discovery** token with the new token.
+4. Modify **cloud-config.yaml** to replace `#DISCOVERY_URL` with the discovery URL.
 
 5. Modify **azuredeploy-parameters.json**: Open the certificate you created in step 2. Copy all text between  *----BEGIN CERTIFICATE-----* and *-----END CERTIFICATE-----* into the **sshKeyData** parameter (you'll need to remove all newline characters).
 
-6. Modify other parameters such as **newStorageAccountName** and **publicDomainName** to values of your choice. 
+6. Modify other parameters such as **newStorageAccountName** and **publicDomainName** to values of your choice.
 
 7. Provision the resource group:
 
@@ -37,9 +37,9 @@ This template allows you to create a Deis cluster. The cluster is made up by thr
 
 
 >**Note:** If you chose to use the "Deploy to Azure" button experience, you'll need to manually encode **cloud-config.yaml** as a Base64 string and enter the encoded string to the **customData** parameter. Although the template can be updated to use the built-in base64() founction, I found the triple-encoding is rather troublesome especially for readability and maintenance.
-		
+
 ##Install the client
-You need **deisctl** to control your Deis cluster. *deisctl* is automatically installed in all the cluster nodes. However, it's a good practice to use *deisctl* on a separate administrative machine. Because all nodes are configured with only private IP addresses, you'll need to use SSH tunneling through the load balancer, which has a public IP, to the node machines. The following are the steps of setting up *deisctl* on a separate machine.
+You need **deisctl** to control your Deis cluster. *deisctl* is automatically installed in all the cluster nodes. However, it's a good practice to use *deisctl* on a separate administrative machine. Because all nodes are configured with only private IP addresses, you'll need to use an SSH tunnel through the load balancer, which has a public IP, to the node machines. The following are the steps of setting up *deisctl* on a separate machine.
 
 1. Install *deisctl*
 
@@ -89,7 +89,7 @@ The following steps show how to deploy a "Hello World" Go application to the clu
 3. Add id_rsa.pub to GitHub (using Settings->SSH Keys section on your GitHub account).
 
 	> **Note**: for step 2 and 3, you can also reuse your existing key.
-	
+
 4. Register a new user
 
 		deis register http://deis.[your domain]
@@ -106,7 +106,7 @@ The following steps show how to deploy a "Hello World" Go application to the clu
 		git push deis master
 
 7. Verify if the application is running:
-	
+
 		curl -S http://[your application name].[your domain]
 
 	You should see:
@@ -121,27 +121,13 @@ The following steps show how to deploy a "Hello World" Go application to the clu
 		deis scale cmd=3
 
 
-##Other parameters
-
-Below are the parameters that the template expects
-
-| Name   | Description    |
-|:--- |:---|
-| adminUsername | Name of the admin user | 
-| customData | Explained above |
-| newStorageAccountName | new storage account for the VMs OS disk |
-| numberOfNodes | Number of member nodes. Currently only 3-node clusters are supported |
-| publicDomainName | public domain name to be assoicated with the load balancer IP |
-| sshKeyData | Explained above |
-| vmSize | Instance size for the VMs |
-
 ##Deis debugging tips
 
-1. First, verify if the VM machines have been provisioned correctly. When you ssh into the machines, you should see the Deis logo as ASCII art. If you don't see it, something has gone wrong with the cloud-init process. Probably you have an invalid cloud-init file.
+1. First, verify that the VM machines have been provisioned correctly. When you SSH into the machines, you should see the Deis logo as ASCII art. If you don't see it, something has gone wrong with the cloud-init process. You probably have an invalid cloud-init file.
 
-2. As you ssh into the machine, verify if Docker daemon is running by running some Docker command such as *docker ps*.
+2. When you SSH into the machine, verify that the Docker daemon is running by running a Docker command such as *docker ps*.
 
-3. Use *deisctl list* to list all services. Check if all services are running. If you found a service is in faulted state, you can try to use the following commands to find out why the service is failing:
+3. Use *deisctl list* to list all services. Check that all services are running. If you find a service in a faulted state, you can try to using the following commands to find out why the service is failing:
 	- List service journal
 
 			deisctl journal [service]  #example: deisctl journal builder
@@ -149,5 +135,5 @@ Below are the parameters that the template expects
 	- Restart a service
 
 			deisctl restart [service] #example: deisctl restart controller
-	
+
 	>Note: For more information, see http://docs.deis.io/en/latest/troubleshooting_deis/

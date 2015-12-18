@@ -4,16 +4,7 @@
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-This template deploys GitHub Enterprise on an Ubuntu virtual machine. GitHub Enterprise leverages Premium Storage, and attaches a replicated 512 GB data disk by default. 
-
-The GitHub Enterprise template expects the following parameters:
-
-| Name   | Description    |
-|:--- |:---|
-| storageAccountPrefix  | Unique prefix for your Storage Account and DNS name. Must be all lower case letters or numbers. No spaces or special characters.|
-| location | Deployment region. Choose a region with Premium Storage support. |
-| vmSize | VM size. Select a DS Series VM with at least 14 GB of RAM. Default value: **"Standard_DS3"**|
-| storageDiskSizeGB | Select a Premium Storage disk capacity for your source code, in GB. Default value: **512**.|
+This template deploys GitHub Enterprise on an Ubuntu virtual machine. GitHub Enterprise leverages Premium Storage, and attaches a replicated 512 GB data disk by default.
 
 You can configure GitHub Enterprise by visiting the public IP address assigned to the VM. To find your IP address, visit the [portal](https://portal.azure.com).
 
