@@ -7,7 +7,12 @@ var assert = require('assert'),
   unirest = require('unirest'),
   skeemas = require('skeemas'),
   debug = require('debug')('validator'),
-  parallel = require('mocha.parallel');
+  parallel = require('mocha.parallel'),
+  colors = require('mocha/lib/reporters/base').colors;
+
+// setup mocha color scheme
+// 32 = console code for green
+colors.pass = 32;
 
 function getModifiedPaths() {
   assert.ok(process.env.TRAVIS_COMMIT_RANGE, 'VALIDATE_MODIFIED_ONLY requires TRAVIS_COMMIT_RANGE to be set to [START_COMMIT_HASH]...[END_COMMIT_HASH]');
