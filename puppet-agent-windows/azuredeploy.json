@@ -2,13 +2,14 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "newStorageAccountName": {
+    "storageAccountNamePrefix": {
       "type": "string",
+      "maxLength": 11,
       "metadata": {
-        "description": "Unique Storage Account Name for creating the VM"
+        "description": "Name prefix of the storage account to hold your VM disk."
       }
     },
-    "vmDnsName": {
+    "dnsLabelPrefix": {
       "type": "string",
       "metadata": {
         "description": "Unique DNS Name"
@@ -26,38 +27,10 @@
         "description": "Admin password name for the Virtual Machines"
       }
     },
-    "imagePublisher": {
-      "type": "string",
-      "defaultValue": "MicrosoftWindowsServer",
-      "metadata": {
-        "description": "Publisher for the OS image, the default is MicrosoftWindowsServer"
-      }
-    },
-    "imageOffer": {
-      "type": "string",
-      "defaultValue": "WindowsServer",
-      "metadata": {
-        "description": "The name of the image offer. The default is WindowsServer "
-      }
-    },
-    "imageSKU": {
-      "type": "string",
-      "defaultValue": "2012-R2-Datacenter",
-      "metadata": {
-        "description": "Version of the image. The default is 2012-R2-Datacenter"
-      }
-    },
     "location": {
-      "type": "string",
-      "allowedValues": [
-        "West US",
-        "East US",
-        "West Europe",
-        "East Asia",
-        "Southeast Asia"
-      ],
+      "type": "string",      
       "metadata": {
-        "description": "Location for the VM"
+        "description": "Location for the VM, e.g. West US"
       }
     },
     "vmSize": {
@@ -67,7 +40,7 @@
         "description": "VM Size for creating the Virtual Machine"
       }
     },
-    "puppet_master_server": {
+    "puppet_master_server_url": {
       "type": "string",
       "metadata": {
         "description": "Puppet Master URL"
@@ -75,10 +48,11 @@
     }
   },
   "variables": {
+    "apiVersion":"2015-06-15",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
     "subnet1Ref": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]",
     "vmExtensionName": "PuppetEnterpriseAgent",
-    "vmName": "[parameters('vmDnsName')]",
+    "vmName": "[parameters('dnsLabelPrefix')]",
     "storageAccountType": "Standard_LRS",
     "publicIPAddressName": "myPublicIP",
     "publicIPAddressType": "Dynamic",
@@ -86,36 +60,38 @@
     "virtualNetworkName": "MyVNET",
     "addressPrefix": "10.0.0.0/16",
     "subnet1Name": "subnet-1",
-    "subnet2Name": "subnet-2",
     "subnet1Prefix": "10.0.0.0/24",
-    "subnet2Prefix": "10.0.1.0/24",
     "nicName": "myVMNic",
-    "dnsName": "[variables('subnet1Name')]"
+    "dnsName": "[variables('subnet1Name')]",
+    "imagePublisher": "MicrosoftWindowsServer",
+    "imageOffer": "WindowsServer",
+    "imageSKU": "2012-R2-Datacenter",
+    "storageAccountName": "[replace(replace(tolower(concat(parameters('storageAccountNamePrefix'), uniquestring(resourceGroup().id))), '-',''),'.','')]"
   },
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[parameters('newStorageAccountName')]",
-      "apiVersion": "2015-05-01-preview",
+      "name": "[variables('storageAccountName')]",
+      "apiVersion": "[variables('apiVersion')]",
       "location": "[parameters('location')]",
       "properties": {
         "accountType": "[variables('storageAccountType')]"
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
       "location": "[parameters('location')]",
       "properties": {
         "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
         "dnsSettings": {
-          "domainNameLabel": "[parameters('vmDnsName')]"
+          "domainNameLabel": "[parameters('dnsLabelPrefix')]"
         }
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
@@ -131,18 +107,12 @@
             "properties": {
               "addressPrefix": "[variables('subnet1Prefix')]"
             }
-          },
-          {
-            "name": "[variables('subnet2Name')]",
-            "properties": {
-              "addressPrefix": "[variables('subnet2Prefix')]"
-            }
           }
         ]
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
       "location": "[parameters('location')]",
@@ -168,12 +138,12 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
       ],
       "properties": {
@@ -187,15 +157,15 @@
         },
         "storageProfile": {
           "imageReference": {
-            "publisher": "[parameters('imagePublisher')]",
-            "offer": "[parameters('imageOffer')]",
-            "sku": "[parameters('imageSKU')]",
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[variables('imageSKU')]",
             "version": "latest"
           },
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/','osdisk.vhd')]"
+              "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/vhds/','osdisk.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -213,7 +183,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmName'),'/', variables('vmExtensionName'))]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
@@ -223,7 +193,12 @@
         "type": "PuppetEnterpriseAgent",
         "typeHandlerVersion": "3.2",
         "settings": {
-          "PUPPET_MASTER_SERVER": "[parameters('puppet_master_server')]"
+          "puppet_master_server": "[parameters('puppet_master_server_url')]"
+        },
+        "protectedSettings": {
+          "placeHolder": {
+            "placeHolder": "placeHolder"
+          }
         }
       }
     }
