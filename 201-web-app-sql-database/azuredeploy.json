@@ -120,7 +120,7 @@
           "name": "[parameters('databaseName')]",
           "type": "databases",
           "location": "[parameters('serverLocation')]",
-          "apiVersion": "2014-08-01",
+          "apiVersion": "2014-04-01-preview",
           "dependsOn": [
             "[concat('Microsoft.Sql/servers/', parameters('serverName'))]"
           ],
@@ -132,7 +132,7 @@
           }
         },
         {
-          "apiVersion": "2.0",
+          "apiVersion": "2014-04-01-preview",
           "dependsOn": [
             "[concat('Microsoft.Sql/servers/', parameters('serverName'))]"
           ],
@@ -147,9 +147,9 @@
       ]
     },
     {
-      "apiVersion": "2015-04-01",
+      "apiVersion": "2014-06-01",
       "name": "[parameters('hostingPlanName')]",
-      "type": "Microsoft.Web/serverFarms",
+      "type": "Microsoft.Web/serverfarms",
       "location": "[parameters('siteLocation')]",
       "properties": {
         "name": "[parameters('hostingPlanName')]",
@@ -159,12 +159,12 @@
       }
     },
     {
-      "apiVersion": "2015-06-01",
+      "apiVersion": "2015-08-01",
       "name": "[parameters('siteName')]",
-      "type": "Microsoft.Web/Sites",
+      "type": "Microsoft.Web/sites",
       "location": "[parameters('siteLocation')]",
       "dependsOn": [
-        "[concat('Microsoft.Web/serverFarms/', parameters('hostingPlanName'))]"
+        "[concat('Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]"
       ],
       "tags": {
         "[concat('hidden-related:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]": "empty"
@@ -175,16 +175,16 @@
       },
       "resources": [
         {
-          "apiVersion": "2014-11-01",
+          "apiVersion": "2015-08-01",
           "type": "config",
           "name": "connectionstrings",
           "dependsOn": [
-            "[concat('Microsoft.Web/Sites/', parameters('siteName'))]"
+            "[concat('Microsoft.Web/sites/', parameters('siteName'))]"
           ],
           "properties": {
             "DefaultConnection": {
               "value": "[concat('Data Source=tcp:', reference(concat('Microsoft.Sql/servers/', parameters('serverName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', parameters('databaseName'), ';User Id=', parameters('administratorLogin'), '@', parameters('serverName'), ';Password=', parameters('administratorLoginPassword'), ';')]",
-              "type": 2
+              "type": "SQLAzure"
             }
           }
         }
@@ -193,7 +193,7 @@
     {
       "apiVersion": "2014-04-01",
       "name": "[concat(parameters('hostingPlanName'), '-', resourceGroup().name)]",
-      "type": "microsoft.insights/autoscalesettings",
+      "type": "Microsoft.Insights/autoscalesettings",
       "location": "East US",
       "tags": {
         "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]": "Resource"
@@ -206,9 +206,9 @@
           {
             "name": "Default",
             "capacity": {
-              "minimum": "1",
-              "maximum": "2",
-              "default": "1"
+              "minimum": 1,
+              "maximum": 2,
+              "default": 1
             },
             "rules": [
               {
@@ -225,7 +225,7 @@
                 "scaleAction": {
                   "direction": "Increase",
                   "type": "ChangeCount",
-                  "value": "1",
+                  "value": 1,
                   "cooldown": "PT10M"
                 }
               },
@@ -243,7 +243,7 @@
                 "scaleAction": {
                   "direction": "Decrease",
                   "type": "ChangeCount",
-                  "value": "1",
+                  "value": 1,
                   "cooldown": "PT1H"
                 }
               }
@@ -258,7 +258,7 @@
     {
       "apiVersion": "2014-04-01",
       "name": "[concat('ServerErrors ', parameters('siteName'))]",
-      "type": "microsoft.insights/alertrules",
+      "type": "Microsoft.Insights/alertrules",
       "location": "East US",
       "dependsOn": [
         "[concat('Microsoft.Web/sites/', parameters('siteName'))]"
@@ -271,9 +271,9 @@
         "description": "[concat(parameters('siteName'), ' has some server errors, status code 5xx.')]",
         "isEnabled": false,
         "condition": {
-          "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.ThresholdRuleCondition",
+          "odata.type": "Microsoft.Azure.Management.Insights.Models.ThresholdRuleCondition",
           "dataSource": {
-            "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.RuleMetricDataSource",
+            "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleMetricDataSource",
             "resourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/sites/', parameters('siteName'))]",
             "metricName": "Http5xx"
           },
@@ -282,16 +282,16 @@
           "windowSize": "PT5M"
         },
         "action": {
-          "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.RuleEmailAction",
+          "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleEmailAction",
           "sendToServiceOwners": true,
-          "customEmails": []
+          "customEmails": [ ]
         }
       }
     },
     {
       "apiVersion": "2014-04-01",
       "name": "[concat('ForbiddenRequests ', parameters('siteName'))]",
-      "type": "microsoft.insights/alertrules",
+      "type": "Microsoft.Insights/alertrules",
       "location": "East US",
       "dependsOn": [
         "[concat('Microsoft.Web/sites/', parameters('siteName'))]"
@@ -304,9 +304,9 @@
         "description": "[concat(parameters('siteName'), ' has some requests that are forbidden, status code 403.')]",
         "isEnabled": false,
         "condition": {
-          "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.ThresholdRuleCondition",
+          "odata.type": "Microsoft.Azure.Management.Insights.Models.ThresholdRuleCondition",
           "dataSource": {
-            "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.RuleMetricDataSource",
+            "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleMetricDataSource",
             "resourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/sites/', parameters('siteName'))]",
             "metricName": "Http403"
           },
@@ -315,16 +315,16 @@
           "windowSize": "PT5M"
         },
         "action": {
-          "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.RuleEmailAction",
+          "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleEmailAction",
           "sendToServiceOwners": true,
-          "customEmails": []
+          "customEmails": [ ]
         }
       }
     },
     {
       "apiVersion": "2014-04-01",
       "name": "[concat('CPUHigh ', parameters('hostingPlanName'))]",
-      "type": "microsoft.insights/alertrules",
+      "type": "Microsoft.Insights/alertrules",
       "location": "East US",
       "dependsOn": [
         "[concat('Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]"
@@ -337,9 +337,9 @@
         "description": "[concat('The average CPU is high across all the instances of ', parameters('hostingPlanName'))]",
         "isEnabled": false,
         "condition": {
-          "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.ThresholdRuleCondition",
+          "odata.type": "Microsoft.Azure.Management.Insights.Models.ThresholdRuleCondition",
           "dataSource": {
-            "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.RuleMetricDataSource",
+            "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleMetricDataSource",
             "resourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]",
             "metricName": "CpuPercentage"
           },
@@ -348,16 +348,16 @@
           "windowSize": "PT15M"
         },
         "action": {
-          "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.RuleEmailAction",
+          "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleEmailAction",
           "sendToServiceOwners": true,
-          "customEmails": []
+          "customEmails": [ ]
         }
       }
     },
     {
       "apiVersion": "2014-04-01",
       "name": "[concat('LongHttpQueue ', parameters('hostingPlanName'))]",
-      "type": "microsoft.insights/alertrules",
+      "type": "Microsoft.Insights/alertrules",
       "location": "East US",
       "dependsOn": [
         "[concat('Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]"
@@ -370,9 +370,9 @@
         "description": "[concat('The HTTP queue for the instances of ', parameters('hostingPlanName'), ' has a large number of pending requests.')]",
         "isEnabled": false,
         "condition": {
-          "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.ThresholdRuleCondition",
+          "odata.type": "Microsoft.Azure.Management.Insights.Models.ThresholdRuleCondition",
           "dataSource": {
-            "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.RuleMetricDataSource",
+            "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleMetricDataSource",
             "resourceUri": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]",
             "metricName": "HttpQueueLength"
           },
@@ -381,16 +381,16 @@
           "windowSize": "PT5M"
         },
         "action": {
-          "odata.type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.RuleEmailAction",
+          "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleEmailAction",
           "sendToServiceOwners": true,
-          "customEmails": []
+          "customEmails": [ ]
         }
       }
     },
     {
       "apiVersion": "2014-04-01",
       "name": "[parameters('siteName')]",
-      "type": "microsoft.insights/components",
+      "type": "Microsoft.Insights/components",
       "location": "Central US",
       "dependsOn": [
         "[concat('Microsoft.Web/sites/', parameters('siteName'))]"
@@ -404,4 +404,3 @@
     }
   ]
 }
-

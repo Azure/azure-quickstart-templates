@@ -119,7 +119,7 @@ mountDriveForLogCloudera()
 
 mountDriveForZookeeper()
 {
-	dirname=/var/lib/zookeep
+	dirname=/log/cloudera/zookeeper
 	drivename=/dev/sdd
 	mke2fs -F -t ext4 -b 4096 -E lazy_itable_init=1 -O sparse_super,dir_index,extent,has_journal,uninit_bg -m1 $drivename
 	mkdir $dirname

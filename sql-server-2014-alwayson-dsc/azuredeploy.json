@@ -222,9 +222,9 @@
     "sqlLBIPAddress": {
       "type": "string",
       "metadata": {
-        "description": "The address of secondary AD"
+        "description": "The address of ILB for SQL Server AlwaysOn listener"
       },
-      "defaultValue": "10.0.0.6"
+      "defaultValue": "10.0.1.10"
     },
 
     "dataBaseNames": {
@@ -236,10 +236,10 @@
     }
   },
   "variables": {
-    "staticSubnetName": "ADStaticSubnet",
+    "adSubnetName": "ADStaticSubnet",
     "subnets": [
       {
-        "name": "[variables('staticSubnetName')]",
+        "name": "[variables('adSubnetName')]",
         "properties": {
           "addressPrefix": "[parameters('vmNetworkSubnet')]"
         }
@@ -253,7 +253,7 @@
     ],
     "virtualNetworkName": "WorkloadVNET",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
-    "staticSubnetRef": "[concat(variables('vnetID'),'/subnets/',variables('staticSubnetName'))]",
+    "adSubnetRef": "[concat(variables('vnetID'),'/subnets/',variables('adSubnetName'))]",
     "adTemplateURL": "[concat(parameters('assetLocation'),'/ADVmTemplate.json')]",
 
 
@@ -301,6 +301,13 @@
     "updateSQLCNic2": "updateSQLCNic2",
     "updateSQLCNic2Id": "[concat('Microsoft.Resources/deployments/', variables('updateSQLCNic2'))]",
     "sqlNicName2": "SqlMachine-Nic-1",
+
+    "publicLBName": "sqlLoadBalancer",
+    "lbFE": "SqlLBFE",
+    "lbBE": "SqlLBBE",
+    "sqllbID":"[resourceId('Microsoft.Network/loadBalancers',variables('publicLBName'))]",
+    "sqllbFEConfigID": "[concat(variables('sqllbID'),'/frontendIPConfigurations/',variables('lbFE'))]",
+    "sqlBEAddressPoolID": "[concat(variables('sqllbID'),'/backendAddressPools/',variables('lbBE'))]",
 
     "deploySqlWitnessShare": "deploySqlWitnessShare",
     "deploySqlWitnessShareId": "[concat('Microsoft.Resources/deployments/', variables('deploySqlWitnessShare'))]",
@@ -365,7 +372,7 @@
           "adminPassword": { "value": "[parameters('adminPassword')]" },
           "dnsPrefix": { "value": "[parameters('dnsPrefix')]" },
           "storageAccount": { "value": "[variables('adStorageName')]" },
-          "subnetUri": { "value": "[variables('staticSubnetRef')]" },
+          "subnetUri": { "value": "[variables('adSubnetRef')]" },
           "primaryAdIpAddress": { "value": "[parameters('primaryAdIpAddress')]" },
           "secondaryIpAddress": { "value": "[parameters('secondaryIpAddress')]" },
           "storageAccountType": { "value": "[parameters('storageAccountType')]" },
@@ -393,8 +400,9 @@
           "adminUsername": { "value": "[parameters('adminUsername')]" },
           "adminPassword": { "value": "[parameters('adminPassword')]" },
           "storageAccount": { "value": "[variables('SqlStorageName')]" },
+          "storageAccountType": { "value": "[parameters('storageAccountType')]" },
           "nicSubnetUri": { "value": "[variables('sqlSubnetRef')]" },
-          "lbSubnetUri": { "value": "[variables('staticSubnetRef')]" },
+          "lbSubnetUri": { "value": "[variables('sqlSubnetRef')]" },
           "vmNamePrefix": { "value": "[variables('sqlClusterVmNamePrefix')]" },
           "sqlLBIPAddress": { "value": "[parameters('sqlLBIPAddress')]" },
           "vmSize": { "value": "[parameters('sqlVMSize')]" },
@@ -592,7 +600,12 @@
                   "privateIPAllocationMethod": "Dynamic",
                   "subnet": {
                     "id": "[variables('sqlSubnetRef')]"
+                  },
+                "loadBalancerBackendAddressPools": [
+                  {
+                    "id":"[variables('sqlBEAddressPoolID')]"
                   }
+		 ]
                 }
               }
             ]
@@ -635,7 +648,12 @@
                   "privateIPAllocationMethod": "Dynamic",
                   "subnet": {
                     "id": "[variables('sqlSubnetRef')]"
+                  },
+                "loadBalancerBackendAddressPools": [
+                  {
+                    "id":"[variables('sqlBEAddressPoolID')]"
                   }
+		 ]
                 }
               }
             ]
