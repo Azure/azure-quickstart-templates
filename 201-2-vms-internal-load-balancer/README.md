@@ -18,6 +18,3 @@ The Azure Load Balancer is assigned a static IP in the Virtual Network and is  c
 - Modify the 2VMsinVnetWithILB-parameters file to update your subscriptionId and change naming convention
 
 - Deploy: New-AzureResourceGroupDeployment –Name IPDep1 -ResourceGroupName ILB-DemoRG -TemplateFile 2VMsinVnetWithILB.json -TemplateParameterFile 2VMsinVnetWithILB-parameters.json
-
-
-

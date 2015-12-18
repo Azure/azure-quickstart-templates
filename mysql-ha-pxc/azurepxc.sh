@@ -142,7 +142,7 @@ configure_disks() {
     fi
 
     echo "Creating filesystem on ${PARTITION}."
-    mkfs -t ext4 ${PARTITION}
+    mkfs -t ext4 lazy_itable_init=1 ${PARTITION}
     mkdir "${MOUNTPOINT}"
     read UUID FS_TYPE < <(blkid -u filesystem ${PARTITION}|awk -F "[= ]" '{print $3" "$5}'|tr -d "\"")
     add_to_fstab "${UUID}" "${MOUNTPOINT}"

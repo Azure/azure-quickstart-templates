@@ -8,32 +8,12 @@ This template creates a multi-server MongoDB deployment on Ubuntu and CentOS vir
 The template also provisions storage accounts, virtual network, availability set, network interfaces, VMs, disks and other infrastructure and runtime resources required by the installation.
 In addition, and when explicitly enabled, the template can create one publicly accessible "jumpbox" VM allowing to ssh into the MongoDB nodes for diagnostics or troubleshooting purposes.
 
-The template expects the following parameters:
-
-| Name   | Description | Default Value |
-|:--- |:---|:---|
-| adminUsername  | Administrator user name used when provisioning virtual machines (which also becomes a system administrator in MongoDB) | |
-| adminPassword  | Administrator password used when provisioning virtual machines (which is also a password for the system administrator in MongoDB) | |
-| storageAccountName | Unique namespace for a new storage account where the virtual machine's disks will be placed (it will be used as a prefix to create one or more new storage accounts as per t-shirt size) | |
-| location | Location where resources will be provisioned | |
-| virtualNetworkName | The arbitrary name of the virtual network provisioned for the MongoDB deployment | mongodbVnet |
-| subnetName | Subnet name for the virtual network that resources will be provisioned in to | mongodbSubnet |
-| addressPrefix | The network address space for the virtual network | 10.0.0.0/16 |
-| subnetPrefix | The network address space for the virtual subnet | 10.0.0.0/24 |
-| nodeAddressPrefix | The IP address prefix that will be used for constructing a static private IP address for each node in the cluster | 10.0.0.1 |
-| jumpbox | The flag allowing to enable or disable provisioning of the jumpbox VM that can be used to access the MongoDB environment | Disabled | 
-| tshirtSize | The t-shirt size of the MongoDB deployment (_XSmall_, _Small_, _Medium_, _Large_, _XLarge_, _XXLarge_) | XSmall |
-| osFamily | The target OS for the virtual machines running MongoDB (_Ubuntu_ or _CentOS_) | Ubuntu |
-| mongodbVersion | The version of the MongoDB packages to be deployed | 3.0.2 |
-| replicaSetName | The name of the MongoDB replica set | rs0 |
-| replicaSetKey | The shared secret key for the MongoDB replica set (6-1024 characters) |||
-
 Topology
 --------
 
 The deployment topology is comprised of a predefined number (as per t-shirt sizing) MongoDB member nodes configured as a replica set, along with the optional
-arbiter node. Replica sets are the preferred replication mechanism in MongoDB in small-to-medium installations. However, in a large deployment 
-with more than 50 nodes, a master/slave replication is required. 
+arbiter node. Replica sets are the preferred replication mechanism in MongoDB in small-to-medium installations. However, in a large deployment
+with more than 50 nodes, a master/slave replication is required.
 
 The following table outlines the deployment topology characteristics for each supported t-shirt size:
 
