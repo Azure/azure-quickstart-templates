@@ -63,6 +63,8 @@
         "addressPrefix": "10.0.0.0/16",
         "externalPrivateAddress": "10.0.1.10",
         "frontEndIPConfigId": "[concat(variables('lbId'),'/frontendIPConfigurations/LoadBalancerFrontEnd')]",
+        "WebApp1IPConfigId": "[concat(variables('lbId'),'/frontendIPConfigurations/WebApp1FrontEnd')]",
+        "WebApp2IPConfigId": "[concat(variables('lbId'),'/frontendIPConfigurations/WebApp2FrontEnd')]",
         "imageOffer": "check-point-r77-10",
         "imagePublisher": "checkpoint",
         "imageReference": "[variables(concat('imageReference',parameters('offer')))]",
@@ -117,7 +119,12 @@
             "product": "[variables('imageOffer')]",
             "publisher": "[variables('imagePublisher')]"
         },
-        "publicIPAddressId": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]",
+
+
+        "webApps": ["webapp1", "webapp2"],
+        "publicIPAddressId": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]",
+        "publicIPAddressWebApp1Id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('webApps')[0])]",
+        "publicIPAddressWebApp2Id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('webApps')[1])]",
         "publicIPAddressName": "security-gateway",
         "storageAccountType": "Standard_LRS",
         "subnet1Name": "external-subnet",
@@ -240,8 +247,36 @@
         },
         {
             "apiVersion": "[variables('apiVersion')]",
+            "location": "[resourceGroup().location]",
+            "name": "[variables('webApps')[0]]",
+            "properties": {
+                "dnsSettings": {
+                    "domainNameLabel": "[variables('webApps')[0]]"
+                },
+                "idleTimeoutInMinutes": 30,
+                "publicIPAllocationMethod": "Static"
+            },
+            "type": "Microsoft.Network/publicIPAddresses"
+        },
+        {
+            "apiVersion": "[variables('apiVersion')]",
+            "location": "[resourceGroup().location]",
+            "name": "[variables('webApps')[1]]",
+            "properties": {
+                "dnsSettings": {
+                    "domainNameLabel": "[variables('webApps')[1]]"
+                },
+                "idleTimeoutInMinutes": 30,
+                "publicIPAllocationMethod": "Static"
+            },
+            "type": "Microsoft.Network/publicIPAddresses"
+        },
+        {
+            "apiVersion": "[variables('apiVersion')]",
             "dependsOn": [
-                "[variables('publicIPAddressId')]"
+                "[variables('publicIPAddressId')]",
+                "[variables('publicIPAddressWebApp1Id')]",
+                "[variables('publicIPAddressWebApp2Id')]"
             ],
             "location": "[resourceGroup().location]",
             "name": "[variables('lbName')]",
@@ -259,9 +294,47 @@
                                 "id": "[variables('publicIPAddressId')]"
                             }
                         }
+                    },
+                    {
+                        "name": "WebApp1FrontEnd",
+                        "properties": {
+                            "publicIPAddress": {
+                                "id": "[variables('publicIPAddressWebApp1Id')]"
+                            }
+                        }
+                    },
+                    {
+                        "name": "WebApp2FrontEnd",
+                        "properties": {
+                            "publicIPAddress": {
+                                "id": "[variables('publicIPAddressWebApp2Id')]"
+                            }
+                        }
                     }
                 ],
                 "inboundNatRules": [
+                    {
+                        "name": "WebApp1",
+                        "properties": {
+                            "backendPort": 8081,
+                            "frontendIPConfiguration": {
+                                "id": "[variables('WebApp1IPConfigId')]"
+                            },
+                            "frontendPort": 80,
+                            "protocol": "tcp"
+                        }
+                    },
+                    {
+                        "name": "WebApp2",
+                        "properties": {
+                            "backendPort": 8082,
+                            "frontendIPConfiguration": {
+                                "id": "[variables('WebApp2IPConfigId')]"
+                            },
+                            "frontendPort": 80,
+                            "protocol": "tcp"
+                        }
+                    },
                     {
                         "name": "SSH",
                         "properties": {
@@ -411,6 +484,12 @@
                                 },
                                 {
                                     "id": "[concat(variables('lbId'),'/inboundNatRules/ICAPush')]"
+                                },
+                                {
+                                    "id": "[concat(variables('lbId'),'/inboundNatRules/WebApp1')]"
+                                },
+                                {
+                                    "id": "[concat(variables('lbId'),'/inboundNatRules/WebApp2')]"
                                 }
                             ],
                             "privateIPAddress": "[variables('externalPrivateAddress')]",
@@ -504,6 +583,14 @@
         "PublicIPAddress": {
             "type": "string",
             "value": "[reference(variables('publicIPAddressId')).IpAddress]"
+        },
+        "WebApp1": {
+            "type": "string",
+            "value": "[reference(variables('publicIPAddressWebApp1Id')).IpAddress]"
+        },
+        "WebApp2": {
+            "type": "string",
+            "value": "[reference(variables('publicIPAddressWebApp2Id')).IpAddress]"
         }
     }
 }
