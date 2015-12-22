@@ -27,6 +27,7 @@ LASTNAME=${13}
 JOBROLE=${14}
 JOBFUNCTION=${15}
 COMPANY=${16}
+VMSIZE=${17}
 
 log "BEGIN: master node deployments"
 
@@ -117,8 +118,8 @@ if $HA; then
 fi
 log $logCmd
 if $HA; then
-    python cmxDeployOnIbiza.py -n "$ClusterName" -u $User -p $Password  -m "$mip" -w "$worker_ip" -a -c $cmUser -s $cmPassword -e -r "$EMAILADDRESS" -b "$BUSINESSPHONE" -f "$FIRSTNAME" -t "$LASTNAME" -o "$JOBROLE" -i "$JOBFUNCTION" -y "$COMPANY">> /tmp/initialize-cloudera-server.log 2>> /tmp/initialize-cloudera-server.err
+    python cmxDeployOnIbiza.py -n "$ClusterName" -u $User -p $Password  -m "$mip" -w "$worker_ip" -a -c $cmUser -s $cmPassword -e -r "$EMAILADDRESS" -b "$BUSINESSPHONE" -f "$FIRSTNAME" -t "$LASTNAME" -o "$JOBROLE" -i "$JOBFUNCTION" -y "$COMPANY" -v "$VMSIZE">> /tmp/initialize-cloudera-server.log 2>> /tmp/initialize-cloudera-server.err
 else
-    python cmxDeployOnIbiza.py -n "$ClusterName" -u $User -p $Password  -m "$mip" -w "$worker_ip" -c $cmUser -s $cmPassword -e -r "$EMAILADDRESS" -b "$BUSINESSPHONE" -f "$FIRSTNAME" -t "$LASTNAME" -o "$JOBROLE" -i "$JOBFUNCTION" -y "$COMPANY">> /tmp/initialize-cloudera-server.log 2>> /tmp/initialize-cloudera-server.err
+    python cmxDeployOnIbiza.py -n "$ClusterName" -u $User -p $Password  -m "$mip" -w "$worker_ip" -c $cmUser -s $cmPassword -e -r "$EMAILADDRESS" -b "$BUSINESSPHONE" -f "$FIRSTNAME" -t "$LASTNAME" -o "$JOBROLE" -i "$JOBFUNCTION" -y "$COMPANY" -v "$VMSIZE">> /tmp/initialize-cloudera-server.log 2>> /tmp/initialize-cloudera-server.err
 fi
 log "END: CM deployment ended"

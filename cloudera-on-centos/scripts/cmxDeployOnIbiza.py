@@ -1672,7 +1672,7 @@ def parse_options():
                           'username': 'cmadmin', 'password': 'cmpassword', 'cm_server': None,
                           'host_names': None, 'license_file': None, 'parcel': [], 'company': None,
                           'email': None, 'phone': None, 'fname': None, 'lname': None, 'jobrole': None,
-                          'jobfunction': None, 'do_post':True}
+                          'jobfunction': None, 'vmsize': None,'do_post':True}
 
     def cmx_args(option, opt_str, value, *args, **kwargs):
         if option.dest == 'host_names':
@@ -1782,6 +1782,8 @@ def parse_options():
                       callback=cmx_args, help='Set company')
     parser.add_option('-e', '--accept-eula', dest='accepted', action="store_true", default=False,
                       help='Must accept eula before install')
+    parser.add_option('-b', '--vmsize', dest='vmsize', type="string", action="callback",
+                      callback=cmx_args, help='provide vmsize for setup')
 
     (options, args) = parser.parse_args()
 
