@@ -2,14 +2,9 @@
   "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "storageAccountName": {
-      "type": "string",
-      "metadata": {
-        "description": "Unique DNS Name for the Storage Account where the Virtual Machine's disks will be placed."
-      }
-    },
     "adminUsername": {
       "type": "string",
+      "defaultValue": "azureuser",
       "metadata": {
         "description": "Admin username"
       }
@@ -22,6 +17,7 @@
     },
     "dnsNameforLBIP": {
       "type": "string",
+      "defaultValue": "haproxylb",
       "metadata": {
         "description": "Unique DNS Name for Load Balancer Public IP"
       }
@@ -78,6 +74,8 @@
     "scriptsBaseUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/redundant-haproxy-floatingip-ubuntu/",
 	"apiVersion": "2015-06-15",
 
+    "storageAccountName": "[concat('haproxy', uniqueString(resourceGroup().id), 'sa')]",
+
     "numberOfHAproxyInstances": 2,
     "masterHAproxyInstanceIndex": 0,
     "haproxyVMScripts": {
@@ -125,7 +123,7 @@
     {
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[parameters('storageAccountName')]",
+      "name": "[variables('storageAccountName')]",
       "location": "[resourceGroup().location]",
       "properties": {
         "accountType": "[variables('storageAccountType')]"
@@ -309,7 +307,7 @@
       },
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', parameters('haproxyVMNamePrefix'), variables('nicNamePrefix'), copyindex())]",
         "[concat('Microsoft.Compute/availabilitySets/', variables('haproxyAvailabilitySetName'))]"
       ],
@@ -345,7 +343,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/', parameters('haproxyVMNamePrefix'), 'osdisk-', copyindex(), '.vhd')]"
+              "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/vhds/', parameters('haproxyVMNamePrefix'), 'osdisk-', copyindex(), '.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -361,7 +359,7 @@
         "diagnosticsProfile": {
           "bootDiagnostics": {
              "enabled": "true",
-             "storageUri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net')]"
+             "storageUri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net')]"
           }
         }
       }
@@ -402,7 +400,7 @@
       },
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', parameters('appVMNamePrefix'), variables('nicNamePrefix'), copyindex())]",
         "[concat('Microsoft.Compute/availabilitySets/', variables('appAvailabilitySetName'))]"
       ],
@@ -438,7 +436,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/', parameters('appVMNamePrefix'), 'osdisk-', copyindex(), '.vhd')]"
+              "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/vhds/', parameters('appVMNamePrefix'), 'osdisk-', copyindex(), '.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -454,7 +452,7 @@
         "diagnosticsProfile": {
           "bootDiagnostics": {
              "enabled": "true",
-             "storageUri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net')]"
+             "storageUri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net')]"
           }
         }
       }
