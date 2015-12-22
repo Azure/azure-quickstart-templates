@@ -15,25 +15,10 @@
         "description": "SSH rsa public key file as a string."
       }
     },
-    "dnsNameforLBIP": {
+    "lbDNSLabelPrefix": {
       "type": "string",
-      "defaultValue": "haproxylb",
       "metadata": {
-        "description": "Unique DNS Name for Load Balancer Public IP"
-      }
-    },
-    "lbName": {
-      "type": "string",
-      "defaultValue": "myLB",
-      "metadata": {
-        "description": "Load Balancer name"
-      }
-    },
-    "vnetName": {
-      "type": "string",
-      "defaultValue": "myVNET",
-      "metadata": {
-        "description": "VNET name"
+        "description": "DNS Label for the load balancer Public IP. Must be lowercase. It should match with the regex: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$."
       }
     },
     "haproxyVMNamePrefix": {
@@ -74,7 +59,8 @@
     "scriptsBaseUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/haproxy-redundant-floatingip-ubuntu/",
 	"apiVersion": "2015-06-15",
 
-    "storageAccountName": "[concat('haproxy', uniqueString(resourceGroup().id), 'sa')]",
+    "location": "[resourceGroup().location]",
+    "storageAccountName": "[concat(uniqueString(resourceGroup().id), 'haproxysa')]",
 
     "numberOfHAproxyInstances": 2,
     "masterHAproxyInstanceIndex": 0,
@@ -84,7 +70,7 @@
       "[concat(variables('scriptsBaseUrl'), 'keepalived-action.sh')]",
       "[concat(variables('scriptsBaseUrl'), 'keepalived-check-appsvc.sh')]"
     ],
-    "commandToExecute": "[concat('sudo bash -x haproxyvm-configure.sh ', ' -a ', parameters('appVMNamePrefix'), '0 -a ', parameters('appVMNamePrefix'), '1 -p ', variables('appVMPort'), ' -l ', parameters('dnsNameforLBIP'), '.', resourceGroup().location, '.cloudapp.azure.com -t ', variables('lbVIPPort'), ' -m ', parameters('haproxyVMNamePrefix'), '0 -b ', parameters('haproxyVMNamePrefix'), '1')]"
+    "commandToExecute": "[concat('sudo bash -x haproxyvm-configure.sh ', ' -a ', parameters('appVMNamePrefix'), '0 -a ', parameters('appVMNamePrefix'), '1 -p ', variables('appVMPort'), ' -l ', parameters('lbDNSLabelPrefix'), '.', variables('location'), '.cloudapp.azure.com -t ', variables('lbVIPPort'), ' -m ', parameters('haproxyVMNamePrefix'), '0 -b ', parameters('haproxyVMNamePrefix'), '1')]"
   },
 
     "numberOfAppInstances": 2,
@@ -105,16 +91,18 @@
     "haproxyAvailabilitySetName": "haproxyAvSet",
     "appAvailabilitySetName": "appAvSet",
 
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('vnetName'))]",
+    "vnetName": "haproxyVNet",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('vnetName'))]",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet-1",
     "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables ('subnetName'))]",
     "subnetPrefix": "10.0.0.0/24",
 
+    "lbName": "haproxyLB",
     "lbPublicIPAddressType": "Static",
-    "lbPublicIPAddressName": "[concat(parameters('lbName'), '-publicip')]",
+    "lbPublicIPAddressName": "[concat(variables('lbName'), '-publicip')]",
     "lbVIPPort": 80,
-    "lbID": "[resourceId('Microsoft.Network/loadBalancers',parameters('lbName'))]",
+    "lbID": "[resourceId('Microsoft.Network/loadBalancers',variables('lbName'))]",
     "frontEndIPConfigID": "[concat(variables('lbID'),'/frontendIPConfigurations/LoadBalancerFrontEnd')]",
     "lbPoolID": "[concat(variables('lbID'),'/backendAddressPools/BackendPool1')]",
     "lbProbeID": "[concat(variables('lbID'),'/probes/tcpProbe')]"
@@ -124,7 +112,7 @@
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('storageAccountName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[variables('location')]",
       "properties": {
         "accountType": "[variables('storageAccountType')]"
       }
@@ -133,33 +121,33 @@
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('haproxyAvailabilitySetName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[variables('location')]",
       "properties": {}
     },
     {
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('appAvailabilitySetName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[variables('location')]",
       "properties": {}
     },
     {
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('lbPublicIPAddressName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[variables('location')]",
       "properties": {
         "publicIPAllocationMethod": "[variables('lbPublicIPAddressType')]",
         "dnsSettings": {
-          "domainNameLabel": "[parameters('dnsNameforLBIP')]"
+          "domainNameLabel": "[parameters('lbDNSLabelPrefix')]"
         }
       }
     },
     {
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/virtualNetworks",
-      "name": "[parameters('vnetName')]",
-      "location": "[resourceGroup().location]",
+      "name": "[variables('vnetName')]",
+      "location": "[variables('location')]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -178,9 +166,9 @@
     },
     {
       "apiVersion": "[variables('apiVersion')]",
-      "name": "[parameters('lbName')]",
+      "name": "[variables('lbName')]",
       "type": "Microsoft.Network/loadBalancers",
-      "location": "[resourceGroup().location]",
+      "location": "[variables('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', variables('lbPublicIPAddressName'))]"
       ],
@@ -264,14 +252,14 @@
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(parameters('haproxyVMNamePrefix'), variables('nicNamePrefix'), copyindex())]",
-      "location": "[resourceGroup().location]",
+      "location": "[variables('location')]",
       "copy": {
         "name": "haproxyNicLoop",
         "count": "[variables('numberOfHAproxyInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', parameters('vnetName'))]",
-        "[concat('Microsoft.Network/loadBalancers/', parameters('lbName'))]"
+        "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
+        "[concat('Microsoft.Network/loadBalancers/', variables('lbName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -305,7 +293,7 @@
         "name": "haproxyVMLoop",
         "count": "[variables('numberOfHAproxyInstances')]"
       },
-      "location": "[resourceGroup().location]",
+      "location": "[variables('location')]",
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', parameters('haproxyVMNamePrefix'), variables('nicNamePrefix'), copyindex())]",
@@ -368,13 +356,13 @@
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(parameters('appVMNamePrefix'), variables('nicNamePrefix'), copyindex())]",
-      "location": "[resourceGroup().location]",
+      "location": "[variables('location')]",
       "copy": {
         "name": "appNicLoop",
         "count": "[variables('numberOfAppInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', parameters('vnetName'))]"
+        "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -398,7 +386,7 @@
         "name": "appVMLoop",
         "count": "[variables('numberOfAppInstances')]"
       },
-      "location": "[resourceGroup().location]",
+      "location": "[variables('location')]",
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', parameters('appVMNamePrefix'), variables('nicNamePrefix'), copyindex())]",
@@ -465,14 +453,14 @@
         "name": "appVMExtensionsLoop",
         "count": "[variables('numberOfAppInstances')]"
       },
-      "location": "[resourceGroup().location]",
+      "location": "[variables('location')]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', parameters('appVMNamePrefix'), copyindex())]"
       ],
       "properties": {
         "publisher": "Microsoft.OSTCExtensions",
         "type": "CustomScriptForLinux",
-        "typeHandlerVersion": "1.3",
+        "typeHandlerVersion": "1.4",
         "settings": {
           "fileUris": "[variables('appVMScripts').fileUris]",
           "commandToExecute": "[variables('appVMScripts').commandToExecute]"
@@ -487,7 +475,7 @@
         "name": "haproxyVMExtensionsLoop",
         "count": "[variables('numberOfHAproxyInstances')]"
       },
-      "location": "[resourceGroup().location]",
+      "location": "[variables('location')]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', parameters('haproxyVMNamePrefix'), copyindex())]",
         "appVMExtensionsLoop"
@@ -495,7 +483,7 @@
       "properties": {
         "publisher": "Microsoft.OSTCExtensions",
         "type": "CustomScriptForLinux",
-        "typeHandlerVersion": "1.3",
+        "typeHandlerVersion": "1.4",
         "settings": {
           "fileUris": "[variables('haproxyVMScripts').fileUris]",
           "commandToExecute": "[variables('haproxyVMScripts').commandToExecute]"
