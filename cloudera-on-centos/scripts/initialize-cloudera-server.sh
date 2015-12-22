@@ -110,7 +110,6 @@ touch /tmp/readyFile
 
 # Execute script to deploy Cloudera cluster
 log "BEGIN: CM deployment - starting"
-log "myCMusername: $cmUser, myCMpassword: $cmPassword"
 # mingrui changed command to print both key info and password.
 logCmd="Command: python cmxDeployOnIbiza.py -n "\""$ClusterName"\"" -u "\""$User"\"" -p "\""$Password"\"" -k "\""$key"\"" -m "\""$mip"\"" -w "\""$worker_ip"\"" -c " \""$cmUser"\"" -s "\""$cmPassword"\"""
 if $HA; then

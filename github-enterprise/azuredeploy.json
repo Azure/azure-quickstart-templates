@@ -1,191 +1,351 @@
 {
-  "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json",
-  "contentVersion": "1.0.0.0",
-  "metadata": {
-    "about": "GitHub Enterprise is the self-hosted version of GitHub.com. Collaborate, track issues & review code - all on your own servers.",
-    "website": "http://enterprise.github.com",
-    "description": "This template deploys the lastest version of GitHub Enterprise on a single, Premium Storage-backed Azure VM."
-  },
-  "parameters": {
-    "accountPrefix": {
-      "type": "string",
-      "metadata": {
-        "description": "Unique prefix for your Storage Account and VM name. Must be all lower case letters or numbers. No spaces or special characters."
-      }
-    },
-    "location": {
-      "type": "string",
-      "metadata": {
-        "description": "Deployment region. Choose a region with Premium Storage support and IaaS ARM preview support."
-      },
-      "defaultValue": "West US",
-      "allowedValues": [
-        "West US",
-        "West Europe",
-        "East US 2",
-        "Southeast Asia",
-        "Japan East",
-        "Japan West"
-      ]
-    },
-    "vmSize": {
-      "type": "string",
-      "metadata": {
-        "description": "VM Size. Select a DS Series VM with at least 14 GB of RAM. Default value: Standard_DS3"
-      },
-      "defaultValue": "Standard_DS3",
-      "allowedValues": [
-        "Standard_DS3",
-        "Standard_DS4",
-        "Standard_DS12",
-        "Standard_DS13",
-        "Standard_DS14"
-      ]
-    },
-    "storageDiskSizeGB": {
-      "type": "string",
-      "metadata": {
-        "description": "Select a Premium Storage disk capacity for your source code, in GB. Default value: 512."
-      },
-      "defaultValue": "512"
-    }
-  },
-  "variables": {
-    "storageAccountType": "Premium_LRS",
-    "storageAccountName": "[concat(replace(replace(replace(toLower(parameters('accountPrefix')),'-',''),'_',''),'.',''),'data')]",
-    "vnetName": "ghe-vnet",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('vnetName'))]",
-    "vnetAddressPrefix": "10.0.0.0/16",
-    "subnetName": "ghe-subnet",
-    "subnetAddressPrefix": "10.0.0.0/24",
-    "publicIPAddressName": "ghe-ip",
-    "publicIPAddressType": "Dynamic",
-    "dnsNameForPublicIP": "[concat(parameters('accountPrefix'), '-ghe')]",
-    "nicName": "ghe-nic",
-    "vmName": "[concat(replace(replace(parameters('accountPrefix'),'.',''),'_','-'), '-ghe-vm')]",
-    "dataDiskName": "ghe-data",
-    "dataDiskVHDName": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/','data-disks','/',variables('dataDiskName'),'.vhd')]",
-    "osDiskVHDName": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/','vhds','/',variables('vmName'),'-os-disk.vhd')]"
-  },
-  "resources": [
-    {
-      "apiVersion": "2015-05-01-preview",
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('storageAccountName')]",
-      "location": "[parameters('location')]",
-      "properties": {
-        "accountType": "[variables('storageAccountType')]"
-      }
-    },
-    {
-      "apiVersion": "2015-05-01-preview",
-      "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[variables('publicIPAddressName')]",
-      "location": "[parameters('location')]",
-      "properties": {
-        "publicIPAllocationMethod": "[variables('publicIPAddressType')]"
-      }
-    },
-    {
-      "apiVersion": "2015-05-01-preview",
-      "type": "Microsoft.Network/virtualNetworks",
-      "name": "[variables('vnetName')]",
-      "location": "[parameters('location')]",
-      "properties": {
-        "addressSpace": {
-          "addressPrefixes": [
-            "[variables('vnetAddressPrefix')]"
-          ]
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "accountPrefix": {
+            "type": "string",
+            "metadata": {
+                "description": "Unique prefix for your Storage Account and VM name. Must be all lower case letters or numbers. No spaces or special characters."
+            }
         },
-        "subnets": [
-          {
-            "name": "[variables('subnetName')]",
-            "properties": {
-              "addressPrefix": "[variables('subnetAddressPrefix')]"
-            }
-          }
-        ]
-      }
-    },
-    {
-      "apiVersion": "2015-05-01-preview",
-      "type": "Microsoft.Network/networkInterfaces",
-      "name": "[variables('nicName')]",
-      "location": "[parameters('location')]",
-      "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
-      ],
-      "properties": {
-        "ipConfigurations": [
-          {
-            "name": "ghe-ipconf",
-            "properties": {
-              "privateIPAllocationMethod": "[variables('publicIPAddressType')]",
-              "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
-              },
-              "subnet": {
-                "id": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "apiVersion": "2015-05-01-preview",
-      "type": "Microsoft.Compute/virtualMachines",
-      "name": "[variables('vmName')]",
-      "location": "[parameters('location')]",
-      "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/',variables('nicName'))]",
-        "[concat('Microsoft.Storage/storageAccounts/',variables('storageAccountName'))]"
-      ],
-      "properties": {
-        "hardwareProfile": {
-          "vmSize": "[parameters('vmSize')]"
+        "vmSize": {
+            "type": "string",
+            "metadata": {
+                "description": "VM Size. Select a DS Series VM with at least 14 GB of RAM. Default value: Standard_DS3"
+            },
+            "defaultValue": "Standard_DS3",
+            "allowedValues": [
+                "Standard_DS3",
+                "Standard_DS4",
+                "Standard_DS12",
+                "Standard_DS13",
+                "Standard_DS14"
+            ]
         },
-        "osProfile": {
-          "computername": "[variables('vmName')]",
-          "adminUsername": "octocatwashere",
-          "adminPassword": "p!aceHolderPa55"
+        "storageDiskSizeGB": {
+            "type": "string",
+            "metadata": {
+                "description": "Select a Premium Storage disk capacity for your source code, in GB. Default value: 512."
+            },
+            "defaultValue": "512"
         },
-        "storageProfile": {
-          "imageReference": {
-            "publisher": "GitHub",
-            "offer": "GitHub-Enterprise",
-            "sku": "GitHub-Enterprise",
-            "version": "latest"
-          },
-          "osDisk": {
-            "name": "[concat(variables('vmName'),'-osDisk')]",
-            "caching": "ReadWrite",
-            "createOption": "FromImage",
-            "vhd": {
-              "uri": "[variables('osDiskVhdName')]"
-            }
-          },
-          "dataDisks": [
-            {
-              "name": "[variables('dataDiskName')]",
-              "diskSizeGB": "[parameters('storageDiskSizeGB')]",
-              "createOption": "empty",
-              "lun": 0,
-              "vhd": {
-                "uri": "[variables('dataDiskVHDName')]"
-              }
-            }
-          ]
-        },
-        "networkProfile": {
-          "networkInterfaces": [
-            {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
-            }
-          ]
+        "location": {
+            "type": "string",
+            "metadata": {
+                "description": "Select a data center that supports premium storage"
+            },
+            "defaultValue": "Southeast Asia",
+            "allowedValues": [
+                "West US",
+                "East US 2",
+                "West Europe",
+                "East China",
+                "Southeast Asia",
+                "Japan West",
+                "Japan East",
+                "Australia East"
+            ]
         }
-      }
-    }
-  ]
+    },
+    "variables": {
+        "imagePublisher": "GitHub",
+        "imageOffer": "GitHub-Enterprise",
+        "OSDiskName": "osdiskforlinuxsimple",
+        "nicName": "[concat(replace(replace(parameters('accountPrefix'),'.',''),'_','-'), '-nic')]",
+        "addressPrefix": "10.0.0.0/16",
+        "subnetName": "Subnet",
+        "subnetPrefix": "10.0.0.0/24",
+        "storageAccountType": "Premium_LRS",
+        "storageAccountName": "[concat(replace(replace(replace(parameters('accountPrefix'),'.',''),'_',''),'-',''), 'data')]",
+        "publicIPAddressName": "[concat(replace(replace(parameters('accountPrefix'),'.',''),'_','-'), '-pub-ip')]",
+        "publicIPAddressType": "Dynamic",
+        "dnsNameForPublicIP": "[concat(parameters('accountPrefix'), '-ghe')]",
+        "vmStorageAccountContainerName": "vhds",
+        "vmName": "[concat(replace(replace(parameters('accountPrefix'),'.',''),'_','-'), '-ghe-vm')]",
+        "virtualNetworkName": "[concat(replace(replace(parameters('accountPrefix'),'.',''),'_','-'), '-vnet')]",
+        "networkSecurityGroupName": "[concat(replace(replace(parameters('accountPrefix'),'.',''),'_','-'), '-nsg')]",
+        "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
+        "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
+        "dataDiskName": "ghe-data",
+        "dataDiskVHDName": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/','data-disks','/',variables('dataDiskName'),'.vhd')]",
+        "apiVersion": "2015-06-15"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[variables('storageAccountName')]",
+            "apiVersion": "[variables('apiVersion')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "accountType": "[variables('storageAccountType')]"
+            }
+        },
+        {
+            "apiVersion": "[variables('apiVersion')]",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[variables('publicIPAddressName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+                "dnsSettings": {
+                    "domainNameLabel": "[variables('dnsNameForPublicIP')]"
+                }
+            }
+        },
+        {
+            "apiVersion": "[variables('apiVersion')]",
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[variables('virtualNetworkName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkSecurityGroups/', variables('networkSecurityGroupName'))]"
+            ],
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('addressPrefix')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[variables('subnetName')]",
+                        "properties": {
+                            "addressPrefix": "[variables('subnetPrefix')]",
+                            "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "[variables('apiVersion')]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[variables('nicName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+                "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+                            },
+                            "subnet": {
+                                "id": "[variables('subnetRef')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "[variables('apiVersion')]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[variables('vmName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+                "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('vmSize')]"
+                },
+                "osProfile": {
+                    "computername": "[variables('vmName')]",
+                    "adminUsername": "octacatwashere",
+                    "adminPassword": "p!@ceHolderPa55"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "[variables('imagePublisher')]",
+                        "offer": "[variables('imageOffer')]",
+                        "sku": "[variables('imageOffer')]",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "osdisk",
+                        "vhd": {
+                            "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]"
+                        },
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage"
+                    },
+                    "dataDisks": [
+                        {
+                            "name": "[variables('dataDiskName')]",
+                            "diskSizeGB": "[parameters('storageDiskSizeGB')]",
+                            "createOption": "empty",
+                            "lun": 0,
+                            "vhd": {
+                                "uri": "[variables('dataDiskVHDName')]"
+                            }
+                        }
+                    ]
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "apiVersion": "[variables('apiVersion')]",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[variables('networkSecurityGroupName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "https_8443",
+                        "properties": {
+                            "description": "https",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "8443",
+                            "sourceAddressPrefix": "Internet",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 100,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "http_8080",
+                        "properties": {
+                            "description": "http plain text",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "8080",
+                            "sourceAddressPrefix": "Internet",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 101,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "ssh_port_122",
+                        "properties": {
+                            "description": "Allow RDP",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "122",
+                            "sourceAddressPrefix": "Internet",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 102,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "vpn_1194",
+                        "properties": {
+                            "description": "Allow VPN",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "1194",
+                            "sourceAddressPrefix": "Internet",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 103,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "snmp_161",
+                        "properties": {
+                            "description": "Allow RDP",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "161",
+                            "sourceAddressPrefix": "Internet",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 104,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "https_443",
+                        "properties": {
+                            "description": "Allow RDP",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "443",
+                            "sourceAddressPrefix": "Internet",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 105,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "http_80",
+                        "properties": {
+                            "description": "Allow RDP",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "80",
+                            "sourceAddressPrefix": "Internet",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 106,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "ssh_22",
+                        "properties": {
+                            "description": "Allow RDP",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "22",
+                            "sourceAddressPrefix": "Internet",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 107,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "git_9418",
+                        "properties": {
+                            "description": "Allow RDP",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "9418",
+                            "sourceAddressPrefix": "Internet",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 108,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "smtp_25",
+                        "properties": {
+                            "description": "Allow RDP",
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "25",
+                            "sourceAddressPrefix": "Internet",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 109,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        }
+    ]
 }

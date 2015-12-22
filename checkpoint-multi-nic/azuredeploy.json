@@ -1,0 +1,450 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "adminPassword": {
+            "metadata": {
+                "description": "Administrator password"
+            },
+            "type": "securestring"
+        },
+        "authenticationType": {
+            "allowedValues": [
+                "password",
+                "sshPublicKey"
+            ],
+            "defaultValue": "password",
+            "metadata": {
+                "description": "Authentication type"
+            },
+            "type": "string"
+        },
+        "newStorageAccountName": {
+            "metadata": {
+                "description": "Name of storage account"
+            },
+            "type": "string"
+        },
+        "offer": {
+            "allowedValues": [
+                "R7710BYOL",
+                "R7710PAYG"
+            ],
+            "defaultValue": "R7710BYOL",
+            "metadata": {
+                "description": "Offer version and type"
+            },
+            "type": "string"
+        },
+        "sshPublicKey": {
+            "defaultValue": "",
+            "metadata": {
+                "description": "Administrator SSH public key"
+            },
+            "type": "string"
+        },
+        "vmName": {
+            "metadata": {
+                "description": "Name of the Security Gateway"
+            },
+            "type": "string"
+        },
+        "vmSize": {
+            "defaultValue": "Standard_D3",
+            "metadata": {
+                "description": "Size of the VM"
+            },
+            "type": "string"
+        }
+    },
+    "variables": {
+        "apiVersion": "2015-06-15",
+        "customData": "#!/bin/bash",
+        "addressPrefix": "10.0.0.0/16",
+        "externalPrivateAddress": "10.0.1.10",
+        "frontEndIPConfigID": "[concat(variables('lbID'),'/frontendIPConfigurations/LoadBalancerFrontEnd')]",
+        "imageOffer": "check-point-r77-10",
+        "imagePublisher": "checkpoint",
+        "imageReference": "[variables(concat('imageReference',parameters('offer')))]",
+        "imageReferenceR7710BYOL": {
+            "offer": "[variables('imageOffer')]",
+            "publisher": "[variables('imagePublisher')]",
+            "sku": "r7710-byol",
+            "version": "latest"
+        },
+        "imageReferenceR7710PAYG": {
+            "offer": "[variables('imageOffer')]",
+            "publisher": "[variables('imagePublisher')]",
+            "sku": "r7710-ngtp-payg",
+            "version": "latest"
+        },
+        "internalPrivateAddress": "10.0.2.10",
+        "lbID": "[resourceId('Microsoft.Network/loadBalancers',variables('lbName'))]",
+        "lbName": "frontend-lb",
+        "nic1NamePrefix": "external-nic",
+        "nic2NamePrefix": "internal-nic",
+        "osProfile": "[variables(concat('osprofile',parameters('authenticationType')))]",
+        "osProfilepassword": {
+            "adminPassword": "[parameters('adminPassword')]",
+            "adminUsername": "notused",
+            "computername": "[parameters('vmName')]",
+            "customData": "[base64(variables('customData'))]"
+        },
+        "osProfilesshPublicKey": {
+            "adminUsername": "notused",
+            "computername": "[parameters('vmName')]",
+            "customData": "[base64(variables('customData'))]",
+            "linuxConfiguration": {
+                "disablePasswordAuthentication": "true",
+                "ssh": {
+                    "publicKeys": [
+                        {
+                            "keyData": "[parameters('sshPublicKey')]",
+                            "path": "/home/notused/.ssh/authorized_keys"
+                        }
+                    ]
+                }
+            }
+        },
+        "plan": "[variables(concat('plan',parameters('offer')))]",
+        "planR7710BYOL": {
+            "name": "r7710-byol",
+            "product": "[variables('imageOffer')]",
+            "publisher": "[variables('imagePublisher')]"
+        },
+        "planR7710PAYG": {
+            "name": "r7710-ngtp-payg",
+            "product": "[variables('imageOffer')]",
+            "publisher": "[variables('imagePublisher')]"
+        },
+        "publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]",
+        "publicIPAddressName": "security-gateway",
+        "storageAccountType": "Standard_LRS",
+        "subnet1Name": "external-subnet",
+        "subnet1Prefix": "10.0.1.0/24",
+        "subnet1ID": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]",
+        "subnet2Name": "internal-subnet",
+        "subnet2Prefix": "10.0.2.0/24",
+        "subnet2ID": "[concat(variables('vnetID'),'/subnets/',variables('subnet2Name'))]",
+        "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('vnetName'))]",
+        "vnetName": "vnet"
+    },
+    "resources": [
+        {
+            "apiVersion": "[variables('apiVersion')]",
+            "location": "[resourceGroup().location]",
+            "name": "[parameters('newStorageAccountName')]",
+            "properties": {
+                "accountType": "[variables('storageAccountType')]"
+            },
+            "type": "Microsoft.Storage/storageAccounts"
+        },
+        {
+            "apiVersion": "[variables('apiVersion')]",
+            "location": "[resourceGroup().location]",
+            "name": "[variables('vnetName')]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('addressPrefix')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[variables('subnet1Name')]",
+                        "properties": {
+                            "addressPrefix": "[variables('subnet1Prefix')]"
+                        }
+                    },
+                    {
+                        "name": "[variables('subnet2Name')]",
+                        "properties": {
+                            "addressPrefix": "[variables('subnet2Prefix')]"
+                        }
+                    }
+                ]
+            },
+            "type": "Microsoft.Network/virtualNetworks"
+        },
+        {
+            "apiVersion": "[variables('apiVersion')]",
+            "location": "[resourceGroup().location]",
+            "name": "[variables('publicIPAddressName')]",
+            "properties": {
+                "dnsSettings": {
+                    "domainNameLabel": "[parameters('vmName')]"
+                },
+                "idleTimeoutInMinutes": 30,
+                "publicIPAllocationMethod": "Static"
+            },
+            "type": "Microsoft.Network/publicIPAddresses"
+        },
+        {
+            "apiVersion": "[variables('apiVersion')]",
+            "dependsOn": [
+                "[variables('publicIPAddressID')]"
+            ],
+            "location": "[resourceGroup().location]",
+            "name": "[variables('lbName')]",
+            "properties": {
+                "backendAddressPools": [
+                    {
+                        "name": "BackendPool1"
+                    }
+                ],
+                "frontendIPConfigurations": [
+                    {
+                        "name": "LoadBalancerFrontEnd",
+                        "properties": {
+                            "publicIPAddress": {
+                                "id": "[variables('publicIPAddressID')]"
+                            }
+                        }
+                    }
+                ],
+                "inboundNatRules": [
+                    {
+                        "name": "SSH",
+                        "properties": {
+                            "backendPort": 22,
+                            "frontendIPConfiguration": {
+                                "id": "[variables('frontEndIPConfigID')]"
+                            },
+                            "frontendPort": 22,
+                            "protocol": "tcp"
+                        }
+                    },
+                    {
+                        "name": "FWD",
+                        "properties": {
+                            "backendPort": 256,
+                            "frontendIPConfiguration": {
+                                "id": "[variables('frontEndIPConfigID')]"
+                            },
+                            "frontendPort": 256,
+                            "protocol": "tcp"
+                        }
+                    },
+                    {
+                        "name": "IKE",
+                        "properties": {
+                            "backendPort": 500,
+                            "frontendIPConfiguration": {
+                                "id": "[variables('frontEndIPConfigID')]"
+                            },
+                            "frontendPort": 500,
+                            "protocol": "udp"
+                        }
+                    },
+                    {
+                        "name": "NAT-T",
+                        "properties": {
+                            "backendPort": 4500,
+                            "frontendIPConfiguration": {
+                                "id": "[variables('frontEndIPConfigID')]"
+                            },
+                            "frontendPort": 4500,
+                            "protocol": "udp"
+                        }
+                    },
+                    {
+                        "name": "HTTPS",
+                        "properties": {
+                            "backendPort": 443,
+                            "frontendIPConfiguration": {
+                                "id": "[variables('frontEndIPConfigID')]"
+                            },
+                            "frontendPort": 443,
+                            "protocol": "tcp"
+                        }
+                    },
+                    {
+                        "name": "SmartDashboard",
+                        "properties": {
+                            "backendPort": 18190,
+                            "frontendIPConfiguration": {
+                                "id": "[variables('frontEndIPConfigID')]"
+                            },
+                            "frontendPort": 18190,
+                            "protocol": "tcp"
+                        }
+                    },
+                    {
+                        "name": "PolicyPush",
+                        "properties": {
+                            "backendPort": 18191,
+                            "frontendIPConfiguration": {
+                                "id": "[variables('frontEndIPConfigID')]"
+                            },
+                            "frontendPort": 18191,
+                            "protocol": "tcp"
+                        }
+                    },
+                    {
+                        "name": "Amon",
+                        "properties": {
+                            "backendPort": 18192,
+                            "frontendIPConfiguration": {
+                                "id": "[variables('frontEndIPConfigID')]"
+                            },
+                            "frontendPort": 18192,
+                            "protocol": "tcp"
+                        }
+                    },
+                    {
+                        "name": "ICAPush",
+                        "properties": {
+                            "backendPort": 18211,
+                            "frontendIPConfiguration": {
+                                "id": "[variables('frontEndIPConfigID')]"
+                            },
+                            "frontendPort": 18211,
+                            "protocol": "tcp"
+                        }
+                    }
+                ]
+            },
+            "type": "Microsoft.Network/loadBalancers"
+        },
+        {
+            "apiVersion": "[variables('apiVersion')]",
+            "dependsOn": [
+                "[variables('vnetID')]",
+                "[variables('lbID')]"
+            ],
+            "location": "[resourceGroup().location]",
+            "name": "[variables('nic1NamePrefix')]",
+            "properties": {
+                "enableIPForwarding": true,
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "loadBalancerBackendAddressPools": [
+                                {
+                                    "id": "[concat(variables('lbID'), '/backendAddressPools/BackendPool1')]"
+                                }
+                            ],
+                            "loadBalancerInboundNatRules": [
+                                {
+                                    "id": "[concat(variables('lbID'),'/inboundNatRules/SSH')]"
+                                },
+                                {
+                                    "id": "[concat(variables('lbID'),'/inboundNatRules/FWD')]"
+                                },
+                                {
+                                    "id": "[concat(variables('lbID'),'/inboundNatRules/IKE')]"
+                                },
+                                {
+                                    "id": "[concat(variables('lbID'),'/inboundNatRules/NAT-T')]"
+                                },
+                                {
+                                    "id": "[concat(variables('lbID'),'/inboundNatRules/HTTPS')]"
+                                },
+                                {
+                                    "id": "[concat(variables('lbID'),'/inboundNatRules/SmartDashboard')]"
+                                },
+                                {
+                                    "id": "[concat(variables('lbID'),'/inboundNatRules/PolicyPush')]"
+                                },
+                                {
+                                    "id": "[concat(variables('lbID'),'/inboundNatRules/Amon')]"
+                                },
+                                {
+                                    "id": "[concat(variables('lbID'),'/inboundNatRules/ICAPush')]"
+                                }
+                            ],
+                            "privateIPAddress": "[variables('externalPrivateAddress')]",
+                            "privateIPAllocationMethod": "Static",
+                            "subnet": {
+                                "id": "[variables('subnet1ID')]"
+                            }
+                        }
+                    }
+                ]
+            },
+            "type": "Microsoft.Network/networkInterfaces"
+        },
+        {
+            "apiVersion": "[variables('apiVersion')]",
+            "dependsOn": [
+                "[variables('vnetID')]"
+            ],
+            "location": "[resourceGroup().location]",
+            "name": "[variables('nic2NamePrefix')]",
+            "properties": {
+                "enableIPForwarding": true,
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAddress": "[variables('internalPrivateAddress')]",
+                            "privateIPAllocationMethod": "Static",
+                            "subnet": {
+                                "id": "[variables('subnet2ID')]"
+                            }
+                        }
+                    }
+                ]
+            },
+            "type": "Microsoft.Network/networkInterfaces"
+        },
+        {
+            "apiVersion": "[variables('apiVersion')]",
+            "dependsOn": [
+                "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
+                "[concat('Microsoft.Network/networkInterfaces/', variables('nic1NamePrefix'))]",
+                "[concat('Microsoft.Network/networkInterfaces/', variables('nic2NamePrefix'))]"
+            ],
+            "location": "[resourceGroup().location]",
+            "name": "[parameters('vmName')]",
+            "plan": "[variables('plan')]",
+            "properties": {
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": "true",
+                        "storageUri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net')]"
+                    }
+                },
+                "hardwareProfile": {
+                    "vmSize": "[parameters('vmSize')]"
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nic1NamePrefix'))]",
+                            "properties": {
+                                "primary": true
+                            }
+                        },
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nic2NamePrefix'))]",
+                            "properties": {
+                                "primary": false
+                            }
+                        }
+                    ]
+                },
+                "osProfile": "[variables('osProfile')]",
+                "storageProfile": {
+                    "imageReference": "[variables('imageReference')]",
+                    "osDisk": {
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage",
+                        "name": "osDisk",
+                        "vhd": {
+                            "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/',parameters('vmName'),'.vhd')]"
+                        }
+                    }
+                }
+            },
+            "type": "Microsoft.Compute/virtualMachines"
+        }
+    ],
+    "outputs": {
+        "PublicIPAddress": {
+            "type": "string",
+            "value": "[reference(variables('publicIPAddressID')).IpAddress]"
+        }
+    }
+}

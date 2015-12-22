@@ -30,7 +30,11 @@ Cluster peer nodes have the following ports open:
 * 9887 for TCP replication traffic
 * 8089 for Splunkd Management open to VNet
 
-##Known Issues and Limitations
+##Known issues and limitations
 
 - The template sets up SSH access via admin username/password, and would ideally use an SSH key.
 - The template opens SSH port to the public. You can restrict it to a virtual network and/or a bastion host only.
+
+##Third-party software credits
+ - VM utility shell script: MIT license
+ - [Opscode Chef Splunk Cookbook](https://github.com/rarsan/chef-splunk): Apache 2.0 license

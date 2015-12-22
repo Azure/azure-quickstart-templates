@@ -11,6 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+echo "initializing nodes..."
 IPPREFIX=$1
 NAMEPREFIX=$2
 NAMESUFFIX=$3
@@ -103,7 +104,6 @@ ifconfig -a >> initialIfconfig.out; who -b >> initialRestart.out
 
 echo net.ipv4.tcp_timestamps=0 >> /etc/sysctl.conf
 echo net.ipv4.tcp_sack=1 >> /etc/sysctl.conf
-echo net.core.netdev_max_backlog=25000 >> /etc/sysctl.conf
 echo net.core.rmem_max=4194304 >> /etc/sysctl.conf
 echo net.core.wmem_max=4194304 >> /etc/sysctl.conf
 echo net.core.rmem_default=4194304 >> /etc/sysctl.conf
@@ -112,7 +112,6 @@ echo net.core.optmem_max=4194304 >> /etc/sysctl.conf
 echo net.ipv4.tcp_rmem="4096 87380 4194304" >> /etc/sysctl.conf
 echo net.ipv4.tcp_wmem="4096 65536 4194304" >> /etc/sysctl.conf
 echo net.ipv4.tcp_low_latency=1 >> /etc/sysctl.conf
-echo net.ipv4.tcp_adv_win_scale=1 >> /etc/sysctl.conf
 sed -i "s/defaults        1 1/defaults,noatime        0 0/" /etc/fstab
 
 #use the key from the key vault as the SSH authorized key

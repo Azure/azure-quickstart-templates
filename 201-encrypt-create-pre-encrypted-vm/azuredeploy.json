@@ -1,0 +1,172 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vmName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Virtual Machine"
+            }
+        },
+        "newStorageAccountName": {
+            "type": "string",
+            "metadata": {
+                "description": "Storage account name"
+            }
+        },
+        "osVhdUri": {
+            "type": "string",
+            "metadata": {
+                "description": "URI of OS vhd. Ex: https://diskencryptiontestaus.blob.core.windows.net/vhds/win2k12Encryptedvm3.vhd"
+            }
+        },
+        "osType": {
+            "type": "string",
+            "defaultValue": "Windows",
+            "allowedValues": [
+                "Windows",
+                "Linux"
+            ],
+            "metadata": {
+                "description": "OS product type"
+            }
+        },
+        "virtualNetworkName": {
+            "type": "string",
+            "metadata": {
+                "description": "Virtual network name"
+            }
+        },
+        "subnetName": {
+            "type": "string",
+            "metadata": {
+                "description": "Subnet name"
+            }
+        },
+        "vmSize": {
+            "type": "string",
+            "defaultValue": "Standard_D2",
+            "metadata": {
+                "description": "VM size"
+            }
+        },
+        "keyVaultResourceID": {
+            "type": "string",
+            "metadata": {
+                "description": "KeyVault resource id. Ex: /subscriptions/9135e259-1f76-4dbd-a5c8-bc4fcdf3cf1c/resourceGroups/DiskEncryptionTest/providers/Microsoft.KeyVault/vaults/DiskEncryptionTestAus"
+            }
+        },
+        "keyVaultSecretUrl": {
+            "type": "string",
+            "metadata": {
+                "description": "KeyVault secret Url. Ex: https://diskencryptiontestaus.vault.azure.net/secrets/BitLockerEncryptionSecretWithKek/e088818e865e48488cf363af16dea596"
+            }
+        },
+        "keyVaultKekUrl": {
+            "type": "string",
+            "metadata": {
+                "description": "KeyVault secret Url. Ex: https://diskencryptiontestaus.vault.azure.net/keys/DiskEncryptionKek/562a4bb76b524a1493a6afe8e536ee78"
+            }
+        }
+    },
+    "variables": {
+        "storageUri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net')]",
+        "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
+        "subnetRef": "[concat(variables('vnetID'),'/subnets/',parameters('subnetName'))]",
+        "dnsNameForPublicIP": "[toLower(parameters('vmName'))]",
+        "nicName": "[toLower(concat('nic',parameters('vmName')))]",
+        "publicIPAddressName": "[toLower(concat('publicIP',parameters('vmName')))]",
+        "publicIPAddressType": "Dynamic"
+    },
+    "resources": [
+        {
+            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[variables('publicIPAddressName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+                "dnsSettings": {
+                    "domainNameLabel": "[variables('dnsNameForPublicIP')]"
+                }
+            }
+        },
+        {
+            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[variables('nicName')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+                            },
+                            "subnet": {
+                                "id": "[variables('subnetRef')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[parameters('vmName')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('vmSize')]"
+                },
+                "storageProfile": {
+                    "osDisk": {
+                        "name": "osdisk",
+                        "osType": "[parameters('osType')]",
+                        "vhd": {
+                            "uri": "[parameters('osVhdUri')]"
+                        },
+                        "caching": "ReadWrite",
+                        "createOption": "Attach",
+                        "encryptionSettings": {
+                            "diskEncryptionKey": {
+                                "sourceVault": {
+                                    "id": "[parameters('keyVaultResourceID')]"
+                                },
+                                "secretUrl": "[parameters('keyVaultSecretUrl')]"
+                            },
+                            "keyEncryptionKey": {
+                                "sourceVault": {
+                                    "id": "[parameters('keyVaultResourceID')]"
+                                },
+                                "keyUrl": "[parameters('keyVaultKekUrl')]"
+                            }
+                        }
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": "true",
+                        "storageUri": "[variables('storageUri')]"
+                    }
+                }
+            }
+        }
+    ]
+}

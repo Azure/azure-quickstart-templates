@@ -282,9 +282,11 @@ create_striped_volume()
         PARTITIONS+=("${PARTITION}")
     done
 
-    MDDEVICE=$(get_next_md_device)    
-    
+    MDDEVICE=$(get_next_md_device)
+
+    udevadm control --stop-exec-queue
     mdadm --create ${MDDEVICE} --level 0 --raid-devices ${#PARTITIONS[@]} ${PARTITIONS[*]}
+    udevadm control --start-exec-queue
 
     MOUNTPOINT="${DATA_PATH}"
     echo "Mount point appears to be ${MOUNTPOINT}"

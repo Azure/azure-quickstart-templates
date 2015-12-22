@@ -2,7 +2,7 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "region": {
+    "location": {
       "type": "string",
       "metadata": {
         "description": "Location where resources will be provisioned"
@@ -25,22 +25,10 @@
         "description": "Load balancer setting (internal/external)"
       }
     },
-    "esDataHaSetName": {
-      "type": "string",
-      "metadata": {
-        "description": "Name of the availability set for the data nodes"
-      }
-    },
     "storageAccountName": {
       "type": "string",
       "metadata": {
         "description": "Storage account used for share virtual machine images"
-      }
-    },
-    "dnsName": {
-      "type": "string",
-      "metadata": {
-        "description": "A shared storage account for images"
       }
     },
     "ilbIpAddress": {
@@ -80,35 +68,25 @@
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[parameters('storageAccountName')]",
       "apiVersion": "2015-05-01-preview",
-      "location": "[parameters('region')]",
+      "location": "[parameters('location')]",
       "properties": {
         "accountType": "Standard_LRS"
       }
     },
     {
       "apiVersion": "2015-06-15",
-      "type": "Microsoft.Compute/availabilitySets",
-      "name": "[parameters('esDataHaSetName')]",
-      "location": "[parameters('region')]",
-      "properties": {}
-    },
-    {
-      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "publicIp",
-      "location": "[parameters('region')]",
+      "location": "[parameters('location')]",
       "properties": {
-        "publicIPAllocationMethod": "Dynamic",
-        "dnsSettings": {
-          "domainNameLabel": "[parameters('dnsName')]"
-        }
+        "publicIPAllocationMethod": "Dynamic"
       }
     },
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[parameters('networkSettings').virtualNetworkName]",
-      "location": "[parameters('region')]",
+      "location": "[parameters('location')]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -135,7 +113,7 @@
       "apiVersion": "2015-06-15",
       "name": "loadBalancer",
       "type": "Microsoft.Network/loadBalancers",
-      "location": "[parameters('region')]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', 'publicIp')]"
       ],
@@ -146,10 +124,9 @@
             "name": "LBBE"
           }
         ],
-        "inboundNatRules": "parameters('lbManagementRule')",
         "loadBalancingRules": [
           {
-            "name": "LBRule",
+            "name": "es",
             "properties": {
               "frontendIPConfiguration": {
                 "id": "[concat(resourceId('Microsoft.Network/loadBalancers','loadBalancer'),'/frontendIPConfigurations/LBFE')]"
@@ -165,6 +142,22 @@
               "probe": {
                 "id": "[concat(resourceId('Microsoft.Network/loadBalancers','loadBalancer'),'/probes/esProbe')]"
               }
+            }
+          },
+          {
+            "name": "estransport",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers','loadBalancer'),'/frontendIPConfigurations/LBFE')]"
+              },
+              "backendAddressPool": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers','loadBalancer'),'/backendAddressPools/LBBE')]"
+              },
+              "protocol": "tcp",
+              "frontendPort": 9300,
+              "backendPort": 9300,
+              "enableFloatingIP": false,
+              "idleTimeoutInMinutes": 5
             }
           }
         ],
