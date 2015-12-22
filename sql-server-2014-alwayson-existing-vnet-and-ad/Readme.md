@@ -13,11 +13,9 @@ A SQL Server always on listener is created using the internal load balancer.
 
 For nested templates and DSC resources specific to SQL Server AlwaysOn, this template references these resources from this <a href="https://github.com/Azure/azure-quickstart-templates/tree/master/sql-server-2014-alwayson-dsc">SQL Server AlwaysOn AG QuickStart</a> template repository.
 
-To deploy the required Azure VNET and Active Directory infrastructure, if not already in place, you may use <a href="https://github.com/Azure/azure-quickstart-templates/tree/master/active-directory-new-domain-ha-2-dc">this template</a>.
-
 # Known Issues
 
-This template is serial in nature for deploying some of the resources, due to some issues between the platform agent and the DSC extension which cause problems when multiple VM and\or extension resources are deployed concurrently. 
+This template is serial in nature for deploying some of the resources, due to some issues between the platform agent and the DSC extension which cause problems when multiple VM and\or extension resources are deployed concurrently.
 
 ## Notes
 
@@ -33,6 +31,7 @@ This template is serial in nature for deploying some of the resources, due to so
 
 +	To successfully deploy this template, be sure that the subnet to which the SQL VMs are being deployed already exists on the specified Azure virtual network, AND this subnet should be defined in Active Directory Sites and Services for the appropriate AD site in which the closest domain controllers are configured.
 
++ To deploy the required Azure VNET and Active Directory infrastructure, if not already in place, you may use <a href="https://github.com/Azure/azure-quickstart-templates/tree/master/active-directory-new-domain-ha-2-dc">this template</a>.
 
 Click the button below to deploy from the portal
 
@@ -61,33 +60,6 @@ Change working folder to the folder containing this template
 New-AzureResourceGroup -Name "<new resourcegroup name>" -Location "<new resourcegroup location>"  -TemplateParameterFile .\azuredeploy-parameters.json -TemplateFile .\azuredeploy.json
 
 ```
-
-## Template Parameters
-
-When deploying from this template, you will be prompted for the parameters listed below.
-
-|Name|Description|
-|:---|:---------------------|
-|newStorageAccountNamePrefix|Naming prefix for each new storage account created. Three storage accounts will be created using this string as a prefix for the name. 18-char max, lowercase alpha|
-|storageAccountType|Type of new Storage Accounts (Standard_LRS, Standard_GRS, Standard_RAGRS or Premium_LRS) to be created to store VM disks|
-|vmNamePrefix|Naming prefix for each VM name. 8-char max, lowercase alpha|
-|sqlVMSize|Size of the SQL VM instances to be created|
-|sqlWitnessVMSize|Size of the Witness VM instance to be created|
-|sqlServerServiceAccountUserName|Service account name for SQL Server services|
-|sqlServerServiceAccountPassword|Service account password for SQL Server services|
-|virtualNetworkId|Resource ID of the existing VNET. You can find the Resource ID for the VNET on the Properties blade of the VNET.|
-|sqlSubnetName|Name of the existing subnet in the existing VNET to which the SQL & Witness VMs should be deployed|
-|domainName|DNS domain name for existing Active Directory domain|
-|adPDCVMName|Computer name of the existing Primary AD domain controller & DNS server|
-|primaryAdIpAddress|IP address of the existing Primary AD domain controller & DNS server|
-|secondaryAdIpAddress|IP address of the existing Secondary AD domain controller & DNS server|
-|sqlLBIPAddress|IP address of ILB for the new SQL Server AlwaysOn listener to be created|
-|adminUsername|Name of an existing Admin user account for the Active Directory domain|
-|adminPassword|Password for the existing Admin user account for the Active Directory domain|
-|location|Region in which to deploy the new resources|
-|dataBaseNames|An array of database names. Each database will be created and added to the availability group|
-|assetLocation|Location of resources upon which this template is dependent, such as nested templates and DSC modules|
-
 ## Notable Variables
 
 |Name|Description|
