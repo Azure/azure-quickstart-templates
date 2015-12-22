@@ -5,3 +5,8 @@
 </a><a  target="_blank">
 
 This template allows you to manually scale in or out the number of VMs in an existing Scale Set. The capacity specified will be the new capacity of the scale set. Make sure the VM Sku in this template matches the VM Sku you originally deployed the Scale Set with. Otherwise, subsequent scale operations (e.g. autoscale) will use the VM Sku specified in this templates.
+
+PARAMETER RESTRICTIONS
+======================
+
+existingVMSSName must be the name of an EXISTING scale set

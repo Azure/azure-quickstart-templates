@@ -26,6 +26,9 @@
     [String] $Location,
 
     [Parameter(Mandatory=$false, ParameterSetName='Prepare')]
+    [String] $ResourceGroup="",
+
+    [Parameter(Mandatory=$false, ParameterSetName='Prepare')]
     [String] $AzureStorageConnStr="",
 
     [Parameter(Mandatory=$false, ParameterSetName='Prepare')]
@@ -43,116 +46,6 @@
 
 . "$PSScriptRoot\HpcPrepareUtil.ps1"
 
-function PromoteDC
-{
-    param
-    (
-        [Parameter(Mandatory=$true)]
-        [String] $DomainFQDN, 
-        
-        [Parameter(Mandatory=$true)]
-        [String] $AdminUserName,
-
-        [Parameter(Mandatory=$true)]
-        [String] $AdminPassword,
-
-        [Parameter(Mandatory=$false)]
-        [String] $DNSForwarder=""
-    )
-
-    $localAdminCred = New-Object -TypeName System.Management.Automation.PSCredential `
-            -ArgumentList @($AdminUserName, (ConvertTo-SecureString -String $AdminPassword -AsPlainText -Force))
-    try
-    {
-        TraceInfo "$env:COMPUTERNAME is not domain controller, start to install domain $DomainFQDN"
-        TraceInfo 'Disable NLA first'
-        $NLA = Get-WmiObject -Class Win32_TSGeneralSetting -ComputerName $env:COMPUTERNAME -Namespace root\CIMV2\TerminalServices -Authentication PacketPrivacy
-        $NLA.SetUserAuthenticationRequired(0)
-
-        # 0 for Standalone Workstation, 1 for Member Workstation, 2 for Standalone Server, 3 for Member Server, 4 for Backup Domain Controller, 5 for Primary Domain Controller
-        $domainRole = (Get-WmiObject Win32_ComputerSystem).DomainRole
-        if($domainRole -eq 5)
-        {
-            TraceInfo "$env:COMPUTERNAME was already a domain controller"
-            return
-        }
-        
-        TraceInfo 'Installing windows features AD-Domain-Services and GPMC'
-        Install-WindowsFeature -Name AD-Domain-Services,GPMC -IncludeManagementTools *>$null
-
-        Import-Module ADDSDeployment
-
-        $netbios = $DomainFQDN.Split('.')[0];
-
-        TraceInfo "Installing AD Forest $DomainFQDN"
-        Install-ADDSForest `
-            -DatabasePath 'C:\Windows\NTDS' `
-            -DomainMode 'Win2012' `
-            -DomainName $DomainFQDN `
-            -DomainNetBIOSName $netbios `
-            -SafeModeAdministratorPassword $localAdminCred.Password `
-            -ForestMode 'Win2012' `
-            -InstallDNS:$true `
-            -LogPath 'C:\Windows\NTDS' `
-            -NoRebootOnCompletion `
-            -SYSVOLPath 'C:\Windows\SYSVOL' `
-            -Force `
-            -WarningAction Continue
-        
-        if(-not $?)
-        {
-            if($Error[0].Exception -eq $null)
-            {
-                throw ("Failed to promoting VM $env:COMPUTERNAME to Domain Controller: " + $Error[0])
-            }
-            else
-            {
-                throw $Error[0].Exception
-            }
-        }
-
-        if($null -eq (Get-DnsServerForwarder).IPAddress)
-        {
-            # Cannot use @((Get-DnsServerForwarder).IPAddress) in this case, because it will get an array with a $null element
-            $orgFwdIPs = @()
-        }
-        else
-        {
-            $orgFwdIPs = @((Get-DnsServerForwarder).IPAddress)
-        }
-
-        $newFwdIPs = @()
-        foreach($fwdIP in $orgFwdIPs)
-        {
-            if(($fwdIP -eq "fec0:0:0:ffff::1") -or ($fwdIP -eq "fec0:0:0:ffff::2") -or ($fwdIP -eq "fec0:0:0:ffff::3"))
-            {
-                TraceInfo "Removing DNS forwarder from the domain controller: $fwdIP"
-                Remove-DnsServerForwarder -IPAddress $fwdIP -Force
-            }
-            else
-            {
-                $newFwdIPs += $fwdIP
-            }
-        }
-        
-        if(-not [string]::IsNullOrEmpty($DNSForwarder))
-        {
-            $fwdIP = [IPAddress]$DNSForwarder
-            if($newFwdIPs -notcontains $fwdIP)
-            {
-                TraceInfo "Adding DNS forwarder to the domain controller: $fwdIP"
-                $newFwdIPs += $fwdIP
-                Set-DnsServerForwarder -IPAddress $newFwdIPs -Confirm:$false
-            }
-        }
-    }
-    catch
-    {
-        $exType = $_.Exception.GetType().ToString()
-        TraceInfo "Unexpected $exType catched, throw again"
-        throw
-    }
-}
 
 function PrepareHeadNode
 {
@@ -193,50 +86,11 @@ function PrepareHeadNode
     # 0 for Standalone Workstation, 1 for Member Workstation, 2 for Standalone Server, 3 for Member Server, 4 for Backup Domain Controller, 5 for Primary Domain Controller
     $domainRole = (Get-WmiObject Win32_ComputerSystem).DomainRole
     TraceInfo "Domain role $domainRole"
-    if($domainRole -ne 5)
+    if($domainRole -lt 3)
     {
-        # join the domain
-        PromoteDC -DomainFQDN $DomainFQDN -AdminUserName $AdminUserName -AdminPassword $AdminPassword -DNSForwarder "8.8.8.8"
-        $task = Get-ScheduledTask -TaskName 'HpcPrepareHeadNode' -ErrorAction SilentlyContinue
-        if($null -eq $task)
-        {
-            $HNPreparePsFile = "$PSScriptRoot\PrepareHN.ps1"
-            $taskArgs = "-DomainFQDN $DomainFQDN -PublicDnsName $PublicDnsName -AdminUserName $AdminUserName -AdminBase64Password $AdminBase64Password"
-            if($UnsecureDNSUpdate)
-            {
-                $taskArgs += " -UnsecureDNSUpdate"
-            }
-            if(-not [string]::IsNullOrEmpty($AzureStorageConnStr))
-            {
-                $taskArgs += " -AzureStorageConnStr '$AzureStorageConnStr'"
-            }
-            if(-not [String]::IsNullOrEmpty($CNSize))
-            {
-                $taskArgs += " -CNSize $CNSize"
-            }
-            if(-not [String]::IsNullOrWhiteSpace($PostConfigScript))
-            {
-                $taskArgs += " -PostConfigScript '$PostConfigScript'"
-            }
-
-            $action = New-ScheduledTaskAction -Execute 'PowerShell.exe' -Argument "-ExecutionPolicy Unrestricted -Command `"& '$HNPreparePsFile' $taskArgs`""
-            $trigger = New-ScheduledTaskTrigger -AtStartup
-            TraceInfo 'Register task HpcPrepareHeadNode'
-            Register-ScheduledTask -TaskName 'HpcPrepareHeadNode' -Action $action -User 'NT AUTHORITY\SYSTEM' -Trigger $trigger -RunLevel Highest *>$script:PrepareNodeLogFile    
-            if(-not $?)
-            {
-                TraceInfo 'Failed to schedule task to prepare head node'
-                throw
-            }
-        }
-        else
-        {
-            TraceInfo 'Task HpcPrepareHeadNode already exists'
-        }
-
         # restart HN
-        TraceInfo 'Restarting Domain controller node to apply changes......'
-        Start-Process -FilePath 'cmd.exe' -ArgumentList '/c shutdown /r /t 60'
+        TraceInfo 'This machine is not domain joined'
+        throw "This machine is not domain joined"
     }
     else
     {
@@ -435,8 +289,7 @@ function PrepareHeadNode
                     TraceInfo 'Start to register HpcNodeOnlineCheck Task'
                     $HpcNodeOnlineCheckFile = "$scriptPath\PrepareHN.ps1"
                     $action = New-ScheduledTaskAction -Execute 'PowerShell.exe' -Argument "-ExecutionPolicy Unrestricted -Command `"& '$HpcNodeOnlineCheckFile' -NodeStateCheck`""
-                    $now = get-date
-                    $trigger = New-ScheduledTaskTrigger -RepetitionInterval (New-TimeSpan -Minutes 1) -At $now -RepetitionDuration (New-TimeSpan -Days 3650) -Once
+                    $trigger = New-ScheduledTaskTrigger -RepetitionInterval (New-TimeSpan -Minutes 1) -At (get-date) -RepetitionDuration (New-TimeSpan -Minutes 90) -Once
                     Register-ScheduledTask -TaskName 'HpcNodeOnlineCheck' -Action $action -Trigger $trigger -User $domainUserCred.UserName -Password $domainUserCred.GetNetworkCredential().Password -RunLevel Highest | Out-Null
                     TraceInfo 'Finish to register task HpcNodeOnlineCheck'
                     if(-not $?)
@@ -487,56 +340,69 @@ function PrepareHeadNode
             }
         } -ArgumentList $PSScriptRoot,$domainUserCred,$AzureStorageConnStr,$PublicDnsName,$PostConfigScript,$CNSize
 
-
-        if($UnsecureDNSUpdate.IsPresent)
+        if($domainRole -eq 5)
         {
-            TraceInfo "Waiting for default zone directory partitions ready"
-            $retry = 0
-            while ($true)
+            if($null -ne (Get-DnsServerForwarder).IPAddress)
             {
+                foreach($fwdIP in @((Get-DnsServerForwarder).IPAddress))
+                {
+                    if(($fwdIP -eq "fec0:0:0:ffff::1") -or ($fwdIP -eq "fec0:0:0:ffff::2") -or ($fwdIP -eq "fec0:0:0:ffff::3"))
+                    {
+                        TraceInfo "Removing DNS forwarder from the domain controller: $fwdIP"
+                        Remove-DnsServerForwarder -IPAddress $fwdIP -Force
+                    }
+                }
+            }
+
+            if($UnsecureDNSUpdate.IsPresent)
+            {
+                TraceInfo "Waiting for default zone directory partitions ready"
+                $retry = 0
+                while ($true)
+                {
+                    try
+                    {
+                        $ddzState = (Get-DnsServerDirectoryPartition -Name "DomainDnsZones.$DomainFQDN").State
+                        $fdzState = (Get-DnsServerDirectoryPartition -Name "ForestDnsZones.$DomainFQDN").State
+                        if (0 -eq $ddzState -and 0 -eq $fdzState)
+                        {
+                            TraceInfo "Default zone directory partitions ready"
+                            break
+                        }
+
+                        TraceInfo "Default zone directory partitions are not ready. DomainDnsZones: $ddzState ForestDnsZones: $fdzState"
+                    }
+                    catch
+                    {
+                        TraceInfo "Exception while getting zone directory partitions state: $($_ | Out-String)"
+                    }
+                    if ($retry++ -lt 60)
+                    {
+                        TraceInfo "Retry after 10 seconds"
+                        Start-Sleep -Seconds 10
+                    }
+                    else
+                    {
+                        throw "Default zone directory partitions not ready after 20 retries"
+                    }
+                }
+
                 try
                 {
-                    $ddzState = (Get-DnsServerDirectoryPartition -Name "DomainDnsZones.$DomainFQDN").State
-                    $fdzState = (Get-DnsServerDirectoryPartition -Name "ForestDnsZones.$DomainFQDN").State
-                    if (0 -eq $ddzState -and 0 -eq $fdzState)
-                    {
-                        TraceInfo "Default zone directory partitions ready"
-                        break
-                    }
-
-                    TraceInfo "Default zone directory partitions are not ready. DomainDnsZones: $ddzState ForestDnsZones: $fdzState"
+                    Set-DnsServerPrimaryZone -Name $DomainFQDN -DynamicUpdate NonsecureAndSecure -ErrorAction Stop
+                    TraceInfo "Updated DNS DynamicUpdate to NonsecureAndSecure"
                 }
                 catch
                 {
-                    TraceInfo "Exception while getting zone directory partitions state: $($_ | Out-String)"
+                    TraceInfo "Failed to update DNS DynamicUpdate to NonsecureAndSecure: $_"
                 }
-                if ($retry++ -lt 60)
-                {
-                    TraceInfo "Retry after 10 seconds"
-                    Start-Sleep -Seconds 10
-                }
-                else
-                {
-                    throw "Default zone directory partitions not ready after 20 retries"
-                }
-            }
-
-            try
-            {
-                Set-DnsServerPrimaryZone -Name $DomainFQDN -DynamicUpdate NonsecureAndSecure -ErrorAction Stop
-                TraceInfo "Updated DNS DynamicUpdate to NonsecureAndSecure"
-            }
-            catch
-            {
-                TraceInfo "Failed to update DNS DynamicUpdate to NonsecureAndSecure: $_"
             }
         }
 
         Wait-Job $job
-        TraceInfo 'job completed'
+        TraceInfo 'Prepare head node job completed'
         Receive-Job $job -Verbose
         TraceInfo 'receive completed'
-        Unregister-ScheduledTask -TaskName 'HpcPrepareHeadNode' -Confirm:$false
     }
 }
 
@@ -546,15 +412,6 @@ function NodeStateCheck
 
     $datetimestr = (Get-Date).ToString('yyyyMMdd')
     $script:PrepareNodeLogFile = "$env:windir\Temp\HpcNodeCheckLog-$datetimestr.txt"
-
-    $unapprovedNodes = @()
-    $unapprovedNodes += Get-HpcNode -State Unknown -ErrorAction SilentlyContinue
-    if($unapprovedNodes.Count -gt 0)
-    {
-        TraceInfo 'Start to assign template to unknown nodes'
-        PrintNodes $unapprovedNodes
-        Assign-HpcNodeTemplate -Name "Default ComputeNode Template" -Node $unapprovedNodes -Confirm:$false        
-    }
 
     $offlineNodes = @()
     $offlineNodes += Get-HpcNode -State Offline -ErrorAction SilentlyContinue
@@ -580,6 +437,10 @@ if ($PsCmdlet.ParameterSetName -eq 'Prepare')
         Set-ItemProperty -Path HKLM:\SOFTWARE\Microsoft\HPC\IaaSInfo -Name Subnet -Value $Subnet
         Set-ItemProperty -Path HKLM:\SOFTWARE\Microsoft\HPC\IaaSInfo -Name AffinityGroup -Value ""
         Set-ItemProperty -Path HKLM:\SOFTWARE\Microsoft\HPC\IaaSInfo -Name Location -Value $Location
+        if(-not [string]::IsNullOrEmpty($ResourceGroup))
+        {
+            Set-ItemProperty -Path HKLM:\SOFTWARE\Microsoft\HPC\IaaSInfo -Name ResourceGroup -Value $ResourceGroup
+        }
         TraceInfo "The information needed for in-box management scripts succcessfully configured."
     }
 

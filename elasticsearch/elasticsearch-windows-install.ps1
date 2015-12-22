@@ -150,7 +150,7 @@ function Download-Jdk
             lmsg "Downloading JDK from $source to $destination"
 
 			$client.Headers.Add([System.Net.HttpRequestHeader]::Cookie, $cookie) 
-			$client.downloadFile($source, $destination)
+			$client.downloadFile($source, $destination) | Out-Null
 		}catch [System.Net.WebException],[System.Exception]{
 			lerr $_.Exception.Message
             lerr $_.Exception.StackTrace
@@ -218,7 +218,7 @@ function Download-ElasticSearch
 
             lmsg "Downloading Elasticsearch version $elasticVersion from $source to $destination"
 
-			$client.downloadFile($source, $destination)
+			$client.downloadFile($source, $destination) | Out-Null
 		}catch [System.Net.WebException],[System.Exception]{
 			lerr $_.Exception.Message
             lerr $_.Exception.StackTrace
@@ -252,15 +252,15 @@ function SetEnv-JavaHome($jdkInstallLocation)
     $homePath = $jdkInstallLocation
     
     lmsg "Setting JAVA_HOME in the registry to $homePath..."
-	Set-ItemProperty -Path $regEnvPath -Name JAVA_HOME -Value $homePath
+	Set-ItemProperty -Path $regEnvPath -Name JAVA_HOME -Value $homePath | Out-Null
     
     lmsg 'Setting JAVA_HOME for the current session...'
-    Set-Item Env:JAVA_HOME "$homePath"
+    Set-Item Env:JAVA_HOME "$homePath" | Out-Null
 
     # Additional check
     if ([environment]::GetEnvironmentVariable("JAVA_HOME","machine") -eq $null)
 	{
-	    [environment]::setenvironmentvariable("JAVA_HOME",$homePath,"machine")
+	    [environment]::setenvironmentvariable("JAVA_HOME",$homePath,"machine") | Out-Null
 	}
 
     lmsg 'Modifying path variable to point to java executable...'
@@ -269,6 +269,27 @@ function SetEnv-JavaHome($jdkInstallLocation)
     Set-ItemProperty -Path $regEnvPath -Name PATH -Value $currentPath
     Set-Item Env:PATH "$currentPath"
 }
+
+function SetEnv-HeapSize
+{
+    # Obtain total memory in MB and divide in half
+    $halfRamCnt = [math]::Round(((Get-WmiObject Win32_PhysicalMemory | measure-object Capacity -sum).sum/1mb)/2,0)
+    $halfRam = $halfRamCnt.ToString() + 'm'
+    lmsg "Half of total RAM in system is $halfRam mb."
+
+    lmsg "Setting ES_HEAP_SIZE in the registry to $halfRam..."
+	Set-ItemProperty -Path $regEnvPath -Name ES_HEAP_SIZE -Value $halfRam | Out-Null
+
+    lmsg 'Setting ES_HEAP_SIZE for the current session...'
+    Set-Item Env:ES_HEAP_SIZE $halfRam | Out-Null
+
+    # Additional check
+    if ([environment]::GetEnvironmentVariable("ES_HEAP_SIZE","machine") -eq $null)
+	{
+	    [environment]::setenvironmentvariable("ES_HEAP_SIZE",$halfRam,"machine") | Out-Null
+	}
+}
+
 
 function Install-ElasticSearch ($driveLetter, $elasticSearchZip, $subFolder = $elasticSearchBaseFolder)
 {
@@ -331,11 +352,9 @@ function ElasticSearch-InstallService($scriptPath)
 	$elasticService = (get-service | Where-Object {$_.Name -match "elasticsearch"}).Name
 	if($elasticService -eq $null) 
     {	
-        #$proc = start-process cmd -argumentlist "/c $scriptpath install" -passthru -nonewwindow -wait
-        #if($proc -ne 0){
-         #   lerr "exception encountered while installing elasticsearch service"
-         #   break
-        #}
+        # First set heap size
+        SetEnv-HeapSize
+
         lmsg 'Installing elasticsearch as a service...'
         cmd.exe /C "$scriptPath install"
         if ($LASTEXITCODE) {
@@ -352,12 +371,12 @@ function ElasticSearch-StartService()
     if($elasticService -ne $null)
     {
         lmsg 'Starting elasticsearch service...'
-        Start-Service -Name $elasticService
+        Start-Service -Name $elasticService | Out-Null
         $svc = Get-Service | Where-Object { $_.Name -Match 'elasticsearch'}
         
         if($svc -ne $null)
         {
-            $svc.WaitForStatus('Running', '00:00:05')
+            $svc.WaitForStatus('Running', '00:00:10')
         }
 
 		lmsg 'Setting the elasticsearch service startup to automatic...'
@@ -391,7 +410,7 @@ function Jmeter-Download($drive)
 
             lmsg "Downloading Jmeter SA from $source to $destination"
 
-			$client.downloadFile($source, $destination)
+			$client.downloadFile($source, $destination) | Out-Null
 		}catch [System.Net.WebException],[System.Exception]{
 			lerr $_.Exception.Message
             lerr $_.Exception.StackTrace
@@ -435,6 +454,23 @@ function Jmeter-ConfigFirewall
         lmsg 'Adding firewall rule - Allow Jmeter Outbound Port ' $i
         New-NetFirewallRule -Name "Jmeter_ServerAgent_OUT_$i" -DisplayName "Allow Jmeter Outbound Port $i" -Protocol tcp -LocalPort $i -Action Allow -Enabled True -Direction Outbound | Out-Null
     }
+}
+
+function Elasticsearch-OpenPorts
+{
+	# Add firewall rules
+    lmsg 'Adding firewall rule - Allow Elasticsearch Inbound Port 9200'
+    New-NetFirewallRule -Name 'ElasticSearch_In_Lb' -DisplayName 'Allow Elasticsearch Inbound Port 9200' -Protocol tcp -LocalPort 9200 -Action Allow -Enabled True -Direction Inbound | Out-Null
+
+    lmsg 'Adding firewall rule - Allow Elasticsearch Outbound Port 9200 for Marvel'
+    New-NetFirewallRule -Name 'ElasticSearch_Out_Lb' -DisplayName 'Allow Elasticsearch Outbound Port 9200 for Marvel' -Protocol tcp -LocalPort 9200 -Action Allow -Enabled True -Direction Outbound | Out-Null
+
+    lmsg 'Adding firewall rule - Allow Elasticsearch Inter Node Communication Inbound Port 9300'
+    New-NetFirewallRule -Name 'ElasticSearch_In_Unicast' -DisplayName 'Allow Elasticsearch Inter Node Communication Inbound Port 9300' -Protocol tcp -LocalPort 9300 -Action Allow -Enabled True -Direction Inbound | Out-Null
+    
+    lmsg 'Adding firewall rule - Allow Elasticsearch Inter Node Communication Outbound Port 9300'
+    New-NetFirewallRule -Name 'ElasticSearch_Out_Unicast' -DisplayName 'Allow Elasticsearch Inter Node Communication Outbound Port 9300' -Protocol tcp -LocalPort 9300 -Action Allow -Enabled True -Direction Outbound | Out-Null
+
 }
 
 function Jmeter-Run($unzipLoc)
@@ -543,17 +579,8 @@ function Install-WorkFlow
 
         Add-Content $elasticSearchConfFile $textToAppend
 		
-
-	# Add firewall rules
-    lmsg 'Adding firewall rule - Allow Elasticsearch Inbound Port 9200'
-    New-NetFirewallRule -Name 'ElasticSearch_In_Lb' -DisplayName 'Allow Elasticsearch Inbound Port 9200' -Protocol tcp -LocalPort 9200 -Action Allow -Enabled True -Direction Inbound | Out-Null
-
-    lmsg 'Adding firewall rule - Allow Elasticsearch Inter Node Communication Inbound Port 9300'
-    New-NetFirewallRule -Name 'ElasticSearch_In_Unicast' -DisplayName 'Allow Elasticsearch Inter Node Communication Inbound Port 9300' -Protocol tcp -LocalPort 9300 -Action Allow -Enabled True -Direction Inbound | Out-Null
-    
-    lmsg 'Adding firewall rule - Allow Elasticsearch Inter Node Communication Outbound Port 9300'
-    New-NetFirewallRule -Name 'ElasticSearch_Out_Unicast' -DisplayName 'Allow Elasticsearch Inter Node Communication Outbound Port 9300' -Protocol tcp -LocalPort 9300 -Action Allow -Enabled True -Direction Outbound | Out-Null
-
+    # Add firewall exceptions
+    Elasticsearch-OpenPorts
 
     # Install service using the batch file in bin folder
     $scriptPath = Join-Path $elasticSearchBin -ChildPath "service.bat"
