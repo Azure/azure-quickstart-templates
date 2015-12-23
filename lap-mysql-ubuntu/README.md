@@ -4,10 +4,10 @@
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-This template deploys a LAP node on an Ubuntu virtual machines and a MYSQL node on two additional VM. This template also provisions a storage account, virtual network, availability sets, public IP addresses and network interfaces required by the installation.
+This template deploys a LAP node on an Ubuntu virtual machine and a MYSQL node on an additional VM. This template also provisions a storage account, virtual network, availability sets, public IP addresses and network interfaces required by the installation.
 
 
-This template deploys a LAP node a MYSQL node, on LAP node will create simple info.php, mysql.php and remotemysql.php to test if the deployment is successful or not.
+This template deploys a LAP node and a MYSQL node, will create simple info.php, mysql.php and remotemysql.php on LAP node to test if the deployment is successful or not.
 The LAP node is exposed on a public IP address that you can access through a browser on port :80 as well as SSH on the standard port. 
 The MYSQL node only has private ip address, the mysql database only allows to be accessed from LAP node.
 
