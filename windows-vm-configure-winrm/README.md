@@ -4,4 +4,29 @@
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-This template allows you to deploy a simple Windows VM using a few different options for the Windows version. This will then configure a WinRM https listener by creating a new test certificate.
+
+
+Description of Template
+=======================
+This template allows you to deploy a simple Windows VM using a few different options for the Windows version. 
+This will then configure a WinRM https listener by creating a new test certificate.
+
+The template uses a custom script extension which executes the script 'https://raw.githubusercontent.com/pavanadepu2/MyRepo/master/ConfigureWinRM.ps1' on the target machine.
+This script creates a self signed certificate and configures the WinRM Https listener using the certificate's thumbprint.
+
+
+
+How to connect to a Target Azure VM post WinRM configuration
+============================================================
+Use the below script to connect to an azure vm post winrm configuration. Assign the exact fqdn of your azure vm to $hostname.
+The script pops up a credential window, provide the credentials of azure vm.
+
+	$hostName="mywindowsvm.westus.cloudapp.azure.com"
+	$winrmPort = '5986'
+
+	# Get the credentials of the machine
+	$cred = Get-Credential
+
+	# Connect to the machine
+	$soptions = New-PSSessionOption -SkipCACheck
+	Enter-PSSession -ComputerName $hostName -Port $winrmPort -Credential $cred -SessionOption $soptions -UseSSL
