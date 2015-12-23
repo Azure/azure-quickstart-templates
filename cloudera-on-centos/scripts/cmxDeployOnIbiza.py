@@ -22,6 +22,15 @@ from cm_api.endpoints.services import ApiServiceSetupInfo, ApiService
 
 LOG_DIR='/log/cloudera'
 
+def getParameterValue(vmsize, parameter):
+    switcher = {
+        "Standard_DS14:yarn_nodemanager_resource_cpu_vcores": "10",
+        "Standard_DS14:yarn_nodemanager_resource_memory_mb": "45056",
+        "Standard_DS13:yarn_nodemanager_resource_cpu_vcores": "5",
+        "Standard_DS13:yarn_nodemanager_resource_memory_mb": "22528",
+    }
+    return switcher.get(vmsize+":"+parameter, "nothing")
+
 def getDataDiskCount():
     bashCommand="lsblk | grep /data | grep -v /data/ | wc -l"
     client=SSHClient()
@@ -591,8 +600,8 @@ def setup_yarn(HA):
                 rcg.update_config({"yarn_nodemanager_heartbeat_interval_ms": "100",
                                    "node_manager_java_heapsize": "2000000000",
                                    "yarn_nodemanager_local_dirs": yarn_dir_list,
-                                   "yarn_nodemanager_resource_cpu_vcores": "10",
-                                   "yarn_nodemanager_resource_memory_mb": "45056",
+                                   "yarn_nodemanager_resource_cpu_vcores": getParameterValue(cmx.vmsize, "yarn_nodemanager_resource_cpu_vcores"),
+                                   "yarn_nodemanager_resource_memory_mb": getParameterValue(cmx.vmsize,"yarn_nodemanager_resource_memory_mb"),
                                    "node_manager_log_dir": LOG_DIR+"/hadoop-yarn",
                                    "yarn_nodemanager_log_dirs": LOG_DIR+"/hadoop-yarn/container"})
 #                for host in hosts:
