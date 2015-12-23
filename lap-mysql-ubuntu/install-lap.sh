@@ -1,4 +1,5 @@
 #!/bin/bash
+
 REMOTEMYSQLIP=$1
 
 apt-get -y update

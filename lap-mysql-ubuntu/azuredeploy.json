@@ -43,10 +43,10 @@
     "dnsName": {
       "type": "string",
       "metadata": {
-        "description": "Domain name for the publicly accessible Jenkins master node"
+        "description": "Domain name for the publicly accessible Lap node"
       }
     },
-    "masterVmSize": {
+    "LapVmSize": {
       "type": "string",
       "defaultValue": "Standard_D3",
       "allowedValues": [
@@ -54,17 +54,17 @@
         "Standard_D4"
       ],
       "metadata": {
-        "description": "The size of the virtual machines used when provisioning the Jenkins master node"
+        "description": "The size of the virtual machines used when provisioning the Lap node"
       }
     },
-    "slaveNodes": {
+    "MysqlNodes": {
       "type": "int",
       "defaultValue": 1,
       "metadata": {
-        "description": "Number of Jenkins slave node (1 is the default)"
+        "description": "Number of Mysql node (1 is the default)"
       }
     },
-    "slaveVmSize": {
+    "MysqlVmSize": {
       "type": "string",
       "defaultValue": "Standard_D3",
       "allowedValues": [
@@ -72,16 +72,16 @@
         "Standard_D4"
       ],
       "metadata": {
-        "description": "The size of the virtual machines used when provisioning Jenkins slave node(s)"
+        "description": "The size of the virtual machines used when provisioning Mysql node(s)"
       }
     }
   },
   "variables": {
     "templateBaseUrl": "https://raw.githubusercontent.com/251744647/azure-quickstart-templates/master/lap-mysql-ubuntu/",
     "sharedTemplateUrl": "[concat(variables('templateBaseUrl'), 'shared-resources.json')]",
-    "jenkMasterTemplateUrl": "[concat(variables('templateBaseUrl'), 'jenkmaster-resources.json')]",
-    "jenkSlaveTemplateUrl": "[concat(variables('templateBaseUrl'), 'jenkslave-resources.json')]",
-    "namespace": "lapmysql",
+    "lampLapTemplateUrl": "[concat(variables('templateBaseUrl'), 'lamplap-resources.json')]",
+    "lampMysqlTemplateUrl": "[concat(variables('templateBaseUrl'), 'lampmysql-resources.json')]",
+    "namespace": "lamp-",
     "networkSettings": {
       "virtualNetworkName": "[parameters('virtualNetworkName')]",
       "addressPrefix": "10.0.0.0/16",
@@ -101,7 +101,7 @@
 		"mysqlip": "10.0.0.10"
       }
     },
-    "masterOsSettings": {
+    "LapOsSettings": {
       "imageReference": {
         "publisher": "Canonical",
         "offer": "UbuntuServer",
@@ -112,7 +112,7 @@
         "https://raw.githubusercontent.com/251744647/azure-quickstart-templates/master/lap-mysql-ubuntu/install-lap.sh",
       ]
     },
-    "slaveOsSettings": {
+    "MysqlOsSettings": {
       "imageReference": {
         "publisher": "Canonical",
         "offer": "UbuntuServer",
@@ -150,7 +150,7 @@
       }
     },
     {
-      "name": "jenkMasterNode",
+      "name": "lampLapNode",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2015-01-01",
       "dependsOn": [
@@ -159,7 +159,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[variables('jenkMasterTemplateUrl')]",
+          "uri": "[variables('lampLapTemplateUrl')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -179,7 +179,7 @@
             "value": "[variables('namespace')]"
           },
           "vmbasename": {
-            "value": "Master"
+            "value": "Lap"
           },
           "subnet": {
             "value": "[variables('networkSettings').subnet.dse]"
@@ -191,33 +191,33 @@
             "value": "[variables('networkSettings').statics.lapip]"
           },
           "vmSize": {
-            "value": "[parameters('masterVmSize')]"
+            "value": "[parameters('LapVmSize')]"
           },
-          "slaveNodes": {
-            "value": "[parameters('slaveNodes')]"
+          "MysqlNodes": {
+            "value": "[parameters('MysqlNodes')]"
           },
           "osSettings": {
-            "value": "[variables('masterOsSettings')]"
+            "value": "[variables('LapOsSettings')]"
           }
         }
       }
     },
     {
-      "name": "[concat('jenkSlaveNode', copyindex())]",
+      "name": "[concat('lampMysqlNode', copyindex())]",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2015-01-01",
       "dependsOn": [
         "[concat('Microsoft.Resources/deployments/', 'shared')]",
-        "[concat('Microsoft.Resources/deployments/', 'jenkMasterNode')]"
+        "[concat('Microsoft.Resources/deployments/', 'lampLapNode')]"
       ],
       "copy": {
         "name": "vmLoop",
-        "count": "[parameters('slaveNodes')]"
+        "count": "[parameters('MysqlNodes')]"
       },
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[variables('jenkSlaveTemplateUrl')]",
+          "uri": "[variables('lampMysqlTemplateUrl')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -237,7 +237,7 @@
             "value": "[variables('namespace')]"
           },
           "vmbasename": {
-            "value": "[concat('Slave', copyindex())]"
+            "value": "[concat('Mysql', copyindex())]"
           },
           "lapNode": {
             "value": "[variables('networkSettings').statics.lapip]"
@@ -249,10 +249,10 @@
             "value": "[variables('networkSettings').subnet.dse]"
           },
           "vmSize": {
-            "value": "[parameters('slaveVmSize')]"
+            "value": "[parameters('MysqlVmSize')]"
           },
           "osSettings": {
-            "value": "[variables('slaveOsSettings')]"
+            "value": "[variables('MysqlOsSettings')]"
           }
         }
       }
