@@ -1,5 +1,6 @@
 #!/bin/bash
-MYSQLIP=$1
+REMOTEMYSQLIP=$1
+
 apt-get -y update
 
 #no password prompt while installing mysql server
@@ -26,9 +27,9 @@ echo 'Connected sucessfully';
 ?>
 EOF
 
-cat > /var/www/html/mysql1.php <<EOF
+cat > /var/www/html/remotemysql.php <<EOF
 <?php
-\$link = mysql_connect('$MYSQLIP', 'root', '');
+\$link = mysql_connect('$REMOTEMYSQLIP', 'root', '');
 if (!\$link) {
     die('Could not connect:' . mysql_error());
 }
