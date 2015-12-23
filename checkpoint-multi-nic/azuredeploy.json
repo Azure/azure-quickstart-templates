@@ -51,6 +51,23 @@
         },
         "vmSize": {
             "defaultValue": "Standard_D3",
+            "allowedValues": [
+                "Standard_A4",
+                "Standard_A7",
+                "Standard_A9",
+                "Standard_A11",
+                "Standard_D3",
+                "Standard_D4",
+                "Standard_D12",
+                "Standard_D13",
+                "Standard_D14",
+                "Standard_D3_v2",
+                "Standard_D4_v2",
+                "Standard_D5_v2",
+                "Standard_D12_v2",
+                "Standard_D13_v2",
+                "Standard_D14_v2"
+            ],
             "metadata": {
                 "description": "Size of the VM"
             },
@@ -60,11 +77,7 @@
     "variables": {
         "apiVersion": "2015-06-15",
         "customData": "#!/bin/bash",
-        "addressPrefix": "10.0.0.0/16",
-        "externalPrivateAddress": "10.0.1.10",
-        "frontEndIPConfigId": "[concat(variables('lbId'),'/frontendIPConfigurations/LoadBalancerFrontEnd')]",
-        "WebApp1IPConfigId": "[concat(variables('lbId'),'/frontendIPConfigurations/WebApp1FrontEnd')]",
-        "WebApp2IPConfigId": "[concat(variables('lbId'),'/frontendIPConfigurations/WebApp2FrontEnd')]",
+
         "imageOffer": "check-point-r77-10",
         "imagePublisher": "checkpoint",
         "imageReference": "[variables(concat('imageReference',parameters('offer')))]",
@@ -80,11 +93,11 @@
             "sku": "r7710-ngtp-payg",
             "version": "latest"
         },
-        "internalPrivateAddress": "10.0.2.10",
         "lbId": "[resourceId('Microsoft.Network/loadBalancers',variables('lbName'))]",
         "lbName": "frontend-lb",
-        "nic1Name": "external-nic",
-        "nic2Name": "internal-nic",
+        "nic1Name": "external",
+        "nic2Name": "int0",
+        "nic3Name": "int1",
         "osProfile": "[variables(concat('osprofile',parameters('authenticationType')))]",
         "osProfilepassword": {
             "adminPassword": "[parameters('adminPassword')]",
@@ -120,40 +133,100 @@
             "publisher": "[variables('imagePublisher')]"
         },
 
-
-        "webApps": ["webapp1", "webapp2"],
-        "publicIPAddressId": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]",
-        "publicIPAddressWebApp1Id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('webApps')[0])]",
-        "publicIPAddressWebApp2Id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('webApps')[1])]",
-        "publicIPAddressName": "security-gateway",
         "storageAccountType": "Standard_LRS",
-        "subnet1Name": "external-subnet",
+
+        "vnetName": "vnet",
+        "vnetId": "[resourceId('Microsoft.Network/virtualNetworks',variables('vnetName'))]",
+        "addressPrefix": "10.0.0.0/16",
+
+        "subnet1Name": "Frontend",
         "subnet1Prefix": "10.0.1.0/24",
         "subnet1Id": "[concat(variables('vnetId'),'/subnets/',variables('subnet1Name'))]",
-        "subnet2Name": "internal-subnet",
+
+        "subnet2Name": "Web",
         "subnet2Prefix": "10.0.2.0/24",
         "subnet2Id": "[concat(variables('vnetId'),'/subnets/',variables('subnet2Name'))]",
-        "vnetId": "[resourceId('Microsoft.Network/virtualNetworks',variables('vnetName'))]",
-        "vnetName": "vnet",
 
-        "externalRouteTableName": "ExternalRouteTable",
-        "externalRouteTableId": "[resourceId('Microsoft.Network/routeTables', variables('externalRouteTableName'))]",
-        "internalRouteTableName": "InternalRouteTable",
-        "internalRouteTableId": "[resourceId('Microsoft.Network/routeTables', variables('internalRouteTableName'))]"
+        "subnet3Name": "App",
+        "subnet3Prefix": "10.0.3.0/24",
+        "subnet3Id": "[concat(variables('vnetId'),'/subnets/',variables('subnet3Name'))]",
+
+        "externalPrivateAddress": "10.0.1.10",
+        "subnet2PrivateAddress": "10.0.2.10",
+        "subnet3PrivateAddress": "10.0.3.10",
+
+        "frontendRouteTableId": "[resourceId('Microsoft.Network/routeTables', variables('subnet1Name'))]",
+        "subnet2RouteTableId": "[resourceId('Microsoft.Network/routeTables', variables('subnet2Name'))]",
+        "subnet3RouteTableId": "[resourceId('Microsoft.Network/routeTables', variables('subnet3Name'))]",
+
+        "publicIPAddressName": "gateway",
+        "publicIPAddressId": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]",
+
+        "webApps": [
+            "[concat('webapp', parameters('vmName'), '1')]",
+            "[concat('webapp', parameters('vmName'), '2')]"
+        ],
+        "publicIPAddressWebApp1Id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('webApps')[0])]",
+        "publicIPAddressWebApp2Id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('webApps')[1])]",
+
+        "WebApp1IPConfigId": "[concat(variables('lbId'), '/frontendIPConfigurations/WebApp1FrontEnd')]",
+        "WebApp2IPConfigId": "[concat(variables('lbId'), '/frontendIPConfigurations/WebApp2FrontEnd')]"
+
     },
     "resources": [
         {
             "apiVersion": "[variables('apiVersion')]",
             "location": "[resourceGroup().location]",
-            "name": "[variables('externalRouteTableName')]",
+            "name": "[variables('subnet1Name')]",
             "properties": {
                 "routes": [
                     {
-                        "name": "ToInernal",
+                        "name": "Local-Subnet",
                         "properties": {
-                            "addressPrefix": "[variables('subnet2Prefix')]",
+                            "addressPrefix": "[variables('subnet1Prefix')]",
+                            "nextHopType": "VnetLocal"
+                        }
+                    },
+                    {
+                        "name": "To-Internal",
+                        "properties": {
+                            "addressPrefix": "[variables('addressPrefix')]",
                             "nextHopType": "VirtualAppliance",
                             "nextHopIpAddress": "[variables('externalPrivateAddress')]"
+                        }
+                    }
+
+                ]
+            },
+            "type": "Microsoft.Network/routeTables"
+        },
+        {
+            "apiVersion": "[variables('apiVersion')]",
+            "location": "[resourceGroup().location]",
+            "name": "[variables('subnet2Name')]",
+            "properties": {
+                "routes": [
+                    {
+                        "name": "Local-Subnet",
+                        "properties": {
+                            "addressPrefix": "[variables('subnet2Prefix')]",
+                            "nextHopType": "VnetLocal"
+                        }
+                    },
+                    {
+                        "name": "Inside-Vnet",
+                        "properties": {
+                            "addressPrefix": "[variables('addressPrefix')]",
+                            "nextHopType": "VirtualAppliance",
+                            "nextHopIpAddress": "[variables('subnet2PrivateAddress')]"
+                        }
+                    },
+                    {
+                        "name": "To-Internet",
+                        "properties": {
+                            "addressPrefix": "0.0.0.0/0",
+                            "nextHopType": "VirtualAppliance",
+                            "nextHopIpAddress": "[variables('subnet2PrivateAddress')]"
                         }
                     }
                 ]
@@ -163,29 +236,37 @@
         {
             "apiVersion": "[variables('apiVersion')]",
             "location": "[resourceGroup().location]",
-            "name": "[variables('internalRouteTableName')]",
+            "name": "[variables('subnet3Name')]",
             "properties": {
                 "routes": [
                     {
-                        "name": "ToInternet",
+                        "name": "Local-Subnet",
                         "properties": {
-                            "addressPrefix": "0.0.0.0/0",
-                            "nextHopType": "VirtualAppliance",
-                            "nextHopIpAddress": "[variables('internalPrivateAddress')]"
+                            "addressPrefix": "[variables('subnet3Prefix')]",
+                            "nextHopType": "VnetLocal"
                         }
                     },
                     {
-                        "name": "ToExternal",
+                        "name": "Inside-Vnet",
                         "properties": {
-                            "addressPrefix": "[variables('subnet1Prefix')]",
+                            "addressPrefix": "[variables('addressPrefix')]",
                             "nextHopType": "VirtualAppliance",
-                            "nextHopIpAddress": "[variables('internalPrivateAddress')]"
+                            "nextHopIpAddress": "[variables('subnet3PrivateAddress')]"
+                        }
+                    },
+                    {
+                        "name": "To-Internet",
+                        "properties": {
+                            "addressPrefix": "0.0.0.0/0",
+                            "nextHopType": "VirtualAppliance",
+                            "nextHopIpAddress": "[variables('subnet3PrivateAddress')]"
                         }
                     }
                 ]
             },
             "type": "Microsoft.Network/routeTables"
         },
+
         {
             "apiVersion": "[variables('apiVersion')]",
             "location": "[resourceGroup().location]",
@@ -200,8 +281,9 @@
             "location": "[resourceGroup().location]",
             "name": "[variables('vnetName')]",
             "dependsOn": [
-                "[variables('externalRouteTableId')]",
-                "[variables('internalRouteTableId')]"
+                "[variables('frontendRouteTableId')]",
+                "[variables('subnet2RouteTableId')]",
+                "[variables('subnet3RouteTableId')]"
             ],
             "properties": {
                 "addressSpace": {
@@ -215,7 +297,7 @@
                         "properties": {
                             "addressPrefix": "[variables('subnet1Prefix')]",
                             "routeTable": {
-                                "id": "[variables('externalRouteTableId')]"
+                                "id": "[variables('frontendRouteTableId')]"
                             }
                         }
                     },
@@ -224,7 +306,16 @@
                         "properties": {
                             "addressPrefix": "[variables('subnet2Prefix')]",
                             "routeTable": {
-                                "id": "[variables('internalRouteTableId')]"
+                                "id": "[variables('subnet2RouteTableId')]"
+                            }
+                        }
+                    },
+                    {
+                        "name": "[variables('subnet3Name')]",
+                        "properties": {
+                            "addressPrefix": "[variables('subnet3Prefix')]",
+                            "routeTable": {
+                                "id": "[variables('subnet3RouteTableId')]"
                             }
                         }
                     }
@@ -274,27 +365,13 @@
         {
             "apiVersion": "[variables('apiVersion')]",
             "dependsOn": [
-                "[variables('publicIPAddressId')]",
                 "[variables('publicIPAddressWebApp1Id')]",
                 "[variables('publicIPAddressWebApp2Id')]"
             ],
             "location": "[resourceGroup().location]",
             "name": "[variables('lbName')]",
             "properties": {
-                "backendAddressPools": [
-                    {
-                        "name": "BackendPool1"
-                    }
-                ],
                 "frontendIPConfigurations": [
-                    {
-                        "name": "LoadBalancerFrontEnd",
-                        "properties": {
-                            "publicIPAddress": {
-                                "id": "[variables('publicIPAddressId')]"
-                            }
-                        }
-                    },
                     {
                         "name": "WebApp1FrontEnd",
                         "properties": {
@@ -314,7 +391,7 @@
                 ],
                 "inboundNatRules": [
                     {
-                        "name": "WebApp1",
+                        "name": "[variables('webApps')[0]]",
                         "properties": {
                             "backendPort": 8081,
                             "frontendIPConfiguration": {
@@ -325,112 +402,13 @@
                         }
                     },
                     {
-                        "name": "WebApp2",
+                        "name": "[variables('webApps')[1]]",
                         "properties": {
                             "backendPort": 8082,
                             "frontendIPConfiguration": {
                                 "id": "[variables('WebApp2IPConfigId')]"
                             },
                             "frontendPort": 80,
-                            "protocol": "tcp"
-                        }
-                    },
-                    {
-                        "name": "SSH",
-                        "properties": {
-                            "backendPort": 22,
-                            "frontendIPConfiguration": {
-                                "id": "[variables('frontEndIPConfigId')]"
-                            },
-                            "frontendPort": 22,
-                            "protocol": "tcp"
-                        }
-                    },
-                    {
-                        "name": "FWD",
-                        "properties": {
-                            "backendPort": 256,
-                            "frontendIPConfiguration": {
-                                "id": "[variables('frontEndIPConfigId')]"
-                            },
-                            "frontendPort": 256,
-                            "protocol": "tcp"
-                        }
-                    },
-                    {
-                        "name": "IKE",
-                        "properties": {
-                            "backendPort": 500,
-                            "frontendIPConfiguration": {
-                                "id": "[variables('frontEndIPConfigId')]"
-                            },
-                            "frontendPort": 500,
-                            "protocol": "udp"
-                        }
-                    },
-                    {
-                        "name": "NAT-T",
-                        "properties": {
-                            "backendPort": 4500,
-                            "frontendIPConfiguration": {
-                                "id": "[variables('frontEndIPConfigId')]"
-                            },
-                            "frontendPort": 4500,
-                            "protocol": "udp"
-                        }
-                    },
-                    {
-                        "name": "HTTPS",
-                        "properties": {
-                            "backendPort": 443,
-                            "frontendIPConfiguration": {
-                                "id": "[variables('frontEndIPConfigId')]"
-                            },
-                            "frontendPort": 443,
-                            "protocol": "tcp"
-                        }
-                    },
-                    {
-                        "name": "SmartDashboard",
-                        "properties": {
-                            "backendPort": 18190,
-                            "frontendIPConfiguration": {
-                                "id": "[variables('frontEndIPConfigId')]"
-                            },
-                            "frontendPort": 18190,
-                            "protocol": "tcp"
-                        }
-                    },
-                    {
-                        "name": "PolicyPush",
-                        "properties": {
-                            "backendPort": 18191,
-                            "frontendIPConfiguration": {
-                                "id": "[variables('frontEndIPConfigId')]"
-                            },
-                            "frontendPort": 18191,
-                            "protocol": "tcp"
-                        }
-                    },
-                    {
-                        "name": "Amon",
-                        "properties": {
-                            "backendPort": 18192,
-                            "frontendIPConfiguration": {
-                                "id": "[variables('frontEndIPConfigId')]"
-                            },
-                            "frontendPort": 18192,
-                            "protocol": "tcp"
-                        }
-                    },
-                    {
-                        "name": "ICAPush",
-                        "properties": {
-                            "backendPort": 18211,
-                            "frontendIPConfiguration": {
-                                "id": "[variables('frontEndIPConfigId')]"
-                            },
-                            "frontendPort": 18211,
                             "protocol": "tcp"
                         }
                     }
@@ -442,7 +420,8 @@
             "apiVersion": "[variables('apiVersion')]",
             "dependsOn": [
                 "[variables('vnetId')]",
-                "[variables('lbId')]"
+                "[variables('lbId')]",
+                "[variables('publicIPAddressId')]"
             ],
             "location": "[resourceGroup().location]",
             "name": "[variables('nic1Name')]",
@@ -452,51 +431,22 @@
                     {
                         "name": "ipconfig1",
                         "properties": {
-                            "loadBalancerBackendAddressPools": [
-                                {
-                                    "id": "[concat(variables('lbId'), '/backendAddressPools/BackendPool1')]"
-                                }
-                            ],
-                            "loadBalancerInboundNatRules": [
-                                {
-                                    "id": "[concat(variables('lbId'),'/inboundNatRules/SSH')]"
-                                },
-                                {
-                                    "id": "[concat(variables('lbId'),'/inboundNatRules/FWD')]"
-                                },
-                                {
-                                    "id": "[concat(variables('lbId'),'/inboundNatRules/IKE')]"
-                                },
-                                {
-                                    "id": "[concat(variables('lbId'),'/inboundNatRules/NAT-T')]"
-                                },
-                                {
-                                    "id": "[concat(variables('lbId'),'/inboundNatRules/HTTPS')]"
-                                },
-                                {
-                                    "id": "[concat(variables('lbId'),'/inboundNatRules/SmartDashboard')]"
-                                },
-                                {
-                                    "id": "[concat(variables('lbId'),'/inboundNatRules/PolicyPush')]"
-                                },
-                                {
-                                    "id": "[concat(variables('lbId'),'/inboundNatRules/Amon')]"
-                                },
-                                {
-                                    "id": "[concat(variables('lbId'),'/inboundNatRules/ICAPush')]"
-                                },
-                                {
-                                    "id": "[concat(variables('lbId'),'/inboundNatRules/WebApp1')]"
-                                },
-                                {
-                                    "id": "[concat(variables('lbId'),'/inboundNatRules/WebApp2')]"
-                                }
-                            ],
                             "privateIPAddress": "[variables('externalPrivateAddress')]",
                             "privateIPAllocationMethod": "Static",
+                            "PublicIpAddress": {
+                                "Id": "[variables('publicIPAddressId')]"
+                            },
                             "subnet": {
                                 "id": "[variables('subnet1Id')]"
-                            }
+                            },
+                            "loadBalancerInboundNatRules": [
+                                {
+                                    "id": "[concat(variables('lbId'), '/inboundNatRules/', variables('webApps')[0])]"
+                                },
+                                {
+                                    "id": "[concat(variables('lbId'), '/inboundNatRules/', variables('webApps')[1])]"
+                                }
+                            ]
                         }
                     }
                 ]
@@ -514,9 +464,9 @@
                 "enableIPForwarding": true,
                 "ipConfigurations": [
                     {
-                        "name": "ipconfig1",
+                        "name": "ipconfig2",
                         "properties": {
-                            "privateIPAddress": "[variables('internalPrivateAddress')]",
+                            "privateIPAddress": "[variables('subnet2PrivateAddress')]",
                             "privateIPAllocationMethod": "Static",
                             "subnet": {
                                 "id": "[variables('subnet2Id')]"
@@ -530,9 +480,34 @@
         {
             "apiVersion": "[variables('apiVersion')]",
             "dependsOn": [
+                "[variables('vnetId')]"
+            ],
+            "location": "[resourceGroup().location]",
+            "name": "[variables('nic3Name')]",
+            "properties": {
+                "enableIPForwarding": true,
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig3",
+                        "properties": {
+                            "privateIPAddress": "[variables('subnet3PrivateAddress')]",
+                            "privateIPAllocationMethod": "Static",
+                            "subnet": {
+                                "id": "[variables('subnet3Id')]"
+                            }
+                        }
+                    }
+                ]
+            },
+            "type": "Microsoft.Network/networkInterfaces"
+        },
+        {
+            "apiVersion": "[variables('apiVersion')]",
+            "dependsOn": [
                 "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
                 "[concat('Microsoft.Network/networkInterfaces/', variables('nic1Name'))]",
-                "[concat('Microsoft.Network/networkInterfaces/', variables('nic2Name'))]"
+                "[concat('Microsoft.Network/networkInterfaces/', variables('nic2Name'))]",
+                "[concat('Microsoft.Network/networkInterfaces/', variables('nic3Name'))]"
             ],
             "location": "[resourceGroup().location]",
             "name": "[parameters('vmName')]",
@@ -560,7 +535,14 @@
                             "properties": {
                                 "primary": false
                             }
+                        },
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nic3Name'))]",
+                            "properties": {
+                                "primary": false
+                            }
                         }
+
                     ]
                 },
                 "osProfile": "[variables('osProfile')]",
@@ -580,7 +562,7 @@
         }
     ],
     "outputs": {
-        "PublicIPAddress": {
+        "Gateway": {
             "type": "string",
             "value": "[reference(variables('publicIPAddressId')).IpAddress]"
         },
