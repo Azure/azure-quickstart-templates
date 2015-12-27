@@ -72,12 +72,41 @@
                 "description": "Size of the VM"
             },
             "type": "string"
+        },
+        "installSecurityGateway": {
+            "type": "bool",
+            "defaultValue": true,
+            "metadata": {
+                "description": "Install Security Gateway"
+            }
+        },
+        "installSecurityManagement": {
+            "type": "bool",
+            "defaultValue": true,
+            "metadata": {
+                "description": "Install Security Management"
+            }
+        },
+        "managementGUIClientNetwork": {
+            "type": "string",
+            "defaultValue": "0.0.0.0/0",
+            "metadata": {
+                "description": "Allowed network for Management GUI clients",
+                "minLength": 9,
+                "maxLength": 18
+            }
+        },
+        "sicKey": {
+            "type": "securestring",
+            "metadata": {
+                "description": "One time key for Secure Internal Communication",
+                "minLength": 8
+            }
         }
     },
     "variables": {
         "apiVersion": "2015-06-15",
-        "customData": "#!/bin/bash",
-
+        "customData": "[concat('#!/bin/bash\n', '\n', 'installSecurityGateway=\"', parameters('installSecurityGateway'), '\"', '\n', 'installSecurityGateway=\"$(echo $installSecurityGateway | tr \"TF\" \"tf\")\"\n', 'installSecurityManagement=\"', parameters('installSecurityManagement'), '\"', '\n', 'installSecurityManagement=\"$(echo $installSecurityManagement | tr \"TF\" \"tf\")\"\n', 'adminPassword=\"', parameters('adminPassword'), '\"', '\n', 'managementGUIClientNetwork=\"', parameters('managementGUIClientNetwork'), '\"', '\n', 'ManagementGUIClientBase=\"$(echo $managementGUIClientNetwork | cut -d / -f 1)\"\n', 'ManagementGUIClientMaskLength=\"$(echo $managementGUIClientNetwork | cut -d / -f 2)\"\n', 'sicKey=\"', parameters('sicKey'), '\"', '\n', 'conf=\"install_security_gw=$installSecurityGateway\"\n', 'if $installSecurityGateway; then\n', '    conf=\"${conf}&install_ppak=true\"\n', '    conf=\"${conf}&gateway_cluster_member=false\"\n', 'fi\n', 'conf=\"${conf}&install_security_managment=$installSecurityManagement\"\n', 'if $installSecurityManagement; then\n', '    conf=\"${conf}&install_mgmt_primary=false\"\n', '    conf=\"${conf}&mgmt_admin_name=admin\"\n', '    conf=\"${conf}&mgmt_admin_passwd=$adminPassword\"\n', '    conf=\"${conf}&mgmt_gui_clients_radio=network\"\n', '    conf=\"${conf}&mgmt_gui_clients_ip_field=$ManagementGUIClientBase\"\n', '    conf=\"${conf}&mgmt_gui_clients_subnet_field=$ManagementGUIClientMaskLength\"\n', 'fi\n', 'conf=\"${conf}&ftw_sic_key=$sicKey\"\n', '\n', 'config_system -s $conf\n', 'shutdown -r now\n')]",
         "imageOffer": "check-point-r77-10",
         "imagePublisher": "checkpoint",
         "imageReference": "[variables(concat('imageReference',parameters('offer')))]",
@@ -132,46 +161,35 @@
             "product": "[variables('imageOffer')]",
             "publisher": "[variables('imagePublisher')]"
         },
-
         "storageAccountType": "Standard_LRS",
-
         "vnetName": "vnet",
         "vnetId": "[resourceId('Microsoft.Network/virtualNetworks',variables('vnetName'))]",
         "addressPrefix": "10.0.0.0/16",
-
         "subnet1Name": "Frontend",
         "subnet1Prefix": "10.0.1.0/24",
         "subnet1Id": "[concat(variables('vnetId'),'/subnets/',variables('subnet1Name'))]",
-
         "subnet2Name": "Web",
         "subnet2Prefix": "10.0.2.0/24",
         "subnet2Id": "[concat(variables('vnetId'),'/subnets/',variables('subnet2Name'))]",
-
         "subnet3Name": "App",
         "subnet3Prefix": "10.0.3.0/24",
         "subnet3Id": "[concat(variables('vnetId'),'/subnets/',variables('subnet3Name'))]",
-
         "externalPrivateAddress": "10.0.1.10",
         "subnet2PrivateAddress": "10.0.2.10",
         "subnet3PrivateAddress": "10.0.3.10",
-
         "frontendRouteTableId": "[resourceId('Microsoft.Network/routeTables', variables('subnet1Name'))]",
         "subnet2RouteTableId": "[resourceId('Microsoft.Network/routeTables', variables('subnet2Name'))]",
         "subnet3RouteTableId": "[resourceId('Microsoft.Network/routeTables', variables('subnet3Name'))]",
-
         "publicIPAddressName": "gateway",
         "publicIPAddressId": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]",
-
         "webApps": [
             "[concat('webapp', parameters('vmName'), '1')]",
             "[concat('webapp', parameters('vmName'), '2')]"
         ],
         "publicIPAddressWebApp1Id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('webApps')[0])]",
         "publicIPAddressWebApp2Id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('webApps')[1])]",
-
         "WebApp1IPConfigId": "[concat(variables('lbId'), '/frontendIPConfigurations/WebApp1FrontEnd')]",
         "WebApp2IPConfigId": "[concat(variables('lbId'), '/frontendIPConfigurations/WebApp2FrontEnd')]"
-
     },
     "resources": [
         {
@@ -195,7 +213,6 @@
                             "nextHopIpAddress": "[variables('externalPrivateAddress')]"
                         }
                     }
-
                 ]
             },
             "type": "Microsoft.Network/routeTables"
@@ -266,7 +283,6 @@
             },
             "type": "Microsoft.Network/routeTables"
         },
-
         {
             "apiVersion": "[variables('apiVersion')]",
             "location": "[resourceGroup().location]",
@@ -542,7 +558,6 @@
                                 "primary": false
                             }
                         }
-
                     ]
                 },
                 "osProfile": "[variables('osProfile')]",
