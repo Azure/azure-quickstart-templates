@@ -16,7 +16,7 @@ if $installSecurityGateway; then
 fi
 conf="${conf}&install_security_managment=$installSecurityManagement"
 if $installSecurityManagement; then
-    conf="${conf}&install_mgmt_primary=false"
+    conf="${conf}&install_mgmt_primary=true"
     conf="${conf}&mgmt_admin_name=admin"
     conf="${conf}&mgmt_admin_passwd=$adminPassword"
     conf="${conf}&mgmt_gui_clients_radio=network"
