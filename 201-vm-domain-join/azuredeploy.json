@@ -47,6 +47,7 @@
     },
     "ouPath": {
       "type": "string",
+      "defaultValue": "",
       "metadata": {
         "description": "Specifies an organizational unit (OU) for the domain account. Enter the full distinguished name of the OU in quotation marks. Example: 'OU=testOU; DC=domain; DC=Domain; DC=com'"
       }
@@ -80,7 +81,7 @@
     "apiVersion": "2015-06-15",
     "nicName": "domainJoinNIC",
     "publicIPName": "domainJoinPip",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('existingVNETName'))]",
+    "vnetID": "[resourceId(resourceGroup().name, 'Microsoft.Network/virtualNetworks', parameters('existingVNETName'))]",
     "subnetId": "[concat(variables('vnetID'),'/subnets/', parameters('existingSubnetName'))]"
   },
   "resources": [
@@ -111,7 +112,7 @@
       "name": "[variables('nicName')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', parameters('existingVNETName'))]"
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -119,6 +120,9 @@
             "name": "ipconfig",
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPName'))]"
+              },
               "subnet": {
                 "id": "[variables('subnetId')]"
               }
@@ -128,7 +132,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmName')]",
       "location": "[resourceGroup().location]",
@@ -189,8 +193,10 @@
       }
     },
     {
+      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmName'),'/joindomain')]",
+      "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
       ],
@@ -206,7 +212,7 @@
           "Options": "[parameters('domainJoinOptions')]"
         },
         "protectedsettings": {
-          "Password": "[paremeters('domainPassword')]"
+          "Password": "[parameters('domainPassword')]"
         }
       }
     }
