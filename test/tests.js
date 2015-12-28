@@ -128,7 +128,9 @@ function validateParamtersFile(parametersPath) {
   assert.ok(parametersObject.parameters, parametersPath + ' - Expected a \'.parameters\' field within the parameters file');
   for (var k in parametersObject.parameters) {
     if (typeof k === 'string') {
-      assert.ok(parametersObject.parameters[k].value,
+      assert.ok(parametersObject.parameters[k].value !== null &&
+        parametersObject.parameters[k].value !== undefined &&
+        parametersObject.parameters[k].value !== '',
         parametersPath + ' -  Parameter \"' + k + '\" is missing its value field');
     }
   }
