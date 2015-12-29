@@ -54,10 +54,13 @@
         "subnetName": "Subnet-1",
         "subnetPrefix": "10.0.0.0/24",
         "publicIPAddressType": "Dynamic",
-        "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('vnetName'))]",
+        "vnetName": "myVNET",
+        "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('vnetName'))]",
         "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables ('subnetName'))]",
-        "publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('publicIPAddressName'))]",
-        "lbID": "[resourceId('Microsoft.Network/loadBalancers',parameters('lbName'))]",
+        "publicIPAddressName": "myPublicIP",
+        "publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]",
+        "lbName": "myLB",
+        "lbID": "[resourceId('Microsoft.Network/loadBalancers',variables('lbName'))]",
         "numberOfInstances": 1,
         "frontEndIPConfigID": "[concat(variables('lbID'),'/frontendIPConfigurations/loadBalancerFrontend')]",
         "lbPoolID": "[concat(variables('lbID'),'/backendAddressPools/LoadBalancerBackend')]",
@@ -65,11 +68,8 @@
         "newStorageAccountName": "[concat(uniquestring(resourceGroup().id),'winrmsa')]",
         "apiVersion": "2015-06-15",
         "hostDNSNameScriptArgument": "[concat('*.',resourceGroup().location,'.cloudapp.azure.com')]",
-        "lbName": "myLB",
         "primaryNicNamePrefix": "nic",
-        "secondaryNicNamePrefix": "nicN",
-        "publicIPAddressName": "myPublicIP",
-        "vnetName": "myVNET",
+        "secondaryNicNamePrefix": "nicN",        
         "imagePublisher":"MicrosoftWindowsServer",
         "imageOffer":"WindowsServer"
     },
@@ -93,7 +93,7 @@
         {
             "apiVersion": "[variables('apiVersion')]",
             "type": "Microsoft.Network/publicIPAddresses",
-            "name": "[parameters('publicIPAddressName')]",
+            "name": "[variables('publicIPAddressName')]",
             "location": "[resourceGroup().location]",
             "properties": {
                 "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
@@ -105,7 +105,7 @@
         {
             "apiVersion": "[variables('apiVersion')]",
             "type": "Microsoft.Network/virtualNetworks",
-            "name": "[parameters('vnetName')]",
+            "name": "[variables('vnetName')]",
             "location": "[resourceGroup().location]",
             "properties": {
                 "addressSpace": {
@@ -126,15 +126,15 @@
         {
             "apiVersion": "[variables('apiVersion')]",
             "type": "Microsoft.Network/networkInterfaces",
-            "name": "[concat(parameters('primaryNicNamePrefix'), copyindex())]",
+            "name": "[concat(variables('primaryNicNamePrefix'), copyindex())]",
             "location": "[resourceGroup().location]",
             "copy": {
                 "name": "nicLoop",
                 "count": "[variables('numberOfInstances')]"
             },
             "dependsOn": [
-                "[concat('Microsoft.Network/virtualNetworks/', parameters('vnetName'))]",
-                "[concat('Microsoft.Network/loadBalancers/', parameters('lbName'))]"
+                "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
+                "[concat('Microsoft.Network/loadBalancers/', variables('lbName'))]"
             ],
             "properties": {
                 "ipConfigurations": [
@@ -167,15 +167,15 @@
         {
             "apiVersion": "[variables('apiVersion')]",
             "type": "Microsoft.Network/networkInterfaces",
-            "name": "[concat(parameters('secondaryNicNamePrefix'), copyindex())]",
+            "name": "[concat(variables('secondaryNicNamePrefix'), copyindex())]",
             "location": "[resourceGroup().location]",
             "copy": {
                 "name": "nicLoop",
                 "count": "[variables('numberOfInstances')]"
             },
             "dependsOn": [
-                "[concat('Microsoft.Network/virtualNetworks/', parameters('vnetName'))]",
-                "[concat('Microsoft.Network/loadBalancers/', parameters('lbName'))]"
+                "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
+                "[concat('Microsoft.Network/loadBalancers/', variables('lbName'))]"
             ],
             "properties": {
                 "ipConfigurations": [
@@ -211,7 +211,7 @@
             "type": "Microsoft.Network/loadBalancers",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[concat('Microsoft.Network/publicIPAddresses/', parameters('publicIPAddressName'))]"
+                "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
             ],
             "properties": {
                 "frontendIPConfigurations": [
@@ -373,7 +373,7 @@
             "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]",
-                "[concat('Microsoft.Network/networkInterfaces/', parameters('primaryNicNamePrefix'), copyindex())]",
+                "[concat('Microsoft.Network/networkInterfaces/', variables('primaryNicNamePrefix'), copyindex())]",
                 "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
             ],
             "tags": {
@@ -393,8 +393,8 @@
                 },
                 "storageProfile": {
                     "imageReference": {
-                        "publisher": "[parameters('imagePublisher')]",
-                        "offer": "[parameters('imageOffer')]",
+                        "publisher": "[variables('imagePublisher')]",
+                        "offer": "[variables('imageOffer')]",
                         "sku": "[parameters('imageSKU')]",
                         "version": "latest"
                     },
@@ -410,7 +410,7 @@
                 "networkProfile": {
                     "networkInterfaces": [
                         {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('primaryNicNamePrefix'),copyindex()))]"
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('primaryNicNamePrefix'),copyindex()))]"
                         }
                     ]
                 }
@@ -451,7 +451,7 @@
             "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]",
-                "[concat('Microsoft.Network/networkInterfaces/', parameters('secondaryNicNamePrefix'), copyindex())]",
+                "[concat('Microsoft.Network/networkInterfaces/', variables('secondaryNicNamePrefix'), copyindex())]",
                 "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
             ],
             "tags": {
@@ -471,8 +471,8 @@
                 },
                 "storageProfile": {
                     "imageReference": {
-                        "publisher": "[parameters('imagePublisher')]",
-                        "offer": "[parameters('imageOffer')]",
+                        "publisher": "[variables('imagePublisher')]",
+                        "offer": "[variables('imageOffer')]",
                         "sku": "[parameters('imageSKU')]",
                         "version": "latest"
                     },
@@ -488,7 +488,7 @@
                 "networkProfile": {
                     "networkInterfaces": [
                         {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('secondaryNicNamePrefix'),copyindex()))]"
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('secondaryNicNamePrefix'),copyindex()))]"
                         }
                     ]
                 }
