@@ -1,6 +1,6 @@
 # Deploys set of Windows VM instances under Load Balancer and configures WinRM Https listener on VMs using a self-signed certificate.
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vm-lb-winrm-windows%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vm-winrm-lb-windows%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
@@ -9,7 +9,7 @@ Description of Template
 =======================
 This template allows you to create a set of Virtual Machines under a Load Balancer. It also configures a WinRM https listener by creating a new test certificate.
 
-The template uses a custom script extension which executes the script 'https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vm-lb-winrm-windows/ConfigureWinRM.ps1' on the target VMs.
+The template uses a custom script extension which executes the script 'https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vm-winrm-lb-windows/ConfigureWinRM.ps1' on the target VMs.
 This script creates a self signed certificate and configures the WinRM Https listener using the certificate's thumbprint.
 
 
