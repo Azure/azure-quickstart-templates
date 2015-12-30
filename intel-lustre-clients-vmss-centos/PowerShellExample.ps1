@@ -11,7 +11,7 @@ $Region = "East US"
 New-AzureRmResourceGroup -Name $ResourceGroupName -Location $Region
 
 New-AzureRmResourceGroupDeployment -Name "deploy" -ResourceGroupName $ResourceGroupName -TemplateFile .\azuredeploy.json `
-    -artifactsBaseUrl "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/intel-lustre-clients-on-centos" `
+    -artifactsBaseUrl "https://raw.githubusercontent.com/arsenvlad/azure-quickstart-templates/master/intel-lustre-clients-vmss-centos" `
     -location $Region `
     -clientVmSize "Standard_D1" `
     -imageSku "6.6" `
