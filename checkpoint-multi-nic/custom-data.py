@@ -26,4 +26,4 @@ with open('azuredeploy.json') as f:
 os.rename('azuredeploy.json', 'azuredeploy.json.old')
 
 with open('azuredeploy.json', 'w') as f:
-    f.write(json.dumps(templ, indent=4).replace(' \n', '\n') + '\n')
+    f.write(json.dumps(templ, indent=2).replace(' \n', '\n') + '\n')
