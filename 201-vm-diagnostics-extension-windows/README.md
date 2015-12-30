@@ -4,4 +4,4 @@
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-This template allows you to deploy a Premium Windows VM using a few different options for the Windows version, using the latest patched version. In addition, it will provision the Diagnostics Extension on your behlf in a new, non-Premium Storage Account.
+This template allows you to deploy a Premium Windows VM using a few different options for the Windows version, using the latest patched version. In addition, it will provision the Diagnostics Extension on your behalf in a new, non-Premium Storage Account.
