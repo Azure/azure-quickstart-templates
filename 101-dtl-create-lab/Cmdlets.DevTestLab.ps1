@@ -36,6 +36,9 @@ $LabResourceType = "microsoft.devtestlab/labs"
 $EnvironmentResourceType = "microsoft.devtestlab/environments"
 $VMTemplateResourceType = "microsoft.devtestlab/labs/vmtemplates"
 
+# Other resource types
+$StorageAccountResourceType = "microsoft.storage/storageAccounts"
+
 # The API version required to query DTL resources
 $RequiredApiVersion = "2015-05-21-preview"
 
@@ -49,7 +52,7 @@ function GetLabFromVM_Private
 {
     Param(
         [ValidateNotNull()]
-        # An existing VM (please use the Get-AzureDtlLab cmdlet to get this lab object).
+        # An existing VM (please use the Get-AzureDtlVirtualMachine cmdlet to get this VM object).
         $VM
     )
 
@@ -58,6 +61,22 @@ function GetLabFromVM_Private
     Get-AzureRmResource | Where-Object {
         $_.ResourceType -eq $LabResourceType -and 
         $_.ResourceId -eq $vm.Properties.LabId
+    }
+}
+
+function GetDefaultStorageAccountFromLab_Private
+{
+    Param(
+        [ValidateNotNull()]
+        # An existing Lab (please use the Get-AzureDtlLab cmdlet to get this lab object).
+        $Lab
+    )
+
+    $lab = GetResourceWithProperties_Private -Resource $Lab
+
+    Get-AzureRmResource | Where-Object {
+        $_.ResourceType -eq $StorageAccountResourceType -and 
+        $_.ResourceId -eq $lab.Properties.DefaultStorageAccount
     }
 }
 
@@ -112,6 +131,88 @@ function CreateNewResourceGroup_Private
     until ($null -eq $randomRG)
 
     return (New-AzureRmResourceGroup -Name $randomRGName -Location $Location)
+}
+
+function IsFileRemote_Private
+{
+    Param(
+        [ValidateNotNullOrEmpty()] 
+        [string] 
+        #  The full path or Uri of a file.
+        $FilePathOrUri
+    )
+
+    # Poor man's check for UNC paths
+    if ($FilePathOrUri.StartsWith("\\"))
+    {
+        return $true
+    }
+
+    # Poor man's check for Uris.
+    if ($FilePathOrUri.StartsWith("https://"))
+    {
+        return $true
+    }
+
+    # A more formal check for UNC paths
+    $uri = New-Object -TypeName System.Uri -ArgumentList @($FilePathOrUri) 
+    if (($null -ne $uri) -and ($true -eq $uri.IsUnc))
+    {
+        return $true
+    }
+
+    # Check for network-mapped drives
+    $driveInfo = New-Object -TypeName System.IO.DriveInfo -ArgumentList @($FilePathOrUri)
+    if (($null -ne $driveInfo) -and ($driveInfo.DriveType -eq [System.IO.DriveType]::Network))
+    {
+        return $true
+    }
+            
+    # else just assume it is local
+    return $false
+}
+
+function CopyVhdToStagingIfNeeded_Private
+{
+    Param(
+        [ValidateNotNullOrEmpty()] 
+        [string] 
+        # The full path a local or remote (available from a UNC share or a network-mapped drive) file.
+        $VhdFullPath
+    )
+
+    # check whether the file resides locally or is remote. 
+    $isRemoteVhd = IsFileRemote_Private -FilePathOrUri $VhdFullPath
+
+    # if this is a local vhd, then don't copy it to the staging area
+    if ($false -eq $isRemoteVhd)
+    {
+        return $VhdFullPath
+    }
+    else
+    {
+        # Location of vhd staging area
+        $VhdStagingFolder = Join-Path $env:USERPROFILE -ChildPath "UploadVhdToDTL\Staging"
+
+        # Create the staging folder if it doesn't already exist
+        if ($false -eq (Test-Path -Path $VhdStagingFolder))
+        {
+            New-Item -Path $VhdStagingFolder -ItemType directory | Out-Null
+        }
+
+        $vhdFileName = Split-Path -Path $VhdFullPath -Leaf
+        $vhdStagingPath = Join-Path -Path $VhdStagingFolder -ChildPath $vhdFileName
+
+        # copy the vhd to staging folder.
+        Write-Warning "Copying the vhd to the staging area (Note: This can take a while)..."
+        Write-Verbose "Copying the vhd to the staging area (Note: This can take a while)..."
+        Write-Verbose $("Source : " + $VhdFullPath)
+        Write-Verbose $("Staging Destination : " + $vhdStagingPath)
+        Copy-Item -Path $VhdFullPath -Destination $vhdStagingPath -Force | Out-Null
+        Write-Verbose "Successfully copied vhd to staging folder."
+
+        return $vhdStagingPath
+    }
 }
 
 ##################################################################################################
@@ -372,6 +473,132 @@ function Get-AzureDtlVMTemplate
         {
             $output | Write-Output
         }
+    }
+}
+
+##################################################################################################
+
+function Get-AzureDtlVhd
+{
+    <#
+        .SYNOPSIS
+        Gets vhds from a specified lab.
+
+        .DESCRIPTION
+        The Get-AzureDtlVhd cmdlet does the following: 
+        - Gets a specific vhd from a lab, if the -VhdName parameter is specified.
+        - Gets a specific vhd from a lab, if the -VhdUri parameter is specified.
+        - Gets all vhds from a lab, if the -Lab parameter is specified.
+
+        .EXAMPLE 
+        $lab = $null
+
+        $lab = Get-AzureDtlLab -LabName "MyLab1"
+        Get-AzureDtlVhd -VhdName "myVhd.vhd" -Lab $lab
+
+        Gets a specific vhd "myVhd.vhd" from the lab "MyLab1".
+
+        .EXAMPLE 
+        $lab = $null
+
+        $lab = Get-AzureDtlLab -LabName "MyLab1"
+        Get-AzureDtlVhd -VhdAbsoluteUri "https://msdtlvmxxxxxx.blob.core.windows.net/uploads/myVhd.vhd" -Lab $lab
+
+        Gets a specific vhd from the lab "MyLab1".
+
+        .EXAMPLE
+        $lab = $null
+
+        $lab = Get-AzureDtlLab -LabName "MyLab1"
+        Get-AzureDtlVhd -Lab $lab
+
+        Gets all vhds from the lab "MyLab1".
+
+        .INPUTS
+        None. Currently you cannot pipe objects to this cmdlet (this will be fixed in a future version).  
+    #>
+    [CmdletBinding(DefaultParameterSetName="ListAllInLab")]
+    Param(
+        [Parameter(Mandatory=$true, ParameterSetName="ListByVhdName")] 
+        [ValidateNotNullOrEmpty()]
+        [string]
+        # The name of the vhd 
+        $VhdName,
+
+        [Parameter(Mandatory=$true, ParameterSetName="ListByVhdUri")] 
+        [ValidateNotNullOrEmpty()]
+        [string]
+        # The absolute uri of the vhd
+        $VhdAbsoluteUri,
+
+        [Parameter(Mandatory=$true, ParameterSetName="ListAllInLab")] 
+        [Parameter(Mandatory=$true, ParameterSetName="ListByVhdName")] 
+        [Parameter(Mandatory=$true, ParameterSetName="ListByVhdUri")] 
+        [ValidateNotNull()]
+        # An existing lab (please use the Get-AzureDtlLab cmdlet to get this lab object).
+        $Lab
+    )
+
+    PROCESS
+    {
+        Write-Verbose $("Processing cmdlet '" + $PSCmdlet.MyInvocation.InvocationName + "', ParameterSet = '" + $PSCmdlet.ParameterSetName + "'")
+
+        # Get the default storage account associated with the lab.
+        Write-Verbose $("Extracting the default storage account for lab '" + $Lab.Name + "'")
+        $labStorageAccount = GetDefaultStorageAccountFromLab_Private -Lab $Lab
+
+        if ($null -eq $labStorageAccount)
+        {
+            throw $("Unable to extract the default storage account for lab '" + $Lab.Name + "'")
+        }
+        Write-Verbose $("Default storage account: "  + $labStorageAccount.ResourceName + "")
+
+        # Set the storage context.
+        Write-Verbose $("Setting the current context to storage account '" + $labStorageAccount.ResourceName + "'")
+        Set-AzureRmCurrentStorageAccount -ResourceGroupName $labStorageAccount.ResourceGroupName -StorageAccountName $labStorageAccount.ResourceName | Out-Null
+
+        # Extract the 'uploads' container (which houses the vhds).
+        Write-Verbose $("Extracting the 'uploads' container")
+        $uploadsContainer = Get-AzureStorageContainer -Name "uploads" 
+
+        if ($null -eq $uploadsContainer)
+        {
+            throw $("Unable to extract the 'uploads' container from the default storage account for lab '" + $Lab.Name + "'")
+        }
+        
+        #
+        $output = $null
+
+        switch ($PSCmdlet.ParameterSetName)
+        {
+            "ListByVhdName"
+            {
+                if ($VhdName -notlike "*.vhd")
+                {
+                    $VhdName = $($VhdName + ".vhd")
+                }
+
+                $output = Get-AzureStorageBlob -Container $uploadsContainer.Name -Blob $VhdName
+            }
+
+            "ListByVhdUri"
+            {
+                $output = Get-AzureStorageBlob -Container $uploadsContainer.Name | Where-Object {
+                    ($_.ICloudBlob -ne $null) -and 
+                    ($_.ICloudBlob.Uri -ne $null) -and
+                    ($_.ICloudBlob.Uri.AbsoluteUri -ne $null) -and
+                    ($_.ICloudBlob.Uri.AbsoluteUri -eq $VhdAbsoluteUri) 
+                }
+            }
+
+            "ListAllInLab"
+            {
+                $output = Get-AzureStorageBlob -Container $uploadsContainer.Name
+            }
+        }
+
+        # now let us display the output
+        $output | Write-Output
     }
 }
 
@@ -754,6 +981,169 @@ function New-AzureDtlVMTemplate
 
 ##################################################################################################
 
+function Add-AzureDtlVhd
+{
+    <#
+        .SYNOPSIS
+        Uploads a new vhd into the specified lab.
+
+        .DESCRIPTION
+        The Add-AzureDtlVhd cmdlet uploads a vhd into a lab. Please note that the vhd file must
+        meet the following specific requirements (dictated by Azure):
+        - Must be a Gen1 vhd file (and NOT a Gen2 vhdx file).
+        - Fixed sized vhd (and NOT dynamically expanding vhd). 
+        - Size must be less than 1023 GB. 
+        - The vhd must be uploaded as a page blob (and NOT as a block blob).
+
+        .EXAMPLE
+        $lab = $null
+
+        $lab = Get-AzureDtlLab -LabName "MyLab"
+        $vhdlocation = "\\MyShare\MyFolder\MyVHD1.vhd"
+        $friendlyName = "AnExampleVHD.vhd"
+
+        Add-AzureDtlVhd -VhdFullPath $vhdlocation -Lab $lab -VhdFriendlyName $friendlyName 
+
+        Uploads a vhd file "MyVHD1" from specified network share ("\\MyShare\MyFolder") into the lab "MyLab". 
+        - Once uploaded, the vhd is renamed to "AnExampleVHD.vhd". 
+
+        .INPUTS
+        None. Currently you cannot pipe objects to this cmdlet (this will be fixed in a future version).  
+    #>
+    [CmdletBinding(DefaultParameterSetName="AddByFileFullPath")]
+    Param(
+        [Parameter(Mandatory=$true, ParameterSetName="AddByFileFullPath")] 
+        [ValidateNotNullOrEmpty()]
+        [string]
+        # Full path to the vhd file (that'll be uploaded to the lab).
+        # Note: Currently we only support vhds that are available from:
+        # - local drives (e.g. c:\somefolder\somefile.ext)
+        # - UNC shares (e.g. \\someshare\somefolder\somefile.ext).
+        # - Network mapped drives (e.g. net use z: \\someshare\somefolder && z:\somefile.ext). 
+        $VhdFullPath,
+
+        [Parameter(Mandatory=$true, ParameterSetName="AddByFileUri")] 
+        [ValidateNotNullOrEmpty()]
+        [string]
+        # Absolute uri to the vhd file (that'll be uploaded to the lab).
+        # @TODO: Currently not used.
+        $VhdAbsoluteUri,
+
+        [Parameter(Mandatory=$true, ParameterSetName="AddByFileFullPath")] 
+        [Parameter(Mandatory=$true, ParameterSetName="AddByFileUri")] 
+        [Parameter(Mandatory=$true, ParameterSetName="AddByBlobDetails")] 
+        [ValidateNotNull()]
+        # An existing lab to which the vhd will be uploaded (please use the Get-AzureDtlLab cmdlet to get this lab object).
+        $Lab,
+
+        # [Optional] The name that will be assigned to vhd once uploded to the lab.
+        # The name should be in a "<filename>.vhd" format (E.g. "WinServer2012-VS2015.Vhd"). 
+        [string]
+        $VhdFriendlyName,
+
+        # [Optional] If this switch is specified, then any vhds copied to the staging area (if any) will NOT be deleted.
+        # Note: The default behavior is to delete all vhds from the staging area.
+        # @TODO: Currently not used.
+        [switch]
+        $KeepStagingVhd = $false,
+
+        # [Optional] If this switch is specified, then any vhds copied to the staging area (if any) will NOT be deleted.
+        # Note: The default behavior is to NOT overwrite any existing vhds in the lab.
+        # @TODO: Currently not used.
+        [switch]
+        $OverwriteExistingVhd = $false
+    )
+
+    PROCESS 
+    {
+        Write-Verbose $("Processing cmdlet '" + $PSCmdlet.MyInvocation.InvocationName + "', ParameterSet = '" + $PSCmdlet.ParameterSetName + "'")
+
+        # If the user has specified a friendly name for the vhd, ensure that it is appended with ".vhd" extension. 
+        if (($false -eq [string]::IsNullOrEmpty($VhdFriendlyName)) -and ($VhdFriendlyName -notlike "*.vhd"))
+        {
+            $VhdFriendlyName = $($VhdFriendlyName + ".vhd")
+        }
+
+        # Get the default storage account associated with the lab.
+        Write-Verbose $("Extracting the default storage account for lab '" + $Lab.Name + "'")
+        $labStorageAccount = GetDefaultStorageAccountFromLab_Private -Lab $Lab
+
+        if ($null -eq $labStorageAccount)
+        {
+            throw $("Unable to extract the default storage account for lab '" + $Lab.Name + "'")
+        }
+        Write-Verbose $("Default storage account: "  + $labStorageAccount.ResourceName + "")
+
+        # Extracting the lab's storage account key
+        Write-Verbose $("Extracting the storage account key for lab '" + $Lab.Name + "'")
+        $labStorageAccountKey = Get-AzureRmStorageAccountKey -ResourceGroupName $labStorageAccount.ResourceGroupName -Name $labStorageAccount.ResourceName
+
+        if ($null -eq $labStorageAccountKey)
+        {
+            throw $("Unable to extract the storage account key for lab '" + $Lab.Name + "'")
+        }
+
+        # Set the storage context.
+        Write-Verbose $("Setting the current context to storage account '" + $labStorageAccount.ResourceName + "'")
+        Set-AzureRmCurrentStorageAccount -ResourceGroupName $labStorageAccount.ResourceGroupName -StorageAccountName $labStorageAccount.ResourceName | Out-Null
+
+        # Extract the 'uploads' container (which houses the vhds).
+        Write-Verbose $("Extracting the 'uploads' container")
+        $uploadsContainer = Get-AzureStorageContainer -Name "uploads" 
+
+        if ($null -eq $uploadsContainer)
+        {
+            throw $("Unable to extract the 'uploads' container from the default storage account for lab '" + $Lab.Name + "'")
+        }
+        
+        # 
+        switch($PSCmdlet.ParameterSetName)
+        {
+            "AddByFileFullPath"
+            {
+                # Check if the specified vhd actually exists
+                if ($false -eq (Test-Path -Path $VhdFullPath))
+                {
+                    throw $("Specified vhd is not accessible: " + $VhdFullPath)
+                }
+
+                # Copy the vhd into the staging area if needed
+                $vhdLocalPath = CopyVhdToStagingIfNeeded_Private -VhdFullPath $VhdFullPath
+
+                # Compute the destination path. 
+                $uploadsContainerUri = $uploadsContainer.CloudBlobContainer.Uri.AbsoluteUri
+                $vhdDestinationPath = $($uploadsContainerUri + "/" + $(Split-Path -Path $vhdLocalPath -Leaf)) 
+
+                # If the user has specified a friendly name for the vhd, let us use it. 
+                if ($false -eq [string]::IsNullOrEmpty($VhdFriendlyName))
+                {
+                    $vhdDestinationPath = $($uploadsContainerUri + "/" + $VhdFriendlyName) 
+                }
+
+                # Now upload the vhd to lab's container
+                Write-Warning "Starting upload of vhd to lab (Note: This can take a while)..."
+                Write-Verbose "Starting upload of vhd to lab (Note: This can take a while)..."
+                Write-Verbose $("Source: " + $vhdLocalPath)
+                Write-Verbose $("Destination: " + $vhdDestinationPath)
+                Add-AzureRmVhd -Destination $vhdDestinationPath -LocalFilePath $vhdLocalPath -ResourceGroupName $labStorageAccount.ResourceGroupName -OverWrite | Out-Null
+                Write-Verbose "Success."
+            }
+
+            "AddByFileUri"
+            {
+                # @TODO   
+            }
+
+            "AddByBlobDetails"
+            {
+                # @TODO
+            }
+        }
+    }
+}
+
+##################################################################################################
+
 function New-AzureDtlVirtualMachine
 {
     <#
@@ -871,34 +1261,34 @@ function New-AzureDtlVirtualMachine
         }
         else
         {
-            # Pre-condition checks for linux VHDs.
+            # Pre-condition checks for linux vhds.
             if ("linux" -eq $VMTemplate.Properties.OsType)
             {
                 if ($false -eq (($PSBoundParameters.ContainsKey("UserName") -and $PSBoundParameters.ContainsKey("Password")) -or ($PSBoundParameters.ContainsKey("UserName") -and $PSBoundParameters.ContainsKey("SSHKey"))))
                 {
-                    throw $("The specified VM template '" + $VMTemplate.Name + "' uses a linux VHD. Please specify either the -UserName and -Password parameters or the -UserName and -SSHKey parameters to use this VM template.")
+                    throw $("The specified VM template '" + $VMTemplate.Name + "' uses a linux vhd. Please specify either the -UserName and -Password parameters or the -UserName and -SSHKey parameters to use this VM template.")
                 }
             }
 
-            # Pre-condition checks for windows VHDs.
+            # Pre-condition checks for windows vhds.
             else 
             {
-                # Pre-condition checks for sysprepped Windows VHDs.
+                # Pre-condition checks for sysprepped Windows vhds.
                 if ($true -eq $VMTemplate.Properties.SysPrep)
                 {
                     if ($false -eq ($PSBoundParameters.ContainsKey("UserName") -and $PSBoundParameters.ContainsKey("Password")))
                     {
-                        throw $("The specified VM template '" + $VMTemplate.Name + "' uses a sysprepped VHD. Please specify both the -UserName and -Password parameters to use this VM template.")
+                        throw $("The specified VM template '" + $VMTemplate.Name + "' uses a sysprepped vhd. Please specify both the -UserName and -Password parameters to use this VM template.")
                     }
                 }
 
-                # Pre-condition checks for non-sysprepped Windows VHDs.
-                # Note: For non-sysprepped windows VHDs we ignore the username and password and instead use the built-in account.
+                # Pre-condition checks for non-sysprepped Windows vhds.
+                # Note: For non-sysprepped windows vhds we ignore the username and password and instead use the built-in account.
                 else
                 {
                     if ($true -eq ($PSBoundParameters.ContainsKey("UserName") -and $PSBoundParameters.ContainsKey("Password")))
                     {
-                        Write-Warning $("The specified VM template '" + $VMTemplate.Name + "' uses a non-sysprepped VHD with a built-in account. The specified userame and password will not be used.")
+                        Write-Warning $("The specified VM template '" + $VMTemplate.Name + "' uses a non-sysprepped vhd with a built-in account. The specified userame and password will not be used.")
                     }                    
                 }
             }
