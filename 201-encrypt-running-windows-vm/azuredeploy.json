@@ -20,16 +20,10 @@
                 "description": "Client Secret of AAD app which has permissions to KeyVault"
             }
         },
-        "keyVaultResourceID": {
+        "keyVaultName": {
             "type": "string",
             "metadata": {
-                "description": "ResourceID of the KeyVault to place the volume encryption key"
-            }
-        },
-        "keyVaultURL": {
-            "type": "string",
-            "metadata": {
-                "description": "URL of the KeyVault to place the volume encryption key"
+                "description": "Name of the KeyVault to place the volume encryption key"
             }
         },
         "useExistingKek": {
@@ -65,13 +59,15 @@
             }
         }
     },
-    "variables": {
-        "extensionName": "AzureDiskEncryption",
-        "extensionVersion": "1.0",
-        "encryptionOperation": "EnableEncryption",
-        "keyEncryptionAlgorithm": "RSA-OAEP",
-        "updateVmUrl": "[concat('https://raw.githubusercontent.com/azure/azure-quickstart-templates/master/201-encrypt-running-windows-vm/updatevm-',parameters('useExistingKek'),'.json')]"
-    },
+  "variables": {
+    "extensionName": "AzureDiskEncryption",
+    "extensionVersion": "1.0",
+    "encryptionOperation": "EnableEncryption",
+    "keyEncryptionAlgorithm": "RSA-OAEP",
+    "updateVmUrl": "[concat('https://raw.githubusercontent.com/azure/azure-quickstart-templates/master/201-encrypt-running-windows-vm/updatevm-',parameters('useExistingKek'),'.json')]",
+    "keyVaultURL": "[concat('https://', parameters('keyVaultName'), '.vault.azure.net/')]",
+    "keyVaultResourceID": "[concat(resourceGroup().id,'/providers/Microsoft.KeyVault/vaults/', parameters('keyVaultName'))]"
+  },
     "resources": [
         {
             "type": "Microsoft.Compute/virtualMachines/extensions",
@@ -84,7 +80,7 @@
                 "typeHandlerVersion": "[variables('extensionVersion')]",
                 "settings": {
                     "AADClientID": "[parameters('aadClientID')]",
-                    "KeyVaultURL": "[parameters('keyVaultURL')]",
+                    "KeyVaultURL": "[variables('keyVaultURL')]",
                     "KeyEncryptionKeyURL": "[parameters('keyEncryptionKeyURL')]",
                     "KeyEncryptionAlgorithm": "[variables('keyEncryptionAlgorithm')]",
                     "VolumeType": "[parameters('volumeType')]",
@@ -114,7 +110,7 @@
                         "value": "[parameters('vmName')]"
                     },
                     "keyVaultResourceID": {
-                        "value": "[parameters('keyVaultResourceID')]"
+                        "value": "[variables('keyVaultResourceID')]"
                     },
                     "keyVaultSecretUrl": {
                         "value": "[reference(resourceId('Microsoft.Compute/virtualMachines/extensions',  parameters('vmName'), variables('extensionName'))).instanceView.statuses[0].message]"
