@@ -45,7 +45,7 @@ Here are notes for troubleshooting:
 
 ## Template Parameters
 When you deploy the template you will need to specify the following parameters:
-* `adminPassword`: this is only required for the Windows jumpbox.
+* `adminPassword`: this is only required for the Windows jumpbox (the admin username is `azureuser`)
 * `dnsNamePrefix`: this is the DNS prefix name that will be used to make up the names for the FQDN for the jumpbox, master endpoints, and the agent endpoints.
 * `agentCount`: the number of Mesos Agents that you want to create in the container service.  You are allowed to create 1 to 100 agents
 * `masterCount`: Number of Masters. Currently the template supports 3 configurations: 1, 3 and 5 Masters container service configuration.
@@ -69,7 +69,7 @@ This walk through is based the wonderful digital ocean tutorial: https://www.dig
 
 2. Connect to your container service
  1. linux jumpbox - start a VNC to the jumpbox using instructions https://github.com/anhowe/ubuntu-devbox.  The jumpbox takes an hour to configure.  If the desktop is not ready, you can tail /var/log/azure/cluster-bootstrap.log to watach installation.
- 2. windows jumpbox - remote desktop to the windows jumpbox
+ 2. windows jumpbox - remote desktop to the windows jumpbox (username is `azureuser`)
  3. no jumpbox - SSH to port 2200 on your NAT creating a tunnel to port 5050 and port 8080.  Then use the browser of your desktop to browse these ports.
 
 3. browse to the Mesos UI.  Internet Explorer will automatically point to the URL, but if you are on linux, the URL will be the master name, something like http://mesos-master-01234567-0:5050/
