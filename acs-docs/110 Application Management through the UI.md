@@ -33,6 +33,10 @@ Now you can open a browser and visit:
 
 ## Remote Desktop for Windows Jumpbox
 
+To connect to a Windows Jumpbox you can find the RDP connection
+details in the Azure Portal (see below for details). The admin
+username is `azureuser`.
+
 In the Azure portal navigate to your Jumpbox within your resource group:
 
 ![](images/110/media/image5.png)
@@ -47,7 +51,9 @@ Optionally Save the file for easy access later. Open it now.
 
 ![](images/110/media/image8.png)
 
-Connect:
+### Connect
+
+Now you can connect using the password `azureuser`:
 
 ![](images/110/media/image9.png)
 
