@@ -3,9 +3,9 @@
 #########################################################
 # Script Name: couchbase_ansible.sh
 # Author: Gonzalo Ruiz 
-# Version: 0.1
+# Version: 0.2
 # Date Created:           01st Marh 2015
-# Last Modified:          14th April 17:26 GMT
+# Last Modified:          29th November 2015
 # Last Modified By:       Gonzalo Ruiz
 # Description:
 #  This script automates the installation of a multi VM Couchbase cluster using Ansible. It will
@@ -42,11 +42,14 @@ CB_WEB_FQDN=''
 CB_WEB_PORT=''
 MOUNTPOINT='/datadrive'
 
+SSH_AZ_ACCOUNT_NAME=''
+SSH_AZ_ACCOUNT_KEY=''
+
 
  function usage()
  {
     echo "INFO:"
-    echo "Usage: configure-ansible.sh [-i IP_ADDRESS_SPACE ] [-n NUMBER_OF_NODES ] [-r CONFIGURE_RAID ] [-f FILE_SYSTEM] [-u CB_USER] [-p CB_PWD]"
+    echo "Usage: configure-ansible.sh [-i IP_ADDRESS_SPACE ] [-n NUMBER_OF_NODES ] [-r CONFIGURE_RAID ] [-f FILE_SYSTEM] [-u CB_USER] [-p CB_PWD] [-m] [-q] [-o] [-a] [-k]"
     echo "The -i (ipAddressSpace) parameters specifies the starting IP space for the vms.For instance if you specify 10.0.2.2, and 3 nodes, the script will find for the VMS 10.0.2.20, 10.0.2.21,10.0.2.22.Plase note that Azure reserves the first 4 IPs, so you will have to specify an IP space in which IP x.x.x0 is available"
     echo "The -n (numberOfNodes) parameter specifies the number of VMs"
     echo "The -r (configureRAID) parameter specifies whether you want to create a RAID with all the available data disks.Allowed values : true or false"
@@ -56,6 +59,8 @@ MOUNTPOINT='/datadrive'
     echo "The -m (couchbaseAllocatedMemory) parameter specifies the percentage of memory allocated to Couchbase "
     echo "The -q (couchbaseFQDN) parameter specifies the fully qualified named assigned to the Azure public IP"
     echo "The -o (couchbaseAdminPort) parameter specifies the public Admin Port for the Couchbase Web Console"
+    echo "The -a (azureStorageAccountName) parameter specifies the name of the storage account that contains the private keys"
+    echo "The -k (azureStorageAccountKey) parameter specifies the key of the private storage account that contains the private keys"
 }
 
 
@@ -68,13 +73,13 @@ function log()
 
 
 #---PARSE AND VALIDATE PARAMETERS---
-if [ $# -ne 18 ]; then
+if [ $# -ne 22 ]; then
     log "ERROR:Wrong number of arguments specified. Parameters received $#. Terminating the script."
     usage
     exit 1
 fi
 
-while getopts :i:n:r:f:u:p:m:q:o: optname; do
+while getopts :i:n:r:f:u:p:m:q:o:a:k: optname; do
     log "INFO:Option $optname set with value ${OPTARG}"
   case $optname in
     i) # IP address space 
@@ -121,6 +126,12 @@ while getopts :i:n:r:f:u:p:m:q:o: optname; do
     o) # Couchbase Web Console Port 
       CB_WEB_PORT=${OPTARG}
       ;;    
+    a) # Azure Private Storage Account Name- SSH Keys
+      SSH_AZ_ACCOUNT_NAME=${OPTARG}
+      ;;
+    k) # Azure Private Storage Account Key - SSH Keys
+      SSH_AZ_ACCOUNT_KEY=${OPTARG}
+      ;;     
 
     \?) #Invalid option - show help
       log "ERROR:Option -${BOLD}$OPTARG${NORM} not allowed."
@@ -208,6 +219,18 @@ function install_packages_ubuntu()
     yum -y install nginx
  }
 
+
+function get_sshkeys()
+ {
+    apt-get -y install python-pip
+    pip install azure-storage
+
+    # Download both Private and Public Key
+    python GetSSHFromPrivateStorageAccount.py ${SSH_AZ_ACCOUNT_NAME} ${SSH_AZ_ACCOUNT_KEY} id_rsa
+    python GetSSHFromPrivateStorageAccount.py ${SSH_AZ_ACCOUNT_NAME} ${SSH_AZ_ACCOUNT_KEY} id_rsa.pub
+
+}
+
 function configure_ssh()
 {
 
@@ -218,7 +241,6 @@ function configure_ssh()
     # set permissions
     chmod 700 ~/.ssh
     chmod 600 ~/.ssh/id_rsa     
-
 
     # copy root ssh key   
     cat id_rsa.pub >> ~/.ssh/authorized_keys
@@ -255,7 +277,7 @@ function configure_ssh()
     printf  "[defaults]\nhost_key_checking = False\n\n" >> "${ANSIBLE_CONFIG_FILE}"   
     # Shorten the ControlPath to avoid errors with long host names , long user names or deeply nested home directories
     echo  $'[ssh_connection]\ncontrol_path = ~/.ssh/ansible-%%h-%%r' >> "${ANSIBLE_CONFIG_FILE}"   
-    
+    echo "\nscp_if_ssh=True" >> "${ANSIBLE_CONFIG_FILE}"
     # Generate a new ansible host file    
     printf  "[${TEMPLATE_ROLE}]\n" >> "${ANSIBLE_HOST_FILE}"    
     printf  "${IP_ADDRESS_SPACE}0 node_role=primary\n" >> "${ANSIBLE_HOST_FILE}"    
@@ -321,6 +343,8 @@ function configure_nginx()
 
   # Start nginx service
   service nginx start 
+  service nginx restart
+
 
 
   
@@ -331,6 +355,7 @@ InitializeVMs()
 {
     check_OS
     
+    get_sshkeys
     configure_ssh
 
     if [[ "${DIST}" == "Ubuntu" ]];
@@ -345,6 +370,7 @@ InitializeVMs()
        exit 2
     fi
     
+
     configure_ansible    
     configure_storage    
     install_couchbase    

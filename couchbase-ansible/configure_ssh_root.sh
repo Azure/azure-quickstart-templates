@@ -17,12 +17,16 @@
 ######################################################### 
 
 #---BEGIN VARIABLES---
-
+SSH_AZ_ACCOUNT_NAME=''
+SSH_AZ_ACCOUNT_KEY=''
 
  function usage()
  {
     echo "INFO:"
-    echo "Usage: configure_ssh_root"
+    echo "Usage: configure_ssh_root [-a] [-k]"
+    echo "The -a (azureStorageAccountName) parameter specifies the name of the storage account that contains the private keys"
+    echo "The -k (azureStorageAccountKey) parameter specifies the key of the private storage account that contains the private keys"
+
 }
 
 function log()
@@ -32,8 +36,30 @@ function log()
     echo "$1"
 }
 
-
 #---PARSE AND VALIDATE PARAMETERS---
+if [ $# -ne 4 ]; then
+    log "ERROR:Wrong number of arguments specified. Parameters received $#. Terminating the script."
+    usage
+    exit 1
+fi
+
+while getopts :a:k: optname; do
+    log "INFO:Option $optname set with value ${OPTARG}"
+  case $optname in   
+    a) # Azure Private Storage Account Name- SSH Keys
+      SSH_AZ_ACCOUNT_NAME=${OPTARG}
+      ;;
+    k) # Azure Private Storage Account Key - SSH Keys
+      SSH_AZ_ACCOUNT_KEY=${OPTARG}
+      ;;     
+
+    \?) #Invalid option - show help
+      log "ERROR:Option -${BOLD}$OPTARG${NORM} not allowed."
+      usage
+      exit 1
+      ;;
+  esac
+done
 
 function check_OS()
 {
@@ -103,6 +129,16 @@ function configure_ssh()
 
 } 
 
+function get_sshkeys()
+ {
+    apt-get -y install python-pip
+    pip install azure-storage
+
+    # Download Public Key 
+    python GetSSHFromPrivateStorageAccount.py  ${SSH_AZ_ACCOUNT_NAME} ${SSH_AZ_ACCOUNT_KEY} id_rsa.pub
+
+}
+
 
 
 function ConfigureSSH()
@@ -124,4 +160,5 @@ function ConfigureSSH()
     
 }
 
+get_sshkeys
 ConfigureSSH
