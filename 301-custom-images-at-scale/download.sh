@@ -5,6 +5,7 @@ export HOME
 
 apt-get -y update
 apt-get -y install python3-pip
+apt-get -y install libssl-dev
 pip3 install blobxfer
 apt-get install -y npm 
 ln -s /usr/bin/nodejs /usr/bin/node
@@ -22,7 +23,15 @@ echo $container_name
 echo $blob_name    
 echo "$container_name,$blob_name" > /mnt/config.txt  
 
-blobxfer $sa_name $container_name /mnt/ --remoteresource $blob_name --storageaccountkey $2 --download --no-computefilemd5
+attempts=0
+response=1
+while [ $response -ne 1 -a $attempts -lt 5 ]
+do
+  blobxfer $sa_name $container_name /mnt/ --remoteresource $blob_name --storageaccountkey $2 --download --no-computefilemd5
+  response=$?
+  attempts=$((attempts+1))
+done
+
 
 
 
