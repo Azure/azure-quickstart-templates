@@ -4,6 +4,7 @@
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
+Built by: [GONZALORUIZ](https://github.com/GONZALORUIZ)
 
 This advanced template creates a Multi VM Couchbase Cluster,it also configures Ansible so you can easily manage all the VMS. 
 
