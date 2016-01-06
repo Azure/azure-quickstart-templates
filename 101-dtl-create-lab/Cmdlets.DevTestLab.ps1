@@ -231,11 +231,14 @@ function CopyVhdToStagingIfNeeded_Private
     $vhdFileName = Split-Path -Path $VhdFilePathOrUri -Leaf
     $vhdStagingPath = Join-Path -Path $VhdStagingFolder -ChildPath $vhdFileName
 
-    # copy the vhd to staging folder.
+    # let us copy the vhd to the local staging folder.
     Write-Warning $("Copying the vhd to local staging area '" + $vhdStagingPath + "' (Note: This can take a while)...")
     Write-Verbose $("Copying the vhd to local staging area.")
     Write-Verbose $("Source : " + $VhdFilePathOrUri)
     Write-Verbose $("Staging Destination : " + $vhdStagingPath)
+
+    # let us measure the file copy time for instrumentation purposes.
+    $stopWatch = [Diagnostics.Stopwatch]::StartNew()
 
     if ($true -eq $VhdFilePathOrUri.StartsWith("https://"))
     {
@@ -247,7 +250,8 @@ function CopyVhdToStagingIfNeeded_Private
         Copy-Item -Path $VhdFilePathOrUri -Destination $vhdStagingPath -Force | Out-Null
     }
 
-    Write-Verbose "Successfully copied vhd to staging folder."
+    $stopWatch.Stop()
+    Write-Verbose $("Successfully copied vhd to staging folder in " + $stopWatch.Elapsed.Seconds + " seconds.")
 
     return $vhdStagingPath
 }
@@ -303,9 +307,14 @@ function CopyVhdToStaging_Private
     Write-Verbose $("Source : " + $SrcVhdBlobName)
     Write-Verbose $("Staging Destination : " + $vhdStagingPath)
 
+    # let us measure the file copy time for instrumentation purposes.
+    $stopWatch = [Diagnostics.Stopwatch]::StartNew()
+
     # Note: We're explicitly using '-ErrorAction Stop' to ensure that a terminating error is thrown if the vhd cannot be copied to local staging folder. 
     Get-AzureStorageBlobContent -Blob $SrcVhdBlobName -Container $SrcVhdContainerName -Context $storageAccountContext -Destination $vhdStagingPath -CheckMd5:$false -ErrorAction Stop -Force | Out-Null
-    Write-Verbose "Successfully copied vhd to staging folder."
+
+    $stopWatch.Stop()
+    Write-Verbose $("Successfully copied vhd to staging folder in " + $stopWatch.Elapsed.Seconds + " seconds.")
 
     return $vhdStagingPath
 }
@@ -1247,8 +1256,13 @@ function Add-AzureDtlVhd
         Write-Verbose $("Source: " + $vhdLocalPath)
         Write-Verbose $("Destination: " + $vhdDestinationPath)
         
+        # let us measure the file upload time for instrumentation purposes.
+        $stopWatch = [Diagnostics.Stopwatch]::StartNew()
+
         Add-AzureRmVhd -Destination $vhdDestinationPath -LocalFilePath $vhdLocalPath -ResourceGroupName $lab.ResourceGroupName -NumberOfUploaderThreads $env:NUMBER_OF_PROCESSORS -OverWrite | Out-Null
-        Write-Verbose "Success."
+
+        $stopWatch.Stop()
+        Write-Verbose $("Successfully uploaded vhd to lab in " + $stopWatch.Elapsed.Seconds + " seconds.")
     }
 }
 
