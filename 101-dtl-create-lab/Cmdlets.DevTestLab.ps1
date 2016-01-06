@@ -213,7 +213,7 @@ function CopyVhdToStagingIfNeeded_Private
     # check whether the file resides locally or is remote. 
     $isRemoteVhd = IsFileRemote_Private -FilePathOrUri $VhdFilePathOrUri
 
-    # if this is a local vhd, then don't copy it to the staging area
+    # if this is a local vhd, then don't copy it to the local staging area
     if ($false -eq $isRemoteVhd)
     {
         return $VhdFilePathOrUri
@@ -222,7 +222,7 @@ function CopyVhdToStagingIfNeeded_Private
     # Location of vhd staging area
     $VhdStagingFolder = Join-Path $env:USERPROFILE -ChildPath "UploadVhdToDTL\Staging"
 
-    # Create the staging folder if it doesn't already exist
+    # Create the local staging folder if it doesn't already exist
     if ($false -eq (Test-Path -Path $VhdStagingFolder))
     {
         New-Item -Path $VhdStagingFolder -ItemType directory | Out-Null
@@ -232,14 +232,15 @@ function CopyVhdToStagingIfNeeded_Private
     $vhdStagingPath = Join-Path -Path $VhdStagingFolder -ChildPath $vhdFileName
 
     # copy the vhd to staging folder.
-    Write-Warning "Copying the vhd to the staging area (Note: This can take a while)..."
-    Write-Verbose "Copying the vhd to the staging area (Note: This can take a while)..."
+    Write-Warning $("Copying the vhd to local staging area '" + $vhdStagingPath + "' (Note: This can take a while)...")
+    Write-Verbose $("Copying the vhd to local staging area.")
     Write-Verbose $("Source : " + $VhdFilePathOrUri)
     Write-Verbose $("Staging Destination : " + $vhdStagingPath)
 
     if ($true -eq $VhdFilePathOrUri.StartsWith("https://"))
     {
-        # @TODO
+        # @Todo: Blob Uris are currently not supported. Will be fixed in a future update.
+        throw "Blob Uris are currently not supported by this cmdlet."
     }
     else
     {
@@ -280,7 +281,7 @@ function CopyVhdToStaging_Private
     # Location of vhd staging area
     $VhdStagingFolder = Join-Path $env:USERPROFILE -ChildPath "UploadVhdToDTL\Staging"
 
-    # Create the staging folder if it doesn't already exist
+    # Create the local staging folder if it doesn't already exist
     if ($false -eq (Test-Path -Path $VhdStagingFolder))
     {
         New-Item -Path $VhdStagingFolder -ItemType directory | Out-Null
@@ -297,12 +298,13 @@ function CopyVhdToStaging_Private
     }
 
     # copy the vhd to staging folder.
-    Write-Warning "Copying the vhd to the staging area (Note: This can take a while)..."
-    Write-Verbose "Copying the vhd to the staging area (Note: This can take a while)..."
-    Write-Verbose $("Source : " + $VhdFilePathOrUri)
+    Write-Warning $("Copying the vhd to local staging area '" + $vhdStagingPath + "' (Note: This can take a while)...")
+    Write-Verbose $("Copying the vhd to local staging area.")
+    Write-Verbose $("Source : " + $SrcVhdBlobName)
     Write-Verbose $("Staging Destination : " + $vhdStagingPath)
 
-    Get-AzureStorageBlobContent -Blob $SrcVhdBlobName -Container $SrcVhdContainerName -Context $storageAccountContext -Destination $vhdStagingPath -CheckMd5:$false -Force | Out-Null
+    # Note: We're explicitly using '-ErrorAction Stop' to ensure that a terminating error is thrown if the vhd cannot be copied to local staging folder. 
+    Get-AzureStorageBlobContent -Blob $SrcVhdBlobName -Container $SrcVhdContainerName -Context $storageAccountContext -Destination $vhdStagingPath -CheckMd5:$false -ErrorAction Stop -Force | Out-Null
     Write-Verbose "Successfully copied vhd to staging folder."
 
     return $vhdStagingPath
@@ -639,7 +641,7 @@ function Get-AzureDtlVhd
         # Get the default storage account associated with the lab.
         Write-Verbose $("Extracting the context for the default storage account for lab '" + $Lab.Name + "'")
         $labStorageAccountContext = GetDefaultStorageAccountContextFromLab_Private -Lab $Lab
-        Write-Verbose $("Extracted the context for the default storage account for lab '" + $Lab.Name + "'")
+        Write-Verbose $("Successfully extracted the context for the default storage account for lab '" + $Lab.Name + "'")
 
         # Extract the 'uploads' container (which houses the vhds).
         Write-Verbose $("Extracting the 'uploads' container")
@@ -928,7 +930,7 @@ function New-AzureDtlLab
             # Create a new resource group with a unique name (using the lab name as a seed/prefix).
             Write-Verbose $("Creating new resoure group with seed/prefix '" + $LabName + "' at location '" + $LabLocation + "'")
             $newResourceGroup = CreateNewResourceGroup_Private -ResourceGroupSeedPrefixName $LabName -Location $LabLocation
-            Write-Verbose $("Created new resoure group '" + $newResourceGroup.ResourceGroupName + "' at location '" + $newResourceGroup.Location + "'")
+            Write-Verbose $("Successfully created new resoure group '" + $newResourceGroup.ResourceGroupName + "' at location '" + $newResourceGroup.Location + "'")
     
             # Create the lab in this resource group by deploying the RM template
             Write-Verbose $("Creating new lab '" + $LabName + "'")
@@ -1065,8 +1067,12 @@ function Add-AzureDtlVhd
         Uploads a new vhd into the specified lab.
 
         .DESCRIPTION
-        The Add-AzureDtlVhd cmdlet uploads a vhd into a lab. Please note that the vhd file must
-        meet the following specific requirements (dictated by Azure):
+        The Add-AzureDtlVhd cmdlet uploads a vhd into a lab. The source vhd can reside on:
+        - local drives (e.g. c:\somefolder\somefile.ext)
+        - UNC shares (e.g. \\someshare\somefolder\somefile.ext).
+        - Network mapped drives (e.g. net use z: \\someshare\somefolder && z:\somefile.ext). 
+        - Blobs in Azure storage containers.
+        Please note that the vhd file must meet the following specific requirements (dictated by Azure):
         - Must be a Gen1 vhd file (and NOT a Gen2 vhdx file).
         - Fixed sized vhd (and NOT dynamically expanding vhd). 
         - Size must be less than 1023 GB. 
@@ -1082,6 +1088,17 @@ function Add-AzureDtlVhd
         Add-AzureDtlVhd -VhdFullPath $vhdlocation -Lab $lab -VhdFriendlyName $friendlyName 
 
         Uploads a vhd file "MyVHD1" from specified network share ("\\MyShare\MyFolder") into the lab "MyLab". 
+        - Once uploaded, the vhd is renamed to "AnExampleVHD.vhd". 
+
+        .EXAMPLE
+        $lab = $null
+
+        $lab = Get-AzureDtlLab -LabName "MyLab"
+        $friendlyName = "AnExampleVHD.vhd"
+
+        Add-AzureDtlVhd -SrcVhdBlobName "MyVHD1.vhd" -SrcVhdContainerName "MyContainer1" -SrcVhdStorageAccountName "MyStorageAccount1" -SrcVhdStorageAccountKey "xxxxxxx" -Lab $lab -VhdFriendlyName $friendlyName
+
+        Uploads a vhd file "MyVHD1" from the storage account "MyStorageAccount1" into the lab "MyLab".
         - Once uploaded, the vhd is renamed to "AnExampleVHD.vhd". 
 
         .INPUTS
@@ -1179,17 +1196,21 @@ function Add-AzureDtlVhd
                     throw $("Specified vhd is not accessible: " + $VhdFullPath)
                 }
 
-                # Copy the vhd into the staging area if needed
+                # Copy the vhd into the local staging area if needed
+                Write-Verbose $("Copying the vhd file '" + $VhdFullPath + "' to a local staging area.")
                 $vhdLocalPath = CopyVhdToStagingIfNeeded_Private -VhdFilePathOrUri $VhdFullPath
+                Write-Verbose $("Successfully copied the vhd file to local staging area '" + $vhdLocalPath + "'.")
             }
 
             "AddByBlobDetails"
             {
                 # Copy the vhd into the staging area        
+                Write-Verbose $("Copying the vhd file '" + $SrcVhdBlobName + "' to a local staging area.")
                 $vhdLocalPath = CopyVhdToStaging_Private -SrcVhdBlobName $SrcVhdBlobName -SrcVhdContainerName $SrcVhdContainerName -SrcVhdStorageAccountName $SrcVhdStorageAccountName -SrcVhdStorageAccountKey $SrcVhdStorageAccountKey
+                Write-Verbose $("Successfully copied the vhd file to local staging area '" + $vhdLocalPath + "'.")
             }
 
-            <# @TODO: The following parameter set is currently not being used. It'll be consumed in a future update.
+            <# @TODO: The following parameter set is currently not being used. It'll be used in a future update.
             "AddByFileUri"
             {
             }
@@ -1226,7 +1247,7 @@ function Add-AzureDtlVhd
         Write-Verbose $("Source: " + $vhdLocalPath)
         Write-Verbose $("Destination: " + $vhdDestinationPath)
         
-        Add-AzureRmVhd -Destination $vhdDestinationPath -LocalFilePath $vhdLocalPath -ResourceGroupName $lab.ResourceGroupName -OverWrite | Out-Null
+        Add-AzureRmVhd -Destination $vhdDestinationPath -LocalFilePath $vhdLocalPath -ResourceGroupName $lab.ResourceGroupName -NumberOfUploaderThreads $env:NUMBER_OF_PROCESSORS -OverWrite | Out-Null
         Write-Verbose "Success."
     }
 }
