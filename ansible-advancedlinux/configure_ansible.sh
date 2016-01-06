@@ -5,7 +5,7 @@
 # Author: Gonzalo Ruiz 
 # Version: 0.1
 # Date Created:           01st Marh 2015
-# Last Modified:          04st April 17:26 GMT
+# Last Modified:          31st December 17:26 GMT
 # Last Modified By:       Gonzalo Ruiz
 # Description:
 #  This script automates the installation of this VM as an ansible VM. Specifically it:
@@ -28,9 +28,11 @@ CONFIGURE_RAID=''
 FILE_SYSTEM=''
 USER_NAME=''
 USER_PASSWORD=''
-TEMPLATE_ROLE='couchbase'
+TEMPLATE_ROLE='ansible'
 START_IP_INDEX=0
-
+SSH_AZ_ACCOUNT_NAME=''
+SSH_AZ_ACCOUNT_KEY=''
+MOUNTPOINT='/datadrive'
 
  function usage()
  {
@@ -40,6 +42,9 @@ START_IP_INDEX=0
     echo "The -n (numberOfNodes) parameter specifies the number of VMs"
     echo "The -r (configureRAID) parameter specifies whether you want to create a RAID with all the available data disks.Allowed values : true or false"
     echo "The -f (fileSystem) parameter specifies the file system you want to use.Allowed values : ext4 or xfs"    
+    echo "The -a (azureStorageAccountName) parameter specifies the name of the storage account that contains the private keys"
+    echo "The -k (azureStorageAccountKey) parameter specifies the key of the private storage account that contains the private keys"
+
 }
 
 function log()
@@ -51,13 +56,13 @@ function log()
 
 
 #---PARSE AND VALIDATE PARAMETERS---
-if [ $# -ne 8 ]; then
+if [ $# -ne 12 ]; then
     log "ERROR:Wrong number of arguments specified. Parameters received $#. Terminating the script."
     usage
     exit 1
 fi
 
-while getopts :i:n:r:f: optname; do
+while getopts :i:n:r:f:a:k: optname; do
     log "INFO:Option $optname set with value ${OPTARG}"
   case $optname in
     i) # IP address space 
@@ -88,6 +93,12 @@ while getopts :i:n:r:f: optname; do
           exit 1
       fi
       ;;    
+    a) # Azure Private Storage Account Name- SSH Keys
+      SSH_AZ_ACCOUNT_NAME=${OPTARG}
+      ;;
+    k) # Azure Private Storage Account Key - SSH Keys
+      SSH_AZ_ACCOUNT_KEY=${OPTARG}
+      ;;     
     \?) #Invalid option - show help
       log "ERROR:Option -${BOLD}$OPTARG${NORM} not allowed."
       usage
@@ -150,6 +161,8 @@ function install_ansible_ubuntu()
     apt-get --yes --force-yes install sshpass
     # install Git
     apt-get --yes --force-yes install git
+    # install python
+    apt-get --yes --force-yes install python-pip
 
  }
 
@@ -159,6 +172,9 @@ function install_ansible_ubuntu()
     # install EPEL Packages - sshdpass
     wget http://download.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm
     rpm -ivh epel-release-6-8.noarch.rpm
+    # install python
+    yum -y install python-pip
+    
     # install ansible
     yum -y install ansible
     yum install -y libselinux-python
@@ -168,7 +184,21 @@ function install_ansible_ubuntu()
     # install Git
     yum -y install git 
 
+
+
  }
+
+ function get_sshkeys()
+ {
+    log "INFO:Retrieving ssh keys from Azure Storage"
+    pip install azure-storage
+
+    # Download both Private and Public Key
+    python GetSSHFromPrivateStorageAccount.py ${SSH_AZ_ACCOUNT_NAME} ${SSH_AZ_ACCOUNT_KEY} id_rsa
+    python GetSSHFromPrivateStorageAccount.py ${SSH_AZ_ACCOUNT_NAME} ${SSH_AZ_ACCOUNT_KEY} id_rsa.pub
+
+}
+
 
 function configure_ssh()
 {
@@ -217,7 +247,7 @@ function configure_ssh()
     printf  "[defaults]\nhost_key_checking = False\n\n" >> "${ANSIBLE_CONFIG_FILE}"   
     # Shorten the ControlPath to avoid errors with long host names , long user names or deeply nested home directories
     echo  $'[ssh_connection]\ncontrol_path = ~/.ssh/ansible-%%h-%%r' >> "${ANSIBLE_CONFIG_FILE}"   
-    
+    echo "\nscp_if_ssh=True" >> "${ANSIBLE_CONFIG_FILE}"
     # Generate a new ansible host file    
     # printf  "[master]\n${IP_ADDRESS_SPACE}.${NUMBER_OF_NODES}\n\n" >> "${ANSIBLE_HOST_FILE}"   
     printf  "[${TEMPLATE_ROLE}]\n${IP_ADDRESS_SPACE}[0:$(($NUMBER_OF_NODES - 1))]" >> "${ANSIBLE_HOST_FILE}"
@@ -239,15 +269,10 @@ function configure_ssh()
     
  }
 
-
-
-
 InitializeVMs()
 {
     check_OS
-    
-    configure_ssh
-
+   
     if [[ "${DIST}" == "Ubuntu" ]];
     then
         log "INFO:Installing Ansible for Ubuntu"
@@ -259,7 +284,10 @@ InitializeVMs()
        log "ERROR:Unsupported OS ${DIST}"
        exit 2
     fi
-    
+   
+    get_sshkeys
+    configure_ssh
+     
     configure_ansible
     configure_storage
 
