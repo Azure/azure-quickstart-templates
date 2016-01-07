@@ -67,6 +67,44 @@ function GetLabFromVM_Private
     {
         throw $("Unable to detect lab for VM '" + $VM.ResourceName + "'")
     }
+
+    return $lab
+}
+
+function GetLabFromVhd_Private
+{
+    Param(
+        [ValidateNotNull()]
+        # An existing Vhd (please use the Get-AzureDtlVhd cmdlet to get this vhd object).
+        $Vhd
+    )
+
+    if (($null -eq $Vhd) -or ($null -eq $Vhd.Context) -or ($null -eq $Vhd.Context.StorageAccountName))
+    {
+        throw $("Unable to determine the storage account name for the vhd '" + $Vhd.Name + "'.")
+    }
+
+    $vhdStorageAccount = Get-AzureRmResource | Where-Object {
+        $_.ResourceType -eq $StorageAccountResourceType -and 
+        $_.ResourceName -eq $Vhd.Context.StorageAccountName
+    }
+
+    if ($null -eq $vhdStorageAccount)
+    {
+        throw $("Unable to extract the storage account '" + $Vhd.Context.StorageAccountName + "'")
+    }
+
+    $lab = Get-AzureRmResource -ExpandProperties | Where-Object {
+        $_.ResourceType -eq $LabResourceType -and
+        $_.Properties.DefaultStorageAccount -eq $vhdStorageAccount.ResourceId
+    }
+
+    if ($null -eq $lab)
+    {
+        throw $("Unable to detect lab for Vhd '" + $Vhd.Name + "'")
+    }
+
+    return $lab
 }
 
 function GetDefaultStorageAccountContextFromLab_Private
@@ -972,9 +1010,10 @@ function New-AzureDtlVMTemplate
         Creates a new (or updates an existing) virtual machine template.
 
         .DESCRIPTION
-        The New-AzureDtlVMTemplate cmdlet creates a new VM template from an existing VM.
-        - The new VM template is created in the same lab as the VM.
-        - If a VM template with the same name already exists in the lab, then it simply updates it.
+        The New-AzureDtlVMTemplate cmdlet creates a new VM template from an existing VM or Vhd.
+        - The VM template name can only include alphanumeric characters, underscores, hyphens and parantheses.
+        - The new VM template is created in the same lab as the VM (or Vhd).
+        - If a VM template with the same name already exists in the lab, then it is simply updated.
 
         .EXAMPLE
         $lab = $null
@@ -984,20 +1023,39 @@ function New-AzureDtlVMTemplate
 
         Creates a new VM Template "MyVMTemplate1" from the VM "MyVM1".
 
+        .EXAMPLE
+        $lab = $null
+
+        $lab = Get-AzureDtlLab -LabName "MyLab1"
+        $vhd = Get-AzureDtlVhd -Lab $lab -VMName "MyVhd1.vhd"
+        New-AzureDtlVMTemplate -Vhd $vhd -VMTemplateName "MyVMTemplate1" -VMTemplateDescription "MyDescription"
+
+        Creates a new VM Template "MyVMTemplate1" from the vhd "MyVhd1.vhd".
+
         .INPUTS
         None.
     #>
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName="FromVM")]
     Param(
+        [Parameter(Mandatory=$true, ParameterSetName="FromVM")]
         [ValidateNotNull()]
         # An existing VM from which the new VM template will be created (please use the Get-AzureDtlVirtualMachine cmdlet to get this VM object).
         $VM,
 
+        [Parameter(Mandatory=$true, ParameterSetName="FromVhd")]
+        [ValidateNotNull()]
+        # An existing vhd from which the new VM template will be created (please use the Get-AzureDtlVhd cmdlet to get this vhd object).
+        $Vhd,
+
+        [Parameter(Mandatory=$true, ParameterSetName="FromVM")]
+        [Parameter(Mandatory=$true, ParameterSetName="FromVhd")]
         [ValidateNotNullOrEmpty()]
         [string]
         # Name of the new VM template to create.
         $VMTemplateName,
 
+        [Parameter(Mandatory=$true, ParameterSetName="FromVM")]
+        [Parameter(Mandatory=$true, ParameterSetName="FromVhd")]
         [ValidateNotNull()]
         [string]
         # Details about the new VM template being created.
@@ -1008,58 +1066,97 @@ function New-AzureDtlVMTemplate
     {
         Write-Verbose $("Processing cmdlet '" + $PSCmdlet.MyInvocation.InvocationName + "', ParameterSet = '" + $PSCmdlet.ParameterSetName + "'")
 
-        # Get the same VM object, but with properties attached.
-        $VM = GetResourceWithProperties_Private -Resource $VM
-
-        # Pre-condition checks to ensure that VM is in a valid state.
-        if (($null -ne $VM) -and ($null -ne $VM.Properties) -and ($null -ne $VM.Properties.ProvisioningState))
-        {
-            if ("succeeded" -ne $VM.Properties.ProvisioningState)
-            {
-                throw $("The provisioning state of the VM '" + $VM.ResourceName + "' is '" + $VM.Properties.ProvisioningState + "'. Hence unable to continue.")
-            }
-        }
-        else
-        {
-            throw $("The provisioning state of the VM '" + $VM.ResourceName + "' could not be determined. Hence unable to continue.")
-        }
-
-        # Pre-condition checks to ensure that we're able to extract the Resource Id of the compute VM.
-        if (($null -eq $VM) -or ($null -eq $VM.Properties) -or ($null -eq $VM.Properties.Vms) -or ($null -eq $VM.Properties.Vms[0]) -or ($null -eq $VM.Properties.Vms[0].ComputeId) )
-        {
-            throw $("Unable to determine the Resource Id of the compute VM '" + $VM.ResourceName + "'.")
-        }
+        # @Todo: Pre-condition check for the VM template name
+        
+        # Encode the VM template name
+        $VMTemplateNameEncoded = $VMTemplateName.Replace(" ", "%20")
 
         # Unique name for the deployment
         $deploymentName = [Guid]::NewGuid().ToString()
 
-        # Folder location of VM creation script, the template file and template parameters file.
-        $VMTemplateCreationTemplateFile = Join-Path $PSScriptRoot -ChildPath "..\201-dtl-create-vmtemplate\azuredeploy.json" -Resolve
-
-        # Pre-condition check to ensure the RM template file exists.
-        if ($false -eq (Test-Path -Path $VMTemplateCreationTemplateFile))
+        # Copy the vhd file into the staging area if needed
+        switch($PSCmdlet.ParameterSetName)
         {
-            throw $("The RM template file could not be located at : '" + $VMTemplateCreationTemplateFile + "'")
+            "FromVM"
+            {
+                # Get the same VM object, but with properties attached.
+                $VM = GetResourceWithProperties_Private -Resource $VM
+
+                # Pre-condition checks to ensure that VM is in a valid state.
+                if (($null -ne $VM) -and ($null -ne $VM.Properties) -and ($null -ne $VM.Properties.ProvisioningState))
+                {
+                    if ("succeeded" -ne $VM.Properties.ProvisioningState)
+                    {
+                        throw $("The provisioning state of the VM '" + $VM.ResourceName + "' is '" + $VM.Properties.ProvisioningState + "'. Hence unable to continue.")
+                    }
+                }
+                else
+                {
+                    throw $("The provisioning state of the VM '" + $VM.ResourceName + "' could not be determined. Hence unable to continue.")
+                }
+
+                # Pre-condition checks to ensure that we're able to extract the Resource Id of the compute VM.
+                if (($null -eq $VM) -or ($null -eq $VM.Properties) -or ($null -eq $VM.Properties.Vms) -or ($null -eq $VM.Properties.Vms[0]) -or ($null -eq $VM.Properties.Vms[0].ComputeId) )
+                {
+                    throw $("Unable to determine the Resource Id of the compute VM '" + $VM.ResourceName + "'.")
+                }
+
+                # Folder location of VM creation script, the template file and template parameters file.
+                $VMTemplateCreationTemplateFile = Join-Path $PSScriptRoot -ChildPath "..\201-dtl-create-vmtemplate-from-vm\azuredeploy.json" -Resolve
+
+                # Pre-condition check to ensure the RM template file exists.
+                if ($false -eq (Test-Path -Path $VMTemplateCreationTemplateFile))
+                {
+                    throw $("The RM template file could not be located at : '" + $VMTemplateCreationTemplateFile + "'")
+                }
+                else
+                {
+                    Write-Verbose $("The RM template file was located at : '" + $VMTemplateCreationTemplateFile + "'")
+                }
+
+                # Get the lab that contains the source VM
+                $lab = GetLabFromVM_Private -VM $VM
+
+                # Create the VM Template in the lab's resource group by deploying the RM template
+                Write-Verbose $("Creating VM Template '" + $VMTemplateName + "' in lab '" + $lab.ResourceName + "'")
+                $rgDeployment = New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $lab.ResourceGroupName -TemplateFile $VMTemplateCreationTemplateFile -existingLabName $lab.ResourceName -existingVMResourceId $VM.Properties.Vms[0].ComputeId -templateName $VMTemplateNameEncoded -templateDescription $VMTemplateDescription
+            }
+
+            "FromVhd"
+            {
+                # Pre-condition checks to ensure that we're able to extract the uri of the vhd blob.
+                if (($null -eq $Vhd) -or ($null -eq $Vhd.ICloudBlob) -or ($null -eq $Vhd.ICloudBlob.Uri) -or ($null -eq $Vhd.ICloudBlob.Uri.AbsoluteUri))
+                {
+                    throw $("Unable to determine the absolute uri of the vhd '" + $Vhd.Name + "'.")
+                }
+
+                # Folder location of VM creation script, the template file and template parameters file.
+                $VMTemplateCreationTemplateFile = Join-Path $PSScriptRoot -ChildPath "..\201-dtl-create-vmtemplate-from-vhd\azuredeploy.json" -Resolve
+
+                # Pre-condition check to ensure the RM template file exists.
+                if ($false -eq (Test-Path -Path $VMTemplateCreationTemplateFile))
+                {
+                    throw $("The RM template file could not be located at : '" + $VMTemplateCreationTemplateFile + "'")
+                }
+                else
+                {
+                    Write-Verbose $("The RM template file was located at : '" + $VMTemplateCreationTemplateFile + "'")
+                }
+
+                # Get the lab that contains the source VM
+                # @TODO
+                $lab = GetLabFromVhd_Private -Vhd $Vhd
+
+                # Create the VM Template in the lab's resource group by deploying the RM template
+                Write-Verbose $("Creating VM Template '" + $VMTemplateName + "' in lab '" + $lab.ResourceName + "'")
+                $rgDeployment = New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $lab.ResourceGroupName -TemplateFile $VMTemplateCreationTemplateFile -existingLabName $lab.ResourceName -existingVhdUri $Vhd.ICloudBlob.Uri.AbsoluteUri -templateName $VMTemplateNameEncoded -templateDescription $VMTemplateDescription
+            }
         }
-        else
-        {
-            Write-Verbose $("The RM template file was located at : '" + $VMTemplateCreationTemplateFile + "'")
-        }
 
-        # Get the lab that contains the source VM
-        $lab = GetLabFromVM_Private -VM $VM
-
-        # encode the VM template name
-        $VMTemplateNameEncoded = $VMTemplateName.Replace(" ", "%20")
-
-        # Create the VM Template in the lab's resource group by deploying the RM template
-        Write-Verbose $("Creating VM Template '" + $VMTemplateName + "' in lab '" + $lab.ResourceName + "'")
-        $rgDeployment = New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $lab.ResourceGroupName -TemplateFile $VMTemplateCreationTemplateFile -existingLabName $lab.ResourceName -existingVMResourceId $VM.Properties.Vms[0].ComputeId -templateName $VMTemplateNameEncoded -templateDescription $VMTemplateDescription
-
+        # fetch and output the newly created VM template. 
         if (($null -ne $rgDeployment) -and ($null -ne $rgDeployment.Outputs['vmTemplateId']) -and ($null -ne $rgDeployment.Outputs['vmTemplateId'].Value))
         {
             $vmTemplateId = $rgDeployment.Outputs['vmTemplateId'].Value
-
             Write-Verbose $("VMTemplateId : '" + $vmTemplateId + "'")
 
             Get-AzureRmResource -ResourceId $vmTemplateId -ApiVersion $RequiredApiVersion | Write-Output
@@ -1263,6 +1360,9 @@ function Add-AzureDtlVhd
 
         $stopWatch.Stop()
         Write-Verbose $("Successfully uploaded vhd to lab in " + $stopWatch.Elapsed.TotalSeconds + " seconds.")
+
+        # fetch and return the vhd which was just uploaded
+        Get-AzureDtlVhd -Lab $Lab -VhdAbsoluteUri $vhdDestinationPath | Write-Output
     }
 }
 
