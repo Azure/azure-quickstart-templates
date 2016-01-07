@@ -251,7 +251,7 @@ function CopyVhdToStagingIfNeeded_Private
     }
 
     $stopWatch.Stop()
-    Write-Verbose $("Successfully copied vhd to staging folder in " + $stopWatch.Elapsed.Seconds + " seconds.")
+    Write-Verbose $("Successfully copied vhd to staging folder in " + $stopWatch.Elapsed.TotalSeconds + " seconds.")
 
     return $vhdStagingPath
 }
@@ -314,7 +314,7 @@ function CopyVhdToStaging_Private
     Get-AzureStorageBlobContent -Blob $SrcVhdBlobName -Container $SrcVhdContainerName -Context $storageAccountContext -Destination $vhdStagingPath -CheckMd5:$false -ErrorAction Stop -Force | Out-Null
 
     $stopWatch.Stop()
-    Write-Verbose $("Successfully copied vhd to staging folder in " + $stopWatch.Elapsed.Seconds + " seconds.")
+    Write-Verbose $("Successfully copied vhd to staging folder in " + $stopWatch.Elapsed.TotalSeconds + " seconds.")
 
     return $vhdStagingPath
 }
@@ -1262,7 +1262,7 @@ function Add-AzureDtlVhd
         Add-AzureRmVhd -Destination $vhdDestinationPath -LocalFilePath $vhdLocalPath -ResourceGroupName $lab.ResourceGroupName -NumberOfUploaderThreads $env:NUMBER_OF_PROCESSORS -OverWrite | Out-Null
 
         $stopWatch.Stop()
-        Write-Verbose $("Successfully uploaded vhd to lab in " + $stopWatch.Elapsed.Seconds + " seconds.")
+        Write-Verbose $("Successfully uploaded vhd to lab in " + $stopWatch.Elapsed.TotalSeconds + " seconds.")
     }
 }
 
