@@ -25,7 +25,7 @@ echo "$container_name,$blob_name" > /mnt/config.txt
 
 attempts=0
 response=1
-while [ $response -ne 1 -a $attempts -lt 5 ]
+while [ $response -ne 0 -a $attempts -lt 5 ]
 do
   blobxfer $sa_name $container_name /mnt/ --remoteresource $blob_name --storageaccountkey $2 --download --no-computefilemd5
   response=$?
