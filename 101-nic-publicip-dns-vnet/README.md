@@ -4,4 +4,4 @@
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-This template allows you to create a Network Inerface in a Virtual Network referencing a Public IP Address.
+This template allows you to create a Network Interface in a Virtual Network referencing a Public IP Address.
