@@ -51,7 +51,7 @@ function Configure-WinRMHttpsListener
         }
     }    
 
-    cmd.exe /c .\winrmconf.cmd $hostname $thumbprint
+    $response = cmd.exe /c .\winrmconf.cmd $hostname $thumbprint
 }
 
 function Add-FirewallException
