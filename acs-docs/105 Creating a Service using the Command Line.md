@@ -38,12 +38,18 @@ Where:
  
  ![github raw content](images/105/01 - github - raw.png)
  
-###Providing a Parameters file
+### Providing a Parameters
  
-This version of the command requires the user to define parameters interactively. If you want to provide a parameters file in json format you can do so with the `-p` switch. For example:
+This version of the command requires the user to define parameters interactively. If you want to provide a parameters as a json formatted string you can do so with the `-p` switch. For example:
  
  ```bash
 azure group deployment create RESOURCE_GROUP DEPLOYMENT_NAME --template-uri TEMPLATE_URI -p '{ "param1": "value1" … }'
+ ```
+
+Alternativley you can provide a json formatted parameters file using the `-e` switch:
+
+ ```bash
+azure group deployment create RESOURCE_GROUP DEPLOYMENT_NAME --template-uri TEMPLATE_URI -e PATH/FILE.JSON'
  ```
  
 There is an example parameters file (called 'azuredeploy.parameters.json') in GitHub alongside each template.
