@@ -20,6 +20,7 @@ In order to deploy Openchain, you will need the following pieces of information:
 
 * ``storageAccountNamePrefix``: A unique name for the Storage Account where the Virtual Machine's disks will be placed.
 * ``vmSize``: The size of the virtual machines used when provisioning the node.
+* ``openchainVersion``: The Openchain version to deploy.
 * ``openchainAdminKey``: The admin public key obtained in the previous section of this document.
 * ``adminUsername``: The username used to log in onto the Virtual Machine.
 * ``adminPassword``: The password used to log in onto the Virtual Machine.
@@ -30,7 +31,7 @@ Once the deployment has completed, you will receive the ``endpointURL`` that can
 
 ## Connect to the Openchain instance
 
-Go to [http://nossl.wallet.openchain.org/](http://nossl.wallet.openchain.org/). Enter the admin seed when prompted.
+Go to [http://nossl.wallet.openchain.org/](nossl.wallet.openchain.org). Enter the admin seed when prompted.
 
 If you are connecting to this wallet endpoint for the first time, you will be prompted for the endpoint URL. Use the ``endpointURL`` obtained when the deployment completed. If you are not prompted, after authenticating with the admin seed, go to "Account" on the top right, and click "Add server...", then enter the endpoint URL obtained when the deployment completed.
 
