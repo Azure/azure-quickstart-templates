@@ -23,6 +23,7 @@ from cm_api.endpoints.services import ApiServiceSetupInfo, ApiService
 LOG_DIR='/log/cloudera'
 
 def getParameterValue(vmsize, parameter):
+    log("vmsize: "+vmsize+", parameter:"+parameter)
     switcher = {
         "Standard_DS14:yarn_nodemanager_resource_cpu_vcores": "10",
         "Standard_DS14:yarn_nodemanager_resource_memory_mb": "45056",
