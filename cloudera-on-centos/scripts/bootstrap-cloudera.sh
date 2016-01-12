@@ -41,6 +41,7 @@ log() {
   echo "$(date): [${execname}] $@" 
 }
 
+log "my vmsize: $VMSIZE"
 # Converts a domain like machine.domain.com to domain.com by removing the machine name
 NAMESUFFIX=`echo $NAMESUFFIX | sed 's/^[^.]*\.//'`
 
