@@ -1,0 +1,232 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vnetName": {
+      "type": "string",
+      "defaultValue": "WTestVNet",
+      "metadata": {
+        "description": "Name for the new VNet."
+      }
+    },
+    "vnetPrefix": {
+      "type": "string",
+      "defaultValue": "192.168.0.0/16",
+      "metadata": {
+        "description": "CIDR prefix for the VNet address space."
+      }
+    },
+    "frontEndSubnetName": {
+      "type": "string",
+      "defaultValue": "FrontEnd",
+      "metadata": {
+        "description": "Name for the front end subnet."
+      }
+    },
+    "frontEndSubnetPrefix": {
+      "type": "string",
+      "defaultValue": "192.168.1.0/24",
+      "metadata": {
+        "description": "CIDR address prefix for the front end subnet."
+      }
+    },
+    "storageAccountNamePrefix": {
+      "type": "string",
+      "maxLength": 11,
+      "metadata": {
+        "description": "Name prefix for standard storage account (max 11 characters)."
+      }
+    },
+    "stdStorageType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_GRS",
+        "Standard_ZRS"
+      ],
+      "metadata": {
+        "description": "Storage type."
+      }
+    },
+    "osType": {
+      "type": "string",
+      "defaultValue": "Windows",
+      "allowedValues": [
+        "Windows",
+        "Ubuntu"
+      ],
+      "metadata": {
+        "description": "Type of OS to use for VMs: Windows or Ubuntu."
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": { "description": "Username for local admin account." }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": { "description": "Password for local admin account." }
+    }
+  },
+  "variables": {
+    "webVMSettings": {
+      "Windows": {
+        "vmSize": "Standard_A1",
+        "publisher": "MicrosoftWindowsServer",
+        "offer": "WindowsServer",
+        "sku": "2012-R2-Datacenter",
+        "version": "latest",
+        "vmName": "WEB1",
+        "osdisk": "osdiskweb",
+        "nicName": "NICWEB1",
+        "pipName": "PIPWEB1",
+        "ipAddress": "192.168.1.101"
+      },
+      "Ubuntu": {
+        "vmSize": "Standard_A1",
+        "publisher": "Canonical",
+        "offer": "UbuntuServer",
+        "sku": "14.04.2-LTS",
+        "version": "latest",
+        "vmName": "WEB1",
+        "osdisk": "osdiskweb",
+        "nicName": "NICWEB1",
+        "pipName": "PIPWEB1",
+        "ipAddress": "192.168.1.101"
+      }
+    },
+    "location": "[resourceGroup().location]",
+    "vmStorageAccountContainerName": "vhds",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('vnetName'))]",
+    "frontEndSubnetRef": "[concat(variables('vnetID'),'/subnets/',parameters('frontEndSubnetName'))]",
+    "webVMSetting": "[variables('webVMSettings')[parameters('osType')]]",
+    "stdStorageName": "[replace(replace(tolower(concat(parameters('storageAccountNamePrefix'), uniquestring(resourceGroup().id))), '-',''),'.','')]"
+  },
+    "resources": [
+      {
+        "apiVersion": "2015-06-15",
+        "type": "Microsoft.Storage/storageAccounts",
+        "name": "[variables('stdStorageName')]",
+        "location": "[resourceGroup().location]",
+        "tags": {
+          "displayName": "Storage Account - Simple"
+        },
+        "properties": {
+          "accountType": "[parameters('stdStorageType')]"
+        }
+      },
+      {
+        "apiVersion": "2015-06-15",
+        "type": "Microsoft.Network/virtualNetworks",
+        "name": "[parameters('vnetName')]",
+        "location": "[variables('location')]",
+        "tags": {
+          "displayName": "VNet"
+        },
+        "properties": {
+          "addressSpace": {
+            "addressPrefixes": [
+              "[parameters('vnetPrefix')]"
+            ]
+          },
+          "subnets": [
+            {
+              "name": "[parameters('frontEndSubnetName')]",
+              "properties": {
+                "addressPrefix": "[parameters('frontEndSubnetPrefix')]"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "apiVersion": "2015-06-15",
+        "type": "Microsoft.Network/publicIPAddresses",
+        "name": "[variables('webVMSetting').pipName]",
+        "location": "[variables('location')]",
+        "properties": {
+          "publicIPAllocationMethod": "Static"
+        },
+        "tags": {
+          "displayName": "PublicIPAddress - Web"
+        }
+      },
+      {
+        "apiVersion": "2015-06-15",
+        "type": "Microsoft.Network/networkInterfaces",
+        "name": "[variables('webVMSetting').nicName]",
+        "location": "[variables('location')]",
+        "tags": {
+          "displayName": "NetworkInterface - Web"
+        },
+        "dependsOn": [
+          "[concat('Microsoft.Network/publicIPAddresses/', variables('webVMSetting').pipName)]",
+          "[concat('Microsoft.Network/virtualNetworks/', parameters('vnetName'))]"
+        ],
+        "properties": {
+          "ipConfigurations": [
+            {
+              "name": "ipconfig1",
+              "properties": {
+                "privateIPAllocationMethod": "Static",
+                "privateIPAddress": "[variables('webVMSetting').ipAddress]",
+                "publicIPAddress": {
+                  "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('webVMSetting').pipName)]"
+                },
+                "subnet": {
+                  "id": "[variables('frontEndSubnetRef')]"
+                }
+              }
+            }
+          ]
+        }
+      },
+      {
+        "apiVersion": "2015-06-15",
+        "type": "Microsoft.Compute/virtualMachines",
+        "name": "[variables('webVMSetting').vmName]",
+        "location": "[variables('location')]",
+        "dependsOn": [
+          "[concat('Microsoft.Network/networkInterfaces/', variables('webVMSetting').nicName)]",
+          "[concat('Microsoft.Storage/storageAccounts/', variables('stdStorageName'))]"
+        ],
+        "tags": {
+          "displayName": "VM - Web"
+        },
+        "properties": {
+          "hardwareProfile": {
+            "vmSize": "[variables('webVMSetting').vmSize]"
+          },
+          "osProfile": {
+            "computerName": "[variables('webVMSetting').vmName]",
+            "adminUsername": "[parameters('adminUsername')]",
+            "adminPassword": "[parameters('adminPassword')]"
+          },
+          "storageProfile": {
+            "imageReference": {
+              "publisher": "[variables('webVMSetting').publisher]",
+              "offer": "[variables('webVMSetting').offer]",
+              "sku": "[variables('webVMSetting').sku]",
+              "version": "[variables('webVMSetting').version]"
+            },
+            "osDisk": {
+              "name": "[variables('webVMSetting').osdisk]",
+              "vhd": {
+                "uri": "[concat('http://', variables('stdStorageName'), '.blob.core.windows.net/', variables('vmStorageAccountContainerName'), '/', variables('webVMSetting').osdisk,'.vhd')]"
+              },
+              "caching": "ReadWrite",
+              "createOption": "FromImage"
+            }
+          },
+          "networkProfile": {
+            "networkInterfaces": [
+              {
+                "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('webVMSetting').nicName)]"
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
