@@ -27,8 +27,11 @@ def getParameterValue(vmsize, parameter):
     switcher = {
         "Standard_DS14:yarn_nodemanager_resource_cpu_vcores": "10",
         "Standard_DS14:yarn_nodemanager_resource_memory_mb": "45056",
+        "Standard_DS14:impalad_memory_limit": "42949672960",
         "Standard_DS13:yarn_nodemanager_resource_cpu_vcores": "5",
-        "Standard_DS13:yarn_nodemanager_resource_memory_mb": "22528",
+        "Standard_DS13:yarn_nodemanager_resource_memory_mb": "20028",
+        "Standard_DS13:impalad_memory_limit": "30549672960"
+
     }
     return switcher.get(vmsize+":"+parameter, "nothing")
 
@@ -838,7 +841,7 @@ def setup_impala(HA):
 
         impalad=service.get_role_config_group("{0}-IMPALAD-BASE".format(service_name))
         impalad.update_config({"log_dir": LOG_DIR+"/impalad",
-                               "impalad_memory_limit": "42949672960"})
+                               "impalad_memory_limit": getParameterValue(cmx.vmsize, "impalad_memory_limit")})
         #llama=service.get_role_config_group("{0}-LLAMMA-BASE".format(service_name))
         #llama.update_config({"log_dir": LOG_DIR+"impala-llama"})
         ss = service.get_role_config_group("{0}-STATESTORE-BASE".format(service_name))
