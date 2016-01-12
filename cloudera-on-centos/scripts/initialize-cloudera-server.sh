@@ -111,7 +111,7 @@ touch /tmp/readyFile
 
 # Execute script to deploy Cloudera cluster
 log "BEGIN: CM deployment - starting"
-log "Parameters: $ClusterName $mip $worker_ip $VMSIZE"
+log "Parameters: $ClusterName $mip $worker_ip $EMAILADDRESS $BUSINESSPHONE $FIRSTNAME $LASTNAME $JOBROLE $JOBFUNCTION $COMPANY $VMSIZE"
 if $HA; then
     python cmxDeployOnIbiza.py -n "$ClusterName" -u $User -p $Password  -m "$mip" -w "$worker_ip" -a -c $cmUser -s $cmPassword -e -r "$EMAILADDRESS" -b "$BUSINESSPHONE" -f "$FIRSTNAME" -t "$LASTNAME" -o "$JOBROLE" -i "$JOBFUNCTION" -y "$COMPANY" -v "$VMSIZE">> /tmp/initialize-cloudera-server.log 2>> /tmp/initialize-cloudera-server.err
 else
