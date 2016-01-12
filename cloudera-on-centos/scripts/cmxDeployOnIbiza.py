@@ -30,7 +30,7 @@ def getParameterValue(vmsize, parameter):
         "Standard_DS14:impalad_memory_limit": "42949672960",
         "Standard_DS13:yarn_nodemanager_resource_cpu_vcores": "5",
         "Standard_DS13:yarn_nodemanager_resource_memory_mb": "20028",
-        "Standard_DS13:impalad_memory_limit": "30549672960"
+        "Standard_DS13:impalad_memory_limit": "21500000000"
 
     }
     return switcher.get(vmsize+":"+parameter, "nothing")
