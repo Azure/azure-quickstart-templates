@@ -35,6 +35,8 @@
 $LabResourceType = "microsoft.devtestlab/labs"
 $EnvironmentResourceType = "microsoft.devtestlab/environments"
 $VMTemplateResourceType = "microsoft.devtestlab/labs/vmtemplates"
+$ArtifactSourceResourceType = "microsoft.devtestlab/labs/artifactsources"
+$ArtifactResourceType = "microsoft.devtestlab/labs/artifactsources/artifacts"
 
 # Other resource types
 $StorageAccountResourceType = "microsoft.storage/storageAccounts"
@@ -522,13 +524,17 @@ function Get-AzureDtlVMTemplate
 
         .DESCRIPTION
         The Get-AzureDtlVMTemplate cmdlet does the following: 
-        - Gets a specific VM template, if the -VMTemplateId parameter is specified.
-        - Gets all VM templates with matching name from a lab, if the -VMTemplateName and -Lab parameters are specified.
         - Gets all VM templates from a lab, if the -Lab parameter is specified.
+        - Gets all VM templates with matching name from a lab, if the -VMTemplateName and -Lab parameters are specified.
+        - Gets a specific VM template, if the -VMTemplateId parameter is specified.
 
         .EXAMPLE
-        Get-AzureDtlVMTemplate -VMTemplateId "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/MyLabRG/providers/Microsoft.DevTestLab/labs/MyLab1/vmtemplates/MyVMTemplate1"
-        Gets a specific VM template, identified by the specified resource-id.
+        $lab = $null
+
+        $lab = Get-AzureDtlLab -LabName "MyLab1"
+        Get-AzureDtlVMTemplate -Lab $lab
+
+        Gets all VM templates from the lab "MyLab1".
 
         .EXAMPLE
         $lab = $null
@@ -539,17 +545,13 @@ function Get-AzureDtlVMTemplate
         Gets all VM templates with the name "MyVMTemplate1" from the lab "MyLab1".
 
         .EXAMPLE
-        $lab = $null
-
-        $lab = Get-AzureDtlLab -LabName "MyLab1"
-        Get-AzureDtlVMTemplate -Lab $lab
-
-        Gets all VM templates from the lab "MyLab1".
+        Get-AzureDtlVMTemplate -VMTemplateId "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/MyLabRG/providers/Microsoft.DevTestLab/labs/MyLab1/vmtemplates/MyVMTemplate1"
+        Gets a specific VM template, identified by the specified resource-id.
 
         .INPUTS
         None. Currently you cannot pipe objects to this cmdlet (this will be fixed in a future version).  
     #>
-    [CmdletBinding(DefaultParameterSetName="ListAllInLab")]
+    [CmdletBinding(DefaultParameterSetName="ListByVMTemplateName")]
     Param(
         [Parameter(Mandatory=$true, ParameterSetName="ListByVMTemplateId")] 
         [ValidateNotNullOrEmpty()]
@@ -557,13 +559,12 @@ function Get-AzureDtlVMTemplate
         # The ResourceId of the VM template (e.g. "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/MyLabRG/providers/Microsoft.DevTestLab/labs/MyLab1/vmtemplates/MyVMTemplate1").
         $VMTemplateId,
 
-        [Parameter(Mandatory=$true, ParameterSetName="ListByVMTemplateName")] 
+        [Parameter(Mandatory=$false, ParameterSetName="ListByVMTemplateName")] 
         [ValidateNotNullOrEmpty()]
         [string]
         # The name of the VM template 
         $VMTemplateName,
 
-        [Parameter(Mandatory=$true, ParameterSetName="ListAllInLab")] 
         [Parameter(Mandatory=$true, ParameterSetName="ListByVMTemplateName")] 
         [ValidateNotNull()]
         # An existing lab (please use the Get-AzureDtlLab cmdlet to get this lab object).
@@ -571,7 +572,6 @@ function Get-AzureDtlVMTemplate
 
         [Parameter(Mandatory=$false, ParameterSetName="ListByVMTemplateId")] 
         [Parameter(Mandatory=$false, ParameterSetName="ListByVMTemplateName")] 
-        [Parameter(Mandatory=$false, ParameterSetName="ListAllInLab")] 
         [switch]
         # Optional. If specified, fetches the properties of the VM template(s).
         $ShowProperties
@@ -592,14 +592,166 @@ function Get-AzureDtlVMTemplate
 
             "ListByVMTemplateName"
             {
-                $output = Get-AzureRmResource -ResourceName $Lab.ResourceName -ResourceGroupName $Lab.ResourceGroupName -ResourceType $VMTemplateResourceType -ApiVersion $RequiredApiVersion | Where-Object {
-                    $_.Name -eq $VMTemplateName
+                $output = Get-AzureRmResource -ResourceName $Lab.ResourceName -ResourceGroupName $Lab.ResourceGroupName -ResourceType $VMTemplateResourceType -ApiVersion $RequiredApiVersion
+
+                if ($PSBoundParameters.ContainsKey("VMTemplateName"))
+                {
+                    $output = $output | Where-Object {
+                        $_.Name -eq $VMTemplateName                        
+                    }
                 }
             }
+        }
 
-            "ListAllInLab"
+        # now let us display the output
+        if ($PSBoundParameters.ContainsKey("ShowProperties"))
+        {
+            foreach ($item in $output)
             {
-                $output = Get-AzureRmResource -ResourceName $Lab.ResourceName -ResourceGroupName $Lab.ResourceGroupName -ResourceType $VMTemplateResourceType -ApiVersion $RequiredApiVersion
+                GetResourceWithProperties_Private -Resource $item | Write-Output
+            }
+        }
+        else
+        {
+            $output | Write-Output
+        }
+    }
+}
+
+##################################################################################################
+
+function Get-AzureDtlArtifact
+{
+    <#
+        .SYNOPSIS
+        Gets artifacts from a specified lab.
+
+        .DESCRIPTION
+        The Get-AzureDtlArtifact cmdlet does the following: 
+        - Gets all artifacts from a lab, if the -Lab parameter is specified.
+        - Gets all artifacts from a specific artifact repo of a lab, if the -ArtifactSourceName and -Lab parameters are specified.
+        - Gets all artifacts with matching name from a lab, if the -ArtifactName and -Lab parameters are specified.
+        - Gets all artifacts with matching name from a specific artifact repo of a lab, if the -ArtifactName, -ArtifactSourceName and -Lab parameters are specified.
+        - Gets a specific artifact, if the -ArtifactId parameter is specified.
+
+        .EXAMPLE
+        $lab = $null
+
+        $lab = Get-AzureDtlLab -LabName "MyLab1"
+        Get-AzureDtlArtifact -Lab $lab
+
+        Gets all artifacts from the lab "MyLab1".
+
+        .EXAMPLE
+        $lab = $null
+
+        $lab = Get-AzureDtlLab -LabName "MyLab1"
+        Get-AzureDtlArtifact -Lab $lab -ArtifactSource "MyArtifactRepo1"
+
+        Gets all artifacts from the artifact repo "MyArtifactRepo1" of the lab "MyLab1".
+
+        .EXAMPLE
+        $lab = $null
+
+        $lab = Get-AzureDtlLab -LabName "MyLab1"
+        Get-AzureDtlArtifact -ArtifactName "MyArtifact1" -Lab $lab
+
+        Gets all artifacts with the name "MyArtifact1" from the lab "MyLab1".
+
+        .EXAMPLE
+        $lab = $null
+
+        $lab = Get-AzureDtlLab -LabName "MyLab1"
+        Get-AzureDtlArtifact -ArtifactName "MyArtifact1" -ArtifactSource "MyArtifactRepo1" -Lab $lab
+
+        Gets all artifacts with the name "MyArtifact1" from the artifact repo "MyArtifactRepo1" of the lab "MyLab1".
+
+        .EXAMPLE
+        Get-AzureDtlArtifact -ArtifactId "/subscriptions/xxxxxxxx-xxxx-xxxx/resourceGroups/MyLabRG/providers/Microsoft.DevTestLab/labs/MyLab1/artifactSources/MyArtifactRepo1/artifacts/MyArtifact1"
+        Gets a specific artifact, identified by the specified resource-id.
+
+        .INPUTS
+        None. Currently you cannot pipe objects to this cmdlet (this will be fixed in a future version).  
+    #>
+    [CmdletBinding(DefaultParameterSetName="ListByArtifactName")]
+    Param(
+        [Parameter(Mandatory=$true, ParameterSetName="ListByArtifactId")] 
+        [ValidateNotNullOrEmpty()]
+        [string]
+        # The ResourceId of the artifact (e.g. "/subscriptions/xxxxxxxx-xxxx-xxxx/resourceGroups/MyLabRG/providers/Microsoft.DevTestLab/labs/MyLab1/artifactSources/MyArtifactRepo1/artifacts/MyArtifact1").
+        $ArtifactId,
+
+        [Parameter(Mandatory=$false, ParameterSetName="ListByArtifactName")] 
+        [ValidateNotNullOrEmpty()]
+        [string]
+        # The name of the artifact
+        $ArtifactName,
+
+        [Parameter(Mandatory=$false, ParameterSetName="ListByArtifactName")] 
+        [ValidateNotNullOrEmpty()]
+        [string]
+        # The name of the artifact source
+        $ArtifactSourceName,
+
+        [Parameter(Mandatory=$true, ParameterSetName="ListByArtifactName")] 
+        [ValidateNotNull()]
+        # An existing lab (please use the Get-AzureDtlLab cmdlet to get this lab object).
+        $Lab,
+
+        [Parameter(Mandatory=$false, ParameterSetName="ListByArtifactId")] 
+        [Parameter(Mandatory=$false, ParameterSetName="ListByArtifactName")] 
+        [switch]
+        # Optional. If specified, fetches the properties of the artifact(s).
+        $ShowProperties
+    )
+
+    PROCESS
+    {
+        Write-Verbose $("Processing cmdlet '" + $PSCmdlet.MyInvocation.InvocationName + "', ParameterSet = '" + $PSCmdlet.ParameterSetName + "'")
+
+        $output = $null
+
+        switch ($PSCmdlet.ParameterSetName)
+        {
+            "ListByArtifactId"
+            {
+                $output = Get-AzureRmResource -ResourceId $ArtifactId -ApiVersion $RequiredApiVersion
+            }
+
+            "ListByArtifactName"
+            {
+                $output = @()
+
+                # first let us extract all the artifact sources associated with the lab.
+                $artifactSources = Get-AzureRmResource -ResourceName $Lab.ResourceName -ResourceGroupName $Lab.ResourceGroupName -ResourceType $ArtifactSourceResourceType -ApiVersion $RequiredApiVersion 
+
+                # we'll filter by artifact source name, if specified
+                if ($PSBoundParameters.ContainsKey("ArtifactSourceName"))
+                {
+                    $artifactSources = $artifactSources | Where-Object {
+                        $_.Name -eq $ArtifactSourceName
+                    }
+                }
+
+                # then for each of the artifact sources, let us extract the artifacts themselves.
+                foreach ($artifactSrc in $artifactSources)
+                {
+                    $artifacts = Get-AzureRmResource -ResourceName $($Lab.ResourceName + "/" + $artifactSrc.Name) -ResourceGroupName $Lab.ResourceGroupName -ResourceType $ArtifactResourceType -ApiVersion $RequiredApiVersion
+
+                    # filter by artifact name, if specified
+                    if ($PSBoundParameters.ContainsKey("ArtifactName"))
+                    {
+                        $artifacts = $artifacts | Where-Object {
+                            $_.Name -eq $ArtifactName
+                        }
+                    }
+
+                    # dump the individual artifacts into the output variable
+                    foreach ($artifact in $artifacts)
+                    {
+                        $output += $artifact
+                    }
+                }
             }
         }
 
@@ -1030,7 +1182,14 @@ function New-AzureDtlVMTemplate
         $vhd = Get-AzureDtlVhd -Lab $lab -VMName "MyVhd1.vhd"
         New-AzureDtlVMTemplate -Vhd $vhd -VMTemplateName "MyVMTemplate1" -VMTemplateDescription "MyDescription"
 
-        Creates a new VM Template "MyVMTemplate1" from the vhd "MyVhd1.vhd".
+        .EXAMPLE
+        $lab = $null
+
+        $lab = Get-AzureDtlLab -LabName "MyLab1"
+        $image = Get-AzureRmVMImage -Location "west us" -PublisherName "microsoftwindowsserver" -Offer "windowsserver" -Skus "2016-Nano-Server" -Version "2016.0.15"
+        New-AzureDtlVMTemplate -AzureRmVMImage $image -DestLabName "MyLab1" -VMTemplateName "MyVMTemplate1" -VMTemplateDescription "MyDescription"
+
+        Creates a new VM Template "MyVMTemplate1" in the lab "MyLab1" from the azure marketplace image "windowsserver" (sku = "2016-Nano-Server", version "2016.0.15").
 
         .INPUTS
         None.
@@ -1047,8 +1206,20 @@ function New-AzureDtlVMTemplate
         # An existing vhd from which the new VM template will be created (please use the Get-AzureDtlVhd cmdlet to get this vhd object).
         $Vhd,
 
+        [Parameter(Mandatory=$true, ParameterSetName="FromAzureRmVMImage")]
+        [ValidateNotNull()]
+        # An existing azure gallery image from which the new VM template will be created (please use the Get-AzureRmVMImage cmdlet to get this image object).
+        $AzureRmVMImage,
+
+        [Parameter(Mandatory=$true, ParameterSetName="FromAzureRmVMImage")]
+        [ValidateNotNullOrEmpty()]
+        [string]
+        # The name of the lab.
+        $DestLabName,
+
         [Parameter(Mandatory=$true, ParameterSetName="FromVM")]
         [Parameter(Mandatory=$true, ParameterSetName="FromVhd")]
+        [Parameter(Mandatory=$true, ParameterSetName="FromAzureRmVMImage")]
         [ValidateNotNullOrEmpty()]
         [string]
         # Name of the new VM template to create.
@@ -1056,6 +1227,7 @@ function New-AzureDtlVMTemplate
 
         [Parameter(Mandatory=$true, ParameterSetName="FromVM")]
         [Parameter(Mandatory=$true, ParameterSetName="FromVhd")]
+        [Parameter(Mandatory=$true, ParameterSetName="FromAzureRmVMImage")]
         [ValidateNotNull()]
         [string]
         # Details about the new VM template being created.
@@ -1096,7 +1268,7 @@ function New-AzureDtlVMTemplate
                 }
 
                 # Pre-condition checks to ensure that we're able to extract the Resource Id of the compute VM.
-                if (($null -eq $VM) -or ($null -eq $VM.Properties) -or ($null -eq $VM.Properties.Vms) -or ($null -eq $VM.Properties.Vms[0]) -or ($null -eq $VM.Properties.Vms[0].ComputeId) )
+                if (($null -eq $VM.Properties) -or ($null -eq $VM.Properties.Vms) -or ($null -eq $VM.Properties.Vms[0]) -or ($null -eq $VM.Properties.Vms[0].ComputeId) )
                 {
                     throw $("Unable to determine the Resource Id of the compute VM '" + $VM.ResourceName + "'.")
                 }
@@ -1125,7 +1297,7 @@ function New-AzureDtlVMTemplate
             "FromVhd"
             {
                 # Pre-condition checks to ensure that we're able to extract the uri of the vhd blob.
-                if (($null -eq $Vhd) -or ($null -eq $Vhd.ICloudBlob) -or ($null -eq $Vhd.ICloudBlob.Uri) -or ($null -eq $Vhd.ICloudBlob.Uri.AbsoluteUri))
+                if (($null -eq $Vhd.ICloudBlob) -or ($null -eq $Vhd.ICloudBlob.Uri) -or ($null -eq $Vhd.ICloudBlob.Uri.AbsoluteUri))
                 {
                     throw $("Unable to determine the absolute uri of the vhd '" + $Vhd.Name + "'.")
                 }
@@ -1144,12 +1316,53 @@ function New-AzureDtlVMTemplate
                 }
 
                 # Get the lab that contains the source VM
-                # @TODO
                 $lab = GetLabFromVhd_Private -Vhd $Vhd
 
                 # Create the VM Template in the lab's resource group by deploying the RM template
                 Write-Verbose $("Creating VM Template '" + $VMTemplateName + "' in lab '" + $lab.ResourceName + "'")
                 $rgDeployment = New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $lab.ResourceGroupName -TemplateFile $VMTemplateCreationTemplateFile -existingLabName $lab.ResourceName -existingVhdUri $Vhd.ICloudBlob.Uri.AbsoluteUri -templateName $VMTemplateNameEncoded -templateDescription $VMTemplateDescription
+            }
+
+            "FromAzureRmVMImage"
+            {
+                # Pre-condition checks to ensure that we're able to extract the properties of the azure gallery image.
+                if (($null -eq $AzureRmVMImage.PublisherName) -or ($null -eq $AzureRmVMImage.Offer) -or ($null -eq $AzureRmVMImage.Skus) -or ($null -eq $AzureRmVMImage.Version))
+                {
+                    throw $("Unable to determine the properties of the specified azure gallery image '" + $AzureRmVMImage.Name + "'.")
+                }
+
+                # Folder location of VM creation script, the template file and template parameters file.
+                $VMTemplateCreationTemplateFile = Join-Path $PSScriptRoot -ChildPath "..\201-dtl-create-vmtemplate-from-azure-image\azuredeploy.json" -Resolve
+
+                # Pre-condition check to ensure the RM template file exists.
+                if ($false -eq (Test-Path -Path $VMTemplateCreationTemplateFile))
+                {
+                    throw $("The RM template file could not be located at : '" + $VMTemplateCreationTemplateFile + "'")
+                }
+                else
+                {
+                    Write-Verbose $("The RM template file was located at : '" + $VMTemplateCreationTemplateFile + "'")
+                }
+
+                # fetch the lab where the VM template should be created
+                $lab = Get-AzureDtlLab -LabName $DestLabName 
+
+                if ($null -eq $lab -or $lab.Count -eq 0)
+                {
+                    throw $("Unable to detect lab with name '" + $DestLabName + "'")
+                }
+
+                if ($lab.Count > 1)
+                {
+                    throw $("Multiple labs found with name '" + $DestLabName + "'")
+                }
+
+                write-Verbose $("Found lab : " + $lab.ResourceName) 
+                write-Verbose $("LabId : " + $lab.ResourceId) 
+
+                # Create the VM Template in the lab's resource group by deploying the RM template
+                Write-Verbose $("Creating VM Template '" + $VMTemplateName + "' in lab '" + $lab.ResourceName + "'")
+                $rgDeployment = New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $lab.ResourceGroupName -TemplateFile $VMTemplateCreationTemplateFile -existingLabName $lab.ResourceName -imagePublisher $AzureRmVMImage.PublisherName -imageOffer $AzureRmVMImage.Offer -imageSku $AzureRmVMImage.Skus -imageVersion $AzureRmVMImage.Version -templateName $VMTemplateNameEncoded -templateDescription $VMTemplateDescription
             }
         }
 
