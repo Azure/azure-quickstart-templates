@@ -1791,7 +1791,7 @@ def parse_options():
                       callback=cmx_args, help='Set company')
     parser.add_option('-e', '--accept-eula', dest='accepted', action="store_true", default=False,
                       help='Must accept eula before install')
-    parser.add_option('-b', '--vmsize', dest='vmsize', type="string", action="callback",
+    parser.add_option('-v', '--vmsize', dest='vmsize', type="string", action="callback",
                       callback=cmx_args, help='provide vmsize for setup')
 
     (options, args) = parser.parse_args()
