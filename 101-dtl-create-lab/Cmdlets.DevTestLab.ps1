@@ -1404,7 +1404,7 @@ function Add-AzureDtlVhd
         $vhdlocation = "\\MyShare\MyFolder\MyVHD1.vhd"
         $friendlyName = "AnExampleVHD.vhd"
 
-        Add-AzureDtlVhd -VhdFullPath $vhdlocation -Lab $lab -VhdFriendlyName $friendlyName 
+        Add-AzureDtlVhd -VhdFullPath $vhdlocation -DestLab $lab -VhdFriendlyName $friendlyName 
 
         Uploads a vhd file "MyVHD1" from specified network share ("\\MyShare\MyFolder") into the lab "MyLab". 
         - Once uploaded, the vhd is renamed to "AnExampleVHD.vhd". 
@@ -1415,7 +1415,7 @@ function Add-AzureDtlVhd
         $lab = Get-AzureDtlLab -LabName "MyLab"
         $friendlyName = "AnExampleVHD.vhd"
 
-        Add-AzureDtlVhd -SrcVhdBlobName "MyVHD1.vhd" -SrcVhdContainerName "MyContainer1" -SrcVhdStorageAccountName "MyStorageAccount1" -SrcVhdStorageAccountKey "xxxxxxx" -Lab $lab -VhdFriendlyName $friendlyName
+        Add-AzureDtlVhd -SrcVhdBlobName "MyVHD1.vhd" -SrcVhdContainerName "MyContainer1" -SrcVhdStorageAccountName "MyStorageAccount1" -SrcVhdStorageAccountKey "xxxxxxx" -DestLab $lab -VhdFriendlyName $friendlyName
 
         Uploads a vhd file "MyVHD1" from the storage account "MyStorageAccount1" into the lab "MyLab".
         - Once uploaded, the vhd is renamed to "AnExampleVHD.vhd". 
@@ -1460,38 +1460,15 @@ function Add-AzureDtlVhd
         $SrcVhdStorageAccountKey,
 
         [Parameter(Mandatory=$true, ParameterSetName="AddByFileFullPath")] 
-        [Parameter(Mandatory=$true, ParameterSetName="AddByFileUri")] 
         [Parameter(Mandatory=$true, ParameterSetName="AddByBlobDetails")] 
         [ValidateNotNull()]
         # An existing lab to which the vhd will be uploaded (please use the Get-AzureDtlLab cmdlet to get this lab object).
-        $Lab,
+        $DestLab,
 
         # [Optional] The name that will be assigned to vhd once uploded to the lab.
         # The name should be in a "<filename>.vhd" format (E.g. "WinServer2012-VS2015.Vhd"). 
         [string]
         $VhdFriendlyName
-
-        <# @TODO: The following parameters are currently not used. These will be consumed in a future update.
-
-        [Parameter(Mandatory=$true, ParameterSetName="AddByFileUri")] 
-        [ValidateNotNullOrEmpty()]
-        [string]
-        # Absolute uri to the vhd file (that'll be uploaded to the lab).
-        $VhdAbsoluteUri,
-
-        # [Optional] If this switch is specified, then any vhds copied to the staging area (if any) will NOT be deleted.
-        # Note: The default behavior is to delete all vhds from the staging area.
-        # @TODO: Currently not used.
-        [switch]
-        $KeepStagingVhd = $false,
-
-        # [Optional] If this switch is specified, then any vhds copied to the staging area (if any) will NOT be deleted.
-        # Note: The default behavior is to NOT overwrite any existing vhds in the lab.
-        # @TODO: Currently not used.
-        [switch]
-        $OverwriteExistingVhd = $false
-
-        #>
     )
 
     PROCESS 
@@ -1537,9 +1514,9 @@ function Add-AzureDtlVhd
         }
 
         # Get the default storage account associated with the lab.
-        Write-Verbose $("Extracting the context for the default storage account for lab '" + $Lab.Name + "'")
-        $labStorageAccountContext = GetDefaultStorageAccountContextFromLab_Private -Lab $Lab
-        Write-Verbose $("Extracted the context for the default storage account for lab '" + $Lab.Name + "'")
+        Write-Verbose $("Extracting the context for the default storage account for lab '" + $DestLab.Name + "'")
+        $labStorageAccountContext = GetDefaultStorageAccountContextFromLab_Private -Lab $DestLab
+        Write-Verbose $("Extracted the context for the default storage account for lab '" + $DestLab.Name + "'")
 
         # Extract the 'uploads' container (which houses the vhds).
         Write-Verbose $("Extracting the 'uploads' container")
@@ -1547,7 +1524,7 @@ function Add-AzureDtlVhd
 
         if ($null -eq $uploadsContainer)
         {
-            throw $("Unable to extract the 'uploads' container from the default storage account for lab '" + $Lab.Name + "'")
+            throw $("Unable to extract the 'uploads' container from the default storage account for lab '" + $DestLab.Name + "'")
         }
 
         # Compute the destination path. 
@@ -1569,14 +1546,14 @@ function Add-AzureDtlVhd
         # let us measure the file upload time for instrumentation purposes.
         $stopWatch = [Diagnostics.Stopwatch]::StartNew()
 
-        Add-AzureRmVhd -Destination $vhdDestinationPath -LocalFilePath $vhdLocalPath -ResourceGroupName $lab.ResourceGroupName -NumberOfUploaderThreads $env:NUMBER_OF_PROCESSORS -OverWrite | Out-Null
+        Add-AzureRmVhd -Destination $vhdDestinationPath -LocalFilePath $vhdLocalPath -ResourceGroupName $DestLab.ResourceGroupName -NumberOfUploaderThreads $env:NUMBER_OF_PROCESSORS -OverWrite | Out-Null
 
         $stopWatch.Stop()
         Write-Verbose $("Successfully uploaded vhd to lab in " + $stopWatch.Elapsed.TotalSeconds + " seconds.")
 
         # fetch and return the vhd which was just uploaded
-        Get-AzureDtlVhd -Lab $Lab -VhdAbsoluteUri $vhdDestinationPath | Write-Output
-    }
+        Get-AzureDtlVhd -Lab $DestLab -VhdAbsoluteUri $vhdDestinationPath | Write-Output
+    } 
 }
 
 ##################################################################################################
