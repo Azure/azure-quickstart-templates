@@ -268,8 +268,9 @@ function CopyVhdToStagingIfNeeded_Private
         New-Item -Path $VhdStagingFolder -ItemType directory | Out-Null
     }
 
-    $vhdFileName = Split-Path -Path $VhdFilePathOrUri -Leaf
-    $vhdStagingPath = Join-Path -Path $VhdStagingFolder -ChildPath $vhdFileName
+    $vhdSourceFolder = Split-Path $VhdFilePathOrUri -Parent
+    $vhdSourceFileName = Split-Path -Path $VhdFilePathOrUri -Leaf
+    $vhdStagingPath = Join-Path -Path $VhdStagingFolder -ChildPath $vhdSourceFileName
 
     # let us copy the vhd to the local staging folder.
     Write-Warning $("Copying the vhd to local staging area '" + $vhdStagingPath + "' (Note: This can take a while)...")
@@ -287,7 +288,14 @@ function CopyVhdToStagingIfNeeded_Private
     }
     else
     {
-        Copy-Item -Path $VhdFilePathOrUri -Destination $vhdStagingPath -Force | Out-Null
+        robocopy /MT $vhdSourceFolder $VhdStagingFolder $vhdSourceFileName | Out-Null
+
+        # Robocopy returns exitcode 1 on successful copy.
+        # reference: https://support.microsoft.com/en-us/kb/954404
+        if ($LASTEXITCODE -ne 1)
+        {
+            throw $("Robocopy unexpectedly returned exit-code " + $LASTEXITCODE + ". Expected exit-code was 1.")
+        }
     }
 
     $stopWatch.Stop()
