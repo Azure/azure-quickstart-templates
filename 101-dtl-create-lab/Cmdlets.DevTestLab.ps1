@@ -241,13 +241,18 @@ function IsFileRemote_Private
     return $false
 }
 
-function CopyVhdToStagingIfNeeded_Private
+function CopyVhdToLocalIfRemote_Private
 {
     Param(
         [ValidateNotNullOrEmpty()] 
         [string] 
         # The full path a local or remote (available from a UNC share or a network-mapped drive) file.
-        $VhdFilePathOrUri
+        $VhdFilePathOrUri,
+
+        [ValidateNotNullOrEmpty()] 
+        [string] 
+        # A local folder to which the source vhd will be copied. 
+        $LocalStagingFolder
     )
 
     # check whether the file resides locally or is remote. 
@@ -256,21 +261,19 @@ function CopyVhdToStagingIfNeeded_Private
     # if this is a local vhd, then don't copy it to the local staging area
     if ($false -eq $isRemoteVhd)
     {
+        Write-Verbose "This is a local vhd, hence won't be copied into the local staging area."
         return $VhdFilePathOrUri
     }
 
-    # Location of vhd staging area
-    $VhdStagingFolder = Join-Path $env:USERPROFILE -ChildPath "UploadVhdToDTL\Staging"
-
-    # Create the local staging folder if it doesn't already exist
-    if ($false -eq (Test-Path -Path $VhdStagingFolder))
+    # Pre-condition check
+    if ($false -eq (Test-Path -Path $LocalStagingFolder))
     {
-        New-Item -Path $VhdStagingFolder -ItemType directory | Out-Null
+        throw $("The specified local staging folder '" + $LocalStagingFolder + "' does not exist.")
     }
 
     $vhdSourceFolder = Split-Path $VhdFilePathOrUri -Parent
     $vhdSourceFileName = Split-Path -Path $VhdFilePathOrUri -Leaf
-    $vhdStagingPath = Join-Path -Path $VhdStagingFolder -ChildPath $vhdSourceFileName
+    $vhdStagingPath = Join-Path -Path $LocalStagingFolder -ChildPath $vhdSourceFileName
 
     # let us copy the vhd to the local staging folder.
     Write-Warning $("Copying the vhd to local staging area '" + $vhdStagingPath + "' (Note: This can take a while)...")
@@ -288,78 +291,13 @@ function CopyVhdToStagingIfNeeded_Private
     }
     else
     {
-        robocopy /MT $vhdSourceFolder $VhdStagingFolder $vhdSourceFileName | Out-Null
+        Copy-Item -Path $VhdFilePathOrUri -Destination $vhdStagingPath -Force | Out-Null
 
-        # Robocopy returns exitcode 1 on successful copy.
-        # reference: https://support.microsoft.com/en-us/kb/954404
-        if ($LASTEXITCODE -ne 1)
+        if ($false -eq $?)
         {
-            throw $("Robocopy unexpectedly returned exit-code " + $LASTEXITCODE + ". Expected exit-code was 1.")
+            throw "An error occurred while copying the vhd to staging folder."
         }
     }
-
-    $stopWatch.Stop()
-    Write-Verbose $("Successfully copied vhd to staging folder in " + $stopWatch.Elapsed.TotalSeconds + " seconds.")
-
-    return $vhdStagingPath
-}
-
-function CopyVhdToStaging_Private
-{
-    Param(
-        [ValidateNotNullOrEmpty()] 
-        [string] 
-        # The name of the blob representing the vhd file.
-        $SrcVhdBlobName,
-
-        [ValidateNotNullOrEmpty()] 
-        [string] 
-        # The name of the container which houses the vhd file.
-        $SrcVhdContainerName,
-
-        [Parameter(Mandatory=$true, ParameterSetName="AddByBlobDetails")] 
-        [ValidateNotNullOrEmpty()]
-        [string]
-        # The name of the storage account assoiciated with the vhd file.
-        $SrcVhdStorageAccountName,
-
-        [Parameter(Mandatory=$true, ParameterSetName="AddByBlobDetails")] 
-        [ValidateNotNullOrEmpty()]
-        [string]
-        # The key of the storage account associated with the vhd file.
-        $SrcVhdStorageAccountKey
-    )
-
-    # Location of vhd staging area
-    $VhdStagingFolder = Join-Path $env:USERPROFILE -ChildPath "UploadVhdToDTL\Staging"
-
-    # Create the local staging folder if it doesn't already exist
-    if ($false -eq (Test-Path -Path $VhdStagingFolder))
-    {
-        New-Item -Path $VhdStagingFolder -ItemType directory | Out-Null
-    }
-
-    $vhdStagingPath = Join-Path -Path $VhdStagingFolder -ChildPath $SrcVhdBlobName
-
-    # Create a new storage context using the provided storage account name and key.
-    $storageAccountContext = New-AzureStorageContext -StorageAccountName $SrcVhdStorageAccountName -StorageAccountKey $SrcVhdStorageAccountKey
-
-    if ($null -eq $storageAccountContext)
-    {
-        throw $("Unable to create a new storage account context for storage account '" + $SrcVhdStorageAccountName + "'")
-    }
-
-    # copy the vhd to staging folder.
-    Write-Warning $("Copying the vhd to local staging area '" + $vhdStagingPath + "' (Note: This can take a while)...")
-    Write-Verbose $("Copying the vhd to local staging area.")
-    Write-Verbose $("Source : " + $SrcVhdBlobName)
-    Write-Verbose $("Staging Destination : " + $vhdStagingPath)
-
-    # let us measure the file copy time for instrumentation purposes.
-    $stopWatch = [Diagnostics.Stopwatch]::StartNew()
-
-    # Note: We're explicitly using '-ErrorAction Stop' to ensure that a terminating error is thrown if the vhd cannot be copied to local staging folder. 
-    Get-AzureStorageBlobContent -Blob $SrcVhdBlobName -Container $SrcVhdContainerName -Context $storageAccountContext -Destination $vhdStagingPath -CheckMd5:$false -ErrorAction Stop -Force | Out-Null
 
     $stopWatch.Stop()
     Write-Verbose $("Successfully copied vhd to staging folder in " + $stopWatch.Elapsed.TotalSeconds + " seconds.")
@@ -1391,49 +1329,63 @@ function Add-AzureDtlVhd
 {
     <#
         .SYNOPSIS
-        Uploads a new vhd into the specified lab.
+        Uploads a local or remote vhd into the specified lab.
 
         .DESCRIPTION
-        The Add-AzureDtlVhd cmdlet uploads a vhd into a lab. The source vhd can reside on:
-        - local drives (e.g. c:\somefolder\somefile.ext)
-        - UNC shares (e.g. \\someshare\somefolder\somefile.ext).
+        The Add-AzureDtlVhd cmdlet uploads a vhd into a lab. The source vhd must reside on:
+        - local drives (e.g. c:\somefolder\somefile.ext) OR
+        - UNC shares (e.g. \\someshare\somefolder\somefile.ext) OR
         - Network mapped drives (e.g. net use z: \\someshare\somefolder && z:\somefile.ext). 
-        - Blobs in Azure storage containers.
+
+        If your source vhd is stored as blob in an Azure storage account, please use the Start-AzureDtlVhdCopy
+        cmdlet instead.
+
         Please note that the vhd file must meet the following specific requirements (dictated by Azure):
         - Must be a Gen1 vhd file (and NOT a Gen2 vhdx file).
         - Fixed sized vhd (and NOT dynamically expanding vhd). 
         - Size must be less than 1023 GB. 
         - The vhd must be uploaded as a page blob (and NOT as a block blob).
 
-        .EXAMPLE
-        $lab = $null
-
-        $lab = Get-AzureDtlLab -LabName "MyLab"
-        $vhdlocation = "\\MyShare\MyFolder\MyVHD1.vhd"
-        $friendlyName = "AnExampleVHD.vhd"
-
-        Add-AzureDtlVhd -VhdFullPath $vhdlocation -DestLab $lab -VhdFriendlyName $friendlyName 
-
-        Uploads a vhd file "MyVHD1" from specified network share ("\\MyShare\MyFolder") into the lab "MyLab". 
-        - Once uploaded, the vhd is renamed to "AnExampleVHD.vhd". 
+        Other notes:
+        - Vhds from local drives are: 
+            - validated to ensure they meet the Azure requirements. 
+            - If validation is successful, they are uploaded to the destination lab.
+        - Vhds from UNC shares and network mapped drives too are validated. The vhd files are:
+            - copied to a local staging (location is customizable via the -LocalStagingFolder parameter) and 
+            - validated to ensure they meet the Azure requirements. 
+            - If validation is successful, they are uploaded to the destination lab.
 
         .EXAMPLE
-        $lab = $null
+        $destLab = $null
 
-        $lab = Get-AzureDtlLab -LabName "MyLab"
-        $friendlyName = "AnExampleVHD.vhd"
+        $destLab = Get-AzureDtlLab -LabName "MyLab"
+        Add-AzureDtlVhd -SrcVhdPath "d:\myImages\MyOriginal.vhd" -DestLab $destLab -DestVhdName "MyRenamed.vhd"
 
-        Add-AzureDtlVhd -SrcVhdBlobName "MyVHD1.vhd" -SrcVhdContainerName "MyContainer1" -SrcVhdStorageAccountName "MyStorageAccount1" -SrcVhdStorageAccountKey "xxxxxxx" -DestLab $lab -VhdFriendlyName $friendlyName
+        Uploads a local vhd "MyOriginal.vhd" into the lab "MyLab" as "MyRenamed.vhd".
 
-        Uploads a vhd file "MyVHD1" from the storage account "MyStorageAccount1" into the lab "MyLab".
-        - Once uploaded, the vhd is renamed to "AnExampleVHD.vhd". 
+        .EXAMPLE
+        $destLab = $null
+
+        $destLab = Get-AzureDtlLab -LabName "MyLab"
+        Add-AzureDtlVhd -SrcVhdPath "\\MyShare\MyFolder\MyOriginal.vhd" -DestLab $lab 
+
+        Uploads a vhd file "MyOriginal.vhd" from specified network share "\\MyShare\MyFolder" into the lab "MyLab". 
+
+        .EXAMPLE
+        $destLab = $null
+
+        $destLab = Get-AzureDtlLab -LabName "MyLab"
+        Add-AzureDtlVhd -SrcVhdPath "\\MyShare\MyFolder\MyOriginal.vhd" -DestLab $lab -LocalStagingFolder "f:\temp"
+
+        Uploads a vhd file "MyOriginal.vhd" from specified network share "\\MyShare\MyFolder" into the lab "MyLab",
+        using "f:\temp" as an intermediate staging folder.
 
         .INPUTS
         None. Currently you cannot pipe objects to this cmdlet (this will be fixed in a future version).  
     #>
-    [CmdletBinding(DefaultParameterSetName="AddByFileFullPath")]
+    [CmdletBinding(SupportsShouldProcess=$true)]
     Param(
-        [Parameter(Mandatory=$true, ParameterSetName="AddByFileFullPath")] 
+        [Parameter(Mandatory=$true)] 
         [ValidateNotNullOrEmpty()]
         [string]
         # Full path to the vhd file (that'll be uploaded to the lab).
@@ -1441,126 +1393,313 @@ function Add-AzureDtlVhd
         # - local drives (e.g. c:\somefolder\somefile.ext)
         # - UNC shares (e.g. \\someshare\somefolder\somefile.ext).
         # - Network mapped drives (e.g. net use z: \\someshare\somefolder && z:\somefile.ext). 
-        $VhdFullPath,
+        $SrcVhdPath,
 
-        [Parameter(Mandatory=$true, ParameterSetName="AddByBlobDetails")] 
+        [Parameter(Mandatory=$true)] 
+        [ValidateNotNull()]
+        # An existing lab to which the vhd will be uploaded (please use the Get-AzureDtlLab cmdlet to get this lab object).
+        $DestLab,
+
+        [Parameter(Mandatory=$false)] 
+        [string]
+        # [Optional] The name that will be assigned to vhd once uploded to the lab.
+        # The name should be in a "<filename>.vhd" format (E.g. "WinServer2012-VS2015.Vhd"). 
+        $DestVhdName,
+
+        [Parameter(Mandatory=$false)] 
+        [ValidateNotNullOrEmpty()]
+        [string]
+        # [Optional] An intermediate, local folder to which the source vhd will be copied, prior to upload. 
+        # All validation checks (dictated by Azure) will be run on the vhd here. 
+        # Note: By default, the local staging folder used is '%USERPROFILE%\UploadVhdToDTL\Staging'.
+        # Note: This parameters is ignored in case the source vhd resides on local drives.
+        $LocalStagingFolder = $(Join-Path $env:USERPROFILE -ChildPath "UploadVhdToDTL\Staging"),
+
+        [Parameter(Mandatory=$false)] 
+        [ValidateScript({$_ -ge 1})]
+        [int]
+        # [Optional] The number of uploader threads to use.
+        # Note: By default, the numer of uploader threads used is equal to the number of processors.  
+        $NumThreads = $env:NUMBER_OF_PROCESSORS,
+
+        [Parameter(Mandatory=$false)] 
+        [switch]
+        # [Optional] If specified, will overwrite any existing vhd with the same name in the lab.
+        $OverWrite
+    )
+
+    PROCESS
+    {
+        Write-Verbose $("Processing cmdlet '" + $PSCmdlet.MyInvocation.InvocationName + "', ParameterSet = '" + $PSCmdlet.ParameterSetName + "'")
+
+        # Check if the specified vhd actually exists
+        if ($false -eq (Test-Path -Path $SrcVhdPath))
+        {
+            throw $("Specified vhd is not accessible: " + $SrcVhdPath)
+        }
+
+        # If the user has specified a name for the destination name, ensure that it is appended with ".vhd" extension. 
+        if ([string]::IsNullOrEmpty($DestVhdName))
+        {
+            $DestVhdName = Split-Path -Path $SrcVhdPath -Leaf
+        }
+        else
+        {
+            if ($DestVhdName -notlike "*.vhd")
+            {
+                $DestVhdName = $($DestVhdName + ".vhd")
+            }
+        }
+
+        # Create the local staging folder if it doesn't already exist
+        if ($false -eq (Test-Path -Path $LocalStagingFolder))
+        {
+            New-Item -Path $LocalStagingFolder -ItemType directory | Out-Null
+        }
+        
+        # If this is a remote vhd, then copy it to the local staging area 
+        $vhdLocalPath = CopyVhdToLocalIfRemote_Private -VhdFilePathOrUri $SrcVhdPath -LocalStagingFolder $LocalStagingFolder
+
+        # Get the context associated with the lab's default storage account.
+        $destStorageAccountContext = GetDefaultStorageAccountContextFromLab_Private -Lab $DestLab
+
+        # Extract the 'uploads' container (which houses the vhds).
+        $destContainer = Get-AzureStorageContainer -Name "uploads" -Context $destStorageAccountContext
+
+        if ($null -eq $destContainer)
+        {
+            throw $("Unable to extract the 'uploads' container from the default storage account of lab '" + $DestLab.Name + "'")
+        }
+
+        # Processing the -Confirm and -Whatif switches.
+        if ($PSCmdlet.ShouldProcess($DestVhdName, "Add Vhd"))
+        {
+            # Compute the destination vhd uri. 
+            $destVhdUri = $($destContainer.CloudBlobContainer.Uri.AbsoluteUri + "/" + $DestVhdName) 
+
+            # Now upload the vhd to lab's container
+            Write-Warning "Starting upload of vhd to lab (Note: This can take a while)..."
+            Write-Verbose "Starting upload of vhd to lab (Note: This can take a while)..."
+            Write-Verbose $("Source: " + $VhdLocalPath)
+            Write-Verbose $("Destination: " + $destVhdUri)
+        
+            # let us measure the file upload time for instrumentation purposes.
+            $stopWatch = [Diagnostics.Stopwatch]::StartNew()
+
+            # Now upload the local vhd to the lab.
+            Add-AzureRmVhd -Destination $destVhdUri -LocalFilePath $VhdLocalPath -ResourceGroupName $DestLab.ResourceGroupName -NumberOfUploaderThreads $NumThreads -OverWrite:$PSBoundParameters.ContainsKey("OverWrite") | Out-Null
+
+            if ($false -eq $?)
+            {
+                throw "An error occurred while copying the vhd to the lab '" + $DestLab.Name + "'."
+            }    
+
+            $stopWatch.Stop()
+            Write-Verbose $("Successfully uploaded vhd to the lab in " + $stopWatch.Elapsed.TotalSeconds + " seconds.")
+
+            # fetch and return the vhd which was just uploaded
+            Get-AzureDtlVhd -Lab $DestLab -VhdAbsoluteUri $destVhdUri | Write-Output
+        }
+    }
+}
+
+##################################################################################################
+
+function Start-AzureDtlVhdCopy
+{
+    <#
+        .SYNOPSIS
+        Starts to copy a vhd from an Azure storage account into the specified lab.
+
+        .DESCRIPTION
+        The Add-AzureDtlVhd cmdlet starts a copy operation to upload a vhd into a lab. The source vhd 
+        must reside:
+        - as blobs in Azure storage containers.
+        - as files on Azure file shares (currently not supported).
+
+        If your source vhd is located on a local disk or a network share, please use the Add-AzureDtlVhd 
+        cmdlet instead.
+
+        Please note that the vhd file must meet the following specific requirements (dictated by Azure):
+        - Must be a Gen1 vhd file (and NOT a Gen2 vhdx file).
+        - Fixed sized vhd (and NOT dynamically expanding vhd). 
+        - Size must be less than 1023 GB. 
+        - The vhd must be uploaded as a page blob (and NOT as a block blob).
+
+        Other notes:
+        - Vhds from Azure storage containers are copied directly into the lab (without being staged and validated locally).  
+
+        .EXAMPLE
+        $lab = $null
+
+        $lab = Get-AzureDtlLab -LabName "MyLab"
+        $friendlyName = "AnExampleVHD.vhd"
+
+        Add-AzureDtlVhd -SrcVhdBlobName "MyVHD1.vhd" -SrcVhdContainerName "MyContainer1" -SrcVhdStorageAccountName "MyStorageAccount1" -SrcVhdStorageAccountKey "xxxxxxx" -DestLab $lab -DestVhdFriendlyName $friendlyName
+
+        Uploads a vhd file "MyVHD1" from the storage account "MyStorageAccount1" into the lab "MyLab".
+        - Once uploaded, the vhd is renamed to "AnExampleVHD.vhd". 
+
+        .INPUTS
+        None. Currently you cannot pipe objects to this cmdlet (this will be fixed in a future version).  
+    #>
+    [CmdletBinding(DefaultParameterSetName="AddFromStorageContainer")]
+    Param(
+        [Parameter(Mandatory=$true, ParameterSetName="AddFromStorageContainer")] 
         [ValidateNotNullOrEmpty()]
         [string]
         # The name of the blob representing the vhd file (that'll be uploaded to the lab).
         $SrcVhdBlobName,
 
-        [Parameter(Mandatory=$true, ParameterSetName="AddByBlobDetails")] 
+        [Parameter(Mandatory=$true, ParameterSetName="AddFromStorageContainer")] 
         [ValidateNotNullOrEmpty()]
         [string]
         # The name of the container representing the vhd file (that'll be uploaded to the lab).
         $SrcVhdContainerName,
 
-        [Parameter(Mandatory=$true, ParameterSetName="AddByBlobDetails")] 
+        [Parameter(Mandatory=$true, ParameterSetName="AddFromStorageContainer")] 
         [ValidateNotNullOrEmpty()]
         [string]
         # The name of the storage account assoiciated with the vhd file (that'll be uploaded to the lab).
         $SrcVhdStorageAccountName,
 
-        [Parameter(Mandatory=$true, ParameterSetName="AddByBlobDetails")] 
+        [Parameter(Mandatory=$true, ParameterSetName="AddFromStorageContainer")] 
         [ValidateNotNullOrEmpty()]
         [string]
         # The key of the storage account assoiciated with the vhd file (that'll be uploaded to the lab).
         $SrcVhdStorageAccountKey,
 
-        [Parameter(Mandatory=$true, ParameterSetName="AddByFileFullPath")] 
-        [Parameter(Mandatory=$true, ParameterSetName="AddByBlobDetails")] 
+        [Parameter(Mandatory=$true, ParameterSetName="AddFromStorageContainer")] 
         [ValidateNotNull()]
         # An existing lab to which the vhd will be uploaded (please use the Get-AzureDtlLab cmdlet to get this lab object).
         $DestLab,
 
+        [Parameter(Mandatory=$false, ParameterSetName="AddFromStorageContainer")] 
+        [string]
         # [Optional] The name that will be assigned to vhd once uploded to the lab.
         # The name should be in a "<filename>.vhd" format (E.g. "WinServer2012-VS2015.Vhd"). 
-        [string]
-        $VhdFriendlyName
+        $DestVhdName,
+
+        [Parameter(Mandatory=$false, ParameterSetName="AddFromStorageContainer")] 
+        [ValidateScript({$_ -ge 1})]
+        [int]
+        # [Optional] The number of uploader threads to use.
+        # Note: By default, the numer of uploader threads used is equal to the number of processors.  
+        $NumThreads = $env:NUMBER_OF_PROCESSORS,
+
+        [Parameter(Mandatory=$false, ParameterSetName="AddFromStorageContainer")] 
+        [switch]
+        # [Optional] If specified, will overwrite any existing vhd with the same name in the lab.
+        $OverWrite,
+
+        [Parameter(Mandatory=$false, ParameterSetName="AddFromStorageContainer")] 
+        [switch]
+        # [Optional] If specified, will wait for vhd copy operation to complete.
+        # Note: If specified, then this cmdlet's output is the vhd object successfully copied into the lab.
+        # Note: If specified, then this cmdlet's output is the vhd object partially copied into the lab.
+        $WaitForCompletion
     )
 
     PROCESS 
     {
         Write-Verbose $("Processing cmdlet '" + $PSCmdlet.MyInvocation.InvocationName + "', ParameterSet = '" + $PSCmdlet.ParameterSetName + "'")
 
-        # If the user has specified a friendly name for the vhd, ensure that it is appended with ".vhd" extension. 
-        if (($false -eq [string]::IsNullOrEmpty($VhdFriendlyName)) -and ($VhdFriendlyName -notlike "*.vhd"))
+        # If the user has specified a name for the destination name, ensure that it is appended with ".vhd" extension. 
+        if ([string]::IsNullOrEmpty($DestVhdName))
         {
-            $VhdFriendlyName = $($VhdFriendlyName + ".vhd")
+            $DestVhdName = $SrcVhdBlobName
+        }
+        else
+        {
+            if ($DestVhdName -notlike "*.vhd")
+            {
+                $DestVhdName = $($DestVhdName + ".vhd")
+            }
         }
         
         # Copy the vhd file into the staging area if needed
         switch($PSCmdlet.ParameterSetName)
         {
-            "AddByFileFullPath"
+            "AddFromStorageContainer"
             {
-                # Check if the specified vhd actually exists
-                if ($false -eq (Test-Path -Path $VhdFullPath))
+                # Create a new storage context using the provided src storage account name and key.
+                $srcStorageAccountContext = New-AzureStorageContext -StorageAccountName $SrcVhdStorageAccountName -StorageAccountKey $SrcVhdStorageAccountKey
+
+                if ($null -eq $srcStorageAccountContext)
                 {
-                    throw $("Specified vhd is not accessible: " + $VhdFullPath)
+                    throw $("Unable to create a new storage account context for storage account '" + $SrcVhdStorageAccountName + "'")
                 }
 
-                # Copy the vhd into the local staging area if needed
-                Write-Verbose $("Copying the vhd file '" + $VhdFullPath + "' to a local staging area.")
-                $vhdLocalPath = CopyVhdToStagingIfNeeded_Private -VhdFilePathOrUri $VhdFullPath
-                Write-Verbose $("Successfully copied the vhd file to local staging area '" + $vhdLocalPath + "'.")
+                # Get the context associated with the lab's default storage account.
+                $destStorageAccountContext = GetDefaultStorageAccountContextFromLab_Private -Lab $DestLab
+
+                # Extract the 'uploads' container (which houses the vhds).
+                $destContainer = Get-AzureStorageContainer -Name "uploads" -Context $destStorageAccountContext
+
+                if ($null -eq $destContainer)
+                {
+                    throw $("Unable to extract the 'uploads' container from the default storage account of lab '" + $DestLab.Name + "'")
+                }
+
+                # Processing the -Confirm and -Whatif switches.
+                if ($PSCmdlet.ShouldProcess($DestVhdName, "Add Vhd"))
+                {
+                    # check if the vhd with same name already exists in the lab.
+                    $destVhdExists = ($null -ne (Get-AzureStorageBlob -Blob $DestVhdName -Container $destContainer.Name -Context $destStorageAccountContext -ErrorAction Ignore))
+
+                    if ($destVhdExists -and ($false -eq $PSBoundParameters.ContainsKey("OverWrite")))
+                    {
+                        throw $("A vhd with the name '" + $DestVhdName + "' already exists in the lab '" + $DestLab.Name + "'. Please use the -OverWrite switch to overwrite it.")
+                    }
+
+                    # Compute the destination vhd uri. 
+                    $destVhdUri = $($destContainer.CloudBlobContainer.Uri.AbsoluteUri + "/" + $DestVhdName) 
+
+                    # copy the vhd to the lab.
+                    Write-Verbose $("Copying the vhd to lab '" + $DestLab.Name + "'")
+                    Write-Verbose $("Source blob: " + $SrcVhdBlobName)
+                    Write-Verbose $("Source container: " + $SrcVhdBlobName)
+                    Write-Verbose $("Source storage account: " + $SrcVhdBlobName)
+                    Write-Verbose $("Destination blob: " + $DestVhdName)
+                    Write-Verbose $("Destination container: " + $destContainer.Name)
+                    Write-Verbose $("Destination storage account: " + $destStorageAccountContext.StorageAccountName)
+
+                    $partiallyCopiedVhd = Start-AzureStorageBlobCopy -SrcBlob $SrcVhdBlobName -SrcContainer $SrcVhdContainerName -Context $srcStorageAccountContext -DestBlob $DestVhdName -DestContainer $destContainer.Name -DestContext $destStorageAccountContext -ConcurrentTaskCount $NumThreads -Force 
+
+                    if ($false -eq $? -or $null -eq $partiallyCopiedVhd)
+                    {
+                        throw "An error occurred while copying the vhd to the lab '" + $DestLab.Name + "'."
+                    }    
+
+                    Write-Verbose $("Successfully initiated the copy of vhd '" + $SrcVhdBlobName + "' to lab '" + $DestLab.Name + "'.")
+
+                    if($PSBoundParameters.ContainsKey("WaitForCompletion"))
+                    {
+                        Write-Warning $("Waiting for the vhd copy operation to complete (Note: This can take a while)...")
+
+                        # let us measure the file copy time for instrumentation purposes.
+                        $stopWatch = [Diagnostics.Stopwatch]::StartNew()
+
+                        Get-AzureStorageBlobCopyState -Blob $DestVhdName -Container $destContainer.Name -Context $destStorageAccountContext -WaitForComplete | Out-Null
+
+                        if ($false -eq $?)
+                        {
+                            throw "An error occurred while querying the copy-state of the uploaded vhd."
+                        }    
+
+                        $stopWatch.Stop()
+                        Write-Verbose $("Successfully copied vhd to lab " + $stopWatch.Elapsed.TotalSeconds + " seconds.")
+
+                        # fetch and return the vhd which was just uploaded
+                        Get-AzureDtlVhd -Lab $DestLab -VhdAbsoluteUri $destVhdUri | Write-Output
+                    }
+                    else
+                    {
+                        $partiallyCopiedVhd | Write-Output
+                    }
+                }
             }
-
-            "AddByBlobDetails"
-            {
-                # Copy the vhd into the staging area        
-                Write-Verbose $("Copying the vhd file '" + $SrcVhdBlobName + "' to a local staging area.")
-                $vhdLocalPath = CopyVhdToStaging_Private -SrcVhdBlobName $SrcVhdBlobName -SrcVhdContainerName $SrcVhdContainerName -SrcVhdStorageAccountName $SrcVhdStorageAccountName -SrcVhdStorageAccountKey $SrcVhdStorageAccountKey
-                Write-Verbose $("Successfully copied the vhd file to local staging area '" + $vhdLocalPath + "'.")
-            }
-
-            <# @TODO: The following parameter set is currently not being used. It'll be used in a future update.
-            "AddByFileUri"
-            {
-            }
-            #>
         }
-
-        # Get the default storage account associated with the lab.
-        Write-Verbose $("Extracting the context for the default storage account for lab '" + $DestLab.Name + "'")
-        $labStorageAccountContext = GetDefaultStorageAccountContextFromLab_Private -Lab $DestLab
-        Write-Verbose $("Extracted the context for the default storage account for lab '" + $DestLab.Name + "'")
-
-        # Extract the 'uploads' container (which houses the vhds).
-        Write-Verbose $("Extracting the 'uploads' container")
-        $uploadsContainer = Get-AzureStorageContainer -Name "uploads" -Context $labStorageAccountContext
-
-        if ($null -eq $uploadsContainer)
-        {
-            throw $("Unable to extract the 'uploads' container from the default storage account for lab '" + $DestLab.Name + "'")
-        }
-
-        # Compute the destination path. 
-        $uploadsContainerUri = $uploadsContainer.CloudBlobContainer.Uri.AbsoluteUri
-        $vhdDestinationPath = $($uploadsContainerUri + "/" + $(Split-Path -Path $vhdLocalPath -Leaf)) 
-
-        # If the user has specified a friendly name for the vhd, let us use it. 
-        if ($false -eq [string]::IsNullOrEmpty($VhdFriendlyName))
-        {
-            $vhdDestinationPath = $($uploadsContainerUri + "/" + $VhdFriendlyName) 
-        }
-
-        # Now upload the vhd to lab's container
-        Write-Warning "Starting upload of vhd to lab (Note: This can take a while)..."
-        Write-Verbose "Starting upload of vhd to lab (Note: This can take a while)..."
-        Write-Verbose $("Source: " + $vhdLocalPath)
-        Write-Verbose $("Destination: " + $vhdDestinationPath)
-        
-        # let us measure the file upload time for instrumentation purposes.
-        $stopWatch = [Diagnostics.Stopwatch]::StartNew()
-
-        Add-AzureRmVhd -Destination $vhdDestinationPath -LocalFilePath $vhdLocalPath -ResourceGroupName $DestLab.ResourceGroupName -NumberOfUploaderThreads $env:NUMBER_OF_PROCESSORS -OverWrite | Out-Null
-
-        $stopWatch.Stop()
-        Write-Verbose $("Successfully uploaded vhd to lab in " + $stopWatch.Elapsed.TotalSeconds + " seconds.")
-
-        # fetch and return the vhd which was just uploaded
-        Get-AzureDtlVhd -Lab $DestLab -VhdAbsoluteUri $vhdDestinationPath | Write-Output
     } 
 }
 
