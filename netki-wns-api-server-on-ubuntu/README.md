@@ -1,0 +1,1 @@
+# Easy deployment of Netki WNS API Server to resolve Wallet Names. 
