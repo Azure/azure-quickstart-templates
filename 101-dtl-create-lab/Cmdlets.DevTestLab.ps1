@@ -96,7 +96,10 @@ function GetLabFromVhd_Private
         throw $("Unable to extract the storage account '" + $Vhd.Context.StorageAccountName + "'")
     }
 
-    $lab = Get-AzureRmResource -ExpandProperties | Where-Object {
+    # Note: The -ErrorAction 'SilentlyContinue' ensures that we suppress irrelevant
+    # errors originating while expanding properties (especially in internal test and
+    # pre-production subscriptions).
+    $lab = Get-AzureRmResource -ExpandProperties -ErrorAction "SilentlyContinue" | Where-Object {
         $_.ResourceType -eq $LabResourceType -and
         $_.Properties.DefaultStorageAccount -eq $vhdStorageAccount.ResourceId
     }
