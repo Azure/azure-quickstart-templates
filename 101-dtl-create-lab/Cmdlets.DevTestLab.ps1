@@ -1114,12 +1114,12 @@ function New-AzureDtlVMTemplate
         - If a VM template with the same name already exists in the lab, then it is simply updated.
 
         .EXAMPLE
-        $lab = $null
+        $vm = $null
 
         $vm = Get-AzureDtlVirtualMachine -VMName "MyVM1"
         New-AzureDtlVMTemplate -VM $vm -VMTemplateName "MyVMTemplate1" -VMTemplateDescription "MyDescription"
 
-        Creates a new VM Template "MyVMTemplate1" from the VM "MyVM1".
+        Creates a new VM Template "MyVMTemplate1" from the VM "MyVM1" (in the same lab as the VM).
 
         .EXAMPLE
         $lab = $null
@@ -1127,6 +1127,8 @@ function New-AzureDtlVMTemplate
         $lab = Get-AzureDtlLab -LabName "MyLab1"
         $vhd = Get-AzureDtlVhd -Lab $lab -VMName "MyVhd1.vhd"
         New-AzureDtlVMTemplate -Vhd $vhd -VMTemplateName "MyVMTemplate1" -VMTemplateDescription "MyDescription"
+
+        Creates a new VM Template "MyVMTemplate1" in the lab "MyLab1" using the vhd "MyVhd1.vhd" as the source.
 
         .EXAMPLE
         $lab = $null
@@ -1535,10 +1537,20 @@ function Start-AzureDtlVhdCopy
         $lab = Get-AzureDtlLab -LabName "MyLab"
         $friendlyName = "AnExampleVHD.vhd"
 
-        Add-AzureDtlVhd -SrcVhdBlobName "MyVHD1.vhd" -SrcVhdContainerName "MyContainer1" -SrcVhdStorageAccountName "MyStorageAccount1" -SrcVhdStorageAccountKey "xxxxxxx" -DestLab $lab -DestVhdFriendlyName $friendlyName
+        Start-AzureDtlVhdCopy -SrcVhdBlobName "MyOriginal.vhd" -SrcVhdContainerName "MyContainer1" -SrcVhdStorageAccountName "MyStorageAccount1" -SrcVhdStorageAccountKey "xxxxxxx" -DestLab $lab -DestVhdName "MyRenamed.vhd"
 
-        Uploads a vhd file "MyVHD1" from the storage account "MyStorageAccount1" into the lab "MyLab".
-        - Once uploaded, the vhd is renamed to "AnExampleVHD.vhd". 
+        Initiates copying of vhd file "MyOriginal.vhd" from the storage account "MyStorageAccount1" into the lab "MyLab" as "MyRenamed.vhd".
+
+        .EXAMPLE
+        $lab = $null
+
+        $lab = Get-AzureDtlLab -LabName "MyLab"
+        $friendlyName = "AnExampleVHD.vhd"
+
+        Start-AzureDtlVhdCopy -SrcVhdBlobName "MyOriginal.vhd" -SrcVhdContainerName "MyContainer1" -SrcVhdStorageAccountName "MyStorageAccount1" -SrcVhdStorageAccountKey "xxxxxxx" -DestLab $lab -WaitForCompletion
+
+        Initiates copying of vhd file "MyOriginal.vhd" from the storage account "MyStorageAccount1" into the lab "MyLab" and wait
+        for the copy operation to fully complete.
 
         .INPUTS
         None. Currently you cannot pipe objects to this cmdlet (this will be fixed in a future version).  
