@@ -1117,7 +1117,7 @@ function New-AzureDtlVMTemplate
         $vm = $null
 
         $vm = Get-AzureDtlVirtualMachine -VMName "MyVM1"
-        New-AzureDtlVMTemplate -VM $vm -VMTemplateName "MyVMTemplate1" -VMTemplateDescription "MyDescription"
+        New-AzureDtlVMTemplate -SrcDtlVM $vm -DestVMTemplateName "MyVMTemplate1" -DestVMTemplateDescription "MyDescription"
 
         Creates a new VM Template "MyVMTemplate1" from the VM "MyVM1" (in the same lab as the VM).
 
@@ -1126,7 +1126,7 @@ function New-AzureDtlVMTemplate
 
         $lab = Get-AzureDtlLab -LabName "MyLab1"
         $vhd = Get-AzureDtlVhd -Lab $lab -VMName "MyVhd1.vhd"
-        New-AzureDtlVMTemplate -Vhd $vhd -VMTemplateName "MyVMTemplate1" -VMTemplateDescription "MyDescription"
+        New-AzureDtlVMTemplate -SrcDtlVhd $vhd -DestVMTemplateName "MyVMTemplate1" -DestVMTemplateDescription "MyDescription"
 
         Creates a new VM Template "MyVMTemplate1" in the lab "MyLab1" using the vhd "MyVhd1.vhd" as the source.
 
@@ -1135,7 +1135,7 @@ function New-AzureDtlVMTemplate
 
         $lab = Get-AzureDtlLab -LabName "MyLab1"
         $image = Get-AzureRmVMImage -Location "west us" -PublisherName "microsoftwindowsserver" -Offer "windowsserver" -Skus "2016-Nano-Server" -Version "2016.0.15"
-        New-AzureDtlVMTemplate -AzureRmVMImage $image -DestLabName "MyLab1" -VMTemplateName "MyVMTemplate1" -VMTemplateDescription "MyDescription"
+        New-AzureDtlVMTemplate -SrcAzureRmVMImage $image -DestLabName "MyLab1" -DestVMTemplateName "MyVMTemplate1" -DestVMTemplateDescription "MyDescription"
 
         Creates a new VM Template "MyVMTemplate1" in the lab "MyLab1" from the azure marketplace image "windowsserver" (sku = "2016-Nano-Server", version "2016.0.15").
 
@@ -1146,18 +1146,18 @@ function New-AzureDtlVMTemplate
     Param(
         [Parameter(Mandatory=$true, ParameterSetName="FromVM")]
         [ValidateNotNull()]
-        # An existing VM from which the new VM template will be created (please use the Get-AzureDtlVirtualMachine cmdlet to get this VM object).
-        $VM,
+        # An existing lab VM from which the new lab VM template will be created (please use the Get-AzureDtlVirtualMachine cmdlet to get this lab VM object).
+        $SrcDtlVM,
 
         [Parameter(Mandatory=$true, ParameterSetName="FromVhd")]
         [ValidateNotNull()]
-        # An existing vhd from which the new VM template will be created (please use the Get-AzureDtlVhd cmdlet to get this vhd object).
-        $Vhd,
+        # An existing lab vhd from which the new lab VM template will be created (please use the Get-AzureDtlVhd cmdlet to get this lab vhd object).
+        $SrcDtlVhd,
 
         [Parameter(Mandatory=$true, ParameterSetName="FromAzureRmVMImage")]
         [ValidateNotNull()]
-        # An existing azure gallery image from which the new VM template will be created (please use the Get-AzureRmVMImage cmdlet to get this image object).
-        $AzureRmVMImage,
+        # An existing azure gallery image from which the new lab VM template will be created (please use the Get-AzureRmVMImage cmdlet to get this image object).
+        $SrcAzureRmVMImage,
 
         [Parameter(Mandatory=$true, ParameterSetName="FromAzureRmVMImage")]
         [ValidateNotNullOrEmpty()]
@@ -1170,16 +1170,16 @@ function New-AzureDtlVMTemplate
         [Parameter(Mandatory=$true, ParameterSetName="FromAzureRmVMImage")]
         [ValidateNotNullOrEmpty()]
         [string]
-        # Name of the new VM template to create.
-        $VMTemplateName,
+        # Name of the new lab VM template to be created.
+        $DestVMTemplateName,
 
         [Parameter(Mandatory=$true, ParameterSetName="FromVM")]
         [Parameter(Mandatory=$true, ParameterSetName="FromVhd")]
         [Parameter(Mandatory=$true, ParameterSetName="FromAzureRmVMImage")]
         [ValidateNotNull()]
         [string]
-        # Details about the new VM template being created.
-        $VMTemplateDescription = ""
+        # Details about the new lab VM template being created.
+        $DestVMTemplateDescription = ""
     )
 
     PROCESS
@@ -1189,7 +1189,7 @@ function New-AzureDtlVMTemplate
         # @Todo: Pre-condition check for the VM template name
         
         # Encode the VM template name
-        $VMTemplateNameEncoded = $VMTemplateName.Replace(" ", "%20")
+        $VMTemplateNameEncoded = $DestVMTemplateName.Replace(" ", "%20")
 
         # Unique name for the deployment
         $deploymentName = [Guid]::NewGuid().ToString()
@@ -1200,25 +1200,25 @@ function New-AzureDtlVMTemplate
             "FromVM"
             {
                 # Get the same VM object, but with properties attached.
-                $VM = GetResourceWithProperties_Private -Resource $VM
+                $SrcDtlVM = GetResourceWithProperties_Private -Resource $SrcDtlVM
 
                 # Pre-condition checks to ensure that VM is in a valid state.
-                if (($null -ne $VM) -and ($null -ne $VM.Properties) -and ($null -ne $VM.Properties.ProvisioningState))
+                if (($null -ne $SrcDtlVM) -and ($null -ne $SrcDtlVM.Properties) -and ($null -ne $SrcDtlVM.Properties.ProvisioningState))
                 {
-                    if ("succeeded" -ne $VM.Properties.ProvisioningState)
+                    if ("succeeded" -ne $SrcDtlVM.Properties.ProvisioningState)
                     {
-                        throw $("The provisioning state of the VM '" + $VM.ResourceName + "' is '" + $VM.Properties.ProvisioningState + "'. Hence unable to continue.")
+                        throw $("The provisioning state of the VM '" + $SrcDtlVM.ResourceName + "' is '" + $SrcDtlVM.Properties.ProvisioningState + "'. Hence unable to continue.")
                     }
                 }
                 else
                 {
-                    throw $("The provisioning state of the VM '" + $VM.ResourceName + "' could not be determined. Hence unable to continue.")
+                    throw $("The provisioning state of the VM '" + $SrcDtlVM.ResourceName + "' could not be determined. Hence unable to continue.")
                 }
 
                 # Pre-condition checks to ensure that we're able to extract the Resource Id of the compute VM.
-                if (($null -eq $VM.Properties) -or ($null -eq $VM.Properties.Vms) -or ($null -eq $VM.Properties.Vms[0]) -or ($null -eq $VM.Properties.Vms[0].ComputeId) )
+                if (($null -eq $SrcDtlVM.Properties) -or ($null -eq $SrcDtlVM.Properties.Vms) -or ($null -eq $SrcDtlVM.Properties.Vms[0]) -or ($null -eq $SrcDtlVM.Properties.Vms[0].ComputeId) )
                 {
-                    throw $("Unable to determine the Resource Id of the compute VM '" + $VM.ResourceName + "'.")
+                    throw $("Unable to determine the Resource Id of the compute VM '" + $SrcDtlVM.ResourceName + "'.")
                 }
 
                 # Folder location of VM creation script, the template file and template parameters file.
@@ -1235,19 +1235,19 @@ function New-AzureDtlVMTemplate
                 }
 
                 # Get the lab that contains the source VM
-                $lab = GetLabFromVM_Private -VM $VM
+                $lab = GetLabFromVM_Private -VM $SrcDtlVM
 
                 # Create the VM Template in the lab's resource group by deploying the RM template
-                Write-Verbose $("Creating VM Template '" + $VMTemplateName + "' in lab '" + $lab.ResourceName + "'")
-                $rgDeployment = New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $lab.ResourceGroupName -TemplateFile $VMTemplateCreationTemplateFile -existingLabName $lab.ResourceName -existingVMResourceId $VM.Properties.Vms[0].ComputeId -templateName $VMTemplateNameEncoded -templateDescription $VMTemplateDescription
+                Write-Verbose $("Creating VM Template '" + $DestVMTemplateName + "' in lab '" + $lab.ResourceName + "'")
+                $rgDeployment = New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $lab.ResourceGroupName -TemplateFile $VMTemplateCreationTemplateFile -existingLabName $lab.ResourceName -existingVMResourceId $SrcDtlVM.Properties.Vms[0].ComputeId -templateName $VMTemplateNameEncoded -templateDescription $DestVMTemplateDescription
             }
 
             "FromVhd"
             {
                 # Pre-condition checks to ensure that we're able to extract the uri of the vhd blob.
-                if (($null -eq $Vhd.ICloudBlob) -or ($null -eq $Vhd.ICloudBlob.Uri) -or ($null -eq $Vhd.ICloudBlob.Uri.AbsoluteUri))
+                if (($null -eq $SrcDtlVhd.ICloudBlob) -or ($null -eq $SrcDtlVhd.ICloudBlob.Uri) -or ($null -eq $SrcDtlVhd.ICloudBlob.Uri.AbsoluteUri))
                 {
-                    throw $("Unable to determine the absolute uri of the vhd '" + $Vhd.Name + "'.")
+                    throw $("Unable to determine the absolute uri of the vhd '" + $SrcDtlVhd.Name + "'.")
                 }
 
                 # Folder location of VM creation script, the template file and template parameters file.
@@ -1264,19 +1264,19 @@ function New-AzureDtlVMTemplate
                 }
 
                 # Get the lab that contains the source VM
-                $lab = GetLabFromVhd_Private -Vhd $Vhd
+                $lab = GetLabFromVhd_Private -Vhd $SrcDtlVhd
 
                 # Create the VM Template in the lab's resource group by deploying the RM template
-                Write-Verbose $("Creating VM Template '" + $VMTemplateName + "' in lab '" + $lab.ResourceName + "'")
-                $rgDeployment = New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $lab.ResourceGroupName -TemplateFile $VMTemplateCreationTemplateFile -existingLabName $lab.ResourceName -existingVhdUri $Vhd.ICloudBlob.Uri.AbsoluteUri -templateName $VMTemplateNameEncoded -templateDescription $VMTemplateDescription
+                Write-Verbose $("Creating VM Template '" + $DestVMTemplateName + "' in lab '" + $lab.ResourceName + "'")
+                $rgDeployment = New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $lab.ResourceGroupName -TemplateFile $VMTemplateCreationTemplateFile -existingLabName $lab.ResourceName -existingVhdUri $SrcDtlVhd.ICloudBlob.Uri.AbsoluteUri -templateName $VMTemplateNameEncoded -templateDescription $DestVMTemplateDescription
             }
 
             "FromAzureRmVMImage"
             {
                 # Pre-condition checks to ensure that we're able to extract the properties of the azure gallery image.
-                if (($null -eq $AzureRmVMImage.PublisherName) -or ($null -eq $AzureRmVMImage.Offer) -or ($null -eq $AzureRmVMImage.Skus) -or ($null -eq $AzureRmVMImage.Version))
+                if (($null -eq $SrcAzureRmVMImage.PublisherName) -or ($null -eq $SrcAzureRmVMImage.Offer) -or ($null -eq $SrcAzureRmVMImage.Skus) -or ($null -eq $SrcAzureRmVMImage.Version))
                 {
-                    throw $("Unable to determine the properties of the specified azure gallery image '" + $AzureRmVMImage.Name + "'.")
+                    throw $("Unable to determine the properties of the specified azure gallery image '" + $SrcAzureRmVMImage.Name + "'.")
                 }
 
                 # Folder location of VM creation script, the template file and template parameters file.
@@ -1309,8 +1309,8 @@ function New-AzureDtlVMTemplate
                 write-Verbose $("LabId : " + $lab.ResourceId) 
 
                 # Create the VM Template in the lab's resource group by deploying the RM template
-                Write-Verbose $("Creating VM Template '" + $VMTemplateName + "' in lab '" + $lab.ResourceName + "'")
-                $rgDeployment = New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $lab.ResourceGroupName -TemplateFile $VMTemplateCreationTemplateFile -existingLabName $lab.ResourceName -imagePublisher $AzureRmVMImage.PublisherName -imageOffer $AzureRmVMImage.Offer -imageSku $AzureRmVMImage.Skus -imageVersion $AzureRmVMImage.Version -templateName $VMTemplateNameEncoded -templateDescription $VMTemplateDescription
+                Write-Verbose $("Creating VM Template '" + $DestVMTemplateName + "' in lab '" + $lab.ResourceName + "'")
+                $rgDeployment = New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $lab.ResourceGroupName -TemplateFile $VMTemplateCreationTemplateFile -existingLabName $lab.ResourceName -imagePublisher $SrcAzureRmVMImage.PublisherName -imageOffer $SrcAzureRmVMImage.Offer -imageSku $SrcAzureRmVMImage.Skus -imageVersion $SrcAzureRmVMImage.Version -templateName $VMTemplateNameEncoded -templateDescription $DestVMTemplateDescription
             }
         }
 
@@ -1572,13 +1572,13 @@ function Start-AzureDtlVhdCopy
         [Parameter(Mandatory=$true, ParameterSetName="AddFromStorageContainer")] 
         [ValidateNotNullOrEmpty()]
         [string]
-        # The name of the storage account assoiciated with the vhd file (that'll be uploaded to the lab).
+        # The name of the storage account associated with the vhd file (that'll be uploaded to the lab).
         $SrcVhdStorageAccountName,
 
         [Parameter(Mandatory=$true, ParameterSetName="AddFromStorageContainer")] 
         [ValidateNotNullOrEmpty()]
         [string]
-        # The key of the storage account assoiciated with the vhd file (that'll be uploaded to the lab).
+        # The key of the storage account associated with the vhd file (that'll be uploaded to the lab).
         $SrcVhdStorageAccountKey,
 
         [Parameter(Mandatory=$true, ParameterSetName="AddFromStorageContainer")] 
