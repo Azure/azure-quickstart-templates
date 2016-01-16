@@ -55,7 +55,7 @@ help()
 # Log method to control log output
 log()
 {
-    echo "$1"
+    echo "`date`: $1"
 }
 
 # You must be root to run this script
@@ -108,31 +108,30 @@ while getopts :r:p:c:i: optname; do
   esac
 done
 
-log "Started node-setup on ${HOSTNAME} with role ${NODE_ROLE}: `date`"
+log "Started node-setup on ${HOSTNAME} with role ${NODE_ROLE}"
 
-# Stripe data disks into one data volume where SPLUNK_DB will reside
 log "Striping data disks into one volume mounted at ${DATA_MOUNTPOINT}"
+# Stripe data disks into one data volume where SPLUNK_DB will reside
 chmod u+x vm-disk-utils-0.1.sh && ./vm-disk-utils-0.1.sh -s -p $DATA_MOUNTPOINT
 
-log "Checkpoint 1: `date`"
-
+log "Updating system packages"
 # Update packages & install dependencies
 apt-get -y update && apt-get install -y curl
 
-log "Checkpoint 2: `date`"
-
+log "Downloading Chef client"
 # Download chef client 12.5.1, verify checksum and install package
 if [ ! -f "${CHEF_PKG_CACHE}" ]; then
   curl -O ${CHEF_PKG_URL}
 else
   cp ${CHEF_PKG_CACHE} .
 fi
+
+log "Verifying checksum..."
 echo ${CHEF_PKG_MD5} > /tmp/checksum
 sha1sum -c /tmp/checksum
 dpkg -i chef_12.5.1-1_amd64.deb
 
-log "Checkpoint 3: `date`"
-
+log "Downloading Chef repo for Splunk"
 # Download chef repo including cookbooks, roles and default data bags
 mkdir -p /etc/chef/repo
 cd /etc/chef/repo
@@ -173,8 +172,7 @@ log_location STDOUT
 chef_repo_path "/etc/chef/repo"
 end
 
-log "Checkpoint 4: `date`"
-
+log "Installing and configuring Splunk"
 # Finally install & configure Splunk using chef client in local mode
 chef-client -z -c /etc/chef/client.rb -j /etc/chef/node.json
 
@@ -184,6 +182,6 @@ rm -rf /etc/chef/repo
 # Remove first time login
 touch /opt/splunk/etc/.ui_login
 
-log "Finished node-setup on ${HOSTNAME} with role ${NODE_ROLE}: `date`"
+log "Finished node-setup on ${HOSTNAME} with role ${NODE_ROLE}"
 
 exit 0
