@@ -2,21 +2,14 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "newStorageAccountName": {
+    "dnsLabelPrefix": {
       "type": "string",
       "metadata": {
-        "description": "This is the name of the your storage account"
-      }
-    },
-    "vmDnsName": {
-      "type": "string",
-      "metadata": {
-        "description": "This is the unique DNS name of the for the public IP for your VM"
+        "description": "DNS Label for the Public IP. Must be lowercase. It should match with the following regular expression: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$ or it will raise an error."
       }
     },
     "adminUsername": {
       "type": "string",
-      "defaultValue": "eris",
       "metadata": {
         "description": "This is the the username you wish to assign to your VMs admin account"
       }
@@ -31,14 +24,14 @@
       "type": "string",
       "defaultValue": "",
       "metadata": {
-        "description": "Comma separated list of the services to start"
+        "description": "Comma separated list of the services to start. Example input: btcd,eth,ipfs,openbazaar"
       }
     },
     "chainsToStart": {
       "type": "string",
       "defaultValue": "",
       "metadata": {
-        "description": "Comma separated list of the chains to start"
+        "description": "Comma separated list of the chains to start. Example input: simplechain"
       }
     },
     "vmSize": {
@@ -60,7 +53,6 @@
     },
     "location": {
       "type": "string",
-      "defaultValue": "North Europe",
       "allowedValues": [
         "Australia East",
         "Australia Southeast",
@@ -93,19 +85,20 @@
     "subnetName": "Subnet-1",
     "subnetPrefix": "10.0.0.0/24",
     "storageAccountType": "Standard_LRS",
-    "publicIPAddressName": "publicIP",
+    "publicIPAddressName": "[parameters('dnsLabelPrefix')]",
     "publicIPAddressType": "Dynamic",
     "vmStorageAccountContainerName": "vhds",
-    "vmName": "[parameters('vmDnsName')]",
+    "vmName": "[parameters('dnsLabelPrefix')]",
     "virtualNetworkName": "WPVNET",
     "apiVersion": "2015-06-15",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
-    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]"
+    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
+    "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'eris')]"
   },
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[parameters('newStorageAccountName')]",
+      "name": "[variables('storageAccountName')]",
       "apiVersion": "[variables('apiVersion')]",
       "location": "[parameters('location')]",
       "properties": {
@@ -120,7 +113,7 @@
       "properties": {
         "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
         "dnsSettings": {
-          "domainNameLabel": "[parameters('vmDnsName')]"
+          "domainNameLabel": "[parameters('dnsLabelPrefix')]"
         }
       }
     },
@@ -177,7 +170,7 @@
       "name": "[variables('vmName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
       ],
       "properties": {
@@ -199,7 +192,7 @@
           "osDisk": {
             "name": "osdisk1",
             "vhd": {
-              "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/','osdisk1.vhd')]"
+              "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/','osdisk1.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -241,10 +234,11 @@
       "properties": {
         "publisher": "Microsoft.OSTCExtensions",
         "type": "CustomScriptForLinux",
-        "typeHandlerVersion": "1.2",
+        "typeHandlerVersion": "1.4",
+        "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "https://raw.githubusercontent.com/eris-ltd/common/master/cloud/setup/setup.sh"
+            "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/eris-platform/setup.sh"
           ],
           "commandToExecute": "[concat('bash setup.sh ', parameters('adminUsername'), ' ', parameters('servicesToStart'), ' ', parameters('chainsToStart'))]"
         }
