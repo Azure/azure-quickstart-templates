@@ -95,7 +95,7 @@ This walk through is based the wonderful digital ocean tutorial: https://www.dig
 6. start a long running job in Marathon
  1. click "Create"
  2. type "myfirstapp" for the id
- 3. type `/bin/bash -c "for i in {1..5}; do echo MyFirstApp $i; sleep 1; done` for the command
+ 3. type `/bin/bash -c "for i in {1..5}; do echo MyFirstApp $i; sleep 1; done"` for the command
  4. scroll to bottom and click create
 
  ![Image of Marathon new app dialog](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-mesos-full-template/images/marathon-newapp.png)
