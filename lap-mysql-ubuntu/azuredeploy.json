@@ -4,21 +4,8 @@
   "parameters": {
     "region": {
       "type": "string",
-      "allowedValues": [
-        "West US",
-        "East US",
-        "East Asia",
-        "Southeast Asia",
-        "West Europe"
-      ],
       "metadata": {
         "description": "Location where resources will be provisioned"
-      }
-    },
-    "storageAccountPrefix": {
-      "type": "string",
-      "metadata": {
-        "description": "Unique namespace for the Storage Account where the Virtual Machine's disks will be placed"
       }
     },
     "virtualNetworkName": {
@@ -40,16 +27,20 @@
         "description": "Administrator password used when provisioning virtual machines"
       }
     },
-    "dnsName": {
+    "dnsNamePrefix": {
       "type": "string",
       "metadata": {
-        "description": "Domain name for the publicly accessible Lap node"
+        "description": "DNS Name for the publicly accessible Lap node. Must be lowercase. It should match with the following regular expression: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$ or it will raise an error."
       }
     },
-    "LapVmSize": {
+    "lapVmSize": {
       "type": "string",
       "defaultValue": "Standard_D3",
       "allowedValues": [
+	    "Standard_A1",
+		"Standard_A2",
+		"Standard_A3",
+        "Standard_D1",
         "Standard_D3",
         "Standard_D4"
       ],
@@ -57,17 +48,21 @@
         "description": "The size of the virtual machines used when provisioning the Lap node"
       }
     },
-    "MysqlNodes": {
+    "mysqlNodes": {
       "type": "int",
       "defaultValue": 1,
       "metadata": {
         "description": "Number of Mysql node (1 is the default)"
       }
     },
-    "MysqlVmSize": {
+    "mysqlVmSize": {
       "type": "string",
       "defaultValue": "Standard_D3",
       "allowedValues": [
+	    "Standard_A1",
+		"Standard_A2",
+		"Standard_A3",
+        "Standard_D1",
         "Standard_D3",
         "Standard_D4"
       ],
@@ -82,6 +77,7 @@
     "lampLapTemplateUrl": "[concat(variables('templateBaseUrl'), 'lamplap-resources.json')]",
     "lampMysqlTemplateUrl": "[concat(variables('templateBaseUrl'), 'lampmysql-resources.json')]",
     "namespace": "lamp-",
+	"apiVersion": "2015-01-01",
     "networkSettings": {
       "virtualNetworkName": "[parameters('virtualNetworkName')]",
       "addressPrefix": "10.0.0.0/16",
@@ -101,35 +97,34 @@
 		"mysqlip": "10.0.0.10"
       }
     },
-    "LapOsSettings": {
+    "lapOsSettings": {
       "imageReference": {
         "publisher": "Canonical",
         "offer": "UbuntuServer",
         "sku": "14.04.2-LTS",
-        "version": "14.04.201503090"
+        "version": "latest"
       },
       "scripts": [
         "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/lap-mysql-ubuntu/install-lap.sh"
       ]
     },
-    "MysqlOsSettings": {
+    "mysqlOsSettings": {
       "imageReference": {
         "publisher": "Canonical",
         "offer": "UbuntuServer",
         "sku": "14.04.2-LTS",
-        "version": "14.04.201503090"
+        "version": "latest"
       },
       "scripts": [
         "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/lap-mysql-ubuntu/install-mysql.sh"
       ]
-    },
-    "sharedStorageAccountName": "[parameters('storageAccountPrefix')]"
+    }
   },
   "resources": [
     {
       "name": "shared",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "[variables('apiVersion')]",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -142,9 +137,6 @@
           },
           "networkSettings": {
             "value": "[variables('networkSettings')]"
-          },
-          "storageAccountName": {
-            "value": "[variables('sharedStorageAccountName')]"
           }
         }
       }
@@ -152,7 +144,7 @@
     {
       "name": "lampLapNode",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "[variables('apiVersion')]",
       "dependsOn": [
         "[concat('Microsoft.Resources/deployments/', 'shared')]"
       ],
@@ -165,9 +157,6 @@
         "parameters": {
           "region": {
             "value": "[parameters('region')]"
-          },
-          "storageAccountName": {
-            "value": "[variables('sharedStorageAccountName')]"
           },
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
@@ -185,19 +174,19 @@
             "value": "[variables('networkSettings').subnet.dse]"
           },
           "dnsname": {
-            "value": "[parameters('dnsName')]"
+            "value": "[parameters('dnsNamePrefix')]"
           },
           "staticIp": {
             "value": "[variables('networkSettings').statics.lapip]"
           },
           "vmSize": {
-            "value": "[parameters('LapVmSize')]"
+            "value": "[parameters('lapVmSize')]"
           },
-          "MysqlNodes": {
-            "value": "[parameters('MysqlNodes')]"
+          "mysqlNodes": {
+            "value": "[parameters('mysqlNodes')]"
           },
           "osSettings": {
-            "value": "[variables('LapOsSettings')]"
+            "value": "[variables('lapOsSettings')]"
           }
         }
       }
@@ -205,14 +194,14 @@
     {
       "name": "[concat('lampMysqlNode', copyindex())]",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "[variables('apiVersion')]",
       "dependsOn": [
         "[concat('Microsoft.Resources/deployments/', 'shared')]",
         "[concat('Microsoft.Resources/deployments/', 'lampLapNode')]"
       ],
       "copy": {
         "name": "vmLoop",
-        "count": "[parameters('MysqlNodes')]"
+        "count": "[parameters('mysqlNodes')]"
       },
       "properties": {
         "mode": "Incremental",
@@ -223,9 +212,6 @@
         "parameters": {
           "region": {
             "value": "[parameters('region')]"
-          },
-          "storageAccountName": {
-            "value": "[variables('sharedStorageAccountName')]"
           },
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
@@ -249,10 +235,10 @@
             "value": "[variables('networkSettings').subnet.dse]"
           },
           "vmSize": {
-            "value": "[parameters('MysqlVmSize')]"
+            "value": "[parameters('mysqlVmSize')]"
           },
           "osSettings": {
-            "value": "[variables('MysqlOsSettings')]"
+            "value": "[variables('mysqlOsSettings')]"
           }
         }
       }

@@ -5,9 +5,6 @@
     "region": {
       "type": "string"
     },
-    "storageAccountName": {
-      "type": "string"
-    },
     "adminUsername": {
       "type": "string"
     },
@@ -37,18 +34,20 @@
     }
   },
   "variables": {
-    "subnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('subnet').vnet), '/subnets/', parameters('subnet').name)]"
+    "subnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('subnet').vnet), '/subnets/', parameters('subnet').name)]",
+	"storageAccountName": "[concat(uniquestring(resourceGroup().id), 'standardsa')]",
+	"apiVersion": "2015-06-15"
   },
   "resources": [
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[concat(parameters('namespace'), 'set')]",
       "location": "[parameters('region')]",
       "properties": {}
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'nic')]",
       "location": "[parameters('region')]",
@@ -68,7 +67,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(parameters('namespace'), concat(parameters('vmbasename'), 'vm'))]",
       "location": "[parameters('region')]",
@@ -89,7 +88,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://', parameters('storageAccountName'),'.blob.core.windows.net/vhds/', parameters('vmbasename'), '-osdisk.vhd')]"
+              "uri": "[concat('http://', variables('storageAccountName'),'.blob.core.windows.net/vhds/', parameters('vmbasename'), '-osdisk.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -107,7 +106,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'vm', '/lampInstall')]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "location": "[parameters('region')]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', parameters('namespace'), parameters('vmbasename'), 'vm')]",
@@ -116,8 +115,9 @@
       "properties": {
         "publisher": "Microsoft.OSTCExtensions",
         "type": "CustomScriptForLinux",
-        "typeHandlerVersion": "1.2",
+        "typeHandlerVersion": "1.4",
         "settings": {
+		  "autoUpgradeMinorVersion": true,
           "fileUris": "[parameters('osSettings').scripts]",
           "commandToExecute": "[concat('bash install-mysql.sh ', parameters('lapNode'))]"
         }
