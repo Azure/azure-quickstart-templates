@@ -1,5 +1,9 @@
 # Netki Wallet Name Server 
 
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fnetki-wns-api-server-on-ubuntu%2Fazuredeploy.json" target="_blank">
+    <img src="http://azuredeploy.net/deploybutton.png"/>
+</a>
+
 The Netki Wallet Name lookup API server allows you to quickly integrate the Wallet Name standard into your digital 
 currency platform. Using the Wallet Name Service allows you to avoid difficult to remember Bitcoin, Ethereum, Factoid, 
 etc. addresses and instead use a much more memorable naming scheme that runs on top of DNS using DNSSEC to keep the 
@@ -17,7 +21,7 @@ http://<AZUREPUBLICDNSNAME>/api/wallet_lookup/<WALLET_NAME>/<CURRENCY>
 
 #### Example Request URL
 ```
-http://wnstemplatetest2.westus.cloudapp.azure.com/api/wallet_lookup/batman.tip.me/btc
+http://netkiwnsapiserver.westus.cloudapp.azure.com/api/wallet_lookup/batman.tip.me/btc
 ```
 
 #### Example Response
