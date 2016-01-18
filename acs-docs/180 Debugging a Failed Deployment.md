@@ -65,22 +65,28 @@ data:    Target Resource Type: Microsoft.Compute/virtualMachines
 
 Navigate to the [container service](http://aka.ms/acsportal) browse UI in the portal. 
 
-![FIXME: Container Service Browse UI with Failed Deployment](/images/180/browse_a_failed_deployment.png)
+![Container Service Browse UI with Failed Deployment](/images/180/browse_a_failed_deployment.png)
 
-Select the service that suffered the failed deployment and click on the "Last Deployment":
+Select the service that suffered the failed deployment in order to view the service details:
 
-![FIXME: Deployment details for a failed deployment](/images/180/failed_deployment_details.png)
+![Failed Container Service](/images/180/failed_service_details.png)
 
-Select the deployment that indicates it contains errors and click the "events" link:
+Click on the "Resource Group":
 
-![FIXME:Deployment with Errors](/images/180/deployment_with_errors.png)
+![Resource Group for failed container service](/images/180/resource_group_for_failed_service.png)
 
-Find errors in the log and click on them to get more details.
+Click on "Last Deployment" to list deployments for this resource group:
+
+![Deployments for failed container service](/images/180/deployments_for_failed_container_service.png)
+
+Select the failed deployment (note there will be two deployments for
+each ACS deployment, the earlier of the two will give more detailed
+results.:
+
+![Deployment details for a failed deployment](/images/180/failed_deployment_details.png)
+
+At the top of this blade you will see the parameters used for the
+deployment, scroll down to view the the log, click on Failed entried
+to get more details.
 
 ![FIXME: Finding Deployment Errors](/images/180/finding_deployment_errors.png)
-
-## Raising a Support Request
-
-If you need to raise a support request you should submit the deployment ID and correlation ID, these can be found in the deployment and events panes as shown below:
-
-![FIXME: Finding the Deployment ID and Correlation ID](/images/180/finding_deployment_and_correlation_id.png)
