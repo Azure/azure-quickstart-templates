@@ -1,4 +1,6 @@
+sudo apt-get -y update
 sudo apt-get install unzip
+sudo apt-get -y update --fix-missing
 
 cd /usr/lib
 sudo mkdir jvm
