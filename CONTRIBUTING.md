@@ -22,7 +22,7 @@ We're following basic GitHub Flow. If you have ever contributed to an open sourc
  * Push your new branch to your GitHub Fork (`git push origin my-new-template`)
  * Visit this repository in GitHub and create a Pull Request.
 
-**For a detailed tutorial, [please check out our tutorial](../tutorial/git-tutorial.md)!**
+**For a detailed tutorial, [please check out our tutorial](https://github.com/Azure/azure-quickstart-templates/blob/master/tutorial/git-tutorial.md)!**
 
 ### Azure.com
 
