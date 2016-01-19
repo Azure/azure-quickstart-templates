@@ -2,10 +2,11 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+
     "newStorageAccountNamePrefix": {
       "type": "string",
       "metadata": {
-        "description": "Naming prefix for each new storage account created. Four storage accounts will be created using this string as a prefix for the name. 18-char max, lowercase alpha"
+        "description": "Naming prefix for each new storage account created. Three storage accounts will be created using this string as a prefix for the name. 18-char max, lowercase alpha"
       }
     },
 
@@ -30,32 +31,6 @@
       }
     },
 
-    "adVMSize": {
-      "type": "string",
-      "allowedValues": [
-        "Standard_D1",
-        "Standard_DS1",
-        "Standard_D2",
-        "Standard_DS2",
-        "Standard_D3",
-        "Standard_DS3",
-        "Standard_D4",
-        "Standard_DS4",
-        "Standard_D11",
-        "Standard_DS11",
-        "Standard_D12",
-        "Standard_DS12",
-        "Standard_D13",
-        "Standard_DS13",
-        "Standard_D14",
-        "Standard_DS14"
-      ],
-      "metadata": {
-        "description": "Size of the AD VMs to be created"
-      },
-      "defaultValue": "Standard_DS1"
-    },
-
     "sqlVMSize": {
       "type": "string",
       "allowedValues": [
@@ -77,7 +52,7 @@
         "Standard_DS14"
       ],
       "metadata": {
-        "description": "Size of the SQL VMs to be created"
+        "description": "Size of the SQL VM instances to be created"
       },
       "defaultValue": "Standard_DS3"
     },
@@ -103,126 +78,69 @@
         "Standard_DS14"
       ],
       "metadata": {
-        "description": "Size of the Witness VM to be created"
+        "description": "Size of the Witness VM instance to be created"
       },
       "defaultValue": "Standard_DS1"
-    },
-
-    "dnsPrefix": {
-      "type": "string",
-      "metadata": {
-        "description": "DNS Prefix for the Public IP Address"
-      }
-    },
-
-    "domainName": {
-      "type": "string",
-      "metadata": {
-        "description": "DNS domain name for the Active Directory domain to be created"
-      },
-      "defaultValue": "contoso.com"
     },
 
     "sqlServerServiceAccountUserName": {
       "type": "string",
       "metadata": {
-        "description": "The SQL Server Service account name"
+        "description": "Service account name for SQL Server services"
       }
     },
 
     "sqlServerServiceAccountPassword": {
       "type": "securestring",
       "metadata": {
-        "description": "The SQL Server Service account password"
+        "description": "Service account password for SQL Server services"
       }
     },
 
-    "virtualNetworkAddressRange": {
+    "existingVirtualNetworkId": {
       "type": "string",
       "metadata": {
-        "description": "The address range of the new VNET in CIDR format"
-      },
-      "defaultValue": "10.0.0.0/16"
+        "description": "Resource ID of the existing VNET. You can find the Resource ID for the VNET on the Properties blade of the VNET."
+      }
     },
 
-    "vmNetworkSubnet": {
+    "existingSqlSubnetName": {
       "type": "string",
       "metadata": {
-        "description": "Address range for AD Subnet"
+        "description": "Name of the existing subnet in the existing VNET to which the SQL & Witness VMs should be deployed"
       },
-      "defaultValue": "10.0.0.0/24"
+      "defaultValue": "default"
     },
 
-    "sqlSubnet": {
+    "existingDomainName": {
       "type": "string",
       "metadata": {
-        "description": "Address range for SQL Subnet"
+        "description": "DNS domain name for existing Active Directory domain"
       },
-      "defaultValue": "10.0.1.0/24"
+      "defaultValue": "contoso.com"
     },
-    "primaryAdIpAddress": {
+
+    "existingAdPDCVMName": {
       "type": "string",
       "metadata": {
-        "description": "The IP address of Primary AD DC VM"
+        "description": "Computer name of the existing Primary AD domain controller & DNS server"
+      }
+    },
+
+    "existingPrimaryAdIpAddress": {
+      "type": "string",
+      "metadata": {
+        "description": "IP address of the existing Primary AD domain controller & DNS server"
       },
       "defaultValue": "10.0.0.4"
     },
 
-    "secondaryIpAddress": {
+    "existingSecondaryAdIpAddress": {
       "type": "string",
       "metadata": {
-        "description": "The IP address of Secondary AD DC VM"
+        "description": "IP address of the existing Secondary AD domain controller & DNS server"
       },
       "defaultValue": "10.0.0.5"
-    },
-
-    "adminUsername": {
-      "type": "string",
-      "metadata": {
-        "description": "Name of the Administrator of the new VMs and Domain"
-      }
-    },
-
-    "adminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Password for the Administrator account of the new VMs and Domain"
-      }
-    },
-
-    "assetLocation": {
-      "type": "string",
-      "metadata": {
-        "description": "Location of resources that the script is dependent on such as linked templates and DSC modules"
-      },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sql-server-2014-alwayson-dsc"
-    },
-
-    "location": {
-      "type": "string",
-      "allowedValues": [
-          "West US",
-          "East US",
-          "East US 2",
-          "Central US",
-          "South Central US",
-          "North Central US",
-          "North Europe",
-          "West Europe",
-          "East Asia",
-          "Southeast Asia",
-          "Japan East",
-          "Japan West",
-          "Brazil South",
-          "Australia East",
-          "Australia Southeast",
-          "Central India",
-          "South India",
-          "West India"
-     ],
-      "metadata": {
-        "description": "Region in which to deploy the new resources"
-      }
     },
 
     "sqlLBIPAddress": {
@@ -230,56 +148,78 @@
       "metadata": {
         "description": "IP address of ILB for the new SQL Server AlwaysOn listener to be created"
       },
-      "defaultValue": "10.0.1.10"
+      "defaultValue": "10.0.0.10"
+    },
+
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of an existing Admin user account for the Active Directory domain"
+      }
+    },
+
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the existing Admin user account for the Active Directory domain"
+      }
+    },
+
+    "location": {
+      "type": "string",
+      "allowedValues": [
+        "West US",
+        "East US",
+        "East US 2",
+        "Central US",
+        "South Central US",
+        "North Central US",
+        "North Europe",
+        "West Europe",
+        "East Asia",
+        "Southeast Asia",
+        "Japan East",
+        "Japan West",
+        "Brazil South",
+        "Australia East",
+        "Australia Southeast",
+        "Central India",
+        "South India",
+        "West India"
+      ],
+      "metadata": {
+        "description": "Region in which to deploy the new resources"
+      }
     },
 
     "dataBaseNames": {
       "type": "array",
       "metadata": {
-        "description": "An array of databases name, each database will be created and added to the availability group"
+        "description": "An array of database names. Each database will be created and added to the availability group"
       },
       "defaultValue": [ "testdb1", "testdb2" ]
+    },
+
+    "assetLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "Location of resources upon which this template is dependent, such as nested templates and DSC modules"
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sql-server-2014-alwayson-dsc"
     }
+
   },
+
   "variables": {
+
     "apiVersion": "2015-01-01",
     "apiVersionNetworks": "2015-06-15",
     "apiVersionVirtualMachines": "2015-06-15",
     "apiVersionVMExtensions": "2015-06-15",
     "apiVersionStorage": "2015-06-15",
-    "adSubnetName": "ADStaticSubnet",
-    "subnets": [
-      {
-        "name": "[variables('adSubnetName')]",
-        "properties": {
-          "addressPrefix": "[parameters('vmNetworkSubnet')]"
-        }
-      },
-      {
-        "name": "[variables('sqlSubnetName')]",
-        "properties": {
-          "addressPrefix": "[parameters('sqlSubnet')]"
-        }
-      }
-    ],
-    "virtualNetworkName": "WorkloadVNET",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
-    "adSubnetRef": "[concat(variables('vnetID'),'/subnets/',variables('adSubnetName'))]",
-    "adTemplateURL": "[concat(parameters('assetLocation'),'/ADVmTemplate.json')]",
 
+    "sqlSubnetRef": "[concat(parameters('existingVirtualNetworkId'),'/subnets/',parameters('existingSqlSubnetName'))]",
 
-    "adStorageName": "[concat(parameters('newStorageAccountNamePrefix'),'adsa')]",
-    "adVmDepoyment": "DeployAdVms",
-    "adVmDepoymentId": "[concat('Microsoft.Resources/deployments/', variables('adVmDepoyment'))]",
-    "deployPrimaryAdTemplateURL": "[concat(parameters('assetLocation'),'/DeployPrimaryAD.json')]",
-    "deploySecondaryAdTemplateURL": "[concat(parameters('assetLocation'),'/DeploySecondaryAD.json')]",
-    "deployPrimaryAd": "deployPrimaryAd",
-    "deployPrimaryAdId": "[concat('Microsoft.Resources/deployments/', variables('deployPrimaryAd'))]",
-    "deploySecondaryAdName": "deploySecondaryAdName",
-    "deploySecondaryAdNameId": "[concat('Microsoft.Resources/deployments/', variables('deploySecondaryAdName'))]",
-
-    "sqlSubnetName": "sqlSubnet",
-    "sqlSubnetRef": "[concat(variables('vnetID'),'/subnets/',variables('sqlSubnetName'))]",
     "sqlStorageName": "[concat(parameters('newStorageAccountNamePrefix'),'sqlsa')]",
     "sqlClusterTemplateURL": "[concat(parameters('assetLocation'),'/SqlClusterVmTemplate.json')]",
     "deploySqlClusterVms": "deploySqlClusterVms",
@@ -289,16 +229,6 @@
     "sqlWitnessStorageName": "[concat(parameters('newStorageAccountNamePrefix'),'sqlwsa')]",
     "deploySqlWitnessVms": "deploySqlWitnessVms",
     "deploySqlWitnessVmsId": "[concat('Microsoft.Resources/deployments/', variables('deploySqlWitnessVms'))]",
-
-    "adVmNamePrefix": "[concat(parameters('vmNamePrefix'),'-AD-')]",
-    "adPDCVMName": "[concat(variables('adVmNamePrefix'),'0')]",
-    "adBDCVMName": "[concat(variables('adVmNamePrefix'),'1')]",
-    "vnetwithDNSTemplateUri": "[concat(parameters('assetLocation'),'/vnet-with-dns-server.json')]",
-    "updateVNetDNS1": "updateVNetDNS1",
-    "updateVNetDNS1Id": "[concat('Microsoft.Resources/deployments/', variables('updateVNetDNS1'))]",
-
-    "updateVNetDNS2": "updateVNetDNS2",
-    "updateVNetDNS2Id": "[concat('Microsoft.Resources/deployments/', variables('updateVNetDNS2'))]",
 
     "updateSQLWNic": "updateSQLWNic",
     "updateSQLWNicId": "[concat('Microsoft.Resources/deployments/', variables('updateSQLWNic'))]",
@@ -323,7 +253,7 @@
     "deploySqlWitnessShare": "deploySqlWitnessShare",
     "deploySqlWitnessShareId": "[concat('Microsoft.Resources/deployments/', variables('deploySqlWitnessShare'))]",
     "deploySqlWitnessShareTemplateUrl": "[concat(parameters('assetLocation'),'/DeploySqlWitnessShare.json')]",
-    "sqlWitnessSharePath" : "[concat(parameters('dnsPrefix'),'-fsw')]",
+    "sqlWitnessSharePath" : "[concat(parameters('vmNamePrefix'),'-fsw')]",
     "sqlWitnessVmNamePrefix": "[concat(parameters('vmNamePrefix'),'-SqlW-')]",
     "sqlwVMName": "[concat(variables('sqlWitnessVmNamePrefix'),'0')]",
 
@@ -336,68 +266,27 @@
 
     "sqlLBName": "sqlLoadBalancer",
 
-    "sqlAOEPName": "[concat(parameters('dnsPrefix'),'-hadr')]",
-    "sqlAOAGName": "[concat(parameters('dnsPrefix'),'-ag')]",
-    "sqlAOListenerName": "[concat(parameters('dnsPrefix'),'ag-listener')]",
+    "sqlAOEPName": "[concat(parameters('vmNamePrefix'),'-hadr')]",
+    "sqlAOAGName": "[concat(parameters('vmNamePrefix'),'-ag')]",
+    "sqlAOListenerName": "[concat(parameters('vmNamePrefix'),'ag-listener')]",
 
     "sqlAvailabilitySetName": "sqlAvailabilitySet"
   },
 
   "resources": [
-    {
-      "name": "[variables('virtualNetworkName')]",
-      "type": "Microsoft.Network/virtualNetworks",
-      "location": "[parameters('location')]",
-      "apiVersion": "[variables('apiVersionNetworks')]",
-      "properties": {
-        "addressSpace": {
-          "addressPrefixes": [
-            "[parameters('virtualNetworkAddressRange')]"
-          ]
-        },
-        "subnets": "[variables('subnets')]"
-      }
-    },
+
     {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('sqlAvailabilitySetName')]",
       "apiVersion": "[variables('apiVersionNetworks')]",
       "location": "[parameters('location')]"
     },
-    {
-      "name": "[variables('adVmDepoyment')]",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "[variables('apiVersion')]",
-      "dependsOn": [
-        "[variables('virtualNetworkName')]"
-      ],
-      "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[variables('adTemplateURL')]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "location": { "value": "[parameters('location')]" },
-          "adminUsername": { "value": "[parameters('adminUsername')]" },
-          "adminPassword": { "value": "[parameters('adminPassword')]" },
-          "dnsPrefix": { "value": "[parameters('dnsPrefix')]" },
-          "storageAccount": { "value": "[variables('adStorageName')]" },
-          "subnetUri": { "value": "[variables('adSubnetRef')]" },
-          "primaryAdIpAddress": { "value": "[parameters('primaryAdIpAddress')]" },
-          "secondaryIpAddress": { "value": "[parameters('secondaryIpAddress')]" },
-          "storageAccountType": { "value": "[parameters('storageAccountType')]" },
-          "vmNamePrefix": { "value": "[variables('adVmNamePrefix')]" },
-          "vmSize": { "value": "[parameters('adVMSize')]" }
-        }
-      }
-    },
+
     {
       "name": "[variables('deploySqlClusterVms')]",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "[variables('apiVersion')]",
       "dependsOn": [
-        "[variables('virtualNetworkName')]",
         "[resourceId('Microsoft.Compute/availabilitySets', variables('sqlAvailabilitySetName'))]"
       ],
       "properties": {
@@ -421,12 +310,12 @@
         }
       }
     },
+
     {
       "name": "[variables('deploySqlWitnessVms')]",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "[variables('apiVersion')]",
       "dependsOn": [
-        "[variables('virtualNetworkName')]",
         "[resourceId('Microsoft.Compute/availabilitySets', variables('sqlAvailabilitySetName'))]"
       ],
       "properties": {
@@ -450,102 +339,10 @@
     },
 
     {
-      "name": "[variables('deployPrimaryAd')]",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "[variables('apiVersion')]",
-      "dependsOn": [
-        "[variables('adVmDepoymentId')]"
-      ],
-      "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[variables('deployPrimaryAdTemplateURL')]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "primaryADName": { "value": "[variables('adPDCVMName')]" },
-          "domainName": { "value": "[parameters('domainName')]" },
-          "location": { "value": "[parameters('location')]" },
-          "adminUsername": { "value": "[parameters('adminUsername')]" },
-          "adminPassword": { "value": "[parameters('adminPassword')]" },
-          "assetLocation": { "value": "[parameters('assetLocation')]" }
-        }
-      }
-    },
-    {
-      "name": "[variables('updateVNetDNS1')]",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "[variables('apiVersion')]",
-      "dependsOn": [
-        "[variables('deployPrimaryAdId')]"
-      ],
-      "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[variables('vnetwithDNSTemplateUri')]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "location": { "value": "[parameters('location')]" },
-          "virtualNetworkName": { "value": "[variables('virtualNetworkName')]" },
-          "virtualNetworkAddressRange": { "value": "[parameters('virtualNetworkAddressRange')]" },
-          "subnets": { "value": "[variables('subnets')]" },
-          "dnsServerAddress": { "value": [ "[parameters('primaryAdIpAddress')]" ] }
-        }
-      }
-    },
-    {
-      "name": "[variables('deploySecondaryAdName')]",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "[variables('apiVersion')]",
-      "dependsOn": [
-        "[variables('updateVNetDNS1Id')]"
-      ],
-      "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[variables('deploySecondaryAdTemplateURL')]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "secondaryADName": { "value": "[variables('adBDCVMName')]" },
-          "domainName": { "value": "[parameters('domainName')]" },
-          "location": { "value": "[parameters('location')]" },
-          "adminUsername": { "value": "[parameters('adminUsername')]" },
-          "adminPassword": { "value": "[parameters('adminPassword')]" },
-          "assetLocation": { "value": "[parameters('assetLocation')]" }
-        }
-      }
-    },
-    {
-      "name": "[variables('updateVNetDNS2')]",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "[variables('apiVersion')]",
-      "dependsOn": [
-        "[variables('deploySecondaryAdNameId')]"
-      ],
-      "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[variables('vnetwithDNSTemplateUri')]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "location": { "value": "[parameters('location')]" },
-          "virtualNetworkName": { "value": "[variables('virtualNetworkName')]" },
-          "virtualNetworkAddressRange": { "value": "[parameters('virtualNetworkAddressRange')]" },
-          "subnets": { "value": "[variables('subnets')]" },
-          "dnsServerAddress": { "value": [ "[parameters('primaryAdIpAddress')]", "[parameters('secondaryIpAddress')]" ] }
-        }
-      }
-    },
-    {
       "name": "[variables('updateSQLWNic')]",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "[variables('apiVersion')]",
       "dependsOn": [
-        "[variables('updateVNetDNS1Id')]",
-        "[variables('updateVNetDNS2Id')]",
         "[variables('deploySqlWitnessVmsId')]"
       ],
       "properties": {
@@ -575,7 +372,7 @@
             ]
           },
           "dnsServers": {
-            "value": [ "[parameters('primaryAdIpAddress')]", "[parameters('secondaryIpAddress')]" ]
+            "value": [ "[parameters('existingPrimaryAdIpAddress')]", "[parameters('existingSecondaryAdIpAddress')]" ]
           }
 
         }
@@ -586,8 +383,6 @@
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "[variables('apiVersion')]",
       "dependsOn": [
-        "[variables('updateVNetDNS1Id')]",
-        "[variables('updateVNetDNS2Id')]",
         "[variables('deploySqlClusterVmsId')]"
       ],
       "properties": {
@@ -622,7 +417,7 @@
             ]
           },
           "dnsServers": {
-            "value": [ "[parameters('primaryAdIpAddress')]", "[parameters('secondaryIpAddress')]" ]
+            "value": [ "[parameters('existingPrimaryAdIpAddress')]", "[parameters('existingSecondaryAdIpAddress')]" ]
           }
 
         }
@@ -633,8 +428,6 @@
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "[variables('apiVersion')]",
       "dependsOn": [
-        "[variables('updateVNetDNS1Id')]",
-        "[variables('updateVNetDNS2Id')]",
         "[variables('deploySqlClusterVmsId')]",
         "[variables('updateSQLCNic1Id')]"
       ],
@@ -670,7 +463,7 @@
             ]
           },
           "dnsServers": {
-            "value": [ "[parameters('primaryAdIpAddress')]", "[parameters('secondaryIpAddress')]" ]
+            "value": [ "[parameters('existingPrimaryAdIpAddress')]", "[parameters('existingSecondaryAdIpAddress')]" ]
           }
 
         }
@@ -691,9 +484,9 @@
         },
         "parameters": {
           "sqlwVMName": { "value": "[variables('sqlwVMName')]" },
-          "domainName": { "value": "[parameters('domainName')]" },
+          "domainName": { "value": "[parameters('existingDomainName')]" },
           "location": { "value": "[parameters('location')]" },
-          "sharePath": { "value": "[concat(parameters('dnsPrefix'),'-fsw')]" },
+          "sharePath": { "value": "[concat(parameters('vmNamePrefix'),'-fsw')]" },
           "adminUsername": { "value": "[parameters('adminUsername')]" },
           "adminPassword": { "value": "[parameters('adminPassword')]" },
           "assetLocation": { "value": "[parameters('assetLocation')]" }
@@ -716,13 +509,13 @@
         },
         "parameters": {
           "sqlVMNamePrefix": { "value": "[variables('sqlClusterVmNamePrefix')]" },
-          "domainName": { "value": "[parameters('domainName')]" },
-          "dnsPrefix": { "value": "[parameters('dnsPrefix')]" },
+          "domainName": { "value": "[parameters('existingDomainName')]" },
+          "dnsPrefix": { "value": "[parameters('vmNamePrefix')]" },
           "sharePath": { "value": "[variables('sqlWitnessSharePath')]" },
           "sqlwVMName": { "value": "[variables('sqlwVMName')]" },
           "sqlLBName": { "value": "[variables('sqlLBName')]" },
           "sqlLBIPAddress": { "value": "[parameters('sqlLBIPAddress')]" },
-          "dnsServerName": { "value": "[variables('adPDCVMName')]" },
+          "dnsServerName": { "value": "[parameters('existingAdPDCVMName')]" },
           "dataBaseNames": { "value": "[parameters('dataBaseNames')]" },
           "location": { "value": "[parameters('location')]" },
           "sqlServerServiceAccountUserName": { "value": "[parameters('sqlServerServiceAccountUserName')]" },
