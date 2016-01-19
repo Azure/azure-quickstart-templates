@@ -9,21 +9,19 @@ Once your deployment is complete, a private blockchain named ``chain1`` will be 
 ## Template Parameters
 
 When you launch the installation of the VM, you need to specify the following parameters:
-
-When you launch the installation of the cluster, you need to specify the following parameters:
 * `vmDnsName`: This is the public DNS name for the VM.  You need to specify an unique name.
 * `adminUsername`: This is the username you will use for logging into to the VM.
 * `adminPassword`: Azure requires passwords to have at least three of the following: one upper case, one lower case, a special character, or a number.
 * `vmSize`: The type of VM that you want to use for the node. The default size is D1 (1 core 3.5GB RAM) but you can change that if you expect to run workloads that require more RAM or CPU resources.
 * `location`: The region where the VM should be deployed to
 
-Once the deployment of the MultiChain node has completed, you will receive the ``connectAddress`` that can be used to connect other nodes to the new blockchain.  The blockchain's name is ``chain1`` and the network port is set to ``8333`` and the JSON-RPC port set to ``8332``.  The deployed node has the role of Administrator.
+Once the deployment of the MultiChain node has completed, you will receive the ``nodeAddress`` that can be used to connect other nodes to the new blockchain.  The blockchain's name is ``chain1`` and the network port is set to ``8333`` and the JSON-RPC port set to ``8332``.  The deployed node has the role of Administrator.
 
 ## Connect to the blockchain from another computer
 
-Install Multichain on a second computer and run the command `multichaind <connectAddress>`.
+Install Multichain on a second computer and run the command `multichaind <nodeAddress>`.
 
-The ``connectAddress`` argument was obtained after deployment and should look something like `chain1@magicunicorns.westus.cloudapp.azure.com:8333`.
+The ``nodeAddress`` argument was obtained after deployment and should look something like `chain1@magicunicorns.westus.cloudapp.azure.com:8333`.
 
 More information about how to connect to a blockchain and grant permissions can be found in the [Getting Started](http://www.multichain.com/getting-started/) tutorial.
 
