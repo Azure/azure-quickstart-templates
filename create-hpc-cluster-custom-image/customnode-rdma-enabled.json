@@ -38,34 +38,10 @@
         "description": "The VM role size"
       }
     },
-    "storageAccountName": {
+    "sourceImageVhdUri": {
       "type": "string",
       "metadata": {
-        "description": "The storage account name to store the VHD of the VM"
-      }
-    },
-    "imgPublisher": {
-      "type": "string",
-      "metadata": {
-        "description": "The publisher of the VM image"
-      }
-    },
-    "imgOffer": {
-      "type": "string",
-      "metadata": {
-        "description": "The offer of the VM image"
-      }
-    },
-    "imgSku": {
-      "type": "string",
-      "metadata": {
-        "description": "The sku of the VM image"
-      }
-    },
-    "imgVersion": {
-      "type": "string",
-      "metadata": {
-        "description": "The version of the VM image"
+        "description": "The Uri of the source image VHD"
       }
     },
     "adminUsername": {
@@ -112,14 +88,13 @@
     },
     "computeNodePostConfigScript": {
       "type": "string",
-      "defaultValue": "",
       "metadata": {
         "description": "Optional URL of a public available PowerShell script you want to run on the compute nodes after they are configured. You can also specify arguments for the script, for example 'http://www.consto.com/mypostscript.ps1 -Arg1 arg1 -Arg2 arg2'."
       }    
     }
   },
   "variables":{
-    "osDiskUri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/', toLower(parameters('vmName')), '-os', uniqueString(parameters('subnetId')), '.vhd')]"
+    "osDiskUri": "[uri(parameters('sourceImageVhdUri'), concat(toLower(parameters('vmName')), '-', uniqueString(parameters('subnetId'), toLower(parameters('vmName'))), '.vhd'))]"
   },
   "resources": [
     {
@@ -163,19 +138,17 @@
           "customData": "[parameters('customData')]"
         },
         "storageProfile": {
-          "imageReference": {
-            "publisher": "[parameters('imgPublisher')]",
-            "offer": "[parameters('imgOffer')]",
-            "sku": "[parameters('imgSku')]",
-            "version": "[parameters('imgVersion')]"
-          },
           "osDisk": {
-            "name": "osdisk",
+            "name": "[parameters('vmName')]",
+            "osType": "windows",
+            "caching": "ReadOnly",
+            "image": {
+              "uri": "[parameters('sourceImageVhdUri')]"
+            },
+            "createOption": "FromImage",
             "vhd": {
               "uri": "[variables('osDiskUri')]"
-            },
-            "caching": "ReadOnly",
-            "createOption": "FromImage"
+            }
           }
         },
         "networkProfile": {
@@ -189,11 +162,26 @@
       "resources": [
         {
           "type": "Microsoft.Compute/virtualMachines/extensions",
-          "name": "[concat(parameters('vmName'), '/configureComputeNode')]",
+          "name": "[concat(parameters('vmName'), '/installRDMADriver')]",
           "apiVersion": "[parameters('apiVersion')]",
           "location": "[parameters('location')]",
           "dependsOn": [
             "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.HpcCompute",
+            "type": "HpcVmDrivers",
+            "typeHandlerVersion": "1.1"
+          }
+        },
+        {
+          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "name": "[concat(parameters('vmName'), '/configureComputeNode')]",
+          "apiVersion": "[parameters('apiVersion')]",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]",
+            "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'), '/extensions/installRDMADriver')]"
           ],
           "properties": {
             "publisher": "Microsoft.Powershell",
