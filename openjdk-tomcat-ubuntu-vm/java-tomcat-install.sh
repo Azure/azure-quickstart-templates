@@ -37,7 +37,7 @@ export CATALINA_HOME=/usr/lib/tomcat/latest
 export SERVER_APPS_LOCATION=$CATALINA_HOME/webapps
 export PATH=$PATH:$CATALINA_HOME/bin
 cd $CATALINA_HOME
-sudo chown -R $USER .
+sudo chown -R $3 .
 cd $CATALINA_HOME/bin
 sudo chmod +x *.sh
 
