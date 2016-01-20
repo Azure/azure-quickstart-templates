@@ -12,8 +12,8 @@ This template uses the resource loops capability to create network interfaces, v
 * Topology: Azure-LB -> haproxy-lb VMs (2) -> application VMs (2)
 * Azure-LB
   * Azure-LB is configured with *enableFloatingIP* set to true in *loadBalancingRules*.
-    * In this configuration, Azure-LB does not perform DNAT from public IP (VIP) to private IP address of the pool members. Instead, packete reach the pool member with the same destination IP set by the client.
-  * Public IP **should** be configured on a network adapater of the pool member VMs to receive/respond to the requests.
+    * In this configuration, Azure-LB does not perform DNAT from public IP (VIP) to private IP address of the pool members. Instead, packets reach the pool member with the same destination IP set by the client.
+  * Public IP **should** be configured on a network adapter of the pool member VMs to receive/respond to the requests.
 * Haproxy-lb VMs
   * Public IP associated with Azure-LB is assigned to *only* one of the haproxy-lb VMs (MASTER as determined by keepalived).
   * Azure-LB probe on the other haproxy-lb VM (BACKUP) is explicitly disabled using a firewall(iptables) rule to block the LB probe port.

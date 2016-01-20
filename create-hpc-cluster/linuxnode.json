@@ -109,7 +109,17 @@
       "metadata": {
         "description": "The fully qualified domain name (FQDN) for the private domain forest which will be created by this template, for example 'hpc.local'."
       }
+    },
+    "computeNodePostConfigScript": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Not used currently."
+      }    
     }
+  },
+  "variables":{
+    "osDiskUri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/', toLower(parameters('vmName')), '-os', uniqueString(parameters('subnetId')), '.vhd')]"
   },
   "resources": [
     {
@@ -165,7 +175,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/', toLower(parameters('vmName')), '-osdisk.vhd')]"
+              "uri": "[variables('osDiskUri')]"
             },
             "caching": "ReadOnly",
             "createOption": "FromImage"
@@ -182,39 +192,16 @@
       "resources": [
         {
           "type": "Microsoft.Compute/virtualMachines/extensions",
-          "name": "[concat(parameters('vmName'), '/updateDNSRecord')]",
+          "name": "[concat(parameters('vmName'), '/installHPCNodeAgent')]",
           "apiVersion": "[parameters('apiVersion')]",
           "location": "[parameters('location')]",
           "dependsOn": [
             "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
           ],
           "properties": {
-            "publisher": "Microsoft.OSTCExtensions",
-            "type": "CustomScriptForLinux",
-            "typeHandlerVersion": "1.4",
-            "settings": {
-              "fileUris": [
-                "[concat(parameters('scriptBaseUri'), '/updatednsrecord.sh')]"
-              ]
-            },
-            "protectedSettings": {
-              "commandToExecute": "[concat('bash updatednsrecord.sh ', parameters('privateDomainName'), ' ', reference(parameters('nicName')).ipConfigurations[0].properties.privateIPAddress)]"
-            }
-          }
-        },
-        {
-          "type": "Microsoft.Compute/virtualMachines/extensions",
-          "name": "[concat(parameters('vmName'), '/installHPCNodeAgent')]",
-          "apiVersion": "[parameters('apiVersion')]",
-          "location": "[parameters('location')]",
-          "dependsOn": [
-            "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]",
-            "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'), '/extensions/updateDNSRecord')]"
-          ],
-          "properties": {
             "publisher": "Microsoft.HpcPack",
             "type": "LinuxNodeAgent",
-            "typeHandlerVersion": "1.5",
+            "typeHandlerVersion": "1.6",
             "protectedSettings": {
               "ClusterName": "[concat(parameters('clusterName'), '.', parameters('privateDomainName'))]"
             }
