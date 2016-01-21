@@ -1,6 +1,6 @@
 # Deploy Shibboleth Identity Provider on Ubuntu on a single VM.
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Fshibboleth-singlevm-ubuntu%2Fazuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fshibboleth-singlevm-ubuntu%2Fazuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
 
 This template deploys Shibboleth Identity Provider on Ubuntu. It creates a single Ubuntu VM, does a silent install of Apache Tomcat and Open JDK on it, and then deploys Shibboleth IDP on it.  After the deployment is successful, you can go to /idp/profile/Status to check success. For further instructions, please refer to the Shibboleth IDP documentation at https://wiki.shibboleth.net/confluence/display/SHIB2/IdPInstall.
 
