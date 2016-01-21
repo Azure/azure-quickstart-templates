@@ -2,16 +2,22 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "location": {
+    "workspaceId": {
       "type": "string",
       "metadata": {
-        "description": "The location where the Virtual Machine will be deployed."
+        "description": "workspace id"
+      }
+    },
+    "workspaceKey": {
+      "type": "string",
+      "metadata": {
+        "description": "workspace key"
       }
     },
     "adminUsername": {
       "type": "string",
       "metadata": {
-        "description": "Username for the Virtual Machine."
+        "description": "User name for the Virtual Machine."
       }
     },
     "adminPassword": {
@@ -20,43 +26,42 @@
         "description": "Password for the Virtual Machine."
       }
     },
-    "dnsLabelPrefix": {
-      "type": "string",
-      "metadata": {
-        "description": "DNS Label for the Public IP. Must be lowercase. It should match with the following regular expression: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$ or it will raise an error."
-      }
-    },
+	"dnsLabelPrefix": {
+	   "type": "string",
+	   "metadata": {
+		  "description": "DNS Label for the Public IP. Must be lowercase. It should match with the following regular expression: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$ or it will raise an error."
+	   }
+	},
     "ubuntuOSVersion": {
       "type": "string",
-      "defaultValue": "15.10",
-      "metadata": {
-        "description": "The Ubuntu version for deploying the Netki Wallet Name Service API server docker container. This will pick a fully patched image of this given Ubuntu version. Allowed values: 14.04.2-LTS, 14.04-DAILY, 15.04"
-      },
+      "defaultValue": "14.04.2-LTS",
       "allowedValues": [
+        "12.04.5-LTS",
         "14.04.2-LTS",
-        "14.04-DAILY",
         "15.10"
-      ]
+      ],
+      "metadata": {
+        "description": "The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version. Allowed values: 12.04.5-LTS, 14.04.2-LTS, 15.10."
+      }
     }
   },
   "variables": {
-    "apiVersion": "2015-06-15",
+	"storageAccountName": "[concat(uniquestring(resourceGroup().id), 'standardsa')]",
+	"apiVersion": "2015-06-15",
     "imagePublisher": "Canonical",
     "imageOffer": "UbuntuServer",
-    "OSDiskName": "osdiskfornetkiwnsapiserver",
-    "nicName": "wnsVMNic",
-    "extensionName": "DockerExtension",
+    "OSDiskName": "osdiskforlinuxsimple",
+    "nicName": "myVMNic",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet",
     "subnetPrefix": "10.0.0.0/24",
-    "storageAccountName": "[uniqueString(resourceGroup().id)]",
     "storageAccountType": "Standard_LRS",
     "publicIPAddressName": "myPublicIP",
     "publicIPAddressType": "Dynamic",
     "vmStorageAccountContainerName": "vhds",
-    "vmName": "NetkiWNSApiServer",
+    "vmName": "MyUbuntuVM",
     "vmSize": "Standard_D1",
-    "virtualNetworkName": "wnsVNET",
+    "virtualNetworkName": "MyVNET",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
     "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]"
   },
@@ -65,7 +70,7 @@
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('storageAccountName')]",
       "apiVersion": "[variables('apiVersion')]",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "properties": {
         "accountType": "[variables('storageAccountType')]"
       }
@@ -74,7 +79,7 @@
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "properties": {
         "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
         "dnsSettings": {
@@ -86,7 +91,7 @@
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -107,7 +112,7 @@
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
@@ -130,10 +135,10 @@
       }
     },
     {
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmName')]",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
@@ -143,7 +148,7 @@
           "vmSize": "[variables('vmSize')]"
         },
         "osProfile": {
-          "computerName": "[variables('vmName')]",
+          "computername": "[variables('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]"
         },
@@ -155,7 +160,7 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "osdisk1",
+            "name": "osdisk",
             "vhd": {
               "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]"
             },
@@ -169,46 +174,37 @@
               "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
             }
           ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+             "enabled": "true",
+             "storageUri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net')]"
+          }
         }
-      }
-    },
-    {
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('vmName'),'/', variables('extensionName'))]",
-      "apiVersion": "[variables('apiVersion')]",
-      "location": "[parameters('location')]",
-      "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
-      ],
-      "properties": {
-        "publisher": "Microsoft.Azure.Extensions",
-        "type": "DockerExtension",
-        "typeHandlerVersion": "1.0",
-        "autoUpgradeMinorVersion": true,
-        "settings": {}
-      }
-    },
-    {
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('vmName'),'/dockerfile')]",
-      "apiVersion": "[variables('apiVersion')]",
-      "location": "[parameters('location')]",
-      "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]",
-        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'), '/extensions/', variables('extensionName'))]"
-      ],
-      "properties": {
-        "autoUpgradeMinorVersion": true,
-        "publisher": "Microsoft.OSTCExtensions",
-        "type": "CustomScriptForLinux",
-        "typeHandlerVersion": "1.4",
-        "settings": {
-          "fileUris": [
-            "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/netki-wns-api-server-on-ubuntu/get-build-run-dockerfile.sh"
+      },
+      "resources": [
+        {
+		  "type": "Microsoft.Compute/virtualMachines/extensions",
+	      "name": "[concat(variables('vmName'), '/Microsoft.EnterpriseCloud.Monitoring')]",
+          "apiVersion": "[variables('apiVersion')]",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
           ],
-          "commandToExecute": "sh get-build-run-dockerfile.sh"
+          "properties": {
+            "publisher": "Microsoft.EnterpriseCloud.Monitoring",
+			"type": "OmsAgentForLinux",
+            "typeHandlerVersion": "1.0",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+			  "workspaceId": "[parameters('workspaceId')]"
+            },
+            "protectedSettings": {
+			  "workspaceKey": "[parameters('workspaceKey')]"
+            }
+          }
         }
-      }
+      ]
     }
   ]
 }
