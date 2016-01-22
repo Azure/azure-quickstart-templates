@@ -2,10 +2,22 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "instanceName": {
+        "deploymentName": {
             "type": "string",
             "metadata": {
                 "description" : "What to call this virtual machine"
+            }
+        },
+	"contactEmail": {
+	    "type": "string",
+	    "metadata": {
+		"description" : "Email address at which Blockapps can reach you"
+	    }
+	},
+        "password" : {
+            "type" : "secureString",
+            "metadata" : {
+                "description" : "Password for admin account 'strato'"
             }
         },
         "storageAccount": {
@@ -14,49 +26,42 @@
                 "description" : "The storage account in which to create this VM"
             }
         },
-        "blockchain": {
-            "type": "string",
-            "allowedValues" : ["live", "dev"],
-            "metadata": {
-                "description" : "Which STRATO configuration to enable: 'live' is the Ethereum network; 'dev' is a private developer blockchain"
-            }
-        },
-        "stratoVersion" : {
-            "type": "string",
-            "allowedValues": ["1.0"],
+        "cpus" : {
+            "type" : "int",
+            "allowedValues": [1,2,4,8],
             "metadata" : {
-                "description" : "STRATO version"
-            }
-        },
-        "password" : {
-            "type" : "securestring",
-            "metadata" : {
-                "description" : "Password for admin account 'strato'"
+                "description" : "Virtual machine CPUs"
             }
         }
     },
     "variables": {
         "apiVersion" : "2015-06-15",
         "dockerRepo" : "blockapps/strato",
+        "dockerVersion" : "ubuntu",
         "dockerUser" : "blockappsuser",
         "dockerPassword" : "blockchain as a service",
         "dockerEmail" : "blockapps.user@gmail.com",
-        "dockerImage" : "[concat(variables('dockerRepo'), ':ubuntu-', parameters('blockchain'), '-public-', parameters('stratoVersion'))]",
-        "allDockerPorts": {
-            "live": ["80:80", "443:443"],
-            "dev": ["80:80"]
-        },
-        "dockerPorts" : "[variables('allDockerPorts')[parameters('blockchain')]]",
+        "dockerImage" : "[concat(variables('dockerRepo'), ':', variables('dockerVersion'))]",
+        "dockerPorts" : ["80:80", "30303:30303", "30303:30303/udp", "60022:60022"],
 
-        "name" : "[parameters('instanceName')]",
+        "name" : "[parameters('deploymentName')]",
+	"email" : "[parameters('contactEmail')]",
+	"blockchain" : "strato-dev",
         "location": "centralus",
-        "vmSize": "Standard_DS3",
+        "cpuSizes" : {
+            "1" : "1",
+            "2" : "2",
+            "4" : "3",
+            "8" : "4"
+        },
+        "vmSize": "[concat('Standard_DS', variables('cpuSizes')[string(parameters('cpus'))])]",
         "username": "strato",
         "password": "[parameters('password')]",
+        "copies" : 1,
 
         "storageAccount": "[parameters('storageAccount')]",
         "storageAccountPath": "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccount'))]",
-        "vhdURI": "[concat('https:\/\/', variables('storageAccount'), '.blob.core.windows.net\/vhds\/', parameters('instanceName'), '.vhd')]",
+        "vhdURIBase": "[concat('https:\/\/', variables('storageAccount'), '.blob.core.windows.net\/vhds\/', variables('name'))]",
         "storageAccountType": "Premium_LRS",
 
         "networkInterfaceName": "[concat(variables('name'), 'nic')]",
@@ -74,14 +79,15 @@
         "publicIPAddressType": "Dynamic",
         "dnsNameForPublicIP": "[variables('name')]",
 
-        "virtualNetworkName": "stratodeploynet",
+        "virtualNetworkName": "[concat(variables('name'), 'net')]",
         "virtualNetworkPath": "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
         "vnetId": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
         "virtualNetworkAddressPrefix": "11.24.0.0/16",
 
         "subnetName": "stratoinstances",
         "subnetId": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
-        "virtualSubnetAddressPrefix": "11.24.82.0/24",
+        "virtualSubnetAddressBase": "11.24.82.",
+        "virtualSubnetAddressPrefix": "[concat(variables('virtualSubnetAddressBase'), '0/24')]",
 
         "imagePublisher": "Canonical",
         "imageOffer": "UbuntuServer",
@@ -142,26 +148,96 @@
                         "properties": {
                             "description": "Allow inbound SSH connections",
                             "protocol": "Tcp",
-                            "sourcePortRange": "0-65535",
+                            "sourcePortRange": "*",
                             "destinationPortRange": "22",
                             "sourceAddressPrefix": "*",
-                            "destinationAddressPrefix": "*",
+                            "destinationAddressPrefix": "[variables('virtualSubnetAddressPrefix')]",
                             "access": "Allow",
                             "direction": "Inbound",
                             "priority": 100
                         }
                     },
                     {
-                        "name": "AllowHHTPIn",
+                        "name": "AllowAltSSHIn",
                         "properties": {
-                            "description": "Allow inbound HTTP connections",
+                            "description": "Allow inbound SSH connections from hub",
                             "protocol": "Tcp",
-                            "sourcePortRange": "0-65535",
-                            "destinationPortRange": "80",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "60022",
                             "sourceAddressPrefix": "*",
-                            "destinationAddressPrefix": "*",
+                            "destinationAddressPrefix": "[variables('virtualSubnetAddressPrefix')]",
                             "access": "Allow",
                             "direction": "Inbound",
+                            "priority": 101
+                        }
+                    },
+                    {
+                        "name": "AllowEthP2PIn",
+                        "properties": {
+                            "description": "Allow p2p connections",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "30303",
+                            "sourceAddressPrefix": "[variables('virtualSubnetAddressPrefix')]",
+                            "destinationAddressPrefix": "[variables('virtualSubnetAddressPrefix')]",
+                            "access": "Allow",
+                            "direction": "Inbound",
+                            "priority": 102
+                        }
+                    },
+                    {
+                        "name": "AllowEthP2PUDPIn",
+                        "properties": {
+                            "description": "Allow p2p connections",
+                            "protocol": "Udp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "30303",
+                            "sourceAddressPrefix": "[variables('virtualSubnetAddressPrefix')]",
+                            "destinationAddressPrefix": "[variables('virtualSubnetAddressPrefix')]",
+                            "access": "Allow",
+                            "direction": "Inbound",
+                            "priority": 103
+                        }
+                    },
+                    {
+                        "name": "AllowHTTPIn",
+                        "properties": {
+                            "description": "Allow api requests",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "80",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "[variables('virtualSubnetAddressPrefix')]",
+                            "access": "Allow",
+                            "direction": "Inbound",
+                            "priority": 104
+                        }
+                    },
+                    {
+                        "name": "AllowEthP2PUDPOut",
+                        "properties": {
+                            "description": "Allow p2p discovery",
+                            "protocol": "Udp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "30303",
+                            "sourceAddressPrefix": "[variables('virtualSubnetAddressPrefix')]",
+                            "destinationAddressPrefix": "[variables('virtualSubnetAddressPrefix')]",
+                            "access": "Allow",
+                            "direction": "Outbound",
+                            "priority": 100
+                        }
+                    },
+                    {
+                        "name": "AllowEthP2POut",
+                        "properties": {
+                            "description": "Allow p2p discovery",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "30303",
+                            "sourceAddressPrefix": "[variables('virtualSubnetAddressPrefix')]",
+                            "destinationAddressPrefix": "[variables('virtualSubnetAddressPrefix')]",
+                            "access": "Allow",
+                            "direction": "Outbound",
                             "priority": 101
                         }
                     }
@@ -186,8 +262,9 @@
                     {
                         "name": "[variables('ipConfigurationName')]",
                         "properties": {
-                            "privateIPAllocationMethod": "Dynamic",
-                            "publicIPAddress": {
+                            "privateIPAllocationMethod": "Static",
+                            "privateIPAddress": "[concat(variables('virtualSubnetAddressBase'), '5')]",
+                            "publicIPAddress" : {
                                 "id": "[variables('publicIPAddressId')]"
                             },
                             "subnet": {
@@ -237,7 +314,7 @@
                     "osDisk": {
                         "caching": "ReadWrite",
                         "vhd": {
-                            "uri": "[variables('vhdURI')]"
+                            "uri": "[concat(variables('vhdURIBase'), '.vhd')]"
                         },
                         "createOption": "FromImage",
                         "name" : "[concat(variables('name'), 'osDisk')]"
@@ -271,6 +348,7 @@
                         },
                         "strato" : {
                             "container_name" : "strato",
+                            "command" : "[concat(variables('blockchain'), ' ', variables('name'), ' ', variables('email'), ' ', variables('copies'))]",
                             "stdin_open" : true,
                             "tty" : true,
                             "restart" : "always",
