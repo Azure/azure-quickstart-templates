@@ -22,7 +22,7 @@ We're following basic GitHub Flow. If you have ever contributed to an open sourc
  * Push your new branch to your GitHub Fork (`git push origin my-new-template`)
  * Visit this repository in GitHub and create a Pull Request.
 
-**For a detailed tutorial, [please check out our tutorial](../tutorial/git-tutorial.md)!**
+**For a detailed tutorial, [please check out our tutorial](https://github.com/Azure/azure-quickstart-templates/blob/master/tutorial/git-tutorial.md)!**
 
 ### Azure.com
 
@@ -118,7 +118,7 @@ The metadata.json file will be validated using these rules
 
 ## Starter template
 
-A starter template is provided [here](https://github.com/Azure/azure-quickstart-templates/tree/master/100-starter-template-with-validation) for you to follow
+A starter template is provided [here](https://github.com/Azure/azure-quickstart-templates/tree/master/100-STARTER-TEMPLATE-with-VALIDATION) for you to follow
 
 ## Common errors from acomghbot
 

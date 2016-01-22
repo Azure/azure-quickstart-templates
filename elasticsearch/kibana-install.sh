@@ -39,7 +39,7 @@ sudo groupadd -g 999 kibana
 sudo useradd -u 999 -g 999 kibana
 
 sudo mkdir -p /opt/kibana
-curl -o kibana.tar.gz https://download.elastic.co/kibana/kibana/kibana-4.2.0-linux-x64.tar.gz
+curl -o kibana.tar.gz https://download.elastic.co/kibana/kibana/kibana-4.3.1-linux-x64.tar.gz
 tar xvf kibana.tar.gz -C /opt/kibana/ --strip-components=1
 
 sudo chown -R kibana: /opt/kibana

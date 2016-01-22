@@ -160,9 +160,16 @@
     },
     "headNodePostConfigScript": {
       "type": "string",
-      "defaultValue": " ",
+      "defaultValue": "",
       "metadata": {
-        "description": "Optional URL of a public available PowerShell script you want to run on the head node after it is configured. You can also specify arguments for the script, for example 'http://www.consto.com/mypostscript.ps1 -Arg1 arg1 -Arg2 arg2'."
+        "description": "Optional URL of a public available PowerShell script you want to run on the head node after it is configured. The script will be run as the Local System account. You can also specify arguments for the script, for example 'http://www.contoso.com/myhnpostscript.ps1 -Arg1 arg1 -Arg2 arg2'."
+      }
+    },
+    "computeNodePostConfigScript": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Optional URL of a public available PowerShell script you want to run on the compute nodes after they are configured. The script will be run as the Local System account. You can also specify arguments for the script, for example 'http://www.contoso.com/mycnpostscript.ps1 -Arg1 arg1 -Arg2 arg2'."
       }
     },
     "artifactsBaseUrl": {
@@ -187,12 +194,11 @@
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
     "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]",
     "publicIPAddressType": "Dynamic",
-    "availabilitySetNamePrefix": "[concat(parameters('clusterName'), '-AVSet')]",
+    "availabilitySetNamePrefix": "[concat(parameters('clusterName'), '-avset')]",
     "nbrVMPerAvailabilitySet": 50,
     "availabilitySetNumber": "[add(div(variables('computeNodeNumber'), variables('nbrVMPerAvailabilitySet')), 1)]",
-    "dnsName": "[concat(parameters('clusterName'), 'ep')]",
-    "nicName": "[concat(parameters('clusterName'),'-nic')]",
-    "nicNameHN": "[concat(variables('nicName'),'-hn')]",
+    "nicNameSuffix": "[concat('-nic', uniqueString(variables('subnetRef')))]",
+    "nicNameHN": "[concat(parameters('clusterName'), variables('nicNameSuffix'))]",
     "vmSizeSuffix": "[uniqueString(resourceGroup().id)]",
     "suffixA8Size": "[concat('Standard_A8', variables('vmSizeSuffix'))]",
     "suffixA9Size": "[concat('Standard_A9', variables('vmSizeSuffix'))]",
@@ -210,12 +216,10 @@
     "cnRDMAState": "[variables('cnRDMACapable')]",
     "cnOsPlatformRelated": {
       "Linux": {
-        "template": "linuxnode.json",
-        "hnDNSArg": " -UnsecureDNSUpdate "
+        "template": "linuxnode.json"
       },
       "Windows": {
-        "template": "[concat('windowsnode-rdma-', variables('cnRDMAState'), '.json')]",
-        "hnDNSArg": " "
+        "template": "[concat('windowsnode-rdma-', variables('cnRDMAState'), '.json')]"
       }
     },
     "curCNOSPlatformRelated": "[variables('cnOsPlatformRelated')[parameters('computeNodeImageOsPlatform')]]",
@@ -223,7 +227,7 @@
     "computeNodeCustomData": "[base64(concat('HPCClusterName=', parameters('clusterName'), '\r\nImageCategory=public\r\nImageName=', parameters('computeNodeImageOffer'), '-', parameters('computeNodeImageSku'), '\r\nVMSize=', parameters('computeNodeVMSize')))]",
     "adminBase64Password": "[base64(parameters('adminPassword'))]",
     "iaasInfoArg": "[concat('-SubscriptionId ', subscription().subscriptionId, ' -VNet ', parameters('virtualNetworkName'), ' -Subnet ', variables('subnet1Name'), ' -Location \"', parameters('location'), '\"')]",
-    "headNodeCommandStr": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File PrepareHN.ps1 -DomainFQDN ', parameters('privateDomainName'), ' -AdminUserName ', parameters('adminUsername'), ' -AdminBase64Password \"', variables('adminBase64Password'), '\" -CNSize ', parameters('computeNodeVMSize'), ' -PostConfigScript \"', parameters('headNodePostConfigScript'), '\"', variables('curCNOSPlatformRelated').hnDNSArg, variables('iaasInfoArg'))]",
+    "headNodeCommandStr": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File PrepareHN.ps1 -DomainFQDN ', parameters('privateDomainName'), ' -AdminUserName ', parameters('adminUsername'), ' -AdminBase64Password \"', variables('adminBase64Password'), '\" -CNSize ', parameters('computeNodeVMSize'), ' -PostConfigScript \"', base64(trim(parameters('headNodePostConfigScript'))), '\" ', variables('iaasInfoArg'))]",
     "hnStorageConnStrPrefix": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('hnStorageAccountName'), ';AccountKey=')]"
   },
   "resources": [
@@ -295,6 +299,7 @@
       "name": "[variables('nicNameHN')]",
       "location": "[parameters('location')]",
       "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
         "Microsoft.Resources/deployments/setupClusterPublicIP"
       ],
       "properties": {
@@ -445,13 +450,14 @@
       "properties": {
         "publisher": "Microsoft.Compute",
         "type": "CustomScriptExtension",
-        "typeHandlerVersion": "1.4",
+        "typeHandlerVersion": "1.7",
         "settings": {
           "fileUris": [
             "[concat(parameters('artifactsBaseUrl'), '/PrepareHN.ps1')]",
-            "[concat(parameters('artifactsBaseUrl'), '/HPCHNPrepare.ps1')]",
-            "[concat(parameters('artifactsBaseUrl'), '/HpcPrepareUtil.ps1')]"
-          ],
+            "[concat(parameters('artifactsBaseUrl'), '/HPCHNPrepare.ps1')]"
+          ]
+        },
+        "protectedSettings": {
           "commandToExecute": "[concat(variables('headNodeCommandStr'), ' -AzureStorageConnStr \"', variables('hnStorageConnStrPrefix'), listKeys(variables('hnStorageAccountId'),variables('apiVersion')).key1, '\" -PublicDnsName ', reference('setupClusterPublicIP').outputs.fqdn.value)]"
         }
       }
@@ -499,7 +505,7 @@
             "value": "[parameters('location')]"
           },
           "nicName": {
-            "value": "[concat(variables('nicName'), padLeft(string(copyIndex()), 3, '0'))]"
+            "value": "[concat(parameters('computeNodeNamePrefix'), padLeft(string(copyIndex()), 3, '0'), variables('nicNameSuffix'))]"
           },
           "subnetId": {
             "value": "[variables('subnetRef')]"
@@ -545,6 +551,9 @@
           },
           "privateDomainName": {
             "value": "[parameters('privateDomainName')]"
+          },
+          "computeNodePostConfigScript": {
+            "value": "[trim(parameters('computeNodePostConfigScript'))]"          
           }
         }
       }
