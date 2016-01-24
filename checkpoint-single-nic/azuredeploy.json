@@ -51,21 +51,75 @@
     },
     "vmSize": {
       "defaultValue": "Standard_D3",
+      "allowedValues": [
+        "Standard_A0",
+        "Standard_A1",
+        "Standard_A2",
+        "Standard_A3",
+        "Standard_A4",
+        "Standard_A7",
+        "Standard_A9",
+        "Standard_A11",
+        "Standard_D1",
+        "Standard_D2",
+        "Standard_D3",
+        "Standard_D4",
+        "Standard_D11",
+        "Standard_D12",
+        "Standard_D13",
+        "Standard_D14",
+        "Standard_D1_v2",
+        "Standard_D2_v2",
+        "Standard_D3_v2",
+        "Standard_D4_v2",
+        "Standard_D5_v2",
+        "Standard_D11_v2",
+        "Standard_D12_v2",
+        "Standard_D13_v2",
+        "Standard_D14_v2"
+      ],
       "metadata": {
         "description": "Size of the VM"
       },
       "type": "string"
+    },
+    "installSecurityGateway": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Install Security Gateway"
+      }
+    },
+    "installSecurityManagement": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Install Security Management"
+      }
+    },
+    "managementGUIClientNetwork": {
+      "type": "string",
+      "defaultValue": "0.0.0.0/0",
+      "metadata": {
+        "description": "Allowed network for Management GUI clients",
+        "minLength": 9,
+        "maxLength": 18
+      }
+    },
+    "sicKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "One time key for Secure Internal Communication",
+        "minLength": 8
+      }
     }
   },
   "variables": {
     "apiVersion": "2015-06-15",
-    "customData": "#!/bin/bash",
-    "addressPrefix": "10.0.0.0/16",
-    "gatewayPrivateAddress": "10.0.1.10",
-    "onPremiseNetwork": "198.51.100.0/24",
+    "customData": "[concat('#!/bin/bash\n', '\n', 'installSecurityGateway=\"', parameters('installSecurityGateway'), '\"', '\n', 'installSecurityGateway=\"$(echo $installSecurityGateway | tr \"TF\" \"tf\")\"\n', 'installSecurityManagement=\"', parameters('installSecurityManagement'), '\"', '\n', 'installSecurityManagement=\"$(echo $installSecurityManagement | tr \"TF\" \"tf\")\"\n', 'adminPassword=\"', parameters('adminPassword'), '\"', '\n', 'managementGUIClientNetwork=\"', parameters('managementGUIClientNetwork'), '\"', '\n', 'ManagementGUIClientBase=\"$(echo $managementGUIClientNetwork | cut -d / -f 1)\"\n', 'ManagementGUIClientMaskLength=\"$(echo $managementGUIClientNetwork | cut -d / -f 2)\"\n', 'sicKey=\"', parameters('sicKey'), '\"', '\n', 'conf=\"install_security_gw=$installSecurityGateway\"\n', 'if $installSecurityGateway; then\n', '    conf=\"${conf}&install_ppak=true\"\n', '    conf=\"${conf}&gateway_cluster_member=false\"\n', 'fi\n', 'conf=\"${conf}&install_security_managment=$installSecurityManagement\"\n', 'if $installSecurityManagement; then\n', '    conf=\"${conf}&install_mgmt_primary=true\"\n', '    conf=\"${conf}&mgmt_admin_name=admin\"\n', '    conf=\"${conf}&mgmt_admin_passwd=$adminPassword\"\n', '    conf=\"${conf}&mgmt_gui_clients_radio=network\"\n', '    conf=\"${conf}&mgmt_gui_clients_ip_field=$ManagementGUIClientBase\"\n', '    conf=\"${conf}&mgmt_gui_clients_subnet_field=$ManagementGUIClientMaskLength\"\n', 'fi\n', 'conf=\"${conf}&ftw_sic_key=$sicKey\"\n', '\n', 'config_system -s $conf\n', 'shutdown -r now\n')]",
     "imageOffer": "check-point-r77-10",
     "imagePublisher": "checkpoint",
-    "imageReference": "[variables(concat('imageReference',parameters('offer')))]",
+    "imageReference": "[variables(concat('imageReference', parameters('offer')))]",
     "imageReferenceR7730BYOL": {
       "offer": "[variables('imageOffer')]",
       "publisher": "[variables('imagePublisher')]",
@@ -78,8 +132,8 @@
       "sku": "sg-ngtp",
       "version": "latest"
     },
-    "nicName": "gateway-nic",
-    "osProfile": "[variables(concat('osprofile',parameters('authenticationType')))]",
+    "nic1Name": "gateway-nic",
+    "osProfile": "[variables(concat('osprofile', parameters('authenticationType')))]",
     "osProfilepassword": {
       "adminPassword": "[parameters('adminPassword')]",
       "adminUsername": "notused",
@@ -113,19 +167,22 @@
       "product": "[variables('imageOffer')]",
       "publisher": "[variables('imagePublisher')]"
     },
-    "publicIPAddressName": "security-gateway",
-    "publicIPAddressId": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]",
     "storageAccountType": "Standard_LRS",
+    "vnetName": "vnet",
+    "vnetId": "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+    "addressPrefix": "10.0.0.0/16",
+    "onPremiseNetwork": "198.51.100.0/24",
     "subnet1Name": "external-subnet",
     "subnet1Prefix": "10.0.1.0/24",
-    "subnet1Id": "[concat(variables('vnetId'),'/subnets/',variables('subnet1Name'))]",
+    "subnet1Id": "[concat(variables('vnetId'), '/subnets/', variables('subnet1Name'))]",
     "subnet2Name": "internal-subnet",
     "subnet2Prefix": "10.0.2.0/24",
-    "subnet2Id": "[concat(variables('vnetId'),'/subnets/',variables('subnet2Name'))]",
-    "vnetId": "[resourceId('Microsoft.Network/virtualNetworks',variables('vnetName'))]",
-    "vnetName": "vnet",
+    "subnet2Id": "[concat(variables('vnetId'), '/subnets/', variables('subnet2Name'))]",
+    "gatewayPrivateAddress": "10.0.1.10",
     "internalRouteTableName": "InternalRouteTable",
-    "internalRouteTableId": "[resourceId('Microsoft.Network/routeTables', variables('internalRouteTableName'))]"
+    "internalRouteTableId": "[resourceId('Microsoft.Network/routeTables', variables('internalRouteTableName'))]",
+    "publicIPAddressName": "gateway",
+    "publicIPAddressId": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
   },
   "resources": [
     {
@@ -225,7 +282,7 @@
         "[variables('publicIPAddressId')]"
       ],
       "location": "[resourceGroup().location]",
-      "name": "[variables('nicName')]",
+      "name": "[variables('nic1Name')]",
       "properties": {
         "enableIPForwarding": true,
         "ipConfigurations": [
@@ -250,7 +307,7 @@
       "apiVersion": "[variables('apiVersion')]",
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nic1Name'))]"
       ],
       "location": "[resourceGroup().location]",
       "name": "[parameters('vmName')]",
@@ -259,7 +316,7 @@
         "diagnosticsProfile": {
           "bootDiagnostics": {
             "enabled": "true",
-            "storageUri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net')]"
+            "storageUri": "[concat('http://', parameters('newStorageAccountName'), '.blob.core.windows.net')]"
           }
         },
         "hardwareProfile": {
@@ -268,7 +325,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]",
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nic1Name'))]",
               "properties": {
                 "primary": true
               }
@@ -283,7 +340,7 @@
             "createOption": "FromImage",
             "name": "osDisk",
             "vhd": {
-              "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/',parameters('vmName'),'.vhd')]"
+              "uri": "[concat('http://',parameters('newStorageAccountName'), '.blob.core.windows.net/vhds/', parameters('vmName'), '.vhd')]"
             }
           }
         }
