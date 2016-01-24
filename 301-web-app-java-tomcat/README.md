@@ -1,0 +1,2 @@
+# Create a web app on Azure with Java 8 and Tomcat 8 enabled.
+This template creates a web app on azure with Java 8 and Tomcat 8 enabled allowing you to run Java application in Azure.  Template was authored by [Donovan Brown](http://twitter.com/DonovanBrown) of Microsoft. 
