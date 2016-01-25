@@ -178,13 +178,13 @@ ulimit -c unlimited
 ulimit -f unlimited
 ulimit -d unlimited
 ulimit -n 16384
-ulimit -u 16384
+ulimit -u 56060
 if test -f /etc/security/limits.conf; then
   echo "*       -       core    unlimited" >> /etc/security/limits.conf
   echo "*       -       fsize   unlimited" >> /etc/security/limits.conf
   echo "*       -       data    unlimited" >> /etc/security/limits.conf
-  echo "*       soft    nofile  16384" >> /etc/security/limits.conf
-  echo "*       hard    nofile  16384" >> /etc/security/limits.conf
+  echo "*       -       nofile  16384" >> /etc/security/limits.conf
+  echo "*       -       nproc   56060" >> /etc/security/limits.conf
 fi
 
 log "Disabling THP for Splunk performance"
