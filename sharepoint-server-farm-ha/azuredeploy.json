@@ -29,24 +29,6 @@
       },
       "adVMSize":{
          "type":"string",
-         "allowedValues":[
-            "Standard_D1",
-            "Standard_DS1",
-            "Standard_D2",
-            "Standard_DS2",
-            "Standard_D3",
-            "Standard_DS3",
-            "Standard_D4",
-            "Standard_DS4",
-            "Standard_D11",
-            "Standard_DS11",
-            "Standard_D12",
-            "Standard_DS12",
-            "Standard_D13",
-            "Standard_DS13",
-            "Standard_D14",
-            "Standard_DS14"
-         ],
          "metadata":{
             "description":"The size of the AD VMs Created"
          },
@@ -54,24 +36,6 @@
       },
       "sqlVMSize":{
          "type":"string",
-         "allowedValues":[
-            "Standard_D1",
-            "Standard_DS1",
-            "Standard_D2",
-            "Standard_DS2",
-            "Standard_D3",
-            "Standard_DS3",
-            "Standard_D4",
-            "Standard_DS4",
-            "Standard_D11",
-            "Standard_DS11",
-            "Standard_D12",
-            "Standard_DS12",
-            "Standard_D13",
-            "Standard_DS13",
-            "Standard_D14",
-            "Standard_DS14"
-         ],
          "metadata":{
             "description":"The size of the SQL VMs Created"
          },
@@ -79,24 +43,6 @@
       },
       "witnessVMSize":{
          "type":"string",
-         "allowedValues":[
-            "Standard_D1",
-            "Standard_DS1",
-            "Standard_D2",
-            "Standard_DS2",
-            "Standard_D3",
-            "Standard_DS3",
-            "Standard_D4",
-            "Standard_DS4",
-            "Standard_D11",
-            "Standard_DS11",
-            "Standard_D12",
-            "Standard_DS12",
-            "Standard_D13",
-            "Standard_DS13",
-            "Standard_D14",
-            "Standard_DS14"
-         ],
          "metadata":{
             "description":"The size of the Witness VM Created"
          },
@@ -104,24 +50,6 @@
       },
       "spVMSize":{
          "type":"string",
-         "allowedValues":[
-            "Standard_D1",
-            "Standard_DS1",
-            "Standard_D2",
-            "Standard_DS2",
-            "Standard_D3",
-            "Standard_DS3",
-            "Standard_D4",
-            "Standard_DS4",
-            "Standard_D11",
-            "Standard_DS11",
-            "Standard_D12",
-            "Standard_DS12",
-            "Standard_D13",
-            "Standard_DS13",
-            "Standard_D14",
-            "Standard_DS14"
-         ],
          "metadata":{
             "description":"The size of the SP VMs Created"
          },
@@ -262,12 +190,6 @@
             "description":"Resource Group containing existing SP Web IP address"
          }
       },
-      "spWebIPAddressName":{
-         "type":"string",
-         "metadata":{
-            "description":"The existing IP address name for SP Web"
-         }
-      },
       "spWebIPNewOrExisting":{
          "type":"string",
          "defaultValue":"new",
@@ -277,6 +199,12 @@
          ],
          "metadata":{
             "description":"Indicates whether the Sharepoint farm's IP is new or existing"
+         }
+      },
+      "spWebIPAddressName":{
+         "type":"string",
+         "metadata":{
+            "description":"The new or existing - depending on value of spWebIPNewOrExisting parameter - IP address name for SP Web "
          }
       },
       "dnsPrefix":{
@@ -366,11 +294,12 @@
          "sqlDiskSize":1000,
          "spDiskSize":128
       },
-      "sqlAOEPName":"[concat(parameters('dnsPrefix'),'-hadr')]",
-      "sqlAOAGName":"[concat(parameters('dnsPrefix'),'-ag')]",
-      "sqlAOListenerName":"[concat(parameters('dnsPrefix'),'ag-listener')]",
-      "sharePath":"[concat(parameters('dnsPrefix'),'-fsw')]",
-      "clusterName":"[concat(parameters('dnsPrefix'),'-fc')]",
+      "prefix":"[tolower(trim(subString(concat(parameters('dnsPrefix'),'           '),0,10)))]",
+      "sqlAOEPName":"[concat(variables('prefix'),'-hadr')]",
+      "sqlAOAGName":"[concat(variables('prefix'),'-ag')]",
+      "sqlAOListenerName":"[concat(variables('prefix'),'ag-listener')]",
+      "sharePath":"[concat(variables('prefix'),'-fsw')]",
+      "clusterName":"[concat(variables('prefix'),'-fc')]",
       "adPDCNicName":"[concat(variables('vmSettings').adPDCVMName,'-nic')]",
       "adBDCNicName":"[concat(variables('vmSettings').adBDCVMName,'-nic')]",
       "sqlwNicName":"[concat(variables('vmSettings').sqlwVMName,'-nic')]",
@@ -1248,142 +1177,6 @@
                },
                "fswConfigurationFunction":{
                   "value":"[variables('configuration').fswConfigurationFunction]"
-               }
-            }
-         }
-      },
-      {
-         "name":"UpdatingSQLWNic",
-         "type":"Microsoft.Resources/deployments",
-         "apiVersion":"2015-01-01",
-         "dependsOn":[
-            "Microsoft.Resources/deployments/UpdatingDNSwithBackupADVM"
-         ],
-         "properties":{
-            "mode":"Incremental",
-            "templateLink":{
-               "uri":"[variables('configuration').nicTemplateURL]",
-               "contentVersion":"1.0.0.0"
-            },
-            "parameters":{
-               "location":{
-                  "value":"[parameters('location')]"
-               },
-               "nicName":{
-                  "value":"[variables('sqlwNicName')]"
-               },
-               "ipConfigurations":{
-                  "value":[
-                     {
-                        "name":"ipconfig1",
-                        "properties":{
-                           "privateIPAllocationMethod":"Dynamic",
-                           "subnet":{
-                              "id":"[variables('sqlSubnetRef')]"
-                           }
-                        }
-                     }
-                  ]
-               },
-               "dnsServers":{
-                  "value":[
-                     "[parameters('adPDCNICIPAddress')]",
-                     "[parameters('adBDCNICIPAddress')]"
-                  ]
-               }
-            }
-         }
-      },
-      {
-         "name":"UpdatingSQL0Nic",
-         "type":"Microsoft.Resources/deployments",
-         "apiVersion":"2015-01-01",
-         "dependsOn":[
-            "Microsoft.Resources/deployments/UpdatingSQLWNic"
-         ],
-         "properties":{
-            "mode":"Incremental",
-            "templateLink":{
-               "uri":"[variables('configuration').nicTemplateURL]",
-               "contentVersion":"1.0.0.0"
-            },
-            "parameters":{
-               "location":{
-                  "value":"[parameters('location')]"
-               },
-               "nicName":{
-                  "value":"[concat(variables('vmSettings').sqlVMName, '0-nic')]"
-               },
-               "ipConfigurations":{
-                  "value":[
-                     {
-                        "name":"ipconfig1",
-                        "properties":{
-                           "privateIPAllocationMethod":"Dynamic",
-                           "subnet":{
-                              "id":"[variables('sqlSubnetRef')]"
-                           },
-                           "loadBalancerBackendAddressPools":[
-                              {
-                                 "id":"[variables('derivedIds').sqlBEAddressPoolID]"
-                              }
-                           ]
-                        }
-                     }
-                  ]
-               },
-               "dnsServers":{
-                  "value":[
-                     "[parameters('adPDCNICIPAddress')]",
-                     "[parameters('adBDCNICIPAddress')]"
-                  ]
-               }
-            }
-         }
-      },
-      {
-         "name":"UpdatingSQL1Nic",
-         "type":"Microsoft.Resources/deployments",
-         "apiVersion":"2015-01-01",
-         "dependsOn":[
-            "Microsoft.Resources/deployments/UpdatingSQL0Nic"
-         ],
-         "properties":{
-            "mode":"Incremental",
-            "templateLink":{
-               "uri":"[variables('configuration').nicTemplateURL]",
-               "contentVersion":"1.0.0.0"
-            },
-            "parameters":{
-               "location":{
-                  "value":"[parameters('location')]"
-               },
-               "nicName":{
-                  "value":"[concat(variables('vmSettings').sqlVMName, '1-nic')]"
-               },
-               "ipConfigurations":{
-                  "value":[
-                     {
-                        "name":"ipconfig1",
-                        "properties":{
-                           "privateIPAllocationMethod":"Dynamic",
-                           "subnet":{
-                              "id":"[variables('sqlSubnetRef')]"
-                           },
-                           "loadBalancerBackendAddressPools":[
-                              {
-                                 "id":"[variables('derivedIds').sqlBEAddressPoolID]"
-                              }
-                           ]
-                        }
-                     }
-                  ]
-               },
-               "dnsServers":{
-                  "value":[
-                     "[parameters('adPDCNICIPAddress')]",
-                     "[parameters('adBDCNICIPAddress')]"
-                  ]
                }
             }
          }
