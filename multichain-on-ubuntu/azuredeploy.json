@@ -2,7 +2,7 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "vmDnsPrefix": {
+    "dnsLabelPrefix": {
       "type": "string",
       "metadata": {
         "description": "This is the unique DNS name of the for the public IP for your VM"
@@ -22,7 +22,7 @@
     },
     "vmSize": {
       "type": "string",
-      "defaultValue": "Standard_A2",
+      "defaultValue": "Standard_D1",
       "allowedValues": [
         "Standard_A1",
         "Standard_A2",
@@ -36,34 +36,27 @@
       "metadata": {
         "description": "Size of VM"
       }
-    },
-    "sizeOfEachDataDiskInGB": {
-      "type": "string",
-      "metadata": {
-        "description": "Size of each data disk in GB"
-      }
     }
   },
   "variables": {
     "nicName": "VMNic",
     "addressPrefix": "10.0.0.0/16",
-    "imagePublisher": "OpenLogic",
+    "imagePublisher": "Canonical",
     "imageVersion": "latest",
-    "imageSKU": "7.1",
-    "imageOffer": "CentOS",
+    "imageSKU": "14.04.2-LTS",
+    "imageOffer": "UbuntuServer",
     "subnetName": "Subnet-1",
     "subnetPrefix": "10.0.0.0/24",
     "storageAccountType": "Standard_LRS",
     "publicIPAddressName": "publicIP",
     "publicIPAddressType": "Dynamic",
     "vmStorageAccountContainerName": "vhds",
-    "vmName": "[parameters('vmDnsPrefix')]",
+    "vmName": "[parameters('dnsLabelPrefix')]",
     "virtualNetworkName": "WPVNET",
     "apiVersion": "2015-06-15",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
     "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
-    "storageAccountName": "[replace(replace(tolower(concat('bitcore', uniquestring(resourceGroup().id))), '-',''),'.','')]",
-    "dataDisk1VhdName": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('vmName'),'dataDisk1.vhd')]",
+    "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'multichain')]",
     "location": "[resourceGroup().location]"
   },
   "resources": [
@@ -84,7 +77,7 @@
       "properties": {
         "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
         "dnsSettings": {
-          "domainNameLabel": "[parameters('vmDnsPrefix')]"
+          "domainNameLabel": "[parameters('dnsLabelPrefix')]"
         }
       }
     },
@@ -160,17 +153,6 @@
             "sku": "[variables('imageSKU')]",
             "version": "[variables('imageVersion')]"
           },
-          "dataDisks": [
-            {
-              "name": "datadisk1",
-              "diskSizeGB": "[parameters('sizeOfEachDataDiskInGB')]",
-              "lun": 0,
-              "vhd": {
-                "Uri": "[variables('dataDisk1VhdName')]"
-              },
-              "createOption": "Empty"
-            }
-          ],
           "osDisk": {
             "name": "osdisk1",
             "vhd": {
@@ -204,11 +186,21 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-          "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/bitcore-centos-vm/install_bitcore.sh"
+            "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/multichain-on-ubuntu/install_multichain.sh"
           ],
-          "commandToExecute": "[concat('sh install_bitcore.sh ', parameters('adminUsername'))]"
+          "commandToExecute": "[concat('sh install_multichain.sh ', parameters('adminUsername'))]"
         }
       }
     }
-  ]
+  ],
+  "outputs": {
+    "nodeaddress": {
+      "value": "[concat('chain1@', reference(resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpAddressName'))).dnsSettings.fqdn, ':8333')]",
+      "type": "string"
+    },
+    "instructions": {
+      "value": "Nodes can connect to the blockchain by passing nodeaddress to multichaind, for example: multichaind <nodeAddress>",
+      "type": "string"
+    }
+  }
 }
