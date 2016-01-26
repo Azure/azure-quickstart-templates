@@ -29,23 +29,23 @@ Below are instructions for creating the certificate and service principal.
         $certEndDate = $certStartDate.AddYears(1)
         $certEndDateStr = $certEndDate.ToString("MM/dd/yyyy")
         $certName = "HDI-ADLS-SPI"
-        $certPassword = "Password_Change_Me"
+        $certPassword = "new_password_here"
+        $certPasswordSecureString = ConvertTo-SecureString $certPassword -AsPlainText -Force
         
         mkdir $certFolder
-        cd "C:\Program Files (x86)\Microsoft SDKs\Windows\v7.1A\Bin"
         
-        # When prompted, enter a new password to generate the private key.
-        .\makecert.exe -sv $certFolder\myKey.pvk -n "cn=$certName" $certFolder\certFile.cer -b $certStartDateStr -e $certEndDateStr -r -len 2048
+        $cert = New-SelfSignedCertificate -DnsName $certName -CertStoreLocation cert:\CurrentUser\My -KeySpec KeyExchange -NotAfter $certEndDate -NotBefore $certStartDate
+        $certThumbprint = $cert.Thumbprint
+        $cert = (Get-ChildItem -Path cert:\CurrentUser\My\$certThumbprint)
         
-        # When prompted, enter the same password as before.
-        .\pvk2pfx.exe -pvk $certFolder\myKey.pvk -spc $certFolder\certFile.cer -pfx $certFolder\certFile.pfx -po $certPassword
+        Export-PfxCertificate -Cert $cert -FilePath $certFilePath -Password $certPasswordSecureString
 
 2. Create a service principal using the certificate.
 
     In Windows, you can do this using Azure PowerShell.
 
-        $clusterName = "<your cluster name>"
-        $certificatePFX = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2($certFilePath, $certPassword)
+        $clusterName = "cluster-name-here"
+        $certificatePFX = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2($certFilePath, $certPasswordSecureString)
         $credential = [System.Convert]::ToBase64String($certificatePFX.GetRawCertData())
         
         $application = New-AzureRmADApplication -DisplayName $certName `
