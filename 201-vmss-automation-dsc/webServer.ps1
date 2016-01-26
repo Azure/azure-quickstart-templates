@@ -1,8 +1,8 @@
-Configuration webServer
+Configuration MyService
 {
     Import-DSCResource -ModuleName PSDesiredStateConfiguration, xNetworking
 	
-	Node localhost
+	Node webServer
 	{
 		WindowsFeature webServer
 		{
