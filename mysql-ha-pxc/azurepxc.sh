@@ -234,6 +234,12 @@ install_mysql_centos() {
     yum -y install http://www.percona.com/downloads/percona-release/percona-release-0.0-1.x86_64.rpm
     wget --no-cache http://apt.sw.be/redhat/el6/en/x86_64/rpmforge/RPMS/socat-1.7.2.4-1.el6.rf.x86_64.rpm
     rpm -Uvh socat-1.7.2.4*rpm
+    
+    # Fix to install required libev
+    wget http://download.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm
+    rpm -ivh epel-release-6-8.noarch.rpm
+    yum install -y libev
+    
     yum -y install Percona-XtraDB-Cluster-56
     yum -y install xinetd
 }
