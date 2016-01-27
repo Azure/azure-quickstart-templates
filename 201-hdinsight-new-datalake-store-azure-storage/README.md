@@ -1,6 +1,6 @@
 # Deploy a Linux HDInsight cluster with new Data Lake Store and Storage accounts.
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fhdinsight-new-datalake-store-azure-storage%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-hdinsight-new-datalake-store-azure-storage%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
@@ -19,8 +19,6 @@ Below are instructions for creating the certificate and service principal.
 1. Create a password-protected PFX certificate.
    
     In Windows, you can do this using Azure PowerShell.
-
-    First, install the Windows SDK portion of [Visual Studio](https://www.visualstudio.com/downloads/download-visual-studio-vs). 
     
         $certFolder = "C:\certificates"
         $certFilePath = "$certFolder\certFile.pfx"
@@ -44,7 +42,7 @@ Below are instructions for creating the certificate and service principal.
 
     In Windows, you can do this using Azure PowerShell.
 
-        $clusterName = "cluster-name-here"
+        $clusterName = "new-cluster-name-here"
         $certificatePFX = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2($certFilePath, $certPasswordSecureString)
         $credential = [System.Convert]::ToBase64String($certificatePFX.GetRawCertData())
         
@@ -62,5 +60,5 @@ Below are instructions for creating the certificate and service principal.
     * Application ID: ``$servicePrincipal.ApplicationId``
     * Object ID: ``$servicePrincipal.Id``
     * AAD Tenant ID: ``(Get-AzureRmContext).Tenant.TenantId``
-    * Base-64 PFX file contents: ``[Convert]::ToBase64String(Get-Content $certFilePath -Encoding Byte)``
+    * Base-64 PFX file contents: ``[System.Convert]::ToBase64String((Get-Content $certFilePath -Encoding Byte))``
     * PFX password: ``$certPassword``
