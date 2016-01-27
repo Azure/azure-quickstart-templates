@@ -9,7 +9,7 @@ customData = []
 
 with open('custom-data.sh') as f:
     for line in f:
-        m = re.match(r'(.*?)(parameters\([^\)]*\))(.*$)', line)
+        m = re.match(r'(.*?)(parameters\([^\)]*\)|variables\([^\)]*\)|resourceGroup\(\)\.name|subscription\(\)\.subscriptionId)(.*$)', line)
         if m:
             customData += ['\'' + m.group(1) + '\'',
                            m.group(2),
