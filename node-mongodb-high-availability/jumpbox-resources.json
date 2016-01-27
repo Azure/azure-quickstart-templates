@@ -20,7 +20,6 @@
         "Description": "Network settings object"
       }
     },
-
     "machineSettings": {
       "type": "object",
       "metadata": {
@@ -28,111 +27,110 @@
       }
     }
   },
-    "variables": {
-        "vmSize": "Standard_A0",
-        "securityGroupName": "jumpboxNSG"
+  "variables": {
+    "vmSize": "Standard_A0",
+    "securityGroupName": "jumpboxNSG"
+  },
+  "resources": [
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('securityGroupName')]",
+      "location": "[parameters('commonSettings').location]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "SSH",
+            "properties": {
+              "description": "Allows SSH traffic",
+              "protocol": "Tcp",
+              "sourcePortRange": "22",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
     },
-    "resources": [
-        {
-            "apiVersion": "2015-05-01-preview",
-            "type": "Microsoft.Network/networkSecurityGroups",
-            "name": "[variables('securityGroupName')]",
-            "location": "[parameters('commonSettings').location]",
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "jumpboxPublicIP",
+      "location": "[parameters('commonSettings').location]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic"
+      }
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "jumpboxNIC",
+      "location": "[parameters('commonSettings').location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', 'jumpboxPublicIP')]",
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('securityGroupName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipConfigJumpbox",
             "properties": {
-                "securityRules": [
-                    {
-                        "name": "SSH",
-                        "properties": {
-                            "description": "Allows SSH traffic",
-                            "protocol": "Tcp",
-                            "sourcePortRange": "22",
-                            "destinationPortRange": "22",
-                            "sourceAddressPrefix": "*",
-                            "destinationAddressPrefix": "*",
-                            "access": "Allow",
-                            "priority": 100,
-                            "direction": "Inbound"
-                        }
-                    }
-                ]
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses','jumpboxPublicIP')]"
+              },
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('securityGroupName'))]"
+              },
+              "subnet": {
+                "id": "[parameters('networkSettings').subnetRef]"
+              }
             }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "jumpboxVM",
+      "location": "[parameters('commonSettings').location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', 'jumpboxNIC')]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('vmSize')]"
         },
-        {
-            "apiVersion": "2015-05-01-preview",
-            "type": "Microsoft.Network/publicIPAddresses",
-            "name": "jumpboxPublicIP",
-            "location": "[parameters('commonSettings').location]",
-            "properties": {
-                "publicIPAllocationMethod": "Dynamic"
-            }
+        "osProfile": {
+          "computerName": "[concat(parameters('machineSettings').machineNamePrefix, 'jumpbox')]",
+          "adminUsername": "[parameters('machineSettings').adminUsername]",
+          "adminPassword": "[parameters('machineSettings').adminPassword]"
         },
-        {
-            "apiVersion": "2015-05-01-preview",
-            "type": "Microsoft.Network/networkInterfaces",
-            "name": "jumpboxNIC",
-            "location": "[parameters('commonSettings').location]",
-            "dependsOn": [
-                "[concat('Microsoft.Network/publicIPAddresses/', 'jumpboxPublicIP')]",
-                "[concat('Microsoft.Network/networkSecurityGroups/', variables('securityGroupName'))]"
-            ],
-            "properties": {
-                "ipConfigurations": [
-                    {
-                        "name": "ipConfigJumpbox",
-                        "properties": {
-                            "privateIPAllocationMethod": "Dynamic",
-                            "publicIPAddress": {
-                                "id": "[resourceId('Microsoft.Network/publicIPAddresses','jumpboxPublicIP')]"
-                            },
-                            "networkSecurityGroup": {
-                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('securityGroupName'))]"
-                            },
-                            "subnet": {
-                                "id": "[parameters('networkSettings').subnetRef]"
-                            }
-                        }
-                    }
-                ]
-            }
+        "storageProfile": {
+          "imageReference": "[parameters('machineSettings').osImageReference]",
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat(parameters('storageSettings').destinationVhdsContainer, 'jumpbox-os-disk.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
         },
-        {
-            "apiVersion": "2015-05-01-preview",
-            "type": "Microsoft.Compute/virtualMachines",
-            "name": "jumpboxVM",
-            "location": "[parameters('commonSettings').location]",
-            "dependsOn": [
-                "[concat('Microsoft.Network/networkInterfaces/', 'jumpboxNIC')]"
-            ],
-            "properties": {
-                "hardwareProfile": {
-                    "vmSize": "[variables('vmSize')]"
-                },
-                "osProfile": {
-                    "computerName": "[concat(parameters('machineSettings').machineNamePrefix, 'jumpbox')]",
-                    "adminUsername": "[parameters('machineSettings').adminUsername]",
-                    "adminPassword": "[parameters('machineSettings').adminPassword]"
-                },
-                "storageProfile": {
-                    "imageReference": "[parameters('machineSettings').osImageReference]",
-                    "osDisk": {
-                        "name": "osdisk",
-                        "vhd": {
-                            "uri": "[concat(parameters('storageSettings').destinationVhdsContainer, 'jumpbox-os-disk.vhd')]"
-                        },
-                        "caching": "ReadWrite",
-                        "createOption": "FromImage"
-                    }
-                },
-                "networkProfile": {
-                    "networkInterfaces": [
-                        {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces','jumpboxNIC')]"
-                        }
-                    ]
-                }
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces','jumpboxNIC')]"
             }
+          ]
         }
-    ],
-    "outputs": {
+      }
     }
+  ],
+  "outputs": {}
 }
