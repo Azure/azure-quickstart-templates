@@ -1,6 +1,6 @@
 # Gnome Desktop on Ubuntu VM
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2F251744647%2Fazure-quickstart-templates%2Fmaster%2Fremote-desktop-ubuntu%2Fazuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fremote-desktop-ubuntu%2Fazuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
 
 This template uses the Azure Linux CustomScript extension to deploy Gnome Desktop on the VM. It creates an Ubuntu VM, does a silent install of gnome xfce4 desktop and xrdp, allows you to connect it with Remote Desktop from a Windows machine.
 
