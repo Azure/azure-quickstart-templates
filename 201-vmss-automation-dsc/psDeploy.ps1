@@ -17,4 +17,6 @@ New-AzureRMAutomationAccount -ResourceGroupName $ResourceGroupName -Name $Accoun
 
 $RegistrationInfo = Get-AzureRmAutomationRegistrationInfo -ResourceGroupName $ResourceGroupName -AutomationAccountName $AccountName
 
-New-AzureRmResourceGroupDeployment -Name TestDeployment -ResourceGroupName $ResourceGroupName -TemplateFile .\azuredeploy.json -TemplateParameterFile .\azuredeploy.parameters.json -registrationKey ($RegistrationInfo.PrimaryKey | ConvertTo-SecureString -AsPlainText -Force) -registrationUrl $RegistrationInfo.Endpoint -automationAccountName $AccountName -jobId (New-GUID) -adminUsername $credential.UserName -adminPassword $credential.Password -domainNameLabel $DomainNameLabel -Verbose
+$NewGUID = [system.guid]::newguid().guid
+
+New-AzureRmResourceGroupDeployment -Name TestDeployment -ResourceGroupName $ResourceGroupName -TemplateFile .\azuredeploy.json -TemplateParameterFile .\azuredeploy.parameters.json -registrationKey ($RegistrationInfo.PrimaryKey | ConvertTo-SecureString -AsPlainText -Force) -registrationUrl $RegistrationInfo.Endpoint -automationAccountName $AccountName -jobid $NewGUID -adminUsername $credential.UserName -adminPassword $credential.Password -domainNameLabel $DomainNameLabel -Verbose
