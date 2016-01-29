@@ -36,7 +36,7 @@ To make sure your template is added to Azure.com index, please follow these guid
 4. The template folder must host the **scripts** that are needed for successful template execution
 5. The template folder must contain a **metadata.json** file to allow the template to be indexed on [Azure.com](http://azure.microsoft.com)
   * Guidelines on the metadata file below
-6. Include a **Readme.md** file that explains how the template works. No need to include the parameters that the template needs. We can render this on Azure.com from the template.
+6. Include a **README.md** file that explains how the template works. No need to include the parameters that the template needs. We can render them on Azure.com from the template. Include code for buttons to "Deploy to Azure" and "Visualize" as seen in the README.md files for other templates. If you see problems with visualizing your template, please report the issue in the ArmViz GitHub project [here](https://github.com/ytechie/AzureResourceVisualizer/issues/new).
 7. Template parameters should follow **camelCasing**
 8. Try to reduce the **number of parameters** a user has to enter to deploy your template. Make things that do not need to be globally unique such as VNETs, NICs, PublicIPs, Subnets, NSGs as variables.
   * If you must include a parameter, please include a default value as well. See the next rule for naming convention for the default values.
