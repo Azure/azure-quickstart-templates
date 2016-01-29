@@ -22,7 +22,7 @@ We're following basic GitHub Flow. If you have ever contributed to an open sourc
  * Push your new branch to your GitHub Fork (`git push origin my-new-template`)
  * Visit this repository in GitHub and create a Pull Request.
 
-**For a detailed tutorial, [please check out our tutorial](../tutorial/git-tutorial.md)!**
+**For a detailed tutorial, [please check out our tutorial](https://github.com/Azure/azure-quickstart-templates/blob/master/tutorial/git-tutorial.md)!**
 
 ### Azure.com
 
@@ -36,7 +36,7 @@ To make sure your template is added to Azure.com index, please follow these guid
 4. The template folder must host the **scripts** that are needed for successful template execution
 5. The template folder must contain a **metadata.json** file to allow the template to be indexed on [Azure.com](http://azure.microsoft.com)
   * Guidelines on the metadata file below
-6. Include a **Readme.md** file that explains how the template works. No need to include the parameters that the template needs. We can render this on Azure.com from the template.
+6. Include a **README.md** file that explains how the template works. No need to include the parameters that the template needs. We can render them on Azure.com from the template. Include code for buttons to "Deploy to Azure" and "Visualize" as seen in the README.md files for other templates. If you see problems with visualizing your template, please report the issue in the ArmViz GitHub project [here](https://github.com/ytechie/AzureResourceVisualizer/issues/new).
 7. Template parameters should follow **camelCasing**
 8. Try to reduce the **number of parameters** a user has to enter to deploy your template. Make things that do not need to be globally unique such as VNETs, NICs, PublicIPs, Subnets, NSGs as variables.
   * If you must include a parameter, please include a default value as well. See the next rule for naming convention for the default values.
@@ -118,7 +118,7 @@ The metadata.json file will be validated using these rules
 
 ## Starter template
 
-A starter template is provided [here](https://github.com/Azure/azure-quickstart-templates/tree/master/100-starter-template-with-validation) for you to follow
+A starter template is provided [here](https://github.com/Azure/azure-quickstart-templates/tree/master/100-STARTER-TEMPLATE-with-VALIDATION) for you to follow
 
 ## Common errors from acomghbot
 
@@ -180,14 +180,94 @@ Here's an example in an `azuredeploy.parameters.json` file:
 
 If you're making use of `raw.githubusercontent.com` links within your template contribution (within the template file itself or any scripts in your contribution) please ensure the following:
 
-- Ensure any raw.githubusercontent.com links which refer to content within your pull request points to `https://raw.githubusercontent.com/Azure/azure-quickstart-templates/...' and **NOT** your fork.
+- Ensure any raw.githubusercontent.com links which refer to content within your pull request points to `https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/...' and **NOT** your fork.
 
 - All raw.githubusercontent.com links are placed in your `azuredeploy.json` and you pass the link down into your scripts & linked templates via this top-level template. This ensures we re-link correctly from your pull-request repository and branch.
+
+### Relinking
+
+**Please Note:** that although pull requests with links pointing to `https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/...' may not exist in the Azure repo at the time of your pull-request, at CI run-time, those links will be converted to `https://raw.githubusercontent.com/{your_user_name}/azure-quickstart-templates/{your_branch}/...'. Be sure to check the casing of `https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/...' as this is case-sensitive.
 
 ## Template Pre-requisites
 
 If your template has some pre-requisite such as an Azure Active Directory application or service principal, we don't support this yet. To bypass the CI workflow include a  file called `.ci_skip` in the root of your template folder.
 
-## Failures
+## Diagnosing Failures
 
-If your deployment fails, check the details link of the Travis CI build, scroll to the bottom and the template and template parameters json used will be available for you to debug on your subscription.
+If your deployment fails, check the details link of the Travis CI build, which will take you to the CI log. If the template deployment was attempted, you will get two top-level fields. The first is `parameters` which is the rendered version of your `azuredeploy.parameters.json`. This will include any replacements for `GEN-` parameters. The second is `template` which is the contents of your `azuredeploy.json`, after any `raw.githubusercontent.com` relinking. These values are the exact values you need to reproduce the error. Keep in mind, that depending on the resources allocated, it can take a few minutes for the CI system to cleanup provisioned resources.
+
+Here is an example failure log:
+
+```
+Server Error:{
+    "error": "Deployment provisioning state was not successful\n",
+    "_rgName": "qstci-26dd2ec4-bae9-12fb-fd46-fd4ce455a035",
+    "command": "azure group deployment create --resource-group (your_group_name) --template-file azuredeploy.json --parameters-file azuredeploy.parameters.json",
+    "parameters": {
+        "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+        "contentVersion": "1.0.0.0",
+        "parameters": {
+            "clusterName": {
+                "value": "ci4391bcd700f86e84"
+            },
+            "clusterType": {
+                "value": "hadoop"
+            },
+            "clusterStorageAccountName": {
+                "value": "cifb07cf059735afba"
+            },
+            "clusterLoginUserName": {
+                "value": "admin"
+            },
+            "clusterLoginPassword": {
+                "value": "ciP$ss2e6a28784055eda8"
+            }
+        }
+    },
+    "template": {
+        "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+        "contentVersion": "1.0.0.0",
+        "parameters": {
+            "clusterType": {
+                "type": "string",
+                "allowedValues": [
+                    "hadoop",
+                    "hbase",
+                    "storm",
+                    "spark"
+                ],
+                "metadata": {
+                    "description": "The type of the HDInsight cluster to create."
+                }
+            }
+            // more parameters here...
+        },
+        "variables": {
+            "defaultApiVersion": "2015-06-15",
+            "clusterApiVersion": "2015-03-01-preview",
+            "adlsApiVersion": "2015-10-01-preview"
+        },
+        "resources": [
+            {
+                "name": "[parameters('adlStoreName')]",
+                "type": "Microsoft.DataLakeStore/accounts",
+                "location": "East US 2",
+                "apiVersion": "[variables('adlsApiVersion')]",
+                "dependsOn": [],
+                "tags": {},
+                "properties": {
+                    "initialUser": "[parameters('servicePrincipalObjectId')]"
+                }
+            },
+            // more resources here...
+        ],
+        "outputs": {
+            "adlStoreAccount": {
+                "type": "object",
+                "value": "[reference(resourceId('Microsoft.DataLakeStore/accounts',parameters('adlStoreName')))]"
+            }
+            // more outputs here...
+        }
+    }
+}
+```

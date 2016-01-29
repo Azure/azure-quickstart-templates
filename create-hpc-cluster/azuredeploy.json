@@ -4,6 +4,8 @@
   "parameters": {
     "clusterName": {
       "type": "string",
+      "minLength": 3,
+      "maxLength": 15,
       "metadata": {
         "description": "The HPC Pack cluster name. It must be unique in the location because it is also used as the public DNS name prefix for the cluster. For example, the public DNS name is '&lt;clustername&gt;.westus.cloudapp.azure.com' if the resource group location is 'West US'. It must contain between 3 and 15 characters with lowercase letters and numbers, and must start with a letter."
       }
@@ -54,7 +56,7 @@
         "Standard_GS5"
       ],
       "metadata": {
-        "description": "The VM role size of the head node"
+        "description": "The VM size for the head node"
       }
     },
     "computeNodeImage": {
@@ -71,6 +73,8 @@
     "computeNodeNamePrefix": {
       "type": "string",
       "defaultValue": "IaaSCN-",
+      "minLength": 1,
+      "maxLength": 12,      
       "metadata": {
         "description": "The name prefix of the compute nodes. It must be no more than 12 characters, begin with a letter, and contain only letters, numbers and hyphens. For example, if 'IaaSCN-' is specified, the compute node names will be 'IaaSCN-000', 'IaaSCN-001', ..."
       }
@@ -78,6 +82,8 @@
     "computeNodeNumber": {
       "type": "int",
       "defaultValue": 2,
+      "minValue": 1,
+      "maxValue": 500,      
       "metadata": {
         "description": "The number of the compute nodes"
       }
@@ -151,15 +157,22 @@
     },
     "headNodePostConfigScript": {
       "type": "string",
-      "defaultValue": " ",
+      "defaultValue": "",
       "metadata": {
-        "description": "Optional URL of a public available PowerShell script you want to run on the head node after it is configured. You can also specify arguments for the script, for example 'http://www.consto.com/mypostscript.ps1 -Arg1 arg1 -Arg2 arg2'."
+        "description": "Optional URL of a public available PowerShell script you want to run on the head node after it is configured. The script will be run as the Local System account. You can also specify arguments for the script, for example 'http://www.contoso.com/myhnpostscript.ps1 -Arg1 arg1 -Arg2 arg2'."
+      }
+    },
+    "computeNodePostConfigScript": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Optional URL of a public available PowerShell script you want to run on the compute nodes after they are configured. The script will be run as the Local System account. You can also specify arguments for the script, for example 'http://www.contoso.com/mycnpostscript.ps1 -Arg1 arg1 -Arg2 arg2'."
       }
     }
   },
   "variables": {
     "virtualNetworkName": "[concat(parameters('clusterName'), 'VNet')]",
-    "storageAccountNamePrefix": "[toLower(concat('hpc', uniqueString(resourceGroup().id, parameters('clusterName'))))]",
+    "storageAccountNamePrefix": "[toLower(concat('hpc', uniqueString(resourceGroup().id, toLower(parameters('clusterName')))))]",
     "storageAccountType": "Standard_LRS",
     "publicIPAddressName": "[concat(parameters('clusterName'), '-PublicIP-HN')]",
     "computeNodeImageOsPlatform": "Windows",
@@ -257,7 +270,10 @@
             "value": "[parameters('adminPassword')]"
           },
           "headNodePostConfigScript": {
-            "value": "[parameters('headNodePostConfigScript')]"
+            "value": "[trim(parameters('headNodePostConfigScript'))]"
+          },
+          "computeNodePostConfigScript": {
+            "value": "[trim(parameters('computeNodePostConfigScript'))]"
           },
           "artifactsBaseUrl": {
             "value": "[variables('artifactsBaseUrl')]"
@@ -269,7 +285,7 @@
   "outputs": {
     "clusterDnsName": {
       "type": "string",
-      "value": "[reference('mainTemplate').outputs.clusterDNSName]"
+      "value": "[reference('mainTemplate').outputs.clusterDNSName.value]"
     }
   }
 }

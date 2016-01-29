@@ -205,7 +205,7 @@ function Download-ElasticSearch
     )
 	# download ElasticSearch from a given source URL to destination folder
 	try{
-			$source = if ($elasticVersion -match '2.0.0') {"https://download.elasticsearch.org/elasticsearch/release/org/elasticsearch/distribution/zip/elasticsearch/$elasticVersion/elasticsearch-$elasticVersion.zip"} else { "https://download.elastic.co/elasticsearch/elasticsearch/elasticsearch-$elasticVersion.zip" }
+			$source = if ($elasticVersion -match '2.') {"https://download.elasticsearch.org/elasticsearch/release/org/elasticsearch/distribution/zip/elasticsearch/$elasticVersion/elasticsearch-$elasticVersion.zip"} else { "https://download.elastic.co/elasticsearch/elasticsearch/elasticsearch-$elasticVersion.zip" }
 			$destination = "$targetDrive`:\Downloads\ElasticSearch\Elastic-Search.zip"
             
             # create folder if doesn't exists and suppress the output
@@ -274,6 +274,7 @@ function SetEnv-HeapSize
 {
     # Obtain total memory in MB and divide in half
     $halfRamCnt = [math]::Round(((Get-WmiObject Win32_PhysicalMemory | measure-object Capacity -sum).sum/1mb)/2,0)
+    $halfRamCnt = [math]::Min($halfRamCnt, 31744)
     $halfRam = $halfRamCnt.ToString() + 'm'
     lmsg "Half of total RAM in system is $halfRam mb."
 
@@ -570,8 +571,8 @@ function Install-WorkFlow
             $textToAppend = $textToAppend + "`ndiscovery.zen.ping.unicast.hosts: [$ipAddresses]"
         }
 
-        # In ES 2.0 you explicitly need to set network host to _non_loopback_ or the IP address of the host else other nodes cannot communicate
-        if ($elasticSearchVersion -match '2.0.0')
+        # In ES 2.x you explicitly need to set network host to _non_loopback_ or the IP address of the host else other nodes cannot communicate
+        if ($elasticSearchVersion -match '2.')
         {
             $textToAppend = $textToAppend + "`nnetwork.host: _non_loopback_"
         }
@@ -592,7 +593,7 @@ function Install-WorkFlow
     # Install marvel if specified
     if ($installMarvel)
     {
-        if ($elasticSearchVersion -match '2.0.0')
+        if ($elasticSearchVersion -match '2.')
         {
             cmd.exe /C "$elasticSearchBin\plugin.bat install license"
             cmd.exe /C "$elasticSearchBin\plugin.bat install marvel-agent"
