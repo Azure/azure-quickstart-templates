@@ -5,6 +5,9 @@ This is an Azure template to create an Ubuntu Desktop VM.  This is great as a ju
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fubuntu-desktop%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fubuntu-desktop%2Fazuredeploy.json" target="_blank">
+    <img src="http://armviz.io/visualizebutton.png"/>
+</a>
 
 This template runs quickly, but the overall install takes about 1 hour to complete.  You can SSH into the VM and *tail -f /var/log/azure/firstinstall.log* to see progress.
 
@@ -36,3 +39,18 @@ These instructions walk through on how to setup a fast secure remote desktop ses
  4. Click "Connect", and enter "password" for the password:  
  ![Image of VNC authentication dialog](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/ubuntu-desktop/images/vnc-authentication.png)  
  5. now you should be connected to your session.
+
+# Accessing From OS X
+
+OS X is already setup with a VNC viewer, so all that needs to be done is to create the SSH tunnel:
+
+```
+ssh  -N -f -L 5000:localhost:5901 azureuser@<JUMPBOX_IP>
+```
+
+Go to Finder, and press `Cmd + K`. Then connect to the VNC tunnel, using `password` as the password:
+
+![OSX Connection Dialog](images/osx-connection-dialog.png)
+
+Enter the password and you'll be all setup.
+
