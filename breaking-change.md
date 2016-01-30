@@ -1,6 +1,6 @@
 # Steps to update your template for the breaking change in API
 
-1. Replace the 2014-12-01-preview API version for resources with 2015-05-01-preview
+1. Replace the 2014-12-01-preview API version for resources with 2015-06-15
 
 2. Use the imageReference section to refer to your image and add define the osDisk property to the storageProfile. Here's what the new storageProfile looks like
 

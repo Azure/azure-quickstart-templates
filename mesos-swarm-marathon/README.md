@@ -5,6 +5,9 @@ This Microsoft Azure template creates an Apache Mesos cluster with Marathon, and
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmesos-swarm-marathon%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmesos-swarm-marathon%2Fazuredeploy.json" target="_blank">
+    <img src="http://armviz.io/visualizebutton.png"/>
+</a>
 
 Once your cluster has been created you will have a resource group containing 3 parts:
 
@@ -96,7 +99,7 @@ Before running the walkthrough ensure you have chosen "true" for "marathonEnable
 6. start a long running job in Marathon
  1. click "+New App"
  2. type "myfirstapp" for the id
- 3. type "/bin/bash "for i in {1..5}; do echo MyFirstApp $i; sleep 1; done" for the command
+ 3. type "/bin/bash -c "for i in {1..5}; do echo MyFirstApp $i; sleep 1; done" for the command
  4. scroll to bottom and click create
 
  ![Image of Marathon new app dialog](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/mesos-swarm-marathon/images/marathon-newapp.png)

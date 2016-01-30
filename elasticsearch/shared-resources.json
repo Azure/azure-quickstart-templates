@@ -2,7 +2,7 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "region": {
+    "location": {
       "type": "string",
       "metadata": {
         "description": "Location where resources will be provisioned"
@@ -25,22 +25,10 @@
         "description": "Load balancer setting (internal/external)"
       }
     },
-    "esDataHaSetName": {
-      "type": "string",
-      "metadata": {
-        "description": "Name of the availability set for the data nodes"
-      }
-    },
     "storageAccountName": {
       "type": "string",
       "metadata": {
         "description": "Storage account used for share virtual machine images"
-      }
-    },
-    "dnsName": {
-      "type": "string",
-      "metadata": {
-        "description": "A shared storage account for images"
       }
     },
     "ilbIpAddress": {
@@ -56,7 +44,7 @@
         "name": "LBFE",
         "properties": {
           "publicIPAddress": {
-            "id": "[resourceId('Microsoft.Network/publicIPAddresses','publicIp')]"
+            "id": "[resourceId('Microsoft.Network/publicIPAddresses','public-ip')]"
           }
         }
       }
@@ -66,7 +54,7 @@
         "Name": "LBFE",
         "Properties": {
           "subnet": {
-            "Id": "[concat(resourceId('Microsoft.Network/virtualNetworks',parameters('networkSettings').virtualNetworkName), '/subnets/', parameters('networkSettings').subnet.master.name)]"
+            "Id": "[concat(resourceId('Microsoft.Network/virtualNetworks',parameters('networkSettings').virtualNetworkName), '/subnets/', parameters('networkSettings').subnet.other.name)]"
           },
           "privateIPAddress": "[parameters('ilbIpAddress')]",
           "privateIPAllocationMethod": "Static"
@@ -80,35 +68,25 @@
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[parameters('storageAccountName')]",
       "apiVersion": "2015-05-01-preview",
-      "location": "[parameters('region')]",
+      "location": "[parameters('location')]",
       "properties": {
         "accountType": "Standard_LRS"
       }
     },
     {
       "apiVersion": "2015-06-15",
-      "type": "Microsoft.Compute/availabilitySets",
-      "name": "[parameters('esDataHaSetName')]",
-      "location": "[parameters('region')]",
-      "properties": {}
-    },
-    {
-      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
-      "name": "publicIp",
-      "location": "[parameters('region')]",
+      "name": "public-ip",
+      "location": "[parameters('location')]",
       "properties": {
-        "publicIPAllocationMethod": "Dynamic",
-        "dnsSettings": {
-          "domainNameLabel": "[parameters('dnsName')]"
-        }
+        "publicIPAllocationMethod": "Dynamic"
       }
     },
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[parameters('networkSettings').virtualNetworkName]",
-      "location": "[parameters('region')]",
+      "location": "[parameters('location')]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -127,17 +105,23 @@
             "properties": {
               "addressPrefix": "[parameters('networkSettings').subnet.data.prefix]"
             }
+          },
+          {
+            "name": "[parameters('networkSettings').subnet.other.name]",
+            "properties": {
+              "addressPrefix": "[parameters('networkSettings').subnet.other.prefix]"
+            }
           }
         ]
       }
     },
     {
       "apiVersion": "2015-06-15",
-      "name": "loadBalancer",
+      "name": "es-load-balancer",
       "type": "Microsoft.Network/loadBalancers",
-      "location": "[parameters('region')]",
+      "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', 'publicIp')]"
+        "[concat('Microsoft.Network/publicIPAddresses/', 'public-ip')]"
       ],
       "properties": {
         "frontendIPConfigurations": "[variables('feLoadBalancerConfig')]",
@@ -146,33 +130,48 @@
             "name": "LBBE"
           }
         ],
-        "inboundNatRules": "parameters('lbManagementRule')",
         "loadBalancingRules": [
           {
-            "name": "LBRule",
+            "name": "es-http-rule",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers','loadBalancer'),'/frontendIPConfigurations/LBFE')]"
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers','es-load-balancer'),'/frontendIPConfigurations/LBFE')]"
               },
               "backendAddressPool": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers','loadBalancer'),'/backendAddressPools/LBBE')]"
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers','es-load-balancer'),'/backendAddressPools/LBBE')]"
               },
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "frontendPort": 9200,
               "backendPort": 9200,
               "enableFloatingIP": false,
               "idleTimeoutInMinutes": 5,
               "probe": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers','loadBalancer'),'/probes/esProbe')]"
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers','es-load-balancer'),'/probes/es-tcp-probe')]"
               }
+            }
+          },
+          {
+            "name": "es-tcp-rule",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers','es-load-balancer'),'/frontendIPConfigurations/LBFE')]"
+              },
+              "backendAddressPool": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers','es-load-balancer'),'/backendAddressPools/LBBE')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 9300,
+              "backendPort": 9300,
+              "enableFloatingIP": false,
+              "idleTimeoutInMinutes": 5
             }
           }
         ],
         "probes": [
           {
-            "name": "esProbe",
+            "name": "es-tcp-probe",
             "properties": {
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "port": 9200,
               "intervalInSeconds": 30,
               "numberOfProbes": 3
