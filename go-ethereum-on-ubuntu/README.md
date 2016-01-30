@@ -145,7 +145,7 @@ On the public network this would be solved for us simply by waiting approximatel
 Interesting. How do we solve this problem? By turning on CPU mining locally:
 
 ```
-web3.miner.start()
+web3.miner.start(1)
 ```
 
 We'll have to wait a little bit while your node generates its Directed Acyclic Graph (DAG). This process is what helps the Ethereum network be resistant to ASIC mining; but that's a topic for another time.
@@ -161,7 +161,7 @@ Congratulations - your contract is now alive on the Ethereum Network!
 
 Go ahead and stop your miner for the moment:
 ```
-web3.miner.stop()
+web3.miner.stop(1)
 ```
 
 ## Reading from the contract
