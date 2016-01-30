@@ -161,7 +161,7 @@ Congratulations - your contract is now alive on the Ethereum Network!
 
 Go ahead and stop your miner for the moment:
 ```
-web3.miner.stop()
+web3.miner.stop(1)
 ```
 
 ## Reading from the contract
