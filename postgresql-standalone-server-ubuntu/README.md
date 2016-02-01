@@ -4,19 +4,7 @@
 
 This template uses the Azure Linux CustomScript extension to deploy a postgresql server. It creates an Ubuntu VM, does a silent install of postgresql server, version:9.3.5, and the basic configuration is below: port is 1999, data directory is /opt/pgsql_data, installation directory is /opt/pgsql, user is postgres.
 
-PGPORT=1999
 
-PGDATA=/opt/pgsql_data
-
-LANG=en_US.utf8
-
-PGHOME=/opt/pgsql
-
-PATH=$PATH:$PGHOME/bin
-
-MANPATH=$MANPATH:$PGHOME/share/man
-
-PGUSER=postgres
 
 
 For security reasons, PostgreSQL uses a non-root user to initialize, start, or shut down the database. Here it uses postgres as the user.
@@ -25,22 +13,27 @@ You can verify the deployment by connecting to the Postgres database:
 
 $sudo su - postgres
 
+
 Create a Postgres database:
 
 $createdb events
+
 
 Connect to the events database that you just created:
 
 $psql -d events
 
 
+
 Create a new example Postgres table by using the following command:
 
 CREATE TABLE potluck (name VARCHAR(20), food VARCHAR(30),   confirmed CHAR(1), signup_date DATE);
 
+
 Add data to a table:
 
 INSERT INTO potluck (name, food, confirmed, signup_date) VALUES('John', 'Casserole', 'Y', '2012-04-11');
+
 
 Exit the database:
 
