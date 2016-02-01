@@ -2,21 +2,22 @@
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fpostgresql-standalone-server-ubuntu%2Fazuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
 
-This template uses the Azure Linux CustomScript extension to deploy a postgresql server. It creates an Ubuntu VM, does a silent install of postgresql server, version:9.3.5, and the basic configuration is below:
+This template uses the Azure Linux CustomScript extension to deploy a postgresql server. It creates an Ubuntu VM, does a silent install of postgresql server, version:9.3.5, and the basic configuration is below: port is 1999, data directory is /opt/pgsql_data, installation directory is /opt/pgsql, user is postgres.
 
 PGPORT=1999
 
 PGDATA=/opt/pgsql_data
 
-PGHOME=/opt/pgsql
-
 LANG=en_US.utf8
+
+PGHOME=/opt/pgsql
 
 PATH=$PATH:$PGHOME/bin
 
 MANPATH=$MANPATH:$PGHOME/share/man
 
 PGUSER=postgres
+
 
 For security reasons, PostgreSQL uses a non-root user to initialize, start, or shut down the database. Here it uses postgres as the user.
 
