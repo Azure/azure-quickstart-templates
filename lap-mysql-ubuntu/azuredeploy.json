@@ -1,0 +1,248 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "region": {
+      "type": "string",
+      "metadata": {
+        "description": "Location where resources will be provisioned"
+      }
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "defaultValue": "myVNET",
+      "metadata": {
+        "description": "Name of the virtual network provisioned for the cluster"
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Administrator user name used when provisioning virtual machines"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Administrator password used when provisioning virtual machines"
+      }
+    },
+    "dnsNamePrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "DNS Name for the publicly accessible Lap node. Must be lowercase. It should match with the following regular expression: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$ or it will raise an error."
+      }
+    },
+    "lapVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D3",
+      "allowedValues": [
+	    "Standard_A1",
+		"Standard_A2",
+		"Standard_A3",
+        "Standard_D1",
+        "Standard_D3",
+        "Standard_D4"
+      ],
+      "metadata": {
+        "description": "The size of the virtual machines used when provisioning the Lap node"
+      }
+    },
+    "mysqlNodes": {
+      "type": "int",
+      "defaultValue": 1,
+      "metadata": {
+        "description": "Number of Mysql node (1 is the default)"
+      }
+    },
+    "mysqlVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D3",
+      "allowedValues": [
+	    "Standard_A1",
+		"Standard_A2",
+		"Standard_A3",
+        "Standard_D1",
+        "Standard_D3",
+        "Standard_D4"
+      ],
+      "metadata": {
+        "description": "The size of the virtual machines used when provisioning Mysql node(s)"
+      }
+    }
+  },
+  "variables": {
+    "templateBaseUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/lap-mysql-ubuntu/",
+    "sharedTemplateUrl": "[concat(variables('templateBaseUrl'), 'shared-resources.json')]",
+    "lampLapTemplateUrl": "[concat(variables('templateBaseUrl'), 'lamplap-resources.json')]",
+    "lampMysqlTemplateUrl": "[concat(variables('templateBaseUrl'), 'lampmysql-resources.json')]",
+    "namespace": "lamp-",
+	"apiVersion": "2015-01-01",
+    "networkSettings": {
+      "virtualNetworkName": "[parameters('virtualNetworkName')]",
+      "addressPrefix": "10.0.0.0/16",
+      "subnet": {
+        "dse": {
+          "name": "dse",
+          "prefix": "10.0.0.0/24",
+          "vnet": "[parameters('virtualNetworkName')]"
+        }
+      },
+      "statics": {
+        "clusterRange": {
+          "base": "10.0.0.",
+          "start": 5
+        },
+        "lapip": "10.0.0.240",
+		"mysqlip": "10.0.0.10"
+      }
+    },
+    "lapOsSettings": {
+      "imageReference": {
+        "publisher": "Canonical",
+        "offer": "UbuntuServer",
+        "sku": "14.04.2-LTS",
+        "version": "latest"
+      },
+      "scripts": [
+        "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/lap-mysql-ubuntu/install-lap.sh"
+      ]
+    },
+    "mysqlOsSettings": {
+      "imageReference": {
+        "publisher": "Canonical",
+        "offer": "UbuntuServer",
+        "sku": "14.04.2-LTS",
+        "version": "latest"
+      },
+      "scripts": [
+        "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/lap-mysql-ubuntu/install-mysql.sh"
+      ]
+    }
+  },
+  "resources": [
+    {
+      "name": "shared",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "[variables('apiVersion')]",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('sharedTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "region": {
+            "value": "[parameters('region')]"
+          },
+          "networkSettings": {
+            "value": "[variables('networkSettings')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "lampLapNode",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "[variables('apiVersion')]",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', 'shared')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('lampLapTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "region": {
+            "value": "[parameters('region')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "namespace": {
+            "value": "[variables('namespace')]"
+          },
+          "vmbasename": {
+            "value": "Lap"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnet.dse]"
+          },
+          "dnsname": {
+            "value": "[parameters('dnsNamePrefix')]"
+          },
+          "staticIp": {
+            "value": "[variables('networkSettings').statics.lapip]"
+          },
+          "vmSize": {
+            "value": "[parameters('lapVmSize')]"
+          },
+          "mysqlNodes": {
+            "value": "[parameters('mysqlNodes')]"
+          },
+          "osSettings": {
+            "value": "[variables('lapOsSettings')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "[concat('lampMysqlNode', copyindex())]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "[variables('apiVersion')]",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', 'shared')]",
+        "[concat('Microsoft.Resources/deployments/', 'lampLapNode')]"
+      ],
+      "copy": {
+        "name": "vmLoop",
+        "count": "[parameters('mysqlNodes')]"
+      },
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('lampMysqlTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "region": {
+            "value": "[parameters('region')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "namespace": {
+            "value": "[variables('namespace')]"
+          },
+          "vmbasename": {
+            "value": "[concat('Mysql', copyindex())]"
+          },
+          "lapNode": {
+            "value": "[variables('networkSettings').statics.lapip]"
+          },
+		  "mysqlstaticIp": {
+            "value": "[variables('networkSettings').statics.mysqlip]"
+		  },
+          "subnet": {
+            "value": "[variables('networkSettings').subnet.dse]"
+          },
+          "vmSize": {
+            "value": "[parameters('mysqlVmSize')]"
+          },
+          "osSettings": {
+            "value": "[variables('mysqlOsSettings')]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}

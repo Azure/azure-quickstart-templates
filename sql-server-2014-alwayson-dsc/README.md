@@ -21,11 +21,11 @@ This template is entirely serial due to some issues between the platform agent a
 
 +	The default settings for storage are to deploy using **premium storage**, the AD VMs use a P10 Disk and the SQL VMs use two P30 disks each, these sizes can be changed by changing the relevant variables. In addition there is a P10 Disk used for each VMs OS Disk.
 
-+ 	In default settings for compute require that you have at least 19 cores of free quota to deploy.
++ 	In default settings for compute require that you have at least 11 cores of free quota to deploy.
 
 + 	The images used to create this deployment are
 	+ 	AD - Latest Windows Server 2012 R2 Image
-	+ 	SQL Server - Latest SQL Server 2014 on Windows Server 2012 R2 Image
+	+ 	SQL Server - Latest SQL Server 2014 SP1 on Windows Server 2012 R2 Image
 	+ 	Witness - Latest Windows Server 2012 R2 Image
 
 + 	The image configuration is defined in variables - details below - but the scripts that configure this deployment have only been tested with these versions and may not work on other images.
