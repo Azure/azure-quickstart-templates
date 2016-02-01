@@ -1,7 +1,7 @@
 # 180: Debugging a Failed Deployment
 
 Sometimes a deployment will fail. Here's some tips on how to debug
-using both the portal and the CLI.
+using both the [portal](#using-the-portal) and the [CLI](#using-the-cli).
 
 ## Using the CLI
 
