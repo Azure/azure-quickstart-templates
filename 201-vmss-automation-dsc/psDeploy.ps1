@@ -10,6 +10,9 @@ param (
 $ResourceGroupName = "vmss$i"
 $AccountName = "AutomationAccount$i"
 $DomainNameLabel = "demoapp$i"
+$ResourceLocation = 'East US 2'
+$VirtualMachineScaleSetName = 'webSrv'
+$InstanceCount = 2
 
 New-AzureRmResourcegroup -Name $ResourceGroupName -Location 'East US' -Verbose
 
@@ -19,4 +22,6 @@ $RegistrationInfo = Get-AzureRmAutomationRegistrationInfo -ResourceGroupName $Re
 
 $NewGUID = [system.guid]::newguid().guid
 
-New-AzureRmResourceGroupDeployment -Name TestDeployment -ResourceGroupName $ResourceGroupName -TemplateFile .\azuredeploy.json -TemplateParameterFile .\azuredeploy.parameters.json -registrationKey ($RegistrationInfo.PrimaryKey | ConvertTo-SecureString -AsPlainText -Force) -registrationUrl $RegistrationInfo.Endpoint -automationAccountName $AccountName -jobid $NewGUID -adminUsername $credential.UserName -adminPassword $credential.Password -domainNameLabel $DomainNameLabel -Verbose
+$timestamp = (get-date).getdatetimeformats()[80]
+
+New-AzureRmResourceGroupDeployment -Name TestDeployment -ResourceGroupName $ResourceGroupName -TemplateFile .\azuredeploy.json -registrationKey ($RegistrationInfo.PrimaryKey | ConvertTo-SecureString -AsPlainText -Force) -registrationUrl $RegistrationInfo.Endpoint -automationAccountName $AccountName -jobid $NewGUID -adminUsername $credential.UserName -adminPassword $credential.Password -domainNameLabel $DomainNameLabel -resourceLocation $ResourceLocation -vmssName $VirtualMachineScaleSetName -instanceCount $InstanceCount -timestamp $timestamp -Verbose
