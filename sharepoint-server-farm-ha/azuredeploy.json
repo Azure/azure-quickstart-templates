@@ -361,8 +361,10 @@
          "nicTemplateURL":"[concat(parameters('baseUrl'),'/nic.json')]",
          "adPDCModulesURL":"[concat(variables('assetLocation'),'/CreateADPDC.ps1.zip')]",
          "adPDCConfigurationFunction":"CreateADPDC.ps1\\CreateADPDC",
-         "adBDCModulesURL":"[concat(variables('assetLocation'),'/CreateADBDC.ps1.zip')]",
-         "adBDCConfigurationFunction":"CreateADBDC.ps1\\CreateADBDC",
+         "adBDCPreparationModulesURL":"[concat(variables('assetLocation'),'/PrepareADBDC.ps1.zip')]",
+         "adBDCPreparationFunction":"PrepareADBDC.ps1\\PrepareADBDC",
+         "adBDCConfigurationModulesURL":"[concat(variables('assetLocation'),'/ConfigureADBDC.ps1.zip')]",
+         "adBDCConfigurationFunction":"ConfigureADBDC.ps1\\ConfigureADBDC",
          "fswModulesURL":"[concat(variables('assetLocation'),'/CreateFileShareWitness.ps1.zip')]",
          "fswConfigurationFunction":"CreateFileShareWitness.ps1\\CreateFileShareWitness",
          "sqlAOPrepareModulesURL":"[concat(variables('assetLocation'),'/PrepareAlwaysOnSqlServer.ps1.zip')]",
@@ -377,6 +379,7 @@
          "availabilitySetSetupURL":"[concat(parameters('baseUrl'),'/availabilitySets.json')]",
          "provisioningPrimaryDCURL":"[concat(parameters('baseUrl'),'/provisioningPrimaryDomainController.json')]",
          "provisioningBackupDCURL":"[concat(parameters('baseUrl'),'/provisioningBackupDomainController.json')]",
+         "configuringBackupDCURL":"[concat(parameters('baseUrl'),'/configuringBackupDomainController.json')]",
          "provisioningSQLAlwaysOnClusterUrl":"[concat(parameters('baseUrl'),'/provisioningSQLAlwaysOnCluster.json')]",
          "creatingSharepointVMsURL":"[concat(parameters('baseUrl'),'/creatingSharepointVMs.json')]",
          "provisioningSharepointUrl":"[concat(parameters('baseUrl'),'/provisioningSharePoint.json')]",
@@ -386,7 +389,7 @@
          "setupLBsUrl":"[concat(parameters('baseUrl'),'/setupLBs.json')]",
          "creatingNicsUrl":"[concat(parameters('baseUrl'),'/creatingNICS.json')]"
       },
-      "assetLocation":"https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sharepoint-server-farm-ha/dsc"
+      "assetLocation":"[concat('baseURL'),'/dsc']"
    },
    "resources":[
       {
@@ -834,8 +837,7 @@
          "dependsOn":[
             "Microsoft.Resources/deployments/CreatingStorageAccounts",
             "Microsoft.Resources/deployments/CreatingNetworkInterfaces",
-            "Microsoft.Resources/deployments/CreatingAvailabilitySets",
-            "Microsoft.Resources/deployments/UpdatingDNStoPrimaryADVM"
+            "Microsoft.Resources/deployments/CreatingAvailabilitySets"
          ],
          "properties":{
             "mode":"Incremental",
@@ -880,14 +882,53 @@
                "adBDCNicName":{
                   "value":"[variables('adBDCNicName')]"
                },
+               "DNSServer":{
+                  "value":"[parameters('adPDCNICIPAddress')]"
+               },
+               "adBDCPreparationFunction":{
+                  "value":"[variables('configuration').adBDCPreparationFunction]"
+               },
+               "adBDCPreparationModulesURL":{
+                  "value":"[variables('configuration').adBDCPreparationModulesURL]"
+               }
+            }
+         }
+      },
+      {
+         "name":"ConfiguringBackupADDomainController",
+         "type":"Microsoft.Resources/deployments",
+         "apiVersion":"2015-01-01",
+         "dependsOn":[
+            "Microsoft.Resources/deployments/ProvisioningBackupADDomainController",
+            "Microsoft.Resources/deployments/UpdatingDNStoPrimaryADVM"
+         ],
+         "properties":{
+            "mode":"Incremental",
+            "templateLink":{
+               "uri":"[variables('configuration').provisioningBackupDCURL]",
+               "contentVersion":"1.0.0.0"
+            },
+            "parameters":{
+               "adBDCVMName":{
+                  "value":"[variables('vmSettings').adBDCVMName]"
+               },
+               "location":{
+                  "value":"[parameters('location')]"
+               },
+               "adminUsername":{
+                  "value":"[parameters('adminUsername')]"
+               },
+               "adminPassword":{
+                  "value":"[parameters('adminPassword')]"
+               },
                "domainName":{
                   "value":"[parameters('domainName')]"
                },
                "adBDCConfigurationFunction":{
                   "value":"[variables('configuration').adBDCConfigurationFunction]"
                },
-               "adBDCModulesURL":{
-                  "value":"[variables('configuration').adBDCModulesURL]"
+               "adBDCConfigurationModulesURL":{
+                  "value":"[variables('configuration').adBDCConfigurationModulesURL]"
                }
             }
          }
