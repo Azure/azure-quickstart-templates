@@ -1,9 +1,9 @@
 # Deploy a Node js service connected to a highly available MongoDB installation on Ubuntu virtual machine
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fnode-mongodb-high-availability%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmongodb-nodejs-high-availability%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fnode-mongodb-high-availability%2Fazuredeploy.json" target="_blank">
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmongodb-nodejs-high-availability%2Fazuredeploy.json" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
@@ -18,42 +18,20 @@ The template also creates a Linux VM, using a few different options for the Ubun
 A Node.js (Express) service is installed on it, exposes a REST GET endpoint that connects to the MongoDB and then deletes, inserts and retrieves 3 tasks from a Tasks database.
 SSH into the Ubuntu VM (using Putty www.putty.org), navigate to /opt/app.js and modify the workload as needed.
 
-Credentials - 
+Credentials -
 The adminUsername and adminPassword are administrators of all the VM's, the MongoDB database and the Tasks database.
 These credentials are hard coded in the connection string in the Node js server, in /opt/app.js. Modify according to adminUsername:adminPassword you entered in the parameters.
-Please do not use a question mark in the adminUsername and/or the adminPassword. 
+Please do not use a question mark in the adminUsername and/or the adminPassword.
 
 Navigate to /opt and run sudo nodejs app.js.
 Open a browser with the public IP of the MyUbuntuVM machine from the Azure portal, on port 8080. You should get a JSON response with 3 tasks.
-
-The template expects the following parameters:
-
-| Name   | Description | Default Value |
-|:--- |:---|:---|
-| adminUsername  | Administrator user name used when provisioning virtual machines (which also becomes a system administrator in MongoDB and the Node js server VM) | |
-| adminPassword  | Administrator password used when provisioning virtual machines (which is also a password for the system administrator in MongoDB and the Node js server VM) | |
-| storageAccountName | Unique namespace for a new storage account where the virtual machine's disks will be placed (it will be used as a prefix to create one or more new storage accounts as per t-shirt size) | |
-| location | Location where resources will be provisioned | |
-| virtualNetworkName | The arbitrary name of the virtual network provisioned for the MongoDB deployment | mongodbVnet |
-| subnetName | Subnet name for the virtual network that resources will be provisioned in to | mongodbSubnet |
-| addressPrefix | The network address space for the virtual network | 10.0.0.0/16 |
-| subnetPrefix | The network address space for the virtual subnet | 10.0.0.0/24 |
-| nodeAddressPrefix | The IP address prefix that will be used for constructing a static private IP address for each node in the cluster | 10.0.0.1 |
-| storageNameForFrontEnd | Unique DNS Name for the Storage Account where the Node server Virtual Machine's disks will be placed. |
-| dnsNameForPublicIP | Unique DNS Name for the Public IP used to access the Node server VM. |
-| ubuntuOSVersion | The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version. Allowed values: 12.04.2-LTS, 12.04.3-LTS, 12.04.4-LTS, 12.04.5-LTS, 12.10, 14.04.2-LTS, 14.10, 15.04 |
-| jumpbox | The flag allowing to enable or disable provisioning of the jumpbox VM that can be used to access the MongoDB environment | Disabled | 
-| tshirtSize | The t-shirt size of the MongoDB deployment (_XSmall_, _Small_, _Medium_, _Large_, _XLarge_, _XXLarge_) | XSmall |
-| mongodbVersion | The version of the MongoDB packages to be deployed | 3.0.2 |
-| replicaSetName | The name of the MongoDB replica set | rs0 |
-| replicaSetKey | The shared secret key for the MongoDB replica set (6-1024 characters) |||
 
 MongoDB Topology
 --------
 
 The deployment topology is comprised of a predefined number (as per t-shirt sizing) MongoDB member nodes configured as a replica set, along with the optional
-arbiter node. Replica sets are the preferred replication mechanism in MongoDB in small-to-medium installations. However, in a large deployment 
-with more than 50 nodes, a master/slave replication is required. 
+arbiter node. Replica sets are the preferred replication mechanism in MongoDB in small-to-medium installations. However, in a large deployment
+with more than 50 nodes, a master/slave replication is required.
 
 The following table outlines the deployment topology characteristics for each supported t-shirt size:
 
