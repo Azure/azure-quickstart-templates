@@ -172,37 +172,6 @@ log_location STDOUT
 chef_repo_path "/etc/chef/repo"
 end
 
-log "Increasing ulimit settings for Splunk performance"
-# Increase ulimit for file size/file descriptors/user processes, and persist change
-ulimit -c unlimited
-ulimit -f unlimited
-ulimit -d unlimited
-ulimit -n 16384
-ulimit -u 56060
-if test -f /etc/security/limits.conf; then
-  echo "*       -       core    unlimited" >> /etc/security/limits.conf
-  echo "*       -       fsize   unlimited" >> /etc/security/limits.conf
-  echo "*       -       data    unlimited" >> /etc/security/limits.conf
-  echo "*       -       nofile  16384" >> /etc/security/limits.conf
-  echo "*       -       nproc   56060" >> /etc/security/limits.conf
-fi
-
-log "Disabling THP for Splunk performance"
-# Disable transparent huge pages & persist change
-if test -f /sys/kernel/mm/transparent_hugepage/enabled; then
-   echo never > /sys/kernel/mm/transparent_hugepage/enabled
-fi
-if test -f /sys/kernel/mm/transparent_hugepage/defrag; then
-   echo never > /sys/kernel/mm/transparent_hugepage/defrag
-fi
-
-if test -f /etc/default/grub; then
-  if ! grep -c "transparent_hugepage=never" /etc/default/grub; then
-    sed -i 's/\(GRUB_CMDLINE_LINUX_DEFAULT.*\)"$/\1 transparent_hugepage=never"/' /etc/default/grub
-  fi
-fi
-update-grub
-
 log "Installing and configuring Splunk"
 # Finally install & configure Splunk using chef client in local mode
 chef-client -z -c /etc/chef/client.rb -j /etc/chef/node.json
