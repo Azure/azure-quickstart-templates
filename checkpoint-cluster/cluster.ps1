@@ -1,4 +1,4 @@
-﻿#############################################################################
+#############################################################################
 # Parameters
 #############################################################################
 
@@ -108,7 +108,7 @@ $WebApps = @(
 $SKU = "sg-byol"
 
 #############################################################################
-# Variables - these should normally not be left unchanged
+# Variables - these should normally be left unchanged
 #############################################################################
 $IdleTimeoutInMinutes = 30
 $Publisher = "checkpoint"
@@ -524,3 +524,4 @@ Write-Host "=============================="
 Write-Host "Cluster: " $ClusterPublicAddress.IpAddress
 Write-Host "Member1: " $MembersPublicAddresses[0].IpAddress
 Write-Host "Member2: " $MembersPublicAddresses[1].IpAddress
+
