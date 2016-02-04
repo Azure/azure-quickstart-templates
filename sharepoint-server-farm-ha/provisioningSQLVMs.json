@@ -50,49 +50,16 @@
     "sqlAOPrepareModulesURL" : {
       "type" : "string"
     },
-    "sqlAOPrepareConfigurationFunction" : {
+    "sqlAOPrepareFunction" : {
       "type" : "string"
     },
-    "sqlAOEPName" : {
+    "prepareClusterModulesURL" : {
       "type" : "string"
     },
-    "sqlServerServiceAccountUserName" : {
-      "type" : "string"
-    },
-    "sharePointSetupUserAccountUserName" : {
-      "type" : "string"
-    },
-    "sqlServerServiceAccountPassword" : {
-      "type" : "securestring"
-    },
-    "sharePointSetupUserAccountPassword" : {
-      "type" : "securestring"
-    },
-    "createClusterModulesURL" : {
-      "type" : "string"
-    },
-    "createClusterConfigurationFunction" : {
-      "type" : "string"
-    },
-    "clusterName" : {
+    "prepareClusterConfigurationFunction" : {
       "type" : "string"
     },
     "sharePath" : {
-      "type" : "string"
-    },
-    "sqlAOAGName" : {
-      "type" : "string"
-    },
-    "sqlAOListenerName" : {
-      "type" : "string"
-    },
-    "sqlLBName" : {
-      "type" : "string"
-    },
-    "sqlLBIPAddress" : {
-      "type" : "string"
-    },
-    "adPDCVMName" : {
       "type" : "string"
     },
     "witnessVMSize" : {
@@ -104,10 +71,13 @@
     "sqlwNicName" : {
       "type" : "string"
     },
-    "fswModulesURL" : {
+    "fswPreparationModulesURL" : {
       "type" : "string"
     },
-    "fswConfigurationFunction" : {
+    "fswPreparationFunction" : {
+      "type" : "string"
+    },
+    "DNSServer" : {
       "type" : "string"
     }
   },
@@ -170,7 +140,33 @@
             "storageUri": "[concat('http://',parameters('storageAccountNamePrefix'),'4.blob.core.windows.net')]"
           }
         }
-      }
+      },
+      "resources": [
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(parameters('sqlwVMName'),'/CreateFileShareWitness')]",
+            "apiVersion": "2015-06-15",
+            "location": "[parameters('location')]",
+            "dependsOn":[
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('sqlwVMName'))]"
+            ],
+            "properties": {
+                "publisher": "Microsoft.Powershell",
+                "type": "DSC",
+                "typeHandlerVersion": "2.13",
+                "autoUpgradeMinorVersion": false,
+                "settings": {
+                    "modulesURL": "[parameters('fswPreparationModulesURL')]",
+                    "wmfVersion": "4.0",
+                    "configurationFunction": "[parameters('fswPreparationFunction')]",
+                    "properties": {
+                        "DNSServer": "[parameters('DNSServer')]",
+                        "SharePath":"[parameters('sharePath')]"
+                    }
+                }
+            }
+        }
+    ]
     },
     {
       "apiVersion": "2015-06-15",
@@ -245,6 +241,53 @@
           }
         }
       }
+    },
+    {
+        "type": "Microsoft.Compute/virtualMachines/extensions",
+        "name": "[concat(parameters('sqlVMName'), '0/SQLAOSetup')]",
+        "apiVersion": "2015-06-15",
+        "location": "[parameters('location')]",
+        "dependsOn":[
+          "[concat('Microsoft.Compute/virtualMachines/', parameters('sqlVMName'),'0')]"
+        ],
+        "properties": {
+            "publisher": "Microsoft.Powershell",
+            "type": "DSC",
+            "typeHandlerVersion": "2.13",
+            "autoUpgradeMinorVersion": false,
+            "settings": {
+                "modulesURL": "[parameters('sqlAOPrepareModulesURL')]",
+                "wmfVersion": "4.0",
+                "configurationFunction": "[parameters('sqlAOPrepareFunction')]",
+                "properties": {
+                    "DNSServer": "[parameters('DNSServer')]"
+                }
+            }
+        }
+    },
+    {
+        "type": "Microsoft.Compute/virtualMachines/extensions",
+        "name": "[concat(parameters('sqlVMName'), '1/CreateCluster')]",
+        "apiVersion": "2015-06-15",
+        "location": "[parameters('location')]",
+        "dependsOn":[
+          "[concat('Microsoft.Compute/virtualMachines/', parameters('sqlVMName'),'1')]"
+        ],
+        "properties": {
+            "publisher": "Microsoft.Powershell",
+            "type": "DSC",
+            "typeHandlerVersion": "2.13",
+            "autoUpgradeMinorVersion": false,
+            "settings": {
+                "modulesURL": "[parameters('prepareClusterModulesURL')]",
+                "wmfVersion": "4.0",
+                "configurationFunction": "[parameters('prepareClusterConfigurationFunction')]",
+                "properties": {
+                    "DNSServer": "[parameters('DNSServer')]",
+                    "DomainName": "[parameters('domainName')]"
+                }
+            }
+        }
     }
   ],
   "outputs": {}
