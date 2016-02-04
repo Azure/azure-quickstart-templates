@@ -115,8 +115,9 @@ log "Striping data disks into one volume mounted at ${DATA_MOUNTPOINT}"
 chmod u+x vm-disk-utils-0.1.sh && ./vm-disk-utils-0.1.sh -s -p $DATA_MOUNTPOINT
 
 log "Updating system packages"
-# Update packages & install dependencies
-apt-get -y update && apt-get install -y curl
+# Update packages & install required dependencies
+apt-get -y update
+DEBIAN_FRONTEND=noninteractive apt-get install -y curl iptables-persistent
 
 log "Downloading Chef client"
 # Download chef client 12.5.1, verify checksum and install package
@@ -174,11 +175,16 @@ log_location STDOUT
 chef_repo_path "/etc/chef/repo"
 end
 
-log "Setup iptables before running Splunk"
+log "Update iptables before running Splunk"
+# Port forwarding for system ports: 443->10443, 514->10514
 iptables -t nat -A PREROUTING -p tcp -m tcp --dport 443 -j REDIRECT --to-ports 10443
 iptables -t nat -A PREROUTING -p udp -m udp --dport 514 -j REDIRECT --to-ports 10514
 iptables -t nat -A PREROUTING -p tcp -m tcp --dport 514 -j REDIRECT --to-ports 10514
-iptables-save
+iptables-save > /etc/iptables/rules.v4
+ip6tables -t nat -A PREROUTING -p tcp -m tcp --dport 443 -j REDIRECT --to-ports 10443
+ip6tables -t nat -A PREROUTING -p udp -m udp --dport 514 -j REDIRECT --to-ports 10514
+ip6tables -t nat -A PREROUTING -p tcp -m tcp --dport 514 -j REDIRECT --to-ports 10514
+ip6tables-save > /etc/iptables/rules.v6
 
 log "Installing and configuring Splunk"
 # Finally install & configure Splunk using chef client in local mode
