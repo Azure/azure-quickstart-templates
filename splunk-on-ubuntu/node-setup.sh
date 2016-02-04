@@ -151,11 +151,13 @@ fi
 cat >/etc/chef/node.json <<end
 {
   "splunk": {
+    "web_port": 10443,
     "ssl_options": {
       "enable_ssl": true,
       "use_default_certs": true
     },
     "server": {
+      "runasroot": false,
       "edit_datastore_dir": true,
       "datastore_dir": "${SPLUNK_DB_DIR}"
     }
@@ -171,6 +173,12 @@ log_level :info
 log_location STDOUT
 chef_repo_path "/etc/chef/repo"
 end
+
+log "Setup iptables before running Splunk"
+iptables -t nat -A PREROUTING -p tcp -m tcp --dport 443 -j REDIRECT --to-ports 10443
+iptables -t nat -A PREROUTING -p udp -m udp --dport 514 -j REDIRECT --to-ports 10514
+iptables -t nat -A PREROUTING -p tcp -m tcp --dport 514 -j REDIRECT --to-ports 10514
+iptables-save
 
 log "Installing and configuring Splunk"
 # Finally install & configure Splunk using chef client in local mode
