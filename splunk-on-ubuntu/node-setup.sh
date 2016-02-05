@@ -75,8 +75,8 @@ SPLUNK_DB_DIR="${DATA_MOUNTPOINT}/splunk_db"
 CHEF_PKG_URL="https://opscode-omnibus-packages.s3.amazonaws.com/ubuntu/10.04/x86_64/chef_12.5.1-1_amd64.deb"
 CHEF_PKG_MD5="6360faba9d6358d636be5618eecb21ee1dbdca7d  chef_12.5.1-1_amd64.deb"
 CHEF_PKG_CACHE="/etc/chef/local-mode-cache/cache/chef_12.5.1-1_amd64.deb"
-
-CHEF_REPO_URL="https://github.com/rarsan/chef-repo-splunk/tarball/v0.7"
+CHEF_GEM_PACKAGE_LOCAL_PATH="`pwd`/packages/chef-vault-2.6.1.gem"
+CHEF_REPO_SPLUNK_URL="https://github.com/rarsan/chef-repo-splunk/tarball/v0.7"
 
 # Arguments
 while getopts :r:p:c:i: optname; do
@@ -136,7 +136,7 @@ log "Downloading Chef repo for Splunk"
 # Download chef repo including cookbooks, roles and default data bags
 mkdir -p /etc/chef/repo
 cd /etc/chef/repo
-curl -L ${CHEF_REPO_URL} -o chef-repo-splunk.tar.gz --retry 3 --retry-delay 10
+curl -L ${CHEF_REPO_SPLUNK_URL} -o chef-repo-splunk.tar.gz --retry 3 --retry-delay 10
 tar -xzf chef-repo-splunk.tar.gz --strip-components=1
 tar -xzf berks-package.tar.gz -C cookbooks --strip-components=1
 cd -
@@ -163,6 +163,9 @@ cat >/etc/chef/node.json <<end
       "edit_datastore_dir": true,
       "datastore_dir": "${SPLUNK_DB_DIR}"
     }
+  },
+  "chef-vault": {
+    "gem_source": "${CHEF_GEM_PACKAGE_LOCAL_PATH}"
   },
   "run_list": [
     "role[${NODE_ROLE}]"
