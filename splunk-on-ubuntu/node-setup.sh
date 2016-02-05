@@ -75,7 +75,7 @@ SPLUNK_DB_DIR="${DATA_MOUNTPOINT}/splunk_db"
 CHEF_PKG_URL="https://opscode-omnibus-packages.s3.amazonaws.com/ubuntu/10.04/x86_64/chef_12.5.1-1_amd64.deb"
 CHEF_PKG_MD5="6360faba9d6358d636be5618eecb21ee1dbdca7d  chef_12.5.1-1_amd64.deb"
 CHEF_PKG_CACHE="/etc/chef/local-mode-cache/cache/chef_12.5.1-1_amd64.deb"
-CHEF_GEM_PACKAGE_LOCAL_PATH="`pwd`/packages/chef-vault-2.6.1.gem"
+CHEF_GEM_PACKAGE_LOCAL_PATH="`pwd`/chef-vault-2.6.1.gem"
 CHEF_REPO_SPLUNK_URL="https://github.com/rarsan/chef-repo-splunk/tarball/v0.7"
 
 # Arguments
