@@ -122,7 +122,7 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y curl iptables-persistent
 log "Downloading Chef client"
 # Download chef client 12.5.1, verify checksum and install package
 if [ ! -f "${CHEF_PKG_CACHE}" ]; then
-  curl -O ${CHEF_PKG_URL}
+  curl -O ${CHEF_PKG_URL} --retry 3 --retry-delay 10
 else
   cp ${CHEF_PKG_CACHE} .
 fi
@@ -136,7 +136,8 @@ log "Downloading Chef repo for Splunk"
 # Download chef repo including cookbooks, roles and default data bags
 mkdir -p /etc/chef/repo
 cd /etc/chef/repo
-curl -sL ${CHEF_REPO_URL} | tar -xz --strip-components=1
+curl -L ${CHEF_REPO_URL} -o chef-repo-splunk.tar.gz --retry 3 --retry-delay 10
+tar -xzf chef-repo-splunk.tar.gz --strip-components=1
 tar -xzf berks-package.tar.gz -C cookbooks --strip-components=1
 cd -
 
