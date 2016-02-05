@@ -377,8 +377,10 @@
          "prepareClusterConfigurationFunction":"PrepareFailoverCluster.ps1\\PrepareFailoverCluster",
          "configureClusterModulesURL":"[concat(variables('assetLocation'),'/ConfigureFailoverCluster.ps1.zip')]",
          "configureClusterConfigurationFunction":"ConfigureFailoverCluster.ps1\\ConfigureFailoverCluster",
-         "spModulesURL":"[concat(variables('assetLocation'),'/ConfigureSharePointServerHA.ps1.zip')]",
+         "spConfigurationModulesURL":"[concat(variables('assetLocation'),'/ConfigureSharePointServerHA.ps1.zip')]",
          "spConfigurationFunction":"ConfigureSharePointServerHA.ps1\\ConfigureSharePointServerHA",
+         "spPreparationModulesURL":"[concat(variables('assetLocation'),'/PrepareSharePointServerHA.ps1.zip')]",
+         "spPreparationFunction":"PrepareSharePointServerHA.ps1\\PrepareSharePointServerHA",
          "spWebIPAdressSetupURL":"[concat(parameters('baseUrl'),'/publicip-',parameters('spWebIPNewOrExisting'),'.json')]",
          "spCAIPAdressSetupURL":"[concat(parameters('baseUrl'),'/publicip-','new.json')]",
          "rdpIPAdressSetupURL":"[concat(parameters('baseUrl'),'/publicip-rdp.json')]",
@@ -387,8 +389,8 @@
          "provisioningBackupDCURL":"[concat(parameters('baseUrl'),'/provisioningBackupDomainController.json')]",
          "configuringBackupDCURL":"[concat(parameters('baseUrl'),'/configuringBackupDomainController.json')]",
          "configuringSQLAlwaysOnClusterUrl":"[concat(parameters('baseUrl'),'/configuringSQLAlwaysOnCluster.json')]",
-         "creatingSharepointVMsURL":"[concat(parameters('baseUrl'),'/creatingSharepointVMs.json')]",
-         "provisioningSharepointUrl":"[concat(parameters('baseUrl'),'/provisioningSharePoint.json')]",
+         "provisioningSharepointVMsURL":"[concat(parameters('baseUrl'),'/provisioningSharepointVMs.json')]",
+         "configuringSharepointUrl":"[concat(parameters('baseUrl'),'/configuringSharePoint.json')]",
          "creatingStorageAccounts":"[concat(parameters('baseUrl'),'/creatingStorageAccounts.json')]",
          "provisioningSQLVMsURL":"[concat(parameters('baseUrl'),'/provisioningSQLVMs.json')]",
          "vnetSetupURL":"[concat(parameters('baseUrl'),'/vnet-new.json')]",
@@ -1168,13 +1170,12 @@
          "dependsOn":[
             "Microsoft.Resources/deployments/CreatingStorageAccounts",
             "Microsoft.Resources/deployments/CreatingNetworkInterfaces",
-            "Microsoft.Resources/deployments/CreatingAvailabilitySets",
-            "Microsoft.Resources/deployments/UpdatingDNSwithBackupADVM"
+            "Microsoft.Resources/deployments/CreatingAvailabilitySets"
          ],
          "properties":{
             "mode":"Incremental",
             "templateLink":{
-               "uri":"[variables('configuration').creatingSharepointVMsURL]",
+               "uri":"[variables('configuration').provisioningSharepointVMsURL]",
                "contentVersion":"1.0.0.0"
             },
             "parameters":{
@@ -1216,12 +1217,24 @@
                },
                "storageAccountNamePrefix":{
                   "value":"[parameters('storageAccountNamePrefix')]"
+               },
+               "spPreparationModulesURL":{
+                  "value":"[variables('configuration').spPreparationModulesURL]"
+               },
+               "spPreparationFunction":{
+                  "value":"[variables('configuration').spPreparationFunction]"
+               },
+               "domainName":{
+                  "value":"[parameters('domainName')]"
+               },
+               "DNSServer":{
+                  "value":"[parameters('adPDCNICIPAddress')]"
                }
             }
          }
       },
       {
-         "name":"ProvisioningSharepoint",
+         "name":"ConfiguringSharepoint",
          "type":"Microsoft.Resources/deployments",
          "apiVersion":"2015-01-01",
          "dependsOn":[
@@ -1231,7 +1244,7 @@
          "properties":{
             "mode":"Incremental",
             "templateLink":{
-               "uri":"[variables('configuration').provisioningSharepointUrl]",
+               "uri":"[variables('configuration').configuringSharepointUrl]",
                "contentVersion":"1.0.0.0"
             },
             "parameters":{
@@ -1244,8 +1257,8 @@
                "location":{
                   "value":"[parameters('location')]"
                },
-               "spModulesURL":{
-                  "value":"[variables('configuration').spModulesURL]"
+               "spConfigurationModulesURL":{
+                  "value":"[variables('configuration').spConfigurationModulesURL]"
                },
                "spConfigurationFunction":{
                   "value":"[variables('configuration').spConfigurationFunction]"
@@ -1315,6 +1328,10 @@
      "fqdn": {
        "value": "[reference('SettingUpSharepointWebPublicIP').outputs.fqdn.value]",
        "type": "string"
+     },
+     "cafqdn":{
+        "value":"[reference('SettingUpSharepointCentralAdminPublicIP').outputs.fqdn.value]",
+        "type": "string"
      }
    }
 }
