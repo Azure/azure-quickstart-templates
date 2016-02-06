@@ -1,12 +1,14 @@
 #!/bin/bash
 
 prefix="cf"
-loc="East Asia"
-tenantID="REPLACE-HERE"
-clientID="REPLACE-HERE"
-clientSecret="REPLACE-HERE"
-username="REPLACE-HERE"
-password="REPLACE-HERE"
+loc="CHANGE-ME"
+
+username="CHANGE-ME"
+sshKeyData="CHANGE-ME"
+
+tenantID="CHANGE-ME"
+clientID="CHANGE-ME"
+clientSecret="CHANGE-ME"
 
 get_id()
 {
@@ -18,66 +20,24 @@ get_id()
 deploy()
 {
     echo "scenario: $2"
-    azure group create -n "$prefix$1" -l "$loc" -d "$2" -f ../azuredeploy.json -e $2.json
+    azure group create -n "$prefix$1" -l "$loc" -d "$2"  -f ../azuredeploy.json -e $2.json -vv
 }
 
-scenario="minimumconf"
+scenario="minimum"
 id=`get_id`
 cat > $scenario.json << EOF
 {
   "\$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "newStorageAccountName": {
-      "value": "$prefix$id"
-    },
     "vmName": {
       "value": "$prefix$id"
     },
     "adminUsername": {
       "value": "$username"
     },
-    "adminPassword": {
-      "value": "$password"
-    }
-  }
-}
-EOF
-deploy $id $scenario
-
-scenario="maximumconf"
-id=`get_id`
-cat > $scenario.json << EOF
-{
-  "\$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
-  "contentVersion": "1.0.0.0",
-  "parameters": {
-    "newStorageAccountName": {
-      "value": "$prefix$id"
-    },
-    "virtualNetworkName": {
-      "value": "boshvnet-crp"
-    },
-    "subnetNameForBosh": {
-      "value": "Bosh"
-    },
-    "subnetNameForCloudFoundry": {
-      "value": "CloudFoundry"
-    },
-    "vmName": {
-      "value": "$prefix$id"
-    },
-    "vmSize": {
-      "value": "Standard_A1"
-    },
-    "adminUsername": {
-      "value": "$username"
-    },
-    "adminPassword": {
-      "value": "$password"
-    },
-    "enableDNSOnDevbox": {
-      "value": true
+    "sshKeyData": {
+      "value": "$sshKeyData"
     },
     "tenantID": {
       "value": "$tenantID"
@@ -93,62 +53,154 @@ cat > $scenario.json << EOF
 EOF
 deploy $id $scenario
 
-scenario="noserviceprincipal"
+scenario="auto-deploy-bosh"
 id=`get_id`
 cat > $scenario.json << EOF
 {
   "\$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "newStorageAccountName": {
-      "value": "$prefix$id"
-    },
     "vmName": {
       "value": "$prefix$id"
-    },
-    "vmSize": {
-      "value": "Standard_A1"
     },
     "adminUsername": {
       "value": "$username"
     },
-    "adminPassword": {
-      "value": "$password"
+    "sshKeyData": {
+      "value": "$sshKeyData"
     },
-    "enableDNSOnDevbox": {
-      "value": true
+    "tenantID": {
+      "value": "$tenantID"
+    },
+    "clientID": {
+      "value": "$clientID"
+    },
+    "clientSecret": {
+      "value": "$clientSecret"
+    },
+    "autoDeployBosh": {
+      "value": "enabled"
     }
   }
 }
 EOF
 deploy $id $scenario
 
-scenario="nodns"
+scenario="with-additional-storage-accounts"
 id=`get_id`
 cat > $scenario.json << EOF
 {
   "\$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "newStorageAccountName": {
-      "value": "$prefix$id"
-    },
     "vmName": {
       "value": "$prefix$id"
-    },
-    "vmSize": {
-      "value": "Standard_A1"
     },
     "adminUsername": {
       "value": "$username"
     },
-    "adminPassword": {
-      "value": "$password"
+    "sshKeyData": {
+      "value": "$sshKeyData"
     },
-    "enableDNSOnDevbox": {
-      "value": false
+    "tenantID": {
+      "value": "$tenantID"
+    },
+    "clientID": {
+      "value": "$clientID"
+    },
+    "clientSecret": {
+      "value": "$clientSecret"
+    },
+    "additionalStorageAccounts": {
+      "value": "enabled"
+    },
+    "additionalStorageAccountsNumber": {
+      "value": 3
     }
   }
 }
 EOF
 deploy $id $scenario
+
+scenario="with-azure-dns"
+id=`get_id`
+cat > $scenario.json << EOF
+{
+  "\$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmName": {
+      "value": "$prefix$id"
+    },
+    "adminUsername": {
+      "value": "$username"
+    },
+    "sshKeyData": {
+      "value": "$sshKeyData"
+    },
+    "tenantID": {
+      "value": "$tenantID"
+    },
+    "clientID": {
+      "value": "$clientID"
+    },
+    "clientSecret": {
+      "value": "$clientSecret"
+    },
+    "azureDNS": {
+      "value": "enabled"
+    },
+    "systemDomainName": {
+      "value": "mslovelinux.com"
+    }
+  }
+}
+EOF
+deploy $id $scenario
+
+scenario="all"
+id=`get_id`
+cat > $scenario.json << EOF
+{
+  "\$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmName": {
+      "value": "$prefix$id"
+    },
+    "adminUsername": {
+      "value": "$username"
+    },
+    "sshKeyData": {
+      "value": "$sshKeyData"
+    },
+    "tenantID": {
+      "value": "$tenantID"
+    },
+    "clientID": {
+      "value": "$clientID"
+    },
+    "clientSecret": {
+      "value": "$clientSecret"
+    },
+    "autoDeployBosh": {
+      "value": "enabled"
+    },
+    "additionalStorageAccounts": {
+      "value": "enabled"
+    },
+    "additionalStorageAccountsNumber": {
+      "value": 3
+    },
+    "azureDNS": {
+      "value": "enabled"
+    },
+    "systemDomainName": {
+      "value": "mslovelinux.com"
+    }
+  }
+}
+EOF
+deploy $id $scenario
+
+echo "FINISH"
