@@ -1,0 +1,306 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "domainName": {
+      "type": "string",
+      "defaultValue": "fabrikam.com",
+      "metadata": {
+        "description": "Domain to create for the Lab"
+      }
+    },
+    "assetLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The location of resources such as templates and DSC modules that the script is dependent"
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/"
+    },
+
+    "adminUsername": {
+      "type": "string",
+      "defaultValue": "zeAdmin",
+      "metadata": {
+        "description": "Admin username"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Admin password"
+      }
+    },
+    "StorageAccountPrefix": {
+      "type": "string",
+      "defaultValue": "st",
+      "metadata": {
+        "description": "Storage Account Prefix (prepended to the unique id generated"
+      }
+    },
+    "vnetName": {
+      "type": "string",
+      "defaultValue": "LabVNet",
+      "metadata": {
+        "description": "Name of the vnet"
+      }
+    },
+    "dnsLabelPrefix": {
+      "type": "string",
+      "defaultValue": "vlab",
+      "metadata": {
+        "description": "Unique public DNS prefix for the deployment. The fqdn will look something like '<dnsname>.westus.cloudapp.azure.com'. Up to 62 chars, digits or dashes, lowercase, should start with a letter: must conform to '^[a-z][a-z0-9-]{1,61}[a-z0-9]$'."
+      }
+    },
+    "lbName": {
+      "type": "string",
+      "defaultValue": "lbn",
+      "metadata": {
+        "description": "Front End load Balancer Name'."
+      }
+    },
+    "publicIPAddressName": {
+      "type": "string",
+      "defaultValue": "PublicIP",
+      "metadata": {
+        "description": "Public address name, for lb configuration."
+      }
+    }
+  },
+  "variables": {
+    "labVNetPrefix": "172.16.0.0/12",
+    "subnets": [
+      {
+        "name": "sbn-Central",
+        "properties": {
+          "addressPrefix": "172.16.0.0/24"
+        }
+      },
+      {
+        "name": "sbn-Branch1",
+        "properties": {
+          "addressPrefix": "172.16.1.0/24"
+        }
+      },
+      {
+        "name": "sbn-Branch2",
+        "properties": {
+          "addressPrefix": "172.16.2.0/24"
+        }
+      },
+      {
+        "name": "sbn-Branch3",
+        "properties": {
+          "addressPrefix": "172.16.3.0/24"
+        }
+      }
+
+    ],
+    "apiVersion": "2015-06-15",
+    "location": "[resourceGroup().location]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2015-01-01",
+      "name": "[parameters('vnetName')]",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('assetLocation'),'LabVNet.json')]",
+          "contentVersion": "1.0.0.1"
+        },
+        "parameters": {
+          "labVNetPrefix": { "value": "[variables('labVNetPrefix')]" },
+          "subnets": { "value": "[variables('subnets')]" },
+          "vnetName": { "value": "[parameters('vnetName')]" },
+          "dnsLabelPrefix": { "value": "[parameters('dnsLabelPrefix')]" },
+          "lbName": { "value": "[parameters('lbName')]" },
+          "publicIPAddressName": { "value": "[parameters('publicIPAddressName')]" }
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-01-01",
+      "name": "LabStorage",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('assetLocation'), 'Storage.json')]",
+          "contentVersion": "1.0.0.1"
+        },
+        "parameters": {
+          "storageAccounPrefix": { "value": "[parameters('storageAccountPrefix')]" }
+        }
+      }
+    },
+
+    {
+      "apiVersion": "2015-01-01",
+      "name": "LabAVSetDC",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('assetLocation'),'AVSet.json')]",
+          "contentVersion": "0.0.0.1"
+        },
+        "parameters": {
+          "availabilitySetName": { "value": "AVSetDC" }
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-01-01",
+      "name": "RootFirstDC",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', parameters('vnetName'))]",
+        "Microsoft.Resources/deployments/LabStorage",
+        "Microsoft.Resources/deployments/LabAVSetDC"
+      ],
+      "properties": {
+        "mode": "incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('assetLocation'),'CreateADC.json')]",
+          "contentVersion": "0.0.0.1"
+        },
+        "parameters": {
+          "indx": { "value": 0 },
+          "lbName": { "value": "[parameters('lbName')]" },
+          "publicIPAddressName": { "value": "[parameters('publicIPAddressName')]" },
+          "publicStartRdpPort": { "value": 5000 },
+          "vnetName": { "value": "[parameters('vnetName')]" },
+          "subnets": { "value": "[reference(parameters('vnetName')).outputs.vnetSubnets.value]" },
+          "storageAccountName": { "value": "[reference('LabStorage').outputs.storageAccountName.value]" },
+          "availabilitySetName": { "value": "AvSetDC" },
+          "vmSize": { "value": "Standard_A2" },
+          "vmNamePrefix": { "value": "dc" },
+          "domainName": { "value": "[parameters('domainName')]" },
+          "adminUserName": { "value": "[parameters('adminUserName')]" },
+          "adminPassword": { "value": "[parameters('adminPassword')]" },
+          "assetLocation": { "value": "[parameters('assetLocation')]" }
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-01-01",
+      "name": "setDNS",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "Microsoft.Resources/deployments/RootFirstDC"
+      ],
+      "properties": {
+        "mode": "incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('assetLocation'),'SetVNetDNS.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "dnsServerAddresses": { "value": [ "[reference('RootFirstDC').outputs.vmIPAddress.value]" ] },
+          "virtualNetworkName": { "value": "[parameters('vnetName')]" },
+          "virtualNetworkSubnets": { "value": "[reference(parameters('vnetName')).outputs.vnetSubnets.value]" },
+          "virtualNetworkAddressRanges": { "value": [ "[variables('labVNetPrefix')]" ] }
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-01-01",
+      "name": "[concat('bdc', copyIndex())]",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "Microsoft.Resources/deployments/LabAVSetDC",
+        "Microsoft.Resources/deployments/RootFirstDC",
+        "Microsoft.Resources/deployments/setDNS"
+      ],
+      "copy": {
+        "name": "otherDCs",
+        "count": "[add(length(variables('subnets')),-1)]"
+      },
+      "properties": {
+        "mode": "incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('assetLocation'),'CreateADC.json')]",
+          "contentVersion": "0.0.0.1"
+        },
+        "parameters": {
+          "indx": { "value": "[copyIndex(1)]" },
+          "lbName": { "value": "[parameters('lbName')]" },
+          "publicIPAddressName": { "value": "[parameters('publicIPAddressName')]" },
+          "publicStartRdpPort": { "value": 5000 },
+          "vnetName": { "value": "[parameters('vnetName')]" },
+          "subnets": { "value": "[reference(parameters('vnetName')).outputs.vnetSubnets.value]" },
+          "storageAccountName": { "value": "[reference('LabStorage').outputs.storageAccountName.value]" },
+          "availabilitySetName": { "value": "AvSetDC" },
+          "vmNamePrefix": { "value": "dc" },
+          "nicNamePrefix": { "value": "nic" },
+          "domainName": { "value": "[parameters('domainName')]" },
+          "adminUserName": { "value": "[parameters('adminUserName')]" },
+          "adminPassword": { "value": "[parameters('adminPassword')]" },
+          "assetLocation": { "value": "[parameters('assetLocation')]" }
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-01-01",
+      "name": "[concat('Members', copyIndex())]",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "Microsoft.Resources/deployments/RootFirstDC",
+        "Microsoft.Resources/deployments/setDNS"
+      ],
+      "copy": {
+        "name": "members",
+        "count": "[mul(length(variables('subnets')),2)]"
+      },
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('assetLocation'),'WinServ.json')]",
+          "contentVersion": "0.0.0.1"
+        },
+        "parameters": {
+          "indx": { "value": "[copyIndex()]" },
+          "lbName": { "value": "[parameters('lbName')]" },
+          "computerName": { "value": "srvMbmr" },
+          "publicStartRdpPort": { "value": 6000 },
+          "publicIPAddressName": { "value": "[parameters('publicIPAddressName')]" },
+          "vnetName": { "value": "[parameters('vnetName')]" },
+          "subnets": { "value": "[reference(parameters('vnetName')).outputs.vnetSubnets.value]" },
+          "storageAccountName": { "value": "[reference('LabStorage').outputs.storageAccountName.value]" },
+          "availabilitySetName": { "value": "AVSetDC" },
+          "domainName": { "value": "[parameters('domainName')]" },
+          "adminUsername": { "value": "[parameters('adminUserName')]" },
+          "adminPassword": { "value": "[parameters('adminPassword')]" },
+          "domainJoinUsername": { "value": "[parameters('adminUserName')]" },
+          "domainJoinPassword": { "value": "[parameters('adminPassword')]" },
+          "assetLocation": { "value": "[parameters('assetLocation')]" },
+          "dDisks": { "value": 
+            [
+              {
+                "vhd": {
+                  "uri": "[concat('http://',reference('LabStorage').outputs.storageAccountName.value,'.blob.core.windows.net/vhds/', 'datasrvdfs', copyIndex(),'.vhd')]"
+                },
+                "name": "[concat('dataDisk', copyIndex())]",
+                "caching": "None",
+                "createOption": "empty",
+                "diskSizeGB": "1000",
+                "lun": 0
+              }
+            ]
+          }
+          }
+      }
+    }
+  ],
+  "outputs": {
+    "vmIPAddress": {
+      "type": "string",
+      "value": "[reference('RootFirstDC').outputs.vmIPAddress.value]"
+    },
+    "subnets": {
+      "type": "array",
+      "value": "[reference(parameters('VNetName')).outputs.vnetSubnets.value]"
+    }
+  }
+}

@@ -1,0 +1,333 @@
+﻿{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "0.0.0.1",
+  "parameters": {
+    "subnets": {
+      "type": "array",
+      "metadata": {
+        "description": "list of subnets where the VMs will belong to (round-robin)"
+      }
+    },
+    "indx": {
+      "type": "int",
+      "defaultValue": 0,
+      "metadata": {
+        "description": "Index to create multiple DCs. Index == 0 means it will be a new domain and a PDCE will be created"
+      }
+    },
+    "lbName": {
+      "type": "string",
+      "defaultValue": "lbn",
+      "metadata": {
+        "description": "Front End load Balancer Name'."
+      }
+    },
+    "publicIPAddressName": {
+      "type": "string",
+      "defaultValue": "PublicIP",
+      "metadata": {
+        "description": "Public address name, for lb configuration."
+      }
+    },
+    "vnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "VNet the VM will belong to"
+      }
+    },
+    "nicNamePrefix": {
+      "type": "string",
+      "defaultValue": "nic",
+      "metadata": {
+        "description": "Nic name associated with the VM."
+      }
+    },
+    "publicStartRdpPort": {
+      "type": "int",
+      "metadata": {
+        "description": "Public port, for RDP remote connection ."
+      }
+    },
+    "storageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Storage to put the disk image on"
+      }
+    },
+    "vmNamePrefix": {
+      "type": "string",
+      "defaultValue": "DC-"
+    },
+    "imagePublisher": {
+      "type": "string",
+      "defaultValue": "MicrosoftWindowsServer",
+      "metadata": {
+        "description": "Image Publisher"
+      }
+    },
+    "imageOffer": {
+      "type": "string",
+      "defaultValue": "WindowsServer",
+      "metadata": {
+        "description": "Image Offer"
+      }
+    },
+    "imageSKU": {
+      "type": "string",
+      "defaultValue": "2012-R2-Datacenter",
+      "metadata": {
+        "description": "Image SKU"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_A1",
+      "metadata": {
+        "description": "VM Size"
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "defaultValue": "zeAdmin",
+      "metadata": {
+        "description": "Admin username"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Admin password"
+      }
+    },
+    "availabilitySetName": {
+      "type": "string",
+      "defaultValue": "AVSet1",
+      "metadata": {
+        "description": "AVSet the VM will belong to"
+      }
+    },
+    "domainName": {
+      "type": "string",
+      "defaultValue": "contoso.com",
+      "metadata": {
+        "description": "The FQDN of the AD Domain created "
+      }
+    },
+    "assetLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The location of resources such as templates and DSC modules that the script is dependent. Includes the last forward slash"
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/active-directory-new-domain/"
+    }
+  },
+  "variables": {
+    "nicName": "[concat(parameters('nicNamePrefix'),variables('vmName'))]",
+    "adConfigurationFunction": "[concat('CreateADC.ps1\\CreateADC_', variables('dscFiletocall'))]",
+    "adDataDisk": "[concat('ADDataDisk',parameters('indx'))]",
+    "adDataDiskSize": 1000,
+    "adModulesURL": "[concat(parameters('assetLocation'),'CreateADC.ps1.zip')]",
+    "dscFiletocall": "[mod(add(parameters('indx'),2),add(parameters('indx'),1))]",
+    "frontEndIPConfigID": "[concat(variables('lbID'),'/frontendIPConfigurations/loadBalancerFrontend')]",
+    "inboundNatName": "[concat(parameters('lbName'), '/', variables('natRuleName'))]",
+    "lbID": "[resourceId('Microsoft.Network/loadBalancers',parameters('lbName'))]",
+    "natRuleName": "[concat('RDP-RootDC', parameters('indx'))]",
+    "subnetIndex": "[mod(parameters('indx'),length(parameters('subnets')))]",
+    "subnetRef": "[parameters('subnets')[variables('subnetIndex') ].id]",
+    "vmName": "[concat(parameters('vmNamePrefix'), parameters('indx'))]",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('vnetName'))]",
+    "osDisk": "[concat('osdisk',variables('vmName'),'.vhd')]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/loadBalancers/inboundNatRules",
+      "name": "[variables('inboundNatName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "frontendIPConfiguration": {
+          "id": "[variables('frontEndIPConfigID')]"
+        },
+        "protocol": "tcp",
+        "frontendPort": "[add(parameters('publicStartRdpPort'),parameters('indx'))]",
+        "backendPort": 3389,
+        "enableFloatingIP": false
+      }
+    },
+
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nicName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/loadBalancers/', parameters('lbName'), '/inboundNatRules/', variables('natRuleName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              },
+              "loadBalancerBackendAddressPools": [
+                {
+                  "id": "[concat(variables('lbID'), '/backendAddressPools/LoadBalancerBackend')]"
+                }
+              ],
+              "loadBalancerInboundNatRules": [
+                {
+                  "id": "[concat(variables('lbID'),'/inboundNatRules/', variables('natRuleName'))]"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('vmName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+      ],
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets',parameters('availabilitySetName'))]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[concat(parameters('vmNamePrefix'), parameters('indx'))]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[parameters('imagePublisher')]",
+            "offer": "[parameters('imageOffer')]",
+            "sku": "[parameters('imageSKU')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[variables('osdisk')]",
+            "vhd": {
+              "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/',variables('osdisk'))]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          },
+          "dataDisks": [
+            {
+              "vhd": {
+                "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/', variables('adDataDisk'),'.vhd')]"
+              },
+              "name": "[concat(variables('vmName'),'-data-disk', parameters('indx'))]",
+              "caching": "None",
+              "createOption": "empty",
+              "diskSizeGB": "[variables('adDataDiskSize')]",
+              "lun": 0
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('nicName')))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {   
+          "bootDiagnostics": {
+            "enabled": "true",
+            "storageUri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net')]"
+          }
+        }
+      },
+      "resources": [
+        {
+          "name": "[concat(variables('vmName'),'/BgInfo')]",
+          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2015-06-15",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Compute",
+            "type": "BGInfo",
+            "typeHandlerVersion": "2.1",
+            "settings": {
+              "properties": [ ]
+            }
+          }
+        },
+        {
+          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "name": "[concat(variables('vmName'),'/MyCustomScriptExtension')]",
+          "apiVersion": "2015-05-01-preview",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]",
+            "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'),'/extensions/BgInfo')]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Compute",
+            "type": "CustomScriptExtension",
+            "typeHandlerVersion": "1.4",
+            "settings": {
+              "fileUris": [
+                "[concat(parameters('assetLocation'), 'start.ps1')]"
+              ],
+              "commandToExecute": "powershell.exe -ExecutionPolicy Unrestricted -File start.ps1"
+            }
+          }
+        },
+        {
+          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "name": "[concat(variables('vmName'),'/CreateDC',parameters('indx'))]",
+          "apiVersion": "2015-05-01-preview",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines/', variables('vmName'))]",
+            "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'),'/extensions/BgInfo')]",
+            "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'),'/extensions/MyCustomScriptExtension')]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Powershell",
+            "type": "DSC",
+            "typeHandlerVersion": "2.11",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "ModulesUrl": "[variables('adModulesURL')]",
+              "ConfigurationFunction": "[variables('adConfigurationFunction')]",
+              "Properties": {
+                "DomainName": "[parameters('domainName')]",
+                "AdminCreds": {
+                  "UserName": "[parameters('adminUserName')]",
+                  "Password": "PrivateSettingsRef:AdminPassword"
+                }
+              }
+            },
+            "protectedSettings": {
+              "Items": {
+                "AdminPassword": "[parameters('adminPassword')]"
+              }
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": {
+    "vmIPAddress": {
+      "type": "string",
+      "value": "[reference(variables('nicName')).ipConfigurations[0].properties.privateIPAddress]"
+    }
+  }
+}
