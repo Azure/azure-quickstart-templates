@@ -7,7 +7,7 @@ azure config mode arm
 
 UUID=$(cat /proc/sys/kernel/random/uuid)
 UUID=${UUID//-}
-UUID="cf${UUID:0:22}"
+AZURE_GROUP_NAME="cf${UUID:0:22}"
 
 cat > parameters.json << EOF
 {
@@ -15,7 +15,7 @@ cat > parameters.json << EOF
   "contentVersion": "1.0.0.0",
   "parameters": {
     "vmName": {
-      "value": "$UUID"
+      "value": "${AZURE_GROUP_NAME}"
     },
     "adminUsername": {
       "value": "azureuser"
@@ -39,9 +39,9 @@ cat > parameters.json << EOF
 }
 EOF
 
-AZURE_GROUP_NAME=$UUID
-echo azure group create ${AZURE_GROUP_NAME} "${AZURE_REGION_NAME}"
+echo "Create the resource group ${AZURE_GROUP_NAME} in the region ${AZURE_REGION_NAME}"
 azure group create ${AZURE_GROUP_NAME} "${AZURE_REGION_NAME}"
+echo "Create the deployment"
 azure group deployment create ${AZURE_GROUP_NAME} --template-file ./bosh-setup-template/bosh-setup/azuredeploy.json --parameters-file ./parameters.json -vv
-
+echo "Delete the resource group ${AZURE_GROUP_NAME}"
 azure group delete ${AZURE_GROUP_NAME} --quiet
