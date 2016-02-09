@@ -176,13 +176,25 @@
     },
     "esVersion": {
       "type": "string",
-      "defaultValue": "2.1.1",
+      "defaultValue": "2.1.2",
       "allowedValues": [
-        "2.1.1",
-        "1.7.3"
+        "2.2.0",
+        "2.1.2",
+        "1.7.5"
       ],
       "metadata": {
         "description": "Elasticsearch version to install"
+      }
+    },
+    "afs": {
+      "type": "string",
+      "defaultValue": "no",
+      "allowedValues": [
+        "yes",
+        "no"
+      ],
+      "metadata": {
+        "description": "Setup an Azure File Service share to store the Elasticsearch data (ubuntu, elasticsearch 2.x only)"
       }
     },
     "marvel": {
@@ -193,7 +205,7 @@
         "no"
       ],
       "metadata": {
-        "description": "Install the marvel agenet in the cluster"
+        "description": "Install the marvel agent in the cluster"
       }
     },
     "kibana":{
@@ -207,17 +219,17 @@
         "description": "Provision a machine with Kibana on it"
       }
     },
-    "templateRepo": {
+    "templateBase": {
       "type": "string",
-      "defaultValue": "Azure",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master",
       "metadata": {
         "description": "Change this value to your repo name if deploying from a fork"
       } 
     }
   },
   "variables": {
-    "templateBaseUrl": "[concat('https://raw.githubusercontent.com/', parameters('templateRepo'), '/azure-quickstart-templates/master/elasticsearch/')]",
-    "scriptBaseUrl": "[concat('https://raw.githubusercontent.com/', parameters('templateRepo'), '/azure-quickstart-templates/master/shared_scripts/ubuntu/')]",
+    "templateBaseUrl": "[concat(parameters('templateBase'), '/elasticsearch/')]",
+    "scriptBaseUrl": "[concat(parameters('templateBase'), '/shared_scripts/ubuntu/')]",
     "locationMap": {
         "ResourceGroup":"[resourceGroup().location]",
         "West US":"[parameters('location')]",
@@ -292,11 +304,22 @@
         "no":""
       },
       "windows": {
-        "yes":" -installMarvel",
+        "yes":" -m",
         "no":""
       }
     },
+    "afsParam": {
+      "ubuntu": {
+        "yes": "[concat(' -a ', variables('storageAccountNameShared'), ' -c -k ')]",
+        "no": "[concat(' -a ', variables('storageAccountNameShared'), ' -k ')]"
+      },
+      "windows": {
+        "yes":"",
+        "no":""
+      } 
+    },
     "marvelParamValue": "[variables('marvelParam')[parameters('OS')][parameters('marvel')]]",
+    "afsParamValue": "[variables('afsParam')[parameters('OS')][parameters('afs')]]",
     "kibanaTemplates": {
       "yes": "kibana-resources.json",
       "no": "empty-resources.json"
@@ -312,7 +335,8 @@
     "ubuntuScripts": [
       "[concat(variables('templateBaseUrl'), 'elasticsearch-ubuntu-install.sh')]",
       "[concat(variables('templateBaseUrl'), 'kibana-install.sh')]",
-      "[concat(variables('scriptBaseUrl'), 'vm-disk-utils-0.1.sh')]"
+      "[concat(variables('scriptBaseUrl'), 'vm-disk-utils-0.1.sh')]",
+      "[concat(variables('scriptBaseUrl'), 'afs-utils-0.1.sh')]"
     ],
     "windowsScripts": [
       "[concat(variables('templateBaseUrl'), 'elasticsearch-windows-install.ps1')]"
@@ -332,7 +356,7 @@
             "typeHandlerVersion": "1.2",
             "settings": {
               "fileUris": "[variables('ubuntuScripts')]",
-              "commandToExecute": "[concat('bash elasticsearch-ubuntu-install.sh -xn ', variables('esSettings').clusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').discoveryHosts, variables('marvelParamValue'))]"
+              "commandToExecute": "[concat('bash elasticsearch-ubuntu-install.sh -xn ', variables('esSettings').clusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').discoveryHosts, variables('marvelParamValue'), variables('afsParamValue'))]"
             }
           },
         "client": {
@@ -341,7 +365,7 @@
             "typeHandlerVersion": "1.2",
             "settings": {
               "fileUris": "[variables('ubuntuScripts')]",
-              "commandToExecute": "[concat('bash elasticsearch-ubuntu-install.sh -yn ', variables('esSettings').clusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').discoveryHosts, variables('marvelParamValue'))]"
+              "commandToExecute": "[concat('bash elasticsearch-ubuntu-install.sh -yn ', variables('esSettings').clusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').discoveryHosts, variables('marvelParamValue'), variables('afsParamValue'))]"
             }
           },
         "data": {
@@ -350,7 +374,7 @@
           "typeHandlerVersion": "1.2",
           "settings": {
             "fileUris": "[variables('ubuntuScripts')]",
-            "commandToExecute": "[concat('bash elasticsearch-ubuntu-install.sh -zn ', variables('esSettings').clusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').discoveryHosts, variables('marvelParamValue'))]"
+            "commandToExecute": "[concat('bash elasticsearch-ubuntu-install.sh -zn ', variables('esSettings').clusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').discoveryHosts, variables('marvelParamValue'), variables('afsParamValue'))]"
           }
         },
         "kibana": {
@@ -359,7 +383,7 @@
           "typeHandlerVersion": "1.2",
           "settings": {
             "fileUris": "[variables('ubuntuScripts')]",
-            "commandToExecute": "[concat('bash kibana-install.sh')]"
+            "commandToExecute": "[concat('bash kibana-install.sh -v ', variables('esSettings').version, variables('marvelParamValue'), ' -t http://', variables('masterNodesIpPrefix'), '0:9200')]"
           }
         }
       }
@@ -379,7 +403,7 @@
           "typeHandlerVersion": "1.4",
           "settings": {
             "fileUris": "[variables('windowsScripts')]",
-            "commandToExecute": "[concat('powershell.exe -File elasticsearch-windows-install.ps1 -elasticSearchVersion ', variables('esSettings').version,' -elasticClusterName ', variables('esSettings').clusterName,' -discoveryEndpoints ', variables('esSettings').discoveryHosts, ' -masterOnlyNode -installMarvel')]"
+            "commandToExecute": "[concat('powershell.exe -File elasticsearch-windows-install.ps1 -elasticSearchVersion ', variables('esSettings').version,' -elasticClusterName ', variables('esSettings').clusterName,' -discoveryEndpoints ', variables('esSettings').discoveryHosts, ' -masterOnlyNode -installMarvel -storageKey ')]"
           }
         },
         "client": {
@@ -388,7 +412,7 @@
           "typeHandlerVersion": "1.4",
           "settings": {
             "fileUris": "[variables('windowsScripts')]",
-            "commandToExecute": "[concat('powershell.exe -File elasticsearch-windows-install.ps1 -elasticSearchVersion ', variables('esSettings').version,' -elasticClusterName ', variables('esSettings').clusterName,' -discoveryEndpoints ', variables('esSettings').discoveryHosts, ' -clientOnlyNode -installMarvel')]"
+            "commandToExecute": "[concat('powershell.exe -File elasticsearch-windows-install.ps1 -elasticSearchVersion ', variables('esSettings').version,' -elasticClusterName ', variables('esSettings').clusterName,' -discoveryEndpoints ', variables('esSettings').discoveryHosts, ' -clientOnlyNode -installMarvel -storageKey ')]"
           }
         },
         "data": {
@@ -397,7 +421,7 @@
           "typeHandlerVersion": "1.4",
           "settings": {
             "fileUris": "[variables('windowsScripts')]",
-            "commandToExecute": "[concat('powershell.exe -File elasticsearch-windows-install.ps1 -elasticSearchVersion ', variables('esSettings').version,' -elasticClusterName ', variables('esSettings').clusterName,' -discoveryEndpoints ', variables('esSettings').discoveryHosts, ' -dataOnlyNode -installMarvel')]"
+            "commandToExecute": "[concat('powershell.exe -File elasticsearch-windows-install.ps1 -elasticSearchVersion ', variables('esSettings').version,' -elasticClusterName ', variables('esSettings').clusterName,' -discoveryEndpoints ', variables('esSettings').discoveryHosts, ' -dataOnlyNode -installMarvel -storageKey ')]"
           }
         }
       }
@@ -532,9 +556,13 @@
       "count":"[div(sub(add(parameters('vmDataNodeCount'), variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
       "mapping":"[variables('storageBinPackMap')]",
       "accountType":"[variables('dataSkuSettings')[parameters('vmSizeDataNodes')].storageAccountType]",
+      "shared":"[variables('storageAccountNameShared')]",
       "prefix":"[concat(variables('storageAccountPrefix'), 'da')]"
     },
-    "dataTemplateUrl": "[concat(variables('templateBaseUrl'), 'data-nodes-', string(variables('dataSkuSettings')[parameters('vmSizeDataNodes')].dataDisks), 'disk-resources.json')]"
+    "dataTemplateUrl": {
+        "afs-yes": "[concat(variables('templateBaseUrl'), 'data-nodes-0disk-resources.json')]",
+        "afs-no": "[concat(variables('templateBaseUrl'), 'data-nodes-', string(variables('dataSkuSettings')[parameters('vmSizeDataNodes')].dataDisks), 'disk-resources.json')]"
+    }
   },
   "resources": [
     {
@@ -667,7 +695,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[variables('dataTemplateUrl')]",
+          "uri": "[variables('dataTemplateUrl')[concat('afs-', parameters('afs'))]]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
