@@ -66,10 +66,11 @@ Please note that [Azure Resource Manager][3] is used to provision the environmen
   -ResourceGroupLocation 'eastus' `
   -TemplateFile '..\azuredeploy.json' `
   -TemplateParametersFile '..\azuredeploy.parameters.json' `
-  -ArtifactStagingDirectory '../../' `
+  -ArtifactStagingDirectory '../CustomScripts' `
   -UploadArtifacts `
   -StorageAccountName 'arm-resources' `
-  -StorageAccountResourceGroupName 'deployments'
+  -StorageAccountResourceGroupName 'deployments' `
+  -Verbose
 ```
 
 #### Post-Deployment
