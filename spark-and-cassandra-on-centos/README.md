@@ -54,7 +54,7 @@ Please note that [Azure Resource Manager][3] is used to provision the environmen
 1.  Launch PowerShell ISE
 2.  Execute: `Login-AzureRmAccount`
 3.  Navigate to `CHECKOUT_DIRECTORY/Scripts`
-4.  Execute the following command on PowerShell ISE and fill in any prompts.  Defaults are automatically set in templates\azuredeploy.parameters.json and can be updated as required.
+4.  Execute the following command on PowerShell ISE and fill in any prompts.  Defaults are automatically set in azuredeploy.parameters.json and can be updated as required.
 
 > You can set change the **-ResourceGroupName** and **-ResourceGroupLocation** to suit your deployment needs.  In this example, it is set to "spark-on-centos" and "East US"
 
@@ -64,8 +64,8 @@ Please note that [Azure Resource Manager][3] is used to provision the environmen
 .\Deploy-AzureResourceGroup.ps1 `
   -ResourceGroupName 'spark-on-centos' `
   -ResourceGroupLocation 'eastus' `
-  -TemplateFile '..\templates\azuredeploy.json' `
-  -TemplateParametersFile '..\templates\azuredeploy.parameters.json' `
+  -TemplateFile '..\azuredeploy.json' `
+  -TemplateParametersFile '..\azuredeploy.parameters.json' `
   -ArtifactStagingDirectory '../../' `
   -UploadArtifacts `
   -StorageAccountName 'arm-resources' `
