@@ -161,11 +161,11 @@ expand_ip_range() {
 # Configure Elasticsearch Data Disk Folder and Permissions
 setup_data_disk()
 {
-    log "Configuring disk $1/elasticsearch/data"
+    log "Configuring disk $1"
 
-    mkdir -p "$1/elasticsearch/data"
-    chown -R elasticsearch:elasticsearch "$1/elasticsearch"
-    chmod 755 "$1/elasticsearch"
+    mkdir -p "$1"
+    chown -R elasticsearch:elasticsearch "$1"
+    chmod 755 "$1"
 }
 
 # Install Oracle Java
@@ -230,7 +230,7 @@ if [ -d "${DATA_BASE}" ]; then
         #Configure disk permissions and folder for storage
         setup_data_disk ${D}
         # Add to list for elasticsearch configuration
-        DATAPATH_CONFIG+="$D/elasticsearch/data,"
+        DATAPATH_CONFIG+="$D,"
     done
     #Remove the extra trailing comma
     DATAPATH_CONFIG="${DATAPATH_CONFIG%?}"
@@ -259,14 +259,23 @@ echo "node.name: ${HOSTNAME}" >> /etc/elasticsearch/elasticsearch.yml
 # Configure paths - if we have data disks attached then use them
 if [ -n "$DATAPATH_CONFIG" ]; then
     log "Update configuration with data path list of $DATAPATH_CONFIG"
-    echo "path.data: $DATAPATH_CONFIG" >> /etc/elasticsearch/elasticsearch.yml
+    
+    data_setting="path.data"
+    if [ ${USE_AFS} -ne 0 ]; 
+    then
+        # path.data will be the default (/var/lib/elasticsearch)
+        data_setting="path.shared_data"
+        echo "node.enable_custom_paths: true" >> /etc/elasticsearch/elasticsearch.yml
+        echo "node.add_id_to_custom_path: false" >> /etc/elasticsearch/elasticsearch.yml
+    fi
+    
+    echo "$data_setting: $DATAPATH_CONFIG" >> /etc/elasticsearch/elasticsearch.yml
 fi
 
 # Configure discovery
 log "Update configuration with hosts configuration of $HOSTS_CONFIG"
 echo "discovery.zen.ping.multicast.enabled: false" >> /etc/elasticsearch/elasticsearch.yml
 echo "discovery.zen.ping.unicast.hosts: $HOSTS_CONFIG" >> /etc/elasticsearch/elasticsearch.yml
-
 
 # Configure Elasticsearch node type
 log "Configure master/client/data node type flags mater-$MASTER_ONLY_NODE data-$DATA_NODE"
