@@ -20,7 +20,7 @@
         "description": "Unique namespace for the Storage Account where the Virtual Machine's disks will be placed"
       }
     },
-    "region": {
+    "location": {
       "type": "string",
       "defaultValue": "West US",
       "metadata": {
@@ -46,38 +46,42 @@
         "description": "Size of the Elasticsearch master nodes"
       }
     },
-    "esSettings": {
-      "type": "object",
-      "metadata": {
-        "description": "Elasticsearch settings - cluster name, version, discovery hosts"
-      }
-    },
     "osSettings": {
       "type": "object",
       "metadata": {
         "description": "Elasticsearch deployment platform settings"
       }
+    },
+    "namespace": {
+      "type": "string",
+      "metadata": {
+        "description": "Namespace for resources created by this template"
+      }
     }
   },
   "variables": {
     "vmStorageAccountContainerName": "vhd",
-    "subnetRef":"[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('subnet').vnet), '/subnets/', parameters('subnet').name)]",
+    "subnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('subnet').vnet), '/subnets/', parameters('subnet').name)]",
     "storageAccountName": "[parameters('storageAccountName')]",
-    "vmName": "masterVm"
+    "vmName": "[concat(parameters('namespace'), '-vm')]",
+    "nicName": "[concat(parameters('namespace'), '-nic')]"
   },
   "resources": [
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/availabilitySets",
-      "name": "elasticsearchMaster",
-      "location": "[parameters('region')]",
-      "properties": {}
+      "name": "es-master-set",
+      "location": "[parameters('location')]",
+      "properties": {
+        "platformUpdateDomainCount": 3,
+        "platformFaultDomainCount": 3
+      }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[concat('masterNodeNic', copyindex())]",
-      "location": "[parameters('region')]",
+      "name": "[concat(variables('nicName'), copyindex())]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "masterNodesNicLoop",
         "count": 3
@@ -98,27 +102,27 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[concat('masterVm', copyindex())]",
-      "location": "[parameters('region')]",
+      "name": "[concat(variables('vmName'), copyindex())]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "masterVmLoop",
         "count": 3
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', 'masterNodeNic', copyindex())]",
-        "[concat('Microsoft.Compute/availabilitySets/', 'elasticsearchMaster')]"
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyindex())]",
+        "[concat('Microsoft.Compute/availabilitySets/', 'es-master-set')]"
       ],
       "properties": {
         "availabilitySet": {
-          "id": "[resourceId('Microsoft.Compute/availabilitySets', 'elasticsearchMaster')]"
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', 'es-master-set')]"
         },
         "hardwareProfile": {
           "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
-          "computername": "[concat('esMaster', copyIndex())]",
+          "computerName": "[concat('master-vm', copyIndex())]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]"
         },
@@ -136,34 +140,23 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat('masterNodeNic', copyindex()))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('nicName'), copyindex()))]"
             }
           ]
         }
-      }
-    },
-    {
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat('masterVm', copyindex(), '/installelasticsearch')]",
-      "apiVersion": "2015-05-01-preview",
-      "location": "[parameters('region')]",
-      "copy": {
-        "name": "masterVMExtensionsLoop",
-        "count": 3
       },
-      "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', 'masterVm', copyindex())]",
-        "[concat('Microsoft.Network/networkInterfaces/', 'masterNodeNic', copyindex())]"
-      ],
-      "properties": {
-        "publisher": "Microsoft.OSTCExtensions",
-        "type": "CustomScriptForLinux",
-        "typeHandlerVersion": "1.2",
-        "settings": {
-          "fileUris": "[parameters('osSettings').scripts]",
-          "commandToExecute": "[concat('bash elasticsearch-ubuntu-install.sh -xn ', parameters('esSettings').clusterName, ' -v ', parameters('esSettings').version, ' -d ', parameters('esSettings').discoveryHosts)]"
+      "resources": [
+        {
+          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "name": "[concat(variables('vmName'), copyindex(), '/installelasticsearch')]",
+          "apiVersion": "2015-06-15",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'), copyindex())]"
+          ],
+          "properties": "[parameters('osSettings').extensionSettings.master]"
         }
-      }
+      ]
     }
   ]
 }
