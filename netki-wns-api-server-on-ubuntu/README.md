@@ -3,6 +3,9 @@
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fnetki-wns-api-server-on-ubuntu%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fnetki-wns-api-server-on-ubuntu%2Fazuredeploy.json" target="_blank">
+    <img src="http://armviz.io/visualizebutton.png"/>
+</a>
 
 The Netki Wallet Name lookup API server allows you to quickly integrate the Wallet Name standard into your digital 
 currency platform. Using the Wallet Name Service allows you to avoid difficult to remember Bitcoin, Ethereum, Factoid, 

@@ -27,7 +27,7 @@
     "availabilitySetNodes": "swarm-nodes-set",
     "osImagePublisher": "CoreOS",
     "osImageOffer": "CoreOS",
-    "osImageSKU": "Stable",
+    "osImageSKU": "Beta",
     "managementPublicIPAddrName": "swarm-lb-masters-ip",
     "nodesPublicIPAddrName": "swarm-lb-nodes-ip",
     "virtualNetworkName": "swarm-vnet",
@@ -485,22 +485,22 @@
               "image": "progrium/consul",
               "command": "[concat('-server -node master', copyIndex(), ' ', variables('consulServerArgs')[copyIndex()])]",
               "ports": [
+                "8500:8500",
                 "8300:8300",
                 "8301:8301",
                 "8301:8301/udp",
                 "8302:8302",
                 "8302:8302/udp",
-                "8400:8400",
-                "8500:8500"
-              ],
+                "8400:8400"
+             ],
               "volumes": [
                 "/data/consul:/data"
               ],
               "restart": "always"
             },
             "swarm": {
-              "image": "swarm:1.0.0",
-              "command": "[concat('manage --replication --advertise ', reference(concat(variables('vmNameMaster'), copyIndex(), '-nic')).ipConfigurations[0].properties.privateIPAddress, ':2375 consul://10.0.0.4:8500/nodes')]",
+              "image": "swarm:1.0.1",
+              "command": "[concat('manage --replication --advertise ', reference(concat(variables('vmNameMaster'), copyIndex(), '-nic')).ipConfigurations[0].properties.privateIPAddress, ':2375 --discovery-opt kv.path=docker/nodes consul://10.0.0.4:8500')]",
               "ports": [
                 "2375:2375"
               ],
@@ -535,14 +535,11 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "docker": {
-            "port": "2375"
-          },
-          "compose": {
-            "swarm": {
-              "image": "swarm:1.0.0",
-              "restart": "always",
-              "command": "[concat('join --advertise=', reference(concat(variables('vmNameNode'), copyIndex(), '-nic')).ipConfigurations[0].properties.privateIPAddress, ':2375 consul://10.0.0.4:8500/nodes')]"
-            }
+            "port": "2375",
+	    "options": [
+	      "--cluster-store=consul://10.0.0.4:8500",
+	      "--cluster-advertise=eth0:2375"
+	    ]
           }
         }
       }
