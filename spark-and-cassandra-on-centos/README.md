@@ -91,7 +91,7 @@ Please note that [Azure Resource Manager][3] is used to provision the environmen
 2.  Copy the scripts located in CustomScripts folder to a publically accessible location or in Azure Storage.  Once uploaded, update **_artifactsLocation** and **_artifactsLocationSasToken** in azuredeploy.parameters.json accordingly.
 
 
-#### Deployment (For XPLAT-CLI)
+#### Deployment
 
 1.  Launch Command Line
 2.  Navigate to CHECKOUT_DIRECTORY
