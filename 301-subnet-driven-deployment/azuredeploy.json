@@ -1,6 +1,6 @@
 ﻿{
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-  "contentVersion": "1.0.0.0",
+  "contentVersion": "1.0.0.1",
   "parameters": {
     "domainName": {
       "type": "string",
@@ -19,7 +19,6 @@
 
     "adminUsername": {
       "type": "string",
-      "defaultValue": "zeAdmin",
       "metadata": {
         "description": "Admin username"
       }
@@ -30,25 +29,16 @@
         "description": "Admin password"
       }
     },
-    "StorageAccountPrefix": {
-      "type": "string",
-      "defaultValue": "st",
-      "metadata": {
-        "description": "Storage Account Prefix (prepended to the unique id generated"
-      }
-    },
     "vnetName": {
       "type": "string",
-      "defaultValue": "LabVNet",
       "metadata": {
         "description": "Name of the vnet"
       }
     },
-    "dnsLabelPrefix": {
+    "dnsLabel": {
       "type": "string",
-      "defaultValue": "vlab",
       "metadata": {
-        "description": "Unique public DNS prefix for the deployment. The fqdn will look something like '<dnsname>.westus.cloudapp.azure.com'. Up to 62 chars, digits or dashes, lowercase, should start with a letter: must conform to '^[a-z][a-z0-9-]{1,61}[a-z0-9]$'."
+        "description": "Unique public DNS label for the deployment. The fqdn will look something like 'dnsname.region.cloudapp.azure.com'. Up to 62 chars, digits or dashes, lowercase, should start with a letter: must conform to '^[a-z][a-z0-9-]{1,61}[a-z0-9]$'."
       }
     },
     "lbName": {
@@ -89,7 +79,8 @@
       }
     ],
     "apiVersion": "2015-06-15",
-    "location": "[resourceGroup().location]"
+    "location": "[resourceGroup().location]",
+    "storageAccountSuffix": "st"
   },
   "resources": [
     {
@@ -106,7 +97,7 @@
           "labVNetPrefix": { "value": "[variables('labVNetPrefix')]" },
           "subnets": { "value": "[variables('subnets')]" },
           "vnetName": { "value": "[parameters('vnetName')]" },
-          "dnsLabelPrefix": { "value": "[parameters('dnsLabelPrefix')]" },
+          "dnsLabel": { "value": "[parameters('dnsLabel')]" },
           "lbName": { "value": "[parameters('lbName')]" },
           "publicIPAddressName": { "value": "[parameters('publicIPAddressName')]" }
         }
@@ -123,7 +114,7 @@
           "contentVersion": "1.0.0.1"
         },
         "parameters": {
-          "storageAccounPrefix": { "value": "[parameters('storageAccountPrefix')]" }
+          "storageAccountSuffix": { "value": "[variables('storageAccountSuffix')]" }
         }
       }
     },
@@ -136,7 +127,7 @@
         "mode": "incremental",
         "templateLink": {
           "uri": "[concat(parameters('assetLocation'),'AVSet.json')]",
-          "contentVersion": "0.0.0.1"
+          "contentVersion": "1.0.0.1"
         },
         "parameters": {
           "availabilitySetName": { "value": "AVSetDC" }
@@ -156,7 +147,7 @@
         "mode": "incremental",
         "templateLink": {
           "uri": "[concat(parameters('assetLocation'),'CreateADC.json')]",
-          "contentVersion": "0.0.0.1"
+          "contentVersion": "1.0.0.1"
         },
         "parameters": {
           "indx": { "value": 0 },
@@ -187,7 +178,7 @@
         "mode": "incremental",
         "templateLink": {
           "uri": "[concat(parameters('assetLocation'),'SetVNetDNS.json')]",
-          "contentVersion": "1.0.0.0"
+          "contentVersion": "1.0.0.1"
         },
         "parameters": {
           "dnsServerAddresses": { "value": [ "[reference('RootFirstDC').outputs.vmIPAddress.value]" ] },
@@ -214,7 +205,7 @@
         "mode": "incremental",
         "templateLink": {
           "uri": "[concat(parameters('assetLocation'),'CreateADC.json')]",
-          "contentVersion": "0.0.0.1"
+          "contentVersion": "1.0.0.1"
         },
         "parameters": {
           "indx": { "value": "[copyIndex(1)]" },
@@ -250,7 +241,7 @@
         "mode": "Incremental",
         "templateLink": {
           "uri": "[concat(parameters('assetLocation'),'WinServ.json')]",
-          "contentVersion": "0.0.0.1"
+          "contentVersion": "1.0.0.1"
         },
         "parameters": {
           "indx": { "value": "[copyIndex()]" },
@@ -268,8 +259,8 @@
           "domainJoinUsername": { "value": "[parameters('adminUserName')]" },
           "domainJoinPassword": { "value": "[parameters('adminPassword')]" },
           "assetLocation": { "value": "[parameters('assetLocation')]" },
-          "dDisks": { "value": 
-            [
+          "dDisks": {
+            "value": [
               {
                 "vhd": {
                   "uri": "[concat('http://',reference('LabStorage').outputs.storageAccountName.value,'.blob.core.windows.net/vhds/', 'datasrvdfs', copyIndex(),'.vhd')]"
@@ -282,7 +273,7 @@
               }
             ]
           }
-          }
+        }
       }
     }
   ],
