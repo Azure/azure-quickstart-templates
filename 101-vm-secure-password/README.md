@@ -27,10 +27,10 @@ After this you'll need to enable the Key Vault for template deployment and deplo
 
 ## PowerShell
 ```
-Set-AzureRmKeyVaultAccessPolicy -VaultName Contoso -EnabledForTemplateDeployment -EnabledForDeployment
+Set-AzureRmKeyVaultAccessPolicy -VaultName Contoso -EnabledForTemplateDeployment
 ```
 
 ### CLI
 ```
-azure keyvault set-policy --vault-name Contoso --enabled-for-deployment true --enabled-for-template-deployment true
+azure keyvault set-policy --vault-name Contoso --enabled-for-template-deployment true
 ```
