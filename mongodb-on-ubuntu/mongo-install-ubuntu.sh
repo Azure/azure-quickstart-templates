@@ -10,5 +10,8 @@ sudo grep -q -F 'transparent_hugepage=never' /etc/default/grub || echo 'transpar
 # Install updates
 sudo apt-get -y update
 
+# Modified tcp keepalive according to https://docs.mongodb.org/ecosystem/platforms/windows-azure/
+sudo bash -c "sudo echo net.ipv4.tcp_keepalive_time = 120 >> /etc/sysctl.conf"
+
 #Install Mongo DB
 sudo apt-get install -y mongodb-org
