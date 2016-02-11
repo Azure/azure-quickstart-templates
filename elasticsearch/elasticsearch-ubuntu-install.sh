@@ -35,6 +35,9 @@ help()
     echo "-x configure as a dedicated master node"
     echo "-y configure as client only node (no master, no data)"
     echo "-z configure as data node (no master)"
+    echo "-a storage account (for AFS)"
+    echo "-k access key (for AFS)"
+    echo "-c create and mount AFS share"
     echo "-h view this help content"
 }
 
@@ -63,9 +66,9 @@ then
   echo "${HOSTNAME}found in /etc/hosts"
 else
   echo "${HOSTNAME} not found in /etc/hosts"
-  # Append it to the hsots file if not there
+  # Append it to the hosts file if not there
   echo "127.0.0.1 ${HOSTNAME}" >> /etc/hosts
-  log "hostname ${HOSTNAME} added to /etchosts"
+  log "hostname ${HOSTNAME} added to /etc/hosts"
 fi
 
 #Script Parameters
@@ -76,9 +79,12 @@ INSTALL_MARVEL=0
 CLIENT_ONLY_NODE=0
 DATA_NODE=0
 MASTER_ONLY_NODE=0
+USE_AFS=0
+STORAGE_ACCOUNT=""
+ACCESS_KEY=""
 
 #Loop through options passed
-while getopts :n:d:v:mxyzsh optname; do
+while getopts :n:d:v:a:k:cmxyzsh optname; do
     log "Option $optname set with value ${OPTARG}"
   case $optname in
     n) #set cluster name
@@ -104,6 +110,15 @@ while getopts :n:d:v:mxyzsh optname; do
       ;;
     s) #use OS striped disk volumes
       OS_STRIPED_DISK=1
+      ;;
+    a) #set the storage account for AFS
+      STORAGE_ACCOUNT=${OPTARG}
+      ;;
+    k) #set the access key for AFS
+      ACCESS_KEY=${OPTARG}
+      ;;
+    c) #use AFS for the data storage
+      USE_AFS=1
       ;;
     d) #place data on local resource disk
       NON_DURABLE=1
@@ -168,7 +183,7 @@ install_java()
 install_es()
 {
 	
-	# Elasticsearch 2.0.0 uses a different download path
+	# Elasticsearch 2.x uses a different download path
     if [[ "${ES_VERSION}" == \2* ]]; then
         DOWNLOAD_URL="https://download.elasticsearch.org/elasticsearch/release/org/elasticsearch/distribution/deb/elasticsearch/$ES_VERSION/elasticsearch-$ES_VERSION.deb"
     else
@@ -186,9 +201,15 @@ install_es()
 #NOTE: These first three could be changed to run in parallel
 #      Future enhancement - (export the functions and use background/wait to run in parallel)
 
-#Format data disks (Find data disks then partition, format, and mount them as seperate drives)
-#------------------------
-bash vm-disk-utils-0.1.sh
+
+if [ ${USE_AFS} -ne 0 ]; 
+then
+    # create and mount an AFS share
+    bash afs-utils-0.1.sh -cp -a ${STORAGE_ACCOUNT} -k ${ACCESS_KEY}
+else
+    #Format data disks (Find data disks then partition, format, and mount them as separate drives)
+    bash vm-disk-utils-0.1.sh    
+fi
 
 #Install Oracle Java
 #------------------------
@@ -290,6 +311,7 @@ echo "vm.max_map_count = 262144" >> /etc/sysctl.conf
 #Update HEAP Size in this configuration or in upstart service
 #Set Elasticsearch heap size to 50% of system memory
 #TODO: Move this to an init.d script so we can handle instance size increases
+#TODO: Client nodes should use 75% of the heap
 ES_HEAP=`free -m |grep Mem | awk '{if ($2/2 >31744)  print 31744;else print $2/2;}'`
 log "Configure elasticsearch heap size - $ES_HEAP"
 echo "ES_HEAP_SIZE=${ES_HEAP}m" >> /etc/default/elasticsearch
@@ -301,7 +323,7 @@ if [ ${INSTALL_MARVEL} -ne 0 ]; then
         /usr/share/elasticsearch/bin/plugin install license
         /usr/share/elasticsearch/bin/plugin install marvel-agent
     else
-        /usr/share/elasticsearch/bin/plugin -i elasticsearch/marvel/latest
+        /usr/share/elasticsearch/bin/plugin -i elasticsearch/marvel/1.3.1
     fi
 fi
 
