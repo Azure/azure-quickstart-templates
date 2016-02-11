@@ -84,6 +84,6 @@ Create a deployment of Shibboleth IDP using this template and RDP into the VM de
   - cd C:\apache-tomcat-7.0.67\bin\
   - Start-Process .\startup.bat
 
-## Follow the steps on http://testshib.org to test the shibboleth installation as IDP
-  Log files for Shibboleth reside inside /opt/logs directory. 
-  The log files can be helpful to debug any issue that show up during login process.
+## Test your installation
+    - Follow the steps on http://testshib.org to test the shibboleth installation as IDP
+    - Log files for Shibboleth reside inside /opt/logs directory. The log files can be helpful for debugging any issues that show up during the login process.
