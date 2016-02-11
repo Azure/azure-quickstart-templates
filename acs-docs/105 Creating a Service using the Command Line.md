@@ -1,6 +1,6 @@
 # 105: Creating a Service using the Command Line
 
-To access Azure Container Service using the command line, you will need an Azure subscription. If you don't have one then you can sign up for a free trial. You will also need to have installed and configured either the Azure CLI (cross platform) or the Azure PowerShell Azure.
+To create an instance of the Azure Container Service using the command line, you will need an Azure subscription. If you don't have one then you can sign up for a free trial. You will also need to have installed and configured either the Azure CLI (cross platform) or the Azure PowerShell Azure.
  
 Select an ARM template from  rgardler's fork of the Azure QuickStarts repo in Github. All Azure Container Service Templates start with 'acs-'
  
@@ -8,13 +8,16 @@ There are two templates of particular interest:
  
 * Mesos: https://github.com/rgardler/azure-quickstart-templates/tree/acs/acs-mesos-full-template
 * Swarm: https://github.com/rgardler/azure-quickstart-templates/tree/acs/acs-swarm-full-template
+
+Both of these templates are the same, with the exception of the default orchestrator selection.
  
 ## Using the Azure CLI (Cross Platform)
  
-First you need to ensure that your CLI tools are configured to use Azure Resource manager. This is done with:
+First you need to ensure that your CLI tools are configured to use Azure Resource Manager and that you are logged into your account. This is done with:
  
 ```bash
 azure config mode arm
+azure login
 ```
  
 If you want to create your cluster in a new Resource Group you must first create the Resource Group. Use this command:
@@ -25,7 +28,7 @@ azure group create GROUP_NAME REGION
  
 Where `GROUP_NAME` is the name of the resource group you want to create, and `REGION` is the region where you want to create the Resource Group.
  
-Once you have a Resource Group you can create your cluster with:
+Once you have a Resource Group you can create your cluster with the following command. THis version of the command will ask you for the parameters interactively, see the next section if you would prefer to provide a configuration file:
  
 ```bash
 azure group deployment create RESOURCE_GROUP DEPLOYMENT_NAME --template-uri TEMPLATE_URI
@@ -38,9 +41,9 @@ Where:
  
  ![github raw content](images/105/01 - github - raw.png)
  
-### Providing a Parameters
+### Providing a Parameters String or File
  
-This version of the command requires the user to define parameters interactively. If you want to provide a parameters as a json formatted string you can do so with the `-p` switch. For example:
+If you want to provide a parameters as a json formatted string you can do so with the `-p` switch. For example:
  
  ```bash
 azure group deployment create RESOURCE_GROUP DEPLOYMENT_NAME --template-uri TEMPLATE_URI -p '{ "param1": "value1" … }'
@@ -51,7 +54,7 @@ Alternativley you can provide a json formatted parameters file using the `-e` sw
  ```bash
 azure group deployment create RESOURCE_GROUP DEPLOYMENT_NAME --template-uri TEMPLATE_URI -e PATH/FILE.JSON'
  ```
- 
+
 There is an example parameters file (called 'azuredeploy.parameters.json') in GitHub alongside each template.
  
 ##PowerShell

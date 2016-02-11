@@ -9,7 +9,7 @@ There are two templates of particular interest:
 * Mesos: https://github.com/rgardler/azure-quickstart-templates/tree/acs/acs-mesos-full-template
 * Swarm: https://github.com/rgardler/azure-quickstart-templates/tree/acs/acs-swarm-full-template
  
-On those pages you can click the "deploy to Azure" button. This will take you to the Azure portal where you can configure your instance of the Azure Container Service..
+These templates are actually identical, with the exception of the default value for the "orchestrator type" (see below). On the pages linked above you can click the "deploy to Azure" button to start a portal deployment. This will take you to the Azure portal where you can configure your instance of the Azure Container Service..
 
 ## Edit Parameters 
 
