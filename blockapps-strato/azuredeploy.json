@@ -1,0 +1,349 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "deploymentName": {
+            "type": "string",
+            "metadata": {
+                "description" : "What to call this virtual machine"
+            }
+        },
+	"contactEmail": {
+	    "type": "string",
+	    "metadata": {
+		"description" : "Email address at which Blockapps can reach you"
+	    }
+	},
+        "password" : {
+            "type" : "secureString",
+            "metadata" : {
+                "description" : "Password for admin account 'strato'"
+            }
+        },
+        "storageAccountName": {
+            "type": "string",
+            "metadata": {
+                "description" : "The storage account in which to create this VM"
+            }
+        },
+        "cpus" : {
+            "type" : "int",
+            "allowedValues": [1,2,4,8],
+            "metadata" : {
+                "description" : "Virtual machine CPUs"
+            }
+        }
+    },
+    "variables": {
+        "apiVersion" : "2015-06-15",
+        "dockerRepo" : "blockapps/strato",
+        "dockerVersion" : "ubuntu",
+        "dockerUser" : "blockappsuser",
+        "dockerPassword" : "blockchain as a service",
+        "dockerEmail" : "blockapps.user@gmail.com",
+        "dockerImage" : "[concat(variables('dockerRepo'), ':', variables('dockerVersion'))]",
+        "dockerPorts" : ["80:80", "30303:30303", "30303:30303/udp", "60022:60022"],
+
+        "name" : "[parameters('deploymentName')]",
+	"email" : "[parameters('contactEmail')]",
+	"blockchain" : "strato-dev",
+        "location": "centralus",
+        "cpuSizes" : {
+            "1" : "1",
+            "2" : "2",
+            "4" : "3",
+            "8" : "4"
+        },
+        "vmSize": "[concat('Standard_DS', variables('cpuSizes')[string(parameters('cpus'))])]",
+        "username": "strato",
+        "password": "[parameters('password')]",
+        "copies" : 1,
+        
+        "storageAccount": "[parameters('storageAccountName')]",
+        "storageAccountPath": "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccount'))]",
+        "vhdURIBase": "[concat('https:\/\/', variables('storageAccount'), '.blob.core.windows.net\/vhds\/', variables('name'))]",
+        "storageAccountType": "Premium_LRS",
+
+        "networkInterfaceName": "[concat(variables('name'), 'nic')]",
+        "networkInterfacePath": "[concat('Microsoft.Network/networkInterfaces/', variables('networkInterfaceName'))]",
+        "networkInterfaceId": "[resourceId('Microsoft.Network/networkInterfaces',variables('networkInterfaceName'))]",
+
+        "networkSecurityGroupName": "[concat(variables('name'), 'nsg')]",
+        "networkSecurityGroupPath": "[concat('Microsoft.Network/networkSecurityGroups/', variables('networkSecurityGroupName'))]",
+        "networkSecurityGroupId": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]",
+
+        "ipConfigurationName": "[concat(variables('name'), 'ipconfig')]",
+        "publicIPAddressName": "[concat(variables('name'), 'publicip')]",
+        "publicIPAddressPath": "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+        "publicIPAddressId" : "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]",
+        "publicIPAddressType": "Dynamic",
+        "dnsNameForPublicIP": "[variables('name')]",
+
+        "virtualNetworkName": "[concat(variables('name'), 'net')]",
+        "virtualNetworkPath": "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+        "vnetId": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
+        "virtualNetworkAddressPrefix": "11.24.0.0/16",
+
+        "subnetName": "stratoinstances",
+        "subnetId": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
+        "virtualSubnetAddressBase": "11.24.82.",
+        "virtualSubnetAddressPrefix": "[concat(variables('virtualSubnetAddressBase'), '0/24')]",
+
+        "imagePublisher": "Canonical",
+        "imageOffer": "UbuntuServer",
+        "ubuntuOSVersion": "14.04.3-LTS"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[variables('storageAccount')]",
+            "apiVersion": "[variables('apiVersion')]",
+            "location": "[variables('location')]",
+            "properties": {
+                "accountType": "[variables('storageAccountType')]"
+            }
+        },
+        {
+            "apiVersion": "[variables('apiVersion')]",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[variables('publicIPAddressName')]",
+            "location": "[variables('location')]",
+            "properties": {
+                "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+                "dnsSettings": {
+                    "domainNameLabel": "[variables('dnsNameForPublicIP')]"
+                }
+            }
+        },
+        {
+            "apiVersion": "[variables('apiVersion')]",
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[variables('virtualNetworkName')]",
+            "location": "[variables('location')]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('virtualNetworkAddressPrefix')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[variables('subnetName')]",
+                        "properties": {
+                            "addressPrefix": "[variables('virtualSubnetAddressPrefix')]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "[variables('apiVersion')]",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[variables('networkSecurityGroupName')]",
+            "location": "[variables('location')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "AllowSSHIn",
+                        "properties": {
+                            "description": "Allow inbound SSH connections",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "22",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "[variables('virtualSubnetAddressPrefix')]",
+                            "access": "Allow",
+                            "direction": "Inbound",
+                            "priority": 100
+                        }
+                    },
+                    {
+                        "name": "AllowEthP2PIn",
+                        "properties": {
+                            "description": "Allow p2p connections",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "30303",
+                            "sourceAddressPrefix": "[variables('virtualSubnetAddressPrefix')]",
+                            "destinationAddressPrefix": "[variables('virtualSubnetAddressPrefix')]",
+                            "access": "Allow",
+                            "direction": "Inbound",
+                            "priority": 102
+                        }
+                    },
+                    {
+                        "name": "AllowEthP2PUDPIn",
+                        "properties": {
+                            "description": "Allow p2p connections",
+                            "protocol": "Udp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "30303",
+                            "sourceAddressPrefix": "[variables('virtualSubnetAddressPrefix')]",
+                            "destinationAddressPrefix": "[variables('virtualSubnetAddressPrefix')]",
+                            "access": "Allow",
+                            "direction": "Inbound",
+                            "priority": 103
+                        }
+                    },
+                    {
+                        "name": "AllowHTTPIn",
+                        "properties": {
+                            "description": "Allow api requests",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "80",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "[variables('virtualSubnetAddressPrefix')]",
+                            "access": "Allow",
+                            "direction": "Inbound",
+                            "priority": 104
+                        }
+                    },
+                    {
+                        "name": "AllowEthP2PUDPOut",
+                        "properties": {
+                            "description": "Allow p2p discovery",
+                            "protocol": "Udp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "30303",
+                            "sourceAddressPrefix": "[variables('virtualSubnetAddressPrefix')]",
+                            "destinationAddressPrefix": "[variables('virtualSubnetAddressPrefix')]",
+                            "access": "Allow",
+                            "direction": "Outbound",
+                            "priority": 100
+                        }
+                    },
+                    {
+                        "name": "AllowEthP2POut",
+                        "properties": {
+                            "description": "Allow p2p discovery",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "30303",
+                            "sourceAddressPrefix": "[variables('virtualSubnetAddressPrefix')]",
+                            "destinationAddressPrefix": "[variables('virtualSubnetAddressPrefix')]",
+                            "access": "Allow",
+                            "direction": "Outbound",
+                            "priority": 101
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "[variables('apiVersion')]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[variables('networkInterfaceName')]",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[variables('publicIPAddressPath')]",
+                "[variables('virtualNetworkPath')]",
+                "[variables('networkSecurityGroupPath')]"
+            ],
+            "properties": {
+                "networkSecurityGroup" : {
+                    "id" : "[variables('networkSecurityGroupId')]"
+                },
+                "ipConfigurations": [
+                    {
+                        "name": "[variables('ipConfigurationName')]",
+                        "properties": {
+                            "privateIPAllocationMethod": "Static",
+                            "privateIPAddress": "[concat(variables('virtualSubnetAddressBase'), '5')]",
+                            "publicIPAddress" : {
+                                "id": "[variables('publicIPAddressId')]"
+                            },
+                            "subnet": {
+                                "id": "[variables('subnetId')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "location": "[variables('location')]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[variables('name')]",
+            "dependsOn": [
+                "[variables('storageAccountPath')]",
+                "[variables('networkInterfacePath')]"
+            ],
+            "properties": {
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": false
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[variables('networkInterfaceId')]"
+                        }
+                    ]
+                },
+                "osProfile": {
+                    "computerName": "[variables('name')]",
+                    "adminUsername": "[variables('username')]",
+                    "adminPassword": "[variables('password')]",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": "false"
+                    }
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "[variables('imagePublisher')]",
+                        "offer": "[variables('imageOffer')]",
+                        "sku": "[variables('ubuntuOSVersion')]",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "caching": "ReadWrite",
+                        "vhd": {
+                            "uri": "[concat(variables('vhdURIBase'), '.vhd')]"
+                        },
+                        "createOption": "FromImage",
+                        "name" : "[concat(variables('name'), 'osDisk')]"
+                    }
+                },
+                "hardwareProfile": {
+                    "vmSize": "[variables('vmSize')]"
+                }
+            },
+            "apiVersion": "[variables('apiVersion')]"
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(variables('name'), '/DockerExtension')]",
+            "apiVersion": "[variables('apiVersion')]",
+            "location": "[variables('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', variables('name'))]"
+            ],
+            "properties": {
+                "publisher": "Microsoft.Azure.Extensions",
+                "type": "DockerExtension",
+                "typeHandlerVersion": "1.0",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "compose" : {
+                        "strato" : {
+                            "container_name" : "strato",
+                            "command" : "[concat(variables('blockchain'), ' ', variables('name'), ' ', variables('email'), ' ', variables('copies'))]",
+                            "ports": "[variables('dockerPorts')]",
+                            "hostname": "[variables('name')]",
+                            "image" : "[variables('dockerImage')]"
+                        }
+                    }
+                },
+                "protectedSettings": {
+                    "login" : {
+                        "username" : "[variables('dockerUser')]",
+                        "password" : "[variables('dockerPassword')]",
+                        "email" : "[variables('dockerEmail')]"
+                    }
+                }
+            }
+        }
+    ]
+}

@@ -118,9 +118,9 @@ do
   worker=$WORKER_NAME$i
   sudo -u $ADMIN_USERNAME scp /tmp/hosts.$$ $ADMIN_USERNAME@$worker:/tmp/hosts >> /tmp/azuredeploy.log.$$ 2>&1
   sudo -u $ADMIN_USERNAME scp torque-package-mom-linux-x86_64.sh $ADMIN_USERNAME@$worker:/tmp/. >> /tmp/azuredeploy.log.$$ 2>&1
-  sudo -u $ADMIN_USERNAME ssh -tt $worker "echo $ADMIN_PASSWORD | sudo -kS sh -c 'cat /tmp/hosts>>/etc/hosts'"
-  sudo -u $ADMIN_USERNAME ssh -tt $worker "echo $ADMIN_PASSWORD | sudo -kS /tmp/torque-package-mom-linux-x86_64.sh --install"
-  sudo -u $ADMIN_USERNAME ssh -tt $worker "echo $ADMIN_PASSWORD | sudo -kS /usr/local/sbin/pbs_mom"
+  sudo -u $ADMIN_USERNAME ssh -tt $worker "echo '$ADMIN_PASSWORD' | sudo -kS sh -c 'cat /tmp/hosts>>/etc/hosts'"
+  sudo -u $ADMIN_USERNAME ssh -tt $worker "echo '$ADMIN_PASSWORD' | sudo -kS /tmp/torque-package-mom-linux-x86_64.sh --install"
+  sudo -u $ADMIN_USERNAME ssh -tt $worker "echo '$ADMIN_PASSWORD' | sudo -kS /usr/local/sbin/pbs_mom"
   echo $worker >> /var/spool/torque/server_priv/nodes
   i=`expr $i + 1`
 done
