@@ -60,8 +60,8 @@ $AddressPrefix = "10.0.0.0/16"
 
 # Description : The names of the subnets to create
 # Mandatory   : Yes
-$Subnet1Name =  "Frontend"
-$Subnet2Name =  "Web"
+$Subnet1Name = "Frontend"
+$Subnet2Name = "Web"
 $Subnet3Name = "App"
 
 # Description : The address prefix of each subnet
