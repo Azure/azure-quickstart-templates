@@ -333,7 +333,7 @@ $nic1 = New-AzureRmNetworkInterface `
     -ResourceGroupName $ResourceGroup `
     -Location $Location `
     -PublicIpAddress $GatewayPublicAddress `
-    -PrivateIpAddress $Subent1PrivateAddress `
+    -PrivateIpAddress $Subnet1PrivateAddress `
     -Subnet $Subnet1 `
     -LoadBalancerInboundNatRule $LoadBalancer.InboundNatRules `
     -EnableIPForwarding
