@@ -480,7 +480,8 @@ for ($i = 0; $i -lt 2; $i += 1) {
     
     if ($SSHPublicKey) {
         Add-AzureRmVMSshPublicKey -VM $VMConfig `
-            -KeyData $SSHPublicKey
+            -KeyData $SSHPublicKey `
+            -Path "/home/notused/.ssh/authorized_keys"
     }
     
     Set-AzureRmVMBootDiagnostics -VM $VMConfig `

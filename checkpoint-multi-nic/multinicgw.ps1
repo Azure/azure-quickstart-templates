@@ -371,7 +371,8 @@ Set-AzureRmVMOperatingSystem -VM $VMConfig `
     
 if ($SSHPublicKey) {
     Add-AzureRmVMSshPublicKey -VM $VMConfig `
-        -KeyData $SSHPublicKey
+        -KeyData $SSHPublicKey `
+        -Path "/home/notused/.ssh/authorized_keys"
 }
     
 Set-AzureRmVMBootDiagnostics -VM $VMConfig `
