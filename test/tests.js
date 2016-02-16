@@ -7,7 +7,12 @@ var assert = require('assert'),
   unirest = require('unirest'),
   skeemas = require('skeemas'),
   debug = require('debug')('validator'),
-  parallel = require('mocha.parallel');
+  parallel = require('mocha.parallel'),
+  colors = require('mocha/lib/reporters/base').colors;
+
+// setup mocha color scheme
+// 32 = console code for green
+colors.pass = 32;
 
 function getModifiedPaths() {
   assert.ok(process.env.TRAVIS_COMMIT_RANGE, 'VALIDATE_MODIFIED_ONLY requires TRAVIS_COMMIT_RANGE to be set to [START_COMMIT_HASH]...[END_COMMIT_HASH]');
@@ -123,7 +128,9 @@ function validateParamtersFile(parametersPath) {
   assert.ok(parametersObject.parameters, parametersPath + ' - Expected a \'.parameters\' field within the parameters file');
   for (var k in parametersObject.parameters) {
     if (typeof k === 'string') {
-      assert.ok(parametersObject.parameters[k].value,
+      assert.ok(parametersObject.parameters[k].value !== null &&
+        parametersObject.parameters[k].value !== undefined &&
+        parametersObject.parameters[k].value !== '',
         parametersPath + ' -  Parameter \"' + k + '\" is missing its value field');
     }
   }
@@ -354,7 +361,7 @@ describe('Template', function () {
               errorString += ' --template-file ' + test.args[0] + ' --parameters-file ' + test.args[1] + '\n';
               errorString += 'azure group deployment create --resource-group (your_group_name) ';
               errorString += ' --template-file ' + test.args[0] + ' --parameters-file ' + test.args[1];
-              assert(false, errorString + ' \n\nServer Error:' + JSON.stringify(err));
+              assert(false, errorString + ' \n\nServer Error:' + JSON.stringify(err, null, 4));
             });
         });
       });
