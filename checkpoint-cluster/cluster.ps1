@@ -433,7 +433,7 @@ for ($i = 0; $i -lt 2; $i += 1) {
     $IpConfig = $LoadBalancer.FrontendIpConfigurations | where -Property Name -EQ $MemberName
     $InboundNatRules = $LoadBalancer.InboundNatRules | where {$_.FrontendIPConfiguration.Id -EQ $IpConfig.Id}
     if ($i -eq 0) {
-        $InboundNatRules += $LoadBalancer.InbountNatRules | where {! $_.Name.StartsWith("checkpoint") }
+        $InboundNatRules += $LoadBalancer.InboundNatRules | where {! $_.Name.StartsWith("checkpoint") }
     }
    
     $nic1 = New-AzureRmNetworkInterface `
