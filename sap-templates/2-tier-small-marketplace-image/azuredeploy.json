@@ -34,40 +34,54 @@
     "dbDataLUNs": "0,1,2",
     "dbLogLUNs": "3",
 
+    "csExtension": {
+      "Windows": {
+        "Publisher": "Microsoft.Compute",
+        "Name": "CustomScriptExtension",
+        "Version": "1.7",
+        "script": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sap-templates/shared/configureSAPVM.ps1",
+        "scriptCall": "[concat('powershell.exe -File configureSAPVM.ps1 -DBDataLUNS \"', variables('dbDataLUNs'), '\" -DBLogLUNS \"', variables('dbLogLUNs'),' \"')]"
+      },
+      "Linux": {
+        "Publisher": "Microsoft.OSTCExtensions",
+        "Name": "CustomScriptForLinux",
+        "Version": "1.3",
+        "script": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sap-templates/shared/configureSAPVM.sh",
+        "scriptCall": "[concat('configureSAPVM.sh -DBDataLUNS \"', variables('dbDataLUNs') , '\" -DBLogLUNS \"', variables('dbLogLUNs'), '\"')]"
+      }
+    },
+
+
     "images": {
       "Windows Server 2012 Datacenter": {
         "sku": "2012-Datacenter",
         "offer": "WindowsServer",
         "publisher": "MicrosoftWindowsServer",
-        "script": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sap-templates/shared/configureSAPVM.ps1",
-        "scriptCall": "[concat('configureSAPVM.ps1 -DBDataLUNS ', variables('dbDataLUNs') , ' -DBLogLUNS ', variables('dbLogLUNs'))]"
+        "OSType": "Windows"
       },
       "Windows Server 2012 R2 Datacenter": {
         "sku": "2012-R2-Datacenter",
         "offer": "WindowsServer",
         "publisher": "MicrosoftWindowsServer",
-        "script": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sap-templates/shared/configureSAPVM.ps1",
-        "scriptCall": "[concat('configureSAPVM.ps1 -DBDataLUNS ', variables('dbDataLUNs') , ' -DBLogLUNS ', variables('dbLogLUNs'))]"
+        "OSType": "Windows"
       },
       "SLES 11 SP4": {
         "sku": "11-SP4",
         "offer": "SLES",
         "publisher": "SUSE",
-        "script": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sap-templates/shared/configureSAPVM.sh",
-        "scriptCall": "[concat('configureSAPVM.ps1 -DBDataLUNS ', variables('dbDataLUNs') , ' -DBLogLUNS ', variables('dbLogLUNs'))]"
+        "OSType": "Linux"
       },
       "SLES 12": {
         "sku": "12",
         "offer": "SLES",
         "publisher": "SUSE",
-        "script": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sap-templates/shared/configureSAPVM.sh",
-        "scriptCall": "[concat('configureSAPVM.ps1 -DBDataLUNS ', variables('dbDataLUNs') , ' -DBLogLUNS ', variables('dbLogLUNs'))]"
+        "OSType": "Linux"
       }
     },
     "location": "[resourceGroup().location]",
     "sidlower": "[toLower(parameters('SID'))]",
     "vmName": "[concat(variables('sidlower'), '-servercs')]",
-    "storageAccountName": "[concat(variables('sidlower'), 'GEN-UNIQUE')]",
+    "storageAccountName": "[concat(variables('sidlower'), uniqueString(variables('sidlower'), resourceGroup().id))]",
     "vnetName": "[concat(variables('sidlower'), '-vnet')]",
     "publicIpName": "[concat(variables('sidlower'), '-publicIP')]",
     "nicName": "[concat(variables('sidlower'), '-nic')]",
@@ -82,9 +96,9 @@
     "imagePublisher": "[variables('images')[parameters('osType')].publisher]",
     "imageOffer": "[variables('images')[parameters('osType')].offer]",
     "vmSize": "Standard_A5",
-    "cseExtPublisher": "Microsoft.Compute",
-    "cseExtName": "CustomScriptExtension",
-    "cseExtVersion": "1.4",
+    "cseExtPublisher": "[variables('csExtension')[variables('images')[parameters('osType')].OSType].Publisher]",
+    "cseExtName": "[variables('csExtension')[variables('images')[parameters('osType')].OSType].Name]",
+    "cseExtVersion": "[variables('csExtension')[variables('images')[parameters('osType')].OSType].Version]",
     "osDiskName": "[concat(variables('sidlower'),'-os.vhd')]",
     "osDiskCaching": "ReadWrite",
     "sapDiskName": "[concat(variables('sidlower'),'-sapdisk.vhd')]",
@@ -249,16 +263,15 @@
       "apiVersion": "2015-06-15",
       "location": "[variables('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]",
-        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'), '/extensions/', variables('wadExtName'))]"
+        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
       ],
       "properties": {
         "publisher": "[variables('cseExtPublisher')]",
         "type": "[variables('cseExtName')]",
         "typeHandlerVersion": "[variables('cseExtVersion')]",
         "settings": {
-          "fileUris": [ "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sap-templates/shared/configureSAPVM.ps1" ],
-          "commandToExecute": "[concat('configureSAPVM.ps1 -DBDataLUNS ', variables('') , ' -DBLogLUNS ', variables(''))]"
+          "fileUris": [ "[variables('csExtension')[variables('images')[parameters('osType')].OSType].script]" ],
+          "commandToExecute": "[variables('csExtension')[variables('images')[parameters('osType')].OSType].scriptCall]"
         }
       }
     }
