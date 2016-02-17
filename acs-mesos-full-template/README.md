@@ -10,5 +10,5 @@ Click the "Deploy to Azure" button and then choose from the list of walkthrough 
 2. [SwarmPreview](https://github.com/rgardler/azure-quickstart-templates/blob/acs/acs-swarm-full-template/docs/SwarmPreviewWalkthrough.md) - The Docker Swarm orchestrator [walkthrough](https://github.com/rgardler/azure-quickstart-templates/blob/acs/acs-swarm-full-template/docs/SwarmPreviewWalkthrough.md).
 
 ## Deployment Tips:
-1. You will need to provide an SSH RSA public key.  Follow instructions to generate SSH RSA keys in section [SSH Key Generation](https://github.com/rgardler/azure-quickstart-templates/blob/acs/acs-swarm-full-template/docs/SSHKeyManagement.md#ssh-key-generation).  Your key should include three parts, for example ```ssh-rsa AAAAB...snip...UcyupgH azureuser@linuxvm```
+1. You will need to provide an SSH RSA public key.  Follow instructions to generate SSH RSA keys in section [SSH Key Generation](https://github.com/rgardler/azure-quickstart-templates/blob/acs/acs-mesos-full-template/docs/SSHKeyManagement.md#ssh-key-generation).  Your key should include three parts, for example ```ssh-rsa AAAAB...snip...UcyupgH azureuser@linuxvm```
 2. As a best practice, create a new resource group for every new container service you deploy.
