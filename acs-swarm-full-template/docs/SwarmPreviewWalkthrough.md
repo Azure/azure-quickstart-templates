@@ -4,20 +4,15 @@ This walkthrough assumes you have deployed an ACS cluster with a Docker Swarm or
 
  Once your container service has been created you will have a resource group containing 2 parts:
 
-1. a set of 1,3,5 masters in a master specific availability set.  Each master's SSH can be accessed via the public dns address at ports 2200..2204
+1. a set of 1,3, or 5 masters in a master specific availability set.  Each master's SSH can be accessed via the public dns address at ports 2200..2204
 
-2. a set of agents behind in an agent specific availability set.  The agent VMs must be accessed through the master.
+2. a set of agents in a VM scale set (VMSS).  The agent VMs must be accessed through the master.  See [agent forwarding]([SSH Key Generation](https://github.com/rgardler/azure-quickstart-templates/blob/acs/acs-swarm-full-template/docs/SSHKeyManagement.md#key-management-and-agent-forwarding-with-windows-pageant) for an example of how to do this.
 
-The following image is an example of a container service with 3 masters, and 3 agents:
+The following image shows the architecture of a container service cluster with 3 masters, and 3 agents:
 
  ![Image of Swarm container service on azure](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-swarm-full-template/images/swarm.png)
 
- All VMs are in the same VNET where the masters are on private subnet 176.16.0.0/24 and the agents are on the private subnet, 10.0.0.0/8, and fully accessible to each other.
-## Deployment Notes
-
-Here are notes for troubleshooting:
-  * the installation log for the masters, agents, and jumpbox are in /var/log/azure/cluster-bootstrap.log
-  * even though the agent VMs finish quickly Mesos can take 5-15 minutes to install, check /var/log/azure/cluster-bootstrap.log for the completion status.
+ All VMs are in the same VNET where the masters are on private subnet 172.16.0.0/24 and the agents are on the private subnet, 10.0.0.0/8, and fully accessible to each other.
 
 ## Explore Swarm with Simple hello world
  1. After successfully deploying the template write down the two output master and agent FQDNs (Fully Qualified Domain Name).
@@ -29,10 +24,10 @@ Here are notes for troubleshooting:
     4. then click on the "Microsoft.Template"
     5. now you can copy the output FQDNs and sample SSH commands
     ![Image of docker scaling](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-swarm-full-template/images/findingoutputs.png)
- 2. SSH to port 2200 of the master FQDN
- 3. Type `docker -H 176.16.0.5:2375 info` to see the status of the agent nodes.
+ 2. SSH to port 2200 of the master FQDN. See [agent forwarding]([SSH Key Generation](https://github.com/rgardler/azure-quickstart-templates/blob/acs/acs-swarm-full-template/docs/SSHKeyManagement.md#key-management-and-agent-forwarding-with-windows-pageant) for an example of how to do this.
+ 3. Type `docker -H 172.16.0.5:2375 info` to see the status of the agent nodes.
  ![Image of docker info](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-swarm-full-template/images/dockerinfo.png)
- 4. Type `docker -H 176.16.0.5:2375 run hello-world` to see the hello-world test app run on one of the agents
+ 4. Type `docker -H 172.16.0.5:2375 run hello-world` to see the hello-world test app run on one of the agents
 
 ## Explore Swarm with a web-based Compose Script, then scale the script to all agents
 1. create the following docker-compose.yml file:
@@ -43,7 +38,7 @@ echo """web:
     - \"80:80\"
   restart: \"always\" """ > docker-compose.yml
 ```
-2. type `export DOCKER_HOST=176.16.0.5:2375` so that docker-compose automatically hits the swarm endpoints
+2. type `export DOCKER_HOST=172.16.0.5:2375` so that docker-compose automatically hits the swarm endpoints
 3. type `docker-compose up -d` to create the simple web server.  This will take a few minutes to pull the image
 4. once completed, type `docker ps` to see the running image.
  ![Image of docker ps](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-swarm-full-template/images/dockerps.png)

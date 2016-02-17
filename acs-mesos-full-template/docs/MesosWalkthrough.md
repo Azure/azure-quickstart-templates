@@ -10,7 +10,7 @@ Once your container service has been created you will have a resource group cont
 
 3. if chosen, a windows or linux jumpbox
 
-The following image is an example of a container service with 1 jumpbox, 3 masters, and 3 agents:
+The following image shows the architecture of a container service cluster with 3 masters, and 3 agents:
 
 ![Image of Mesos container service on azure](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-mesos-full-template/images/mesos.png)
 
@@ -25,7 +25,7 @@ In the image above, you can see the following parts:
 4. **Chronos on port 4400** - Chronos is a scheduler for Mesos that is equivalent to cron on a single linux machine: it schedules periodic tasks for the whole cluster.
 5. **Docker on port 2375** - The Docker engine runs containerized workloads and each Agent runs the Docker engine.  Mesos runs Docker workloads, and examples on how to do this are provided in the Marathon and Chronos walkthrough sections of this readme.
 
- All VMs are in the same VNET where the masters are on private subnet 176.16.0.0/24 and the agents are on the private subnet, 10.0.0.0/8, and fully accessible to each other.
+ All VMs are in the same VNET where the masters are on private subnet 172.16.0.0/24 and the agents are on the private subnet, 10.0.0.0/8, and fully accessible to each other.
 
 ## Deployment Notes
 
