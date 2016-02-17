@@ -1,6 +1,6 @@
 # Mesos Container Service Walkthrough
 
-This walkthrough assumes you have deployed an ACS cluster with a Mesos orchestrator using the template from [acs-mesos-full-template](https://github.com/Azure/azure-quickstart-templates/tree/master/acs-mesos).
+This walkthrough assumes you have deployed an ACS cluster with a Mesos orchestrator using the template from [acs-mesos](https://github.com/Azure/azure-quickstart-templates/tree/master/acs-mesos).
 
 Once your container service has been created you will have a resource group containing 3 parts:
 
@@ -48,7 +48,7 @@ This walk through is based the wonderful digital ocean tutorial: https://www.dig
    5. now you can copy the output FQDNs and sample SSH commands
    ![Image of docker scaling](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/acs-swarm/images/findingoutputs.png)
 
- 3. Create an [SSH tunnel to port 80](https://github.com/Azure/azure-quickstart-templates/blob/master/acs-mesos-full-template/docs/SSHKeyManagement.md#create-port-80-tunnel-to-the-master) on the master FQDN.
+ 3. Create an [SSH tunnel to port 80](https://github.com/Azure/azure-quickstart-templates/blob/master/acs-mesos/docs/SSHKeyManagement.md#create-port-80-tunnel-to-the-master) on the master FQDN.
 
  4. browse to the Mesos UI.  <http://localhost/mesos/>
 
