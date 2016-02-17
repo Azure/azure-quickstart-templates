@@ -4,11 +4,9 @@ This walkthrough assumes you have deployed an ACS cluster with a Mesos orchestra
 
 Once your container service has been created you will have a resource group containing 3 parts:
 
-1. a set of 1,3,5 masters in a master specific availability set.  Each master's SSH can be accessed via the public dns address at ports 2200..2204
+1. a set of 1,3, or 5 masters in a master specific availability set.  Each master's SSH can be accessed via the public dns address at ports 2200..2204
 
-2. a set of agents behind in an agent specific availability set.  The agent VMs must be accessed through the master, or jumpbox
-
-3. if chosen, a windows or linux jumpbox
+2. a set of agents behind in an agent specific availability set.  The agent VMs must be accessed through the master
 
 The following image shows the architecture of a container service cluster with 3 masters, and 3 agents:
 
@@ -17,9 +15,9 @@ The following image shows the architecture of a container service cluster with 3
 In the image above, you can see the following parts:
 
 1. **Admin Router on port 80** - The admin router enables you to access all mesos services.  For example, if you create an SSH tunnel to port 80 you can access the services on the following urls:
-  1. **Mesos** - http://localhost/mesos/
-  2. **Marathon** - http://localhost/marathon/
-  3. **Chronos** - http://localhost/chronos/
+  1. **Mesos** - (http://localhost/mesos/)
+  2. **Marathon** - (http://localhost/marathon/)
+  3. **Chronos** - (http://localhost/chronos/)
 2. **Mesos on port 5050** - Mesos is the distributed systems kernel that abstracts cpu, memory and other resources, and offers these to services named "frameworks" for scheduling of workloads.
 3. **Marathon on port 8080** - Marathon is a scheduler for Mesos that is equivalent to init on a single linux machine: it schedules long running tasks for the whole cluster.
 4. **Chronos on port 4400** - Chronos is a scheduler for Mesos that is equivalent to cron on a single linux machine: it schedules periodic tasks for the whole cluster.
@@ -27,15 +25,9 @@ In the image above, you can see the following parts:
 
  All VMs are in the same VNET where the masters are on private subnet 172.16.0.0/24 and the agents are on the private subnet, 10.0.0.0/8, and fully accessible to each other.
 
-## Deployment Notes
-
-Here are notes for troubleshooting:
- * the installation log for the masters, agents, and jumpbox are in /var/log/azure/cluster-bootstrap.log
- * even though the agent VMs finish quickly Mesos can take 5-15 minutes to install, check /var/log/azure/cluster-bootstrap.log for the completion status.
-
 ## Template Parameters
 When you deploy the template you will need to specify the following parameters:
-* `dnsNamePrefix`: this is the DNS prefix name that will be used to make up the names for the FQDN for the jumpbox, master endpoints, and the agent endpoints.
+* `dnsNamePrefix`: this is the DNS prefix name that will be used to make up the names for the FQDN for the master and agent endpoints.
 * `agentCount`: the number of Mesos Agents that you want to create in the container service.  You are allowed to create 1 to 100 agents
 * `agentVMSize`: The type of VM that you want to use for each node in the container service. The default size is D2 (2 core) but you can change that if you expect to run workloads that require more RAM or CPU resources.
 * `linuxAdminUsername`: this is the username to use for the linux machines.  The default username is `azureuser`.
@@ -66,7 +58,7 @@ This walk through is based the wonderful digital ocean tutorial: https://www.dig
 
  ![Image of Mesos frameworks on azure](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-mesos-full-template/images/mesos-frameworks.png)
 
- 3. On top of page, click agents and you can see your agents.  On windows or linux jumpbox you can also drill down into the agent and see its logs. (Note: "Agents" and "Slaves" are synonymous, and as announced in August 2015 at MesosCon, the word "Slave" will be replaced with "Agent")
+ 3. On top of page, click agents and you can see your agents.  (Note: "Agents" and "Slaves" are synonymous, and as announced in August 2015 at MesosCon, the word "Slave" will be replaced with "Agent")
 
  ![Image of Mesos agents on azure](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-mesos-full-template/images/mesos-agents.png)
 
