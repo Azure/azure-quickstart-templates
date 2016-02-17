@@ -13,13 +13,21 @@ When creating container services, you will need an SSH RSA key for access.  Use 
 Pageant enables agent forwarding.  This means that you can SSH from any of the master nodes directly to any of the agent nodes.  Here are the steps to enable this:
  1. Download and install Putty Pageant.
  2. Double Click on pageant.exe to run, and you will notice it appears in your tray
- ![Image of Pageant in the tray](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-mesos-full-template/images/pageant-tray.png)
+
+  ![Image of Pageant in the tray](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-mesos-full-template/images/pageant-tray.png)
+
  3. Right click on Pageant in the tray and click "View Keys"
  4. Click "Add Key", and add your PPK generated in (#ssh-key-generation).
- ![Image of Pageant addkey](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-mesos-full-template/images/pageant-addkey.png)
+
+  ![Image of Pageant addkey](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-mesos-full-template/images/pageant-addkey.png)
+
  5. Now try out the configuration by opening up Putty.exe
  6. Type in "azureuser@FQDN" and port 2200 where FQDN is the management name returned after deploying a cluster and port:
- ![Image of Putty main](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-mesos-full-template/images/putty-address.png)
+
+  ![Image of Putty main](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-mesos-full-template/images/putty-address.png)
+
  7. Browse to Connection->SSH->Auth and click "Allow agent forwarding":
- ![Image of Putty SSH](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-mesos-full-template/images/putty-agentforwarding.png)
+
+  ![Image of Putty SSH](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-mesos-full-template/images/putty-agentforwarding.png)
+
  8. Click "Open" to connect to the master.  Now ssh directly to an agent, and you will connect automatically.

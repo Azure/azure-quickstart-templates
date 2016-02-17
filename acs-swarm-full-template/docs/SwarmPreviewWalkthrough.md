@@ -26,7 +26,9 @@ The following image shows the architecture of a container service cluster with 3
     ![Image of docker scaling](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-swarm-full-template/images/findingoutputs.png)
  2. SSH to port 2200 of the master FQDN. See [agent forwarding]([SSH Key Generation](https://github.com/rgardler/azure-quickstart-templates/blob/acs/acs-swarm-full-template/docs/SSHKeyManagement.md#key-management-and-agent-forwarding-with-windows-pageant) for an example of how to do this.
  3. Type `docker -H 172.16.0.5:2375 info` to see the status of the agent nodes.
+
  ![Image of docker info](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-swarm-full-template/images/dockerinfo.png)
+
  4. Type `docker -H 172.16.0.5:2375 run hello-world` to see the hello-world test app run on one of the agents
 
 ## Explore Swarm with a web-based Compose Script, then scale the script to all agents
@@ -41,10 +43,15 @@ echo """web:
 2. type `export DOCKER_HOST=172.16.0.5:2375` so that docker-compose automatically hits the swarm endpoints
 3. type `docker-compose up -d` to create the simple web server.  This will take a few minutes to pull the image
 4. once completed, type `docker ps` to see the running image.
+
  ![Image of docker ps](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-swarm-full-template/images/dockerps.png)
+
 5. in your web browser hit the AGENTFQDN endpoint (**not the master FQDN**) you recorded in [step #1](#explore-swarm-with-simple-hello-world)  and you should see the following page, with a counter that increases on each refresh.
+
  ![Image of the web page](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-swarm-full-template/images/swarmbrowser.png)
+
 6. You can now scale the web application.  For example, if you have 3 agents, you can type `docker-compose scale web=**3**`, and this will scale to the rest of your agents.  Note that you can only scale up to the number of agents that you have, so if you deployed a single agent, you won't be able to scale up.  The Azure load balancer will automatically pick up the new containers.
+
  ![Image of docker scaling](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-swarm-full-template/images/dockercomposescale.png)
 
 # Sample Workloads
