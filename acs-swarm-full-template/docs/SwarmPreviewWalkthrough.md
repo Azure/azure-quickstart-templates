@@ -1,15 +1,6 @@
-# Container Service with a Swarm Orchestrator
+# Docker Swarm Walkthrough
 
-This Microsoft Azure template creates a container service with a Docker Swarm orchestrator.
-
-Portal Launch Button|Container Service Type
---- | --- | ---
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Frgardler%2Fazure-quickstart-templates%2Facs%2Facs-swarm-full-template%2Fazuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a> (**Japan East Only**)|Swarm
-
-## Deployment Tips:
-1. Only deploy to a "Japan East" resource group.  ACS is only in Japan East.
-2. You will need to provide an SSH RSA public key.  Follow instructions to generate SSH RSA keys in section [SSH Key Generation](#ssh-key-generation).  Your key should include three parts, for example ```ssh-rsa AAAAB...snip...UcyupgH azureuser@linuxvm```
-3. As a best practice, create a new resource group for every new container service you deploy.
+This walkthrough assumes you have deployed an ACS cluster with a Docker Swarm orchestrator using the template from [acs-swarm-full-template](https://github.com/rgardler/azure-quickstart-templates/tree/acs/acs-swarm-full-template).
 
 # Swarm Container Service Walkthrough
 
@@ -23,7 +14,7 @@ The following image is an example of a container service with 3 masters, and 3 a
 
  ![Image of Swarm container service on azure](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-swarm-full-template/images/swarm.png)
 
- All VMs are on the same private subnet, 10.0.0.0/18, and fully accessible to each other.
+ All VMs are in the same VNET where the masters are on private subnet 176.16.0.0/24 and the agents are on the private subnet, 10.0.0.0/8, and fully accessible to each other.
 
 ## Explore Swarm with Simple hello world
  1. After successfully deploying the template write down the two output master and agent FQDNs (Fully Qualified Domain Name).
@@ -36,9 +27,9 @@ The following image is an example of a container service with 3 masters, and 3 a
     5. now you can copy the output FQDNs and sample SSH commands
     ![Image of docker scaling](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-swarm-full-template/images/findingoutputs.png)
  2. SSH to port 2200 of the master FQDN
- 3. Type `docker -H 10.0.0.5:2375 info` to see the status of the agent nodes.
+ 3. Type `docker -H 176.16.0.5:2375 info` to see the status of the agent nodes.
  ![Image of docker info](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-swarm-full-template/images/dockerinfo.png)
- 4. Type `docker -H 10.0.0.5:2375 run hello-world` to see the hello-world test app run on one of the agents
+ 4. Type `docker -H 176.16.0.5:2375 run hello-world` to see the hello-world test app run on one of the agents
 
 ## Explore Swarm with a web-based Compose Script, then scale the script to all agents
 1. create the following docker-compose.yml file:
@@ -49,7 +40,7 @@ echo """web:
     - \"80:80\"
   restart: \"always\" """ > docker-compose.yml
 ```
-2. type `export DOCKER_HOST=10.0.0.5:2375` so that docker-compose automatically hits the swarm endpoints
+2. type `export DOCKER_HOST=176.16.0.5:2375` so that docker-compose automatically hits the swarm endpoints
 3. type `docker-compose up -d` to create the simple web server.  This will take a few minutes to pull the image
 4. once completed, type `docker ps` to see the running image.
  ![Image of docker ps](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-swarm-full-template/images/dockerps.png)
@@ -60,18 +51,10 @@ echo """web:
 
 # Sample Workloads
 
-Try the following workloads to test your new Swarm container service.  Run these on Marathon using the examples above
+Try the following workloads to test your new Swarm container service.
 
 1. **Folding@Home** - [docker run rgardler/fah](https://hub.docker.com/r/rgardler/fah/) - Folding@Home is searching for a cure for Cancer, Alzheimers, Parkinsons and other such diseases. Donate some compute time to this fantastic effort.
 
 2. **Mount Azure Files volume within Docker Container** - [docker run --privileged anhowe/azure-file-workload STORAGEACCOUNTNAME STORAGEACCOUNTKEY SHARENAME](https://github.com/anhowe/azure-file-workload) - From each container mount your Azure storage by using Azure files
 
 3. **Explore Docker Hub** - explore Docker Hub for 100,000+ different container workloads: https://hub.docker.com/explore/
-
-# SSH Key Generation
-
-When creating container services, you will need an SSH RSA key for access.  Use the following articles to create your SSH RSA Key:
-
-1. Windows - https://www.digitalocean.com/community/tutorials/how-to-create-ssh-keys-with-putty-to-connect-to-a-vps
-2. Linux - https://help.ubuntu.com/community/SSH/OpenSSH/Keys#Generating_RSA_Keys
-3. Mac - https://help.github.com/articles/generating-ssh-keys/#platform-mac
