@@ -11,8 +11,9 @@ This Microsoft Azure template creates an Azure Container Service cluster with a 
 # Summary
 
 Click the above link to deploy your service and then choose from the list of walkthrough depending on the orchestrator that you have chosen:
-1. **Mesos** - The Mesos orchestrator [walkthrough](https://github.com/rgardler/azure-quickstart-templates/blob/acs/acs-mesos-full-template/docs/MesosWalkthrough.md).
-2. **SwarmPreview** - The Docker Swarm orchestrator [walkthrough](https://github.com/rgardler/azure-quickstart-templates/blob/acs/acs-swarm-full-template/docs/SwarmPreviewWalkthrough.md).
+
+1. [Mesos](https://github.com/rgardler/azure-quickstart-templates/blob/acs/acs-mesos-full-template/docs/MesosWalkthrough.md) - The Mesos orchestrator [walkthrough](https://github.com/rgardler/azure-quickstart-templates/blob/acs/acs-mesos-full-template/docs/MesosWalkthrough.md).
+2. [SwarmPreview](https://github.com/rgardler/azure-quickstart-templates/blob/acs/acs-swarm-full-template/docs/SwarmPreviewWalkthrough.md) - The Docker Swarm orchestrator [walkthrough](https://github.com/rgardler/azure-quickstart-templates/blob/acs/acs-swarm-full-template/docs/SwarmPreviewWalkthrough.md).
 
 # SSH Key Generation
 
