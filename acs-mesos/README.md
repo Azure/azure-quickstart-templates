@@ -10,13 +10,7 @@ Click the "Deploy to Azure" button and then follow the relevant walkthrough for 
 2. [SwarmPreview](docs/SwarmPreviewWalkthrough.md) - The Docker Swarm orchestrator [walkthrough](docs/SwarmPreviewWalkthrough.md).
 
 ## Deployment Tips:
-1. You will need to provide an SSH RSA public key.  Follow instructions to generate SSH RSA keys in section [SSH Key Generation](#ssh-key-generation).  Your key should include three parts, for example ```ssh-rsa AAAAB...snip...UcyupgH azureuser@linuxvm```
+1. You will need to provide an SSH RSA public key.  Follow instructions to generate SSH RSA keys in section [SSH Key Generation](https://github.com/rgardler/azure-quickstart-templates/blob/acs/acs-mesos-full-template/docs/SSHKeyManagement.md#ssh-key-generation).  Your key should include three parts, for example ```ssh-rsa AAAAB...snip...UcyupgH azureuser@linuxvm```
 2. As a best practice, create a new resource group for every new container service you deploy.
-
-## SSH Key Generation
-
-When creating container services, you will need an SSH RSA key for access.  Use the following articles to create your SSH RSA Key:
-
-1. Windows - https://www.digitalocean.com/community/tutorials/how-to-create-ssh-keys-with-putty-to-connect-to-a-vps
-2. Linux - https://help.ubuntu.com/community/SSH/OpenSSH/Keys#Generating_RSA_Keys
-3. Mac - https://help.github.com/articles/generating-ssh-keys/#platform-mac
+3. The installation log for the masters, agents, and jumpbox are in /var/log/azure/cluster-bootstrap.log
+4. Even though the agent VMs finish quickly Mesos can take 5-15 minutes to install, check /var/log/azure/cluster-bootstrap.log for the completion status.
