@@ -1,8 +1,8 @@
-# Deploy Shibboleth Identity Provider on Ubuntu on a single VM.
+# Deploy Shibboleth Identity Provider on Windows on a single VM.
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fshibboleth-singlevm-ubuntu%2Fazuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fshibboleth-singlevm-windows%2Fazuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
 
-This template deploys Shibboleth Identity Provider on Ubuntu. It creates a single Ubuntu VM, does a silent install of Apache Tomcat and Open JDK on it, and then deploys Shibboleth IDP on it.  After the deployment is successful, you can go to https://your-domain:8443/idp/profile/status (note port number) to check success. For further details, please refer to the Shibboleth IDP documentation at https://wiki.shibboleth.net/confluence/display/SHIB2/IdPInstall.
+This template deploys Shibboleth Identity Provider on Windows. It creates a single Windows VM, installs JDK and Apache Tomcat, deploys Shibboleth Identity Provider, and then configures everything for SSL access to the Shibboleth IDP.  After the deployment is successful, you can go to https://your-server:8443/idp/profile/status (note port number) to check success. Note that, in case of smaller size VM's, it may take a few minutes for the installation script to complete even after the deployment status is shown as succeeded. For further details, please refer to the Shibboleth IDP documentation at https://wiki.shibboleth.net/confluence/display/SHIB2/IdPInstall.
 
 ## Certificate:
 In order to support SSL, this template creates a self signed certificate as a part of the installation script. This allows the template to be deployed without having to create your own certificate. In production deployments, you will need to create and use your own certificate instead of the self signed certificate.
@@ -12,7 +12,7 @@ Here are the steps you can follow to create a testing setup including Shibboleth
 
 ## Deploy Shibboleth IDP using this template.
 
-Create a deployment of Shibboleth IDP using this template and SSH into the VM deployed.
+Create a deployment of Shibboleth IDP using this template and RDP into the VM deployed.
 
 ## Update ldap.properties inside /opt/conf directory as per the LDAP configuration. 
     Following are the settings for Online LDAP Test Server installation hosted at http://www.forumsys.com/tutorials/integration-how-to/ldap/online-ldap-test-server/
@@ -80,9 +80,10 @@ Create a deployment of Shibboleth IDP using this template and SSH into the VM de
 	- idp.consent.userStorageKey
 	- idp.consent.userStorageKeyAttribute
 
-## Restart the servlet container
-    - service tomcat7 restart
-	
+## Restart the servlet container 
+  - cd C:\apache-tomcat-7.0.67\bin\
+  - Start-Process .\startup.bat
+
 ## Test your installation
     - Follow the steps on http://testshib.org to test the shibboleth installation as IDP
     - Log files for Shibboleth reside inside /opt/logs directory. The log files can be helpful for debugging any issues that show up during the login process.

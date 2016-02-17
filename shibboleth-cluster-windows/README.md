@@ -1,18 +1,27 @@
-# Deploy Shibboleth Identity Provider on Ubuntu on a single VM.
+# Deploy Shibboleth Identity Provider cluster on Windows
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fshibboleth-singlevm-ubuntu%2Fazuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fshibboleth-cluster-windows%2Fazuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
 
-This template deploys Shibboleth Identity Provider on Ubuntu. It creates a single Ubuntu VM, does a silent install of Apache Tomcat and Open JDK on it, and then deploys Shibboleth IDP on it.  After the deployment is successful, you can go to https://your-domain:8443/idp/profile/status (note port number) to check success. For further details, please refer to the Shibboleth IDP documentation at https://wiki.shibboleth.net/confluence/display/SHIB2/IdPInstall.
+This template deploys Shibboleth Identity Provider on Windows in a clustered configuration. It creates a one or more Windows VM for the front end and a single VM for the backend. It does a silent install of Apache Tomcat and Open JDK on the front end VM's, and then deploys Shibboleth IDP on each of them. It also deploys MySQL on the backend VM.  It configures a load balancer for directing requests to the front end VM's. It also configures NAT rules to allow admin access to each of the VM's. On backend VM's, it configures the database using JPA. After the deployment is successful, you can go to https://your-domain:8443/idp/profile/status (note port number) to check success. Note that, in case of smaller size VM's, it may take a few minutes for the installation script to complete even after the deployment status is shown as succeeded. For further details, please refer to the Shibboleth IDP documentation at https://wiki.shibboleth.net/confluence/display/IDP30/Clustering.
 
-## Certificate:
-In order to support SSL, this template creates a self signed certificate as a part of the installation script. This allows the template to be deployed without having to create your own certificate. In production deployments, you will need to create and use your own certificate instead of the self signed certificate.
+# Notes
+
+## Front End VM's:
+This template can instantiate up to 5 front end VM's. This number can be increased easily by copying and pasting the related parts of the template. 
+
+## Port Details:
+The template opens HTTP port 8443 for SSL front end access on all the front end VM's. This port is load-balanced using the load balancer.
+It also opens ports 2200 to 2204 on the load balancer which are mapped to port 22 for SSH admin access on the respective VM's.
+
+## Certificates:
+In order to support SSL, this template creates self signed certificates as a part of the installation script. This allows the template to be deployed without having to create your own certificates. In production deployments, you will need to create and use your own certificates instead of the self signed certificates.
 
 # Test Setup
 Here are the steps you can follow to create a testing setup including Shibboleth IDP deployed using this template, along with an OpenLDAP test server and a test SP available online.
 
 ## Deploy Shibboleth IDP using this template.
 
-Create a deployment of Shibboleth IDP using this template and SSH into the VM deployed.
+Create a deployment of Shibboleth IDP using this template and RDP into the VM deployed.
 
 ## Update ldap.properties inside /opt/conf directory as per the LDAP configuration. 
     Following are the settings for Online LDAP Test Server installation hosted at http://www.forumsys.com/tutorials/integration-how-to/ldap/online-ldap-test-server/
@@ -80,9 +89,13 @@ Create a deployment of Shibboleth IDP using this template and SSH into the VM de
 	- idp.consent.userStorageKey
 	- idp.consent.userStorageKeyAttribute
 
-## Restart the servlet container
-    - service tomcat7 restart
-	
+## Add following environment variable inside startup.bat of Apache Tomcat.
+    - set IDP_HOME=c:/opt/shibboleth-idp
+
+## Restart the servlet container 
+    - cd C:\apache-tomcat-7.0.67\bin\
+    - Start-Process .\startup.bat
+    
 ## Test your installation
     - Follow the steps on http://testshib.org to test the shibboleth installation as IDP
     - Log files for Shibboleth reside inside /opt/logs directory. The log files can be helpful for debugging any issues that show up during the login process.

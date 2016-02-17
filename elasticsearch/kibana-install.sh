@@ -27,11 +27,12 @@
 
 help()
 {
-    echo "Usage: $(basename $0) [-v es_version] [-t target_host] [-m] [-h]"
+    echo "Usage: $(basename $0) [-v es_version] [-t target_host] [-m] [-s] [-h]"
     echo "Options:"
     echo "  -v    elasticsearch version to target (default: 2.2.0)"
     echo "  -t    target host (default: http://10.0.1.4:9200)"
     echo "  -m    install marvel (default: no)"
+    echo "  -s    install sense (default: no)"
     echo "  -h    this help message"
 }
 
@@ -43,10 +44,10 @@ error()
 
 install_java() {
     add-apt-repository -y ppa:webupd8team/java
-    apt-get -y update  > /dev/null
+    apt-get -q -y update  > /dev/null
     echo debconf shared/accepted-oracle-license-v1-1 select true | debconf-set-selections
     echo debconf shared/accepted-oracle-license-v1-1 seen true | debconf-set-selections
-    apt-get -y install oracle-java8-installer  > /dev/null
+    apt-get -q -y install oracle-java8-installer  > /dev/null
 }
 
 install_kibana() {
@@ -67,8 +68,8 @@ install_kibana() {
     useradd -u 999 -g 999 kibana
 
     mkdir -p /opt/kibana
-    curl -o kibana.tar.gz ${kibana_url}
-    tar xvf kibana.tar.gz -C /opt/kibana/ --strip-components=1
+    curl -s -o kibana.tar.gz ${kibana_url}
+    tar xvf kibana.tar.gz -C /opt/kibana/ --strip-components=1 > /dev/null
 
     chown -R kibana: /opt/kibana
     mv /opt/kibana/config/kibana.yml /opt/kibana/config/kibana.yml.bak
@@ -95,6 +96,17 @@ install_kibana() {
         
         # for 1.x marvel is installed only within the cluster, not on the kibana node 
     fi
+    
+    # install the sense plugin for 2.x
+    if [ ${INSTALL_SENSE} ];
+    then
+        if [[ "${ES_VERSION}" == \2* ]];
+        then
+            /opt/kibana/bin/kibana plugin --install elastic/sense
+        fi
+                
+        # for 1.x sense is not supported 
+    fi
 
 # Add upstart task and start kibana service
 cat << EOF > /etc/init/kibana.conf
@@ -120,12 +132,14 @@ fi
 
 ES_VERSION="2.2.0"
 INSTALL_MARVEL=0
+INSTALL_SENSE=0
 ELASTICSEARCH_URL="http://10.0.1.4:9200"
 
-while getopts :v:t:mh optname; do
+while getopts :v:t:msh optname; do
   case ${optname} in
     v) ES_VERSION=${OPTARG};;
     m) INSTALL_MARVEL=1;;
+    s) INSTALL_SENSE=1;;
     t) ELASTICSEARCH_URL=${OPTARG};; 
     h) help; exit 1;;
    \?) help; error "Option -${OPTARG} not supported.";;
