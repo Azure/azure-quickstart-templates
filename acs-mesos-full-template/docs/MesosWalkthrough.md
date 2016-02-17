@@ -1,19 +1,6 @@
-# Container Service with a Mesos Orchestrator and Marathon/Chronos Frameworks
-
-These Microsoft Azure templates create various Azure Container Service combinations with the Mesos Orchestrator and Marathon/Chronos services.
-
-Portal Launch Button|Container Service Type
---- | --- | ---
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Frgardler%2Fazure-quickstart-templates%2Facs%2Facs-mesos-full-template%2Fazuredeploy.windowsjumpbox.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a> (**Japan East Only**)|Mesos with windows jumpbox
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Frgardler%2Fazure-quickstart-templates%2Facs%2Facs-mesos-full-template%2Fazuredeploy.linuxjumpbox.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a> (**Japan East Only**)|Mesos with linux jumpbox
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Frgardler%2Fazure-quickstart-templates%2Facs%2Facs-mesos-full-template%2Fazuredeploy.nojumpbox.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a> (**Japan East Only**)|Mesos with no jumpbox
-
-## Deployment Tips:
-1. Only deploy to a "Japan East" resource group.  ACS is only in Japan East.
-2. You will need to provide an SSH RSA public key.  Follow instructions to generate SSH RSA keys in section [SSH Key Generation](#ssh-key-generation).  Your key should include three parts, for example ```ssh-rsa AAAAB...snip...UcyupgH azureuser@linuxvm```
-3. As a best practice, create a new resource group for every new container service you deploy.
-
 # Mesos Container Service Walkthrough
+
+This walkthrough assumes you have deployed an ACS cluster with a Mesos orchestrator using the template from [acs-mesos-full-template](https://github.com/rgardler/azure-quickstart-templates/tree/acs/acs-mesos-full-template).
 
 Once your container service has been created you will have a resource group containing 3 parts:
 
@@ -29,54 +16,47 @@ The following image is an example of a container service with 1 jumpbox, 3 maste
 
 In the image above, you can see the following parts:
 
-1. **Mesos on port 5050** - Mesos is the distributed systems kernel that abstracts cpu, memory and other resources, and offers these to services named "frameworks" for scheduling of workloads.
-2. **Marathon on port 8080** - Marathon is a scheduler for Mesos that is equivalent to init on a single linux machine: it schedules long running tasks for the whole cluster.
-3. **Chronos on port 4400** - Chronos is a scheduler for Mesos that is equivalent to cron on a single linux machine: it schedules periodic tasks for the whole cluster.
-4. **Docker on port 2375** - The Docker engine runs containerized workloads and each Master and Agent run the Docker engine.  Mesos runs Docker workloads, and examples on how to do this are provided in the Marathon and Chronos walkthrough sections of this readme.
+1. **Admin Router on port 80** - The admin router enables you to access all mesos services.  For example, if you create an SSH tunnel to port 80 you can access the services on the following urls:
+  1. **Mesos** - http://localhost/mesos/
+  2. **Marathon** - http://localhost/marathon/
+  3. **Chronos** - http://localhost/chronos/
+2. **Mesos on port 5050** - Mesos is the distributed systems kernel that abstracts cpu, memory and other resources, and offers these to services named "frameworks" for scheduling of workloads.
+3. **Marathon on port 8080** - Marathon is a scheduler for Mesos that is equivalent to init on a single linux machine: it schedules long running tasks for the whole cluster.
+4. **Chronos on port 4400** - Chronos is a scheduler for Mesos that is equivalent to cron on a single linux machine: it schedules periodic tasks for the whole cluster.
+5. **Docker on port 2375** - The Docker engine runs containerized workloads and each Agent runs the Docker engine.  Mesos runs Docker workloads, and examples on how to do this are provided in the Marathon and Chronos walkthrough sections of this readme.
 
-All VMs are on the same private subnet, 10.0.0.0/18, and fully accessible to each other.
+ All VMs are in the same VNET where the masters are on private subnet 176.16.0.0/24 and the agents are on the private subnet, 10.0.0.0/8, and fully accessible to each other.
 
 ## Deployment Notes
 
 Here are notes for troubleshooting:
  * the installation log for the masters, agents, and jumpbox are in /var/log/azure/cluster-bootstrap.log
  * even though the agent VMs finish quickly Mesos can take 5-15 minutes to install, check /var/log/azure/cluster-bootstrap.log for the completion status.
- * the linux jumpbox is based on https://github.com/anhowe/ubuntu-devbox and will take 1 hour to configure.  Visit https://github.com/anhowe/ubuntu-devbox to learn how to know when setup is completed, and then how to access the desktop via VNC and an SSH tunnel.
 
 ## Template Parameters
 When you deploy the template you will need to specify the following parameters:
-* `adminPassword`: this is only required for the Windows jumpbox (the admin username is `azureuser`)
 * `dnsNamePrefix`: this is the DNS prefix name that will be used to make up the names for the FQDN for the jumpbox, master endpoints, and the agent endpoints.
 * `agentCount`: the number of Mesos Agents that you want to create in the container service.  You are allowed to create 1 to 100 agents
+* `agentVMSize`: The type of VM that you want to use for each node in the container service. The default size is D2 (2 core) but you can change that if you expect to run workloads that require more RAM or CPU resources.
+* `linuxAdminUsername`: this is the username to use for the linux machines.  The default username is `azureuser`.
 * `masterCount`: Number of Masters. Currently the template supports 3 configurations: 1, 3 and 5 Masters container service configuration.
-* `agentVMSize`: The type of VM that you want to use for each node in the container service. The default size is A1 (1 core) but you can change that if you expect to run workloads that require more RAM or CPU resources.
-* `sshRSAPublicKey`: Configure all linux machines with the SSH rsa public key string.  This is required.  Refer to the following section on how to generate your key pair: [SSH Key Generation](#ssh-key-generation)
+* `sshRSAPublicKey`: Configure all linux machines with the SSH rsa public key string.  This is required.  Refer to the following section on how to generate your key pair: [SSH Key Generation](https://github.com/rgardler/azure-quickstart-templates/tree/acs/acs-mesos-full-template#ssh-key-generation)
 
 ## Marathon
 
 This walk through is based the wonderful digital ocean tutorial: https://www.digitalocean.com/community/tutorials/how-to-configure-a-production-ready-mesosphere-cluster-on-ubuntu-14-04
 
-1. Get your endpoints to container service
- 1. browse to https://portal.azure.com
-
- 2. then click browse all, followed by "resource groups", and choose your resource group
-
- ![Image of resource groups in portal](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-mesos-full-template/images/portal-resourcegroups.png)
-
- 3. then expand your resources, and copy the dns names of your jumpbox (if chosen), and your NAT public ip addresses.
-
- ![Image of public ip addresses in portal](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-mesos-full-template/images/portal-publicipaddresses.png)
-
-2. Connect to your container service
- 1. linux jumpbox - start a VNC to the jumpbox using instructions https://github.com/anhowe/ubuntu-devbox.  The jumpbox takes an hour to configure.  If the desktop is not ready, you can tail /var/log/azure/cluster-bootstrap.log to watach installation.
- 2. windows jumpbox - remote desktop to the windows jumpbox (username is `azureuser`)
- 3. no jumpbox - SSH to port 2200 on your NAT creating a tunnel to port 5050 and port 8080.  Then use the browser of your desktop to browse these ports.
-
-3. browse to the Mesos UI.  Internet Explorer will automatically point to the URL, but if you are on linux, the URL will be the master name, something like http://mesos-master-01234567-0:5050/
- 1. linux jumpbox - in top right corner choose Applications->Internet->Chrome and browse to master URL
- 2. windows jumpbox - open Internet explore and it will automatically open to the master URL
- 3. no jumpbox - ensure you setup the SSH tunnels correctly to 5050, then browse to http://localhost:5050
-
+1. After successfully deploying the template write down the two output master and agent FQDNs (Fully Qualified Domain Name).
+ 1. If using Powershell or CLI, the output parameters are the last values printed.
+ 2. If using Portal, to get the output you need to:
+   1. navigate to "resource group"
+   2. click on the resource group you just created
+   3. then click on "Succeeded" under *last deployment*
+   4. then click on the "Microsoft.Template"
+   5. now you can copy the output FQDNs and sample SSH commands
+   ![Image of docker scaling](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-swarm-full-template/images/findingoutputs.png)
+2. SSH to port 2200 of the master FQDN, creating an SSH tunnel from port 80 on your machine to port 80 on the remote machine.
+3. browse to the Mesos UI.  http://localhost/mesos/
 4. Browse Mesos:
  1. scroll down the page and notice your resources of CPU and memory.  These are your agents
 
@@ -90,7 +70,7 @@ This walk through is based the wonderful digital ocean tutorial: https://www.dig
 
  ![Image of Mesos agents on azure](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-mesos-full-template/images/mesos-agents.png)
 
-5. browse and explore Marathon UI http://NAMEOFMASTERNODE:8080.  The NAMEOFMASTERNODE can be obtained from the "frameworks" page (or if using tunnel http://localhost:8080).
+5. browse and explore Marathon UI http://localhost/marathon/.
 
 6. start a long running job in Marathon
  1. click "Create"
@@ -122,9 +102,7 @@ This walk through is based the wonderful digital ocean tutorial: https://www.dig
 
 ## Chronos Walkthrough
 
-**Note: As of Dec 1st, 2015, the Chronos UI does not show jobs in Internet Explorer.  This is tracked in the following issue: https://github.com/mesos/chronos/issues/597.  The recommendation is to use Chrome or Firefox to run through the below examples**
-
-1. On the Mesos UI, browse to "Frameworks" and click on the Chronos URI:
+1. On the Mesos UI, http://localhost/mesos/, browse to "Frameworks" and click on the Chronos URI:
 
  ![Image of Chronos UI](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-mesos-full-template/images/chronos-url.png)
 
@@ -153,11 +131,3 @@ Try the following workloads by creating Marathon apps to test your new Mesos con
 2. **Mount Azure Files volume within Docker Container** - [docker run --privileged anhowe/azure-file-workload STORAGEACCOUNTNAME STORAGEACCOUNTKEY SHARENAME](https://github.com/anhowe/azure-file-workload) - From each container mount your Azure storage by using Azure files
 
 3. **Explore Docker Hub** - explore Docker Hub for 100,000+ different container workloads: https://hub.docker.com/explore/
-
-# SSH Key Generation
-
-When creating container services, you will need an SSH RSA key for access.  Use the following articles to create your SSH RSA Key:
-
-1. Windows - https://www.digitalocean.com/community/tutorials/how-to-create-ssh-keys-with-putty-to-connect-to-a-vps
-2. Linux - https://help.ubuntu.com/community/SSH/OpenSSH/Keys#Generating_RSA_Keys
-3. Mac - https://help.github.com/articles/generating-ssh-keys/#platform-mac

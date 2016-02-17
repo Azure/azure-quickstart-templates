@@ -1,8 +1,6 @@
-# Docker Swarm Walkthrough
+# Docker Swarm Container Service Walkthrough
 
 This walkthrough assumes you have deployed an ACS cluster with a Docker Swarm orchestrator using the template from [acs-swarm-full-template](https://github.com/rgardler/azure-quickstart-templates/tree/acs/acs-swarm-full-template).
-
-# Swarm Container Service Walkthrough
 
  Once your container service has been created you will have a resource group containing 2 parts:
 
@@ -15,6 +13,11 @@ The following image is an example of a container service with 3 masters, and 3 a
  ![Image of Swarm container service on azure](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-swarm-full-template/images/swarm.png)
 
  All VMs are in the same VNET where the masters are on private subnet 176.16.0.0/24 and the agents are on the private subnet, 10.0.0.0/8, and fully accessible to each other.
+## Deployment Notes
+
+Here are notes for troubleshooting:
+  * the installation log for the masters, agents, and jumpbox are in /var/log/azure/cluster-bootstrap.log
+  * even though the agent VMs finish quickly Mesos can take 5-15 minutes to install, check /var/log/azure/cluster-bootstrap.log for the completion status.
 
 ## Explore Swarm with Simple hello world
  1. After successfully deploying the template write down the two output master and agent FQDNs (Fully Qualified Domain Name).
