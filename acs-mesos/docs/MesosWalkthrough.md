@@ -32,7 +32,7 @@ When you deploy the template you will need to specify the following parameters:
 * `agentVMSize`: The type of VM that you want to use for each node in the container service. The default size is D2 (2 core) but you can change that if you expect to run workloads that require more RAM or CPU resources.
 * `linuxAdminUsername`: this is the username to use for the linux machines.  The default username is `azureuser`.
 * `masterCount`: Number of Masters. Currently the template supports 3 configurations: 1, 3 and 5 Masters container service configuration.
-* `sshRSAPublicKey`: Configure all linux machines with the SSH rsa public key string.  This is required.  Refer to the following section on how to generate your key pair: [SSH Key Generation](https://github.com/Azure/azure-quickstart-templates/master/acs-mesos#ssh-key-generation)
+* `sshRSAPublicKey`: Configure all linux machines with the SSH rsa public key string.  This is required.  Refer to the following section on how to generate your key pair: [SSH Key Generation](https://github.com/Azure/azure-quickstart-templates/blob/master/acs-mesos/docs/SSHKeyManagement.md)
 
 ## Marathon
 
