@@ -1,0 +1,209 @@
+{
+    "$schema": "http://schemas.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "appName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the mobile app that you wish to create."
+            }
+        },
+        "location": {
+            "type": "string",
+            "metadata": {
+                "description": "The location to use for creating the application."
+            }
+        },
+        "hostingPlanSettings": {
+            "type": "Object",
+            "defaultValue": {
+                "computeMode": "Dedicated",
+                "siteMode": "Limited",
+                "sku": "Standard",
+                "workerSize": "0",
+                "hostingEnvironment": ""
+            },
+            "metadata": {
+                "description": "The settings of the existing hosting plan."
+            }
+        },
+        "sqlServerAdminLogin": {
+            "type": "string",
+            "metadata": {
+                "description": "The account name to use for the database server administrator."
+            }
+        },
+        "sqlServerAdminPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The password to use for the database server administrator."
+            }
+        },
+        "sqlDatabaseEdition": {
+            "type": "string",
+            "defaultValue": "Basic",
+            "metadata": {
+                "description": "The type of database to create. The available options are: Web, Business, Basic, Standard, and Premium."
+            }
+        },
+        "sqlDatabaseCollation": {
+            "type": "string",
+            "defaultValue": "SQL_Latin1_General_CP1_CI_AS",
+            "metadata": {
+                "description": "The database collation for governing the proper use of characters."
+            }
+        },
+        "sqlDatabaseMaxSizeBytes": {
+            "type": "string",
+            "defaultValue": "1073741824",
+            "metadata": {
+                "description": "The maximum size, in bytes, for the database"
+            }
+        }
+    },
+    "variables": {
+        "hostingPlanName": "[parameters('appName')]",
+        "databaseServerName": "[concat(parameters('appName'), '-sqlserver')]",
+        "databaseName": "[concat(parameters('appName'), '-sqldb')]",
+        "notificationHubNamespace": "[concat(parameters('appName'), '-namespace')]",
+        "notificationHubName": "[concat(parameters('appName'), '-hub')]",
+        "notificationHubLocation": "[parameters('location')]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Web/serverfarms",
+            "apiVersion": "2015-04-01",
+            "name": "[variables('hostingPlanName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "name": "[variables('hostingPlanName')]",
+                "sku": "[parameters('hostingPlanSettings').sku]",
+                "workerSize": "[parameters('hostingPlanSettings').workerSize]",
+                "hostingEnvironment": "[parameters('hostingPlanSettings').hostingEnvironment]",
+                "numberOfWorkers": 1
+            }
+        },
+        {
+            "name": "[variables('databaseServerName')]",
+            "type": "Microsoft.Sql/servers",
+            "location": "[parameters('location')]",
+            "apiVersion": "2014-04-01-preview",
+            "properties": {
+                "administratorLogin": "[parameters('sqlServerAdminLogin')]",
+                "administratorLoginPassword": "[parameters('sqlServerAdminPassword')]"
+            },
+            "resources": [
+                {
+                    "name": "[variables('databaseName')]",
+                    "type": "databases",
+                    "location": "[parameters('location')]",
+                    "apiVersion": "2014-04-01-preview",
+                    "dependsOn": [ "[concat('Microsoft.Sql/servers/', variables('databaseServerName'))]" ],
+                    "properties": {
+                        "edition": "[parameters('sqlDatabaseEdition')]",
+                        "collation": "[parameters('sqlDatabaseCollation')]",
+                        "maxSizeBytes": "[parameters('sqlDatabaseMaxSizeBytes')]"
+                    }
+                },
+                {
+                    "type": "firewallrules",
+                    "apiVersion": "2014-04-01-preview",
+                    "dependsOn": [ "[concat('Microsoft.Sql/servers/', variables('databaseServerName'))]" ],
+                    "location": "[parameters('location')]",
+                    "name": "open",
+                    "properties": {
+                        "endIpAddress": "255.255.255.255",
+                        "startIpAddress": "0.0.0.0"
+                    }
+                }
+            ]
+        },
+        {
+            "apiVersion": "2014-09-01",
+            "type": "Microsoft.NotificationHubs/namespaces",
+            "name": "[variables('notificationHubNamespace')]",
+            "location": "[variables('notificationHubLocation')]",
+            "properties": {
+                "region": "[variables('notificationHubLocation')]",
+                "namespaceType": 1
+            },
+            "resources": [
+                {
+                    "apiVersion": "2014-09-01",
+                    "name": "[variables('notificationHubName')]",
+                    "type": "NotificationHubs",
+                    "location": "[variables('notificationHubLocation')]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.NotificationHubs/namespaces', variables('notificationHubNamespace'))]"
+                    ],
+                    "properties": {
+                        "name": "[variables('notificationHubName')]"
+                    }
+                }
+            ]
+        },
+        {
+            "apiVersion": "2015-04-01",
+            "type": "Microsoft.Web/sites",
+            "name": "[parameters('appName')]",
+            "location": "[parameters('location')]",
+            "kind": "mobileapp",
+            "properties": {
+                "name": "[parameters('appName')]",
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
+                "hostingEnvironment": "[parameters('hostingPlanSettings').hostingEnvironment]"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]"
+            ],
+            "resources": [
+                {
+                    "apiVersion": "2014-11-01",
+                    "name": "appsettings",
+                    "type": "config",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/sites', parameters('appName'))]",
+                        "[resourceId('Microsoft.NotificationHubs/namespaces/NotificationHubs', variables('notificationHubNamespace'), variables('notificationHubName'))]"
+                    ],
+                    "properties": {
+                        "MS_MobileServiceName": "[parameters('appName')]",
+                        "MS_NotificationHubName": "[variables('notificationHubName')]"
+                    }
+                },
+                {
+                    "apiVersion": "2014-11-01",
+                    "name": "connectionstrings",
+                    "type": "config",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/sites', parameters('appName'))]",
+                        "[resourceId('Microsoft.Web/sites/config', parameters('appName'), 'appsettings')]",
+                        "[resourceId('Microsoft.NotificationHubs/namespaces/NotificationHubs', variables('notificationHubNamespace'), variables('notificationHubName'))]",
+                        "[concat('Microsoft.Sql/servers/', variables('databaseServerName'), '/databases/', variables('databaseName'))]"
+                    ],
+                    "properties": {
+                        "MS_TableConnectionString": {
+                            "value": "[concat('Data Source=tcp:', reference(concat('Microsoft.Sql/servers/', variables('databaseServerName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', variables('databaseName'), ';User Id=', parameters('sqlServerAdminLogin'), '@', variables('databaseServerName'), ';Password=', parameters('sqlServerAdminPassword'), ';')]",
+                            "type": 2
+                        },
+                        "MS_NotificationHubConnectionString": {
+                            "value": "[listkeys(resourceId('Microsoft.NotificationHubs/namespaces/notificationHubs/authorizationRules', variables('notificationHubNamespace'), variables('notificationHubName'), 'DefaultFullSharedAccessSignature'), '2014-09-01').primaryConnectionString]",
+                            "type": 3
+                        }
+                    }
+                },
+                {
+                    "apiVersion": "2015-01-01",
+                    "type": "providers/links",
+                    "name": "Microsoft.Resources/mobile-notificationhub",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/sites', parameters('appName'))]",
+                        "[resourceId('Microsoft.NotificationHubs/namespaces/NotificationHubs', variables('notificationHubNamespace'), variables('notificationHubName'))]"
+                    ],
+                    "properties": {
+                        "targetId": "[resourceId('Microsoft.NotificationHubs/namespaces/NotificationHubs', variables('notificationHubNamespace'), variables('notificationHubName'))]"
+                    }
+                }
+            ]
+        }
+    ]
+}
