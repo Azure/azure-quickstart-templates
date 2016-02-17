@@ -28,3 +28,4 @@ The purpose of this template is to illustrate:
 
 ## Notes
 
+* The subnets are defined in a **variable** "subnets" (and not a parameter). This variable needs to be adjusted to suit your needs (by adding / removing subnets in the array) and then the template will deploy the right number of machines.
