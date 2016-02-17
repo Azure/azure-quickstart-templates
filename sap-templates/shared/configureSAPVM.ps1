@@ -1,12 +1,9 @@
 ﻿param
 (
-    [int] $SQLDataFilesCount = 4,    
-    [String] $SQLDataLUNS = "0,1,2",
-    [String] $SQLLogLUNS = "3",
-    [long] $DataFileSizeMB = 1024,
-    [long] $LogSizeMB = 1024,
-    [string] $SQLDrive = "S:",
-    [string] $LogDrive = "L:"
+    [String] $DBDataLUNS = "0,1,2",
+    [String] $DBLogLUNS = "3",
+    [string] $DBDataDrive = "S:",
+    [string] $DBLogDrive = "L:"
 )
 
 $ErrorActionPreference = "Stop";
@@ -66,5 +63,5 @@ function Create-Pool
     }
 }
 
-Create-Pool -arraystring $SQLDataLUNS -name "dbdata" -path $SQLDrive;
-Create-Pool -arraystring $SQLLogLUNS -name "dblog" -path $LogDrive;
+Create-Pool -arraystring $DBDataLUNS -name "sqldata" -path $DBDataDrive;
+Create-Pool -arraystring $DBLogLUNS -name "sqllog" -path $DBLogDrive;
