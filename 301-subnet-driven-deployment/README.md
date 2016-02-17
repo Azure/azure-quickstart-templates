@@ -25,3 +25,6 @@ The purpose of this template is to illustrate:
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fgithub.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F301-subnet-driven-deployment%2Fazuredeploy.json" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
+
+## Notes
+
