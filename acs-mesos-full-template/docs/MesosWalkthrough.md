@@ -15,9 +15,9 @@ The following image shows the architecture of a container service cluster with 3
 In the image above, you can see the following parts:
 
 1. **Admin Router on port 80** - The admin router enables you to access all mesos services.  For example, if you create an SSH tunnel to port 80 you can access the services on the following urls:
-  1. **Mesos** - (http://localhost/mesos/)
-  2. **Marathon** - (http://localhost/marathon/)
-  3. **Chronos** - (http://localhost/chronos/)
+  1. **Mesos** - <http://localhost/mesos/>
+  2. **Marathon** - <http://localhost/marathon/>
+  3. **Chronos** - <http://localhost/chronos/>
 2. **Mesos on port 5050** - Mesos is the distributed systems kernel that abstracts cpu, memory and other resources, and offers these to services named "frameworks" for scheduling of workloads.
 3. **Marathon on port 8080** - Marathon is a scheduler for Mesos that is equivalent to init on a single linux machine: it schedules long running tasks for the whole cluster.
 4. **Chronos on port 4400** - Chronos is a scheduler for Mesos that is equivalent to cron on a single linux machine: it schedules periodic tasks for the whole cluster.
@@ -47,7 +47,7 @@ This walk through is based the wonderful digital ocean tutorial: https://www.dig
    4. then click on the "Microsoft.Template"
    5. now you can copy the output FQDNs and sample SSH commands
    ![Image of docker scaling](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-swarm-full-template/images/findingoutputs.png)
-2. SSH to port 2200 of the master FQDN, creating an SSH tunnel from port 80 on your machine to port 80 on the remote machine.
+2. Create an [SSH tunnel to port 80](https://github.com/rgardler/azure-quickstart-templates/blob/acs/acs-mesos-full-template/docs/SSHKeyManagement.md#create-port-80-tunnel-to-the-master) on the master FQDN.
 3. browse to the Mesos UI.  http://localhost/mesos/
 4. Browse Mesos:
  1. scroll down the page and notice your resources of CPU and memory.  These are your agents
