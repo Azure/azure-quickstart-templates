@@ -1,6 +1,6 @@
 # Mesos Container Service Walkthrough
 
-This walkthrough assumes you have deployed an ACS cluster with a Mesos orchestrator using the template from [acs-mesos-full-template](https://github.com/Azure/azure-quickstart-templates/master/acs-mesos).
+This walkthrough assumes you have deployed an ACS cluster with a Mesos orchestrator using the template from [acs-mesos-full-template](https://github.com/Azure/azure-quickstart-templates/tree/master/acs-mesos).
 
 Once your container service has been created you will have a resource group containing 3 parts:
 
