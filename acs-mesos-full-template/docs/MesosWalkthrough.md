@@ -48,7 +48,7 @@ This walk through is based the wonderful digital ocean tutorial: https://www.dig
    5. now you can copy the output FQDNs and sample SSH commands
    ![Image of docker scaling](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-swarm-full-template/images/findingoutputs.png)
 2. Create an [SSH tunnel to port 80](https://github.com/rgardler/azure-quickstart-templates/blob/acs/acs-mesos-full-template/docs/SSHKeyManagement.md#create-port-80-tunnel-to-the-master) on the master FQDN.
-3. browse to the Mesos UI.  http://localhost/mesos/
+3. browse to the Mesos UI.  <http://localhost/mesos/>
 4. Browse Mesos:
  1. scroll down the page and notice your resources of CPU and memory.  These are your agents
 
@@ -62,7 +62,7 @@ This walk through is based the wonderful digital ocean tutorial: https://www.dig
 
  ![Image of Mesos agents on azure](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-mesos-full-template/images/mesos-agents.png)
 
-5. browse and explore Marathon UI http://localhost/marathon/.
+5. browse and explore Marathon UI <http://localhost/marathon/>.
 
 6. start a long running job in Marathon
  1. click "Create"
@@ -94,7 +94,7 @@ This walk through is based the wonderful digital ocean tutorial: https://www.dig
 
 ## Chronos Walkthrough
 
-1. On the Mesos UI, http://localhost/mesos/, browse to "Frameworks" and click on the Chronos URI:
+1. On the Mesos UI, <http://localhost/mesos/>, browse to "Frameworks" and click on the Chronos URI:
 
  ![Image of Chronos UI](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/acs-mesos-full-template/images/chronos-url.png)
 
