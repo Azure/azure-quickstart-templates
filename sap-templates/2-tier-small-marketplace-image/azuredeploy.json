@@ -13,6 +13,31 @@
     "osType": {
       "type": "string",
       "allowedValues": [ "Windows Server 2012 Datacenter", "Windows Server 2012 R2 Datacenter", "SLES 11 SP4", "SLES 12" ],
+      "defaultValue": "Windows Server 2012 R2 Datacenter",
+      "metadata": {
+        "description": "The type of the operating system you want to deploy."
+      }
+    },
+    "sapSystemSize": {
+      "type": "string",
+      "allowedValues": [ "Small < 2.000 SAPS", "Medium < 9.000 SAPS", "Large < 18.000 SAPS", "X-Large < 40.000 SAPS" ],
+      "defaultValue": "Small < 2.000 SAPS",
+      "metadata": {
+        "description": "The type of the operating system you want to deploy."
+      }
+    },
+    "storageType": {
+      "type": "string",
+      "allowedValues": [ "Premium", "Standard" ],
+      "defaultValue": "Standard",
+      "metadata": {
+        "description": "The type of the operating system you want to deploy."
+      }
+    },
+    "multiNIC": {
+      "type": "string",
+      "allowedValues": [ "Yes", "No" ],
+      "defaultValue": "No",
       "metadata": {
         "description": "The type of the operating system you want to deploy."
       }
@@ -33,25 +58,7 @@
   "variables": {
     "dbDataLUNs": "0,1,2",
     "dbLogLUNs": "3",
-
-    "csExtension": {
-      "Windows": {
-        "Publisher": "Microsoft.Compute",
-        "Name": "CustomScriptExtension",
-        "Version": "1.7",
-        "script": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sap-templates/shared/configureSAPVM.ps1",
-        "scriptCall": "[concat('powershell.exe -File configureSAPVM.ps1 -DBDataLUNS \"', variables('dbDataLUNs'), '\" -DBLogLUNS \"', variables('dbLogLUNs'),' \"')]"
-      },
-      "Linux": {
-        "Publisher": "Microsoft.OSTCExtensions",
-        "Name": "CustomScriptForLinux",
-        "Version": "1.3",
-        "script": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sap-templates/shared/configureSAPVM.sh",
-        "scriptCall": "[concat('configureSAPVM.sh -DBDataLUNS \"', variables('dbDataLUNs') , '\" -DBLogLUNS \"', variables('dbLogLUNs'), '\"')]"
-      }
-    },
-
-
+    "github": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sap-templates",
     "images": {
       "Windows Server 2012 Datacenter": {
         "sku": "2012-Datacenter",
@@ -78,6 +85,73 @@
         "OSType": "Linux"
       }
     },
+    "imageSku": "[variables('images')[parameters('osType')].sku]",
+    "imagePublisher": "[variables('images')[parameters('osType')].publisher]",
+    "imageOffer": "[variables('images')[parameters('osType')].offer]",
+
+    "csExtension": {
+      "Windows": {
+        "Publisher": "Microsoft.Compute",
+        "Name": "CustomScriptExtension",
+        "Version": "1.7",
+        "script": "[concat(variables('github'), '/shared/configureSAPVM.ps1')]",
+        "scriptCall": "[concat('powershell.exe -File configureSAPVM.ps1 -DBDataLUNS \"', variables('dbDataLUNs'), '\" -DBLogLUNS \"', variables('dbLogLUNs'),' \"')]"
+      },
+      "Linux": {
+        "Publisher": "Microsoft.OSTCExtensions",
+        "Name": "CustomScriptForLinux",
+        "Version": "1.3",
+        "script": "[concat(variables('github'), '/shared/configureSAPVM.sh')]",
+        "scriptCall": "[concat('configureSAPVM.sh -DBDataLUNS \"', variables('dbDataLUNs') , '\" -DBLogLUNS \"', variables('dbLogLUNs'), '\"')]"
+      }
+    },
+    "cseExtPublisher": "[variables('csExtension')[variables('images')[parameters('osType')].OSType].Publisher]",
+    "cseExtName": "[variables('csExtension')[variables('images')[parameters('osType')].OSType].Name]",
+    "cseExtVersion": "[variables('csExtension')[variables('images')[parameters('osType')].OSType].Version]",
+
+
+    "storageTypes": {
+      "Premium": "Premium_LRS",
+      "Standard": "Standard_LRS"
+    },
+    "internalStorageType": "[variables('storageTypes')[parameters('storageType')]]",
+
+    "vmSizes": {
+      "Small < 2.000 SAPS": {
+        "Premium": {
+          "size": "Standard_DS11"
+        },
+        "Standard": {
+          "size": "Standard_A5"
+        }
+      },
+      "Medium < 9.000 SAPS": {
+        "Premium": {
+          "size": "Standard_DS13"
+        },
+        "Standard": {
+          "size": "Standard_D13"
+        }
+      },
+      "Large < 18.000 SAPS": {
+        "Premium": {
+          "size": "Standard_DS14"
+        },
+        "Standard": {
+          "size": "Standard_D14"
+        }
+      },
+      "X-Large < 40.000 SAPS": {
+        "Premium": {
+          "size": "Standard_GS5"
+        },
+        "Standard": {
+          "size": "Standard_D14"
+        }
+      }
+    },
+    "vmSize": "[variables('vmSizes')[parameters('sapSystemSize')][parameters('storageType')].size]",
+
     "location": "[resourceGroup().location]",
     "sidlower": "[toLower(parameters('SID'))]",
     "vmName": "[concat(variables('sidlower'), '-servercs')]",
@@ -85,26 +159,19 @@
     "vnetName": "[concat(variables('sidlower'), '-vnet')]",
     "publicIpName": "[concat(variables('sidlower'), '-publicIP')]",
     "nicName": "[concat(variables('sidlower'), '-nic')]",
-    "storageAccountType": "Standard_LRS",
     "publicIPAddressType": "Dynamic",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet",
     "subnetPrefix": "10.0.0.0/24",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('vnetName'))]",
     "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
-    "imageSku": "[variables('images')[parameters('osType')].sku]",
-    "imagePublisher": "[variables('images')[parameters('osType')].publisher]",
-    "imageOffer": "[variables('images')[parameters('osType')].offer]",
-    "vmSize": "Standard_A5",
-    "cseExtPublisher": "[variables('csExtension')[variables('images')[parameters('osType')].OSType].Publisher]",
-    "cseExtName": "[variables('csExtension')[variables('images')[parameters('osType')].OSType].Name]",
-    "cseExtVersion": "[variables('csExtension')[variables('images')[parameters('osType')].OSType].Version]",
     "osDiskName": "[concat(variables('sidlower'),'-os.vhd')]",
     "osDiskCaching": "ReadWrite",
     "sapDiskName": "[concat(variables('sidlower'),'-sapdisk.vhd')]",
     "sapDiskCaching": "None",
     "dbDiskName": "[concat(variables('sidlower'),'-dbdisk')]",
-    "dbDiskCaching": "None"
+    "dbDiskCaching": "None",
+    "nestedDeploymentName": "nestedTemplate"
   },
   "resources": [
     {
@@ -113,7 +180,7 @@
       "apiVersion": "2015-06-15",
       "location": "[variables('location')]",
       "properties": {
-        "accountType": "[variables('storageAccountType')]"
+        "accountType": "[variables('internalStorageType')]"
       }
     },
     {
@@ -146,124 +213,45 @@
         ]
       }
     },
+
     {
-      "type": "Microsoft.Network/networkInterfaces",
-      "name": "[variables('nicName')]",
-      "apiVersion": "2015-06-15",
-      "location": "[variables('location')]",
+      "apiVersion": "2015-01-01",
+      "name": "variables('nestedDeploymentName')",
+      "type": "Microsoft.Resources/deployments",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIpName'))]",
         "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
       ],
       "properties": {
-        "ipConfigurations": [
-          {
-            "name": "ipconfig1",
-            "properties": {
-              "privateIPAllocationMethod": "Dynamic",
-              "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpName'))]"
-              },
-              "subnet": {
-                "id": "[variables('subnetRef')]"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Compute/virtualMachines",
-      "name": "[variables('vmName')]",
-      "location": "[variables('location')]",
-      "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
-      ],
-      "properties": {
-        "hardwareProfile": {
-          "vmSize": "[variables('vmSize')]"
+        "mode": "incremental",
+        "templateLink": {
+          "uri": "[concat(variables('github'), '/shared/db-server-', variables('vmSize'), '_multiNIC_', parameters('multiNIC'), '.json')]",
+          "contentVersion": "1.0.0.0"
         },
-        "osProfile": {
-          "computername": "[variables('vmName')]",
-          "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
-        },
-        "storageProfile": {
-          "imageReference": {
-            "publisher": "[variables('imagePublisher')]",
-            "offer": "[variables('imageOffer')]",
-            "sku": "[variables('imageSku')]",
-            "version": "latest"
-          },
-          "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/vhds/', variables('osDiskName'))]"
-            },
-            "caching": "[variables('osDiskCaching')]",
-            "createOption": "FromImage"
-          },
-          "dataDisks": [
-            {
-              "name": "dbdisk1",
-              "lun": 0,
-              "vhd": {
-                "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/vhds/',variables('sidlower'),'-dbdisk1.vhd')]"
-              },
-              "createOption": "empty",
-              "caching": "None",
-              "diskSizeGB": "1023"
-            },
-            {
-              "name": "dbdisk2",
-              "lun": 1,
-              "vhd": {
-                "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/vhds/',variables('sidlower'),'-dbdisk2.vhd')]"
-              },
-              "createOption": "empty",
-              "caching": "None",
-              "diskSizeGB": "1023"
-            },
-            {
-              "name": "dbdisk3",
-              "lun": 2,
-              "vhd": {
-                "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/vhds/',variables('sidlower'),'-dbdisk3.vhd')]"
-              },
-              "createOption": "empty",
-              "caching": "None",
-              "diskSizeGB": "1023"
-            },
-            {
-              "name": "dbdisk4",
-              "lun": 3,
-              "vhd": {
-                "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/vhds/',variables('sidlower'),'-dbdisk4.vhd')]"
-              },
-              "createOption": "empty",
-              "caching": "None",
-              "diskSizeGB": "1023"
-            }
-          ]
-        },
-        "networkProfile": {
-          "networkInterfaces": [
-            {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
-            }
-          ]
+        "parameters": {
+          "imageSku": { "value": "[variables('imageSku')]" },
+          "imagePublisher": { "value": "[variables('imagePublisher')]" },
+          "imageOffer": { "value": "[variables('imageOffer')]" },
+          "location": { "value": "[variables('location')]" },
+          "sidlower": { "value": "[variables('sidlower')]" },
+          "vmName": { "value": "[variables('vmName')]" },
+          "adminUsername": { "value": "[parameters('adminUsername')]" },
+          "adminPassword": { "value": "[parameters('adminPassword')]" },
+          "storageAccountName": { "value": "[variables('storageAccountName')]" },
+          "publicIpName": { "value": "[variables('publicIpName')]" },
+          "subnetRef1": { "value": "[variables('subnetRef')]" },
+          "subnetRef2": { "value": "" }
         }
       }
     },
+    
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmName'),'/', variables('cseExtName'))]",
       "apiVersion": "2015-06-15",
       "location": "[variables('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+        "[concat('Microsoft.Resources/deployments', variables('nestedDeploymentName'))]"
       ],
       "properties": {
         "publisher": "[variables('cseExtPublisher')]",
