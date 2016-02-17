@@ -1,7 +1,9 @@
 ﻿param
 (
     [String] $DBDataLUNS = "0,1,2",
+	[int] $DBDataSize,
     [String] $DBLogLUNS = "3",
+	[int] $DBLogSize,
     [string] $DBDataDrive = "S:",
     [string] $DBLogDrive = "L:"
 )
@@ -29,7 +31,8 @@ function Create-Pool
     (
         $arraystring,
         $name,
-        $path
+        $path,
+		$size
     )
 
     Log ("Creating volume for " + $arraystring);
@@ -50,7 +53,7 @@ function Create-Pool
         Log "Creating Pool";
         New-StoragePool -FriendlyName $name -StorageSubsystemFriendlyName $subsystem.FriendlyName -PhysicalDisks $disks -ResiliencySettingNameDefault Simple -ProvisioningTypeDefault Fixed;
         Log "Creating volume";
-        New-Volume -StoragePoolFriendlyName $name -FriendlyName $name -PhysicalDiskRedundancy 0 -FileSystem NTFS -Size ($count * 1020GB) -AccessPath $path;
+        New-Volume -StoragePoolFriendlyName $name -FriendlyName $name -PhysicalDiskRedundancy 0 -FileSystem NTFS -Size $size -AccessPath $path;
     }
     else
     {		
@@ -63,5 +66,5 @@ function Create-Pool
     }
 }
 
-Create-Pool -arraystring $DBDataLUNS -name "sqldata" -path $DBDataDrive;
-Create-Pool -arraystring $DBLogLUNS -name "sqllog" -path $DBLogDrive;
+Create-Pool -arraystring $DBDataLUNS -name "sqldata" -path $DBDataDrive -size $DBDataSize;
+Create-Pool -arraystring $DBLogLUNS -name "sqllog" -path $DBLogDrive -size $DBLogSize;
