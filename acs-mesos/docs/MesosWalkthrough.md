@@ -38,7 +38,7 @@ When you deploy the template you will need to specify the following parameters:
 
 This walk through is based the wonderful digital ocean tutorial: https://www.digitalocean.com/community/tutorials/how-to-configure-a-production-ready-mesosphere-cluster-on-ubuntu-14-04
 
-  1. After successfully deploying the template write down the two output master and agent FQDNs (Fully Qualified Domain Name).
+ 1. After successfully deploying the template write down the two output master and agent FQDNs (Fully Qualified Domain Name).
    1. If using Powershell or CLI, the output parameters are the last values printed.
    2. If using Portal, to get the output you need to:
      1. navigate to "resource group"
