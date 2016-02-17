@@ -6,8 +6,8 @@ This Microsoft Azure template creates an Azure Container Service cluster with a 
 
 Click the "Deploy to Azure" button and then follow the relevant walkthrough for your choise of orchestrator:
 
-1. [Mesos](docs/MesosWalkthrough.md) - The Mesos orchestrator [walkthrough](https://github.com/Azure/azure-quickstart-templates/blob/master/acs-mesos/docs/MesosWalkthrough.md).
-2. [SwarmPreview](docs/SwarmPreviewWalkthrough.md) - The Docker Swarm orchestrator [walkthrough](https://github.com/Azure/azure-quickstart-templates/blob/master/acs-swarm/docs/SwarmPreviewWalkthrough.md).
+1. [Mesos](https://github.com/Azure/azure-quickstart-templates/blob/master/acs-mesos/docs/MesosWalkthrough.md) - The Mesos orchestrator [walkthrough](https://github.com/Azure/azure-quickstart-templates/blob/master/acs-mesos/docs/MesosWalkthrough.md).
+2. [SwarmPreview](https://github.com/Azure/azure-quickstart-templates/blob/master/acs-swarm/docs/SwarmPreviewWalkthrough.md) - The Docker Swarm orchestrator [walkthrough](https://github.com/Azure/azure-quickstart-templates/blob/master/acs-swarm/docs/SwarmPreviewWalkthrough.md).
 
 ## Deployment Tips:
 1. You will need to provide an SSH RSA public key.  Follow instructions to generate SSH RSA keys in section [SSH Key Generation](https://github.com/rgardler/azure-quickstart-templates/blob/acs/acs-mesos-full-template/docs/SSHKeyManagement.md#ssh-key-generation).  Your key should include three parts, for example ```ssh-rsa AAAAB...snip...UcyupgH azureuser@linuxvm```
