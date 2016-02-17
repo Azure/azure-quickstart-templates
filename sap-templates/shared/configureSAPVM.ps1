@@ -53,7 +53,7 @@ function Create-Pool
         Log "Creating Pool";
         New-StoragePool -FriendlyName $name -StorageSubsystemFriendlyName $subsystem.FriendlyName -PhysicalDisks $disks -ResiliencySettingNameDefault Simple -ProvisioningTypeDefault Fixed;
         Log "Creating volume";
-        New-Volume -StoragePoolFriendlyName $name -FriendlyName $name -PhysicalDiskRedundancy 0 -FileSystem NTFS -Size $size -AccessPath $path;
+        New-Volume -StoragePoolFriendlyName $name -FriendlyName $name -PhysicalDiskRedundancy 0 -FileSystem NTFS -Size ($size * 1GB) -AccessPath $path;
     }
     else
     {		
