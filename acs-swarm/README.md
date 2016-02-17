@@ -2,12 +2,12 @@
 
 This Microsoft Azure template creates an Azure Container Service cluster with a Mesos or Swarm orchestrator.
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Frgardler%2Fazure-quickstart-templates%2Facs%2Facs-swarm-full-template%2Fazuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Facs-swarm%2Fazuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
 
 Click the "Deploy to Azure" button and then choose from the list of walkthrough depending on the orchestrator that you have chosen:
 
-1. [Mesos](https://github.com/rgardler/azure-quickstart-templates/blob/acs/acs-mesos-full-template/docs/MesosWalkthrough.md) - The Mesos orchestrator [walkthrough](https://github.com/rgardler/azure-quickstart-templates/blob/acs/acs-mesos-full-template/docs/MesosWalkthrough.md).
-2. [SwarmPreview](https://github.com/rgardler/azure-quickstart-templates/blob/acs/acs-swarm-full-template/docs/SwarmPreviewWalkthrough.md) - The Docker Swarm orchestrator [walkthrough](https://github.com/rgardler/azure-quickstart-templates/blob/acs/acs-swarm-full-template/docs/SwarmPreviewWalkthrough.md).
+1. [Mesos](docs/MesosWalkthrough.md) - The Mesos orchestrator [walkthrough](MesosWalkthrough.md).
+2. [SwarmPreview](docs/SwarmPreviewWalkthrough.md) - The Docker Swarm orchestrator [walkthrough](docs/SwarmPreviewWalkthrough.md).
 
 ## Deployment Tips:
 1. You will need to provide an SSH RSA public key.  Follow instructions to generate SSH RSA keys in section [SSH Key Generation](#ssh-key-generation).  Your key should include three parts, for example ```ssh-rsa AAAAB...snip...UcyupgH azureuser@linuxvm```
