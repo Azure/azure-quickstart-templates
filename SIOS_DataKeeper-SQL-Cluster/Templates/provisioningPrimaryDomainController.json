@@ -1,0 +1,151 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adPDCVMName": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    },
+    "newStorageAccountNamePrefix": {
+      "type": "string"
+    },
+    "availabilitySet": {
+      "type": "string"
+    },
+    "adVMSize": {
+      "type": "string"
+    },
+    "adminUsername": {
+      "type": "string"
+    },
+    "adminPassword": {
+      "type": "securestring"
+    },
+    "windowsImagePublisher": {
+      "type": "string"
+    },
+    "windowsImageOffer": {
+      "type": "string"
+    },
+    "windowsImageSKU": {
+      "type": "string"
+    },
+    "vmContainerName": {
+      "type": "string"
+    },
+    "adPDCNicName": {
+      "type": "string"
+    },
+    "domainName": {
+      "type": "string"
+    },
+    "sharePath": {
+      "type": "string"
+    },
+    "adPDCConfigurationFunction": {
+      "type": "string"
+    },
+    "adPDCModulesURL": {
+      "type": "string"
+    }
+  },
+  "resources": [
+  {
+    "apiVersion": "2015-06-15",
+    "type": "Microsoft.Compute/virtualMachines",
+    "name": "[parameters('adPDCVMName')]",
+    "location": "[parameters('location')]",
+    "properties": {
+      "hardwareProfile": {
+        "vmSize": "[parameters('adVMSize')]"
+      },
+      "availabilitySet": {
+        "id": "[parameters('availabilitySet')]"
+      },
+      "osProfile": {
+        "computerName": "[parameters('adPDCVMName')]",
+        "adminUsername": "[parameters('adminUsername')]",
+        "adminPassword": "[parameters('adminPassword')]"
+      },
+      "storageProfile": {
+        "imageReference": {
+          "publisher": "[parameters('windowsImagePublisher')]",
+          "offer": "[parameters('windowsImageOffer')]",
+          "sku": "[parameters('windowsImageSKU')]",
+          "version": "latest"
+        },
+        "osDisk": {
+          "name": "osdisk",
+          "vhd": {
+            "uri": "[concat('http://',parameters('newStorageAccountNamePrefix'),'0.blob.core.windows.net/',parameters('vmContainerName'),'/',parameters('adPDCVMName'),'-osdisk.vhd')]"
+          },
+          "caching": "ReadWrite",
+          "createOption": "FromImage"
+        },
+        "dataDisks": [
+          {
+            "vhd": {
+              "uri":"[concat('http://',parameters('newStorageAccountNamePrefix'),'0.blob.core.windows.net/',parameters('vmContainerName'),'/', parameters('adPDCVMName'),'-datadisk.vhd')]"
+              },
+            "name":"[concat(parameters('adPDCVMName'),'-datadisk')]",
+            "createOption": "empty",
+            "caching" : "None",
+            "diskSizeGB": 100,
+            "lun": 0
+          }
+        ]
+      },
+      "networkProfile": {
+        "networkInterfaces": [
+          {
+            "id": "[resourceId(resourceGroup().name,'Microsoft.Network/networkInterfaces',parameters('adPDCNicName'))]"
+          }
+        ]
+      },
+      "diagnosticsProfile": {
+        "bootDiagnostics": {
+          "enabled": "true",
+          "storageUri": "[concat('http://',parameters('newStorageAccountNamePrefix'),'diag.blob.core.windows.net')]"
+        }
+      }
+    },
+    "resources" :[
+      {
+        "type": "Microsoft.Compute/virtualMachines/extensions",
+        "name": "[concat(parameters('adPDCVMName'),'/InstallDomainController')]",
+        "apiVersion": "2015-06-15",
+        "location": "[parameters('location')]",
+        "dependsOn":[
+          "[resourceId('Microsoft.Compute/virtualMachines', parameters('adPDCVMName'))]"
+        ],
+        "properties": {
+          "publisher": "Microsoft.Powershell",
+          "type": "DSC",
+          "typeHandlerVersion": "2.6",
+          "autoUpgradeMinorVersion": true,
+          "settings": {
+            "modulesURL": "[parameters('adPDCModulesURL')]",
+            "configurationFunction": "[parameters('adPDCConfigurationFunction')]",
+            "properties": {
+              "domainName": "[parameters('domainName')]",
+              "adminCreds": {
+                "userName": "[parameters('adminUserName')]",
+                "password": "PrivateSettingsRef:adminPassword"
+              },
+              "sharePath": "[parameters('sharePath')]"
+            }
+          },
+          "protectedSettings": {
+            "items": {
+              "adminPassword": "[parameters('adminPassword')]"
+            }
+          }
+        }
+      }
+    ]
+  }
+  ],
+  "outputs": {}
+}
