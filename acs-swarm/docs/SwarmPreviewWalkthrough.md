@@ -1,6 +1,6 @@
 # Docker Swarm Container Service Walkthrough
 
-This walkthrough assumes you have deployed an ACS cluster with a Docker Swarm orchestrator using the template from [acs-swarm](https://github.com/Azure/azure-quickstart-templates/master/acs-swarm).
+This walkthrough assumes you have deployed an ACS cluster with a Docker Swarm orchestrator using the template from [acs-swarm](https://github.com/Azure/azure-quickstart-templates/tree/master/acs-swarm).
 
 Once your container service has been created you will have a resource group containing 2 parts:
 
