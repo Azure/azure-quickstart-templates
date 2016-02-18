@@ -14,13 +14,13 @@ echo mysql-server-5.6 mysql-server/root_password_again password $dbpass | debcon
 # install the LAMP stack
 apt-get -y install apache2 mysql-client mysql-server php5
 
-# install moodle requirements
+# install iomad requirements
 apt-get -y install graphviz aspell php5-pspell php5-curl php5-gd php5-intl php5-mysql php5-xmlrpc php5-ldap
 
 # Allow remote connection
 sed -i "s/bind-address.*/bind-address = 0.0.0.0/" /etc/mysql/my.cnf
 
-# create moodle database
+# create iomad database
 MYSQL=`which mysql`
 
 Q1="CREATE DATABASE moodle DEFAULT CHARACTER SET UTF8 COLLATE utf8_unicode_ci;"
