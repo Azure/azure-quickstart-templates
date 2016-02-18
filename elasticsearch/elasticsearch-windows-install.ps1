@@ -57,6 +57,7 @@ Param(
 	[string]$elasticSearchBaseFolder,
     [string]$discoveryEndpoints,
 	[string]$elasticClusterName,
+    [string]$storageKey,
 	[switch]$masterOnlyNode,
 	[switch]$clientOnlyNode,
 	[switch]$dataOnlyNode,
@@ -600,7 +601,7 @@ function Install-WorkFlow
         }
         else
         {
-            cmd.exe /C "$elasticSearchBin\plugin.bat -i elasticsearch/marvel/latest"
+            cmd.exe /C "$elasticSearchBin\plugin.bat -i elasticsearch/marvel/1.3.1"
         }
     }		
 		
