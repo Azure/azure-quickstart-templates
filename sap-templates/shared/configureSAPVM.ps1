@@ -1,4 +1,4 @@
-param
+﻿param
 (
     [String] $DBDataLUNS = "0,1,2",	
     [String] $DBLogLUNS = "3",
@@ -51,7 +51,7 @@ function Create-Pool
         $pool = New-StoragePool -FriendlyName $name -StorageSubsystemFriendlyName $subsystem.FriendlyName -PhysicalDisks $disks -ResiliencySettingNameDefault Simple -ProvisioningTypeDefault Fixed;
         Log "Creating disk";
         $disk = New-VirtualDisk -StoragePoolUniqueId $pool.UniqueId -FriendlyName $name -UseMaximumSize
-        Initialize-Disk -PartitionStyle MBR -UniqueId $disk.UniqueId
+        Initialize-Disk -PartitionStyle GPT -UniqueId $disk.UniqueId
         $partition = New-Partition -UseMaximumSize -DiskId $disk.UniqueId -DriveLetter $path.Substring(0,1)
         $partition | Format-Volume -FileSystem NTFS -NewFileSystemLabel $name -Confirm:$false;
     }
@@ -60,7 +60,7 @@ function Create-Pool
         $lun = $luns[0];
 		Log ("Creating volume for disk " + $lun);
         $disk = Get-WmiObject Win32_DiskDrive | where InterfaceType -eq SCSI | where SCSILogicalUnit -eq $lun | % { Get-Disk -Number $_.Index } | select -First 1;
-        $partition = $disk | Initialize-Disk -PartitionStyle MBR -ErrorAction SilentlyContinue -PassThru | New-Partition -DriveLetter $path.Substring(0,1) -UseMaximumSize;
+        $partition = $disk | Initialize-Disk -PartitionStyle GPT -ErrorAction SilentlyContinue -PassThru | New-Partition -DriveLetter $path.Substring(0,1) -UseMaximumSize;
 		sleep 10;
 		$partition | Format-Volume -FileSystem NTFS -NewFileSystemLabel $name -Confirm:$false;
     }
