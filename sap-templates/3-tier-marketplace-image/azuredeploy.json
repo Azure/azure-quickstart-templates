@@ -20,16 +20,16 @@
     },
     "sapSystemSize": {
       "type": "string",
-      "allowedValues": [ "Small < 2.000 SAPS", "Medium < 9.000 SAPS", "Large < 18.000 SAPS", "X-Large < 40.000 SAPS" ],
+      "allowedValues": [ "Small < 30.000 SAPS", "Medium < 70.000 SAPS", "Large < 180.000 SAPS", "X-Large < 250.000 SAPS" ],
       "defaultValue": "Small < 2.000 SAPS",
       "metadata": {
         "description": "The type of the operating system you want to deploy."
       }
     },
-    "storageType": {
+    "systemAvailability": {
       "type": "string",
-      "allowedValues": [ "Premium", "Standard" ],
-      "defaultValue": "Standard",
+      "allowedValues": [ "HA", "Not HA" ],
+      "defaultValue": "Not HA",
       "metadata": {
         "description": "The type of the operating system you want to deploy."
       }
@@ -55,7 +55,7 @@
       }
     }
   },
-  "variables": {    
+  "variables": {
     "github": "https://raw.githubusercontent.com/MSSedusch/azure-quickstart-templates/master/sap-templates",
     "images": {
       "Windows Server 2012 Datacenter": {
@@ -112,44 +112,94 @@
       "Premium": "Premium_LRS",
       "Standard": "Standard_LRS"
     },
-    "internalStorageType": "[variables('storageTypes')[parameters('storageType')]]",
+    "internalStorageType": "[variables('storageTypes')['Premium']]",
 
     "vmSizes": {
-      "Small < 2.000 SAPS": {
-        "Premium": {
-          "size": "Standard_DS11"
+      "Small < 30.000 SAPS": {
+        "Not HA": {
+          "dbserversize": "Standard_GS2",
+          "dbservercount": 1,
+          "ascsserversize": "Standard_D13",
+          "ascsservercount": 1,
+          "diserversize": "Standard_D13",
+          "diservercount": 1
         },
-        "Standard": {
-          "size": "Standard_A5"
+        "HA": {
+          "dbserversize": "Standard_GS2",
+          "dbservercount": 2,
+          "ascsserversize": "Standard_D13",
+          "ascsservercount": 2,
+          "diserversize": "Standard_D13",
+          "diservercount": 1
         }
       },
-      "Medium < 9.000 SAPS": {
-        "Premium": {
-          "size": "Standard_DS13"
+      "Medium < 70.000 SAPS": {
+        "Not HA": {
+          "dbserversize": "Standard_GS3",
+          "dbservercount": 1,
+          "ascsserversize": "Standard_D13",
+          "ascsservercount": 1,
+          "diserversize": "Standard_D13",
+          "diservercount": 4
         },
-        "Standard": {
-          "size": "Standard_D13"
+        "HA": {
+          "dbserversize": "Standard_GS3",
+          "dbservercount": 2,
+          "ascsserversize": "Standard_D13",
+          "ascsservercount": 2,
+          "diserversize": "Standard_D13",
+          "diservercount": 4
         }
       },
-      "Large < 18.000 SAPS": {
-        "Premium": {
-          "size": "Standard_DS14"
+
+      "Large < 180.000 SAPS": {
+        "Not HA": {
+          "dbserversize": "Standard_GS4",
+          "dbservercount": 1,
+          "ascsserversize": "Standard_D14",
+          "ascsservercount": 1,
+          "diserversize": "Standard_D14",
+          "diservercount": 5
         },
-        "Standard": {
-          "size": "Standard_D14"
+        "HA": {
+          "dbserversize": "Standard_GS4",
+          "dbservercount": 2,
+          "ascsserversize": "Standard_D11",
+          "ascsservercount": 2,
+          "diserversize": "Standard_D14",
+          "diservercount": 6
         }
       },
-      "X-Large < 40.000 SAPS": {
-        "Premium": {
-          "size": "Standard_GS5"
+      "X-Large < 250.000 SAPS": {
+        "Not HA": {
+          "dbserversize": "Standard_GS5",
+          "dbservercount": 1,
+          "ascsserversize": "Standard_D14",
+          "ascsservercount": 1,
+          "diserversize": "Standard_D14",
+          "diservercount": 9
         },
-        "Standard": {
-          "size": "Standard_D14"
+        "HA": {
+          "dbserversize": "Standard_GS5",
+          "dbservercount": 2,
+          "ascsserversize": "Standard_D11",
+          "ascsservercount": 2,
+          "diserversize": "Standard_D14",
+          "diservercount": 10
         }
       }
     },
-    "vmSize": "[variables('vmSizes')[parameters('sapSystemSize')][parameters('storageType')].size]",
-
+    "dbvmSize": "[variables('vmSizes')[parameters('sapSystemSize')][parameters('systemAvailability')].dbserversize]",
+    "dbvmCount": "[variables('vmSizes')[parameters('sapSystemSize')][parameters('systemAvailability')].dbservercount]",
+    "ascsvmSize": "[variables('vmSizes')[parameters('sapSystemSize')][parameters('systemAvailability')].ascsserversize]",
+    "ascsvmCount": "[variables('vmSizes')[parameters('sapSystemSize')][parameters('systemAvailability')].ascsservercount]",
+    "divmSize": "[variables('vmSizes')[parameters('sapSystemSize')][parameters('systemAvailability')].diserversize]",
+    "divmCount": "[variables('vmSizes')[parameters('sapSystemSize')][parameters('systemAvailability')].diservercount]",
+    "systemAvailabilities": {
+      "HA": "HA",
+      "Not HA": "NOHA"
+    },
+    "systemAvailabilityInternal": "[variables('systemAvailabilities')[parameters('systemAvailability')]]",
     "location": "[resourceGroup().location]",
     "sidlower": "[toLower(parameters('SID'))]",
     "vmName": "[concat(variables('sidlower'), '-servercs')]",
@@ -172,6 +222,33 @@
     "nestedDeploymentName": "nestedTemplate"
   },
   "resources": [
+    {
+      "apiVersion": "2015-01-01",
+      "name": "[variables('nestedDeploymentName')]",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('github'), '/shared/ascs-server-', variables('ascsvmSize'), '_multiNIC_', parameters('multiNIC'), '_', variables('systemAvailabilityInternal'), '.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "imageSku": { "value": "[variables('imageSku')]" },
+          "imagePublisher": { "value": "[variables('imagePublisher')]" },
+          "imageOffer": { "value": "[variables('imageOffer')]" },
+          "location": { "value": "[variables('location')]" },
+          "sidlower": { "value": "[variables('sidlower')]" },
+          "vmName": { "value": "[variables('vmName')]" },
+          "adminUsername": { "value": "[parameters('adminUsername')]" },
+          "adminPassword": { "value": "[parameters('adminPassword')]" },
+          "storageAccountName": { "value": "[variables('storageAccountName')]" },
+          "publicIpName": { "value": "[variables('publicIpName')]" },
+          "subnetRef1": { "value": "[variables('subnetRef')]" },
+          "subnetRef2": { "value": "" },
+          "vmSize": { "value": "[variables('vmSize')]" }
+        }
+      }
+    },
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('storageAccountName')]",
