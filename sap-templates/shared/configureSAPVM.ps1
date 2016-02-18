@@ -1,9 +1,7 @@
-﻿param
+param
 (
-    [String] $DBDataLUNS = "0,1,2",
-	[int] $DBDataSize,
+    [String] $DBDataLUNS = "0,1,2",	
     [String] $DBLogLUNS = "3",
-	[int] $DBLogSize,
     [string] $DBDataDrive = "S:",
     [string] $DBLogDrive = "L:"
 )
@@ -31,8 +29,7 @@ function Create-Pool
     (
         $arraystring,
         $name,
-        $path,
-		$size
+        $path
     )
 
     Log ("Creating volume for " + $arraystring);
@@ -43,7 +40,7 @@ function Create-Pool
         $disks = @();
         foreach ($lun in $luns)
         {
-			Log ("Preparing LUN " + $lun);
+	    Log ("Preparing LUN " + $lun);
             $disk = Get-WmiObject Win32_DiskDrive | where InterfaceType -eq SCSI | where SCSILogicalUnit -eq $lun | % { Get-Disk -Number $_.Index } | select -First 1;
             $disk | Clear-Disk -RemoveData -RemoveOEM -Confirm:$false -ErrorAction SilentlyContinue;
             $disks += Get-PhysicalDisk -UniqueId $disk.UniqueId;
@@ -51,9 +48,12 @@ function Create-Pool
         }
         $subsystem = Get-StorageSubSystem;
         Log "Creating Pool";
-        New-StoragePool -FriendlyName $name -StorageSubsystemFriendlyName $subsystem.FriendlyName -PhysicalDisks $disks -ResiliencySettingNameDefault Simple -ProvisioningTypeDefault Fixed;
-        Log "Creating volume";
-        New-Volume -StoragePoolFriendlyName $name -FriendlyName $name -PhysicalDiskRedundancy 0 -FileSystem NTFS -Size ($size * 1GB) -AccessPath $path;
+        $pool = New-StoragePool -FriendlyName $name -StorageSubsystemFriendlyName $subsystem.FriendlyName -PhysicalDisks $disks -ResiliencySettingNameDefault Simple -ProvisioningTypeDefault Fixed;
+        Log "Creating disk";
+        $disk = New-VirtualDisk -StoragePoolUniqueId $pool.UniqueId -FriendlyName $name -UseMaximumSize
+        Initialize-Disk -PartitionStyle MBR -UniqueId $disk.UniqueId
+        $partition = New-Partition -UseMaximumSize -DiskId $disk.UniqueId -DriveLetter $path.Substring(0,1)
+        $partition | Format-Volume -FileSystem NTFS -NewFileSystemLabel $name -Confirm:$false;
     }
     else
     {		
@@ -66,5 +66,5 @@ function Create-Pool
     }
 }
 
-Create-Pool -arraystring $DBDataLUNS -name "sqldata" -path $DBDataDrive -size $DBDataSize;
-Create-Pool -arraystring $DBLogLUNS -name "sqllog" -path $DBLogDrive -size $DBLogSize;
+Create-Pool -arraystring $DBDataLUNS -name "dbdata" -path $DBDataDrive 
+Create-Pool -arraystring $DBLogLUNS -name "dblog" -path $DBLogDrive
