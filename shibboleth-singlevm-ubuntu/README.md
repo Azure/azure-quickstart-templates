@@ -2,7 +2,7 @@
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fshibboleth-singlevm-ubuntu%2Fazuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
 
-This template deploys Shibboleth Identity Provider on Ubuntu. It creates a single Ubuntu VM, does a silent install of Apache Tomcat and Open JDK on it, and then deploys Shibboleth IDP on it.  After the deployment is successful, you can go to /idp/profile/Status to check success. For further instructions, please refer to the Shibboleth IDP documentation at https://wiki.shibboleth.net/confluence/display/SHIB2/IdPInstall.
+This template deploys Shibboleth Identity Provider on Ubuntu. It creates a single Ubuntu VM, does a silent install of Apache Tomcat and Open JDK on it, and then deploys Shibboleth IDP on it.  After the deployment is successful, you can go to https://your-domain:8443/idp/profile/status (note port number) to check success. For further details, please refer to the Shibboleth IDP documentation at https://wiki.shibboleth.net/confluence/display/SHIB2/IdPInstall.
 
 ## Certificate:
 In order to support SSL, this template creates a self signed certificate as a part of the installation script. This allows the template to be deployed without having to create your own certificate. In production deployments, you will need to create and use your own certificate instead of the self signed certificate.
@@ -15,7 +15,7 @@ Here are the steps you can follow to create a testing setup including Shibboleth
 Create a deployment of Shibboleth IDP using this template and SSH into the VM deployed.
 
 ## Update ldap.properties inside /opt/conf directory as per the LDAP configuration. 
-Following are the settings for Online LDAP Test Server installation hosted at http://www.forumsys.com/tutorials/integration-how-to/ldap/online-ldap-test-server/
+    Following are the settings for Online LDAP Test Server installation hosted at http://www.forumsys.com/tutorials/integration-how-to/ldap/online-ldap-test-server/
 	- set idp.authn.LDAP.authenticator = bindSearchAuthenticator
 	- set idp.authn.LDAP.ldapURL = ldap://ldap.forumsys.com:389
 	- set idp.authn.LDAP.useStartTLS = false
@@ -27,7 +27,7 @@ Following are the settings for Online LDAP Test Server installation hosted at ht
 	- Comment out idp.authn.LDAP.sslConfig & Comment out idp.authn.LDAP.trustCertificates as SSL is not used here
 
 ## Create metadata xml file for service provider. 
-http://testshib.org is used as Service provider and Shibboleth is used as IDP.
+    Note: http://testshib.org is used as Service provider and Shibboleth is used as IDP.
 	- Download metadata file from - https://www.testshib.org/metadata/testshib-providers.xml inside /opt/conf directory
 	- Configure the metadata provider inside /opt/conf/metadata-providers.xml file as follows
 	<!-- TestShib -->
@@ -80,8 +80,9 @@ http://testshib.org is used as Service provider and Shibboleth is used as IDP.
 	- idp.consent.userStorageKey
 	- idp.consent.userStorageKeyAttribute
 
-## Restart the servlet container - service tomcat7 restart
+## Restart the servlet container
+    - service tomcat7 restart
 	
-## Follow the steps on http://testshib.org to test the shibboleth installation as IDP
-
-## Log files for Shibboleth reside inside /opt/logs directory. The log files can be helpful to debug any issue that show up during login process.
+## Test your installation
+    - Follow the steps on http://testshib.org to test the shibboleth installation as IDP
+    - Log files for Shibboleth reside inside /opt/logs directory. The log files can be helpful for debugging any issues that show up during the login process.
