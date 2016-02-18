@@ -106,7 +106,8 @@
     "cseExtPublisher": "[variables('csExtension')[variables('images')[parameters('osType')].OSType].Publisher]",
     "cseExtName": "[variables('csExtension')[variables('images')[parameters('osType')].OSType].Name]",
     "cseExtVersion": "[variables('csExtension')[variables('images')[parameters('osType')].OSType].Version]",
-
+    "csExtensionScript": "[variables('csExtension')[variables('images')[parameters('osType')].OSType].script]",
+    "csExtensionscriptCall": "[variables('csExtension')[variables('images')[parameters('osType')].OSType].scriptCall]",
 
     "storageTypes": {
       "Premium": "Premium_LRS",
@@ -122,7 +123,7 @@
           "ascsserversize": "Standard_D13",
           "ascsservercount": 1,
           "diserversize": "Standard_D13",
-          "diservercount": 1
+          "diservercount": 4
         },
         "HA": {
           "dbserversize": "Standard_GS2",
@@ -219,54 +220,13 @@
     "sapDiskCaching": "None",
     "dbDiskName": "[concat(variables('sidlower'),'-dbdisk')]",
     "dbDiskCaching": "None",
-    "nestedDeploymentName": "nestedTemplate"
+    "nestedDeploymentName": "nestedTemplate",
+    "nestedDeploymentNameASCS": "[concat(variables('nestedDeploymentName'), 'ascs')]",
+    "nestedDeploymentNameDB": "[concat(variables('nestedDeploymentName'), 'db')]",
+    "nestedDeploymentNameDI": "[concat(variables('nestedDeploymentName'), 'di')]"
   },
   "resources": [
-    {
-      "apiVersion": "2015-01-01",
-      "name": "[variables('nestedDeploymentName')]",
-      "type": "Microsoft.Resources/deployments",
-      "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[concat(variables('github'), '/shared/ascs-server-', variables('ascsvmSize'), '_multiNIC_', parameters('multiNIC'), '_', variables('systemAvailabilityInternal'), '.json')]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "imageSku": { "value": "[variables('imageSku')]" },
-          "imagePublisher": { "value": "[variables('imagePublisher')]" },
-          "imageOffer": { "value": "[variables('imageOffer')]" },
-          "location": { "value": "[variables('location')]" },
-          "sidlower": { "value": "[variables('sidlower')]" },
-          "vmName": { "value": "[variables('vmName')]" },
-          "adminUsername": { "value": "[parameters('adminUsername')]" },
-          "adminPassword": { "value": "[parameters('adminPassword')]" },
-          "storageAccountName": { "value": "[variables('storageAccountName')]" },
-          "publicIpName": { "value": "[variables('publicIpName')]" },
-          "subnetRef1": { "value": "[variables('subnetRef')]" },
-          "subnetRef2": { "value": "" },
-          "vmSize": { "value": "[variables('vmSize')]" }
-        }
-      }
-    },
-    {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('storageAccountName')]",
-      "apiVersion": "2015-06-15",
-      "location": "[variables('location')]",
-      "properties": {
-        "accountType": "[variables('internalStorageType')]"
-      }
-    },
-    {
-      "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[variables('publicIpName')]",
-      "apiVersion": "2015-06-15",
-      "location": "[variables('location')]",
-      "properties": {
-        "publicIPAllocationMethod": "[variables('publicIPAddressType')]"
-      }
-    },
+    
     {
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('vnetName')]",
@@ -288,19 +248,17 @@
         ]
       }
     },
-
     {
       "apiVersion": "2015-01-01",
-      "name": "[variables('nestedDeploymentName')]",
+      "name": "[variables('nestedDeploymentNameASCS')]",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIpName'))]",
         "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
       ],
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('github'), '/shared/cs-server-', variables('vmSize'), '_multiNIC_', parameters('multiNIC'), '.json')]",
+          "uri": "[concat(variables('github'), '/shared/ascs-server-', variables('ascsvmSize'), '_multiNIC_', parameters('multiNIC'), '_', variables('systemAvailabilityInternal'), '.json')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -312,30 +270,80 @@
           "vmName": { "value": "[variables('vmName')]" },
           "adminUsername": { "value": "[parameters('adminUsername')]" },
           "adminPassword": { "value": "[parameters('adminPassword')]" },
-          "storageAccountName": { "value": "[variables('storageAccountName')]" },
-          "publicIpName": { "value": "[variables('publicIpName')]" },
           "subnetRef1": { "value": "[variables('subnetRef')]" },
           "subnetRef2": { "value": "" },
-          "vmSize": { "value": "[variables('vmSize')]" }
+          "vmSize": { "value": "[variables('ascsvmSize')]" },
+          "vmCount": { "value": "[variables('ascsvmCount')]" },
+          "cseExtPublisher": { "value": "[variables('cseExtPublisher')]" },
+          "cseExtName": { "value": "[variables('cseExtName')]" },
+          "cseExtVersion": { "value": "[variables('cseExtVersion')]" },
+          "csExtensionScript": { "value": "[variables('csExtensionScript')]" },
+          "csExtensionscriptCall": { "value": "[variables('csExtensionscriptCall')]" }
         }
       }
     },
-
     {
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('vmName'),'/', variables('cseExtName'))]",
-      "apiVersion": "2015-06-15",
-      "location": "[variables('location')]",
+      "apiVersion": "2015-01-01",
+      "name": "[variables('nestedDeploymentNameDB')]",
+      "type": "Microsoft.Resources/deployments",
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentName'))]"
+        "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
       ],
       "properties": {
-        "publisher": "[variables('cseExtPublisher')]",
-        "type": "[variables('cseExtName')]",
-        "typeHandlerVersion": "[variables('cseExtVersion')]",
-        "settings": {
-          "fileUris": [ "[variables('csExtension')[variables('images')[parameters('osType')].OSType].script]" ],
-          "commandToExecute": "[concat(variables('csExtension')[variables('images')[parameters('osType')].OSType].scriptCall, ' -DBDataLUNS \"', reference(variables('nestedDeploymentName')).outputs.dbDataLUNs.value , '\" -DBLogLUNS \"', reference(variables('nestedDeploymentName')).outputs.dbLogLUNs.value, '\"')]"
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('github'), '/shared/db-server-', variables('dbvmSize'), '_multiNIC_', parameters('multiNIC'), '_', variables('systemAvailabilityInternal'), '.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "imageSku": { "value": "[variables('imageSku')]" },
+          "imagePublisher": { "value": "[variables('imagePublisher')]" },
+          "imageOffer": { "value": "[variables('imageOffer')]" },
+          "location": { "value": "[variables('location')]" },
+          "sidlower": { "value": "[variables('sidlower')]" },
+          "vmName": { "value": "[variables('vmName')]" },
+          "adminUsername": { "value": "[parameters('adminUsername')]" },
+          "adminPassword": { "value": "[parameters('adminPassword')]" },
+          "subnetRef1": { "value": "[variables('subnetRef')]" },
+          "subnetRef2": { "value": "" },
+          "vmSize": { "value": "[variables('dbvmSize')]" },
+          "vmCount": { "value": "[variables('dbvmCount')]" },
+          "cseExtPublisher": { "value": "[variables('cseExtPublisher')]" },
+          "cseExtName": { "value": "[variables('cseExtName')]" },
+          "cseExtVersion": { "value": "[variables('cseExtVersion')]" },
+          "csExtensionScript": { "value": "[variables('csExtensionScript')]" },
+          "csExtensionscriptCall": { "value": "[variables('csExtensionscriptCall')]" }
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-01-01",
+      "name": "[variables('nestedDeploymentNameDI')]",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('github'), '/shared/di-server-', variables('divmSize'), '_multiNIC_', parameters('multiNIC'), '_', variables('systemAvailabilityInternal'), '.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "imageSku": { "value": "[variables('imageSku')]" },
+          "imagePublisher": { "value": "[variables('imagePublisher')]" },
+          "imageOffer": { "value": "[variables('imageOffer')]" },
+          "location": { "value": "[variables('location')]" },
+          "sidlower": { "value": "[variables('sidlower')]" },
+          "vmName": { "value": "[variables('vmName')]" },
+          "adminUsername": { "value": "[parameters('adminUsername')]" },
+          "adminPassword": { "value": "[parameters('adminPassword')]" },
+          "subnetRef1": { "value": "[variables('subnetRef')]" },
+          "subnetRef2": { "value": "" },
+          "vmSize": { "value": "[variables('divmSize')]" },
+          "vmCount": { "value": "[variables('divmCount')]" },
+          "cseExtPublisher": { "value": "[variables('cseExtPublisher')]" },
+          "cseExtName": { "value": "[variables('cseExtName')]" },
+          "cseExtVersion": { "value": "[variables('cseExtVersion')]" },
+          "csExtensionScript": { "value": "[variables('csExtensionScript')]" },
+          "csExtensionscriptCall": { "value": "[variables('csExtensionscriptCall')]" }
         }
       }
     }
