@@ -7,13 +7,45 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template can help you setup the development environment to deploy [BOSH](http://bosh.io/) and [Cloud Foundry](https://www.cloudfoundry.org/) on Azure. It will create a virtual machine with a dynamic public IP address, a storage account, a virtual network, 2 subnets and 2 reserved public IP addresses.
+This template can help you setup the development environment to deploy [BOSH](http://bosh.io/) and [Cloud Foundry](https://www.cloudfoundry.org/) on Azure.
 
-You can follow the guide [**HERE**](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/blob/master/docs/guidance.md) to deploy Cloud Foundry on Azure. From the guide, you can also get how to set the parameters (e.g. tenantID).
-
-After the VM is created, you can logon to the VM and see ~/install.log to check whether the installation is finished.
-After the installation is finished, you can execute "./deploy_bosh.sh" in your home directory to deploy bosh and see ~/run.log to check whether bosh is deployed successfully.
+You can follow the guide [**HERE**](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/blob/master/docs/guidance.md) to deploy Cloud Foundry on Azure.
 
 If you have any question about this template or the deployment of Cloud Foundry on Azure, please feel free to give your feedback [**HERE**](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/issues).
 
 We look forward to hearing your feedback and suggestions!
+
+```
+Template Changelog
+
+# V1.1 (2016-02-13)
+- New features
+  - Support deploying Bosh automatically
+- Parameters and Variables
+  - Remove the parameter "newStorageAccountName" and generate it by uniqueString()
+  - Create the dev-box with SSH Keys
+  - Make service principal parameters required and fixed-length
+  - Move the parameter "vmSize" into a variable
+  - Move the parameters about vnet & subnet to variables
+  - Change the CIDR of the subnet for Cloud Foundry to /20
+- Render the manifest of Bosh
+  - Autofill the service principal
+- Render the manifest of Cloud Foundry
+  - Autofill the virtual network name, the subnet name and so on.
+- Upgrade versions
+  - Upgrade bosh_cli version to 1.3169.0
+  - Upgrade bosh-init version to 0.0.81
+  - Upgrade API version to the latest 2015-06-15
+  - Upgrade to Ubuntu Server 14.04.3 LTS
+  - Upgrade the default "storageAccountType" into Standard_RAGRS
+  - Upgrade the version of CustomScript Extension to 1.4
+    - Download the scripts and manifests via fileUris
+    - Put commandToExecute into protectedSettings to protect users' credentials
+- Add CI pipeline to test bosh-setup deployment
+
+# V1.0 (2015-11-02) - GA Version
+
+# Preview II Version (2015-08-25)
+
+# Preview Version (2015-05-29)
+```
