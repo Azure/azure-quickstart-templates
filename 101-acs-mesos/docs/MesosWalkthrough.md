@@ -10,7 +10,7 @@ Once your container service has been created you will have a resource group cont
 
 The following image shows the architecture of a container service cluster with 3 masters, and 3 agents:
 
-![Image of Mesos container service on azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-101-acs-mesos/images/mesos.png)
+![Image of Mesos container service on azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-acs-mesos/images/mesos.png)
 
 In the image above, you can see the following parts:
 
