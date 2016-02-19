@@ -6,7 +6,7 @@ Once your container service has been created you will have a resource group cont
 
 1. a set of 1,3, or 5 masters in a master specific availability set.  Each master's SSH can be accessed via the public dns address at ports 2200..2204
 
-2. a set of agents in a VM scale set (VMSS).  The agent VMs must be accessed through the master.  See [agent forwarding](https://github.com/Azure/azure-quickstart-templates/blob/master/101-acs-mesos/docs/SSHKeyManagement.md) for an example of how to do this.
+2. a set of agents in a VM scale set (VMSS).  The agent VMs can be accessed through a master.  See [agent forwarding](https://github.com/Azure/azure-quickstart-templates/blob/master/101-acs-mesos/docs/SSHKeyManagement.md#key-management-and-agent-forwarding-with-windows-pageant) for an example of how to do this.
 
 The following image shows the architecture of a container service cluster with 3 masters, and 3 agents:
 
@@ -25,7 +25,7 @@ The following image shows the architecture of a container service cluster with 3
     5. now you can copy the output FQDNs and sample SSH commands
 
     ![Image of docker scaling](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-acs-swarm/images/findingoutputs.png)
- 
+
  3. SSH to port 2200 of the master FQDN. See [agent forwarding](https://github.com/Azure/azure-quickstart-templates/blob/master/101-acs-mesos/docs/SSHKeyManagement.md) for an example of how to do this.
 
  4. Set the DOCKER_HOST environment variable (e.g. ```export DOCKER_HOST=:2375``` on Linux)
