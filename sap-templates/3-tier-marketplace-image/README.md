@@ -10,8 +10,11 @@
 This template takes a minimum amount of parameters and deploys a VM that is customized for use with SAP NetWeaver, using the latest patched version of the selected operating system. This is a template for a 3-tier configuration. It deploys 1 (no HA) or 2 (HA) ASCS servers, 1 (no HA) or 2 (HA) database servers and serveral virtual machines that can host dialog instances. In case of a HA deployment, the ASCS and DB servers are placed in Availability Sets and a Load Balancer is added to the ASCS and DB server to allow HA configurations in the operating system (e.g. Windows Failover Cluster).
 
 ASCS Internal Load Balancer ports: 445, 3200, 3300, 3600, 3900, 50013, 50014, 50016, 51013, 51014
+
 ASCS Internal Load Balancer probe port: 62300
+
 DB Internal Load Balancer ports: 1433
+
 DB Internal Load Balancer probe port: 62300
 
 <table>
