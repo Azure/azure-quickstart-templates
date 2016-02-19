@@ -1,16 +1,16 @@
 # Mesos Container Service Walkthrough
 
-This walkthrough assumes you have deployed an ACS cluster with a Mesos orchestrator using the template from [acs-mesos](https://github.com/Azure/azure-quickstart-templates/tree/master/acs-mesos).
+This walkthrough assumes you have deployed an ACS cluster with a Mesos orchestrator using the template from [101-acs-mesos](https://github.com/Azure/azure-quickstart-templates/tree/master/101-acs-mesos).
 
 Once your container service has been created you will have a resource group containing 3 parts:
 
 1. a set of 1,3, or 5 masters in a master specific availability set.  Each master's SSH can be accessed via the public dns address at ports 2200..2204
 
-2. a set of agents in an Virtual Machine Scale Set (VMSS).  The agent VMs must be accessed through and SSH tunnel to the orchestration software installed on the master(s)
+2. a set of agents in an Virtual Machine Scale Set (VMSS).  The agent VMs can be accessed through a master.  See [agent forwarding](https://github.com/Azure/azure-quickstart-templates/blob/master/101-acs-mesos/docs/SSHKeyManagement.md#key-management-and-agent-forwarding-with-windows-pageant) for an example of how to do this.
 
 The following image shows the architecture of a container service cluster with 3 masters, and 3 agents:
 
-![Image of Mesos container service on azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/acs-mesos/images/mesos.png)
+![Image of Mesos container service on azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-acs-mesos/images/mesos.png)
 
 In the image above, you can see the following parts:
 
@@ -32,7 +32,7 @@ When you deploy the template you will need to specify the following parameters:
 * `agentVMSize`: The type of VM that you want to use for each node in the container service. The default size is D2 (2 core) but you can change that if you expect to run workloads that require more RAM or CPU resources.
 * `linuxAdminUsername`: this is the username to use for the linux machines.  The default username is `azureuser`.
 * `masterCount`: Number of Masters. Currently the template supports 3 configurations: 1, 3 and 5 Masters container service configuration.
-* `sshRSAPublicKey`: Configure all linux machines with the SSH rsa public key string.  This is required.  Refer to the following section on how to generate your key pair: [SSH Key Generation](https://github.com/Azure/azure-quickstart-templates/blob/master/acs-mesos/docs/SSHKeyManagement.md)
+* `sshRSAPublicKey`: Configure all linux machines with the SSH rsa public key string.  This is required.  Refer to the following section on how to generate your key pair: [SSH Key Generation](https://github.com/Azure/azure-quickstart-templates/blob/master/101-acs-mesos/docs/SSHKeyManagement.md#ssh-key-generation)
 
 ## Marathon
 
@@ -46,24 +46,24 @@ This walk through is based the wonderful digital ocean tutorial: https://www.dig
      3. then click on "Succeeded" under *last deployment*
      4. then click on the "Microsoft.Template"
      5. now you can copy the output FQDNs and sample SSH commands
-     ![Image of docker scaling](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/acs-swarm/images/findingoutputs.png)
+     ![Image of docker scaling](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-acs-swarm/images/findingoutputs.png)
 
- 2. Create an [SSH tunnel to port 80](https://github.com/Azure/azure-quickstart-templates/blob/master/acs-mesos/docs/SSHKeyManagement.md#create-port-80-tunnel-to-the-master) on the master FQDN.
+ 2. Create an [SSH tunnel to port 80](https://github.com/Azure/azure-quickstart-templates/blob/master/101-acs-mesos/docs/SSHKeyManagement.md#create-port-80-tunnel-to-the-master) on the master FQDN.
 
  3. browse to the Mesos UI.  <http://localhost/mesos/>
 
  4. Browse Mesos:
    1. scroll down the page and notice your resources of CPU and memory.  These are your agents
 
-   ![Image of Mesos container service on azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/acs-mesos/images/mesos-webui.png)
+   ![Image of Mesos container service on azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-acs-mesos/images/mesos-webui.png)
 
    2. On top of page, click frameworks and notice your Marathon and Chronos frameworks
 
-   ![Image of Mesos frameworks on azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/acs-mesos/images/mesos-frameworks.png)
+   ![Image of Mesos frameworks on azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-acs-mesos/images/mesos-frameworks.png)
 
    3. On top of page, click agents and you can see your agents.  (Note: "Agents" and "Slaves" are synonymous, and as announced in August 2015 at MesosCon, the word "Slave" will be replaced with "Agent")
 
-   ![Image of Mesos agents on azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/acs-mesos/images/mesos-agents.png)
+   ![Image of Mesos agents on azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-acs-mesos/images/mesos-agents.png)
 
   5. browse and explore Marathon UI <http://localhost/marathon/>.
 
@@ -73,33 +73,33 @@ This walk through is based the wonderful digital ocean tutorial: https://www.dig
     3. type `/bin/bash -c "for i in {1..5}; do echo MyFirstApp $i; sleep 1; done"` for the command
     4. scroll to bottom and click create
 
-    ![Image of Marathon new app dialog](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/acs-mesos/images/marathon-newapp.png)
+    ![Image of Marathon new app dialog](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-acs-mesos/images/marathon-newapp.png)
 
   7. you will notice the new app change state from not running to running
 
-  ![Image of the new application status](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/acs-mesos/images/marathon-newapp-status.png)
+  ![Image of the new application status](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-acs-mesos/images/marathon-newapp-status.png)
 
   8. browse back to the Mesos master.  You will notice the running tasks and the completed tasks.  Click on the host of the completed tasks and also look at the sandbox.
 
-  ![Image of Mesos completed tasks](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/acs-mesos/images/mesos-completed-tasks.png)
-  
+  ![Image of Mesos completed tasks](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-acs-mesos/images/mesos-completed-tasks.png)
+
   9. All nodes are running docker, so to run a docker app browse back to Marathon, and create your first docker application by specifying Docker Image `hello-world` and Network `Host`:
 
-  ![Image of setting up docker application in Marathon](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/acs-mesos/images/marathon-docker.png)
+  ![Image of setting up docker application in Marathon](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-acs-mesos/images/marathon-docker.png)
 
   10. The agents have a load balancer exposing port 80, 443, and 8080.  From https://portal.azure.com browse to the loadbalancer and grab its FQDN.  Next browse to your Marathon app, and create a new app specifying the fields below:
 
-  ![Image of setting up docker application in Marathon](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/acs-mesos/images/marathon-simpleweb.png)
+  ![Image of setting up docker application in Marathon](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-acs-mesos/images/marathon-simpleweb.png)
 
   11. Once deployed you can browse to the FQDN and observe the new content on port 80:
 
-  ![Image of setting up docker application in Marathon](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/acs-mesos/images/simpleweb.png)
+  ![Image of setting up docker application in Marathon](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-acs-mesos/images/simpleweb.png)
 
 ## Chronos Walkthrough
 
 1. On the Mesos UI, <http://localhost/mesos/>, browse to "Frameworks" and click on the Chronos URI:
 
- ![Image of Chronos UI](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/acs-mesos/images/chronos-url.png)
+ ![Image of Chronos UI](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-acs-mesos/images/chronos-url.png)
 
 2. Click Add and fill in the following details:
  1. Name - "MyFirstApp"
@@ -107,7 +107,7 @@ This walk through is based the wonderful digital ocean tutorial: https://www.dig
  3. Owner, and Owner Name - you can put random information Here
  4. Schedule - Set to P"T1M" in order to run this every minute
 
- ![Image of adding a new scheduled operation in Chronos](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/acs-mesos/images/chronos.png)
+ ![Image of adding a new scheduled operation in Chronos](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-acs-mesos/images/chronos.png)
 
 3. Click Create
 
@@ -115,7 +115,7 @@ This walk through is based the wonderful digital ocean tutorial: https://www.dig
 
 5. All nodes are running docker, so to run a docker app browse back to Chronos, and create an application to run `sudo docker run hello-world`.  Once running browse back to Mesos in a similar fashion to the above instructions to verify that it has run:
 
- ![Image of setting up docker application in Marathon](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/acs-mesos/images/chronos-docker.png)
+ ![Image of setting up docker application in Marathon](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-acs-mesos/images/chronos-docker.png)
 
 # Sample Workloads
 
