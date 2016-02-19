@@ -1,16 +1,16 @@
 # Docker Swarm Container Service Walkthrough
 
-This walkthrough assumes you have deployed an ACS cluster with a Docker Swarm orchestrator using the template from [acs-swarm](https://github.com/Azure/azure-quickstart-templates/tree/master/acs-swarm).
+This walkthrough assumes you have deployed an ACS cluster with a Docker Swarm orchestrator using the template from [101-acs-swarm](https://github.com/Azure/azure-quickstart-templates/tree/master/101-acs-swarm).
 
 Once your container service has been created you will have a resource group containing 2 parts:
 
 1. a set of 1,3, or 5 masters in a master specific availability set.  Each master's SSH can be accessed via the public dns address at ports 2200..2204
 
-2. a set of agents in a VM scale set (VMSS).  The agent VMs must be accessed through the master.  See [agent forwarding](https://github.com/Azure/azure-quickstart-templates/blob/master/acs-mesos/docs/SSHKeyManagement.md) for an example of how to do this.
+2. a set of agents in a VM scale set (VMSS).  The agent VMs must be accessed through the master.  See [agent forwarding](https://github.com/Azure/azure-quickstart-templates/blob/master/101-acs-mesos/docs/SSHKeyManagement.md) for an example of how to do this.
 
 The following image shows the architecture of a container service cluster with 3 masters, and 3 agents:
 
- ![Image of Swarm container service on azure](https://github.com/Azure/azure-quickstart-templates/blob/master/acs-swarm/images/swarm.png)
+ ![Image of Swarm container service on azure](https://github.com/Azure/azure-quickstart-templates/blob/master/101-acs-swarm/images/swarm.png)
 
  All VMs are in the same VNET where the masters are on private subnet 172.16.0.0/24 and the agents are on the private subnet, 10.0.0.0/8, and fully accessible to each other.
 
@@ -24,14 +24,14 @@ The following image shows the architecture of a container service cluster with 3
     4. then click on the "Microsoft.Template"
     5. now you can copy the output FQDNs and sample SSH commands
 
-    ![Image of docker scaling](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/acs-swarm/images/findingoutputs.png)
+    ![Image of docker scaling](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-acs-swarm/images/findingoutputs.png)
  
- 3. SSH to port 2200 of the master FQDN. See [agent forwarding](https://github.com/Azure/azure-quickstart-templates/blob/master/acs-mesos/docs/SSHKeyManagement.md) for an example of how to do this.
+ 3. SSH to port 2200 of the master FQDN. See [agent forwarding](https://github.com/Azure/azure-quickstart-templates/blob/master/101-acs-mesos/docs/SSHKeyManagement.md) for an example of how to do this.
 
  4. Set the DOCKER_HOST environment variable (e.g. ```export DOCKER_HOST=:2375``` on Linux)
 
  5. Type `docker info` to see the status of the agent nodes.
- ![Image of docker info](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/acs-swarm/images/dockerinfo.png)
+ ![Image of docker info](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-acs-swarm/images/dockerinfo.png)
 
  6. Type `docker run -it hello-world` to see the hello-world test app run on one of the agents (the '-it' switches ensure output is displayed on your client)
 
@@ -51,15 +51,15 @@ web:
 
 4. once completed, type `docker ps` to see the running image.
 
- ![Image of docker ps](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/acs-swarm/images/dockerps.png)
+ ![Image of docker ps](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-acs-swarm/images/dockerps.png)
 
 5. in your web browser hit the AGENTFQDN endpoint (**not the master FQDN**) you recorded in [step #1](#explore-swarm-with-simple-hello-world)  and you should see the following page, with a counter that increases on each refresh.
 
- ![Image of the web page](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/acs-swarm/images/swarmbrowser.png)
+ ![Image of the web page](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-acs-swarm/images/swarmbrowser.png)
 
 6. You can now scale the web application.  For example, if you have 3 agents, you can type `docker-compose scale web=**3**`, and this will scale to the rest of your agents.  Note that in this example you can only scale up to the number of agents that you have since each container requires port 80, so if you deployed a single agent, you won't be able to scale up.  The Azure load balancer will automatically pick up the new containers.
 
- ![Image of docker scaling](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/acs-swarm/images/dockercomposescale.png)
+ ![Image of docker scaling](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-acs-swarm/images/dockercomposescale.png)
 
 # Sample Workloads
 
