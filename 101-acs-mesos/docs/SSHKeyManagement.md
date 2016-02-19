@@ -48,7 +48,7 @@ The Mesos admin router requires an SSH tunnel from port 80 to port 80.
     3. then click on "Succeeded" under *last deployment*
     4. then click on the "Microsoft.Template"
     5. now you can copy the output of "sshMaster0"
-    ![Image of docker scaling](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/101-acs-swarm/images/findingoutputs.png)
+    ![Image of docker scaling](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-acs-swarm/images/findingoutputs.png)
 
 2. SSH to the machine
   1. on linux or Mac, modify the ssh command from "sshMaster0", and add `-R 80:localhost:80`, then use that command to connect

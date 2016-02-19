@@ -26,7 +26,7 @@ The following image shows the architecture of a container service cluster with 3
 
     ![Image of docker scaling](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-acs-swarm/images/findingoutputs.png)
 
- 3. SSH to port 2200 of the master FQDN. See [agent forwarding](https://github.com/Azure/azure-quickstart-templates/blob/master/101-acs-mesos/docs/SSHKeyManagement.md) for an example of how to do this.
+ 3. SSH to port 2200 of the master FQDN. See [agent forwarding](https://github.com/Azure/azure-quickstart-templates/blob/master/101-acs-mesos/docs/SSHKeyManagement.md#key-management-and-agent-forwarding-with-windows-pageant) for an example of how to do this.
 
  4. Set the DOCKER_HOST environment variable (e.g. ```export DOCKER_HOST=:2375``` on Linux)
 
