@@ -14,21 +14,21 @@ Pageant enables agent forwarding.  This means that you can SSH from any of the m
  1. Download and install Putty Pageant.
  2. Double Click on pageant.exe to run, and you will notice it appears in your tray
 
-  ![Image of Pageant in the tray](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/101-acs-mesos-full-template/images/pageant-tray.png)
+  ![Image of Pageant in the tray](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/101-acs-mesos/images/pageant-tray.png)
 
  3. Right click on Pageant in the tray and click "View Keys"
  4. Click "Add Key", and add your PPK generated in (#ssh-key-generation).
 
-  ![Image of Pageant addkey](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/101-acs-mesos-full-template/images/pageant-addkey.png)
+  ![Image of Pageant addkey](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/101-acs-mesos/images/pageant-addkey.png)
 
  5. Now try out the configuration by opening up Putty.exe
  6. Type in "azureuser@FQDN" and port 2200 where FQDN is the management name returned after deploying a cluster and port:
 
-  ![Image of Putty main](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/101-acs-mesos-full-template/images/putty-address.png)
+  ![Image of Putty main](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/101-acs-mesos/images/putty-address.png)
 
  7. Browse to Connection->SSH->Auth and click "Allow agent forwarding":
 
-  ![Image of Putty SSH](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/101-acs-mesos-full-template/images/putty-agentforwarding.png)
+  ![Image of Putty SSH](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/101-acs-mesos/images/putty-agentforwarding.png)
 
  8. Click "Open" to connect to the master.  Now ssh directly to an agent, and you will connect automatically.
 
@@ -48,9 +48,9 @@ The Mesos admin router requires an SSH tunnel from port 80 to port 80.
     3. then click on "Succeeded" under *last deployment*
     4. then click on the "Microsoft.Template"
     5. now you can copy the output of "sshMaster0"
-    ![Image of docker scaling](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/101-acs-swarm-full-template/images/findingoutputs.png)
+    ![Image of docker scaling](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/101-acs-swarm/images/findingoutputs.png)
 
 2. SSH to the machine
   1. on linux or Mac, modify the ssh command from "sshMaster0", and add `-R 80:localhost:80`, then use that command to connect
   2. on Windows, open Putty and in addition to the instructions from [agent forwarding](#key-management-and-agent-forwarding-with-windows-pageant), browse to Connection->SSH->Tunnel and add "80" to Source Port and "localhost:80" to Destination.
-  ![Image of putty port 80](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/101-acs-mesos-full-template/images/putty-port80tunnel.png)
+  ![Image of putty port 80](https://raw.githubusercontent.com/rgardler/azure-quickstart-templates/acs/101-acs-mesos/images/putty-port80tunnel.png)
