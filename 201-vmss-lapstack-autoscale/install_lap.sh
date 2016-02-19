@@ -1,7 +1,12 @@
 #!/bin/bash
 # wait for Linux Diagnostic Extension to complete
-while ( ! grep "Start mdsd" /var/log/azure/Microsoft.OSTCExtensions.LinuxDiagnostic/2.1.5/extension.log); do
-    sleep 5
+for i in {1..60}; do
+  if [ -e /var/lib/cloud/instance/boot-finished ]
+  then
+    echo "the provisioning has complete"
+    break
+  fi
+  sleep 10
 done
 
 # install Apache and PHP
