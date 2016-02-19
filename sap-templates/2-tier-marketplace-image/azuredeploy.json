@@ -2,7 +2,7 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "SID": {
+    "sapSystemId": {
       "type": "string",
       "maxLength": 3,
       "minLength": 3,
@@ -23,7 +23,7 @@
       "allowedValues": [ "Small < 2.000 SAPS", "Medium < 9.000 SAPS", "Large < 18.000 SAPS", "X-Large < 40.000 SAPS" ],
       "defaultValue": "Small < 2.000 SAPS",
       "metadata": {
-        "description": "The type of the operating system you want to deploy."
+        "description": "The size of the SAP System you want to deploy."
       }
     },
     "storageType": {
@@ -31,7 +31,7 @@
       "allowedValues": [ "Premium", "Standard" ],
       "defaultValue": "Standard",
       "metadata": {
-        "description": "The type of the operating system you want to deploy."
+        "description": "The storage type that should be used for the virtual machine."
       }
     },
     "multiNIC": {
@@ -39,7 +39,7 @@
       "allowedValues": [ "No" ],
       "defaultValue": "No",
       "metadata": {
-        "description": "The type of the operating system you want to deploy."
+        "description": "Determines if the virtual machine should have multip network interfaces."
       }
     },
     "adminUsername": {
@@ -56,7 +56,7 @@
     }
   },
   "variables": {    
-    "github": "https://raw.githubusercontent.com/MSSedusch/azure-quickstart-templates/master/sap-templates",
+    "github": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sap-templates",
     "images": {
       "Windows Server 2012 Datacenter": {
         "sku": "2012-Datacenter",
@@ -107,7 +107,6 @@
     "cseExtName": "[variables('csExtension')[variables('images')[parameters('osType')].OSType].Name]",
     "cseExtVersion": "[variables('csExtension')[variables('images')[parameters('osType')].OSType].Version]",
 
-
     "storageTypes": {
       "Premium": "Premium_LRS",
       "Standard": "Standard_LRS"
@@ -151,12 +150,13 @@
     "vmSize": "[variables('vmSizes')[parameters('sapSystemSize')][parameters('storageType')].size]",
 
     "location": "[resourceGroup().location]",
-    "sidlower": "[toLower(parameters('SID'))]",
+    "sidlower": "[toLower(parameters('sapSystemId'))]",
     "vmName": "[concat(variables('sidlower'), '-servercs')]",
     "storageAccountName": "[concat(variables('sidlower'), uniqueString(variables('sidlower'), resourceGroup().id))]",
     "vnetName": "[concat(variables('sidlower'), '-vnet')]",
     "publicIpName": "[concat(variables('sidlower'), '-publicIP')]",
     "nicName": "[concat(variables('sidlower'), '-nic')]",
+    "nsgName":  "[concat(variables('sidlower'), '-nsg-cs')]",
     "publicIPAddressType": "Dynamic",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet",
@@ -191,9 +191,36 @@
       }
     },
     {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[concat(variables('nsgName'))]",
+      "apiVersion": "2015-06-15",
+      "location": "[variables('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "RDP",
+            "properties": {
+              "description": "Allow RDP Subnet",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3389",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('vnetName')]",
       "apiVersion": "2015-06-15",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('nsgName'))]"
+      ]
       "location": "[variables('location')]",
       "properties": {
         "addressSpace": {
@@ -208,7 +235,10 @@
               "addressPrefix": "[variables('subnetPrefix')]"
             }
           }
-        ]
+        ],
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+        }
       }
     },
 
