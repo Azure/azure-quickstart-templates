@@ -108,18 +108,19 @@
   "variables": {
     "osDiskName": "[concat(parameters('sidlower'),'-os.vhd')]",
     "osDiskCaching": "ReadWrite",
-    "nicName": "[concat(parameters('sidlower'), '-nic')]",
+    "nicName": "[concat(parameters('sidlower'), '-nic-di')]",
     "publicIpName": "[concat(parameters('sidlower'), '-publicIP')]",
     "publicIPAddressType": "Dynamic",
     "internalStorageType": "Standard_LRS",
-    "storageAccountName": "[concat('ascs', parameters('sidlower'), uniqueString(parameters('sidlower'), resourceGroup().id))]",
+    "storageAccountName": "[concat('di', parameters('sidlower'), uniqueString(parameters('sidlower'), resourceGroup().id))]",
     "dbDataLUNs": "0,1,2,3,4,5,6,7,8,9,10,11,12,13",
-    "dbLogLUNs": "14,15"
+    "dbLogLUNs": "14,15",
+    "vmNameInternal": "[concat(parameters('vmName'), '-di-')]"
   },
   "resources": [
     {
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[concat(variables('nicName'), 'di-', copyindex())]",
+      "name": "[concat(variables('nicName'), '-', copyindex())]",
       "apiVersion": "2015-06-15",
       "copy": {
         "name": "nicLoop",
@@ -146,7 +147,7 @@
       "apiVersion": "2015-06-15",
       "copy": {
         "name": "nicLoop",
-        "count": "[div(parameters('vmCount'), 3)]"
+        "count": "[add(div(parameters('vmCount'), 3), 1)]"
       },
       "location": "[parameters('location')]",
       "properties": {
@@ -156,22 +157,22 @@
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[concat(parameters('vmName'), copyIndex())]",
+      "name": "[concat(variables('vmNameInternal'), add(1, copyIndex()))]",
       "copy": {
         "name": "nicLoop",
         "count": "[parameters('vmCount')]"
       },
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), 'ascs-', string(copyIndex()))]",
-        "[concat('Microsoft.Storage/storageAccounts/', concat(variables('storageAccountName'), mod(div(parameters('vmCount'), 3), add(1, copyindex()))))]"
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), '-', string(copyIndex()))]",
+        "[concat('Microsoft.Storage/storageAccounts/', concat(variables('storageAccountName'), div(copyindex(), 3)))]"
       ],
       "properties": {
         "hardwareProfile": {
           "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
-          "computername": "[concat(parameters('vmName'), copyIndex())]",
+          "computername": "[concat(variables('vmNameInternal'), add(1, copyIndex()))]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]"
         },
@@ -185,7 +186,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('https://', concat(variables('storageAccountName'), mod(div(parameters('vmCount'), 3), add(1, copyindex()))),'.blob.core.windows.net/', concat(parameters('vmName'), copyIndex()), '/', variables('osDiskName'))]"
+              "uri": "[concat('https://', concat(variables('storageAccountName'), div(copyindex(), 3)),'.blob.core.windows.net/', concat(variables('vmNameInternal'), add(1, copyIndex())), '/', variables('osDiskName'))]"
             },
             "caching": "[variables('osDiskCaching')]",
             "createOption": "FromImage"
@@ -195,7 +196,7 @@
               "name": "dbdisk1",
               "lun": 0,
               "vhd": {
-                "uri": "[concat('https://', concat(variables('storageAccountName'), mod(div(parameters('vmCount'), 3), add(1, copyindex()))),'.blob.core.windows.net/', concat(parameters('vmName'), copyIndex()), '/', parameters('sidlower'),'-dbdisk1.vhd')]"
+                "uri": "[concat('https://', concat(variables('storageAccountName'), div(copyindex(), 3)),'.blob.core.windows.net/', concat(variables('vmNameInternal'), add(1, copyIndex())), '/', parameters('sidlower'),'-dbdisk1.vhd')]"
               },
               "createOption": "empty",
               "caching": "None",
@@ -205,7 +206,7 @@
               "name": "dbdisk2",
               "lun": 1,
               "vhd": {
-                "uri": "[concat('https://', concat(variables('storageAccountName'), mod(div(parameters('vmCount'), 3), add(1, copyindex()))),'.blob.core.windows.net/', concat(parameters('vmName'), copyIndex()), '/', parameters('sidlower'),'-dbdisk2.vhd')]"
+                "uri": "[concat('https://', concat(variables('storageAccountName'), div(copyindex(), 3)),'.blob.core.windows.net/', concat(variables('vmNameInternal'), add(1, copyIndex())), '/', parameters('sidlower'),'-dbdisk2.vhd')]"
               },
               "createOption": "empty",
               "caching": "None",
@@ -215,7 +216,7 @@
               "name": "dbdisk3",
               "lun": 2,
               "vhd": {
-                "uri": "[concat('https://', concat(variables('storageAccountName'), mod(div(parameters('vmCount'), 3), add(1, copyindex()))),'.blob.core.windows.net/', concat(parameters('vmName'), copyIndex()), '/', parameters('sidlower'),'-dbdisk3.vhd')]"
+                "uri": "[concat('https://', concat(variables('storageAccountName'), div(copyindex(), 3)),'.blob.core.windows.net/', concat(variables('vmNameInternal'), add(1, copyIndex())), '/', parameters('sidlower'),'-dbdisk3.vhd')]"
               },
               "createOption": "empty",
               "caching": "None",
@@ -225,7 +226,7 @@
               "name": "dbdisk4",
               "lun": 3,
               "vhd": {
-                "uri": "[concat('https://', concat(variables('storageAccountName'), mod(div(parameters('vmCount'), 3), add(1, copyindex()))),'.blob.core.windows.net/', concat(parameters('vmName'), copyIndex()), '/', parameters('sidlower'),'-dbdisk4.vhd')]"
+                "uri": "[concat('https://', concat(variables('storageAccountName'), div(copyindex(), 3)),'.blob.core.windows.net/', concat(variables('vmNameInternal'), add(1, copyIndex())), '/', parameters('sidlower'),'-dbdisk4.vhd')]"
               },
               "createOption": "empty",
               "caching": "None",
@@ -235,7 +236,7 @@
               "name": "dbdisk5",
               "lun": 4,
               "vhd": {
-                "uri": "[concat('https://', concat(variables('storageAccountName'), mod(div(parameters('vmCount'), 3), add(1, copyindex()))),'.blob.core.windows.net/', concat(parameters('vmName'), copyIndex()), '/', parameters('sidlower'),'-dbdisk5.vhd')]"
+                "uri": "[concat('https://', concat(variables('storageAccountName'), div(copyindex(), 3)),'.blob.core.windows.net/', concat(variables('vmNameInternal'), add(1, copyIndex())), '/', parameters('sidlower'),'-dbdisk5.vhd')]"
               },
               "createOption": "empty",
               "caching": "None",
@@ -245,7 +246,7 @@
               "name": "dbdisk6",
               "lun": 5,
               "vhd": {
-                "uri": "[concat('https://', concat(variables('storageAccountName'), mod(div(parameters('vmCount'), 3), add(1, copyindex()))),'.blob.core.windows.net/', concat(parameters('vmName'), copyIndex()), '/', parameters('sidlower'),'-dbdisk6.vhd')]"
+                "uri": "[concat('https://', concat(variables('storageAccountName'), div(copyindex(), 3)),'.blob.core.windows.net/', concat(variables('vmNameInternal'), add(1, copyIndex())), '/', parameters('sidlower'),'-dbdisk6.vhd')]"
               },
               "createOption": "empty",
               "caching": "None",
@@ -255,7 +256,7 @@
               "name": "dbdisk7",
               "lun": 6,
               "vhd": {
-                "uri": "[concat('https://', concat(variables('storageAccountName'), mod(div(parameters('vmCount'), 3), add(1, copyindex()))),'.blob.core.windows.net/', concat(parameters('vmName'), copyIndex()), '/', parameters('sidlower'),'-dbdisk7.vhd')]"
+                "uri": "[concat('https://', concat(variables('storageAccountName'), div(copyindex(), 3)),'.blob.core.windows.net/', concat(variables('vmNameInternal'), add(1, copyIndex())), '/', parameters('sidlower'),'-dbdisk7.vhd')]"
               },
               "createOption": "empty",
               "caching": "None",
@@ -265,7 +266,7 @@
               "name": "dbdisk8",
               "lun": 7,
               "vhd": {
-                "uri": "[concat('https://', concat(variables('storageAccountName'), mod(div(parameters('vmCount'), 3), add(1, copyindex()))),'.blob.core.windows.net/', concat(parameters('vmName'), copyIndex()), '/', parameters('sidlower'),'-dbdisk8.vhd')]"
+                "uri": "[concat('https://', concat(variables('storageAccountName'), div(copyindex(), 3)),'.blob.core.windows.net/', concat(variables('vmNameInternal'), add(1, copyIndex())), '/', parameters('sidlower'),'-dbdisk8.vhd')]"
               },
               "createOption": "empty",
               "caching": "None",
@@ -275,7 +276,7 @@
               "name": "dbdisk9",
               "lun": 8,
               "vhd": {
-                "uri": "[concat('https://', concat(variables('storageAccountName'), mod(div(parameters('vmCount'), 3), add(1, copyindex()))),'.blob.core.windows.net/', concat(parameters('vmName'), copyIndex()), '/', parameters('sidlower'),'-dbdisk9.vhd')]"
+                "uri": "[concat('https://', concat(variables('storageAccountName'), div(copyindex(), 3)),'.blob.core.windows.net/', concat(variables('vmNameInternal'), add(1, copyIndex())), '/', parameters('sidlower'),'-dbdisk9.vhd')]"
               },
               "createOption": "empty",
               "caching": "None",
@@ -285,7 +286,7 @@
               "name": "dbdisk10",
               "lun": 9,
               "vhd": {
-                "uri": "[concat('https://', concat(variables('storageAccountName'), mod(div(parameters('vmCount'), 3), add(1, copyindex()))),'.blob.core.windows.net/', concat(parameters('vmName'), copyIndex()), '/', parameters('sidlower'),'-dbdisk10.vhd')]"
+                "uri": "[concat('https://', concat(variables('storageAccountName'), div(copyindex(), 3)),'.blob.core.windows.net/', concat(variables('vmNameInternal'), add(1, copyIndex())), '/', parameters('sidlower'),'-dbdisk10.vhd')]"
               },
               "createOption": "empty",
               "caching": "None",
@@ -295,7 +296,7 @@
               "name": "dbdisk11",
               "lun": 10,
               "vhd": {
-                "uri": "[concat('https://', concat(variables('storageAccountName'), mod(div(parameters('vmCount'), 3), add(1, copyindex()))),'.blob.core.windows.net/', concat(parameters('vmName'), copyIndex()), '/', parameters('sidlower'),'-dbdisk11.vhd')]"
+                "uri": "[concat('https://', concat(variables('storageAccountName'), div(copyindex(), 3)),'.blob.core.windows.net/', concat(variables('vmNameInternal'), add(1, copyIndex())), '/', parameters('sidlower'),'-dbdisk11.vhd')]"
               },
               "createOption": "empty",
               "caching": "None",
@@ -305,7 +306,7 @@
               "name": "dbdisk12",
               "lun": 11,
               "vhd": {
-                "uri": "[concat('https://', concat(variables('storageAccountName'), mod(div(parameters('vmCount'), 3), add(1, copyindex()))),'.blob.core.windows.net/', concat(parameters('vmName'), copyIndex()), '/', parameters('sidlower'),'-dbdisk12.vhd')]"
+                "uri": "[concat('https://', concat(variables('storageAccountName'), div(copyindex(), 3)),'.blob.core.windows.net/', concat(variables('vmNameInternal'), add(1, copyIndex())), '/', parameters('sidlower'),'-dbdisk12.vhd')]"
               },
               "createOption": "empty",
               "caching": "None",
@@ -315,7 +316,7 @@
               "name": "dbdisk13",
               "lun": 12,
               "vhd": {
-                "uri": "[concat('https://', concat(variables('storageAccountName'), mod(div(parameters('vmCount'), 3), add(1, copyindex()))),'.blob.core.windows.net/', concat(parameters('vmName'), copyIndex()), '/', parameters('sidlower'),'-dbdisk13.vhd')]"
+                "uri": "[concat('https://', concat(variables('storageAccountName'), div(copyindex(), 3)),'.blob.core.windows.net/', concat(variables('vmNameInternal'), add(1, copyIndex())), '/', parameters('sidlower'),'-dbdisk13.vhd')]"
               },
               "createOption": "empty",
               "caching": "None",
@@ -325,7 +326,7 @@
               "name": "dbdisk14",
               "lun": 13,
               "vhd": {
-                "uri": "[concat('https://', concat(variables('storageAccountName'), mod(div(parameters('vmCount'), 3), add(1, copyindex()))),'.blob.core.windows.net/', concat(parameters('vmName'), copyIndex()), '/', parameters('sidlower'),'-dbdisk14.vhd')]"
+                "uri": "[concat('https://', concat(variables('storageAccountName'), div(copyindex(), 3)),'.blob.core.windows.net/', concat(variables('vmNameInternal'), add(1, copyIndex())), '/', parameters('sidlower'),'-dbdisk14.vhd')]"
               },
               "createOption": "empty",
               "caching": "None",
@@ -335,7 +336,7 @@
               "name": "dbdisk15",
               "lun": 14,
               "vhd": {
-                "uri": "[concat('https://', concat(variables('storageAccountName'), mod(div(parameters('vmCount'), 3), add(1, copyindex()))),'.blob.core.windows.net/', concat(parameters('vmName'), copyIndex()), '/', parameters('sidlower'),'-dbdisk15.vhd')]"
+                "uri": "[concat('https://', concat(variables('storageAccountName'), div(copyindex(), 3)),'.blob.core.windows.net/', concat(variables('vmNameInternal'), add(1, copyIndex())), '/', parameters('sidlower'),'-dbdisk15.vhd')]"
               },
               "createOption": "empty",
               "caching": "None",
@@ -345,7 +346,7 @@
               "name": "dbdisk16",
               "lun": 15,
               "vhd": {
-                "uri": "[concat('https://', concat(variables('storageAccountName'), mod(div(parameters('vmCount'), 3), add(1, copyindex()))),'.blob.core.windows.net/', concat(parameters('vmName'), copyIndex()), '/', parameters('sidlower'),'-dbdisk16.vhd')]"
+                "uri": "[concat('https://', concat(variables('storageAccountName'), div(copyindex(), 3)),'.blob.core.windows.net/', concat(variables('vmNameInternal'), add(1, copyIndex())), '/', parameters('sidlower'),'-dbdisk16.vhd')]"
               },
               "createOption": "empty",
               "caching": "None",
@@ -356,7 +357,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'), 'ascs-', string(copyIndex())))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'), '-', string(copyIndex())))]"
             }
           ]
         }
@@ -364,14 +365,14 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(concat(parameters('vmName'), copyIndex()),'/', parameters('cseExtName'))]",
+      "name": "[concat(concat(variables('vmNameInternal'), add(1, copyIndex())),'/', parameters('cseExtName'))]",
       "apiVersion": "2015-06-15",
       "copy": {
         "name": "nicLoop",
         "count": "[parameters('vmCount')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', concat(parameters('vmName'), copyIndex()))]"
+        "[concat('Microsoft.Compute/virtualMachines/', concat(variables('vmNameInternal'), add(1, copyIndex())))]"
       ],
       "location": "[parameters('location')]",
       "properties": {
