@@ -60,12 +60,11 @@
     }
   },
   "variables": {
-    "hostingPlanName": "[parameters('appName')]",
+    "hostingPlanName": "[concat(parameters('appName'), '-plan')]",
     "databaseServerName": "[concat(parameters('appName'), '-sqlserver')]",
     "databaseName": "[concat(parameters('appName'), '-sqldb')]",
     "notificationHubNamespace": "[concat(parameters('appName'), '-namespace')]",
-    "notificationHubName": "[concat(parameters('appName'), '-hub')]",
-    "notificationHubLocation": "[parameters('location')]"
+    "notificationHubName": "[concat(parameters('appName'), '-hub')]"
   },
   "resources": [
     {
@@ -83,6 +82,66 @@
       }
     },
     {
+      "apiVersion": "2015-08-01",
+      "type": "Microsoft.Web/sites",
+      "name": "[parameters('appName')]",
+      "location": "[parameters('location')]",
+      "kind": "mobileapp",
+      "properties": {
+        "name": "[parameters('appName')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]"
+      },
+      "dependsOn": [
+        "[variables('hostingPlanName')]"
+      ],
+      "resources": [
+        {
+          "apiVersion": "2015-08-01",
+          "name": "appsettings",
+          "type": "config",
+          "dependsOn": [
+            "[parameters('appName')]"
+          ],
+          "properties": {
+            "MS_MobileServiceName": "[parameters('appName')]",
+            "MS_NotificationHubName": "[variables('notificationHubName')]"
+          }
+        },
+        {
+          "apiVersion": "2015-08-01",
+          "name": "connectionstrings",
+          "type": "config",
+          "dependsOn": [
+            "[parameters('appName')]",
+            "[variables('notificationHubName')]",
+            "[variables('databaseName')]"
+          ],
+          "properties": {
+            "MS_TableConnectionString": {
+              "value": "[concat('Data Source=tcp:', reference(concat('Microsoft.Sql/servers/', variables('databaseServerName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', variables('databaseName'), ';User Id=', parameters('sqlServerAdminLogin'), '@', variables('databaseServerName'), ';Password=', parameters('sqlServerAdminPassword'), ';')]",
+              "type": "SQLServer"
+            },
+            "MS_NotificationHubConnectionString": {
+              "value": "[listkeys(resourceId('Microsoft.NotificationHubs/namespaces/notificationHubs/authorizationRules', variables('notificationHubNamespace'), variables('notificationHubName'), 'DefaultFullSharedAccessSignature'), '2014-09-01').primaryConnectionString]",
+              "type": "Custom"
+            }
+          }
+        },
+        {
+          "apiVersion": "2015-01-01",
+          "type": "providers/links",
+          "name": "Microsoft.Resources/SiteToHub",
+          "dependsOn": [
+            "[parameters('appName')]",
+            "[variables('notificationHubName')]"
+          ],
+          "properties": {
+            "targetId": "[resourceId('Microsoft.NotificationHubs/namespaces/NotificationHubs', variables('notificationHubNamespace'), variables('notificationHubName'))]"
+          }
+        }
+      ]
+    },
+    {
       "name": "[variables('databaseServerName')]",
       "type": "Microsoft.Sql/servers",
       "location": "[parameters('location')]",
@@ -97,7 +156,7 @@
           "type": "databases",
           "location": "[parameters('location')]",
           "apiVersion": "2014-04-01-preview",
-          "dependsOn": [ "[concat('Microsoft.Sql/servers/', variables('databaseServerName'))]" ],
+          "dependsOn": [ "[variables('databaseServerName')]" ],
           "properties": {
             "edition": "[parameters('sqlDatabaseEdition')]",
             "collation": "[parameters('sqlDatabaseCollation')]",
@@ -107,7 +166,7 @@
         {
           "type": "firewallrules",
           "apiVersion": "2014-04-01-preview",
-          "dependsOn": [ "[concat('Microsoft.Sql/servers/', variables('databaseServerName'))]" ],
+          "dependsOn": [ "[variables('databaseServerName')]" ],
           "location": "[parameters('location')]",
           "name": "open",
           "properties": {
@@ -121,87 +180,23 @@
       "apiVersion": "2014-09-01",
       "type": "Microsoft.NotificationHubs/namespaces",
       "name": "[variables('notificationHubNamespace')]",
-      "location": "[variables('notificationHubLocation')]",
+      "location": "[parameters('location')]",
       "properties": {
-        "region": "[variables('notificationHubLocation')]",
+        "region": "[parameters('location')]",
         "namespaceType": "NotificationHub"
-      },
-      "resources": [
-        {
-          "apiVersion": "2014-09-01",
-          "name": "[variables('notificationHubName')]",
-          "type": "notificationHubs",
-          "location": "[variables('notificationHubLocation')]",
-          "dependsOn": [
-            "[resourceId('Microsoft.NotificationHubs/namespaces', variables('notificationHubNamespace'))]"
-          ],
-          "properties": {
-            "name": "[variables('notificationHubName')]"
-          }
-        }
-      ]
+      }
     },
     {
-      "apiVersion": "2015-08-01",
-      "type": "Microsoft.Web/sites",
-      "name": "[parameters('appName')]",
+      "apiVersion": "2014-09-01",
+      "name": "[concat(variables('notificationHubNamespace'), '/', parameters('appName'), '-hub')]",
+      "type": "Microsoft.NotificationHubs/namespaces/notificationHubs",
       "location": "[parameters('location')]",
-      "kind": "mobileapp",
-      "properties": {
-        "name": "[parameters('appName')]",
-        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]"
-      },
       "dependsOn": [
-        "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]"
+        "[variables('notificationHubNamespace')]"
       ],
-      "resources": [
-        {
-          "apiVersion": "2015-08-01",
-          "name": "appsettings",
-          "type": "config",
-          "dependsOn": [
-            "[resourceId('Microsoft.Web/sites', parameters('appName'))]",
-            "[resourceId('Microsoft.NotificationHubs/namespaces/NotificationHubs', variables('notificationHubNamespace'), variables('notificationHubName'))]"
-          ],
-          "properties": {
-            "MS_MobileServiceName": "[parameters('appName')]",
-            "MS_NotificationHubName": "[variables('notificationHubName')]"
-          }
-        },
-        {
-          "apiVersion": "2015-08-01",
-          "name": "connectionstrings",
-          "type": "config",
-          "dependsOn": [
-            "[resourceId('Microsoft.Web/sites', parameters('appName'))]",
-            "[resourceId('Microsoft.Web/sites/config', parameters('appName'), 'appsettings')]",
-            "[resourceId('Microsoft.NotificationHubs/namespaces/NotificationHubs', variables('notificationHubNamespace'), variables('notificationHubName'))]",
-            "[concat('Microsoft.Sql/servers/', variables('databaseServerName'), '/databases/', variables('databaseName'))]"
-          ],
-          "properties": {
-            "MS_TableConnectionString": {
-              "value": "[concat('Data Source=tcp:', reference(concat('Microsoft.Sql/servers/', variables('databaseServerName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', variables('databaseName'), ';User Id=', parameters('sqlServerAdminLogin'), '@', variables('databaseServerName'), ';Password=', parameters('sqlServerAdminPassword'), ';')]",
-              "type": "SQLAzure"
-            },
-            "MS_NotificationHubConnectionString": {
-              "value": "[listkeys(resourceId('Microsoft.NotificationHubs/namespaces/notificationHubs/authorizationRules', variables('notificationHubNamespace'), variables('notificationHubName'), 'DefaultFullSharedAccessSignature'), '2014-09-01').primaryConnectionString]",
-              "type": "Custom"
-            }
-          }
-        },
-        {
-          "apiVersion": "2015-01-01",
-          "type": "providers/links",
-          "name": "Microsoft.Resources/SiteToHub",
-          "dependsOn": [
-            "[resourceId('Microsoft.Web/sites', parameters('appName'))]",
-            "[resourceId('Microsoft.NotificationHubs/namespaces/NotificationHubs', variables('notificationHubNamespace'), variables('notificationHubName'))]"
-          ],
-          "properties": {
-            "targetId": "[resourceId('Microsoft.NotificationHubs/namespaces/NotificationHubs', variables('notificationHubNamespace'), variables('notificationHubName'))]"
-          }
-        }
-      ]
+      "properties": {
+
+      }
     }
   ]
 }
