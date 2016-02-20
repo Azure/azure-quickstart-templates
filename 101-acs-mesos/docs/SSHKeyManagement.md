@@ -11,7 +11,7 @@ When creating container services, you will need an SSH RSA key for access.  Use 
 # Key Management and Agent Forwarding with Windows Pageant
 
 Pageant enables agent forwarding.  This means that you can SSH from any of the master nodes directly to any of the agent nodes.  Here are the steps to enable this:
- 1. Download and install Putty Pageant.
+ 1. Download and install [Putty Pageant](http://www.chiark.greenend.org.uk/~sgtatham/putty/download.html).
  2. Double Click on pageant.exe to run, and you will notice it appears in your tray
 
   ![Image of Pageant in the tray](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-acs-mesos/images/pageant-tray.png)
