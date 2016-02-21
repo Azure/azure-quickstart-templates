@@ -51,6 +51,6 @@ The Mesos admin router requires an SSH tunnel from port 80 to port 80.
     ![Image of docker scaling](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-acs-swarm/images/findingoutputs.png)
 
 2. SSH to the machine
-  1. on linux or Mac, modify the ssh command from "sshMaster0", and add `-R 80:localhost:80`, then use that command to connect
+  1. on linux or Mac, modify the ssh command from "sshMaster0", and add `-L 80:localhost:80`, then use that command to connect
   2. on Windows, open Putty and in addition to the instructions from [agent forwarding](#key-management-and-agent-forwarding-with-windows-pageant), browse to Connection->SSH->Tunnel and add "80" to Source Port and "localhost:80" to Destination.
   ![Image of putty port 80](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-acs-mesos/images/putty-port80tunnel.png)
