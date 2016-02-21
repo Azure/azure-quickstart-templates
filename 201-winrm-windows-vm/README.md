@@ -1,4 +1,4 @@
-# Template moved tp
+# Template moved to:
 
 https://github.com/Azure/azure-quickstart-templates/tree/master/201-vm-winrm-keyvault-windows
 

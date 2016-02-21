@@ -1,6 +1,6 @@
 {
-  "$schema": "http://schema.management.azure.com/schemas/2015-01-01-preview/deploymentTemplate.json",
-  "contentVersion": "1.0.0.0",
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "contentVersion": "1.0.0.1",
   "parameters": {
     "adminUserName": {
       "type": "string",
@@ -48,12 +48,15 @@
         "eastus",
         "northeurope", 
         "westeurope",
+        "eastasia",
         "southeastasia",
-        "centralus", 
+        "southcentralus",
+        "centralus",
         "eastus2",
-        "japaneast", 
+        "japaneast",
         "japanwest",
-        "australiaeast"
+        "australiaeast",
+        "australiasoutheast"
       ],
       "metadata": {
         "description": "Location where resources will be provisioned (must support premium storage)"
@@ -71,6 +74,24 @@
       "defaultValue": "clouderavnet",
       "metadata": {
         "description": "The name of the virtual network provisioned for the deployment"
+      }
+    },
+    "vnetNewOrExisting" : {
+      "type" : "string",
+      "defaultValue": "new",
+      "allowedValues": [
+        "new",
+        "existing"
+      ],
+      "metadata": {
+        "description": "Indicator for new or exiting Virtual Network"
+      }
+    },
+    "virtualNetworkRGName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Resource Group Name for Vnet. For new VNet, use the same resource group for the cluster. O stherwise, type in existing resource group name"
       }
     },
     "subnetName": {
@@ -222,11 +243,15 @@
     }
   },
   "variables": {
+    "templateAPIVersion":"2015-11-01",
+    "resourceAPIVersion":"2015-06-15",
     "installCDH":"True",
     "addressPrefix":"[parameters('addressPrefix')]",
     "subnetPrefix":"[parameters('subnetPrefix')]",
     "nodeAddressPrefix":"[parameters('nodeAddressPrefix')]",
     "scriptsUri": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/cloudera-on-centos",
+    "share-resourcesUri": "[concat(variables('scriptsUri'), '/shared-resources-', parameters('vnetNewOrExisting'), '-vnet.json')]",
+    "data-nodeUri":"[concat(variables('scriptsUri'), '/data-node-', toLower(subString(parameters('vmSize'), 9, 4)), '.json')]",
     "storageAccount": {
       "prefix": "[parameters('storageAccountPrefix')]",
       "type": "[parameters('storageAccountType')]"
@@ -257,6 +282,8 @@
       "masterNodeAddressStart": "[parameters('masterNodeAddressStart')]",
       "dataNodeAddressStart": "[parameters('dataNodeAddressStart')]",
       "virtualNetworkName": "[parameters('virtualNetworkName')]",
+      "virtualNetworkRGName":"[parameters('virtualNetworkRGName')]",
+      "vnetNewOrExisting": "[parameters('vnetNewOrExisting')]",
       "virtualNetworkSubnetName": "[parameters('subnetName')]"
     }
   },
@@ -264,14 +291,17 @@
     {
       "name": "shared-resources",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "[variables('templateAPIVersion')]",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('scriptsUri'), '/shared-resources.json')]",
-          "contentVersion": "1.0.0.0"
+          "uri": "[variables('share-resourcesUri')]",
+          "contentVersion": "1.0.0.1"
         },
         "parameters": {
+          "resourceAPIVersion":{
+            "value":"[variables('resourceAPIVersion')]"
+          },
           "location": {
             "value": "[parameters('location')]"
           },
@@ -290,7 +320,7 @@
     {
       "name": "master-node",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "[variables('templateAPIVersion')]",
       "dependsOn": [
         "Microsoft.Resources/deployments/shared-resources"
       ],
@@ -298,9 +328,15 @@
         "mode": "Incremental",
         "templateLink": {
           "uri": "[concat(variables('scriptsUri'), '/master-node.json')]",
-          "contentVersion": "1.0.0.0"
+          "contentVersion": "1.0.0.1"
         },
         "parameters": {
+          "vnetID":{
+            "value":"[reference('Microsoft.Resources/deployments/shared-resources', '2015-01-01').outputs.vnetIDRef.value]"
+          },
+          "resourceAPIVersion":{
+            "value":"[variables('resourceAPIVersion')]"
+          },
           "dnsNamePrefix": {
             "value": "[parameters('dnsNamePrefix')]"
           },
@@ -331,17 +367,23 @@
     {
       "name": "data-node",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "[variables('templateAPIVersion')]",
       "dependsOn": [
         "Microsoft.Resources/deployments/shared-resources"
       ],
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('scriptsUri'), '/data-node.json')]",
-          "contentVersion": "1.0.0.0"
+          "uri": "[variables('data-nodeUri')]",
+          "contentVersion": "1.0.0.1"
         },
         "parameters": {
+          "vnetID":{
+            "value":"[reference('Microsoft.Resources/deployments/shared-resources', '2015-01-01').outputs.vnetIDRef.value]"
+          },
+          "resourceAPIVersion":{
+            "value":"[variables('resourceAPIVersion')]"
+          },
           "dnsNamePrefix": {
             "value": "[parameters('dnsNamePrefix')]"
           },
@@ -372,7 +414,7 @@
     {
       "name": "setup-cloudera",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "[variables('templateAPIVersion')]",
       "dependsOn": [
         "Microsoft.Resources/deployments/data-node",
         "Microsoft.Resources/deployments/master-node"
@@ -381,9 +423,12 @@
         "mode": "Incremental",
         "templateLink": {
           "uri": "[concat(variables('scriptsUri'), '/setup-cloudera.json')]",
-          "contentVersion": "1.0.0.0"
+          "contentVersion": "1.0.0.1"
         },
         "parameters": {
+          "resourceAPIVersion":{
+            "value":"[variables('resourceAPIVersion')]"
+          },
           "dnsNamePrefix": {
             "value": "[parameters('dnsNamePrefix')]"
           },

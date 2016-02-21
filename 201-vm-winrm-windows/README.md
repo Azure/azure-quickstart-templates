@@ -1,10 +1,11 @@
-# Deploy a Windows VM and Configures a WinRM Https listener. It creates a self signed certificate, so no extra certificate is required.
+# Deploys a Windows VM and Configures a WinRM Https listener. It creates a self signed certificate, so no extra certificate is required.
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vm-winrm-windows%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
-
-
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vm-winrm-windows%2Fazuredeploy.json" target="_blank">
+    <img src="http://armviz.io/visualizebutton.png"/>
+</a>
 
 Description of Template
 =======================
