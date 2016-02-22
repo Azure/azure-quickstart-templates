@@ -39,12 +39,12 @@ do
 	num=${#scsiOutputA[@]}
 	if [ `expr $num % 8` -eq 0 ]
 	then
-		for ((i=0; i<=$num; i=i+8))
+		for ((j=0; j<=$num; j=j+8))
 		do
-			value=${scsiOutputA[$i]}		
+			value=${scsiOutputA[$j]}		
 			if [[ $value =~  \[5:0:0:$lun\] ]]; 
 			then
-				devicePath=${scsiOutputA[$i+6]}
+				devicePath=${scsiOutputA[$j+6]}
 				break			
 			fi
 		done
@@ -83,7 +83,7 @@ fi
 logNumRaidDevices=0
 logRaidDevices=""
 lognum=${#loglunsA[@]}
-if [[ $lognum -gt 1]]
+if [[ $lognum -gt 1 ]]
 then
 	for ((i=0; i<lognum; i++))
 	do
@@ -94,12 +94,12 @@ then
 		num=${#scsiOutputA[@]}
 		if [ `expr $num % 8` -eq 0 ]
 		then
-			for ((i=0; i<=$num; i=i+8))
+			for ((j=0; j<=$num; j=j+8))
 			do
-				value=${scsiOutputA[$i]}		
+				value=${scsiOutputA[$j]}		
 				if [[ $value =~  \[5:0:0:$lun\] ]]; 
 				then
-					devicePath=${scsiOutputA[$i+6]}
+					devicePath=${scsiOutputA[$j+6]}
 					break
 				fi
 			done
