@@ -30,6 +30,7 @@ dbRaidDevices=""
 dbnum=${#dblunsA[@]}
 for ((i=0; i<dbnum; i++))
 do
+	echo "trying to find device path" >> /var/log/sapconfigcreate
 	devicePath=""
 	lun=${dblunsA[$i]}
 	scsiOutput=$(lsscsi -i 5)
@@ -44,6 +45,8 @@ do
 			then
 				devicePath=${scsiOutputA[$i+6]}
 				break
+			else
+				echo "no device path for LUN $lun" >> /var/log/sapconfigcreate
 			fi
 		done
 	fi
@@ -102,16 +105,16 @@ do
 	if [ -n "$devicePath" ];
 	then
 		echo " Device Path is $devicePath" >> /var/log/sapconfigcreate
-		logNumRaidDevices=$(expr $dbNumRaidDevices + 1);
-		logRaidDevices="$dbRaidDevices $devicePath""1 "
+		logNumRaidDevices=$(expr $logNumRaidDevices + 1);
+		logRaidDevices="$logRaidDevices $devicePath""1 "
 		# http://superuser.com/questions/332252/creating-and-formating-a-partition-using-a-bash-script
 		$(echo -e "n\np\n1\n\n\nw" | fdisk $devicePath)
 		echo "changing partition type" >> /var/log/sapconfigcreate
 		$(echo -e "t\nfd\nw" | fdisk $devicePath)		
 	fi
 done
-echo "num: $logNumRaidDevices paths: '$logaidDevices'" >> /var/log/sapconfigcreate
-$(mdadm --create /dev/md128 --level 0 --raid-devices $dbNumRaidDevices $dbRaidDevices)
+echo "num: $logNumRaidDevices paths: '$logRaidDevices'" >> /var/log/sapconfigcreate
+$(mdadm --create /dev/md128 --level 0 --raid-devices $logNumRaidDevices $logRaidDevices)
 $(mkfs -t xfs /dev/md128)
 #Test if SLES 11
 #$(chkconfig --add boot.md)
