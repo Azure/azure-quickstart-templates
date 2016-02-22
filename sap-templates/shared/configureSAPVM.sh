@@ -28,10 +28,10 @@ loglunsA=(${logluns//,/ })
 dbNumRaidDevices=0
 dbRaidDevices=""
 dbnum=${#dblunsA[@]}
-for ((dblun=0; dblun<dbnum; dblun++))
+for ((i=0; i<dbnum; i++))
 do
 	devicePath=""
-
+	lun=${dblunsA[$i]}
 	scsiOutput=$(lsscsi -i 5)
 	scsiOutputA=($scsiOutput)
 	num=${#scsiOutputA[@]}
@@ -40,7 +40,7 @@ do
 		for ((i=0; i<=$num; i=i+8))
 		do
 			value=${scsiOutputA[$i]}		
-			if [[ $value =~  \[5:0:0:$dblun\] ]]; 
+			if [[ $value =~  \[5:0:0:$lun\] ]]; 
 			then
 				devicePath=${scsiOutputA[$i+6]}
 				break
@@ -66,8 +66,8 @@ $(mkfs -t xfs /dev/md127)
 #$(chkconfig --add boot.md)
 #$(echo 'DEVICE /dev/sd*[0-9]' >> /etc/mdadm.conf)
 $(mkdir /dbdata)
-blkid=$(sudo /sbin/blkid /dev/md127)
-if [[ $blkid =~  UUID=\"(.*?)\" ]]
+blkid=$(/sbin/blkid /dev/md127)
+if [[ $blkid =~  UUID=\"(.{36})\" ]]
 then
 	echo "Adding fstab entry" >> /var/log/sapconfigcreate
 	uuid=${BASH_REMATCH[1]};
@@ -76,15 +76,13 @@ then
 	#echo "UUID=$uuid  /dbdata  xfs  defaults  0  2" >> /etc/fstab
 fi
 
-
-
 logNumRaidDevices=0
 logRaidDevices=""
 lognum=${#loglunsA[@]}
-for ((loglun=0; loglun<lognum; loglun++))
+for ((i=0; i<lognum; i++))
 do
 	devicePath=""
-
+	lun=${loglunsA[$i]}
 	scsiOutput=$(lsscsi -i 5)
 	scsiOutputA=($scsiOutput)
 	num=${#scsiOutputA[@]}
@@ -93,7 +91,7 @@ do
 		for ((i=0; i<=$num; i=i+8))
 		do
 			value=${scsiOutputA[$i]}		
-			if [[ $value =~  \[5:0:0:$loglun\] ]]; 
+			if [[ $value =~  \[5:0:0:$lun\] ]]; 
 			then
 				devicePath=${scsiOutputA[$i+6]}
 				break
@@ -120,7 +118,7 @@ $(mkfs -t xfs /dev/md128)
 #$(echo 'DEVICE /dev/sd*[0-9]' >> /etc/mdadm.conf)
 $(mkdir /dblog)
 blkid=$(sudo /sbin/blkid /dev/md128)
-if [[ $blkid =~  UUID=\"(.*?)\" ]]
+if [[ $blkid =~  UUID=\"(.{36})\" ]]
 then
 	echo "Adding fstab entry" >> /var/log/sapconfigcreate
 	uuid=${BASH_REMATCH[1]};
