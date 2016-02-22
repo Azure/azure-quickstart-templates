@@ -1,4 +1,100 @@
 #!/bin/bash
+# create-mdadm <lun array> <mdadm path e.g. /dev/md127> <mount path e.g. /dbdata>
+function get-device-path()
+{
+	local getdevicepathresult=""
+	local lun=$1
+	local scsiOutput=$(lsscsi -i 5)
+	local scsiOutputA=($scsiOutput)
+	local numLines=${#scsiOutputA[@]}
+	if [ `expr $numLines % 8` -eq 0 ]
+	then
+		for ((j=0; j<=$numLines; j=j+8))
+		do
+			local value=${scsiOutputA[$j]}		
+			if [[ $value =~  \[5:0:0:$lun\] ]]; 
+			then
+				local getdevicepathresult=${scsiOutputA[$j+6]}
+				break			
+			fi
+		done
+	fi
+	echo "$getdevicepathresult"
+}
+
+function create-mdadm()
+{
+	lunsA=$1
+	mdadmPath=$2
+	mountPath=$3
+	
+	arraynum=${#lunsA[@]}
+	if [[ $arraynum -gt 1 ]]
+	then
+		numRaidDevices=0
+		raidDevices=""
+		num=${#lunsA[@]}
+		echo "num luns $num" >> /var/log/sapconfigcreate
+		for ((i=0; i<num; i++))
+		do
+			echo "trying to find device path" >> /var/log/sapconfigcreate
+			lun=${lunsA[$i]}
+			devicePath=$(get-device-path $lun)
+			
+			if [ -n "$devicePath" ];
+			then
+				echo " Device Path is $devicePath" >> /var/log/sapconfigcreate
+				numRaidDevices=$(expr $numRaidDevices + 1);
+				raidDevices="$raidDevices $devicePath""1 "
+				# http://superuser.com/questions/332252/creating-and-formating-a-partition-using-a-bash-script
+				$(echo -e "n\np\n1\n\n\nw" | fdisk $devicePath)
+				echo "changing partition type" >> /var/log/sapconfigcreate
+				$(echo -e "t\nfd\nw" | fdisk $devicePath)
+			else
+				echo "no device path for LUN $lun" >> /var/log/sapconfigcreate
+			fi
+		done
+		echo "num: $numRaidDevices paths: '$raidDevices'" >> /var/log/sapconfigcreate
+		$(mdadm --create $mdadmPath --level 0 --raid-devices $numRaidDevices $raidDevices)
+		$(mkfs -t xfs $mdadmPath)
+		#Test if SLES 11
+		#$(chkconfig --add boot.md)
+		#$(echo 'DEVICE /dev/sd*[0-9]' >> /etc/mdadm.conf)
+		$(mkdir $mountPath)
+		blkid=$(/sbin/blkid $mdadmPath)
+		if [[ $blkid =~  UUID=\"(.{36})\" ]]
+		then
+			echo "Adding fstab entry" >> /var/log/sapconfigcreate
+			uuid=${BASH_REMATCH[1]};
+			echo "/dev/disk/by-uuid/$uuid $mountPath xfs  defaults  0  2" >> /etc/fstab
+			#SLES 11
+			#echo "UUID=$uuid  /dbdata  xfs  defaults  0  2" >> /etc/fstab
+		fi
+	else		
+		lun=${lunsA[0]}
+		devicePath=$(get-device-path $lun)
+		
+		if [ -n "$devicePath" ];
+		then
+			echo " Device Path is $devicePath" >> /var/log/sapconfigcreate		
+			# http://superuser.com/questions/332252/creating-and-formating-a-partition-using-a-bash-script
+			$(echo -e "n\np\n1\n\n\nw" | fdisk $devicePath)
+			partPath="$devicePath""1"
+			$(mkfs -t xfs $partPath)
+			$(mkdir $mountPath)	
+
+			blkid=$(sudo /sbin/blkid $partPath)
+			if [[ $blkid =~  UUID=\"(.{36})\" ]]
+			then
+				echo "Adding fstab entry" >> /var/log/sapconfigcreate
+				uuid=${BASH_REMATCH[1]};
+				echo "/dev/disk/by-uuid/$uuid $mountPath xfs  defaults  0  2" >> /etc/fstab
+				#SLES 11
+				#echo "UUID=$uuid  /dbdata  xfs  defaults  0  2" >> /etc/fstab
+			fi
+		fi
+	fi
+}
 
 dbluns=""
 logluns=""
@@ -25,148 +121,5 @@ fi
 dblunsA=(${dbluns//,/ })
 loglunsA=(${logluns//,/ })
 
-dbNumRaidDevices=0
-dbRaidDevices=""
-dbnum=${#dblunsA[@]}
-echo "num luns $dbnum"
-for ((i=0; i<dbnum; i++))
-do
-	echo "trying to find device path" >> /var/log/sapconfigcreate
-	devicePath=""
-	lun=${dblunsA[$i]}
-	scsiOutput=$(lsscsi -i 5)
-	scsiOutputA=($scsiOutput)
-	num=${#scsiOutputA[@]}
-	if [ `expr $num % 8` -eq 0 ]
-	then
-		for ((j=0; j<=$num; j=j+8))
-		do
-			value=${scsiOutputA[$j]}		
-			if [[ $value =~  \[5:0:0:$lun\] ]]; 
-			then
-				devicePath=${scsiOutputA[$j+6]}
-				break			
-			fi
-		done
-	fi
-		
-	if [ -n "$devicePath" ];
-	then
-		echo " Device Path is $devicePath" >> /var/log/sapconfigcreate
-		dbNumRaidDevices=$(expr $dbNumRaidDevices + 1);
-		dbRaidDevices="$dbRaidDevices $devicePath""1 "
-		# http://superuser.com/questions/332252/creating-and-formating-a-partition-using-a-bash-script
-		$(echo -e "n\np\n1\n\n\nw" | fdisk $devicePath)
-		echo "changing partition type" >> /var/log/sapconfigcreate
-		$(echo -e "t\nfd\nw" | fdisk $devicePath)
-	else
-			echo "no device path for LUN $lun" >> /var/log/sapconfigcreate
-	fi
-done
-echo "num: $dbNumRaidDevices paths: '$dbRaidDevices'" >> /var/log/sapconfigcreate
-$(mdadm --create /dev/md127 --level 0 --raid-devices $dbNumRaidDevices $dbRaidDevices)
-$(mkfs -t xfs /dev/md127)
-#Test if SLES 11
-#$(chkconfig --add boot.md)
-#$(echo 'DEVICE /dev/sd*[0-9]' >> /etc/mdadm.conf)
-$(mkdir /dbdata)
-blkid=$(/sbin/blkid /dev/md127)
-if [[ $blkid =~  UUID=\"(.{36})\" ]]
-then
-	echo "Adding fstab entry" >> /var/log/sapconfigcreate
-	uuid=${BASH_REMATCH[1]};
-	echo "/dev/disk/by-uuid/$uuid  /dbdata  xfs  defaults  0  2" >> /etc/fstab
-	#SLES 11
-	#echo "UUID=$uuid  /dbdata  xfs  defaults  0  2" >> /etc/fstab
-fi
-
-logNumRaidDevices=0
-logRaidDevices=""
-lognum=${#loglunsA[@]}
-if [[ $lognum -gt 1 ]]
-then
-	for ((i=0; i<lognum; i++))
-	do
-		devicePath=""
-		lun=${loglunsA[$i]}
-		scsiOutput=$(lsscsi -i 5)
-		scsiOutputA=($scsiOutput)
-		num=${#scsiOutputA[@]}
-		if [ `expr $num % 8` -eq 0 ]
-		then
-			for ((j=0; j<=$num; j=j+8))
-			do
-				value=${scsiOutputA[$j]}		
-				if [[ $value =~  \[5:0:0:$lun\] ]]; 
-				then
-					devicePath=${scsiOutputA[$j+6]}
-					break
-				fi
-			done
-		fi
-		
-		if [ -n "$devicePath" ];
-		then
-			echo " Device Path is $devicePath" >> /var/log/sapconfigcreate
-			logNumRaidDevices=$(expr $logNumRaidDevices + 1);
-			logRaidDevices="$logRaidDevices $devicePath""1 "
-			# http://superuser.com/questions/332252/creating-and-formating-a-partition-using-a-bash-script
-			$(echo -e "n\np\n1\n\n\nw" | fdisk $devicePath)
-			echo "changing partition type" >> /var/log/sapconfigcreate
-			$(echo -e "t\nfd\nw" | fdisk $devicePath)		
-		fi
-	done
-	echo "num: $logNumRaidDevices paths: '$logRaidDevices'" >> /var/log/sapconfigcreate
-	$(mdadm --create /dev/md128 --level 0 --raid-devices $logNumRaidDevices $logRaidDevices)
-	$(mkfs -t xfs /dev/md128)
-	#Test if SLES 11
-	#$(chkconfig --add boot.md)
-	#$(echo 'DEVICE /dev/sd*[0-9]' >> /etc/mdadm.conf)
-	$(mkdir /dblog)
-	blkid=$(sudo /sbin/blkid /dev/md128)
-	if [[ $blkid =~  UUID=\"(.{36})\" ]]
-	then
-		echo "Adding fstab entry" >> /var/log/sapconfigcreate
-		uuid=${BASH_REMATCH[1]};
-		echo "/dev/disk/by-uuid/$uuid  /dblog  xfs  defaults  0  2" >> /etc/fstab
-		#SLES 11
-		#echo "UUID=$uuid  /dbdata  xfs  defaults  0  2" >> /etc/fstab
-	fi
-else
-	devicePath=""
-	lun=${loglunsA[0]}
-	scsiOutput=$(lsscsi -i 5)
-	scsiOutputA=($scsiOutput)
-	num=${#scsiOutputA[@]}
-	if [ `expr $num % 8` -eq 0 ]
-	then
-		for ((i=0; i<=$num; i=i+8))
-		do
-			value=${scsiOutputA[$i]}		
-			if [[ $value =~  \[5:0:0:$lun\] ]]; 
-			then
-				devicePath=${scsiOutputA[$i+6]}
-				break
-			fi
-		done
-	fi
-		
-	if [ -n "$devicePath" ];
-	then
-		echo " Device Path is $devicePath" >> /var/log/sapconfigcreate		
-		# http://superuser.com/questions/332252/creating-and-formating-a-partition-using-a-bash-script
-		$(echo -e "n\np\n1\n\n\nw" | fdisk $devicePath)
-		$(mkfs -t xfs $devicePath)
-		$(mkdir /dblog)	
-
-		blkid=$(sudo /sbin/blkid $devicePath)
-		if [[ $blkid =~  UUID=\"(.{36})\" ]]
-		then
-			echo "Adding fstab entry" >> /var/log/sapconfigcreate
-			uuid=${BASH_REMATCH[1]};
-			echo "/dev/disk/by-uuid/$uuid  /dblog  xfs  defaults  0  2" >> /etc/fstab
-			#SLES 11
-			#echo "UUID=$uuid  /dbdata  xfs  defaults  0  2" >> /etc/fstab
-		fi
-	fi
-fi
+create-mdadm dblunsA "/dev/md127" "/dbdata"
+create-mdadm dblunsA "/dev/md128" "/dblog"
