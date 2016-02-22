@@ -1,5 +1,27 @@
 #!/bin/bash
 # create-mdadm <lun array> <mdadm path e.g. /dev/md127> <mount path e.g. /dbdata>
+function addto-fstab()
+{
+	partPath=$1
+	local blkid=$(sudo /sbin/blkid $partPath)
+	if [[ $blkid =~  UUID=\"(.{36})\" ]]
+	then
+		echo "Adding fstab entry" >> /var/log/sapconfigcreate
+		local uuid=${BASH_REMATCH[1]};
+		local vLinux=$(cat /etc/issue)
+		if [[ $vLinux =~ 11 SP4 ]]
+		then
+			#SLES 11
+			echo "UUID=$uuid $mountPath xfs  defaults  0  2" >> /etc/fstab
+		fi
+		if [[ $vLinux =~ 12 ]]
+		then
+			#SLES 12
+			echo "/dev/disk/by-uuid/$uuid $mountPath xfs  defaults  0  2" >> /etc/fstab
+		fi
+	fi
+}
+
 function get-device-path()
 {
 	local getdevicepathresult=""
@@ -61,15 +83,7 @@ function create-mdadm()
 		#$(chkconfig --add boot.md)
 		#$(echo 'DEVICE /dev/sd*[0-9]' >> /etc/mdadm.conf)
 		$(mkdir $mountPath)
-		blkid=$(/sbin/blkid $mdadmPath)
-		if [[ $blkid =~  UUID=\"(.{36})\" ]]
-		then
-			echo "Adding fstab entry" >> /var/log/sapconfigcreate
-			uuid=${BASH_REMATCH[1]};
-			echo "/dev/disk/by-uuid/$uuid $mountPath xfs  defaults  0  2" >> /etc/fstab
-			#SLES 11
-			#echo "UUID=$uuid  /dbdata  xfs  defaults  0  2" >> /etc/fstab
-		fi
+		addto-fstab $mdadmPath		
 	else		
 		lun=${lunsA[0]}
 		devicePath=$(get-device-path $lun)
@@ -83,15 +97,7 @@ function create-mdadm()
 			$(mkfs -t xfs $partPath)
 			$(mkdir $mountPath)	
 
-			blkid=$(sudo /sbin/blkid $partPath)
-			if [[ $blkid =~  UUID=\"(.{36})\" ]]
-			then
-				echo "Adding fstab entry" >> /var/log/sapconfigcreate
-				uuid=${BASH_REMATCH[1]};
-				echo "/dev/disk/by-uuid/$uuid $mountPath xfs  defaults  0  2" >> /etc/fstab
-				#SLES 11
-				#echo "UUID=$uuid  /dbdata  xfs  defaults  0  2" >> /etc/fstab
-			fi
+			addto-fstab $partPath
 		fi
 	fi
 }
