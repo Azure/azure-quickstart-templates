@@ -82,7 +82,7 @@ function createmdadm()
 			if [ -n "$devicePath" ];
 			then
 				log " Device Path is $devicePath"
-				$((numRaidDevices + 1))
+				numRaidDevices=$((numRaidDevices + 1))
 				raidDevices="$raidDevices $devicePath""1 "
 				# http://superuser.com/questions/332252/creating-and-formating-a-partition-using-a-bash-script
 				$(echo -e "n\np\n1\n\n\nw" | fdisk $devicePath)
