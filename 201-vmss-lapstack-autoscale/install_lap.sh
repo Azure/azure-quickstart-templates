@@ -13,8 +13,8 @@ done
 
 # write some PHP
 cd /var/www/html
-wget https://raw.githubusercontent.com/gatneil/azure-quickstart-templates/lapstack_fix/201-vmss-lapstack-autoscale/index.php
-wget https://raw.githubusercontent.com/gatneil/azure-quickstart-templates/lapstack_fix/201-vmss-lapstack-autoscale/do_work.php
+wget https://raw.githubusercontent.com/azure/azure-quickstart-templates/master/201-vmss-lapstack-autoscale/index.php
+wget https://raw.githubusercontent.com/azure/azure-quickstart-templates/master/201-vmss-lapstack-autoscale/do_work.php
 rm /var/www/html/index.html
 # restart Apache
 apachectl restart
