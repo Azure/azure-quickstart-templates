@@ -43,23 +43,12 @@ function getdevicepath()
 	log "getdevicepath"
 	getdevicepathresult=""
 	local lun=$1
-	local scsiOutput=$(lsscsi -i 5)
-	local scsiOutputA=($scsiOutput)
-	local numLines=${#scsiOutputA[@]}
-	if [ `expr $numLines % 8` -eq 0 ]
-	then
-		for ((j=0; j<=$numLines; j=j+8))
-		do
-			local value=${scsiOutputA[$j]}		
-			if [[ $value =~  \[5:0:0:$lun\] ]]; 
-			then
-				getdevicepathresult=${scsiOutputA[$j+6]}
-				log "getdevicepath found $getdevicepathresult"
-				break			
-			fi
-		done
+	local scsiOutput=$(lsscsi)
+	if [[ $scsiOutput =~ \[5:0:0:$lun\][^\[]*(/dev/sd.) ]];
+	then 
+		getdevicepathresult=${BASH_REMATCH[1]}; 
 	else
-		log "lsscsi output not as expected: expected 8 columns - result: $numLines"
+		log "lsscsi output not as expected"
 	fi
 	log "getdevicepath done"
 }
