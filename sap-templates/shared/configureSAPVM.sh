@@ -34,6 +34,7 @@ function addtofstab()
 		$(mount $mountPath)
 	else
 		log "no UUID found"
+		exit -1;
 	fi
 	log "addtofstab done"
 }
@@ -49,6 +50,7 @@ function getdevicepath()
 		getdevicepathresult=${BASH_REMATCH[1]};
 	else
 		log "lsscsi output not as expected"
+		exit -1;
 	fi
 	log "getdevicepath done"
 }
@@ -80,7 +82,7 @@ function createmdadm()
 			if [ -n "$devicePath" ];
 			then
 				log " Device Path is $devicePath"
-				numRaidDevices=$(expr $numRaidDevices + 1);
+				$((numRaidDevices + 1))
 				raidDevices="$raidDevices $devicePath""1 "
 				# http://superuser.com/questions/332252/creating-and-formating-a-partition-using-a-bash-script
 				$(echo -e "n\np\n1\n\n\nw" | fdisk $devicePath)
@@ -88,6 +90,7 @@ function createmdadm()
 				$(echo -e "t\nfd\nw" | fdisk $devicePath)
 			else
 				log "no device path for LUN $lun"
+				exit -1;
 			fi
 		done
 		log "num: $numRaidDevices paths: '$raidDevices'"
@@ -95,7 +98,7 @@ function createmdadm()
 		$(mkfs -t xfs $mdadmPath)
 
 		local vLinux=$(cat /etc/os-release)		
-		if [[ $vLinux =~ VERSION=\"11\" && $vLinux =~ NAME=\"SLES\" ]];
+		if [[ $vLinux =~ VERSION=\"11\..\" && $vLinux =~ NAME=\"SLES\" ]];
 		then
 			#SLES 11
 			log "createmdadm - SLES 11"
@@ -121,6 +124,9 @@ function createmdadm()
 			$(mkdir $mountPath)	
 
 			addtofstab $partPath
+		else
+			log "no device path for LUN $lun"
+			exit -1;
 		fi
 	fi
 
