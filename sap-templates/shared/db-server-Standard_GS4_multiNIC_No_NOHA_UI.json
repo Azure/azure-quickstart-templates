@@ -51,18 +51,6 @@
         "description": "Password for the Virtual Machine."
       }
     },
-    "storageAccountName": {
-      "type": "string",
-      "metadata": {
-        "description": "Name of the storage account that should be used for the virtual machine."
-      }
-    },
-    "publicIpName": {
-      "type": "string",
-      "metadata": {
-        "description": "Name of the public IP that should be used for the network interface."
-      }
-    },
     "subnetRef1": {
       "type": "string",
       "metadata": {
@@ -80,6 +68,42 @@
       "metadata": {
         "description": "Size of the Virtual Machine."
       }
+    },
+    "vmCount": {
+      "type": "int",
+      "metadata": {
+        "description": "Count of virtual machines that should be deployed."
+      }
+    },
+    "cseExtPublisher": {
+      "type": "string",
+      "metadata": {
+        "description": "Publisher of the CustomScriptExtension."
+      }
+    },
+    "cseExtName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the CustomScriptExtension."
+      }
+    },
+    "cseExtVersion": {
+      "type": "string",
+      "metadata": {
+        "description": "Version of the CustomScriptExtension."
+      }
+    },
+    "csExtensionScript": {
+      "type": "string",
+      "metadata": {
+        "description": "Script that should be passed to the CustomScriptExtension."
+      }
+    },
+    "csExtensionscriptCall": {
+      "type": "string",
+      "metadata": {
+        "description": "Script call that should be passed to the CustomScriptExtension."
+      }
     }
   },
   "variables": {
@@ -89,9 +113,23 @@
     "sapDiskCaching": "None",
     "dbDiskName": "[concat(parameters('sidlower'),'-dbdisk')]",
     "dbDiskCaching": "None",
-    "nicName1": "[concat(parameters('sidlower'), '-nic1')]"
+    "nicName1": "[concat(parameters('sidlower'), '-nic-db')]",
+    "storageAccountName": "[concat('db', parameters('sidlower'), uniqueString(parameters('sidlower'), resourceGroup().id))]",
+    "internalStorageType": "Premium_LRS",
+    "dbDataLUNs": "0,1,2,3,4",
+    "dbLogLUNs": "5",
+    "vmNameDB": "[concat(parameters('vmName'), '-db')]"
   },
   "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('storageAccountName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[parameters('location')]",
+      "properties": {
+        "accountType": "[variables('internalStorageType')]"
+      }
+    },
     {
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName1')]",
@@ -103,9 +141,6 @@
             "name": "ipconfig1",
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
-              "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIpName'))]"
-              },
               "subnet": {
                 "id": "[parameters('subnetRef1')]"
               }
@@ -117,9 +152,10 @@
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[parameters('vmName')]",
+      "name": "[variables('vmNameDB')]",
       "location": "[parameters('location')]",
       "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName1'))]"
       ],
       "properties": {
@@ -127,7 +163,7 @@
           "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
-          "computerName": "[parameters('vmName')]",
+          "computerName": "[variables('vmNameDB')]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]"
         },
@@ -139,7 +175,7 @@
               "uri": "[parameters('userImageVhdUri')]"
             },
             "vhd": {
-              "uri": "[concat('http://',parameters('userImageStorageAccount'),'.blob.core.windows.net/vhds/', parameters('vmName'), '-', variables('osDiskName'))]"
+              "uri": "[concat('http://',parameters('userImageStorageAccount'),'.blob.core.windows.net/vhds/', variables('vmNameDB'), '-', variables('osDiskName'))]"
             },
             "caching": "[variables('osDiskCaching')]",
             "createOption": "FromImage"
@@ -149,7 +185,7 @@
               "name": "dbdisk1",
               "lun": 0,
               "vhd": {
-                "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/',parameters('sidlower'),'-dbdisk1.vhd')]"
+                "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/vhds/',parameters('sidlower'),'-dbdisk1.vhd')]"
               },
               "createOption": "Empty",
               "caching": "None",
@@ -159,7 +195,7 @@
               "name": "dbdisk2",
               "lun": 1,
               "vhd": {
-                "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/',parameters('sidlower'),'-dbdisk2.vhd')]"
+                "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/vhds/',parameters('sidlower'),'-dbdisk2.vhd')]"
               },
               "createOption": "Empty",
               "caching": "None",
@@ -169,7 +205,7 @@
               "name": "dbdisk3",
               "lun": 2,
               "vhd": {
-                "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/',parameters('sidlower'),'-dbdisk3.vhd')]"
+                "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/vhds/',parameters('sidlower'),'-dbdisk3.vhd')]"
               },
               "createOption": "Empty",
               "caching": "None",
@@ -179,11 +215,31 @@
               "name": "dbdisk4",
               "lun": 3,
               "vhd": {
-                "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/',parameters('sidlower'),'-dbdisk4.vhd')]"
+                "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/vhds/',parameters('sidlower'),'-dbdisk4.vhd')]"
               },
               "createOption": "Empty",
               "caching": "None",
               "diskSizeGB": "1023"
+            },
+            {
+              "name": "dbdisk5",
+              "lun": 4,
+              "vhd": {
+                "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/vhds/',parameters('sidlower'),'-dbdisk5.vhd')]"
+              },
+              "createOption": "Empty",
+              "caching": "None",
+              "diskSizeGB": "1023"
+            },
+            {
+              "name": "dbdisk6",
+              "lun": 5,
+              "vhd": {
+                "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/vhds/',parameters('sidlower'),'-dbdisk6.vhd')]"
+              },
+              "createOption": "Empty",
+              "caching": "None",
+              "diskSizeGB": "512"
             }
           ]
         },
@@ -195,16 +251,24 @@
           ]
         }
       }
-    }
-  ],
-  "outputs": {
-    "dbDataLUNs": {
-      "value": "0,1,2",
-      "type": "string"
     },
-    "dbLogLUNs": {
-      "value": "3",
-      "type": "string"
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('vmNameDB'),'/', parameters('cseExtName'))]",
+      "apiVersion": "2015-06-15",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', variables('vmNameDB'))]"
+      ],
+      "properties": {
+        "publisher": "[parameters('cseExtPublisher')]",
+        "type": "[parameters('cseExtName')]",
+        "typeHandlerVersion": "[parameters('cseExtVersion')]",
+        "settings": {
+          "fileUris": [ "[parameters('csExtensionScript')]" ],
+          "commandToExecute": "[concat(parameters('csExtensionscriptCall'), ' -DBDataLUNS \"', variables('dbDataLUNs'), '\" -DBLogLUNS \"', variables('dbLogLUNs'), '\"')]"
+        }
+      }
     }
-  }
+  ]
 }
