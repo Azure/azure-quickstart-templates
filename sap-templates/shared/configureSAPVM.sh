@@ -18,7 +18,7 @@ function addtofstab()
 		local uuid=${BASH_REMATCH[1]};
 		local vLinux=$(cat /etc/os-release)
 		local mountCmd=""
-		if [[ $vLinux =~ VERSION=\"11\" && $vLinux =~ NAME=\"SLES\" ]];
+		if [[ $vLinux =~ VERSION=\"11\..\" && $vLinux =~ NAME=\"SLES\" ]];
 		then
 			#SLES 11
 			log "adding fstab entry for SLES 11"
@@ -46,7 +46,7 @@ function getdevicepath()
 	local scsiOutput=$(lsscsi)
 	if [[ $scsiOutput =~ \[5:0:0:$lun\][^\[]*(/dev/sd.) ]];
 	then 
-		getdevicepathresult=${BASH_REMATCH[1]}; 
+		getdevicepathresult=${BASH_REMATCH[1]};
 	else
 		log "lsscsi output not as expected"
 	fi
