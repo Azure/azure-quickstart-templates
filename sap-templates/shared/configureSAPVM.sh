@@ -160,3 +160,11 @@ loglunsA=(${logluns//,/ })
 
 createmdadm $dbluns "/dev/md127" "/dbdata"
 createmdadm $logluns "/dev/md128" "/dblog"
+
+local vLinux=$(cat /etc/os-release)		
+if [[ $vLinux =~ VERSION=\"11\..\" && $vLinux =~ NAME=\"SLES\" ]];
+then
+	#SLES 11
+	log "SLES 11 - restarting"
+	$(shutdown -r now)
+fi
