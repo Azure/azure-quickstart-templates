@@ -48,30 +48,30 @@ Please note that [Azure Resource Manager][3] is used to provision the environmen
 
 1.  Create a Resource Group and Storage Account.  This is required to stage provisioning scripts that are used to install software and tools on the servers.  In this example, the **Resource Group** is "deployments" and **StorageAccountName** is "arm-resources"
 2.  Checkout the Git repository.  This folder will be known in the rest of the instructions as **CHECKOUT_DIRECTORY
-3.  [Ensure you can execute PowerShell scripts through PowerShell ISE][4].
+3.  Upload the scripts in CustomScripts to the Storage Account
+4.  [Ensure you can execute PowerShell scripts through PowerShell ISE][4].
 
 #### Deployment
 
 1.  Launch PowerShell ISE
 2.  Execute: `Login-AzureRmAccount`
 3.  Navigate to `CHECKOUT_DIRECTORY/Scripts`
-4.  Execute the following command on PowerShell ISE and fill in any prompts.  Defaults are automatically set in azuredeploy.parameters.json and can be updated as required.  To leverage Azure Storage, remove the default values for **_artifactsLocation** and **_artifactsLocationSasToken** in azuredeploy.json.
+4.  Execute the following commands on PowerShell ISE and fill in any prompts.  Defaults are automatically set in azuredeploy.parameters.json and can be updated as required.  To leverage Azure Storage, edit the default values for **_artifactsLocation** and **_artifactsLocationSasToken**.
 
 > You can set change the **-ResourceGroupName** and **-ResourceGroupLocation** to suit your deployment needs.  In this example, it is set to "spark-on-centos" and "East US"
 
 > Enter the values for **-StorageAccountName** and **-StorageAccountResourceGroupName** based on the storage account that was created as part of the pre-deployment steps.
 
 ```powershell
-.\Deploy-AzureResourceGroup.ps1 `
-  -ResourceGroupName 'spark-on-centos' `
-  -ResourceGroupLocation 'eastus' `
-  -TemplateFile '..\azuredeploy.json' `
-  -TemplateParametersFile '..\azuredeploy.parameters.json' `
-  -ArtifactStagingDirectory '../CustomScripts' `
-  -UploadArtifacts `
-  -StorageAccountName 'arm-resources' `
-  -StorageAccountResourceGroupName 'deployments' `
-  -Verbose
+$ResourceGroupName = "spark"
+$Location = "East US"
+
+New-AzureRmResourceGroup -Name $ResourceGroupName -Location $Location
+
+New-AzureRmResourceGroupDeployment -ResourceGroupName $ResourceGroupName `
+    -TemplateFile spark-and-cassandra-on-centos/azuredeploy.json `
+    -TemplateParameterFile spark-and-cassandra-on-centos/azuredeploy.parameters.json
+    -Mode Incremental
 ```
 
 #### Post-Deployment
