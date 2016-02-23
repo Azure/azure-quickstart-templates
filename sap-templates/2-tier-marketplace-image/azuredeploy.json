@@ -55,7 +55,7 @@
       }
     }
   },
-  "variables": {    
+  "variables": {
     "github": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sap-templates",
     "images": {
       "Windows Server 2012 Datacenter": {
@@ -87,6 +87,7 @@
     "imagePublisher": "[variables('images')[parameters('osType')].publisher]",
     "imageOffer": "[variables('images')[parameters('osType')].offer]",
 
+    "internalOSType": "[variables('images')[parameters('osType')].OSType]",
     "csExtension": {
       "Windows": {
         "Publisher": "Microsoft.Compute",
@@ -103,9 +104,9 @@
         "scriptCall": "sh configureSAPVM.sh"
       }
     },
-    "cseExtPublisher": "[variables('csExtension')[variables('images')[parameters('osType')].OSType].Publisher]",
-    "cseExtName": "[variables('csExtension')[variables('images')[parameters('osType')].OSType].Name]",
-    "cseExtVersion": "[variables('csExtension')[variables('images')[parameters('osType')].OSType].Version]",
+    "cseExtPublisher": "[variables('csExtension')[variables('internalOSType')].Publisher]",
+    "cseExtName": "[variables('csExtension')[variables('internalOSType')].Name]",
+    "cseExtVersion": "[variables('csExtension')[variables('internalOSType')].Version]",
 
     "storageTypes": {
       "Premium": "Premium_LRS",
@@ -154,22 +155,17 @@
     "vmName": "[concat(variables('sidlower'), '-servercs')]",
     "storageAccountName": "[concat(variables('sidlower'), uniqueString(variables('sidlower'), resourceGroup().id))]",
     "vnetName": "[concat(variables('sidlower'), '-vnet')]",
-    "publicIpName": "[concat(variables('sidlower'), '-publicIP')]",
+    "publicIpName": "[concat(variables('sidlower'), '-pib')]",
     "nicName": "[concat(variables('sidlower'), '-nic')]",
-    "nsgName":  "[concat(variables('sidlower'), '-nsg-cs')]",
+    "nsgName": "[concat(variables('sidlower'), '-nsg-cs')]",
     "publicIPAddressType": "Dynamic",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet",
     "subnetPrefix": "10.0.0.0/24",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('vnetName'))]",
     "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
-    "osDiskName": "[concat(variables('sidlower'),'-os.vhd')]",
-    "osDiskCaching": "ReadWrite",
-    "sapDiskName": "[concat(variables('sidlower'),'-sapdisk.vhd')]",
-    "sapDiskCaching": "None",
-    "dbDiskName": "[concat(variables('sidlower'),'-dbdisk')]",
-    "dbDiskCaching": "None",
-    "nestedDeploymentName": "nestedTemplate"
+    "nestedDeploymentName": "nestedTemplate",
+    "nestedDeploymentNameNSG": "[concat(variables('nestedDeploymentName'), 'nsg')]"
   },
   "resources": [
     {
@@ -190,36 +186,30 @@
         "publicIPAllocationMethod": "[variables('publicIPAddressType')]"
       }
     },
+
     {
-      "type": "Microsoft.Network/networkSecurityGroups",
-      "name": "[concat(variables('nsgName'))]",
-      "apiVersion": "2015-06-15",
-      "location": "[variables('location')]",
+      "apiVersion": "2015-01-01",
+      "name": "[variables('nestedDeploymentNameNSG')]",
+      "type": "Microsoft.Resources/deployments",
       "properties": {
-        "securityRules": [
-          {
-            "name": "RDP",
-            "properties": {
-              "description": "Allow RDP Subnet",
-              "protocol": "Tcp",
-              "sourcePortRange": "*",
-              "destinationPortRange": "3389",
-              "sourceAddressPrefix": "*",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 100,
-              "direction": "Inbound"
-            }
-          }
-        ]
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('github'), '/shared/nsg-', variables('internalOSType'), '.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "nsgName": { "value": "[variables('nsgName')]" },
+          "location": { "value": "[variables('location')]" }
+        }
       }
     },
+      
     {
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('vnetName')]",
       "apiVersion": "2015-06-15",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkSecurityGroups/', variables('nsgName'))]"
+        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameNSG'))]"
       ],
       "location": "[variables('location')]",
       "properties": {
@@ -232,13 +222,13 @@
           {
             "name": "[variables('subnetName')]",
             "properties": {
-              "addressPrefix": "[variables('subnetPrefix')]"
+              "addressPrefix": "[variables('subnetPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+              }
             }
           }
-        ],
-        "networkSecurityGroup": {
-          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
-        }
+        ]
       }
     },
 
@@ -287,8 +277,8 @@
         "type": "[variables('cseExtName')]",
         "typeHandlerVersion": "[variables('cseExtVersion')]",
         "settings": {
-          "fileUris": [ "[variables('csExtension')[variables('images')[parameters('osType')].OSType].script]" ],
-          "commandToExecute": "[concat(variables('csExtension')[variables('images')[parameters('osType')].OSType].scriptCall, ' -DBDataLUNS \"', reference(variables('nestedDeploymentName')).outputs.dbDataLUNs.value , '\" -DBLogLUNS \"', reference(variables('nestedDeploymentName')).outputs.dbLogLUNs.value, '\"')]"
+          "fileUris": [ "[variables('csExtension')[variables('internalOSType')].script]" ],
+          "commandToExecute": "[concat(variables('csExtension')[variables('internalOSType')].scriptCall, ' -DBDataLUNS \"', reference(variables('nestedDeploymentName')).outputs.dbDataLUNs.value , '\" -DBLogLUNS \"', reference(variables('nestedDeploymentName')).outputs.dbLogLUNs.value, '\"')]"
         }
       }
     }

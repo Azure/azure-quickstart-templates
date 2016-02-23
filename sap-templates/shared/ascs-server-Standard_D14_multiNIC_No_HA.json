@@ -20,6 +20,13 @@
         "description": "Offer of the image that should be used to deploy the virtual machine."
       }
     },
+    "osType": {
+      "type": "string",
+      "allowedValues": [ "Windows", "Linux" ],
+      "metadata": {
+        "description": "The type of the operating system you want to deploy."
+      }
+    },
     "location": {
       "type": "string",
       "metadata": {
@@ -103,6 +110,12 @@
       "metadata": {
         "description": "Script call that should be passed to the CustomScriptExtension."
       }
+    },
+    "github": {
+      "type": "string",
+      "metadata": {
+        "description": "Address of the github repository that contains the required templates."
+      }
     }
   },
   "variables": {
@@ -119,7 +132,9 @@
     "avSetName": "[concat(parameters('sidlower'), '-avset-ascs')]",
     "nsgName": "[concat(parameters('sidlower'), '-nsg-ascs')]",
     "loadBalancerName": "[concat(parameters('sidlower'), '-lb-ascs')]",
-    "lbProbePortInternal": 62300
+    "lbProbePortInternal": 62300,
+    "nestedDeploymentName": "nestedTemplateascs",
+    "nestedDeploymentNameNSG": "[concat(variables('nestedDeploymentName'), 'nsg')]"
   },
   "resources": [
     {
@@ -145,32 +160,25 @@
         "publicIPAllocationMethod": "[variables('publicIPAddressType')]"
       }
     },
+
     {
-      "type": "Microsoft.Network/networkSecurityGroups",
-      "name": "[concat(variables('nsgName'), '-', copyIndex())]",
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2015-01-01",
+      "name": "[concat(variables('nestedDeploymentNameNSG'), '-', copyIndex())]",
+      "type": "Microsoft.Resources/deployments",
       "copy": {
         "name": "nicLoop",
         "count": "[parameters('vmCount')]"
       },
-      "location": "[parameters('location')]",
       "properties": {
-        "securityRules": [
-          {
-            "name": "RDP",
-            "properties": {
-              "description": "Allow RDP Subnet",
-              "protocol": "Tcp",
-              "sourcePortRange": "*",
-              "destinationPortRange": "3389",
-              "sourceAddressPrefix": "*",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 100,
-              "direction": "Inbound"
-            }
-          }
-        ]
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('github'), '/shared/nsg-', parameters('osType'), '.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "nsgName": { "value": "[concat(variables('nsgName'), '-', copyIndex())]" },
+          "location": { "value": "[parameters('location')]" }
+        }
       }
     },
 
@@ -414,7 +422,7 @@
       },
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIpName'), '-', copyIndex())]",
-        "[concat('Microsoft.Network/networkSecurityGroups/', variables('nsgName'), '-', copyIndex())]",
+        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameNSG'), '-', copyIndex())]",
         "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]"
       ],
       "location": "[parameters('location')]",
@@ -434,14 +442,13 @@
                 {
                   "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName')), '/backendAddressPools/BackendPool1')]"
                 }
-              ]
+              ],
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(variables('nsgName'), '-', copyIndex()))]"
+              }
             }
           }
-        ],
-        "networkSecurityGroup": {
-          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(variables('nsgName'), '-', copyIndex()))]"
-        }
-
+        ]
       }
     },
     {

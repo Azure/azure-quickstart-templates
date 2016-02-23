@@ -123,8 +123,9 @@
     "vmName": "[concat(variables('sidlower'), '-servercs')]",
     "storageAccountName": "[concat(variables('sidlower'), uniqueString(variables('sidlower'), resourceGroup().id))]",
     "vnetName": "[concat(variables('sidlower'), '-vnet')]",
-    "publicIpName": "[concat(variables('sidlower'), '-publicIP')]",
+    "publicIpName": "[concat(variables('sidlower'), '-pip')]",
     "nicName": "[concat(variables('sidlower'), '-nic')]",
+    "nsgName": "[concat(variables('sidlower'), '-nsg-cs')]",
     "storageAccountType": "Standard_LRS",
     "publicIPAddressType": "Dynamic",
     "addressPrefix": "10.0.0.0/16",
@@ -133,15 +134,10 @@
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('vnetName'))]",
     "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
     "nestedDeploymentName": "nestedTemplate",
-
-    "osDiskName": "[concat(variables('sidlower'),'-os.vhd')]",
-    "osDiskCaching": "ReadWrite",
-    "sapDiskName": "[concat(variables('sidlower'),'-sapdisk.vhd')]",
-    "sapDiskCaching": "None",
-    "dbDiskName": "[concat(variables('sidlower'),'-dbdisk')]",
-    "dbDiskCaching": "None"
+    "nestedDeploymentNameNSG": "[concat(variables('nestedDeploymentName'), 'nsg')]"
   },
   "resources": [
+    
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('storageAccountName')]",
@@ -151,6 +147,7 @@
         "accountType": "[variables('storageAccountType')]"
       }
     },
+
     {
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIpName')]",
@@ -160,10 +157,31 @@
         "publicIPAllocationMethod": "[variables('publicIPAddressType')]"
       }
     },
+
+    {
+      "apiVersion": "2015-01-01",
+      "name": "[variables('nestedDeploymentNameNSG')]",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('github'), '/shared/nsg-', variables('internalOSType'), '.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "nsgName": { "value": "[variables('nsgName')]" },
+          "location": { "value": "[variables('location')]" }
+        }
+      }
+    },
+
     {
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('vnetName')]",
       "apiVersion": "2015-06-15",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameNSG'))]"
+      ],
       "location": "[variables('location')]",
       "properties": {
         "addressSpace": {
@@ -175,32 +193,9 @@
           {
             "name": "[variables('subnetName')]",
             "properties": {
-              "addressPrefix": "[variables('subnetPrefix')]"
-            }
-          }
-        ]
-      }
-    },
-    {
-      "type": "Microsoft.Network/networkInterfaces",
-      "name": "[variables('nicName')]",
-      "apiVersion": "2015-06-15",
-      "location": "[variables('location')]",
-      "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIpName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
-      ],
-      "properties": {
-        "ipConfigurations": [
-          {
-            "name": "ipconfig1",
-            "properties": {
-              "privateIPAllocationMethod": "Dynamic",
-              "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpName'))]"
-              },
-              "subnet": {
-                "id": "[variables('subnetRef')]"
+              "addressPrefix": "[variables('subnetPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
               }
             }
           }

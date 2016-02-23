@@ -20,6 +20,13 @@
         "description": "Offer of the image that should be used to deploy the virtual machine."
       }
     },
+    "osType": {
+      "type": "string",
+      "allowedValues": [ "Windows", "Linux" ],
+      "metadata": {
+        "description": "The type of the operating system you want to deploy."
+      }
+    },
     "location": {
       "type": "string",
       "metadata": {
@@ -103,6 +110,12 @@
       "metadata": {
         "description": "Script call that should be passed to the CustomScriptExtension."
       }
+    },
+    "github": {
+      "type": "string",
+      "metadata": {
+        "description": "Address of the github repository that contains the required templates."
+      }
     }
   },
   "variables": {
@@ -115,7 +128,10 @@
     "storageAccountName": "[concat('ascs', parameters('sidlower'), uniqueString(parameters('sidlower'), resourceGroup().id))]",
     "dbDataLUNs": "0,1,2,3,4,5,6,7,8,9,10,11,12,13",
     "dbLogLUNs": "14,15",
-    "vmNameASCS":"[concat(parameters('vmName'), '-ascs')]" 
+    "nsgName": "[concat(parameters('sidlower'), '-nsg-ascs')]",
+    "vmNameASCS": "[concat(parameters('vmName'), '-ascs')]",
+    "nestedDeploymentName": "nestedTemplateascs",
+    "nestedDeploymentNameNSG": "[concat(variables('nestedDeploymentName'), 'nsg')]"
   },
   "resources": [
     {
@@ -128,10 +144,29 @@
       }
     },
     {
+      "apiVersion": "2015-01-01",
+      "name": "[variables('nestedDeploymentNameNSG')]",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('github'), '/shared/nsg-', parameters('osType'), '.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "nsgName": { "value": "[variables('nsgName')]" },
+          "location": { "value": "[parameters('location')]" }
+        }
+      }
+    },
+    {
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName1')]",
       "apiVersion": "2015-06-15",
-      "dependsOn": [ "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIpName'))]" ],
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIpName'))]",
+        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameNSG'))]"
+      ],
       "location": "[parameters('location')]",
       "properties": {
         "ipConfigurations": [
@@ -144,6 +179,9 @@
               },
               "subnet": {
                 "id": "[parameters('subnetRef1')]"
+              },
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
               }
             }
           }
