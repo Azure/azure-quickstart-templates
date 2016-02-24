@@ -12,9 +12,10 @@
     },
     "osType": {
       "type": "string",
-      "allowedValues": [ "Windows", "Linux" ],
+      "allowedValues": [ "Windows Server 2012 Datacenter", "Windows Server 2012 R2 Datacenter", "SLES 11 SP4", "SLES 12" ],
+      "defaultValue": "Windows Server 2012 R2 Datacenter",
       "metadata": {
-        "description": "The operating system type of the private OS image."
+        "description": "The type of the operating system you want to deploy."
       }
     },
     "sapSystemSize": {
@@ -33,16 +34,12 @@
         "description": "Determines whether this is a high available deployment or not. A HA deployment contains multiple instances of single point of failures."
       }
     },
-    "userImageVhdUri": {
+    "multiNIC": {
       "type": "string",
+      "allowedValues": [ "No" ],
+      "defaultValue": "No",
       "metadata": {
-        "description": "Uri of the user image."
-      }
-    },
-    "userImageStorageAccount": {
-      "type": "string",
-      "metadata": {
-        "description": "Name of the storage account where the user image is stored."
+        "description": "Determines if the virtual machine should have multip network interfaces."
       }
     },
     "adminUsername": {
@@ -56,12 +53,47 @@
       "metadata": {
         "description": "Password for the Virtual Machine."
       }
+    },
+    "subnetId": {
+      "type": "string",
+      "metadata": {
+        "description": "The id of the subnet you want to use."
+      }
     }
   },
   "variables": {
     "github": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sap-2-tier-marketplace-image/shared/",
+    "images": {
+      "Windows Server 2012 Datacenter": {
+        "sku": "2012-Datacenter",
+        "offer": "WindowsServer",
+        "publisher": "MicrosoftWindowsServer",
+        "OSType": "Windows"
+      },
+      "Windows Server 2012 R2 Datacenter": {
+        "sku": "2012-R2-Datacenter",
+        "offer": "WindowsServer",
+        "publisher": "MicrosoftWindowsServer",
+        "OSType": "Windows"
+      },
+      "SLES 11 SP4": {
+        "sku": "11-SP4",
+        "offer": "SLES",
+        "publisher": "SUSE",
+        "OSType": "Linux"
+      },
+      "SLES 12": {
+        "sku": "12",
+        "offer": "SLES",
+        "publisher": "SUSE",
+        "OSType": "Linux"
+      }
+    },
+    "imageSku": "[variables('images')[parameters('osType')].sku]",
+    "imagePublisher": "[variables('images')[parameters('osType')].publisher]",
+    "imageOffer": "[variables('images')[parameters('osType')].offer]",
 
-    "internalOSType": "[parameters('osType')]",
+    "internalOSType": "[variables('images')[parameters('osType')].OSType]",
     "csExtension": {
       "Windows": {
         "Publisher": "Microsoft.Compute",
@@ -187,52 +219,28 @@
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet",
     "subnetPrefix": "10.0.0.0/24",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('vnetName'))]",
-    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
+    "subnetRef": "[parameters('subnetId')]",
     "nestedDeploymentName": "nestedTemplate",
     "nestedDeploymentNameASCS": "[concat(variables('nestedDeploymentName'), 'ascs')]",
     "nestedDeploymentNameDB": "[concat(variables('nestedDeploymentName'), 'db')]",
     "nestedDeploymentNameDI": "[concat(variables('nestedDeploymentName'), 'di')]"
   },
-  "resources": [
+  "resources": [    
     
-    {
-      "type": "Microsoft.Network/virtualNetworks",
-      "name": "[variables('vnetName')]",
-      "apiVersion": "2015-06-15",
-      "location": "[variables('location')]",
-      "properties": {
-        "addressSpace": {
-          "addressPrefixes": [
-            "[variables('addressPrefix')]"
-          ]
-        },
-        "subnets": [
-          {
-            "name": "[variables('subnetName')]",
-            "properties": {
-              "addressPrefix": "[variables('subnetPrefix')]"
-            }
-          }
-        ]
-      }
-    },
     {
       "apiVersion": "2015-01-01",
       "name": "[variables('nestedDeploymentNameASCS')]",
       "type": "Microsoft.Resources/deployments",
-      "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
-      ],
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('github'), 'ascs-server-', variables('ascsvmSize'), '_multiNIC_No_', variables('systemAvailabilityInternal'), '_UI.json')]",
+          "uri": "[concat(variables('github'), 'ascs-server-', variables('ascsvmSize'), '_multiNIC_', parameters('multiNIC'), '_', variables('systemAvailabilityInternal'), '.json')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "userImageVhdUri": { "value": "[parameters('userImageVhdUri')]" },
-          "userImageStorageAccount": { "value": "[parameters('userImageStorageAccount')]" },
+          "imageSku": { "value": "[variables('imageSku')]" },
+          "imagePublisher": { "value": "[variables('imagePublisher')]" },
+          "imageOffer": { "value": "[variables('imageOffer')]" },
           "osType": { "value": "[variables('internalOSType')]" },
           "location": { "value": "[variables('location')]" },
           "sidlower": { "value": "[variables('sidlower')]" },
@@ -256,19 +264,16 @@
       "apiVersion": "2015-01-01",
       "name": "[variables('nestedDeploymentNameDB')]",
       "type": "Microsoft.Resources/deployments",
-      "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
-      ],
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('github'), 'db-server-', variables('dbvmSize'), '_multiNIC_No_', variables('systemAvailabilityInternal'), '_UI.json')]",
+          "uri": "[concat(variables('github'), 'db-server-', variables('dbvmSize'), '_multiNIC_', parameters('multiNIC'), '_', variables('systemAvailabilityInternal'), '.json')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "userImageVhdUri": { "value": "[parameters('userImageVhdUri')]" },
-          "userImageStorageAccount": { "value": "[parameters('userImageStorageAccount')]" },
-          "osType": { "value": "[variables('internalOSType')]" },
+          "imageSku": { "value": "[variables('imageSku')]" },
+          "imagePublisher": { "value": "[variables('imagePublisher')]" },
+          "imageOffer": { "value": "[variables('imageOffer')]" },
           "location": { "value": "[variables('location')]" },
           "sidlower": { "value": "[variables('sidlower')]" },
           "vmName": { "value": "[variables('vmName')]" },
@@ -290,19 +295,16 @@
       "apiVersion": "2015-01-01",
       "name": "[variables('nestedDeploymentNameDI')]",
       "type": "Microsoft.Resources/deployments",
-      "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
-      ],
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('github'), 'di-server-', variables('divmSize'), '_multiNIC_No_UI.json')]",
+          "uri": "[concat(variables('github'), 'di-server-', variables('divmSize'), '_multiNIC_', parameters('multiNIC'), '.json')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "userImageVhdUri": { "value": "[parameters('userImageVhdUri')]" },
-          "userImageStorageAccount": { "value": "[parameters('userImageStorageAccount')]" },
-          "osType": { "value": "[variables('internalOSType')]" },
+          "imageSku": { "value": "[variables('imageSku')]" },
+          "imagePublisher": { "value": "[variables('imagePublisher')]" },
+          "imageOffer": { "value": "[variables('imageOffer')]" },
           "location": { "value": "[variables('location')]" },
           "sidlower": { "value": "[variables('sidlower')]" },
           "vmName": { "value": "[variables('vmName')]" },

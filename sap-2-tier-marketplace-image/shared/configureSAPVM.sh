@@ -1,5 +1,8 @@
 #!/bin/bash
 # create-mdadm <lun array> <mdadm path e.g. /dev/md127> <mount path e.g. /dbdata>
+# TODO: SWAP file
+# TODO: run /usr/sbin/SAPconf
+
 function log()
 {
 	message=$1
