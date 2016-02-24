@@ -1,0 +1,265 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "imageSku": {
+      "type": "string",
+      "metadata": {
+        "description": "SKU of the image that should be used to deploy the virtual machine."
+      }
+    },
+    "imagePublisher": {
+      "type": "string",
+      "metadata": {
+        "description": "Publisher of the image that should be used to deploy the virtual machine."
+      }
+    },
+    "imageOffer": {
+      "type": "string",
+      "metadata": {
+        "description": "Offer of the image that should be used to deploy the virtual machine."
+      }
+    },
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Location where the template should be deployed."
+      }
+    },
+    "sidlower": {
+      "type": "string",
+      "metadata": {
+        "description": "SAP System ID in lower case."
+      }
+    },
+    "vmName": {
+      "type": "string",
+      "metadata": {
+        "description": "Prefix of the virtual machine name."
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Username for the Virtual Machine."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the Virtual Machine."
+      }
+    },
+    "subnetRef1": {
+      "type": "string",
+      "metadata": {
+        "description": "ID of the first subnet that should be used."
+      }
+    },
+    "subnetRef2": {
+      "type": "string",
+      "metadata": {
+        "description": "ID of the second subnet that should be used."
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "metadata": {
+        "description": "Size of the Virtual Machine."
+      }
+    },
+    "vmCount": {
+      "type": "int",
+      "metadata": {
+        "description": "Count of virtual machines that should be deployed."
+      }
+    },
+    "cseExtPublisher": {
+      "type": "string",
+      "metadata": {
+        "description": "Publisher of the CustomScriptExtension."
+      }
+    },
+    "cseExtName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the CustomScriptExtension."
+      }
+    },
+    "cseExtVersion": {
+      "type": "string",
+      "metadata": {
+        "description": "Version of the CustomScriptExtension."
+      }
+    },
+    "csExtensionScript": {
+      "type": "string",
+      "metadata": {
+        "description": "Script that should be passed to the CustomScriptExtension."
+      }
+    },
+    "csExtensionscriptCall": {
+      "type": "string",
+      "metadata": {
+        "description": "Script call that should be passed to the CustomScriptExtension."
+      }
+    }
+  },
+  "variables": {
+    "osDiskName": "[concat(parameters('sidlower'),'-os.vhd')]",
+    "osDiskCaching": "ReadWrite",
+    "sapDiskName": "[concat(parameters('sidlower'),'-sapdisk.vhd')]",
+    "sapDiskCaching": "None",
+    "dbDiskName": "[concat(parameters('sidlower'),'-dbdisk')]",
+    "dbDiskCaching": "None",
+    "nicName1": "[concat(parameters('sidlower'), '-nic-db')]",
+    "storageAccountName": "[concat('db', parameters('sidlower'), uniqueString(parameters('sidlower'), resourceGroup().id))]",
+    "internalStorageType": "Premium_LRS",
+    "dbDataLUNs": "0,1,2,3",
+    "dbLogLUNs": "4",
+    "vmNameDB":"[concat(parameters('vmName'), '-db')]" 
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('storageAccountName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[parameters('location')]",
+      "properties": {
+        "accountType": "[variables('internalStorageType')]"
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nicName1')]",
+      "apiVersion": "2015-06-15",
+      "location": "[parameters('location')]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[parameters('subnetRef1')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('vmNameDB')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName1'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('vmNameDB')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[parameters('imagePublisher')]",
+            "offer": "[parameters('imageOffer')]",
+            "sku": "[parameters('imageSku')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/vhds/', variables('osDiskName'))]"
+            },
+            "caching": "[variables('osDiskCaching')]",
+            "createOption": "FromImage"
+          },
+          "dataDisks": [
+            {
+              "name": "dbdisk1",
+              "lun": 0,
+              "vhd": {
+                "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/vhds/',parameters('sidlower'),'-dbdisk1.vhd')]"
+              },
+              "createOption": "Empty",
+              "caching": "None",
+              "diskSizeGB": "512"
+            },
+            {
+              "name": "dbdisk2",
+              "lun": 1,
+              "vhd": {
+                "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/vhds/',parameters('sidlower'),'-dbdisk2.vhd')]"
+              },
+              "createOption": "Empty",
+              "caching": "None",
+              "diskSizeGB": "512"
+            },
+            {
+              "name": "dbdisk3",
+              "lun": 2,
+              "vhd": {
+                "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/vhds/',parameters('sidlower'),'-dbdisk3.vhd')]"
+              },
+              "createOption": "Empty",
+              "caching": "None",
+              "diskSizeGB": "512"
+            },
+            {
+              "name": "dbdisk4",
+              "lun": 3,
+              "vhd": {
+                "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/vhds/',parameters('sidlower'),'-dbdisk4.vhd')]"
+              },
+              "createOption": "Empty",
+              "caching": "None",
+              "diskSizeGB": "512"
+            },
+            {
+              "name": "dbdisk5",
+              "lun": 4,
+              "vhd": {
+                "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/vhds/',parameters('sidlower'),'-dbdisk5.vhd')]"
+              },
+              "createOption": "Empty",
+              "caching": "None",
+              "diskSizeGB": "512"
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName1'))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('vmNameDB'),'/', parameters('cseExtName'))]",
+      "apiVersion": "2015-06-15",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', variables('vmNameDB'))]"
+      ],
+      "properties": {
+        "publisher": "[parameters('cseExtPublisher')]",
+        "type": "[parameters('cseExtName')]",
+        "typeHandlerVersion": "[parameters('cseExtVersion')]",
+        "settings": {
+          "fileUris": [ "[parameters('csExtensionScript')]" ],
+          "commandToExecute": "[concat(parameters('csExtensionscriptCall'), ' -DBDataLUNS \"', variables('dbDataLUNs'), '\" -DBLogLUNS \"', variables('dbLogLUNs'), '\"')]"
+        }
+      }
+    }
+  ]
+}

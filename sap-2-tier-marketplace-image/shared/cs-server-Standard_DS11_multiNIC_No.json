@@ -1,0 +1,201 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "imageSku": {
+      "type": "string",
+      "metadata": {
+        "description": "SKU of the image that should be used to deploy the virtual machine."
+      }
+    },
+    "imagePublisher": {
+      "type": "string",
+      "metadata": {
+        "description": "Publisher of the image that should be used to deploy the virtual machine."
+      }
+    },
+    "imageOffer": {
+      "type": "string",
+      "metadata": {
+        "description": "Offer of the image that should be used to deploy the virtual machine."
+      }
+    },
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Location where the template should be deployed."
+      }
+    },
+    "sidlower": {
+      "type": "string",
+      "metadata": {
+        "description": "SAP System ID in lower case."
+      }
+    },
+    "vmName": {
+      "type": "string",
+      "metadata": {
+        "description": "Prefix of the virtual machine name."
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Username for the Virtual Machine."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the Virtual Machine."
+      }
+    },
+    "storageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the storage account that should be used for the virtual machine."
+      }
+    },
+    "publicIpName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the public IP that should be used for the network interface."
+      }
+    },
+    "subnetRef1": {
+      "type": "string",
+      "metadata": {
+        "description": "ID of the first subnet that should be used."
+      }
+    },
+    "subnetRef2": {
+      "type": "string",
+      "metadata": {
+        "description": "ID of the second subnet that should be used."
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "metadata": {
+        "description": "Size of the Virtual Machine."
+      }
+    }
+  },
+  "variables": {
+    "osDiskName": "[concat(parameters('sidlower'),'-os.vhd')]",
+    "osDiskCaching": "ReadWrite",
+    "sapDiskName": "[concat(parameters('sidlower'),'-sapdisk.vhd')]",
+    "sapDiskCaching": "None",
+    "dbDiskName": "[concat(parameters('sidlower'),'-dbdisk')]",
+    "dbDiskCaching": "None",
+    "nicName1": "[concat(parameters('sidlower'), '-nic1')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nicName1')]",
+      "apiVersion": "2015-06-15",
+      "location": "[parameters('location')]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIpName'))]"
+              },
+              "subnet": {
+                "id": "[parameters('subnetRef1')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[parameters('vmName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName1'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('vmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[parameters('imagePublisher')]",
+            "offer": "[parameters('imageOffer')]",
+            "sku": "[parameters('imageSku')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/', variables('osDiskName'))]"
+            },
+            "caching": "[variables('osDiskCaching')]",
+            "createOption": "FromImage"
+          },
+          "dataDisks": [
+            {
+              "name": "dbdisk1",
+              "lun": 0,
+              "vhd": {
+                "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/',parameters('sidlower'),'-dbdisk1.vhd')]"
+              },
+              "createOption": "Empty",
+              "caching": "None",
+              "diskSizeGB": "512"
+            },
+            {
+              "name": "dbdisk2",
+              "lun": 1,
+              "vhd": {
+                "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/',parameters('sidlower'),'-dbdisk2.vhd')]"
+              },
+              "createOption": "Empty",
+              "caching": "None",
+              "diskSizeGB": "512"
+            },
+            {
+              "name": "dbdisk3",
+              "lun": 2,
+              "vhd": {
+                "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/',parameters('sidlower'),'-dbdisk3.vhd')]"
+              },
+              "createOption": "Empty",
+              "caching": "None",
+              "diskSizeGB": "128"
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName1'))]"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "dbDataLUNs": {
+      "value": "0,1",
+      "type": "string"
+    },
+    "dbLogLUNs": {
+      "value": "2",
+      "type": "string"
+    }
+  }
+}
