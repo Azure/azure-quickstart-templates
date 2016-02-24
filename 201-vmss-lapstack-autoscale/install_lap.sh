@@ -9,12 +9,9 @@ do
 done
 
 
-
-
-# write some PHP
-cd /var/www/html
-wget https://raw.githubusercontent.com/azure/azure-quickstart-templates/master/201-vmss-lapstack-autoscale/index.php
-wget https://raw.githubusercontent.com/azure/azure-quickstart-templates/master/201-vmss-lapstack-autoscale/do_work.php
+# write some PHP; these scripts are downloaded beforehand as fileUris
+cp index.php /var/www/html/
+cp do_work.php /var/www/html/
 rm /var/www/html/index.html
 # restart Apache
 apachectl restart
