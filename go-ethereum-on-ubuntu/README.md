@@ -58,7 +58,7 @@ Welcome to the Ethereum ecosystem. You are now on your journey to becoming a dec
 
 Earlier when you ran the `ls` command there was a file named `GuestBook.sol` - this is a very simple guest book contract written in the Solidity smart contract programming language.
 
-Learning Solidity is beyond the scope of this walk through, but feel free to read the code and try to understand what the contract is trying to do.  
+[Learning Solidity](https://solidity.readthedocs.org) is beyond the scope of this walk through, but feel free to read the code and try to understand what the contract is trying to do.  
 
 Getting familiar with Solidity contracts and deploying them to the network can be a bit of a learning curve - there are a number of different steps in the journey from source code to having a contract live on the public network; we'll try to address each of these steps.
 
@@ -145,7 +145,7 @@ On the public network this would be solved for us simply by waiting approximatel
 Interesting. How do we solve this problem? By turning on CPU mining locally:
 
 ```
-web3.miner.start()
+web3.miner.start(1)
 ```
 
 We'll have to wait a little bit while your node generates its Directed Acyclic Graph (DAG). This process is what helps the Ethereum network be resistant to ASIC mining; but that's a topic for another time.
@@ -161,7 +161,7 @@ Congratulations - your contract is now alive on the Ethereum Network!
 
 Go ahead and stop your miner for the moment:
 ```
-web3.miner.stop()
+web3.miner.stop(1)
 ```
 
 ## Reading from the contract

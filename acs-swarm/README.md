@@ -1,0 +1,1 @@
+The acs-swarm templates have moved to [101-acs-swarm](https://github.com/Azure/azure-quickstart-templates/tree/master/101-acs-swarm)

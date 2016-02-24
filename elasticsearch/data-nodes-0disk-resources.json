@@ -76,6 +76,7 @@
     "vmStorageAccountContainerName": "vhd",
     "subnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('subnet').vnet), '/subnets/', parameters('subnet').name)]",
     "storageAccountName": "[parameters('storageSettings').prefix]",
+    "storageAccountNameShared": "[parameters('storageSettings').shared]",
     "vmName": "[concat(parameters('namespace'), '-vm')]"
   },
   "resources": [
@@ -147,7 +148,7 @@
           "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
-          "computername": "[concat(variables('vmName'), copyIndex())]",
+          "computerName": "[concat('data-vm', copyIndex())]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]"
         },
@@ -179,7 +180,15 @@
           "dependsOn": [
             "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'), copyindex())]"
           ],
-          "properties": "[parameters('osSettings').extentionSettings.data]"
+          "properties": {
+            "publisher": "[parameters('osSettings').extensionSettings.data.publisher]",
+            "type": "[parameters('osSettings').extensionSettings.data.type]",
+            "typeHandlerVersion": "[parameters('osSettings').extensionSettings.data.typeHandlerVersion]",
+            "settings": {
+              "fileUris": "[parameters('osSettings').extensionSettings.data.settings.fileUris]",
+              "commandToExecute": "[concat(parameters('osSettings').extensionSettings.data.settings.commandToExecute, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameShared')), '2015-05-01-preview').key1)]"
+            }
+          }
         }
       ]
     }
