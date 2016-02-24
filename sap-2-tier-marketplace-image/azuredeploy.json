@@ -12,7 +12,8 @@
     },
     "osType": {
       "type": "string",
-      "allowedValues": [ "Windows", "Linux" ],
+      "allowedValues": [ "Windows Server 2012 Datacenter", "Windows Server 2012 R2 Datacenter", "SLES 11 SP4", "SLES 12" ],
+      "defaultValue": "Windows Server 2012 R2 Datacenter",
       "metadata": {
         "description": "The type of the operating system you want to deploy."
       }
@@ -33,16 +34,12 @@
         "description": "The storage type that should be used for the virtual machine."
       }
     },
-    "userImageVhdUri": {
+    "multiNIC": {
       "type": "string",
+      "allowedValues": [ "No" ],
+      "defaultValue": "No",
       "metadata": {
-        "description": "Uri of the user image."
-      }
-    },
-    "userImageStorageAccount": {
-      "type": "string",
-      "metadata": {
-        "description": "Name of the storage account where the user image is stored."
+        "description": "Determines if the virtual machine should have multip network interfaces."
       }
     },
     "adminUsername": {
@@ -59,27 +56,63 @@
     }
   },
   "variables": {
-    "github": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sap-templates",
+    "github": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sap-2-tier-marketplace-image/shared/",
+    "images": {
+      "Windows Server 2012 Datacenter": {
+        "sku": "2012-Datacenter",
+        "offer": "WindowsServer",
+        "publisher": "MicrosoftWindowsServer",
+        "OSType": "Windows"
+      },
+      "Windows Server 2012 R2 Datacenter": {
+        "sku": "2012-R2-Datacenter",
+        "offer": "WindowsServer",
+        "publisher": "MicrosoftWindowsServer",
+        "OSType": "Windows"
+      },
+      "SLES 11 SP4": {
+        "sku": "11-SP4",
+        "offer": "SLES",
+        "publisher": "SUSE",
+        "OSType": "Linux"
+      },
+      "SLES 12": {
+        "sku": "12",
+        "offer": "SLES",
+        "publisher": "SUSE",
+        "OSType": "Linux"
+      }
+    },
+    "imageSku": "[variables('images')[parameters('osType')].sku]",
+    "imagePublisher": "[variables('images')[parameters('osType')].publisher]",
+    "imageOffer": "[variables('images')[parameters('osType')].offer]",
 
+    "internalOSType": "[variables('images')[parameters('osType')].OSType]",
     "csExtension": {
       "Windows": {
         "Publisher": "Microsoft.Compute",
         "Name": "CustomScriptExtension",
         "Version": "1.7",
-        "script": "[concat(variables('github'), '/shared/configureSAPVM.ps1')]",
+        "script": "[concat(variables('github'), 'configureSAPVM.ps1')]",
         "scriptCall": "powershell.exe -File configureSAPVM.ps1"
       },
       "Linux": {
         "Publisher": "Microsoft.OSTCExtensions",
         "Name": "CustomScriptForLinux",
         "Version": "1.3",
-        "script": "[concat(variables('github'), '/shared/configureSAPVM.sh')]",
+        "script": "[concat(variables('github'), 'configureSAPVM.sh')]",
         "scriptCall": "sh configureSAPVM.sh"
       }
     },
-    "cseExtPublisher": "[variables('csExtension')[variables('internalOsType')].Publisher]",
-    "cseExtName": "[variables('csExtension')[variables('internalOsType')].Name]",
-    "cseExtVersion": "[variables('csExtension')[variables('internalOsType')].Version]",
+    "cseExtPublisher": "[variables('csExtension')[variables('internalOSType')].Publisher]",
+    "cseExtName": "[variables('csExtension')[variables('internalOSType')].Name]",
+    "cseExtVersion": "[variables('csExtension')[variables('internalOSType')].Version]",
+
+    "storageTypes": {
+      "Premium": "Premium_LRS",
+      "Standard": "Standard_LRS"
+    },
+    "internalStorageType": "[variables('storageTypes')[parameters('storageType')]]",
 
     "vmSizes": {
       "Small < 2.000 SAPS": {
@@ -117,16 +150,14 @@
     },
     "vmSize": "[variables('vmSizes')[parameters('sapSystemSize')][parameters('storageType')].size]",
 
-    "internalOsType": "[parameters('osType')]",
     "location": "[resourceGroup().location]",
     "sidlower": "[toLower(parameters('sapSystemId'))]",
     "vmName": "[concat(variables('sidlower'), '-servercs')]",
     "storageAccountName": "[concat(variables('sidlower'), uniqueString(variables('sidlower'), resourceGroup().id))]",
     "vnetName": "[concat(variables('sidlower'), '-vnet')]",
-    "publicIpName": "[concat(variables('sidlower'), '-pip')]",
+    "publicIpName": "[concat(variables('sidlower'), '-pib')]",
     "nicName": "[concat(variables('sidlower'), '-nic')]",
     "nsgName": "[concat(variables('sidlower'), '-nsg-cs')]",
-    "storageAccountType": "Standard_LRS",
     "publicIPAddressType": "Dynamic",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet",
@@ -137,17 +168,15 @@
     "nestedDeploymentNameNSG": "[concat(variables('nestedDeploymentName'), 'nsg')]"
   },
   "resources": [
-    
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('storageAccountName')]",
       "apiVersion": "2015-06-15",
       "location": "[variables('location')]",
       "properties": {
-        "accountType": "[variables('storageAccountType')]"
+        "accountType": "[variables('internalStorageType')]"
       }
     },
-
     {
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIpName')]",
@@ -165,7 +194,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('github'), '/shared/nsg-', variables('internalOSType'), '.json')]",
+          "uri": "[concat(variables('github'), 'nsg-', variables('internalOSType'), '.json')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -174,7 +203,7 @@
         }
       }
     },
-
+      
     {
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('vnetName')]",
@@ -214,13 +243,13 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('github'), '/shared/cs-server-', variables('vmSize'), '_multiNIC_No_UI.json')]",
+          "uri": "[concat(variables('github'), 'cs-server-', variables('vmSize'), '_multiNIC_', parameters('multiNIC'), '.json')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "userImageVhdUri": { "value": "[parameters('userImageVhdUri')]" },
-          "userImageStorageAccount": { "value": "[parameters('userImageStorageAccount')]" },
-          "osType": { "value": "[parameters('osType')]" },
+          "imageSku": { "value": "[variables('imageSku')]" },
+          "imagePublisher": { "value": "[variables('imagePublisher')]" },
+          "imageOffer": { "value": "[variables('imageOffer')]" },
           "location": { "value": "[variables('location')]" },
           "sidlower": { "value": "[variables('sidlower')]" },
           "vmName": { "value": "[variables('vmName')]" },
@@ -248,8 +277,8 @@
         "type": "[variables('cseExtName')]",
         "typeHandlerVersion": "[variables('cseExtVersion')]",
         "settings": {
-          "fileUris": [ "[variables('csExtension')[parameters('osType')].script]" ],
-          "commandToExecute": "[concat(variables('csExtension')[parameters('osType')].scriptCall, ' -DBDataLUNS \"', reference(variables('nestedDeploymentName')).outputs.dbDataLUNs.value , '\" -DBLogLUNS \"', reference(variables('nestedDeploymentName')).outputs.dbLogLUNs.value, '\"')]"
+          "fileUris": [ "[variables('csExtension')[variables('internalOSType')].script]" ],
+          "commandToExecute": "[concat(variables('csExtension')[variables('internalOSType')].scriptCall, ' -DBDataLUNS \"', reference(variables('nestedDeploymentName')).outputs.dbDataLUNs.value , '\" -DBLogLUNS \"', reference(variables('nestedDeploymentName')).outputs.dbLogLUNs.value, '\"')]"
         }
       }
     }
