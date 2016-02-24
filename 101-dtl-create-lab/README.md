@@ -9,3 +9,6 @@
 
 
 This template creates a new DevTestLab instance.
+
+
+More examples of RM templates for Azure DevTestLab can be found at: https://github.com/Azure/azure-devtestlab 
