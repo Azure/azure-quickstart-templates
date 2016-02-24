@@ -18,7 +18,11 @@ We look forward to hearing your feedback and suggestions!
 ```
 Template Changelog
 
-# V1.1 (2016-02-13)
+# v1.1.1 (2016-02-23)
+- Upgrade versions
+  - Upgrade bosh version to 255.1
+
+# v1.1 (2016-02-13)
 - New features
   - Support deploying Bosh automatically
 - Parameters and Variables
@@ -43,7 +47,7 @@ Template Changelog
     - Put commandToExecute into protectedSettings to protect users' credentials
 - Add CI pipeline to test bosh-setup deployment
 
-# V1.0 (2015-11-02) - GA Version
+# v1.0 (2015-11-02) - GA Version
 
 # Preview II Version (2015-08-25)
 
