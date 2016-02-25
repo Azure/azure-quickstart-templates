@@ -10,7 +10,7 @@ ps axjf
 ################################################################
 # Start a screen session to allow viewing of progress via SSH  #
 ################################################################
-#sudo screen 
+sudo screen 
 
 #############
 # Parameters
