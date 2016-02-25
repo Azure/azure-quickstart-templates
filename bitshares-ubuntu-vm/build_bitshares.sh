@@ -1,25 +1,25 @@
 #!/bin/bash
 
 # print commands and arguments as they are executed
-set -x
+#set -x
 
-echo "starting ubuntu devbox install on pid $$"
-date
-ps axjf
+#echo "starting ubuntu devbox install on pid $$"
+#date
+#ps axjf
 
 #############
 # Parameters
 #############
 
-NPROC=$(nproc)
-echo "nproc: $NPROC"
+#NPROC=$(nproc)
+#echo "nproc: $NPROC"
 
 #######################################################
 # Update Ubuntu and install all necessary prerequisites
 #######################################################
 
-time sudo apt-get -y update
-time sudo apt-get -y --force-yes git #cmake ntp install libbz2-dev libdb++-dev libdb-dev libssl-dev openssl libreadline-dev autoconf libtool libboost-all-dev
+time apt-get -y update
+time apt-get -y --force-yes git #cmake ntp install libbz2-dev libdb++-dev libdb-dev libssl-dev openssl libreadline-dev autoconf libtool libboost-all-dev
 
 ###############################
 # Install BitShares from source
