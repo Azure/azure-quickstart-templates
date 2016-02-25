@@ -19,7 +19,7 @@ echo "nproc: $NPROC"
 #######################################################
 
 time sudo apt-get -y update
-#time sudo apt-get -y --force-yes install libbz2-dev libdb++-dev libdb-dev libssl-dev openssl libreadline-dev autoconf libtool git cmake ntp libboost-all-dev
+time sudo apt-get -y --force-yes git #cmake ntp install libbz2-dev libdb++-dev libdb-dev libssl-dev openssl libreadline-dev autoconf libtool libboost-all-dev
 
 ###############################
 # Install BitShares from source
