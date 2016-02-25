@@ -37,3 +37,8 @@ time sudo make -j$NPROC
 
 cd ~/bitshares-2/programs/witness_node
 sudo ./witness_node --rpc-endpoint=127.0.0.1:8090
+
+################################################################
+# Connect to the host via SSH                                  #
+# sudo ~/bitshares/programs/cli_wallet/./cli_wallet            #
+################################################################
