@@ -11,13 +11,7 @@ ps axjf
 # Parameters
 #############
 
-AZUREUSER=$1
-HOMEDIR="/home/$AZUREUSER"
-VMNAME=`hostname`
 NPROC=$(nproc)
-echo "User: $AZUREUSER"
-echo "User home dir: $HOMEDIR"
-echo "vmname: $VMNAME"
 echo "nproc: $NPROC"
 
 #######################################################
