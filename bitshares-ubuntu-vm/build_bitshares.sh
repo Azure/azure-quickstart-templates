@@ -19,7 +19,7 @@
 #######################################################
 
 time apt-get -y update
-time apt-get -y --force-yes git #cmake ntp install libbz2-dev libdb++-dev libdb-dev libssl-dev openssl libreadline-dev autoconf libtool libboost-all-dev
+time apt-get -y git #cmake ntp install libbz2-dev libdb++-dev libdb-dev libssl-dev openssl libreadline-dev autoconf libtool libboost-all-dev
 
 ###############################
 # Install BitShares from source
