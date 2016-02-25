@@ -10,7 +10,7 @@ ps axjf
 ################################################################
 # Start a screen session to allow viewing of progress via SSH  #
 ################################################################
-sudo screen 
+#sudo screen 
 
 #############
 # Parameters
@@ -31,12 +31,12 @@ time apt-get -y install git ntp cmake libbz2-dev libdb++-dev libdb-dev libssl-de
 cd ~/ 
 time sudo git clone https://github.com/bitshares/bitshares-2.git 
 cd ~/bitshares-2 
-time sudo git submodule update --init --recursive --force 
-time sudo cmake -DCMAKE_BUILD_TYPE=Release . 
-time sudo make -j$NPROC
+time git submodule update --init --recursive --force 
+time cmake -DCMAKE_BUILD_TYPE=Release . 
+time make -j$NPROC
 
 cd ~/bitshares-2/programs/witness_node
-sudo ./witness_node --rpc-endpoint=127.0.0.1:8090
+./witness_node --rpc-endpoint=127.0.0.1:8090
 
 ################################################################
 # Connect to the host via SSH                                  #
