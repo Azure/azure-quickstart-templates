@@ -2,8 +2,12 @@
 
 REMOTEMYSQLIP=$1
 
+#get repo
+wget http://repo.mysql.com/mysql-community-release-el6-5.noarch.rpm
+yum localinstall -y mysql-community-release-el6-5.noarch.rpm
+
 #install apache 2.4 php5
-yum install httpd php php-mysql -y
+yum install mysql httpd php php-mysql -y
 
 #start
 service httpd start
