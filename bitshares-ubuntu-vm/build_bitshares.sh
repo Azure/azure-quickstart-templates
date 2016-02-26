@@ -21,7 +21,7 @@ echo "nproc: $NPROC"
 ################################################################
 # Build BitShares from source, then start witness node         #
 ################################################################
-/usr/local
+cd /usr/local
 time git clone https://github.com/bitshares/bitshares-2.git
 cd bitshares-2/
 time git submodule update --init --recursive --force
