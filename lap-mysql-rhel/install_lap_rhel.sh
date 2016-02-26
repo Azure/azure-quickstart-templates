@@ -15,9 +15,11 @@ service httpd start
 #auto-start
 chkconfig httpd on
 
-#disable firewalld
+#disable firewalld and selinux
 chkconfig firewalld off
 service firewalld stop
+setenforce 0
+sed -i 's/^SELINUX=.*/SELINUX=disabled' /etc/sysconfig/selinux
 
 
 #php test file

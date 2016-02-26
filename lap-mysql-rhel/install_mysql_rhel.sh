@@ -23,6 +23,8 @@ service mysqld restart
 #auto-start 
 chkconfig mysqld on
 
-#disable firewalld
+#disable firewalld and selinux
 service firewalld stop
 chkconfig firewalld off
+setenforce 0
+sed -i 's/^SELINUX=.*/SELINUX=disabled/' /etc/sysconfig/selinux
