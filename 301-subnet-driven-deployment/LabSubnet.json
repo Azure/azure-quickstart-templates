@@ -1,6 +1,6 @@
 ﻿{
   "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-  "contentVersion": "1.0.0.1",
+  "contentVersion": "1.1.0.0",
   "parameters": {
     "labVNetPrefix": {
       "type": "string",
@@ -24,14 +24,7 @@
       "type": "string",
       "defaultValue": "labVNet",
       "metadata": {
-        "description": "VNet name"
-      }
-    },
-    "lbName": {
-      "type": "string",
-      "defaultValue": "lbn",
-      "metadata": {
-        "description": "Front End load Balancer Name'."
+        "description": "Virtual Network name"
       }
     },
     "publicIPAddressName": {
@@ -40,18 +33,37 @@
       "metadata": {
         "description": "Public address name, for lb configuration."
       }
+    },
+    "addedSubnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the subnet to add"
+      }
+    },
+    "addedSubnetPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "CIDR prefix of the subnet to add"
+      }
     }
-
 
   },
   "variables": {
     "apiVersion": "2015-06-15",
-    "location": "[resourceGroup().location]"
+    "location": "[resourceGroup().location]",
+    "publicIPAddressName": "[uniqueString(resourceGroup().id, 'PublicIP')]",
+    "lbName": "[uniqueString(resourceGroup().id, 'labLB')]",
+    "sbn": [
+      {
+        "name": "[parameters('addedSubnetName')]",
+        "properties": { "addressPrefix": "[parameters('addedSubnetPrefix')]" }
+      }
+    ]
   },
   "resources": [
     {
       "apiVersion": "2015-06-15",
-      "name": "[parameters('lbName')]",
+      "name": "[variables('lbName')]",
       "type": "Microsoft.Network/loadBalancers",
       "location": "[resourceGroup().location]",
       "dependsOn": [
@@ -102,7 +114,7 @@
             "[parameters('labVNetPrefix')]"
           ]
         },
-        "subnets": "[parameters('subnets')]"
+        "subnets": "[concat(parameters('subnets'),variables('sbn'))]"
       }
     }
   ],
@@ -110,6 +122,19 @@
     "vnetSubnets": {
       "type": "array",
       "value": "[reference(parameters('vnetName')).subnets]"
+    },
+    "vnetLength": {
+      "type": "int",
+      "value": "[length(reference(parameters('vnetName')).subnets)]"
+    },
+    "publicIPAddressName": {
+      "type": "string",
+      "value": "[variables('publicIPAddressName')]"
+    },
+    "lbName": {
+      "type": "string",
+      "value": "[variables('lbName')]"
     }
+
   }
 }

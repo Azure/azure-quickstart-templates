@@ -1,0 +1,94 @@
+﻿{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.1.0.0",
+  "parameters": {
+    "indx": {
+      "type": "int",
+      "defaultValue": 0,
+      "metadata": {
+        "description": "Index to create multiple DCs. Index == 0 means it will be a new domain and a PDCE will be created"
+      }
+    },
+    "vmNamePrefix": {
+      "type": "string",
+      "defaultValue": "DC-"
+    },
+    "adminUsername": {
+      "type": "string",
+      "defaultValue": "zeAdmin",
+      "metadata": {
+        "description": "Admin username"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Admin password"
+      }
+    },
+    "domainName": {
+      "type": "string",
+      "defaultValue": "contoso.com",
+      "metadata": {
+        "description": "The FQDN of the AD Domain created "
+      }
+    },
+    "assetLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The location of resources such as templates and DSC modules that the script is dependent. Includes the last forward slash"
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/301-subnet-driven-deployment/"
+    },
+    "computerName": {
+      "type": "string",
+      "defaultValue": "dc",
+      "metadata": {
+        "description": "Computer Name"
+      }
+    }
+  },
+  "variables": {
+    "adConfigurationFunction": "[concat('CreateADC.ps1\\CreateADC_', variables('dscFiletocall'))]",
+    "adDataDisk": "[concat('ADDataDisk',parameters('indx'))]",
+    "adDataDiskSize": 1000,
+    "adModulesURL": "[concat(parameters('assetLocation'),'CreateADC.ps1.zip')]",
+    "dscFiletocall": "[mod(add(parameters('indx'),2),add(parameters('indx'),1))]",
+    "vmName": "[concat(parameters('vmNamePrefix'), parameters('computerName'), parameters('indx'))]"
+
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('vmName'),'/CreateDC',parameters('indx'))]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publisher": "Microsoft.Powershell",
+        "type": "DSC",
+        "typeHandlerVersion": "2.13",
+        "autoUpgradeMinorVersion": false,
+        "settings": {
+          "wmfVersion": "4.0",
+          "ModulesUrl": "[variables('adModulesURL')]",
+          "ConfigurationFunction": "[variables('adConfigurationFunction')]",
+          "Properties": {
+            "DomainName": "[parameters('domainName')]",
+            "AdminCreds": {
+              "UserName": "[parameters('adminUserName')]",
+              "Password": "PrivateSettingsRef:AdminPassword"
+            }
+          }
+        },
+        "protectedSettings": {
+          "Items": {
+            "AdminPassword": "[parameters('adminPassword')]"
+          }
+        }
+      }
+    }
+
+  ],
+  "outputs": {
+  }
+}
