@@ -56,7 +56,7 @@ Please note that [Azure Resource Manager][3] is used to provision the environmen
 1.  Launch PowerShell ISE
 2.  Execute: `Login-AzureRmAccount`
 3.  Navigate to `CHECKOUT_DIRECTORY/Scripts`
-4.  Execute the following commands on PowerShell ISE and fill in any prompts.  Defaults are automatically set in azuredeploy.parameters.json and can be updated as required.  To leverage Azure Storage, edit the default values for **_artifactsLocation** and **_artifactsLocationSasToken**.
+4.  Execute the following commands on PowerShell ISE and fill in any prompts.  Defaults are automatically set in azuredeploy.parameters.json and can be updated as required.  To leverage Azure Storage, edit the default values for **artifactsLocation** and **artifactsLocationSasToken**.
 
 > You can set change the **-ResourceGroupName** and **-ResourceGroupLocation** to suit your deployment needs.  In this example, it is set to "spark-on-centos" and "East US"
 
@@ -88,7 +88,7 @@ New-AzureRmResourceGroupDeployment -ResourceGroupName $ResourceGroupName `
 #### Pre-Deployment
 
 1.  Checkout the Git repository.  This folder will be known in the rest of the instructions as **CHECKOUT_DIRECTORY
-2.  Copy the scripts located in CustomScripts folder to a publically accessible location or in Azure Storage.  Once uploaded, update **_artifactsLocation** and **_artifactsLocationSasToken** in azuredeploy.parameters.json accordingly.
+2.  Copy the scripts located in CustomScripts folder to a publically accessible location or in Azure Storage.  Once uploaded, update **artifactsLocation** and **artifactsLocationSasToken** in azuredeploy.json accordingly.
 
 
 #### Deployment
