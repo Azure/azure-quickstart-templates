@@ -1,0 +1,168 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "userImageVhdUri": {
+      "type": "string",
+      "metadata": {
+        "description": "Uri of the user image."
+      }
+    },
+    "userImageStorageAccount": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the storage account where the user image is stored."
+      }
+    },
+    "osType": {
+      "type": "string",
+      "allowedValues": [ "Windows", "Linux" ],
+      "metadata": {
+        "description": "The type of the operating system you want to deploy."
+      }
+    },
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Location where the template should be deployed."
+      }
+    },
+    "sidlower": {
+      "type": "string",
+      "metadata": {
+        "description": "SAP System ID in lower case."
+      }
+    },
+    "vmName": {
+      "type": "string",
+      "metadata": {
+        "description": "Prefix of the virtual machine name."
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Username for the Virtual Machine."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the Virtual Machine."
+      }
+    },
+    "storageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the storage account that should be used for the virtual machine."
+      }
+    },
+    "nicName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the network interface that should be used for the virtual machine."
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "metadata": {
+        "description": "Size of the Virtual Machine."
+      }
+    }
+  },
+  "variables": {
+    "osDiskName": "[concat(parameters('sidlower'),'-os.vhd')]",
+    "osDiskCaching": "ReadWrite"
+  },
+  "resources": [    
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[parameters('vmName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('vmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "osDisk": {
+            "name": "osdisk",
+            "osType": "[parameters('osType')]",
+            "image": {
+              "uri": "[parameters('userImageVhdUri')]"
+            },
+            "vhd": {
+              "uri": "[concat('http://',parameters('userImageStorageAccount'),'.blob.core.windows.net/', resourceGroup().name, '/', parameters('vmName'), '-', variables('osDiskName'))]"
+            },
+            "caching": "[variables('osDiskCaching')]",
+            "createOption": "FromImage"
+          },
+          "dataDisks": [
+            {
+              "name": "dbdisk1",
+              "lun": 0,
+              "vhd": {
+                "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/',parameters('sidlower'),'-dbdisk1.vhd')]"
+              },
+              "createOption": "Empty",
+              "caching": "None",
+              "diskSizeGB": "512"
+            },
+            {
+              "name": "dbdisk2",
+              "lun": 1,
+              "vhd": {
+                "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/',parameters('sidlower'),'-dbdisk2.vhd')]"
+              },
+              "createOption": "Empty",
+              "caching": "None",
+              "diskSizeGB": "512"
+            },
+            {
+              "name": "dbdisk3",
+              "lun": 2,
+              "vhd": {
+                "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/',parameters('sidlower'),'-dbdisk3.vhd')]"
+              },
+              "createOption": "Empty",
+              "caching": "None",
+              "diskSizeGB": "512"
+            },
+            {
+              "name": "dbdisk4",
+              "lun": 3,
+              "vhd": {
+                "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/',parameters('sidlower'),'-dbdisk4.vhd')]"
+              },
+              "createOption": "Empty",
+              "caching": "None",
+              "diskSizeGB": "127"
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('nicName'))]"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "dbDataLUNs": {
+      "value": "0,1,2",
+      "type": "string"
+    },
+    "dbLogLUNs": {
+      "value": "3",
+      "type": "string"
+    }
+  }
+}
