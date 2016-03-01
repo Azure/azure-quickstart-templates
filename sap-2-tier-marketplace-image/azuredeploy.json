@@ -151,7 +151,8 @@
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('vnetName'))]",
     "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
     "nestedDeploymentName": "nestedTemplate",
-    "nestedDeploymentNameNSG": "[concat(variables('nestedDeploymentName'), 'nsg')]"
+    "nestedDeploymentNameNSG": "[concat(variables('nestedDeploymentName'), 'nsg')]",
+    "nestedDeploymentNameProf": "[concat(variables('nestedDeploymentName'), 'prof')]"
   },
   "resources": [
     {
@@ -186,6 +187,34 @@
         "parameters": {
           "nsgName": { "value": "[variables('nsgName')]" },
           "location": { "value": "[variables('location')]" }
+        }
+      }
+    },
+
+    {
+      "apiVersion": "2015-01-01",
+      "name": "[variables('nestedDeploymentNameProf')]",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('github'), 'os-disk-parts.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "imageSku": { "value": "[variables('imageSku')]" },
+          "imagePublisher": { "value": "[variables('imagePublisher')]" },
+          "imageOffer": { "value": "[variables('imageOffer')]" },
+          "userImageVhdUri": { "value": "" },
+          "userImageStorageAccount": { "value": "" },
+          "osDiskVhdUri": { "value": "" },
+          "osDiskType": { "value": "image" },
+          "osType":{ "value": "" },
+          "sidlower": { "value": "[variables('sidlower')]" },
+          "vmName": { "value": "[variables('vmName')]" },
+          "adminUsername": { "value": "[parameters('adminUsername')]" },
+          "adminPassword": { "value": "[parameters('adminPassword')]" },
+          "storageAccountName": { "value": "[variables('storageAccountName')]" }
         }
       }
     },
@@ -249,7 +278,8 @@
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]",
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
+        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameProf'))]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -258,17 +288,15 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "imageSku": { "value": "[variables('imageSku')]" },
-          "imagePublisher": { "value": "[variables('imagePublisher')]" },
-          "imageOffer": { "value": "[variables('imageOffer')]" },
+          "imageReference": { "value": "[reference(variables('nestedDeploymentNameProf')).outputs.imageReference.value]" },
+          "osDisk": { "value": "[reference(variables('nestedDeploymentNameProf')).outputs.osDisk.value]" },
+          "osProfile": { "value": "[reference(variables('nestedDeploymentNameProf')).outputs.osProfile.value]" },
           "location": { "value": "[variables('location')]" },
           "sidlower": { "value": "[variables('sidlower')]" },
           "vmName": { "value": "[variables('vmName')]" },
-          "adminUsername": { "value": "[parameters('adminUsername')]" },
-          "adminPassword": { "value": "[parameters('adminPassword')]" },
+          "vmSize": { "value": "[variables('vmSize')]" },
           "storageAccountName": { "value": "[variables('storageAccountName')]" },
-          "nicName": { "value": "[variables('nicName')]" },
-          "vmSize": { "value": "[variables('vmSize')]" }
+          "nicName": { "value": "[variables('nicName')]" }
         }
       }
     },

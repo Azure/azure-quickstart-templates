@@ -4,6 +4,8 @@
     [String] $DBLogLUNS = "3",
     [string] $DBDataDrive = "S:",
     [string] $DBLogDrive = "L:"
+	[string] $DBDataName = "dbdata",
+    [string] $DBLogName = "dblog"
 )
 
 $ErrorActionPreference = "Stop";
@@ -55,7 +57,7 @@ function Create-Pool
         $partition = New-Partition -UseMaximumSize -DiskId $disk.UniqueId -DriveLetter $path.Substring(0,1)
         $partition | Format-Volume -FileSystem NTFS -NewFileSystemLabel $name -Confirm:$false;
     }
-    else
+    elseif ($luns.Length -eq 1)
     {		
         $lun = $luns[0];
 		Log ("Creating volume for disk " + $lun);
@@ -66,5 +68,5 @@ function Create-Pool
     }
 }
 
-Create-Pool -arraystring $DBDataLUNS -name "dbdata" -path $DBDataDrive 
-Create-Pool -arraystring $DBLogLUNS -name "dblog" -path $DBLogDrive
+Create-Pool -arraystring $DBDataLUNS -name $DBDataName -path $DBDataDrive 
+Create-Pool -arraystring $DBLogLUNS -name $DBLogName -path $DBLogDrive
