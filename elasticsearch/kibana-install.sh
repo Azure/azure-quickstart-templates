@@ -82,7 +82,7 @@ install_kibana() {
     fi
 
     # install the marvel plugin for 2.x
-    if [ ${INSTALL_MARVEL} ];
+    if [ ${INSTALL_MARVEL} -ne 0 ];
     then
         if [[ "${ES_VERSION}" == "2.2.0" ]];
         then
@@ -98,7 +98,7 @@ install_kibana() {
     fi
     
     # install the sense plugin for 2.x
-    if [ ${INSTALL_SENSE} ];
+    if [ ${INSTALL_SENSE} -ne 0 ];
     then
         if [[ "${ES_VERSION}" == \2* ]];
         then
