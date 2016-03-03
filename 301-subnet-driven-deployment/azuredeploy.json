@@ -2,6 +2,35 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.1",
   "parameters": {
+    "numberOfSubnets": {
+      "type": "int",
+      "defaultValue": 3,
+      "minValue": 2,
+      "maxValue": 20,
+      "metadata": {
+        "description": "Number of subnets in the VNet. Must be between 2 and 20"
+      }
+    },
+    "memberServersPerSubnet": {
+      "type": "int",
+      "defaultValue": 1,
+      "minValue": 1,
+      "maxValue": 20,
+      "metadata": {
+        "description": "Member servers for each subnet. Must be between 1 and 20"
+      }
+    },
+    "storageCategory": {
+      "type": "string",
+      "defaultValue": "Standard",
+      "metadata": {
+        "description": "Storage type. Can be either Standard (HDD) or Premium (SSD)"
+      },
+      "allowedValues": [
+        "Standard",
+        "Premium"
+      ]
+    },
     "domainName": {
       "type": "string",
       "defaultValue": "fabrikam.com",
@@ -29,80 +58,80 @@
         "description": "Admin password"
       }
     },
-    "vnetName": {
-      "type": "string",
-      "metadata": {
-        "description": "Name of the vnet"
-      }
-    },
     "dnsLabelPrefix": {
       "type": "string",
       "metadata": {
         "description": "Unique public DNS label for the deployment. The fqdn will look something like 'dnsname.region.cloudapp.azure.com'. Up to 62 chars, digits or dashes, lowercase, should start with a letter: must conform to '^[a-z][a-z0-9-]{1,61}[a-z0-9]$'."
       }
-    },
-    "lbName": {
-      "type": "string",
-      "defaultValue": "lbn",
-      "metadata": {
-        "description": "Front End load Balancer Name'."
-      }
-    },
-    "publicIPAddressName": {
-      "type": "string",
-      "defaultValue": "PublicIP",
-      "metadata": {
-        "description": "Public address name, for lb configuration."
-      }
     }
   },
   "variables": {
+    "vnetName": "[uniqueString(resourceGroup().id, 'labVNet')]",
     "labVNetPrefix": "172.16.0.0/12",
-    "subnets": [
-      {
-        "name": "sbn-Central",
-        "properties": {
-          "addressPrefix": "172.16.0.0/24"
-        }
-      },
-      {
-        "name": "sbn-Branch1",
-        "properties": {
-          "addressPrefix": "172.16.1.0/24"
-        }
-      },
-      {
-        "name": "sbn-Branch2",
-        "properties": {
-          "addressPrefix": "172.16.2.0/24"
-        }
-      }
-    ],
     "apiVersion": "2015-06-15",
     "location": "[resourceGroup().location]",
-    "storageAccountSuffix": "st"
+    "storageAccountSuffix": "st",
+    "storageAccountType": "[concat(parameters('storageCategory'),'_LRS')]",
+    "adDataDiskSize": "30",
+    "mbrDataDiskSize": "127",
+    "vmSize-Standard": "Standard_A2",
+    "vmSize-Premium": "Standard_DS2",
+    "boot-Standard": true,
+    "boot-Premium": false
+
+
   },
   "resources": [
     {
       "apiVersion": "2015-01-01",
-      "name": "[parameters('vnetName')]",
+      "name": "sbn0",
       "type": "Microsoft.Resources/deployments",
       "properties": {
         "mode": "incremental",
         "templateLink": {
-          "uri": "[concat(parameters('assetLocation'),'LabVNet.json')]",
-          "contentVersion": "1.0.0.1"
+          "uri": "[concat(parameters('assetLocation'),'LabSubnet.json')]",
+          "contentVersion": "1.1.0.0"
         },
         "parameters": {
           "labVNetPrefix": { "value": "[variables('labVNetPrefix')]" },
-          "subnets": { "value": "[variables('subnets')]" },
-          "vnetName": { "value": "[parameters('vnetName')]" },
-          "dnsLabel": { "value": "[parameters('dnsLabel')]" },
-          "lbName": { "value": "[parameters('lbName')]" },
-          "publicIPAddressName": { "value": "[parameters('publicIPAddressName')]" }
+          "subnets": {
+            "value": []
+          },
+          "addedSubnetName": { "value": "sbn-Central" },
+          "addedSubnetPrefix": { "value": "172.16.0.0/24" },
+          "vnetName": { "value": "[variables('vnetName')]" },
+          "dnsLabel": { "value": "[parameters('dnsLabelPrefix')]" }
         }
       }
     },
+
+    {
+      "apiVersion": "2015-01-01",
+      "name": "[concat('sbn', copyIndex(1))]",
+      "type": "Microsoft.Resources/deployments",
+      "copy": {
+        "name": "iter",
+        "count": "[add(parameters('numberOfSubnets'),-1)]"
+      },
+      "properties": {
+        "mode": "incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('assetLocation'),'LabSubnet.json')]",
+          "contentVersion": "1.1.0.0"
+        },
+        "parameters": {
+          "labVNetPrefix": { "value": "[variables('labVNetPrefix')]" },
+          "subnets": {
+            "value": "[reference(concat('sbn', copyIndex())).outputs.vnetSubnets.value]"
+          },
+          "vnetName": { "value": "[variables('vnetName')]" },
+          "dnsLabel": { "value": "[parameters('dnsLabelPrefix')]" },
+          "addedSubnetName": { "value": "[concat('sbn-',copyIndex(1))]" },
+          "addedSubnetPrefix": { "value": "[concat('172.16.',copyIndex(1),'.0/24')]" }
+        }
+      }
+    },
+
     {
       "apiVersion": "2015-01-01",
       "name": "LabStorage",
@@ -111,17 +140,17 @@
         "mode": "incremental",
         "templateLink": {
           "uri": "[concat(parameters('assetLocation'), 'Storage.json')]",
-          "contentVersion": "1.0.0.1"
+          "contentVersion": "1.1.0.0"
         },
         "parameters": {
-          "storageAccountSuffix": { "value": "[variables('storageAccountSuffix')]" }
+          "storageAccountSuffix": { "value": "[variables('storageAccountSuffix')]" },
+          "storageAccountType": { "value": "[variables('storageAccountType')]" }
         }
       }
     },
-
     {
       "apiVersion": "2015-01-01",
-      "name": "LabAVSetDC",
+      "name": "Step0",
       "type": "Microsoft.Resources/deployments",
       "properties": {
         "mode": "incremental",
@@ -136,30 +165,23 @@
     },
     {
       "apiVersion": "2015-01-01",
-      "name": "RootFirstDC",
+      "name": "confDC0",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', parameters('vnetName'))]",
+        "[concat('Microsoft.Resources/deployments/', 'sbn0')]",
         "Microsoft.Resources/deployments/LabStorage",
-        "Microsoft.Resources/deployments/LabAVSetDC"
+        "Microsoft.Resources/deployments/dc0"
       ],
       "properties": {
         "mode": "incremental",
         "templateLink": {
-          "uri": "[concat(parameters('assetLocation'),'CreateADC.json')]",
-          "contentVersion": "1.0.0.1"
+          "uri": "[concat(parameters('assetLocation'),'ConfigDC.json')]",
+          "contentVersion": "1.1.0.0"
         },
         "parameters": {
           "indx": { "value": 0 },
-          "lbName": { "value": "[parameters('lbName')]" },
-          "publicIPAddressName": { "value": "[parameters('publicIPAddressName')]" },
-          "publicStartRdpPort": { "value": 5000 },
-          "vnetName": { "value": "[parameters('vnetName')]" },
-          "subnets": { "value": "[reference(parameters('vnetName')).outputs.vnetSubnets.value]" },
-          "storageAccountName": { "value": "[reference('LabStorage').outputs.storageAccountName.value]" },
-          "availabilitySetName": { "value": "AvSetDC" },
-          "vmSize": { "value": "Standard_A2" },
-          "vmNamePrefix": { "value": "dc" },
+          "vmNamePrefix": { "value": "" },
+          "computerName": { "value": "dc" },
           "domainName": { "value": "[parameters('domainName')]" },
           "adminUserName": { "value": "[parameters('adminUserName')]" },
           "adminPassword": { "value": "[parameters('adminPassword')]" },
@@ -169,10 +191,10 @@
     },
     {
       "apiVersion": "2015-01-01",
-      "name": "setDNS",
+      "name": "Step1",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
-        "Microsoft.Resources/deployments/RootFirstDC"
+        "Microsoft.Resources/deployments/dc0"
       ],
       "properties": {
         "mode": "incremental",
@@ -181,47 +203,109 @@
           "contentVersion": "1.0.0.1"
         },
         "parameters": {
-          "dnsServerAddresses": { "value": [ "[reference('RootFirstDC').outputs.vmIPAddress.value]" ] },
-          "virtualNetworkName": { "value": "[parameters('vnetName')]" },
-          "virtualNetworkSubnets": { "value": "[reference(parameters('vnetName')).outputs.vnetSubnets.value]" },
+          "dnsServerAddresses": { "value": [ "[reference('dc0').outputs.vmIPAddress.value]" ] },
+          "virtualNetworkName": { "value": "[variables('vnetName')]" },
+          "virtualNetworkSubnets": { "value": "[reference(concat('sbn', add(parameters('numberOfSubnets'),-1))).outputs.vnetSubnets.value]" },
           "virtualNetworkAddressRanges": { "value": [ "[variables('labVNetPrefix')]" ] }
         }
       }
     },
     {
       "apiVersion": "2015-01-01",
-      "name": "[concat('bdc', copyIndex())]",
+      "name": "dc0",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
-        "Microsoft.Resources/deployments/LabAVSetDC",
-        "Microsoft.Resources/deployments/RootFirstDC",
-        "Microsoft.Resources/deployments/setDNS"
+        "Microsoft.Resources/deployments/Step0"
+      ],
+      "properties": {
+        "mode": "incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('assetLocation'),'WinServ.json')]",
+          "contentVersion": "1.2.0.0"
+        },
+        "parameters": {
+          "indx": { "value": 0 },
+          "bootDiagnostics": { "value": "[variables(concat('boot-',parameters('storageCategory')))]" },
+          "vmSize": { "value": "[variables(concat('vmSize-', parameters('storageCategory')))]" },
+          "lbName": { "value": "[reference('sbn0').outputs.lbName.value]" },
+          "computerName": { "value": "dc" },
+          "publicIPAddressName": { "value": "[reference('sbn0').outputs.publicIPAddressName.value]" },
+          "publicStartRdpPort": { "value": 5000 },
+          "vnetName": { "value": "[variables('vnetName')]" },
+          "subnets": { "value": "[reference('sbn0').outputs.vnetSubnets.value]" },
+          "storageAccountName": { "value": "[reference('LabStorage').outputs.storageAccountName.value]" },
+          "availabilitySetName": { "value": "AvSetDC" },
+          "vmNamePrefix": { "value": "" },
+          "nicNamePrefix": { "value": "nic" },
+          "adminUserName": { "value": "[parameters('adminUserName')]" },
+          "adminPassword": { "value": "[parameters('adminPassword')]" },
+          "assetLocation": { "value": "[parameters('assetLocation')]" },
+          "dDisks": {
+            "value": [
+              {
+                "vhd": {
+                  "uri": "[concat('http://',reference('LabStorage').outputs.storageAccountName.value,'.blob.core.windows.net/vhds/', 'ad', 0,'.vhd')]"
+                },
+                "name": "[concat('dataDisk', '0')]",
+                "caching": "None",
+                "createOption": "empty",
+                "diskSizeGB": "[variables('adDataDiskSize')]",
+                "lun": 0
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-01-01",
+      "name": "[concat('dc', copyIndex(1))]",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "Microsoft.Resources/deployments/Step1",
+        "Microsoft.Resources/deployments/dc0"
       ],
       "copy": {
         "name": "otherDCs",
-        "count": "[add(length(variables('subnets')),-1)]"
+        "count": "[add(parameters('numberOfSubnets'),-1)]"
       },
       "properties": {
         "mode": "incremental",
         "templateLink": {
-          "uri": "[concat(parameters('assetLocation'),'CreateADC.json')]",
-          "contentVersion": "1.0.0.1"
+          "uri": "[concat(parameters('assetLocation'),'WinServ.json')]",
+          "contentVersion": "1.2.0.0"
         },
         "parameters": {
           "indx": { "value": "[copyIndex(1)]" },
-          "lbName": { "value": "[parameters('lbName')]" },
-          "publicIPAddressName": { "value": "[parameters('publicIPAddressName')]" },
+          "bootDiagnostics": { "value": "[variables(concat('boot-',parameters('storageCategory')))]" },
+          "vmSize": { "value": "[variables(concat('vmSize-', parameters('storageCategory')))]" },
+          "lbName": { "value": "[reference('sbn0').outputs.lbName.value]" },
+          "computerName": { "value": "dc" },
+          "publicIPAddressName": { "value": "[reference('sbn0').outputs.publicIPAddressName.value]" },
           "publicStartRdpPort": { "value": 5000 },
-          "vnetName": { "value": "[parameters('vnetName')]" },
-          "subnets": { "value": "[reference(parameters('vnetName')).outputs.vnetSubnets.value]" },
+          "vnetName": { "value": "[variables('vnetName')]" },
+          "subnets": { "value": "[reference(concat('sbn', add(parameters('numberOfSubnets'),-1))).outputs.vnetSubnets.value]" },
           "storageAccountName": { "value": "[reference('LabStorage').outputs.storageAccountName.value]" },
           "availabilitySetName": { "value": "AvSetDC" },
-          "vmNamePrefix": { "value": "dc" },
+          "vmNamePrefix": { "value": "" },
           "nicNamePrefix": { "value": "nic" },
-          "domainName": { "value": "[parameters('domainName')]" },
           "adminUserName": { "value": "[parameters('adminUserName')]" },
           "adminPassword": { "value": "[parameters('adminPassword')]" },
-          "assetLocation": { "value": "[parameters('assetLocation')]" }
+          "assetLocation": { "value": "[parameters('assetLocation')]" },
+          "dDisks": {
+            "value": [
+              {
+                "vhd": {
+                  "uri": "[concat('http://',reference('LabStorage').outputs.storageAccountName.value,'.blob.core.windows.net/vhds/', 'ad', copyIndex(1),'.vhd')]"
+                },
+                "name": "[concat('adDataDisk', copyIndex(1))]",
+                "caching": "None",
+                "createOption": "empty",
+                "diskSizeGB": "[variables('adDataDiskSize')]",
+                "lun": 0
+              }
+            ]
+          }
         }
       }
     },
@@ -230,34 +314,33 @@
       "name": "[concat('Members', copyIndex())]",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
-        "Microsoft.Resources/deployments/RootFirstDC",
-        "Microsoft.Resources/deployments/setDNS"
+        "Microsoft.Resources/deployments/Step1",
+        "Microsoft.Resources/deployments/dc0"
       ],
       "copy": {
         "name": "members",
-        "count": "[mul(length(variables('subnets')),2)]"
+        "count": "[mul(parameters('numberOfSubnets'),parameters('memberServersPerSubnet'))]"
       },
       "properties": {
         "mode": "Incremental",
         "templateLink": {
           "uri": "[concat(parameters('assetLocation'),'WinServ.json')]",
-          "contentVersion": "1.0.0.1"
+          "contentVersion": "1.2.0.0"
         },
         "parameters": {
           "indx": { "value": "[copyIndex()]" },
-          "lbName": { "value": "[parameters('lbName')]" },
+          "bootDiagnostics": { "value": "[variables(concat('boot-',parameters('storageCategory')))]" },
+          "vmSize": { "value": "[variables(concat('vmSize-', parameters('storageCategory')))]" },
+          "lbName": { "value": "[reference('sbn0').outputs.lbName.value]" },
           "computerName": { "value": "srvMbmr" },
           "publicStartRdpPort": { "value": 6000 },
-          "publicIPAddressName": { "value": "[parameters('publicIPAddressName')]" },
-          "vnetName": { "value": "[parameters('vnetName')]" },
-          "subnets": { "value": "[reference(parameters('vnetName')).outputs.vnetSubnets.value]" },
+          "publicIPAddressName": { "value": "[reference('sbn0').outputs.publicIPAddressName.value]" },
+          "vnetName": { "value": "[variables('vnetName')]" },
+          "subnets": { "value": "[reference(concat('sbn', add(parameters('numberOfSubnets'),-1))).outputs.vnetSubnets.value]" },
           "storageAccountName": { "value": "[reference('LabStorage').outputs.storageAccountName.value]" },
           "availabilitySetName": { "value": "AVSetDC" },
-          "domainName": { "value": "[parameters('domainName')]" },
           "adminUsername": { "value": "[parameters('adminUserName')]" },
           "adminPassword": { "value": "[parameters('adminPassword')]" },
-          "domainJoinUsername": { "value": "[parameters('adminUserName')]" },
-          "domainJoinPassword": { "value": "[parameters('adminPassword')]" },
           "assetLocation": { "value": "[parameters('assetLocation')]" },
           "dDisks": {
             "value": [
@@ -268,11 +351,67 @@
                 "name": "[concat('dataDisk', copyIndex())]",
                 "caching": "None",
                 "createOption": "empty",
-                "diskSizeGB": "1000",
+                "diskSizeGB": "[variables('mbrDataDiskSize')]",
                 "lun": 0
               }
             ]
           }
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-01-01",
+      "name": "[concat('confDc', copyIndex(1))]",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "Microsoft.Resources/deployments/confDC0",
+        "[concat('Microsoft.Resources/deployments/dc', copyIndex(1))]"
+      ],
+      "copy": {
+        "name": "otherDCConfs",
+        "count": "[add(parameters('numberOfSubnets'),-1)]"
+      },
+      "properties": {
+        "mode": "incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('assetLocation'),'ConfigDC.json')]",
+          "contentVersion": "1.1.0.0"
+        },
+        "parameters": {
+          "indx": { "value": "[copyIndex(1)]" },
+          "computerName": { "value": "dc" },
+          "vmNamePrefix": { "value": "" },
+          "domainName": { "value": "[parameters('domainName')]" },
+          "adminUserName": { "value": "[parameters('adminUserName')]" },
+          "adminPassword": { "value": "[parameters('adminPassword')]" },
+          "assetLocation": { "value": "[parameters('assetLocation')]" }
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-01-01",
+      "name": "[concat('confMembers', copyIndex())]",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "Microsoft.Resources/deployments/confDC0",
+        "[concat('Microsoft.Resources/deployments/Members', copyIndex())]"
+      ],
+      "copy": {
+        "name": "confMembers",
+        "count": "[mul(parameters('numberOfSubnets'),parameters('memberServersPerSubnet'))]"
+      },
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('assetLocation'),'confDomainMember.json')]",
+          "contentVersion": "1.1.0.0"
+        },
+        "parameters": {
+          "indx": { "value": "[copyIndex()]" },
+          "computerName": { "value": "srvMbmr" },
+          "domainName": { "value": "[parameters('domainName')]" },
+          "domainJoinUsername": { "value": "[parameters('adminUserName')]" },
+          "domainJoinPassword": { "value": "[parameters('adminPassword')]" }
         }
       }
     }
@@ -280,11 +419,15 @@
   "outputs": {
     "vmIPAddress": {
       "type": "string",
-      "value": "[reference('RootFirstDC').outputs.vmIPAddress.value]"
+      "value": "[reference('dc0').outputs.vmIPAddress.value]"
     },
     "subnets": {
       "type": "array",
-      "value": "[reference(parameters('VNetName')).outputs.vnetSubnets.value]"
+      "value": "[reference(concat('sbn',add(parameters('numberOfSubnets'),-1))).outputs.vnetSubnets.value]"
+    },
+    "lenVnetSubnets": {
+      "type": "int",
+      "value": "[reference(concat('sbn',add(parameters('numberOfSubnets'),-1))).outputs.vnetLength.value]"
     }
   }
 }
