@@ -48,7 +48,7 @@ function getdevicepath()
 	getdevicepathresult=""
 	local lun=$1
 	local scsiOutput=$(lsscsi)
-	if [[ $scsiOutput =~ \[5:0:0:$lun\][^\[]*(/dev/sd.) ]];
+	if [[ $scsiOutput =~ \[5:0:0:$lun\][^\[]*(/dev/sd[^\[]*) ]];
 	then 
 		getdevicepathresult=${BASH_REMATCH[1]};
 	else
