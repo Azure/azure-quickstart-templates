@@ -29,7 +29,7 @@
 # Description:
 #  This script automates the partitioning and formatting of data disks
 #  Data disks can be partitioned and formatted as seperate disks or in a RAID0 configuration
-#  The script will scan for unpartitioined and unformatted data disks and partition, format, and add fstab entries
+#  The script will scan for unpartitioned and unformatted data disks and partition, format, and add fstab entries
 # Parameters :
 #  1 - b: The base directory for mount points (default: /datadisks)
 #  2 - s  Create a striped RAID0 Array (No redundancy)
