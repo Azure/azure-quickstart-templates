@@ -1,4 +1,53 @@
 {
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#", 
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminUsername": {
+      "type": "string", 
+      "metadata": {
+        "description": "Admin username for VM"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring", 
+      "metadata": {
+        "description": "Admin password for VM"
+      }
+    }, 
+    "vmSize": {
+      "defaultValue": "Standard_A1", 
+      "metadata": {
+        "description": "Size of the Virtual Machine."
+      }, 
+      "type": "string", 
+      "allowedValues": [
+        "Standard_A1", 
+        "Standard_A2", 
+        "Standard_A3", 
+        "Standard_D1_v2", 
+        "Standard_D2_v2", 
+        "Standard_D3_v2"
+      ]
+    }, 
+    "appPrefix": {
+      "type": "string", 
+      "metadata": {
+        "description": "Prefix for each component (VMs, networks, etc)"
+      }
+    }, 
+    "existingAtlasToken": {
+      "type": "string", 
+      "metadata": {
+        "description": "Your existing access token from Atlas"
+      }
+    }, 
+    "existingAtlasInfra": {
+      "type": "string", 
+      "metadata": {
+        "description": "The name of your existing infrastructure in Atlas (username/infraName)"
+      }
+    }
+  },
   "variables": {
     "imagePublisher": "Canonical", 
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetIDRef'))]", 
@@ -16,9 +65,7 @@
     "vnetIDRef": "[concat(parameters('appPrefix'),'_VNET')]", 
     "imageOffer": "UbuntuServer", 
     "storageAccountName": "[concat(uniquestring(resourceGroup().id), parameters('appPrefix'))]"
-  }, 
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#", 
-  "contentVersion": "1.0.0.0", 
+  },  
   "resources": [
     {
       "properties": {
@@ -261,63 +308,18 @@
       "type": "Microsoft.Compute/virtualMachines/extensions", 
       "properties": {
         "autoUpgradeMinorVersion": true, 
-        "typeHandlerVersion": "1.3", 
+        "typeHandlerVersion": "1.4", 
         "settings": {
           "fileUris": [
             "[variables('customScriptFilePath')]"
-          ], 
-          "commandToExecute": "[concat(variables('customScriptCommandToExecute'),' ', parameters('atlasInfra'), ' ', parameters('atlasToken'))]"
+          ]
         }, 
+        "protectedSettings": { 
+            "commandToExecute": "[concat(variables('customScriptCommandToExecute'),' ', parameters('existingAtlasInfra'), ' ', parameters('existingAtlasToken'))]"
+        },
         "type": "CustomScriptForLinux", 
         "publisher": "Microsoft.OSTCExtensions"
       }
     }
-  ], 
-  "parameters": {
-    "existingAtlasToken": {
-      "type": "string", 
-      "metadata": {
-        "description": "Your existing access token from Atlas"
-      }
-    }, 
-    "existingAtlasInfra": {
-      "type": "string", 
-      "metadata": {
-        "description": "The name of your existing infrastructure in Atlas (username/infraName)"
-      }
-    }, 
-    "adminPassword": {
-      "type": "securestring", 
-      "metadata": {
-        "description": "Admin password for VM"
-      }
-    }, 
-    "vmSize": {
-      "defaultValue": "Standard_A1", 
-      "metadata": {
-        "description": "Size of the Virtual Machine."
-      }, 
-      "type": "string", 
-      "allowedValues": [
-        "Standard_A1", 
-        "Standard_A2", 
-        "Standard_A3", 
-        "Standard_D1_v2", 
-        "Standard_D2_v2", 
-        "Standard_D3_v2"
-      ]
-    }, 
-    "appPrefix": {
-      "type": "string", 
-      "metadata": {
-        "description": "Prefix for each component (VMs, networks, etc)"
-      }
-    }, 
-    "adminUsername": {
-      "type": "string", 
-      "metadata": {
-        "description": "Admin username for VM"
-      }
-    }
-  }
+  ]
 }
