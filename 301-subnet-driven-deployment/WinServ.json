@@ -1,13 +1,12 @@
 ﻿{
   "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-  "contentVersion": "1.0.0.1",
+  "contentVersion": "1.2.0.0",
   "parameters": {
     "dDisks": {
       "type": "array",
       "defaultValue": [ ],
       "metadata": {
-        "description":
-        "Array of disks objects that can be added (see azuredeploy.json for a sample of the disk object)"
+        "description": "Array of disks objects that can be added (see azuredeploy.json for the disk object content)"
       }
     },
     "adminPassword": {
@@ -25,7 +24,7 @@
     "assetLocation": {
       "type": "string",
       "metadata": {
-        "description": "The location of resources such as templates and DSC modules that the script is dependent. Includes the last forward slash"
+        "description": "The location of resources such as templates and DSC modules that the script is dependent on. Includes the last forward slash"
       },
       "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/"
     },
@@ -33,7 +32,7 @@
       "type": "string",
       "defaultValue": "AVSet1",
       "metadata": {
-        "description": "AVSet the VM will belong to"
+        "description": "Availibility Set the VM will belong to"
       }
     },
     "computerName": {
@@ -41,26 +40,6 @@
       "defaultValue": "mbmr",
       "metadata": {
         "description": "Computer Name"
-      }
-    },
-    "domainJoinPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "The password for to join the domain"
-      }
-    },
-    "domainJoinUsername": {
-      "type": "string",
-      "defaultValue": "zeAdmin",
-      "metadata": {
-        "description": "The user for to join the domain"
-      }
-    },
-    "domainName": {
-      "type": "string",
-      "defaultValue": "fabrikam.com",
-      "metadata": {
-        "description": "The FQDN of the AD Domain created "
       }
     },
     "imageOffer": {
@@ -96,7 +75,7 @@
       "type": "int",
       "defaultValue": 0,
       "metadata": {
-        "description": "suffix to avoid collisions"
+        "description": "objects suffix to avoid name collisions"
       }
     },
     "lbName": {
@@ -117,7 +96,7 @@
       "type": "string",
       "defaultValue": "nic-",
       "metadata": {
-        "description": "Prefix for Nics."
+        "description": "Prefix for NICs."
       }
     },
     "publicIPAddressName": {
@@ -131,7 +110,7 @@
       "type": "int",
       "defaultValue": 5500,
       "metadata": {
-        "description": "Public port, for RDP remote connection. Will be incremented if the templae is in a loop"
+        "description": "Public port, for RDP remote connection. The value of indx parameter will be added"
       }
     },
     "storageAccountName": {
@@ -211,6 +190,13 @@
       "metadata": {
         "description": "VNet the VM will belong to"
       }
+    },
+    "bootDiagnostics": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Activate boot diagnostics. MUST be set to false is premium storage option is used"
+      }
     }
   },
   "variables": {
@@ -224,7 +210,7 @@
     "vmName": "[concat(parameters('vmNamePrefix'), parameters('computerName'), parameters('indx'))]",
     "nicName": "[concat(parameters('nicNamePrefix'), parameters('computerName'), parameters('indx'))]",
     "rdpPort": "[add(parameters('publicStartRdpPort'), parameters('indx'))]",
-    "apiVersion":  "2015-06-15"
+    "apiVersion": "2015-06-15"
   },
   "resources": [
     {
@@ -321,7 +307,7 @@
         },
         "diagnosticsProfile": {
           "bootDiagnostics": {
-            "enabled": "true",
+            "enabled": "[parameters('bootDiagnostics')]",
             "storageUri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net')]"
           }
         }
@@ -366,33 +352,6 @@
           }
         }
       ]
-    },
-    {
-      "name": "[concat(variables('vmName'),'/extensions')]",
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "[variables('apiVersion')]",
-      "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]",
-        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'),'/extensions/BgInfo')]",
-        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'),'/extensions/MyCustomScriptExtension')]"
-      ],
-      "properties": {
-        "publisher": "Microsoft.Compute",
-        "type": "JsonADDomainExtension",
-        "typeHandlerVersion": "1.0",
-        "settings": {
-          "Name": "[parameters('domainName')]",
-          "OUPath": "",
-          "User": "[concat(parameters('domainJoinUsername'), '@',parameters('domainName'))]",
-          "Restart": "true",
-          "Options": 3
-
-        },
-        "protectedsettings": {
-          "Password": "[parameters('domainJoinPassword')]"
-        }
-      }
     }
   ],
   "outputs": {
