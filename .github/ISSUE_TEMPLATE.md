@@ -8,11 +8,11 @@ We've created an outline of recommended sections to fill out that will help make
 
 [Template Name goes here](Template link goes here)
 
-## Issue Details
+### Issue Details
 
 
 
-## Repro steps (*if necessary, delete otherwise*)
+### Repro steps (*if necessary, delete otherwise*)
 1.
 2.
 3.

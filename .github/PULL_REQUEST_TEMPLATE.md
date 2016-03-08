@@ -7,11 +7,11 @@ We've created an outline of recommended sections to fill out that will help make
 
 --------------------MESSAGE FROM ADMIN, DELETE BEFORE SUBMITTING----------------------
 
-## Changelog
+### Changelog
 *
 *
 *
 *
 *
 
-## Description of the change
+### Description of the change
