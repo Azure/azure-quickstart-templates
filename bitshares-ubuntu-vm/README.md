@@ -41,6 +41,5 @@ When you click the Deploy to Azure icon above, you need to specify the following
 BitShares is offered under the MIT License as [documented here](https://github.com/bitshares/bitshares-2/blob/bitshares/LICENSE.md). 
 
 # More About BitShares
->>>>>>> e4cdf85... New: test_build.sh
 
 Please review [BitShares documentation](https://docs.bitshares.eu) to learn more. 
