@@ -49,7 +49,7 @@ When you click the Deploy to Azure icon above, you need to specify the following
 * Complete the template parameters, choose your resource group, accept the terms and click Create
 * Wait about 15 minutes for the VM to spin up and install the software
 * Connect to the VM via SSH using the DNS name assigned to your Public IP
-* Launch syscoind `sudo /usr/bin/syscoind
+* If you wish to relaunch syscoind `sudo syscoind`
 * syscoind will run automatically on restart
 
 # Licensing
