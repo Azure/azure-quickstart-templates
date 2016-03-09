@@ -9,7 +9,7 @@ ps axjf
 # Update Ubuntu and install prerequisites for running BitShares #
 #################################################################
 time apt-get update
-time apt-get install -y dphys-swapfile ntp
+time apt-get install -y ntp
 
 if [ $1 = 'From_Source' ]; then
 #################################################################
@@ -37,7 +37,7 @@ else
 #################################################################
 time add-apt-repository -y ppa:bitshares/bitshares
 time apt-get -y update
-time apt-get install -y bitshares bitshares2-cli
+time apt-get install -y bitshares2-cli
 
 fi
 
