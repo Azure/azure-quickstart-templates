@@ -66,6 +66,4 @@ then
 	sudo update-rc.d syscoin defaults	
 fi
 
-
-
-/usr/bin/syscoind & exit 0
+systemctl reboot
