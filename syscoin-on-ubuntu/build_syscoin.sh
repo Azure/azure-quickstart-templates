@@ -5,10 +5,6 @@ set -e
 date
 ps axjf
 
-#################################################################
-# Update Ubuntu and install prerequisites for running Syscoin   #
-#################################################################
-sudo apt-get update
 
 if [ $1 = 'From_Source' ]; then
 #################################################################
