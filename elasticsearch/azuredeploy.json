@@ -205,7 +205,33 @@
         "no"
       ],
       "metadata": {
-        "description": "Install the marvel agent in the cluster"
+        "description": "Install the Marvel agent in the cluster"
+      }
+    },
+    "marvelCluster" : {
+      "type":"string",
+      "defaultValue":"yes",
+      "allowedValues": [
+        "yes",
+        "no"
+      ],
+      "metadata": {
+        "description": "Build a standalone 3 node cluster for Marvel data"
+      }
+    },
+    "vmSizeMarvelNodes": {
+      "type": "string",
+      "defaultValue": "Standard_D2_v2",
+      "allowedValues": [
+        "Standard_D2_v2",
+        "Standard_D3_v2",
+        "Standard_D4_v2",
+        "Standard_A2",
+        "Standard_A3",
+        "Standard_A4"
+      ],
+      "metadata": {
+        "description": "Size of the Elasticsearch Marvel cluster nodes, if selected"
       }
     },
     "kibana":{
@@ -256,8 +282,15 @@
     },
     "location":"[variables('locationMap')[parameters('location')]]",
     "storageAccountPrefix": "[concat(substring(uniqueString(resourceGroup().id, parameters('esClusterName')), 0, 6), substring(parameters('esClusterName'), 0, 3))]",
+    "storageAccountNameAFS": "[concat(variables('storageAccountPrefix'), 'afs')]",
     "storageAccountNameShared": "[concat(variables('storageAccountPrefix'), 'sh')]",
     "masterNodesIpPrefix": "10.0.0.1",
+    "marvelNodesIpPrefix": "10.0.2.2",
+    "kibanaIPPrefix": {
+        "yes" : "[variables('marvelNodesIpPrefix')]",
+        "no": "[variables('masterNodesIpPrefix')]"
+    },
+    "kibanaIP" : "[concat('http://', variables('kibanaIPPrefix')[parameters('marvelCluster')], '0:9200')]",
     "networkSettings": {
       "virtualNetworkName": "[parameters('virtualNetworkName')]",
       "addressPrefix": "10.0.0.0/16",
@@ -281,15 +314,22 @@
     },
     "esSettings": {
       "clusterName": "[parameters('esClusterName')]",
+      "marvelClusterName": "[concat(parameters('esClusterName'), '-marvel')]",
       "version": "[parameters('esVersion')]",
-      "discoveryHosts": "[concat(variables('masterNodesIpPrefix'), '-3')]"
+      "discoveryHosts": "[concat(variables('masterNodesIpPrefix'), '-3')]",
+      "marvelHosts": "[concat(variables('marvelNodesIpPrefix'), '-3')]"
     },
     "sharedTemplateUrl": "[concat(variables('templateBaseUrl'), 'shared-resources.json')]",
     "masterTemplateUrl": "[concat(variables('templateBaseUrl'), 'master-nodes-resources.json')]",
+    "marvelTemplates": {
+        "yes" : "marvel-nodes-resources.json",
+        "no" : "empty-resources.json"
+    },
     "clientTemplates": [
       "empty-resources.json",
       "client-nodes-resources.json"
     ],
+    "marvelTemplateUrl": "[concat(variables('templateBaseUrl'), variables('marvelTemplates')[parameters('marvelCluster')])]",    
     "clientTemplateUrl": "[concat(variables('templateBaseUrl'), variables('clientTemplates')[mod(add(parameters('vmClientNodeCount'),2),add(parameters('vmClientNodeCount'),1))])]",
     "lbBackEndPoolsAdded": {
       "backendPools": [
@@ -325,14 +365,25 @@
     },
     "afsParam": {
       "ubuntu": {
-        "yes": "[concat(' -a ', variables('storageAccountNameShared'), ' -c -k ')]",
-        "no": "[concat(' -a ', variables('storageAccountNameShared'), ' -k ')]"
+        "yes": "[concat(' -a ', variables('storageAccountNameAFS'), ' -c -k ')]",
+        "no": "[concat(' -a ', variables('storageAccountNameAFS'), ' -k ')]"
       },
       "windows": {
         "yes":"",
         "no":""
       } 
     },
+    "marvelExportParam" : {
+      "ubuntu" : {
+        "yes" : "[concat(' -e ', variables('marvelNodesIpPrefix'), '-3')]",
+        "no": ""  
+      },
+      "windows": {
+        "yes": "[concat(' -marvelEndpoints ', variables('marvelNodesIpPrefix'), '-3')]",
+        "no": ""
+      }
+    },
+    "marvelExportParamValue": "[variables('marvelExportParam')[parameters('OS')][parameters('marvelCluster')]]",
     "senseParamValue": "[variables('senseParam')[parameters('sense')]]",
     "marvelParamValue": "[variables('marvelParam')[parameters('OS')][parameters('marvel')]]",
     "afsParamValue": "[variables('afsParam')[parameters('OS')][parameters('afs')]]",
@@ -341,13 +392,6 @@
       "no": "empty-resources.json"
     },
     "kibanaTemplateUrl":"[concat(variables('templateBaseUrl'), variables('kibanaTemplates')[parameters('kibana')], '')]",
-    "scriptParams": [
-      "[concat('version=', parameters('esVersion'), ';')]",
-      "[concat('clusterName=', parameters('esClusterName'), ';')]",
-      "[concat('discoveryHosts=', variables('masterNodesIpPrefix'), '-3', ';')]",
-      "[concat('installMarvel=', parameters('marvel'), ';')]"
-    ],
-    "scriptParamString":"[concat(variables('scriptParams')[0], variables('scriptParams')[1], variables('scriptParams')[2], variables('scriptParams')[3] )]",
     "ubuntuScripts": [
       "[concat(variables('templateBaseUrl'), 'elasticsearch-ubuntu-install.sh')]",
       "[concat(variables('templateBaseUrl'), 'kibana-install.sh')]",
@@ -366,13 +410,22 @@
       },
       "managementPort":"22",
       "extensionSettings":{
+        "marvel": {
+            "publisher": "Microsoft.OSTCExtensions",
+            "type": "CustomScriptForLinux",
+            "typeHandlerVersion": "1.2",
+            "settings": {
+              "fileUris": "[variables('ubuntuScripts')]",
+              "commandToExecute": "[concat('bash elasticsearch-ubuntu-install.sh -wn ', variables('esSettings').marvelClusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').marvelHosts, ' -k ')]"
+            }
+          },
         "master": {
             "publisher": "Microsoft.OSTCExtensions",
             "type": "CustomScriptForLinux",
             "typeHandlerVersion": "1.2",
             "settings": {
               "fileUris": "[variables('ubuntuScripts')]",
-              "commandToExecute": "[concat('bash elasticsearch-ubuntu-install.sh -xn ', variables('esSettings').clusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').discoveryHosts, variables('marvelParamValue'), variables('afsParamValue'))]"
+              "commandToExecute": "[concat('bash elasticsearch-ubuntu-install.sh -xn ', variables('esSettings').clusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').discoveryHosts, variables('marvelParamValue'), variables('marvelExportParamValue'), variables('afsParamValue'))]"
             }
           },
         "client": {
@@ -381,7 +434,7 @@
             "typeHandlerVersion": "1.2",
             "settings": {
               "fileUris": "[variables('ubuntuScripts')]",
-              "commandToExecute": "[concat('bash elasticsearch-ubuntu-install.sh -yn ', variables('esSettings').clusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').discoveryHosts, variables('marvelParamValue'), variables('afsParamValue'))]"
+              "commandToExecute": "[concat('bash elasticsearch-ubuntu-install.sh -yn ', variables('esSettings').clusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').discoveryHosts, variables('marvelParamValue'), variables('marvelExportParamValue'), variables('afsParamValue'))]"
             }
           },
         "data": {
@@ -390,7 +443,7 @@
           "typeHandlerVersion": "1.2",
           "settings": {
             "fileUris": "[variables('ubuntuScripts')]",
-            "commandToExecute": "[concat('bash elasticsearch-ubuntu-install.sh -zn ', variables('esSettings').clusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').discoveryHosts, variables('marvelParamValue'), variables('afsParamValue'))]"
+            "commandToExecute": "[concat('bash elasticsearch-ubuntu-install.sh -zn ', variables('esSettings').clusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').discoveryHosts, variables('marvelParamValue'), variables('marvelExportParamValue'), variables('afsParamValue'))]"
           }
         },
         "kibana": {
@@ -399,7 +452,7 @@
           "typeHandlerVersion": "1.2",
           "settings": {
             "fileUris": "[variables('ubuntuScripts')]",
-            "commandToExecute": "[concat('bash kibana-install.sh -v ', variables('esSettings').version, variables('marvelParamValue'), variables('senseParamValue'), ' -t http://', variables('masterNodesIpPrefix'), '0:9200')]"
+            "commandToExecute": "[concat('bash kibana-install.sh -v ', variables('esSettings').version, variables('marvelParamValue'), variables('senseParamValue'), ' -t ', variables('kibanaIP'))]"
           }
         }
       }
@@ -413,13 +466,22 @@
       },
       "managementPort":"3389",
       "extensionSettings":{
+        "marvel": {
+          "publisher": "Microsoft.Compute",
+          "type": "CustomScriptExtension",
+          "typeHandlerVersion": "1.4",
+          "settings": {
+            "fileUris": "[variables('windowsScripts')]",
+            "commandToExecute": "[concat('powershell.exe -File elasticsearch-windows-install.ps1 -elasticSearchVersion ', variables('esSettings').version,' -elasticClusterName ', variables('esSettings').marvelClusterName,' -discoveryEndpoints ', variables('esSettings').marvelHosts, ' -marvelOnlyNode -storageKey ')]"
+          }
+        },
         "master": {
           "publisher": "Microsoft.Compute",
           "type": "CustomScriptExtension",
           "typeHandlerVersion": "1.4",
           "settings": {
             "fileUris": "[variables('windowsScripts')]",
-            "commandToExecute": "[concat('powershell.exe -File elasticsearch-windows-install.ps1 -elasticSearchVersion ', variables('esSettings').version,' -elasticClusterName ', variables('esSettings').clusterName,' -discoveryEndpoints ', variables('esSettings').discoveryHosts, ' -masterOnlyNode -installMarvel -storageKey ')]"
+            "commandToExecute": "[concat('powershell.exe -File elasticsearch-windows-install.ps1 -elasticSearchVersion ', variables('esSettings').version,' -elasticClusterName ', variables('esSettings').clusterName,' -discoveryEndpoints ', variables('esSettings').discoveryHosts, variables('marvelParamValue'), variables('marvelExportParamValue'), ' -masterOnlyNode -storageKey ')]"
           }
         },
         "client": {
@@ -428,7 +490,7 @@
           "typeHandlerVersion": "1.4",
           "settings": {
             "fileUris": "[variables('windowsScripts')]",
-            "commandToExecute": "[concat('powershell.exe -File elasticsearch-windows-install.ps1 -elasticSearchVersion ', variables('esSettings').version,' -elasticClusterName ', variables('esSettings').clusterName,' -discoveryEndpoints ', variables('esSettings').discoveryHosts, ' -clientOnlyNode -installMarvel -storageKey ')]"
+            "commandToExecute": "[concat('powershell.exe -File elasticsearch-windows-install.ps1 -elasticSearchVersion ', variables('esSettings').version,' -elasticClusterName ', variables('esSettings').clusterName,' -discoveryEndpoints ', variables('esSettings').discoveryHosts, variables('marvelParamValue'), variables('marvelExportParamValue'), ' -clientOnlyNode -storageKey ')]"
           }
         },
         "data": {
@@ -437,7 +499,7 @@
           "typeHandlerVersion": "1.4",
           "settings": {
             "fileUris": "[variables('windowsScripts')]",
-            "commandToExecute": "[concat('powershell.exe -File elasticsearch-windows-install.ps1 -elasticSearchVersion ', variables('esSettings').version,' -elasticClusterName ', variables('esSettings').clusterName,' -discoveryEndpoints ', variables('esSettings').discoveryHosts, ' -dataOnlyNode -installMarvel -storageKey ')]"
+            "commandToExecute": "[concat('powershell.exe -File elasticsearch-windows-install.ps1 -elasticSearchVersion ', variables('esSettings').version,' -elasticClusterName ', variables('esSettings').clusterName,' -discoveryEndpoints ', variables('esSettings').discoveryHosts, variables('marvelParamValue'), variables('marvelExportParamValue'), ' -dataOnlyNode -storageKey ')]"
           }
         }
       }
@@ -572,6 +634,7 @@
       "count":"[div(sub(add(parameters('vmDataNodeCount'), variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
       "mapping":"[variables('storageBinPackMap')]",
       "accountType":"[variables('dataSkuSettings')[parameters('vmSizeDataNodes')].storageAccountType]",
+      "afs":"[variables('storageAccountNameAFS')]",
       "shared":"[variables('storageAccountNameShared')]",
       "prefix":"[concat(variables('storageAccountPrefix'), 'da')]"
     },
@@ -626,6 +689,50 @@
       }
     },
     {
+      "name": "marvel-nodes",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', 'shared')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('marvelTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "storageAccountName": {
+            "value": "[variables('storageAccountNameShared')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "marvelNodesIpPrefix": {
+            "value": "[variables('marvelNodesIpPrefix')]"
+          },
+          "location": {
+            "value": "[variables('location')]"
+          },
+          "vmSize": {
+            "value": "[parameters('vmSizeMarvelNodes')]"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnet.other]"
+          },
+          "osSettings": {
+            "value": "[variables('osSettings')]"
+          },
+          "namespace": {
+            "value": "[concat(parameters('esClusterName'), '-marvel')]"
+          }
+        }
+      }
+    },
+    {
       "name": "shared",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2015-01-01",
@@ -642,8 +749,8 @@
           "networkSettings": {
             "value": "[variables('networkSettings')]"
           },
-          "storageAccountName": {
-            "value": "[variables('storageAccountNameShared')]"
+          "storageSettings": {
+            "value": "[variables('dataNodeStorageSettings')]"
           },
           "loadBalancerType": {
             "value": "[parameters('loadBalancerType')]"
