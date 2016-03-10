@@ -45,6 +45,20 @@
       "metadata": {
         "description": "Password for the Virtual Machine."
       }
+    },
+    "newOrExistingSubnet": {
+      "type": "string",
+      "allowedValues": ["new", "existing"],
+      "metadata": {
+        "desription":  "Determines whether a new virtual network and subnet should be created or an existing subnet should be used."
+      }
+    },
+    "subnetId": {
+      "type": "string",
+      "minLength": 0,
+      "metadata": {
+        "description": "The id of the subnet you want to use."
+      }
     }
   },
   "variables": {
@@ -148,11 +162,9 @@
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet",
     "subnetPrefix": "10.0.0.0/24",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('vnetName'))]",
-    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
     "nestedDeploymentName": "nestedTemplate",
-    "nestedDeploymentNameNSG": "[concat(variables('nestedDeploymentName'), 'nsg')]",
     "nestedDeploymentNameProf": "[concat(variables('nestedDeploymentName'), 'prof')]",
+    "nestedDeploymentNameVnet": "[concat(variables('nestedDeploymentName'), 'vnet')]",
     "osDiskType": "image",
     "apiVerion": "2015-06-15",
     "apiVerionRm": "2015-01-01"
@@ -168,29 +180,28 @@
       }
     },
     {
-      "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[variables('publicIpName')]",
-      "apiVersion": "[variables('apiVerion')]",
-      "location": "[variables('location')]",
-      "properties": {
-        "publicIPAllocationMethod": "[variables('publicIPAddressType')]"
-      }
-    },
-
-    {
       "apiVersion": "[variables('apiVerionRm')]",
-      "name": "[variables('nestedDeploymentNameNSG')]",
+      "name": "[variables('nestedDeploymentNameVnet')]",
       "type": "Microsoft.Resources/deployments",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('github'), 'nsg.json')]",
+          "uri": "[concat(variables('github'), parameters('newOrExistingSubnet'), 'vnet.json')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
+          "publicIpName": { "value": "[variables('publicIpName')]" },
+          "publicIPAddressType": { "value": "[variables('publicIPAddressType')]" },
           "nsgName": { "value": "[variables('nsgName')]" },
+          "vnetName": { "value": "[variables('vnetName')]" },
+          "addressPrefix": { "value": "[variables('addressPrefix')]" },
+          "subnetName": { "value": "[variables('subnetName')]" },
+          "subnetPrefix": { "value": "[variables('subnetPrefix')]" },
+          "osType": { "value": "[variables('internalOSType')]" },
+          "github": { "value": "[variables('github')]" },
           "location": { "value": "[variables('location')]" },
-          "osType": { "value": "[variables('internalOSType')]" }
+          "sidlower": { "value": "[variables('sidlower')]" },
+          "subnetId": { "value": "[parameters('subnetId')]" }
         }
       }
     },
@@ -215,46 +226,18 @@
           "osDiskType": { "value": "[variables('osDiskType')]" },
           "osType": { "value": "[variables('internalOSType')]" },
           "sidlower": { "value": "[variables('sidlower')]" },
-          "vmName": { "value": "[variables('vmName')]" },          
+          "vmName": { "value": "[variables('vmName')]" },
           "storageAccountName": { "value": "[variables('storageAccountName')]" }
         }
       }
     },
 
     {
-      "type": "Microsoft.Network/virtualNetworks",
-      "name": "[variables('vnetName')]",
-      "apiVersion": "[variables('apiVerion')]",
-      "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameNSG'))]"
-      ],
-      "location": "[variables('location')]",
-      "properties": {
-        "addressSpace": {
-          "addressPrefixes": [
-            "[variables('addressPrefix')]"
-          ]
-        },
-        "subnets": [
-          {
-            "name": "[variables('subnetName')]",
-            "properties": {
-              "addressPrefix": "[variables('subnetPrefix')]",
-              "networkSecurityGroup": {
-                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
       "apiVersion": "[variables('apiVerion')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIpName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
+        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameVnet'))]"
       ],
       "location": "[variables('location')]",
       "properties": {
@@ -267,7 +250,7 @@
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpName'))]"
               },
               "subnet": {
-                "id": "[variables('subnetRef')]"
+                "id": "[reference(variables('nestedDeploymentNameVnet')).outputs.subnetId.value]"
               }
             }
           }
