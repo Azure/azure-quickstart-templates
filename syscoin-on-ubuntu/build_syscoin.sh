@@ -66,4 +66,5 @@ then
 	sudo update-rc.d syscoin defaults	
 fi
 
-sudo syscoind & exit 0
+sudo syscoind
+echo 'Syscoin has been setup successfully and is running...'
