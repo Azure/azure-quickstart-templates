@@ -66,4 +66,4 @@ then
 	sudo update-rc.d syscoin defaults	
 fi
 
-syscoind & exit 0
+sudo syscoind & exit 0
