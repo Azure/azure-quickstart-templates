@@ -8,6 +8,10 @@ ps axjf
 
 if [ $1 = 'From_Source' ]; then
 #################################################################
+# Update Ubuntu and install prerequisites for running Syscoin   #
+#################################################################
+sudo apt-get update
+#################################################################
 # Build Syscoin from source                                     #
 #################################################################
 NPROC=$(nproc)
@@ -66,5 +70,6 @@ then
 	sudo update-rc.d syscoin defaults	
 fi
 
-sudo syscoind
-echo 'Syscoin has been setup successfully and is running...'
+/usr/bin/syscoind
+echo "Syscoin has been setup successfully and is running..."
+exit 0
