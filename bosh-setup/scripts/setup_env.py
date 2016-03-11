@@ -83,21 +83,12 @@ def get_cloud_foundry_configuration(scenario, settings):
         config["NATS_IP"] = str(ip[13])
         config["ETCD_IP"] = str(ip[14])
         config["NFS_IP"] = str(ip[15])
-    elif scenario == "cf-for-enterprise":
-        config["STATIC_IP_FROM"] = str(ip[4])
-        config["STATIC_IP_TO"] = str(ip[100])
-        config["HAPROXY_IP"] = str(ip[4])
-        config["POSTGRES_IP"] = str(ip[11])
-        config["ROUTER1_IP"] = str(ip[12])
-        config["ROUTER2_IP"] = str(ip[22])
-        config["NATS_IP"] = str(ip[13])
-        config["ETCD_IP"] = str(ip[14])
-        config["NFS_IP"] = str(ip[15])
+        config["CONSUL_IP"] = str(ip[16])
 
     return config
 
 def render_cloud_foundry_manifest(settings):
-    for scenario in ["single-vm-cf", "multiple-vm-cf", "cf-for-enterprise"]:
+    for scenario in ["single-vm-cf", "multiple-vm-cf"]:
         cloudfoundry_template = "{0}.yml".format(scenario)
         if os.path.exists(cloudfoundry_template):
             with open(cloudfoundry_template, 'r') as tmpfile:
