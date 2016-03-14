@@ -151,6 +151,19 @@
     },
     "vmSize": "[variables('vmSizes')[parameters('sapSystemSize')][parameters('storageType')].size]",
 
+    "nicConfigurations": {
+      "new": {
+        "countPublicIp": 1,
+        "countNSG": 1
+      },
+      "existing": {
+        "countPublicIp": 0,
+        "countNSG": 0
+      }
+    },
+    "countPublicIp": "[variables('nicConfigurations')[parameters('newOrExistingSubnet')].countPublicIp]",
+    "countNSG": "[variables('nicConfigurations')[parameters('newOrExistingSubnet')].countNSG]",
+
     "location": "[resourceGroup().location]",
     "sidlower": "[toLower(parameters('sapSystemId'))]",
     "vmName": "[concat(variables('sidlower'), '-servercs')]",
@@ -168,6 +181,7 @@
     "nestedDeploymentNameVnet": "[concat(variables('nestedDeploymentName'), 'vnet')]",
     "nestedDeploymentNameNSG": "[concat(variables('nestedDeploymentName'), 'nsg')]",
     "nestedDeploymentNameNIC": "[concat(variables('nestedDeploymentName'), 'nic')]",
+    "nestedDeploymentNamePIP": "[concat(variables('nestedDeploymentName'), 'pip')]",
     "osDiskType": "image",
     "apiVerion": "2015-06-15",
     "apiVerionRm": "2015-01-01"
@@ -256,37 +270,30 @@
     },
 
     {
-      "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[variables('publicIpName')]",
-      "apiVersion": "[variables('apiVerion')]",
-      "location": "[variables('location')]",
-      "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameNIC'))]"
-      ],
-      "copy": {
-        "name": "ipLoop",
-        "count": "[reference(variables('nestedDeploymentNameProf')).outputs.countPublicIp.value]"
-      },
+      "apiVersion": "[variables('apiVerionRm')]",
+      "name": "[variables('nestedDeploymentNamePIP')]",
+      "type": "Microsoft.Resources/deployments",
       "properties": {
-        "publicIPAllocationMethod": "[variables('publicIPAddressType')]"
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('github'), parameters('newOrExistingSubnet'), 'pip.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "publicIpName": { "value": "[variables('publicIpName')]" },
+          "publicIPAddressType": { "value": "[variables('publicIPAddressType')]" },
+          "location": { "value": "[variables('location')]" }
+        }
       }
     },
-
     {
       "apiVersion": "[variables('apiVerionRm')]",
       "name": "[variables('nestedDeploymentNameNSG')]",
       "type": "Microsoft.Resources/deployments",
-      "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameNIC'))]"
-      ],
-      "copy": {
-        "name": "nsgLoop",
-        "count": "[reference(variables('nestedDeploymentNameProf')).outputs.countNSG.value]"
-      },
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('github'), 'nsg.json')]",
+          "uri": "[concat(variables('github'), parameters('newOrExistingSubnet'), 'nsg.json')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -304,17 +311,18 @@
       "dependsOn": [
         "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameVnet'))]",
         "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameNIC'))]",
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIpName'))]"
+        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNamePIP'))]",
+        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameNSG'))]"
       ],
       "properties": {
-        "networkSecurityGroup": "[reference(variables('nestedDeploymentNameProf')).outputs.selectedNSG.value]",
+        "networkSecurityGroup": "[reference(variables('nestedDeploymentNameNIC')).outputs.selectedNSG]",
         "ipConfigurations": [
           {
             "name": "ipconfig1",
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
-              "publicIPAddress": "[reference(variables('nestedDeploymentNameProf')).outputs.selectedPublicIp.value]",
-              "subnet": "[reference(variables('nestedDeploymentNameProf')).outputs.selectedSubnet.value]"
+              "publicIPAddress": "[reference(variables('nestedDeploymentNameNIC')).outputs.selectedPublicIp]",
+              "subnet": "[reference(variables('nestedDeploymentNameNIC')).outputs.selectedSubnet]"
             }
           }
         ]
