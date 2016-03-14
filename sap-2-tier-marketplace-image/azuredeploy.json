@@ -151,6 +151,25 @@
     },
     "vmSize": "[variables('vmSizes')[parameters('sapSystemSize')][parameters('storageType')].size]",
 
+    "nicConfigurations": {
+      "new": {
+        "subnet": {
+          "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('vnetName')), '/subnets/', variables('subnetName'))]"
+        },
+        "publicIPAddress": {
+          "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpName'))]"
+        }
+      },
+      "existing": {
+        "subnet": {
+          "id": "[parameters('subnetId')]"
+        },
+        "publicIPAddress": null
+      }
+    },
+    "selectedSubnet": "[variables('nicConfigurations')[parameters('newOrExistingSubnet')].subnet]",
+    "selectedPublicIp": "[variables('nicConfigurations')[parameters('newOrExistingSubnet')].publicIPAddress]",
+
     "location": "[resourceGroup().location]",
     "sidlower": "[toLower(parameters('sapSystemId'))]",
     "vmName": "[concat(variables('sidlower'), '-servercs')]",
@@ -234,7 +253,24 @@
       }
     },
 
-    
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nicName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[variables('location')]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": "[variables('selectedPublicIp')]",
+              "subnet": "[variables('selectedSubnet')]"
+            }
+          }
+        ]
+      }
+    },
     {
       "apiVersion": "[variables('apiVerionRm')]",
       "name": "[variables('nestedDeploymentName')]",
@@ -242,7 +278,8 @@
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
         "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameProf'))]",
-        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameVnet'))]"
+        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameVnet'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
       ],
       "properties": {
         "mode": "Incremental",
