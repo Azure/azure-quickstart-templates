@@ -54,4 +54,4 @@ When you click the Deploy to Azure icon above, you need to specify the following
 
 # Licensing
 
-Syscoin is released under the terms of the MIT license. See `COPYING` for moreinformation or see http://opensource.org/licenses/MIT.
+Syscoin is released under the terms of the MIT license. See `COPYING` for more information or see http://opensource.org/licenses/MIT.
