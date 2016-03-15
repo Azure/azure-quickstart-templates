@@ -1,6 +1,6 @@
 # Influx Blockchain Node on Ubuntu VM
 
-This template delivers the Influx network to your VM in about 15 minutes.  Everything you need to get started using the Influx blockchain from the command line is included. 
+This template delivers the Influx network to your VM in about 20 minutes.  Everything you need to get started using the Influx blockchain from the command line is included. 
 You may build from source.  Once installed, 'Influxd' will begin syncing the public blockchain. 
 You may then connect via SSH to the VM and launch 'Influxd' to interface with the blockchain.
 
