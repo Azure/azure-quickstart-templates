@@ -1,0 +1,68 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the virtual machine"
+      }
+    },
+    "volumeType": {
+      "type": "string",
+      "defaultValue": "All",
+      "metadata": {
+        "description": "Type of the volume OS or Data to perform decryption operation"
+      }
+    },
+    "forceUpdateTag": {
+      "type": "string",
+      "defaultValue": "1.0",
+      "metadata": {
+        "description": "Pass in an unique value like a GUID everytime the operation needs to be force run"
+      }
+    }
+  },
+  "variables": {
+    "extensionName": "ADETest",
+    "extensionVersion": "1.4",
+    "encryptionOperation": "DisableEncryption"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmName'),'/', variables('extensionName'))]",
+      "apiVersion": "2016-03-30",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publisher": "Microsoft.Azure.Security",
+        "type": "ADETest",
+        "typeHandlerVersion": "[variables('extensionVersion')]",
+        "autoUpgradeMinorVersion": true,
+        "forceUpdateTag": "[parameters('forceUpdateTag')]",
+        "settings": {
+          "VolumeType": "[parameters('volumeType')]",
+          "EncryptionOperation": "[variables('encryptionOperation')]"
+        }
+      }
+    },
+    {
+        "apiVersion": "2016-03-30",
+        "type": "Microsoft.Compute/virtualMachines",
+        "name": "[parameters('vmName')]",
+        "location": "[resourceGroup().location]",
+        "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines/extensions',  parameters('vmName'), variables('extensionName'))]"
+        ],		
+        "properties": {
+            "storageProfile": {
+                "osDisk": {
+                    "encryptionSettings": {
+                        "enabled": false
+                    }
+                }
+            }
+        }
+    }
+  ]
+}
