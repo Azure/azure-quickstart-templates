@@ -15,7 +15,9 @@ The cluster is configured to use a file share witness for quorum. This file shar
 
 # Known Issues
 
-This template is mostly deployed in a serial manner, and uses PowerShell DSC Extensions for final configurations. As a result, and because of current restrictions in the Azure back-end logic, deployment of this template requires 45-60 min to complete. Microsoft is working toward a solution that allows more parallel operations (enabling faster deployment times). This template will be updated accordingly as soon as possible.
++	This template is mostly deployed in a serial manner, and uses PowerShell DSC Extensions for final configurations. As a result, and because of current restrictions in the Azure back-end logic, deployment of this template requires 45-60 min to complete. Microsoft is working toward a solution that allows more parallel operations (enabling faster deployment times). This template will be updated accordingly as soon as possible.
+
++	Deploying the template using a method other than the "Deploy to Azure" button may not work initially. If deployment fails due to a 'ResourcePurchaseValidationFailed' error, deploy the template using the "Deploy to Azure" button, making sure to accept the legal terms at the bottom of the Custom Deployment blade. Other deployment methods should work for that subscription/account thereafter. 
 
 ## Notes
 
