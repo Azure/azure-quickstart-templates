@@ -31,13 +31,16 @@ help()
     echo "-n elasticsearch cluster name"
     echo "-d static discovery endpoints 10.0.0.1-3"
     echo "-v elasticsearch version"
-    echo "-m install marvel yes/no"
-    echo "-x configure as a dedicated master node"
-    echo "-y configure as client only node (no master, no data)"
-    echo "-z configure as data node (no master)"
     echo "-a storage account (for AFS)"
     echo "-k access key (for AFS)"
     echo "-c create and mount AFS share"
+    echo "-m install marvel yes/no"
+    echo "-e export marvel data to a different ip"
+    echo "-w configure as a dedicated marvel node"
+    echo "-x configure as a dedicated master node"
+    echo "-y configure as client only node (no master, no data)"
+    echo "-z configure as data node (no master)"
+    echo "-s used striped data disk volumes"
     echo "-h view this help content"
 }
 
@@ -74,6 +77,7 @@ fi
 #Script Parameters
 CLUSTER_NAME="elasticsearch"
 ES_VERSION="2.0.0"
+MARVEL_ONLY_NODE=0
 DISCOVERY_ENDPOINTS=""
 INSTALL_MARVEL=0
 CLIENT_ONLY_NODE=0
@@ -84,7 +88,7 @@ STORAGE_ACCOUNT=""
 ACCESS_KEY=""
 
 #Loop through options passed
-while getopts :n:d:v:a:k:cmxyzsh optname; do
+while getopts :n:d:v:a:k:cme:wxyzsh optname; do
     log "Option $optname set with value ${OPTARG}"
   case $optname in
     n) #set cluster name
@@ -98,6 +102,12 @@ while getopts :n:d:v:a:k:cmxyzsh optname; do
       ;;
     m) #install marvel
       INSTALL_MARVEL=1
+      ;;
+    e) #export marvel data
+      MARVEL_ENDPOINTS=${OPTARG}
+      ;;
+    w) #marvel node
+      MARVEL_ONLY_NODE=1
       ;;
     x) #master node
       MASTER_ONLY_NODE=1
@@ -278,7 +288,7 @@ echo "discovery.zen.ping.multicast.enabled: false" >> /etc/elasticsearch/elastic
 echo "discovery.zen.ping.unicast.hosts: $HOSTS_CONFIG" >> /etc/elasticsearch/elasticsearch.yml
 
 # Configure Elasticsearch node type
-log "Configure master/client/data node type flags mater-$MASTER_ONLY_NODE data-$DATA_NODE"
+log "Configure master/client/data node type flags master-$MASTER_ONLY_NODE data-$DATA_NODE"
 
 if [ ${MASTER_ONLY_NODE} -ne 0 ]; then
     log "Configure node as master only"
@@ -289,7 +299,7 @@ elif [ ${DATA_NODE} -ne 0 ]; then
     echo "node.master: false" >> /etc/elasticsearch/elasticsearch.yml
     echo "node.data: true" >> /etc/elasticsearch/elasticsearch.yml
 elif [ ${CLIENT_ONLY_NODE} -ne 0 ]; then
-    log "Configure node as data only"
+    log "Configure node as client only"
     echo "node.master: false" >> /etc/elasticsearch/elasticsearch.yml
     echo "node.data: false" >> /etc/elasticsearch/elasticsearch.yml
 else
@@ -302,6 +312,28 @@ echo "discovery.zen.minimum_master_nodes: 2" >> /etc/elasticsearch/elasticsearch
 
 if [[ "${ES_VERSION}" == \2* ]]; then
     echo "network.host: _non_loopback_" >> /etc/elasticsearch/elasticsearch.yml
+fi
+
+if [[ "${MARVEL_ENDPOINTS}" ]]; then
+  # non-Marvel node
+  mep=$(expand_ip_range "$MARVEL_ENDPOINTS")
+  expanded_marvel_endpoints="[\"${mep// /\",\"}\"]"
+  
+  if [[ "${ES_VERSION}" == \2* ]]; then
+    # 2.x non-Marvel node
+    echo "marvel.agent.exporters:" >> /etc/elasticsearch/elasticsearch.yml
+    echo "  id1:" >> /etc/elasticsearch/elasticsearch.yml
+    echo "    type: http" >> /etc/elasticsearch/elasticsearch.yml
+    echo "    host: ${expanded_marvel_endpoints}" >> /etc/elasticsearch/elasticsearch.yml
+  else
+    # 1.x non-Marvel node
+    echo "marvel.agent.exporter.hosts: ${expanded_marvel_endpoints}" >> /etc/elasticsearch/elasticsearch.yml
+  fi
+fi
+
+if [[ ${MARVEL_ONLY_NODE} -ne 0 && "${ES_VERSION}" == \1* ]]; then
+  # 1.x Marvel node
+  echo "marvel.agent.enabled: false" >> /etc/elasticsearch/elasticsearch.yml
 fi
 
 # DNS Retry

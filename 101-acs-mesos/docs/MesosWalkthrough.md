@@ -1,12 +1,12 @@
 # Mesos Container Service Walkthrough
 
-This walkthrough assumes you have deployed an ACS cluster with a Mesos orchestrator using the template from [101-acs-mesos](https://github.com/Azure/azure-quickstart-templates/tree/master/101-acs-mesos).
+This walkthrough assumes you have deployed an ACS cluster with a Mesos orchestrator using the template from [101-acs-mesos](https://github.com/Azure/azure-quickstart-templates/tree/master/101-acs-mesos). For more detailed documentation see the [Azure Container Service Documentation](https://azure.microsoft.com/en-us/documentation/articles/container-service-intro/).
 
 Once your container service has been created you will have a resource group containing 3 parts:
 
 1. a set of 1,3, or 5 masters in a master specific availability set.  Each master's SSH can be accessed via the public dns address at ports 2200..2204
 
-2. a set of agents in an Virtual Machine Scale Set (VMSS).  The agent VMs must be accessed through and SSH tunnel to the orchestration software installed on the master(s)
+2. a set of agents in an Virtual Machine Scale Set (VMSS).  The agent VMs can be accessed through a master.  See [agent forwarding](https://github.com/Azure/azure-quickstart-templates/blob/master/101-acs-mesos/docs/SSHKeyManagement.md#key-management-and-agent-forwarding-with-windows-pageant) for an example of how to do this.
 
 The following image shows the architecture of a container service cluster with 3 masters, and 3 agents:
 
@@ -32,7 +32,7 @@ When you deploy the template you will need to specify the following parameters:
 * `agentVMSize`: The type of VM that you want to use for each node in the container service. The default size is D2 (2 core) but you can change that if you expect to run workloads that require more RAM or CPU resources.
 * `linuxAdminUsername`: this is the username to use for the linux machines.  The default username is `azureuser`.
 * `masterCount`: Number of Masters. Currently the template supports 3 configurations: 1, 3 and 5 Masters container service configuration.
-* `sshRSAPublicKey`: Configure all linux machines with the SSH rsa public key string.  This is required.  Refer to the following section on how to generate your key pair: [SSH Key Generation](https://github.com/Azure/azure-quickstart-templates/blob/master/101-acs-mesos/docs/SSHKeyManagement.md)
+* `sshRSAPublicKey`: Configure all linux machines with the SSH rsa public key string.  This is required.  Refer to the following section on how to generate your key pair: [SSH Key Generation](https://github.com/Azure/azure-quickstart-templates/blob/master/101-acs-mesos/docs/SSHKeyManagement.md#ssh-key-generation)
 
 ## Marathon
 
@@ -82,7 +82,7 @@ This walk through is based the wonderful digital ocean tutorial: https://www.dig
   8. browse back to the Mesos master.  You will notice the running tasks and the completed tasks.  Click on the host of the completed tasks and also look at the sandbox.
 
   ![Image of Mesos completed tasks](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-acs-mesos/images/mesos-completed-tasks.png)
-  
+
   9. All nodes are running docker, so to run a docker app browse back to Marathon, and create your first docker application by specifying Docker Image `hello-world` and Network `Host`:
 
   ![Image of setting up docker application in Marathon](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-acs-mesos/images/marathon-docker.png)
