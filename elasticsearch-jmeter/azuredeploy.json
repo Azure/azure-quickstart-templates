@@ -14,27 +14,7 @@
                 "description": "Admin password used when provisioning virtual machines"
             }
         },
-        "location": {
-            "type": "string",
-            "allowedValues": [
-                "ResourceGroup",
-                "West US",
-                "East US",
-                "East US 2",
-                "Central US",
-                "South Central US",
-                "North Central US",
-                "East Asia",
-                "Southeast Asia",
-                "West Europe",
-                "North Europe"
-            ],
-            "defaultValue": "ResourceGroup",
-            "metadata": {
-                "description": "Location where resources will be provisioned"
-            }
-        },
-        "virtualNetworkName": {
+        "existingVirtualNetworkName": {
             "type": "string",
             "defaultValue": "es-vnet",
             "metadata": {
@@ -122,36 +102,24 @@
         }
     },
     "variables": {
+        "apiVersion": "2015-06-15",
         "templateBaseUrl": "[concat(parameters('templateBase'), '/elasticsearch-jmeter/')]",
-        "locationMap": {
-            "ResourceGroup": "[resourceGroup().location]",
-            "West US": "[parameters('location')]",
-            "East US": "[parameters('location')]",
-            "East US 2": "[parameters('location')]",
-            "Central US": "[parameters('location')]",
-            "South Central US": "[parameters('location')]",
-            "North Central US": "[parameters('location')]",
-            "East Asia": "[parameters('location')]",
-            "Southeast Asia": "[parameters('location')]",
-            "West Europe": "[parameters('location')]",
-            "North Europe": "[parameters('location')]"
-        },
-        "location": "[variables('locationMap')[parameters('location')]]",
+        "location": "[resourceGroup().location]",
         "storageAccountName": "[concat(substring(uniqueString(resourceGroup().id, 'jmeter'), 0, 6), 'jmeter')]",
         "bossNodeIp": "10.0.4.10",
         "subNodesIpPrefix": "10.0.4.2",
         "networkSettings": {
-            "virtualNetworkName": "[parameters('virtualNetworkName')]",
+            "virtualNetworkName": "[parameters('existingVirtualNetworkName')]",
             "addressPrefix": "10.0.0.0/16",
             "subnet": {
                 "jmeter": {
                     "name": "jmeter",
                     "prefix": "10.0.4.0/24",
-                    "vnet": "[parameters('virtualNetworkName')]"
+                    "vnet": "[parameters('existingVirtualNetworkName')]"
                 }
             }
         },
-        "subnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName')), '/subnets/jmeter')]",
+        "subnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('existingVirtualNetworkName')), '/subnets/jmeter')]",
         "nicName": "jmeter-nic",
         "vmName": "jmeter-vm",
         "setupScripts": [
@@ -169,7 +137,7 @@
                 "boss": {
                     "publisher": "Microsoft.OSTCExtensions",
                     "type": "CustomScriptForLinux",
-                    "typeHandlerVersion": "1.2",
+                    "typeHandlerVersion": "1.4",
                     "settings": {
                         "fileUris": "[variables('setupScripts')]",
                         "commandToExecute": "[concat('bash jmeter-install.sh -mr ', variables('subNodesIpPrefix'), '-', parameters('subNodeCount'), ' -j ', parameters('jarball'), ' -t ', parameters('testpack'))]"
@@ -178,7 +146,7 @@
                 "sub": {
                     "publisher": "Microsoft.OSTCExtensions",
                     "type": "CustomScriptForLinux",
-                    "typeHandlerVersion": "1.2",
+                    "typeHandlerVersion": "1.4",
                     "settings": {
                         "fileUris": "[variables('setupScripts')]",
                         "commandToExecute": "[concat('bash jmeter-install.sh -j ', parameters('jarball'))]"
@@ -191,14 +159,14 @@
         {
             "type": "Microsoft.Storage/storageAccounts",
             "name": "[variables('storageAccountName')]",
-            "apiVersion": "2015-06-15",
+            "apiVersion": "[variables('apiVersion')]",
             "location": "[variables('location')]",
             "properties": {
                 "accountType": "Standard_LRS"
             }
         },
         {
-            "apiVersion": "2015-06-15",
+            "apiVersion": "[variables('apiVersion')]",
             "type": "Microsoft.Network/publicIPAddresses",
             "name": "jmeter-pip",
             "location": "[variables('location')]",
@@ -207,7 +175,7 @@
             }
         },
         {
-            "apiVersion": "2015-06-15",
+            "apiVersion": "[variables('apiVersion')]",
             "type": "Microsoft.Network/networkSecurityGroups",
             "name": "jmeter-nsg",
             "location": "[variables('location')]",
@@ -231,7 +199,7 @@
             }
         },
         {
-            "apiVersion": "2015-06-15",
+            "apiVersion": "[variables('apiVersion')]",
             "type": "Microsoft.Network/virtualNetworks/subnets",
             "name": "[concat(variables('networkSettings').virtualNetworkName, '/jmeter')]",
             "location": "[variables('location')]",
@@ -240,7 +208,7 @@
             }
         },
         {
-            "apiVersion": "2015-06-15",
+            "apiVersion": "[variables('apiVersion')]",
             "type": "Microsoft.Network/networkInterfaces",
             "name": "[concat(variables('nicName'), '-sub', copyindex())]",
             "location": "[variables('location')]",
@@ -267,7 +235,7 @@
             }
         },
         {
-            "apiVersion": "2015-06-15",
+            "apiVersion": "[variables('apiVersion')]",
             "type": "Microsoft.Network/networkInterfaces",
             "name": "[concat(variables('nicName'), '-boss')]",
             "location": "[variables('location')]",
@@ -297,7 +265,7 @@
             }
         },
         {
-            "apiVersion": "2015-06-15",
+            "apiVersion": "[variables('apiVersion')]",
             "type": "Microsoft.Compute/virtualMachines",
             "name": "[concat(variables('vmName'), '-boss')]",
             "location": "[variables('location')]",
@@ -337,7 +305,7 @@
                 {
                     "type": "Microsoft.Compute/virtualMachines/extensions",
                     "name": "[concat(variables('vmName'), '-boss', '/installjmeter')]",
-                    "apiVersion": "2015-06-15",
+                    "apiVersion": "[variables('apiVersion')]",
                     "location": "[variables('location')]",
                     "dependsOn": [
                         "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'), '-boss')]"
@@ -355,7 +323,7 @@
             ]
         },
         {
-            "apiVersion": "2015-06-15",
+            "apiVersion": "[variables('apiVersion')]",
             "type": "Microsoft.Compute/virtualMachines",
             "name": "[concat(variables('vmName'), '-sub', copyindex())]",
             "location": "[variables('location')]",
@@ -399,7 +367,7 @@
                 {
                     "type": "Microsoft.Compute/virtualMachines/extensions",
                     "name": "[concat(variables('vmName'), '-sub', copyindex(), '/installjmeter')]",
-                    "apiVersion": "2015-06-15",
+                    "apiVersion": "[variables('apiVersion')]",
                     "location": "[variables('location')]",
                     "dependsOn": [
                         "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'), '-sub', copyindex())]"
