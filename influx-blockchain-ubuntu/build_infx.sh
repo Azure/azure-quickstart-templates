@@ -50,13 +50,13 @@ then
 	sudo mkdir $HOME/.Influx
 fi
 printf '%s\n%s\n%s\n%s\n' 'daemon=1' 'server=1' 'rpcuser=u' 'rpcpassword=p' | sudo tee $HOME/.Influx/Influx.conf
-file=/etc/init.d/Influx
-if [ ! -e "$file" ]
-then
-	printf '%s\n%s\n' '#!/bin/sh' 'sudo Influxd' | sudo tee /etc/init.d/Influx
-	sudo chmod +x /etc/init.d/Influx
-	sudo update-rc.d Influx defaults	
-fi
+#file=/etc/init.d/Influx
+#if [ ! -e "$file" ]
+#then
+#	printf '%s\n%s\n' '#!/bin/sh' 'sudo Influxd' | sudo tee /etc/init.d/Influx
+#	sudo chmod +x /etc/init.d/Influx
+#	sudo update-rc.d Influx defaults	
+#fi
 
 /usr/bin/Influxd
 echo "Influx has been setup successfully and is running..."
