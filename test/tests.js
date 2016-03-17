@@ -168,7 +168,7 @@ function validateTemplate(templatePath, parametersPath) {
       .send(JSON.stringify(requestBody))
       .end(function (response) {
         if (response.status !== 200) {
-          return reject(response.body);
+          return reject(response);
         }
 
         return resolve(response.body);
@@ -361,7 +361,7 @@ describe('Template', function () {
               errorString += ' --template-file ' + test.args[0] + ' --parameters-file ' + test.args[1] + '\n';
               errorString += 'azure group deployment create --resource-group (your_group_name) ';
               errorString += ' --template-file ' + test.args[0] + ' --parameters-file ' + test.args[1];
-              assert(false, errorString + ' \n\nServer Error:' + JSON.stringify(err));
+              assert(false, errorString + ' \n\nServer Error:' + JSON.stringify(err, null, 4));
             });
         });
       });
