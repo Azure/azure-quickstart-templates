@@ -6,7 +6,7 @@ date
 ps axjf
 
 
-if [ $1 = 'From_Source' ]; then
+if [[ $1 = 'From_Source' ]]; then
 #################################################################
 # Update Ubuntu and install prerequisites for running Influx    #
 #################################################################
