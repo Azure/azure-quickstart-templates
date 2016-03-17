@@ -5,7 +5,7 @@ set -e
 date
 ps axjf
 
-
+#if [[ $1 = 'From_Source' ]]; then
 #################################################################
 # Update Ubuntu and install prerequisites for running Influx    #
 #################################################################
@@ -13,8 +13,8 @@ sudo apt-get update
 #################################################################
 # Build Influx from source                                      #
 #################################################################
-NPROC=$(nproc)
-echo "nproc: $NPROC"
+#NPROC=$(nproc)
+#echo "nproc: $NPROC"
 #################################################################
 # Install all necessary packages for building Influx            #
 #################################################################
@@ -34,10 +34,12 @@ cd /usr/local/Influx/src
 file=/usr/local/Influx/src/Influxd
 if [ ! -e "$file" ]
 then
-	sudo make -j$NPROC -f makefile.unix
+	sudo make -f makefile.unix
+#	sudo make -j$NPROC -f makefile.unix
 fi
 
 sudo cp /usr/local/Influx/src/Influxd /usr/bin/Influxd
+#fi
 
 ################################################################
 # Configure to auto start at boot		               #
