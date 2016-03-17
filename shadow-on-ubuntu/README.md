@@ -12,8 +12,8 @@ When you click the Deploy to Azure icon above, you need to specify the following
 * `adminUsername`: This is the account for connecting to your Shadow host.
 * `adminPassword`: This is your password for the host.  Azure requires passwords to have One upper case, one lower case, a special character, and a number.
 * `dnsLabelPrefix`: This is used as both the VM name and DNS name of your public IP address.  Please ensure an unique name.
-* `installMethod`: This tells Azure how to install the software.  The default is using the community provided PPA.  You may choose to install from source, but be advised this method takes substantially longer to complete.
-* `vmSize`: This is the size of the VM to use.  Recommendations: Use the A series for PPA installs, and D series for installations from source.
+* `installMethod`: This tells Azure how to install the software.  The default is using the Binaries.  You may choose to install from Source, but be advised this method takes substantially longer to complete.
+* `vmSize`: This is the size of the VM to use.  Recommendations: Use the A series for Binaries installs, and D series for installations from Source.
 
 # Getting Started Tutorial
 
