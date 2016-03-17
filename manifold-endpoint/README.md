@@ -5,7 +5,7 @@ By clicking "Deploy to Azure" you agree to the Terms and Conditions below.
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fmanifoldtechnology%2Fazure-quickstart-templates%2Fmaster%2Fmanifold-endpoint%2Fazuredeploy.json" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
-# This template installs the Manifold Platform REST Endpoint on a CentOS VM.
+# This template deploys a Manifold Platform Server on a CentOS VM into the selected resource group.
  
 #
 Manifold's BaaS product allows enterprises to manage diverse account relationships. With Manifold, enterprises can now link accounts to Azure's cloud-based blockchain and create rules to govern the relationships between accounts, simplifying complex tasks like managing shared P&Ls. 
