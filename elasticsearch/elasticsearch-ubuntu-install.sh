@@ -243,9 +243,18 @@ EOF
 
 if [ ${USE_AFS} -ne 0 ]; 
 then
+    log "setting up afs"
+    
+    # install cachefilesd
+    apt-get install cachefilesd
+    echo "RUN=yes" >> /etc/default/cachefilesd
+    service cachefilesd start
+
     # create and mount an AFS share
     bash afs-utils-0.1.sh -cp -a ${STORAGE_ACCOUNT} -k ${ACCESS_KEY}
 else
+    log "setting up disks"
+    
     #Format data disks (Find data disks then partition, format, and mount them as separate drives)
     bash vm-disk-utils-0.1.sh    
 fi
@@ -304,17 +313,15 @@ echo "node.name: ${HOSTNAME}" >> /etc/elasticsearch/elasticsearch.yml
 # Configure paths - if we have data disks attached then use them
 if [ -n "$DATAPATH_CONFIG" ]; then
     log "Update configuration with data path list of $DATAPATH_CONFIG"
-    
-    data_setting="path.data"
-    if [ ${USE_AFS} -ne 0 ]; 
-    then
-        # path.data will be the default (/var/lib/elasticsearch)
-        data_setting="path.shared_data"
-        echo "node.enable_custom_paths: true" >> /etc/elasticsearch/elasticsearch.yml
-        echo "node.add_id_to_custom_path: false" >> /etc/elasticsearch/elasticsearch.yml
-    fi
-    
-    echo "$data_setting: $DATAPATH_CONFIG" >> /etc/elasticsearch/elasticsearch.yml
+    echo "path.data: $DATAPATH_CONFIG" >> /etc/elasticsearch/elasticsearch.yml
+fi
+
+# if we are using AFS, then add that path
+if [ ${USE_AFS} -ne 0 ]; 
+then
+    echo "node.enable_custom_paths: true" >> /etc/elasticsearch/elasticsearch.yml
+    echo "node.add_id_to_custom_path: false" >> /etc/elasticsearch/elasticsearch.yml
+    echo "path.shared_data: /sharedfs" >> /etc/elasticsearch/elasticsearch.yml        
 fi
 
 # Configure discovery
