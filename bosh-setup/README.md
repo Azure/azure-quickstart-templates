@@ -18,6 +18,11 @@ We look forward to hearing your feedback and suggestions!
 ```
 Template Changelog
 
+# v1.1.3 (2016-03-08)
+- Upgrade versions
+  - Upgrade bosh version to 255.3
+  - Upgrade cf version to 231
+
 # v1.1.2 (2016-03-01)
 - Change the default value of "autoDeployBosh" to "enabled"
 - Run "apt-get update" at the beginning of "setup_env"
