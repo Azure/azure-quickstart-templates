@@ -1,4 +1,4 @@
-# Manually change the number Of VMs in an existing VM Scale Set
+# Manually change the number of VMs in an existing VM Scale Set
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vmss-scale-existing%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
