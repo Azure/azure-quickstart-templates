@@ -41,6 +41,7 @@ help()
     echo "-y configure as client only node (no master, no data)"
     echo "-z configure as data node (no master)"
     echo "-s used striped data disk volumes"
+    echo "-j install jmeter server agent"
     echo "-h view this help content"
 }
 
@@ -88,8 +89,8 @@ STORAGE_ACCOUNT=""
 ACCESS_KEY=""
 
 #Loop through options passed
-while getopts :n:d:v:a:k:cme:wxyzsh optname; do
-    log "Option $optname set with value ${OPTARG}"
+while getopts :n:d:v:a:k:cme:wxyzsjh optname; do
+  log "Option $optname set with value ${OPTARG}"
   case $optname in
     n) #set cluster name
       CLUSTER_NAME=${OPTARG}
@@ -132,6 +133,9 @@ while getopts :n:d:v:a:k:cme:wxyzsh optname; do
       ;;
     d) #place data on local resource disk
       NON_DURABLE=1
+      ;;
+    j) #install jmeter server agent
+      JMETER_AGENT=1
       ;;
     h) #show help
       help
@@ -206,6 +210,31 @@ install_es()
     sudo dpkg -i elasticsearch.deb
 }
 
+install_jmeter_server()
+{
+    log "download jmeter server agent"
+    apt-get -y install unzip
+    wget -O agent.zip http://jmeter-plugins.org/downloads/file/ServerAgent-2.2.1.zip
+    mkdir /opt/jmeter-server-agent
+    unzip agent.zip -d /opt/jmeter-server-agent 
+    
+    log "updating iptables"
+    sudo iptables -A INPUT -m state --state NEW -m tcp -p tcp --dport 4444 -j ACCEPT
+    
+    log "setup agent service"
+    cat << EOF > /etc/init/jmeter-server-agent.conf
+    description "JMeter Server Agent"
+
+    start on starting
+    script
+        /opt/jmeter-server-agent/startAgent.sh
+    end script
+EOF
+
+    log "starting agent service"
+    service jmeter-server-agent start
+}
+
 # Primary Install Tasks
 #########################
 #NOTE: These first three could be changed to run in parallel
@@ -229,6 +258,12 @@ install_java
 #Install Elasticsearch
 #-----------------------
 install_es
+
+#install jmeter server agent
+if [ $JMETER_AGENT ]; 
+then
+    install_jmeter_server
+fi
 
 # Prepare configuration information
 # Configure permissions on data disks for elasticsearch user:group
