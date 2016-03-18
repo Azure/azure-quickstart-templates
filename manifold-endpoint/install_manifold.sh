@@ -10,6 +10,9 @@ yum install -y jdk-8u74-linux-x64.rpm
 curl -X GET https://s3-us-west-2.amazonaws.com/rpmhost/rest-server-0.1-1.x86_64.rpm > rest-server-0.1-1.x86_64.rpm
 yum install -y rest-server-0.1-1.x86_64.rpm
 
+curl -X GET https://s3-us-west-2.amazonaws.com/rpmhost/manifold.crt > manifold.crt
+sudo keytool -import -alias manifold -trustcacerts -file manifold.crt -keystore /usr/java/latest/jre/lib/security/cacerts -storepass changeit
+
 systemctl start rest-server
 cd /home/
 rm -rf /var/tmp/manifoldinstall
