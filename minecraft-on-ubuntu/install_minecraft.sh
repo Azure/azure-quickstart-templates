@@ -47,9 +47,9 @@ mkdir $minecraft_server_path
 cd $minecraft_server_path
 
 # download the server jar
-while ! echo y | wget https://s3.amazonaws.com/Minecraft.Download/versions/1.8/minecraft_server.1.8.jar; do
+while ! echo y | wget https://s3.amazonaws.com/Minecraft.Download/versions/1.9/minecraft_server.1.9.jar; do
     sleep 10
-    wget https://s3.amazonaws.com/Minecraft.Download/versions/1.8/minecraft_server.1.8.jar
+    wget https://s3.amazonaws.com/Minecraft.Download/versions/1.9/minecraft_server.1.9.jar
 done
 
 # set permissions on install folder
@@ -71,7 +71,7 @@ echo 'eula=true' >> $minecraft_server_path/eula.txt
 touch /etc/systemd/system/minecraft-server.service
 printf '[Unit]\nDescription=Minecraft Service\nAfter=rc-local.service\n' >> /etc/systemd/system/minecraft-server.service
 printf '[Service]\nWorkingDirectory=%s\n' $minecraft_server_path >> /etc/systemd/system/minecraft-server.service
-printf 'ExecStart=/usr/bin/java -Xms%s -Xmx%s -jar %s/minecraft_server.1.8.jar nogui\n' $memoryAlloc $memoryAlloc $minecraft_server_path >> /etc/systemd/system/minecraft-server.service
+printf 'ExecStart=/usr/bin/java -Xms%s -Xmx%s -jar %s/minecraft_server.1.9.jar nogui\n' $memoryAlloc $memoryAlloc $minecraft_server_path >> /etc/systemd/system/minecraft-server.service
 printf 'ExecReload=/bin/kill -HUP $MAINPID\nKillMode=process\nRestart=on-failure\n' >> /etc/systemd/system/minecraft-server.service
 printf '[Install]\nWantedBy=multi-user.target\nAlias=minecraft-server.service' >> /etc/systemd/system/minecraft-server.service
 
