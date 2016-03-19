@@ -16,6 +16,8 @@ minecraft_server_path=/srv/minecraft_server
 minecraft_user=minecraft
 minecraft_group=minecraft
 UUID_URL=https://api.mojang.com/users/profiles/minecraft/$1
+server_jar=minecraft_server.$10.jar
+SERVER_JAR_URL=https://s3.amazonaws.com/Minecraft.Download/versions/$10/minecraft_server.$10.jar
 
 # add and update repos
 while ! echo y | apt-get install -y software-properties-common; do
@@ -48,9 +50,9 @@ mkdir $minecraft_server_path
 cd $minecraft_server_path
 
 # download the server jar
-while ! echo y | wget https://s3.amazonaws.com/Minecraft.Download/versions/$10/minecraft_server.$10.jar; do
+while ! echo y | wget SERVER_JAR_URL; do
     sleep 10
-    wget https://s3.amazonaws.com/Minecraft.Download/versions/$10/minecraft_server.$10.jar
+    wget SERVER_JAR_URL
 done
 
 # set permissions on install folder
@@ -72,7 +74,7 @@ echo 'eula=true' >> $minecraft_server_path/eula.txt
 touch /etc/systemd/system/minecraft-server.service
 printf '[Unit]\nDescription=Minecraft Service\nAfter=rc-local.service\n' >> /etc/systemd/system/minecraft-server.service
 printf '[Service]\nWorkingDirectory=%s\n' $minecraft_server_path >> /etc/systemd/system/minecraft-server.service
-printf 'ExecStart=/usr/bin/java -Xms%s -Xmx%s -jar %s/minecraft_server.$10.jar nogui\n' $memoryAlloc $memoryAlloc $minecraft_server_path >> /etc/systemd/system/minecraft-server.service
+printf 'ExecStart=/usr/bin/java -Xms%s -Xmx%s -jar %s/%s nogui\n' $memoryAlloc $memoryAlloc $minecraft_server_path $server_jar >> /etc/systemd/system/minecraft-server.service
 printf 'ExecReload=/bin/kill -HUP $MAINPID\nKillMode=process\nRestart=on-failure\n' >> /etc/systemd/system/minecraft-server.service
 printf '[Install]\nWantedBy=multi-user.target\nAlias=minecraft-server.service' >> /etc/systemd/system/minecraft-server.service
 
