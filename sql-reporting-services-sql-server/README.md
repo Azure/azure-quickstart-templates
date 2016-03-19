@@ -19,7 +19,7 @@ By Default it will create the SQL machines using the image ***SQL2014SP1-WS2012R
 
 For example
 * **sqlImageVersion:** SQL2014SP1-WS2012R2 **sku:** Enterprise 
-* **sqlImageVersion:** SQL2016CTP3.3-WS2012R2 **sku:** Evaluation
+* **sqlImageVersion:** SQL2016RC1-WS2012R2 **sku:** Evaluation
 
 
 ***For CTP Versions of SQL the only SKU available is Evaluation*** 
