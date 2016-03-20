@@ -25,7 +25,7 @@ For example
 ***For CTP Versions of SQL the only SKU available is Evaluation*** 
 
 ***
-It contains a modified version of xSQLServerRSConfig that supports machines that are non domain join and uses SQL authentication for connection SSRS with the database 
+It contains a modified version of xSQLServerRSConfig that supports machines that are non domain join and uses SQL authentication for connecting SSRS with the database 
 based on the DSC package http://www.powershellgallery.com/packages/xSQLServer/1.4.0.0.
 
 It contains the DSC scripts from https://sqlvmgroup.blob.core.windows.net/singlevm/PrepareSqlServer.ps1.zip used by the Azure marketplace to create SQL Machines
