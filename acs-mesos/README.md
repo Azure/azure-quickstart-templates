@@ -1,1 +1,0 @@
-The acs-mesos templates have moved to [101-acs-mesos](https://github.com/Azure/azure-quickstart-templates/tree/master/101-acs-mesos)
