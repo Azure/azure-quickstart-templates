@@ -50,9 +50,9 @@ mkdir $minecraft_server_path
 cd $minecraft_server_path
 
 # download the server jar
-while ! echo y | wget SERVER_JAR_URL; do
+while ! echo y | wget $SERVER_JAR_URL; do
     sleep 10
-    wget SERVER_JAR_URL
+    wget $SERVER_JAR_URL
 done
 
 # set permissions on install folder
