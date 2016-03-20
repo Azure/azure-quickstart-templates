@@ -66,8 +66,8 @@ log "my vmsize: $VMSIZE"
 # Converts a domain like machine.domain.com to domain.com by removing the machine name
 NAMESUFFIX=`echo $NAMESUFFIX | sed 's/^[^.]*\.//'`
 
-
-HOSTIP=`itoa ${MASTERIP}`
+log "master ip: $MASTERIP"
+HOSTIP=${MASTERIP}
 ManagementNode="$HOSTIP:${NAMEPREFIX}-mn0.$NAMESUFFIX:${NAMEPREFIX}-mn0"
 
 mip=${MASTERIP}
