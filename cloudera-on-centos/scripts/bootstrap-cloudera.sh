@@ -66,9 +66,8 @@ log "my vmsize: $VMSIZE"
 # Converts a domain like machine.domain.com to domain.com by removing the machine name
 NAMESUFFIX=`echo $NAMESUFFIX | sed 's/^[^.]*\.//'`
 
-IP=`atoi ${FULLIPADDRESS}`
-let "IP=i+IP"
-HOSTIP=`itoa ${IP}`
+
+HOSTIP=`itoa ${MASTERIP}`
 ManagementNode="$HOSTIP:${NAMEPREFIX}-mn0.$NAMESUFFIX:${NAMEPREFIX}-mn0"
 
 mip=$(echo "$ManagementNode" | sed 's/:/ /' | sed 's/:/ /' | cut -d ' ' -f 1)
@@ -89,7 +88,7 @@ NODES=()
 let "NAMEEND=MASTERNODES-1"
 for i in $(seq 1 $NAMEEND)
 do
-  IP=`atoi ${FULLIPADDRESS}`
+  IP=`atoi ${MASTERIP}`
   let "IP=i+IP"
   HOSTIP=`itoa ${IP}`
   NODES+=("$HOSTIP:${NAMEPREFIX}-mn$i.$NAMESUFFIX:${NAMEPREFIX}-mn$i")
@@ -98,8 +97,8 @@ done
 let "DATAEND=DATANODES-1"
 for i in $(seq 0 $DATAEND)
 do 
-  IP=`atoi ${FULLIPADDRESS}`
-  let "IP=i+IP+MasterWorderNodeAddressGap"
+  IP=`atoi ${WORKERIP}`
+  let "IP=i+IP"
   HOSTIP=`itoa ${IP}`
   NODES+=("$HOSTIP:${NAMEPREFIX}-dn$i.$NAMESUFFIX:${NAMEPREFIX}-dn$i")
 done
