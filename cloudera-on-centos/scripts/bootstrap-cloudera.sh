@@ -70,7 +70,7 @@ NAMESUFFIX=`echo $NAMESUFFIX | sed 's/^[^.]*\.//'`
 HOSTIP=`itoa ${MASTERIP}`
 ManagementNode="$HOSTIP:${NAMEPREFIX}-mn0.$NAMESUFFIX:${NAMEPREFIX}-mn0"
 
-mip=$(echo "$ManagementNode" | sed 's/:/ /' | sed 's/:/ /' | cut -d ' ' -f 1)
+mip=${MASTERIP}
 
 log "set private key"
 #use the key from the key vault as the SSH private key
