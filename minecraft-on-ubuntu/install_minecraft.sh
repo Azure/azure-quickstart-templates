@@ -8,16 +8,16 @@
 # $6 = enable-command-block
 # $7 = spawn-monsters
 # $8 = generate-structures
-# $9 = level-seed
-# $10 = minecraft Server Version
+# $9 = minecraft Server Version
+# $10 = level-seed
 
 # basic service and API settings
 minecraft_server_path=/srv/minecraft_server
 minecraft_user=minecraft
 minecraft_group=minecraft
 UUID_URL=https://api.mojang.com/users/profiles/minecraft/$1
-server_jar=minecraft_server.$10.jar
-SERVER_JAR_URL=https://s3.amazonaws.com/Minecraft.Download/versions/$10/minecraft_server.$10.jar
+server_jar=minecraft_server.$9.jar
+SERVER_JAR_URL=https://s3.amazonaws.com/Minecraft.Download/versions/$9/minecraft_server.$9.jar
 
 # add and update repos
 while ! echo y | apt-get install -y software-properties-common; do
@@ -105,6 +105,6 @@ printf 'white-list=%s\n' $5 >> $minecraft_server_path/server.properties
 printf 'enable-command-block=%s\n' $6 >> $minecraft_server_path/server.properties
 printf 'spawn-monsters=%s\n' $7 >> $minecraft_server_path/server.properties
 printf 'generate-structures=%s\n' $8 >> $minecraft_server_path/server.properties
-printf 'level-seed=%s\n' $9 >> $minecraft_server_path/server.properties
+printf 'level-seed=%s\n' $10 >> $minecraft_server_path/server.properties
 
 systemctl start minecraft-server
