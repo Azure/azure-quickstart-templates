@@ -13,6 +13,7 @@ Services include:
 * Short-Term Data Storage and Retrieval
 * Lightweight SQL-like Query Protocol
 
+For more information see: http://www.v.cash/
 # Template Parameters
 When you click the Deploy to Azure icon above, you need to specify the following template parameters:
 
