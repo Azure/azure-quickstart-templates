@@ -1,0 +1,360 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminPassword": {
+      "metadata": {
+        "description": "Administrator password"
+      },
+      "type": "securestring"
+    },
+    "authenticationType": {
+      "allowedValues": [
+        "password",
+        "sshPublicKey"
+      ],
+      "defaultValue": "password",
+      "metadata": {
+        "description": "Authentication type"
+      },
+      "type": "string"
+    },
+    "newStorageAccountName": {
+      "metadata": {
+        "description": "Name of storage account"
+      },
+      "type": "string"
+    },
+    "offer": {
+      "allowedValues": [
+        "R7730BYOL",
+        "R7730PAYG"
+      ],
+      "defaultValue": "R7730BYOL",
+      "metadata": {
+        "description": "Offer version and type"
+      },
+      "type": "string"
+    },
+    "sshPublicKey": {
+      "defaultValue": "",
+      "metadata": {
+        "description": "Administrator SSH public key"
+      },
+      "type": "string"
+    },
+    "vmName": {
+      "metadata": {
+        "description": "Name of the Security Gateway"
+      },
+      "type": "string"
+    },
+    "vmSize": {
+      "defaultValue": "Standard_D3",
+      "allowedValues": [
+        "Standard_A0",
+        "Standard_A1",
+        "Standard_A2",
+        "Standard_A3",
+        "Standard_A4",
+        "Standard_A7",
+        "Standard_A9",
+        "Standard_A11",
+        "Standard_D1",
+        "Standard_D2",
+        "Standard_D3",
+        "Standard_D4",
+        "Standard_D11",
+        "Standard_D12",
+        "Standard_D13",
+        "Standard_D14",
+        "Standard_D1_v2",
+        "Standard_D2_v2",
+        "Standard_D3_v2",
+        "Standard_D4_v2",
+        "Standard_D5_v2",
+        "Standard_D11_v2",
+        "Standard_D12_v2",
+        "Standard_D13_v2",
+        "Standard_D14_v2"
+      ],
+      "metadata": {
+        "description": "Size of the VM"
+      },
+      "type": "string"
+    },
+    "installSecurityGateway": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Install Security Gateway"
+      }
+    },
+    "installSecurityManagement": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Install Security Management"
+      }
+    },
+    "managementGUIClientNetwork": {
+      "type": "string",
+      "defaultValue": "0.0.0.0/0",
+      "metadata": {
+        "description": "Allowed network for Management GUI clients",
+        "minLength": 9,
+        "maxLength": 18
+      }
+    },
+    "sicKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "One time key for Secure Internal Communication",
+        "minLength": 8
+      }
+    }
+  },
+  "variables": {
+    "apiVersion": "2015-06-15",
+    "customData": "[concat('#!/bin/bash\n', '\n', 'installSecurityGateway=\"', parameters('installSecurityGateway'), '\"', '\n', 'installSecurityGateway=\"$(echo $installSecurityGateway | tr \"TF\" \"tf\")\"\n', 'installSecurityManagement=\"', parameters('installSecurityManagement'), '\"', '\n', 'installSecurityManagement=\"$(echo $installSecurityManagement | tr \"TF\" \"tf\")\"\n', 'adminPassword=\"', parameters('adminPassword'), '\"', '\n', 'managementGUIClientNetwork=\"', parameters('managementGUIClientNetwork'), '\"', '\n', 'ManagementGUIClientBase=\"$(echo $managementGUIClientNetwork | cut -d / -f 1)\"\n', 'ManagementGUIClientMaskLength=\"$(echo $managementGUIClientNetwork | cut -d / -f 2)\"\n', 'sicKey=\"', parameters('sicKey'), '\"', '\n', 'conf=\"install_security_gw=$installSecurityGateway\"\n', 'if $installSecurityGateway; then\n', '    conf=\"${conf}&install_ppak=true\"\n', '    conf=\"${conf}&gateway_cluster_member=false\"\n', 'fi\n', 'conf=\"${conf}&install_security_managment=$installSecurityManagement\"\n', 'if $installSecurityManagement; then\n', '    conf=\"${conf}&install_mgmt_primary=true\"\n', '    conf=\"${conf}&mgmt_admin_name=admin\"\n', '    conf=\"${conf}&mgmt_admin_passwd=$adminPassword\"\n', '    conf=\"${conf}&mgmt_gui_clients_radio=network\"\n', '    conf=\"${conf}&mgmt_gui_clients_ip_field=$ManagementGUIClientBase\"\n', '    conf=\"${conf}&mgmt_gui_clients_subnet_field=$ManagementGUIClientMaskLength\"\n', 'fi\n', 'conf=\"${conf}&ftw_sic_key=$sicKey\"\n', '\n', 'config_system -s $conf\n', 'shutdown -r now\n')]",
+    "imageOffer": "check-point-r77-10",
+    "imagePublisher": "checkpoint",
+    "imageReference": "[variables(concat('imageReference', parameters('offer')))]",
+    "imageReferenceR7730BYOL": {
+      "offer": "[variables('imageOffer')]",
+      "publisher": "[variables('imagePublisher')]",
+      "sku": "sg-byol",
+      "version": "latest"
+    },
+    "imageReferenceR7730PAYG": {
+      "offer": "[variables('imageOffer')]",
+      "publisher": "[variables('imagePublisher')]",
+      "sku": "sg-ngtp",
+      "version": "latest"
+    },
+    "nic1Name": "gateway-nic",
+    "osProfile": "[variables(concat('osprofile', parameters('authenticationType')))]",
+    "osProfilepassword": {
+      "adminPassword": "[parameters('adminPassword')]",
+      "adminUsername": "notused",
+      "computerName": "[parameters('vmName')]",
+      "customData": "[base64(variables('customData'))]"
+    },
+    "osProfilesshPublicKey": {
+      "adminUsername": "notused",
+      "computerName": "[parameters('vmName')]",
+      "customData": "[base64(variables('customData'))]",
+      "linuxConfiguration": {
+        "disablePasswordAuthentication": "true",
+        "ssh": {
+          "publicKeys": [
+            {
+              "keyData": "[parameters('sshPublicKey')]",
+              "path": "/home/notused/.ssh/authorized_keys"
+            }
+          ]
+        }
+      }
+    },
+    "plan": "[variables(concat('plan', parameters('offer')))]",
+    "planR7730BYOL": {
+      "name": "sg-byol",
+      "product": "[variables('imageOffer')]",
+      "publisher": "[variables('imagePublisher')]"
+    },
+    "planR7730PAYG": {
+      "name": "sg-ngtp",
+      "product": "[variables('imageOffer')]",
+      "publisher": "[variables('imagePublisher')]"
+    },
+    "storageAccountType": "Standard_LRS",
+    "vnetName": "vnet",
+    "vnetId": "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+    "addressPrefix": "10.0.0.0/16",
+    "onPremiseNetwork": "198.51.100.0/24",
+    "subnet1Name": "external-subnet",
+    "subnet1Prefix": "10.0.1.0/24",
+    "subnet1Id": "[concat(variables('vnetId'), '/subnets/', variables('subnet1Name'))]",
+    "subnet2Name": "internal-subnet",
+    "subnet2Prefix": "10.0.2.0/24",
+    "subnet2Id": "[concat(variables('vnetId'), '/subnets/', variables('subnet2Name'))]",
+    "gatewayPrivateAddress": "10.0.1.10",
+    "internalRouteTableName": "InternalRouteTable",
+    "internalRouteTableId": "[resourceId('Microsoft.Network/routeTables', variables('internalRouteTableName'))]",
+    "publicIPAddressName": "gateway",
+    "publicIPAddressId": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/routeTables",
+      "apiVersion": "[variables('apiVersion')]",
+      "location": "[resourceGroup().location]",
+      "name": "[variables('internalRouteTableName')]",
+      "properties": {
+        "routes": [
+          {
+            "name": "Default",
+            "properties": {
+              "addressPrefix": "0.0.0.0/0",
+              "nextHopType": "VirtualAppliance",
+              "nextHopIpAddress": "[variables('gatewayPrivateAddress')]"
+            }
+          },
+          {
+            "name": "On-Premise-Network",
+            "properties": {
+              "addressPrefix": "[variables('onPremiseNetwork')]",
+              "nextHopType": "VirtualAppliance",
+              "nextHopIpAddress": "[variables('gatewayPrivateAddress')]"
+            }
+          },
+          {
+            "name": "External-Subnet",
+            "properties": {
+              "addressPrefix": "[variables('subnet1Prefix')]",
+              "nextHopType": "VirtualAppliance",
+              "nextHopIpAddress": "[variables('gatewayPrivateAddress')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "[variables('apiVersion')]",
+      "location": "[resourceGroup().location]",
+      "name": "[parameters('newStorageAccountName')]",
+      "properties": {
+        "accountType": "[variables('storageAccountType')]"
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "[variables('apiVersion')]",
+      "location": "[resourceGroup().location]",
+      "name": "[variables('vnetName')]",
+      "dependsOn": [
+        "[variables('internalRouteTableId')]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnet1Name')]",
+            "properties": {
+              "addressPrefix": "[variables('subnet1Prefix')]"
+            }
+          },
+          {
+            "name": "[variables('subnet2Name')]",
+            "properties": {
+              "addressPrefix": "[variables('subnet2Prefix')]",
+              "routeTable": {
+                "id": "[variables('internalRouteTableId')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "[variables('apiVersion')]",
+      "location": "[resourceGroup().location]",
+      "name": "[variables('publicIPAddressName')]",
+      "properties": {
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('vmName')]"
+        },
+        "idleTimeoutInMinutes": 30,
+        "publicIPAllocationMethod": "Static"
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "[variables('apiVersion')]",
+      "dependsOn": [
+        "[variables('vnetId')]",
+        "[variables('publicIPAddressId')]"
+      ],
+      "location": "[resourceGroup().location]",
+      "name": "[variables('nic1Name')]",
+      "properties": {
+        "enableIPForwarding": true,
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAddress": "[variables('gatewayPrivateAddress')]",
+              "privateIPAllocationMethod": "Static",
+              "publicIPAddress": {
+                "id": "[variables('publicIPAddressId')]"
+              },
+              "subnet": {
+                "id": "[variables('subnet1Id')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "[variables('apiVersion')]",
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nic1Name'))]"
+      ],
+      "location": "[resourceGroup().location]",
+      "name": "[parameters('vmName')]",
+      "plan": "[variables('plan')]",
+      "properties": {
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": "true",
+            "storageUri": "[concat('http://', parameters('newStorageAccountName'), '.blob.core.windows.net')]"
+          }
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nic1Name'))]",
+              "properties": {
+                "primary": true
+              }
+            }
+          ]
+        },
+        "osProfile": "[variables('osProfile')]",
+        "storageProfile": {
+          "imageReference": "[variables('imageReference')]",
+          "osDisk": {
+            "caching": "ReadWrite",
+            "createOption": "FromImage",
+            "name": "osDisk",
+            "vhd": {
+              "uri": "[concat('http://',parameters('newStorageAccountName'), '.blob.core.windows.net/vhds/', parameters('vmName'), '.vhd')]"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "PublicIPAddress": {
+      "type": "string",
+      "value": "[reference(variables('publicIPAddressId')).IpAddress]"
+    },
+    "PublicIPAddressFQDN": {
+      "type": "string",
+      "value": "[reference(variables('publicIPAddressId')).DnsSettings.Fqdn]"
+    }
+  }
+}

@@ -13,12 +13,14 @@
 
 echo "initializing nodes..."
 IPPREFIX=$1
-NAMEPREFIX=$2
-NAMESUFFIX=$3
-MASTERNODES=$4
-DATANODES=$5
-ADMINUSER=$6
-NODETYPE=$7
+MASTERSTARTINGIP=$2
+WORKERSTARTINGIP=$3
+NAMEPREFIX=$4
+NAMESUFFIX=$5
+MASTERNODES=$6
+DATANODES=$7
+ADMINUSER=$8
+NODETYPE=$9
 
 # Converts a domain like machine.domain.com to domain.com by removing the machine name
 NAMESUFFIX=`echo $NAMESUFFIX | sed 's/^[^.]*\.//'`
@@ -29,14 +31,14 @@ NODES=()
 let "NAMEEND=MASTERNODES-1"
 for i in $(seq 0 $NAMEEND)
 do 
-  let "IP=i+10"
+  let "IP=i+MASTERSTARTINGIP"
   NODES+=("$IPPREFIX$IP:${NAMEPREFIX}-mn$i.$NAMESUFFIX:${NAMEPREFIX}-mn$i")
 done
 
 let "DATAEND=DATANODES-1"
 for i in $(seq 0 $DATAEND)
 do 
-  let "IP=i+20"
+  let "IP=i+WORKERSTARTINGIP"
   NODES+=("$IPPREFIX$IP:${NAMEPREFIX}-dn$i.$NAMESUFFIX:${NAMEPREFIX}-dn$i")
 done
 

@@ -4,8 +4,10 @@
   "parameters": {
     "clusterName": {
       "type": "string",
+      "minLength": 3,
+      "maxLength": 15,
       "metadata": {
-        "description": "The unique HPC Pack cluster name. It is also used as the public DNS name prefix for the cluster, for example, the public DNS name is '&lt;clusterName&gt;.westus.cloudapp.azure.com' if the resource group location is 'West US'. It must contain between 3 and 15 characters with lowercase letters and numbers, and must start with a letter."
+        "description": "The HPC Pack cluster name. It must be unique in the location because it is also used as the public DNS name prefix for the cluster. For example, the public DNS name is '&lt;clustername&gt;.westus.cloudapp.azure.com' if the resource group location is 'West US'. It must contain between 3 and 15 characters with lowercase letters and numbers, and must start with a letter."
       }
     },
     "privateDomainName": {
@@ -29,13 +31,32 @@
         "Standard_A10",
         "Standard_A11",
         "Standard_D3",
+        "Standard_D3_v2",
         "Standard_D4",
+        "Standard_D4_v2",
+        "Standard_D5_v2",
         "Standard_D12",
+        "Standard_D12_v2",
         "Standard_D13",
-        "Standard_D14"
+        "Standard_D13_v2",
+        "Standard_D14",
+        "Standard_D14_v2",
+        "Standard_DS3",
+        "Standard_DS4",
+        "Standard_DS12",
+        "Standard_DS13",
+        "Standard_DS14",
+        "Standard_G2",
+        "Standard_G3",
+        "Standard_G4",
+        "Standard_G5",
+        "Standard_GS2",
+        "Standard_GS3",
+        "Standard_GS4",
+        "Standard_GS5"
       ],
       "metadata": {
-        "description": "The VM role size of the head node"
+        "description": "The VM size for the head node"
       }
     },
     "computeNodeImage": {
@@ -52,13 +73,17 @@
     "computeNodeNamePrefix": {
       "type": "string",
       "defaultValue": "IaaSCN-",
+      "minLength": 1,
+      "maxLength": 12,      
       "metadata": {
-        "description": "The name prefix of the compute nodes. It can contain letters, numbers and hyphens and must start with a letter, up to 12 characters. For example, if 'IaaSCN-' is specified, the compute node names will be 'IaaSCN-000', 'IaaSCN-001', ..."
+        "description": "The name prefix of the compute nodes. It must be no more than 12 characters, begin with a letter, and contain only letters, numbers and hyphens. For example, if 'IaaSCN-' is specified, the compute node names will be 'IaaSCN-000', 'IaaSCN-001', ..."
       }
     },
     "computeNodeNumber": {
       "type": "int",
       "defaultValue": 2,
+      "minValue": 1,
+      "maxValue": 500,      
       "metadata": {
         "description": "The number of the compute nodes"
       }
@@ -79,13 +104,40 @@
         "Standard_A10",
         "Standard_A11",
         "Standard_D1",
+        "Standard_D1_v2",
         "Standard_D2",
+        "Standard_D2_v2",
         "Standard_D3",
+        "Standard_D3_v2",
         "Standard_D4",
+        "Standard_D4_v2",
+        "Standard_D5_v2",
         "Standard_D11",
+        "Standard_D11_v2",
         "Standard_D12",
+        "Standard_D12_v2",
         "Standard_D13",
-        "Standard_D14"
+        "Standard_D13_v2",
+        "Standard_D14",
+        "Standard_D14_v2",
+        "Standard_DS1",
+        "Standard_DS2",
+        "Standard_DS3",
+        "Standard_DS4",
+        "Standard_DS11",
+        "Standard_DS12",
+        "Standard_DS13",
+        "Standard_DS14",
+        "Standard_G1",
+        "Standard_G2",
+        "Standard_G3",
+        "Standard_G4",
+        "Standard_G5",
+        "Standard_GS1",
+        "Standard_GS2",
+        "Standard_GS3",
+        "Standard_GS4",
+        "Standard_GS5"
       ],
       "metadata": {
         "description": "The VM role size of the compute nodes"
@@ -105,356 +157,111 @@
     },
     "headNodePostConfigScript": {
       "type": "string",
-      "defaultValue": " ",
+      "defaultValue": "",
       "metadata": {
-        "description": "Optional, specify the http/https url of the PowerShell script you want to run on the head node after it is configured. The script url must be public available, and you can also specify arguments for the script, for example 'http://www.consto.com/mypostscript.ps1 -Arg1 arg1 -Arg2 arg2'."
+        "description": "Optional URL of a public available PowerShell script you want to run on the head node after it is configured. The script will be run as the Local System account. You can also specify arguments for the script, for example 'http://www.contoso.com/myhnpostscript.ps1 -Arg1 arg1 -Arg2 arg2'."
+      }
+    },
+    "computeNodePostConfigScript": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Optional URL of a public available PowerShell script you want to run on the compute nodes after they are configured. The script will be run as the Local System account. You can also specify arguments for the script, for example 'http://www.contoso.com/mycnpostscript.ps1 -Arg1 arg1 -Arg2 arg2'."
       }
     }
   },
   "variables": {
-    "apiVersion": "2015-05-01-preview",
-    "location": "[resourceGroup().location]",
     "virtualNetworkName": "[concat(parameters('clusterName'), 'VNet')]",
-    "storageAccountNamePrefix": "[toLower(concat('hpc', uniqueString(resourceGroup().id, parameters('clusterName'))))]",
+    "storageAccountNamePrefix": "[toLower(concat('hpc', uniqueString(resourceGroup().id, toLower(parameters('clusterName')))))]",
     "storageAccountType": "Standard_LRS",
-    "nbrCNPerStorageAccount": 10,
-    "cnStorageAccountNumber": "[add(div(parameters('computeNodeNumber'), variables('nbrCNPerStorageAccount')), 1)]",
-    "hnStorageAccountName": "[concat(variables('storageAccountNamePrefix'), 'hn')]",
-    "hnStorageAccountId": "[resourceId('Microsoft.Storage/storageAccounts',variables('hnStorageAccountName'))]",
-    "addressPrefix": "10.0.0.0/16",
-    "subnet1Name": "Subnet-1",
-    "subnet1Prefix": "10.0.0.0/24",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
-    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]",
-    "publicIPAddressType": "Dynamic",
-    "publicIPAddressName": "[concat(parameters('clusterName'), '-PublicIP-VM')]",
-    "publicIPAddressNameHN": "[concat(variables('publicIPAddressName'),'-HN')]",
-    "availabilitySetName": "[concat(parameters('clusterName'), 'AVSet')]",
-    "dnsName": "[concat(parameters('clusterName'), 'ep')]",
-    "nicName": "[concat(parameters('clusterName'),'-nic')]",
-    "nicNameHN": "[concat(variables('nicName'),'-hn')]",
-    "vmSizeRDMAStates": {
-      "Standard_A1": "disabled",
-      "Standard_A2": "disabled",
-      "Standard_A3": "disabled",
-      "Standard_A4": "disabled",
-      "Standard_A5": "disabled",
-      "Standard_A6": "disabled",
-      "Standard_A7": "disabled",
-      "Standard_A8": "enabled",
-      "Standard_A9": "enabled",
-      "Standard_A10": "disabled",
-      "Standard_A11": "disabled",
-      "Standard_D1": "disabled",
-      "Standard_D2": "disabled",
-      "Standard_D3": "disabled",
-      "Standard_D4": "disabled",
-      "Standard_D11": "disabled",
-      "Standard_D12": "disabled",
-      "Standard_D13": "disabled",
-      "Standard_D14": "disabled"
+    "publicIPAddressName": "[concat(parameters('clusterName'), '-PublicIP-HN')]",
+    "computeNodeImageOsPlatform": "Windows",
+    "computeNodeImages": {
+      "ComputeNode": {
+        "publisher": "MicrosoftWindowsServerHPCPack",
+        "offer": "WindowsServerHPCPack",
+        "sku": "2012R2CN"
+      },
+      "ComputeNodeWithExcel": {
+        "publisher": "MicrosoftWindowsServerHPCPack",
+        "offer": "WindowsServerHPCPack",
+        "sku": "2012R2CNExcel"
+      }
     },
-    "avSetJumpBox": {
-      "disabled-disabled": "disabled",
-      "disabled-enabled": "enabled",
-      "enabled-disabled": "enabled",
-      "enabled-enabled": "enabled"
-    },
-    "avSetState": "[variables('avSetJumpBox')[concat(variables('vmSizeRDMAStates')[parameters('headNodeVMSize')], '-', variables('vmSizeRDMAStates')[parameters('computeNodeVMSize')])]]",
-    "availableCNImageSkus": {
-      "ComputeNode": "2012R2CN",
-      "ComputeNodeWithExcel": "2012R2CNExcel"
-    },
-    "computeNodeImagePublisher": "MicrosoftWindowsServerHPCPack",
-    "computeNodeImageOffer": "WindowsServerHPCPack",
-    "computeNodeImageSku": "[variables('availableCNImageSkus')[parameters('computeNodeImage')]]",
-    "adminBase64Password": "[base64(parameters('adminPassword'))]",
-    "customScriptLocation": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/create-hpc-cluster/",
-    "iaasInfoArg": "[concat('-SubscriptionId ', subscription().subscriptionId, ' -VNet ', variables('virtualNetworkName'), ' -Subnet ', variables('subnet1Name'), ' -Location \"', variables('location'), '\"')]",
-    "headNodeCommandStr": "[concat('powershell.exe -ExecutionPolicy Unrestricted -File PrepareHN.ps1 -DomainFQDN ', parameters('privateDomainName'), ' -AdminUserName ', parameters('adminUsername'), ' -AdminBase64Password \"', variables('adminBase64Password'), '\" -CNSize ', parameters('computeNodeVMSize'), ' -PostConfigScript \"', parameters('headNodePostConfigScript'), '\" ', variables('iaasInfoArg'))]",
-    "hnStorageConnStrPrefix": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('hnStorageAccountName'), ';AccountKey=')]"
+    "currentComputeNodeImage": "[variables('computeNodeImages')[parameters('computeNodeImage')]]",
+    "artifactsBaseUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/create-hpc-cluster"
   },
   "resources": [
     {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('hnStorageAccountName')]",
-      "apiVersion": "[variables('apiVersion')]",
-      "location": "[variables('location')]",
-      "properties": {
-        "accountType": "[variables('storageAccountType')]"
-      }
-    },
-    {
-      "apiVersion": "[variables('apiVersion')]",
-      "type": "Microsoft.Network/virtualNetworks",
-      "name": "[variables('virtualNetworkName')]",
-      "location": "[variables('location')]",
-      "properties": {
-        "addressSpace": {
-          "addressPrefixes": [
-            "[variables('addressPrefix')]"
-          ]
-        },
-        "subnets": [
-          {
-            "name": "[variables('subnet1Name')]",
-            "properties": {
-              "addressPrefix": "[variables('subnet1Prefix')]"
-            }
-          }
-        ]
-      }
-    },
-    {
-      "apiVersion": "[variables('apiVersion')]",
-      "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[variables('publicIPAddressNameHN')]",
-      "location": "[variables('location')]",
-      "properties": {
-        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
-        "dnsSettings": {
-          "domainNameLabel": "[toLower(parameters('clusterName'))]"
-        }
-      }
-    },
-    {
-      "apiVersion": "[variables('apiVersion')]",
-      "type": "Microsoft.Network/networkInterfaces",
-      "name": "[variables('nicNameHN')]",
-      "location": "[variables('location')]",
-      "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressNameHN'))]"
-      ],
-      "properties": {
-        "ipConfigurations": [
-          {
-            "name": "IPConfig",
-            "properties": {
-              "privateIPAllocationMethod": "Static",
-              "privateIPAddress": "10.0.0.4",
-              "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressNameHN'))]"
-              },
-              "subnet": {
-                "id": "[variables('subnetRef')]"
-              }
-            }
-          }
-        ]
-      }
-    },
-
-    {
       "apiVersion": "2015-01-01",
       "type": "Microsoft.Resources/deployments",
-      "name": "createAvailabilitySet",
+      "name": "mainTemplate",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('customScriptLocation'), 'availabilityset-', variables('avSetState'), '.json')]",
+          "uri": "[concat(variables('artifactsBaseUrl'), '/mainTemplate.json')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "apiVersion": {
-            "value": "[variables('apiVersion')]"
-          },
-          "location": {
-            "value": "[variables('location')]"
-          },
-          "availabilitySetName": {
-            "value": "[variables('availabilitySetName')]"
-          }
-        }
-      }
-    },
-
-    {
-      "apiVersion": "2015-01-01",
-      "type": "Microsoft.Resources/deployments",
-      "name": "createHeadNode",
-      "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicNameHN'))]",
-        "[concat('Microsoft.Storage/storageAccounts/', variables('hnStorageAccountName'))]",
-        "Microsoft.Resources/deployments/createAvailabilitySet"
-      ],
-      "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[concat(variables('customScriptLocation'), 'headnode-rdma-', variables('vmSizeRDMAStates')[parameters('headNodeVMSize')], '.json')]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "apiVersion": {
-            "value": "[variables('apiVersion')]"
-          },
-          "location": {
-            "value": "[variables('location')]"
-          },
-          "vmName": {
+          "clusterName": {
             "value": "[parameters('clusterName')]"
           },
-          "vmSize": {
-            "value": "[parameters('headNodeVMSize')]"
-          },
-          "storageAccountName": {
-            "value": "[variables('hnStorageAccountName')]"
-          },
-          "nicName": {
-            "value": "[variables('nicNameHN')]"
-          },
-          "adminUsername": {
-            "value": "[parameters('adminUsername')]"
-          },
-          "adminPassword": {
-            "value": "[parameters('adminPassword')]"
-          },
-          "availabilitySetName": {
-            "value": "[variables('availabilitySetName')]"
-          },
-          "scriptBaseUri": {
-            "value": "[variables('customScriptLocation')]"
-          },
-          "privateDomainName": {
-            "value": "[parameters('privateDomainName')]"
-          }
-        }
-      }
-    },
-
-    {
-      "apiVersion": "2015-01-01",
-      "type": "Microsoft.Resources/deployments",
-      "name": "updateVNetDNS",
-      "dependsOn": [
-        "Microsoft.Resources/deployments/createHeadNode"
-      ],
-      "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[concat(variables('customScriptLocation'),'vnet-with-dns-server.json')]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "apiVersion": {
-            "value": "[variables('apiVersion')]"
-          },
           "location": {
-            "value": "[variables('location')]"
+            "value": "[resourceGroup().location]"
           },
           "virtualNetworkName": {
             "value": "[variables('virtualNetworkName')]"
           },
-          "virtualNetworkAddressRange": {
-            "value": "[variables('addressPrefix')]"
+          "privateDomainName": {
+            "value": "[parameters('privateDomainName')]"
           },
-          "subnetName": {
-            "value": "[variables('subnet1Name')]"
+          "storageAccountNamePrefix": {
+            "value": "[variables('storageAccountNamePrefix')]"
           },
-          "subnetRange": {
-            "value": "[variables('subnet1Prefix')]"
+          "storageAccountStartIndex": {
+            "value": 0
           },
-          "DNSServerAddress": {
-            "value": [
-              "10.0.0.4",
-              "8.8.8.8"
-            ]
-          }
-        }
-      }
-    },
-
-    {
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(parameters('clusterName'),'/configureHeadNode')]",
-      "apiVersion": "[variables('apiVersion')]",
-      "location": "[variables('location')]",
-      "dependsOn": [
-        "Microsoft.Resources/deployments/updateVNetDNS"
-      ],
-      "properties": {
-        "publisher": "Microsoft.Compute",
-        "type": "CustomScriptExtension",
-        "typeHandlerVersion": "1.4",
-        "settings": {
-          "fileUris": [
-            "[concat(variables('customScriptLocation'), 'PrepareHN.ps1')]",
-            "[concat(variables('customScriptLocation'), 'HPCHNPrepare.ps1')]",
-            "[concat(variables('customScriptLocation'), 'HpcPrepareUtil.ps1')]"
-          ],
-          "commandToExecute": "[concat(variables('headNodeCommandStr'), ' -AzureStorageConnStr \"', variables('hnStorageConnStrPrefix'), listKeys(variables('hnStorageAccountId'),variables('apiVersion')).key1, '\" -PublicDnsName ', reference(variables('publicIPAddressNameHN')).dnsSettings.fqdn)]"
-        }
-      }
-    },
-
-    {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[concat(variables('storageAccountNamePrefix'), padLeft(string(copyIndex()), 2, '0'))]",
-      "apiVersion": "[variables('apiVersion')]",
-      "location": "[variables('location')]",
-      "dependsOn": [
-        "Microsoft.Resources/deployments/updateVNetDNS"
-      ],
-      "copy": {
-        "name": "hpcStorageAccounts",
-        "count": "[variables('cnStorageAccountNumber')]"
-      },
-      "properties": {
-        "accountType": "[variables('storageAccountType')]"
-      }
-    },
-
-    {
-      "apiVersion": "2015-01-01",
-      "type": "Microsoft.Resources/deployments",
-      "name": "[concat('create', parameters('computeNodeNamePrefix'), padLeft(string(copyIndex()), 3, '0'))]",
-      "dependsOn": [
-        "Microsoft.Resources/deployments/createAvailabilitySet",
-        "Microsoft.Resources/deployments/updateVNetDNS",
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountNamePrefix'), padLeft(string(mod(copyIndex(), variables('cnStorageAccountNumber'))), 2, '0'))]"
-      ],
-      "copy": {
-        "name": "CN",
-        "count": "[parameters('computeNodeNumber')]"
-      },
-      "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[concat(variables('customScriptLocation'), 'windowsnode-rdma-', variables('vmSizeRDMAStates')[parameters('computeNodeVMSize')], '.json')]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "apiVersion": {
-            "value": "[variables('apiVersion')]"
+          "storageAccountType": {
+            "value": "[variables('storageAccountType')]"
           },
-          "location": {
-            "value": "[variables('location')]"
+          "nbrCNPerStorageAccount": {
+            "value": 20
           },
-          "nicName": {
-            "value": "[concat(variables('nicName'), padLeft(string(copyIndex()), 3, '0'))]"
+          "headNodeVMSize": {
+            "value": "[parameters('headNodeVMSize')]"
           },
-          "subnetId": {
-            "value": "[variables('subnetRef')]"
+          "computeNodeImageOsPlatform": {
+            "value": "[variables('computeNodeImageOsPlatform')]"
           },
-          "vmName": {
-            "value": "[concat(parameters('computeNodeNamePrefix'), padLeft(string(copyIndex()), 3, '0'))]"
+          "computeNodeImagePublisher": {
+            "value": "[variables('currentComputeNodeImage').publisher]"
           },
-          "vmSize": {
+          "computeNodeImageOffer": {
+            "value": "[variables('currentComputeNodeImage').offer]"
+          },
+          "computeNodeImageSku": {
+            "value": "[variables('currentComputeNodeImage').sku]"
+          },
+          "computeNodeNamePrefix": {
+            "value": "[parameters('computeNodeNamePrefix')]"
+          },
+          "computeNodeNumber": {
+            "value": "[string(parameters('computeNodeNumber'))]"
+          },
+          "computeNodeVMSize": {
             "value": "[parameters('computeNodeVMSize')]"
           },
-          "storageAccountName": {
-            "value": "[concat(variables('storageAccountNamePrefix'), padLeft(string(mod(copyIndex(), variables('cnStorageAccountNumber'))), 2, '0'))]"
+          "publicIPName": {
+            "value": "[variables('publicIPAddressName')]"
           },
-          "imgPublisher": {
-            "value": "[variables('computeNodeImagePublisher')]"
+          "publicIPRGName": {
+            "value": "[resourceGroup().name]"
           },
-          "imgOffer": {
-            "value": "[variables('computeNodeImageOffer')]"
+          "publicIPNewOrExisting": {
+            "value": "new"
           },
-          "imgSku": {
-            "value": "[variables('computeNodeImageSku')]"
-          },
-          "imgVersion": {
-            "value": "latest"
+          "publicIPDNSNameLabel": {
+            "value": "[parameters('clusterName')]"
           },
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
@@ -462,27 +269,23 @@
           "adminPassword": {
             "value": "[parameters('adminPassword')]"
           },
-          "availabilitySetName": {
-            "value": "[variables('availabilitySetName')]"
+          "headNodePostConfigScript": {
+            "value": "[trim(parameters('headNodePostConfigScript'))]"
           },
-          "customData": {
-            "value": "[base64(concat('HPCClusterName=', parameters('clusterName'), '\r\nImageCategory=public\r\nImageName=WindowsServerHPCPack-', variables('computeNodeImageSku'), '\r\nVMSize=', parameters('computeNodeVMSize')))]"
+          "computeNodePostConfigScript": {
+            "value": "[trim(parameters('computeNodePostConfigScript'))]"
           },
-          "scriptBaseUri": {
-            "value": "[variables('customScriptLocation')]"
-          },
-          "privateDomainName": {
-            "value": "[parameters('privateDomainName')]"
+          "artifactsBaseUrl": {
+            "value": "[variables('artifactsBaseUrl')]"
           }
         }
       }
     }
   ],
-   "outputs": {
-     "clusterDnsName": {
-       "type": "string",
-       "value": "[reference(variables('publicIPAddressNameHN')).dnsSettings.fqdn]"
-     }
-   }
+  "outputs": {
+    "clusterDnsName": {
+      "type": "string",
+      "value": "[reference('mainTemplate').outputs.clusterDNSName.value]"
+    }
+  }
 }
-

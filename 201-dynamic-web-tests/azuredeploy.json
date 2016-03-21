@@ -1,0 +1,180 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "appName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the app insights instance that you wish to create."
+      }
+    },
+    "tests": {
+      "type": "array",
+      "metadata": {
+        "description": "The list of web tests to run. See the README for the schema of test descriptor object."
+      }
+    },
+    "emails": {
+      "type": "array",
+      "metadata": {
+        "description": "A list of strings representing the email addresses to send alerts to."
+      }
+    }
+  },
+  "variables": {
+  },
+  "resources": [
+    {
+      "apiVersion": "2015-05-01",
+      "name": "[parameters('appName')]",
+      "type": "microsoft.insights/components",
+      "location": "Central US",
+      "tags": {
+        "AppInsightsApp": "MyApp"
+      },
+      "properties": {
+        "Application_Type": "web",
+        "Flow_Type": "Redfield",
+        "Request_Source": "Unknown",
+        "Name": "testapp",
+        "ApplicationId": "[parameters('appName')]"
+      },
+      "kind": "web"
+    },
+    {
+      "name": "[parameters('tests')[0].name]",
+      "apiVersion": "2015-05-01",
+      "type": "microsoft.insights/webtests",
+      "location": "Central US",
+      "tags": {
+        "[concat('hidden-link:', resourceId('microsoft.insights/components/', parameters('appName')))]": "Resource"
+      },
+      "dependsOn": [
+        "[concat('microsoft.insights/components/', parameters('appName'))]"
+      ],
+      "properties": {
+        "Name": "[parameters('tests')[0].name]",
+        "Description": "[parameters('tests')[0].description]",
+        "Enabled": true,
+        "Frequency": "[parameters('tests')[0].frequency_secs]",
+        "Timeout": "[parameters('tests')[0].timeout_secs]",
+        "Kind": "ping",
+        "Locations": "[parameters('tests')[0].locations]",
+        "Configuration": {
+          "WebTest": "[concat('<WebTest Name=\"', parameters('tests')[0].name, '\"',  ' Id=\"', parameters('tests')[0].guid ,'\"    Enabled=\"True\" CssProjectStructure=\"\" CssIteration=\"\" Timeout=\"0\" WorkItemIds=\"\" xmlns=\"http://microsoft.com/schemas/VisualStudio/TeamTest/2010\" Description=\"\" CredentialUserName=\"\" CredentialPassword=\"\" PreAuthenticate=\"True\" Proxy=\"default\" StopOnError=\"False\" RecordedResultFile=\"\" ResultsLocale=\"\">        <Items>        <Request Method=\"GET\" Guid=\"a5f10126-e4cd-570d-961c-cea43999a200\" Version=\"1.1\" Url=\"', parameters('tests')[0].url ,'\" ThinkTime=\"0\" Timeout=\"300\" ParseDependentRequests=\"True\" FollowRedirects=\"True\" RecordResult=\"True\" Cache=\"False\" ResponseTimeGoal=\"0\" Encoding=\"utf-8\" ExpectedHttpStatusCode=\"', parameters('tests')[0].expected ,'\" ExpectedResponseUrl=\"\" ReportingName=\"\" IgnoreHttpStatusCode=\"False\" /></Items></WebTest>')]"
+        },
+        "SyntheticMonitorId": "[parameters('tests')[0].name]"
+      }
+    },
+    {
+      "name": "[concat(parameters('tests')[0].name, 'alert')]",
+      "type": "Microsoft.Insights/alertRules",
+      "apiVersion": "2015-04-01",
+      "location": "East US",
+      "tags": {
+        "[concat('hidden-link:', resourceId('microsoft.insights/components/', parameters('appName')))]": "Resource",
+        "[concat('hidden-link:', resourceId('microsoft.insights/webtests/', parameters('tests')[0].name))]": "Resource"
+      },
+      "dependsOn": [
+        "[concat('microsoft.insights/components/', parameters('appName'))]",
+        "[concat('microsoft.insights/webtests/', parameters('tests')[0].name)]"
+      ],
+      "properties": {
+        "name": "[parameters('tests')[0].name]",
+        "description": "[parameters('tests')[0].description]",
+        "isEnabled": true,
+        "condition": {
+          "$type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.LocationThresholdRuleCondition, Microsoft.WindowsAzure.Management.Mon.Client",
+          "odata.type": "Microsoft.Azure.Management.Insights.Models.LocationThresholdRuleCondition",
+          "dataSource": {
+            "$type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.RuleMetricDataSource, Microsoft.WindowsAzure.Management.Mon.Client",
+            "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleMetricDataSource",
+            "resourceUri": "[resourceId('microsoft.insights/webtests/', parameters('tests')[0].name)]",
+            "metricName": "GSMT_AvRaW"
+          },
+          "windowSize": "PT15M",
+          "failedLocationCount": "[parameters('tests')[0].failedLocationCount]"
+        },
+        "action": {
+          "$type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.RuleEmailAction, Microsoft.WindowsAzure.Management.Mon.Client",
+          "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleEmailAction",
+          "sendToServiceOwners": true,
+          "customEmails": "[parameters('emails')]"
+        }
+      }
+    },
+    {
+      "name": "[concat(parameters('tests')[copyIndex(1)].name, 'alert')]",
+      "type": "Microsoft.Insights/alertRules",
+      "apiVersion": "2015-04-01",
+      "location": "East US",
+      "tags": {
+        "[concat('hidden-link:', resourceId('microsoft.insights/components/', parameters('appName')))]": "Resource",
+        "[concat('hidden-link:', resourceId('microsoft.insights/webtests/', parameters('tests')[copyIndex(1)].name))]": "Resource"
+      },
+      "dependsOn": [
+        "[concat('microsoft.insights/components/', parameters('appName'))]",
+        "[concat('microsoft.insights/alertRules/', parameters('tests')[copyIndex()].name, 'alert')]",
+        "createTests"
+      ],
+      "properties": {
+        "name": "[parameters('tests')[copyIndex(1)].name]",
+        "description": "[parameters('tests')[copyIndex(1)].description]",
+        "isEnabled": true,
+        "condition": {
+          "$type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.LocationThresholdRuleCondition, Microsoft.WindowsAzure.Management.Mon.Client",
+          "odata.type": "Microsoft.Azure.Management.Insights.Models.LocationThresholdRuleCondition",
+          "dataSource": {
+            "$type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.RuleMetricDataSource, Microsoft.WindowsAzure.Management.Mon.Client",
+            "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleMetricDataSource",
+            "resourceUri": "[resourceId('microsoft.insights/webtests/', parameters('tests')[copyIndex()].name)]",
+            "metricName": "GSMT_AvRaW"
+          },
+          "windowSize": "PT15M",
+          "failedLocationCount": "[parameters('tests')[copyIndex(1)].failedLocationCount]"
+        },
+        "action": {
+          "$type": "Microsoft.WindowsAzure.Management.Monitoring.Alerts.Models.RuleEmailAction, Microsoft.WindowsAzure.Management.Mon.Client",
+          "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleEmailAction",
+          "sendToServiceOwners": true,
+          "customEmails": "[parameters('emails')]"
+        }
+      },
+      "copy": {
+        "name": "createAlerts",
+        "count": "[sub(length(parameters('tests')), 1)]"
+      }
+    },
+    {
+      "name": "[parameters('tests')[copyIndex(1)].name]",
+      "apiVersion": "2015-05-01",
+      "type": "microsoft.insights/webtests",
+      "location": "Central US",
+      "tags": {
+        "[concat('hidden-link:', resourceId('microsoft.insights/components/', parameters('appName')))]": "Resource"
+      },
+      "dependsOn": [
+        "[concat('microsoft.insights/components/', parameters('appName'))]",
+        "[concat('microsoft.insights/webtests/', parameters('tests')[copyIndex()].name)]"
+      ],
+      "properties": {
+        "Name": "[parameters('tests')[copyIndex(1)].name]",
+        "Description": "[parameters('tests')[copyIndex(1)].description]",
+        "Enabled": true,
+        "Frequency": "[parameters('tests')[copyIndex(1)].frequency_secs]",
+        "Timeout": "[parameters('tests')[copyIndex(1)].timeout_secs]",
+        "Kind": "ping",
+        "Locations": "[parameters('tests')[copyIndex(1)].locations]",
+        "Configuration": {
+          "WebTest": "[concat('<WebTest Name=\"', parameters('tests')[copyIndex(1)].name, '\"',  ' Id=\"', parameters('tests')[copyIndex(1)].guid ,'\"    Enabled=\"True\" CssProjectStructure=\"\" CssIteration=\"\" Timeout=\"0\" WorkItemIds=\"\" xmlns=\"http://microsoft.com/schemas/VisualStudio/TeamTest/2010\" Description=\"\" CredentialUserName=\"\" CredentialPassword=\"\" PreAuthenticate=\"True\" Proxy=\"default\" StopOnError=\"False\" RecordedResultFile=\"\" ResultsLocale=\"\">        <Items>        <Request Method=\"GET\" Guid=\"a5f10126-e4cd-570d-961c-cea43999a200\" Version=\"1.1\" Url=\"', parameters('tests')[copyIndex(1)].url ,'\" ThinkTime=\"0\" Timeout=\"300\" ParseDependentRequests=\"True\" FollowRedirects=\"True\" RecordResult=\"True\" Cache=\"False\" ResponseTimeGoal=\"0\" Encoding=\"utf-8\" ExpectedHttpStatusCode=\"', parameters('tests')[copyIndex(1)].expected ,'\" ExpectedResponseUrl=\"\" ReportingName=\"\" IgnoreHttpStatusCode=\"False\" /></Items></WebTest>')]"
+        },
+        "SyntheticMonitorId": "[parameters('tests')[copyIndex(1)].name]"
+      },
+      "copy": {
+        "name": "createTests",
+        "count": "[sub(length(parameters('tests')), 1)]"
+      }
+    }
+  ]
+}
+

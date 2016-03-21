@@ -57,10 +57,13 @@ Param(
 	[string]$elasticSearchBaseFolder,
     [string]$discoveryEndpoints,
 	[string]$elasticClusterName,
+    [string]$storageKey,
+    [string]$marvelEndpoints,
+    [switch]$marvelOnlyNode,
 	[switch]$masterOnlyNode,
 	[switch]$clientOnlyNode,
 	[switch]$dataOnlyNode,
-	[switch]$installMarvel,
+	[switch]$m,
 	[switch]$jmeterConfig
 )
 
@@ -205,7 +208,7 @@ function Download-ElasticSearch
     )
 	# download ElasticSearch from a given source URL to destination folder
 	try{
-			$source = if ($elasticVersion -match '2.0.0') {"https://download.elasticsearch.org/elasticsearch/release/org/elasticsearch/distribution/zip/elasticsearch/$elasticVersion/elasticsearch-$elasticVersion.zip"} else { "https://download.elastic.co/elasticsearch/elasticsearch/elasticsearch-$elasticVersion.zip" }
+			$source = if ($elasticVersion -match '2.') {"https://download.elasticsearch.org/elasticsearch/release/org/elasticsearch/distribution/zip/elasticsearch/$elasticVersion/elasticsearch-$elasticVersion.zip"} else { "https://download.elastic.co/elasticsearch/elasticsearch/elasticsearch-$elasticVersion.zip" }
 			$destination = "$targetDrive`:\Downloads\ElasticSearch\Elastic-Search.zip"
             
             # create folder if doesn't exists and suppress the output
@@ -274,6 +277,7 @@ function SetEnv-HeapSize
 {
     # Obtain total memory in MB and divide in half
     $halfRamCnt = [math]::Round(((Get-WmiObject Win32_PhysicalMemory | measure-object Capacity -sum).sum/1mb)/2,0)
+    $halfRamCnt = [math]::Min($halfRamCnt, 31744)
     $halfRam = $halfRamCnt.ToString() + 'm'
     lmsg "Half of total RAM in system is $halfRam mb."
 
@@ -570,12 +574,30 @@ function Install-WorkFlow
             $textToAppend = $textToAppend + "`ndiscovery.zen.ping.unicast.hosts: [$ipAddresses]"
         }
 
-        # In ES 2.0 you explicitly need to set network host to _non_loopback_ or the IP address of the host else other nodes cannot communicate
-        if ($elasticSearchVersion -match '2.0.0')
+        # In ES 2.x you explicitly need to set network host to _non_loopback_ or the IP address of the host else other nodes cannot communicate
+        if ($elasticSearchVersion -match '2.')
         {
             $textToAppend = $textToAppend + "`nnetwork.host: _non_loopback_"
         }
 
+        # configure marvel as required
+        if($marvelEndpoints.Length -ne 0)
+        {
+            $marvelIPAddresses = Implode-Host2 $marvelEndpoints
+            if ($elasticSearchVersion -match '2.')
+            {
+                $textToAppend = $textToAppend + "`nmarvel.agent.exporters:`n  id1:`n    type: http`n    host: [$marvelIPAddresses]"
+            }
+            else
+            {
+                $textToAppend = $textToAppend + "`nmarvel.agent.exporter.hosts: [$marvelIPAddresses]"
+            }
+        }
+        
+        if ($marvelOnlyNode -and ($elasticSearchVersion -match '1.'))
+        {
+            $textToAppend = $textToAppend + "`nmarvel.agent.enabled: false"
+        }
 
         Add-Content $elasticSearchConfFile $textToAppend
 		
@@ -590,16 +612,16 @@ function Install-WorkFlow
     ElasticSearch-StartService
 
     # Install marvel if specified
-    if ($installMarvel)
+    if ($m)
     {
-        if ($elasticSearchVersion -match '2.0.0')
+        if ($elasticSearchVersion -match '2.')
         {
             cmd.exe /C "$elasticSearchBin\plugin.bat install license"
             cmd.exe /C "$elasticSearchBin\plugin.bat install marvel-agent"
         }
         else
         {
-            cmd.exe /C "$elasticSearchBin\plugin.bat -i elasticsearch/marvel/latest"
+            cmd.exe /C "$elasticSearchBin\plugin.bat -i elasticsearch/marvel/1.3.1"
         }
     }		
 		
@@ -625,9 +647,11 @@ function Startup-Output
     if($jdkDownloadLocation.Length -ne 0) { lmsg "Jdk download location: $jdkDownloadLocation" }
     if($elasticSearchBaseFolder.Length -ne 0) { lmsg "Elasticsearch base folder: $elasticSearchBaseFolder" }
     if($discoveryEndpoints.Length -ne 0) { lmsg "Discovery endpoints: $discoveryEndpoints" }
+    if($marvelEndpoints.Length -ne 0) { lmsg "Marvel endpoints: $marvelEndpoints" }
     if($masterOnlyNode) { lmsg 'Node installation mode: Master' }
     if($clientOnlyNode) { lmsg 'Node installation mode: Client' }
     if($dataOnlyNode) { lmsg 'Node installation mode: Data' }
+    if($marvelOnlyNode) { lmsg 'Node installation mode: Marvel' }
 }
 
 Install-WorkFlow

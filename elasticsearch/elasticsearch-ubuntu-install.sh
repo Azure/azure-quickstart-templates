@@ -31,10 +31,17 @@ help()
     echo "-n elasticsearch cluster name"
     echo "-d static discovery endpoints 10.0.0.1-3"
     echo "-v elasticsearch version"
+    echo "-a storage account (for AFS)"
+    echo "-k access key (for AFS)"
+    echo "-c create and mount AFS share"
     echo "-m install marvel yes/no"
+    echo "-e export marvel data to a different ip"
+    echo "-w configure as a dedicated marvel node"
     echo "-x configure as a dedicated master node"
     echo "-y configure as client only node (no master, no data)"
     echo "-z configure as data node (no master)"
+    echo "-s used striped data disk volumes"
+    echo "-j install jmeter server agent"
     echo "-h view this help content"
 }
 
@@ -63,23 +70,27 @@ then
   echo "${HOSTNAME}found in /etc/hosts"
 else
   echo "${HOSTNAME} not found in /etc/hosts"
-  # Append it to the hsots file if not there
+  # Append it to the hosts file if not there
   echo "127.0.0.1 ${HOSTNAME}" >> /etc/hosts
-  log "hostname ${HOSTNAME} added to /etchosts"
+  log "hostname ${HOSTNAME} added to /etc/hosts"
 fi
 
 #Script Parameters
 CLUSTER_NAME="elasticsearch"
 ES_VERSION="2.0.0"
+MARVEL_ONLY_NODE=0
 DISCOVERY_ENDPOINTS=""
 INSTALL_MARVEL=0
 CLIENT_ONLY_NODE=0
 DATA_NODE=0
 MASTER_ONLY_NODE=0
+USE_AFS=0
+STORAGE_ACCOUNT=""
+ACCESS_KEY=""
 
 #Loop through options passed
-while getopts :n:d:v:mxyzsh optname; do
-    log "Option $optname set with value ${OPTARG}"
+while getopts :n:d:v:a:k:cme:wxyzsjh optname; do
+  log "Option $optname set with value ${OPTARG}"
   case $optname in
     n) #set cluster name
       CLUSTER_NAME=${OPTARG}
@@ -93,6 +104,12 @@ while getopts :n:d:v:mxyzsh optname; do
     m) #install marvel
       INSTALL_MARVEL=1
       ;;
+    e) #export marvel data
+      MARVEL_ENDPOINTS=${OPTARG}
+      ;;
+    w) #marvel node
+      MARVEL_ONLY_NODE=1
+      ;;
     x) #master node
       MASTER_ONLY_NODE=1
       ;;
@@ -105,8 +122,20 @@ while getopts :n:d:v:mxyzsh optname; do
     s) #use OS striped disk volumes
       OS_STRIPED_DISK=1
       ;;
+    a) #set the storage account for AFS
+      STORAGE_ACCOUNT=${OPTARG}
+      ;;
+    k) #set the access key for AFS
+      ACCESS_KEY=${OPTARG}
+      ;;
+    c) #use AFS for the data storage
+      USE_AFS=1
+      ;;
     d) #place data on local resource disk
       NON_DURABLE=1
+      ;;
+    j) #install jmeter server agent
+      JMETER_AGENT=1
       ;;
     h) #show help
       help
@@ -146,11 +175,11 @@ expand_ip_range() {
 # Configure Elasticsearch Data Disk Folder and Permissions
 setup_data_disk()
 {
-    log "Configuring disk $1/elasticsearch/data"
+    log "Configuring disk $1"
 
-    mkdir -p "$1/elasticsearch/data"
-    chown -R elasticsearch:elasticsearch "$1/elasticsearch"
-    chmod 755 "$1/elasticsearch"
+    mkdir -p "$1"
+    chown -R elasticsearch:elasticsearch "$1"
+    chmod 755 "$1"
 }
 
 # Install Oracle Java
@@ -168,7 +197,7 @@ install_java()
 install_es()
 {
 	
-	# Elasticsearch 2.0.0 uses a different download path
+	# Elasticsearch 2.x uses a different download path
     if [[ "${ES_VERSION}" == \2* ]]; then
         DOWNLOAD_URL="https://download.elasticsearch.org/elasticsearch/release/org/elasticsearch/distribution/deb/elasticsearch/$ES_VERSION/elasticsearch-$ES_VERSION.deb"
     else
@@ -181,14 +210,45 @@ install_es()
     sudo dpkg -i elasticsearch.deb
 }
 
+install_jmeter_server()
+{
+    log "download jmeter server agent"
+    apt-get -y install unzip
+    wget -O agent.zip http://jmeter-plugins.org/downloads/file/ServerAgent-2.2.1.zip
+    mkdir /opt/jmeter-server-agent
+    unzip agent.zip -d /opt/jmeter-server-agent 
+    
+    log "updating iptables"
+    sudo iptables -A INPUT -m state --state NEW -m tcp -p tcp --dport 4444 -j ACCEPT
+    
+    log "setup agent service"
+    cat << EOF > /etc/init/jmeter-server-agent.conf
+    description "JMeter Server Agent"
+
+    start on starting
+    script
+        /opt/jmeter-server-agent/startAgent.sh
+    end script
+EOF
+
+    log "starting agent service"
+    service jmeter-server-agent start
+}
+
 # Primary Install Tasks
 #########################
 #NOTE: These first three could be changed to run in parallel
 #      Future enhancement - (export the functions and use background/wait to run in parallel)
 
-#Format data disks (Find data disks then partition, format, and mount them as seperate drives)
-#------------------------
-bash vm-disk-utils-0.1.sh
+
+if [ ${USE_AFS} -ne 0 ]; 
+then
+    # create and mount an AFS share
+    bash afs-utils-0.1.sh -cp -a ${STORAGE_ACCOUNT} -k ${ACCESS_KEY}
+else
+    #Format data disks (Find data disks then partition, format, and mount them as separate drives)
+    bash vm-disk-utils-0.1.sh    
+fi
 
 #Install Oracle Java
 #------------------------
@@ -198,6 +258,12 @@ install_java
 #Install Elasticsearch
 #-----------------------
 install_es
+
+#install jmeter server agent
+if [ $JMETER_AGENT ]; 
+then
+    install_jmeter_server
+fi
 
 # Prepare configuration information
 # Configure permissions on data disks for elasticsearch user:group
@@ -209,7 +275,7 @@ if [ -d "${DATA_BASE}" ]; then
         #Configure disk permissions and folder for storage
         setup_data_disk ${D}
         # Add to list for elasticsearch configuration
-        DATAPATH_CONFIG+="$D/elasticsearch/data,"
+        DATAPATH_CONFIG+="$D,"
     done
     #Remove the extra trailing comma
     DATAPATH_CONFIG="${DATAPATH_CONFIG%?}"
@@ -238,7 +304,17 @@ echo "node.name: ${HOSTNAME}" >> /etc/elasticsearch/elasticsearch.yml
 # Configure paths - if we have data disks attached then use them
 if [ -n "$DATAPATH_CONFIG" ]; then
     log "Update configuration with data path list of $DATAPATH_CONFIG"
-    echo "path.data: $DATAPATH_CONFIG" >> /etc/elasticsearch/elasticsearch.yml
+    
+    data_setting="path.data"
+    if [ ${USE_AFS} -ne 0 ]; 
+    then
+        # path.data will be the default (/var/lib/elasticsearch)
+        data_setting="path.shared_data"
+        echo "node.enable_custom_paths: true" >> /etc/elasticsearch/elasticsearch.yml
+        echo "node.add_id_to_custom_path: false" >> /etc/elasticsearch/elasticsearch.yml
+    fi
+    
+    echo "$data_setting: $DATAPATH_CONFIG" >> /etc/elasticsearch/elasticsearch.yml
 fi
 
 # Configure discovery
@@ -246,9 +322,8 @@ log "Update configuration with hosts configuration of $HOSTS_CONFIG"
 echo "discovery.zen.ping.multicast.enabled: false" >> /etc/elasticsearch/elasticsearch.yml
 echo "discovery.zen.ping.unicast.hosts: $HOSTS_CONFIG" >> /etc/elasticsearch/elasticsearch.yml
 
-
 # Configure Elasticsearch node type
-log "Configure master/client/data node type flags mater-$MASTER_ONLY_NODE data-$DATA_NODE"
+log "Configure master/client/data node type flags master-$MASTER_ONLY_NODE data-$DATA_NODE"
 
 if [ ${MASTER_ONLY_NODE} -ne 0 ]; then
     log "Configure node as master only"
@@ -259,7 +334,7 @@ elif [ ${DATA_NODE} -ne 0 ]; then
     echo "node.master: false" >> /etc/elasticsearch/elasticsearch.yml
     echo "node.data: true" >> /etc/elasticsearch/elasticsearch.yml
 elif [ ${CLIENT_ONLY_NODE} -ne 0 ]; then
-    log "Configure node as data only"
+    log "Configure node as client only"
     echo "node.master: false" >> /etc/elasticsearch/elasticsearch.yml
     echo "node.data: false" >> /etc/elasticsearch/elasticsearch.yml
 else
@@ -272,6 +347,28 @@ echo "discovery.zen.minimum_master_nodes: 2" >> /etc/elasticsearch/elasticsearch
 
 if [[ "${ES_VERSION}" == \2* ]]; then
     echo "network.host: _non_loopback_" >> /etc/elasticsearch/elasticsearch.yml
+fi
+
+if [[ "${MARVEL_ENDPOINTS}" ]]; then
+  # non-Marvel node
+  mep=$(expand_ip_range "$MARVEL_ENDPOINTS")
+  expanded_marvel_endpoints="[\"${mep// /\",\"}\"]"
+  
+  if [[ "${ES_VERSION}" == \2* ]]; then
+    # 2.x non-Marvel node
+    echo "marvel.agent.exporters:" >> /etc/elasticsearch/elasticsearch.yml
+    echo "  id1:" >> /etc/elasticsearch/elasticsearch.yml
+    echo "    type: http" >> /etc/elasticsearch/elasticsearch.yml
+    echo "    host: ${expanded_marvel_endpoints}" >> /etc/elasticsearch/elasticsearch.yml
+  else
+    # 1.x non-Marvel node
+    echo "marvel.agent.exporter.hosts: ${expanded_marvel_endpoints}" >> /etc/elasticsearch/elasticsearch.yml
+  fi
+fi
+
+if [[ ${MARVEL_ONLY_NODE} -ne 0 && "${ES_VERSION}" == \1* ]]; then
+  # 1.x Marvel node
+  echo "marvel.agent.enabled: false" >> /etc/elasticsearch/elasticsearch.yml
 fi
 
 # DNS Retry
@@ -290,6 +387,7 @@ echo "vm.max_map_count = 262144" >> /etc/sysctl.conf
 #Update HEAP Size in this configuration or in upstart service
 #Set Elasticsearch heap size to 50% of system memory
 #TODO: Move this to an init.d script so we can handle instance size increases
+#TODO: Client nodes should use 75% of the heap
 ES_HEAP=`free -m |grep Mem | awk '{if ($2/2 >31744)  print 31744;else print $2/2;}'`
 log "Configure elasticsearch heap size - $ES_HEAP"
 echo "ES_HEAP_SIZE=${ES_HEAP}m" >> /etc/default/elasticsearch
@@ -301,7 +399,7 @@ if [ ${INSTALL_MARVEL} -ne 0 ]; then
         /usr/share/elasticsearch/bin/plugin install license
         /usr/share/elasticsearch/bin/plugin install marvel-agent
     else
-        /usr/share/elasticsearch/bin/plugin -i elasticsearch/marvel/latest
+        /usr/share/elasticsearch/bin/plugin -i elasticsearch/marvel/1.3.1
     fi
 fi
 
