@@ -5,8 +5,6 @@ set -e
 date
 ps axjf
 
-
-if [ $1 = 'From_Source' ]; then
 #################################################################
 # Update Ubuntu and install prerequisites for running Influx    #
 #################################################################
@@ -39,10 +37,9 @@ then
 fi
 
 sudo cp /usr/local/Influx/src/Influxd /usr/bin/Influxd
-fi
 
 ################################################################
-# Configure to auto start at boot		               #
+# Configure to auto start at boot		                           #
 ################################################################
 file=$HOME/.Influx 
 if [ ! -e "$file" ]
