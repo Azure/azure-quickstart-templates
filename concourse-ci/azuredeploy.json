@@ -1,0 +1,246 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmName": {
+      "type": "string",
+      "metadata": {
+        "description": "name of the vm, will be used as DNS Name for the Public IP used to access the Virtual Machine"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D1",
+      "allowedValues": [
+        "Standard_A1",
+        "Standard_A2",
+        "Standard_A3",
+        "Standard_A4",
+        "Standard_D1",
+        "Standard_D2",
+        "Standard_D3",
+        "Standard_D4"
+      ],
+      "metadata": {
+        "description": "Size of vm"
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "User name for the Virtual Machine."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the Virtual Machine."
+      }
+    },
+    "tenantID": {
+      "type": "string",
+      "defaultValue": "TENANT-ID",
+      "metadata": {
+        "description": "ID of the tenant."
+      }
+    },
+    "clientID": {
+      "type": "string",
+      "defaultValue": "CLIENT-ID",
+      "metadata": {
+        "description": "ID of the client"
+      }
+    },
+    "clientSecret": {
+      "type": "securestring",
+      "defaultValue": "CLIENT-SECRET",
+      "metadata": {
+        "description": "secret of the client"
+      }
+    }
+  },
+  "variables": {
+    "apiVersion": "2015-06-15",
+    "location": "[resourceGroup().location]",
+    "newStorageAccountName": "[concat('concourse', uniqueString(resourceGroup().id))]",
+    "storageAccountType": "Standard_RAGRS",
+    "vmStorageAccountContainerName": "vhds",
+    "storageid": "[resourceId('Microsoft.Storage/storageAccounts', variables('newStorageAccountName'))]",
+    "virtualNetworkName": "vnet",
+    "virtualNetworkAddressPrefix": "10.0.0.0/16",
+    "subnetNameForBosh": "Bosh",
+    "subnetAddressPrefixForBosh": "10.0.0.0/24",
+    "subnetNameForConcourse": "Concourse",
+    "subnetAddressPrefixForConcourse": "10.0.16.0/24",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
+    "subnetRefForBosh": "[concat(variables('vnetID'),'/subnets/', variables('subnetNameForBosh'))]",
+    "nicName": "[parameters('vmName')]",
+    "devboxPrivateIPAddress": "10.0.0.100",
+    "devboxPublicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses', 'devbox')]",
+    "imagePublisher": "Canonical",
+    "imageOffer": "UbuntuServer",
+    "ubuntuOSVersion": "14.04.3-LTS",
+    "githubPath": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/concourse-ci/"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('newStorageAccountName')]",
+      "apiVersion": "[variables('apiVersion')]",
+      "location": "[variables('location')]",
+      "properties": {
+        "accountType": "[variables('storageAccountType')]"
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "devbox",
+      "location": "[variables('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[toLower(parameters('vmName'))]"
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "concourse",
+      "location": "[variables('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "static"
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[variables('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('virtualNetworkAddressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetNameForBosh')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetAddressPrefixForBosh')]"
+            }
+          },
+          {
+            "name": "[variables('subnetNameForConcourse')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetAddressPrefixForConcourse')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nicName')]",
+      "location": "[variables('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', 'devbox')]",
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[variables('devboxPrivateIPAddress')]",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses','devbox')]"
+              },
+              "subnet": {
+                "id": "[variables('subnetRefForBosh')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiversion": "[variables('apiVersion')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[parameters('vmName')]",
+      "location": "[variables('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/',variables('newStorageAccountName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/',variables('nicName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computername": "[parameters('vmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[variables('ubuntuOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',parameters('vmName'),'-osdisk.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmName'),'/initdevbox')]",
+      "apiVersion": "[variables('apiVersion')]",
+      "location": "[variables('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.OSTCExtensions",
+        "type": "CustomScriptForLinux",
+        "typeHandlerVersion": "1.2",
+        "settings": {
+          "fileUris": [
+            "[concat(variables('githubPath'),'launch_script.sh')]"
+          ],
+          "commandToExecute": "[concat('sh launch_script.sh',' ',variables('githubPath'))]",
+          "VNET-NAME": "[variables('virtualNetworkName')]",
+          "SUBNET-NAME": "[variables('subnetNameForBosh')]",
+          "SUBNET-NAME-FOR-CONCOURSE": "[variables('subnetNameForConcourse')]",
+          "SUBSCRIPTION-ID": "[subscription().subscriptionId]",
+          "STORAGE-ACCOUNT-NAME": "[variables('newStorageAccountName')]",
+          "STORAGE-ACCESS-KEY": "[listKeys(variables('storageid'),variables('apiVersion')).key1]",
+          "RESOURCE-GROUP-NAME": "[resourceGroup().name]",
+          "TENANT-ID": "[parameters('tenantID')]",
+          "CLIENT-ID": "[parameters('clientID')]",
+          "CLIENT-SECRET": "[parameters('clientSecret')]",
+          "CONCOURSE-IP": "[reference('concourse').ipAddress]",
+          "username": "[parameters('adminUserName')]"
+        }
+      }
+    }
+  ]
+}
