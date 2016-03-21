@@ -81,6 +81,15 @@ else
     sudo apt-get install -y Vcash
 fi
 
+file=/etc/init.d/vcash
+
+if [ ! -e "$file" ]
+then
+	printf '%s\n%s\n' '#!/bin/sh' 'sudo vcashd' | sudo tee /etc/init.d/vcash
+	sudo chmod +x /etc/init.d/vcash
+	sudo update-rc.d vcash defaults
+fi
+
 echo "vcashd is starting..."
 
 /usr/bin/vcashd &
