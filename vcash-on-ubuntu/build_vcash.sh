@@ -92,7 +92,7 @@ fi
 
 echo "vcashd is starting..."
 
-/usr/bin/vcashd &
+/usr/bin/vcashd
 
 exit 0
 
