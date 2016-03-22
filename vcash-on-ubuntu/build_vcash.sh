@@ -85,14 +85,14 @@ file=/etc/init.d/vcash
 
 if [ ! -e "$file" ]
 then
-	printf '%s\n%s\n' '#!/bin/sh' 'sudo vcashd &' | sudo tee /etc/init.d/vcash
+	printf '%s\n%s\n' '#!/bin/sh' 'sudo nohup vcashd >/dev/null 2>&1 &' | sudo tee /etc/init.d/vcash
 	sudo chmod +x /etc/init.d/vcash
 	sudo update-rc.d vcash defaults
 fi
 
 echo "vcashd is starting..."
 
-sudo /usr/bin/vcashd &
+sudo nohup /usr/bin/vcashd >/dev/null 2>&1 &
 
 exit 0
 
