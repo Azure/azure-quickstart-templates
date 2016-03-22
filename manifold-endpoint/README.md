@@ -8,7 +8,7 @@ By clicking "Deploy to Azure" you agree to the Terms and Conditions below.
 # This template deploys a Manifold Platform Server on a CentOS VM into the selected resource group.
  
 #
-Manifold's BaaS product allows enterprises to manage diverse account relationships. With Manifold, enterprises can now link accounts to Azure's cloud-based blockchain and establish relationships between accounts accounts and accounting entities, simplifying complex tasks like managing shared P&Ls.
+Manifold's BaaS product allows enterprises to manage diverse account relationships. With Manifold, enterprises can now link accounts to Azure's cloud-based blockchain and establish relationships between accounts and accounting entities, simplifying complex tasks like managing shared P&Ls.
 #<br>
 Manifold Platform uses the Oracle JVM, and use of this image signifies your agreement with the license for thier product. 
 
