@@ -7,14 +7,14 @@ Add-Type -AssemblyName System.Web
 # Parameters
 #############################################################################
 
-# Description : A user principle name used by the cluster to make Azure API calls 
+# Description : A user principle name used by the cluster to make Azure API calls
 # Mandatory   : Yes
 $UserPrincipalName = ""
 # Description : The above user's password used by the cluster to make Azure API calls
 # Mandatory   : Yes
 $ClusterPassword = [System.Web.Security.Membership]::GeneratePassword(20,10)
 
-# Description : Name of the resource group to create 
+# Description : Name of the resource group to create
 # Mandatory   : Yes
 $ResourceGroup = ""
 # Description : Azure location (e.g. eastus2)
@@ -32,11 +32,11 @@ $StorageAccount = ""
 # Mandatory   : Onlhy if not provoding an SSH public key
 $SSHPassword = ""
 # Description : The Administrator SSH public key (if using SSH public key authentication)
-# Mandatory   : Only if not providing an SSH password 
+# Mandatory   : Only if not providing an SSH password
 $SSHPublicKey = ""
 
-# Description : 
-# Secure Internal Communication (SIC) one time key used to establish initial 
+# Description :
+# Secure Internal Communication (SIC) one time key used to establish initial
 # trust between the gateway and its management server.
 # Mandatory   : Yes
 $SicKey = ""
@@ -82,7 +82,7 @@ $ClusterVMSize = "Standard_D3_v2"
 # Description : A list of web application to create
 # Mandatory   : No
 $WebApps = @(
-    @{ 
+    @{
         "name" = "WebApp1";
         "services" = @(
             @{
@@ -93,7 +93,7 @@ $WebApps = @(
             }
         )
     },
-    @{ 
+    @{
         "name" = "WebApp2";
         "services" = @(
             @{
@@ -104,12 +104,12 @@ $WebApps = @(
             }
         )
     }
-)    
+)
 
 # Description : The licensing model
 # Mandatory   : Yes
 # Valid values:  "sg-byol" - for Bring Your Own License
-#                "sg-ngtp" - for a Pay-As-You-Go offering 
+#                "sg-ngtp" - for a Pay-As-You-Go offering
 $SKU = "sg-byol"
 
 #############################################################################
@@ -122,32 +122,37 @@ $Version = "latest"
 
 # The following services are needed in order to manage the cluster members from an on premise management server
 $CheckPointServices = @(
-    @{ 
+    @{
         "name" = "SSH";
         "protocol" = "tcp";
         "port" = 22
     },
-    @{ 
+    @{
         "name" = "WebUI";
         "protocol" = "tcp";
         "port" = 443
     },
-    @{ 
+    @{
         "name" = "FWD";
         "protocol" = "tcp";
         "port" = 256
     },
-    @{ 
+    @{
         "name" = "CPD";
         "protocol" = "tcp";
         "port" = 18191
     },
-    @{ 
+    @{
         "name" = "AMON";
         "protocol" = "tcp";
         "port" = 18192
     },
-    @{ 
+	@{
+		"name" = "CPRID";
+		"protocol" = "tcp";
+		"port" = 18208
+	},
+    @{
         "name" = "ICAPUSH";
         "protocol" = "tcp";
         "port" = 18211
@@ -190,7 +195,7 @@ if (!$UserPrincipalName -or !$ClusterPassword) {
     Throw "Invalid user credentials"
 }
 if (!$SSHPassword -and !$SSHPublicKey) {
-    Throw "An SSH password or public key must be specified" 
+    Throw "An SSH password or public key must be specified"
 }
 if (!$ResourceGroup) {
     Throw -Message "Invalid resource group name"
@@ -223,7 +228,7 @@ Connect-MsolService -Credential $Cred
 Login-AzureRmAccount -Credential $Cred
 
 Select-AzureRmSubscription -SubscriptionId $SubscriptionId
-    
+
 # Create a user:
 New-MsolUser `
     -DisplayName "ClusterXL" `
@@ -231,12 +236,12 @@ New-MsolUser `
     -ForceChangePassword $false `
     -Password $ClusterPassword `
     -PasswordNeverExpires $true
-    
+
 # Create a new resource group:
 New-AzureRmResourceGroup -Name $ResourceGroup `
     -Location $Location
-        
-# Assign the user with permission to modify the resources in the resource group        
+
+# Assign the user with permission to modify the resources in the resource group
 New-AzureRmRoleAssignment `
     -ResourceGroupName $ResourceGroup `
     -SignInName $UserPrincipalName `
@@ -247,8 +252,8 @@ New-AzureRmRoleAssignment `
 $Subnet1RT = New-AzureRmRouteTable `
     -ResourceGroupName $ResourceGroup `
     -Location $Location `
-    -Name $Subnet1Name 
-    
+    -Name $Subnet1Name
+
 Add-AzureRmRouteConfig `
     -RouteTable $Subnet1RT `
     -Name "Local-Subnet" `
@@ -261,12 +266,12 @@ Add-AzureRmRouteConfig `
     -AddressPrefix $AddressPrefix `
     -NextHopType VirtualAppliance `
     -NextHopIpAddress $Subnet1PrivateAddresses[0] | Set-AzureRmRoutetable
-    
+
 $Subnet2RT = New-AzureRmRouteTable `
     -ResourceGroupName $ResourceGroup `
     -Location $Location `
-    -Name $Subnet2Name 
-    
+    -Name $Subnet2Name
+
 Add-AzureRmRouteConfig `
     -RouteTable $Subnet2RT `
     -Name "Local-Subnet" `
@@ -286,12 +291,12 @@ Add-AzureRmRouteConfig `
     -AddressPrefix "0.0.0.0/0" `
     -NextHopType VirtualAppliance `
     -NextHopIpAddress $Subnet2PrivateAddresses[0] | Set-AzureRmRoutetable
-    
+
 $Subnet3RT = New-AzureRmRouteTable `
     -ResourceGroupName $ResourceGroup `
     -Location $Location `
-    -Name $Subnet3Name 
-    
+    -Name $Subnet3Name
+
 Add-AzureRmRouteConfig `
     -RouteTable $Subnet3RT `
     -Name "Local-Subnet" `
@@ -324,7 +329,7 @@ $Subnet3 = New-AzureRmVirtualNetworkSubnetConfig `
     -Name $Subnet3Name `
     -AddressPrefix $Subnet3Prefix `
     -RouteTable $Subnet3RT
-    
+
 $Vnet = New-AzureRmVirtualNetwork `
     -ResourceGroupName $ResourceGroup `
     -Location $Location `
@@ -350,8 +355,8 @@ New-AzureRmStorageAccount `
 $AvailabilitySet = New-AzureRmAvailabilitySet `
     -ResourceGroupName $ResourceGroup `
     -Location $Location `
-    -Name "$ClusterName-AvailabilitySet" 
-    
+    -Name "$ClusterName-AvailabilitySet"
+
 # Allocate the cluster public address
 $ClusterPublicAddress = New-AzureRmPublicIpAddress `
     -ResourceGroupName $ResourceGroup `
@@ -360,7 +365,7 @@ $ClusterPublicAddress = New-AzureRmPublicIpAddress `
     -AllocationMethod Static `
     -IdleTimeoutInMinutes $IdleTimeoutInMinutes
 
-# Create a load balancer    
+# Create a load balancer
 $LoadBalancer = New-AzureRmLoadBalancer `
     -ResourceGroupName $ResourceGroup `
     -Location $Location `
@@ -376,7 +381,7 @@ foreach ($WebApp in $WebApps) {
         -AllocationMethod Static `
         -IdleTimeoutInMinutes $IdleTimeoutInMinutes
     $WebAppsPublicAddresses += $WebAppPublicAddress
-    
+
     Add-AzureRmLoadBalancerFrontendIpConfig `
         -Name $WebApp.name `
         -LoadBalancer $LoadBalancer `
@@ -435,7 +440,7 @@ for ($i = 0; $i -lt 2; $i += 1) {
     if ($i -eq 0) {
         $InboundNatRules += $LoadBalancer.InboundNatRules | where {! $_.Name.StartsWith("checkpoint") }
     }
-   
+
     $nic1 = New-AzureRmNetworkInterface `
         -Name ("ext-" + ($i + 1)) `
         -ResourceGroupName $ResourceGroup `
@@ -461,11 +466,11 @@ for ($i = 0; $i -lt 2; $i += 1) {
         -PrivateIpAddress $Subnet3PrivateAddresses[$i] `
         -Subnet $Subnet3 `
         -EnableIPForwarding
-        
+
     $VMConfig = New-AzureRmVMConfig `
         -VMName $MemberName `
         -VMSize $ClusterVMSize `
-        -AvailabilitySetId $AvailabilitySet.Id 
+        -AvailabilitySetId $AvailabilitySet.Id
 
     $OSCred = $null
     if ($SSHPAssword) {
@@ -477,13 +482,13 @@ for ($i = 0; $i -lt 2; $i += 1) {
         -ComputerName $MemberName `
         -Credential $OSCred `
         -CustomData $CustomData `
-    
+
     if ($SSHPublicKey) {
         Add-AzureRmVMSshPublicKey -VM $VMConfig `
             -KeyData $SSHPublicKey `
             -Path "/home/notused/.ssh/authorized_keys"
     }
-    
+
     Set-AzureRmVMBootDiagnostics -VM $VMConfig `
         -Enable `
         -ResourceGroupName $ResourceGroup `
@@ -493,7 +498,7 @@ for ($i = 0; $i -lt 2; $i += 1) {
         -PublisherName $Publisher `
         -Offer $Offer `
         -Skus $SKU `
-        -Version $Version 
+        -Version $Version
 
     Add-AzureRmVMNetworkInterface -VM $VMConfig `
         -Id $nic1.Id -Primary
@@ -506,7 +511,7 @@ for ($i = 0; $i -lt 2; $i += 1) {
         -Name "osDisk" `
         -VhdUri ("https://" + $StorageAccount + ".blob.core.windows.net/" + $ClusterName + "/osDisk" + ($i + 1) + ".vhd") `
         -Caching ReadWrite `
-        -CreateOption FromImage 
+        -CreateOption FromImage
 
     $VMConfig.Plan = New-Object Microsoft.Azure.Management.Compute.Models.Plan
     $VMConfig.Plan.Name = $SKU
@@ -518,7 +523,7 @@ for ($i = 0; $i -lt 2; $i += 1) {
         -ResourceGroupName $ResourceGroup `
         -Location $Location `
         -VM $VMConfig
-        
+
 }
 
 #############################################################################
