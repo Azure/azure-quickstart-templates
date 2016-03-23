@@ -53,4 +53,4 @@ cp /usr/local/Radium/src/Radiumd /usr/bin/Radiumd
 printf '%s\n%s\n' '#!/bin/sh' '/usr/bin/Radiumd --rpc-endpoint=127.0.0.1:8090 -d /usr/local/Radium/programs/radiumd/'>> /etc/init.d/radium
 chmod +x /etc/init.d/radium
 update-rc.d radium defaults
-sudo /usr/bin/Radiumd --rpc-endpoint=127.0.0.1:8090  & exit 0
+/usr/bin/Radiumd  & exit 0
