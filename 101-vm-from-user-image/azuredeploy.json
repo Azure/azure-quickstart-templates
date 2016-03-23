@@ -8,16 +8,22 @@
         "description": "This is the name of the your storage account"
       }
     },
-    "osDiskVhdUri": {
+    "userImageStorageContainerName": {
       "type": "string",
       "metadata": {
-        "description": "Uri of the your user image"
+        "description": "This is the name of the container in your storage account"
       }
     },
-    "dnsLabelPrefix": {
+    "userImageVhdName": {
       "type": "string",
       "metadata": {
-        "description": "DNS Label for the Public IP. Must be lowercase. It should match with the following regular expression: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$ or it will raise an error."
+        "description": "This is the name of the your customized VHD"
+      }
+    },
+    "dnsNameForPublicIP": {
+      "type": "string",
+      "metadata": {
+        "description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
       }
     },
     "adminUserName": {
@@ -35,8 +41,8 @@
     "osType": {
       "type": "string",
       "allowedValues": [
-        "Windows",
-        "Linux"
+        "windows",
+        "linux"
       ],
       "metadata": {
         "description": "This is the OS that your VM will be running"
@@ -51,34 +57,34 @@
   },
   "variables": {
     "location": "[resourceGroup().location]",
-    "publicIPAddressName": "userImagePublicIP",
-    "vmName": "userImageVM",
-    "virtualNetworkName": "userImageVNET",
-    "nicName": "userImageVMNic",
+    "publicIPAddressName": "myPublicIP",
+    "vmName": "myVM",
+    "virtualNetworkName": "myVNET",
+    "nicName": "myVMNic",
     "addressPrefix": "10.0.0.0/16",
     "subnet1Name": "Subnet-1",
     "subnet1Prefix": "10.0.0.0/24",
     "publicIPAddressType": "Dynamic",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
     "subnet1Ref": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]",
-    "osDiskVhdName": "[concat('http://',parameters('userImageStorageAccountName'),'.blob.core.windows.net/vhds/',variables('vmName'),'osDisk.vhd')]",
-    "apiVersion": "2015-06-15"
+    "userImageName": "[concat('http://',parameters('userImageStorageAccountName'),'.blob.core.windows.net/',parameters('userImageStorageContainerName'),'/',parameters('userImageVhdName'))]",
+    "osDiskVhdName": "[concat('http://',parameters('userImageStorageAccountName'),'.blob.core.windows.net/vhds/',variables('vmName'),'osDisk.vhd')]"
   },
   "resources": [
     {
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
       "location": "[variables('location')]",
       "properties": {
         "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
         "dnsSettings": {
-          "domainNameLabel": "[parameters('dnsLabelPrefix')]"
+          "domainNameLabel": "[parameters('dnsNameForPublicIP')]"
         }
       }
     },
     {
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[variables('location')]",
@@ -99,7 +105,7 @@
       }
     },
     {
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
       "location": "[variables('location')]",
@@ -125,7 +131,7 @@
       }
     },
     {
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmName')]",
       "location": "[variables('location')]",
@@ -148,7 +154,7 @@
             "caching": "ReadWrite",
             "createOption": "FromImage",
             "image": {
-              "uri": "[parameters('osDiskVhdUri')]"
+              "uri": "[variables('userImageName')]"
             },
             "vhd": {
               "uri": "[variables('osDiskVhdName')]"

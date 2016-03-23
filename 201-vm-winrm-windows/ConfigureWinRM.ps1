@@ -8,8 +8,7 @@
 
 param
 (
-    [Parameter(Mandatory = $true)]
-    [string] $HostName
+    [string] $hostname
 )
 
 #################################################################################################################################
@@ -33,7 +32,7 @@ function Delete-WinRMListener
 
 function Configure-WinRMHttpsListener
 {
-    param([string] $HostName,
+    param([string] $hostname,
           [string] $port)
 
     # Delete the WinRM Https listener if it is already configured
@@ -52,7 +51,7 @@ function Configure-WinRMHttpsListener
         }
     }    
 
-    $response = cmd.exe /c .\winrmconf.cmd $hostname $thumbprint
+    cmd.exe /c .\winrmconf.cmd $hostname $thumbprint
 }
 
 function Add-FirewallException
@@ -74,7 +73,7 @@ function Add-FirewallException
 $winrmHttpsPort=5986
 
 # Configure https listener
-Configure-WinRMHttpsListener $HostName $port
+Configure-WinRMHttpsListener $hostname $port
 
 # Add firewall exception
 Add-FirewallException -port $winrmHttpsPort

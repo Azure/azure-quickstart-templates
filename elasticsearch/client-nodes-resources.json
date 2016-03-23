@@ -14,10 +14,10 @@
         "description": "Admin password used when provisioning virtual machines"
       }
     },
-    "storageSettings": {
-      "type": "object",
+    "storageAccountName": {
+      "type": "string",
       "metadata": {
-        "description": "Storage Account Settings"
+        "description": "Unique namespace for the Storage Account where the Virtual Machine's disks will be placed"
       }
     },
     "location": {
@@ -56,27 +56,20 @@
       "metadata": {
         "description": "loadBalancerBackendAddressPools config object"
       }
-    },
-    "namespace": {
-      "type": "string",
-      "metadata": {
-        "description": "Namespace for resources created by this template"
-      }
     }
   },
   "variables": {
     "vmStorageAccountContainerName": "vhd",
     "subnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('subnet').vnet), '/subnets/', parameters('subnet').name)]",
-    "storageAccountName": "[parameters('storageSettings').shared]",
-    "storageAccountNameAFS": "[parameters('storageSettings').afs]",
-    "vmName": "[concat(parameters('namespace'), '-vm')]",
-    "nicName": "[concat(parameters('namespace'), '-nic')]"
+    "storageAccountName": "[parameters('storageAccountName')]",
+    "vmName": "clientVm",
+    "nicName": "clientNic"
   },
   "resources": [
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/availabilitySets",
-      "name": "es-client-set",
+      "name": "elasticsearchClient",
       "location": "[parameters('location')]",
       "properties": {}
     },
@@ -107,7 +100,7 @@
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[concat(variables('vmName'), copyindex())]",
+      "name": "[concat('clientVm', copyindex())]",
       "location": "[parameters('location')]",
       "copy": {
         "name": "clientVmLoop",
@@ -115,17 +108,17 @@
       },
       "dependsOn": [
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyindex())]",
-        "[concat('Microsoft.Compute/availabilitySets/', 'es-client-set')]"
+        "[concat('Microsoft.Compute/availabilitySets/', 'elasticsearchClient')]"
       ],
       "properties": {
         "availabilitySet": {
-          "id": "[resourceId('Microsoft.Compute/availabilitySets', 'es-client-set')]"
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', 'elasticsearchClient')]"
         },
         "hardwareProfile": {
           "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
-          "computerName": "[concat('client-vm', copyIndex())]",
+          "computerName": "[concat('esClient', copyIndex())]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]"
         },
@@ -151,21 +144,13 @@
       "resources": [
         {
           "type": "Microsoft.Compute/virtualMachines/extensions",
-          "name": "[concat(variables('vmName'), copyindex(), '/installelasticsearch')]",
+          "name": "[concat('clientVm', copyindex(), '/installelasticsearch')]",
           "apiVersion": "2015-06-15",
           "location": "[parameters('location')]",
           "dependsOn": [
-            "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'), copyindex())]"
+            "[concat('Microsoft.Compute/virtualMachines/', 'clientVm', copyindex())]"
           ],
-          "properties": {
-            "publisher": "[parameters('osSettings').extensionSettings.client.publisher]",
-            "type": "[parameters('osSettings').extensionSettings.client.type]",
-            "typeHandlerVersion": "[parameters('osSettings').extensionSettings.client.typeHandlerVersion]",
-            "settings": {
-              "fileUris": "[parameters('osSettings').extensionSettings.client.settings.fileUris]",
-              "commandToExecute": "[concat(parameters('osSettings').extensionSettings.client.settings.commandToExecute, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameAFS')), '2015-05-01-preview').key1)]"
-            }
-          }
+          "properties": "[parameters('osSettings').extentionSettings.client]"
         }   
       ]
     }
