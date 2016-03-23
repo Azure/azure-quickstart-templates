@@ -30,21 +30,40 @@ sudo printf 'rpcallowip=%s\n' $5 >> $HOME/.Radium/Radium.conf
 sudo printf 'server=1' >> $HOME/.Radium/Radium.conf
 
 
-#################################################################
-# Git Clone Radium Source                                       #
-#################################################################
-
-cd /usr/local
-time git clone https://github.com/tm2013/Radium.git
-chmod -R 777 /usr/local/Radium/
-
+if [ $1 = 'From_Source' ]; then
 #################################################################
 # Build Radium from source                                      #
 #################################################################
 
+# git clone source
+cd /usr/local
+time git clone https://github.com/tm2013/Radium.git
+chmod -R 777 /usr/local/Radium/
+
+# Build  source                                
+
 cd /usr/local/Radium/src 
 make -f makefile.unix USE_UPNP=-
 cp /usr/local/Radium/src/Radiumd /usr/bin/Radiumd
+
+else
+#################################################################
+# Install Radium from Binary                                    #
+#################################################################
+
+cd /usr/local
+DOWNLOADFILE=$(curl -s https://api.github.com/repos/JJ12880/Radium/releases | grep browser_download_url | grep linux64 | head -n 1 | cut -d '"' -f 4)
+DOWNLOADNAME=$(curl -s https://api.github.com/repos/JJ12880/Radium/releases | grep name | grep linux64 | head -n 1 | cut -d '"' -f 4)
+DIRNAME=$(echo $DOWNLOADNAME | sed 's/.tgz//')
+wget $DOWNLOADFILE
+tar zxf $DOWNLOADNAME
+rm $DOWNLOADNAME
+cp Radiumd /usr/bin/Radiumd
+chmod 777 /usr/bin/Radiumd
+rm Radiumd
+
+fi
+
 
 ################################################################
 # Configure Radium node to auto start at boot       #
