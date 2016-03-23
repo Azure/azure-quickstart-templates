@@ -50,7 +50,7 @@ cp /usr/local/Radium/src/Radiumd /usr/bin/Radiumd
 # Configure Radium node to auto start at boot       #
 #################################################################
 
-printf '%s\n%s\n' '#!/bin/sh' '/usr/bin/Radiumd --rpc-endpoint=127.0.0.1:8090 -d /usr/local/Radium/programs/radiumd/'>> /etc/init.d/radium
+printf '%s\n%s\n' '#!/bin/sh' '/usr/bin/Radiumd --datadir/.Radiumd'>> /etc/init.d/radium
 chmod +x /etc/init.d/radium
 update-rc.d radium defaults
-/usr/bin/Radiumd  & exit 0
+/usr/bin/Radiumd  --datadir/.Radiumd & exit 0
