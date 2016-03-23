@@ -5,13 +5,20 @@
   "parameters": {
     "location": {
       "type": "string",
-      "defaultValue": "West US",
       "allowedValues": [
         "West US",
-        "West Europe",
         "East US",
+        "Central US",
+        "South Central US",
+        "West Europe",
+        "North Europe",
         "East Asia",
-        "Southeast Asia"
+        "Southeast Asia",
+        "Japan East",
+        "Japan West",
+        "Japan East",
+        "Australia East",
+        "Australia Southeast"
       ],
       "metadata": {
         "description": "Region where you want to create all the resources"
@@ -86,39 +93,6 @@
         "description": "Servers purpose, for instance development, test, pre-production, production.A tag will be created with the provided value"
       }
     },
-    "imagePublisher": {
-      "type": "string",
-      "defaultValue": "Canonical",
-      "allowedValues": [
-        "Canonical",
-        "OpenLogic"
-      ],
-      "metadata": {
-        "description": "VM Image Publisher"
-      }
-    },
-    "imageOffer": {
-      "type": "string",
-      "defaultValue": "UbuntuServer",
-      "allowedValues": [
-        "UbuntuServer",
-        "CentOS"
-      ],
-      "metadata": {
-        "description": "VM Image Offer"
-      }
-    },
-    "imageSKU": {
-      "type": "string",
-      "defaultValue": "14.04.3-LTS",
-      "allowedValues": [
-        "14.04.3-LTS",
-        "6.5"
-      ],
-      "metadata": {
-        "description": "VM Image SKU"
-      }
-    },
     "numberOfVms": {
       "type": "int",
       "defaultValue": 3,
@@ -156,11 +130,12 @@
         "description": "Private storage account key in which you are storing your ssh certificates"
       }
     },    
-    "dnsNameLabel": {
+    "dnsLabelPrefix": {
       "type": "string",
       "metadata": {
-        "description": "Public facing DNS name"
+        "description": "DNS Label for the Public IP. Must be lowercase. It should match with the following regular expression: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$ or it will raise an error."
       }
+
     },
     "publicIPType": {
       "type": "string",
@@ -174,8 +149,9 @@
       }
     }
   },
-  "variables": {    
-    "scriptsBaseUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/ansible-advancedlinux/",
+  "variables": {
+    "scriptsBaseUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/couchbase-ansible/",
+    "apiVersion": "2015-06-15",
     "vmStorageAccountContainerName": "vhds",
     "createRAID": "true",
     "availabilitySetName": "ANS01",
@@ -197,7 +173,7 @@
     "publicIPRef": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPName'))]",
     "NICipconfig": "ipCnfgBE",
     "NICRef": "[resourceId('Microsoft.Network/networkInterfaces',variables('vmNICNamePattern'))]",
-    "DNSNameLB": "[concat(parameters('dnsNameLabel'))]",
+    "DNSNameLB": "[concat(parameters('dnsLabelPrefix'))]",
     "vnetRef": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
     "subnetBackEndRef": "[concat(variables('vnetRef'),'/subnets/',variables('subnet2Name'))]",
     "FrontEndRef": "[concat(variables('vnetRef'),'/subnets/',variables('subnet1Name'))]",
@@ -212,7 +188,7 @@
     "sshRootCerBlobLocation": "id_rsa",
     "nginxConfigLocation": "nginx",
     "sshRootPubBlobLocation": "id_rsa.pub",
-    "ansiblePlaybookLocation": "InitStorage_RAID.yml",    
+    "ansiblePlaybookLocation": "InitStorage_RAID.yml",
     "customScriptAnsibleFile": "configure_ansible.sh",
     "customScriptAnsibleUrl": "[concat(variables('scriptsBaseUrl'),variables('customScriptAnsibleFile'))]",
     "customScriptAnsibleCommand": "[concat('bash ',variables('customScriptAnsibleFile'))]",
@@ -232,13 +208,13 @@
     },
     "currentEnvironmentSettings": "[variables('ansibleVmTypes')[parameters('storageAccountType')]]",
     "ansibleVmType": "[variables('currentEnvironmentSettings').vmSize]",
-    "newStorageAccountName": "[concat(parameters('dnsNameLabel'),'stg')]",
+    "newStorageAccountName": "[concat(uniquestring(resourceGroup().id), 'stg')]",
     "storageRef": "[concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]"
   },
 
   "resources": [
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
@@ -265,7 +241,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPName')]",
       "location": "[parameters('location')]",
@@ -281,7 +257,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/loadBalancers",
       "name": "[variables('loadBalancerName')]",
       "location": "[parameters('location')]",
@@ -322,7 +298,7 @@
     {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('availabilitySetName')]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "location": "[parameters('location')]",
       "properties": {
         "PlatformFaultDomainCount": "[variables('faultDomainCount')]",
@@ -333,14 +309,14 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('newStorageAccountName')]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "location": "[parameters('location')]",
       "properties": {
         "accountType": "[parameters('storageAccountType')]"
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('vmNICNamePattern'),copyIndex())]",
       "location": "[parameters('location')]",
@@ -372,7 +348,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('vmNamePattern'),copyIndex())]",
       "location": "[parameters('location')]",
@@ -403,9 +379,9 @@
         },
         "storageProfile": {
           "imageReference": {
-            "publisher": "[parameters('imagePublisher')]",
-            "offer": "[parameters('imageOffer')]",
-            "sku": "[parameters('imageSKU')]",
+            "publisher": "Canonical",
+            "offer": "UbuntuServer",
+            "sku": "14.04.3-LTS",
             "version": "latest"
           },
           "osDisk": {
@@ -472,7 +448,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmNamePattern'),copyIndex(),'/configuressh')]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "location": "[parameters('location')]",
       "copy": {
         "name": "VMExtensionsLoop",
@@ -496,9 +472,8 @@
         }
       }
     },
-
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "AnsibleController",
       "location": "[parameters('location')]",
@@ -515,7 +490,7 @@
               "privateIPAddress": "[concat(variables('VMIPAddressStart'),parameters('numberOfVms'))]",
               "subnet": { "id": "[variables('subnetBackEndRef')]" },
               "loadBalancerInboundNatRules": [
-                { "id": "[concat(variables('loadBalancerRef'),'/inboundNatRules/sshToAnsibleControllerNAT')]" }                
+                { "id": "[concat(variables('loadBalancerRef'),'/inboundNatRules/sshToAnsibleControllerNAT')]" }
               ]
             }
 
@@ -524,7 +499,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "AnsibleController",
       "location": "[parameters('location')]",
@@ -563,9 +538,9 @@
         },
         "storageProfile": {
           "imageReference": {
-            "publisher": "[parameters('imagePublisher')]",
-            "offer": "[parameters('imageOffer')]",
-            "sku": "[parameters('imageSKU')]",
+            "publisher": "Canonical",
+            "offer": "UbuntuServer",
+            "sku": "14.04.3-LTS",
             "version": "latest"
           },
           "osDisk": {
@@ -591,7 +566,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "AnsibleController/installAnsible",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "location": "[parameters('location')]",
       "dependsOn": [
         "VMExtensionsLoop"
@@ -603,7 +578,7 @@
         "settings": {
           "fileUris": [
             "[variables('customScriptAnsibleUrl')]",
-            "[variables('ansiblePlaybookUrl')]",                        
+            "[variables('ansiblePlaybookUrl')]",
             "[variables('pythonAzureScriptUrl')]"
           ],
           "commandToExecute": "[concat(variables('customScriptAnsibleCommand'),variables('customScriptAnsibleParameters'),' -a ', parameters('sshStorageAccountName'),' -k ', parameters('sshStorageAccountKey'))]",

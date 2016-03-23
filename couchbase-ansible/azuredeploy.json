@@ -5,13 +5,20 @@
   "parameters": {
     "location": {
       "type": "string",
-      "defaultValue": "West US",
       "allowedValues": [
         "West US",
-        "West Europe",
         "East US",
+        "Central US",
+        "South Central US",
+        "West Europe",
+        "North Europe",
         "East Asia",
-        "Southeast Asia"
+        "Southeast Asia",
+        "Japan East",
+        "Japan West",
+        "Japan East",
+        "Australia East",
+        "Australia Southeast"
       ],
       "metadata": {
         "description": "Region where you want to create all the resources"
@@ -158,11 +165,12 @@
         "description": "Specify the percentage of RAM Allocated to Couchbase. Leave Memory for the OS."
       }
     },
-    "dnsNameLabel": {
+    "dnsLabelPrefix": {
       "type": "string",
       "metadata": {
-        "description": "Public facing DNS name"
+        "description": "DNS Label for the Public IP. Must be lowercase. It should match with the following regular expression: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$ or it will raise an error."
       }
+
     },
     "publicIPType": {
       "type": "string",
@@ -177,7 +185,8 @@
     }
   },
   "variables": {
-    "scriptsBaseUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/couchbase-ansible/",    
+    "apiVersion": "2015-06-15",
+    "scriptsBaseUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/couchbase-ansible/",
     "vmStorageAccountContainerName": "vhds",
     "createRAID": "true",
     "availabilitySetName": "CB01",
@@ -199,7 +208,7 @@
     "publicIPRef": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPName'))]",
     "NICipconfig": "ipCnfgBE",
     "NICRef": "[resourceId('Microsoft.Network/networkInterfaces',variables('vmNICNamePattern'))]",
-    "DNSNameLB": "[concat(parameters('dnsNameLabel'))]",
+    "DNSNameLB": "[concat(parameters('dnsLabelPrefix'))]",
     "vnetRef": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
     "subnetBackEndRef": "[concat(variables('vnetRef'),'/subnets/',variables('subnet2Name'))]",
     "FrontEndRef": "[concat(variables('vnetRef'),'/subnets/',variables('subnet1Name'))]",
@@ -242,13 +251,13 @@
     },
     "currentEnvironmentSettings": "[variables('ansibleVmTypes')[parameters('storageAccountType')]]",
     "ansibleVmType": "[variables('currentEnvironmentSettings').vmSize]",
-    "newStorageAccountName": "[concat(parameters('dnsNameLabel'),'stg')]",
+    "newStorageAccountName": "[concat(uniquestring(resourceGroup().id), 'stg')]",
     "storageRef": "[concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]"
   },
 
   "resources": [
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
@@ -275,7 +284,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPName')]",
       "location": "[parameters('location')]",
@@ -291,7 +300,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/loadBalancers",
       "name": "[variables('loadBalancerName')]",
       "location": "[parameters('location')]",
@@ -342,7 +351,7 @@
     {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('availabilitySetName')]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "location": "[parameters('location')]",
       "properties": {
         "PlatformFaultDomainCount": "[variables('faultDomainCount')]",
@@ -353,14 +362,14 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('newStorageAccountName')]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "location": "[parameters('location')]",
       "properties": {
         "accountType": "[parameters('storageAccountType')]"
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('vmNICNamePattern'),copyIndex())]",
       "location": "[parameters('location')]",
@@ -392,7 +401,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('vmNamePattern'),copyIndex())]",
       "location": "[parameters('location')]",
@@ -492,7 +501,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmNamePattern'),copyIndex(),'/configuressh')]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "location": "[parameters('location')]",
       "copy": {
         "name": "VMExtensionsLoop",
@@ -518,7 +527,7 @@
     },
 
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "NICAnsibleController",
       "location": "[parameters('location')]",
@@ -545,7 +554,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "AnsibleController",
       "location": "[parameters('location')]",
@@ -612,7 +621,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "AnsibleController/configureAnsibleAndCouchbase",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "location": "[parameters('location')]",
       "dependsOn": [
         "VMExtensionsLoop"

@@ -2,19 +2,19 @@
 
 #########################################################
 # Script Name: configure_ssh_root.sh
-# Author: Gonzalo Ruiz 
+# Author: Gonzalo Ruiz
 # Version: 0.1
 # Date Created:           01st Marh 2015
 # Last Modified:          31st December 17:26 GMT
 # Last Modified By:       Gonzalo Ruiz
 # Description:
-#  This script configures root login over ssh using keys. 
+#  This script configures root login over ssh using keys.
 #  The .pub key must file on the same folder
 # Parameters :
-#  
-# Note : 
-# This script has only been tested on CentOS 6.5 and Ubuntu 12.04 LTS 
-######################################################### 
+#
+# Note :
+# This script has only been tested on CentOS 6.5 and Ubuntu 12.04 LTS
+#########################################################
 
 #---BEGIN VARIABLES---
 SSH_AZ_ACCOUNT_NAME=''
@@ -45,13 +45,13 @@ fi
 
 while getopts :a:k: optname; do
     log "INFO:Option $optname set with value ${OPTARG}"
-  case $optname in   
+  case $optname in
     a) # Azure Private Storage Account Name- SSH Keys
       SSH_AZ_ACCOUNT_NAME=${OPTARG}
       ;;
     k) # Azure Private Storage Account Key - SSH Keys
       SSH_AZ_ACCOUNT_KEY=${OPTARG}
-      ;;     
+      ;;
 
     \?) #Invalid option - show help
       log "ERROR:Option -${BOLD}$OPTARG${NORM} not allowed."
@@ -69,7 +69,7 @@ function check_OS()
     KERNEL=`uname -r`
     MACH=`uname -m`
 
-      
+
     if [ -f /etc/redhat-release ] ; then
             DistroBasedOn='RedHat'
             DIST=`cat /etc/redhat-release |sed s/\ release.*//`
@@ -87,7 +87,7 @@ function check_OS()
                  REV=`cat /etc/lsb-release | grep '^DISTRIB_RELEASE' | awk -F=  '{ print $2 }'`
             fi
     fi
-            
+
             OS=$OS
             DistroBasedOn=$DistroBasedOn
             readonly OS
@@ -100,7 +100,7 @@ function check_OS()
 
             log "INFO: Detected OS : ${OS}  Distribution: ${DIST}-${DistroBasedOn}-${PSUEDONAME} Revision: ${REV} Kernel: ${KERNEL}-${MACH}"
 
-     
+
 }
 
 function configure_ssh()
@@ -110,10 +110,10 @@ function configure_ssh()
     mkdir -p ~/.ssh
     cat id_rsa.pub >> ~/.ssh/authorized_keys
     rm id_rsa.pub
-    
+
     # set permissions
     chmod 700 ~/.ssh
-    chmod 600 ~/.ssh/authorized_keys 
+    chmod 600 ~/.ssh/authorized_keys
 
     if [[ "${DIST}" == "Ubuntu" ]];
     then
@@ -122,33 +122,34 @@ function configure_ssh()
     elif [[ "${DIST}" == "CentOS" ]] ;
     then
         # configure SELinux
-        restorecon -Rv ~/.ssh 
-    
+        restorecon -Rv ~/.ssh
+
         #restart sshd service - CentOS
         service sshd restart
     fi
-    
 
-} 
+
+}
 
 function get_sshkeys()
  {
     # install python
     log "INFO:Installing Python and Azure Storage Python SDK"
     if [[ "${DIST}" == "Ubuntu" ]];
-    then        
+    then
+        apt-get --yes --force-yes update
         apt-get --yes --force-yes install python-pip
     elif [[ "${DIST}" == "CentOS" ]] ;
-    then    
+    then
         wget http://download.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm
         rpm -ivh epel-release-6-8.noarch.rpm
-        yum -y install python-pip    
+        yum -y install python-pip
     fi
 
-    # Install Python Azure Storage SDK  
+    # Install Python Azure Storage SDK
     pip install azure-storage
 
-    # Download Public Key 
+    # Download Public Key
     python GetSSHFromPrivateStorageAccount.py  ${SSH_AZ_ACCOUNT_NAME} ${SSH_AZ_ACCOUNT_KEY} id_rsa.pub
 
 }
@@ -171,7 +172,7 @@ function ConfigureSSH()
          log "ERROR:Unsupported OS ${DIST}"
     fi
 
-    
+
 }
 
 ConfigureSSH
