@@ -2,8 +2,8 @@
 This template delivers the Radium network to your VM.  Everything you need to get started using the Radium blockchain can be deployed right from the Azure console. No commandline is necessary, standard RPC connection settings can be set during deployment in the Azure portal. This template builds from source.  Once installed, 'Radiumd' will begin syncing the public blockchain. 
 You may then connect via SSH to the VM, or simply connect directly via RPC using the custom RPC values set during deployment.
                                                                          
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3a%2f%2fraw.githubusercontent.com%2fJJ12880%2fazure-quickstart-templates%2fmaster%2fradium-blockchain-ubuntu%2fazuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
-<a href="http://armviz.io/#/?load=https%3a%2f%2fraw.githubusercontent.com%2fJJ12880%2fazure-quickstart-templates%2fmaster%2fradium-blockchain-ubuntu%2fazuredeploy.json" target="_blank">
+<a href=https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmaster%2fradium-blockchain-ubuntu%2fazuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fradium-blockchain-ubuntu%2fazuredeploy.json" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
