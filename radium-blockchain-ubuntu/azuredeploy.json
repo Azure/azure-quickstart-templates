@@ -1,56 +1,92 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-  "contentVersion": "1.0.0.0",
-  "parameters": {
-    "adminUsername": {
-      "type": "string",
-      "metadata": {
-        "description": "User name for the Virtual Machine."
-      }
-    },
-    "adminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Password for the Virtual Machine."
-      }
-    },
-    "dnsLabelPrefix": {
-      "type": "string",
-      "metadata": {
-        "description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
-      }
-    },
-    "ubuntuOSVersion": {
-      "type": "string",
-      "defaultValue": "14.04.2-LTS",
-      "allowedValues": [
-        "12.04.5-LTS",
-        "14.04.2-LTS",
-        "15.10"
-      ],
-      "metadata": {
-        "description": "The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version. Allowed values: 12.04.5-LTS, 14.04.2-LTS, 15.10."
-      }
-    }
-  },
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"adminUsername": {
+			"type": "string",
+			"metadata": {
+				"description": "Username for the Virtual Machine."
+			}
+		},
+		"adminPassword": {
+			"type": "securestring",
+			"metadata": {
+				"description": "Password for the Virtual Machine."
+			}
+		},
+		"dnsLabelPrefix": {
+			"type": "string",
+			"metadata": {
+				"description": "Hostname assigned to the Public IP, also used as the VM Name. Must be lowercase. It should match with the following regular expression: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$ or it will raise an error."
+			}
+		},
+		"installMethod": {
+			"type": "string",
+			"defaultValue": "From_Binary",
+			"allowedValues": [
+				"From_Binary",
+				"From_Source"
+			],
+			"metadata": {
+				"description": "Method to install Radium. From_Binary: download precompiled binary from GitHub. From_Source: official Radium repo on GitHub."
+			}
+		},
+		"vmSize": {
+			"type": "string",
+			"defaultValue": "Standard_A2",
+			"allowedValues": [
+				"Standard_A1",
+				"Standard_A2",
+				"Standard_A3",
+				"Standard_D1_V2",
+				"Standard_D2_V2",
+				"Standard_D3_V2"
+			],
+			"metadata": {
+				"description": "Size of VM"
+			}
+		},
+		"rpcUser": {
+			"type": "string",
+			"metadata": {
+				"description": "Username for the RPC connection."
+			}
+		},
+		"rpcPass": {
+			"type": "securestring",
+			"metadata": {
+				"description": "Password for the RPC connection."
+			}
+		},
+		"rpcPort": {
+			"type": "string",
+			"metadata": {
+				"description": "Port for the RPC connection."
+			}
+		},
+		"rpcAllowIp": {
+			"type": "string",
+			"metadata": {
+				"description": "Allowed IP for RPC connection."
+			}
+		}
+	},
   "variables": {
-    "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'salinuxvm')]",
-    "location": "[resourceGroup().location]",
-    "dataDisk1VhdName": "datadisk1",
     "imagePublisher": "Canonical",
     "imageOffer": "UbuntuServer",
-    "OSDiskName": "osdiskforlinuxsimple",
-    "nicName": "myVMNic",
+    "OSDiskName": "RadiumOSDisk",
+    "imageSKU": "14.04.4-LTS",
+    "nicName": "RadiumNic",
     "addressPrefix": "10.0.0.0/16",
-    "subnetName": "Subnet",
+    "subnetName": "RadiumSubnet",
     "subnetPrefix": "10.0.0.0/24",
     "storageAccountType": "Standard_LRS",
-    "publicIPAddressName": "myPublicIP",
+    "storageAccountName": "[concat(uniquestring(resourceGroup().id, 'radium'))]",
+    "publicIPAddressName": "RadiumPublicIP",
     "publicIPAddressType": "Dynamic",
     "vmStorageAccountContainerName": "vhds",
-    "vmName": "MyUbuntuVM",
-    "vmSize": "Standard_D1",
-    "virtualNetworkName": "MyVNET",
+    "vmName": "[parameters('dnsLabelPrefix')]",
+    "virtualNetworkName": "RadiumVNET",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
     "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
     "apiVersion": "2015-06-15"
@@ -60,7 +96,7 @@
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('storageAccountName')]",
       "apiVersion": "[variables('apiVersion')]",
-      "location": "[variables('location')]",
+      "location": "[resourceGroup().location]",
       "properties": {
         "accountType": "[variables('storageAccountType')]"
       }
@@ -69,7 +105,7 @@
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
-      "location": "[variables('location')]",
+      "location": "[resourceGroup().location]",
       "properties": {
         "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
         "dnsSettings": {
@@ -81,7 +117,7 @@
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
-      "location": "[variables('location')]",
+      "location": "[resourceGroup().location]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -102,7 +138,7 @@
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
-      "location": "[variables('location')]",
+      "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
@@ -128,14 +164,14 @@
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmName')]",
-      "location": "[variables('location')]",
+      "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[variables('vmSize')]"
+          "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
           "computerName": "[variables('vmName')]",
@@ -146,7 +182,7 @@
           "imageReference": {
             "publisher": "[variables('imagePublisher')]",
             "offer": "[variables('imageOffer')]",
-            "sku": "[parameters('ubuntuOSVersion')]",
+            "sku": "[variables('imageSKU')]",
             "version": "latest"
           },
           "osDisk": {
@@ -156,18 +192,7 @@
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
-          },
-          "dataDisks": [
-            {
-              "name": "datadisk1",
-              "diskSizeGB": "100",
-              "lun": 0,
-              "vhd": {
-                "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('dataDisk1VhdName'),'.vhd')]"
-              },
-              "createOption": "Empty"
-            }
-          ]
+          }
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -178,21 +203,32 @@
         },
         "diagnosticsProfile": {
           "bootDiagnostics": {
-             "enabled": "true",
-             "storageUri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net')]"
+            "enabled": "true",
+            "storageUri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net')]"
           }
         }
       }
+    },  
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('vmName'),'/newuserscript')]",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "[variables('apiVersion')]",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.OSTCExtensions",
+        "type": "CustomScriptForLinux",
+        "typeHandlerVersion": "1.4",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/radium-blockchain-ubuntu/build_radium.sh"
+          ],
+          "commandToExecute": "[concat('sh build_radium.sh ', parameters('installMethod'), ' ', parameters('rpcUser'), ' ', parameters('rpcPass'), ' ', parameters('rpcPort'), ' ', parameters('rpcAllowIp'))]"
+          }
+      }
     }
-  ],
-  "outputs": {
-     "hostname": {
-         "type": "string",
-         "value": "[concat(parameters('dnsLabelPrefix'), '.', variables('location'), '.cloudapp.azure.com')]"
-     },
-     "sshCommand": {
-         "type": "string",
-         "value": "[concat('ssh ', parameters('adminUsername'), '@', parameters('dnsLabelPrefix'), '.', variables('location'), '.cloudapp.azure.com')]"
-     } 
-  }
+  ]
 }
