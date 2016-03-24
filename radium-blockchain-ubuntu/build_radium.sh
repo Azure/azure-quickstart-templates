@@ -30,27 +30,46 @@ sudo printf 'rpcallowip=%s\n' $5 >> $HOME/.Radium/Radium.conf
 sudo printf 'server=1' >> $HOME/.Radium/Radium.conf
 
 
+if [ $1 = 'From_Source' ]; then
 #################################################################
-# Git Clone Radium Source                                       #
+# Build Radium from source                                      #
 #################################################################
 
+# git clone source
 cd /usr/local
 time git clone https://github.com/tm2013/Radium.git
 chmod -R 777 /usr/local/Radium/
 
-#################################################################
-# Build Radium from source                                      #
-#################################################################
+# Build  source                                
 
 cd /usr/local/Radium/src 
 make -f makefile.unix USE_UPNP=-
 cp /usr/local/Radium/src/Radiumd /usr/bin/Radiumd
 
+else
+#################################################################
+# Install Radium from Binary                                    #
+#################################################################
+
+cd /usr/local
+DOWNLOADFILE=$(curl -s https://api.github.com/repos/JJ12880/Radium/releases | grep browser_download_url | grep linux64 | head -n 1 | cut -d '"' -f 4)
+DOWNLOADNAME=$(curl -s https://api.github.com/repos/JJ12880/Radium/releases | grep name | grep linux64 | head -n 1 | cut -d '"' -f 4)
+DIRNAME=$(echo $DOWNLOADNAME | sed 's/.tgz//')
+wget $DOWNLOADFILE
+tar zxf $DOWNLOADNAME
+rm $DOWNLOADNAME
+cp Radiumd /usr/bin/Radiumd
+chmod 777 /usr/bin/Radiumd
+rm Radiumd
+
+fi
+
+
 ################################################################
 # Configure Radium node to auto start at boot       #
 #################################################################
 
-printf '%s\n%s\n' '#!/bin/sh' '/usr/bin/Radiumd --rpc-endpoint=127.0.0.1:8090 -d /usr/local/Radium/programs/radiumd/'>> /etc/init.d/radium
+printf '%s\n%s\n' '#!/bin/sh' '/usr/bin/Radiumd --datadir/.Radiumd'>> /etc/init.d/radium
 chmod +x /etc/init.d/radium
 update-rc.d radium defaults
-/usr/bin/Radiumd  & exit 0
+/usr/bin/Radiumd  --datadir/.Radiumd & exit 0
