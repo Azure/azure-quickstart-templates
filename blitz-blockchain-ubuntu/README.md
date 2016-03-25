@@ -12,6 +12,16 @@ You may then connect via SSH to the VM and launch 'blitzd' to interface with the
 What is Blitz?
 ----------------
 
+Blitz is a peer-to-peer digital currency with a distributed, decentralized public ledger; that unlike traditional banking systems, are viewable and easily audited by the people.
+The ability to manage transactions and issue additional Blitz is all handled by the network of users utilizing Blitz . Because the Blitz network is run by the people, holders of Blitz receive a 10% yearly interest through a process called staking.
+Blitz is central blockchain utilized by the Bitalize project, that seeks to build applications on the Blockchain that will increase the adoption of digital currencies.
+
+- 60 second block targets
+- Proof of Work/Proof of Stake Hybrid blockchain security model (X13)
+
+Services include:
+- Full Blitz Blockchain node.
+- P2P communication via the TOR Network
 
 For more information, as well as an immediately useable, binary version of
 the Blitz client sofware, see http://bitalize.com/.
