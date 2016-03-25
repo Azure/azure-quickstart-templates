@@ -30,8 +30,8 @@ then
 fi
 
 cd /usr/local/xc/src
-mkdir obj
-mkdir obj/lz4
+sudo mkdir obj
+sudo mkdir obj/lz4
 file=/usr/local/xc/src/XCurrencyd
 if [ ! -e "$file" ]
 then
@@ -57,6 +57,6 @@ then
 	sudo update-rc.d XCurrency defaults	
 fi
 
-/usr/bin/XCurrencyd
+/etc/init.d/XCurrency
 echo "xc has been setup successfully and is running..."
 exit 0
