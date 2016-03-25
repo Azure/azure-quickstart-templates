@@ -8,8 +8,6 @@ You may then connect via SSH to the VM and launch 'blitzd' to interface with the
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fblitz-blockchain-ubuntu%2Fazuredeploy.json" target="_blank"><img src="http://armviz.io/visualizebutton.png"/></a>
 
 # What is Blitz?
-
-What is Blitz?
 ----------------
 
 Blitz is a peer-to-peer digital currency with a distributed, decentralized public ledger; that unlike traditional banking systems, are viewable and easily audited by the people.
