@@ -7,7 +7,7 @@
       "metadata": {
         "description": "Prefix for the environment (2-5 characters)"
       },
-      "defaultValue": "cust1",
+      "defaultValue": "demo1",
       "minLength": 2,
       "maxLength": 5
     },
@@ -31,13 +31,13 @@
     "username": {
       "type": "string",
       "metadata": {
-        "description": "SQL IaaS VM local administrator username"
+        "description": "IaaS VM local administrator username"
       }
     },
     "password": {
       "type": "securestring",
       "metadata": {
-        "description": "SQL IaaS VM local administrator password"
+        "description": "IaaS VM local administrator password"
       }
     },
     "webSrvVMSize": {
@@ -66,24 +66,7 @@
         1,
         2
       ],
-      "defaultValue": 1
-    },
-    "sqlVMSize": {
-      "type": "string",
-      "allowedValues": [
-        "Standard_DS1",
-        "Standard_DS2",
-        "Standard_DS3",
-        "Standard_DS4",
-        "Standard_DS11",
-        "Standard_DS12",
-        "Standard_DS13",
-        "Standard_DS14"
-      ],
-      "metadata": {
-        "description": "The size of the SQL VM Created"
-      },
-      "defaultValue": "Standard_DS3"
+      "defaultValue": 2
     },
     "storageAccountType": {
       "type": "string",
@@ -109,18 +92,7 @@
     "dbSubnetPrefix": "10.0.2.0/24",
     "feNSGName": "feNsg",
     "dbNSGName": "dbNsg",
-    "sqlSrvDBName": "[concat(parameters('envPrefixName'), 'sqlSrv14')]",
-    "sqlVmSize": "[parameters('sqlVMSize')]",
-    "sqlSrvDBOsDiskName": "[concat(parameters('envPrefixName'), 'DBSrvOS')]",
-    "sqlSrvDBDataDiskName": "[concat(parameters('envPrefixName'), 'DBSrvData')]",
     "vnetId": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
-    "sqlSrvDBNicName": "[concat(variables('sqlSrvDBName'), 'Nic')]",
-    "sqlSvrDBSubnetRef": "[concat(variables('vnetId'), '/subnets/', 'DBSubnetName')]",
-    "sqlPublicIP": "[concat(parameters('envPrefixName'), 'SqlPip')]",
-    "sqlPublicIPRef": "[resourceId('Microsoft.Network/publicIPAddresses', variables('sqlPublicIP'))]",
-    "sqlImagePublisher": "MicrosoftSQLServer",
-    "sqlImageOffer": "SQL2014-WS2012R2",
-    "sqlImageSku": "Standard",
     "webSrvName": "[concat(parameters('envPrefixName'), 'webSrv')]",
     "webSrvVMSize": "[parameters('webSrvVMSize')]",
     "webSrvOSDiks": "[concat(parameters('envPrefixName'), 'WebSrvOS')]",
@@ -138,7 +110,7 @@
     "lbPoolID": "[concat(variables('webLbId'),'/backendAddressPools/BackendPool1')]",
     "lbProbeID": "[concat(variables('webLbId'),'/probes/tcpProbe')]",
     "vmExtensionName": "dscExtension",
-    "modulesUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/iis-2vm-sql-1vm/scripts/WebServerConfig.ps1.zip",
+    "modulesUrl": "https://raw.githubusercontent.com/zivraf/azure-quickstart-templates/master/iis-2vm-sql-1vm/scripts/WebServerConfig.ps1.zip",
     "configurationFunction": "WebServerConfig.ps1\\WebServerConfig"
   },
   "resources": [
@@ -303,95 +275,6 @@
       },
       "properties": {
         "accountType": "[parameters('storageAccountType')]"
-      }
-    },
-    {
-      "name": "[variables('sqlPublicIP')]",
-      "type": "Microsoft.Network/publicIPAddresses",
-      "location": "[parameters('location')]",
-      "apiVersion": "[variables('apiVersion')]",
-      "tags": {
-        "displayName": "SqlPIP"
-      },
-      "properties": {
-        "publicIPAllocationMethod": "Dynamic",
-        "idleTimeoutInMinutes": 4
-      }
-    },
-    {
-      "name": "[variables('sqlSrvDBNicName')]",
-      "type": "Microsoft.Network/networkInterfaces",
-      "location": "[parameters('location')]",
-      "apiVersion": "[variables('apiVersion')]",
-      "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
-      ],
-      "tags": {
-        "displayName": "SQLSrvDBNic"
-      },
-      "properties": {
-        "ipConfigurations": [
-          {
-            "name": "ipconfig1",
-            "properties": {
-              "privateIPAllocationMethod": "Dynamic",
-              "subnet": {
-                "id": "[variables('sqlSvrDBSubnetRef')]"
-              },
-              "publicIPAddress": {
-                "id": "[variables('sqlPublicIPRef')]"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "[concat(parameters('envPrefixName'), 'sqlSrv14')]",
-      "type": "Microsoft.Compute/virtualMachines",
-      "location": "[parameters('location')]",
-      "apiVersion": "[variables('apiVersion')]",
-      "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('sqlSrvDBNicName'))]",
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('sqlPublicIP'))]"
-      ],
-      "tags": {
-        "displayName": "SQL-Svr-DB"
-      },
-      "properties": {
-        "hardwareProfile": {
-          "vmSize": "[variables('sqlVmSize')]"
-        },
-        "osProfile": {
-          "computerName": "[variables('sqlSrvDBName')]",
-          "adminUsername": "[parameters('username')]",
-          "adminPassword": "[parameters('password')]"
-        },
-        "storageProfile": {
-          "imageReference": {
-            "publisher": "[variables('sqlImagePublisher')]",
-            "offer": "[variables('sqlImageOffer')]",
-            "sku": "[variables('sqlImageSku')]",
-            "version": "latest"
-          },
-          "osDisk": {
-            "name": "SQL-Svr-DBOSDisk",
-            "vhd": {
-              "uri": "[concat('http://', variables('storageName'), '.blob.core.windows.net/', variables('vhdContainer'), '/', variables('sqlSrvDBOsDiskName'), '.vhd')]"
-            },
-            "caching": "ReadWrite",
-            "createOption": "FromImage"
-          }
-        },
-
-        "networkProfile": {
-          "networkInterfaces": [
-            {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('sqlSrvDBNicName'))]"
-            }
-          ]
-        }
       }
     },
     {
