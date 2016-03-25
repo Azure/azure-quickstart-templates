@@ -22,7 +22,7 @@ Services include:
 - P2P communication via the TOR Network
 
 For more information, as well as an immediately useable, binary version of
-the Blitz client sofware, see http://bitalize.com/.
+the Blitz client sofware, see http://www.blitzcoin.org.
 
 
 # Template Parameters
