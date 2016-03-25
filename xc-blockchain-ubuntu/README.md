@@ -24,8 +24,8 @@ Services include:
 
 - Private Transactions (Hybrid CoinJoin)
 - XChat - secure p2p messaging
-- Advanced Storage via modified op-return size to 253bytes
-- 4Mb Blocksize
+- Advanced Storage via modified op-return size to 253bytes (in the v4 update)
+- 4Mb Blocksize (in the v4 update)
 - Blocknet DX compatible
 
 For more information, as well as an immediately useable, binary version of
