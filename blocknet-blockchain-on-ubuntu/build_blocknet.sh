@@ -30,6 +30,7 @@ then
 fi
 
 cd /usr/local/blocknet/src
+mkdir obj
 file=/usr/local/blocknet/src/blocknetd
 if [ ! -e "$file" ]
 then
