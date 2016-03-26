@@ -6,12 +6,21 @@ date
 ps axjf
 
 #################################################################
-# Build Blocknet from source                                    #
+# Update Ubuntu and install prerequisites for running Blocknet  #
+#################################################################
+sudo apt-get update
+#################################################################
+# Build Blocknet source                                         #
+#################################################################
+NPROC=$(nproc)
+echo "nproc: $NPROC"
+#################################################################
 # Install all necessary packages for building Blocknet          #
 #################################################################
+sudo apt-get install -y git qt5-default qt5-qmake qtbase5-dev-tools qttools5-dev-tools build-essential libboost-dev libboost-system-dev libboost-filesystem-dev libboost-program-options-dev libboost-thread-dev libssl-dev libdb++-dev libevent-dev libminiupnpc-dev libqrencode-dev
 sudo add-apt-repository -y ppa:bitcoin/bitcoin
 sudo apt-get update
-sudo apt-get install -y libdb4.8-dev libdb4.8++-dev libminiupnpc-dev libdb++-dev libdb-dev libcrypto++-dev libqrencode-dev libboost-all-dev build-essential libboost-system-dev libboost-filesystem-dev libboost-program-options-dev libboost-thread-dev libssl-dev git
+sudo apt-get install -y libdb4.8-dev libdb4.8++-dev
 
 cd /usr/local
 file=/usr/local/blocknet
@@ -24,13 +33,13 @@ cd /usr/local/blocknet/src
 file=/usr/local/blocknet/src/blocknetd
 if [ ! -e "$file" ]
 then
-	sudo make -f makefile.unix
+	sudo make -j$NPROC -f makefile.unix
 fi
 
 sudo cp /usr/local/blocknet/src/blocknetd /usr/bin/blocknetd
 
 ################################################################
-# Configure to auto start at boot		                           #
+# Configure to auto start at boot		               #
 ################################################################
 file=$HOME/.blocknet 
 if [ ! -e "$file" ]
