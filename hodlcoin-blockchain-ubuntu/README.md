@@ -2,7 +2,7 @@
 
 This template delivers the Hodlcoin network to your VM in about 20 minutes.  Everything you need to get started using the Hodlcoin blockchain from the command line is included. 
 You may build from source.  Once installed, 'hodlcoind' will begin syncing the public blockchain. 
-You may then connect via SSH to the VM and launch 'hodlcoind' to interface with the blockchain.
+You may then connect via SSH to the VM and launch 'hodlcoin-cli' to interface with the blockchain.
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fhodlcoin-blockchain-ubuntu%2Fazuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fhodlcoin-blockchain-ubuntu%2Fazuredeploy.json" target="_blank"><img src="http://armviz.io/visualizebutton.png"/></a>
