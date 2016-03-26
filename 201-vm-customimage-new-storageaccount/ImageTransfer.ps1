@@ -209,11 +209,20 @@ try
 	foreach ($url in $sourceImageList)
 	{
 		"Copying blob $url" | Out-File "c:\$scriptName.txt" -Append
+	
 		$SourceURIContainer = getPathUpToContainerLevelfromUrl -url $url
+		"   SourceURIContainer = $SourceURIContainer" | Out-File "c:\$scriptName.txt" -Append
+
 		$blobName = getBlobName -url $url
+		"   BlobName = $blobName" | Out-File "c:\$scriptName.txt" -Append
+
 		$azCopyLogFile = "$PSScriptRoot\azcopylog-$blobName.txt"
+		"   azCopyLogFile = $azCopyLogFile" | Out-File "c:\$scriptName.txt" -Append
+
+		"   Running AzCopy Tool..." | Out-File "c:\$scriptName.txt" -Append
 		& $AzCopyTool "/Source:$SourceURIContainer","/SourceKey:$SourceSAKey", "/Dest:$DestinationURI", "/DestKey:$DestinationSAKey", "/Pattern:$blobName", "/Y" , "/V:$azCopyLogFile", "/Z:$PSScriptRoot", "/NC:20"
 
+		"   Checking blob copy status..." | Out-File "c:\$scriptName.txt" -Append
 		# Checking blob copy status
 		$result = getBlobCompletionStatus -AzCopyLogFile $azCopyLogFile
 		if ($result.Success)
