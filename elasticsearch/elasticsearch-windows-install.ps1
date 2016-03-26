@@ -58,10 +58,12 @@ Param(
     [string]$discoveryEndpoints,
 	[string]$elasticClusterName,
     [string]$storageKey,
+    [string]$marvelEndpoints,
+    [switch]$marvelOnlyNode,
 	[switch]$masterOnlyNode,
 	[switch]$clientOnlyNode,
 	[switch]$dataOnlyNode,
-	[switch]$installMarvel,
+	[switch]$m,
 	[switch]$jmeterConfig
 )
 
@@ -578,6 +580,24 @@ function Install-WorkFlow
             $textToAppend = $textToAppend + "`nnetwork.host: _non_loopback_"
         }
 
+        # configure marvel as required
+        if($marvelEndpoints.Length -ne 0)
+        {
+            $marvelIPAddresses = Implode-Host2 $marvelEndpoints
+            if ($elasticSearchVersion -match '2.')
+            {
+                $textToAppend = $textToAppend + "`nmarvel.agent.exporters:`n  id1:`n    type: http`n    host: [$marvelIPAddresses]"
+            }
+            else
+            {
+                $textToAppend = $textToAppend + "`nmarvel.agent.exporter.hosts: [$marvelIPAddresses]"
+            }
+        }
+        
+        if ($marvelOnlyNode -and ($elasticSearchVersion -match '1.'))
+        {
+            $textToAppend = $textToAppend + "`nmarvel.agent.enabled: false"
+        }
 
         Add-Content $elasticSearchConfFile $textToAppend
 		
@@ -592,7 +612,7 @@ function Install-WorkFlow
     ElasticSearch-StartService
 
     # Install marvel if specified
-    if ($installMarvel)
+    if ($m)
     {
         if ($elasticSearchVersion -match '2.')
         {
@@ -627,9 +647,11 @@ function Startup-Output
     if($jdkDownloadLocation.Length -ne 0) { lmsg "Jdk download location: $jdkDownloadLocation" }
     if($elasticSearchBaseFolder.Length -ne 0) { lmsg "Elasticsearch base folder: $elasticSearchBaseFolder" }
     if($discoveryEndpoints.Length -ne 0) { lmsg "Discovery endpoints: $discoveryEndpoints" }
+    if($marvelEndpoints.Length -ne 0) { lmsg "Marvel endpoints: $marvelEndpoints" }
     if($masterOnlyNode) { lmsg 'Node installation mode: Master' }
     if($clientOnlyNode) { lmsg 'Node installation mode: Client' }
     if($dataOnlyNode) { lmsg 'Node installation mode: Data' }
+    if($marvelOnlyNode) { lmsg 'Node installation mode: Marvel' }
 }
 
 Install-WorkFlow
