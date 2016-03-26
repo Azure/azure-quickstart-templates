@@ -6,21 +6,12 @@ date
 ps axjf
 
 #################################################################
-# Update Ubuntu and install prerequisites for running Blocknet  #
-#################################################################
-sudo apt-get update
-#################################################################
 # Build Blocknet from source                                    #
-#################################################################
-NPROC=$(nproc)
-echo "nproc: $NPROC"
-#################################################################
 # Install all necessary packages for building Blocknet          #
 #################################################################
-sudo apt-get install -y libminiupnpc-dev libdb++-dev libdb-dev libcrypto++-dev libqrencode-dev libboost-all-dev build-essential libboost-system-dev libboost-filesystem-dev libboost-program-options-dev libboost-thread-dev libssl-dev git
 sudo add-apt-repository -y ppa:bitcoin/bitcoin
 sudo apt-get update
-sudo apt-get install -y libdb4.8-dev libdb4.8++-dev
+sudo apt-get install -y libdb4.8-dev libdb4.8++-dev libminiupnpc-dev libdb++-dev libdb-dev libcrypto++-dev libqrencode-dev libboost-all-dev build-essential libboost-system-dev libboost-filesystem-dev libboost-program-options-dev libboost-thread-dev libssl-dev git
 
 cd /usr/local
 file=/usr/local/blocknet
@@ -33,7 +24,7 @@ cd /usr/local/blocknet/src
 file=/usr/local/blocknet/src/blocknetd
 if [ ! -e "$file" ]
 then
-	sudo make -j$NPROC -f makefile.unix
+	sudo make -f makefile.unix
 fi
 
 sudo cp /usr/local/blocknet/src/blocknetd /usr/bin/blocknetd
