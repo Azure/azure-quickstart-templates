@@ -39,6 +39,8 @@ then
 fi
 
 sudo cp /usr/local/hodlcoin/src/hodlcoind /usr/bin/hodlcoind
+cd /usr/local/hodlcoin/src
+sudo make install
 
 ################################################################
 # Configure to auto start at boot		                           #
