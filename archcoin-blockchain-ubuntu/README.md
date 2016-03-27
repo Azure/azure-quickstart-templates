@@ -9,7 +9,14 @@ You may then connect via SSH to the VM and launch 'archcoind' to interface with 
 
 # What is Archcoin?
 
-Archcoin is a floating triangle. Learn more https://bitcointalk.org/index.php?topic=831777.0
+The original ARCH whitepaper focused on the concept of controlling the flow of information within a decentralized autonomous corporation (DAC) in an effort to promote financial stability and growth within a DAC and protecting sensible information. While most cryptocurrencies are created as an alternative to bitcoin, ARCH was created as a startup holding DAC whose equity is represented by a cryptographic token. The goal is to test new applications of blockchain technology as well as to model an investor-token relationship in a use-case scenario involving a real startup with palpable products and services. To improve equity fungibility, revenue from any of the holding company's products or services is to be used to purchase more tokens from the market, thereby making the holding DAC's equity token exponentially more valuable with each additional revenue stream. Although no substantial revenue has been injected into ARCH's fungibility yet, its tiered conditional access levels have created a natural self-audit system that has proven very effective when it comes to managing this pseudo-corporate setup and its investors. Value in information is trusted to investors according to their own responsibility in the pseudo-corporate structure. In this tiered setup, the amount of tokens held serves as a basis of evaluating trust and involvement with the DAC itself. This system promotes unbiased transparency by the developers and corporate responsibility on behalf of the investors. This system alone, without any major revenue stream, has already proven itself as the backbone of the current stable growth in the ARCH equity token's market cap.
+
+This unique approach opens doors for a new generation of DACs, fusing decentralized communities with traditional corporate structures using tiered conditional access levels to secure the flow of information. Although tailored to our specific ventures and “community” needs, the ARCH wallet concept is an outstanding, first-of-its-kind example for other future DACs looking to combine all relevant information and tools regarding the DAC's and its equity token in one place. ARCH is taking that concept even further and seeks to integrate the whole corporate structure into its wallet as the DAC grows. 
+
+In a nutshell, Arch rearranged how investors interacted in DACs to establish healthier lines of communication while changing the financial structure so that FIAT revenue would be injected directly into the tokens fungibility instead of being distributed through dividends.
+
+Our products, services and software are inspired by bitcoin, disruptive and innovative but not interdependent.
+Learn more https://bitcointalk.org/index.php?topic=831777.0
 
 # Template Parameters
 
