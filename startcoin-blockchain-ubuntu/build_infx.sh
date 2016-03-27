@@ -48,7 +48,7 @@ if [ ! -e "$file" ]
 then
 	sudo mkdir $HOME/.startcoin-v2
 fi
-echo -e "rpcuser=rpc\nrpcpassword=1234\nserver=1\ndaemon=1" > $HOME/.startcoin-v2/startcoin.conf
+echo -e "rpcuser=rpc\nrpcpassword=1234\nserver=1\ndaemon=1\naddnode=217.160.180.208:9247\naddnode=74.120.220.51:9247\naddnode=46.105.158.205:9247\naddnode=72.130.194.71:9247\naddnode=195.154.223.134:9247\naddnode=104.131.82.220:9247\naddnode=151.80.9.33:9247\naddnode=62.45.120.75:9247" > $HOME/.startcoin-v2/startcoin.conf
 file=/etc/init.d/startcoin
 if [ ! -e "$file" ]
 then
