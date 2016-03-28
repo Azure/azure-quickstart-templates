@@ -62,7 +62,7 @@ then
 	sudo mkdir $HOME/.digibyte
 fi
 rpcp=$(pwgen -ncsB 35 1)
-printf '%s\n%s\n%s\nrpcpassword=%s\n' 'daemon=1' 'server=1' 'rpcuser=jumbucksrpc' $rpcp | sudo tee $HOME/.digibyte/digibyte.conf
+printf '%s\n%s\n%s\nrpcpassword=%s\n' 'daemon=1' 'server=1' 'rpcuser=digibyterpc' $rpcp | sudo tee $HOME/.digibyte/digibyte.conf
 file=/etc/init.d/digibyte
 if [ ! -e "$file" ]
 then
