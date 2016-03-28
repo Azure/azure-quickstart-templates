@@ -48,7 +48,14 @@ if [ ! -e "$file" ]
 then
 	sudo mkdir $HOME/.blackcoin
 fi
-echo -e "rpcuser=rpc\nrpcpassword=1234\nserver=1\ndaemon=1" > $HOME/.blackcoin/blackcoin.conf
+
+sudo printf 'rpcuser=%s\n' $2  >> $HOME/.blackcoin/blackcoin.conf
+sudo printf 'rpcpassword=%s\n' $3 >> $HOME/.blackcoin/blackcoin.conf
+sudo printf 'rpcport=%s\n' $4 >> $HOME/.blackcoin/blackcoin.conf
+sudo printf 'rpcallowip=%s\n' $5 >> $HOME/.blackcoin/blackcoin.conf
+sudo printf 'server=1' >> $HOME/.blackcoin/blackcoin.conf
+sudo printf 'daemon=1' >> $HOME/.blackcoin/blackcoin.conf
+
 file=/etc/init.d/blackcoin
 if [ ! -e "$file" ]
 then
