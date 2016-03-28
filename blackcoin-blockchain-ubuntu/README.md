@@ -13,6 +13,7 @@ What is BlackCoin?
 ----------------
 
 BlackCoin is pure Proof of Stake coin, except stage of initial distribution, when it was mixed PoW and PoS coin.
+For more info see: http://blackcoin.co/
 
 # Template Parameters
 
