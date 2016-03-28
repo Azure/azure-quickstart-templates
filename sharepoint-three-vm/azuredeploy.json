@@ -196,7 +196,10 @@
     "storageAccountType": {
       "type": "string",
       "allowedValues": [
-        "Premium_LRS"
+        "Premium_LRS",
+        "Standard_LRS",
+        "Standard_GRS"
+
       ],
       "metadata": {
         "description": "The type of the Storage Account created"
@@ -205,13 +208,13 @@
     }
   },
   "variables": {
+    "assetLocation":"[concat(parameters('baseUrl'),'/dsc')]",
     "configDatabaseName": "SP_Config",
     "administrationContentDatabaseName": "SP_AdminContent",
     "contentDatabaseName": "spARM_Content",
     "adVMName": "[concat(parameters('sharepointFarmName'),'-ad')]",
     "sqlVMName": "[concat(parameters('sharepointFarmName'),'-sql')]",
     "spVMName": "[concat(parameters('sharepointFarmName'),'-sp')]",
-    "AssetLocation": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sharepoint-three-vm/dsc",
     "LBFE": "LBFE",
     "LBBE": "LBBE",
     "RDPNAT": "RDP",
@@ -279,14 +282,23 @@
         }
       }
     ],
-    "adModulesURL": "[concat(variables('AssetLocation'),'/CreateADPDC.ps1.zip')]",
+    "SpPublicIpexisting":"[resourceId(parameters('spPublicIPRGName'),concat('Microsoft.Network','/','publicIPAddresses'),parameters('sppublicIPAddressName'))]",
+    "SpPublicIpnew": "[resourceId(concat('Microsoft.Network','/','publicIPAddresses'),parameters('sppublicIPAddressName'))]",
+    "adPublicIpResourceId": "[resourceId(concat('Microsoft.Network','/','publicIPAddresses'),variables('adpublicIPAddressName'))]",
+    "sqlPublicIpResourceId": "[resourceId(concat('Microsoft.Network','/','publicIPAddresses'),variables('sqlpublicIPAddressName'))]",
+    "spFQDN":"[concat(parameters('spDNSPrefix'),'.',toLower(trim(replace(parameters('location'),' ' ,''))),'.cloudapp.azure.com')]",
+    "splbResourceId":"[resourceId(concat('Microsoft.Network','/','loadBalancers'),variables('spLBName'))]",
+    "adModulesURL": "[concat(variables('assetLocation'),'/CreateADPDC.ps1.zip')]",
     "adConfigurationFunction": "CreateADPDC.ps1\\CreateADPDC",
-    "sqlModulesURL": "[concat(variables('AssetLocation'),'/ConfigureSqlServer.ps1.zip')]",
+    "sqlConfigureModulesURL": "[concat(variables('assetLocation'),'/ConfigureSqlServer.ps1.zip')]",
     "sqlConfigurationFunction": "ConfigureSqlServer.ps1\\ConfigureSqlServer",
-    "spModulesURL": "[concat(variables('AssetLocation'),'/ConfigureSharePointServer.ps1.zip')]",
+    "spConfigureModulesURL": "[concat(variables('assetLocation'),'/ConfigureSharePointServer.ps1.zip')]",
     "spConfigurationFunction": "ConfigureSharePointServer.ps1\\ConfigureSharePointServer",
+    "sqlPrepareModulesURL": "[concat(variables('assetLocation'),'/PrepareSqlServer.ps1.zip')]",
+    "sqlPreparationFunction": "PrepareSqlServer.ps1\\PrepareSqlServer",
+    "spPrepareModulesURL": "[concat(variables('assetLocation'),'/PrepareSharePointServer.ps1.zip')]",
+    "spPreparationFunction": "PrepareSharePointServer.ps1\\PrepareSharePointServer",
     "SettingUpSharepointIPUrl": "[concat(parameters('baseUrl'),'/publicip-',parameters('spPublicIPNewOrExisting'),'.json')]",
-    "provisioningSharepointUrl": "[concat(parameters('baseUrl'),'/provisioningSharepoint.json')]",
     "storageAccountSetupURL": "[concat(parameters('baseUrl'),'/storageAccount.json')]",
     "creatingPublicIPsUrl": "[concat(parameters('baseUrl'),'/creatingPublicIPs.json')]",
     "vnetwithDNSTemplateUrl": "[concat(parameters('baseUrl'),'/vnet-with-dns-server.json')]",
@@ -295,7 +307,10 @@
     "setupLBsUrl": "[concat(parameters('baseUrl'),'/loadBalancers.json')]",
     "creatingNICSUrl": "[concat(parameters('baseUrl'),'/creatingNICS.json')]",
     "ProvisioningADDomainControllerUrl": "[concat(parameters('baseUrl'),'/provisioningDomainController.json')]",
-    "ProvisioningSQLUrl": "[concat(parameters('baseUrl'),'/provisioningSQL.json')]"
+    "ProvisioningSQLUrl": "[concat(parameters('baseUrl'),'/provisioningSQL.json')]",
+    "provisioningSharepointUrl": "[concat(parameters('baseUrl'),'/provisioningSharepoint.json')]",
+    "configuringSQLUrl": "[concat(parameters('baseUrl'),'/configuringSQL.json')]",
+    "configuringSharepointUrl": "[concat(parameters('baseUrl'),'/configuringSharepoint.json')]"
   },
   "resources": [
     {
@@ -447,10 +462,10 @@
             "value": "[parameters('location')]"
           },
           "spLBName": {
-            "value": "[variables('splbName')]"
+            "value": "[variables('spLBName')]"
           },
           "sqllbName": {
-            "value": "[variables('sqllbName')]"
+            "value": "[variables('sqlLBName')]"
           },
           "LBFE": {
             "value": "[variables('LBFE')]"
@@ -468,16 +483,16 @@
             "value": "[variables('spCANAT')]"
           },
           "adlbName": {
-            "value": "[variables('adlbName')]"
+            "value": "[variables('adLBName')]"
           },
           "spPublicIPResourceId": {
-            "value": "[reference('SettingUpSharepointIP').outputs.publicIpId.value]"
+            "value": "[variables(concat('SpPublicIP',parameters('spPublicIPNewOrExisting')))]"
           },
           "adPublicIpResourceId": {
-            "value": "[reference('SettingUpPublicIPs').outputs.adPublicIpResourceId.value]"
+            "value": "[variables('adPublicIpResourceId')]"
           },
           "sqlPublicIpResourceId": {
-            "value": "[reference('SettingUpPublicIPs').outputs.sqlPublicIpResourceId.value]"
+            "value": "[variables('sqlPublicIpResourceId')]"
           }
         }
       }
@@ -535,7 +550,7 @@
             "value": "[variables('spSubnetRef')]"
           },
           "splbResourceId": {
-            "value": "[reference('SettingUpLoadBalancers').outputs.splbID.value]"
+            "value": "[variables('splbResourceId')]"
           },
           "LBBE": {
             "value": "[variables('LBBE')]"
@@ -609,45 +624,14 @@
       }
     },
     {
-      "name": "UpdatingDNStoPrimaryADVM",
+      "name": "ProvisioningSQLServerVM",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2015-01-01",
       "dependsOn": [
-        "Microsoft.Resources/deployments/ProvisioningADDomainController"
-      ],
-      "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[variables('vnetwithDNSTemplateUrl')]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "location": {
-            "value": "[parameters('location')]"
-          },
-          "virtualNetworkName": {
-            "value": "[parameters('virtualNetworkName')]"
-          },
-          "virtualNetworkAddressRange": {
-            "value": "[parameters('virtualNetworkAddressRange')]"
-          },
-          "subnets": {
-            "value": "[variables('subnets')]"
-          },
-          "DNSServerAddress": {
-            "value": [
-              "[parameters('adNicIPAddress')]"
-            ]
-          }
-        }
-      }
-    },
-    {
-      "name": "ProvisioningSQLServer",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
-      "dependsOn": [
-        "Microsoft.Resources/deployments/UpdatingDNStoPrimaryADVM"
+        "Microsoft.Resources/deployments/SettingUpStorageAccount",
+        "Microsoft.Resources/deployments/CreatingNetworkInterfaces",
+        "Microsoft.Resources/deployments/CreatingAvailabilitySets",
+        "Microsoft.Resources/deployments/SettingUpLoadBalancers"
       ],
       "properties": {
         "mode": "Incremental",
@@ -686,8 +670,138 @@
           "sqlNicName": {
             "value": "[variables('sqlNicName')]"
           },
-          "sqlModulesURL": {
-            "value": "[variables('sqlModulesURL')]"
+          "sqlPrepareModulesURL": {
+            "value": "[variables('sqlPrepareModulesURL')]"
+          },
+          "sqlPreparationFunction": {
+            "value": "[variables('sqlPreparationFunction')]"
+          },
+          "DNSServerAddress": {
+            "value": "[parameters('adNicIPAddress')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "ProvisioningSharepointVM",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "Microsoft.Resources/deployments/SettingUpStorageAccount",
+        "Microsoft.Resources/deployments/CreatingNetworkInterfaces",
+        "Microsoft.Resources/deployments/CreatingAvailabilitySets",
+        "Microsoft.Resources/deployments/SettingUpLoadBalancers"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('provisioningSharepointUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "spVMName": {
+            "value": "[variables('spVMName')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "spPrepareModulesURL": {
+            "value": "[variables('spPrepareModulesURL')]"
+          },
+          "spPreparationFunction": {
+            "value": "[variables('spPreparationFunction')]"
+          },
+          "adminUserName": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "spVMSize": {
+            "value": "[parameters('spVMSize')]"
+          },
+          "spAvailabilitySetName": {
+            "value": "[variables('spAvailabilitySetName')]"
+          },
+          "spNicName": {
+            "value": "[variables('spNicName')]"
+          },
+          "spDataDisk": {
+            "value": "[variables('spDataDisk')]"
+          },
+          "storageAccountNamePrefix": {
+            "value": "[parameters('storageAccountNamePrefix')]"
+          },
+          "DNSServerAddress": {
+            "value": "[parameters('adNicIPAddress')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "UpdatingDNStoPrimaryADVM",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "Microsoft.Resources/deployments/ProvisioningADDomainController",
+        "Microsoft.Resources/deployments/ProvisioningSQLServerVM",
+        "Microsoft.Resources/deployments/ProvisioningSharepointVM"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('vnetwithDNSTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "virtualNetworkName": {
+            "value": "[parameters('virtualNetworkName')]"
+          },
+          "virtualNetworkAddressRange": {
+            "value": "[parameters('virtualNetworkAddressRange')]"
+          },
+          "subnets": {
+            "value": "[variables('subnets')]"
+          },
+          "DNSServerAddress": {
+            "value": [
+              "[parameters('adNicIPAddress')]"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "ConfiguringSQLServerVM",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "Microsoft.Resources/deployments/UpdatingDNStoPrimaryADVM"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('configuringSQLUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "sqlVMName": {
+            "value": "[variables('sqlVMName')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "sqlConfgureModulesURL": {
+            "value": "[variables('sqlConfigureModulesURL')]"
           },
           "sqlConfigurationFunction": {
             "value": "[variables('sqlConfigurationFunction')]"
@@ -711,16 +825,16 @@
       }
     },
     {
-      "name": "ProvisioningSharepointFarm",
+      "name": "ConfiguringSharepointVM",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2015-01-01",
       "dependsOn": [
-        "Microsoft.Resources/deployments/ProvisioningSQLServer"
+        "Microsoft.Resources/deployments/ConfiguringSQLServerVM"
       ],
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[variables('provisioningSharepointUrl')]",
+          "uri": "[variables('configuringSharepointUrl')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -730,8 +844,8 @@
           "location": {
             "value": "[parameters('location')]"
           },
-          "spModulesURL": {
-            "value": "[variables('spModulesURL')]"
+          "spConfgureModulesURL": {
+            "value": "[variables('spConfigureModulesURL')]"
           },
           "spConfigurationFunction": {
             "value": "[variables('spConfigurationFunction')]"
@@ -740,7 +854,7 @@
             "value": "[parameters('domainName')]"
           },
           "adminUserName": {
-            "value": "[parameters('adminUserName')]"
+            "value": "[parameters('adminUsername')]"
           },
           "sharePointSetupUserAccountUserName": {
             "value": "[parameters('sharePointSetupUserAccountUserName')]"
@@ -758,7 +872,7 @@
             "value": "[variables('sqlVMName')]"
           },
           "fqdn": {
-            "value": "[reference('SettingUpSharepointIP').outputs.fqdn.value]"
+            "value": "[variables('spFQDN')]"
           },
           "contentDatabaseName": {
             "value": "[variables('contentDatabaseName')]"
@@ -778,21 +892,6 @@
           "sharePointFarmPassphrasePassword": {
             "value": "[parameters('sharePointFarmPassphrasePassword')]"
           },
-          "spVMSize": {
-            "value": "[parameters('spVMSize')]"
-          },
-          "spAvailabilitySetName": {
-            "value": "[variables('spAvailabilitySetName')]"
-          },
-          "spNicName": {
-            "value": "[variables('spNicName')]"
-          },
-          "spDataDisk": {
-            "value": "[variables('spDataDisk')]"
-          },
-          "storageAccountNamePrefix": {
-            "value": "[parameters('storageAccountNamePrefix')]"
-          },
           "sharepointFarmName": {
             "value": "[parameters('sharepointFarmName')]"
           }
@@ -802,7 +901,7 @@
   ],
   "outputs": {
     "fqdn": {
-      "value": "[reference('SettingUpSharepointIP').outputs.fqdn.value]",
+      "value": "[variables('spFQDN')]",
       "type": "string"
     }
   }

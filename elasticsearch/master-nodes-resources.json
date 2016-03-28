@@ -14,10 +14,10 @@
         "description": "Admin password used when provisioning virtual machines"
       }
     },
-    "storageAccountName": {
-      "type": "string",
+    "storageSettings": {
+      "type": "object",
       "metadata": {
-        "description": "Unique namespace for the Storage Account where the Virtual Machine's disks will be placed"
+        "description": "Storage Account Settings"
       }
     },
     "location": {
@@ -62,7 +62,8 @@
   "variables": {
     "vmStorageAccountContainerName": "vhd",
     "subnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('subnet').vnet), '/subnets/', parameters('subnet').name)]",
-    "storageAccountName": "[parameters('storageAccountName')]",
+    "storageAccountName": "[parameters('storageSettings').shared]",
+    "storageAccountNameAFS": "[parameters('storageSettings').afs]",
     "vmName": "[concat(parameters('namespace'), '-vm')]",
     "nicName": "[concat(parameters('namespace'), '-nic')]"
   },
@@ -122,7 +123,7 @@
           "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
-          "computerName": "[concat(variables('vmName'), copyIndex())]",
+          "computerName": "[concat('master-vm', copyIndex())]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]"
         },
@@ -154,7 +155,15 @@
           "dependsOn": [
             "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'), copyindex())]"
           ],
-          "properties": "[parameters('osSettings').extentionSettings.master]"
+          "properties": {
+            "publisher": "[parameters('osSettings').extensionSettings.master.publisher]",
+            "type": "[parameters('osSettings').extensionSettings.master.type]",
+            "typeHandlerVersion": "[parameters('osSettings').extensionSettings.master.typeHandlerVersion]",
+            "settings": {
+              "fileUris": "[parameters('osSettings').extensionSettings.master.settings.fileUris]",
+              "commandToExecute": "[concat(parameters('osSettings').extensionSettings.master.settings.commandToExecute, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameAFS')), '2015-05-01-preview').key1)]"
+            }
+          }
         }
       ]
     }
