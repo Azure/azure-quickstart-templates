@@ -115,7 +115,7 @@ $SKU = "sg-byol"
 #############################################################################
 # Variables - these should normally be left unchanged
 #############################################################################
-$IdleTimeoutInMinutes = 30
+$IdleTimeoutInMinutes = 4
 $Publisher = "checkpoint"
 $Offer = "check-point-r77-10"
 $Version = "latest"
