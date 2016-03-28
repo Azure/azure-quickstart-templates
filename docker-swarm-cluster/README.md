@@ -25,6 +25,10 @@ This template creates the following cluster topology:
 
 > [![docker-swarm-azure](img/cluster-network.png)](img/cluster-network.png)
 
+The cluster will be interconnected with Docker multi-host networking setup
+so that you can easily create overlay networks with `docker network create`
+command.
+
 #### Swarm Managers
 
 The template provisions 3 Swarm manager VMs that use

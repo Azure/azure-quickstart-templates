@@ -7,7 +7,7 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template allows you to deploy a simple VM Scale Set of Linux VMs using the latest patched version of Ubuntu Linux 15.10, 15.04, or 14.02.2-LTS. These VMs are behind a load balancer with NAT rules that let you connect to vm i by connecting via ssh on port 50000 + i of the public IP in the deployment. For example, to connect to the 0th VM, you could use the following command:
+This template allows you to deploy a simple VM Scale Set of Linux VMs using the latest patched version of Ubuntu Linux 15.10 or 14.02.2-LTS. These VMs are behind a load balancer with NAT rules that let you connect to vm i by connecting via ssh on port 50000 + i of the public IP in the deployment. For example, to connect to the 0th VM, you could use the following command:
 
 ssh -p 50000 {username}@{public-ip-address}
 

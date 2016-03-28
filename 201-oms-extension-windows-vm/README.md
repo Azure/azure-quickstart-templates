@@ -7,4 +7,4 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template allows you to deploy a Windows VM with the OMS extension installed and onboarded to a specified workspace. You may obtain the workspace id and key by going to the Connected Sources Tab in the Settings Page in the OMS Portal.
+This template allows you to deploy a Windows VM with the OMS extension installed and onboarded to a specified workspace. You may obtain the workspace ID and key by going to the Connected Sources tab in the Settings page in the OMS Portal or to the Direct Agent blade in the Azure portal.
