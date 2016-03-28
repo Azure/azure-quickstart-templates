@@ -8,18 +8,18 @@ ps axjf
 
 if [ $1 = 'From_Source' ]; then
 #################################################################
-# Update Ubuntu and install prerequisites for running Syscoin   #
+# Update Ubuntu and install prerequisites for running DigiByte   #
 #################################################################
 sudo apt-get update
 #################################################################
-# Build Syscoin from source                                     #
+# Build DigiByte from source                                     #
 #################################################################
 NPROC=$(nproc)
 echo "nproc: $NPROC"
 #################################################################
-# Install all necessary packages for building Syscoin           #
+# Install all necessary packages for building DigiByte           #
 #################################################################
-sudo apt-get -y install git build-essential libtool autotools-dev autoconf pkg-config libssl-dev libevent-dev bsdmainutils libboost-all-dev libminiupnpc-dev libzmq3-dev
+sudo apt-get -y install git build-essential libtool autotools-dev autoconf pkg-config libssl-dev libevent-dev bsdmainutils libboost-all-dev libminiupnpc-dev libzmq3-dev pwgen
 sudo add-apt-repository -y ppa:bitcoin/bitcoin
 sudo apt-get update
 sudo apt-get install -y libdb4.8-dev libdb4.8++-dev
@@ -45,7 +45,7 @@ sudo cp /usr/local/digibyte/src/digibyte-cli /usr/bin/digibyte-cli
 
 else    
 #################################################################
-# Install Syscoin from PPA                                      #
+# Install DigiByte from PPA                                      #
 #################################################################
 sudo add-apt-repository -y ppa:digibyte/digibyte
 sudo apt-get update
@@ -61,7 +61,8 @@ if [ ! -e "$file" ]
 then
 	sudo mkdir $HOME/.digibyte
 fi
-printf '%s\n%s\n%s\n%s\n' 'daemon=1' 'server=1' 'rpcuser=u' 'rpcpassword=p' | sudo tee $HOME/.digibyte/digibyte.conf
+rpcp=$(pwgen -ncsB 35 1)
+printf '%s\n%s\n%s\nrpcpassword=%s\n' 'daemon=1' 'server=1' 'rpcuser=jumbucksrpc' $rpcp | sudo tee $HOME/.digibyte/digibyte.conf
 file=/etc/init.d/digibyte
 if [ ! -e "$file" ]
 then
@@ -71,5 +72,5 @@ then
 fi
 
 /usr/bin/digibyted
-echo "Syscoin has been setup successfully and is running..."
+echo "Digibyte has been setup successfully and is running..."
 exit 0

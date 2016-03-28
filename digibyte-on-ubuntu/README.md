@@ -1,13 +1,13 @@
 # DigiByte Blockchain Node on Ubuntu VM
 
 This template delivers the DigiByte network to your VM in about 15 minutes (PPA install).  Everything you need to get started using the DigiByte blockchain from the command line is included. 
-You may select to build from source or install from the community provided Personal Package Archive (PPA).  Once installed, 'syscoind' will begin syncing the public blockchain. 
-You may then connect via SSH to the VM and launch 'syscoind' to interface with the blockchain.
+You may select to build from source or install from the community provided Personal Package Archive (PPA).  Once installed, 'digibyted' will begin syncing the public blockchain. 
+You may then connect via SSH to the VM and launch 'digibyted' to interface with the blockchain.
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsyscoin-on-ubuntu%2Fazuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsyscoin-on-ubuntu%2Fazuredeploy.json" target="_blank"><img src="http://armviz.io/visualizebutton.png"/></a>
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdigibyte-on-ubuntu%2Fazuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdigibyte-on-ubuntu%2Fazuredeploy.json" target="_blank"><img src="http://armviz.io/visualizebutton.png"/></a>
 
-# What is Di?
+# What is DigiByte?
 
 What is DigiByte?
 ----------------
@@ -65,8 +65,8 @@ When you click the Deploy to Azure icon above, you need to specify the following
 * Complete the template parameters, choose your resource group, accept the terms and click Create
 * Wait about 15 minutes for the VM to spin up and install the software
 * Connect to the VM via SSH using the DNS name assigned to your Public IP
-* If you wish to relaunch syscoind `sudo syscoind`
-* syscoind will run automatically on restart
+* If you wish to relaunch digibyted `sudo digibyted`
+* digibyted will run automatically on restart
 
 # Licensing
 
