@@ -29,7 +29,7 @@ When you click the Deploy to Azure icon above, you need to specify the following
 
 * Click the `Deploy to Azure` icon above
 * Complete the template parameters, choose your resource group, accept the terms and click Create
-* Wait about 15 minutes for the VM to spin up and install the software
+* Wait about 20 minutes for the VM to spin up and install the software
 * Connect to the VM via SSH using the DNS name assigned to your Public IP
 * If you wish to relaunch blackcoind `sudo blackcoind`
 * blackcoind will run automatically on restart
