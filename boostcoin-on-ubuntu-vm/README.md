@@ -12,8 +12,10 @@ You may then connect via SSH to the VM and launch 'boostcoind' to interface with
 What is BoostCoin-core?
 ----------------
 
-BoostCoin-core is a merge-minable scrypt coin which provides an array of useful services
-which leverage the bitcoin protocol and blockchain technology.
+BoostCoin-core is a hybrid Proof of Work / Proof of Stake Crypto currency which is based on the bitcoin protocol
+and blockchain technology
+
+
  - Proof of Stake rewards
  - 2 minute block targets
  - Utilises a built in Tor proxy 
