@@ -1,5 +1,5 @@
 {
-  "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json",
+  "$schema": "http://schema.management.azure.com/schemas/2015-04-01/deploymentTemplate.json",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "clusterLocation": {
@@ -12,7 +12,7 @@
       "type": "string",
       "defaultValue": "Cluster",
       "metadata": {
-        "description": "Name of your cluster - between 3 and 23 characters. Letters and numbers only"
+        "description": "Name of your cluster - Between 3 and 23 characters. Letters and numbers only"
       }
     },
     "fabricTcpGatewayPort": {
@@ -29,30 +29,31 @@
         "description": "Http Client Connection end point to perform management operations on this cluster"
       }
     },
-   "adminUserName": {
+    "adminUserName": {
       "type": "string",
+      "defaultValue": "testadm",
       "metadata": {
-        "description": "Remote Desktop user ID"
+        "description": "Remote desktop user Id"
       }
     },
     "adminPassword": {
       "type": "securestring",
-              "metadata": {
-        "description": "Remote Desktop user Password. Must be a strong password"
+      "metadata": {
+        "description": "Remote desktop user password. Must be a strong password"
       }
     },
     "loadBalancedAppPort1": {
       "type": "int",
       "defaultValue": 80,
-            "metadata": {
-        "description": "Input end point1 for the application to use. Replace it with what your application uses"
+      "metadata": {
+        "description": "Input endpoint1 for the application to use. Replace it with what your application uses"
       }
     },
     "loadBalancedAppPort2": {
       "type": "int",
       "defaultValue": 8081,
-            "metadata": {
-        "description": "Input end point2 for the application to use"
+      "metadata": {
+        "description": "Input endpoint2 for the application to use. Replace it with what your application uses"
       }
     },
     "storageAccountType": {
@@ -83,19 +84,11 @@
     "dnsName": "[parameters('clusterName')]",
     "vmStorageAccountName": "[toLower(concat(uniqueString(resourceGroup().id), '1' ))]",
     "vmName": "vm",
-    "applicationStartPort": "20000",
-    "applicationEndPort": "30000",
-    "ephemeralStartPort": "49152",
-    "ephemeralEndPort": "65534",
     "publicIPAddressName": "PublicIP-VM",
     "publicIPAddressType": "Dynamic",
     "vmStorageAccountContainerName": "vhds",
     "virtualNetworkName": "VNet",
     "addressPrefix": "10.0.0.0/16",
-    "subnet1Name": "Subnet-1",
-    "subnet2Name": "Subnet-2",
-    "subnet1Prefix": "10.0.0.0/24",
-    "subnet2Prefix": "10.0.1.0/24",
     "nicName": "NIC",
     "lbName": "LoadBalancer",
     "lbIPName": "PublicIP-LB-FE",
@@ -106,7 +99,16 @@
     "vmImageSku": "2012-R2-Datacenter",
     "vmImageVersion": "latest",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
-    "subnet1Ref": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]",
+    "overProvision": "false",
+    "nt0applicationStartPort": "20000",
+    "nt0applicationEndPort": "30000",
+    "nt0ephemeralStartPort": "49152",
+    "nt0ephemeralEndPort": "65534",
+    "nt0fabricTcpGatewayPort": "19000",
+    "nt0fabricHttpGatewayPort": "19080",
+    "subnet0Name": "Subnet-0",
+    "subnet0Prefix": "10.0.0.0/24",
+    "subnet0Ref": "[concat(variables('vnetID'),'/subnets/',variables('subnet0Name'))]",
     "supportLogStorageAccountName": "[toLower( concat( uniqueString(resourceGroup().id),'2'))]",
     "lbID0": "[resourceId('Microsoft.Network/loadBalancers',concat('LB','-', parameters('clusterName'),'-',variables('vmNodeType0Name')))]",
     "lbIPConfig0": "[concat(variables('lbID0'),'/frontendIPConfigurations/LoadBalancerIPConfig')]",
@@ -115,11 +117,11 @@
     "lbHttpProbeID0": "[concat(variables('lbID0'),'/probes/FabricHttpGatewayProbe')]",
     "lbNatPoolID0": "[concat(variables('lbID0'),'/inboundNatPools/LoadBalancerBEAddressNatPool')]",
     "vmNodeType0Name": "[toLower(concat('NT1', variables('vmName')))]",
-    "vmNodeType0Size": "Standard_A2"
+    "vmNodeType0Size": "Standard_D2"
   },
   "resources": [
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('vmStorageAccountName')]",
       "location": "[variables('computeLocation')]",
@@ -132,7 +134,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('supportLogStorageAccountName')]",
       "location": "[variables('computeLocation')]",
@@ -145,7 +147,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[variables('computeLocation')]",
@@ -157,15 +159,9 @@
         },
         "subnets": [
           {
-            "name": "[variables('subnet1Name')]",
+            "name": "[variables('subnet0Name')]",
             "properties": {
-              "addressPrefix": "[variables('subnet1Prefix')]"
-            }
-          },
-          {
-            "name": "[variables('subnet2Name')]",
-            "properties": {
-              "addressPrefix": "[variables('subnet2Prefix')]"
+              "addressPrefix": "[variables('subnet0Prefix')]"
             }
           }
         ]
@@ -176,7 +172,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[concat(variables('lbIPName'),'-','0')]",
       "location": "[variables('computeLocation')]",
@@ -192,7 +188,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/loadBalancers",
       "name": "[concat('LB','-', parameters('clusterName'),'-',variables('vmNodeType0Name'))]",
       "location": "[variables('computeLocation')]",
@@ -223,12 +219,12 @@
               "backendAddressPool": {
                 "id": "[variables('lbPoolID0')]"
               },
-              "backendPort": "[parameters('fabricTcpGatewayPort')]",
+              "backendPort": "[parameters('nt0fabricTcpGatewayPort')]",
               "enableFloatingIP": "false",
               "frontendIPConfiguration": {
                 "id": "[variables('lbIPConfig0')]"
               },
-              "frontendPort": "[parameters('fabricTcpGatewayPort')]",
+              "frontendPort": "[parameters('nt0fabricTcpGatewayPort')]",
               "idleTimeoutInMinutes": "5",
               "probe": {
                 "id": "[variables('lbProbeID0')]"
@@ -242,12 +238,12 @@
               "backendAddressPool": {
                 "id": "[variables('lbPoolID0')]"
               },
-              "backendPort": "[parameters('fabricHttpGatewayPort')]",
+              "backendPort": "[parameters('nt0fabricHttpGatewayPort')]",
               "enableFloatingIP": "false",
               "frontendIPConfiguration": {
                 "id": "[variables('lbIPConfig0')]"
               },
-              "frontendPort": "[parameters('fabricHttpGatewayPort')]",
+              "frontendPort": "[parameters('nt0fabricHttpGatewayPort')]",
               "idleTimeoutInMinutes": "5",
               "probe": {
                 "id": "[variables('lbHttpProbeID0')]"
@@ -300,7 +296,7 @@
             "properties": {
               "intervalInSeconds": 5,
               "numberOfProbes": 2,
-              "port": "[parameters('fabricTcpGatewayPort')]",
+              "port": "[parameters('nt0fabricTcpGatewayPort')]",
               "protocol": "tcp"
             }
           },
@@ -309,7 +305,7 @@
             "properties": {
               "intervalInSeconds": 5,
               "numberOfProbes": 2,
-              "port": "[parameters('fabricHttpGatewayPort')]",
+              "port": "[parameters('nt0fabricHttpGatewayPort')]",
               "protocol": "tcp"
             }
           },
@@ -353,7 +349,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2016-03-30",
       "type": "Microsoft.Compute/virtualMachineScaleSets",
       "name": "[variables('vmNodeType0Name')]",
       "location": "[variables('computeLocation')]",
@@ -363,6 +359,7 @@
         "[concat('Microsoft.Storage/storageAccounts/', variables('supportLogStorageAccountName'))]"
       ],
       "properties": {
+        "overprovision": "[variables('overProvision')]",
         "upgradePolicy": {
           "mode": "Automatic"
         },
@@ -375,13 +372,15 @@
                   "type": "ServiceFabricNode",
                   "autoUpgradeMinorVersion": false,
                   "protectedSettings": {
-                    "StorageAccountKey1": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('supportLogStorageAccountName')),'2015-05-01-preview').key1]",
-                    "StorageAccountKey2": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('supportLogStorageAccountName')),'2015-05-01-preview').key2]"
+                    "StorageAccountKey1": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('supportLogStorageAccountName')),'2015-06-15').key1]",
+                    "StorageAccountKey2": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('supportLogStorageAccountName')),'2015-06-15').key2]"
                   },
                   "publisher": "Microsoft.Azure.ServiceFabric",
                   "settings": {
                     "clusterEndpoint": "[reference(parameters('clusterName')).clusterEndpoint]",
-                    "nodeTypeRef": "[variables('vmNodeType0Name')]"
+                    "nodeTypeRef": "[variables('vmNodeType0Name')]",
+                    "dataPath": "D:\\\\SvcFab",
+                    "durabilityLevel": "Bronze"
                   },
                   "typeHandlerVersion": "1.0"
                 }
@@ -408,7 +407,7 @@
                           }
                         ],
                         "subnet": {
-                          "id": "[variables('subnet1Ref')]"
+                          "id": "[variables('subnet0Ref')]"
                         }
                       }
                     }
@@ -452,7 +451,7 @@
       }
     },
     {
-      "apiVersion": "2016-01-01-beta",
+      "apiVersion": "2016-03-01",
       "type": "Microsoft.ServiceFabric/clusters",
       "name": "[parameters('clusterName')]",
       "location": "[parameters('clusterLocation')]",
@@ -471,25 +470,28 @@
           "tableEndpoint": "[concat('https://',variables('supportLogStorageAccountName'),'.table.core.windows.net/')]"
         },
         "fabricSettings": [],
-        "managementEndpoint": "[concat('http://',reference(concat(variables('lbIPName'),'-','0')).dnsSettings.fqdn,':',parameters('fabricHttpGatewayPort'))]",
+        "managementEndpoint": "[concat('http://',reference(concat(variables('lbIPName'),'-','0')).dnsSettings.fqdn,':',parameters('nt0fabricHttpGatewayPort'))]",
         "nodeTypes": [
           {
             "name": "[variables('vmNodeType0Name')]",
             "applicationPorts": {
-              "endPort": "[variables('applicationEndPort')]",
-              "startPort": "[variables('applicationStartPort')]"
+              "endPort": "[variables('nt0applicationEndPort')]",
+              "startPort": "[variables('nt0applicationStartPort')]"
             },
-            "clientConnectionEndpointPort": "[parameters('fabricTcpGatewayPort')]",
+            "clientConnectionEndpointPort": "[parameters('nt0fabricTcpGatewayPort')]",
+            "durabilityLevel": "Bronze",
             "ephemeralPorts": {
-              "endPort": "[variables('ephemeralEndPort')]",
-              "startPort": "[variables('ephemeralStartPort')]"
+              "endPort": "[variables('nt0ephemeralEndPort')]",
+              "startPort": "[variables('nt0ephemeralStartPort')]"
             },
-            "httpGatewayEndpointPort": "[parameters('fabricHttpGatewayPort')]",
+            "httpGatewayEndpointPort": "[parameters('nt0fabricHttpGatewayPort')]",
             "isPrimary": true,
             "vmInstanceCount": 5
           }
         ],
-        "provisioningState": "Default"
+        "provisioningState": "Default",
+        "reliabilityLevel": "Bronze",
+        "vmImage": "Windows"
       },
       "tags": {
         "resourceType": "Service Fabric",
