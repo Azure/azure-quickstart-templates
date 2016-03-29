@@ -11,8 +11,13 @@
     "volumeType": {
       "type": "string",
       "defaultValue": "All",
+      "allowedValues": [
+        "All",
+        "OS",
+		"Data"
+      ],	  
       "metadata": {
-        "description": "Type of the volume OS or Data to perform decryption operation"
+        "description": "Type of the volume OS or Data or All to perform decryption operation"
       }
     },
     "forceUpdateTag": {
@@ -26,7 +31,8 @@
   "variables": {
     "extensionName": "AzureDiskEncryption",
     "extensionVersion": "1.1",
-    "encryptionOperation": "DisableEncryption"
+    "encryptionOperation": "DisableEncryption",
+    "updateEncryptionSettingsUrl": "[concat('https://raw.githubusercontent.com/SudhakaraReddyEvuri/azure-quickstart-templates/master/201-decrypt-running-windows-vm/updateEncryptionSettings-',parameters('volumeType'),'.json')]",	
   },
   "resources": [
     {
@@ -47,22 +53,24 @@
       }
     },
     {
-        "apiVersion": "2016-03-30",
-        "type": "Microsoft.Compute/virtualMachines",
-        "name": "[parameters('vmName')]",
-        "location": "[resourceGroup().location]",
-        "dependsOn": [
-            "[resourceId('Microsoft.Compute/virtualMachines/extensions',  parameters('vmName'), variables('extensionName'))]"
-        ],		
-        "properties": {
-            "storageProfile": {
-                "osDisk": {
-                    "encryptionSettings": {
-                        "enabled": false
-                    }
-                }
-            }
-        }
+      "name": "updatevm",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions',  parameters('vmName'), variables('extensionName'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('updateEncryptionSettingsUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "vmName": {
+            "value": "[parameters('vmName')]"
+          }
+        }		  
+      }
     }
   ]
 }
