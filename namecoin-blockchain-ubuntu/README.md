@@ -1,0 +1,50 @@
+# Namecoin Blockchain Node on Ubuntu VM
+
+This template delivers the Namecoin network to your VM in about 20 minutes.  Everything you need to get started using the Namecoin blockchain from the command line is included. 
+You may build from source.  Once installed, 'namecoind' will begin syncing the public blockchain. 
+You may then connect via SSH to the VM and launch 'namecoin-cli' to interface with the blockchain.
+
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fnamecoin-blockchain-ubuntu%2Fazuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fnamecoin-blockchain-ubuntu%2Fazuredeploy.json" target="_blank"><img src="http://armviz.io/visualizebutton.png"/></a>
+
+# What is Namecoin?
+
+What is Namecoin?
+----------------
+
+Namecoin is a decentralized open source information registration and transfer system based on the Bitcoin cryptocurrency.
+
+What does it do?
+----------------
+
+* Securely record and transfer arbitrary names (keys).
+* Attach a value (data) to the names (up to 520 bytes, more in the future).
+* Transact namecoins, the digital currency (ℕ, NMC).
+
+Namecoin was the first fork of Bitcoin and still is one of the most innovative altcoins. It was first to implement merged mining and a decentralized DNS. Namecoin squares Zooko's Triangle!
+
+Mirror: https://github.com/namecoin/namecoin-core
+For more info see: https://namecoin.info/
+
+# Template Parameters
+
+When you click the Deploy to Azure icon above, you need to specify the following template parameters:
+
+* `adminUsername`: This is the account for connecting to your Namecoin host.
+* `adminPassword`: This is your password for the host.  Azure requires passwords to have One upper case, one lower case, a special character, and a number.
+* `dnsLabelPrefix`: This is used as both the VM name and DNS name of your public IP address.  Please ensure an unique name.
+* `installMethod`: This tells Azure to install Namecoin from source.
+* `vmSize`: This is the size of the VM to use.  Recommendations: Use the D series for installations from source.
+
+# Getting Started Tutorial
+
+* Click the `Deploy to Azure` icon above
+* Complete the template parameters, choose your resource group, accept the terms and click Create
+* Wait about 15 minutes for the VM to spin up and install the software
+* Connect to the VM via SSH using the DNS name assigned to your Public IP
+* If you wish to relaunch namecoind `sudo namecoind`
+* namecoind will run automatically on restart
+
+# Licensing
+
+Namecoin is released under the terms of the MIT license. See `COPYING` for more information or see http://opensource.org/licenses/MIT.
