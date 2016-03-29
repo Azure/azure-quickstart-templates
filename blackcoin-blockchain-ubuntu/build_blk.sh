@@ -6,16 +6,16 @@ date
 ps axjf
 
 #################################################################
-# Update Ubuntu and install prerequisites for running BlackCoin    #
+# Update Ubuntu and install prerequisites for running Blackcoin    #
 #################################################################
 sudo apt-get update
 #################################################################
-# Build BlackCoin from source                                      #
+# Build Blackcoin from source                                      #
 #################################################################
 NPROC=$(nproc)
 echo "nproc: $NPROC"
 #################################################################
-# Install all necessary packages for building BlackCoin            #
+# Install all necessary packages for building Blackcoin            #
 #################################################################
 
 sudo apt-get install -y checkinstall subversion git git-core libssl-dev libminiupnpc-dev
@@ -27,7 +27,7 @@ cd /usr/local
 file=/usr/local/blackcoin
 if [ ! -e "$file" ]
 then
-	sudo git clone https://github.com/rat4/blackcoin blackcoin
+	sudo git clone https://github.com/rat4/blackcoin
 fi
 
 cd /usr/local/blackcoin
@@ -58,5 +58,5 @@ then
 fi
 
 /usr/bin/blackcoind
-echo "BlackCoin has been setup successfully and is running..."
+echo "Blackcoin has been setup successfully and is running..."
 exit 0
