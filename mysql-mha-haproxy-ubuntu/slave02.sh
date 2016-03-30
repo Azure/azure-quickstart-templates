@@ -38,5 +38,5 @@ dpkg -i mha4mysql-node_0.53_all.deb
 mkdir /var/log/masterha/
 chown ${osUser}:${osUser} -R /var/log/masterha/
 apt-get install acl -y
-setfacl -Rdm u:${osUser}:rx /var/lib/mysql/
+setfacl -Rm u:${osUser}:rx /var/lib/mysql/
 setfacl -m u:${osUser}:r /var/lib/mysql/*
