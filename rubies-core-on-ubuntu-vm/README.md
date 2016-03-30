@@ -3,12 +3,12 @@
 # BetterBets Rubies Blockchain Node on Ubuntu VM
 
 
-This template delivers the Rubies daemon client to your VM in about 15 minutes. Everything you need to get started using the Rubies blockchain from the command line is included.
-You may select to build from source or install from the community provided Personal Package Archive (PPA).  Once installed, 'rubiesd' will begin syncing the public blockchain. 
+This template delivers the Rubies daemon client to your VM in about 15-20 minutes. Everything you need to get started using the Rubies blockchain from the command line is included.
+The Rubies wallet daemon is built from source to ensure you recieve the latest build updates, Once installed, 'rubiesd' will begin syncing the public blockchain. 
 You may then connect via SSH to the VM and launch 'rubiesd' to interface with the blockchain.
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Frubies-core-on-ubuntu%2Fazuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Frubies-core-on-ubuntu%2Fazuredeploy.json" target="_blank"><img src="http://armviz.io/visualizebutton.png"/></a>
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Frubies-core-on-ubuntu-vm%2Fazuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Frubies-core-on-ubuntu-vm%2Fazuredeploy.json" target="_blank"><img src="http://armviz.io/visualizebutton.png"/></a>
 
 # What is Rubies-core?
 
