@@ -18,6 +18,12 @@ We look forward to hearing your feedback and suggestions!
 ```
 Template Changelog
 
+# v1.2.0 (2016-03-28)
+- Add a subnet for Diego
+- Create network security groups for all subnets
+- Upgrade versions
+  - Upgrade Azure CPI version to v8. Please see new features in https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release
+
 # v1.1.3 (2016-03-08)
 - Upgrade versions
   - Upgrade bosh version to 255.3

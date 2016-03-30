@@ -42,6 +42,9 @@ help()
     echo "-z configure as data node (no master)"
     echo "-s used striped data disk volumes"
     echo "-j install jmeter server agent"
+    echo "-p install the cloud-azure plugin"
+    echo "-o storage account (for cloud-azure)"
+    echo "-r storage key (for cloud-azure)"
     echo "-h view this help content"
 }
 
@@ -87,9 +90,12 @@ MASTER_ONLY_NODE=0
 USE_AFS=0
 STORAGE_ACCOUNT=""
 ACCESS_KEY=""
+INSTALL_CLOUD_AZURE=0
+CLOUD_AZURE_ACCOUNT=""
+CLOUD_AZURE_KEY=""
 
 #Loop through options passed
-while getopts :n:d:v:a:k:cme:wxyzsjh optname; do
+while getopts :n:d:v:a:k:cme:o:r:pwxyzsjh optname; do
   log "Option $optname set with value ${OPTARG}"
   case $optname in
     n) #set cluster name
@@ -136,6 +142,15 @@ while getopts :n:d:v:a:k:cme:wxyzsjh optname; do
       ;;
     j) #install jmeter server agent
       JMETER_AGENT=1
+      ;;
+    p) #install cloud-azure plugin
+      INSTALL_CLOUD_AZURE=1
+      ;;
+    o) #set cloud-azure account
+      CLOUD_AZURE_ACCOUNT=${OPTARG}
+      ;;
+    r) #set the cloud-azure account key
+      CLOUD_AZURE_KEY=${OPTARG}
       ;;
     h) #show help
       help
@@ -408,6 +423,20 @@ if [ ${INSTALL_MARVEL} -ne 0 ]; then
         /usr/share/elasticsearch/bin/plugin install marvel-agent
     else
         /usr/share/elasticsearch/bin/plugin -i elasticsearch/marvel/1.3.1
+    fi
+fi
+
+# install the cloud-azure plugin
+if [ ${INSTALL_CLOUD_AZURE} -ne 0 ]; then
+    log "Installing Cloud-Azure Plugin"
+    if [[ "${ES_VERSION}" == \2* ]]; then
+        /usr/share/elasticsearch/bin/plugin install cloud-azure
+        echo "cloud.azure.storage.default.account: ${CLOUD_AZURE_ACCOUNT}" >> /etc/elasticsearch/elasticsearch.yml
+        echo "cloud.azure.storage.default.key: ${CLOUD_AZURE_KEY}" >> /etc/elasticsearch/elasticsearch.yml
+    else
+        /usr/share/elasticsearch/bin/plugin -i elasticsearch/elasticsearch-cloud-azure/2.8.2
+        echo "cloud.azure.storage.account: ${CLOUD_AZURE_ACCOUNT}" >> /etc/elasticsearch/elasticsearch.yml
+        echo "cloud.azure.storage.key: ${CLOUD_AZURE_KEY}" >> /etc/elasticsearch/elasticsearch.yml
     fi
 fi
 
