@@ -111,7 +111,7 @@ EOF
 
 
 #master ip check script
-cat > /usr/local/haproxy/master_ip_failover.sh <<EOF
+cat > /usr/local/haproxy/master_ip_check.sh <<EOF
 #!/usr/bin/env bash
 haproxyDir=/usr/local/haproxy
 haproxyConFile=/usr/local/haproxy/haproxy.cfg
@@ -215,11 +215,13 @@ done
 done
 EOF
 
+sed -i '/my \$msg  = \$args{message};$/a $msg = \"\" unless($msg);' /usr/share/perl5/MHA/ManagerConst.pm
+sed -i 's/^\($msg = "" unless($msg);\)$/  \1/' /usr/share/perl5/MHA/ManagerConst.pm
 chown ${osUser}:${osUser} /etc/app1.cnf
 chmod 600 /etc/app1.cnf
 chown ${osUser}:${osUser} -R /var/log/masterha/
-chown ${osUser}:${osUser} /usr/local/haproxy/master_ip_failover.sh
+chown ${osUser}:${osUser} /usr/local/haproxy/master_ip_check.sh
 chown ${osUser}:${osUser} /usr/local/haproxy/slave_ip_check.sh
-chmod 700 /usr/local/haproxy/master_ip_failover.sh
+chmod 700 /usr/local/haproxy/master_ip_check.sh
 chmod 700 /usr/local/haproxy/slave_ip_check.sh
 
