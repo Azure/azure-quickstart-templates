@@ -1,11 +1,10 @@
 #!/bin/bash
-
 set -e
-
 #################################################################
 # Build Horizon from latest release                             #
 # Install all necessary packages for building Horizon           #
 #################################################################
+sudo apt-get update
 sudo apt-get install -y software-properties-common unzip
 sudo add-apt-repository ppa:webupd8team/java -y
 sudo apt-get update
@@ -22,5 +21,7 @@ echo "#!/bin/bash sudo nohup ./usr/local/hz-v5.4-node/run.sh &" | sudo tee /etc/
 cd /usr/local/hz-v5.4-node/
 sudo nohup ./run.sh &
 echo "Horizon has been setup successfully and is running..."
-echo "Thanks!"
+echo 
+echo
+echo
 exit 0
