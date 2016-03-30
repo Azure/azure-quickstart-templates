@@ -35,8 +35,10 @@ When you click the Deploy to Azure icon above, you need to specify the following
 * Complete the template parameters, choose your resource group, accept the terms and click Create
 * Wait about 15 minutes for the VM to spin up and install the software
 * Connect to the VM via SSH using the DNS name assigned to your Public IP
-* If you wish to relaunch boostcoind `sudo ./boostcoind`
 * boostcoind will run automatically on restart
+* If you wish to relaunch boostcoind run `sudo boostcoind`
+* If you wish to stop boostcoind daemon `sudo boostcoind stop`
+* To get a list of available boostcoind commands run `sudo boostcoind help`
 
 # Licensing
 
