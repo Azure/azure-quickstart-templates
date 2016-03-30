@@ -18,7 +18,7 @@ echo "nproc: $NPROC"
 ########################################################################
 # Install all necessary packages for building BoostCoin-core           #
 ########################################################################
-sudo apt-get -y install qt4-qmake libqt4-dev build-essential libboost-dev libboost-system-dev libboost-filesystem-dev libboost-program-options-dev libboost-thread-dev libssl-dev libdb++-dev libminiupnpc-dev libevent-dev git
+sudo apt-get -y install qt4-qmake libqt4-dev build-essential libboost-dev libboost-system-dev libboost-filesystem-dev libboost-program-options-dev libboost-thread-dev libssl-dev libminiupnpc-dev libevent-dev git
 sudo add-apt-repository -y ppa:bitcoin/bitcoin
 sudo apt-get update
 sudo apt-get install -y libdb4.8-dev libdb4.8++-dev
