@@ -59,5 +59,5 @@ then
 fi
 
 sudo /usr/bin/boostcoind
-echo "BoostCoin-core has been setup successfully and is running..."
+echo "BoostCoin-core has been setup successfully. Run 'boostcoind help' for a list of available commands"
 exit 0
