@@ -49,7 +49,7 @@ if [ ! -e "$file" ]
 then
 	sudo mkdir $HOME/.rubies
 fi
-printf '%s\n%s\n%s\n%s\n%s\n' 'daemon=1' 'server=1' 'rpcuser=j34GG%^dfhekk88fhgeger4' 'rpcpassword=asdfgh4erfvhjy5rxEFH!!!!ff' 'torproxy=1' | sudo tee $HOME/.rubies/rubies.conf
+printf '%s\n%s\n%s\n%s\n' 'daemon=1' 'server=1' 'rpcuser=j34GG%^dfhekk88fhgeger4' 'rpcpassword=asdfgh4erfvhjy5rxEFH!!!!ff' | sudo tee $HOME/.rubies/rubies.conf
 file=/etc/init.d/rubiesd
 if [ ! -e "$file" ]
 then
