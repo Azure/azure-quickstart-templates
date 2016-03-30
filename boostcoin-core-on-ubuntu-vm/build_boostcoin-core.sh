@@ -30,6 +30,8 @@ then
 	sudo git clone https://github.com/mammix2/boostcoin-core.git
 fi
 
+cd /usr/local/boostcoin-core/src/leveldb
+sudo chmod +x ./build_detect_platform
 cd /usr/local/boostcoin-core/src
 file=/usr/local/boostcoin-core/src/boostcoind
 if [ ! -e "$file" ]

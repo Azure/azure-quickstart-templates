@@ -1,4 +1,7 @@
+<a href="https://betterbets.io" target="_blank"><img src="https://betterbets.io/themes/DiceV1/img/logo.png"/></a>
+
 # BetterBets Rubies Blockchain Node on Ubuntu VM
+
 
 This template delivers the Rubies daemon client to your VM in about 15 minutes. Everything you need to get started using the Rubies blockchain from the command line is included.
 You may select to build from source or install from the community provided Personal Package Archive (PPA).  Once installed, 'rubiesd' will begin syncing the public blockchain. 
@@ -15,9 +18,7 @@ What is Rubies-core?
 Rubies-core is a hybrid Proof of Work / Proof of Stake Crypto currency which is based on the bitcoin protocol
 and blockchain technology
 
-For more information, visit https://betterbets.io
-<a href="https://betterbets.io" target="_blank"><img src="https://betterbets.io/themes/DiceV1/img/logo.png"/></a>
-
+For more information, visit http://rbies.org
 
 # Template Parameters
 
