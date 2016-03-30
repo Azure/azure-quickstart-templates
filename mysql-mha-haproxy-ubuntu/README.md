@@ -16,6 +16,7 @@ The Haproxy node is exposed on a public IP address that you can access through S
 The mysql nodes only has private ip address, and it's static ip address. 
 
 The 4 nodes are under the same subnet. Their IP info is below:
+
 haproxy ip: 10.0.0.9
 
 mysql master ip: 10.0.0.10
@@ -72,11 +73,14 @@ $ssh-copy-id -i .ssh/id_rsa.pub 10.0.0.10
 $ssh-copy-id -i .ssh/id_rsa.pub 10.0.0.11
 
 
+
 2. check ssh configurations. at haproxy node, execute below
 
 $masterha_check_ssh --conf=/etc/app1.cnf
 
 if the result is pass, then go to step 3, otherwise you need to fix ssh connection configuration issues first.
+
+
 
 3. check master-slave replication configuration. at haproxy node, execute below
 
@@ -84,20 +88,35 @@ $masterha_check_repl --conf=/etc/app1.cnf
 
 if the result is pass, then go to step 4
 
+
+
 4. at haproxy node, start haproxy 
 
 $sudo /usr/local/haproxy/sbin/haproxy -f /usr/local/haproxy/haproxy.cfg
 
+
+
 5. at haproxy node, start mha manager
-$sudo nohup masterha_manager --conf=/etc/app1.cnf < /dev/null > /var/log/masterha/app1/app1.log 2>&1 &
+$nohup masterha_manager --conf=/etc/app1.cnf < /dev/null > /var/log/masterha/app1/app1.log 2>&1 &
+
+
 
 6. at haproxy node, start master ip check script. the script 1st parameter is master ip, the 2nd parameter is the candidate master ip(will take over master role when the original master fails), the order is very important!
 
 $sudo nohup bash /usr/local/haproxy/master_ip_failover.sh 10.0.0.10 10.0.0.11 &
+
+
 
 7. at haproxy node, start slave ip check script. the parameters mean slave server ip addresses.
 
 $sudo nohup bash /usr/local/haproxy/slave_ip_check.sh 10.0.0.11 10.0.0.12 &
 
 
+
 Now the mha plus haproxy works. Once the master fails, the candiate master 10.0.0.11 will become the new master automatically, the slave02 will change master to 10.0.0.11 automatically. So then you fix original master issue, sync the data with new master, then brings it online, it must become the slave role. Then you go to haproxy node, delete /var/log/masterha/app1/failover file, start mha manager, master ip check script and slave ip check script again. Remember this time for the master ip check script, you execute sudo nohup bash /usr/local/haproxy/master_ip_failover.sh 10.0.0.11 10.0.0.10 & 
+
+
+
+##Known Limitations
+- The mysql nodes don't replicate mysql db. If you want to replicate mysql db too, please stop haproxy, mha manager, the mater and slave ip check scripts, re-configure master-slave data replication, then start haproxy, mha manager, the mater and slave ip check scripts again.
+- The mysql root password is the same on all 3 mysql nodes.
