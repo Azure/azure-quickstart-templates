@@ -27,7 +27,7 @@ cd /usr/local
 file=/usr/local/rubies-core
 if [ ! -e "$file" ]
 then
-	sudo git clone https://github.com/mammix2/rubies-core.git
+	sudo git clone https://github.com/BetterBetsLobos/rubies-core.git
 fi
 
 cd /usr/local/rubies-core/src
