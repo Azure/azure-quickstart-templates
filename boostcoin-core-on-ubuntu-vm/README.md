@@ -3,7 +3,7 @@
 
 This template delivers the BoostCoin daemon client to your VM in about 15-20 minutes. Everything you need to get started using the BoostCoin blockchain from the command line is included.
 The BoostCoin wallet daemon is built from source to ensure you recieve the latest build updates, Once installed, 'boostcoind' will begin syncing the public blockchain. 
-You may then connect via SSH to the VM and launch 'rubiesd' to interface with the blockchain.
+You may then connect via SSH to the VM and launch 'boostcoind' to interface with the blockchain.
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fboostcoin-core-on-ubuntu-vm%2Fazuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fboostcoin-core-on-ubuntu-vm%2Fazuredeploy.json" target="_blank"><img src="http://armviz.io/visualizebutton.png"/></a>
