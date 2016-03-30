@@ -32,45 +32,37 @@ mysql slave02 ip: 10.0.0.12
 
 1.1. connect to haproxy node, execute below
 
-$cd
-
 $ssh-keygen -t rsa
 
-$ssh-copy-id -i .ssh/id_rsa.pub 10.0.0.10
+$ssh-copy-id 10.0.0.10
 
-$ssh-copy-id -i .ssh/id_rsa.pub 10.0.0.11
+$ssh-copy-id 10.0.0.11
 
-$ssh-copy-id -i .ssh/id_rsa.pub 10.0.0.12
+$ssh-copy-id 10.0.0.12
 
 1.2. connect to master node. through haproxy node to connect to master node, then execute below
 
-$cd
-
 $ssh-keygen -t rsa
 
-$ssh-copy-id -i .ssh/id_rsa.pub 10.0.0.11
+$ssh-copy-id 10.0.0.11
 
-$ssh-copy-id -i .ssh/id_rsa.pub 10.0.0.12
+$ssh-copy-id 10.0.0.12
 
 1.3. connect to slave01 node. through haproxy node to connect to slave01 node, then execute below
 
-$cd
-
 $ssh-keygen -t rsa
 
-$ssh-copy-id -i .ssh/id_rsa.pub 10.0.0.10
+$ssh-copy-id 10.0.0.10
 
-$ssh-copy-id -i .ssh/id_rsa.pub 10.0.0.12
+$ssh-copy-id 10.0.0.12
 
 1.4. connect to slave02 node. through haproxy node to connect to slave02 node, then execute below
 
-$cd
-
 $ssh-keygen -t rsa
 
-$ssh-copy-id -i .ssh/id_rsa.pub 10.0.0.10
+$ssh-copy-id 10.0.0.10
 
-$ssh-copy-id -i .ssh/id_rsa.pub 10.0.0.11
+$ssh-copy-id 10.0.0.11
 
 
 
