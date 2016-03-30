@@ -121,7 +121,8 @@ Now the mha plus haproxy works. Once the master fails, the candiate master 10.0.
 ##Known Limitations
 - The mysql nodes don't replicate mysql db. If you want to replicate mysql db too, please stop haproxy, mha manager, the mater and slave ip check scripts, re-configure master-slave data replication, then start haproxy, mha manager, the mater and slave ip check scripts again.
 - The mysql root password is the same on all 3 mysql nodes.
+- Every time you start mha manager, must delete /var/log/masterha/app1/app1.failover.complete file first.
 - sudo nohup bash /usr/local/haproxy/master_ip_check.sh masterip candidatemasterip &     Here the script 1st parameter is master ip, the 2nd parameter is the candidate master ip(will take over master role when the original master fails). The order is very important!
+- sudo nohup bash /usr/local/haproxy/slave_ip_check.sh slave01ip slave02ip &    Here the parameters mean slave server ip addresses. The order is irrelevant.
 - /var/log/masterha/app1/app1.log records the master failover details. 
 - current directory/nohup.out records master and slave ip check information.
-- Every time you start mha manager, must delete /var/log/masterha/app1/app1.failover.complete file first.
