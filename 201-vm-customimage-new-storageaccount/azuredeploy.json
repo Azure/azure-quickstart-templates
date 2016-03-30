@@ -2,7 +2,7 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "TransferVmName": {
+    "transferVmName": {
       "type": "string",
       "defaultValue": "TransferVM",
       "minLength": 3,
@@ -11,7 +11,14 @@
         "description": "Name of the Windows VM that will perform the copy of the VHD from a source storage account to the new storage account created in the new deployement, this is known as transfer vm."
       }
     },
-    "NewVmName": {
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D1",
+      "metadata": {
+        "description": "VM size of new virtual machine that will be deployed from a custom image."
+      }
+    },
+    "newVmName": {
       "type": "string",
       "defaultValue": "NewVM",
       "minLength": 3,
@@ -20,43 +27,41 @@
         "description": "Name of the new VM deployed from the custom image."
       }
     },
-    "CustomImageName": {
+    "customImageName": {
       "type": "string",
-      "defaultValue": "images/Win10MasterImage-osDisk.72451a98-4c26-4375-90c5-0a940dd56bab.vhd",
       "metadata": {
         "description": "Name of the VHD to be used as source syspreped/generalized image to deploy the VM. E.g. mybaseimage.vhd."
       }
     },
-    "AdminUserName": {
+    "adminUserName": {
       "type": "string",
-      "defaultValue": "vadmin",
       "minLength": 1,
       "metadata": {
-        "description": "Name of the local administrator account, this cannot be Admin or Administrator or root if Linux VM."
+        "description": "Name of the local administrator account, this cannot be Admin, Administrator or root."
       }
     },
-    "AdminPassword": {
+    "adminPassword": {
       "type": "securestring",
       "minLength": 8,
       "metadata": {
         "description": "Local administrator password, complex password is required, do not use any variation of the password word because it will be rejected."
       }
     },
-    "sourceStorageAccountKey": {
+    "sourceStorageAccountResourceGroup": {
       "type": "string",
       "metadata": {
-        "description": "Key of the storage account that contains the custom image."
+        "description": "Resource group name of the source storage account."
       }
     },
-    "sourceImages": {
+    "sourceImageURI": {
       "type": "string",
-      "defaultValue": "https://jumpvmrg7942.blob.core.windows.net/vhds/CustomMasterImage-osDisk.72451a98-4c26-4375-90c5-0a940dd56bab.vhd,https://jumpvmrg7942.blob.core.windows.net/vhds/CustomDisk01.vhd",
       "metadata": {
         "description": "Full URIs for one or more custom images (VHDs) that should be copied to the deployment storage account to spin up new VMs from them. URLs must be comma separated."
       }
     }
   },
   "variables": {
+    "sourceStorageAccountName": "[substring(split(parameters('sourceImageURI'),'.')[0],8)]",
     "vmCount": 2,
     "vmNames": [
       "[parameters('transferVmName')]",
@@ -67,7 +72,7 @@
       "[concat(parameters('newVmName'),'Nic')]"
     ],
     "storageAccountType": "Standard_LRS",
-    "storageAccountName": "[concat('storageacct',uniquestring(resourceGroup().id))]",
+    "storageAccountName": "[concat(uniquestring(resourceGroup().id,'sa'))]",
     "virtualNetworkName": "vNet",
     "vnetPrefix": "10.0.0.0/16",
     "vnetSubnetName1": "LabSubnet",
@@ -83,10 +88,7 @@
     "imagePublisher": "MicrosoftWindowsServer",
     "imageOffer": "WindowsServer",
     "osDiskName": "OSDisk",
-    "VmSizes": [
-      "Standard_D1",
-      "Standard_D1"
-    ],
+    "transferVmSize": "Standard_D1",
     "vhdStorageAccountContainerName": "vhds",
     "customScriptFolder": "CustomScripts",
     "trfCustomScriptFiles": [
@@ -190,7 +192,7 @@
       "name": "[variables('vmNames')[0]]",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[resourceGroup().location]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2015-06-15",
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('vmNames')[0],'NIC')]"
@@ -200,12 +202,12 @@
       },
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[variables('vmSizes')[0]]"
+          "vmSize": "[variables('transferVmSize')]"
         },
         "osProfile": {
           "computerName": "[variables('vmNames')[0]]",
           "adminUsername": "[parameters('AdminUsername')]",
-          "adminPassword": "[parameters('AdminPassword')]"
+          "adminPassword": "[parameters('adminPassword')]"
         },
         "storageProfile": {
           "imageReference": {
@@ -234,7 +236,7 @@
       "resources": [
         {
           "comments": "Custom Script that copies VHDs from source storage account to destination storage account",
-          "apiVersion": "2015-05-01-preview",
+          "apiVersion": "2015-06-15",
           "type": "extensions",
           "name": "[concat(variables('VMNames')[0],'CustomScriptExtension')]",
           "location": "[resourceGroup().location]",
@@ -244,12 +246,15 @@
           "properties": {
             "publisher": "Microsoft.Compute",
             "type": "CustomScriptExtension",
+            "autoUpgradeMinorVersion": "true",
             "typeHandlerVersion": "1.4",
             "settings": {
               "fileUris": [
-                  "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vm-customimage-new-storageaccount/ImageTransfer.ps1"
-              ],
-              "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ','ImageTransfer.ps1 -SourceImage ',parameters('sourceImages'),' -SourceSAKey ', parameters('sourceStorageAccountKey'), ' -DestinationURI https://', variables('StorageAccountName'), '.blob.core.windows.net/vhds', ' -DestinationSAKey ', listKeys(concat('Microsoft.Storage/storageAccounts/', variables('StorageAccountName')), '2015-05-01-preview').key1 )]"
+                "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vm-customimage-new-storageaccount/ImageTransfer.ps1"
+              ]
+            },
+            "protectedSettings": {
+              "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ','ImageTransfer.ps1 -SourceImage ',parameters('sourceImageURI'),' -SourceSAKey ', listKeys(resourceId(parameters('sourceStorageAccountResourceGroup'),'Microsoft.Storage/storageAccounts/', variables('StorageAccountName')), '2015-06-15').key1), ' -DestinationURI https://', variables('StorageAccountName'), '.blob.core.windows.net/vhds', ' -DestinationSAKey ', listKeys(concat('Microsoft.Storage/storageAccounts/', variables('StorageAccountName')), '2015-06-15').key1)]"
             }
           }
         }
@@ -260,7 +265,7 @@
       "name": "[variables('vmNames')[1]]",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[resourceGroup().location]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2015-06-15",
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('StorageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('vmNames')[1],'NIC')]",
@@ -271,12 +276,12 @@
       },
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[variables('VmSizes')[1]]"
+          "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
           "computerName": "[variables('VMNames')[1]]",
           "adminUsername": "[parameters('AdminUsername')]",
-          "adminPassword": "[parameters('AdminPassword')]"
+          "adminPassword": "[parameters('adminPassword')]"
         },
         "storageProfile": {
           "osDisk": {
