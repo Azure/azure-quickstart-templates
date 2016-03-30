@@ -28,7 +28,7 @@ mysql slave02 ip: 10.0.0.12
 
 ##After deployment, you must do the follow things:
 
-- configure ssh trust connection on the 4 nodes. 
+1 configure ssh trust connection on the 4 nodes. 
 
 1.1. connect to haproxy node, execute below
 
@@ -74,7 +74,7 @@ $ssh-copy-id -i .ssh/id_rsa.pub 10.0.0.11
 
 
 
-- check ssh configurations. at haproxy node, execute below
+2 check ssh configurations. at haproxy node, execute below
 
 $masterha_check_ssh --conf=/etc/app1.cnf
 
@@ -82,7 +82,7 @@ if the result is pass, then go to step 3, otherwise you need to fix ssh connecti
 
 
 
-- check master-slave replication configuration. at haproxy node, execute below
+3 check master-slave replication configuration. at haproxy node, execute below
 
 $masterha_check_repl --conf=/etc/app1.cnf
 
@@ -90,25 +90,25 @@ if the result is pass, then go to step 4
 
 
 
-- at haproxy node, start haproxy 
+4 at haproxy node, start haproxy 
 
 $sudo /usr/local/haproxy/sbin/haproxy -f /usr/local/haproxy/haproxy.cfg
 
 
 
-- at haproxy node, start mha manager
+5 at haproxy node, start mha manager
 
 $nohup masterha_manager --conf=/etc/app1.cnf < /dev/null > /var/log/masterha/app1/app1.log 2>&1 &
 
 
 
-- at haproxy node, start master ip check script. the script 1st parameter is master ip, the 2nd parameter is the candidate master ip(will take over master role when the original master fails), the order is very important!
+6 at haproxy node, start master ip check script. the script 1st parameter is master ip, the 2nd parameter is the candidate master ip(will take over master role when the original master fails), the order is very important!
 
 $sudo nohup bash /usr/local/haproxy/master_ip_check.sh 10.0.0.10 10.0.0.11 &
 
 
 
-- at haproxy node, start slave ip check script. the parameters mean slave server ip addresses.
+7 at haproxy node, start slave ip check script. the parameters mean slave server ip addresses.
 
 $sudo nohup bash /usr/local/haproxy/slave_ip_check.sh 10.0.0.11 10.0.0.12 &
 
