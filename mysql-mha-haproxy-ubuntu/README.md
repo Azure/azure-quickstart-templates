@@ -7,6 +7,7 @@
 http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmysql-mha-haproxy-ubuntu%2Fazuredeploy.json" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
+
 This template deploys a MySQL MHA + Haproxy solution:  the objective of MHA is automating master failover and slave promotion within short (usually 10-30 seconds) downtime, without suffering from replication consistency problems, without spending money for lots of new servers, without performance penalty, without complexity (easy-to-install), and without changing existing deployments; Haproxy is the interface which apps access mysql.
 
 This template deploys 4 nodes: 3 mysql nodes and 1 haproxy node. Os is Ubuntu 14.04.
