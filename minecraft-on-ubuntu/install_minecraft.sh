@@ -105,6 +105,6 @@ printf 'white-list=%s\n' $6 >> $minecraft_server_path/server.properties
 printf 'enable-command-block=%s\n' $7 >> $minecraft_server_path/server.properties
 printf 'spawn-monsters=%s\n' $8 >> $minecraft_server_path/server.properties
 printf 'generate-structures=%s\n' $9 >> $minecraft_server_path/server.properties
-printf 'level-seed=%s\n' $10 >> $minecraft_server_path/server.properties
+printf 'level-seed=%s\n' ${10} >> $minecraft_server_path/server.properties
 
 systemctl start minecraft-server
