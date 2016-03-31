@@ -18,10 +18,10 @@ echo "nproc: $NPROC"
 # Install all necessary packages for building Steps            #
 #################################################################
 
-sudo apt-get install -y checkinstall subversion git git-core libssl-dev libminiupnpc-dev
+sudo apt-get install -y git qt5-default qt5-qmake qtbase5-dev-tools qttools5-dev-tools build-essential libboost-dev libboost-system-dev libboost-filesystem-dev libboost-program-options-dev libboost-thread-dev libssl-dev libdb++-dev libevent-dev libminiupnpc-dev libqrencode-dev
 sudo add-apt-repository -y ppa:bitcoin/bitcoin
 sudo apt-get update
-sudo apt-get install -y libdb4.8-dev libdb4.8++-dev build-essential libboost-all-dev automake libtool autoconf pkg-config
+sudo apt-get install -y libdb4.8-dev libdb4.8++-dev
 
 cd /usr/local
 file=/usr/local/steps
@@ -30,12 +30,11 @@ then
 	sudo git clone https://github.com/AltcoinSteps/STEPS
 fi
 
-cd /usr/local/steps
+cd /usr/local/steps/src
 file=/usr/local/steps/src/Stepsd
 if [ ! -e "$file" ]
 then
-	cd src
-	sudo make -f makefile.unix
+	sudo make -j$NPROC -f makefile.unix
 fi
 
 sudo cp /usr/local/steps/src/Stepsd /usr/bin/Stepsd
