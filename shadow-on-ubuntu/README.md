@@ -1,4 +1,4 @@
-# Shadow Public Blockchain Node
+<img src="https://i.imgur.com/ovemJA3.png"/>
 
 This Microsoft Azure template deploys a single Shadow client which will connect to the public Shadow network.
 
