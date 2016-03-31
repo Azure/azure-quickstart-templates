@@ -18,7 +18,7 @@ The process of this template is:
 3. Storage Account is created
 3. Transfer Virtual Machine gets deployed
 4. Transfer Virtual Machine starts the custom script extension to start the VHD copy from source to destination storage acounts
-5. The new Virtual Machine based on a custom image VHD gets deployed
+5. The new Virtual Machine based on a custom image VHD gets deployed 
 
 ## Requiremets
 
