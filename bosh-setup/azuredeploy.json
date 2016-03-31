@@ -87,9 +87,9 @@
     "environment": "AzureCloud",
     "serviceHostBase": "core.windows.net",
     "keepUnreachableVMs": "false",
+    "devboxNetworkSecurityGroup": "nsg-devbox",
     "boshNetworkSecurityGroup": "nsg-bosh",
-    "cfNetworkSecurityGroup": "nsg-cf",
-    "diegoNetworkSecurityGroup": "nsg-diego"
+    "cfNetworkSecurityGroup": "nsg-cf"
   },
   "resources": [
     {
@@ -100,16 +100,82 @@
       "properties": {
         "securityRules": [
           {
-            "name": "devbox-ssh",
+            "name": "ssh",
             "properties": {
-              "description": "Allow SSH to devbox",
+              "description": "Allow SSH",
               "protocol": "Tcp",
               "sourcePortRange": "*",
               "destinationPortRange": "22",
               "sourceAddressPrefix": "*",
-              "destinationAddressPrefix": "[concat(variables('devboxPrivateIPAddress'),'/32')]",
+              "destinationAddressPrefix": "*",
               "access": "Allow",
-              "priority": 100,
+              "priority": 200,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "bosh-agent",
+            "properties": {
+              "description": "Allow bosh-agent",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "6868",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 201,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "bosh-director",
+            "properties": {
+              "description": "Allow bosh-director",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "25555",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 202,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "dns",
+            "properties": {
+              "description": "Allow DNS",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "53",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 203,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('devboxNetworkSecurityGroup')]",
+      "location": "[variables('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "ssh",
+            "properties": {
+              "description": "Allow SSH",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 200,
               "direction": "Inbound"
             }
           }
@@ -123,16 +189,34 @@
       "location": "[variables('location')]",
       "properties": {
         "securityRules": [
-        ]
-      }
-    },
-    {
-      "apiVersion": "[variables('apiVersion')]",
-      "type": "Microsoft.Network/networkSecurityGroups",
-      "name": "[variables('diegoNetworkSecurityGroup')]",
-      "location": "[variables('location')]",
-      "properties": {
-        "securityRules": [
+          {
+            "name": "cf-https",
+            "properties": {
+              "description": "Allow cf-https",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 200,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "cf-log",
+            "properties": {
+              "description": "Allow cf-log",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "4443",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 201,
+              "direction": "Inbound"
+            }
+          }
         ]
       }
     },
@@ -180,11 +264,6 @@
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[variables('location')]",
-      "dependsOn": [
-        "[concat('Microsoft.Network/networkSecurityGroups/', variables('boshNetworkSecurityGroup'))]",
-        "[concat('Microsoft.Network/networkSecurityGroups/', variables('cfNetworkSecurityGroup'))]",
-        "[concat('Microsoft.Network/networkSecurityGroups/', variables('diegoNetworkSecurityGroup'))]"
-      ],
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -195,28 +274,19 @@
           {
             "name": "[variables('subnetNameForBosh')]",
             "properties": {
-              "addressPrefix": "[variables('subnetAddressRangeForBosh')]",
-              "networkSecurityGroup": {
-                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('boshNetworkSecurityGroup'))]"
-              }
+              "addressPrefix": "[variables('subnetAddressRangeForBosh')]"
             }
           },
           {
             "name": "[variables('subnetNameForCloudFoundry')]",
             "properties": {
-              "addressPrefix": "[variables('subnetAddressRangeForCloudFoundry')]",
-              "networkSecurityGroup": {
-                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('cfNetworkSecurityGroup'))]"
-              }
+              "addressPrefix": "[variables('subnetAddressRangeForCloudFoundry')]"
             }
           },
           {
             "name": "[variables('subnetNameForDiego')]",
             "properties": {
-              "addressPrefix": "[variables('subnetAddressRangeForDiego')]",
-              "networkSecurityGroup": {
-                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('diegoNetworkSecurityGroup'))]"
-              }
+              "addressPrefix": "[variables('subnetAddressRangeForDiego')]"
             }
           }
         ]
@@ -229,9 +299,13 @@
       "location": "[variables('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', concat(parameters('vmName'), '-devbox'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('devboxNetworkSecurityGroup'))]"
       ],
       "properties": {
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('devboxNetworkSecurityGroup'))]"
+        },
         "ipConfigurations": [
           {
             "name": "ipconfig1",
@@ -329,7 +403,7 @@
           "enableInternalDNSCheck": false
         },
         "protectedSettings": {
-          "commandToExecute": "[concat('./setup_env', ' ', '\"VNET_NAME:', variables('virtualNetworkName'), ';SUBNET_NAME_FOR_BOSH:', variables('subnetNameForBosh'), ';SUBNET_ADDRESS_RANGE_FOR_BOSH:', variables('subnetAddressRangeForBosh'), ';SUBNET_NAME_FOR_CLOUD_FOUNDRY:', variables('subnetNameForCloudFoundry'), ';SUBNET_ADDRESS_RANGE_FOR_CLOUD_FOUNDRY:', variables('subnetAddressRangeForCloudFoundry'), ';CLOUD_FOUNDRY_PUBLIC_IP:', reference(concat(parameters('vmName'),'-cf')).ipAddress, ';BOSH_PUBLIC_IP:', reference(concat(parameters('vmName'),'-bosh')).ipAddress, ';SUBSCRIPTION_ID:', subscription().subscriptionId, ';DEFAULT_STORAGE_ACCOUNT_NAME:', variables('defaultStorageAccountName'), ';STORAGE_ACCESS_KEY:', listKeys(variables('storageid'), variables('apiVersion')).key1, ';RESOURCE_GROUP_NAME:', resourceGroup().name, ';KEEP_UNREACHABLE_VMS:', variables('keepUnreachableVMs'), ';NSG_NAME_FOR_BOSH:', variables('boshNetworkSecurityGroup'), ';NSG_NAME_FOR_CF:', variables('cfNetworkSecurityGroup'), ';NSG_NAME_FOR_DIEGO:', variables('diegoNetworkSecurityGroup'), '\" ', parameters('tenantID'), ' ', parameters('clientID'), ' \"', parameters('clientSecret'), '\" ', parameters('adminUserName'), ' ', parameters('autoDeployBosh'))]"
+          "commandToExecute": "[concat('./setup_env', ' ', '\"VNET_NAME:', variables('virtualNetworkName'), ';SUBNET_NAME_FOR_BOSH:', variables('subnetNameForBosh'), ';SUBNET_ADDRESS_RANGE_FOR_BOSH:', variables('subnetAddressRangeForBosh'), ';SUBNET_NAME_FOR_CLOUD_FOUNDRY:', variables('subnetNameForCloudFoundry'), ';SUBNET_ADDRESS_RANGE_FOR_CLOUD_FOUNDRY:', variables('subnetAddressRangeForCloudFoundry'), ';CLOUD_FOUNDRY_PUBLIC_IP:', reference(concat(parameters('vmName'),'-cf')).ipAddress, ';BOSH_PUBLIC_IP:', reference(concat(parameters('vmName'),'-bosh')).ipAddress, ';SUBSCRIPTION_ID:', subscription().subscriptionId, ';DEFAULT_STORAGE_ACCOUNT_NAME:', variables('defaultStorageAccountName'), ';STORAGE_ACCESS_KEY:', listKeys(variables('storageid'), variables('apiVersion')).key1, ';RESOURCE_GROUP_NAME:', resourceGroup().name, ';KEEP_UNREACHABLE_VMS:', variables('keepUnreachableVMs'), ';NSG_NAME_FOR_BOSH:', variables('boshNetworkSecurityGroup'), ';NSG_NAME_FOR_CLOUD_FOUNDRY:', variables('cfNetworkSecurityGroup'), '\" ', parameters('tenantID'), ' ', parameters('clientID'), ' \"', parameters('clientSecret'), '\" ', parameters('adminUserName'), ' ', parameters('autoDeployBosh'))]"
         }
       }
     }
