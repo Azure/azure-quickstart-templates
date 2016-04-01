@@ -17,10 +17,10 @@ echo "nproc: $NPROC"
 #################################################################
 # Install all necessary packages for building VPNCoin           #
 #################################################################
-sudo apt-get install -y  build-essential libboost1.55-all-dev libssl-dev libdb-dev libglib2.0-dev ufw git libminiupnpc-dev
-sudo add-apt-repository -y ppa:bitcoin/bitcoin
+sudo apt-get install build-essential libboost-all-dev libcurl4-openssl-dev git qt-sdk libminiupnpc-dev
+sudo add-apt-repository ppa:bitcoin/bitcoin
 sudo apt-get update
-sudo apt-get install -y libdb4.8-dev libdb4.8++-dev
+sudo apt-get install libdb4.8-dev libdb4.8++-dev
 
 cd /usr/local
 file=/usr/local/vpncoin
