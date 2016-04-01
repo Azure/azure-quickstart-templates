@@ -28,62 +28,6 @@ def prepare_storage(settings):
     table_service = TableService(default_storage_account_name, storage_access_key)
     table_service.create_table('stemcells')
 
-def prepare_network_security_group(settings, static_ip, nsg_name, rules):
-    credentials = ServicePrincipalCredentials(
-        client_id = settings["CLIENT_ID"],
-        secret = settings["CLIENT_SECRET"],
-        tenant = settings["TENANT_ID"]
-    )
-    network_client = NetworkManagementClient(
-        NetworkManagementClientConfiguration(
-            credentials,
-            settings["SUBSCRIPTION_ID"]
-        )
-    )
-
-    priority = 200
-    for protocol in rules:
-        for name,port in rules[protocol].items():
-            params = azure.mgmt.network.models.SecurityRule(
-                protocol,
-                '*',
-                static_ip+"/32",
-                'Allow',
-                'Inbound',
-                source_port_range='*',
-                destination_port_range=port,
-                priority=priority,
-                name=name)
-            priority += 1
-            ret=network_client.security_rules.create_or_update(settings["RESOURCE_GROUP_NAME"], nsg_name, name, params)
-            ret.wait()
-
-def prepare_network_security_group_for_bosh(settings, static_ip):
-    tcp_rules = dict()
-    tcp_rules['bosh-ssh'] = 22
-    tcp_rules['bosh-agent'] = 6868
-    tcp_rules['bosh-director'] = 25555
-
-    udp_rules = dict()
-
-    rules = dict()
-    rules['TCP'] = tcp_rules
-    rules['UDP'] = udp_rules
-    prepare_network_security_group(settings, static_ip, settings["NSG_NAME_FOR_BOSH"], rules)
-
-def prepare_network_security_group_for_cloudfoundry(settings, static_ip):
-    tcp_rules = dict()
-    tcp_rules['cf-https'] = 443
-    tcp_rules['cf-log'] = 4443
-
-    udp_rules = dict()
-
-    rules = dict()
-    rules['TCP'] = tcp_rules
-    rules['UDP'] = udp_rules
-
-    prepare_network_security_group(settings, static_ip, settings["NSG_NAME_FOR_CF"], rules)
-
 def render_bosh_manifest(settings):
     with open('bosh.pub', 'r') as tmpfile:
         ssh_public_key = tmpfile.read()
@@ -97,7 +41,7 @@ def render_bosh_manifest(settings):
     if os.path.exists(bosh_template):
         with open(bosh_template, 'r') as tmpfile:
             contents = tmpfile.read()
-        for k in ["SUBNET_ADDRESS_RANGE_FOR_BOSH", "VNET_NAME", "SUBNET_NAME_FOR_BOSH", "SUBSCRIPTION_ID", "DEFAULT_STORAGE_ACCOUNT_NAME", "RESOURCE_GROUP_NAME", "KEEP_UNREACHABLE_VMS", "TENANT_ID", "CLIENT_ID", "CLIENT_SECRET", "BOSH_PUBLIC_IP"]:
+        for k in ["SUBNET_ADDRESS_RANGE_FOR_BOSH", "VNET_NAME", "SUBNET_NAME_FOR_BOSH", "SUBSCRIPTION_ID", "DEFAULT_STORAGE_ACCOUNT_NAME", "RESOURCE_GROUP_NAME", "KEEP_UNREACHABLE_VMS", "TENANT_ID", "CLIENT_ID", "CLIENT_SECRET", "BOSH_PUBLIC_IP", "NSG_NAME_FOR_BOSH"]:
             v = settings[k]
             contents = re.compile(re.escape("REPLACE_WITH_{0}".format(k))).sub(v, contents)
         contents = re.compile(re.escape("REPLACE_WITH_SSH_PUBLIC_KEY")).sub(ssh_public_key, contents)
@@ -106,13 +50,11 @@ def render_bosh_manifest(settings):
         with open(bosh_template, 'w') as tmpfile:
             tmpfile.write(contents)
 
-    prepare_network_security_group_for_bosh(settings, bosh_director_ip)
-
     return bosh_director_ip
 
 def get_cloud_foundry_configuration(scenario, settings):
     config = {}
-    for key in ["SUBNET_ADDRESS_RANGE_FOR_CLOUD_FOUNDRY", "VNET_NAME", "SUBNET_NAME_FOR_CLOUD_FOUNDRY", "CLOUD_FOUNDRY_PUBLIC_IP"]:
+    for key in ["SUBNET_ADDRESS_RANGE_FOR_CLOUD_FOUNDRY", "VNET_NAME", "SUBNET_NAME_FOR_CLOUD_FOUNDRY", "CLOUD_FOUNDRY_PUBLIC_IP", "NSG_NAME_FOR_CLOUD_FOUNDRY"]:
         config[key] = settings[key]
 
     with open('cloudfoundry.cert', 'r') as tmpfile:
@@ -158,11 +100,6 @@ def render_cloud_foundry_manifest(settings):
                 contents = re.compile(re.escape("REPLACE_WITH_{0}".format(key))).sub(value, contents)
             with open(cloudfoundry_template, 'w') as tmpfile:
                 tmpfile.write(contents)
-            if scenario == "single-vm-cf":
-                prepare_network_security_group_for_cloudfoundry(settings, config["STATIC_IP"])
-            elif scenario == "multiple-vm-cf":
-                prepare_network_security_group_for_cloudfoundry(settings, config["HAPROXY_IP"])
-
 
 def get_settings():
     settings = dict()
