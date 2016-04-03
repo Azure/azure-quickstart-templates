@@ -27,7 +27,7 @@ cd /usr/local
 file=/usr/local/steps
 if [ ! -e "$file" ]
 then
-	sudo git clone https://github.com/AltcoinSteps/STEPS
+	sudo git clone https://github.com/AltcoinSteps/STEPS steps
 fi
 
 cd /usr/local/steps/src
