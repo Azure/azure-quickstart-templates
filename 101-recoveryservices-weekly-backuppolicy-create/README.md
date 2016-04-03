@@ -7,7 +7,7 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template creates a Backup Policy for an existing Recovery Services Vault which can be used further to protect classic and ARM based Azure IaaS VMs
+This template creates a Backup Policy for Recovery Services Vault which can be used further to protect classic and ARM based Azure IaaS VMs
 
 To create new Recovery Services Vault, please use this template: [Create Recovery Services Vault] (https://github.com/Azure/azure-quickstart-templates/tree/master/101-recoveryservices-vault-create)
 
