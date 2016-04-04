@@ -7,7 +7,7 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template allows you to deploy a simple VM Scale Set of Linux VMs using the latest patched version of Ubuntu Linux 15.10 or 14.02.2-LTS. These VMs are behind a load balancer with NAT rules that let you connect to vm i by connecting via ssh on port 50000 + i of the public IP in the deployment. For example, to connect to the 0th VM, you could use the following command:
+This template allows you to deploy a simple VM Scale Set of Linux VMs using the latest patched version of Ubuntu Linux 15.10 or 14.02.2-LTS. To connect from the load balancer to a VM in the scale set, you would go to the Azure Portal, find the load balancer of your scale set, examine the NAT rules, then connect using the NAT rule you want. For example, if there is a NAT rule on port 50000, you could use the following command to connect to that VM:
 
 ssh -p 50000 {username}@{public-ip-address}
 
