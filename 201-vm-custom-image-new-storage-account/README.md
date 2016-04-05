@@ -1,9 +1,9 @@
 # Create a new VM on a new storage account from a custom image
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vm-customimage-new-storageaccount%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vm-custom-image-new-storage-account%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vm-customimage-new-storageaccount%2Fazuredeploy.json" target="_blank">
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vm-custom-image-new-storage-account%2Fazuredeploy.json" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
@@ -18,7 +18,7 @@ The process of this template is:
 3. Storage Account is created
 3. Transfer Virtual Machine gets deployed
 4. Transfer Virtual Machine starts the custom script extension to start the VHD copy from source to destination storage acounts
-5. The new Virtual Machine based on a custom image VHD gets deployed
+5. The new Virtual Machine based on a custom image VHD gets deployed 
 
 ## Requiremets
 
@@ -78,7 +78,7 @@ The process of this template is:
   $credential = Get-Credential 
   ```
 
-5. Getting source storage account authorization Key. Note that this is an automated way to get this key, you can get it directly from the new portal and define the content directly. 
+5. (Optional if you know the image name already) Getting source storage account authorization Key. Note that this is an automated way to get this key, you can get it directly from the new portal and define the content directly. 
   
   If your source storage account is based on Azure Service Manager management model:
   ```powershell
@@ -97,7 +97,7 @@ The process of this template is:
   $sourceVhdContainer = "images"
   ```
 
-6. (Optional) How to list blobs from Powershell, previous step is mandatory to obtain the storage account context object. In this example the custom images resides in **images** container.
+6. (Optional if you know the image name already) How to list blobs from Powershell, previous step is mandatory to obtain the storage account context object. In this example the custom images resides in **images** container.
   
   ```powershell
   $vhds = Get-AzureStorageBlob -Container $sourceVhdContainer -Context $saContext -Blob *.vhd
@@ -117,18 +117,19 @@ The process of this template is:
   ```powershell
   $adminUserName = $credential.UserName
   $adminPassword = $credential.GetNetworkCredential().Password
-  $sourceStorageAccountKey = $storagekey
-  # Following line is the equivalent of defining "images/Win10MasterImage-osDisk.72451a98-4c26-4375-90c5-0a940dd56bab.vhd", but here we executed optional step 6 and have an array of vhds, we are picking the second vhd 
+  # Following line is the equivalent of defining "images/Win10MasterImage-osDisk.72451a98-4c26-4375-90c5-0a940dd56bab.vhd", but here we executed optional steps 5 and 6 and have an array of vhds, we are picking the second vhd 
   $customImageName = $vhds[1].Name  
-  $sourceImages = [string]::Format("http://{0}.blob.core.windows.net/{1}/{2}",$sourceStorageAccountName,$sourceVhdContainer,$customImageName)
+  $sourceImageUri = [string]::Format("http://{0}.blob.core.windows.net/{1}/{2}",$sourceStorageAccountName,$sourceVhdContainer,$customImageName)
   $transferVmName = "myTransferVm"
   $newVmName = "myNewWin10Vm"
+  $vmSize = "Standard_D1"
+  $sourceStorageAccountResourceGroup = $sourceSaResourceGroupName # if you exected step 5 then you can use this variable, otherwise just add the storage account resource group name as string
   ```
   
 8. Define a hashtable with all parameters
   
   ```powershell
-  $parameters = @{"AdminUsername"=$adminUserName;"AdminPassword"=$adminPassword;"SourceStorageAccountKey"=$sourceStorageAccountKey;"CustomImageName"=$CustomImageName;"sourceImages"=$sourceImages;"TransferVmName"=$transferVmName;"NewVmName"=$newVmName}
+  $parameters = @{"AdminUsername"=$adminUserName;"AdminPassword"=$adminPassword;"sourceStorageAccountResourceGroup"=$sourceStorageAccountResourceGroup;"CustomImageName"=$CustomImageName;"sourceImageUri"=$sourceImageUri;"TransferVmName"=$transferVmName;"NewVmName"=$newVmName;"vmSize"=$vmSize}
   ```
   
 9. Deploy your template
