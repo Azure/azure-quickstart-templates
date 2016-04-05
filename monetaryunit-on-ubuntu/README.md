@@ -25,6 +25,14 @@ In order to run monetaryunit-cli without sudo or the extra arguments, you need t
 
 ## System Configuration
 
+Once your node is deployed, you need to set your VM's public ip address in the config:
+
+`sudo echo "externalip=<YourMonetaryUnitPublicIP> "-e/etc/monetaryunit/monetaryunit.conf`
+`sudo service monetaryunit restart`
+
+You also need to remove your /var/lib/monetaryunitd/bootstrap.dat.old once your node is synced.
+`sudo rm /var/lib/monetaryunitd/bootstrap.dat.old`
+
 For security purposes the configuration script enables two things:
 
 1. The Ubuntu UFW (Uncomplicated Firewall). It leaves the MonetaryUnit daemon port (29948) and the standard SSH port (22) open.
