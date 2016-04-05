@@ -36,7 +36,7 @@ rm /tmp/bootstrap-block_1400000.tar.xz > /dev/null 2>&1
 sudo mkdir /var/lib/monetaryunitd > /dev/null 2>&1
 sudo mv bootstrap.dat /var/lib/monetaryunitd > /dev/null 2>&1
 sudo mkdir /etc/monetaryunit > /dev/null 2>&1
-printf '%s\n%s\n%s\n%s\n%s\n' 'daemon=1' 'server=1' 'rpcuser='$(apg -MCLN -m 32 -n1) 'rpcpassword='$(apg -MCLN -m 32 -n1) 'rpcallowip=127.0.0.1' | sudo tee /etc/monetaryunit/monetaryunit.conf
+printf '%s\n%s\n%s\n%s\n%s\n%s\n' 'datadir=/var/lib/monetaryunitd' 'daemon=1' 'server=1' 'rpcuser='$(apg -MCLN -m 32 -n1) 'rpcpassword='$(apg -MCLN -m 32 -n1) 'rpcallowip=127.0.0.1' | sudo tee /etc/monetaryunit/monetaryunit.conf
 sudo adduser --system --no-create-home --group muedaemon > /dev/null 2>&1
 sudo chown -R muedaemon:muedaemon /etc/monetaryunit > /dev/null 2>&1
 sudo chown -R muedaemon:muedaemon /var/lib/monetaryunitd > /dev/null 2>&1

@@ -6,14 +6,22 @@
 
 The simplest way to get up-and-running with MonetaryUnit on Azure!
 
-Once deployed, the script will start the MonetaryUnit full node daemon and begin importing the latest bootstrap blocks. This will take an hour to several hours, depending on your Azure instance's connectivity, performance, and bandwidth.
+Once deployed, the script will start the MonetaryUnit full node daemon and begin importing the latest bootstrap blocks. This will take about an hour, depending on your Azure instance's connectivity, performance, and bandwidth.
 
 ## Monitoring and Interacting with the Node
 
 The MonetaryUnit node runs as an Upstart service. It can be controlled using the service command, ie: sudo service monetaryunit restart
 The datadir and wallet are located at /var/lib/monetaryunitd and the node can be accessed via monetaryunit-cli command:
 
-`sudo -u muedaemon monetaryunit-cli -conf=/etc/monetaryunit/monetaryunit.conf getinfo`
+`sudo -u muedaemon monetaryunit-cli -conf=/etc/monetaryunit/monetaryunit.conf -datadir=/var/lib/monetaryunitd getinfo`
+
+
+In order to run monetaryunit-cli without sudo or the extra arguments, you need to do the following:
+
+`mkdir ~/.monetaryunit`
+`sudo cp /etc/monetaryunit/monetaryunit.conf ~/.monetaryunit`
+`sudo chown $USER ~/.monetaryunit/monetaryunit.conf`
+
 
 ## System Configuration
 
@@ -21,6 +29,7 @@ For security purposes the configuration script enables two things:
 
 1. The Ubuntu UFW (Uncomplicated Firewall). It leaves the MonetaryUnit daemon port (29948) and the standard SSH port (22) open.
 2. Ubuntu's automatic security updates are enabled. This ensures that critical libraries are not left outdated.
+
 
 ## Assistance and Troubleshooting
 
