@@ -15,6 +15,13 @@ sudo ln -s /usr/bin/gem2.0 /usr/bin/gem
 sudo ln -s /usr/bin/irb2.0 /usr/bin/irb
 sudo ln -s /usr/bin/rdoc2.0 /usr/bin/rdoc
 sudo ln -s /usr/bin/erb2.0 /usr/bin/erb
+
+environment=$1
+if [ "$environment" == "AzureChinaCloud" ]; then
+  sudo gem sources --add https://ruby.taobao.org/ --remove https://rubygems.org/
+fi
+
+gem sources -l
 sudo gem update --system
 sudo gem pristine --all
 
@@ -22,7 +29,8 @@ echo "Start to install bosh_cli..."
 sudo gem install bosh_cli -v 1.3169.0 --no-ri --no-rdoc
 
 echo "Start to install bosh-init..."
-wget https://s3.amazonaws.com/bosh-init-artifacts/bosh-init-0.0.81-linux-amd64
+bosh_init_url=$2
+wget $bosh_init_url
 chmod +x ./bosh-init-*
 sudo mv ./bosh-init-* /usr/local/bin/bosh-init
 

@@ -16,8 +16,9 @@ from azure.mgmt.network import NetworkManagementClient, NetworkManagementClientC
 def prepare_storage(settings):
     default_storage_account_name = settings["DEFAULT_STORAGE_ACCOUNT_NAME"]
     storage_access_key = settings["STORAGE_ACCESS_KEY"]
+    endpoint_suffix = settings["SERVICE_HOST_BASE"]
 
-    blob_service = AppendBlobService(default_storage_account_name, storage_access_key)
+    blob_service = AppendBlobService(account_name=default_storage_account_name, account_key=storage_access_key, endpoint_suffix=endpoint_suffix)
     blob_service.create_container('bosh')
     blob_service.create_container(
         container_name='stemcell',
@@ -25,7 +26,7 @@ def prepare_storage(settings):
     )
 
     # Prepare the table for storing meta datas of storage account and stemcells
-    table_service = TableService(default_storage_account_name, storage_access_key)
+    table_service = TableService(account_name=default_storage_account_name, account_key=storage_access_key, endpoint_suffix=endpoint_suffix)
     table_service.create_table('stemcells')
 
 def render_bosh_manifest(settings):
@@ -41,7 +42,7 @@ def render_bosh_manifest(settings):
     if os.path.exists(bosh_template):
         with open(bosh_template, 'r') as tmpfile:
             contents = tmpfile.read()
-        for k in ["SUBNET_ADDRESS_RANGE_FOR_BOSH", "VNET_NAME", "SUBNET_NAME_FOR_BOSH", "SUBSCRIPTION_ID", "DEFAULT_STORAGE_ACCOUNT_NAME", "RESOURCE_GROUP_NAME", "KEEP_UNREACHABLE_VMS", "TENANT_ID", "CLIENT_ID", "CLIENT_SECRET", "BOSH_PUBLIC_IP", "NSG_NAME_FOR_BOSH"]:
+        for k in ["SUBNET_ADDRESS_RANGE_FOR_BOSH", "VNET_NAME", "SUBNET_NAME_FOR_BOSH", "SUBSCRIPTION_ID", "DEFAULT_STORAGE_ACCOUNT_NAME", "RESOURCE_GROUP_NAME", "KEEP_UNREACHABLE_VMS", "TENANT_ID", "CLIENT_ID", "CLIENT_SECRET", "BOSH_PUBLIC_IP", "NSG_NAME_FOR_BOSH", "BOSH_RELEASE_URL", "BOSH_AZURE_CPI_RELEASE_URL", "STEMCELL_URL", "ENVIRONMENT"]:
             v = settings[k]
             contents = re.compile(re.escape("REPLACE_WITH_{0}".format(k))).sub(v, contents)
         contents = re.compile(re.escape("REPLACE_WITH_SSH_PUBLIC_KEY")).sub(ssh_public_key, contents)
@@ -101,10 +102,23 @@ def render_cloud_foundry_manifest(settings):
             with open(cloudfoundry_template, 'w') as tmpfile:
                 tmpfile.write(contents)
 
+def render_cloud_foundry_deployment_cmd(settings):
+    cloudfoundry_deployment_cmd = "deploy_cloudfoundry.sh"
+    if os.path.exists(cloudfoundry_deployment_cmd):
+        with open(cloudfoundry_deployment_cmd, 'r') as tmpfile:
+            contents = tmpfile.read()
+        key = "CF_RELEASE_URL"
+        value = settings[key]
+        contents = re.compile(re.escape("REPLACE_WITH_{0}".format(key))).sub(value, contents)
+        with open(cloudfoundry_deployment_cmd, 'w') as tmpfile:
+            tmpfile.write(contents)
+
 def get_settings():
     settings = dict()
     for item in sys.argv[1].split(';'):
-        key, value = item.split(':')
+        i = item.index(':')
+        key = item[:i]
+        value = item[i+1:]
         settings[key] = value
     settings['TENANT_ID'] = sys.argv[2]
     settings['CLIENT_ID'] = sys.argv[3]
@@ -122,6 +136,7 @@ def main():
     print bosh_director_ip
 
     render_cloud_foundry_manifest(settings)
+    render_cloud_foundry_deployment_cmd(settings)
 
 if __name__ == "__main__":
     main()
