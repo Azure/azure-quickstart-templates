@@ -49,9 +49,11 @@ then
 	sudo mkdir $HOME/.RootCoin
 fi
 
-sudo /bin/su -c "echo 'rpcuser=rpc' > $HOME/.RootCoin/RootCoin.conf"
-sudo /bin/su -c "echo 'rpcpassword=1234' >> $HOME/.RootCoin/RootCoin.conf"
+sudo /bin/su -c "echo 'rpcuser=%s\n' $2 > $HOME/.RootCoin/RootCoin.conf"
+sudo /bin/su -c "echo 'rpcpassword=%s\n' $3 >> $HOME/.RootCoin/RootCoin.conf"
+sudo /bin/su -c "echo 'rpcport=%s\n' $4 >> $HOME/.RootCoin/RootCoin.conf"
 sudo /bin/su -c "echo 'server=1' >> $HOME/.RootCoin/RootCoin.conf"
+sudo /bin/su -c "echo 'rpcallowip=%s\n' $5 >> $HOME/.RootCoin/RootCoin.conf"
 sudo /bin/su -c "echo 'daemon=1'  >> $HOME/.RootCoin/RootCoin.conf"
 
 
