@@ -25,6 +25,10 @@ When you click the Deploy to Azure icon above, you need to specify the following
 * `dnsLabelPrefix`: This is used as both the VM name and DNS name of your public IP address.  Please ensure an unique name.
 * `installMethod`: This tells Azure to install Rootcoin from source.
 * `vmSize`: This is the size of the VM to use.  Recommendations: Use the D series for installations from source.
+* `rpcuser`: This is the username for connecting to the rootdaemon via RPC.
+* `rpcpass`: This is the password for connecting to the rootdaemon via RPC.
+* `rpcport`: This is the port for connecting to the rootdaemon via RPC.
+* `allowip`: This is the ip address which is allowed to access the rootdaemon via RPC.
 
 # Getting Started Tutorial
 
