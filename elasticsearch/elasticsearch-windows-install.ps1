@@ -59,6 +59,8 @@ Param(
 	[string]$elasticClusterName,
     [string]$storageKey,
     [string]$marvelEndpoints,
+	[string]$po,
+	[string]$r,
     [switch]$marvelOnlyNode,
 	[switch]$masterOnlyNode,
 	[switch]$clientOnlyNode,
@@ -297,7 +299,6 @@ function SetEnv-HeapSize
 
 function Install-ElasticSearch ($driveLetter, $elasticSearchZip, $subFolder = $elasticSearchBaseFolder)
 {
-	
 	# Designate unzip location 
 	$elasticSearchPath =  Join-Path "$driveLetter`:" -ChildPath $subFolder
 	
@@ -519,87 +520,105 @@ function Install-WorkFlow
     SetEnv-JavaHome $jdkInstallLocation
 	
 	# Configure cluster name and other properties
-		
-		# Cluster name
-		if($elasticClusterName.Length -eq 0) { $elasticClusterName = 'elasticsearch_cluster' }
+	# Cluster name
+	if($elasticClusterName.Length -eq 0) { $elasticClusterName = 'elasticsearch_cluster' }
         
-        # Unicast host setup
-        if($discoveryEndpoints.Length -ne 0) { $ipAddresses = Implode-Host2 $discoveryEndpoints }
+    # Unicast host setup
+    if($discoveryEndpoints.Length -ne 0) { $ipAddresses = Implode-Host2 $discoveryEndpoints }
 		
-		# Extract install folders
-		$elasticSearchBinParent = (gci -path $elasticSearchInstallLocation -filter "bin" -Recurse).Parent.FullName
-		$elasticSearchBin = Join-Path $elasticSearchBinParent -ChildPath "bin"
-		$elasticSearchConfFile = Join-Path $elasticSearchBinParent -ChildPath "config\elasticsearch.yml"
+	# Extract install folders
+	$elasticSearchBinParent = (gci -path $elasticSearchInstallLocation -filter "bin" -Recurse).Parent.FullName
+	$elasticSearchBin = Join-Path $elasticSearchBinParent -ChildPath "bin"
+	$elasticSearchConfFile = Join-Path $elasticSearchBinParent -ChildPath "config\elasticsearch.yml"
 		
-		# Set values
-        lmsg "Configure cluster name to $elasticClusterName"
-        $textToAppend = "`n#### Settings automatically added by deployment script`ncluster.name: $elasticClusterName"
+	# Set values
+    lmsg "Configure cluster name to $elasticClusterName"
+    $textToAppend = "`n#### Settings automatically added by deployment script`ncluster.name: $elasticClusterName"
 
-        # Use hostname for node name
-        $hostname = (Get-WmiObject -Class Win32_ComputerSystem -Property Name).Name
-        $textToAppend = $textToAppend + "`nnode.name: $hostname"
+    # Use hostname for node name
+    $hostname = (Get-WmiObject -Class Win32_ComputerSystem -Property Name).Name
+    $textToAppend = $textToAppend + "`nnode.name: $hostname"
 
-        # Set data paths
-        if($folderPathSetting -ne $null)
-        {
-            $textToAppend = $textToAppend + "`npath.data: $folderPathSetting"
-        }
+    # Set data paths
+    if($folderPathSetting -ne $null)
+    {
+        $textToAppend = $textToAppend + "`npath.data: $folderPathSetting"
+    }
 
-        if($masterOnlyNode)
+    if($masterOnlyNode)
+    {
+        lmsg 'Configure node as master only'
+        $textToAppend = $textToAppend + "`nnode.master: true`nnode.data: false"
+    }
+    elseif($dataOnlyNode)
+    {
+        lmsg 'Configure node as data only'
+        $textToAppend = $textToAppend + "`nnode.master: false`nnode.data: true"
+    }
+    elseif($clientOnlyNode)
+    {
+        lmsg 'Configure node as client only'
+        $textToAppend = $textToAppend + "`nnode.master: false`nnode.data: false"
+    }
+    else
+    {
+        lmsg 'Configure node as master and data'
+        $textToAppend = $textToAppend + "`nnode.master: true`nnode.data: true"
+    }
+
+	$textToAppend = $textToAppend + "`ndiscovery.zen.minimum_master_nodes: 2"
+    $textToAppend = $textToAppend + "`ndiscovery.zen.ping.multicast.enabled: false"
+
+    if($ipAddresses -ne $null)
+    {
+        $textToAppend = $textToAppend + "`ndiscovery.zen.ping.unicast.hosts: [$ipAddresses]"
+    }
+
+    # In ES 2.x you explicitly need to set network host to _non_loopback_ or the IP address of the host else other nodes cannot communicate
+    if ($elasticSearchVersion -match '2.')
+    {
+        $textToAppend = $textToAppend + "`nnetwork.host: _non_loopback_"
+    }
+
+	# configure the cloud-azure plugin, if selected
+	if ($po.Length -ne 0 -and $r.Length -ne 0)
+	{
+		if ($elasticSearchVersion -match '2.')
+		{
+			cmd.exe /C "$elasticSearchBin\plugin.bat install cloud-azure"
+			
+			$textToAppend = $textToAppend + "`ncloud.azure.storage.default.account: $po"
+			$textToAppend = $textToAppend + "`ncloud.azure.storage.default.key: $r"
+		}
+		else
+		{
+			cmd.exe /C "$elasticSearchBin\plugin.bat -i elasticsearch/elasticsearch-cloud-azure/2.8.2"
+			
+			$textToAppend = $textToAppend + "`ncloud.azure.storage.account: $po"
+			$textToAppend = $textToAppend + "`ncloud.azure.storage.key: $r"
+		}
+	}
+
+    # configure marvel as required
+    if($marvelEndpoints.Length -ne 0)
+    {
+        $marvelIPAddresses = Implode-Host2 $marvelEndpoints
+        if ($elasticSearchVersion -match '2.')
         {
-            lmsg 'Configure node as master only'
-            $textToAppend = $textToAppend + "`nnode.master: true`nnode.data: false"
-        }
-        elseif($dataOnlyNode)
-        {
-            lmsg 'Configure node as data only'
-            $textToAppend = $textToAppend + "`nnode.master: false`nnode.data: true"
-        }
-        elseif($clientOnlyNode)
-        {
-            lmsg 'Configure node as client only'
-            $textToAppend = $textToAppend + "`nnode.master: false`nnode.data: false"
+            $textToAppend = $textToAppend + "`nmarvel.agent.exporters:`n  id1:`n    type: http`n    host: [$marvelIPAddresses]"
         }
         else
         {
-            lmsg 'Configure node as master and data'
-            $textToAppend = $textToAppend + "`nnode.master: true`nnode.data: true"
+            $textToAppend = $textToAppend + "`nmarvel.agent.exporter.hosts: [$marvelIPAddresses]"
         }
-
-		$textToAppend = $textToAppend + "`ndiscovery.zen.minimum_master_nodes: 2"
-        $textToAppend = $textToAppend + "`ndiscovery.zen.ping.multicast.enabled: false"
-
-        if($ipAddresses -ne $null)
-        {
-            $textToAppend = $textToAppend + "`ndiscovery.zen.ping.unicast.hosts: [$ipAddresses]"
-        }
-
-        # In ES 2.x you explicitly need to set network host to _non_loopback_ or the IP address of the host else other nodes cannot communicate
-        if ($elasticSearchVersion -match '2.')
-        {
-            $textToAppend = $textToAppend + "`nnetwork.host: _non_loopback_"
-        }
-
-        # configure marvel as required
-        if($marvelEndpoints.Length -ne 0)
-        {
-            $marvelIPAddresses = Implode-Host2 $marvelEndpoints
-            if ($elasticSearchVersion -match '2.')
-            {
-                $textToAppend = $textToAppend + "`nmarvel.agent.exporters:`n  id1:`n    type: http`n    host: [$marvelIPAddresses]"
-            }
-            else
-            {
-                $textToAppend = $textToAppend + "`nmarvel.agent.exporter.hosts: [$marvelIPAddresses]"
-            }
-        }
+    }
         
-        if ($marvelOnlyNode -and ($elasticSearchVersion -match '1.'))
-        {
-            $textToAppend = $textToAppend + "`nmarvel.agent.enabled: false"
-        }
+    if ($marvelOnlyNode -and ($elasticSearchVersion -match '1.'))
+    {
+        $textToAppend = $textToAppend + "`nmarvel.agent.enabled: false"
+    }
 
-        Add-Content $elasticSearchConfFile $textToAppend
+    Add-Content $elasticSearchConfFile $textToAppend
 		
     # Add firewall exceptions
     Elasticsearch-OpenPorts
@@ -607,9 +626,6 @@ function Install-WorkFlow
     # Install service using the batch file in bin folder
     $scriptPath = Join-Path $elasticSearchBin -ChildPath "service.bat"
     ElasticSearch-InstallService $scriptPath
-
-    # Start service
-    ElasticSearch-StartService
 
     # Install marvel if specified
     if ($m)
@@ -623,8 +639,8 @@ function Install-WorkFlow
         {
             cmd.exe /C "$elasticSearchBin\plugin.bat -i elasticsearch/marvel/1.3.1"
         }
-    }		
-		
+    }
+
 	# Temporary measure to configure each ES node for JMeter server agent
 	if ($jmeterConfig)
 	{
@@ -634,6 +650,8 @@ function Install-WorkFlow
 		Jmeter-Run $unzipLocation
 	}
 
+	# Start service
+    ElasticSearch-StartService
 
     # Verify service TODO: Investigate why verification fails during ARM deployment
     # ElasticSearch-VerifyInstall
@@ -641,13 +659,14 @@ function Install-WorkFlow
 
 function Startup-Output
 {
-    lmsg 'Install workflow starting with following params:'
+	lmsg 'Install workflow starting with following params:'
     lmsg "Elasticsearch version: $elasticSearchVersion"
     if($elasticClusterName.Length -ne 0) { lmsg "Elasticsearch cluster name: $elasticClusterName" }
     if($jdkDownloadLocation.Length -ne 0) { lmsg "Jdk download location: $jdkDownloadLocation" }
     if($elasticSearchBaseFolder.Length -ne 0) { lmsg "Elasticsearch base folder: $elasticSearchBaseFolder" }
     if($discoveryEndpoints.Length -ne 0) { lmsg "Discovery endpoints: $discoveryEndpoints" }
     if($marvelEndpoints.Length -ne 0) { lmsg "Marvel endpoints: $marvelEndpoints" }
+	if($po.Length -ne 0 -and $r.Length -ne 0) { lmsg "Installing cloud-azure plugin" }
     if($masterOnlyNode) { lmsg 'Node installation mode: Master' }
     if($clientOnlyNode) { lmsg 'Node installation mode: Client' }
     if($dataOnlyNode) { lmsg 'Node installation mode: Data' }
