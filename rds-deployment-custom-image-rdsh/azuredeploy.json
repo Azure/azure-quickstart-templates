@@ -5,31 +5,31 @@
         "dnsLabelPrefix": {
             "type": "string",
             "metadata": {
-                "description": "Unique public DNS prefix for the deployment. The fqdn will look something like '<dnsname>.westus.cloudapp.azure.com'. Up to 62 chars, digits or dashes, lowercase, should start with a letter: must conform to '^[a-z][a-z0-9-]{1,61}[a-z0-9]$'."
+                "description": "Unique public DNS prefix for the deployment. The fqdn will look something like '<dnsname>.westus.cloudapp.azure.com'. Up to 62 chars, digits or dashes, lowercase, should start with a letter: must conform to '^[a-z][a-z0-9-]{1,61}[a-z0-9]$'. For example johndns1 will result the final RDWEB access url like https://johndns1.westus.cloudapp.azure.com/RDWeb"
             }
         },
         "adVnetName": {
             "type": "string",
             "metadata": {
-                "description": "The vnet name of AD domain"
+                "description": "The vnet name of AD domain. For example johnvnet1"
             }
         },
         "adSubnetName": {
             "type": "string",
             "metadata": {
-                "description": "The subnet name of AD domain"
+                "description": "The subnet name of AD domain. For example johnsubnet1"
             }
         },
         "adDomainName": {
             "type": "string",
             "metadata": {
-                "description": "The name of the AD domain"
+                "description": "The name of the AD domain. For example contoso.com"
             }
         },
         "adminUsername": {
             "type": "string",
             "metadata": {
-                "description": "The name of the administrator of the new VM and the domain. Exclusion list: 'administrator'"
+                "description": "The name of the administrator of the new VM and the domain. Exclusion list: 'administrator'. For example johnadmin"
             }
         },
         "adminPassword": {
@@ -52,13 +52,13 @@
         "rdshImageStorageAccountName": {
             "type": "string",
             "metadata": {
-                "description": "This is the name of the your storage account"
+                "description": "This is the name of the your storage account where you stored the os custom image you want to use for rdsh machines. For example johnrdshstore"
             }
         },
         "rdshsourceImageVhdUri": {
             "type": "string",
             "metadata": {
-                "description": "The source of the blob containing the custom image"
+                "description": "The URI for source of the blob containing the custom image. For example https://johnrdshstore.blob.core.windows.net/johncontainer/MyWindowServerOS.vhd"
             }
         },
         "numberOfRdshInstances": {
@@ -111,10 +111,22 @@
                 "accountType": "Standard_LRS"
             }
         },
-        {
+         {
+        "apiVersion": "[variables('apiVersion')]",
+        "type": "Microsoft.Compute/availabilitySets",
+        "name": "gw-availabilityset",
+        "location": "[resourceGroup().location]"
+      },
+      {
+        "apiVersion": "[variables('apiVersion')]",
+        "type": "Microsoft.Compute/availabilitySets",
+        "name": "cb-availabilityset",
+        "location": "[resourceGroup().location]"
+      },
+      {
             "apiVersion": "[variables('apiVersion')]",
             "type": "Microsoft.Compute/availabilitySets",
-            "name": "availabilityset",
+            "name": "rdsh-availabilityset",
             "location": "[resourceGroup().location]"
         },
         {
@@ -259,7 +271,7 @@
             "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
-                "[resourceId('Microsoft.Compute/availabilitySets', 'availabilityset')]",
+                "[resourceId('Microsoft.Compute/availabilitySets', 'gw-availabilityset')]",
                 "Microsoft.Network/networkInterfaces/gw-nic"
             ],
             "properties": {
@@ -267,7 +279,7 @@
                     "vmSize": "Standard_D2"
                 },
                 "availabilitySet": {
-                    "id": "[resourceId('Microsoft.Compute/availabilitySets', 'availabilityset')]"
+                    "id": "[resourceId('Microsoft.Compute/availabilitySets', 'gw-availabilityset')]"
                 },
                 "osProfile": {
                     "computerName": "gw-vm-1",
@@ -342,12 +354,16 @@
                 "count": "[parameters('numberOfRdshInstances')]"
             },
             "dependsOn": [
-                "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
-                "[concat('Microsoft.Network/networkInterfaces/', 'rdsh-', copyindex(), '-nic')]"
+              "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+              "[resourceId('Microsoft.Compute/availabilitySets', 'rdsh-availabilityset')]",
+              "[concat('Microsoft.Network/networkInterfaces/', 'rdsh-', copyindex(), '-nic')]"
             ],
             "properties": {
-                "hardwareProfile": {
-                    "vmSize": "[parameters('rdshVmSize')]"
+              "hardwareProfile": {
+                "vmSize": "[parameters('rdshVmSize')]"
+              },
+              "availabilitySet": {
+                    "id": "[resourceId('Microsoft.Compute/availabilitySets', 'rdsh-availabilityset')]"
                 },
                 "osProfile": {
                     "computerName": "[concat('rdsh-', copyIndex())]",
@@ -423,7 +439,7 @@
             "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
-                "[resourceId('Microsoft.Compute/availabilitySets', 'availabilityset')]",
+                "[resourceId('Microsoft.Compute/availabilitySets', 'cb-availabilityset')]",
                 "Microsoft.Network/networkInterfaces/cb-nic"
             ],
             "properties": {
@@ -431,7 +447,7 @@
                     "vmSize": "Standard_D2"
                 },
                 "availabilitySet": {
-                    "id": "[resourceId('Microsoft.Compute/availabilitySets', 'availabilityset')]"
+                    "id": "[resourceId('Microsoft.Compute/availabilitySets', 'cb-availabilityset')]"
                 },
                 "osProfile": {
                     "computerName": "cb-vm-1",
