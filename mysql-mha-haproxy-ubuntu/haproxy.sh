@@ -5,8 +5,8 @@ osUser=$2
 
 #install mha manager
 cd /tmp/
-wget http://mysql-master-ha.googlecode.com/files/mha4mysql-node_0.53_all.deb
-wget http://mysql-master-ha.googlecode.com/files/mha4mysql-manager_0.53_all.deb
+wget http://mysql-master-ha.googlecode.com/files/mha4mysql-node_0.53_all.deb > /dev/null 2>&1
+wget http://mysql-master-ha.googlecode.com/files/mha4mysql-manager_0.53_all.deb > /dev/null 2>&1
 apt-get update
 apt-get install libdbd-mysql-perl -y
 apt-get install libconfig-tiny-perl -y
