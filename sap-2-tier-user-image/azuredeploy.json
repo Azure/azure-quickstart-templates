@@ -12,8 +12,7 @@
     },
     "osType": {
       "type": "string",
-      "allowedValues": [ "Windows Server 2012 Datacenter", "Windows Server 2012 R2 Datacenter", "SLES 12" ],
-      "defaultValue": "Windows Server 2012 R2 Datacenter",
+      "allowedValues": [ "Windows", "Linux" ],
       "metadata": {
         "description": "The type of the operating system you want to deploy."
       }
@@ -32,6 +31,18 @@
       "defaultValue": "Standard",
       "metadata": {
         "description": "The storage type that should be used for the virtual machine."
+      }
+    },
+    "userImageVhdUri": {
+      "type": "string",
+      "metadata": {
+        "description": "Uri of the user image."
+      }
+    },
+    "userImageStorageAccount": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the storage account where the user image is stored."
       }
     },
     "adminUsername": {
@@ -64,38 +75,14 @@
   },
   "variables": {
     "github": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sap-2-tier-marketplace-image/shared/",
-    "images": {
-      "Windows Server 2012 Datacenter": {
-        "sku": "2012-Datacenter",
-        "offer": "WindowsServer",
-        "publisher": "MicrosoftWindowsServer",
-        "OSType": "Windows"
-      },
-      "Windows Server 2012 R2 Datacenter": {
-        "sku": "2012-R2-Datacenter",
-        "offer": "WindowsServer",
-        "publisher": "MicrosoftWindowsServer",
-        "OSType": "Windows"
-      },
-      "SLES 12": {
-        "sku": "12",
-        "offer": "SLES",
-        "publisher": "SUSE",
-        "OSType": "Linux"
-      }
-    },
-    "imageSku": "[variables('images')[parameters('osType')].sku]",
-    "imagePublisher": "[variables('images')[parameters('osType')].publisher]",
-    "imageOffer": "[variables('images')[parameters('osType')].offer]",
 
-    "internalOSType": "[variables('images')[parameters('osType')].OSType]",
     "csExtension": {
       "Windows": {
         "Publisher": "Microsoft.Compute",
         "Name": "CustomScriptExtension",
         "Version": "1.7",
         "script": "[concat(variables('github'), 'configureSAPVM.ps1')]",
-        "scriptCall": "powershell.exe -ExecutionPolicy bypass -File configureSAPVM.ps1"
+        "scriptCall": "powershell.exe -File configureSAPVM.ps1"
       },
       "Linux": {
         "Publisher": "Microsoft.OSTCExtensions",
@@ -105,15 +92,9 @@
         "scriptCall": "sh configureSAPVM.sh"
       }
     },
-    "cseExtPublisher": "[variables('csExtension')[variables('internalOSType')].Publisher]",
-    "cseExtName": "[variables('csExtension')[variables('internalOSType')].Name]",
-    "cseExtVersion": "[variables('csExtension')[variables('internalOSType')].Version]",
-
-    "storageTypes": {
-      "Premium": "Premium_LRS",
-      "Standard": "Standard_LRS"
-    },
-    "internalStorageType": "[variables('storageTypes')[parameters('storageType')]]",
+    "cseExtPublisher": "[variables('csExtension')[variables('internalOsType')].Publisher]",
+    "cseExtName": "[variables('csExtension')[variables('internalOsType')].Name]",
+    "cseExtVersion": "[variables('csExtension')[variables('internalOsType')].Version]",
 
     "vmSizes": {
       "Small < 2.000 SAPS": {
@@ -151,27 +132,22 @@
     },
     "vmSize": "[variables('vmSizes')[parameters('sapSystemSize')][parameters('storageType')].size]",
 
-    "nicConfigurations": {
-      "new": {
-        "countPublicIp": 1,
-        "countNSG": 1
-      },
-      "existing": {
-        "countPublicIp": 0,
-        "countNSG": 0
-      }
-    },
-    "countPublicIp": "[variables('nicConfigurations')[parameters('newOrExistingSubnet')].countPublicIp]",
-    "countNSG": "[variables('nicConfigurations')[parameters('newOrExistingSubnet')].countNSG]",
-
+    "internalOsType": "[parameters('osType')]",
     "location": "[resourceGroup().location]",
     "sidlower": "[toLower(parameters('sapSystemId'))]",
     "vmName": "[concat(variables('sidlower'), '-servercs')]",
     "storageAccountName": "[concat(variables('sidlower'), uniqueString(variables('sidlower'), resourceGroup().id))]",
     "vnetName": "[concat(variables('sidlower'), '-vnet')]",
-    "publicIpName": "[concat(variables('sidlower'), '-pib')]",
+    "publicIpName": "[concat(variables('sidlower'), '-pip')]",
     "nicName": "[concat(variables('sidlower'), '-nic')]",
     "nsgName": "[concat(variables('sidlower'), '-nsg-cs')]",
+
+    "storageTypes": {
+      "Premium": "Premium_LRS",
+      "Standard": "Standard_LRS"
+    },
+    "internalStorageType": "[variables('storageTypes')[parameters('storageType')]]",
+
     "publicIPAddressType": "Dynamic",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet",
@@ -182,9 +158,10 @@
     "nestedDeploymentNameNSG": "[concat(variables('nestedDeploymentName'), 'nsg')]",
     "nestedDeploymentNameNIC": "[concat(variables('nestedDeploymentName'), 'nic')]",
     "nestedDeploymentNamePIP": "[concat(variables('nestedDeploymentName'), 'pip')]",
-    "osDiskType": "image",
+    "osDiskType": "userImage",
     "apiVerion": "2015-06-15",
     "apiVerionRm": "2015-01-01"
+
   },
   "resources": [
     {
@@ -246,11 +223,11 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "imageSku": { "value": "[variables('imageSku')]" },
-          "imagePublisher": { "value": "[variables('imagePublisher')]" },
-          "imageOffer": { "value": "[variables('imageOffer')]" },
-          "userImageVhdUri": { "value": "" },
-          "userImageStorageAccount": { "value": "" },
+          "imageSku": { "value": "" },
+          "imagePublisher": { "value": "" },
+          "imageOffer": { "value": "" },
+          "userImageVhdUri": { "value": "[parameters('userImageVhdUri')]" },
+          "userImageStorageAccount": { "value": "[parameters('userImageStorageAccount')]" },
           "osDiskVhdUri": { "value": "" },
           "osDiskType": { "value": "[variables('osDiskType')]" },
           "osType": { "value": "[variables('internalOSType')]" },
@@ -336,7 +313,7 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "imageReference": { "value": "[reference(variables('nestedDeploymentNameProf')).outputs.imageReference.value]" },
+          "imageReference": { "value": "[reference(variables('nestedDeploymentNameProf')).outputs.osDisk.value]" },
           "osDisk": { "value": "[reference(variables('nestedDeploymentNameProf')).outputs.osDisk.value]" },
           "osDiskType": { "value": "[variables('osDiskType')]" },
           "location": { "value": "[variables('location')]" },

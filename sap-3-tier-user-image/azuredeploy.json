@@ -12,10 +12,9 @@
     },
     "osType": {
       "type": "string",
-      "allowedValues": [ "Windows Server 2012 Datacenter", "Windows Server 2012 R2 Datacenter", "SLES 12" ],
-      "defaultValue": "Windows Server 2012 R2 Datacenter",
+      "allowedValues": [ "Windows", "Linux" ],
       "metadata": {
-        "description": "The type of the operating system you want to deploy."
+        "description": "The operating system type of the private OS image."
       }
     },
     "sapSystemSize": {
@@ -32,6 +31,18 @@
       "defaultValue": "Not HA",
       "metadata": {
         "description": "Determines whether this is a high available deployment or not. A HA deployment contains multiple instances of single point of failures."
+      }
+    },
+    "userImageVhdUri": {
+      "type": "string",
+      "metadata": {
+        "description": "Uri of the user image."
+      }
+    },
+    "userImageStorageAccount": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the storage account where the user image is stored."
       }
     },
     "adminUsername": {
@@ -64,37 +75,8 @@
   },
   "variables": {
     "github": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sap-2-tier-marketplace-image/shared/",
-    "images": {
-      "Windows Server 2012 Datacenter": {
-        "sku": "2012-Datacenter",
-        "offer": "WindowsServer",
-        "publisher": "MicrosoftWindowsServer",
-        "OSType": "Windows"
-      },
-      "Windows Server 2012 R2 Datacenter": {
-        "sku": "2012-R2-Datacenter",
-        "offer": "WindowsServer",
-        "publisher": "MicrosoftWindowsServer",
-        "OSType": "Windows"
-      },
-      "SLES 11 SP4": {
-        "sku": "11-SP4",
-        "offer": "SLES",
-        "publisher": "SUSE",
-        "OSType": "Linux"
-      },
-      "SLES 12": {
-        "sku": "12",
-        "offer": "SLES",
-        "publisher": "SUSE",
-        "OSType": "Linux"
-      }
-    },
-    "imageSku": "[variables('images')[parameters('osType')].sku]",
-    "imagePublisher": "[variables('images')[parameters('osType')].publisher]",
-    "imageOffer": "[variables('images')[parameters('osType')].offer]",
-
-    "internalOSType": "[variables('images')[parameters('osType')].OSType]",
+    
+    "internalOSType": "[parameters('osType')]",
     "csExtension": {
       "Windows": {
         "Publisher": "Microsoft.Compute",
@@ -253,12 +235,12 @@
     "storageAccountNameDI": "[concat('di', variables('storageAccountName'))]",
     "internalStorageTypeDI": "Standard_LRS",
     "vmNameDI": "[concat(variables('vmName'), '-di')]",
-    "osDiskType": "image",
+    "osDiskType": "userImage",
     "apiVerion": "2015-06-15",
     "apiVerionRm": "2015-01-01"
+
   },
   "resources": [
-
     {
       "apiVersion": "[variables('apiVerionRm')]",
       "name": "[variables('nestedDeploymentNameVnet')]",
@@ -644,11 +626,11 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "imageSku": { "value": "[variables('imageSku')]" },
-          "imagePublisher": { "value": "[variables('imagePublisher')]" },
-          "imageOffer": { "value": "[variables('imageOffer')]" },
-          "userImageVhdUri": { "value": "" },
-          "userImageStorageAccount": { "value": "" },
+          "imageSku": { "value": "" },
+          "imagePublisher": { "value": "" },
+          "imageOffer": { "value": "" },
+          "userImageVhdUri": { "value": "[parameters('userImageVhdUri')]" },
+          "userImageStorageAccount": { "value": "[parameters('userImageStorageAccount')]" },
           "osDiskVhdUri": { "value": "" },
           "osDiskType": { "value": "[variables('osDiskType')]" },
           "osType": { "value": "[variables('internalOSType')]" },
@@ -678,7 +660,7 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "imageReference": { "value": "[reference(concat(variables('nestedDeploymentNameProf'), '-ascs-', copyIndex())).outputs.imageReference.value]" },
+          "imageReference": { "value": "[reference(concat(variables('nestedDeploymentNameProf'), '-ascs-', copyIndex())).outputs.osDisk.value]" },
           "osDisk": { "value": "[reference(concat(variables('nestedDeploymentNameProf'), '-ascs-', copyIndex())).outputs.osDisk.value]" },
           "osDiskType": { "value": "[variables('osDiskType')]" },
           "location": { "value": "[variables('location')]" },
@@ -698,8 +680,6 @@
         }
       }
     },
-
-
     {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('avSetNameDB')]",
@@ -849,11 +829,11 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "imageSku": { "value": "[variables('imageSku')]" },
-          "imagePublisher": { "value": "[variables('imagePublisher')]" },
-          "imageOffer": { "value": "[variables('imageOffer')]" },
-          "userImageVhdUri": { "value": "" },
-          "userImageStorageAccount": { "value": "" },
+          "imageSku": { "value": "" },
+          "imagePublisher": { "value": "" },
+          "imageOffer": { "value": "" },
+          "userImageVhdUri": { "value": "[parameters('userImageVhdUri')]" },
+          "userImageStorageAccount": { "value": "[parameters('userImageStorageAccount')]" },
           "osDiskVhdUri": { "value": "" },
           "osDiskType": { "value": "[variables('osDiskType')]" },
           "osType": { "value": "[variables('internalOSType')]" },
@@ -883,7 +863,7 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "imageReference": { "value": "[reference(concat(variables('nestedDeploymentNameProf'), '-db-', copyIndex())).outputs.imageReference.value]" },
+          "imageReference": { "value": "[reference(concat(variables('nestedDeploymentNameProf'), '-db-', copyIndex())).outputs.osDisk.value]" },
           "osDisk": { "value": "[reference(concat(variables('nestedDeploymentNameProf'), '-db-', copyIndex())).outputs.osDisk.value]" },
           "osDiskType": { "value": "[variables('osDiskType')]" },
           "location": { "value": "[variables('location')]" },
@@ -995,11 +975,11 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "imageSku": { "value": "[variables('imageSku')]" },
-          "imagePublisher": { "value": "[variables('imagePublisher')]" },
-          "imageOffer": { "value": "[variables('imageOffer')]" },
-          "userImageVhdUri": { "value": "" },
-          "userImageStorageAccount": { "value": "" },
+          "imageSku": { "value": "" },
+          "imagePublisher": { "value": "" },
+          "imageOffer": { "value": "" },
+          "userImageVhdUri": { "value": "[parameters('userImageVhdUri')]" },
+          "userImageStorageAccount": { "value": "[parameters('userImageStorageAccount')]" },
           "osDiskVhdUri": { "value": "" },
           "osDiskType": { "value": "[variables('osDiskType')]" },
           "osType": { "value": "[variables('internalOSType')]" },
@@ -1029,7 +1009,7 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "imageReference": { "value": "[reference(concat(variables('nestedDeploymentNameProf'), '-di-', copyIndex())).outputs.imageReference.value]" },
+          "imageReference": { "value": "[reference(concat(variables('nestedDeploymentNameProf'), '-di-', copyIndex())).outputs.osDisk.value]" },
           "osDisk": { "value": "[reference(concat(variables('nestedDeploymentNameProf'), '-di-', copyIndex())).outputs.osDisk.value]" },
           "osDiskType": { "value": "[variables('osDiskType')]" },
           "location": { "value": "[variables('location')]" },
