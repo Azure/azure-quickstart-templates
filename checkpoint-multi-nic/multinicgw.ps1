@@ -13,6 +13,7 @@ $Location = ""
 $SubscriptionId = ""
 # Description : The Name of storage account to create
 # Mandatory   : Yes
+# Valid values: Globally unique, 3-24 lower case alphanumeric characters.
 $StorageAccount = ""
 
 # Set one of the following
@@ -134,6 +135,11 @@ $ErrorActionPreference = "Stop"
 if (!$Password -and !$SSHPublicKey) {
     Throw "A password or public key must be specified" 
 }
+
+if ($StorageAccount.Length -lt 3 -or $StorageAccount.Length -gt 24) {
+    Throw "The StorageAccount should be 3-24 lower case alphanumeric characters"
+}
+$StorageAccount = $StorageAccount.ToLower()
 
 # Login:
 Login-AzureRmAccount

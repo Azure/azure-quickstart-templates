@@ -25,6 +25,7 @@ $Location = ""
 $SubscriptionId = ""
 # Description : The Name of storage account to create
 # Mandatory   : Yes
+# Valid values: Globally unique, 3-24 lower case alphanumeric characters.
 $StorageAccount = ""
 
 # SSH settings, set one of the following
@@ -203,9 +204,10 @@ if (!$ResourceGroup) {
 if (!$Location) {
     Throw "Invalid Location"
 }
-if (!$StorageAccount) {
-    Throw -Message "Invalid storage account"
+if ($StorageAccount.Length -lt 3 -or $StorageAccount.Length -gt 24) {
+    Throw "The StorageAccount should be 3-24 lower case alphanumeric characters"
 }
+$StorageAccount = $StorageAccount.ToLower()
 if ($SicKey.Length -lt 8) {
     Throw -Message "SIC key should be at least 8 characters"
 }
