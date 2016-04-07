@@ -1,0 +1,351 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "sapSystemId": {
+      "type": "string",
+      "maxLength": 3,
+      "minLength": 3,
+      "metadata": {
+        "description": "SAP System ID."
+      }
+    },
+    "osType": {
+      "type": "string",
+      "allowedValues": [ "Windows", "Linux" ],
+      "metadata": {
+        "description": "The type of the operating system you want to deploy."
+      }
+    },
+    "sapSystemSize": {
+      "type": "string",
+      "allowedValues": [ "Small < 2.000 SAPS", "Medium < 9.000 SAPS", "Large < 18.000 SAPS", "X-Large < 40.000 SAPS" ],
+      "defaultValue": "Small < 2.000 SAPS",
+      "metadata": {
+        "description": "The size of the SAP System you want to deploy."
+      }
+    },
+    "storageType": {
+      "type": "string",
+      "allowedValues": [ "Premium", "Standard" ],
+      "defaultValue": "Standard",
+      "metadata": {
+        "description": "The storage type that should be used for the virtual machine."
+      }
+    },
+    "userImageVhdUri": {
+      "type": "string",
+      "metadata": {
+        "description": "Uri of the user image."
+      }
+    },
+    "userImageStorageAccount": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the storage account where the user image is stored."
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Username for the Virtual Machine."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the Virtual Machine."
+      }
+    },
+    "newOrExistingSubnet": {
+      "type": "string",
+      "defaultValue": "new",
+      "allowedValues": [ "new", "existing" ],
+      "metadata": {
+        "description": "Determines whether a new virtual network and subnet should be created or an existing subnet should be used."
+      }
+    },
+    "subnetId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The id of the subnet you want to use."
+      }
+    }
+  },
+  "variables": {
+    "github": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sap-2-tier-marketplace-image/shared/",
+
+    "csExtension": {
+      "Windows": {
+        "Publisher": "Microsoft.Compute",
+        "Name": "CustomScriptExtension",
+        "Version": "1.7",
+        "script": "[concat(variables('github'), 'configureSAPVM.ps1')]",
+        "scriptCall": "powershell.exe -File configureSAPVM.ps1"
+      },
+      "Linux": {
+        "Publisher": "Microsoft.OSTCExtensions",
+        "Name": "CustomScriptForLinux",
+        "Version": "1.3",
+        "script": "[concat(variables('github'), 'configureSAPVM.sh')]",
+        "scriptCall": "sh configureSAPVM.sh"
+      }
+    },
+    "cseExtPublisher": "[variables('csExtension')[variables('internalOsType')].Publisher]",
+    "cseExtName": "[variables('csExtension')[variables('internalOsType')].Name]",
+    "cseExtVersion": "[variables('csExtension')[variables('internalOsType')].Version]",
+
+    "vmSizes": {
+      "Small < 2.000 SAPS": {
+        "Premium": {
+          "size": "Standard_DS11"
+        },
+        "Standard": {
+          "size": "Standard_D11"
+        }
+      },
+      "Medium < 9.000 SAPS": {
+        "Premium": {
+          "size": "Standard_DS13"
+        },
+        "Standard": {
+          "size": "Standard_D13"
+        }
+      },
+      "Large < 18.000 SAPS": {
+        "Premium": {
+          "size": "Standard_DS14"
+        },
+        "Standard": {
+          "size": "Standard_D14"
+        }
+      },
+      "X-Large < 40.000 SAPS": {
+        "Premium": {
+          "size": "Standard_GS5"
+        },
+        "Standard": {
+          "size": "Standard_D14"
+        }
+      }
+    },
+    "vmSize": "[variables('vmSizes')[parameters('sapSystemSize')][parameters('storageType')].size]",
+
+    "internalOsType": "[parameters('osType')]",
+    "location": "[resourceGroup().location]",
+    "sidlower": "[toLower(parameters('sapSystemId'))]",
+    "vmName": "[concat(variables('sidlower'), '-servercs')]",
+    "storageAccountName": "[concat(variables('sidlower'), uniqueString(variables('sidlower'), resourceGroup().id))]",
+    "vnetName": "[concat(variables('sidlower'), '-vnet')]",
+    "publicIpName": "[concat(variables('sidlower'), '-pip')]",
+    "nicName": "[concat(variables('sidlower'), '-nic')]",
+    "nsgName": "[concat(variables('sidlower'), '-nsg-cs')]",
+
+    "storageTypes": {
+      "Premium": "Premium_LRS",
+      "Standard": "Standard_LRS"
+    },
+    "internalStorageType": "[variables('storageTypes')[parameters('storageType')]]",
+
+    "publicIPAddressType": "Dynamic",
+    "addressPrefix": "10.0.0.0/16",
+    "subnetName": "Subnet",
+    "subnetPrefix": "10.0.0.0/24",
+    "nestedDeploymentName": "nestedTemplate",
+    "nestedDeploymentNameProf": "[concat(variables('nestedDeploymentName'), 'prof')]",
+    "nestedDeploymentNameVnet": "[concat(variables('nestedDeploymentName'), 'vnet')]",
+    "nestedDeploymentNameNSG": "[concat(variables('nestedDeploymentName'), 'nsg')]",
+    "nestedDeploymentNameNIC": "[concat(variables('nestedDeploymentName'), 'nic')]",
+    "nestedDeploymentNamePIP": "[concat(variables('nestedDeploymentName'), 'pip')]",
+    "osDiskType": "userImage",
+    "apiVerion": "2015-06-15",
+    "apiVerionRm": "2015-01-01"
+
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('storageAccountName')]",
+      "apiVersion": "[variables('apiVerion')]",
+      "location": "[variables('location')]",
+      "properties": {
+        "accountType": "[variables('internalStorageType')]"
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVerionRm')]",
+      "name": "[variables('nestedDeploymentNameVnet')]",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('github'), parameters('newOrExistingSubnet'), 'vnet.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "vnetName": { "value": "[variables('vnetName')]" },
+          "addressPrefix": { "value": "[variables('addressPrefix')]" },
+          "subnetName": { "value": "[variables('subnetName')]" },
+          "subnetPrefix": { "value": "[variables('subnetPrefix')]" },
+          "location": { "value": "[variables('location')]" }          
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVerionRm')]",
+      "name": "[variables('nestedDeploymentNameNIC')]",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('github'), 'nic-config.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "vnetName": { "value": "[variables('vnetName')]" },
+          "subnetName": { "value": "[variables('subnetName')]" },
+          "publicIpName": { "value": "[variables('publicIpName')]" },
+          "nsgName": { "value": "[variables('nsgName')]" },
+          "newOrExistingSubnet": { "value": "[parameters('newOrExistingSubnet')]" },
+          "subnetId": { "value": "[parameters('subnetId')]" }
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVerionRm')]",
+      "name": "[variables('nestedDeploymentNameProf')]",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('github'), 'os-disk-parts.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "imageSku": { "value": "" },
+          "imagePublisher": { "value": "" },
+          "imageOffer": { "value": "" },
+          "userImageVhdUri": { "value": "[parameters('userImageVhdUri')]" },
+          "userImageStorageAccount": { "value": "[parameters('userImageStorageAccount')]" },
+          "osDiskVhdUri": { "value": "" },
+          "osDiskType": { "value": "[variables('osDiskType')]" },
+          "osType": { "value": "[variables('internalOSType')]" },
+          "sidlower": { "value": "[variables('sidlower')]" },
+          "vmName": { "value": "[variables('vmName')]" },
+          "storageAccountName": { "value": "[variables('storageAccountName')]" }
+        }
+      }
+    },
+
+    {
+      "apiVersion": "[variables('apiVerionRm')]",
+      "name": "[variables('nestedDeploymentNamePIP')]",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('github'), parameters('newOrExistingSubnet'), 'pip.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "publicIpName": { "value": "[variables('publicIpName')]" },
+          "publicIPAddressType": { "value": "[variables('publicIPAddressType')]" },
+          "location": { "value": "[variables('location')]" }
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVerionRm')]",
+      "name": "[variables('nestedDeploymentNameNSG')]",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('github'), parameters('newOrExistingSubnet'), 'nsg.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "nsgName": { "value": "[variables('nsgName')]" },
+          "location": { "value": "[variables('location')]" },
+          "osType": { "value": "[variables('internalOSType')]" }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nicName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[variables('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameVnet'))]",
+        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameNIC'))]",
+        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNamePIP'))]",
+        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameNSG'))]"
+      ],
+      "properties": {
+        "networkSecurityGroup": "[reference(variables('nestedDeploymentNameNIC')).outputs.selectedConfiguration.value.networkSecurityGroup]",
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": "[reference(variables('nestedDeploymentNameNIC')).outputs.selectedConfiguration.value.publicIPAddress]",
+              "subnet": "[reference(variables('nestedDeploymentNameNIC')).outputs.selectedConfiguration.value.subnet]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVerionRm')]",
+      "name": "[variables('nestedDeploymentName')]",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameProf'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('github'), 'cs-server-', variables('vmSize'), '_multiNIC_No.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "imageReference": { "value": "[reference(variables('nestedDeploymentNameProf')).outputs.osDisk.value]" },
+          "osDisk": { "value": "[reference(variables('nestedDeploymentNameProf')).outputs.osDisk.value]" },
+          "osDiskType": { "value": "[variables('osDiskType')]" },
+          "location": { "value": "[variables('location')]" },
+          "sidlower": { "value": "[variables('sidlower')]" },
+          "vmName": { "value": "[variables('vmName')]" },
+          "vmSize": { "value": "[variables('vmSize')]" },
+          "adminUsername": { "value": "[parameters('adminUsername')]" },
+          "adminPassword": { "value": "[parameters('adminPassword')]" },
+          "storageAccountName": { "value": "[variables('storageAccountName')]" },
+          "nicName": { "value": "[variables('nicName')]" }
+        }
+      }
+    },
+
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('vmName'),'/', variables('cseExtName'))]",
+      "apiVersion": "[variables('apiVerion')]",
+      "location": "[variables('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentName'))]"
+      ],
+      "properties": {
+        "publisher": "[variables('cseExtPublisher')]",
+        "type": "[variables('cseExtName')]",
+        "typeHandlerVersion": "[variables('cseExtVersion')]",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [ "[variables('csExtension')[variables('internalOSType')].script]" ],
+          "commandToExecute": "[concat(variables('csExtension')[variables('internalOSType')].scriptCall, ' -DBDataLUNS \"', reference(variables('nestedDeploymentName')).outputs.dbDataLUNs.value , '\" -DBLogLUNS \"', reference(variables('nestedDeploymentName')).outputs.dbLogLUNs.value, '\"')]"
+        }
+      }
+    }
+  ]
+}
