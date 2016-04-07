@@ -123,7 +123,7 @@ $Offer = "check-point-r77-10"
 #                "sg-byol" - for Bring Your Own License
 #                "sg-ngtp" - for a Pay-As-You-Go offering 
 $SKU = "sg-byol"
-$Version = "latest"
+$Version = "77.30.8009043"
 
 #############################################################################
 # End of parameters
