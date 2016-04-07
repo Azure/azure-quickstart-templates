@@ -19,23 +19,24 @@ echo "vmname: $VMNAME"
 if [ $1 = 'From_Source' ]; then
 ## Compile from Source
 sudo apt-get update
-sudo apt-get -y install git build-essential libssl-dev libdb-dev libdb++-dev libboost-all-dev libqrencode-dev unzip pwgen
+sudo apt-get -y install git build-essential libssl-dev libdb-dev libdb++-dev libboost-all-dev libqrencode-dev unzip pwgen miniupnpc libminiupnpc-dev
 cd /usr/local/src/
 sudo git clone https://github.com/Whitecoin-org/Whitecoin
 cd Whitecoin/src 
-sudo make -f makefile.unix 
+sudo make -f makefile.unix
 
 sudo cp whitecoind /usr/bin/whitecoind
 
 else    
 ## Download Binaries
 sudo apt-get update
-sudo apt-get -y install git build-essential libssl-dev libdb-dev libdb++-dev libboost-all-dev libqrencode-dev unzip pwgen
+sudo apt-get -y install git build-essential libssl-dev libdb-dev libdb++-dev libboost-all-dev libqrencode-dev unzip pwgen miniupnpc libminiupnpc-dev
 cd /usr/local/src/
 DOWNLOADFILE=$(curl -s https://api.github.com/repos/Whitecoin-org/Whitecoin/releases | grep browser_download_url | grep linux64 | head -n 1 | cut -d '"' -f 4)
 DOWNLOADNAME=$(curl -s https://api.github.com/repos/Whitecoin-org/Whitecoin/releases | grep name | grep linux64 | head -n 1 | cut -d '"' -f 4)
 sudo wget $DOWNLOADFILE
 sudo unzip $DOWNLOADNAME
+sudo chmod 755 whitecoind
 sudo cp whitecoind /usr/bin/whitecoind
 fi
 
