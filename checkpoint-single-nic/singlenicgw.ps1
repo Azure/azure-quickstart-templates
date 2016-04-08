@@ -117,10 +117,13 @@ if (!$Password -and !$SSHPublicKey) {
 }
 
 $StorageAccount = $StorageAccount.ToLower()
-if (!($StorageAccount -cmatch "^[a-z0-9]{3,24}$")) {
-    Throw "The StorageAccount should be 3-24 lower case alphanumeric characters"
+if (!($StorageAccount -cmatch "^[a-z0-9]*$")) {
+    Throw "The StorageAccount should contain only lower case alphanumeric characters"
 }
-
+$set    = "abcdefghijklmnopqrstuvwxyz0123456789".ToCharArray()
+for (; $StorageAccount.Length -lt 24; $x++) {
+    $StorageAccount += $set | Get-Random
+}
 
 # Login:
 Login-AzureRmAccount
