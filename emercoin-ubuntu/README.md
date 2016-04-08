@@ -29,5 +29,7 @@ When you launch the installation of the VM, you need to specify the following pa
  3. then expand your resources, and public ip address of your node.
 
 2. Connect to your node
- 1. SSH to the public ip of your node as the user you specified for `adminUsername`, enter your `adminPassword` and then try to use the cli-client by `emc help` or `emc getinfo`
- 2. Point your browser to the public ip of your node, sign in with the user you specified for `adminUsername`, enter your `adminPassword` (note that browser may show you a warning of bad certificate - it's OK, you may replace the self-signed certificates by yours at /etc/ssl/emc/emcweb*)
+ 1. SSH to the public ip of your node as the user you specified for `adminUsername`, enter your `adminPassword`
+ 2. Try to use the cli-client by `emc help` or `emc getinfo`
+ 3. Run `emcweb-useradd` and specify credentials for the Emercoin Web Wallet
+ 4. Point your browser to the public ip of your node, sign in with login and password specified before (note that browser may show you a warning of bad certificate - it's OK, you may replace the self-signed certificates by yours at /etc/ssl/emc/emcweb*). You have check endpoints in openning port 80/tcp and 443/tcp to be accessed to the Emercoin Web Wallet.
