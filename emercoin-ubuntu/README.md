@@ -13,7 +13,6 @@ Once your deployment is complete you will be able to connect to the Emercoin pub
 
 # Template Parameters
 When you launch the installation of the VM, you need to specify the following parameters:
-* `newStorageAccountNamePrefix`: make sure this is a unique identifier. Azure Storage's accounts are global so make sure you use a prefix that is unique to your account otherwise there is a good change it will clash with names already in use.
 * `vmDnsName`: this is the public DNS name for the VM that you will use interact with your console. You just need to specify an unique name.
 * `adminUsername`: self-explanatory. This is the account you will use for connecting to the node
 * `adminPassword`: self-explanatory. Be aware that Azure requires passwords to have One upper case, one lower case, a special character, and a number
@@ -31,5 +30,4 @@ When you launch the installation of the VM, you need to specify the following pa
 2. Connect to your node
  1. SSH to the public ip of your node as the user you specified for `adminUsername`, enter your `adminPassword`
  2. Try to use the cli-client by `emc help` or `emc getinfo`
- 3. Run `emcweb-useradd` and specify credentials for the Emercoin Web Wallet
- 4. Point your browser to the public ip of your node, sign in with login and password specified before (note that browser may show you a warning of bad certificate - it's OK, you may replace the self-signed certificates by yours at /etc/ssl/emc/emcweb*). You have check endpoints in openning port 80/tcp and 443/tcp to be accessed to the Emercoin Web Wallet.
+ 3. Point your browser to the public ip of your node, sign in with `adminUsername` and `adminPassword` specified before (note that browser may show you a warning of bad certificate - it's OK, you may replace the self-signed certificates by yours at /etc/ssl/emc/emcweb*). Make sure you have opened 80/tcp and 443/tcp ports.
