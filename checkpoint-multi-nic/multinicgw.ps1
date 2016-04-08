@@ -143,10 +143,10 @@ if (!$Password -and !$SSHPublicKey) {
     Throw "A password or public key must be specified" 
 }
 
-if ($StorageAccount.Length -lt 3 -or $StorageAccount.Length -gt 24) {
+$StorageAccount = $StorageAccount.ToLower()
+if (!($StorageAccount -cmatch "^[a-z0-9]{3,24}$")) {
     Throw "The StorageAccount should be 3-24 lower case alphanumeric characters"
 }
-$StorageAccount = $StorageAccount.ToLower()
 
 # Login:
 Login-AzureRmAccount
