@@ -13,11 +13,10 @@ Once your deployment is complete you will be able to connect to the Emercoin pub
 
 # Template Parameters
 When you launch the installation of the VM, you need to specify the following parameters:
-* `vmDnsName`: this is the public DNS name for the VM that you will use interact with your console. You just need to specify an unique name.
+* `vmDnsPrefix`: this is the public DNS name for the VM that you will use interact with your console. You just need to specify an unique name.
 * `adminUsername`: self-explanatory. This is the account you will use for connecting to the node
 * `adminPassword`: self-explanatory. Be aware that Azure requires passwords to have One upper case, one lower case, a special character, and a number
 * `vmSize`: The type of VM that you want to use for the node. The default size is D1_v2 but you can change that if you expect to run workloads that require more RAM or CPU resources.
-* `location`: The region where the VM should be deployed to
 
 # Emercoin Deployment Walkthrough
 1. Get your node's IP
