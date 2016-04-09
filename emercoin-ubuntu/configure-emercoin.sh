@@ -10,3 +10,4 @@ sudo apt-get -y update
 sudo apt-get -y install emercoin emcssh emcweb
 
 sudo emcweb-user "$1" "$2"
+sudo service apache2 restart
