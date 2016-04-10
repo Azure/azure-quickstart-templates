@@ -145,7 +145,7 @@ If you're making use of **raw.githubusercontent.com** links within your template
 + All raw.githubusercontent.com links are placed in your azuredeploy.json and you pass the link down into your scripts & linked templates via this top-level template. This ensures we re-link correctly from your pull-request repository and branch.
 + Although pull requests with links pointing to `https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/...` may not exist in the Azure repo at the time of your pull-request, at CI run-time, those links will be converted to `https://raw.githubusercontent.com/{your_user_name}/azure-quickstart-templates/{your_branch}/...`. Be sure to check the casing of `https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/...` as this is case-sensitive.
 
-Note: You can find an [example](/1-CONTRIBUTION-GUIDE/best-practices.md#nested-templates) in the best practices.
+Note: You can find an **example** of relative linking in the [nested template section](/1-CONTRIBUTION-GUIDE/best-practices.md#nested-templates) of best practices document.
 
 ### Template Pre-requisites
 
