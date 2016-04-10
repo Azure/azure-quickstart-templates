@@ -226,7 +226,7 @@ Define a complex object variable in the azuredeploy.json that contains the absol
     "properties": {
       "mode": "Incremental",
       "templateLink": {
-        "uri": "[uri(variables('template').base, variables('template').shared)]",
+        "uri": "[concat(variables('template').base, variables('template').shared)]",
         "contentVersion": "1.0.0.0"
       }
     }
