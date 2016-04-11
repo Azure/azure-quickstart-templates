@@ -8,15 +8,15 @@ cd /tmp/
 wget http://mysql-master-ha.googlecode.com/files/mha4mysql-node_0.53_all.deb > /dev/null 2>&1
 wget http://mysql-master-ha.googlecode.com/files/mha4mysql-manager_0.53_all.deb > /dev/null 2>&1
 apt-get update > /dev/null 2>&1
-apt-get install libdbd-mysql-perl -y
-apt-get install libconfig-tiny-perl -y
-apt-get install liblog-dispatch-perl -y
-apt-get install libparallel-forkmanager-perl -y
-dpkg -i mha4mysql-node_0.53_all.deb
-dpkg -i mha4mysql-manager_0.53_all.deb
+apt-get install libdbd-mysql-perl -y > /dev/null 2>&1
+apt-get install libconfig-tiny-perl -y > /dev/null 2>&1
+apt-get install liblog-dispatch-perl -y > /dev/null 2>&1
+apt-get install libparallel-forkmanager-perl -y > /dev/null 2>&1
+dpkg -i mha4mysql-node_0.53_all.deb > /dev/null 2>&1
+dpkg -i mha4mysql-manager_0.53_all.deb > /dev/null 2>&1
 
 #install mysql-client
-apt-get install mysql-client -y
+apt-get install mysql-client -y > /dev/null 2>&1
 
 #configure mha manager
 mkdir -p /var/log/masterha/app1
@@ -55,10 +55,10 @@ EOF
 
 #install haproxy
 cd /tmp
-wget http://www.haproxy.org/download/1.6/src/haproxy-1.6.3.tar.gz
+wget http://www.haproxy.org/download/1.6/src/haproxy-1.6.3.tar.gz > /dev/null 2>&1
 tar zxvf haproxy-1.6.3.tar.gz
 cd haproxy-1.6.3
-apt-get install make gcc -y
+apt-get install make gcc -y > /dev/null 2>&1
 
 make TARGET=linux2628 PREFIX=/usr/local/haproxy
 make install PREFIX=/usr/local/haproxy
