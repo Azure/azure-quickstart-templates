@@ -42,7 +42,28 @@ def render_bosh_manifest(settings):
     if os.path.exists(bosh_template):
         with open(bosh_template, 'r') as tmpfile:
             contents = tmpfile.read()
-        for k in ["SUBNET_ADDRESS_RANGE_FOR_BOSH", "VNET_NAME", "SUBNET_NAME_FOR_BOSH", "SUBSCRIPTION_ID", "DEFAULT_STORAGE_ACCOUNT_NAME", "RESOURCE_GROUP_NAME", "KEEP_UNREACHABLE_VMS", "TENANT_ID", "CLIENT_ID", "CLIENT_SECRET", "BOSH_PUBLIC_IP", "NSG_NAME_FOR_BOSH", "BOSH_RELEASE_URL", "BOSH_RELEASE_SHA1", "BOSH_AZURE_CPI_RELEASE_URL", "BOSH_AZURE_CPI_RELEASE_SHA1", "STEMCELL_URL", "STEMCELL_SHA1", "ENVIRONMENT"]:
+        keys = [
+            "SUBNET_ADDRESS_RANGE_FOR_BOSH",
+            "VNET_NAME",
+            "SUBNET_NAME_FOR_BOSH",
+            "SUBSCRIPTION_ID",
+            "DEFAULT_STORAGE_ACCOUNT_NAME",
+            "RESOURCE_GROUP_NAME",
+            "KEEP_UNREACHABLE_VMS",
+            "TENANT_ID",
+            "CLIENT_ID",
+            "CLIENT_SECRET",
+            "BOSH_PUBLIC_IP",
+            "NSG_NAME_FOR_BOSH",
+            "BOSH_RELEASE_URL",
+            "BOSH_RELEASE_SHA1",
+            "BOSH_AZURE_CPI_RELEASE_URL",
+            "BOSH_AZURE_CPI_RELEASE_SHA1",
+            "STEMCELL_URL",
+            "STEMCELL_SHA1",
+            "ENVIRONMENT"
+        ]
+        for k in keys:
             v = settings[k]
             contents = re.compile(re.escape("REPLACE_WITH_{0}".format(k))).sub(str(v), contents)
         contents = re.compile(re.escape("REPLACE_WITH_SSH_PUBLIC_KEY")).sub(ssh_public_key, contents)
@@ -107,9 +128,10 @@ def render_cloud_foundry_deployment_cmd(settings):
     if os.path.exists(cloudfoundry_deployment_cmd):
         with open(cloudfoundry_deployment_cmd, 'r') as tmpfile:
             contents = tmpfile.read()
-        key = "CF_RELEASE_URL"
-        value = settings[key]
-        contents = re.compile(re.escape("REPLACE_WITH_{0}".format(key))).sub(value, contents)
+        keys = ["CF_RELEASE_URL", "STEMCELL_URL"]
+        for key in keys:
+            value = settings[key]
+            contents = re.compile(re.escape("REPLACE_WITH_{0}".format(key))).sub(value, contents)
         with open(cloudfoundry_deployment_cmd, 'w') as tmpfile:
             tmpfile.write(contents)
 
