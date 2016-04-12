@@ -122,7 +122,7 @@ $SKU = "sg-byol"
 $IdleTimeoutInMinutes = 4
 $Publisher = "checkpoint"
 $Offer = "check-point-r77-10"
-$Version = "77.30.8009043"
+$Version = "latest"
 
 # The following services are needed in order to manage the cluster members from an on premise management server
 $CheckPointServices = @(
