@@ -5,27 +5,38 @@
         "dnsLabelPrefix": {
             "type": "string",
             "metadata": {
-                "description": "Unique public DNS prefix for the deployment. The fqdn will look something like '<dnsname>.westus.cloudapp.azure.com'. Up to 62 chars, digits or dashes, lowercase, should start with a letter: must conform to '^[a-z][a-z0-9-]{1,61}[a-z0-9]$'."
+                "description": "Unique public DNS prefix for the deployment. The fqdn will look something like '<dnsname>.westus.cloudapp.azure.com'. Up to 62 chars, digits or dashes, lowercase, should start with a letter: must conform to '^[a-z][a-z0-9-]{1,61}[a-z0-9]$'. For example johndns1 will result the final RDWEB access url like https://johndns1.westus.cloudapp.azure.com/RDWeb"
             }
         },
         "adDomainName": {
             "type": "string",
             "metadata": {
-                "description": "The FQDN of the AD domain"
+                "description": "The FQDN of the AD domain. For example contoso.com"
             }
         },
         "adminUsername": {
             "type": "string",
             "metadata": {
-                "description": "The name of the administrator of the new VM and the domain. Exclusion list: 'administrator'"
+                "description": "The name of the administrator of the new VM and the domain. Exclusion list: 'administrator'. For example johnadmin"
             }
         },
-        "adminPassword": {
-            "type": "securestring",
-            "metadata": {
-                "description": "The password for the administrator account of the new VM and the domain"
-            }
-        },
+      "adminPassword": {
+        "type": "securestring",
+        "metadata": {
+          "description": "The password for the administrator account of the new VM and the domain"
+        }
+      },
+      "imageSKU": {
+      "type": "string",
+      "allowedValues": [
+        "2012-R2-Datacenter",
+        "Windows-Server-Technical-Preview"
+      ],
+      "metadata": {
+        "description": "Windows server SKU"
+      },
+      "defaultValue": "Windows-Server-Technical-Preview"
+    },
         "numberOfRdshInstances": {
             "type": "int",
             "defaultValue": 2,
@@ -42,10 +53,9 @@
         }
     },
     "variables": {
-        "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'RDS', 'Storage')]",
+        "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'rds', 'storage')]",
         "imagePublisher": "MicrosoftWindowsServer",
         "imageOffer": "WindowsServer",
-        "imageSKU": "2012-R2-Datacenter",
         "vnetAddressRange": "10.0.0.0/16",
         "subnetAddressRange": "10.0.0.0/24",
         "dnsServerPrivateIp": "10.0.0.8",
@@ -77,10 +87,22 @@
                 "accountType": "Standard_LRS"
             }
         },
-        {
+      {
+        "apiVersion": "[variables('apiVersion')]",
+        "type": "Microsoft.Compute/availabilitySets",
+        "name": "gw-availabilityset",
+        "location": "[resourceGroup().location]"
+      },
+      {
+        "apiVersion": "[variables('apiVersion')]",
+        "type": "Microsoft.Compute/availabilitySets",
+        "name": "cb-availabilityset",
+        "location": "[resourceGroup().location]"
+      },
+      {
             "apiVersion": "[variables('apiVersion')]",
             "type": "Microsoft.Compute/availabilitySets",
-            "name": "availabilityset",
+            "name": "rdsh-availabilityset",
             "location": "[resourceGroup().location]"
         },
         {
@@ -201,7 +223,7 @@
                     "imageReference": {
                         "publisher": "[variables('imagePublisher')]",
                         "offer": "[variables('imageOffer')]",
-                        "sku": "[variables('imageSku')]",
+                        "sku": "[parameters('imageSku')]",
                         "version": "latest"
                     },
                     "osDisk": {
@@ -392,7 +414,7 @@
             "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
-                "[resourceId('Microsoft.Compute/availabilitySets', 'availabilityset')]",
+                "[resourceId('Microsoft.Compute/availabilitySets', 'gw-availabilityset')]",
                 "Microsoft.Network/networkInterfaces/gw-nic"
             ],
             "properties": {
@@ -400,7 +422,7 @@
                     "vmSize": "Standard_D2"
                 },
                 "availabilitySet": {
-                    "id": "[resourceId('Microsoft.Compute/availabilitySets', 'availabilityset')]"
+                    "id": "[resourceId('Microsoft.Compute/availabilitySets', 'gw-availabilityset')]"
                 },
                 "osProfile": {
                     "computerName": "gateway",
@@ -411,7 +433,7 @@
                     "imageReference": {
                         "publisher": "[variables('imagePublisher')]",
                         "offer": "[variables('imageOffer')]",
-                        "sku": "[variables('imageSKU')]",
+                        "sku": "[parameters('imageSKU')]",
                         "version": "latest"
                     },
                     "osDisk": {
@@ -475,12 +497,16 @@
                 "count": "[parameters('numberOfRdshInstances')]"
             },
             "dependsOn": [
-                "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
-                "[concat('Microsoft.Network/networkInterfaces/', 'rdsh-', copyindex(), '-nic')]"
+              "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+              "[resourceId('Microsoft.Compute/availabilitySets', 'rdsh-availabilityset')]",
+              "[concat('Microsoft.Network/networkInterfaces/', 'rdsh-', copyindex(), '-nic')]"
             ],
             "properties": {
-                "hardwareProfile": {
-                    "vmSize": "[parameters('rdshVmSize')]"
+              "hardwareProfile": {
+                "vmSize": "[parameters('rdshVmSize')]"
+              },
+              "availabilitySet": {
+                    "id": "[resourceId('Microsoft.Compute/availabilitySets', 'rdsh-availabilityset')]"
                 },
                 "osProfile": {
                     "computerName": "[concat('rdsh-', copyIndex())]",
@@ -491,7 +517,7 @@
                     "imageReference": {
                         "publisher": "[variables('imagePublisher')]",
                         "offer": "[variables('imageOffer')]",
-                        "sku": "[variables('imageSKU')]",
+                        "sku": "[parameters('imageSKU')]",
                         "version": "latest"
                     },
                     "osDisk": {
@@ -552,7 +578,7 @@
             "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
-                "[resourceId('Microsoft.Compute/availabilitySets', 'availabilityset')]",
+                "[resourceId('Microsoft.Compute/availabilitySets', 'cb-availabilityset')]",
                 "Microsoft.Network/networkInterfaces/cb-nic"
             ],
             "properties": {
@@ -560,7 +586,7 @@
                     "vmSize": "Standard_D2"
                 },
                 "availabilitySet": {
-                    "id": "[resourceId('Microsoft.Compute/availabilitySets', 'availabilityset')]"
+                    "id": "[resourceId('Microsoft.Compute/availabilitySets', 'cb-availabilityset')]"
                 },
                 "osProfile": {
                     "computerName": "broker",
@@ -571,7 +597,7 @@
                     "imageReference": {
                         "publisher": "[variables('imagePublisher')]",
                         "offer": "[variables('imageOffer')]",
-                        "sku": "[variables('imageSKU')]",
+                        "sku": "[parameters('imageSKU')]",
                         "version": "latest"
                     },
                     "osDisk": {

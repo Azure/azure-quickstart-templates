@@ -2,149 +2,247 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "newStorageAccountName": {
-      "type": "string",
-      "metadata": {
-        "description": "Unique DNS Name for the Storage Account where the Virtual Machine's disks will be placed. It must be between 3 and 24 characters in length and use numbers and lower-case letters only."
-      }
-    },
-    "virtualNetworkName": {
-      "type": "string",
-      "defaultValue": "boshvnet-crp",
-      "metadata": {
-        "description": "name of the virtual network"
-      }
-    },
-    "subnetNameForBosh": {
-      "type": "string",
-      "defaultValue": "Bosh",
-      "metadata": {
-        "description": "name of the subnet for Bosh"
-      }
-    },
-    "subnetNameForCloudFoundry": {
-      "type": "string",
-      "defaultValue": "CloudFoundry",
-      "metadata": {
-        "description": "name of the subnet for CloudFoundy"
-      }
-    },
     "vmName": {
       "type": "string",
       "metadata": {
         "description": "name of the vm, will be used as DNS Name for the Public IP used to access the Virtual Machine"
       }
     },
-    "vmSize": {
-      "type": "string",
-      "defaultValue": "Standard_D1",
-      "allowedValues": [
-        "Standard_A1",
-        "Standard_A2",
-        "Standard_A3",
-        "Standard_A4",
-        "Standard_D1",
-        "Standard_D2",
-        "Standard_D3",
-        "Standard_D4"
-      ],
-      "metadata": {
-        "description": "Size of vm"
-      }
-    },
     "adminUsername": {
       "type": "string",
       "metadata": {
-        "description": "User name for the Virtual Machine."
+        "description": "User name for the Virtual Machine"
       }
     },
-    "adminPassword": {
-      "type": "securestring",
+    "sshKeyData": {
+      "type": "string",
       "metadata": {
-        "description": "Password for the Virtual Machine."
-      }
-    },
-    "enableDNSOnDevbox": {
-      "type": "bool",
-      "defaultValue": true,
-      "allowedValues": [
-        true,
-        false
-      ],
-      "metadata": {
-        "description": "A default DNS will be setup in the devbox if it is true."
+        "description": "Please copy the content of your SSH RSA public key and paste it here. You can use \"ssh-keygen -t rsa -b 2048\" to generate your SSH key pairs."
       }
     },
     "tenantID": {
       "type": "string",
-      "defaultValue": "TENANT-ID",
+      "minLength": 36,
+      "maxLength": 36,
       "metadata": {
         "description": "ID of the tenant. See https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/blob/master/docs/guidance.md"
       }
     },
     "clientID": {
       "type": "string",
-      "defaultValue": "CLIENT-ID",
+      "minLength": 36,
+      "maxLength": 36,
       "metadata": {
         "description": "ID of the client. See https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/blob/master/docs/guidance.md"
       }
     },
     "clientSecret": {
       "type": "securestring",
-      "defaultValue": "CLIENT-SECRET",
       "metadata": {
         "description": "secret of the client. See https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/blob/master/docs/guidance.md"
+      }
+    },
+    "autoDeployBosh": {
+      "type": "string",
+      "defaultValue": "enabled",
+      "allowedValues": [
+        "enabled",
+        "disabled"
+      ],
+      "metadata": {
+        "description": "The flag allowing to deploy Bosh automatically or not"
       }
     }
   },
   "variables": {
-    "api-version": "2015-05-01-preview",
+    "apiVersion": "2015-06-15",
     "location": "[resourceGroup().location]",
-    "storageAccountType": "Standard_GRS",
+
+    "defaultStorageAccountName": "[concat(uniqueString(resourceGroup().id), 'cfdefaultsa')]",
+    "storageAccountType": "Standard_RAGRS",
     "vmStorageAccountContainerName": "vhds",
-    "storageid": "[resourceId('Microsoft.Storage/storageAccounts', parameters('newStorageAccountName'))]",
-    "virtualNetworkName": "[parameters('virtualNetworkName')]",
-    "addressPrefix": "10.0.0.0/16",
+    "storageid": "[resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccountName'))]",
+
+    "virtualNetworkName": "boshvnet-crp",
+    "virtualNetworkAddressSpace": "10.0.0.0/16",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
-    "subnet1Name": "[parameters('subnetNameForBosh')]",
-    "subnet1Prefix": "10.0.0.0/24",
-    "subnet1Ref": "[concat(variables('vnetID'),'/subnets/', variables('subnet1Name'))]",
-    "subnet2Name": "[parameters('subnetNameForCloudFoundry')]",
-    "subnet2Prefix": "10.0.16.0/24",
+    "subnetNameForBosh": "Bosh",
+    "subnetAddressRangeForBosh": "10.0.0.0/24",
+    "subnetRefForBosh": "[concat(variables('vnetID'),'/subnets/', variables('subnetNameForBosh'))]",
+    "subnetNameForCloudFoundry": "CloudFoundry",
+    "subnetAddressRangeForCloudFoundry": "10.0.16.0/20",
+    "subnetNameForDiego": "Diego",
+    "subnetAddressRangeForDiego": "10.0.32.0/20",
+
+    "vmSize": "Standard_D1",
     "nicName": "[parameters('vmName')]",
     "devboxPrivateIPAddress": "10.0.0.100",
-    "devboxPublicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('vmName'),'-devbox'))]",
     "imagePublisher": "Canonical",
     "imageOffer": "UbuntuServer",
-    "ubuntuOSVersion": "14.04.2-LTS",
-    "repository": "Azure",
-    "branch": "master",
-    "githubPath": "[concat('https://raw.githubusercontent.com/', variables('repository'), '/azure-quickstart-templates/', variables('branch'), '/bosh-setup/')]"
+    "ubuntuOSVersion": "14.04.3-LTS",
+    "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
+
+    "baseUri": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/bosh-setup/",
+
+    "environment": "AzureCloud",
+    "serviceHostBase": "core.windows.net",
+    "keepUnreachableVMs": "false",
+    "devboxNetworkSecurityGroup": "nsg-devbox",
+    "boshNetworkSecurityGroup": "nsg-bosh",
+    "cfNetworkSecurityGroup": "nsg-cf"
   },
   "resources": [
     {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('boshNetworkSecurityGroup')]",
+      "location": "[variables('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "ssh",
+            "properties": {
+              "description": "Allow SSH",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 200,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "bosh-agent",
+            "properties": {
+              "description": "Allow bosh-agent",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "6868",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 201,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "bosh-director",
+            "properties": {
+              "description": "Allow bosh-director",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "25555",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 202,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "dns",
+            "properties": {
+              "description": "Allow DNS",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "53",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 203,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('devboxNetworkSecurityGroup')]",
+      "location": "[variables('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "ssh",
+            "properties": {
+              "description": "Allow SSH",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 200,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('cfNetworkSecurityGroup')]",
+      "location": "[variables('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "cf-https",
+            "properties": {
+              "description": "Allow cf-https",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 200,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "cf-log",
+            "properties": {
+              "description": "Allow cf-log",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "4443",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 201,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[parameters('newStorageAccountName')]",
-      "apiVersion": "[variables('api-version')]",
+      "name": "[variables('defaultStorageAccountName')]",
+      "apiVersion": "[variables('apiVersion')]",
       "location": "[variables('location')]",
       "properties": {
         "accountType": "[variables('storageAccountType')]"
       }
     },
     {
-      "apiVersion": "[variables('api-version')]",
+      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[concat(parameters('vmName'),'-devbox')]",
       "location": "[variables('location')]",
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
-          "domainNameLabel": "[parameters('vmName')]"
+          "domainNameLabel": "[concat(toLower(parameters('vmName')), '-', uniqueString(resourceGroup().id))]"
         }
       }
     },
     {
-      "apiVersion": "[variables('api-version')]",
+      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[concat(parameters('vmName'),'-bosh')]",
       "location": "[variables('location')]",
@@ -153,7 +251,7 @@
       }
     },
     {
-      "apiVersion": "[variables('api-version')]",
+      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[concat(parameters('vmName'), '-cf')]",
       "location": "[variables('location')]",
@@ -162,42 +260,52 @@
       }
     },
     {
-      "apiVersion": "[variables('api-version')]",
+      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[variables('location')]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
-            "[variables('addressPrefix')]"
+            "[variables('virtualNetworkAddressSpace')]"
           ]
         },
         "subnets": [
           {
-            "name": "[variables('subnet1Name')]",
+            "name": "[variables('subnetNameForBosh')]",
             "properties": {
-              "addressPrefix": "[variables('subnet1Prefix')]"
+              "addressPrefix": "[variables('subnetAddressRangeForBosh')]"
             }
           },
           {
-            "name": "[variables('subnet2Name')]",
+            "name": "[variables('subnetNameForCloudFoundry')]",
             "properties": {
-              "addressPrefix": "[variables('subnet2Prefix')]"
+              "addressPrefix": "[variables('subnetAddressRangeForCloudFoundry')]"
+            }
+          },
+          {
+            "name": "[variables('subnetNameForDiego')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetAddressRangeForDiego')]"
             }
           }
         ]
       }
     },
     {
-      "apiVersion": "[variables('api-version')]",
+      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
       "location": "[variables('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', parameters('vmName'), '-devbox')]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        "[concat('Microsoft.Network/publicIPAddresses/', concat(parameters('vmName'), '-devbox'))]",
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('devboxNetworkSecurityGroup'))]"
       ],
       "properties": {
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('devboxNetworkSecurityGroup'))]"
+        },
         "ipConfigurations": [
           {
             "name": "ipconfig1",
@@ -205,10 +313,10 @@
               "privateIPAllocationMethod": "Static",
               "privateIPAddress": "[variables('devboxPrivateIPAddress')]",
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat(parameters('vmName'),'-devbox'))]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('vmName'), '-devbox'))]"
               },
               "subnet": {
-                "id": "[variables('subnet1Ref')]"
+                "id": "[variables('subnetRefForBosh')]"
               }
             }
           }
@@ -216,22 +324,32 @@
       }
     },
     {
-      "apiversion": "[variables('api-version')]",
+      "apiversion": "[variables('apiVersion')]",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('vmName')]",
       "location": "[variables('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/',parameters('newStorageAccountName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/',variables('defaultStorageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/',variables('nicName'))]"
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[parameters('vmSize')]"
+          "vmSize": "[variables('vmSize')]"
         },
         "osProfile": {
           "computerName": "[parameters('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": "true",
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[variables('sshKeyPath')]",
+                  "keyData": "[parameters('sshKeyData')]"
+                }
+              ]
+            }
+          }
         },
         "storageProfile": {
           "imageReference": {
@@ -243,7 +361,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',parameters('vmName'),'-osdisk.vhd')]"
+              "uri": "[concat('http://',variables('defaultStorageAccountName'),'.blob.',variables('serviceHostBase'),'/',variables('vmStorageAccountContainerName'),'/',parameters('vmName'),'-osdisk.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -261,7 +379,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('vmName'),'/initdevbox')]",
-      "apiVersion": "[variables('api-version')]",
+      "apiVersion": "[variables('apiVersion')]",
       "location": "[variables('location')]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
@@ -269,27 +387,35 @@
       "properties": {
         "publisher": "Microsoft.OSTCExtensions",
         "type": "CustomScriptForLinux",
-        "typeHandlerVersion": "1.2",
+        "typeHandlerVersion": "1.4",
         "settings": {
           "fileUris": [
-            "[concat(variables('githubPath'),'launch_script.sh')]"
+            "[uri(variables('baseUri'), 'scripts/setup_env')]",
+            "[uri(variables('baseUri'), 'scripts/setup_env.py')]",
+            "[uri(variables('baseUri'), 'scripts/create_cert.sh')]",
+            "[uri(variables('baseUri'), 'scripts/init.sh')]",
+            "[uri(variables('baseUri'), 'scripts/deploy_bosh.sh')]",
+            "[uri(variables('baseUri'), 'scripts/deploy_cloudfoundry.sh')]",
+            "[uri(variables('baseUri'), 'manifests/bosh.yml')]",
+            "[uri(variables('baseUri'), 'manifests/single-vm-cf.yml')]",
+            "[uri(variables('baseUri'), 'manifests/multiple-vm-cf.yml')]"
           ],
-          "commandToExecute": "[concat('sh launch_script.sh',' ',variables('githubPath'))]",
-          "VNET-NAME": "[variables('virtualNetworkName')]",
-          "SUBNET-NAME": "[variables('subnet1Name')]",
-          "SUBNET-NAME-FOR-CF": "[variables('subnet2Name')]",
-          "SUBSCRIPTION-ID": "[subscription().subscriptionId]",
-          "STORAGE-ACCOUNT-NAME": "[parameters('newStorageAccountName')]",
-          "STORAGE-ACCESS-KEY": "[listKeys(variables('storageid'),variables('api-version')).key1]",
-          "RESOURCE-GROUP-NAME": "[resourceGroup().name]",
-          "TENANT-ID": "[parameters('tenantID')]",
-          "CLIENT-ID": "[parameters('clientID')]",
-          "CLIENT-SECRET": "[parameters('clientSecret')]",
-          "cf-ip": "[reference(concat(parameters('vmName'),'-cf')).ipAddress]",
-          "username": "[parameters('adminUserName')]",
-          "enable-dns": "[parameters('enableDNSOnDevbox')]"
+          "enableInternalDNSCheck": false
+        },
+        "protectedSettings": {
+          "commandToExecute": "[concat('./setup_env', ' ', '\"VNET_NAME:', variables('virtualNetworkName'), ';SUBNET_NAME_FOR_BOSH:', variables('subnetNameForBosh'), ';SUBNET_ADDRESS_RANGE_FOR_BOSH:', variables('subnetAddressRangeForBosh'), ';SUBNET_NAME_FOR_CLOUD_FOUNDRY:', variables('subnetNameForCloudFoundry'), ';SUBNET_ADDRESS_RANGE_FOR_CLOUD_FOUNDRY:', variables('subnetAddressRangeForCloudFoundry'), ';CLOUD_FOUNDRY_PUBLIC_IP:', reference(concat(parameters('vmName'),'-cf')).ipAddress, ';BOSH_PUBLIC_IP:', reference(concat(parameters('vmName'),'-bosh')).ipAddress, ';SUBSCRIPTION_ID:', subscription().subscriptionId, ';DEFAULT_STORAGE_ACCOUNT_NAME:', variables('defaultStorageAccountName'), ';STORAGE_ACCESS_KEY:', listKeys(variables('storageid'), variables('apiVersion')).key1, ';RESOURCE_GROUP_NAME:', resourceGroup().name, ';KEEP_UNREACHABLE_VMS:', variables('keepUnreachableVMs'), ';NSG_NAME_FOR_BOSH:', variables('boshNetworkSecurityGroup'), ';NSG_NAME_FOR_CLOUD_FOUNDRY:', variables('cfNetworkSecurityGroup'), '\" ', parameters('tenantID'), ' ', parameters('clientID'), ' \"', parameters('clientSecret'), '\" ', parameters('adminUserName'), ' ', parameters('autoDeployBosh'))]"
         }
       }
     }
-  ]
+  ],
+  "outputs": {
+    "sshDevBox": {
+      "type": "string",
+      "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(concat('Microsoft.Network/publicIPAddresses/', parameters('vmName'), '-devbox')).dnsSettings.fqdn)]"
+    },
+    "cloudFoundryIP": {
+      "type": "string",
+      "value": "[reference(concat(parameters('vmName'),'-cf')).ipAddress]"
+    }
+  }
 }

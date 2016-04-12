@@ -1,0 +1,1033 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "sapSystemId": {
+      "type": "string",
+      "maxLength": 3,
+      "minLength": 3,
+      "metadata": {
+        "description": "SAP System ID."
+      }
+    },
+    "osType": {
+      "type": "string",
+      "allowedValues": [ "Windows", "Linux" ],
+      "metadata": {
+        "description": "The operating system type of the private OS image."
+      }
+    },
+    "sapSystemSize": {
+      "type": "string",
+      "allowedValues": [ "Small < 30.000 SAPS", "Medium < 70.000 SAPS", "Large < 180.000 SAPS", "X-Large < 250.000 SAPS" ],
+      "defaultValue": "Small < 30.000 SAPS",
+      "metadata": {
+        "description": "The size of the SAP System you want to deploy."
+      }
+    },
+    "systemAvailability": {
+      "type": "string",
+      "allowedValues": [ "HA", "Not HA" ],
+      "defaultValue": "Not HA",
+      "metadata": {
+        "description": "Determines whether this is a high available deployment or not. A HA deployment contains multiple instances of single point of failures."
+      }
+    },
+    "userImageVhdUri": {
+      "type": "string",
+      "metadata": {
+        "description": "Uri of the user image."
+      }
+    },
+    "userImageStorageAccount": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the storage account where the user image is stored."
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Username for the Virtual Machine."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the Virtual Machine."
+      }
+    },
+    "newOrExistingSubnet": {
+      "type": "string",
+      "defaultValue": "new",
+      "allowedValues": [ "new", "existing" ],
+      "metadata": {
+        "description": "Determines whether a new virtual network and subnet should be created or an existing subnet should be used."
+      }
+    },
+    "subnetId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The id of the subnet you want to use."
+      }
+    }
+  },
+  "variables": {
+    "github": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sap-2-tier-marketplace-image/shared/",
+    
+    "internalOSType": "[parameters('osType')]",
+    "csExtension": {
+      "Windows": {
+        "Publisher": "Microsoft.Compute",
+        "Name": "CustomScriptExtension",
+        "Version": "1.7",
+        "script": "[concat(variables('github'), 'configureSAPVM.ps1')]",
+        "scriptCall": "powershell.exe -ExecutionPolicy bypass -File configureSAPVM.ps1"
+      },
+      "Linux": {
+        "Publisher": "Microsoft.OSTCExtensions",
+        "Name": "CustomScriptForLinux",
+        "Version": "1.3",
+        "script": "[concat(variables('github'), 'configureSAPVM.sh')]",
+        "scriptCall": "sh configureSAPVM.sh"
+      }
+    },
+    "cseExtPublisher": "[variables('csExtension')[variables('internalOSType')].Publisher]",
+    "cseExtName": "[variables('csExtension')[variables('internalOSType')].Name]",
+    "cseExtVersion": "[variables('csExtension')[variables('internalOSType')].Version]",
+    "csExtensionScript": "[variables('csExtension')[variables('internalOSType')].script]",
+    "csExtensionscriptCall": "[variables('csExtension')[variables('internalOSType')].scriptCall]",
+
+    "storageTypes": {
+      "Premium": "Premium_LRS",
+      "Standard": "Standard_LRS"
+    },
+
+    "vmSizes": {
+      "Small < 30.000 SAPS": {
+        "Not HA": {
+          "dbserversize": "Standard_GS2",
+          "dbservercount": 1,
+          "ascsserversize": "Standard_D13",
+          "ascsservercount": 1,
+          "diserversize": "Standard_D13",
+          "diservercount": 1
+        },
+        "HA": {
+          "dbserversize": "Standard_GS2",
+          "dbservercount": 2,
+          "ascsserversize": "Standard_D13",
+          "ascsservercount": 2,
+          "diserversize": "Standard_D13",
+          "diservercount": 1
+        }
+      },
+      "Medium < 70.000 SAPS": {
+        "Not HA": {
+          "dbserversize": "Standard_GS3",
+          "dbservercount": 1,
+          "ascsserversize": "Standard_D13",
+          "ascsservercount": 1,
+          "diserversize": "Standard_D13",
+          "diservercount": 4
+        },
+        "HA": {
+          "dbserversize": "Standard_GS3",
+          "dbservercount": 2,
+          "ascsserversize": "Standard_D13",
+          "ascsservercount": 2,
+          "diserversize": "Standard_D13",
+          "diservercount": 4
+        }
+      },
+
+      "Large < 180.000 SAPS": {
+        "Not HA": {
+          "dbserversize": "Standard_GS4",
+          "dbservercount": 1,
+          "ascsserversize": "Standard_D14",
+          "ascsservercount": 1,
+          "diserversize": "Standard_D14",
+          "diservercount": 5
+        },
+        "HA": {
+          "dbserversize": "Standard_GS4",
+          "dbservercount": 2,
+          "ascsserversize": "Standard_D11",
+          "ascsservercount": 2,
+          "diserversize": "Standard_D14",
+          "diservercount": 6
+        }
+      },
+      "X-Large < 250.000 SAPS": {
+        "Not HA": {
+          "dbserversize": "Standard_GS5",
+          "dbservercount": 1,
+          "ascsserversize": "Standard_D14",
+          "ascsservercount": 1,
+          "diserversize": "Standard_D14",
+          "diservercount": 9
+        },
+        "HA": {
+          "dbserversize": "Standard_GS5",
+          "dbservercount": 2,
+          "ascsserversize": "Standard_D11",
+          "ascsservercount": 2,
+          "diserversize": "Standard_D14",
+          "diservercount": 10
+        }
+      }
+    },
+    "dbvmSize": "[variables('vmSizes')[parameters('sapSystemSize')][parameters('systemAvailability')].dbserversize]",
+    "dbvmCount": "[variables('vmSizes')[parameters('sapSystemSize')][parameters('systemAvailability')].dbservercount]",
+    "ascsvmSize": "[variables('vmSizes')[parameters('sapSystemSize')][parameters('systemAvailability')].ascsserversize]",
+    "ascsvmCount": "[variables('vmSizes')[parameters('sapSystemSize')][parameters('systemAvailability')].ascsservercount]",
+    "divmSize": "[variables('vmSizes')[parameters('sapSystemSize')][parameters('systemAvailability')].diserversize]",
+    "divmCount": "[variables('vmSizes')[parameters('sapSystemSize')][parameters('systemAvailability')].diservercount]",
+    "location": "[resourceGroup().location]",
+    "sidlower": "[toLower(parameters('sapSystemId'))]",
+    "vmName": "[variables('sidlower')]",
+    "storageAccountName": "[concat(variables('sidlower'), uniqueString(variables('sidlower'), resourceGroup().id))]",
+    "vnetName": "[concat(variables('sidlower'), '-vnet')]",
+    "publicIPAddressType": "Dynamic",
+    "addressPrefix": "10.0.0.0/16",
+    "subnetName": "Subnet",
+    "subnetPrefix": "10.0.0.0/24",
+    "subnets": {
+      "new": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('vnetName')), '/subnets/', variables('subnetName'))]",
+      "existing": "[parameters('subnetId')]"
+    },
+    "selectedSubnetId": "[variables('subnets')[parameters('newOrExistingSubnet')]]",
+    "nestedDeploymentName": "nestedTemplate",
+    "nestedDeploymentNameVNet": "[concat(variables('nestedDeploymentName'), 'vnet')]",
+    "nestedDeploymentNamePIP": "[concat(variables('nestedDeploymentName'), 'pip')]",
+    "nestedDeploymentNameASCS": "[concat(variables('nestedDeploymentName'), 'ascs')]",
+    "nestedDeploymentNameDB": "[concat(variables('nestedDeploymentName'), 'db')]",
+    "nestedDeploymentNameDI": "[concat(variables('nestedDeploymentName'), 'di')]",
+    "nestedDeploymentNameProf": "[concat(variables('nestedDeploymentName'), 'prof')]",
+    "nestedDeploymentNameNIC": "[concat(variables('nestedDeploymentName'), 'nic')]",
+    "nestedDeploymentNameNICASCS": "[concat(variables('nestedDeploymentNameNIC'), 'ascs')]",
+    "nestedDeploymentNameNICDB": "[concat(variables('nestedDeploymentNameNIC'), 'db')]",
+    "nestedDeploymentNameNICDI": "[concat(variables('nestedDeploymentNameNIC'), 'di')]",
+
+    "publicIpNameASCS": "[concat(variables('sidlower'), '-pip-ascs')]",
+    "avSetNameASCS": "[concat(variables('sidlower'), '-avset-ascs')]",
+    "nestedDeploymentNameNSG": "[concat(variables('nestedDeploymentNameASCS'), 'nsg')]",
+    "nsgNameASCS": "[concat(variables('sidlower'), '-nsg-ascs')]",
+    "storageAccountNameASCS": "[concat('ascs', variables('storageAccountName'))]",
+    "internalStorageTypeASCS": "Standard_LRS",
+    "loadBalancerNameASCS": "[concat(variables('sidlower'), '-lb-ascs')]",
+    "lbProbePortInternalASCS": 62300,
+    "vmNameASCS": "[concat(variables('vmName'), '-ascs')]",
+    "nicNameASCS": "[concat(variables('sidlower'), '-nic-ascs')]",
+
+    "lbProbePortInternalDB": "62300",
+    "avSetNameDB": "[concat(variables('sidlower'), '-avset-db')]",
+    "storageAccountNameDB": "[concat('db', variables('storageAccountName'))]",
+    "internalStorageTypeDB": "Premium_LRS",
+    "loadBalancerNameDB": "[concat(variables('sidlower'), '-lb-db')]",
+    "nicNameDB": "[concat(variables('sidlower'), '-nic-db')]",
+    "vmNameDB": "[concat(variables('vmName'), '-db')]",
+
+    "avSetNameDI": "[concat(variables('sidlower'), '-avset-di')]",
+    "nicNameDI": "[concat(variables('sidlower'), '-nic-di')]",
+    "storageAccountNameDI": "[concat('di', variables('storageAccountName'))]",
+    "internalStorageTypeDI": "Standard_LRS",
+    "vmNameDI": "[concat(variables('vmName'), '-di')]",
+    "osDiskType": "userImage",
+    "apiVerion": "2015-06-15",
+    "apiVerionRm": "2015-01-01"
+
+  },
+  "resources": [
+    {
+      "apiVersion": "[variables('apiVerionRm')]",
+      "name": "[variables('nestedDeploymentNameVnet')]",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('github'), parameters('newOrExistingSubnet'), 'vnet.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "vnetName": { "value": "[variables('vnetName')]" },
+          "addressPrefix": { "value": "[variables('addressPrefix')]" },
+          "subnetName": { "value": "[variables('subnetName')]" },
+          "subnetPrefix": { "value": "[variables('subnetPrefix')]" },
+          "location": { "value": "[variables('location')]" }
+        }
+      }
+    },
+
+    {
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[variables('avSetNameASCS')]",
+      "apiVersion": "[variables('apiVerion')]",
+      "location": "[variables('location')]",
+      "properties": {
+        "platformFaultDomainCount": 3,
+        "platformUpdateDomainCount": 20
+      }
+    },
+
+    {
+      "apiVersion": "[variables('apiVerionRm')]",
+      "name": "[concat(variables('nestedDeploymentNamePIP'), '-', copyIndex())]",
+      "type": "Microsoft.Resources/deployments",
+      "copy": {
+        "name": "nicLoop",
+        "count": "[variables('ascsvmCount')]"
+      },
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('github'), parameters('newOrExistingSubnet'), 'pip.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "publicIpName": { "value": "[concat(variables('publicIpNameASCS'), '-', copyIndex())]" },
+          "publicIPAddressType": { "value": "[variables('publicIPAddressType')]" },
+          "location": { "value": "[variables('location')]" }
+        }
+      }
+    },
+
+    {
+      "apiVersion": "[variables('apiVerionRm')]",
+      "name": "[concat(variables('nestedDeploymentNameNSG'), '-', copyIndex())]",
+      "type": "Microsoft.Resources/deployments",
+      "copy": {
+        "name": "nicLoop",
+        "count": "[variables('ascsvmCount')]"
+      },
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('github'), parameters('newOrExistingSubnet'), 'nsg.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "nsgName": { "value": "[concat(variables('nsgNameASCS'), '-', copyIndex())]" },
+          "location": { "value": "[variables('location')]" },
+          "osType": { "value": "[variables('internalOSType')]" }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[concat(variables('storageAccountNameASCS'), copyIndex())]",
+      "apiVersion": "[variables('apiVerion')]",
+      "copy": {
+        "name": "nicLoop",
+        "count": "[variables('ascsvmCount')]"
+      },
+      "location": "[variables('location')]",
+      "properties": {
+        "accountType": "[variables('internalStorageTypeASCS')]"
+      }
+    },
+    {
+      "type": "Microsoft.Network/loadBalancers",
+      "name": "[variables('loadBalancerNameASCS')]",
+      "apiVersion": "[variables('apiVerion')]",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameVnet'))]"
+      ],
+      "location": "[variables('location')]",
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "properties": {
+              "subnet": {
+                "id": "[variables('selectedSubnetId')]"
+              },
+              "privateIPAllocationMethod": "Dynamic"
+            },
+            "name": "LoadBalancerFrontend"
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "BackendPool1"
+          }
+        ],
+        "loadBalancingRules": [
+          {
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/frontendIpConfigurations/LoadBalancerFrontend')]"
+              },
+              "backendAddressPool": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/backendAddressPools/BackendPool1')]"
+              },
+              "probe": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/probes/lbprobe')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 445,
+              "backendPort": 445,
+              "idleTimeoutInMinutes": 15
+            },
+            "name": "lbrule445"
+          },
+          {
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/frontendIpConfigurations/LoadBalancerFrontend')]"
+              },
+              "backendAddressPool": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/backendAddressPools/BackendPool1')]"
+              },
+              "probe": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/probes/lbprobe')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 3200,
+              "backendPort": 3200,
+              "idleTimeoutInMinutes": 15
+            },
+            "name": "lbrule3200"
+          },
+          {
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/frontendIpConfigurations/LoadBalancerFrontend')]"
+              },
+              "backendAddressPool": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/backendAddressPools/BackendPool1')]"
+              },
+              "probe": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/probes/lbprobe')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 3300,
+              "backendPort": 3300,
+              "idleTimeoutInMinutes": 15
+            },
+            "name": "lbrule3300"
+          },
+          {
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/frontendIpConfigurations/LoadBalancerFrontend')]"
+              },
+              "backendAddressPool": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/backendAddressPools/BackendPool1')]"
+              },
+              "probe": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/probes/lbprobe')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 3600,
+              "backendPort": 3600,
+              "idleTimeoutInMinutes": 15
+            },
+            "name": "lbrule3600"
+          },
+          {
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/frontendIpConfigurations/LoadBalancerFrontend')]"
+              },
+              "backendAddressPool": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/backendAddressPools/BackendPool1')]"
+              },
+              "probe": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/probes/lbprobe')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 3900,
+              "backendPort": 3900,
+              "idleTimeoutInMinutes": 15
+            },
+            "name": "lbrule3900"
+          },
+          {
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/frontendIpConfigurations/LoadBalancerFrontend')]"
+              },
+              "backendAddressPool": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/backendAddressPools/BackendPool1')]"
+              },
+              "probe": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/probes/lbprobe')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 50013,
+              "backendPort": 50013,
+              "idleTimeoutInMinutes": 15
+            },
+            "name": "lbrule50013"
+          },
+          {
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/frontendIpConfigurations/LoadBalancerFrontend')]"
+              },
+              "backendAddressPool": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/backendAddressPools/BackendPool1')]"
+              },
+              "probe": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/probes/lbprobe')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 50014,
+              "backendPort": 50014,
+              "idleTimeoutInMinutes": 15
+            },
+            "name": "lbrule50014"
+          },
+          {
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/frontendIpConfigurations/LoadBalancerFrontend')]"
+              },
+              "backendAddressPool": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/backendAddressPools/BackendPool1')]"
+              },
+              "probe": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/probes/lbprobe')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 50016,
+              "backendPort": 50016,
+              "idleTimeoutInMinutes": 15
+            },
+            "name": "lbrule50016"
+          },
+          {
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/frontendIpConfigurations/LoadBalancerFrontend')]"
+              },
+              "backendAddressPool": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/backendAddressPools/BackendPool1')]"
+              },
+              "probe": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/probes/lbprobe')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 51013,
+              "backendPort": 51013,
+              "idleTimeoutInMinutes": 15
+            },
+            "name": "lbrule51013"
+          },
+          {
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/frontendIpConfigurations/LoadBalancerFrontend')]"
+              },
+              "backendAddressPool": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/backendAddressPools/BackendPool1')]"
+              },
+              "probe": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/probes/lbprobe')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 51014,
+              "backendPort": 51014,
+              "idleTimeoutInMinutes": 15
+            },
+            "name": "lbrule51014"
+          }
+        ],
+        "probes": [
+          {
+            "properties": {
+              "protocol": "Tcp",
+              "port": "[variables('lbProbePortInternalASCS')]",
+              "intervalInSeconds": 10,
+              "numberOfProbes": 2
+            },
+            "name": "lbprobe"
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVerionRm')]",
+      "name": "[concat(variables('nestedDeploymentNameNICASCS'), '-', copyIndex())]",
+      "type": "Microsoft.Resources/deployments",
+      "copy": {
+        "name": "nicLoop",
+        "count": "[variables('ascsvmCount')]"
+      },
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('github'), 'nic-config.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "vnetName": { "value": "[variables('vnetName')]" },
+          "subnetName": { "value": "[variables('subnetName')]" },
+          "publicIpName": { "value": "[concat(variables('publicIpNameASCS'), '-', copyIndex())]" },
+          "nsgName": { "value": "[concat(variables('nsgNameASCS'), '-', copyIndex())]" },
+          "newOrExistingSubnet": { "value": "[parameters('newOrExistingSubnet')]" },
+          "subnetId": { "value": "[parameters('subnetId')]" }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('nicNameASCS'), '-', copyIndex())]",
+      "apiVersion": "[variables('apiVerion')]",
+      "copy": {
+        "name": "nicLoop",
+        "count": "[variables('ascsvmCount')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNamePIP'), '-', copyIndex())]",
+        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameNSG'), '-', copyIndex())]",
+        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameNICASCS'), '-', copyIndex())]",
+        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameVnet'))]",
+        "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerNameASCS'))]"
+      ],
+      "location": "[variables('location')]",
+      "properties": {
+        "networkSecurityGroup": "[reference(concat(variables('nestedDeploymentNameNICASCS'), '-', copyIndex())).outputs.selectedConfiguration.value.networkSecurityGroup]",
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": "[reference(concat(variables('nestedDeploymentNameNICASCS'), '-', copyIndex())).outputs.selectedConfiguration.value.publicIPAddress]",
+              "subnet": "[reference(concat(variables('nestedDeploymentNameNICASCS'), '-', copyIndex())).outputs.selectedConfiguration.value.subnet]",
+              "loadBalancerBackendAddressPools": [
+                {
+                  "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/backendAddressPools/BackendPool1')]"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+
+    {
+      "apiVersion": "[variables('apiVerionRm')]",
+      "name": "[concat(variables('nestedDeploymentNameProf'), '-ascs-', copyIndex())]",
+      "type": "Microsoft.Resources/deployments",
+      "copy": {
+        "name": "nicLoop",
+        "count": "[variables('ascsvmCount')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', concat(variables('storageAccountNameASCS'), copyIndex()))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('github'), 'os-disk-parts.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "imageSku": { "value": "" },
+          "imagePublisher": { "value": "" },
+          "imageOffer": { "value": "" },
+          "userImageVhdUri": { "value": "[parameters('userImageVhdUri')]" },
+          "userImageStorageAccount": { "value": "[parameters('userImageStorageAccount')]" },
+          "osDiskVhdUri": { "value": "" },
+          "osDiskType": { "value": "[variables('osDiskType')]" },
+          "osType": { "value": "[variables('internalOSType')]" },
+          "sidlower": { "value": "[variables('sidlower')]" },
+          "vmName": { "value": "[concat(variables('vmNameASCS'), '-', copyIndex())]" },
+          "storageAccountName": { "value": "[concat(variables('storageAccountNameASCS'), copyIndex())]" }
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVerionRm')]",
+      "name": "[concat(variables('nestedDeploymentNameASCS'), '-', copyIndex())]",
+      "type": "Microsoft.Resources/deployments",
+      "copy": {
+        "name": "nicLoop",
+        "count": "[variables('ascsvmCount')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicNameASCS'), '-', copyIndex())]",
+        "[concat('Microsoft.Compute/availabilitySets/', variables('avSetNameASCS'))]",
+        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameProf'), '-ascs-', copyIndex())]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('github'), 'server-Standard_multiNIC_No.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "imageReference": { "value": "[reference(concat(variables('nestedDeploymentNameProf'), '-ascs-', copyIndex())).outputs.osDisk.value]" },
+          "osDisk": { "value": "[reference(concat(variables('nestedDeploymentNameProf'), '-ascs-', copyIndex())).outputs.osDisk.value]" },
+          "osDiskType": { "value": "[variables('osDiskType')]" },
+          "location": { "value": "[variables('location')]" },
+          "sidlower": { "value": "[variables('sidlower')]" },
+          "vmName": { "value": "[concat(variables('vmNameASCS'), '-', copyIndex())]" },
+          "vmSize": { "value": "[variables('ascsvmSize')]" },
+          "adminUsername": { "value": "[parameters('adminUsername')]" },
+          "adminPassword": { "value": "[parameters('adminPassword')]" },
+          "cseExtPublisher": { "value": "[variables('cseExtPublisher')]" },
+          "cseExtName": { "value": "[variables('cseExtName')]" },
+          "cseExtVersion": { "value": "[variables('cseExtVersion')]" },
+          "csExtensionScript": { "value": "[variables('csExtensionScript')]" },
+          "csExtensionscriptCall": { "value": "[variables('csExtensionscriptCall')]" },
+          "avSetName": { "value": "[variables('avSetNameASCS')]" },
+          "storageAccountName": { "value": "[concat(variables('storageAccountNameASCS'), copyIndex())]" },
+          "nicName": { "value": "[concat(variables('nicNameASCS'), '-', copyIndex())]" }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[variables('avSetNameDB')]",
+      "apiVersion": "[variables('apiVerion')]",
+      "location": "[variables('location')]",
+      "properties": {
+        "platformFaultDomainCount": 3,
+        "platformUpdateDomainCount": 20
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('storageAccountNameDB')]",
+      "apiVersion": "[variables('apiVerion')]",
+      "location": "[variables('location')]",
+      "properties": {
+        "accountType": "[variables('internalStorageTypeDB')]"
+      }
+    },
+    {
+      "type": "Microsoft.Network/loadBalancers",
+      "name": "[variables('loadBalancerNameDB')]",
+      "apiVersion": "[variables('apiVerion')]",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameVnet'))]"
+      ],
+      "location": "[variables('location')]",
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "properties": {
+              "subnet": {
+                "id": "[variables('selectedSubnetId')]"
+              },
+              "privateIPAllocationMethod": "Dynamic"
+            },
+            "name": "LoadBalancerFrontend"
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "BackendPool1"
+          }
+        ],
+        "loadBalancingRules": [
+          {
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameDB')), '/frontendIpConfigurations/LoadBalancerFrontend')]"
+              },
+              "backendAddressPool": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameDB')), '/backendAddressPools/BackendPool1')]"
+              },
+              "probe": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameDB')), '/probes/lbprobe')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 1433,
+              "backendPort": 1433
+            },
+            "name": "lbrule1433"
+          }
+        ],
+        "probes": [
+          {
+            "properties": {
+              "protocol": "Tcp",
+              "port": "[variables('lbProbePortInternalDB')]",
+              "intervalInSeconds": 5,
+              "numberOfProbes": 2
+            },
+            "name": "lbprobe"
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVerionRm')]",
+      "name": "[concat(variables('nestedDeploymentNameNICDB'), '-', copyIndex())]",
+      "type": "Microsoft.Resources/deployments",
+      "copy": {
+        "name": "nicLoop",
+        "count": "[variables('dbvmCount')]"
+      },
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('github'), 'nic-config.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "vnetName": { "value": "[variables('vnetName')]" },
+          "subnetName": { "value": "[variables('subnetName')]" },
+          "publicIpName": { "value": "" },
+          "nsgName": { "value": "" },
+          "newOrExistingSubnet": { "value": "[parameters('newOrExistingSubnet')]" },
+          "subnetId": { "value": "[parameters('subnetId')]" }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('nicNameDB'), '-', copyIndex())]",
+      "apiVersion": "[variables('apiVerion')]",
+      "copy": {
+        "name": "nicLoop",
+        "count": "[variables('dbvmCount')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerNameDB'))]",
+        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameVnet'))]",
+        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameNICDB'), '-', copyIndex())]"
+      ],
+      "location": "[variables('location')]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": "[reference(concat(variables('nestedDeploymentNameNICDB'), '-', copyIndex())).outputs.selectedConfiguration.value.subnet]",
+              "loadBalancerBackendAddressPools": [
+                {
+                  "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameDB')), '/backendAddressPools/BackendPool1')]"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVerionRm')]",
+      "name": "[concat(variables('nestedDeploymentNameProf'), '-db-', copyIndex())]",
+      "type": "Microsoft.Resources/deployments",
+      "copy": {
+        "name": "nicLoop",
+        "count": "[variables('dbvmCount')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountNameDB'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('github'), 'os-disk-parts.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "imageSku": { "value": "" },
+          "imagePublisher": { "value": "" },
+          "imageOffer": { "value": "" },
+          "userImageVhdUri": { "value": "[parameters('userImageVhdUri')]" },
+          "userImageStorageAccount": { "value": "[parameters('userImageStorageAccount')]" },
+          "osDiskVhdUri": { "value": "" },
+          "osDiskType": { "value": "[variables('osDiskType')]" },
+          "osType": { "value": "[variables('internalOSType')]" },
+          "sidlower": { "value": "[variables('sidlower')]" },
+          "vmName": { "value": "[concat(variables('vmNameDB'), '-', copyIndex())]" },
+          "storageAccountName": { "value": "[variables('storageAccountNameDB')]" }
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVerionRm')]",
+      "name": "[concat(variables('nestedDeploymentNameDB'), '-', copyIndex())]",
+      "copy": {
+        "name": "nicLoop",
+        "count": "[variables('dbvmCount')]"
+      },
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicNameDB'), '-', copyIndex())]",
+        "[concat('Microsoft.Compute/availabilitySets/', variables('avSetNameDB'))]",
+        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameProf'), '-db-', copyIndex())]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('github'), 'db-server-', variables('dbvmSize'), '_multiNIC_No.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "imageReference": { "value": "[reference(concat(variables('nestedDeploymentNameProf'), '-db-', copyIndex())).outputs.osDisk.value]" },
+          "osDisk": { "value": "[reference(concat(variables('nestedDeploymentNameProf'), '-db-', copyIndex())).outputs.osDisk.value]" },
+          "osDiskType": { "value": "[variables('osDiskType')]" },
+          "location": { "value": "[variables('location')]" },
+          "sidlower": { "value": "[variables('sidlower')]" },
+          "vmName": { "value": "[concat(variables('vmNameDB'), '-', copyIndex())]" },
+          "vmSize": { "value": "[variables('dbvmSize')]" },
+          "adminUsername": { "value": "[parameters('adminUsername')]" },
+          "adminPassword": { "value": "[parameters('adminPassword')]" },
+          "cseExtPublisher": { "value": "[variables('cseExtPublisher')]" },
+          "cseExtName": { "value": "[variables('cseExtName')]" },
+          "cseExtVersion": { "value": "[variables('cseExtVersion')]" },
+          "csExtensionScript": { "value": "[variables('csExtensionScript')]" },
+          "csExtensionscriptCall": { "value": "[variables('csExtensionscriptCall')]" },
+          "avSetName": { "value": "[variables('avSetNameDB')]" },
+          "storageAccountName": { "value": "[variables('storageAccountNameDB')]" },
+          "nicName": { "value": "[concat(variables('nicNameDB'), '-', copyIndex())]" }
+        }
+      }
+    },
+
+    {
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[variables('avSetNameDI')]",
+      "apiVersion": "[variables('apiVerion')]",
+      "location": "[variables('location')]",
+      "properties": {
+        "platformFaultDomainCount": 3,
+        "platformUpdateDomainCount": 20
+      }
+    },
+
+    {
+      "apiVersion": "[variables('apiVerionRm')]",
+      "name": "[concat(variables('nestedDeploymentNameNICDI'), '-', copyIndex())]",
+      "type": "Microsoft.Resources/deployments",
+      "copy": {
+        "name": "nicLoop",
+        "count": "[variables('divmCount')]"
+      },
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('github'), 'nic-config.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "vnetName": { "value": "[variables('vnetName')]" },
+          "subnetName": { "value": "[variables('subnetName')]" },
+          "publicIpName": { "value": "" },
+          "nsgName": { "value": "" },
+          "newOrExistingSubnet": { "value": "[parameters('newOrExistingSubnet')]" },
+          "subnetId": { "value": "[parameters('subnetId')]" }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('nicNameDI'), '-', copyindex())]",
+      "apiVersion": "[variables('apiVerion')]",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameVnet'))]",
+        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameNICDI'), '-', copyIndex())]"
+      ],
+      "copy": {
+        "name": "nicLoop",
+        "count": "[variables('divmCount')]"
+      },
+      "location": "[variables('location')]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": "[reference(concat(variables('nestedDeploymentNameNICDI'), '-', copyIndex())).outputs.selectedConfiguration.value.subnet]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[concat(variables('storageAccountNameDI'), copyindex()) ]",
+      "apiVersion": "[variables('apiVerion')]",
+      "copy": {
+        "name": "nicLoop",
+        "count": "[add(div(variables('divmCount'), 3), 1)]"
+      },
+      "location": "[variables('location')]",
+      "properties": {
+        "accountType": "[variables('internalStorageTypeDI')]"
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVerionRm')]",
+      "name": "[concat(variables('nestedDeploymentNameProf'), '-di-', copyIndex())]",
+      "type": "Microsoft.Resources/deployments",
+      "copy": {
+        "name": "nicLoop",
+        "count": "[variables('divmCount')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountNameDI'), div(copyIndex(), 3))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('github'), 'os-disk-parts.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "imageSku": { "value": "" },
+          "imagePublisher": { "value": "" },
+          "imageOffer": { "value": "" },
+          "userImageVhdUri": { "value": "[parameters('userImageVhdUri')]" },
+          "userImageStorageAccount": { "value": "[parameters('userImageStorageAccount')]" },
+          "osDiskVhdUri": { "value": "" },
+          "osDiskType": { "value": "[variables('osDiskType')]" },
+          "osType": { "value": "[variables('internalOSType')]" },
+          "sidlower": { "value": "[variables('sidlower')]" },
+          "vmName": { "value": "[concat(variables('vmNameDI'), '-', copyIndex())]" },
+          "storageAccountName": { "value": "[concat(variables('storageAccountNameDI'), div(copyIndex(), 3))]" }
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVerionRm')]",
+      "name": "[concat(variables('nestedDeploymentNameDI'), '-', copyIndex())]",
+      "type": "Microsoft.Resources/deployments",
+      "copy": {
+        "name": "nicLoop",
+        "count": "[variables('divmCount')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicNameDI'), '-', copyIndex())]",
+        "[concat('Microsoft.Compute/availabilitySets/', variables('avSetNameDI'))]",
+        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameProf'), '-di-', copyIndex())]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('github'), 'server-Standard_multiNIC_No.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "imageReference": { "value": "[reference(concat(variables('nestedDeploymentNameProf'), '-di-', copyIndex())).outputs.osDisk.value]" },
+          "osDisk": { "value": "[reference(concat(variables('nestedDeploymentNameProf'), '-di-', copyIndex())).outputs.osDisk.value]" },
+          "osDiskType": { "value": "[variables('osDiskType')]" },
+          "location": { "value": "[variables('location')]" },
+          "sidlower": { "value": "[variables('sidlower')]" },
+          "vmName": { "value": "[concat(variables('vmNameDI'), '-', copyIndex())]" },
+          "vmSize": { "value": "[variables('ascsvmSize')]" },
+          "adminUsername": { "value": "[parameters('adminUsername')]" },
+          "adminPassword": { "value": "[parameters('adminPassword')]" },
+          "cseExtPublisher": { "value": "[variables('cseExtPublisher')]" },
+          "cseExtName": { "value": "[variables('cseExtName')]" },
+          "cseExtVersion": { "value": "[variables('cseExtVersion')]" },
+          "csExtensionScript": { "value": "[variables('csExtensionScript')]" },
+          "csExtensionscriptCall": { "value": "[variables('csExtensionscriptCall')]" },
+          "avSetName": { "value": "[variables('avSetNameDI')]" },
+          "storageAccountName": { "value": "[concat(variables('storageAccountNameDI'), div(copyIndex(), 3))]" },
+          "nicName": { "value": "[concat(variables('nicNameDI'), '-', copyIndex())]" }
+        }
+      }
+    }
+  ]
+}

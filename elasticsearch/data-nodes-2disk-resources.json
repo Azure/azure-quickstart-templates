@@ -8,10 +8,10 @@
         "description": "Admin username used when provisioning virtual machines"
       }
     },
-    "adminPassword": {
-      "type": "securestring",
+    "authSet": {
+      "type": "object",
       "metadata": {
-        "description": "Admin password used when provisioning virtual machines"
+        "description": "Authentication information"
       }
     },
     "storageSettings": {
@@ -76,23 +76,10 @@
     "vmStorageAccountContainerName": "vhd",
     "subnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('subnet').vnet), '/subnets/', parameters('subnet').name)]",
     "storageAccountName": "[parameters('storageSettings').prefix]",
-    "storageAccountNameShared": "[parameters('storageSettings').shared]",
+    "storageAccountNameAFS": "[parameters('storageSettings').afs]",
     "vmName": "[concat(parameters('namespace'), '-vm')]"
   },
   "resources": [
-    {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[concat(variables('storageAccountName'), copyindex(1))]",
-      "apiVersion": "2015-05-01-preview",
-      "location": "[parameters('location')]",
-      "copy": {
-        "name": "[concat(parameters('namespace'),'storageLoop')]",
-        "count": "[parameters('storageSettings').count]"
-      },
-      "properties": {
-        "accountType": "[parameters('storageSettings').accountType]"
-      }
-    },
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/availabilitySets",
@@ -138,7 +125,7 @@
       },
       "dependsOn": [
         "[concat('Microsoft.Network/networkInterfaces/', parameters('namespace'), '-nic', copyindex())]",
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'), parameters('storageSettings').mapping[copyindex()])]"
+        "[resourceId('Microsoft.Compute/availabilitySets', 'es-data-set')]"
       ],
       "properties": {
         "availabilitySet": {
@@ -150,7 +137,8 @@
         "osProfile": {
           "computerName": "[concat('data-vm', copyIndex())]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('authSet').password]",
+          "linuxConfiguration": "[parameters('osSettings').linuxConfiguration]"
         },
         "storageProfile": {
           "imageReference": "[parameters('osSettings').imageReference]",
@@ -208,7 +196,7 @@
             "typeHandlerVersion": "[parameters('osSettings').extensionSettings.data.typeHandlerVersion]",
             "settings": {
               "fileUris": "[parameters('osSettings').extensionSettings.data.settings.fileUris]",
-              "commandToExecute": "[concat(parameters('osSettings').extensionSettings.data.settings.commandToExecute, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameShared')), '2015-05-01-preview').key1)]"
+              "commandToExecute": "[concat(parameters('osSettings').extensionSettings.data.settings.commandToExecute, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameAFS')), '2015-05-01-preview').key1)]"
             }
           }
         }

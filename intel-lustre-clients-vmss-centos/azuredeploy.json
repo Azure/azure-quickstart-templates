@@ -182,9 +182,7 @@
     }
   },
   "variables": {
-    "apiVersion": "2015-06-15",
     "storageAccountType": "Standard_LRS",
-    "saCount": 5,
     "newStorageAccountSuffix": "[concat(parameters('vmssName'), 'sa')]",
     "uniqueStringArray": [
       "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'), '0')))]",
@@ -193,6 +191,7 @@
       "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'), '3')))]",
       "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'), '4')))]"
     ],
+    "saCount": "[length(variables('uniqueStringArray'))]",
     "vhdContainerName": "[concat(parameters('vmssName'), 'vhd')]",
     "osDiskName": "[concat(parameters('vmssName'), 'osdisk')]",
     "publicIPAddressName": "[concat(parameters('vmssName'), 'pip')]",
@@ -202,7 +201,7 @@
     "natPoolName": "[concat(parameters('vmssName'), 'natpool')]",
     "bePoolName": "[concat(parameters('vmssName'), 'bepool')]",
     "natStartPort": 50000,
-    "natEndPort": 50099,
+    "natEndPort": 50119,
     "natBackendPort": 22,
     "nicName": "[concat(parameters('vmssName'), 'nic')]",
     "ipConfigName": "[concat(parameters('vmssName'), 'ipconfig')]",
@@ -232,15 +231,18 @@
     "vnetID": "[resourceId(parameters('existingVnetResourceGroupName'), 'Microsoft.Network/virtualNetworks', parameters('existingVnetName'))]",
     "subnetClientsID": "[concat(variables('vnetID'), '/subnets/', parameters('existingSubnetClientsName'))]",
     "scriptUrlLustreClient": "[concat(variables('baseUrl'),'lustre_client.sh')]",
-    "linuxConfiguration_password": { },
-    "linuxConfiguration": "[variables(concat('linuxConfiguration_',parameters('authenticationType')))]"
+    "linuxConfiguration_password": {},
+    "linuxConfiguration": "[variables(concat('linuxConfiguration_',parameters('authenticationType')))]",
+    "computeApiVersion": "2016-03-30",
+    "networkApiVersion": "2016-03-30",
+    "storageApiVersion": "2015-06-15"
   },
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[concat(variables('uniqueStringArray')[copyIndex()], variables('newStorageAccountSuffix'))]",
       "location": "[parameters('location')]",
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "[variables('storageApiVersion')]",
       "copy": {
         "name": "storageLoop",
         "count": "[variables('saCount')]"
@@ -253,7 +255,7 @@
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
       "location": "[parameters('location')]",
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "[variables('networkApiVersion')]",
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
@@ -265,7 +267,7 @@
       "type": "Microsoft.Network/loadBalancers",
       "name": "[variables('loadBalancerName')]",
       "location": "[parameters('location')]",
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "[variables('networkApiVersion')]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
       ],
@@ -285,10 +287,8 @@
             "name": "[variables('bePoolName')]"
           }
         ],
-        "loadBalancingRules": [
-        ],
-        "probes": [
-        ],
+        "loadBalancingRules": [],
+        "probes": [],
         "inboundNatPools": [
           {
             "name": "[variables('natPoolName')]",
@@ -309,7 +309,7 @@
       "type": "Microsoft.Compute/virtualMachineScaleSets",
       "name": "[parameters('vmssName')]",
       "location": "[parameters('location')]",
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "[variables('computeApiVersion')]",
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('uniqueStringArray')[0], variables('newStorageAccountSuffix'))]",
         "[concat('Microsoft.Storage/storageAccounts/', variables('uniqueStringArray')[1], variables('newStorageAccountSuffix'))]",
@@ -398,7 +398,8 @@
               }
             ]
           }
-        }
+        },
+        "overprovision": "true"
       }
     }
   ],
