@@ -29,7 +29,7 @@
 # Description:
 #  This script automates the partitioning and formatting of data disks
 #  Data disks can be partitioned and formatted as seperate disks or in a RAID0 configuration
-#  The scrtip will scan for unpartitioined and unformatted data disks and partition, format, and add fstab entries
+#  The script will scan for unpartitioned and unformatted data disks and partition, format, and add fstab entries
 # Parameters :
 #  1 - b: The base directory for mount points (default: /datadisks)
 #  2 - s  Create a striped RAID0 Array (No redundancy)
@@ -60,9 +60,6 @@ then
     echo "You must be root to run this program." >&2
     exit 3
 fi
-
-#A set of disks to ignore from partitioning and formatting
-BLACKLIST="/dev/sda|/dev/sdb"
 
 # Base path for data disk mount points
 DATA_BASE="/datadisks"
@@ -120,7 +117,7 @@ has_filesystem() {
 scan_for_new_disks() {
     # Looks for unpartitioned disks
     declare -a RET
-    DEVS=($(ls -1 /dev/sd*|egrep -v "${BLACKLIST}"|egrep -v "[0-9]$"))
+    DEVS=($(ls -1 /dev/sd*|egrep -v "[0-9]$"))
     for DEV in "${DEVS[@]}";
     do
         # The disk will be considered a candidate for partitioning
@@ -288,7 +285,7 @@ create_striped_volume()
 	PARTITIONSNUM=${#PARTITIONS[@]}
 	STRIPEWIDTH=$((${STRIDE} * ${PARTITIONSNUM}))
 
-	mkfs.ext4 -b 4096 -E stride=${STRIDE},stripe-width=${STRIPEWIDTH} "${MDDEVICE}"
+	mkfs.ext4 -b 4096 -E stride=${STRIDE},stripe-width=${STRIPEWIDTH},nodiscard "${MDDEVICE}"
 
 	read UUID FS_TYPE < <(blkid -u filesystem ${MDDEVICE}|awk -F "[= ]" '{print $3" "$5}'|tr -d "\"")
 
@@ -300,7 +297,8 @@ create_striped_volume()
 check_mdadm() {
     dpkg -s mdadm >/dev/null 2>&1
     if [ ${?} -ne 0 ]; then
-        DEBIAN_FRONTEND=noninteractive apt-get -y install mdadm
+        apt-get -y update
+        DEBIAN_FRONTEND=noninteractive apt-get -y install mdadm --fix-missing
     fi
 }
 

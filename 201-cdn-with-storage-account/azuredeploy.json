@@ -1,0 +1,76 @@
+﻿{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "variables": {
+    "cdnApiVersion":"2015-06-01",
+    "storageApiVersion":"2015-06-15"
+  },
+  "parameters": {
+    "storageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Storage Account"
+      }
+    },
+    "profileName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the CDN Profile"
+      }
+    },
+    "endpointName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the CDN Endpoint"
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[parameters('storageAccountName')]",
+      "apiVersion": "[variables('storageApiVersion')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "accountType": "Standard_LRS"
+      }
+    },
+    {
+      "name": "[parameters('profileName')]",
+      "type": "Microsoft.Cdn/profiles",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "[variables('cdnApiVersion')]",
+      "properties": {
+        "sku": {
+          "name": "Standard"
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('cdnApiVersion')]",
+      "dependsOn": [
+        "[concat('Microsoft.Cdn/profiles/', parameters('profileName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]"
+      ],
+      "location": "[resourceGroup().location]",
+      "name": "[concat(parameters('profileName'),'/',parameters('endpointName'))]",
+      "type": "Microsoft.Cdn/profiles/endpoints",
+      "properties": {
+        "originHostHeader": "[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')),'2015-06-15' ).primaryEndpoints.blob,'https://',''),'/','')]",
+        "isHttpAllowed": true,
+        "isHttpsAllowed": true,
+        "queryStringCachingBehavior": "IgnoreQueryString",
+        "contentTypesToCompress": [ "text/plain", "text/html", "text/css", "application/x-javascript", "text/javascript" ],
+        "isCompressionEnabled": "True",
+        "origins": [
+          {
+            "name": "origin1",
+            "properties": {
+              "hostName": "[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')),'2015-06-15' ).primaryEndpoints.blob,'https://',''),'/','')]"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

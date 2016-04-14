@@ -1,0 +1,134 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "imageSku": {
+      "type": "string",
+      "metadata": {
+        "description": "SKU of the image that should be used to deploy the virtual machine."
+      }
+    },
+    "imagePublisher": {
+      "type": "string",
+      "metadata": {
+        "description": "Publisher of the image that should be used to deploy the virtual machine."
+      }
+    },
+    "imageOffer": {
+      "type": "string",
+      "metadata": {
+        "description": "Offer of the image that should be used to deploy the virtual machine."
+      }
+    },
+    "userImageVhdUri": {
+      "type": "string",
+      "metadata": {
+        "description": "Uri of the user image."
+      }
+    },
+    "userImageStorageAccount": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the storage account where the user image is stored."
+      }
+    },
+    "osDiskVhdUri": {
+      "type": "string",
+      "metadata": {
+        "description": "Uri of the OS disk."
+      }
+    },
+    "osDiskType": {
+      "type": "string",
+      "allowedValues": [ "image", "userImage", "osdisk" ],
+      "metadata": {
+        "description": "The type of OS disk."
+      }
+    },
+    "osType": {
+      "type": "string",
+      "allowedValues": [ "Windows", "Linux" ],
+      "metadata": {
+        "description": "The type of the operating system you want to deploy."
+      }
+    },
+    "sidlower": {
+      "type": "string",
+      "metadata": {
+        "description": "SAP System ID in lower case."
+      }
+    },
+    "vmName": {
+      "type": "string",
+      "metadata": {
+        "description": "Prefix of the virtual machine name."
+      }
+    },
+    "storageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the storage account where the os disk and data disk should be placed."
+      }
+    }
+  },
+  "variables": {
+    "osDiskName": "[concat(parameters('sidlower'),'-os.vhd')]",
+    "osDiskCaching": "ReadWrite",
+    "osDiskParts": {
+      "image": {
+        "imageReference": {
+          "publisher": "[parameters('imagePublisher')]",
+          "offer": "[parameters('imageOffer')]",
+          "sku": "[parameters('imageSku')]",
+          "version": "latest"
+        },
+        "osDisk": {
+          "name": "osdisk",
+          "vhd": {
+            "uri": "[concat('http://', parameters('storageAccountName'), '.blob.core.windows.net/', parameters('vmName'), '/', variables('osDiskName'))]"
+          },
+          "caching": "[variables('osDiskCaching')]",
+          "createOption": "FromImage"
+        }
+      },
+      "userImage": {
+        "imageReference": null,
+        "osDisk": {
+          "name": "osdisk",
+          "osType": "[parameters('osType')]",
+          "image": {
+            "uri": "[parameters('userImageVhdUri')]"
+          },
+          "vhd": {
+            "uri": "[concat('http://',parameters('userImageStorageAccount'),'.blob.core.windows.net/', resourceGroup().name, '/', parameters('vmName'), '-', variables('osDiskName'))]"
+          },
+          "caching": "[variables('osDiskCaching')]",
+          "createOption": "FromImage"
+        }
+      },
+      "osdisk": {
+        "imageReference": null,
+        "osDisk": {
+          "name": "osdisk",
+          "osType": "[parameters('osType')]",
+          "vhd": {
+            "uri": "[parameters('osDiskVhdUri')]"
+          },
+          "caching": "[variables('osDiskCaching')]",
+          "createOption": "Attach"
+        }
+      }
+    }
+  },
+  "resources": [ ],
+  "outputs": {
+    "imageReference": {
+      "value": "[variables('osDiskParts')[parameters('osDiskType')].imageReference]",
+      "type": "object"
+    },
+    "osDisk": {
+      "value": "[variables('osDiskParts')[parameters('osDiskType')].osDisk]",
+      "type": "object"
+    }
+  }
+}

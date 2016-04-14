@@ -1,0 +1,71 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "alertName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of alert"
+            }
+        },
+        "alertDescription": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Description of alert"
+            }
+        },
+        "status": {
+            "type": "string",
+            "defaultValue": "",
+            "allowedValues": [
+                "Active", 
+                "InProgress", 
+                "Resolved"
+            ],
+            "metadata": {
+                "description": "Description of alert"
+            }
+        },
+        "sendToServiceOwners": {
+            "type": "bool",
+            "defaultValue": true,
+            "metadata": {
+                "description": "Specifies whether alerts are sent to service owners"
+            }
+        },
+        "customEmailAddresses": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Comma-delimited email addresses where the alerts are also sent"
+            }
+        }
+    },
+    "variables": {
+        "customEmails": "[split(parameters('customEmailAddresses'), ',')]"
+    },
+    "resources": [{
+        "type": "Microsoft.Insights/alertRules",
+        "name": "[parameters('alertName')]",
+        "location": "[resourceGroup().location]",
+        "apiVersion": "2014-04-01",
+        "properties": {
+            "name": "[parameters('alertName')]",
+            "description": "[parameters('alertDescription')]",
+            "condition": {
+                "odata.type": "Microsoft.Azure.Management.Insights.Models.ManagementEventRuleCondition",
+                "dataSource": {
+                    "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleManagementEventDataSource",
+                    "resourceProviderName": "Azure.Health",
+                    "status": "[parameters('status')]"
+                }
+            },
+            "action": {
+                "odata.type": "Microsoft.Azure.Management.Insights.Models.RuleEmailAction",
+                "sendToServiceOwners": "[parameters('sendToServiceOwners')]",
+                "customEmails":  "[variables('customEmails')]"
+            }
+        }
+    }]
+}
