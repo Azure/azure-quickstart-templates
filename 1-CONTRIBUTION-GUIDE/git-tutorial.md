@@ -71,7 +71,7 @@ Many users are initially put off by the idea of having to work with Git through 
 In fact, I find it a lot easier today to work with the command-line. Git will do *exactly* what you tell it do - each step will be obvious to you. GUIs often try to combine multiple commands together into one fancy button, which will surely blow your whole project up, if you don't understand what's going on under the hood. For those reasons, I *heavily* recommend sticking with the command-line.
 
 ### Fork the Repository to your Account
-Before we can get started, you need to register with GitHub. Either create or login into your account. Then, head over to the [azure/azure-quickstart-templates](https://github.com/azure/azure-quickstart-templates) repository and click the little 'fork' button in the upper right.
+Before we can get started, you need to register with GitHub. Either create or login into your account. Then, head over to the [Azure/azure-quickstart-templates](https://github.com/Azure/azure-quickstart-templates) repository and click the little 'fork' button in the upper right.
 
 ![Fork the repo](images/git1.png)
 
