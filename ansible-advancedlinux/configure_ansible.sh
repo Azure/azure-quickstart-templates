@@ -2,10 +2,10 @@
 
 #########################################################
 # Script Name: configure-ansible.sh
-# Author: Gonzalo Ruiz 
+# Author: Gonzalo Ruiz
 # Version: 0.1
 # Date Created:           01st Marh 2015
-# Last Modified:          04st April 17:26 GMT
+# Last Modified:          31st December 17:26 GMT
 # Last Modified By:       Gonzalo Ruiz
 # Description:
 #  This script automates the installation of this VM as an ansible VM. Specifically it:
@@ -14,11 +14,11 @@
 # Parameters :
 #  1 - i: IP Pattern
 #  2 - n: Number of nodes
-#  3 - r: Configure RAID 
+#  3 - r: Configure RAID
 #  4 - f: filesystem : ext4 or xfs
-# Note : 
-# This script has only been tested on CentOS 6.5 and Ubuntu 12.04 LTS 
-######################################################### 
+# Note :
+# This script has only been tested on CentOS 6.5 and Ubuntu 12.04 LTS
+#########################################################
 
 #---BEGIN VARIABLES---
 IP_ADDRESS_SPACE=''
@@ -28,9 +28,11 @@ CONFIGURE_RAID=''
 FILE_SYSTEM=''
 USER_NAME=''
 USER_PASSWORD=''
-TEMPLATE_ROLE='couchbase'
+TEMPLATE_ROLE='ansible'
 START_IP_INDEX=0
-
+SSH_AZ_ACCOUNT_NAME=''
+SSH_AZ_ACCOUNT_KEY=''
+MOUNTPOINT='/datadrive'
 
  function usage()
  {
@@ -39,7 +41,10 @@ START_IP_INDEX=0
     echo "The -i (ipAddressSpace) parameters specifies the starting IP space for the vms.For instance if you specify 10.0.2.2, and 3 nodes, the script will find for the VMS 10.0.2.20, 10.0.2.21,10.0.2.22.Plase note that Azure reserves the first 4 IPs, so you will have to specify an IP space in which IP x.x.x0 is available"
     echo "The -n (numberOfNodes) parameter specifies the number of VMs"
     echo "The -r (configureRAID) parameter specifies whether you want to create a RAID with all the available data disks.Allowed values : true or false"
-    echo "The -f (fileSystem) parameter specifies the file system you want to use.Allowed values : ext4 or xfs"    
+    echo "The -f (fileSystem) parameter specifies the file system you want to use.Allowed values : ext4 or xfs"
+    echo "The -a (azureStorageAccountName) parameter specifies the name of the storage account that contains the private keys"
+    echo "The -k (azureStorageAccountKey) parameter specifies the key of the private storage account that contains the private keys"
+
 }
 
 function log()
@@ -51,25 +56,25 @@ function log()
 
 
 #---PARSE AND VALIDATE PARAMETERS---
-if [ $# -ne 8 ]; then
+if [ $# -ne 12 ]; then
     log "ERROR:Wrong number of arguments specified. Parameters received $#. Terminating the script."
     usage
     exit 1
 fi
 
-while getopts :i:n:r:f: optname; do
+while getopts :i:n:r:f:a:k: optname; do
     log "INFO:Option $optname set with value ${OPTARG}"
   case $optname in
-    i) # IP address space 
+    i) # IP address space
       IP_ADDRESS_SPACE=${OPTARG}
       ;;
     n) # Number of VMS
-      NUMBER_OF_NODES=${OPTARG}     
+      NUMBER_OF_NODES=${OPTARG}
       IDX=${START_IP_INDEX}
       while [ "${IDX}" -lt "${NUMBER_OF_NODES}" ];
       do
         NODE_LIST_IPS[$IDX]="${IP_ADDRESS_SPACE}${IDX}"
-        IDX=$((${IDX} + 1))       
+        IDX=$((${IDX} + 1))
       done
       ;;
     r) # Configure RAID
@@ -87,7 +92,13 @@ while getopts :i:n:r:f: optname; do
           usage
           exit 1
       fi
-      ;;    
+      ;;
+    a) # Azure Private Storage Account Name- SSH Keys
+      SSH_AZ_ACCOUNT_NAME=${OPTARG}
+      ;;
+    k) # Azure Private Storage Account Key - SSH Keys
+      SSH_AZ_ACCOUNT_KEY=${OPTARG}
+      ;;
     \?) #Invalid option - show help
       log "ERROR:Option -${BOLD}$OPTARG${NORM} not allowed."
       usage
@@ -104,7 +115,7 @@ function check_OS()
     KERNEL=`uname -r`
     MACH=`uname -m`
 
-      
+
     if [ -f /etc/redhat-release ] ; then
             DistroBasedOn='RedHat'
             DIST=`cat /etc/redhat-release |sed s/\ release.*//`
@@ -122,7 +133,7 @@ function check_OS()
                  REV=`cat /etc/lsb-release | grep '^DISTRIB_RELEASE' | awk -F=  '{ print $2 }'`
             fi
     fi
-            
+
             OS=$OS
             DistroBasedOn=$DistroBasedOn
             readonly OS
@@ -134,14 +145,14 @@ function check_OS()
             readonly MACH
 
             log "INFO: Detected OS : ${OS}  Distribution: ${DIST}-${DistroBasedOn}-${PSUEDONAME} Revision: ${REV} Kernel: ${KERNEL}-${MACH}"
-    
+
 }
 
 
 function install_ansible_ubuntu()
 {
-    
-    
+
+
     apt-get --yes --force-yes install software-properties-common
     apt-add-repository ppa:ansible/ansible
     apt-get --yes --force-yes update
@@ -150,6 +161,8 @@ function install_ansible_ubuntu()
     apt-get --yes --force-yes install sshpass
     # install Git
     apt-get --yes --force-yes install git
+    # install python
+    apt-get --yes --force-yes install python-pip
 
  }
 
@@ -159,6 +172,9 @@ function install_ansible_ubuntu()
     # install EPEL Packages - sshdpass
     wget http://download.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm
     rpm -ivh epel-release-6-8.noarch.rpm
+    # install python
+    yum -y install python-pip
+
     # install ansible
     yum -y install ansible
     yum install -y libselinux-python
@@ -166,9 +182,23 @@ function install_ansible_ubuntu()
     # needed to copy the keys to all the vms
     yum -y install sshpass
     # install Git
-    yum -y install git 
+    yum -y install git
+
+
 
  }
+
+ function get_sshkeys()
+ {
+    log "INFO:Retrieving ssh keys from Azure Storage"
+    pip install azure-storage
+
+    # Download both Private and Public Key
+    python GetSSHFromPrivateStorageAccount.py ${SSH_AZ_ACCOUNT_NAME} ${SSH_AZ_ACCOUNT_KEY} id_rsa
+    python GetSSHFromPrivateStorageAccount.py ${SSH_AZ_ACCOUNT_NAME} ${SSH_AZ_ACCOUNT_KEY} id_rsa.pub
+
+}
+
 
 function configure_ssh()
 {
@@ -179,15 +209,15 @@ function configure_ssh()
 
     # set permissions
     chmod 700 ~/.ssh
-    chmod 600 ~/.ssh/id_rsa     
+    chmod 600 ~/.ssh/id_rsa
 
 
-    # copy root ssh key   
-    cat id_rsa.pub >> ~/.ssh/authorized_keys
+    # copy root ssh key
+    cat id_rsa.pub  >> ~/.ssh/authorized_keys
     rm id_rsa.pub
-    
+
     # set permissions
-    chmod 600 ~/.ssh/authorized_keys 
+    chmod 600 ~/.ssh/authorized_keys
 
     if [[ "${DIST}" == "Ubuntu" ]]; then
         #restart sshd service - Ubuntu
@@ -195,8 +225,8 @@ function configure_ssh()
 
     elif [[ "${DIST}" == "CentOS" ]] ; then
         # configure SELinux
-        restorecon -Rv ~/.ssh 
-    
+        restorecon -Rv ~/.ssh
+
         #restart sshd service - CentOS
         service sshd restart
     fi
@@ -212,19 +242,19 @@ function configure_ssh()
 
     mv ${ANSIBLE_HOST_FILE} ${ANSIBLE_HOST_FILE}.backup
     mv ${ANSIBLE_CONFIG_FILE} ${ANSIBLE_CONFIG_FILE}.backup
-    
-    # Accept ssh keys by default    
-    printf  "[defaults]\nhost_key_checking = False\n\n" >> "${ANSIBLE_CONFIG_FILE}"   
+
+    # Accept ssh keys by default
+    printf  "[defaults]\nhost_key_checking = False\n\n" >> "${ANSIBLE_CONFIG_FILE}"
     # Shorten the ControlPath to avoid errors with long host names , long user names or deeply nested home directories
-    echo  $'[ssh_connection]\ncontrol_path = ~/.ssh/ansible-%%h-%%r' >> "${ANSIBLE_CONFIG_FILE}"   
-    
-    # Generate a new ansible host file    
-    # printf  "[master]\n${IP_ADDRESS_SPACE}.${NUMBER_OF_NODES}\n\n" >> "${ANSIBLE_HOST_FILE}"   
+    echo  $'[ssh_connection]\ncontrol_path = ~/.ssh/ansible-%%h-%%r' >> "${ANSIBLE_CONFIG_FILE}"
+    echo "\nscp_if_ssh=True" >> "${ANSIBLE_CONFIG_FILE}"
+    # Generate a new ansible host file
+    # printf  "[master]\n${IP_ADDRESS_SPACE}.${NUMBER_OF_NODES}\n\n" >> "${ANSIBLE_HOST_FILE}"
     printf  "[${TEMPLATE_ROLE}]\n${IP_ADDRESS_SPACE}[0:$(($NUMBER_OF_NODES - 1))]" >> "${ANSIBLE_HOST_FILE}"
 
     # Validate ansible configuration
-    ansible ${TEMPLATE_ROLE} -m ping -v 
-   
+    ansible ${TEMPLATE_ROLE} -m ping -v
+
 
  }
 
@@ -233,20 +263,15 @@ function configure_ssh()
  {
     log "INFO: Configuring Storage "
     log "WARNING: This process is not incremental, don't use it if you don't want to lose your existing storage configuration"
-    
-    # Run ansible template to configure Storage : Create RAID and Configure Filesystem 
-    ansible-playbook InitStorage_RAID.yml  --extra-vars "target=${TEMPLATE_ROLE} file_system=${FILE_SYSTEM}" 
-    
+
+    # Run ansible template to configure Storage : Create RAID and Configure Filesystem
+    ansible-playbook InitStorage_RAID.yml  --extra-vars "target=${TEMPLATE_ROLE} file_system=${FILE_SYSTEM}"
+
  }
-
-
-
 
 InitializeVMs()
 {
     check_OS
-    
-    configure_ssh
 
     if [[ "${DIST}" == "Ubuntu" ]];
     then
@@ -259,7 +284,10 @@ InitializeVMs()
        log "ERROR:Unsupported OS ${DIST}"
        exit 2
     fi
-    
+
+    get_sshkeys
+    configure_ssh
+
     configure_ansible
     configure_storage
 

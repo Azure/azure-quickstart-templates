@@ -1,0 +1,621 @@
+# All certs which are used in this file are for testing.
+# You should use your certs to replace them for production.
+---
+name: single-vm-cf-on-azure
+director_uuid: REPLACE_WITH_DIRECTOR_ID
+
+releases:
+- {name: cf, version: 231}
+
+networks:
+- name: cf_private
+  type: manual
+  subnets:
+  - range: REPLACE_WITH_SUBNET_ADDRESS_RANGE_FOR_CLOUD_FOUNDRY
+    gateway: REPLACE_WITH_GATEWAY_IP
+    dns: [168.63.129.16]
+    reserved: ["REPLACE_WITH_RESERVED_IP_FROM - REPLACE_WITH_RESERVED_IP_TO"]
+    static: REPLACE_WITH_STATIC_IP
+    cloud_properties:
+      virtual_network_name: REPLACE_WITH_VNET_NAME
+      subnet_name: REPLACE_WITH_SUBNET_NAME_FOR_CLOUD_FOUNDRY
+
+- name: cf_public
+  type: vip
+
+resource_pools:
+- name: resource_z1
+  network: cf_private
+  stemcell:
+    name: bosh-azure-hyperv-ubuntu-trusty-go_agent
+    version: latest
+  cloud_properties:
+    instance_type: Standard_D1
+    security_group: REPLACE_WITH_NSG_NAME_FOR_CLOUD_FOUNDRY
+
+compilation:
+  workers: 1
+  network: cf_private
+  reuse_compilation_vms: true
+  cloud_properties:
+    instance_type: Standard_D1
+
+update:
+  canaries: 1
+  max_in_flight: 1
+  serial: false
+  canary_watch_time: 30000-600000
+  update_watch_time: 5000-600000
+
+jobs:
+- name: cf_z1
+  instances: 1
+  persistent_disk: 102400
+  resource_pool: resource_z1
+  templates:
+  - {name: consul_agent, release: cf}
+  - {name: nats, release: cf}
+  - {name: nats_stream_forwarder, release: cf}
+  - {name: metron_agent, release: cf}
+  - {name: etcd, release: cf}
+  - {name: etcd_metrics_server, release: cf}
+  - {name: debian_nfs_server, release: cf}
+  - {name: postgres, release: cf}
+  - {name: cloud_controller_ng, release: cf}
+  - {name: cloud_controller_worker, release: cf}
+  - {name: cloud_controller_clock, release: cf}
+  - {name: nfs_mounter, release: cf}
+  - {name: route_registrar, release: cf}
+  - {name: haproxy, release: cf}
+  - {name: hm9000, release: cf}
+  - {name: doppler, release: cf}
+  - {name: loggregator_trafficcontroller, release: cf}
+  - {name: uaa, release: cf}
+  - {name: gorouter, release: cf}
+  - {name: dea_next, release: cf}
+  - {name: dea_logging_agent, release: cf}
+  networks:
+  - name: cf_public
+    static_ips: REPLACE_WITH_CLOUD_FOUNDRY_PUBLIC_IP
+  - name: cf_private
+    default: [gateway, dns]
+    static_ips: [REPLACE_WITH_CLOUD_FOUNDRY_INTERNAL_IP]
+  update:
+    serial: true
+  properties:
+    consul:
+      agent:
+        mode: server
+        services:
+          uaa: {}
+          cloud_controller_ng: {}
+          routing-api: {}
+    etcd_metrics_server:
+      nats:
+        machines: [REPLACE_WITH_CLOUD_FOUNDRY_INTERNAL_IP]
+        password: c1oudc0w
+        username: nats
+    nfs_server:
+      address: REPLACE_WITH_CLOUD_FOUNDRY_INTERNAL_IP
+      allow_from_entries: [REPLACE_WITH_SUBNET_ADDRESS_RANGE_FOR_CLOUD_FOUNDRY]
+    ha_proxy:
+      ssl_pem: |
+        REPLACE_WITH_SSL_CERT_AND_KEY
+    router:
+      servers:
+        z1: [REPLACE_WITH_CLOUD_FOUNDRY_INTERNAL_IP]
+    doppler: {zone: z1}
+    doppler_endpoint:
+      shared_secret: c1oudc0w
+    traffic_controller: {zone: z1}
+    login:
+      catalina_opts: -Xmx768m -XX:MaxPermSize=256m
+      port: 8082
+    uaa:
+      admin:
+        client_secret: c1oudc0w
+      batch:
+        password: c1oudc0w
+        username: batch_user
+      cc:
+        client_secret: c1oudc0w
+      scim:
+        userids_enabled: true
+        users:
+        - admin|c1oudc0w|scim.write,scim.read,openid,cloud_controller.admin,doppler.firehose,routing.router_groups.read
+      port: 8082
+    uaadb:
+      address: REPLACE_WITH_CLOUD_FOUNDRY_INTERNAL_IP
+      databases:
+      - {name: uaadb, tag: uaa}
+      db_scheme: postgresql
+      port: 5524
+      roles:
+      - {name: uaaadmin, password: c1oudc0w, tag: admin}
+    dropsonde: {enabled: true}
+    dea_next: {zone: z1}
+    route_registrar:
+      routes:
+      - name: api
+        port: 9022
+        registration_interval: 20s
+        uris:
+        - "api.REPLACE_WITH_SYSTEM_DOMAIN"
+      - name: hm9000
+        port: 5155
+        registration_interval: 20s
+        uris:
+        - "hm9000.REPLACE_WITH_SYSTEM_DOMAIN"
+      - name: doppler
+        port: 8081
+        registration_interval: 20s
+        uris:
+        - "doppler.REPLACE_WITH_SYSTEM_DOMAIN"
+      - name: loggregator
+        port: 8080
+        registration_interval: 20s
+        uris:
+          - "loggregator.REPLACE_WITH_SYSTEM_DOMAIN"
+      - name: uaa
+        port: 8082
+        registration_interval: 20s
+        uris:
+        - "uaa.REPLACE_WITH_SYSTEM_DOMAIN"
+        - "*.uaa.REPLACE_WITH_SYSTEM_DOMAIN"
+        - "login.REPLACE_WITH_SYSTEM_DOMAIN"
+        - "*.login.REPLACE_WITH_SYSTEM_DOMAIN"
+
+properties:
+  networks: {apps: cf_private}
+  app_domains: [REPLACE_WITH_SYSTEM_DOMAIN]
+  app_ssh:
+    host_key_fingerprint: a6:d1:08:0b:b0:cb:9b:5f:c4:ba:44:2a:97:26:19:8a
+    oauth_client_id: ssh-proxy
+  cc:
+    allow_app_ssh_access: true
+    allowed_cors_domains: []
+    app_events:
+      cutoff_age_in_days: 31
+    app_usage_events:
+      cutoff_age_in_days: 31
+    audit_events:
+      cutoff_age_in_days: 31
+    bulk_api_password: c1oudc0w
+    db_encryption_key: c1oudc0w
+    default_running_security_groups: [public_networks, dns]
+    default_staging_security_groups: [public_networks, dns]
+    install_buildpacks:
+    - {name: java_buildpack, package: buildpack_java}
+    - {name: ruby_buildpack, package: buildpack_ruby}
+    - {name: nodejs_buildpack, package: buildpack_nodejs}
+    - {name: go_buildpack, package: buildpack_go}
+    - {name: python_buildpack, package: buildpack_python}
+    - {name: php_buildpack, package: buildpack_php}
+    - {name: staticfile_buildpack, package: buildpack_staticfile}
+    - {name: binary_buildpack, package: buildpack_binary}
+    internal_api_password: c1oudc0w
+    quota_definitions:
+      default:
+        memory_limit: 102400
+        non_basic_services_allowed: true
+        total_routes: 1000
+        total_services: -1
+    security_group_definitions:
+    - name: public_networks
+      rules:
+      - {destination: 0.0.0.0-9.255.255.255, protocol: all}
+      - {destination: 11.0.0.0-169.253.255.255, protocol: all}
+      - {destination: 169.255.0.0-172.15.255.255, protocol: all}
+      - {destination: 172.32.0.0-192.167.255.255, protocol: all}
+      - {destination: 192.169.0.0-255.255.255.255, protocol: all}
+    - name: dns
+      rules:
+      - {destination: 0.0.0.0/0, ports: '53', protocol: tcp}
+      - {destination: 0.0.0.0/0, ports: '53', protocol: udp}
+    srv_api_uri: https://api.REPLACE_WITH_SYSTEM_DOMAIN
+    staging_upload_password: c1oudc0w
+    staging_upload_user: staging_upload_user
+    external_host: api
+    external_port: 9022
+    stacks:
+      - name: "cflinuxfs2"
+        description: "Cloud Foundry Linux-based filesystem"
+      - name: "windows2012R2"
+        description: "Windows Server 2012 R2"
+  ccdb:
+    address: REPLACE_WITH_CLOUD_FOUNDRY_INTERNAL_IP
+    databases:
+    - {name: ccdb, tag: cc}
+    db_scheme: postgres
+    port: 5524
+    roles:
+    - {name: ccadmin, password: c1oudc0w, tag: admin}
+  consul:
+    agent:
+      log_level: null
+      servers:
+        lan:
+        - REPLACE_WITH_CLOUD_FOUNDRY_INTERNAL_IP
+    agent_cert: |+
+      -----BEGIN CERTIFICATE-----
+      MIIEITCCAgugAwIBAgIQTDMCJHBiQrY8hlM78doHTzALBgkqhkiG9w0BAQswEzER
+      MA8GA1UEAxMIY29uc3VsQ0EwHhcNMTUwODA4MDAxMTM3WhcNMTcwODA4MDAxMTM4
+      WjAXMRUwEwYDVQQDEwxjb25zdWwgYWdlbnQwggEiMA0GCSqGSIb3DQEBAQUAA4IB
+      DwAwggEKAoIBAQC9ybg/ARaW53ItlhLQlEobtzqjCgMchq6G8T8+Y6nV8lTFB9+E
+      AJyQbNz0OATZO09Ezexijict4YL9Ux0oekQ8n9EjoNFcF0VBqa9Iy137cevY97hh
+      Em8a6w5aepyaoh9YcWXGnp4uJ+xf4tzQUQCkb0QuedqSobJhPOrCCRyfL4KuHX0j
+      caJD7MDDX3brlxYLJAKTdaV9xWpLVE/9MMrTQnaZoiJOqoyDMc3scs4gkZ0ohM0R
+      yyFHPp3AC9Y0bZNcpitDYNzRFFvrPzNZTUrM0ar8kwI+Xt7Pbpc47v8xxVAQswXM
+      wPg+1yd9Jr7N3belToFZCvIJeI4vDF97MAM7AgMBAAGjcTBvMA4GA1UdDwEB/wQE
+      AwIAuDAdBgNVHSUEFjAUBggrBgEFBQcDAQYIKwYBBQUHAwIwHQYDVR0OBBYEFC/B
+      5cFoXH/8xxXZ+Z4aJrqKNT0fMB8GA1UdIwQYMBaAFB/z3N26B7azE3kVUt5DNgeu
+      nDonMAsGCSqGSIb3DQEBCwOCAgEAM5mUgC45Mz17CGxP64cm/CVuHLMEsBThufYH
+      FlVk/NOi2fRTxEYzD1kx7lEk1T8D+cktpcLhU7AdHt8ckYfbpkOCfU27Pnql006h
+      tHGGut5K8mfLk/8/qwx99c1J9IE1lgWxPpzVylI8QSG/NkDis3ZUqlv4R0YqSVIs
+      a+NLjWbVHwRRPtUtlOh8aPlWbV9JlM7HWGJwA1K+lz3cG22hxw/lhS+gNkBdV4Ce
+      waTTjKU6c5/Y+7TU00wBy0TFfg0M5ZxnzzJaxSG7bOvy/OYPeIDGsSu4P8BWkJzb
+      wdfyYn+PzIEH49QQJpaExVy0SmMTwh9pVvQImBkexN0e+3PnynDq/GWu+vdBBAHr
+      8IPTVyxwZI1xwLV6LQsX2sMvxYnQTVxxv3/spNbzhmF2Pf0/XKVOawzqOUqSAXc/
+      0uSF9j5EhFFF9azqfdffzqju3q3/4npJn8XKgN6Ve071Li46h+0A+Y+FRdd0zMMj
+      qJd8kgL/rTWPINp0eI47RHW6xMIiZikeeT3BTlO4eSLOc/bUG+oAkfaFNTXBneDX
+      K0+CThR8fyn4ukW3jgAmwx2xmzn2uQvWKxPc3IpofDxNes2DP2J+/1p4jyoveOzp
+      6lwqqBsBz3E/z7sAqPOho4W1iI3o3BmzWhzAfEYuvHlSaZ8Ju74hDuh2pMnMCITB
+      ZjkHgOE=
+      -----END CERTIFICATE-----
+    agent_key: |+
+      -----BEGIN RSA PRIVATE KEY-----
+      MIIEpAIBAAKCAQEAvcm4PwEWludyLZYS0JRKG7c6owoDHIauhvE/PmOp1fJUxQff
+      hACckGzc9DgE2TtPRM3sYo4nLeGC/VMdKHpEPJ/RI6DRXBdFQamvSMtd+3Hr2Pe4
+      YRJvGusOWnqcmqIfWHFlxp6eLifsX+Lc0FEApG9ELnnakqGyYTzqwgkcny+Crh19
+      I3GiQ+zAw19265cWCyQCk3WlfcVqS1RP/TDK00J2maIiTqqMgzHN7HLOIJGdKITN
+      EcshRz6dwAvWNG2TXKYrQ2Dc0RRb6z8zWU1KzNGq/JMCPl7ez26XOO7/McVQELMF
+      zMD4PtcnfSa+zd23pU6BWQryCXiOLwxfezADOwIDAQABAoIBAGQNkjp04mnPvlvW
+      ADlB1Afkgt8tChLh1eSCDmtfs0t9I79ztRwsDl39ZkbBuZykLdgCD5qtgm4nsxzF
+      0ltiidLEFkeIIpdAFVzWjff8bqF+n22UuvlB9JzmSnzcou7KhWfk8FjTimSe23h5
+      axvPeF0342P1DYu7/wRQTxrYHuS0BvCmDPZ07wzFJbOqx6gHM1oAoN3ICTswlKxU
+      a8L0nDkeTtjDwBvoStdpY7+3xUu6zvLxCuLn9bAQjJQVd5Qs5599VNIY055GSJxs
+      0T/p05+ViZWJt4ezUka+7uaKc1ApIA9uLwPiDYlzYNQPgvNpJklb0jw8y/NNaFYl
+      GZrS0GECgYEA+1fSkOQvQPR5ZkKHJ24mLHIyN5hopySrEm8mUSPyBgvAMIN8aIFl
+      c1UsecVAbT7C57lo8Kg51GyTcRcOFegce8K2g60n5VZRqwIKZ5QFKGcnbbmHlrk6
+      U6PCL1sVydKMK86lXWHigRMkPX9THewn5fimTVpDtSiWKXosSE0pL0kCgYEAwU3t
+      ZwE6MFXdpb+o2ZVO7AxqRAjt+DvG/Jyzi2mUm2Q/IPEf9GYrojMK843SmFa+hW/R
+      +WYfjyeXxX/pjiNaajcC9i0/IjHhghtjUMgPTnk3tWg+6JFoGqYOMxmD1jL8JQJ6
+      Q4dMiAJF0FBtA3OWt0rsnHCYnZKGk6+49IS66mMCgYEAr3/eHp/GQwOxtO6lMqod
+      65D9cYZxJKxc621DAwsnVoNj+jwFZW9cqFCD0q8h0mYtb+It3USJxMLfnOqtQiyl
+      nuER0hXZMrC4K8EsBLD9fP2yMVKH032YtYg18h0WtKrYh0oue2r63ofAGVTLc6xP
+      G6woawCpIFirqWCOhRmjtUkCgYB41wdGshy3JKZnvDWIt27b3zL7Dv38hRnyxt7y
+      kvEEZxmTtUi9lrVGM1RwRsNU2j1F205O80ldS2n0W+8cHPujlHo0fLqP3NDVbdub
+      H0V6UArES8OvzV5f8ljEFvo0iDDZzf+ygT0VdR5BiFVtp++a66qYbUbqkjOw1VPw
+      /5x9cwKBgQC69SK7iEZZs3v/wgS/wycxXeJ1KV17wvez3D8XjodO37wh+VrTU5Vi
+      FswLS6coxP5optNulBjEogYA4FV6RW1KpJtzOK9pYbYquYZ7s7jJob99FAG/S4w+
+      32Mj4ovtRtbWPQdq5SNnSWOrp92FSXSZAWTIpGAZC2jaNg6ofV/XNw==
+      -----END RSA PRIVATE KEY-----
+    ca_cert: |+
+      -----BEGIN CERTIFICATE-----
+      MIIFAzCCAu2gAwIBAgIBATALBgkqhkiG9w0BAQswEzERMA8GA1UEAxMIY29uc3Vs
+      Q0EwHhcNMTUwODA4MDAxMTI4WhcNMjUwODA4MDAxMTM0WjATMREwDwYDVQQDEwhj
+      b25zdWxDQTCCAiIwDQYJKoZIhvcNAQEBBQADggIPADCCAgoCggIBAMzjDTn+WDVK
+      AJ6H+8T2krtyzoMBTwEzGcG9UojDfvgdkbht1jLmbyPRJ06k6qc4q08ppdqDDCTg
+      OKnfib1vB839+gqMQjor+66rMMgazwwzlfcm2gCKYNbkuHe8iUYQpyBjJNMF6O6r
+      tHcxW8ETqO8tbXODBEKOxKzjTylCGl41+tRt4fG8mreCs8go7IHmughkQaxck5gc
+      kNy0LVIYiM5UlpTGQJHJzCkT2jCaqV665VHDlFY/X5UXNOEGDjx7UA2NIE9zCVD3
+      g2HBNxB+kPyvpXGWGz6X+fqJkHXe5xhMMKv9Omf3xZNd+7o+nWD0EDz2sHdnH60C
+      lQE+eM9ZhtQmII3MF7AskiKF3x2W+u87W0woJf5xgTVT+7PZRyb25r+g8unCJdRv
+      XZnO4g6rM5yAZtyh3DqepiRFrwvuOWUsbGdGZmv1jL07xL1uNIvJtwXlwIKwKeab
+      OK0PMrrehxcmMJqp+Osoy+YwlSSG54u/VKFsI28W1kL68GEkV3oevlb0hIRIPajT
+      YCIl266Zdo4sO7lmEJysDBi5p0zBz+erOmNhpxm1UsUssZrYaHnVLiodnc2jx4hB
+      0HhiU78Dt7B+jyuc9D3C91wellcgOgLfluQgvPS+n0/EopfLGG4RDDsASe+hqUWH
+      ExxZBac1DPqLhywmb2zRJijXwiiBD/CJAgMBAAGjZjBkMA4GA1UdDwEB/wQEAwIA
+      BjASBgNVHRMBAf8ECDAGAQH/AgEAMB0GA1UdDgQWBBQf89zduge2sxN5FVLeQzYH
+      rpw6JzAfBgNVHSMEGDAWgBQf89zduge2sxN5FVLeQzYHrpw6JzALBgkqhkiG9w0B
+      AQsDggIBAIdodeDVVF+HZXH5mmhuxmdg0RCU6pnvYODPKhwZiIT9lEHmFlexaF85
+      UYvh5z3DL1beisH1yfrN/7z+535nPyIVJUHPHziaKCPed5au4LiHWeRBd/O0kj4W
+      P+GIBRJvAvShWQuQT30hlzh3ZAdTRVNNrKY4UMRclZbTv2dBT7IdlN/FsqHp1GbK
+      bGHQH5/AneF/vttjRiaMJZFrHq3Aw0wntzRCAIIfVZo5r93KGiGUFWXQKdMyoOYD
+      R04DQPzu/otY0hqUPuzMqPU5xYJzLopOtfKpQtnhpB/yNbyjmAh3795zWb51Gead
+      cO6BfaCpzR0vA0SkfTBMhqmvc0AUvoGOqh3tNibFkVBo17KTEWphyIl2+61s/a7N
+      22xgQZIrwyMWXL6Mr4ZHloryJ1Nu5iFUHfT8ATYtqNotGATEV+oi03xACSzqAboE
+      rmGwMRNJAtWbeTqhS6bFqQAkAmvpZBO+h3LkoAixcCIoNXWJA9+pDptIRU48Av2u
+      /DkAOjhNh2MJkQs8owhAvxKsT1BwsPlc71tGzFLEbOJkGwt+RtzqjWc6Nq+l+uup
+      sD0sQMSg/b/b60OtJ/Qm5+u42kDaQi3v9+92S/bs9fTzA25c/mr8KA6dvG4LAsJU
+      /QlnEFyH789135x864ym1G2fvaPTqcgIc7jfw3tMTs5TtP/VSTn0
+      -----END CERTIFICATE-----
+    encrypt_keys:
+    - Atzo3VBv+YVDzQAzlQRPRA==
+    require_ssl: true
+    server_cert: |+
+      -----BEGIN CERTIFICATE-----
+      MIIELDCCAhagAwIBAgIRAN0EJexxqEEyVatWrjzc7zAwCwYJKoZIhvcNAQELMBMx
+      ETAPBgNVBAMTCGNvbnN1bENBMB4XDTE1MDgwODAwMTEzNloXDTE3MDgwODAwMTEz
+      NlowITEfMB0GA1UEAxMWc2VydmVyLmRjMS5jZi5pbnRlcm5hbDCCASIwDQYJKoZI
+      hvcNAQEBBQADggEPADCCAQoCggEBAMnlRbL6VBmDhSqCzVfez1yJsntK1YD1pdbP
+      LBgdfqxKEJv3p6w1FJH/TFpbKQU2HGvGgeCooUcO2fo0pkW8nDp9xASG3eMeL7pG
+      aTSYrlCGD9jmGn7ENLOke6J+S3gjlf3Y029RchPNfUH6PnFQeSnYPmhSgTbeMVBm
+      02aN4KfOuGUiC3ivjaY3RrhcvybWGNhp8PK+hUYWnN8e6lyPDTo6kSgtapiSfCa3
+      32pZITRnQDs/1Y0es5Gjou/7Kh40cKf4pA38xlu8TIxpfsxzlnMbW4mNvP6cdoFg
+      HUhT/uZhYIX0jEqEUSOM/zjj08HFAYYJTTQ7qovY/6z8WXeQR8kCAwEAAaNxMG8w
+      DgYDVR0PAQH/BAQDAgC4MB0GA1UdJQQWMBQGCCsGAQUFBwMBBggrBgEFBQcDAjAd
+      BgNVHQ4EFgQUp59BTY2TSXRJ0GNzVmkUE14j5hgwHwYDVR0jBBgwFoAUH/Pc3boH
+      trMTeRVS3kM2B66cOicwCwYJKoZIhvcNAQELA4ICAQBC37sEtmLj/qS7Q3RIezTc
+      hs3EZJweWNN5vjEWAYVf9g4pq/f39hmMF9rqXugBxm8WgQRCGxDLzMr5IEX1fOcI
+      Ksz98rUfWtS8WxuqFOihnZQmSj9KQmHvOCtgs/zIMW55AEPcdpVtZvl2Y2z9+j68
+      K6Z2cfgZFC8OPkk4Kfvdj3o+wWfMlnaGrwSansmuRNupXGexwQ01L1qClXxDJc/c
+      zGetvKs67HsOdSeuza2Y7D/OJUWdcyaGM7cqfs2MPoLiyAydQRGtXjCsH4mUjzKZ
+      wZ9Rq72y4jmK/Stc40TpBDnav486PZtlap/F6rUhgKKJ3UPH3fBXkIDXtRhztcQa
+      y670ZyTgFWn5mUYLB3Z66YMYqAIIJBX2cbwObbrLH1eI3Qtuh/rcCSms9XXz3jHu
+      R6+saTPl3UWw2hrHc8MAuDSTa/Qsej8TMxigju9bZxxtIY0+sUbz436Yg1I43HzR
+      /wIj682hruww4hwT7lQJUw8Zp0QQA2hfhfr4kPJGIz9+96cGT1LWiEwSuptcwYPw
+      WV4VuQJccQN4yQYR1Qp1jepEBs7NuIX46VgSU55BKSsQf1zUqP6A3G9D0nnMtACO
+      WpO0sgj3uHHCsNTC0DwR7TM5dByZWzJK0lQJCG6HzHkLcvovq/9uhn8dqOlpzeti
+      amuBD7LTPTc3rnu4GL7aZA==
+      -----END CERTIFICATE-----
+    server_key: |+
+      -----BEGIN RSA PRIVATE KEY-----
+      MIIEogIBAAKCAQEAyeVFsvpUGYOFKoLNV97PXImye0rVgPWl1s8sGB1+rEoQm/en
+      rDUUkf9MWlspBTYca8aB4KihRw7Z+jSmRbycOn3EBIbd4x4vukZpNJiuUIYP2OYa
+      fsQ0s6R7on5LeCOV/djTb1FyE819Qfo+cVB5Kdg+aFKBNt4xUGbTZo3gp864ZSIL
+      eK+NpjdGuFy/JtYY2Gnw8r6FRhac3x7qXI8NOjqRKC1qmJJ8JrffalkhNGdAOz/V
+      jR6zkaOi7/sqHjRwp/ikDfzGW7xMjGl+zHOWcxtbiY28/px2gWAdSFP+5mFghfSM
+      SoRRI4z/OOPTwcUBhglNNDuqi9j/rPxZd5BHyQIDAQABAoIBADcgwopfbi1VSzxT
+      YQyYS1jCRJkD0w6WhMUF5s1i6F7VDnn4ArG0ALzo0AlwEOBaaSJIntggU4FancyD
+      Kc+q86HJC4gM53OHn5KmfT2eXyKfqJ4aHqv0mUtgI144TBUu6lrZJMqlm5eqqYQl
+      d31rctopMMk9lgjMXPzORvUe0nQfMuD24y0vv+l8/O8Ib5mIzI8bBor7d+TNbF+W
+      1vXqlZ/NEpqrI/yyacJDFQC0yhDAbEC5SMiYumf7Vc9jJtBKDk2YCIvHpSjKdaIG
+      MUa8JG6A8cpWhSdpP1GO6LnMFloC7LdioGaXLEJeUkWnbhGQ/VuDfqogBM/4lLIt
+      IjDVEI0CgYEA639Ya/pgUe8kVl0mR/wuDI+EENWeJiLbumLpDhTFdiGXSl9ZIYez
+      GAyR23rJOU2zGoIt4IRxxVq6QLPFq0ZTKoq1kGqyAqAc0GenKgU+Uq6Mc3E0A9MG
+      z/+tBCoc9ZtC4+u/q9VdMAu/W4xJ7mtwVFItX115FsYUYw6p3hXsz/cCgYEA23kG
+      YI/KxpAFW1V04urY8YUsdvPiDtJbA0JiQeWoNRUjIoJOUVY/2P+ZdVcCaWcXEi3l
+      mjHPsXoNR5ZzHxbP/5tN8m/jl8tAD17is1qfPR7oUBfjZOHY7xFamWMK0Lo2hi7H
+      xT7BJXLOwqV3hfYcJ+x51R/H3wjpyF5g1vAtNj8CgYA9ZV/qFsaR1eUFVxep4Mco
+      oyntMaQfkSrz9uGHuEaau7szupQEN9qrRGuqauKXO/ibyqCnTiBTMYopYDUCqDz6
+      dFtNoWNzZ8bbVoqwW9mZuMQJPNQwww2doKy8zzXpmmbgARBhfijjY8yp03Na40vP
+      z/TgTgBJva6G/MWwjsrElQKBgCi6guZ0iMrkezoB19ksf+oCLsg8Zh0eCGnIbfeQ
+      qPCA5a5HxETv3pVkiZPu+7GXwf5Lqio9SC/FWKWKU/7W+u6SYZq2DORkgZTYpPVn
+      wdlT3QTQChD0oI9tBwUkDiPCCtBH6ia+iJVsgtY4Yr/ndj4qckmMxkirnMbkTNBW
+      be19AoGAelJR7jzk6TLw6ZGbGXsAQSAcP5IUM7GHAPo26ywIOTe8p40hmKrVnxfY
+      EroZtdjv1A9NVpCHJM7a/3nl0aALEsn3JKYEuG4HCY/oJ7rPpJItfrJ3MUTn/uqD
+      BKcJHlf9kYxFaLL17iOq9rY0+LURr63BkRa2uyn489luxcHnTjk=
+      -----END RSA PRIVATE KEY-----
+  databases:
+    databases:
+    - {name: ccdb, tag: cc, citext: true}
+    - {name: uaadb, tag: uaa, citext: true}
+    port: 5524
+    roles:
+    - {name: ccadmin, password: c1oudc0w, tag: admin}
+    - {name: uaaadmin, password: c1oudc0w, tag: admin}
+  dea_next:
+    advertise_interval_in_seconds: 5
+    heartbeat_interval_in_seconds: 10
+    memory_mb: 33996
+  description: Cloud Foundry sponsored by Pivotal
+  domain: REPLACE_WITH_SYSTEM_DOMAIN
+  doppler:
+    blacklisted_syslog_ranges: null
+    debug: false
+    enable_tls_transport: null
+    maxRetainedLogMessages: 100
+    port: 4443
+    tls_server:
+      cert: null
+      key: null
+      port: null
+    unmarshaller_count: 5
+  doppler_endpoint:
+    shared_secret: c1oudc0w
+  etcd:
+    machines: [REPLACE_WITH_CLOUD_FOUNDRY_INTERNAL_IP]
+    peer_require_ssl: false
+    require_ssl: false
+  etcd_metrics_server:
+    nats:
+      machines: [REPLACE_WITH_CLOUD_FOUNDRY_INTERNAL_IP]
+      password: c1oudc0w
+      username: nats
+  hm9000:
+    port: 5155
+    url: https://hm9000.REPLACE_WITH_SYSTEM_DOMAIN
+  logger_endpoint:
+    port: 4443
+  loggregator:
+    outgoing_dropsonde_port: 18081
+    doppler_port: 8081
+    etcd:
+      machines: [REPLACE_WITH_CLOUD_FOUNDRY_INTERNAL_IP]
+    tls:
+      ca: null
+  loggregator_endpoint:
+    shared_secret: c1oudc0w
+  login:
+    analytics:
+      code: null
+      domain: null
+    asset_base_url: null
+    brand: oss
+    catalina_opts: null
+    enabled: true
+    invitations_enabled: null
+    links:
+      passwd: https://console.REPLACE_WITH_SYSTEM_DOMAIN/password_resets/new
+      signup: https://console.REPLACE_WITH_SYSTEM_DOMAIN/register
+    logout: null
+    messages: null
+    notifications:
+      url: null
+    protocol: null
+    restricted_ips_regex: null
+    saml: null
+    self_service_links_enabled: null
+    signups_enabled: null
+    smtp:
+      host: null
+      password: null
+      port: null
+      user: null
+    spring_profiles: null
+    tiles: null
+    uaa_base: null
+    url: null
+  metron_agent:
+    zone: z1
+    deployment: minimal-azure
+    preferred_protocol: null
+    tls_client:
+      cert: null
+      key: null
+  metron_endpoint:
+    shared_secret: c1oudc0w
+  nats:
+    machines: [REPLACE_WITH_CLOUD_FOUNDRY_INTERNAL_IP]
+    password: c1oudc0w
+    port: 4222
+    user: nats
+  nfs_server:
+    address: REPLACE_WITH_CLOUD_FOUNDRY_INTERNAL_IP
+    allow_from_entries: [REPLACE_WITH_SUBNET_ADDRESS_RANGE_FOR_CLOUD_FOUNDRY]
+  ssl:
+    skip_cert_verify: true
+  system_domain: REPLACE_WITH_SYSTEM_DOMAIN
+  system_domain_organization: default_organization
+  request_timeout_in_seconds: 900
+  router:
+    port: 8888
+    cipher_suites: null
+    debug_addr: 0.0.0.0:17002
+    enable_ssl: null
+    extra_headers_to_log: null
+    logrotate: null
+    requested_route_registration_interval_in_seconds: null
+    route_services_secret: c1oudc0w
+    route_services_secret_decrypt_only: null
+    route_services_timeout: null
+    secure_cookies: null
+    ssl_cert: null
+    ssl_key: null
+    ssl_skip_validation: true
+    status:
+      password: c1oudc0w
+      port: 18888
+      user: gorouter
+  uaadb:
+    address: REPLACE_WITH_CLOUD_FOUNDRY_INTERNAL_IP
+    databases:
+    - {name: uaadb, tag: uaa}
+    db_scheme: postgresql
+    port: 5524
+    roles:
+    - {name: uaaadmin, password: c1oudc0w, tag: admin}
+  uaa:
+    admin:
+      client_secret: c1oudc0w
+    authentication:
+      policy:
+        countFailuresWithinSeconds: null
+        lockoutAfterFailures: null
+        lockoutPeriodSeconds: null
+    catalina_opts: -Xmx192m -XX:MaxPermSize=128m
+    batch:
+      password: c1oudc0w
+      username: batch_user
+    cc:
+      client_secret: c1oudc0w
+    scim:
+      userids_enabled: true
+      users:
+      - admin|c1oudc0w|scim.write,scim.read,openid,cloud_controller.admin,clients.read,clients.write,doppler.firehose,routing.router_groups.read
+    clients:
+      cc-service-dashboards:
+        authorities: clients.read,clients.write,clients.admin
+        authorized-grant-types: client_credentials
+        scope: openid,cloud_controller_service_permissions.read
+        secret: c1oudc0w
+      cc_routing:
+        authorities: routing.router_groups.read
+        secret: c1oudc0w
+        authorized-grant-types: client_credentials
+      cf:
+        access-token-validity: 600
+        authorities: uaa.none
+        authorized-grant-types: implicit,password,refresh_token
+        id: cf
+        override: true
+        refresh-token-validity: 2592000
+        scope: cloud_controller.read,cloud_controller.write,openid,password.write,cloud_controller.admin,scim.read,scim.write,doppler.firehose,uaa.user,routing.router_groups.read
+      cloud_controller_username_lookup:
+        authorities: scim.userids
+        authorized-grant-types: client_credentials
+        secret: c1oudc0w
+      doppler:
+        authorities: uaa.resource
+        override: true
+        secret: c1oudc0w
+      gorouter:
+        authorities: routing.routes.read
+        authorized-grant-types: client_credentials,refresh_token
+        secret: c1oudc0w
+      login:
+        authorities: oauth.login,scim.write,clients.read,notifications.write,critical_notifications.write,emails.write,scim.userids,password.write
+        authorized-grant-types: authorization_code,client_credentials,refresh_token
+        override: true
+        redirect-uri: https://login.REPLACE_WITH_SYSTEM_DOMAIN
+        scope: openid,oauth.approvals
+        secret: c1oudc0w
+      servicesmgmt:
+        authorities: uaa.resource,oauth.service,clients.read,clients.write,clients.secret
+        authorized-grant-types: authorization_code,client_credentials,password,implicit
+        autoapprove: true
+        redirect-uri: https://servicesmgmt.REPLACE_WITH_SYSTEM_DOMAIN/auth/cloudfoundry/callback
+        scope: openid,cloud_controller.read,cloud_controller.write
+        secret: c1oudc0w
+      notifications:
+        authorities: cloud_controller.admin,scim.read
+        authorized-grant-types: client_credentials
+        secret: c1oudc0w
+      ssh-proxy:
+        authorized-grant-types: authorization_code
+        autoapprove: true
+        override: true
+        redirect-uri: /login
+        scope: openid,cloud_controller.read,cloud_controller.write
+        secret: c1oudc0w
+      tcp_emitter:
+        authorities: routing.routes.write,routing.routes.read
+        authorized-grant-types: client_credentials,refresh_token
+        secret: c1oudc0w
+      tcp_router:
+        authorities: routing.routes.read
+        authorized-grant-types: client_credentials,refresh_token
+        secret: c1oudc0w
+    jwt:
+      signing_key: |
+        -----BEGIN RSA PRIVATE KEY-----
+        MIICXAIBAAKBgQDHFr+KICms+tuT1OXJwhCUmR2dKVy7psa8xzElSyzqx7oJyfJ1
+        JZyOzToj9T5SfTIq396agbHJWVfYphNahvZ/7uMXqHxf+ZH9BL1gk9Y6kCnbM5R6
+        0gfwjyW1/dQPjOzn9N394zd2FJoFHwdq9Qs0wBugspULZVNRxq7veq/fzwIDAQAB
+        AoGBAJ8dRTQFhIllbHx4GLbpTQsWXJ6w4hZvskJKCLM/o8R4n+0W45pQ1xEiYKdA
+        Z/DRcnjltylRImBD8XuLL8iYOQSZXNMb1h3g5/UGbUXLmCgQLOUUlnYt34QOQm+0
+        KvUqfMSFBbKMsYBAoQmNdTHBaz3dZa8ON9hh/f5TT8u0OWNRAkEA5opzsIXv+52J
+        duc1VGyX3SwlxiE2dStW8wZqGiuLH142n6MKnkLU4ctNLiclw6BZePXFZYIK+AkE
+        xQ+k16je5QJBAN0TIKMPWIbbHVr5rkdUqOyezlFFWYOwnMmw/BKa1d3zp54VP/P8
+        +5aQ2d4sMoKEOfdWH7UqMe3FszfYFvSu5KMCQFMYeFaaEEP7Jn8rGzfQ5HQd44ek
+        lQJqmq6CE2BXbY/i34FuvPcKU70HEEygY6Y9d8J3o6zQ0K9SYNu+pcXt4lkCQA3h
+        jJQQe5uEGJTExqed7jllQ0khFJzLMx0K6tj0NeeIzAaGCQz13oo2sCdeGRHO4aDh
+        HH6Qlq/6UOV5wP8+GAcCQFgRCcB+hrje8hfEEefHcFpyKH+5g1Eu1k0mLrxK2zd+
+        4SlotYRHgPCEubokb2S1zfZDWIXW3HmggnGgM949TlY=
+        -----END RSA PRIVATE KEY-----
+      verification_key: |
+        -----BEGIN PUBLIC KEY-----
+        MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDHFr+KICms+tuT1OXJwhCUmR2d
+        KVy7psa8xzElSyzqx7oJyfJ1JZyOzToj9T5SfTIq396agbHJWVfYphNahvZ/7uMX
+        qHxf+ZH9BL1gk9Y6kCnbM5R60gfwjyW1/dQPjOzn9N394zd2FJoFHwdq9Qs0wBug
+        spULZVNRxq7veq/fzwIDAQAB
+        -----END PUBLIC KEY-----
+    ssl:
+      port: -1
+    url: https://uaa.REPLACE_WITH_SYSTEM_DOMAIN
+    issuer: https://uaa.REPLACE_WITH_SYSTEM_DOMAIN
+    zones:
+      internal:
+        hostnames:
+        - uaa.service.cf.internal

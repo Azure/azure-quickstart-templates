@@ -58,7 +58,7 @@
       "type": "string",
       "defaultValue": "Data",
       "metadata": {
-        "description": "Subnet name for the VNET that resources will be provisionined in to"
+        "description": "Subnet name for the VNET that resources will be provisioned in to"
       }
     },
     "subnet1Prefix": {
@@ -70,7 +70,6 @@
     },
     "dnsName": {
       "type": "string",
-      "defaultValue": "uniqueName",
       "metadata": {
         "description": "Load balancer subdomain name: for example (<subdomain>.westus.cloudapp.azure.com)"
       }
@@ -92,7 +91,7 @@
   },
   "resources": [
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('securityGroupName')]",
       "location": "[parameters('location')]",
@@ -103,7 +102,7 @@
             "properties": {
               "description": "Allows SSH traffic",
               "protocol": "Tcp",
-              "sourcePortRange": "22",
+              "sourcePortRange": "*",
               "destinationPortRange": "22",
               "sourceAddressPrefix": "*",
               "destinationAddressPrefix": "*",
@@ -116,16 +115,16 @@
       }
     },
     {
+      "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[parameters('storageAccountName')]",
-      "apiVersion": "2015-05-01-preview",
       "location": "[parameters('location')]",
       "properties": {
         "accountType": "Standard_LRS"
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[parameters('virtualNetworkName')]",
       "location": "[parameters('location')]",
@@ -146,7 +145,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "publicIp",
       "location": "[parameters('location')]",
@@ -158,7 +157,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "nic",
       "location": "[parameters('location')]",
@@ -178,17 +177,17 @@
               },
               "subnet": {
                 "id": "[variables('subnet1Ref')]"
-              },
-              "networkSecurityGroup": {
-                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('securityGroupName'))]"
               }
             }
           }
-        ]
+        ],
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('securityGroupName'))]"
+        }
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "myvm",
       "location": "[parameters('location')]",
@@ -201,7 +200,7 @@
           "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
-          "computername": "myvm",
+          "computerName": "myvm",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]"
         },
@@ -250,27 +249,29 @@
             }
           ]
         }
-      }
-    },
-    {
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat('myvm', '/azureVmUtils')]",
-      "apiVersion": "2015-05-01-preview",
-      "location": "[parameters('location')]",
-      "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', 'myvm')]"
-      ],
-      "properties": {
-        "publisher": "Microsoft.OSTCExtensions",
-        "type": "CustomScriptForLinux",
-        "typeHandlerVersion": "1.2",
-        "settings": {
-          "fileUris": [
-            "[variables('scriptUrl')]"
+      },
+      "resources": [
+        {
+          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "name": "[concat('myvm', '/azureVmUtils')]",
+          "apiVersion": "2015-06-15",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', 'myvm')]"
           ],
-          "commandToExecute": "bash vm-disk-utils-0.1.sh -s"
+          "properties": {
+            "publisher": "Microsoft.OSTCExtensions",
+            "type": "CustomScriptForLinux",
+            "typeHandlerVersion": "1.2",
+            "settings": {
+              "fileUris": [
+                "[variables('scriptUrl')]"
+              ],
+              "commandToExecute": "bash vm-disk-utils-0.1.sh -s"
+            }
+          }
         }
-      }
+      ]
     }
   ]
 }
