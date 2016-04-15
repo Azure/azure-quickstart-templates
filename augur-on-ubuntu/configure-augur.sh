@@ -45,8 +45,28 @@ time sudo apt-get install solc -y
 cd $HOMEDIR
 wget https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/go-ethereum-on-ubuntu/genesis.json
 wget https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/go-ethereum-on-ubuntu/priv_genesis.key
-wget https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/go-ethereum-on-ubuntu/start-private-blockchain.sh
 
+
+geth init genesis.json
+echo "password" > pw.txt  #TODO:prompt for separate pw, or just pass in one from auguruser?
+geth --password pw.txt account import priv_genesis.key
+ 
+#Pregen DAG so miniing can start immediately, no delay between when front end is useable
+mkdir ~/.ethash
+geth makedag 0 ~/.ethash
+
+geth --maxpeers 0 --networkid 1101011 --rpc --rpccorsdomain "*" console
+
+
+####################
+#Install Augur Front End
+####################
+
+git clone https://github.com/AugurProject/augur.git
+cd augur
+npm install
+grunt
+npm start
 
 date
 echo "completed geth install $$"
