@@ -1,15 +1,28 @@
-﻿$name = "DnsForwardExample"
+﻿#
+#  This PowerShell script shows how to deploy the "DNS forwarder" resource template.
+#  As storage account names need to be unique, please edit storageAccName to a value that's available.
+#
 
-Login-AzureRmAccount
 
-
-New-AzureRmResourceGroup -Name $name -Location "northeurope" -force
+# parameters 
+$rgname = "DnsForwardExample1"
 
 $params = @{
     "adminUsername"="mradmin";
     "adminPassword"="Admin123!";
-    "storageAccName"="$($name)stor".ToLower();
+    "storageAccName"="$($rgname)stor".ToLower();
 }
 
-New-AzureRmResourceGroupDeployment -Name $name -ResourceGroupName $name -TemplateFile "C:\Users\garbrad\OneDrive - Microsoft\DNS Firewalls\DNS Forwarder For Gallery\mainTemplate.json" -TemplateParameterObject $params
+#  script folder
+$scriptDir = Split-Path $MyInvocation.MyCommand.Path
+
+# import the AzureRM modules
+Import-Module AzureRM.Resources
+
+#  login
+Login-AzureRmAccount
+
+# create the resource from the template
+New-AzureRmResourceGroup -Name $rgname -Location "northeurope"
+New-AzureRmResourceGroupDeployment -Name $rgname -ResourceGroupName $rgname -TemplateFile "$scriptDir\azuredeploy.json" -TemplateParameterObject $params
 
