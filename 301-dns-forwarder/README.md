@@ -7,5 +7,5 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template shows how to create a DNS server VM that forwards queries to Azure's internal DNS servers so that hostnames for VMs in the virtual network can be resolved from outside the network.  This is useful for using hostname resolution between virtual networks and from on-premise machines. See [Name resolution using your own DNS server](https://azure.microsoft.com/documentation/articles/virtual-networks-name-resolution-for-vms-and-role-instances/#name-resolution-using-your-own-dns-server) for more details of how DNS resolution work in Azure.
+This template shows how to create a DNS server VM that forwards queries to Azure's internal DNS servers so that hostnames for VMs in the virtual network can be resolved from outside the network.  This is useful for using hostname resolution between virtual networks and from on-premise machines to Azure. See [Name resolution using your own DNS server](https://azure.microsoft.com/documentation/articles/virtual-networks-name-resolution-for-vms-and-role-instances/#name-resolution-using-your-own-dns-server) for more details of how DNS resolution work in Azure.
 
