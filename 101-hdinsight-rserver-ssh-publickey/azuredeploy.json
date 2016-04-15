@@ -2,23 +2,6 @@
 	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
 	"contentVersion": "1.0.0.0",
 	"parameters": {
-		"location": {
-			"type": "string",
-			"allowedValues": ["Central US",
-			"East Asia",
-			"East US",
-			"East US 2",
-			"Japan East",
-			"Japan West",
-			"North Europe",
-			"South Central US",
-			"Southeast Asia",
-			"West Europe",
-			"West US"],
-			"metadata": {
-				"description": "The location where all azure resources will be deployed."
-			}
-		},
 		"clusterType": {
 			"type": "string",
 			"allowedValues": ["hadoop",
@@ -97,88 +80,96 @@
 			"applicationType": "RServer"
 		}
 	},
-	{
-		"name": "[parameters('clusterStorageAccountName')]",
-		"type": "Microsoft.Storage/storageAccounts",
-		"location": "[parameters('location')]",
-		"apiVersion": "[variables('defaultApiVersion')]",
-		"dependsOn": [],
-		"tags": {
-			
-		},
-		"properties": {
-			"accountType": "Standard_LRS"
-		}
-	},
-	{
-		"name": "[parameters('clusterName')]",
-		"type": "Microsoft.HDInsight/clusters",
-		"location": "[parameters('location')]",
-		"apiVersion": "[variables('clusterApiVersion')]",
-		"dependsOn": ["[concat('Microsoft.Storage/storageAccounts/',parameters('clusterStorageAccountName'))]"],
-		"tags": {
-			
-		},
-		"properties": {
-			"clusterVersion": "3.4",
-			"osType": "Linux",
-			"tier": "Premium",
-			"clusterDefinition": {
-				"kind": "[parameters('clusterType')]",
-				"configurations": {
-					"gateway": {
-						"restAuthCredential.isEnabled": true,
-						"restAuthCredential.username": "[parameters('clusterLoginUserName')]",
-						"restAuthCredential.password": "[parameters('clusterLoginPassword')]"
-					}
-				}
-			},
-			"storageProfile": {
-				"storageaccounts": [{
-					"name": "[concat(parameters('clusterStorageAccountName'),'.blob.core.windows.net')]",
-					"isDefault": true,
-					"container": "[parameters('clusterName')]",
-					"key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('clusterStorageAccountName')), variables('defaultApiVersion')).key1]"
-				}]
-			},
-			"computeProfile": {
-				"roles": [{
-					"name": "headnode",
-					"targetInstanceCount": "2",
-					"hardwareProfile": {
-						"vmSize": "Standard_D3_v2"
-					},
-					"osProfile": {
-						"linuxOperatingSystemProfile": {
-							"username": "[parameters('sshUserName')]",
-							"sshProfile": {
-								"publicKeys": [{
-									"certificateData": "[parameters('sshPublicKey')]"
-								}]
-							}
-						}
-					}
-				},
-				{
-					"name": "workernode",
-					"targetInstanceCount": "[parameters('clusterWorkerNodeCount')]",
-					"hardwareProfile": {
-						"vmSize": "Standard_D3_v2"
-					},
-					"osProfile": {
-						"linuxOperatingSystemProfile": {
-							"username": "[parameters('sshUserName')]",
-							"sshProfile": {
-								"publicKeys": [{
-									"certificateData": "[parameters('sshPublicKey')]"
-								}]
-							}
-						}
-					}
-				}]
-			}
-		}
-	}],
+    {
+      "name": "[parameters('clusterStorageAccountName')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "[variables('defaultApiVersion')]",
+      "dependsOn": [ ],
+      "tags": {
+
+      },
+      "properties": {
+        "accountType": "Standard_LRS"
+      }
+    },
+    {
+      "name": "[parameters('clusterName')]",
+      "type": "Microsoft.HDInsight/clusters",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "[variables('clusterApiVersion')]",
+      "dependsOn": [ "[concat('Microsoft.Storage/storageAccounts/',parameters('clusterStorageAccountName'))]" ],
+      "tags": {
+
+      },
+      "properties": {
+        "clusterVersion": "3.4",
+        "osType": "Linux",
+        "tier": "Premium",
+        "clusterDefinition": {
+          "kind": "[parameters('clusterType')]",
+          "configurations": {
+            "gateway": {
+              "restAuthCredential.isEnabled": true,
+              "restAuthCredential.username": "[parameters('clusterLoginUserName')]",
+              "restAuthCredential.password": "[parameters('clusterLoginPassword')]"
+            }
+          }
+        },
+        "storageProfile": {
+          "storageaccounts": [
+            {
+              "name": "[concat(parameters('clusterStorageAccountName'),'.blob.core.windows.net')]",
+              "isDefault": true,
+              "container": "[parameters('clusterName')]",
+              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('clusterStorageAccountName')), variables('defaultApiVersion')).key1]"
+            }
+          ]
+        },
+        "computeProfile": {
+          "roles": [
+            {
+              "name": "headnode",
+              "targetInstanceCount": "2",
+              "hardwareProfile": {
+                "vmSize": "Standard_D3_v2"
+              },
+              "osProfile": {
+                "linuxOperatingSystemProfile": {
+                  "username": "[parameters('sshUserName')]",
+                  "sshProfile": {
+                    "publicKeys": [
+                      {
+                        "certificateData": "[parameters('sshPublicKey')]"
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "name": "workernode",
+              "targetInstanceCount": "[parameters('clusterWorkerNodeCount')]",
+              "hardwareProfile": {
+                "vmSize": "Standard_D3_v2"
+              },
+              "osProfile": {
+                "linuxOperatingSystemProfile": {
+                  "username": "[parameters('sshUserName')]",
+                  "sshProfile": {
+                    "publicKeys": [
+                      {
+                        "certificateData": "[parameters('sshPublicKey')]"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    }],
 	"outputs": {
 		"cluster": {
 			"type": "object",
