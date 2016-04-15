@@ -5,7 +5,7 @@
 
 
 # parameters 
-$rgname = "DnsForwardExample1"
+$rgname = "DnsForwardExample"
 
 $params = @{
     "adminUsername"="mradmin";
