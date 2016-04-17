@@ -3,19 +3,22 @@ name: bosh
 
 releases:
 - name: bosh
-  url: https://bosh.io/d/github.com/cloudfoundry/bosh?v=255.1
-  sha1: 8cc4613413232f2278735de99d2a24d8dafc14db
+  url: https://bosh.io/d/github.com/cloudfoundry/bosh?v=255.3
+  sha1: 1a3d61f968b9719d9afbd160a02930c464958bf4
 - name: bosh-azure-cpi
-  url: https://bosh.io/d/github.com/cloudfoundry-incubator/bosh-azure-cpi-release?v=7
-  sha1: 8df7b79458335188a1ecab83cf5ef9a82366baeb
+  url: https://bosh.io/d/github.com/cloudfoundry-incubator/bosh-azure-cpi-release?v=9
+  sha1: e4bf4d26b45b2752975e4054f7e406c5f4661c69
 
 networks:
+- name: public
+  type: vip
+
 - name: private
   type: manual
   subnets: # You need to update the subnet configuration if you change to another subnet
   - range: REPLACE_WITH_SUBNET_ADDRESS_RANGE_FOR_BOSH
     gateway: REPLACE_WITH_GATEWAY_IP
-    dns: [8.8.8.8]
+    dns: [168.63.129.16]
     cloud_properties:
       virtual_network_name: REPLACE_WITH_VNET_NAME # Replace with virtual network name
       subnet_name: REPLACE_WITH_SUBNET_NAME_FOR_BOSH # Replace with subnet name for BOSH VM
@@ -51,6 +54,7 @@ jobs:
 
   networks:
   - {name: private, static_ips: [REPLACE_WITH_BOSH_DIRECTOR_IP], default: [dns, gateway]}
+#  - {name: public, static_ips: [REPLACE_WITH_BOSH_PUBLIC_IP]}
 
   properties:
     nats:
@@ -59,11 +63,12 @@ jobs:
       password: nats-password
 
     redis:
-      listen_addresss: 127.0.0.1
+      listen_address: 127.0.0.1
       address: 127.0.0.1
       password: redis-password
 
     postgres: &db
+      listen_address: 127.0.0.1
       host: 127.0.0.1
       user: postgres
       password: postgres-password
@@ -94,10 +99,17 @@ jobs:
       enable_snapshots: true
       debug:
         keep_unreachable_vms: REPLACE_WITH_KEEP_UNREACHABLE_VMS
+      max_threads: 10
+      user_management:
+        provider: local
+        local:
+          users:
+          - {name: admin, password: admin}
+          - {name: hm-user, password: hm-password}
 
     hm:
-      http: {user: hm, password: hm-password}
-      director_account: {user: admin, password: admin}
+      director_account: {user: hm-user, password: hm-password}
+      resurrector_enabled: true
 
     azure: &azure
       environment: AzureCloud
@@ -108,8 +120,8 @@ jobs:
       client_id: REPLACE_WITH_CLIENT_ID
       client_secret: REPLACE_WITH_CLIENT_SECRET
       ssh_user: vcap
-      ssh_certificate: |
-        REPLACE_WITH_SSH_CERTIFICATE
+      ssh_public_key: REPLACE_WITH_SSH_PUBLIC_KEY
+      default_security_group: REPLACE_WITH_NSG_NAME_FOR_BOSH
 
     agent: {mbus: "nats://nats:nats-password@REPLACE_WITH_BOSH_DIRECTOR_IP:4222"}
 
@@ -119,11 +131,13 @@ cloud_provider:
   template: {name: cpi, release: bosh-azure-cpi}
 
   ssh_tunnel:
+#    host: REPLACE_WITH_BOSH_PUBLIC_IP
     host: REPLACE_WITH_BOSH_DIRECTOR_IP
     port: 22
     user: vcap # The user must be as same as above ssh_user
-    private_key: ~/bosh.key
+    private_key: ~/bosh
 
+#  mbus: https://mbus-user:mbus-password@REPLACE_WITH_BOSH_PUBLIC_IP:6868
   mbus: https://mbus-user:mbus-password@REPLACE_WITH_BOSH_DIRECTOR_IP:6868
 
   properties:

@@ -1,4 +1,5 @@
 {
+
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
@@ -6,24 +7,26 @@
       "type": "string",
       "allowedValues": [
         "West US",
-        "West Europe",
         "East US",
+        "Central US",
+        "South Central US",
+        "West Europe",
+        "North Europe",
         "East Asia",
-        "Southeast Asia"
+        "Southeast Asia",
+        "Japan East",
+        "Japan West",
+        "Japan East",
+        "Australia East",
+        "Australia Southeast"
       ],
       "metadata": {
         "description": "Region where you want to create all the resources"
       }
     },
-    "newStorageAccountName": {
-      "type": "string",
-      "metadata": {
-        "description": "Storage account name pattern.The template will use this value and the resource group name for all the storage accounts."
-      }
-    },
     "storageAccountType": {
       "type": "string",
-      "defaultValue": "Standard_LRS",
+      "defaultValue": "Premium_LRS",
       "allowedValues": [
         "Standard_LRS",
         "Premium_LRS"
@@ -34,7 +37,7 @@
     },
     "vmSize": {
       "type": "string",
-      "defaultValue": "Standard_D2",
+      "defaultValue": "Standard_DS2",
       "allowedValues": [
         "Standard_D1",
         "Standard_DS1",
@@ -57,13 +60,7 @@
         "description": "VM Size, for Premium Storage specify DS VMs."
       }
     },
-    "vmNamePattern": {
-      "type": "string",
-      "defaultValue": "VM",
-      "metadata": {
-        "description": "VM Name Pattern; which wil be concatenated with an incremental number"
-      }
-    },
+
     "vmSizeDataDisks": {
       "type": "int",
       "defaultValue": 120,
@@ -84,6 +81,7 @@
     },
     "serversRole": {
       "type": "string",
+      "defaultValue": "Generic",
       "metadata": {
         "description": "Servers role, for instance webtier, database.A tag will be created with the provided value"
       }
@@ -92,50 +90,17 @@
       "type": "string",
       "defaultValue": "DEV",
       "metadata": {
-        "description": "Servers purpose, for instance development, test, pre-production, production.A tag will be created with the provided value"
-      }
-    },
-    "imagePublisher": {
-      "type": "string",
-      "defaultValue": "Canonical",
-      "allowedValues": [
-        "Canonical",
-        "OpenLogic"
-      ],
-      "metadata": {
-        "description": "VM Image Publisher"
-      }
-    },
-    "imageOffer": {
-      "type": "string",
-      "defaultValue": "UbuntuServer",
-      "allowedValues": [
-        "UbuntuServer",
-        "CentOS"
-      ],
-      "metadata": {
-        "description": "VM Image Offer"
-      }
-    },
-    "imageSKU": {
-      "type": "string",
-      "defaultValue": "12.04.5-LTS",
-      "allowedValues": [
-        "12.04.5-LTS",
-        "6.5"
-      ],
-      "metadata": {
-        "description": "VM Image SKU"
+        "description": "Servers purpose, for instance development, test, pre-production, production. A tag will be created with the provided value"
       }
     },
     "numberOfVms": {
       "type": "int",
       "defaultValue": 3,
       "metadata": {
-        "description": "Number of VMs.The template will create N number of identical VMs"
+        "description": "Number of VMs. The template will create N number of identical VMs"
       }
     },
-    "adminUserName": {
+    "adminUsername": {
       "type": "string",
       "metadata": {
         "description": "Admin user name"
@@ -148,22 +113,29 @@
       }
     },
     "sshKeyData": {
-      "type": "string",
+      "type": "securestring",
       "metadata": {
         "description": "ssh public key for the admin user"
       }
     },
-    "customScriptConfigStorageAccountName": {
+    "sshStorageAccountName": {
       "type": "string",
       "metadata": {
-        "description": "Private storage account name in which you are storing your certificates for ansible and the template bash scripts"
+        "description": "Private storage account name in which you are storing your ssh certificates"
       }
     },
-    "customScriptConfigStorageAccountKey": {
+    "sshStorageAccountKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Private storage account key in which you are storing your ssh certificates"
+      }
+    },    
+    "dnsLabelPrefix": {
       "type": "string",
       "metadata": {
-        "description": "Private storage account key"
+        "description": "DNS Label for the Public IP. Must be lowercase. It should match with the following regular expression: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$ or it will raise an error."
       }
+
     },
     "publicIPType": {
       "type": "string",
@@ -175,19 +147,14 @@
       "metadata": {
         "description": "Public facing IP Type."
       }
-    },
-    "dnsNameLabel": {
-      "type": "string",
-      "metadata": {
-        "description": "Public facing DNS name"
-      }
     }
   },
   "variables": {
-    "apiVersion": "2015-05-01-preview",
+    "scriptsBaseUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/ansible-advancedlinux/",
+    "apiVersion": "2015-06-15",
     "vmStorageAccountContainerName": "vhds",
     "createRAID": "true",
-    "availabilitySetName": "AvSet01",
+    "availabilitySetName": "ANS01",
     "faultDomainCount": "3",
     "updateDomainCount": "10",
     "virtualNetworkName": "VNet01",
@@ -197,25 +164,40 @@
     "subnet1Prefix": "10.0.1.0/24",
     "subnet2Prefix": "10.0.2.0/24",
     "publicIPName": "VIP01",
+    "vmNamePattern": "ANS",
     "VMIPAddressStart": "10.0.2.2",
-    "vmNICNamePattern": "NICVM",
-    "loadBalancerName": "LB01",
+    "vmNICNamePattern": "ANS",
+    "loadBalancerName": "PLB",
     "sshNatRuleFrontEndPort": "6400",
     "sshNatRuleBackEndPort": "22",
+    "publicIPRef": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPName'))]",
+    "NICipconfig": "ipCnfgBE",
+    "NICRef": "[resourceId('Microsoft.Network/networkInterfaces',variables('vmNICNamePattern'))]",
+    "DNSNameLB": "[concat(parameters('dnsLabelPrefix'))]",
+    "vnetRef": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
+    "subnetBackEndRef": "[concat(variables('vnetRef'),'/subnets/',variables('subnet2Name'))]",
+    "FrontEndRef": "[concat(variables('vnetRef'),'/subnets/',variables('subnet1Name'))]",
+    "loadBalancerRef": "[resourceId('Microsoft.Network/loadBalancers',variables('loadBalancerName'))]",
+    "lbRuleName": "lbRuleANSAdmin",
+    "lbRuleRef": "[concat(variables('loadBalancerRef'),'/loadBalancingRules/',variables('lbRuleName'))]",
+    "lbFEConfig": "LBAnsFrontConfg",
+    "lbFEConfigRef": "[concat(variables('loadBalancerRef'),'/frontendIPConfigurations/',variables('lbFEConfig'))]",
+    "lbBEConfig": "[concat('LBBEAnsFrontConfg')]",
+    "lbBEConfigRef": "[concat(variables('loadBalancerRef'),'/backendAddressPools/' ,variables('lbBEConfig'))]",
     "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
-    "sshRootCerBlobLocation": "customscript/id_rsa",
-    "sshRootPubBlobLocation": "customscript/id_rsa.pub",
-    "ansiblePlaybookLocation": "customscript/InitStorage_RAID.yml",
+    "sshRootCerBlobLocation": "id_rsa",
+    "nginxConfigLocation": "nginx",
+    "sshRootPubBlobLocation": "id_rsa.pub",
+    "ansiblePlaybookLocation": "InitStorage_RAID.yml",
     "customScriptAnsibleFile": "configure_ansible.sh",
-    "customScriptAnsibleUrl": "[concat('https://',parameters('customScriptConfigStorageAccountName'),'.blob.core.windows.net/customscript/',variables('customScriptAnsibleFile'))]",
+    "customScriptAnsibleUrl": "[concat(variables('scriptsBaseUrl'),variables('customScriptAnsibleFile'))]",
     "customScriptAnsibleCommand": "[concat('bash ',variables('customScriptAnsibleFile'))]",
     "customScriptAnsibleParameters": "[concat(' -i ',variables('VMIPAddressStart'),' -n ',parameters('numberOfVms'),' -r ',variables('createRAID'),' -f ',parameters('linuxFileSystem'))]",
-    "sshRootCerBlobUrl": "[concat('https://',parameters('customScriptConfigStorageAccountName'),'.blob.core.windows.net/',variables('sshRootCerBlobLocation'))]",
     "customScriptSSHRootFile": "configure_ssh_root.sh",
-    "customScriptSSHRootUrl": "[concat('https://',parameters('customScriptConfigStorageAccountName'),'.blob.core.windows.net/customscript/',variables('customScriptSSHRootFile'))]",
-    "customScriptSSHRootCommand": "[concat('bash ',variables('customScriptSSHRootFile'))]",
-    "sshRootPubBlobUrl": "[concat('https://',parameters('customScriptConfigStorageAccountName'),'.blob.core.windows.net/',variables('sshRootPubBlobLocation'))]",
-    "ansiblePlaybookUrl": "[concat('https://',parameters('customScriptConfigStorageAccountName'),'.blob.core.windows.net/',variables('ansiblePlaybookLocation'))]",
+    "customScriptSSHRootUrl": "[concat(variables('scriptsBaseUrl'),variables('customScriptSSHRootFile'))]",
+    "customScriptSSHRootCommand": "[concat('bash ',variables('customScriptSSHRootFile'),' -a ', parameters('sshStorageAccountName'),' -k ', parameters('sshStorageAccountKey'))]",
+    "ansiblePlaybookUrl": "[concat(variables('scriptsBaseUrl'),variables('ansiblePlaybookLocation'))]",
+    "pythonAzureScriptUrl": "[concat(variables('scriptsBaseUrl'),'GetSSHFromPrivateStorageAccount.py')]",
     "ansibleVmTypes": {
       "Premium_LRS": {
         "vmSize": "Standard_DS1"
@@ -226,28 +208,10 @@
     },
     "currentEnvironmentSettings": "[variables('ansibleVmTypes')[parameters('storageAccountType')]]",
     "ansibleVmType": "[variables('currentEnvironmentSettings').vmSize]",
-    "publicIPRef": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPName'))]",
-    "NICipconfig": "ipCnfgBE",
-    "NICRef": "[resourceId('Microsoft.Network/networkInterfaces',variables('vmNICNamePattern'))]",
-    "DNSNameLB": "[concat(parameters('dnsNameLabel'))]",
-    "vnetRef": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
-    "subnetBackEndRef": "[concat(variables('vnetRef'),'/subnets/',variables('subnet2Name'))]",
-    "FrontEndRef": "[concat(variables('vnetRef'),'/subnets/',variables('subnet1Name'))]",
-    "loadBalancerRef": "[resourceId('Microsoft.Network/loadBalancers',variables('loadBalancerName'))]",
-    "lbRuleName": "lbRuleCbAdmin",
-    "lbRuleRef": "[concat(variables('loadBalancerRef'),'/loadBalancingRules/',variables('lbRuleName'))]",
-    "lbFEConfig": "PLBcbaFrontConfg",
-    "lbFEConfigRef": "[concat(variables('loadBalancerRef'),'/frontendIPConfigurations/',variables('lbFEConfig'))]",
-    "lbBEConfig": "[concat('LBBEcbaFrontConfg')]",
-    "lbBEConfigRef": "[concat(variables('loadBalancerRef'),'/backendAddressPools/' ,variables('lbBEConfig'))]",
-    "lbcbaProbe": "cbaLBProbe",
-    "lbcbaProbeRef": "[concat(variables('loadBalancerRef'),'/probes/',variables('lbcbaProbe'))]",
-    "lbProbePort": 8092,
-    "lbExposedPort": 80,
-    "lbcbaIdleTimeOut": 4,
-    "newStorageAccountName": "[concat(resourceGroup().name,parameters('newStorageAccountName'),'0')]",
+    "newStorageAccountName": "[concat(uniquestring(resourceGroup().id), 'stg')]",
     "storageRef": "[concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]"
   },
+
   "resources": [
     {
       "apiVersion": "[variables('apiVersion')]",
@@ -283,6 +247,7 @@
       "location": "[parameters('location')]",
       "dependsOn": [
         "[variables('vnetRef')]"
+
       ],
       "properties": {
         "publicIPAllocationMethod": "[parameters('publicIPType')]",
@@ -300,6 +265,7 @@
         "[variables('publicIPRef')]"
       ],
       "properties": {
+
         "frontendIPConfigurations": [
           {
             "name": "[variables('lbFEConfig')]",
@@ -308,58 +274,24 @@
                 "id": "[variables('publicIPRef')]"
               }
             }
+
           }
         ],
         "backendAddressPools": [
-          {
-            "name": "[variables('lbBEConfig')]"
-          }
-        ],
-        "probes": [
-          {
-            "name": "[variables('lbcbaProbe')]",
-            "properties": {
-              "protocol": "tcp",
-              "port": "[variables('lbProbePort')]",
-              "intervalInSeconds": "5",
-              "numberOfProbes": "3"
-            }
-          }
-        ],
-        "loadBalancingRules": [
-          {
-            "name": "[variables('lbRuleName')]",
-            "properties": {
-              "frontendIPConfiguration": {
-                "id": "[variables('lbFEConfigRef')]"
-              },
-              "backendAddressPool": {
-                "id": "[variables('lbBEConfigRef')]"
-              },
-              "protocol": "tcp",
-              "frontendPort": "[variables('lbExposedPort')]",
-              "backendPort": "[variables('lbExposedPort')]",
-              "enableFloatingIP": false,
-              "idleTimeoutInMinutes": "[ variables('lbcbaIdleTimeOut')]",
-              "probe": {
-                "id": "[variables('lbcbaProbeRef')]"
-              }
-            }
-          }
+          { "name": "[variables('lbBEConfig')]" }
         ],
         "inboundNatRules": [
           {
-            "name": "sshToAnsibleControllerNATRule",
+            "name": "sshToAnsibleControllerNAT",
             "properties": {
-              "frontendIPConfiguration": {
-                "id": "[variables('lbFEConfigRef')]"
-              },
+              "frontendIPConfiguration": { "id": "[variables('lbFEConfigRef')]" },
               "protocol": "tcp",
               "frontendPort": "[concat(variables('sshNatRuleFrontEndPort'),'0')]",
               "backendPort": "[variables('sshNatRuleBackEndPort')]",
               "enableFloatingIP": false
             }
           }
+
         ]
       }
     },
@@ -371,12 +303,13 @@
       "properties": {
         "PlatformFaultDomainCount": "[variables('faultDomainCount')]",
         "PlatformUpdateDomainCount": "[variables('updateDomainCount')]"
+
       }
     },
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('newStorageAccountName')]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "location": "[parameters('location')]",
       "properties": {
         "accountType": "[parameters('storageAccountType')]"
@@ -406,11 +339,10 @@
                 "id": "[variables('subnetBackEndRef')]"
               },
               "loadBalancerBackendAddressPools": [
-                {
-                  "id": "[variables('lbBEConfigRef')]"
-                }
+                { "id": "[variables('lbBEConfigRef')]" }
               ]
             }
+
           }
         ]
       }
@@ -418,7 +350,7 @@
     {
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[concat(parameters('vmNamePAttern'),copyIndex())]",
+      "name": "[concat(variables('vmNamePattern'),copyIndex())]",
       "location": "[parameters('location')]",
       "tags": {
         "ServerRole": "[parameters('serversRole')]",
@@ -441,59 +373,69 @@
           "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
-          "computerName": "[concat(parameters('vmNamePAttern'),copyIndex())]",
-          "adminUsername": "[parameters('adminUserName')]",
-          "adminPassword": "[parameters('adminPassword')]",
-          "linuxConfiguration": {
-            "disablePasswordAuthentication": "false",
-            "ssh": {
-              "publicKeys": [
-                {
-                  "path": "[variables('sshKeyPath')]",
-                  "keyData": "[parameters('sshKeyData')]"
-                }
-              ]
-            }
-          }
+          "computerName": "[concat(variables('vmNamePattern'),copyIndex())]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
         },
         "storageProfile": {
           "imageReference": {
-            "publisher": "[parameters('imagePublisher')]",
-            "offer": "[parameters('imageOffer')]",
-            "sku": "[parameters('imageSKU')]",
+            "publisher": "Canonical",
+            "offer": "UbuntuServer",
+            "sku": "14.04.3-LTS",
             "version": "latest"
           },
           "osDisk": {
-            "name": "[concat(parameters('vmNamePAttern'),copyIndex(), '-OS')]",
+            "name": "[concat(variables('vmNamePattern'),copyIndex(), '-OS')]",
             "vhd": {
-              "uri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',parameters('vmNamePAttern'),copyIndex(),'-OS.vhd')]"
+              "uri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('vmNamePattern'),copyIndex(),'-OS.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
           },
           "dataDisks": [
             {
-              "name": "[concat(parameters('vmNamePAttern'),copyIndex(), '-Data_1')]",
+              "name": "[concat(variables('vmNamePattern'),copyIndex(), '-Data_1')]",
               "diskSizeGB": "[parameters('vmSizeDataDisks')]",
               "lun": 0,
               "vhd": {
-                "uri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',parameters('vmNamePAttern'),copyIndex(),'-Data_1.vhd')]"
+                "uri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('vmNamePattern'),copyIndex(),'-Data_1.vhd')]"
               },
               "caching": "ReadOnly",
               "createOption": "Empty"
             },
             {
-              "name": "[concat(parameters('vmNamePAttern'),copyIndex(), '-Data_2')]",
+              "name": "[concat(variables('vmNamePattern'),copyIndex(), '-Data_2')]",
               "diskSizeGB": "[parameters('vmSizeDataDisks')]",
               "lun": 1,
               "vhd": {
-                "uri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',parameters('vmNamePAttern'),copyIndex(),'-Data_2.vhd')]"
+                "uri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('vmNamePattern'),copyIndex(),'-Data_2.vhd')]"
+              },
+              "caching": "ReadOnly",
+              "createOption": "Empty"
+            },
+            {
+              "name": "[concat(variables('vmNamePattern'),copyIndex(), '-Data_3')]",
+              "diskSizeGB": "[parameters('vmSizeDataDisks')]",
+              "lun": 2,
+              "vhd": {
+                "uri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('vmNamePattern'),copyIndex(),'-Data_3.vhd')]"
+              },
+              "caching": "ReadOnly",
+              "createOption": "Empty"
+            },
+            {
+              "name": "[concat(variables('vmNamePattern'),copyIndex(), '-Data_4')]",
+              "diskSizeGB": "[parameters('vmSizeDataDisks')]",
+              "lun": 3,
+              "vhd": {
+                "uri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('vmNamePattern'),copyIndex(),'-Data_4.vhd')]"
               },
               "caching": "ReadOnly",
               "createOption": "Empty"
             }
           ]
         },
+
         "networkProfile": {
           "networkInterfaces": [
             {
@@ -505,7 +447,7 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(parameters('vmNamePAttern'),copyIndex(),'/configuressh')]",
+      "name": "[concat(variables('vmNamePattern'),copyIndex(),'/configuressh')]",
       "apiVersion": "[variables('apiVersion')]",
       "location": "[parameters('location')]",
       "copy": {
@@ -518,24 +460,22 @@
       "properties": {
         "publisher": "Microsoft.OSTCExtensions",
         "type": "CustomScriptForLinux",
-        "typeHandlerVersion": "1.2",
+        "typeHandlerVersion": "1.4",
         "settings": {
           "fileUris": [
             "[variables('customScriptSSHRootUrl')]",
-            "[variables('sshRootPubBlobUrl')]"
+            "[variables('pythonAzureScriptUrl')]"
           ],
-          "commandToExecute": "[variables('customScriptSSHRootCommand')]"
-        },
-        "protectedSettings": {
-          "storageAccountName": "[parameters('customScriptConfigStorageAccountName')]",
-          "storageAccountKey": "[parameters('customScriptConfigStorageAccountKey')]"
+          "commandToExecute": "[variables('customScriptSSHRootCommand')]",
+          "protectedSettings": { }
+
         }
       }
     },
     {
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "NICAnsibleController",
+      "name": "AnsibleController",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[variables('vnetRef')]",
@@ -548,15 +488,12 @@
             "properties": {
               "privateIPAllocationMethod": "Static",
               "privateIPAddress": "[concat(variables('VMIPAddressStart'),parameters('numberOfVms'))]",
-              "subnet": {
-                "id": "[variables('subnetBackEndRef')]"
-              },
+              "subnet": { "id": "[variables('subnetBackEndRef')]" },
               "loadBalancerInboundNatRules": [
-                {
-                  "id": "[concat(variables('loadBalancerRef'),'/inboundNatRules/sshToAnsibleControllerNATRule')]"
-                }
+                { "id": "[concat(variables('loadBalancerRef'),'/inboundNatRules/sshToAnsibleControllerNAT')]" }
               ]
             }
+
           }
         ]
       }
@@ -571,21 +508,21 @@
         "ServerEnvironment": "[parameters('serversPurpose')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]",
-        "[resourceId('Microsoft.Network/networkInterfaces','NICAnsibleController')]",
+        "[variables('storageRef')]",
+        "[resourceId('Microsoft.Network/networkInterfaces','AnsibleController')]",
         "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]",
         "VMsLoop"
       ],
       "properties": {
         "availabilitySet": {
-          "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySetName'))]"
+          "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('availabilitySetName'))]"
         },
         "hardwareProfile": {
           "vmSize": "[variables('ansibleVMType')]"
         },
         "osProfile": {
           "computerName": "AnsibleController",
-          "adminUsername": "[parameters('adminUserName')]",
+          "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]",
           "linuxConfiguration": {
             "disablePasswordAuthentication": "false",
@@ -601,9 +538,9 @@
         },
         "storageProfile": {
           "imageReference": {
-            "publisher": "[parameters('imagePublisher')]",
-            "offer": "[parameters('imageOffer')]",
-            "sku": "[parameters('imageSKU')]",
+            "publisher": "Canonical",
+            "offer": "UbuntuServer",
+            "sku": "14.04.3-LTS",
             "version": "latest"
           },
           "osDisk": {
@@ -614,12 +551,13 @@
             "caching": "ReadWrite",
             "createOption": "FromImage"
           },
-          "dataDisks": []
+          "dataDisks": [
+          ]
         },
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces','NICAnsibleController')]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces','AnsibleController')]"
             }
           ]
         }
@@ -627,35 +565,32 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "AnsibleController/installansible",
+      "name": "AnsibleController/installAnsible",
       "apiVersion": "[variables('apiVersion')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "Microsoft.Compute/virtualMachines/AnsibleController"
+        "VMExtensionsLoop"
       ],
       "properties": {
         "publisher": "Microsoft.OSTCExtensions",
         "type": "CustomScriptForLinux",
-        "typeHandlerVersion": "1.2",
+        "typeHandlerVersion": "1.4",
         "settings": {
           "fileUris": [
             "[variables('customScriptAnsibleUrl')]",
             "[variables('ansiblePlaybookUrl')]",
-            "[variables('sshRootPubBlobUrl')]",
-            "[variables('sshRootCerBlobUrl')]"
+            "[variables('pythonAzureScriptUrl')]"
           ],
-          "commandToExecute": "[concat(variables('customScriptAnsibleCommand'),variables('customScriptAnsibleParameters'))]"
-        },
-        "protectedSettings": {
-          "storageAccountName": "[parameters('customScriptConfigStorageAccountName')]",
-          "storageAccountKey": "[parameters('customScriptConfigStorageAccountKey')]"
+          "commandToExecute": "[concat(variables('customScriptAnsibleCommand'),variables('customScriptAnsibleParameters'),' -a ', parameters('sshStorageAccountName'),' -k ', parameters('sshStorageAccountKey'))]",
+          "protectedSettings": { }
         }
       }
     }
   ],
+
   "outputs": {
     "sshResourceURL": {
-      "value": "[concat('SSH Url to Ansible :',parameters('adminUserName'),'@', reference(variables('publicIPRef'),providers('Microsoft.Network', 'publicIPAddresses').apiVersions[0]).dnsSettings.fqdn,' -p ',variables('sshNatRuleFrontEndPort'))]",
+      "value": "[concat('SSH Url to Ansible Controller:',parameters('adminUsername'),'@', reference(variables('publicIPRef'),providers('Microsoft.Network', 'publicIPAddresses').apiVersions[0]).dnsSettings.fqdn,' -p ',variables('sshNatRuleFrontEndPort'))]",
       "type": "string"
     }
   }

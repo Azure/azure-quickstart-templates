@@ -10,28 +10,9 @@
     },
     "adminPassword": {
       "type": "securestring",
+      "defaultValue": "", 
       "metadata": {
         "description": "Admin password used when provisioning virtual machines"
-      }
-    },
-    "location": {
-      "type": "string",
-      "allowedValues": [
-        "ResourceGroup",
-        "West US",
-        "East US",
-        "East US 2",
-        "Central US",
-        "South Central US",
-        "North Central US",
-        "East Asia",
-        "Southeast Asia",
-        "West Europe",
-        "North Europe"
-      ],
-      "defaultValue": "ResourceGroup",
-      "metadata": {
-        "description": "Location where resources will be provisioned.  A value of 'ResourceGroup' will deploy the resource to the same location of the resource group the resources are provisioned into"
       }
     },
     "virtualNetworkName": {
@@ -51,6 +32,24 @@
       "metadata": {
         "description": "The operating system to deploy Elasticsearch cluster on"
       }
+    },
+    "authenticationType": {
+        "type": "string",
+        "defaultValue": "password",
+        "allowedValues": [
+            "password",
+            "sshPublicKey"
+        ],
+        "metadata": {
+            "description": "Whether to use a password or ssh key (Ubuntu only) as authentication"
+        }
+    },
+    "sshPublicKey" : {
+        "type": "string",
+        "defaultValue": "",
+        "metadata": {
+            "description": "The public ssh key to use for authentication (Ubuntu only)"
+        }  
     },
     "loadBalancerType": {
       "type": "string",
@@ -144,6 +143,7 @@
         "Standard_D2_v2",
         "Standard_D3_v2",
         "Standard_D4_v2",
+        "Standard_D12_v2",
         "Standard_A2",
         "Standard_A3",
         "Standard_A4",
@@ -176,9 +176,10 @@
     },
     "esVersion": {
       "type": "string",
-      "defaultValue": "2.2.0",
+      "defaultValue": "2.3.1",
       "allowedValues": [
-        "2.2.0",
+        "2.3.1",
+        "2.2.2",
         "2.1.2",
         "1.7.5"
       ],
@@ -210,7 +211,7 @@
     },
     "marvelCluster" : {
       "type":"string",
-      "defaultValue":"yes",
+      "defaultValue":"no",
       "allowedValues": [
         "yes",
         "no"
@@ -256,6 +257,42 @@
         "description": "Install the Sense plugin (2.x only, requires Kibana)"
       }
     },
+    "jmeterAgent" : {
+      "type": "string",
+      "defaultValue": "no",
+      "allowedValues": [
+          "yes",
+          "no"
+      ],
+      "metadata": {
+          "description": "Install the JMeter Server Agent on each node (Ubuntu only)"
+      }
+    },
+    "cloudAzure" : {
+      "type": "string",
+      "defaultValue": "no",
+      "allowedValues": [
+          "yes",
+          "no"
+      ],
+      "metadata": {
+          "description": "Install the cloud-azure plugin, which enables Azure backups"
+      }
+    },
+    "cloudAzureStorageAccount" : {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+          "description": "The name of the storage account to use for the cloud-azure plugin"
+      }
+    },
+    "cloudAzureStorageKey" : {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+          "description": "The storage account key used to access the storage account listed above"
+      }
+    },
     "templateBase": {
       "type": "string",
       "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master",
@@ -267,20 +304,7 @@
   "variables": {
     "templateBaseUrl": "[concat(parameters('templateBase'), '/elasticsearch/')]",
     "scriptBaseUrl": "[concat(parameters('templateBase'), '/shared_scripts/ubuntu/')]",
-    "locationMap": {
-        "ResourceGroup":"[resourceGroup().location]",
-        "West US":"[parameters('location')]",
-        "East US":"[parameters('location')]",
-        "East US 2":"[parameters('location')]",
-        "Central US":"[parameters('location')]",
-        "South Central US":"[parameters('location')]",
-        "North Central US":"[parameters('location')]",
-        "East Asia":"[parameters('location')]",
-        "Southeast Asia":"[parameters('location')]",
-        "West Europe":"[parameters('location')]",
-        "North Europe":"[parameters('location')]"
-    },
-    "location":"[variables('locationMap')[parameters('location')]]",
+    "location":"[resourceGroup().location]",
     "storageAccountPrefix": "[concat(substring(uniqueString(resourceGroup().id, parameters('esClusterName')), 0, 6), substring(parameters('esClusterName'), 0, 3))]",
     "storageAccountNameAFS": "[concat(variables('storageAccountPrefix'), 'afs')]",
     "storageAccountNameShared": "[concat(variables('storageAccountPrefix'), 'sh')]",
@@ -383,9 +407,19 @@
         "no": ""
       }
     },
+    "jmeterParam" : {
+        "yes" : " -j ",
+        "no": ""  
+    },
+    "cloudAzureParam": {
+      "yes" : "[concat(' -po ', parameters('cloudAzureStorageAccount'), ' -r ', parameters('cloudAzureStorageKey'), ' ')]",
+      "no" : ""
+    },
+    "cloudAzureParamValue": "[variables('cloudAzureParam')[parameters('cloudAzure')]]",
     "marvelExportParamValue": "[variables('marvelExportParam')[parameters('OS')][parameters('marvelCluster')]]",
     "senseParamValue": "[variables('senseParam')[parameters('sense')]]",
     "marvelParamValue": "[variables('marvelParam')[parameters('OS')][parameters('marvel')]]",
+    "jmeterParamValue": "[variables('jmeterParam')[parameters('jmeterAgent')]]",
     "afsParamValue": "[variables('afsParam')[parameters('OS')][parameters('afs')]]",
     "kibanaTemplates": {
       "yes": "kibana-resources.json",
@@ -401,19 +435,40 @@
     "windowsScripts": [
       "[concat(variables('templateBaseUrl'), 'elasticsearch-windows-install.ps1')]"
     ],
+    "authSet": {
+        "password": "[parameters('adminPassword')]",
+        "sshKey": "[parameters('sshPublicKey')]",
+        "type": "[parameters('authenticationType')]"
+    },
+    "configurationObject": {
+        "password" : {
+        },
+        "sshPublicKey": {
+            "disablePasswordAuthentication" : "true",
+            "ssh" : {
+                "publicKeys": [
+                    {
+                        "path" : "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+                        "keyData": "[parameters('sshPublicKey')]"
+                    }
+                ]
+            }            
+        }
+    },
     "ubuntuSettings": {
       "imageReference":{
         "publisher": "Canonical",
         "offer": "UbuntuServer",
-        "sku": "14.04.2-LTS",
+        "sku": "14.04.4-LTS",
         "version": "latest"
       },
+      "linuxConfiguration": "[variables('configurationObject')[parameters('authenticationType')]]",
       "managementPort":"22",
       "extensionSettings":{
         "marvel": {
             "publisher": "Microsoft.OSTCExtensions",
             "type": "CustomScriptForLinux",
-            "typeHandlerVersion": "1.2",
+            "typeHandlerVersion": "1.4",
             "settings": {
               "fileUris": "[variables('ubuntuScripts')]",
               "commandToExecute": "[concat('bash elasticsearch-ubuntu-install.sh -wn ', variables('esSettings').marvelClusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').marvelHosts, ' -k ')]"
@@ -422,34 +477,34 @@
         "master": {
             "publisher": "Microsoft.OSTCExtensions",
             "type": "CustomScriptForLinux",
-            "typeHandlerVersion": "1.2",
+            "typeHandlerVersion": "1.4",
             "settings": {
               "fileUris": "[variables('ubuntuScripts')]",
-              "commandToExecute": "[concat('bash elasticsearch-ubuntu-install.sh -xn ', variables('esSettings').clusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').discoveryHosts, variables('marvelParamValue'), variables('marvelExportParamValue'), variables('afsParamValue'))]"
+              "commandToExecute": "[concat('bash elasticsearch-ubuntu-install.sh -xn ', variables('esSettings').clusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').discoveryHosts, variables('marvelParamValue'), variables('jmeterParamValue'), variables('cloudAzureParamValue'), variables('marvelExportParamValue'), variables('afsParamValue'))]"
             }
           },
         "client": {
             "publisher": "Microsoft.OSTCExtensions",
             "type": "CustomScriptForLinux",
-            "typeHandlerVersion": "1.2",
+            "typeHandlerVersion": "1.4",
             "settings": {
               "fileUris": "[variables('ubuntuScripts')]",
-              "commandToExecute": "[concat('bash elasticsearch-ubuntu-install.sh -yn ', variables('esSettings').clusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').discoveryHosts, variables('marvelParamValue'), variables('marvelExportParamValue'), variables('afsParamValue'))]"
+              "commandToExecute": "[concat('bash elasticsearch-ubuntu-install.sh -yn ', variables('esSettings').clusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').discoveryHosts, variables('marvelParamValue'), variables('jmeterParamValue'),  variables('cloudAzureParamValue'),variables('marvelExportParamValue'), variables('afsParamValue'))]"
             }
           },
         "data": {
           "publisher": "Microsoft.OSTCExtensions",
           "type": "CustomScriptForLinux",
-          "typeHandlerVersion": "1.2",
+          "typeHandlerVersion": "1.4",
           "settings": {
             "fileUris": "[variables('ubuntuScripts')]",
-            "commandToExecute": "[concat('bash elasticsearch-ubuntu-install.sh -zn ', variables('esSettings').clusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').discoveryHosts, variables('marvelParamValue'), variables('marvelExportParamValue'), variables('afsParamValue'))]"
+            "commandToExecute": "[concat('bash elasticsearch-ubuntu-install.sh -zn ', variables('esSettings').clusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').discoveryHosts, variables('marvelParamValue'), variables('jmeterParamValue'),  variables('cloudAzureParamValue'),variables('marvelExportParamValue'), variables('afsParamValue'))]"
           }
         },
         "kibana": {
           "publisher": "Microsoft.OSTCExtensions",
           "type": "CustomScriptForLinux",
-          "typeHandlerVersion": "1.2",
+          "typeHandlerVersion": "1.4",
           "settings": {
             "fileUris": "[variables('ubuntuScripts')]",
             "commandToExecute": "[concat('bash kibana-install.sh -v ', variables('esSettings').version, variables('marvelParamValue'), variables('senseParamValue'), ' -t ', variables('kibanaIP'))]"
@@ -464,6 +519,7 @@
         "sku": "2012-R2-Datacenter",
         "version": "latest"
       },
+      "linuxConfiguration": "",
       "managementPort":"3389",
       "extensionSettings":{
         "marvel": {
@@ -481,7 +537,7 @@
           "typeHandlerVersion": "1.4",
           "settings": {
             "fileUris": "[variables('windowsScripts')]",
-            "commandToExecute": "[concat('powershell.exe -File elasticsearch-windows-install.ps1 -elasticSearchVersion ', variables('esSettings').version,' -elasticClusterName ', variables('esSettings').clusterName,' -discoveryEndpoints ', variables('esSettings').discoveryHosts, variables('marvelParamValue'), variables('marvelExportParamValue'), ' -masterOnlyNode -storageKey ')]"
+            "commandToExecute": "[concat('powershell.exe -File elasticsearch-windows-install.ps1 -elasticSearchVersion ', variables('esSettings').version,' -elasticClusterName ', variables('esSettings').clusterName,' -discoveryEndpoints ', variables('esSettings').discoveryHosts, variables('cloudAzureParamValue'), variables('marvelParamValue'), variables('marvelExportParamValue'), ' -masterOnlyNode -storageKey ')]"
           }
         },
         "client": {
@@ -490,7 +546,7 @@
           "typeHandlerVersion": "1.4",
           "settings": {
             "fileUris": "[variables('windowsScripts')]",
-            "commandToExecute": "[concat('powershell.exe -File elasticsearch-windows-install.ps1 -elasticSearchVersion ', variables('esSettings').version,' -elasticClusterName ', variables('esSettings').clusterName,' -discoveryEndpoints ', variables('esSettings').discoveryHosts, variables('marvelParamValue'), variables('marvelExportParamValue'), ' -clientOnlyNode -storageKey ')]"
+            "commandToExecute": "[concat('powershell.exe -File elasticsearch-windows-install.ps1 -elasticSearchVersion ', variables('esSettings').version,' -elasticClusterName ', variables('esSettings').clusterName,' -discoveryEndpoints ', variables('esSettings').discoveryHosts, variables('cloudAzureParamValue'), variables('marvelParamValue'), variables('marvelExportParamValue'), ' -clientOnlyNode -storageKey ')]"
           }
         },
         "data": {
@@ -499,7 +555,7 @@
           "typeHandlerVersion": "1.4",
           "settings": {
             "fileUris": "[variables('windowsScripts')]",
-            "commandToExecute": "[concat('powershell.exe -File elasticsearch-windows-install.ps1 -elasticSearchVersion ', variables('esSettings').version,' -elasticClusterName ', variables('esSettings').clusterName,' -discoveryEndpoints ', variables('esSettings').discoveryHosts, variables('marvelParamValue'), variables('marvelExportParamValue'), ' -dataOnlyNode -storageKey ')]"
+            "commandToExecute": "[concat('powershell.exe -File elasticsearch-windows-install.ps1 -elasticSearchVersion ', variables('esSettings').version,' -elasticClusterName ', variables('esSettings').clusterName,' -discoveryEndpoints ', variables('esSettings').discoveryHosts, variables('cloudAzureParamValue'), variables('marvelParamValue'), variables('marvelExportParamValue'), ' -dataOnlyNode -storageKey ')]"
           }
         }
       }
@@ -524,6 +580,11 @@
       "Standard_D4_v2": {
         "dataDisks":16,
         "nodesPerStorageAccount":2,
+        "storageAccountType":"Standard_LRS"
+      },
+      "Standard_D12_v2": {
+        "dataDisks":8,
+        "nodesPerStorageAccount":3,
         "storageAccountType":"Standard_LRS"
       },
       "Standard_DS1": {
@@ -658,14 +719,14 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "storageAccountName": {
-            "value": "[variables('storageAccountNameShared')]"
+          "storageSettings": {
+            "value": "[variables('dataNodeStorageSettings')]"
           },
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
           },
-          "adminPassword": {
-            "value": "[parameters('adminPassword')]"
+          "authSet": {
+            "value": "[variables('authSet')]"
           },
           "masterNodesIpPrefix": {
             "value": "[variables('masterNodesIpPrefix')]"
@@ -708,8 +769,8 @@
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
           },
-          "adminPassword": {
-            "value": "[parameters('adminPassword')]"
+          "authSet": {
+            "value": "[variables('authSet')]"
           },
           "marvelNodesIpPrefix": {
             "value": "[variables('marvelNodesIpPrefix')]"
@@ -778,11 +839,11 @@
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
           },
-          "adminPassword": {
-            "value": "[parameters('adminPassword')]"
+          "authSet": {
+            "value": "[variables('authSet')]"
           },
-          "storageAccountName": {
-            "value": "[variables('storageAccountNameShared')]"
+          "storageSettings": {
+            "value": "[variables('dataNodeStorageSettings')]"
           },
           "location": {
             "value": "[variables('location')]"
@@ -825,8 +886,8 @@
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
           },
-          "adminPassword": {
-            "value": "[parameters('adminPassword')]"
+          "authSet": {
+            "value": "[variables('authSet')]"
           },
           "location": {
             "value": "[variables('location')]"
@@ -875,8 +936,8 @@
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
           },
-          "adminPassword": {
-            "value": "[parameters('adminPassword')]"
+          "authSet": {
+            "value": "[variables('authSet')]"
           },
           "location": {
             "value": "[variables('location')]"
@@ -913,8 +974,8 @@
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
           },
-          "adminPassword": {
-            "value": "[parameters('adminPassword')]"
+          "authSet": {
+            "value": "[variables('authSet')]"
           },
           "location": {
             "value": "[variables('location')]"
