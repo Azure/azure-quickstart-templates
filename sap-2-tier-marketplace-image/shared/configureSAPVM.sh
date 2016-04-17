@@ -52,7 +52,7 @@ function getdevicepath()
 	then 
 		getdevicepathresult=${BASH_REMATCH[1]};
 	else
-		log "lsscsi output not as expected"
+		log "lsscsi output not as expected for $lun"
 		exit -1;
 	fi
 	log "getdevicepath done"
@@ -137,34 +137,35 @@ function createmdadm()
 }
 
 dbluns=""
+dbname="dbdata"
 logluns=""
+logname="dblog"
 
-if [[ "$#" -eq 4 ]]
+while true; do
+	case "$1" in
+    "-DBLogLUNS")  logluns=$2;shift 2;
+        ;;
+    "-DBDataLUNS")  dbluns=$2;shift 2;
+	        ;;
+	"-DBDataName")  dbname=$2;shift 2;
+        ;;
+	"-DBLogName")  logname=$2;shift 2;
+        ;;
+    esac
+	if [[ -z "$1" ]]; then break; fi
+done
+
+if [[ -n "$dbluns" ]];
 then
-	if [[ "$1" == "-DBDataLUNS" ]]
-	then
-		dbluns="$2"
-	fi
-	if [[ "$3" == "-DBDataLUNS" ]]
-	then
-		dbluns="$4"
-	fi
-	if [[ "$1" == "-DBLogLUNS" ]]
-	then
-		logluns="$2"
-	fi
-	if [[ "$3" == "-DBLogLUNS" ]]
-	then
-		logluns="$4"
-	fi
+	createmdadm $dbluns "/dev/md127" "/$dbname";
 fi
-dblunsA=(${dbluns//,/ })
-loglunsA=(${logluns//,/ })
 
-createmdadm $dbluns "/dev/md127" "/dbdata"
-createmdadm $logluns "/dev/md128" "/dblog"
+if [[ -n "$logluns" ]];
+then
+	createmdadm $logluns "/dev/md128" "/$logname";
+fi
 
-local vLinux=$(cat /etc/os-release)		
+vLinux=$(cat /etc/os-release)		
 if [[ $vLinux =~ VERSION=\"11\..\" && $vLinux =~ NAME=\"SLES\" ]];
 then
 	#SLES 11

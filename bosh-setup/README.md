@@ -18,6 +18,22 @@ We look forward to hearing your feedback and suggestions!
 ```
 Template Changelog
 
+# v1.3.0 (2016-04-01)
+- Does not bind network security groups to subnets but bind network security groups to VMs.
+- Upgrade versions
+  - Upgrade Azure CPI version to v9. Please see new features in https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release
+
+# v1.2.0 (2016-03-28)
+- Add a subnet for Diego
+- Create network security groups for all subnets
+- Upgrade versions
+  - Upgrade Azure CPI version to v8. Please see new features in https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release
+
+# v1.1.3 (2016-03-08)
+- Upgrade versions
+  - Upgrade bosh version to 255.3
+  - Upgrade cf version to 231
+
 # v1.1.2 (2016-03-01)
 - Change the default value of "autoDeployBosh" to "enabled"
 - Run "apt-get update" at the beginning of "setup_env"

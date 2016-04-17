@@ -13,4 +13,3 @@ EndOfMessage
 
 sed -i -e "s/REPLACE_WITH_DIRECTOR_ID/$(bosh status --uuid)/" ./example_manifests/single-vm-cf.yml
 sed -i -e "s/REPLACE_WITH_DIRECTOR_ID/$(bosh status --uuid)/" ./example_manifests/multiple-vm-cf.yml
-sed -i -e "s/REPLACE_WITH_DIRECTOR_ID/$(bosh status --uuid)/" ./example_manifests/cf-for-enterprise.yml

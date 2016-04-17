@@ -46,7 +46,7 @@
       "allowedValues": [
         "westus",
         "eastus",
-        "northeurope", 
+        "northeurope",
         "westeurope",
         "eastasia",
         "southeastasia",
@@ -91,7 +91,7 @@
       "type": "string",
       "defaultValue": "",
       "metadata": {
-        "description": "Resource Group Name for Vnet. For new VNet, use the same resource group for the cluster. O stherwise, type in existing resource group name"
+        "description": "Resource Group Name for Vnet. For new VNet, use the same resource group for the cluster. O otherwise, type in existing resource group name"
       }
     },
     "subnetName": {
@@ -115,25 +115,18 @@
         "description": "CIDR for the subnet where VMs will be placed"
       }
     },
-    "nodeAddressPrefix": {
+    "masterNodeIPAddress": {
       "type": "string",
-      "defaultValue": "10.3.0.",
+      "defaultValue": "10.3.0.4",
       "metadata": {
-        "description": "Prefix for all VM IP addresses (NOT a CIDR)"
+        "description": "IP address for the first master"
       }
     },
-    "masterNodeAddressStart": {
+    "dataNodeIPOffSetFromMaster": {
       "type": "int",
       "defaultValue": 10,
       "metadata": {
-        "description": "IP suffix for first master node"
-      }
-    },
-    "dataNodeAddressStart": {
-      "type": "int",
-      "defaultValue": 20,
-      "metadata": {
-        "description": "IP suffix for first data node"
+        "description": "IP address from the master node, for example if the first master is 10.1.1.1, then the first dataNode would be 10.1.1.11"
       }
     },
     "tshirtSize": {
@@ -158,7 +151,7 @@
       "type": "string",
       "defaultValue": "Standard_DS13",
       "metadata": {
-        "description": "The size of the VMs deployed in the cluster (using DS13 for this deployment)"
+        "description": "The size of the VMs deployed in the cluster (defaults to Standard_DS13)"
       }
     },
     "company": {
@@ -248,10 +241,14 @@
     "installCDH":"True",
     "addressPrefix":"[parameters('addressPrefix')]",
     "subnetPrefix":"[parameters('subnetPrefix')]",
-    "nodeAddressPrefix":"[parameters('nodeAddressPrefix')]",
     "scriptsUri": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/cloudera-on-centos",
     "share-resourcesUri": "[concat(variables('scriptsUri'), '/shared-resources-', parameters('vnetNewOrExisting'), '-vnet.json')]",
     "data-nodeUri":"[concat(variables('scriptsUri'), '/data-node-', toLower(subString(parameters('vmSize'), 9, 4)), '.json')]",
+    "sa": "[parameters('masterNodeIPAddress')]",
+    "ipOctet01": "[concat(split(variables('sa'), '.')[0], '.', split(variables('sa'), '.')[1], '.')]",
+    "ipOctet2": "[int(split(variables('sa'), '.')[2])]",
+    "ipOctet3": "[int(split(variables('sa'), '.')[3])]",
+    "datanodeIpOctet3":"[add(int(split(variables('sa'), '.')[3]), parameters('dataNodeIPOffSetFromMaster'))]",
     "storageAccount": {
       "prefix": "[parameters('storageAccountPrefix')]",
       "type": "[parameters('storageAccountType')]"
@@ -269,7 +266,6 @@
     "clusterSpec": "[variables(concat('clusterTshirtSize', parameters('tshirtSize')))]",
     "vmSpec": {
       "vmSize": "[parameters('vmSize')]",
-      "privateIPAddressPrefix": "[variables('nodeAddressPrefix')]",
       "adminUserName": "[parameters('adminUserName')]",
       "adminPassword": "[parameters('adminPassword')]",
       "masterNodeASName": "[concat(parameters('dnsNamePrefix'), '-mnAS')]",
@@ -278,9 +274,12 @@
     "networkSpec": {
       "addressPrefix": "[variables('addressPrefix')]",
       "subnetPrefix": "[variables('subnetPrefix')]",
-      "privateIPPrefix": "[variables('nodeAddressPrefix')]",
-      "masterNodeAddressStart": "[parameters('masterNodeAddressStart')]",
-      "dataNodeAddressStart": "[parameters('dataNodeAddressStart')]",
+      "ipOctet01": "[variables('ipOctet01')]",
+      "ipOctet2": "[variables('ipOctet2')]",
+      "ipOctet3": "[variables('ipOctet3')]",
+      "datanodeIpOctet3":"[variables('datanodeIpOctet3')]",
+      "masterIP":"[variables('sa')]",
+      "workerIP":"[concat(variables('ipOctet01'), add(variables('ipOctet2'), div(variables('datanodeIpOctet3'), 255)), '.', mod(variables('datanodeIpOctet3'), 255))]",
       "virtualNetworkName": "[parameters('virtualNetworkName')]",
       "virtualNetworkRGName":"[parameters('virtualNetworkRGName')]",
       "vnetNewOrExisting": "[parameters('vnetNewOrExisting')]",

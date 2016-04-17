@@ -308,12 +308,21 @@
       "sqlSubnetRef":"[concat(variables('VnetID'),'/subnets/',variables('subnetNames').sqlSubnetName)]",
       "spWebSubnetRef":"[concat(variables('VnetID'),'/subnets/',variables('subnetNames').spWebSubnetName)]",
       "spAppSubnetRef":"[concat(variables('VnetID'),'/subnets/',variables('subnetNames').spAppSubnetName)]",
+      "spWebResourceIdexisting":"[resourceId(parameters('spWebIPRGName'),concat('Microsoft.Network','/','publicIPAddresses'),parameters('spWebIPAddressName'))]",
+      "spWebResourceIdnew":"[resourceId(concat('Microsoft.Network','/','publicIPAddresses'),parameters('spWebIPAddressName'))]",
+      "sharepointCAfqdn":"[concat(variables('spCADNSPrefix'),'.',toLower(trim(replace(parameters('location'),' ' ,''))),'.cloudapp.azure.com')]",
+      "sharepointWebfqdn":"[concat(parameters('dnsPrefix'),'.',toLower(trim(replace(parameters('location'),' ' ,''))),'.cloudapp.azure.com')]",
       "ids":{
          "adNicId":"[resourceId('Microsoft.Network/networkInterfaces',variables('adPDCNicName'))]",
          "rdplbID":"[resourceId('Microsoft.Network/loadBalancers',variables('lbSettings').rdpLBName)]",
          "spWeblbID":"[resourceId('Microsoft.Network/loadBalancers',variables('lbSettings').spWebLBName)]",
          "sqllbID":"[resourceId('Microsoft.Network/loadBalancers',variables('lbSettings').sqlLBName)]",
-         "spCAlbID":"[resourceId('Microsoft.Network/loadBalancers',variables('lbSettings').spCALBName)]"
+         "spCAlbID":"[resourceId('Microsoft.Network/loadBalancers',variables('lbSettings').spCALBName)]",
+         "spCAResourceId":"[resourceId('Microsoft.Network/publicIPAddresses',variables('spCAIPAddressName'))]",
+         "adAvailabilitySetName": "[resourceId('Microsoft.Compute/availabilitySets',variables('vmSettings').availabilitySets.adAvailabilitySetName)]",
+         "sqlAvailabilitySetName":"[resourceId('Microsoft.Compute/availabilitySets',variables('vmSettings').availabilitySets.sqlAvailabilitySetName)]",
+         "spWebAvailabilitySetName": "[resourceId('Microsoft.Compute/availabilitySets',variables('vmSettings').availabilitySets.spWebAvailabilitySetName)]",
+         "spAppAvailabilitySetName": "[resourceId('Microsoft.Compute/availabilitySets',variables('vmSettings').availabilitySets.spAppAvailabilitySetName)]"
       },
       "derivedIds":{
          "adIPConfigID":"[concat(variables('ids').adNicId,'/ipConfigurations/ipconfig1')]",
@@ -598,7 +607,7 @@
                   "value":"[variables('lbSettings').spCALBFE]"
                },
                "spCAResourceId":{
-                  "value":"[reference('SettingUpSharepointCentralAdminPublicIP').outputs.resourceId.value]"
+                  "value":"[variables('ids').spCAResourceId]"
                },
                "spCALBBE":{
                   "value":"[variables('lbSettings').spCALBBE]"
@@ -616,7 +625,7 @@
                   "value":"[variables('lbSettings').spWebLBFE]"
                },
                "spWebResourceId":{
-                  "value":"[reference('SettingUpSharepointWebPublicIP').outputs.resourceId.value]"
+                  "value":"[variables(concat('spWebResourceId',parameters('spWebIPNewOrExisting')))]"
                },
                "spWebLBBE":{
                   "value":"[variables('lbSettings').spWebLBBE]"
@@ -766,7 +775,7 @@
                   "value":"[parameters('storageAccountNamePrefix')]"
                },
                "availabilitySet":{
-                  "value":"[reference('CreatingAvailabilitySets').outputs.adAvailabilitySetName.value]"
+                  "value":"[variables('ids').adAvailabilitySetName]"
                },
                "adVMSize":{
                   "value":"[parameters('adVMSize')]"
@@ -864,7 +873,7 @@
                   "value":"[parameters('storageAccountNamePrefix')]"
                },
                "availabilitySet":{
-                  "value":"[reference('CreatingAvailabilitySets').outputs.adAvailabilitySetName.value]"
+                  "value":"[variables('ids').adAvailabilitySetName]"
                },
                "adVMSize":{
                   "value":"[parameters('adVMSize')]"
@@ -1002,7 +1011,7 @@
                   "value":"[parameters('storageAccountNamePrefix')]"
                },
                "availabilitySet":{
-                  "value":"[reference('CreatingAvailabilitySets').outputs.sqlAvailabilitySetName.value]"
+                  "value":"[variables('ids').sqlAvailabilitySetName]"
                },
                "sqlVMSize":{
                   "value":"[parameters('sqlVMSize')]"
@@ -1192,10 +1201,10 @@
                   "value":"[parameters('spVMSize')]"
                },
                "spWebAvailabilitySet":{
-                  "value":"[reference('CreatingAvailabilitySets').outputs.spWebAvailabilitySetName.value]"
+                  "value":"[variables('ids').spWebAvailabilitySetName]"
                },
                "spAppAvailabilitySet":{
-                  "value":"[reference('CreatingAvailabilitySets').outputs.spAppAvailabilitySetName.value]"
+                  "value":"[variables('ids').spAppAvailabilitySetName]"
                },
                "adminUsername":{
                   "value":"[parameters('adminUsername')]"
@@ -1294,7 +1303,7 @@
                   "value":"[variables('contentDatabaseName')]"
                },
                "sharepointCAfqdn":{
-                  "value":"[reference('SettingUpSharepointCentralAdminPublicIP').outputs.fqdn.value]"
+                  "value":"[variables('sharepointCAfqdn')]"
                },
                "sharePointSetupUserAccountPassword":{
                   "value":"[parameters('sharePointSetupUserAccountPassword')]"
@@ -1315,7 +1324,7 @@
                   "value":"[parameters('sharepointFarmName')]"
                },
                "sharepointWebfqdn":{
-                  "value":"[reference('SettingUpSharepointWebPublicIP').outputs.fqdn.value]"
+                  "value":"[variables('sharepointWebfqdn')]"
                },
                "spSiteTemplateName":{
                   "value":"[parameters('spSiteTemplateName')]"
@@ -1326,11 +1335,11 @@
    ],
    "outputs": {
      "fqdn": {
-       "value": "[reference('SettingUpSharepointWebPublicIP').outputs.fqdn.value]",
+       "value": "[variables('sharepointWebfqdn')]",
        "type": "string"
      },
      "cafqdn":{
-        "value":"[reference('SettingUpSharepointCentralAdminPublicIP').outputs.fqdn.value]",
+        "value":"[variables('sharepointCAfqdn')]",
         "type": "string"
      }
    }

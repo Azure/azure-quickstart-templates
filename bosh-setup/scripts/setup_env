@@ -7,15 +7,17 @@ home_dir="/home/$username"
 
 apt-get update >/dev/null 2>&1
 apt-get -y install python-pip >/dev/null 2>&1
-pip install azure netaddr >/dev/null 2>&1
+pip install msrest msrestazure azure==2.0.0rc1 azure-storage netaddr >/dev/null 2>&1
 
-# Generate the private key and certificate
-chmod +x create_cert.sh
-bosh_key="bosh.key"
-bosh_cert="bosh.cert"
-./create_cert.sh $bosh_key $bosh_cert
+# Generate SSH key pair for BOSH
+bosh_key="bosh"
+ssh-keygen -t rsa -f $bosh_key -P "" -C ""
+chmod 400 $bosh_key
 cp $bosh_key $home_dir
-chmod 400 $home_dir/$bosh_key
+cp "$bosh_key.pub" $home_dir
+
+# Generate SSL certificate for cloud foundry
+chmod +x create_cert.sh
 cf_key="cloudfoundry.key"
 cf_cert="cloudfoundry.cert"
 ./create_cert.sh $cf_key $cf_cert
@@ -37,7 +39,6 @@ example_manifests="$home_dir/example_manifests"
 mkdir -p $example_manifests
 cp single-vm-cf.yml $example_manifests 
 cp multiple-vm-cf.yml $example_manifests
-cp cf-for-enterprise.yml $example_manifests
 
 install_log="$home_dir/install.log"
 chmod +x init.sh

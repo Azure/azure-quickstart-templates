@@ -1,4 +1,5 @@
 {
+
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
@@ -6,24 +7,26 @@
       "type": "string",
       "allowedValues": [
         "West US",
-        "West Europe",
         "East US",
+        "Central US",
+        "South Central US",
+        "West Europe",
+        "North Europe",
         "East Asia",
-        "Southeast Asia"
+        "Southeast Asia",
+        "Japan East",
+        "Japan West",
+        "Japan East",
+        "Australia East",
+        "Australia Southeast"
       ],
       "metadata": {
         "description": "Region where you want to create all the resources"
       }
     },
-    "newStorageAccountName": {
-      "type": "string",
-      "metadata": {
-        "description": "Storage account name pattern.The template will use this value and the resource group name for all the storage accounts."
-      }
-    },
     "storageAccountType": {
       "type": "string",
-      "defaultValue": "Standard_LRS",
+      "defaultValue": "Premium_LRS",
       "allowedValues": [
         "Standard_LRS",
         "Premium_LRS"
@@ -34,10 +37,8 @@
     },
     "vmSize": {
       "type": "string",
-      "defaultValue": "Standard_D2",
+      "defaultValue": "Standard_DS2",
       "allowedValues": [
-        "Standard_D1",
-        "Standard_DS1",
         "Standard_D2",
         "Standard_DS2",
         "Standard_D3",
@@ -57,13 +58,7 @@
         "description": "VM Size, for Premium Storage specify DS VMs."
       }
     },
-    "vmNamePattern": {
-      "type": "string",
-      "defaultValue": "VMCba",
-      "metadata": {
-        "description": "VM Name Pattern; which wil be concatenated with an incremental number"
-      }
-    },
+
     "vmSizeDataDisks": {
       "type": "int",
       "defaultValue": 120,
@@ -84,23 +79,23 @@
     },
     "serversRole": {
       "type": "string",
+      "defaultValue": "Couchbase",
       "metadata": {
-        "description": "Servers role, for instance webtier, database.A tag will be created with the provided value"
+        "description": "Servers role, for instance webtier, database. A tag will be created with the provided value"
       }
     },
     "serversPurpose": {
       "type": "string",
       "defaultValue": "DEV",
       "metadata": {
-        "description": "Servers purpose, for instance development, test, pre-production, production.A tag will be created with the provided value"
+        "description": "Servers purpose, for instance development, test, pre-production, production. A tag will be created with the provided value"
       }
     },
     "imagePublisher": {
       "type": "string",
       "defaultValue": "Canonical",
       "allowedValues": [
-        "Canonical",
-        "OpenLogic"
+        "Canonical"
       ],
       "metadata": {
         "description": "VM Image Publisher"
@@ -110,8 +105,7 @@
       "type": "string",
       "defaultValue": "UbuntuServer",
       "allowedValues": [
-        "UbuntuServer",
-        "CentOS"
+        "UbuntuServer"
       ],
       "metadata": {
         "description": "VM Image Offer"
@@ -119,10 +113,9 @@
     },
     "imageSKU": {
       "type": "string",
-      "defaultValue": "12.04.5-LTS",
+      "defaultValue": "14.04.3-LTS",
       "allowedValues": [
-        "12.04.5-LTS",
-        "6.5"
+        "14.04.3-LTS"
       ],
       "metadata": {
         "description": "VM Image SKU"
@@ -132,10 +125,10 @@
       "type": "int",
       "defaultValue": 3,
       "metadata": {
-        "description": "Number of VMs.The template will create N number of identical VMs"
+        "description": "Number of VMs. The template will create N number of identical VMs"
       }
     },
-    "adminUserName": {
+    "adminUsername": {
       "type": "string",
       "metadata": {
         "description": "Admin user name"
@@ -148,35 +141,36 @@
       }
     },
     "sshKeyData": {
-      "type": "string",
+      "type": "securestring",
       "metadata": {
         "description": "ssh public key for the admin user"
       }
     },
-    "customScriptConfigStorageAccountName": {
+    "sshStorageAccountName": {
       "type": "string",
       "metadata": {
-        "description": "Private storage account name in which you are storing your certificates for ansible and the template bash scripts"
+        "description": "Private storage account name in which you are storing your ssh certificates"
       }
     },
-    "customScriptConfigStorageAccountKey": {
-      "type": "string",
+    "sshStorageAccountKey": {
+      "type": "securestring",
       "metadata": {
-        "description": "Private storage account key"
+        "description": "Private storage account key in which you are storing your ssh certificates"
       }
     },
     "couchbaseMemoryAllocationPercentage": {
       "type": "string",
-      "defaultValue": "70",
+      "defaultValue": "80",
       "metadata": {
         "description": "Specify the percentage of RAM Allocated to Couchbase. Leave Memory for the OS."
       }
     },
-    "dnsNameLabel": {
+    "dnsLabelPrefix": {
       "type": "string",
       "metadata": {
-        "description": "Public facing DNS name"
+        "description": "DNS Label for the Public IP. Must be lowercase. It should match with the following regular expression: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$ or it will raise an error."
       }
+
     },
     "publicIPType": {
       "type": "string",
@@ -191,9 +185,11 @@
     }
   },
   "variables": {
+    "apiVersion": "2015-06-15",
+    "scriptsBaseUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/couchbase-ansible/",
     "vmStorageAccountContainerName": "vhds",
     "createRAID": "true",
-    "availabilitySetName": "AvSet01",
+    "availabilitySetName": "CB01",
     "faultDomainCount": "3",
     "updateDomainCount": "10",
     "virtualNetworkName": "VNet01",
@@ -203,15 +199,16 @@
     "subnet1Prefix": "10.0.1.0/24",
     "subnet2Prefix": "10.0.2.0/24",
     "publicIPName": "VIP01",
+    "vmNamePattern": "CB",
     "VMIPAddressStart": "10.0.2.2",
-    "vmNICNamePattern": "NICVm",
+    "vmNICNamePattern": "CB",
     "loadBalancerName": "CouchbaseLB",
     "sshNatRuleFrontEndPort": "6400",
     "sshNatRuleBackEndPort": "22",
     "publicIPRef": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPName'))]",
     "NICipconfig": "ipCnfgBE",
     "NICRef": "[resourceId('Microsoft.Network/networkInterfaces',variables('vmNICNamePattern'))]",
-    "DNSNameLB": "[concat(parameters('dnsNameLabel'))]",
+    "DNSNameLB": "[concat(parameters('dnsLabelPrefix'))]",
     "vnetRef": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
     "subnetBackEndRef": "[concat(variables('vnetRef'),'/subnets/',variables('subnet2Name'))]",
     "FrontEndRef": "[concat(variables('vnetRef'),'/subnets/',variables('subnet1Name'))]",
@@ -223,28 +220,27 @@
     "lbBEConfig": "[concat('LBBEcbaFrontConfg')]",
     "lbBEConfigRef": "[concat(variables('loadBalancerRef'),'/backendAddressPools/' ,variables('lbBEConfig'))]",
     "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
-    "sshRootCerBlobLocation": "customscript/id_rsa",
-    "nginxConfigLocation": "customscript/nginx",
-    "sshRootPubBlobLocation": "customscript/id_rsa.pub",
-    "ansiblePlaybookLocation": "customscript/InitStorage_RAID.yml",
-    "couchbasePlaybookLocation": "customscript/couchbase_setup.yml",
-    "couchbasePlaybookParamsLocation": "customscript/couchbase_parameters.yml",
+    "sshRootCerBlobLocation": "id_rsa",
+    "nginxConfigLocation": "nginx",
+    "sshRootPubBlobLocation": "id_rsa.pub",
+    "ansiblePlaybookLocation": "InitStorage_RAID.yml",
+    "couchbasePlaybookLocation": "couchbase_setup.yml",
+    "couchbasePlaybookParamsLocation": "couchbase_parameters.yml",
     "couchbaseAdminUser": "[parameters('adminUsername')]",
     "couchbaseAdminPassword": "[parameters('adminPassword')]",
-    "couchbasePlaybookUrl": "[concat('https://',parameters('customScriptConfigStorageAccountName'),'.blob.core.windows.net/',variables('couchbasePlaybookLocation'))]",
-    "couchbaseParametersPlaybookUrl": "[concat('https://',parameters('customScriptConfigStorageAccountName'),'.blob.core.windows.net/',variables('couchbasePlaybookParamsLocation'))]",
-    "nginxConfigTemplateUrl": "[concat('https://',parameters('customScriptConfigStorageAccountName'),'.blob.core.windows.net/',variables('nginxConfigLocation'))]",
+    "couchbasePlaybookUrl": "[concat(variables('scriptsBaseUrl'),variables('couchbasePlaybookLocation'))]",
+    "couchbaseParametersPlaybookUrl": "[concat(variables('scriptsBaseUrl'),variables('couchbasePlaybookParamsLocation'))]",
+    "nginxConfigTemplateUrl": "[concat(variables('scriptsBaseUrl'),variables('nginxConfigLocation'))]",
     "couchbaseWebConsolePort": "16195",
     "customScriptAnsibleFile": "couchbase_ansible.sh",
-    "customScriptAnsibleUrl": "[concat('https://',parameters('customScriptConfigStorageAccountName'),'.blob.core.windows.net/customscript/',variables('customScriptAnsibleFile'))]",
+    "customScriptAnsibleUrl": "[concat(variables('scriptsBaseUrl'),variables('customScriptAnsibleFile'))]",
     "customScriptAnsibleCommand": "[concat('bash ',variables('customScriptAnsibleFile'))]",
     "customScriptAnsibleParameters": "[concat(' -i ',variables('VMIPAddressStart'),' -n ',parameters('numberOfVms'),' -r ',variables('createRAID'),' -f ',parameters('linuxFileSystem'),' -u ',variables('couchbaseAdminUser'),' -p ',variables('couchbaseAdminPassword') ,' -m ',parameters('couchbaseMemoryAllocationPercentage') )]",
-    "sshRootCerBlobUrl": "[concat('https://',parameters('customScriptConfigStorageAccountName'),'.blob.core.windows.net/',variables('sshRootCerBlobLocation'))]",
     "customScriptSSHRootFile": "configure_ssh_root.sh",
-    "customScriptSSHRootUrl": "[concat('https://',parameters('customScriptConfigStorageAccountName'),'.blob.core.windows.net/customscript/',variables('customScriptSSHRootFile'))]",
-    "customScriptSSHRootCommand": "[concat('bash ',variables('customScriptSSHRootFile'))]",
-    "sshRootPubBlobUrl": "[concat('https://',parameters('customScriptConfigStorageAccountName'),'.blob.core.windows.net/',variables('sshRootPubBlobLocation'))]",
-    "ansiblePlaybookUrl": "[concat('https://',parameters('customScriptConfigStorageAccountName'),'.blob.core.windows.net/',variables('ansiblePlaybookLocation'))]",
+    "customScriptSSHRootUrl": "[concat(variables('scriptsBaseUrl'),variables('customScriptSSHRootFile'))]",
+    "customScriptSSHRootCommand": "[concat('bash ',variables('customScriptSSHRootFile'),' -a ', parameters('sshStorageAccountName'),' -k ', parameters('sshStorageAccountKey'))]",
+    "ansiblePlaybookUrl": "[concat(variables('scriptsBaseUrl'),variables('ansiblePlaybookLocation'))]",
+    "pythonAzureScriptUrl": "[concat(variables('scriptsBaseUrl'),'GetSSHFromPrivateStorageAccount.py')]",
     "ansibleVmTypes": {
       "Premium_LRS": {
         "vmSize": "Standard_DS1"
@@ -255,12 +251,13 @@
     },
     "currentEnvironmentSettings": "[variables('ansibleVmTypes')[parameters('storageAccountType')]]",
     "ansibleVmType": "[variables('currentEnvironmentSettings').vmSize]",
-    "newStorageAccountName": "[concat(resourceGroup().name,parameters('newStorageAccountName'),'0')]",
+    "newStorageAccountName": "[concat(uniquestring(resourceGroup().id), 'stg')]",
     "storageRef": "[concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]"
   },
+
   "resources": [
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[parameters('location')]",
@@ -287,12 +284,13 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPName')]",
       "location": "[parameters('location')]",
       "dependsOn": [
         "[variables('vnetRef')]"
+
       ],
       "properties": {
         "publicIPAllocationMethod": "[parameters('publicIPType')]",
@@ -302,7 +300,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/loadBalancers",
       "name": "[variables('loadBalancerName')]",
       "location": "[parameters('location')]",
@@ -310,6 +308,7 @@
         "[variables('publicIPRef')]"
       ],
       "properties": {
+
         "frontendIPConfigurations": [
           {
             "name": "[variables('lbFEConfig')]",
@@ -318,20 +317,17 @@
                 "id": "[variables('publicIPRef')]"
               }
             }
+
           }
         ],
         "backendAddressPools": [
-          {
-            "name": "[variables('lbBEConfig')]"
-          }
+          { "name": "[variables('lbBEConfig')]" }
         ],
         "inboundNatRules": [
           {
             "name": "sshToAnsibleControllerNAT",
             "properties": {
-              "frontendIPConfiguration": {
-                "id": "[variables('lbFEConfigRef')]"
-              },
+              "frontendIPConfiguration": { "id": "[variables('lbFEConfigRef')]" },
               "protocol": "tcp",
               "frontendPort": "[concat(variables('sshNatRuleFrontEndPort'),'0')]",
               "backendPort": "[variables('sshNatRuleBackEndPort')]",
@@ -341,39 +337,39 @@
           {
             "name": "couchbaseWebAdminConsoleNAT",
             "properties": {
-              "frontendIPConfiguration": {
-                "id": "[variables('lbFEConfigRef')]"
-              },
+              "frontendIPConfiguration": { "id": "[variables('lbFEConfigRef')]" },
               "protocol": "tcp",
               "frontendPort": "[variables('couchbaseWebConsolePort')]",
               "backendPort": "[variables('couchbaseWebConsolePort')]",
               "enableFloatingIP": false
             }
           }
+
         ]
       }
     },
     {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('availabilitySetName')]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "location": "[parameters('location')]",
       "properties": {
         "PlatformFaultDomainCount": "[variables('faultDomainCount')]",
         "PlatformUpdateDomainCount": "[variables('updateDomainCount')]"
+
       }
     },
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('newStorageAccountName')]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "location": "[parameters('location')]",
       "properties": {
         "accountType": "[parameters('storageAccountType')]"
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('vmNICNamePattern'),copyIndex())]",
       "location": "[parameters('location')]",
@@ -396,19 +392,18 @@
                 "id": "[variables('subnetBackEndRef')]"
               },
               "loadBalancerBackendAddressPools": [
-                {
-                  "id": "[variables('lbBEConfigRef')]"
-                }
+                { "id": "[variables('lbBEConfigRef')]" }
               ]
             }
+
           }
         ]
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[concat(parameters('vmNamePattern'),copyIndex())]",
+      "name": "[concat(variables('vmNamePattern'),copyIndex())]",
       "location": "[parameters('location')]",
       "tags": {
         "ServerRole": "[parameters('serversRole')]",
@@ -431,20 +426,9 @@
           "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
-          "computerName": "[concat(parameters('vmNamePattern'),copyIndex())]",
-          "adminUsername": "[parameters('adminUserName')]",
-          "adminPassword": "[parameters('adminPassword')]",
-          "linuxConfiguration": {
-            "disablePasswordAuthentication": "false",
-            "ssh": {
-              "publicKeys": [
-                {
-                  "path": "[variables('sshKeyPath')]",
-                  "keyData": "[parameters('sshKeyData')]"
-                }
-              ]
-            }
-          }
+          "computerName": "[concat(variables('vmNamePattern'),copyIndex())]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
         },
         "storageProfile": {
           "imageReference": {
@@ -454,56 +438,57 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[concat(parameters('vmNamePattern'),copyIndex(), '-OS')]",
+            "name": "[concat(variables('vmNamePattern'),copyIndex(), '-OS')]",
             "vhd": {
-              "uri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',parameters('vmNamePattern'),copyIndex(),'-OS.vhd')]"
+              "uri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('vmNamePattern'),copyIndex(),'-OS.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
           },
           "dataDisks": [
             {
-              "name": "[concat(parameters('vmNamePattern'),copyIndex(), '-Data_1')]",
+              "name": "[concat(variables('vmNamePattern'),copyIndex(), '-Data_1')]",
               "diskSizeGB": "[parameters('vmSizeDataDisks')]",
               "lun": 0,
               "vhd": {
-                "uri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',parameters('vmNamePattern'),copyIndex(),'-Data_1.vhd')]"
+                "uri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('vmNamePattern'),copyIndex(),'-Data_1.vhd')]"
               },
               "caching": "ReadOnly",
               "createOption": "Empty"
             },
             {
-              "name": "[concat(parameters('vmNamePattern'),copyIndex(), '-Data_2')]",
+              "name": "[concat(variables('vmNamePattern'),copyIndex(), '-Data_2')]",
               "diskSizeGB": "[parameters('vmSizeDataDisks')]",
               "lun": 1,
               "vhd": {
-                "uri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',parameters('vmNamePattern'),copyIndex(),'-Data_2.vhd')]"
+                "uri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('vmNamePattern'),copyIndex(),'-Data_2.vhd')]"
               },
               "caching": "ReadOnly",
               "createOption": "Empty"
             },
             {
-              "name": "[concat(parameters('vmNamePattern'),copyIndex(), '-Data_3')]",
+              "name": "[concat(variables('vmNamePattern'),copyIndex(), '-Data_3')]",
               "diskSizeGB": "[parameters('vmSizeDataDisks')]",
               "lun": 2,
               "vhd": {
-                "uri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',parameters('vmNamePattern'),copyIndex(),'-Data_3.vhd')]"
+                "uri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('vmNamePattern'),copyIndex(),'-Data_3.vhd')]"
               },
               "caching": "ReadOnly",
               "createOption": "Empty"
             },
             {
-              "name": "[concat(parameters('vmNamePattern'),copyIndex(), '-Data_4')]",
+              "name": "[concat(variables('vmNamePattern'),copyIndex(), '-Data_4')]",
               "diskSizeGB": "[parameters('vmSizeDataDisks')]",
               "lun": 3,
               "vhd": {
-                "uri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',parameters('vmNamePattern'),copyIndex(),'-Data_4.vhd')]"
+                "uri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('vmNamePattern'),copyIndex(),'-Data_4.vhd')]"
               },
               "caching": "ReadOnly",
               "createOption": "Empty"
             }
           ]
         },
+
         "networkProfile": {
           "networkInterfaces": [
             {
@@ -515,8 +500,8 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(parameters('vmNamePattern'),copyIndex(),'/configuressh')]",
-      "apiVersion": "2015-05-01-preview",
+      "name": "[concat(variables('vmNamePattern'),copyIndex(),'/configuressh')]",
+      "apiVersion": "[variables('apiVersion')]",
       "location": "[parameters('location')]",
       "copy": {
         "name": "VMExtensionsLoop",
@@ -528,22 +513,21 @@
       "properties": {
         "publisher": "Microsoft.OSTCExtensions",
         "type": "CustomScriptForLinux",
-        "typeHandlerVersion": "1.2",
+        "typeHandlerVersion": "1.4",
         "settings": {
           "fileUris": [
             "[variables('customScriptSSHRootUrl')]",
-            "[variables('sshRootPubBlobUrl')]"
+            "[variables('pythonAzureScriptUrl')]"
           ],
-          "commandToExecute": "[variables('customScriptSSHRootCommand')]"
-        },
-        "protectedSettings": {
-          "storageAccountName": "[parameters('customScriptConfigStorageAccountName')]",
-          "storageAccountKey": "[parameters('customScriptConfigStorageAccountKey')]"
+          "commandToExecute": "[variables('customScriptSSHRootCommand')]",
+          "protectedSettings": { }
+
         }
       }
     },
+
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "NICAnsibleController",
       "location": "[parameters('location')]",
@@ -558,24 +542,19 @@
             "properties": {
               "privateIPAllocationMethod": "Static",
               "privateIPAddress": "[concat(variables('VMIPAddressStart'),parameters('numberOfVms'))]",
-              "subnet": {
-                "id": "[variables('subnetBackEndRef')]"
-              },
+              "subnet": { "id": "[variables('subnetBackEndRef')]" },
               "loadBalancerInboundNatRules": [
-                {
-                  "id": "[concat(variables('loadBalancerRef'),'/inboundNatRules/sshToAnsibleControllerNAT')]"
-                },
-                {
-                  "id": "[concat(variables('loadBalancerRef'),'/inboundNatRules/couchbaseWebAdminConsoleNAT')]"
-                }
+                { "id": "[concat(variables('loadBalancerRef'),'/inboundNatRules/sshToAnsibleControllerNAT')]" },
+                { "id": "[concat(variables('loadBalancerRef'),'/inboundNatRules/couchbaseWebAdminConsoleNAT')]" }
               ]
             }
+
           }
         ]
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "AnsibleController",
       "location": "[parameters('location')]",
@@ -598,7 +577,7 @@
         },
         "osProfile": {
           "computerName": "AnsibleController",
-          "adminUsername": "[parameters('adminUserName')]",
+          "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]",
           "linuxConfiguration": {
             "disablePasswordAuthentication": "false",
@@ -627,7 +606,8 @@
             "caching": "ReadWrite",
             "createOption": "FromImage"
           },
-          "dataDisks": []
+          "dataDisks": [
+          ]
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -640,38 +620,35 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "AnsibleController/installansible",
-      "apiVersion": "2015-05-01-preview",
+      "name": "AnsibleController/configureAnsibleAndCouchbase",
+      "apiVersion": "[variables('apiVersion')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "Microsoft.Compute/virtualMachines/AnsibleController"
+        "VMExtensionsLoop"
       ],
       "properties": {
         "publisher": "Microsoft.OSTCExtensions",
         "type": "CustomScriptForLinux",
-        "typeHandlerVersion": "1.2",
+        "typeHandlerVersion": "1.4",
         "settings": {
           "fileUris": [
             "[variables('customScriptAnsibleUrl')]",
             "[variables('ansiblePlaybookUrl')]",
             "[variables('couchbasePlaybookUrl')]",
             "[variables('couchbaseParametersPlaybookUrl')]",
-            "[variables('sshRootPubBlobUrl')]",
-            "[variables('sshRootCerBlobUrl')]",
-            "[variables('nginxConfigTemplateUrl')]"
+            "[variables('nginxConfigTemplateUrl')]",
+            "[variables('pythonAzureScriptUrl')]"
           ],
-          "commandToExecute": "[concat(variables('customScriptAnsibleCommand'),variables('customScriptAnsibleParameters'),' -q ',reference(variables('publicIPRef'),providers('Microsoft.Network', 'publicIPAddresses').apiVersions[0]).dnsSettings.fqdn ,' -o ', variables('couchbaseWebConsolePort'))]"
-        },
-        "protectedSettings": {
-          "storageAccountName": "[parameters('customScriptConfigStorageAccountName')]",
-          "storageAccountKey": "[parameters('customScriptConfigStorageAccountKey')]"
+          "commandToExecute": "[concat(variables('customScriptAnsibleCommand'),variables('customScriptAnsibleParameters'),' -q ',reference(variables('publicIPRef'),providers('Microsoft.Network', 'publicIPAddresses').apiVersions[0]).dnsSettings.fqdn ,' -o ', variables('couchbaseWebConsolePort') ,' -a ', parameters('sshStorageAccountName'),' -k ', parameters('sshStorageAccountKey'))]",
+          "protectedSettings": { }
         }
       }
     }
   ],
+
   "outputs": {
     "sshResourceURL": {
-      "value": "[concat('SSH Url to Ansible Controller:',parameters('adminUserName'),'@', reference(variables('publicIPRef'),providers('Microsoft.Network', 'publicIPAddresses').apiVersions[0]).dnsSettings.fqdn,' -p ',variables('sshNatRuleFrontEndPort'))]",
+      "value": "[concat('SSH Url to Ansible Controller:',parameters('adminUsername'),'@', reference(variables('publicIPRef'),providers('Microsoft.Network', 'publicIPAddresses').apiVersions[0]).dnsSettings.fqdn,' -p ',variables('sshNatRuleFrontEndPort'))]",
       "type": "string"
     },
     "couchbaseWebURL": {

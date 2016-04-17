@@ -7,18 +7,21 @@ import random
 import re
 import requests
 import sys
-from azure.storage.blob import BlobService
+from azure.storage.blob import AppendBlobService
 from azure.storage.table import TableService
+import azure.mgmt.network
+from azure.common.credentials import ServicePrincipalCredentials
+from azure.mgmt.network import NetworkManagementClient, NetworkManagementClientConfiguration
 
 def prepare_storage(settings):
     default_storage_account_name = settings["DEFAULT_STORAGE_ACCOUNT_NAME"]
     storage_access_key = settings["STORAGE_ACCESS_KEY"]
 
-    blob_service = BlobService(default_storage_account_name, storage_access_key)
+    blob_service = AppendBlobService(default_storage_account_name, storage_access_key)
     blob_service.create_container('bosh')
     blob_service.create_container(
         container_name='stemcell',
-        x_ms_blob_public_access='blob'
+        public_access='blob'
     )
 
     # Prepare the table for storing meta datas of storage account and stemcells
@@ -26,10 +29,8 @@ def prepare_storage(settings):
     table_service.create_table('stemcells')
 
 def render_bosh_manifest(settings):
-    with open('bosh.cert', 'r') as tmpfile:
-        ssh_cert = tmpfile.read()
-    indentation = " " * 8
-    ssh_cert = ("\n"+indentation).join([line for line in ssh_cert.split('\n')])
+    with open('bosh.pub', 'r') as tmpfile:
+        ssh_public_key = tmpfile.read()
 
     ip = netaddr.IPNetwork(settings['SUBNET_ADDRESS_RANGE_FOR_BOSH'])
     gateway_ip = str(ip[1])
@@ -40,10 +41,10 @@ def render_bosh_manifest(settings):
     if os.path.exists(bosh_template):
         with open(bosh_template, 'r') as tmpfile:
             contents = tmpfile.read()
-        for k in ["SUBNET_ADDRESS_RANGE_FOR_BOSH", "VNET_NAME", "SUBNET_NAME_FOR_BOSH", "SUBSCRIPTION_ID", "DEFAULT_STORAGE_ACCOUNT_NAME", "RESOURCE_GROUP_NAME", "KEEP_UNREACHABLE_VMS", "TENANT_ID", "CLIENT_ID", "CLIENT_SECRET"]:
+        for k in ["SUBNET_ADDRESS_RANGE_FOR_BOSH", "VNET_NAME", "SUBNET_NAME_FOR_BOSH", "SUBSCRIPTION_ID", "DEFAULT_STORAGE_ACCOUNT_NAME", "RESOURCE_GROUP_NAME", "KEEP_UNREACHABLE_VMS", "TENANT_ID", "CLIENT_ID", "CLIENT_SECRET", "BOSH_PUBLIC_IP", "NSG_NAME_FOR_BOSH"]:
             v = settings[k]
             contents = re.compile(re.escape("REPLACE_WITH_{0}".format(k))).sub(v, contents)
-        contents = re.compile(re.escape("REPLACE_WITH_SSH_CERTIFICATE")).sub(ssh_cert, contents)
+        contents = re.compile(re.escape("REPLACE_WITH_SSH_PUBLIC_KEY")).sub(ssh_public_key, contents)
         contents = re.compile(re.escape("REPLACE_WITH_GATEWAY_IP")).sub(gateway_ip, contents)
         contents = re.compile(re.escape("REPLACE_WITH_BOSH_DIRECTOR_IP")).sub(bosh_director_ip, contents)
         with open(bosh_template, 'w') as tmpfile:
@@ -53,7 +54,7 @@ def render_bosh_manifest(settings):
 
 def get_cloud_foundry_configuration(scenario, settings):
     config = {}
-    for key in ["SUBNET_ADDRESS_RANGE_FOR_CLOUD_FOUNDRY", "VNET_NAME", "SUBNET_NAME_FOR_CLOUD_FOUNDRY", "CLOUD_FOUNDRY_PUBLIC_IP"]:
+    for key in ["SUBNET_ADDRESS_RANGE_FOR_CLOUD_FOUNDRY", "VNET_NAME", "SUBNET_NAME_FOR_CLOUD_FOUNDRY", "CLOUD_FOUNDRY_PUBLIC_IP", "NSG_NAME_FOR_CLOUD_FOUNDRY"]:
         config[key] = settings[key]
 
     with open('cloudfoundry.cert', 'r') as tmpfile:
@@ -83,21 +84,12 @@ def get_cloud_foundry_configuration(scenario, settings):
         config["NATS_IP"] = str(ip[13])
         config["ETCD_IP"] = str(ip[14])
         config["NFS_IP"] = str(ip[15])
-    elif scenario == "cf-for-enterprise":
-        config["STATIC_IP_FROM"] = str(ip[4])
-        config["STATIC_IP_TO"] = str(ip[100])
-        config["HAPROXY_IP"] = str(ip[4])
-        config["POSTGRES_IP"] = str(ip[11])
-        config["ROUTER1_IP"] = str(ip[12])
-        config["ROUTER2_IP"] = str(ip[22])
-        config["NATS_IP"] = str(ip[13])
-        config["ETCD_IP"] = str(ip[14])
-        config["NFS_IP"] = str(ip[15])
+        config["CONSUL_IP"] = str(ip[16])
 
     return config
 
 def render_cloud_foundry_manifest(settings):
-    for scenario in ["single-vm-cf", "multiple-vm-cf", "cf-for-enterprise"]:
+    for scenario in ["single-vm-cf", "multiple-vm-cf"]:
         cloudfoundry_template = "{0}.yml".format(scenario)
         if os.path.exists(cloudfoundry_template):
             with open(cloudfoundry_template, 'r') as tmpfile:
