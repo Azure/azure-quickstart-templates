@@ -18,20 +18,22 @@ NOTE:
 ### Standalone Mode:
 The instance has the following ports open:
 * 22 for SSH
-* 443 and 8000 for HTTPS & HTTP
+* 443 and 8000 for HTTPS & HTTP to access Splunk
 * 9997 for TCP receiver traffic
+* 8088 for HTTP Event Collector
 * 8089 for Splunkd Management open to VNet only
 
 ### Cluster Mode:
 Cluster search head & cluster master have the following ports open:
 * 22 for SSH
-* 443 and 8000 for HTTPS & HTTP
+* 443 and 8000 for HTTPS & HTTP to access Splunk
 * 8089 for Splunkd Management open to VNet only
 
 Cluster peer nodes have the following ports open:
 * 22 for SSH
-* 443 and 8000 for HTTPS & HTTP
+* 443 and 8000 for HTTPS & HTTP to access Splunk
 * 9997 for TCP receiver traffic
+* 8088 for HTTP Event Collector
 * 9887 for TCP replication traffic open to VNet only
 * 8089 for Splunkd Management open to VNet only
 
