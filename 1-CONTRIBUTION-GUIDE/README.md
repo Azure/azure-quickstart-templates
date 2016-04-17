@@ -16,7 +16,7 @@ To make sure your template is added to Azure.com index, please follow these guid
 ## Files, folders and naming conventions
 
 1. Every deployment template and its associated files must be contained in its own **folder**. Name this folder something that describes what your template does. Usually this naming pattern looks like **appName-osName** or **level-platformCapability** (e.g. 101-vm-user-image) 
- + **Required** – Numbering should start at 101. 100 is reserved for things that need to be at the top.
+ + **Required** â€“ Numbering should start at 101. 100 is reserved for things that need to be at the top.
  + **Protip** - Try to keep the name of your template folder short so that it fits inside the Github folder name column width.
 2. Github uses ASCII for ordering files and folder. For consistent ordering **create all files and folders in lowercase**. The only **exception** to this guideline is the **README.md**, that should be in the format **UPPERCASE.lowercase**.
 3. Include a **README.md** file that explains how the template works. 
@@ -48,7 +48,7 @@ Do **not include** the **parameters or the variables** of the deployment script.
 
 ## metadata.json
 
-A valid metedata.json must adhere to the following structure
+A valid metadata.json must adhere to the following structure
 
 ```
 {
