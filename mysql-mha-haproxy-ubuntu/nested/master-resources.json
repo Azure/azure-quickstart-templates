@@ -2,9 +2,6 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "region": {
-      "type": "string"
-    },
     "adminUsername": {
       "type": "string"
     },
@@ -29,9 +26,6 @@
     "vmSize": {
       "type": "string"
     },
-	"slaveStaticIp": {
-      "type": "string"
-    },
     "subnet": {
       "type": "object"
     }
@@ -46,21 +40,21 @@
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[concat(parameters('namespace'), 'set')]",
-      "location": "[parameters('region')]",
+      "location": "[resourceGroup().location]",
       "properties": {}
     },
     {
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'nic')]",
-      "location": "[parameters('region')]",
+      "location": "[resourceGroup().location]",
       "properties": {
         "ipConfigurations": [
           {
             "name": "ipconfig1",
             "properties": {
 			  "privateIPAllocationMethod": "Static",
-              "privateIPAddress": "[parameters('slaveStaticIp')]",
+              "privateIPAddress": "[parameters('masterNodeIp')]",
               "subnet": {
                 "id": "[variables('subnetRef')]"
               }
@@ -73,7 +67,7 @@
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(parameters('namespace'), concat(parameters('vmbasename'), 'vm'))]",
-      "location": "[parameters('region')]",
+      "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Network/networkInterfaces/', parameters('namespace'), parameters('vmbasename'), 'nic')]"
       ],
@@ -108,9 +102,9 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'vm', '/slave02Install')]",
+      "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'vm', '/masterInstall')]",
       "apiVersion": "[variables('apiVersion')]",
-      "location": "[parameters('region')]",
+      "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', parameters('namespace'), parameters('vmbasename'), 'vm')]",
         "[concat('Microsoft.Network/networkInterfaces/', parameters('namespace'), parameters('vmbasename'), 'nic')]"
@@ -124,8 +118,8 @@
           "fileUris": "[parameters('osSettings').scripts]"
 		},
 		"protectedSettings": {
-            "commandToExecute": "[concat('bash slave02.sh ', parameters('mysqlPassword'), ' ', parameters('adminUsername'))]"
-		}
+          "commandToExecute": "[concat('bash master.sh ', parameters('mysqlPassword'), ' ', parameters('adminUsername'))]"
+        }
       }
     }
   ],
