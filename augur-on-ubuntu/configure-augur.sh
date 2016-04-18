@@ -22,21 +22,27 @@ echo "vmname: $VMNAME"
 # install tools
 #####################
 time sudo npm install azure-cli -g
-time sudo apt-get install nodejs-legacy
+sudo ln -s /usr/bin/nodejs /usr/bin/node
 time sudo apt-get update && sudo apt-get install screen -y
-time sudo apt-get update && sudo apt-get install npm -y
-time sudo npm install grunt --save-dev
-time sudo npm install -g grunt-cli
+time sudo apt-get -y install git
 
 ####################
 # Intsall Geth
 ####################
-time sudo apt-get -y install git
 time sudo apt-get install -y software-properties-common
 time sudo add-apt-repository -y ppa:ethereum/ethereum
 time sudo add-apt-repository -y ppa:ethereum/ethereum-dev
 time sudo apt-get update
 time sudo apt-get install -y ethereum
+
+####################
+# Install Serpent
+####################
+time sudo apt-get install -y python-dev
+time sudo apt-get install -y python-pip
+time sudo pip install ethereum-serpent
+time sudo pip install ethereum
+time sudo pip install requests --upgrade
 
 ###############################
 # Fetch Genesis and Private Key
@@ -57,16 +63,25 @@ mkdir ~/.ethash
 #geth makedag 0 ~/.ethash
 
 #start geth+mining using screen
-#screen -dmS geth geth --unlock --maxpeers 0 --networkid 1101011 --rpc --rpccorsdomain "*" --mine
+screen -dmS geth geth --password pw.txt --unlock 0 --maxpeers 0 --networkid 1101011 --rpc --rpccorsdomain "*"
+
+#TODO: turn on mining separately? (--mine)
 
 ####################
 #Install Augur Front End
 ####################
 git clone https://github.com/AugurProject/augur.git
-cd augur
-#npm install
-#grunt
+#cd augur
+#sudo npm install
 #npm start
 
+####################
+#Install Augur Contracts
+####################
+cd $HOMEDIR
+git clone https://github.com/AugurProject/augur-core.git
+cd  augur-core
+
+
 date
-echo "completed geth install $$"
+echo "completed augur install $$"
