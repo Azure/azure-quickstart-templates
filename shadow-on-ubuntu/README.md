@@ -25,4 +25,3 @@ When you click the Deploy to Azure icon above, you need to specify the following
 * Wait about 15 minutes for the VM to spin up and install the software
 * Connect to the VM via SSH using the DNS name assigned to your Public IP
 * If you wish to launch Shadow run 'shadowcoind'
-
