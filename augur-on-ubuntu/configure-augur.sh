@@ -61,7 +61,8 @@ echo "password" > pw.txt  #TODO:prompt for separate pw in tempalte, or just pass
 geth --password pw.txt account import priv_genesis.key
  
 #Pregen DAG so miniing can start immediately, no delay between when front end is useable
-mkdir ~/.ethash
+pwd ~/
+mkdir ~/.ethash/
 #geth makedag 0 ~/.ethash
 
 #start geth+mining using screen
@@ -70,7 +71,7 @@ mkdir ~/.ethash
 ####################
 #Install Augur Front End
 ####################
-git clone https://github.com/AugurProject/augur.git
+#git clone https://github.com/AugurProject/augur.git
 #cd augur
 #sudo npm install
 #npm start
@@ -78,8 +79,8 @@ git clone https://github.com/AugurProject/augur.git
 ####################
 #Install Augur Contracts
 ####################
-cd $HOMEDIR
-git clone https://github.com/AugurProject/augur-core.git
+#cd $HOMEDIR
+#git clone https://github.com/AugurProject/augur-core.git
 #cd  augur-core
 
 
