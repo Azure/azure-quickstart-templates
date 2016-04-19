@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # print commands and arguments as they are executed
-set -x
+set -xv
 
 echo "initializing geth installation"
 date
@@ -62,7 +62,7 @@ geth --password pw.txt account import priv_genesis.key
  
 #Pregen DAG so miniing can start immediately, no delay between when front end is useable
 pwd ~/
-mkdir ~/.ethash/
+mkdir ~/.ethash/ #todo: this fails..
 #geth makedag 0 ~/.ethash
 
 #start geth+mining using screen
