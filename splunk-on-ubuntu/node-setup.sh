@@ -24,10 +24,10 @@
 #
 # Script Name: node-setup.sh
 # Author: Roy Arsan - Splunk Inc github:(rarsan)
-# Version: 0.1
+# Version: 0.2
 # Last Modified By: Roy Arsan
 # Description:
-#  This script sets up a node, and installs & configures Splunk Enterprise via Chef in local mode.
+#  This script sets up a node by configuring pre-installed Splunk Enterprise via Chef in local mode.
 #  The provisioning depends on a specified role and leverages standard Chef Splunk cookbooks
 # Parameters :
 #  1 - r: role of Splunk server
@@ -42,7 +42,7 @@ set -e
 
 help()
 {
-    echo "This script sets up a node, and installs & configures Splunk Enterprise"
+    echo "This script sets up a node, and configures pre-installed Splunk Enterprise"
     echo "Usage: "
     echo "Parameters:"
     echo "-r role to configure node, supported role(s): splunk_server"
@@ -71,12 +71,6 @@ MY_IP="$(ip -4 address show eth0 | sed -rn 's/^[[:space:]]*inet ([[:digit:].]+)[
 
 DATA_MOUNTPOINT="/datadrive"
 SPLUNK_DB_DIR="${DATA_MOUNTPOINT}/splunk_db"
-
-CHEF_PKG_URL="https://opscode-omnibus-packages.s3.amazonaws.com/ubuntu/10.04/x86_64/chef_12.5.1-1_amd64.deb"
-CHEF_PKG_MD5="6360faba9d6358d636be5618eecb21ee1dbdca7d  chef_12.5.1-1_amd64.deb"
-CHEF_PKG_CACHE="/etc/chef/local-mode-cache/cache/chef_12.5.1-1_amd64.deb"
-CHEF_GEM_PACKAGE_LOCAL_PATH="`pwd`/chef-vault-2.6.1.gem"
-CHEF_REPO_SPLUNK_URL="https://github.com/rarsan/chef-repo-splunk/tarball/v0.8"
 
 # Arguments
 while getopts :r:p:c:i: optname; do
@@ -109,47 +103,22 @@ while getopts :r:p:c:i: optname; do
 done
 
 log "Started node-setup on ${HOSTNAME} with role ${NODE_ROLE}"
+# Retrieve new list of packages
+apt-get -y update
 
 log "Striping data disks into one volume mounted at ${DATA_MOUNTPOINT}"
 # Stripe data disks into one data volume where SPLUNK_DB will reside
 chmod u+x vm-disk-utils-0.1.sh && ./vm-disk-utils-0.1.sh -s -p $DATA_MOUNTPOINT
 
-log "Updating system packages"
-# Update packages & install required dependencies
-apt-get -y update
-DEBIAN_FRONTEND=noninteractive apt-get install -y curl iptables-persistent
-
-log "Downloading Chef client"
-# Download chef client 12.5.1, verify checksum and install package
-if [ ! -f "${CHEF_PKG_CACHE}" ]; then
-  curl -O ${CHEF_PKG_URL} --retry 3 --retry-delay 10
-else
-  cp ${CHEF_PKG_CACHE} .
-fi
-
-log "Verifying checksum..."
-echo ${CHEF_PKG_MD5} > /tmp/checksum
-sha1sum -c /tmp/checksum
-dpkg -i chef_12.5.1-1_amd64.deb
-
-log "Downloading Chef repo for Splunk"
-# Download chef repo including cookbooks, roles and default data bags
-mkdir -p /etc/chef/repo
-cd /etc/chef/repo
-curl -L ${CHEF_REPO_SPLUNK_URL} -o chef-repo-splunk.tar.gz --retry 3 --retry-delay 10
-tar -xzf chef-repo-splunk.tar.gz --strip-components=1
-tar -xzf berks-package.tar.gz -C cookbooks --strip-components=1
-cd -
-
-# Update data bag with custom user credentials
+# Update Chef data bag with custom user credentials
 sed -i "s/notarealpassword/${ADMIN_PASSWD}/" /etc/chef/repo/data_bags/vault/splunk__default.json
 
-# Update placeholder nodes with existing resources data
+# Update Chef placeholder nodes with existing resources data
 if [ -n "${CLUSTER_MASTER_IP}" ]; then
   sed -i "s/<INSERT_IP_ADDRESS>/${CLUSTER_MASTER_IP}/" /etc/chef/repo/nodes/cluster-master.json
 fi
 
-# Setup Chef node file with appropriate role and custom attributes
+# Write Chef node file with appropriate role and custom attributes
 cat >/etc/chef/node.json <<end
 {
   "splunk": {
@@ -164,15 +133,13 @@ cat >/etc/chef/node.json <<end
       "datastore_dir": "${SPLUNK_DB_DIR}"
     }
   },
-  "chef-vault": {
-    "gem_source": "${CHEF_GEM_PACKAGE_LOCAL_PATH}"
-  },
   "run_list": [
     "role[${NODE_ROLE}]"
   ]
 }
 end
 
+# Write Chef client configs
 cat >/etc/chef/client.rb <<end
 log_level :info
 log_location STDOUT
@@ -190,8 +157,8 @@ ip6tables -t nat -A PREROUTING -p udp -m udp --dport 514 -j REDIRECT --to-ports 
 ip6tables -t nat -A PREROUTING -p tcp -m tcp --dport 514 -j REDIRECT --to-ports 10514
 ip6tables-save > /etc/iptables/rules.v6
 
-log "Installing and configuring Splunk"
-# Finally install & configure Splunk using chef client in local mode
+log "Configuring Splunk"
+# Finally configure Splunk using chef client in local mode
 chef-client -z -c /etc/chef/client.rb -j /etc/chef/node.json
 
 # Cleanup after ourselves - remove chef repo including data bag
