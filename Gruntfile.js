@@ -2,6 +2,7 @@ var grunt = require('grunt');
 require('load-grunt-tasks')(grunt);
 
 var files = ['test/*.js'];
+var templates = ['**/*.json'];
 
 grunt.initConfig({
   mochacli: {
@@ -36,6 +37,24 @@ grunt.initConfig({
               config: '.beautifyrc'
           }
       },
+      lint: {
+          files: {
+              src: templates
+          },
+          options: {
+              mode: 'VERIFY_ONLY',
+              config: '.beautifyrc'
+          }
+      },
+      reformat: {
+          files: {
+              src: templates
+          },
+          options: {
+              mode: 'VERIFY_AND_WRITE',
+              config: '.beautifyrc'
+          }
+      },
       write: {
           files: {
               src: files
@@ -46,4 +65,4 @@ grunt.initConfig({
       }
   }
 });
-grunt.registerTask('test', ['jshint', 'jscs', 'jsbeautifier', 'mochacli']);
+grunt.registerTask('test', ['jshint', 'jscs', 'jsbeautifier:test', 'jsbeautifier:write', 'mochacli']);
