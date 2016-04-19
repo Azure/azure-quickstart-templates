@@ -5,6 +5,9 @@ This Microsoft Azure template deploys a single Shadow client which will connect 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fshadow-on-ubuntu%2Fazuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fshadow-on-ubuntu%2Fazuredeploy.json" target="_blank"><img src="http://armviz.io/visualizebutton.png"/></a>
 
+For more information, <br>
+https://shadowproject.io <br>
+https://bitcointalk.org/index.php?topic=745352 <br>
 # Template Parameters
 
 When you click the Deploy to Azure icon above, you need to specify the following template parameters:
@@ -22,3 +25,4 @@ When you click the Deploy to Azure icon above, you need to specify the following
 * Wait about 15 minutes for the VM to spin up and install the software
 * Connect to the VM via SSH using the DNS name assigned to your Public IP
 * If you wish to launch Shadow run 'shadowcoind'
+
