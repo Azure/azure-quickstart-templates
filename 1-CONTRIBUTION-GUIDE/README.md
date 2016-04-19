@@ -38,6 +38,7 @@ To make sure your template is added to Azure.com index, please follow these guid
 The README.md describes your deployment. A good description helps other community members to understand your deployment. The README.md uses [Github Flavored Markdown](https://guides.github.com/features/mastering-markdown/) for formatting text. If you want to add images to your README.md file, store the images in the **images** folder. Reference the images in the README.md with a relative path (e.g. `![alt text](images/namingConvention.png "Files, folders and naming conventions")`). This ensures the link will reference the target repository if the source repository is forked. A good README.md contains the following sections
 
 + Deploy to Azure button
++ Visualize button
 + Description of what the template will deploy
 + Tags, that can be used for seach. Specify the tags comma seperated and enclosed between two back-ticks (e.g Tags: `cluster, ha, sql`)
 + *Optional: Prerequisites
@@ -45,6 +46,8 @@ The README.md describes your deployment. A good description helps other communit
 + *Optional: Notes
 
 Do **not include** the **parameters or the variables** of the deployment script. We render this on Azure.com from the template. Specifying these in the README.md will result in **duplicate entries** on Azure.com.
+
+You can download a [**sample README.md**](/1-CONTRIBUTION-GUIDE/sample-README.md) for use in your deployment scenario. The **sample README.md** also contains the code for the **Deploy to Azure** and **Visualize** buttons, that you can use as a reference.
 
 ## metadata.json
 
