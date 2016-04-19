@@ -1,4 +1,28 @@
-## Git Tutorial for Azure Quickstart Templates
+# Azure Resource Manager QuickStart Templates
+
+This repo contains all currently available Azure Resource Manager templates contributed by the community. A searchable template index is maintained at https://azure.microsoft.com/en-us/documentation/templates/.
+The following information is relevant to get started with contributing to this repository.
+
++ [**Contribution guide**](/1-CONTRIBUTION-GUIDE/README.md). Describes the minimal guidelines for contributing.
++ [**Best practices**](/1-CONTRIBUTION-GUIDE/best-practices.md). Best practices for improving the quality of your template design.
++ [**Git tutorial**](/1-CONTRIBUTION-GUIDE/git-tutorial.md). Step by step to get you started with Git.
+
+You are currently reading the Git tutorial.
+
+## Git tutorial
+
+We're following basic GitHub Flow. If you have ever contributed to an open source project on GitHub, you probably know it already - if you have no idea what we're talking about, check out [GitHub's official guide](https://guides.github.com/introduction/flow/). Here's a quick summary:
+
++ Fork the repository and clone to your local machine
++ You should already be on the default branch `master` - if not, check it out (`git checkout master`)
++ Create a new branch for your template (`git checkout -b my-new-template)
++ Write your template
++ Stage the changed files for a commit (`git add .`)
++ Commit your files with a useful commit message ([example](https://github.com/Azure/azure-quickstart-templates/commit/53699fed9983d4adead63d9182566dec4b8430d4)) (`git commit`)
++ Push your new branch to your GitHub Fork (`git push origin my-new-template`)
++ Visit this repository in GitHub and create a Pull Request.
+
+For a detailed tutorial, please check out the following information.
 
 You probably heard of Git before, but it's possible that you haven't used it. Writing an ARM Template doesn't require masterful Git skills, but you will need a few basics. This small tutorial will go over all the steps, taking you from zero to ARM Template contributor.
 
@@ -47,16 +71,16 @@ Many users are initially put off by the idea of having to work with Git through 
 In fact, I find it a lot easier today to work with the command-line. Git will do *exactly* what you tell it do - each step will be obvious to you. GUIs often try to combine multiple commands together into one fancy button, which will surely blow your whole project up, if you don't understand what's going on under the hood. For those reasons, I *heavily* recommend sticking with the command-line.
 
 ### Fork the Repository to your Account
-Before we can get started, you need to register with GitHub. Either create or login into your account. Then, head over to the [azure/azure-quickstart-templates](https://github.com/azure/azure-quickstart-templates) repository and click the little 'fork' button in the upper right.
+Before we can get started, you need to register with GitHub. Either create or login into your account. Then, head over to the [Azure/azure-quickstart-templates](https://github.com/Azure/azure-quickstart-templates) repository and click the little 'fork' button in the upper right.
 
-![Fork the repo](img/ss1.png)
+![Fork the repo](images/git1.png)
 
 This will create a copy of the repository as it exists in the `azure` organization (hence called azure/azure-quick-start-templates) in your own account.
 
 ### Clone the Azure Quick-start Template Repository to your Machine
 Visit your fork (which should be at github.com/{your_name}/azure-quick-start-templates) and copy the "HTTPS Clone URL". Using this URL, you're able to `clone` the repository, which is really just a fancy way of saying "download the whole repository, including its history and information about its origin".
 
-![Clone the repo](img/ss2.png)
+![Clone the repo](images/git2.png)
 
 Now that you have Git installed, open up PowerShell. If everything worked correctly, you should be able to run `git --version`. If that works, navigate to a folder where you'd like to keep the `arm-templates` repository (and hence, all your arm templates). To get a copy of your fork onto your local machine, run:
 
@@ -157,7 +181,7 @@ git push -u origin NAME_OF_YOUR_BRANCH
 ### Make a Pull Request
 Now, head over to the [catalystcode/arm-templates](https://github.com/CatalystCode/arm-templates) repository. In most cases, GitHub will pick up on the fact that you just pushed a branch with some changes to your local fork, assuming that you probably want for those changes to end up in the upstream branch. To help you, it'll show a little box right above the code asking you if you want to make a pull request.
 
-![Make a Pull Request](img/ss3.png)
+![Make a Pull Request](images/git3.png)
 
 Click that button. GitHub will open up the 'Create a Pull Request Page'. It is probably a good idea to notify potential reviewers in your pull request. You can do this by doing an @mention to the maintainer of the repository.
 

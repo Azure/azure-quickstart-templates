@@ -17,16 +17,22 @@ param
 
 function Delete-WinRMListener
 {
-    $config = Winrm enumerate winrm/config/listener
-    foreach($conf in $config)
+    try
     {
-        if($conf.Contains("HTTPS"))
+        $config = Winrm enumerate winrm/config/listener
+        foreach($conf in $config)
         {
-            Write-Verbose "HTTPS is already configured. Deleting the exisiting configuration."
-
-            winrm delete winrm/config/Listener?Address=*+Transport=HTTPS
-            break
+            if($conf.Contains("HTTPS"))
+            {
+                Write-Verbose "HTTPS is already configured. Deleting the exisiting configuration."
+    
+                winrm delete winrm/config/Listener?Address=*+Transport=HTTPS
+                break
+            }
         }
+    }catch
+    {
+        Write-Verbose -Verbose "Exception while deleting the listener: " + $_.Exception.Message
     }
 }
 
