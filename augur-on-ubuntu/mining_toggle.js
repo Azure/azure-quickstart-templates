@@ -1,4 +1,4 @@
-var mining_threads = 1
+var mining_threads = 1;
 
 function checkWork() {
     if (eth.getBlock("pending").transactions.length > 0) {
@@ -6,7 +6,7 @@ function checkWork() {
         console.log("== Pending transactions! Mining...");
         miner.start(mining_threads);
     } else {
-        miner.stop(0);  // This param means nothing
+        miner.stop();
         console.log("== No transactions! Mining stopped.");
     }
 }
