@@ -21,6 +21,7 @@ echo "vmname: $VMNAME"
 #####################
 # install tools
 #####################
+time sudo apt-get update && sudo apt-get install npm -y
 time sudo npm install azure-cli -g
 sudo ln -s /usr/bin/nodejs /usr/bin/node
 time sudo apt-get update && sudo apt-get install screen -y
@@ -32,7 +33,6 @@ time sudo apt-get -y install git
 time sudo apt-get install -y software-properties-common
 time sudo add-apt-repository -y ppa:ethereum/ethereum
 time sudo add-apt-repository -y ppa:ethereum/ethereum-dev
-time sudo apt-get update
 time sudo apt-get install -y ethereum
 
 ####################
@@ -40,9 +40,13 @@ time sudo apt-get install -y ethereum
 ####################
 time sudo apt-get install -y python-dev
 time sudo apt-get install -y python-pip
+time apt-get install -y build-essential automake pkg-config libtool libffi-dev libgmp-dev -y
 time sudo pip install ethereum-serpent
 time sudo pip install ethereum
 time sudo pip install requests --upgrade
+time sudo pip install pyethapp
+
+time sudo apt-get update
 
 ###############################
 # Fetch Genesis and Private Key
@@ -58,7 +62,7 @@ wget https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/maste
 geth init genesis.json
 
 echo "password" > pw.txt  #TODO:prompt for separate pw in tempalte, or just pass in one from auguruser?
-geth --password pw.txt account import priv_genesis.key
+geth --password pw.txt account import priv_genesis.key¯
  
 #Pregen DAG so miniing can start immediately, no delay between when front end is useable
 pwd ~/
@@ -82,6 +86,7 @@ mkdir ~/.ethash/ #todo: this fails..
 #cd $HOMEDIR
 #git clone https://github.com/AugurProject/augur-core.git
 #cd  augur-core
+#python load_contracts.py
 
 
 date
