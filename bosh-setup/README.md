@@ -18,6 +18,12 @@ We look forward to hearing your feedback and suggestions!
 ```
 Template Changelog
 
+# v1.4.0 (2016-04-21)
+
+- Add AzureChinaCloud support
+- Upgrade versions
+  - Upgrade Azure CPI version to v10. Please see new features in https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release
+
 # v1.3.0 (2016-04-01)
 - Does not bind network security groups to subnets but bind network security groups to VMs.
 - Upgrade versions
