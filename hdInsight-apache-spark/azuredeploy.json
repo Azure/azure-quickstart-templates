@@ -2,25 +2,6 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "location": {
-            "type": "string",
-            "allowedValues": [
-                "Central US",
-                "East Asia",
-                "East US",
-                "Japan East",
-                "Japan West",
-                "North Europe",
-                "South Central US",
-                "Southeast Asia",
-                "West Europe",
-                "West US",
-                "East US 2"
-            ],
-            "metadata": {
-                "description": "The location where all azure resources will be deployed."
-            }
-        },
         "clusterName": {
             "type": "string",
             "metadata": {
@@ -72,143 +53,143 @@
         "hbaseZookeeperSize": "Medium"
     },
     "resources": [
-        {
-            "name": "[variables('clusterVNetName')]",
-            "type": "Microsoft.Network/virtualNetworks",
-            "location": "[parameters('location')]",
-            "apiVersion": "[variables('defaultApiVersion')]",
-            "dependsOn": [ ],
-            "tags": { },
-            "properties": {
-                "addressSpace": {
-                    "addressPrefixes": [
-                        "[variables('clusterVNetAddressSpace')]"
-                    ]
-                },
-                "subnets": [
-                    {
-                        "name": "[variables('clusterVNetSubnetName')]",
-                        "properties": {
-                            "addressPrefix": "[variables('clusterVNetSubnetAddressRange')]"
-                        }
-                    }
-                ]
+      {
+        "name": "[variables('clusterVNetName')]",
+        "type": "Microsoft.Network/virtualNetworks",
+        "location": "[resourceGroup().location]",
+        "apiVersion": "[variables('defaultApiVersion')]",
+        "dependsOn": [ ],
+        "tags": { },
+        "properties": {
+          "addressSpace": {
+            "addressPrefixes": [
+              "[variables('clusterVNetAddressSpace')]"
+            ]
+          },
+          "subnets": [
+            {
+              "name": "[variables('clusterVNetSubnetName')]",
+              "properties": {
+                "addressPrefix": "[variables('clusterVNetSubnetAddressRange')]"
+              }
             }
-        },
-        {
-            "name": "[variables('clusterStorageAccountName')]",
-            "type": "Microsoft.Storage/storageAccounts",
-            "location": "[parameters('location')]",
-            "apiVersion": "[variables('defaultApiVersion')]",
-            "dependsOn": [ ],
-            "tags": { },
-            "properties": {
-                "accountType": "Standard_LRS"
-            }
-        },
-        {
-            "name": "[parameters('clusterName')]",
-            "type": "Microsoft.HDInsight/clusters",
-            "location": "[parameters('location')]",
-            "apiVersion": "[variables('clusterApiVersion')]",
-            "dependsOn": [
-                "[concat('Microsoft.Storage/storageAccounts/',variables('clusterStorageAccountName'))]",
-                "[concat('Microsoft.Network/virtualNetworks/',variables('clusterVNetName'))]"
-            ],
-            "tags": { },
-            "properties": {
-                "clusterVersion": "3.2",
-                "osType": "Linux",
-                "clusterDefinition": {
-                    "kind": "[variables('clusterType')]",
-
-                    "configurations": {
-                        "gateway": {
-                            "restAuthCredential.isEnabled": true,
-                            "restAuthCredential.username": "[parameters('loginUsername')]",
-                            "restAuthCredential.password": "[parameters('loginPassword')]"
-                        },
-                        "hive-site": {
-                            "hive.metastore.client.connect.retry.delay": "5",
-                            "hive.execution.engine": "mr",
-                            "hive.security.authorization.manager": "org.apache.hadoop.hive.ql.security.authorization.DefaultHiveAuthorizationProvider"
-                        }
-                    }
-                },
-                "storageProfile": {
-                    "storageaccounts": [
-                        {
-                            "name": "[concat(variables('clusterStorageAccountName'),'.blob.core.windows.net')]",
-                            "isDefault": true,
-                            "container": "[parameters('clusterName')]",
-                            "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('clusterStorageAccountName')), variables('defaultApiVersion')).key1]"
-                        }
-                    ]
-                },
-                "computeProfile": {
-                    "roles": [
-                        {
-                            "name": "headnode",
-                            "targetInstanceCount": "2",
-                            "hardwareProfile": {
-                                "vmSize": "[parameters('clusterNodeSize')]"
-                            },
-                            "osProfile": {
-                                "linuxOperatingSystemProfile": {
-                                    "username": "[parameters('loginUsername')]",
-                                    "password": "[parameters('loginPassword')]"
-                                }
-                            },
-                            "virtualNetworkProfile": {
-                                "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName'))]",
-                                "subnet": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName')), '/subnets/', variables('clusterVNetSubnetName'))]"
-                            },
-                            "scriptActions": [
-                                {
-                                    "name": "Apache Spark 1.4.1",
-                                    "uri": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/hdInsight-apache-spark/spark141-installer-v04.sh",
-                                    "parameters": ""
-                                }
-                            ]
-                        },
-                        {
-                            "name": "workernode",
-                            "targetInstanceCount": "[parameters('clusterWorkerNodeCount')]",
-                            "hardwareProfile": {
-                                "vmSize": "[parameters('clusterNodeSize')]"
-                            },
-                            "osProfile": {
-                                "linuxOperatingSystemProfile": {
-                                    "username": "[parameters('loginUsername')]",
-                                    "password": "[parameters('loginPassword')]"
-                                }
-                            },
-                            "virtualNetworkProfile": {
-                                "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName'))]",
-                                "subnet": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName')), '/subnets/', variables('clusterVNetSubnetName'))]"
-                            }
-                          },
-                        {
-                            "name": "zookeepernode",
-                            "targetInstanceCount": "3",
-                            "hardwareProfile": {
-                                "vmSize": "[variables(concat(variables('clusterType'),'ZookeeperSize'))]"
-                            },
-                            "osProfile": {
-                                "linuxOperatingSystemProfile": {
-                                    "username": "[parameters('loginUsername')]",
-                                    "password": "[parameters('loginPassword')]"
-                                }
-                            },
-                            "virtualNetworkProfile": {
-                                "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName'))]",
-                                "subnet": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName')), '/subnets/', variables('clusterVNetSubnetName'))]"
-                            }
-                         }
-                    ]
-                }
-            }
+          ]
         }
+      },
+      {
+        "name": "[variables('clusterStorageAccountName')]",
+        "type": "Microsoft.Storage/storageAccounts",
+        "location": "[resourceGroup().location]",
+        "apiVersion": "[variables('defaultApiVersion')]",
+        "dependsOn": [ ],
+        "tags": { },
+        "properties": {
+          "accountType": "Standard_LRS"
+        }
+      },
+      {
+        "name": "[parameters('clusterName')]",
+        "type": "Microsoft.HDInsight/clusters",
+        "location": "[resourceGroup().location]",
+        "apiVersion": "[variables('clusterApiVersion')]",
+        "dependsOn": [
+          "[concat('Microsoft.Storage/storageAccounts/',variables('clusterStorageAccountName'))]",
+          "[concat('Microsoft.Network/virtualNetworks/',variables('clusterVNetName'))]"
+        ],
+        "tags": { },
+        "properties": {
+          "clusterVersion": "3.2",
+          "osType": "Linux",
+          "clusterDefinition": {
+            "kind": "[variables('clusterType')]",
+
+            "configurations": {
+              "gateway": {
+                "restAuthCredential.isEnabled": true,
+                "restAuthCredential.username": "[parameters('loginUsername')]",
+                "restAuthCredential.password": "[parameters('loginPassword')]"
+              },
+              "hive-site": {
+                "hive.metastore.client.connect.retry.delay": "5",
+                "hive.execution.engine": "mr",
+                "hive.security.authorization.manager": "org.apache.hadoop.hive.ql.security.authorization.DefaultHiveAuthorizationProvider"
+              }
+            }
+          },
+          "storageProfile": {
+            "storageaccounts": [
+              {
+                "name": "[concat(variables('clusterStorageAccountName'),'.blob.core.windows.net')]",
+                "isDefault": true,
+                "container": "[parameters('clusterName')]",
+                "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('clusterStorageAccountName')), variables('defaultApiVersion')).key1]"
+              }
+            ]
+          },
+          "computeProfile": {
+            "roles": [
+              {
+                "name": "headnode",
+                "targetInstanceCount": "2",
+                "hardwareProfile": {
+                  "vmSize": "[parameters('clusterNodeSize')]"
+                },
+                "osProfile": {
+                  "linuxOperatingSystemProfile": {
+                    "username": "[parameters('loginUsername')]",
+                    "password": "[parameters('loginPassword')]"
+                  }
+                },
+                "virtualNetworkProfile": {
+                  "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName'))]",
+                  "subnet": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName')), '/subnets/', variables('clusterVNetSubnetName'))]"
+                },
+                "scriptActions": [
+                  {
+                    "name": "Apache Spark 1.4.1",
+                    "uri": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/hdInsight-apache-spark/spark141-installer-v04.sh",
+                    "parameters": ""
+                  }
+                ]
+              },
+              {
+                "name": "workernode",
+                "targetInstanceCount": "[parameters('clusterWorkerNodeCount')]",
+                "hardwareProfile": {
+                  "vmSize": "[parameters('clusterNodeSize')]"
+                },
+                "osProfile": {
+                  "linuxOperatingSystemProfile": {
+                    "username": "[parameters('loginUsername')]",
+                    "password": "[parameters('loginPassword')]"
+                  }
+                },
+                "virtualNetworkProfile": {
+                  "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName'))]",
+                  "subnet": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName')), '/subnets/', variables('clusterVNetSubnetName'))]"
+                }
+              },
+              {
+                "name": "zookeepernode",
+                "targetInstanceCount": "3",
+                "hardwareProfile": {
+                  "vmSize": "[variables(concat(variables('clusterType'),'ZookeeperSize'))]"
+                },
+                "osProfile": {
+                  "linuxOperatingSystemProfile": {
+                    "username": "[parameters('loginUsername')]",
+                    "password": "[parameters('loginPassword')]"
+                  }
+                },
+                "virtualNetworkProfile": {
+                  "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName'))]",
+                  "subnet": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName')), '/subnets/', variables('clusterVNetSubnetName'))]"
+                }
+              }
+            ]
+          }
+        }
+      }
 
     ],
     "outputs": {
