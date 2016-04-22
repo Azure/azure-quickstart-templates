@@ -49,7 +49,7 @@ time sudo apt-get update
 ###############################
 # Fetch Genesis and Private Key
 ###############################
-cd ~/
+cd /root
 wget https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/master/augur-on-ubuntu/genesis.json
 wget https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/master/augur-on-ubuntu/priv_genesis.key
 wget https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/master/augur-on-ubuntu/mining_toggle.js
