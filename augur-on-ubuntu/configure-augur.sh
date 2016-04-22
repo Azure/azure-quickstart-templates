@@ -11,11 +11,8 @@ date
 #############
 
 AZUREUSER=$1
-HOMEDIR="/home/$AZUREUSER"
 VMNAME=`hostname`
-ETHDIR="$HOMEDIR/.ethereum"
 echo "User: $AZUREUSER"
-echo "User home dir: $HOMEDIR"
 echo "vmname: $VMNAME"
 
 #####################
@@ -56,6 +53,7 @@ time sudo apt-get update
 wget https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/master/augur-on-ubuntu/genesis.json
 wget https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/master/augur-on-ubuntu/priv_genesis.key
 wget https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/master/augur-on-ubuntu/mining_toggle.js
+wget https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/master/augur-on-ubuntu/geth.conf
 
 ####################
 # Setup Geth
@@ -64,13 +62,21 @@ geth init genesis.json
 echo "password" > pw.txt  #TODO:prompt for separate pw in tempalte, or just pass in one from auguruser?
 geth --password pw.txt account import priv_genesis.key
 
-#Pregen DAG so miniing can start immediately, no delay between when front end is useable
+#Pregen DAG so miniing can start immediately
 mkdir .ethash
 geth makedag 0 .ethash
 
+#make geth a service, turn on.
+cp geth.conf /etc/init/
+start geth 
 
-#start geth+mining using screen
-screen -dmS geth sudo geth --password $HOMEDIR/pw.txt --unlock 0 --maxpeers 0 --networkid 1101011 --rpc --rpccorsdomain "*" js $HOMEDIR/mining_toggle.js
+####################
+#Install Augur Contracts
+####################
+git clone https://github.com/AugurProject/augur-core.git
+cd  augur-core
+python load_contracts.py
+cd ..
 
 ####################
 #Install Augur Front End
@@ -80,12 +86,7 @@ screen -dmS geth sudo geth --password $HOMEDIR/pw.txt --unlock 0 --maxpeers 0 --
 #sudo npm install
 #npm start
 
-####################
-#Install Augur Contracts
-####################
-#git clone https://github.com/AugurProject/augur-core.git
-#cd  augur-core
-#python load_contracts.py
+
 
 
 date
