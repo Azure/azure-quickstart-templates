@@ -49,7 +49,7 @@ time sudo apt-get update
 ###############################
 # Fetch Genesis and Private Key
 ###############################
-echo "currently_at `pwd`"
+cd ~/
 wget https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/master/augur-on-ubuntu/genesis.json
 wget https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/master/augur-on-ubuntu/priv_genesis.key
 wget https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/master/augur-on-ubuntu/mining_toggle.js
@@ -58,25 +58,25 @@ wget https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/maste
 ####################
 # Setup Geth
 ####################
-#geth init genesis.json 
-#echo "password" > pw.txt  #TODO:prompt for separate pw in tempalte, or just pass in one from auguruser?
-#geth --password pw.txt account import priv_genesis.key
+geth init genesis.json 
+echo "password" > pw.txt  #TODO:prompt for separate pw in tempalte, or just pass in one from auguruser?
+geth --password pw.txt account import priv_genesis.key
 
 #Pregen DAG so miniing can start immediately
-#mkdir .ethash
-#geth makedag 0 .ethash
+mkdir .ethash
+geth makedag 0 .ethash
 
 #make geth a service, turn on.
-#cp geth.conf /etc/init/
-#start geth 
+cp geth.conf /etc/init/
+start geth 
 
 ####################
 #Install Augur Contracts
 ####################
-#git clone https://github.com/AugurProject/augur-core.git
-#cd  augur-core
-#python load_contracts.py
-#cd ..
+git clone https://github.com/AugurProject/augur-core.git
+cd  augur-core
+python load_contracts.py
+cd ..
 
 ####################
 #Install Augur Front End
@@ -85,8 +85,6 @@ wget https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/maste
 #cd augur
 #sudo npm install
 #npm start
-
-
 
 
 date
