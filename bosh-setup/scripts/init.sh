@@ -16,10 +16,21 @@ sudo ln -s /usr/bin/irb2.0 /usr/bin/irb
 sudo ln -s /usr/bin/rdoc2.0 /usr/bin/rdoc
 sudo ln -s /usr/bin/erb2.0 /usr/bin/erb
 
+set +e
+
 environment=$1
 if [ "$environment" == "AzureChinaCloud" ]; then
+  echo "Using https://ruby.taobao.org/ as the RubyGems mirror"
   sudo gem sources --add https://ruby.taobao.org/ --remove https://rubygems.org/
+  if [ $? -eq 1 ]
+  then
+    echo "Failed to add https://ruby.taobao.org/ as the RubyGems mirror"
+    echo "Using https://gems.ruby-china.org/ as the RubyGems mirror"
+    sudo gem sources --add https://gems.ruby-china.org/ --remove https://rubygems.org/
+  fi
 fi
+
+set -e
 
 gem sources -l
 sudo gem update --system
