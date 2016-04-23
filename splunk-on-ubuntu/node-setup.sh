@@ -114,8 +114,6 @@ apt-get -y update
 log "Striping data disks into one volume mounted at ${DATA_MOUNTPOINT}"
 # Stripe data disks into one data volume where SPLUNK_DB will reside
 chmod u+x vm-disk-utils-0.1.sh && ./vm-disk-utils-0.1.sh -s -p $DATA_MOUNTPOINT
-mkdir -p $SPLUNK_DB_DIR
-chown splunk:splunk $SPLUNK_DB_DIR
 
 # Update Chef data bag with custom user credentials
 sed -i "s/notarealpassword/${ADMIN_PASSWD}/" /etc/chef/repo/data_bags/vault/splunk__default.json
