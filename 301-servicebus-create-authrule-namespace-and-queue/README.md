@@ -4,4 +4,4 @@
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-For information about using this template, see [Create a Service Bus AuthorizationRule for a Namespace and a Queue using an ARM template](http://azure.microsoft.com/documentation/articles/service-bus-arm-namespace-auth-rule/).
+For information about using this template, see [Create a Service Bus AuthorizationRule for a Namespace and a Queue using an ARM template](http://azure.microsoft.com/documentation/articles/service-bus-resource-manager-namespace-auth-rule/).
