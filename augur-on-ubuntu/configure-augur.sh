@@ -87,7 +87,8 @@ export HOME=/root
 git clone https://github.com/AugurProject/augur.git
 cd augur
 npm install --unsafe-perm
-npm run build
+#export PORT=80
+#npm run build
 #npm start
 
 date
