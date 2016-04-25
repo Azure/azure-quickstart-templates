@@ -23,6 +23,8 @@ sudo ln -s /usr/bin/nodejs /usr/bin/node
 time sudo apt-get update && sudo apt-get install screen -y
 time sudo apt-get -y install git
 time sudo apt-get -y install libssl-dev
+time curl -sL https://deb.nodesource.com/setup_4.x | sudo -E bash -
+time sudo apt-get install -y nodejs
 
 ####################
 # Intsall Geth
@@ -81,10 +83,12 @@ mkdir .ethash
 ####################
 #Install Augur Front End
 ####################
+export HOME=/root
 git clone https://github.com/AugurProject/augur.git
 cd augur
 npm install
-#npm start
+npm run build
+npm start
 
 
 date
