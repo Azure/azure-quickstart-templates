@@ -12,7 +12,7 @@ You can specify a custom Logstash configuration using the encodedConfigString pa
 To create a custom Logstash configuration visit http://codepen.io/skkandia/pen/mPjOdR.
 If you don't want to enter a custom Logstash configuration and would like to use the logstash-input-azurewadtable plugin to
 input diagnostics data from Azure Table storage, then set the encodedConfigString parameter to 'na' and provide values for the
-existingDiagnosticsStorageAccountName, existingDiagnosticsStorageAccountKey, and existingDiagnosticsStorageTableNames parameters.
+existingDiagnosticsStorageAccountName and existingDiagnosticsStorageTableNames parameters.
 
 To ensure there are no conflicts deploy to a new resource group.
 

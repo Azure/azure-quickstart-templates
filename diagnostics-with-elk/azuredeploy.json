@@ -123,17 +123,12 @@
             "type": "string",
             "defaultValue": "14.04.2-LTS",
             "allowedValues": [
-                "12.04.2-LTS",
-                "12.04.3-LTS",
-                "12.04.4-LTS",
-                "12.04.5-LTS",
                 "12.10",
                 "14.04.2-LTS",
-                "14.10",
-                "15.04"
+                "16.04-LTS"
             ],
             "metadata": {
-                "description": "The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version. Allowed values: 12.04.2-LTS, 12.04.3-LTS, 12.04.4-LTS, 12.04.5-LTS, 12.10, 14.04.2-LTS, 14.10, 15.04."
+                "description": "The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version."
             }
         },
         "existingDiagnosticsStorageAccountName": {
@@ -141,13 +136,6 @@
             "defaultValue": "",
             "metadata": {
                 "description": "Exiting diagnostics storage account name."
-            }
-        },
-        "existingDiagnosticsStorageAccountKey": {
-            "type": "securestring",
-            "defaultValue": "",
-            "metadata": {
-                "description": "Key for existing diagnostics storage account."
             }
         },
         "existingDiagnosticsStorageTableNames": {
@@ -169,14 +157,20 @@
         "storageAccountType": "Standard_LRS",
         "publicIPAddressType": "Dynamic",
         "vmStorageAccountContainerName": "vhds",
+        "storageAccountResourceGroup": "[resourceGroup().name]",
+        "storageAccountID": "[concat('/subscriptions/',subscription().subscriptionId,'/resourceGroups/',variables('storageAccountResourceGroup'),'/providers/','Microsoft.Storage/storageAccounts/', parameters('existingDiagnosticsStorageAccountName'))]",
+        "storageAccountKey": "[listkeys(variables('storageAccountID'), '2015-06-15').key1]",
         "vmName": "logstashvm1",
         "vmSize": "Standard_D1",
         "virtualNetworkName": "elkvnet2",
         "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
         "subnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName')), '/subnets/', 'other')]",
-        "esHost":  "10.0.2.100"
+        "esHost":  "10.0.2.100",
+        "esTemplate":  "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/elasticsearch/azuredeploy.json",
+        "esTemplateBase": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master"
     },
     "resources": [
+
         {
           "apiVersion": "2015-01-01",
           "name": "Elasticsearch",
@@ -184,7 +178,7 @@
           "properties": {
             "mode": "Incremental",
             "templateLink": {
-              "uri": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/elasticsearch/azuredeploy.json",
+              "uri": "[variables('esTemplate')]",
               "contentVersion": "1.0.0.0"
             },
             "parameters": {
@@ -213,7 +207,7 @@
               "cloudAzure": { "value": "no" },
               "cloudAzureStorageAccount": { "value": "" },
               "cloudAzureStorageKey": { "value": "" },
-              "templateBase": { "value": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master" }
+              "templateBase": { "value": "[variables('esTemplateBase')]" }
             }
           }
         },
@@ -242,6 +236,7 @@
                 ]
             }
         },
+        
         {
             "apiVersion": "2015-06-15",
             "type": "Microsoft.Network/publicIPAddresses",
@@ -251,6 +246,7 @@
                 "publicIPAllocationMethod": "Static"
             }
         },
+
         {
             "apiVersion": "2015-06-15",
             "type": "Microsoft.Network/networkInterfaces",
@@ -285,7 +281,7 @@
         {
             "type": "Microsoft.Storage/storageAccounts",
             "name": "[variables('storageAccountName')]",
-            "apiVersion": "2015-05-01-preview",
+            "apiVersion": "2015-06-15",
             "location": "[variables('location')]",
             "tags": {
                 "displayName": "StorageAccount"
@@ -354,10 +350,13 @@
             "properties": {
                 "publisher": "Microsoft.OSTCExtensions",
                 "type": "CustomScriptForLinux",
-                "typeHandlerVersion": "1.2",
+                "typeHandlerVersion": "1.5",
+                "autoUpgradeMinorVersion": true,
                 "settings": {
                     "fileUris": [ "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/diagnostics-with-elk/scripts/elk-simple-install-ubuntu.sh" ],
-                    "commandToExecute": "[concat('bash ./elk-simple-install-ubuntu.sh -e ', parameters('encodedConfigString'), ' -a ', parameters('existingDiagnosticsStorageAccountName'), ' -k ', parameters('existingDiagnosticsStorageAccountKey'), ' -t ', parameters('existingDiagnosticsStorageTableNames'), ' -i ', variables('esHost'))]"
+                },
+                "protectedSettings": {
+                    "commandToExecute": "[concat('bash ./elk-simple-install-ubuntu.sh -e ', parameters('encodedConfigString'), ' -a ', parameters('existingDiagnosticsStorageAccountName'), ' -k ', variables('storageAccountKey'), ' -t ', parameters('existingDiagnosticsStorageTableNames'), ' -i ', variables('esHost'))]"
                 }
             }
         }
