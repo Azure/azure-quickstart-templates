@@ -3,7 +3,7 @@
 # print commands and arguments as they are executed
 set -x
 
-echo "initializing geth installation"
+echo "starting augur installation"
 date
 
 #############
@@ -59,7 +59,7 @@ wget https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/maste
 # Setup Geth
 ####################
 geth init genesis.json 
-echo "password" > pw.txt  #TODO:prompt for separate pw in tempalte, or just pass in one from auguruser?
+echo "password" > pw.txt
 geth --password pw.txt account import priv_genesis.key
 
 #Pregen DAG so miniing can start immediately
@@ -81,9 +81,9 @@ cd ..
 ####################
 #Install Augur Front End
 ####################
-#git clone https://github.com/AugurProject/augur.git
-#cd augur
-#sudo npm install
+git clone https://github.com/AugurProject/augur.git
+cd augur
+npm install
 #npm start
 
 
