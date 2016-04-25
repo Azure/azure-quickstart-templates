@@ -30,17 +30,22 @@ $ bin/inbox-api
 
 This will start the API Server on port 5555. At this point **You're now ready to make requests!**
 
-You can get a list of all connected accounts by requesting `http://<your-vms-public-ip>:5555/accounts`. 
+You can get a list of all connected accounts by requesting `http://<your-vms-public-ip>:5555/accounts`.
 
->NOTE: In it's current form this endpoint requires no authentication. To deploy this securely you will need to roll your own security layer (nginx reverse proxy etc.) in front of the endpoint.
+>1. Note the account_id value from this step as you'll be using this in a later step.
+
+>2.  In it's current form this endpoint requires no authentication. To deploy this securely you will need to roll your own security layer (nginx reverse proxy etc.) in front of the endpoint.
 
 For subsequent requests to retreive mail, contacts, and calendar data, your app should pass the `account_id` value from the previous step as the "username" parameter in HTTP Basic auth. For example:
 
 ```bash
-$ curl --user 'ACCOUNT_ID_VALUE_HERE:' http://localhost:5555/threads
+$ curl --user 'ACCOUNT_ID_VALUE_HERE:' http://<your-vms-public-ip>:5555/threads
 ```
 
 If you are using a web browser and would like to clear your cached HTTP Basic Auth values, simply visit `http://<your-vms-public-ip>:5555/logout` and click "Cancel".
 
+After the sync engine is setup, you'll need to point your installation of the N1 email app to using your sync engine. Please follow the below guide for doing that:
+
+`https://github.com/nylas/N1/blob/master/CONFIGURATION.md`
 
 For more information on the Nylas sync engine, see https://github.com/nylas/sync-engine
