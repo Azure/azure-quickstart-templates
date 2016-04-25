@@ -64,19 +64,19 @@ geth --password pw.txt account import priv_genesis.key
 
 #Pregen DAG so miniing can start immediately
 mkdir .ethash
-geth makedag 0 .ethash
+#geth makedag 0 .ethash
 
 #make geth a service, turn on.
-cp geth.conf /etc/init/
-start geth 
+#cp geth.conf /etc/init/
+#start geth 
 
 ####################
 #Install Augur Contracts
 ####################
-git clone https://github.com/AugurProject/augur-core.git
-cd  augur-core
-python load_contracts.py
-cd ..
+#git clone https://github.com/AugurProject/augur-core.git
+#cd  augur-core
+#python load_contracts.py
+#cd ..
 
 ####################
 #Install Augur Front End
