@@ -14,6 +14,3 @@ cd /usr/local/sync-engine/
 # kick off the setup script
 chmod +x ./setup.sh
 sudo ./setup.sh
-
-# start your engines!
-nohup bin/inbox-start &
