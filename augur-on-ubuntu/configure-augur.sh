@@ -81,6 +81,7 @@ cd ..
 ####################
 #Install Augur Front End
 ####################
+export HOME=/root
 git clone https://github.com/AugurProject/augur.git
 cd augur
 npm install
