@@ -33,8 +33,17 @@ fi
 #configure
 sed -i 's/\(bindIp\)/#\1/' /etc/mongod.conf
 
+#set keyfile
+echo "4rfvCDE#" > /etc/mongokeyfile
+chown mongod:mongod /etc/mongokeyfile
+chmod 600 /tmp/keyfile
+sed -i 's/^#security/security/' /etc/mongod.conf
+sed -i '/^security/akeyFile: /etc/mongokeyfile' /etc/mongod.conf
+sed -i 's/^keyFile/  keyFile/' /etc/mongod.conf
+
+
 #start replica set
-mongod --dbpath /var/lib/mongo/ --auth --replSet $replSetName --logpath /var/log/mongodb/mongod.log --fork
+mongod --dbpath /var/lib/mongo/ --config /etc/mongod.conf --replSet $replSetName --logpath /var/log/mongodb/mongod.log --fork
 
 
 #install zabbix agent
