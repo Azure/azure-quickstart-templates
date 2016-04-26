@@ -62,7 +62,7 @@ fi
 pkill mongod
 
 #set keyfile
-echo "4rfvCDE#" > /etc/mongokeyfile
+echo "vfr4CDE1" > /etc/mongokeyfile
 chown mongod:mongod /etc/mongokeyfile
 chmod 600 /etc/mongokeyfile
 sed -i 's/^#security/security/' /etc/mongod.conf
