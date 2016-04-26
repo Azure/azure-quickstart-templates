@@ -28,21 +28,25 @@ After deployment, you can do below to verify if the replica set really works or 
 
 1 SSH connect to primary node, execute below
 
-$mongo
+$mongo -u "<mongouser>" -p "<mongopassword>" "admin"
 
 rs.status()
 
+exit
 
-2 Upper rs.status() will show the replica set details. You can check the data replication status through below:
 
-db. mycol.insert({"title":"MongoDB Overview"})
+2 You can check the data replication status. SSH connect to primary node, execute below:
+
+$mongo -u "<mongouser>" -p "<mongopassword>" "test"
+
+db.mycol.insert({"title":"MongoDB Overview"})
 
 db.mycol.find()
 
 
 3 SSH connect to secondary nodes, execute below
 
-$mongo
+$mongo -u "<mongouser>" -p "<mongopassword>" "test"
 
 db.getMongo().setSlaveOk()
 
