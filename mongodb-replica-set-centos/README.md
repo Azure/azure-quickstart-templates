@@ -24,7 +24,8 @@ secondary node 1 ip: 10.0.0.4
 secondary node 2 ip: 10.0.0.5
 
 
-After deployment, you can do below to verify if the replica set really works or not:
+
+##After deployment, you can do below to verify if the replica set really works or not:
 
 1 SSH connect to primary node, execute below
 
