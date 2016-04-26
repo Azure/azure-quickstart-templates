@@ -10,32 +10,6 @@
                 "artifactsBaseUrl": ""
             }
         },
-        "location": {
-            "type": "string",
-            "allowedValues": [
-                "West US",
-                "East US 2",
-                "East US",
-                "Central US",
-                "South Central US",
-                "North Central US",
-                "West Europe",
-                "North Europe",
-                "East Asia",
-                "Southeast Asia",
-                "Japan West",
-                "Japan East",
-                "Brazil South",
-                "Australia East",
-                "Australia Southeast",
-                "Central India",
-                "West India",
-                "South India"
-            ],
-            "metadata": {
-                "description": "Location for the Lustre nodes"
-            }
-        },
         "imageSku": {
             "type": "string",
             "defaultValue": "6.6",
@@ -230,165 +204,165 @@
         "linuxConfiguration": "[variables(concat('linuxConfiguration_',parameters('authenticationType')))]"
     },
     "resources": [
-        {
-            "apiVersion": "2015-05-01-preview",
-            "type": "Microsoft.Storage/storageAccounts",
-            "name": "[concat(parameters('storageAccountPrefix'))]",
-            "location": "[parameters('location')]",
-            "properties": {
-                "accountType": "[parameters('storageAccountType')]"
-            }
-        },
-        {
-            "apiVersion": "2015-05-01-preview",
-            "type": "Microsoft.Compute/availabilitySets",
-            "name": "[variables('clientAvailabilitySetSettings').name]",
-            "location": "[parameters('location')]",
-            "properties": {
-                "platformFaultDomainCount": "[variables('clientAvailabilitySetSettings').faultDomainCount]",
-                "platformUpdateDomainCount": "[variables('clientAvailabilitySetSettings').updateDomainCount]"
-            }
-        },
-        {
-            "apiVersion": "2015-06-15",
-            "type": "Microsoft.Network/publicIPAddresses",
-            "name": "[concat(parameters('vmNamePrefix'),'client0')]",
-            "location": "[parameters('location')]",
-            "properties": {
-                "publicIPAllocationMethod": "Dynamic",
-                "idleTimeoutInMinutes": 4,
-                "dnsSettings": {
-                    "domainNameLabel": "[concat(parameters('dnsNamePrefix'),'')]"
-                }
-            }
-        },
-        {
-            "apiVersion": "2015-06-15",
-            "type": "Microsoft.Network/networkInterfaces",
-            "name": "[concat(parameters('vmNamePrefix'), 'client0')]",
-            "location": "[parameters('location')]",
-            "dependsOn": [
-                "[concat('Microsoft.Network/publicIPAddresses/', parameters('vmNamePrefix'), 'client0')]"
-            ],
-            "properties": {
-                "ipConfigurations": [
-                    {
-                        "name": "ip1",
-                        "properties": {
-                            "privateIPAllocationMethod": "Dynamic",
-                            "publicIPAddress": {
-                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('vmNamePrefix'), 'client0'))]"
-                            },
-                            "subnet": {
-                                "id": "[variables('subnetClientsID')]"
-                            }
-                        }
-                    }
-                ]
-            }
-        },
-        {
-            "apiVersion": "2015-06-15",
-            "type": "Microsoft.Network/networkInterfaces",
-            "name": "[concat(parameters('vmNamePrefix'), 'client', copyIndex(1))]",
-            "location": "[parameters('location')]",
-            "copy": {
-                "name": "clientNicCopy",
-                "count": "[sub(parameters('clientCount'),1)]"
-            },
-            "properties": {
-                "ipConfigurations": [
-                    {
-                        "name": "ip1",
-                        "properties": {
-                            "privateIPAllocationMethod": "Dynamic",
-                            "subnet": {
-                                "id": "[variables('subnetClientsID')]"
-                            }
-                        }
-                    }
-                ]
-            }
-        },
-        {
-            "apiVersion": "2015-06-15",
-            "type": "Microsoft.Compute/virtualMachines",
-            "name": "[concat(parameters('vmNamePrefix'), 'client', copyIndex())]",
-            "location": "[parameters('location')]",
-            "dependsOn": [
-                "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountPrefix'))]",
-                "[concat('Microsoft.Compute/availabilitySets/', variables('clientAvailabilitySetSettings').name)]",
-                "[concat('Microsoft.Network/networkInterfaces/', parameters('vmNamePrefix'), 'client', copyIndex())]"
-            ],
-            "copy": {
-                "name": "clientVmCopy",
-                "count": "[parameters('clientCount')]"
-            },
-            "tags": {
-                "LustreType": "client"
-            },
-            "properties": {
-                "availabilitySet": {
-                    "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('clientAvailabilitySetSettings').name)]"
-                },
-                "hardwareProfile": {
-                    "vmSize": "[parameters('clientVmSize')]"
-                },
-                "osProfile": {
-                    "computerName": "[concat(parameters('vmNamePrefix'), 'client', copyIndex())]",
-                    "adminUserName": "[parameters('adminUsername')]",
-                    "adminPassword": "[parameters('adminPassword')]",
-                    "linuxConfiguration": "[variables('linuxConfiguration')]"
-                },
-                "storageProfile": {
-                    "imageReference": {
-                        "publisher": "[variables('imagePublisher')]",
-                        "offer": "[variables('imageOffer')]",
-                        "sku": "[parameters('imageSku')]",
-                        "version": "latest"
-                    },
-                    "osDisk": {
-                        "name": "osdisk",
-                        "vhd": {
-                            "uri": "[concat('http://', parameters('storageAccountPrefix'), '.blob.core.windows.net/vhds-client/', concat(parameters('vmNamePrefix'),'client',copyIndex()), '-osdisk.vhd')]"
-                        },
-                        "caching": "ReadWrite",
-                        "createOption": "FromImage"
-                    }
-                },
-                "networkProfile": {
-                    "networkInterfaces": [
-                        {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('vmNamePrefix'), 'client', copyIndex()))]"
-                        }
-                    ]
-                }
-            }
-        },
-        {
-            "apiVersion": "2015-06-15",
-            "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "[concat(parameters('vmNamePrefix'), 'client', copyIndex(), '/init')]",
-            "location": "[parameters('location')]",
-            "dependsOn": [
-                "[concat('Microsoft.Compute/virtualMachines/', concat(parameters('vmNamePrefix'),'client',copyIndex()))]"
-            ],
-            "copy": {
-                "name": "clientExtensionsCopy",
-                "count": "[parameters('clientCount')]"
-            },
-            "properties": {
-                "publisher": "Microsoft.OSTCExtensions",
-                "type": "CustomScriptForLinux",
-                "typeHandlerVersion": "1.3",
-                "settings": {
-                    "fileUris": [
-                        "[variables('scriptUrlLustreClient')]"
-                    ],
-                    "commandToExecute": "[concat('bash lustre_client.sh', ' -n CLIENTCENTOS', parameters('imageSku'), ' -i ', copyIndex(), ' -d 0', ' -m ', parameters('mgsIpAddress'), ' -l ', reference(resourceId('Microsoft.Network/networkInterfaces', concat(parameters('vmNamePrefix'), 'client', copyIndex()))).ipConfigurations[0].properties.privateIPAddress, ' -f ', parameters('filesystemName'))]"
-                }
-            }
+      {
+        "apiVersion": "2015-05-01-preview",
+        "type": "Microsoft.Storage/storageAccounts",
+        "name": "[concat(parameters('storageAccountPrefix'))]",
+        "location": "[resourceGroup().location]",
+        "properties": {
+          "accountType": "[parameters('storageAccountType')]"
         }
+      },
+      {
+        "apiVersion": "2015-05-01-preview",
+        "type": "Microsoft.Compute/availabilitySets",
+        "name": "[variables('clientAvailabilitySetSettings').name]",
+        "location": "[resourceGroup().location]",
+        "properties": {
+          "platformFaultDomainCount": "[variables('clientAvailabilitySetSettings').faultDomainCount]",
+          "platformUpdateDomainCount": "[variables('clientAvailabilitySetSettings').updateDomainCount]"
+        }
+      },
+      {
+        "apiVersion": "2015-06-15",
+        "type": "Microsoft.Network/publicIPAddresses",
+        "name": "[concat(parameters('vmNamePrefix'),'client0')]",
+        "location": "[resourceGroup().location]",
+        "properties": {
+          "publicIPAllocationMethod": "Dynamic",
+          "idleTimeoutInMinutes": 4,
+          "dnsSettings": {
+            "domainNameLabel": "[concat(parameters('dnsNamePrefix'),'')]"
+          }
+        }
+      },
+      {
+        "apiVersion": "2015-06-15",
+        "type": "Microsoft.Network/networkInterfaces",
+        "name": "[concat(parameters('vmNamePrefix'), 'client0')]",
+        "location": "[resourceGroup().location]",
+        "dependsOn": [
+          "[concat('Microsoft.Network/publicIPAddresses/', parameters('vmNamePrefix'), 'client0')]"
+        ],
+        "properties": {
+          "ipConfigurations": [
+            {
+              "name": "ip1",
+              "properties": {
+                "privateIPAllocationMethod": "Dynamic",
+                "publicIPAddress": {
+                  "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('vmNamePrefix'), 'client0'))]"
+                },
+                "subnet": {
+                  "id": "[variables('subnetClientsID')]"
+                }
+              }
+            }
+          ]
+        }
+      },
+      {
+        "apiVersion": "2015-06-15",
+        "type": "Microsoft.Network/networkInterfaces",
+        "name": "[concat(parameters('vmNamePrefix'), 'client', copyIndex(1))]",
+        "location": "[resourceGroup().location]",
+        "copy": {
+          "name": "clientNicCopy",
+          "count": "[sub(parameters('clientCount'),1)]"
+        },
+        "properties": {
+          "ipConfigurations": [
+            {
+              "name": "ip1",
+              "properties": {
+                "privateIPAllocationMethod": "Dynamic",
+                "subnet": {
+                  "id": "[variables('subnetClientsID')]"
+                }
+              }
+            }
+          ]
+        }
+      },
+      {
+        "apiVersion": "2015-06-15",
+        "type": "Microsoft.Compute/virtualMachines",
+        "name": "[concat(parameters('vmNamePrefix'), 'client', copyIndex())]",
+        "location": "[resourceGroup().location]",
+        "dependsOn": [
+          "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountPrefix'))]",
+          "[concat('Microsoft.Compute/availabilitySets/', variables('clientAvailabilitySetSettings').name)]",
+          "[concat('Microsoft.Network/networkInterfaces/', parameters('vmNamePrefix'), 'client', copyIndex())]"
+        ],
+        "copy": {
+          "name": "clientVmCopy",
+          "count": "[parameters('clientCount')]"
+        },
+        "tags": {
+          "LustreType": "client"
+        },
+        "properties": {
+          "availabilitySet": {
+            "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('clientAvailabilitySetSettings').name)]"
+          },
+          "hardwareProfile": {
+            "vmSize": "[parameters('clientVmSize')]"
+          },
+          "osProfile": {
+            "computerName": "[concat(parameters('vmNamePrefix'), 'client', copyIndex())]",
+            "adminUserName": "[parameters('adminUsername')]",
+            "adminPassword": "[parameters('adminPassword')]",
+            "linuxConfiguration": "[variables('linuxConfiguration')]"
+          },
+          "storageProfile": {
+            "imageReference": {
+              "publisher": "[variables('imagePublisher')]",
+              "offer": "[variables('imageOffer')]",
+              "sku": "[parameters('imageSku')]",
+              "version": "latest"
+            },
+            "osDisk": {
+              "name": "osdisk",
+              "vhd": {
+                "uri": "[concat('http://', parameters('storageAccountPrefix'), '.blob.core.windows.net/vhds-client/', concat(parameters('vmNamePrefix'),'client',copyIndex()), '-osdisk.vhd')]"
+              },
+              "caching": "ReadWrite",
+              "createOption": "FromImage"
+            }
+          },
+          "networkProfile": {
+            "networkInterfaces": [
+              {
+                "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('vmNamePrefix'), 'client', copyIndex()))]"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "apiVersion": "2015-06-15",
+        "type": "Microsoft.Compute/virtualMachines/extensions",
+        "name": "[concat(parameters('vmNamePrefix'), 'client', copyIndex(), '/init')]",
+        "location": "[resourceGroup().location]",
+        "dependsOn": [
+          "[concat('Microsoft.Compute/virtualMachines/', concat(parameters('vmNamePrefix'),'client',copyIndex()))]"
+        ],
+        "copy": {
+          "name": "clientExtensionsCopy",
+          "count": "[parameters('clientCount')]"
+        },
+        "properties": {
+          "publisher": "Microsoft.OSTCExtensions",
+          "type": "CustomScriptForLinux",
+          "typeHandlerVersion": "1.3",
+          "settings": {
+            "fileUris": [
+              "[variables('scriptUrlLustreClient')]"
+            ],
+            "commandToExecute": "[concat('bash lustre_client.sh', ' -n CLIENTCENTOS', parameters('imageSku'), ' -i ', copyIndex(), ' -d 0', ' -m ', parameters('mgsIpAddress'), ' -l ', reference(resourceId('Microsoft.Network/networkInterfaces', concat(parameters('vmNamePrefix'), 'client', copyIndex()))).ipConfigurations[0].properties.privateIPAddress, ' -f ', parameters('filesystemName'))]"
+          }
+        }
+      }
     ],
     "outputs": {
         "client0DomainName": {
