@@ -36,7 +36,7 @@ sed -i 's/\(bindIp\)/#\1/' /etc/mongod.conf
 #set keyfile
 echo "4rfvCDE#" > /etc/mongokeyfile
 chown mongod:mongod /etc/mongokeyfile
-chmod 600 /tmp/keyfile
+chmod 600 /etc/mongokeyfile
 sed -i 's/^#security/security/' /etc/mongod.conf
 sed -i '/^security/akeyFile: /etc/mongokeyfile' /etc/mongod.conf
 sed -i 's/^keyFile/  keyFile/' /etc/mongod.conf
