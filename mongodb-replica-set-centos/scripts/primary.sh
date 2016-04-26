@@ -3,6 +3,8 @@
 replSetName=$1
 secondaryNodes=$2
 zabbixServer=$3
+mongoAdminUser=$4
+mongoAdminPasswd=$5
 
 
 #create repo
@@ -35,8 +37,32 @@ fi
 #configure
 sed -i 's/\(bindIp\)/#\1/' /etc/mongod.conf
 
-#start replica set
-mongod --dbpath /var/lib/mongo/ --replSet $replSetName --logpath /var/log/mongodb/mongod.log --fork
+#start mongod
+mongod --dbpath /var/lib/mongo/ --logpath /var/log/mongodb/mongod.log --fork
+
+sleep 15
+n=`ps -ef |grep -v grep|grep mongod |wc -l`
+if [[ $n -eq 1 ]];then
+echo "mongod started successfully"
+else
+echo "mongod started failed!"
+fi
+
+mongo <<EOF
+use admin
+db.createUser({user:"$mongoAdminUser",pwd:"$mongoAdminPasswd",roles:[{role:"userAdminAnyDatabase",db:'admin'},{role:"clusterAdmin",db:"admin"},{role:"readWriteAnyDatabase",db:"admin"},{role:"dbAdminAnyDatabase",db:"admin"}]})
+exit
+EOF
+if [[ $? -eq 0 ]];then
+echo "mongo user added succeefully."
+else
+echo "mongo user added failed!"
+fi
+pkill mongod
+
+
+#restart mongod with auth and replica set
+mongod --dbpath /var/lib/mongo/ --auth --replSet $replSetName --logpath /var/log/mongodb/mongod.log --fork
 
 
 
@@ -80,16 +106,16 @@ chkconfig zabbix_agentd on
 sleep 15
 n=`ps -ef |grep -v grep|grep mongod |wc -l`
 if [[ $n -eq 1 ]];then
-echo "mongod started successfully"
+echo "mongo replica set started successfully"
 else
-echo "mongod started failed!"
+echo "mongo replica set started failed!"
 fi
 
 echo "starting initiating the replica set"
 curl ifconfig.me > /tmp/ip.txt 2> /dev/null
 publicIP=`cat /tmp/ip.txt`
 
-mongo <<EOF
+mongo -u "mongoAdminUser" -p "mongoAdminPasswd" "admin"<<EOF
 use admin
 config ={_id:"$replSetName",members:[{_id:0,host:"$publicIP:27017"}]}
 rs.initiate(config)
@@ -106,7 +132,7 @@ fi
 for((i=1;i<=$secondaryNodes;i++))
 do
 let a=3+$i
-mongo --eval "printjson(rs.add('10.0.0.${a}:27017'))"
+mongo -u "mongoAdminUser" -p "mongoAdminPasswd" "admin" --eval "printjson(rs.add('10.0.0.${a}:27017'))"
 if [[ $? -eq 0 ]];then
 echo "adding server 10.0.0.${a} successfully"
 else
