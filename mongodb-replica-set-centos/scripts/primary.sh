@@ -40,7 +40,7 @@ sed -i 's/\(bindIp\)/#\1/' /etc/mongod.conf
 #start mongod
 mongod --dbpath /var/lib/mongo/ --logpath /var/log/mongodb/mongod.log --fork
 
-sleep 15
+sleep 30
 n=`ps -ef |grep -v grep|grep mongod |wc -l`
 if [[ $n -eq 1 ]];then
 echo "mongod started successfully"
@@ -48,9 +48,10 @@ else
 echo "mongod started failed!"
 fi
 
+#create users
 mongo <<EOF
 use admin
-db.createUser({user:"$mongoAdminUser",pwd:"$mongoAdminPasswd",roles:[{role:"userAdminAnyDatabase",db:'admin'},{role:"clusterAdmin",db:"admin"},{role:"readWriteAnyDatabase",db:"admin"},{role:"dbAdminAnyDatabase",db:"admin"}]})
+db.createUser({user:"$mongoAdminUser",pwd:"$mongoAdminPasswd",roles:[{role: "userAdminAnyDatabase", db: "admin" },{role: "readWriteAnyDatabase", db: "admin" },{role: "root", db: "admin" }]})
 exit
 EOF
 if [[ $? -eq 0 ]];then
@@ -60,9 +61,16 @@ echo "mongo user added failed!"
 fi
 pkill mongod
 
+#set keyfile
+echo "4rfvCDE#" > /etc/mongokeyfile
+chown mongod:mongod /etc/mongokeyfile
+chmod 600 /etc/mongokeyfile
+sed -i 's/^#security/security/' /etc/mongod.conf
+sed -i '/^security/akeyFile: /etc/mongokeyfile' /etc/mongod.conf
+sed -i 's/^keyFile/  keyFile/' /etc/mongod.conf
 
 #restart mongod with auth and replica set
-mongod --dbpath /var/lib/mongo/ --auth --replSet $replSetName --logpath /var/log/mongodb/mongod.log --fork
+mongod --dbpath /var/lib/mongo/ --replSet $replSetName --logpath /var/log/mongodb/mongod.log --fork --config /etc/mongod.conf
 
 
 
@@ -101,8 +109,6 @@ chkconfig zabbix_agentd on
 
 #initiate replica set
 
-#config ={_id:"$replSetName",members:[{_id:0,host:"10.0.0.240:27017"}]}
-
 sleep 15
 n=`ps -ef |grep -v grep|grep mongod |wc -l`
 if [[ $n -eq 1 ]];then
@@ -115,8 +121,9 @@ echo "starting initiating the replica set"
 curl ifconfig.me > /tmp/ip.txt 2> /dev/null
 publicIP=`cat /tmp/ip.txt`
 
-mongo -u "mongoAdminUser" -p "mongoAdminPasswd" "admin"<<EOF
+mongo<<EOF
 use admin
+db.auth("$mongoAdminUser", "$mongoAdminPasswd")
 config ={_id:"$replSetName",members:[{_id:0,host:"$publicIP:27017"}]}
 rs.initiate(config)
 exit
@@ -132,7 +139,7 @@ fi
 for((i=1;i<=$secondaryNodes;i++))
 do
 let a=3+$i
-mongo -u "mongoAdminUser" -p "mongoAdminPasswd" "admin" --eval "printjson(rs.add('10.0.0.${a}:27017'))"
+mongo -u "$mongoAdminUser" -p "$mongoAdminPasswd" "admin" --eval "printjson(rs.add('10.0.0.${a}:27017'))"
 if [[ $? -eq 0 ]];then
 echo "adding server 10.0.0.${a} successfully"
 else
