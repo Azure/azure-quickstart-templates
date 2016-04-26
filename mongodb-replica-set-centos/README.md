@@ -33,7 +33,7 @@ $mongo
 rs.status()
 
 
-2 upper rs.status() will show the replica set details. You can check the data replication status through below:
+2 Upper rs.status() will show the replica set details. You can check the data replication status through below:
 
 db. mycol.insert({"title":"MongoDB Overview"})
 
@@ -57,6 +57,7 @@ db.mycol.find()
 
 
 ##Known Limitations
+- The MongoDB version is 3.2.
 - We expose all the nodes on public addresses so that you can access MongoDB service through internet directly.
 - MongoDB suggests that the replica set has an odd number of voting members. So the number of secondary nodes is better to set to even number, like 2, 4 or 6, then plus the primary node, fill the requirement that the replica set has an odd number of voting members.
 - A replica set can have up to 50 members, but only 7 voting members. So the maximum number of secondary nodes is 6.

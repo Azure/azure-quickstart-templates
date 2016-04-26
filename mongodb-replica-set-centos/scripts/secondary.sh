@@ -34,13 +34,8 @@ fi
 sed -i 's/\(bindIp\)/#\1/' /etc/mongod.conf
 
 #start replica set
-mongod --dbpath /var/lib/mongo/ --replSet $replSetName --logpath /var/log/mongodb/mongod.log --fork
+mongod --dbpath /var/lib/mongo/ --auth --replSet $replSetName --logpath /var/log/mongodb/mongod.log --fork
 
-#mongo <<EOF
-#db
-#db.getMongo().setSlaveOk()
-#exit
-#EOF
 
 #install zabbix agent
 cd /tmp
