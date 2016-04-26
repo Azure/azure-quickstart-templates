@@ -38,7 +38,7 @@ exit
 Upper rs.status() command will show the replica set details. 
 
 
-3 You can also check the data replication status. SSH connect to primary node, execute below:
+2 You can also check the data replication status. SSH connect to primary node, execute below:
 
 $mongo -u "\<mongouser\>" -p "\<mongopassword\>" "admin"
 
@@ -49,7 +49,7 @@ db.mycol.insert({"title":"MongoDB Overview"})
 db.mycol.find()
 
 
-3.1 SSH connect to secondary nodes, execute below
+2.1 SSH connect to secondary nodes, execute below
 
 $mongo -u "\<mongouser\>" -p "\<mongopassword\>" "admin"
 
@@ -62,7 +62,7 @@ show collections
 db.mycol.find()
 
 
-3.2 If db.mycol.find() command can show the result like primary node does, then means the replica set works.
+2.2 If db.mycol.find() command can show the result like primary node does, then means the replica set works.
 
 
 
