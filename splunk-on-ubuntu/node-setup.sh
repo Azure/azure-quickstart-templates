@@ -104,9 +104,11 @@ done
 
 log "Started node-setup on ${HOSTNAME} with role ${NODE_ROLE}"
 
-# Stop Splunk process
+# Stop Splunk process & update server & input config
 log "Stop Splunk process before configuration"
 service splunk stop
+/opt/splunk/bin/splunk set servername "${HOSTNAME}"
+/opt/splunk/bin/splunk set default-hostname "${HOSTNAME}"
 
 # Retrieve new list of packages
 apt-get -y update
