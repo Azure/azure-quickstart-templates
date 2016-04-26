@@ -105,8 +105,8 @@ done
 log "Started node-setup on ${HOSTNAME} with role ${NODE_ROLE}"
 
 # Stop Splunk process
-log "Stop Splunk process before configuration"
-service splunk stop
+# log "Stop Splunk process before configuration"
+# service splunk stop
 
 # Retrieve new list of packages
 apt-get -y update
