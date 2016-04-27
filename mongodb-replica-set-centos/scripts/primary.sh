@@ -139,9 +139,8 @@ fi
 done
 
 n=`ps -ef |grep -v grep|grep mongod |wc -l`
-if [[ $n -eq 0 ]];then
-echo "mongo replica set tried to start 3 times but failed! Exit!"
-exit
+if [[ $n -ne 1 ]];then
+echo "mongo replica set tried to start 3 times but failed!"
 fi
 
 
