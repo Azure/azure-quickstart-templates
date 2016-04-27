@@ -59,7 +59,11 @@ echo "mongo user added succeefully."
 else
 echo "mongo user added failed!"
 fi
-pkill mongod
+
+MongoPid=`ps -ef |grep -v grep |grep mongod|awk '{print $2}'`
+kill -9 $MongoPid
+
+
 
 #set keyfile
 echo "vfr4CDE1" > /etc/mongokeyfile
@@ -68,6 +72,16 @@ chmod 600 /etc/mongokeyfile
 sed -i 's/^#security/security/' /etc/mongod.conf
 sed -i '/^security/akeyFile: /etc/mongokeyfile' /etc/mongod.conf
 sed -i 's/^keyFile/  keyFile/' /etc/mongod.conf
+
+sleep 15
+MongoPid1=`ps -ef |grep -v grep |grep mongod|awk '{print $2}'`
+if [[ -z MongoPid1 ]];then
+echo "shutdown mongod successfully"
+else
+echo "shutdown mongod failed!"
+pkill mongod
+sleep 15
+fi
 
 #restart mongod with auth and replica set
 mongod --dbpath /var/lib/mongo/ --replSet $replSetName --logpath /var/log/mongodb/mongod.log --fork --config /etc/mongod.conf
