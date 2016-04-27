@@ -1,4 +1,4 @@
-# Install MongoDB Replica Set
+# Install MongoDB Sharding Cluster
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2F251744647%2Fazure-quickstart-templates%2Fmaster%2Fmongodb-sharding-centos%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
@@ -9,68 +9,52 @@ http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure
 </a>
 
 
-This template deploys a MongoDB Replica Set on CentOS and enables Zabbix monitoring, and allows user to define the number of secondary nodes. The replica set has a primary node, 2 secondary nodes by default.
+This template deploys a MongoDB Sharding Cluster on CentOS. It deploys 2 router servers, one config server replica set with 3 nodes, and 2 shards which both are replica set with 3 nodes. So it totally deploys 11 nodes.
 
-This template also allows you to input your existing zabbix server IP address to monitor these MongoDB nodes.
+The 2 router server nodes are exposed on public IP addresses that you can access through SSH on the standard port, also mongodb port 27017 open. You can access any one of them for MongoDB data write and read. If one router server is down, you can still access the other one.
 
-The replica set nodes are exposed on public IP addresses that you can access through SSH on the standard port, also mongodb port 27017 open.
+The config server replica set stores sharding cluster metadata. MongoDB suggests to use a replica set for the metadata store in the production environment, in case one of the config server is down, there will still be other 2 config server nodes offer the service.
 
-The nodes are under the same subnet. The primary node ip is 10.0.0.240, the secondary nodes ip address start from 10.0.0.4. For example:
-
-primary node ip: 10.0.0.240
-
-secondary node 1 ip: 10.0.0.4
-
-secondary node 2 ip: 10.0.0.5
+2 shards each is a 3 node replica set. You can shard the data on the two replica sets. You can also add more replica sets into the sharding cluster.
 
 
+The nodes are under the same subnet 10.0.0.0/24. Except the 2 router server nodes, the other nodes only have private IP address.
 
-##After deployment, you can do below to verify if the replica set really works or not:
+This template also allows you to input your existing zabbix server IP address to monitor these MongoDB router servers.
 
-1 SSH connect to primary node, execute below
+
+##After deployment, you can do below to verify if the sharding cluster really works or not:
+
+1 SSH connect to one of the router server, execute below:
 
 $mongo -u "\<mongouser\>" -p "\<mongopassword\>" "admin"
 
-rs.status()
+db.runCommand( { listshards : 1 } )
 
 exit
 
 
-Upper rs.status() command will show the replica set details. 
+Upper db.runCommand( { listshards : 1 } ) command will show the sharding cluster details. 
 
 
-2 You can also check the data replication status. SSH connect to primary node, execute below:
-
-$mongo -u "\<mongouser\>" -p "\<mongopassword\>" "admin"
-
-use test
-
-db.mycol.insert({"title":"MongoDB Overview"})
-
-db.mycol.find()
-
-
-2.1 SSH connect to secondary nodes, execute below
+2 You can "shard" any database and collections you want. SSH connect to one of the router server, execute below:
 
 $mongo -u "\<mongouser\>" -p "\<mongopassword\>" "admin"
 
-use test
+db.runCommand({enableSharding: <database> })
 
-db.getMongo().setSlaveOk()
+sh.status()
 
-show collections
+sh.shardCollection("<database>.<collection>", shard-key-pattern)
 
-db.mycol.find()
-
-
-2.2 If db.mycol.find() command can show the result like primary node does, then means the replica set works.
 
 
 
 
 ##Known Limitations
 - The MongoDB version is 3.2.
-- We expose all the nodes on public addresses so that you can access MongoDB service through internet directly.
-- MongoDB suggests that the replica set has an odd number of voting members. So the number of secondary nodes is better to set to even number, like 2, 4 or 6, then plus the primary node, fill the requirement that the replica set has an odd number of voting members.
-- A replica set can have up to 50 members, but only 7 voting members. So the maximum number of secondary nodes is 6.
-- The replica set doesn't have arbiter nodes.
+- We expose 2 router server nodes on public addresses so that you can access MongoDB service through internet directly.
+- This cluster only has 2 shards, you can add more shards after the deployment. 
+- The nodes use internal authentication. So if you want to add your own replica set into this sharding cluster, you should enable the internal authentication in your replica set first. Check any node /etc/mongokeyfile for more details.
+- The replica set is composed with 1 primary node, 2 secondary nodes.
+- More MongoDB usage details please visit MongoDB website https://www.mongodb.org/ .

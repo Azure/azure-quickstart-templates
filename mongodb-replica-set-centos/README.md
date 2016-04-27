@@ -74,3 +74,4 @@ db.mycol.find()
 - MongoDB suggests that the replica set has an odd number of voting members. So the number of secondary nodes is better to set to even number, like 2, 4 or 6, then plus the primary node, fill the requirement that the replica set has an odd number of voting members.
 - A replica set can have up to 50 members, but only 7 voting members. So the maximum number of secondary nodes is 6.
 - The replica set doesn't have arbiter nodes.
+- More MongoDB usage details please visit MongoDB website https://www.mongodb.org/ .
