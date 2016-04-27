@@ -119,16 +119,6 @@ log "Striping data disks into one volume mounted at ${DATA_MOUNTPOINT}"
 # Stripe data disks into one data volume where SPLUNK_DB will reside
 chmod u+x vm-disk-utils-0.1.sh && ./vm-disk-utils-0.1.sh -s -p $DATA_MOUNTPOINT
 
-# Overwrite Chef repo with latest from develop branch
-log "Overwriting Chef repo for Splunk"
-CHEF_REPO_SPLUNK_URL="https://github.com/rarsan/chef-repo-splunk/tarball/develop"
-mkdir -p /etc/chef/repo
-cd /etc/chef/repo
-curl -L ${CHEF_REPO_SPLUNK_URL} -o chef-repo-splunk.tar.gz --retry 3 --retry-delay 10
-tar -xzf chef-repo-splunk.tar.gz --strip-components=1
-tar -xzf berks-package.tar.gz -C cookbooks --strip-components=1
-cd -
-
 # Update Chef data bag with custom user credentials
 sed -i "s/notarealpassword/${ADMIN_PASSWD}/" /etc/chef/repo/data_bags/vault/splunk__default.json
 
