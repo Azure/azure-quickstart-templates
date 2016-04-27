@@ -48,7 +48,16 @@ sh.status()
 sh.shardCollection("\<database\>.\<collection\>", shard-key-pattern)
 
 
+3 You can add more shards into this sharding cluster. SSH connect to one of the router server, execute below:
 
+$mongo -u "\<mongouser\>" -p "\<mongopassword\>" "admin"
+
+sh.addShard("\<replica set name\>/\<primary ip\>:27017")   
+
+exit
+
+
+Before adding your own replica set into the sharding cluster, you should enable internal authentication in your replica set first, and make sure the replica set is accessiable through this sharding cluster.
 
 
 ##Known Limitations
