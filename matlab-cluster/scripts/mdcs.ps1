@@ -224,7 +224,7 @@ function mdcs_pause($p) {
     Param($profile, $rgname, $name)
 
     function ExecuteCmd([string]$group, [string]$name, [string]$cli) {
-      $scripturi =  $script:GITHUB_BASE_URL + "mdcsutil.ps1"
+      $scripturi =  $script:GITHUB_BASE_URL + "scripts/mdcsutil.ps1"
       echo "Retrieving VM info..."
       $vm = (Get-AzureRmVM -WarningAction:SilentlyContinue -ResourceGroupName $group -Name $name)
       if($vm -ne $null) {
@@ -289,7 +289,7 @@ function mdcs_resume($p) {
     Param($profile, $rgname, $name)
 
     function ExecuteCmd([string]$group, [string]$name, [string]$cli) {
-      $scripturi =  $script:GITHUB_BASE_URL + "mdcsutil.ps1"
+      $scripturi =  $script:GITHUB_BASE_URL + "scripts/mdcsutil.ps1"
       echo "Retrieving VM info..."
       $vm = (Get-AzureRmVM -WarningAction:SilentlyContinue -ResourceGroupName $group -Name $name)
       if($vm -ne $null) {
