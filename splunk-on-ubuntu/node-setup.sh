@@ -109,6 +109,8 @@ log "Stop Splunk process before configuration"
 service splunk stop
 /bin/su - splunk -c '/opt/splunk/bin/splunk set servername "${HOSTNAME}"'
 /bin/su - splunk -c '/opt/splunk/bin/splunk set default-hostname "${HOSTNAME}"'
+# Remove first time login
+touch /opt/splunk/etc/.ui_login
 
 # Retrieve new list of packages
 apt-get -y update
@@ -180,9 +182,6 @@ chef-client -z -c /etc/chef/client.rb -j /etc/chef/node.json
 
 # Cleanup after ourselves - remove chef repo including data bag
 rm -rf /etc/chef/repo
-
-# Remove first time login
-touch /opt/splunk/etc/.ui_login
 
 log "Finished node-setup on ${HOSTNAME} with role ${NODE_ROLE}"
 
