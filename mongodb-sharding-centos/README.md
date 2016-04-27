@@ -41,7 +41,7 @@ Upper db.runCommand( { listshards : 1 } ) command will show the sharding cluster
 
 $mongo -u "\<mongouser\>" -p "\<mongopassword\>" "admin"
 
-db.runCommand({enableSharding: \<database\> })
+db.runCommand({enableSharding: "\<database\>" })
 
 sh.status()
 
