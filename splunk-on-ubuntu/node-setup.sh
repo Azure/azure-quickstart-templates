@@ -110,7 +110,7 @@ service splunk stop
 /bin/su - splunk -c '/opt/splunk/bin/splunk set servername "${HOSTNAME}"'
 /bin/su - splunk -c '/opt/splunk/bin/splunk set default-hostname "${HOSTNAME}"'
 # Remove first time login
-touch /opt/splunk/etc/.ui_login
+/bin/su - splunk -c 'touch /opt/splunk/etc/.ui_login'
 
 # Retrieve new list of packages
 apt-get -y update
