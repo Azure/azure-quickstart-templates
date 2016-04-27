@@ -58,7 +58,9 @@ cd $HOMEDIR
 #sudo -u $AZUREUSER wget https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/master/augur-on-ubuntu/priv_genesis.key
 #sudo -u $AZUREUSER wget https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/master/augur-on-ubuntu/mining_toggle.js
 #sudo -u $AZUREUSER wget https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/master/augur-on-ubuntu/geth.conf
+#sudo -u $AZUREUSER wget https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/master/augur-on-ubuntu/augur_ui.conf
 #sed -i "s/auguruser/$AZUREUSER/g" geth.conf
+#sed -i "s/auguruser/$AZUREUSER/g" augur_ui.conf
 
 ####################
 # Setup Geth
@@ -87,15 +89,15 @@ cd $HOMEDIR
 #Install Augur Front End
 ####################
 #sudo -u $AZUREUSER git clone https://github.com/AugurProject/augur.git
-sudo -i -u $AZUREUSER  bash -c "cd augur; npm install $HOMEDIR/augur"
-sudo -i -u $AZUREUSER bash -c "cd augur; npm run build"
+#sudo -i -u $AZUREUSER  bash -c "cd augur; npm install $HOMEDIR/augur"
+#sudo -i -u $AZUREUSER bash -c "cd augur; npm run build"
 
 #allow nodejs to run on port 80 w/o sudo
-setcap 'cap_net_bind_service=+ep' /usr/bin/nodejs
+#etcap 'cap_net_bind_service=+ep' /usr/bin/nodejs
 
-export PORT=80
-#npm start
-
+#Make augur_ui a service, turn on.
+#cp augur_ui.conf /etc/init/
+#start augur_ui 
 
 date
 echo "completed augur install $$"
