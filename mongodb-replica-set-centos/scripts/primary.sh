@@ -60,6 +60,7 @@ else
 echo "mongo user added failed!"
 fi
 
+#stop mongod
 MongoPid=`ps -ef |grep -v grep |grep mongod|awk '{print $2}'`
 kill -9 $MongoPid
 
@@ -123,13 +124,26 @@ chkconfig zabbix_agentd on
 
 #initiate replica set
 
+
+for((i=1;i<=3;i++))
+do
 sleep 15
 n=`ps -ef |grep -v grep|grep mongod |wc -l`
 if [[ $n -eq 1 ]];then
 echo "mongo replica set started successfully"
+break
 else
-echo "mongo replica set started failed!"
+mongod --dbpath /var/lib/mongo/ --replSet $replSetName --logpath /var/log/mongodb/mongod.log --fork --config /etc/mongod.conf
+continue
 fi
+done
+
+n=`ps -ef |grep -v grep|grep mongod |wc -l`
+if [[ $n -eq 0 ]];then
+echo "mongo replica set tried to start 3 times but failed! Exit!"
+exit
+fi
+
 
 echo "starting initiating the replica set"
 curl ifconfig.me > /tmp/ip.txt 2> /dev/null
