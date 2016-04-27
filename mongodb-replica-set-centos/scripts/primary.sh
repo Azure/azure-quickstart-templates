@@ -61,8 +61,9 @@ echo "mongo user added failed!"
 fi
 
 #stop mongod
+sleep 15
 MongoPid=`ps -ef |grep -v grep |grep mongod|awk '{print $2}'`
-kill -9 $MongoPid
+pkill mongod
 
 
 
