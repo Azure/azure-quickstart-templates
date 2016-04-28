@@ -11,8 +11,10 @@ date
 #############
 
 AZUREUSER=$1
+LOCATION=$2
 VMNAME=`hostname`
 HOMEDIR="/home/$AZUREUSER"
+RPC_SERVER="http://${VMNAME}.${LOCATION}.cloudapp.azure.com"
 echo "User: $AZUREUSER"
 echo "User home dir: $HOMEDIR"
 echo "vmname: $VMNAME"
@@ -100,12 +102,14 @@ swapon /swapfile
 ####################
 #Install Augur Front End
 ####################
-#sudo -i -u $AZUREUSER git clone https://github.com/AugurProject/augur.git
-#sudo -i -u $AZUREUSER  bash -c "cd augur; npm install"
-#sudo -i -u $AZUREUSER bash -c "cd augur; npm run build"
+sudo -i -u $AZUREUSER git clone https://github.com/AugurProject/augur.git
+sudo -i -u $AZUREUSER  bash -c "cd augur; npm install"
+sudo -i -u $AZUREUSER bash -c "cd augur; npm run build"
 
 #allow nodejs to run on port 80 w/o sudo
-#setcap 'cap_net_bind_service=+ep' /usr/bin/nodejs
+setcap 'cap_net_bind_service=+ep' /usr/bin/nodejs
+#set RPC server env var
+echo "export ETHEREUM_HOST_RPC=$RPC_SERVER" >> /etc/environment
 
 #Make augur_ui a service, turn on.
 #cp augur_ui.conf /etc/init/
