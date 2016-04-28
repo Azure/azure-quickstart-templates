@@ -24,10 +24,10 @@ setenforce 0
 
 #kernel settings
 if [[ -f /sys/kernel/mm/transparent_hugepage/enabled ]];then
-echo never > /sys/kernel/mm/transparent_hugepage/enabled
+    echo never > /sys/kernel/mm/transparent_hugepage/enabled
 fi
 if [[ -f /sys/kernel/mm/transparent_hugepage/defrag ]];then
-echo never > /sys/kernel/mm/transparent_hugepage/defrag
+    echo never > /sys/kernel/mm/transparent_hugepage/defrag
 fi
 
 #configure
@@ -64,9 +64,9 @@ sed -i '/^LogFile/s/tmp/var\/log/' /usr/local/zabbix/etc/zabbix_agentd.conf
 hostName=`hostname`
 sed -i "s/^Hostname=Zabbix server/Hostname=$hostName/" /usr/local/zabbix/etc/zabbix_agentd.conf
 if [[ $zabbixServer =~ ([0-9]{1,3}.){3}[0-9]{1,3} ]];then
-sed -i "s/^Server=127.0.0.1/Server=$zabbixServer/" /usr/local/zabbix/etc/zabbix_agentd.conf
-sed -i "s/^ServerActive=127.0.0.1/ServerActive=$zabbixServer/" /usr/local/zabbix/etc/zabbix_agentd.conf
-sed -i "s/^Server=127.0.0.1/Server=$zabbixServer/" /usr/local/zabbix/etc/zabbix_agent.conf
+    sed -i "s/^Server=127.0.0.1/Server=$zabbixServer/" /usr/local/zabbix/etc/zabbix_agentd.conf
+    sed -i "s/^ServerActive=127.0.0.1/ServerActive=$zabbixServer/" /usr/local/zabbix/etc/zabbix_agentd.conf
+    sed -i "s/^Server=127.0.0.1/Server=$zabbixServer/" /usr/local/zabbix/etc/zabbix_agent.conf
 fi
 touch /var/log/zabbix_agentd.log
 chown zabbix:zabbix /var/log/zabbix_agentd.log
@@ -80,9 +80,9 @@ chkconfig zabbix_agentd on
 sleep 15
 n=`ps -ef |grep -v grep|grep mongod |wc -l`
 if [[ $n -eq 1 ]];then
-echo "replica set started successfully"
+    echo "replica set started successfully"
 else
-echo "replica set started failed!"
+    echo "replica set started failed!"
 fi
 
 
