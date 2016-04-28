@@ -44,15 +44,3 @@ This template will create a SQL Server 2014/2012 Always On Availability Group us
 ## Deployment steps
 
 You can click the "deploy to Azure" button at the beginning of this document.
-
-#### Connect
-
-How to connect to the solution
-
-#### Management
-
-How to manage the solution
-
-## Notes
-
-Solution notes
