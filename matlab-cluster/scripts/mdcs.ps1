@@ -119,7 +119,18 @@ function mdcs_create($p) {
   $NumberWorkers = readstring "Number of Worker Nodes" $script:config["NumWorkerVms"]
   $NumberWorkersMJS = readstring "Number of Workers on MJS Nodes" $script:config["NumWorkersOnMjsVm"]
   $NumberWorkersWorker = readstring "Number of Workers on Worker Nodes" $script:config["NumWorkersOnWorkerVms"]
-  $VmUsername = readstring "Admin Username on all VMs" $script:config["VmUsername"]
+
+  echo @"
+You will be prompted to enter the credential for the logon user. The supplied password must be between 8-123 characters long and must satisfy at least 3 of password complexity requirements from the following:
+1) Contains an uppercase character
+2) Contains a lowercase character
+3) Contains a numeric digit
+4) Contains a special character.
+"@
+
+  $cred = Get-Credential -UserName $script:config["VmUsername"] -Message "Admin Username on all VMs"
+  $VmUsername = $cred.UserName
+  $VmPassword = $cred.GetNetworkCredential().Password
 
   $dnsname = readstring "Unique DNS name" $rgname
 
@@ -147,19 +158,13 @@ function mdcs_create($p) {
     -replace '\[\[vmSizeMJS\]\]', $MJSVmSize `
     -replace '\[\[vmSizeWorker\]\]', $WorkerVmSize `
     -replace '\[\[adminUserName\]\]', $VmUsername `
+    -replace 'GEN-PASSWORD', $VmPassword `
     -replace 'second regex', 'second replacement' |
   Out-File $updated_template_param
 
   echo "Creating resource group"
   New-AzureRmResourceGroup -WarningAction:SilentlyContinue -Name $rgname -Location $location
   echo "Deploying to resource group. When this step is done, you will have a running MDCS cluster"
-  echo @"
-You will be prompted to enter a password for the logon user. The supplied password must be between 8-123 characters long and must satisfy at least 3 of password complexity requirements from the following:
-1) Contains an uppercase character
-2) Contains a lowercase character
-3) Contains a numeric digit
-4) Contains a special character.
-"@
   New-AzureRmResourceGroupDeployment -WarningAction:SilentlyContinue -ResourceGroupName $rgname -TemplateFile $template -TemplateParameterFile $updated_template_param
 }
 
@@ -172,7 +177,7 @@ function mdcs_list($p) {
       } else {
         $deployment = (Get-AzureRmResourceGroupDeployment -WarningAction:SilentlyContinue -ResourceGroupName $_.ResourceGroupName)
         $keys = $deployment.Parameters.Keys
-        if(($keys -ne $null) -and $keys.Contains('dnsName') -and $keys.Contains('vmSizeMJS') -and $keys.Contains('vmSizeClient') -and $keys.Contains('vmSizeWorker') -and $keys.Contains('scaleNumber')) {
+        if(($keys -ne $null) -and $keys.Contains('dnsName') -and $keys.Contains('vmSizeMJS') -and $keys.Contains('vmSizeClient') -and $keys.Contains('vmSizeWorker') -and $keys.Contains('numWorkerVms')) {
           # now retrieve vm state
           $totalworkers = 0
           $workerstates = @{}
