@@ -47,6 +47,9 @@ sh.status()
 
 sh.shardCollection("\<database\>.\<collection\>", shard-key-pattern)
 
+exit
+
+
 
 3 You can add more shards into this sharding cluster. SSH connect to one of the router server, execute below:
 
