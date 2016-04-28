@@ -97,7 +97,7 @@ function mdcs_create($p) {
 
   echo "Downloading setup templates..."
   $datetimestr = (Get-Date).ToString('yyyy-MM-dd-HH-mm-ss')
-  $template_uri = $script:GITHUB_BASE_URL + "azuredeploy.private.json"
+  $template_uri = $script:GITHUB_BASE_URL + "azuredeploy.json"
   $template_param_uri = $script:GITHUB_BASE_URL + "azuredeploy.parameters.json"
   $template = "$env:TEMP\mdcs-$datetimestr.json"
   $template_param = "$env:TEMP\mdcs-param-$datetimestr.json"
@@ -140,9 +140,9 @@ function mdcs_create($p) {
     -replace '\[\[imageUri\]\]', $imageuri `
     -replace '\[\[scriptUri\]\]', $script:GITHUB_BASE_URL `
     -replace '\[\[vhdContainer\]\]', $vhdcontainer `
-    -replace '\[\[scaleNumber\]\]', $NumberWorkers `
-    -replace '\[\[nbOfWorkerOnMJS\]\]', $NumberWorkersMJS `
-    -replace '\[\[nbOfWorker\]\]', $NumberWorkersWorker `
+    -replace '715225741', $NumberWorkers `
+    -replace '817504253', $NumberWorkersMJS `
+    -replace '920419823', $NumberWorkersWorker `
     -replace '\[\[vmSizeClient\]\]', $ClientVmSize `
     -replace '\[\[vmSizeMJS\]\]', $MJSVmSize `
     -replace '\[\[vmSizeWorker\]\]', $WorkerVmSize `
