@@ -15,13 +15,13 @@ This template also allows you to input your existing zabbix server IP address to
 
 The replica set nodes are exposed on public IP addresses that you can access through SSH on the standard port, also mongodb port 27017 open.
 
-The nodes are under the same subnet. The primary node ip is 10.0.0.240, the secondary nodes ip address start from 10.0.0.4. For example:
+The nodes are under the same subnet. The primary node ip is 10.0.1.240, the secondary nodes ip address start from 10.0.1.4. For example:
 
-primary node ip: 10.0.0.240
+primary node ip: 10.0.1.240
 
-secondary node 1 ip: 10.0.0.4
+secondary node 1 ip: 10.0.1.4
 
-secondary node 2 ip: 10.0.0.5
+secondary node 2 ip: 10.0.1.5
 
 
 
@@ -74,4 +74,5 @@ db.mycol.find()
 - MongoDB suggests that the replica set has an odd number of voting members. So the number of secondary nodes is better to set to even number, like 2, 4 or 6, then plus the primary node, fill the requirement that the replica set has an odd number of voting members.
 - A replica set can have up to 50 members, but only 7 voting members. So the maximum number of secondary nodes is 6.
 - The replica set doesn't have arbiter nodes.
+- The replica set enables internal authentication. Check /etc/mongokeyfile for details.
 - More MongoDB usage details please visit MongoDB website https://www.mongodb.org/ .
