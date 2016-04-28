@@ -18,6 +18,11 @@ We look forward to hearing your feedback and suggestions!
 ```
 Template Changelog
 
+# v1.4.1 (2016-04-28)
+
+- Add a retry for apt-get update
+- Add https://gems.ruby-china.org/ as a gem source
+
 # v1.4.0 (2016-04-21)
 
 - Add AzureChinaCloud support
