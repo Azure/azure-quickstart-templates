@@ -8,6 +8,7 @@
 $rgname = "DnsForwardExample"
 
 $params = @{
+    "vmName" = "dnsproxy1";
     "adminUsername"="mradmin";
     "adminPassword"="Admin123!";
     "storageAccName"="$($rgname)stor".ToLower();
@@ -24,5 +25,9 @@ Login-AzureRmAccount
 
 # create the resource from the template
 New-AzureRmResourceGroup -Name $rgname -Location "northeurope"
+New-AzureRmResourceGroupDeployment -Name $rgname -ResourceGroupName $rgname -TemplateFile "$scriptDir\azuredeploy.json" -TemplateParameterObject $params
+
+# create a second forwarder vm 
+$params.vmName = "dnsproxy2"
 New-AzureRmResourceGroupDeployment -Name $rgname -ResourceGroupName $rgname -TemplateFile "$scriptDir\azuredeploy.json" -TemplateParameterObject $params
 
