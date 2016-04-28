@@ -2,9 +2,6 @@
 
 set -e
 
-echo "Start to update package lists from repositories..."
-sudo apt-get update
-
 echo "Start to install prerequisites..."
 sudo apt-get install -y build-essential ruby2.0 ruby2.0-dev libxml2-dev libsqlite3-dev libxslt1-dev libpq-dev libmysqlclient-dev zlibc zlib1g-dev openssl libxslt-dev libssl-dev libreadline6 libreadline6-dev libyaml-dev sqlite3 libffi-dev
 
@@ -16,10 +13,16 @@ sudo ln -s /usr/bin/irb2.0 /usr/bin/irb
 sudo ln -s /usr/bin/rdoc2.0 /usr/bin/rdoc
 sudo ln -s /usr/bin/erb2.0 /usr/bin/erb
 
+set +e
+
 environment=$1
 if [ "$environment" == "AzureChinaCloud" ]; then
-  sudo gem sources --add https://ruby.taobao.org/ --remove https://rubygems.org/
+  sudo gem sources --remove https://rubygems.org/
+  sudo gem sources --add https://ruby.taobao.org/
+  sudo gem sources --add https://gems.ruby-china.org/
 fi
+
+set -e
 
 gem sources -l
 sudo gem update --system
