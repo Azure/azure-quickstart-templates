@@ -1,12 +1,13 @@
 #!/bin/bash
 
 # update os
-time apt-get update
+apt-get update
 
 # install git
-time apt-get install -y git
+apt-get install -y git
 
 # clone the sync engine repo
+cd ~
 cd /usr/local
 git clone https://github.com/singhkay/sync-engine.git
 cd /usr/local/sync-engine/
