@@ -2,26 +2,6 @@
     "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "location": {
-            "type": "String",
-            "metadata": {
-                "description": "Region where the resources will be deployed"
-            },
-            "allowedValues": [
-                "East US",
-                "East US 2",
-                "East Asia",
-                "West US",
-                "West Europe",
-                "Southeast Asia",
-                "South Central US",
-                "East US 2",
-                "Japan East",
-                "Japan West",
-                "Central US",
-                "Brazil South"
-            ]
-        },
         "vpnType": {
             "type": "String",
             "metadata": {
@@ -70,7 +50,7 @@
             "type": "string",
             "defaultValue": "Subnet1",
             "metadata": {
-                "description": "Aribtrary name for the Azure Subnet"
+                "description": "Arbitrary name for the Azure Subnet"
             }
         },
         "subnetPrefix": {
@@ -83,14 +63,14 @@
             "type": "string",
             "defaultValue": "10.3.200.0/29",
             "metadata": {
-                "description": "CIDR block for gateway subnet, subsset of azureVNetAddressPrefix address space"
+                "description": "CIDR block for gateway subnet, subset of azureVNetAddressPrefix address space"
             }
         },
         "gatewayPublicIPName": {
             "type": "string",
             "defaultValue": "azureGatewayIP",
             "metadata": {
-                "description": "Aribtary name for public IP resource used for the new azure gateway"
+                "description": "Arbitrary name for public IP resource used for the new azure gateway"
             }
         },
         "gatewayName": {
@@ -192,193 +172,193 @@
         "storage-api-version": "2015-05-01-preview"
     },
     "resources": [
-        {
-            "apiVersion": "[variables('api-version')]",
-            "type": "Microsoft.Network/localNetworkGateways",
-            "name": "[parameters('localGatewayName')]",
-            "location": "[parameters('location')]",
-            "properties": {
-                "localNetworkAddressSpace": {
-                    "addressPrefixes": [
-                        "[parameters('localAddressPrefix')]"
-                    ]
-                },
-                "gatewayIpAddress": "[parameters('localGatewayIpAddress')]"
-            }
-        },
-        {
-            "apiVersion": "[variables('api-version')]",
-            "name": "[parameters('connectionName')]",
-            "type": "Microsoft.Network/connections",
-            "location": "[parameters('location')]",
-            "dependsOn": [
-                "[concat('Microsoft.Network/virtualNetworkGateways/', parameters('gatewayName'))]",
-                "[concat('Microsoft.Network/localNetworkGateways/', parameters('localGatewayName'))]"
-            ],
-            "properties": {
-                "virtualNetworkGateway1": {
-                    "id": "[resourceId('Microsoft.Network/virtualNetworkGateways', parameters('gatewayName'))]"
-                },
-                "localNetworkGateway2": {
-                    "id": "[resourceId('Microsoft.Network/localNetworkGateways', parameters('localGatewayName'))]"
-                },
-                "connectionType": "IPsec",
-                "routingWeight": 10,
-                "sharedKey": "[parameters('sharedKey')]"
-            }
-        },
-        {
-            "apiVersion": "[variables('api-version')]",
-            "type": "Microsoft.Network/virtualNetworks",
-            "name": "[parameters('virtualNetworkName')]",
-            "location": "[parameters('location')]",
-            "properties": {
-                "addressSpace": {
-                    "addressPrefixes": [
-                        "[parameters('azureVNetAddressPrefix')]"
-                    ]
-                },
-                "subnets": [
-                    {
-                        "name": "[parameters('subnetName')]",
-                        "properties": {
-                            "addressPrefix": "[parameters('subnetPrefix')]"
-                        }
-                    },
-                    {
-                        "name": "GatewaySubnet",
-                        "properties": {
-                            "addressPrefix": "[parameters('gatewaySubnetPrefix')]"
-                        }
-                    }
-                ]
-            }
-        },
-        {
-            "apiVersion": "[variables('api-version')]",
-            "type": "Microsoft.Network/publicIPAddresses",
-            "name": "[parameters('gatewayPublicIPName')]",
-            "location": "[parameters('location')]",
-            "properties": {
-                "publicIPAllocationMethod": "Dynamic"
-            }
-        },
-        {
-            "apiVersion": "[variables('api-version')]",
-            "type": "Microsoft.Network/publicIPAddresses",
-            "name": "[variables('vmPublicIPName')]",
-            "location": "[parameters('location')]",
-            "properties": {
-                "publicIPAllocationMethod": "Dynamic"
-            }
-        },
-        {
-            "apiVersion": "[variables('storage-api-version')]",
-            "name": "[parameters('newStorageAccountName')]",
-            "location": "[parameters('location')]",
-            "type": "Microsoft.Storage/storageAccounts",
-            "properties": {
-                "accountType": "[parameters('storageAccountType')]"
-            }
-        },
-        {
-            "apiVersion": "[variables('api-version')]",
-            "type": "Microsoft.Network/virtualNetworkGateways",
-            "name": "[parameters('gatewayName')]",
-            "location": "[parameters('location')]",
-            "dependsOn": [
-                "[concat('Microsoft.Network/publicIPAddresses/', parameters('gatewayPublicIPName'))]",
-                "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
-            ],
-            "properties": {
-                "ipConfigurations": [
-                    {
-                        "properties": {
-                            "privateIPAllocationMethod": "Dynamic",
-                            "subnet": {
-                                "id": "[variables('gatewaySubnetRef')]"
-                            },
-                            "publicIPAddress": {
-                                "id": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('gatewayPublicIPName'))]"
-                            }
-                        },
-                        "name": "vnetGatewayConfig"
-                    }
-                ],
-                "gatewayType": "Vpn",
-                "vpnType": "[parameters('vpnType')]",
-                "enableBgp": "false"
-            }
-        },
-        {
-            "apiVersion": "[variables('api-version')]",
-            "type": "Microsoft.Network/networkInterfaces",
-            "name": "[variables('nicName')]",
-            "location": "[parameters('location')]",
-            "dependsOn": [
-                "[concat('Microsoft.Network/publicIPAddresses/', variables('vmPublicIPName'))]",
-                "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
-                "[concat('Microsoft.Network/virtualNetworkGateways/', parameters('gatewayName'))]"
-            ],
-            "properties": {
-                "ipConfigurations": [
-                    {
-                        "name": "ipconfig1",
-                        "properties": {
-                            "privateIPAllocationMethod": "Dynamic",
-                            "publicIPAddress": {
-                                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('vmPublicIPName'))]"
-                            },
-                            "subnet": {
-                                "id": "[variables('subnetRef')]"
-                            }
-                        }
-                    }
-                ]
-            }
-        },
-        {
-            "apiVersion": "[variables('api-version')]",
-            "type": "Microsoft.Compute/virtualMachines",
-            "name": "[parameters('vmName')]",
-            "location": "[parameters('location')]",
-            "dependsOn": [
-                "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
-                "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
-            ],
-            "properties": {
-                "hardwareProfile": {
-                    "vmSize": "[parameters('vmSize')]"
-                },
-                "osProfile": {
-                    "computerName": "[parameters('vmName')]",
-                    "adminUsername": "[parameters('adminUsername')]",
-                    "adminPassword": "[parameters('adminPassword')]"
-                },
-                "storageProfile": {
-                    "imageReference": {
-                        "publisher": "[variables('imagePublisher')]",
-                        "offer": "[variables('imageOffer')]",
-                        "sku": "[variables('imageSKU')]",
-                        "version": "latest"
-                    },
-                    "osDisk": {
-                        "name": "osdisk1",
-                        "vhd": {
-                            "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]"
-                        },
-                        "caching": "ReadWrite",
-                        "createOption": "FromImage"
-                    }
-                },
-                "networkProfile": {
-                    "networkInterfaces": [
-                        {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
-                        }
-                    ]
-                }
-            }
+      {
+        "apiVersion": "[variables('api-version')]",
+        "type": "Microsoft.Network/localNetworkGateways",
+        "name": "[parameters('localGatewayName')]",
+        "location": "[resourceGroup().location]",
+        "properties": {
+          "localNetworkAddressSpace": {
+            "addressPrefixes": [
+              "[parameters('localAddressPrefix')]"
+            ]
+          },
+          "gatewayIpAddress": "[parameters('localGatewayIpAddress')]"
         }
+      },
+      {
+        "apiVersion": "[variables('api-version')]",
+        "name": "[parameters('connectionName')]",
+        "type": "Microsoft.Network/connections",
+        "location": "[resourceGroup().location]",
+        "dependsOn": [
+          "[concat('Microsoft.Network/virtualNetworkGateways/', parameters('gatewayName'))]",
+          "[concat('Microsoft.Network/localNetworkGateways/', parameters('localGatewayName'))]"
+        ],
+        "properties": {
+          "virtualNetworkGateway1": {
+            "id": "[resourceId('Microsoft.Network/virtualNetworkGateways', parameters('gatewayName'))]"
+          },
+          "localNetworkGateway2": {
+            "id": "[resourceId('Microsoft.Network/localNetworkGateways', parameters('localGatewayName'))]"
+          },
+          "connectionType": "IPsec",
+          "routingWeight": 10,
+          "sharedKey": "[parameters('sharedKey')]"
+        }
+      },
+      {
+        "apiVersion": "[variables('api-version')]",
+        "type": "Microsoft.Network/virtualNetworks",
+        "name": "[parameters('virtualNetworkName')]",
+        "location": "[resourceGroup().location]",
+        "properties": {
+          "addressSpace": {
+            "addressPrefixes": [
+              "[parameters('azureVNetAddressPrefix')]"
+            ]
+          },
+          "subnets": [
+            {
+              "name": "[parameters('subnetName')]",
+              "properties": {
+                "addressPrefix": "[parameters('subnetPrefix')]"
+              }
+            },
+            {
+              "name": "GatewaySubnet",
+              "properties": {
+                "addressPrefix": "[parameters('gatewaySubnetPrefix')]"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "apiVersion": "[variables('api-version')]",
+        "type": "Microsoft.Network/publicIPAddresses",
+        "name": "[parameters('gatewayPublicIPName')]",
+        "location": "[resourceGroup().location]",
+        "properties": {
+          "publicIPAllocationMethod": "Dynamic"
+        }
+      },
+      {
+        "apiVersion": "[variables('api-version')]",
+        "type": "Microsoft.Network/publicIPAddresses",
+        "name": "[variables('vmPublicIPName')]",
+        "location": "[resourceGroup().location]",
+        "properties": {
+          "publicIPAllocationMethod": "Dynamic"
+        }
+      },
+      {
+        "apiVersion": "[variables('storage-api-version')]",
+        "name": "[parameters('newStorageAccountName')]",
+        "location": "[resourceGroup().location]",
+        "type": "Microsoft.Storage/storageAccounts",
+        "properties": {
+          "accountType": "[parameters('storageAccountType')]"
+        }
+      },
+      {
+        "apiVersion": "[variables('api-version')]",
+        "type": "Microsoft.Network/virtualNetworkGateways",
+        "name": "[parameters('gatewayName')]",
+        "location": "[resourceGroup().location]",
+        "dependsOn": [
+          "[concat('Microsoft.Network/publicIPAddresses/', parameters('gatewayPublicIPName'))]",
+          "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
+        ],
+        "properties": {
+          "ipConfigurations": [
+            {
+              "properties": {
+                "privateIPAllocationMethod": "Dynamic",
+                "subnet": {
+                  "id": "[variables('gatewaySubnetRef')]"
+                },
+                "publicIPAddress": {
+                  "id": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('gatewayPublicIPName'))]"
+                }
+              },
+              "name": "vnetGatewayConfig"
+            }
+          ],
+          "gatewayType": "Vpn",
+          "vpnType": "[parameters('vpnType')]",
+          "enableBgp": "false"
+        }
+      },
+      {
+        "apiVersion": "[variables('api-version')]",
+        "type": "Microsoft.Network/networkInterfaces",
+        "name": "[variables('nicName')]",
+        "location": "[resourceGroup().location]",
+        "dependsOn": [
+          "[concat('Microsoft.Network/publicIPAddresses/', variables('vmPublicIPName'))]",
+          "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
+          "[concat('Microsoft.Network/virtualNetworkGateways/', parameters('gatewayName'))]"
+        ],
+        "properties": {
+          "ipConfigurations": [
+            {
+              "name": "ipconfig1",
+              "properties": {
+                "privateIPAllocationMethod": "Dynamic",
+                "publicIPAddress": {
+                  "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('vmPublicIPName'))]"
+                },
+                "subnet": {
+                  "id": "[variables('subnetRef')]"
+                }
+              }
+            }
+          ]
+        }
+      },
+      {
+        "apiVersion": "[variables('api-version')]",
+        "type": "Microsoft.Compute/virtualMachines",
+        "name": "[parameters('vmName')]",
+        "location": "[resourceGroup().location]",
+        "dependsOn": [
+          "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
+          "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+        ],
+        "properties": {
+          "hardwareProfile": {
+            "vmSize": "[parameters('vmSize')]"
+          },
+          "osProfile": {
+            "computerName": "[parameters('vmName')]",
+            "adminUsername": "[parameters('adminUsername')]",
+            "adminPassword": "[parameters('adminPassword')]"
+          },
+          "storageProfile": {
+            "imageReference": {
+              "publisher": "[variables('imagePublisher')]",
+              "offer": "[variables('imageOffer')]",
+              "sku": "[variables('imageSKU')]",
+              "version": "latest"
+            },
+            "osDisk": {
+              "name": "osdisk1",
+              "vhd": {
+                "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]"
+              },
+              "caching": "ReadWrite",
+              "createOption": "FromImage"
+            }
+          },
+          "networkProfile": {
+            "networkInterfaces": [
+              {
+                "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+              }
+            ]
+          }
+        }
+      }
     ]
 }
