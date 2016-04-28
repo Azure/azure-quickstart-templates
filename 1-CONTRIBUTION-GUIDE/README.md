@@ -16,7 +16,7 @@ To make sure your template is added to Azure.com index, please follow these guid
 ## Files, folders and naming conventions
 
 1. Every deployment template and its associated files must be contained in its own **folder**. Name this folder something that describes what your template does. Usually this naming pattern looks like **appName-osName** or **level-platformCapability** (e.g. 101-vm-user-image) 
- + **Required** – Numbering should start at 101. 100 is reserved for things that need to be at the top.
+ + **Required** â€“ Numbering should start at 101. 100 is reserved for things that need to be at the top.
  + **Protip** - Try to keep the name of your template folder short so that it fits inside the Github folder name column width.
 2. Github uses ASCII for ordering files and folder. For consistent ordering **create all files and folders in lowercase**. The only **exception** to this guideline is the **README.md**, that should be in the format **UPPERCASE.lowercase**.
 3. Include a **README.md** file that explains how the template works. 
@@ -38,6 +38,7 @@ To make sure your template is added to Azure.com index, please follow these guid
 The README.md describes your deployment. A good description helps other community members to understand your deployment. The README.md uses [Github Flavored Markdown](https://guides.github.com/features/mastering-markdown/) for formatting text. If you want to add images to your README.md file, store the images in the **images** folder. Reference the images in the README.md with a relative path (e.g. `![alt text](images/namingConvention.png "Files, folders and naming conventions")`). This ensures the link will reference the target repository if the source repository is forked. A good README.md contains the following sections
 
 + Deploy to Azure button
++ Visualize button
 + Description of what the template will deploy
 + Tags, that can be used for seach. Specify the tags comma seperated and enclosed between two back-ticks (e.g Tags: `cluster, ha, sql`)
 + *Optional: Prerequisites
@@ -46,9 +47,11 @@ The README.md describes your deployment. A good description helps other communit
 
 Do **not include** the **parameters or the variables** of the deployment script. We render this on Azure.com from the template. Specifying these in the README.md will result in **duplicate entries** on Azure.com.
 
+You can download a [**sample README.md**](/1-CONTRIBUTION-GUIDE/sample-README.md) for use in your deployment scenario. The **sample README.md** also contains the code for the **Deploy to Azure** and **Visualize** buttons, that you can use as a reference.
+
 ## metadata.json
 
-A valid metedata.json must adhere to the following structure
+A valid metadata.json must adhere to the following structure
 
 ```
 {

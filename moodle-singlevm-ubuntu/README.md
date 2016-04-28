@@ -5,4 +5,4 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template deploys Moodle as a LAMP application on Ubuntu. It creates a single Ubuntu VM, does a silent install of MySQL, Apache and PHP on it, and then deploys Moodle on it.  After the deployment is successful, you can go to /moodle to start congfiguring Moodle.
+This template deploys Moodle as a LAMP application on Ubuntu. It creates a single Ubuntu VM and does a silent install of MySQL, Apache and PHP on it. It then installs the selected version of Moodle on the VM. If specified, it also installs the corresponding version of the  Microsoft Office 365 plugins for Moodle. After the deployment is successful, you can go to /moodle to start congfiguring Moodle.
