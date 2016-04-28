@@ -28,10 +28,10 @@ setenforce 0
 
 #kernel settings
 if [[ -f /sys/kernel/mm/transparent_hugepage/enabled ]];then
-echo never > /sys/kernel/mm/transparent_hugepage/enabled
+    echo never > /sys/kernel/mm/transparent_hugepage/enabled
 fi
 if [[ -f /sys/kernel/mm/transparent_hugepage/defrag ]];then
-echo never > /sys/kernel/mm/transparent_hugepage/defrag
+    echo never > /sys/kernel/mm/transparent_hugepage/defrag
 fi
 
 #configure
@@ -43,9 +43,9 @@ mongod --dbpath /var/lib/mongo/ --logpath /var/log/mongodb/mongod.log --fork
 sleep 30
 n=`ps -ef |grep -v grep|grep mongod |wc -l`
 if [[ $n -eq 1 ]];then
-echo "mongod started successfully"
+    echo "mongod started successfully"
 else
-echo "mongod started failed!"
+    echo "mongod started failed!"
 fi
 
 #create users
@@ -55,9 +55,9 @@ db.createUser({user:"$mongoAdminUser",pwd:"$mongoAdminPasswd",roles:[{role: "use
 exit
 EOF
 if [[ $? -eq 0 ]];then
-echo "mongo user added succeefully."
+    echo "mongo user added succeefully."
 else
-echo "mongo user added failed!"
+    echo "mongo user added failed!"
 fi
 
 #stop mongod
@@ -77,12 +77,12 @@ sed -i 's/^keyFile/  keyFile/' /etc/mongod.conf
 
 sleep 15
 MongoPid1=`ps -ef |grep -v grep |grep mongod|awk '{print $2}'`
-if [[ -z MongoPid1 ]];then
-echo "shutdown mongod successfully"
+if [[ -z $MongoPid1 ]];then
+    echo "shutdown mongod successfully"
 else
-echo "shutdown mongod failed!"
-pkill mongod
-sleep 15
+    echo "shutdown mongod failed!"
+    pkill mongod
+    sleep 15
 fi
 
 #restart mongod with auth and replica set
@@ -110,9 +110,9 @@ sed -i '/^LogFile/s/tmp/var\/log/' /usr/local/zabbix/etc/zabbix_agentd.conf
 hostName=`hostname`
 sed -i "s/^Hostname=Zabbix server/Hostname=$hostName/" /usr/local/zabbix/etc/zabbix_agentd.conf
 if [[ $zabbixServer =~ ([0-9]{1,3}.){3}[0-9]{1,3} ]];then
-sed -i "s/^Server=127.0.0.1/Server=$zabbixServer/" /usr/local/zabbix/etc/zabbix_agentd.conf
-sed -i "s/^ServerActive=127.0.0.1/ServerActive=$zabbixServer/" /usr/local/zabbix/etc/zabbix_agentd.conf
-sed -i "s/^Server=127.0.0.1/Server=$zabbixServer/" /usr/local/zabbix/etc/zabbix_agent.conf
+    sed -i "s/^Server=127.0.0.1/Server=$zabbixServer/" /usr/local/zabbix/etc/zabbix_agentd.conf
+    sed -i "s/^ServerActive=127.0.0.1/ServerActive=$zabbixServer/" /usr/local/zabbix/etc/zabbix_agentd.conf
+    sed -i "s/^Server=127.0.0.1/Server=$zabbixServer/" /usr/local/zabbix/etc/zabbix_agent.conf
 fi
 touch /var/log/zabbix_agentd.log
 chown zabbix:zabbix /var/log/zabbix_agentd.log
@@ -127,21 +127,21 @@ chkconfig zabbix_agentd on
 
 
 for((i=1;i<=3;i++))
-do
-sleep 15
-n=`ps -ef |grep -v grep|grep mongod |wc -l`
-if [[ $n -eq 1 ]];then
-echo "mongo replica set started successfully"
-break
-else
-mongod --dbpath /var/lib/mongo/ --replSet $replSetName --logpath /var/log/mongodb/mongod.log --fork --config /etc/mongod.conf
-continue
-fi
-done
+    do
+        sleep 15
+        n=`ps -ef |grep -v grep|grep mongod |wc -l`
+        if [[ $n -eq 1 ]];then
+            echo "mongo replica set started successfully"
+            break
+        else
+            mongod --dbpath /var/lib/mongo/ --replSet $replSetName --logpath /var/log/mongodb/mongod.log --fork --config /etc/mongod.conf
+            continue
+        fi
+    done
 
 n=`ps -ef |grep -v grep|grep mongod |wc -l`
 if [[ $n -ne 1 ]];then
-echo "mongo replica set tried to start 3 times but failed!"
+    echo "mongo replica set tried to start 3 times but failed!"
 fi
 
 
@@ -157,20 +157,20 @@ rs.initiate(config)
 exit
 EOF
 if [[ $? -eq 0 ]];then
-echo "replica set initiation succeeded."
+    echo "replica set initiation succeeded."
 else
-echo "replica set initiation failed!"
+    echo "replica set initiation failed!"
 fi
 
 
 #add secondary nodes
 for((i=1;i<=$secondaryNodes;i++))
-do
-let a=3+$i
-mongo -u "$mongoAdminUser" -p "$mongoAdminPasswd" "admin" --eval "printjson(rs.add('10.0.0.${a}:27017'))"
-if [[ $? -eq 0 ]];then
-echo "adding server 10.0.0.${a} successfully"
-else
-echo "adding server 10.0.0.${a} failed!"
-fi
-done
+    do
+        let a=3+$i
+        mongo -u "$mongoAdminUser" -p "$mongoAdminPasswd" "admin" --eval "printjson(rs.add('10.0.1.${a}:27017'))"
+        if [[ $? -eq 0 ]];then
+            echo "adding server 10.0.1.${a} successfully"
+        else
+            echo "adding server 10.0.1.${a} failed!"
+        fi
+    done
