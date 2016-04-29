@@ -28,4 +28,4 @@ cd $HOME/sync-engine/
 /bin/bash -l -c "chmod +x ./setup.sh"
 /bin/bash -l -c "sudo ./setup.sh"
 
-/bin/bash -l -c "nohup bin/inbox-start &"
+/bin/bash -l -c "bin/inbox-start"
