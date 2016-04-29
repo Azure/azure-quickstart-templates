@@ -5,7 +5,7 @@ secondaryNodes=$2
 zabbixServer=$3
 mongoAdminUser=$4
 mongoAdminPasswd=$5
-
+staticIp=$6
 
 install_mongo3() {
 
@@ -170,14 +170,15 @@ if [[ $n -ne 1 ]];then
 fi
 
 
-echo "starting initiating the replica set"
+echo "start initiating the replica set"
 curl ifconfig.me > /tmp/ip.txt 2> /dev/null
 publicIP=`cat /tmp/ip.txt`
+
 
 mongo<<EOF
 use admin
 db.auth("$mongoAdminUser", "$mongoAdminPasswd")
-config ={_id:"$replSetName",members:[{_id:0,host:"$publicIP:27017"}]}
+config ={_id:"$replSetName",members:[{_id:0,host:"$staticIp:27017"}]}
 rs.initiate(config)
 exit
 EOF
