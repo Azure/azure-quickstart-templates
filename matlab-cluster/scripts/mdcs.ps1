@@ -148,7 +148,7 @@ Admin user credential for all VMs. The supplied password must be between 8-123 c
 
   echo "updating parameters for template deployment"
   (Get-Content $template_param) `
-    -replace 'location_param', $location `
+    -replace 'locationparam', $location `
     -replace '\[\[dnsName\]\]', $dnsname `
     -replace '\[\[imageUri\]\]', $imageuri `
     -replace '\[\[scriptUri\]\]', $script:GITHUB_BASE_URL `
