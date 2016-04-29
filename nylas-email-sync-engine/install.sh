@@ -27,4 +27,4 @@ cd $HOME/sync-engine/
 # kick off the setup script
 /bin/su -s /bin/bash -c "chmod +x ./setup.sh" $AZUREUSER
 ./setup.sh
-/bin/su -s /bin/bash -c "sudo chown -R $AZUREUSER /etc/inboxapp" $AZUREUSER
+chown -R $AZUREUSER /etc/inboxapp
