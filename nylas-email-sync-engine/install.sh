@@ -25,6 +25,6 @@ git clone https://github.com/singhkay/sync-engine.git
 cd $HOME/sync-engine/
 
 # kick off the setup script
-/bin/su -s /bin/bash -c '/path/to/your/script' testuser
 /bin/su -s /bin/bash -c "chmod +x ./setup.sh" $AZUREUSER
-/bin/su -s /bin/bash -c "sudo ./setup.sh" $AZUREUSER
+./setup.sh
+/bin/su -s /bin/bash -c "sudo chown -R $AZUREUSER /etc/inboxapp" $AZUREUSER
