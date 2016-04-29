@@ -1,16 +1,17 @@
 #!/bin/bash
 
+# update os
+apt-get update
+
 # install git
-sudo apt-get install -y git
+apt-get install -y git
 
 # clone the sync engine repo
+cd ~
+cd /usr/local
 git clone https://github.com/singhkay/sync-engine.git
+cd /usr/local/sync-engine/
 
 # kick off the setup script
-cd sync-engine/
-chmod +x setup.sh
+chmod +x ./setup.sh
 sudo ./setup.sh
-
-# start your engines!
-nohup bin/inbox-start &
-
