@@ -15,7 +15,7 @@ This template also allows you to input your existing zabbix server IP address to
 
 The replica set nodes are exposed on public IP addresses that you can access through SSH on the standard port, also mongodb port 27017 open.
 
-The nodes are under the same subnet. The primary node ip is 10.0.1.240, the secondary nodes ip address start from 10.0.1.4. For example:
+The nodes are under the same subnet 10.0.1.0/24. The primary node ip is 10.0.1.240, the secondary nodes ip address start from 10.0.1.4. For example:
 
 primary node ip: 10.0.1.240
 
@@ -25,7 +25,7 @@ secondary node 2 ip: 10.0.1.5
 
 
 ##Import Notice
-Each VM of the replica set uses raid0 to improve performance. The number and the size of data disks(setup raid0) are determined by yourself. However, there is number and size of data disks limit per the VM size. Before you set number and size of data disks, please refer to the link https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-linux-sizes/ for the correct choice.
+Each VM of the replica set uses raid0 to improve performance. The number and the size of data disks(setup raid0) on each VM are determined by yourself. However, there is number and size of data disks limit per the VM size. Before you set number and size of data disks, please refer to the link https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-linux-sizes/ for the correct choice.
 
 
 
