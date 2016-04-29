@@ -27,5 +27,3 @@ cd $HOME/sync-engine/
 # kick off the setup script
 /bin/bash -l -c "chmod +x ./setup.sh"
 /bin/bash -l -c "sudo ./setup.sh"
-
-/bin/bash -l -c "bin/inbox-start"
