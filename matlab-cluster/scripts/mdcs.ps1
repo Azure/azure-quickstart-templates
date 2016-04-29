@@ -120,17 +120,19 @@ function mdcs_create($p) {
   $NumberWorkersMJS = readstring "Number of Workers on MJS Nodes" $script:config["NumWorkersOnMjsVm"]
   $NumberWorkersWorker = readstring "Number of Workers on Worker Nodes" $script:config["NumWorkersOnWorkerVms"]
 
-  echo @"
-You will be prompted to enter the credential for the logon user. The supplied password must be between 8-123 characters long and must satisfy at least 3 of password complexity requirements from the following:
+  $promptstring = @"
+Admin user credential for all VMs. The supplied password must be between 8-123 characters long and must satisfy at least 3 of password complexity requirements from the following:
 1) Contains an uppercase character
 2) Contains a lowercase character
 3) Contains a numeric digit
 4) Contains a special character.
 "@
 
-  $cred = Get-Credential -UserName $script:config["VmUsername"] -Message "Admin Username on all VMs"
+  $cred = Get-Credential -Message $promptstring -UserName $script:config["VmUsername"]
   $VmUsername = $cred.UserName
   $VmPassword = $cred.GetNetworkCredential().Password
+
+  #$VmUsername = readstring "Admin Username on all VMs" $script:config["VmUsername"]
 
   $dnsname = readstring "Unique DNS name" $rgname
 
@@ -151,9 +153,9 @@ You will be prompted to enter the credential for the logon user. The supplied pa
     -replace '\[\[imageUri\]\]', $imageuri `
     -replace '\[\[scriptUri\]\]', $script:GITHUB_BASE_URL `
     -replace '\[\[vhdContainer\]\]', $vhdcontainer `
-    -replace '715225741', $NumberWorkers `
-    -replace '817504253', $NumberWorkersMJS `
-    -replace '920419823', $NumberWorkersWorker `
+    -replace '3', $NumberWorkers `
+    -replace '5', $NumberWorkersMJS `
+    -replace '7', $NumberWorkersWorker `
     -replace '\[\[vmSizeClient\]\]', $ClientVmSize `
     -replace '\[\[vmSizeMJS\]\]', $MJSVmSize `
     -replace '\[\[vmSizeWorker\]\]', $WorkerVmSize `
@@ -164,6 +166,7 @@ You will be prompted to enter the credential for the logon user. The supplied pa
 
   echo "Creating resource group"
   New-AzureRmResourceGroup -WarningAction:SilentlyContinue -Name $rgname -Location $location
+
   echo "Deploying to resource group. When this step is done, you will have a running MDCS cluster"
   New-AzureRmResourceGroupDeployment -WarningAction:SilentlyContinue -ResourceGroupName $rgname -TemplateFile $template -TemplateParameterFile $updated_template_param
 }
