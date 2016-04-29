@@ -24,6 +24,10 @@ secondary node 1 ip: 10.0.1.4
 secondary node 2 ip: 10.0.1.5
 
 
+##Import Notice
+Each VM of the replica set uses raid0 to improve performance. The number and the size of data disks(setup raid0) are determined by yourself. However, there is number and size of data disks limit per the VM size. Before you set number and size of data disks, please refer to the link https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-linux-sizes/ for the correct choice.
+
+
 
 ##After deployment, you can do below to verify if the replica set really works or not:
 

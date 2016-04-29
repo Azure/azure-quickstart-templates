@@ -32,13 +32,22 @@
     "dnsname": {
       "type": "string"
     },
-	"secondaryNodes": {
+	"secondaryNodeCount": {
 	  "type": "int"
 	},
+    "numDataDisks": {
+      "type": "string"
+    },
+    "sizeOfDataDiskInGB": {
+      "type": "int"
+    },
+    "templateBaseUrl": {
+      "type": "string"
+    },
     "subnet": {
       "type": "object"
     },
-	"zabbixServer": {
+	"zabbixServerIPAddress": {
 	  "type": "string"
 	},
     "staticIp": {
@@ -52,6 +61,32 @@
     "securityGroupName": "[concat(parameters('namespace'), parameters('vmbasename'), 'nsg')]"
   },
   "resources": [
+    { 
+      "apiVersion": "2015-01-01", 
+      "name": "diskSelection", 
+      "type": "Microsoft.Resources/deployments", 
+      "properties": { 
+        "mode": "Incremental", 
+        "templateLink": { 
+          "uri": "[concat(parameters('templateBaseUrl'), 'disksSelector', '.json')]", 
+            "contentVersion": "1.0.0.0" 
+        }, 
+        "parameters": { 
+          "numDataDisks": { 
+            "value": "[parameters('numDataDisks')]" 
+          }, 
+          "diskStorageAccountName": { 
+            "value": "[variables('storageAccountName')]" 
+          }, 
+          "diskCaching": { 
+            "value": "ReadWrite" 
+          }, 
+          "diskSizeGB": { 
+            "value": "[parameters('sizeOfDataDiskInGB')]" 
+          } 
+        } 
+      } 
+    }, 
     {
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/networkSecurityGroups",
@@ -172,7 +207,8 @@
       "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'vm')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', concat(parameters('namespace'), concat(parameters('vmbasename'), 'nic')))]"
+        "[concat('Microsoft.Network/networkInterfaces/', concat(parameters('namespace'), concat(parameters('vmbasename'), 'nic')))]",
+        "[concat('Microsoft.Resources/deployments/', 'diskSelection')]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -192,7 +228,8 @@
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
-          }
+          },
+          "dataDisks": "[reference('diskSelection').outputs.dataDiskArray.value]"
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -220,7 +257,7 @@
           "fileUris": "[parameters('osSettings').scripts]"
 		},
 		"protectedSettings": {
-          "commandToExecute": "[concat('bash primary.sh ', parameters('replSetName'), ' ', parameters('secondaryNodes'), ' ', parameters('zabbixServer'), ' ', parameters('mongoAdminUsername'), ' ', parameters('mongoAdminPassword'))]"
+          "commandToExecute": "[concat('bash primary.sh ', parameters('replSetName'), ' ', parameters('secondaryNodeCount'), ' ', parameters('zabbixServerIPAddress'), ' ', parameters('mongoAdminUsername'), ' ', parameters('mongoAdminPassword'))]"
         }
       }
     }
