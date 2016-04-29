@@ -25,5 +25,5 @@ git clone https://github.com/singhkay/sync-engine.git
 cd $HOME/sync-engine/
 
 # kick off the setup script
-/bin/bash -l -c "chmod +x ./setup.sh"
-/bin/bash -l -c "sudo ./setup.sh"
+chmod +x ./setup.sh
+sudo ./setup.sh
