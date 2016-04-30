@@ -20,12 +20,6 @@
         "description": "SSH rsa public key file as a string."
       }
     },
-    "location": {
-      "type": "string",
-      "metadata": {
-        "description": "Location of resources"
-      }
-    },
     "clusterVmSize": {
       "type": "string",
       "defaultValue": "Standard_A2",
@@ -77,50 +71,56 @@
     "osDiskName": "osDisk1",
     "vmStorageAccountContainerName": "vhds"
   },
-  "resources": [{
-    "apiVersion": "2015-05-01-preview",
-    "type": "Microsoft.Compute/virtualMachines",
-    "name": "[parameters('clusterName')]",
-    "location": "[parameters('location')]",
-    "properties": {
-      "hardwareProfile": {
-        "vmSize": "[parameters('clusterVmSize')]"
-      },
-      "osProfile": {
-        "computerName": "[parameters('clusterName')]",
-        "adminUsername": "[parameters('adminUsername')]",
-        "linuxConfiguration": {
-          "disablePasswordAuthentication": "true",
-          "ssh": {
-            "publicKeys": [{
-              "path": "[parameters('sshKeyPath')]",
-              "keyData": "[parameters('sshKey')]"
-            }]
-          }
-        }
-      },
-      "storageProfile": {
-        "imageReference": {
-          "publisher": "[variables('imagePublisher')]",
-          "offer": "[variables('imageOffer')]",
-          "sku": "[parameters('ubuntuOSVersion')]",
-          "version": "latest"
+  "resources": [
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[parameters('clusterName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('clusterVmSize')]"
         },
-        "osDisk": {
-          "name": "osdisk",
-          "vhd": {
-            "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/', variables('osDiskName'),'.vhd')]"
+        "osProfile": {
+          "computerName": "[parameters('clusterName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": "true",
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[parameters('sshKeyPath')]",
+                  "keyData": "[parameters('sshKey')]"
+                }
+              ]
+            }
+          }
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[parameters('ubuntuOSVersion')]",
+            "version": "latest"
           },
-          "caching": "ReadWrite",
-          "createOption": "FromImage"
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/', variables('osDiskName'),'.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('nicName'))]"
+            }
+          ]
         }
-      },
-      "networkProfile": {
-        "networkInterfaces": [{
-          "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('nicName'))]"
-        }]
       }
     }
-  }]
+  ]
 
 }
