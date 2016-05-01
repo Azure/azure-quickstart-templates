@@ -15,9 +15,9 @@ Topology
 This template deploys Couchbase Server 4.1 Data Service (key based core data operations), Index Service (global secondary index) and Query Service (n1ql) on every node. You can find recommendations on other deployment configurations in Couchbase Server documentation here: http://developer.couchbase.com/documentation/server/4.1/clustersetup/services-mds.html 
 
 Template allows configurable number of Couchbase Server 4.1 cluster nodes and node sizes. Cluster sizes comes in 3 options;
-- Small size = Standard_A2 * 3 Nodes
-- Medium size  = Standard_A6 * 4 Nodes
-- Large size = Standard_D14 * 5 Nodes
+- Small Cluster = 3 Nodes of Standard_A2
+- Medium Cluster  = 4 Nodes of Standard_A6
+- Large Cluster = 5 Nodes of Standard_D14
 
 The cluster nodes are internal and only accessible on the internal virtual network. The cluster can be accessed either through a Ubuntu VM accessible  through SSH (port 22), or a Windows jumpbox VM through RDP, each having a separate public IP for test purposes only. The assumption for the deployment is, the cluster is going to be provisioned as the back end of a service, and never be exposed to internet directly. 
 
