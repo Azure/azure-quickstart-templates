@@ -29,4 +29,4 @@ chmod +x ./setup.sh
 sudo ./setup.sh
 chown -R $AZUREUSER /etc/inboxapp
 
-/bin/su -s /bin/bash -c "nohup /home/$AZUREUSER/sync-engine/bin/inbox-start &" $AZUREUSER
+runuser -l $AZUREUSER -c "nohup /home/$AZUREUSER/sync-engine/bin/inbox-start &"
