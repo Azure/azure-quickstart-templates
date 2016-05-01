@@ -37,5 +37,5 @@ The cluster is deployed to one single availability set to ensure the distributio
 - Couchbase Server 4.1 [SDKs](http://developer.couchbase.com/documentation/server/4.1/sdks/intro.html)
 - Couchbase Server [N1QL Reference Guide](http://developer.couchbase.com/documentation/server/4.1/n1ql/index.html) (SQL-like Query Language for JSON)
 - [Security Considerations](http://developer.couchbase.com/documentation/server/4.1/install/install-security-bp.html) for Couchbase Server 4.1 Installations
-- [Cluster Sizing Guidelines](http://developer.couchbase.com/documentation/server/4.1/install/sizing-general.html) for Couchbase Server 4.1:
+- [Cluster Sizing Guidelines](http://developer.couchbase.com/documentation/server/4.1/install/sizing-general.html) for Couchbase Server 4.1
 
