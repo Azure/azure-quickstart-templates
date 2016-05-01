@@ -25,5 +25,5 @@ if $installSecurityManagement; then
 fi
 conf="${conf}&ftw_sic_key=$sicKey"
 
-config_system -s $conf
+config_system -s "$conf"
 shutdown -r now

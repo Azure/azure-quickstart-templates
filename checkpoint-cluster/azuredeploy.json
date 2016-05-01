@@ -1,0 +1,830 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminPassword": {
+      "metadata": {
+        "description": "Administrator password"
+      },
+      "type": "securestring"
+    },
+    "authenticationType": {
+      "allowedValues": [
+        "password",
+        "sshPublicKey"
+      ],
+      "defaultValue": "password",
+      "metadata": {
+        "description": "Authentication type"
+      },
+      "type": "string"
+    },
+    "newStorageAccountName": {
+      "metadata": {
+        "description": "Name of storage account"
+      },
+      "type": "string"
+    },
+    "offer": {
+      "allowedValues": [
+        "R7730BYOL",
+        "R7730PAYG"
+      ],
+      "defaultValue": "R7730BYOL",
+      "metadata": {
+        "description": "Offer version and type"
+      },
+      "type": "string"
+    },
+    "sshPublicKey": {
+      "defaultValue": "",
+      "metadata": {
+        "description": "Administrator SSH public key"
+      },
+      "type": "string"
+    },
+    "clusterName": {
+      "metadata": {
+        "description": "Name of the Check Point Cluster"
+      },
+      "type": "string"
+    },
+    "vmSize": {
+      "defaultValue": "Standard_D3",
+      "allowedValues": [
+        "Standard_A4",
+        "Standard_A7",
+        "Standard_A9",
+        "Standard_A11",
+        "Standard_D3",
+        "Standard_D4",
+        "Standard_D12",
+        "Standard_D13",
+        "Standard_D14",
+        "Standard_D3_v2",
+        "Standard_D4_v2",
+        "Standard_D5_v2",
+        "Standard_D12_v2",
+        "Standard_D13_v2",
+        "Standard_D14_v2"
+      ],
+      "metadata": {
+        "description": "Size of the VM"
+      },
+      "type": "string"
+    },
+    "roleUserName": {
+      "type": "string",
+      "metadata": {
+        "description": "Azure username to make Azure API calls"
+      }
+    },
+    "rolePassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Azure password to make Azure API calls"
+      }
+    },
+    "sicKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "One time key for Secure Internal Communication",
+        "minLength": 8
+      }
+    }
+  },
+  "variables": {
+    "apiVersion": "2015-06-15",
+    "customData": "[concat('#!/bin/bash\n', '\n', 'subscriptionId=\"', subscription().subscriptionId, '\"', '\n', 'resourceGroup=\"', resourceGroup().name, '\"', '\n', 'userName=\"', parameters('roleUserName'), '\"', '\n', 'password=\"', parameters('rolePassword'), '\"', '\n', 'virtualNetwork=\"', variables('vnetName'), '\"', '\n', 'clusterName=\"', parameters('clusterName'), '\"', '\n', 'lbName=\"', variables('lbName'), '\"', '\n', '\n', 'cat <<EOF >\"$FWDIR/conf/azure-ha.json\"\n', '{\n', '  \"debug\": false,\n', '  \"subscriptionId\": \"$subscriptionId\",\n', '  \"resourceGroup\": \"$resourceGroup\",\n', '  \"userName\": \"$userName\",\n', '  \"password\": \"$password\",\n', '  \"virtualNetwork\": \"$virtualNetwork\",\n', '  \"clusterName\": \"$clusterName\",\n', '  \"lbName\": \"$lbName\"\n', '}\n', 'EOF\n', '\n', 'adminPassword=\"', parameters('adminPassword'), '\"', '\n', 'sicKey=\"', parameters('sicKey'), '\"', '\n', 'conf=\"install_security_gw=true\"\n', 'conf=\"${conf}&install_ppak=true\"\n', 'conf=\"${conf}&gateway_cluster_member=true\"\n', 'conf=\"${conf}&install_security_managment=false\"\n', 'conf=\"${conf}&ftw_sic_key=$sicKey\"\n', '\n', 'config_system -s \"$conf\"\n', 'shutdown -r now\n')]",
+    "imageOffer": "check-point-r77-10",
+    "imagePublisher": "checkpoint",
+    "imageReference": "[variables(concat('imageReference', parameters('offer')))]",
+    "imageReferenceR7730BYOL": {
+      "offer": "[variables('imageOffer')]",
+      "publisher": "[variables('imagePublisher')]",
+      "sku": "sg-byol",
+      "version": "latest"
+    },
+    "imageReferenceR7730PAYG": {
+      "offer": "[variables('imageOffer')]",
+      "publisher": "[variables('imagePublisher')]",
+      "sku": "sg-ngtp",
+      "version": "latest"
+    },
+    "lbId": "[resourceId('Microsoft.Network/loadBalancers', variables('lbName'))]",
+    "lbName": "frontend-lb",
+    "nic1Name": "external",
+    "nic2Name": "int0",
+    "nic3Name": "int1",
+    "linuxConfigurationpassword": {},
+    "linuxConfigurationsshPublicKey": {
+      "disablePasswordAuthentication": "true",
+      "ssh": {
+        "publicKeys": [
+          {
+            "keyData": "[parameters('sshPublicKey')]",
+            "path": "/home/notused/.ssh/authorized_keys"
+          }
+        ]
+      }
+    },
+    "linuxConfiguration": "[variables(concat('linuxConfiguration',parameters('authenticationType')))]",
+    "plan": "[variables(concat('plan', parameters('offer')))]",
+    "planR7730BYOL": {
+      "name": "sg-byol",
+      "product": "[variables('imageOffer')]",
+      "publisher": "[variables('imagePublisher')]"
+    },
+    "planR7730PAYG": {
+      "name": "sg-ngtp",
+      "product": "[variables('imageOffer')]",
+      "publisher": "[variables('imagePublisher')]"
+    },
+    "storageAccountType": "Standard_LRS",
+    "vnetName": "vnet",
+    "vnetId": "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+    "addressPrefix": "10.0.0.0/16",
+    "subnet1Name": "Frontend",
+    "subnet1Prefix": "10.0.1.0/24",
+    "subnet1Id": "[concat(variables('vnetId'), '/subnets/', variables('subnet1Name'))]",
+    "subnet2Name": "Web",
+    "subnet2Prefix": "10.0.2.0/24",
+    "subnet2Id": "[concat(variables('vnetId'), '/subnets/', variables('subnet2Name'))]",
+    "subnet3Name": "App",
+    "subnet3Prefix": "10.0.3.0/24",
+    "subnet3Id": "[concat(variables('vnetId'), '/subnets/', variables('subnet3Name'))]",
+    "externalPrivateAddresses": [
+      "10.0.1.10",
+      "10.0.1.20"
+    ],
+    "subnet2PrivateAddresses": [
+      "10.0.2.10",
+      "10.0.2.20"
+    ],
+    "subnet3PrivateAddresses": [
+      "10.0.3.10",
+      "10.0.3.20"
+    ],
+    "frontendRouteTableId": "[resourceId('Microsoft.Network/routeTables', variables('subnet1Name'))]",
+    "subnet2RouteTableId": "[resourceId('Microsoft.Network/routeTables', variables('subnet2Name'))]",
+    "subnet3RouteTableId": "[resourceId('Microsoft.Network/routeTables', variables('subnet3Name'))]",
+    "publicIPAddressName": "[parameters('clusterName')]",
+    "publicIPAddressId": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]",
+    "publicIPAddressName1": "[concat(parameters('clusterName'), 1)]",
+    "publicIPAddressId1": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName1'))]",
+    "publicIPAddressName2": "[concat(parameters('clusterName'), 2)]",
+    "publicIPAddressId2": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName2'))]",
+    "availabilitySetName": "[concat(parameters('clusterName'), '-AvailabilitySet')]",
+    "count": 2,
+    "app1": "mywebapp",
+    "frontEndIPConfMember1Id": "[concat(variables('lbId'), '/frontendIPConfigurations/LoadBalancerFrontEnd1')]",
+    "frontEndIPConfMember2Id": "[concat(variables('lbId'), '/frontendIPConfigurations/LoadBalancerFrontEnd2')]",
+    "app1IPAddressId": "[resourceId('Microsoft.Network/publicIPAddresses',variables('app1'))]",
+    "member1IPConfigId": "[concat(variables('lbId'), '/frontendIPConfigurations/LoadBalancerFrontEnd1')]",
+    "member2IPConfigId": "[concat(variables('lbId'), '/frontendIPConfigurations/LoadBalancerFrontEnd2')]",
+    "app1IPConfigId": "[concat(variables('lbId'), '/frontendIPConfigurations/', variables('app1'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/routeTables",
+      "apiVersion": "[variables('apiVersion')]",
+      "location": "[resourceGroup().location]",
+      "name": "[variables('subnet1Name')]",
+      "properties": {
+        "routes": [
+          {
+            "name": "Local-Subnet",
+            "properties": {
+              "addressPrefix": "[variables('subnet1Prefix')]",
+              "nextHopType": "VnetLocal"
+            }
+          },
+          {
+            "name": "To-Internal",
+            "properties": {
+              "addressPrefix": "[variables('addressPrefix')]",
+              "nextHopType": "VirtualAppliance",
+              "nextHopIpAddress": "[variables('externalPrivateAddresses')[0]]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/routeTables",
+      "apiVersion": "[variables('apiVersion')]",
+      "location": "[resourceGroup().location]",
+      "name": "[variables('subnet2Name')]",
+      "properties": {
+        "routes": [
+          {
+            "name": "Local-Subnet",
+            "properties": {
+              "addressPrefix": "[variables('subnet2Prefix')]",
+              "nextHopType": "VnetLocal"
+            }
+          },
+          {
+            "name": "Inside-Vnet",
+            "properties": {
+              "addressPrefix": "[variables('addressPrefix')]",
+              "nextHopType": "VirtualAppliance",
+              "nextHopIpAddress": "[variables('subnet2PrivateAddresses')[0]]"
+            }
+          },
+          {
+            "name": "To-Internet",
+            "properties": {
+              "addressPrefix": "0.0.0.0/0",
+              "nextHopType": "VirtualAppliance",
+              "nextHopIpAddress": "[variables('subnet2PrivateAddresses')[0]]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/routeTables",
+      "apiVersion": "[variables('apiVersion')]",
+      "location": "[resourceGroup().location]",
+      "name": "[variables('subnet3Name')]",
+      "properties": {
+        "routes": [
+          {
+            "name": "Local-Subnet",
+            "properties": {
+              "addressPrefix": "[variables('subnet3Prefix')]",
+              "nextHopType": "VnetLocal"
+            }
+          },
+          {
+            "name": "Inside-Vnet",
+            "properties": {
+              "addressPrefix": "[variables('addressPrefix')]",
+              "nextHopType": "VirtualAppliance",
+              "nextHopIpAddress": "[variables('subnet3PrivateAddresses')[0]]"
+            }
+          },
+          {
+            "name": "To-Internet",
+            "properties": {
+              "addressPrefix": "0.0.0.0/0",
+              "nextHopType": "VirtualAppliance",
+              "nextHopIpAddress": "[variables('subnet3PrivateAddresses')[0]]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "[variables('apiVersion')]",
+      "location": "[resourceGroup().location]",
+      "name": "[parameters('newStorageAccountName')]",
+      "properties": {
+        "accountType": "[variables('storageAccountType')]"
+      }
+    },
+    {
+      "type": "Microsoft.Compute/availabilitySets",
+      "apiVersion": "[variables('apiVersion')]",
+      "location": "[resourceGroup().location]",
+      "name": "[variables('availabilitySetName')]"
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "[variables('apiVersion')]",
+      "location": "[resourceGroup().location]",
+      "name": "[variables('vnetName')]",
+      "dependsOn": [
+        "[variables('frontendRouteTableId')]",
+        "[variables('subnet2RouteTableId')]",
+        "[variables('subnet3RouteTableId')]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnet1Name')]",
+            "properties": {
+              "addressPrefix": "[variables('subnet1Prefix')]",
+              "routeTable": {
+                "id": "[variables('frontendRouteTableId')]"
+              }
+            }
+          },
+          {
+            "name": "[variables('subnet2Name')]",
+            "properties": {
+              "addressPrefix": "[variables('subnet2Prefix')]",
+              "routeTable": {
+                "id": "[variables('subnet2RouteTableId')]"
+              }
+            }
+          },
+          {
+            "name": "[variables('subnet3Name')]",
+            "properties": {
+              "addressPrefix": "[variables('subnet3Prefix')]",
+              "routeTable": {
+                "id": "[variables('subnet3RouteTableId')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "[variables('apiVersion')]",
+      "location": "[resourceGroup().location]",
+      "name": "[variables('publicIPAddressName')]",
+      "properties": {
+        "idleTimeoutInMinutes": 4,
+        "publicIPAllocationMethod": "Static"
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "[variables('apiVersion')]",
+      "location": "[resourceGroup().location]",
+      "name": "[concat(parameters('clusterName'), copyIndex(1))]",
+      "copy": {
+        "name": "publicAddressCopy",
+        "count": "[variables('count')]"
+      },
+      "properties": {
+        "idleTimeoutInMinutes": 4,
+        "publicIPAllocationMethod": "Static"
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "[variables('apiVersion')]",
+      "location": "[resourceGroup().location]",
+      "name": "[variables('app1')]",
+      "properties": {
+        "idleTimeoutInMinutes": 4,
+        "publicIPAllocationMethod": "Static"
+      }
+    },
+    {
+      "type": "Microsoft.Network/loadBalancers",
+      "apiVersion": "[variables('apiVersion')]",
+      "dependsOn": [
+        "publicAddressCopy",
+        "[variables('app1IPAddressId')]"
+      ],
+      "location": "[resourceGroup().location]",
+      "name": "[variables('lbName')]",
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "[concat('LoadBalancerFrontEnd', 1)]",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[variables(concat('publicIPAddressId', 1))]"
+              }
+            }
+          },
+          {
+            "name": "[concat('LoadBalancerFrontEnd', 2)]",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[variables(concat('publicIPAddressId', 2))]"
+              }
+            }
+          },
+          {
+            "name": "[variables('app1')]",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[variables('app1IPAddressId')]"
+              }
+            }
+          }
+        ],
+        "inboundNatRules": [
+          {
+            "name": "checkpoint-SSH1",
+            "properties": {
+              "backendPort": 22,
+              "frontendIPConfiguration": {
+                "id": "[variables('member1IPConfigId')]"
+              },
+              "frontendPort": 22,
+              "protocol": "tcp"
+            }
+          },
+          {
+            "name": "checkpoint-SSH2",
+            "properties": {
+              "backendPort": 22,
+              "frontendIPConfiguration": {
+                "id": "[variables('member2IPConfigId')]"
+              },
+              "frontendPort": 22,
+              "protocol": "tcp"
+            }
+          },
+          {
+            "name": "checkpoint-WEBUI1",
+            "properties": {
+              "backendPort": 443,
+              "frontendIPConfiguration": {
+                "id": "[variables('member1IPConfigId')]"
+              },
+              "frontendPort": 443,
+              "protocol": "tcp"
+            }
+          },
+          {
+            "name": "checkpoint-WEBUI2",
+            "properties": {
+              "backendPort": 443,
+              "frontendIPConfiguration": {
+                "id": "[variables('member2IPConfigId')]"
+              },
+              "frontendPort": 443,
+              "protocol": "tcp"
+            }
+          },
+          {
+            "name": "checkpoint-FWD1",
+            "properties": {
+              "backendPort": 256,
+              "frontendIPConfiguration": {
+                "id": "[variables('member1IPConfigId')]"
+              },
+              "frontendPort": 256,
+              "protocol": "tcp"
+            }
+          },
+          {
+            "name": "checkpoint-FWD2",
+            "properties": {
+              "backendPort": 256,
+              "frontendIPConfiguration": {
+                "id": "[variables('member2IPConfigId')]"
+              },
+              "frontendPort": 256,
+              "protocol": "tcp"
+            }
+          },
+          {
+            "name": "checkpoint-CPD1",
+            "properties": {
+              "backendPort": 18191,
+              "frontendIPConfiguration": {
+                "id": "[variables('member1IPConfigId')]"
+              },
+              "frontendPort": 18191,
+              "protocol": "tcp"
+            }
+          },
+          {
+            "name": "checkpoint-CPD2",
+            "properties": {
+              "backendPort": 18191,
+              "frontendIPConfiguration": {
+                "id": "[variables('member2IPConfigId')]"
+              },
+              "frontendPort": 18191,
+              "protocol": "tcp"
+            }
+          },
+          {
+            "name": "checkpoint-AMON1",
+            "properties": {
+              "backendPort": 18192,
+              "frontendIPConfiguration": {
+                "id": "[variables('member1IPConfigId')]"
+              },
+              "frontendPort": 18192,
+              "protocol": "tcp"
+            }
+          },
+          {
+            "name": "checkpoint-AMON2",
+            "properties": {
+              "backendPort": 18192,
+              "frontendIPConfiguration": {
+                "id": "[variables('member2IPConfigId')]"
+              },
+              "frontendPort": 18192,
+              "protocol": "tcp"
+            }
+          },
+          {
+            "name": "checkpoint-CPRID1",
+            "properties": {
+              "backendPort": 18208,
+              "frontendIPConfiguration": {
+                "id": "[variables('member1IPConfigId')]"
+              },
+              "frontendPort": 18208,
+              "protocol": "tcp"
+            }
+          },
+          {
+            "name": "checkpoint-CPRID2",
+            "properties": {
+              "backendPort": 18208,
+              "frontendIPConfiguration": {
+                "id": "[variables('member2IPConfigId')]"
+              },
+              "frontendPort": 18208,
+              "protocol": "tcp"
+            }
+          },
+          {
+            "name": "checkpoint-ICAPUSH1",
+            "properties": {
+              "backendPort": 18211,
+              "frontendIPConfiguration": {
+                "id": "[variables('member1IPConfigId')]"
+              },
+              "frontendPort": 18211,
+              "protocol": "tcp"
+            }
+          },
+          {
+            "name": "checkpoint-ICAPUSH2",
+            "properties": {
+              "backendPort": 18211,
+              "frontendIPConfiguration": {
+                "id": "[variables('member2IPConfigId')]"
+              },
+              "frontendPort": 18211,
+              "protocol": "tcp"
+            }
+          },
+          {
+            "name": "[variables('app1')]",
+            "properties": {
+              "backendPort": 8081,
+              "frontendIPConfiguration": {
+                "id": "[variables('app1IPConfigId')]"
+              },
+              "frontendPort": 80,
+              "protocol": "tcp"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "[variables('apiVersion')]",
+      "dependsOn": [
+        "[variables('vnetId')]",
+        "[variables('lbId')]",
+        "[variables('publicIPAddressId')]"
+      ],
+      "location": "[resourceGroup().location]",
+      "name": "[concat(variables('nic1Name'), '-1')]",
+      "properties": {
+        "enableIPForwarding": true,
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAddress": "[variables('externalPrivateAddresses')[0]]",
+              "privateIPAllocationMethod": "Static",
+              "PublicIpAddress": {
+                "Id": "[variables('publicIPAddressId')]"
+              },
+              "subnet": {
+                "id": "[variables('subnet1Id')]"
+              },
+              "loadBalancerInboundNatRules": [
+                {
+                  "id": "[concat(variables('lbId'), '/inboundNatRules/checkpoint-SSH1')]"
+                },
+                {
+                  "id": "[concat(variables('lbId'), '/inboundNatRules/checkpoint-WEBUI1')]"
+                },
+                {
+                  "id": "[concat(variables('lbId'), '/inboundNatRules/checkpoint-FWD1')]"
+                },
+                {
+                  "id": "[concat(variables('lbId'), '/inboundNatRules/checkpoint-CPD1')]"
+                },
+                {
+                  "id": "[concat(variables('lbId'), '/inboundNatRules/checkpoint-AMON1')]"
+                },
+                {
+                  "id": "[concat(variables('lbId'), '/inboundNatRules/checkpoint-CPRID1')]"
+                },
+                {
+                  "id": "[concat(variables('lbId'), '/inboundNatRules/checkpoint-ICAPUSH1')]"
+                },
+                {
+                  "id": "[concat(variables('lbId'), '/inboundNatRules/', variables('app1'))]"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "[variables('apiVersion')]",
+      "dependsOn": [
+        "[variables('vnetId')]",
+        "[variables('lbId')]"
+      ],
+      "location": "[resourceGroup().location]",
+      "name": "[concat(variables('nic1Name'), '-2')]",
+      "properties": {
+        "enableIPForwarding": true,
+        "ipConfigurations": [
+          {
+            "name": "ipconfig2",
+            "properties": {
+              "privateIPAddress": "[variables('externalPrivateAddresses')[1]]",
+              "privateIPAllocationMethod": "Static",
+              "loadBalancerInboundNatRules": [
+                {
+                  "id": "[concat(variables('lbId'), '/inboundNatRules/checkpoint-SSH2')]"
+                },
+                {
+                  "id": "[concat(variables('lbId'), '/inboundNatRules/checkpoint-WEBUI2')]"
+                },
+                {
+                  "id": "[concat(variables('lbId'), '/inboundNatRules/checkpoint-FWD2')]"
+                },
+                {
+                  "id": "[concat(variables('lbId'), '/inboundNatRules/checkpoint-CPD2')]"
+                },
+                {
+                  "id": "[concat(variables('lbId'), '/inboundNatRules/checkpoint-AMON2')]"
+                },
+                {
+                  "id": "[concat(variables('lbId'), '/inboundNatRules/checkpoint-CPRID2')]"
+                },
+                {
+                  "id": "[concat(variables('lbId'), '/inboundNatRules/checkpoint-ICAPUSH2')]"
+                }
+              ],
+              "subnet": {
+                "id": "[variables('subnet1Id')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "[variables('apiVersion')]",
+      "dependsOn": [
+        "[variables('vnetId')]"
+      ],
+      "location": "[resourceGroup().location]",
+      "name": "[concat(variables('nic2Name'), '-', copyIndex(1))]",
+      "copy": {
+        "name": "interface2Copy",
+        "count": "[variables('count')]"
+      },
+      "properties": {
+        "enableIPForwarding": true,
+        "ipConfigurations": [
+          {
+            "name": "ipconfig2",
+            "properties": {
+              "privateIPAddress": "[variables('subnet2PrivateAddresses')[copyIndex(0)]]",
+              "privateIPAllocationMethod": "Static",
+              "subnet": {
+                "id": "[variables('subnet2Id')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "[variables('apiVersion')]",
+      "dependsOn": [
+        "[variables('vnetId')]"
+      ],
+      "location": "[resourceGroup().location]",
+      "name": "[concat(variables('nic3Name'), '-', copyIndex(1))]",
+      "copy": {
+        "name": "interface3Copy",
+        "count": "[variables('count')]"
+      },
+      "properties": {
+        "enableIPForwarding": true,
+        "ipConfigurations": [
+          {
+            "name": "ipconfig3",
+            "properties": {
+              "privateIPAddress": "[variables('subnet3PrivateAddresses')[copyIndex(0)]]",
+              "privateIPAllocationMethod": "Static",
+              "subnet": {
+                "id": "[variables('subnet3Id')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "[variables('apiVersion')]",
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
+        "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySetName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nic1Name'), '-', copyIndex(1))]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nic2Name'), '-', copyIndex(1))]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nic3Name'), '-', copyIndex(1))]"
+      ],
+      "location": "[resourceGroup().location]",
+      "name": "[concat(parameters('clusterName'), copyIndex(1))]",
+      "copy": {
+        "name": "virtualMachineCopy",
+        "count": "[variables('count')]"
+      },
+      "plan": "[variables('plan')]",
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySetName'))]"
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": "true",
+            "storageUri": "[concat('http://', parameters('newStorageAccountName'),'.blob.core.windows.net')]"
+          }
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nic1Name'), '-', copyIndex(1)))]",
+              "properties": {
+                "primary": true
+              }
+            },
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nic2Name'), '-', copyIndex(1)))]",
+              "properties": {
+                "primary": false
+              }
+            },
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nic3Name'), '-', copyIndex(1)))]",
+              "properties": {
+                "primary": false
+              }
+            }
+          ]
+        },
+        "osProfile": {
+          "adminPassword": "[parameters('adminPassword')]",
+          "adminUsername": "notused",
+          "computername": "[concat(parameters('clusterName'), copyIndex(1))]",
+          "customData": "[base64(variables('customData'))]",
+          "linuxConfiguration": "[variables('linuxConfiguration')]"
+        },
+        "storageProfile": {
+          "imageReference": "[variables('imageReference')]",
+          "osDisk": {
+            "caching": "ReadWrite",
+            "createOption": "FromImage",
+            "name": "osDisk",
+            "vhd": {
+              "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/', parameters('clusterName'), '/osDisk', copyIndex(1), '.vhd')]"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "ClusterIPAddr": {
+      "type": "string",
+      "value": "[reference(variables('publicIPAddressId')).IpAddress]"
+    },
+    "Member1IPAddr": {
+      "type": "string",
+      "value": "[reference(variables('publicIPAddressId1')).IpAddress]"
+    },
+    "Member2IPAddr": {
+      "type": "string",
+      "value": "[reference(variables('publicIPAddressId2')).IpAddress]"
+    },
+    "App1IPAddr": {
+      "type": "string",
+      "value": "[reference(variables('app1IPAddressId')).IpAddress]"
+    }
+  }
+}
