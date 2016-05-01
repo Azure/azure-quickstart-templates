@@ -12,7 +12,7 @@ This template deploys a Couchbase Server 4.1 cluster on the Ubuntu 12 virtual ma
 Topology
 --------
 
-This template deploys Couchbase Server 4.1 Data Service (key based core data operations), Index Service (global secondary index) and Query Service (n1ql) on every node. You can find recommendations on other deployment configurations in Couchbase Server documentation here: http://developer.couchbase.com/documentation/server/4.1/clustersetup/services-mds.html 
+This template deploys Couchbase Server 4.1 Data Service (key based core data operations), Index Service (global secondary index) and Query Service (n1ql) on every node. You can find recommendations on other deployment configurations in Couchbase Server documentation [here](http://developer.couchbase.com/documentation/server/4.1/clustersetup/services-mds.html) 
 
 Template allows configurable number of Couchbase Server 4.1 cluster nodes and node sizes. Cluster sizes comes in 3 options;
 - Small Cluster = 3 Nodes of Standard_A2
