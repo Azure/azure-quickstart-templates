@@ -14,7 +14,7 @@ AZUREUSER=$1
 LOCATION=$2
 VMNAME=`hostname`
 HOMEDIR="/home/$AZUREUSER"
-RPC_SERVER="http:\/\/${VMNAME}.${LOCATION}.cloudapp.azure.com:8545"
+ETHEREUM_HOST_RPC="http://${VMNAME}.${LOCATION}.cloudapp.azure.com:8545"
 echo "User: $AZUREUSER"
 echo "User home dir: $HOMEDIR"
 echo "vmname: $VMNAME"
@@ -62,7 +62,6 @@ sudo -u $AZUREUSER wget https://raw.githubusercontent.com/kevinday/azure-quickst
 sudo -u $AZUREUSER wget https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/web/augur-on-ubuntu/augur_ui.conf
 sed -i "s/auguruser/$AZUREUSER/g" geth.conf
 sed -i "s/auguruser/$AZUREUSER/g" augur_ui.conf
-sed -i "s/RPC_SERVER/$RPC_SERVER/g" augur_ui.conf
 
 touch /var/log/geth.sys.log
 touch /var/log/augur_ui.sys.log
@@ -109,8 +108,6 @@ sudo -i -u $AZUREUSER bash -c "cd augur; npm run build"
 
 #allow nodejs to run on port 80 w/o sudo
 setcap 'cap_net_bind_service=+ep' /usr/bin/nodejs
-#set RPC server env var
-echo "export ETHEREUM_HOST_RPC=$RPC_SERVER" >> /etc/environment
 
 #Make augur_ui a service, turn on.
 #cp augur_ui.conf /etc/init/
