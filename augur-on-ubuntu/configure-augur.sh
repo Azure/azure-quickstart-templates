@@ -14,7 +14,7 @@ AZUREUSER=$1
 LOCATION=$2
 VMNAME=`hostname`
 HOMEDIR="/home/$AZUREUSER"
-RPC_SERVER="http://${VMNAME}.${LOCATION}.cloudapp.azure.com"
+RPC_SERVER="http:\/\/${VMNAME}.${LOCATION}.cloudapp.azure.com:8545"
 echo "User: $AZUREUSER"
 echo "User home dir: $HOMEDIR"
 echo "vmname: $VMNAME"
@@ -62,6 +62,7 @@ sudo -u $AZUREUSER wget https://raw.githubusercontent.com/kevinday/azure-quickst
 sudo -u $AZUREUSER wget https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/web/augur-on-ubuntu/augur_ui.conf
 sed -i "s/auguruser/$AZUREUSER/g" geth.conf
 sed -i "s/auguruser/$AZUREUSER/g" augur_ui.conf
+sed -i "s/RPC_SERVER/$RPC_SERVER/g" augur_ui.conf
 
 touch /var/log/geth.sys.log
 touch /var/log/augur_ui.sys.log
