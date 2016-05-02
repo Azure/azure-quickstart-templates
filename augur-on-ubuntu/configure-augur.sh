@@ -75,13 +75,14 @@ sudo -i -u $AZUREUSER geth init genesis.json
 sudo -u $AZUREUSER echo "password" > pw.txt
 sudo -i -u $AZUREUSER geth --password pw.txt account import priv_genesis.key
 
+#make geth a service, turn on.
+cp geth.conf /etc/init/
+start geth
+
 #Pregen DAG so miniing can start immediately
 sudo -u $AZUREUSER mkdir .ethash
 sudo -i -u $AZUREUSER geth makedag 0 .ethash
 
-#make geth a service, turn on.
-cp geth.conf /etc/init/
-start geth 
 
 ####################
 #Install Augur Contracts
