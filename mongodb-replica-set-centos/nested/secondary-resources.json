@@ -23,14 +23,8 @@
     "osSettings": {
       "type": "object"
     },
-    "numDataDisks": {
-      "type": "string"
-    },
     "sizeOfDataDiskInGB": {
       "type": "int"
-    },
-    "templateBaseUrl": {
-      "type": "string"
     },
     "vmSize": {
       "type": "string"
@@ -58,32 +52,6 @@
         "accountType": "Standard_LRS"
       }
     },
-    { 
-      "apiVersion": "2015-01-01", 
-      "name": "diskSelection", 
-      "type": "Microsoft.Resources/deployments", 
-      "properties": { 
-        "mode": "Incremental", 
-        "templateLink": { 
-          "uri": "[concat(parameters('templateBaseUrl'), 'disksSelector', '.json')]", 
-            "contentVersion": "1.0.0.0" 
-        }, 
-        "parameters": { 
-          "numDataDisks": { 
-            "value": "[parameters('numDataDisks')]" 
-          }, 
-          "diskStorageAccountName": { 
-            "value": "[variables('storageAccountName')]" 
-          }, 
-          "diskCaching": { 
-            "value": "ReadWrite" 
-          }, 
-          "diskSizeGB": { 
-            "value": "[parameters('sizeOfDataDiskInGB')]" 
-          } 
-        } 
-      } 
-    }, 
     {
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/networkSecurityGroups",
@@ -198,7 +166,6 @@
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', parameters('namespace'), parameters('vmbasename'), 'nic')]",
-        "[concat('Microsoft.Resources/deployments/', 'diskSelection')]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -211,6 +178,48 @@
         },
         "storageProfile": {
           "imageReference": "[parameters('osSettings').imageReference]",
+		  "dataDisks": [ 
+             { 
+               "name": "datadisk1", 
+               "diskSizeGB": "[parameters('sizeOfDataDiskInGB')]", 
+               "lun": 0, 
+               "vhd": { 
+                 "Uri": "[concat('http://', variables('storageAccountName'),'.blob.core.windows.net/vhds/', 'datadisk1.vhd')]" 
+               }, 
+               "createOption": "Empty",
+               "caching": "ReadWrite"			   
+             }, 
+             { 
+               "name": "datadisk2", 
+               "diskSizeGB": "[parameters('sizeOfDataDiskInGB')]", 
+               "lun": 1, 
+               "vhd": { 
+                 "Uri": "[concat('http://', variables('storageAccountName'),'.blob.core.windows.net/vhds/', 'datadisk2.vhd')]" 
+               }, 
+               "caching": "ReadWrite",
+               "createOption": "Empty" 
+             }, 
+             { 
+               "name": "datadisk3", 
+               "diskSizeGB": "[parameters('sizeOfDataDiskInGB')]", 
+               "lun": 2, 
+               "vhd": { 
+                 "Uri": "[concat('http://', variables('storageAccountName'),'.blob.core.windows.net/vhds/', 'datadisk3.vhd')]" 
+               },
+               "caching": "ReadWrite",			   
+               "createOption": "Empty" 
+             }, 
+             { 
+               "name": "datadisk4", 
+               "diskSizeGB": "[parameters('sizeOfDataDiskInGB')]", 
+               "lun": 3, 
+               "vhd": { 
+                 "Uri": "[concat('http://', variables('storageAccountName'),'.blob.core.windows.net/vhds/', 'datadisk4.vhd')]" 
+               },
+               "caching": "ReadWrite",			   
+               "createOption": "Empty" 
+             } 
+           ], 
           "osDisk": {
             "name": "osdisk",
             "vhd": {
@@ -218,8 +227,7 @@
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
-          },
-          "dataDisks": "[reference('diskSelection').outputs.dataDiskArray.value]"
+          }
         },
         "networkProfile": {
           "networkInterfaces": [
