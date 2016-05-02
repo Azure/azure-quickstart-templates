@@ -56,7 +56,7 @@ else
 fi
 
 #Script Parameters
-PACKAGE_NAME="couchbase-server-enterprise_4.1.1-ubuntu12.04_amd64.deb"
+PACKAGE_NAME=""
 CLUSTER_NAME=""
 IP_LIST=""
 ADMINISTRATOR=""
