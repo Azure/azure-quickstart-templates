@@ -22,9 +22,13 @@ echo "dataDir=/var/lib/zookeeper" >> zookeeper-3.4.8/conf/zoo.cfg
 echo "clientPort=2181" >> zookeeper-3.4.8/conf/zoo.cfg
 echo "initLimit=5" >> zookeeper-3.4.8/conf/zoo.cfg
 echo "syncLimit=2" >> zookeeper-3.4.8/conf/zoo.cfg
-echo "server.1=10.0.0.4:2888:3888" >> zookeeper-3.4.8/conf/zoo.cfg
-echo "server.2=10.0.0.5:2888:3888" >> zookeeper-3.4.8/conf/zoo.cfg
-echo "server.3=10.0.0.6:2888:3888" >> zookeeper-3.4.8/conf/zoo.cfg
+ 
+i=1
+while [ $i -le $2 ]
+do
+    echo "server.$i=10.0.0.$(($i+3)):2888:3888" >> zookeeper-3.4.8/conf/zoo.cfg
+    i=$(($i+1))
+done
 
 mkdir -p /var/lib/zookeeper
 
