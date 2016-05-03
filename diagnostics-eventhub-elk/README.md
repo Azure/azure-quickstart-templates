@@ -16,4 +16,4 @@ After the deployment completes you can view the diagnostics data in Kibana. To g
 
 #Notes
 - This template uses the Elasticsearch template from: <a href="../elasticsearch">azure-quickstart-templates/elasticsearch/<a/>
-
+- It installs the Logstash input plugin for Event Hub from: <a href="https://github.com/Azure/azure-diagnostics-tools/tree/master/Logstash/logstash-input-azurewadeventhub">logstash-input-azurewadeventhub</a>
