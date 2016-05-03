@@ -32,11 +32,11 @@ function install-script {
     schtasks /DELETE /TN scriptcontianers /F"
 }
 
-Install-Script > c:\images.ps1
+Install-Script > c:\windos-containers.ps1
 
 # Create scheduled task.
 
-$action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoExit c:\images.ps1"
+$action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument "-NoExit c:\windos-containers.ps1"
 $trigger = New-ScheduledTaskTrigger -AtLogOn
 Register-ScheduledTask -TaskName "scriptcontianers" -Action $action -Trigger $trigger -RunLevel Highest -User $adminUser | Out-Null
 
