@@ -23,6 +23,11 @@ The nodes are under the same subnet 10.0.0.0/24. Except the 2 router server node
 This template also allows you to input your existing zabbix server IP address to monitor these MongoDB router servers.
 
 
+##Import Notice
+Each VM of the shard uses raid0 to improve performance. The number and the size of data disks(setup raid0) on each shard VM are determined by yourself。 However, there is number and size of data disks limit per the VM size. Before you set number and size of data disks, please refer to the link https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-linux-sizes/ for the correct choice.
+
+
+
 ##After deployment, you can do below to verify if the sharding cluster really works or not:
 
 1 SSH connect to one of the router server, execute below:

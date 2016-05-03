@@ -29,10 +29,22 @@
     "vmSize": {
       "type": "string"
     },
+    "storageAccountBasename": {
+      "type": "string"
+    },
+    "numDataDisks": {
+      "type": "string"
+    },
+    "sizeOfDataDiskInGB": {
+      "type": "int"
+    },
+    "templateBaseUrl": {
+      "type": "string"
+    },
     "subnet": {
       "type": "object"
     },
-	"zabbixServer": {
+	"zabbixServerIPAddress": {
 	  "type": "string"
 	},
     "staticIp": {
@@ -42,10 +54,45 @@
   "variables": {
     "subnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('subnet').vnet), '/subnets/', parameters('subnet').name)]",
 	"apiVersion": "2015-06-15",
-	"storageAccountName": "[concat(uniquestring(resourceGroup().id), 'standardsa')]",
+	"storageAccountName": "[concat(uniquestring(resourceGroup().id), parameters('storageAccountBasename'))]",
     "securityGroupName": "[concat(parameters('namespace'), parameters('vmbasename'), 'nsg')]"
   },
   "resources": [
+     {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('storageAccountName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "accountType": "Standard_LRS"
+      }
+    },
+    { 
+      "apiVersion": "2015-01-01", 
+      "name": "diskSelection", 
+      "type": "Microsoft.Resources/deployments", 
+      "properties": { 
+        "mode": "Incremental", 
+        "templateLink": { 
+          "uri": "[concat(parameters('templateBaseUrl'), 'disksSelector', '.json')]", 
+            "contentVersion": "1.0.0.0" 
+        }, 
+        "parameters": { 
+          "numDataDisks": { 
+            "value": "[parameters('numDataDisks')]" 
+          }, 
+          "diskStorageAccountName": { 
+            "value": "[variables('storageAccountName')]" 
+          }, 
+          "diskCaching": { 
+            "value": "ReadWrite" 
+          }, 
+          "diskSizeGB": { 
+            "value": "[parameters('sizeOfDataDiskInGB')]" 
+          } 
+        } 
+      } 
+    }, 
     {
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/networkSecurityGroups",
@@ -114,13 +161,6 @@
     },
     {
       "apiVersion": "[variables('apiVersion')]",
-      "type": "Microsoft.Compute/availabilitySets",
-      "name": "[concat(parameters('namespace'), 'set')]",
-      "location": "[resourceGroup().location]",
-      "properties": {}
-    },
-    {
-      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(parameters('namespace'), concat(parameters('vmbasename'), 'nic'))]",
       "location": "[resourceGroup().location]",
@@ -148,7 +188,8 @@
       "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'vm')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', concat(parameters('namespace'), concat(parameters('vmbasename'), 'nic')))]"
+        "[concat('Microsoft.Network/networkInterfaces/', concat(parameters('namespace'), concat(parameters('vmbasename'), 'nic')))]",
+        "[concat('Microsoft.Resources/deployments/', 'diskSelection')]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -168,7 +209,8 @@
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
-          }
+          },
+          "dataDisks": "[reference('diskSelection').outputs.dataDiskArray.value]"
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -196,7 +238,7 @@
           "fileUris": "[parameters('osSettings').scripts]"
 		},
 		"protectedSettings": {
-          "commandToExecute": "[concat('bash replica_primary.sh ', parameters('replSetName'), ' ', parameters('staticIp'), ' ', parameters('zabbixServer'), ' ', parameters('mongoAdminUsername'), ' ', parameters('mongoAdminPassword'))]"
+          "commandToExecute": "[concat('bash replica_primary.sh ', parameters('replSetName'), ' ', parameters('staticIp'), ' ', parameters('zabbixServerIPAddress'), ' ', parameters('mongoAdminUsername'), ' ', parameters('mongoAdminPassword'))]"
         }
       }
     }
