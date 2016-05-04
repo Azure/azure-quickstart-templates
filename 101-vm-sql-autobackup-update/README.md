@@ -9,7 +9,7 @@
 
 ## Solution overview and deployed resources
 
-+	This template will create a SQL Server 2014 IaasExtension Resoruce to update an existing SQL Server 2014 Virtual Machine
++	This template will create a SQL Server 2014 IaasExtension Resource to update an existing SQL Server 2014 Virtual Machine
 
 This template setup or update SQL Server Auto Backup setting on any existing Azure Virtual machine with SQL Server Standard or Enterprise edition. This service enables you to configure a backup schedule on your SQL Server 2014 Enterprise and Standard Virtual Machines in a very convenient manner while ensuring your data is backed up consistently and safely. Automated Backup is configured to backup all existing and new databases for the default instance of SQL Server. This simplifies the usual process of configuring Managed Backup for new databases and then for each existing database by combining it into one simple automated setup.
 
