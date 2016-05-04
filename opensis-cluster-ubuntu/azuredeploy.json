@@ -2,12 +2,6 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "newStorageAccountName": {
-      "type": "string",
-      "metadata": {
-        "description": "Unique DNS Name for the Storage Account where the Virtual Machine's disks will be placed."
-      }
-    },
     "adminUsername": {
       "type": "string",
       "metadata": {
@@ -106,6 +100,7 @@
     }
   },
   "variables": {
+    "storageAccountName": "[concat(uniquestring(resourceGroup().id),'storage')]",
     "imagePublisher": "Canonical",
     "imageOffer": "UbuntuServer",
     "ubuntuOSVersion": "14.04.2-LTS",
@@ -146,7 +141,7 @@
     {
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[parameters('newStorageAccountName')]",
+      "name": "[variables('storageAccountName')]",
       "location": "[resourceGroup().location]",
       "properties": {
         "accountType": "[variables('storageAccountType')]"
@@ -425,7 +420,7 @@
       "name": "[concat(variables('vmName'),copyIndex())]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/',parameters('newStorageAccountName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/',variables('storageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/',concat(variables('nicName'),copyIndex()))]",
         "[concat('Microsoft.Compute/availabilitySets/',variables('availabilitySetName'))]"
       ],
@@ -451,7 +446,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',concat(variables('OSDiskName'),copyIndex()),'.vhd')]"
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob,variables('vmStorageAccountContainerName'),'/',concat(variables('OSDiskName'),copyIndex()),'.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -547,7 +542,7 @@
       "name": "[concat(variables('vmName'),'db')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/',parameters('newStorageAccountName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/',variables('storageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/',variables('nicName'),'db')]",
         "[concat('Microsoft.Compute/availabilitySets/',variables('availabilitySetName'),'db')]"
       ],
@@ -573,7 +568,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',concat(variables('OSDiskName'),'db'),'.vhd')]"
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob,variables('vmStorageAccountContainerName'),'/',concat(variables('OSDiskName'),'db'),'.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
