@@ -2,12 +2,6 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "newStorageAccountName": {
-      "type": "string",
-      "metadata": {
-        "description": "Storage Account to create for the disks"
-      }
-    },
     "storageAccountType": {
       "type": "string",
       "defaultValue": "Standard_LRS",
@@ -70,6 +64,7 @@
     }
   },
   "variables": {
+    "storageAccountName": "[concat(uniquestring(resourceGroup().id),'storage')]",
     "availabilitySetName": "zookeeperAvSet",
     "virtualNetworkName": "zookeeperVNET",
     "vnetAddressPrefix": "10.0.0.0/16",
@@ -86,7 +81,7 @@
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[parameters('newStorageAccountName')]",
+      "name": "[variables('storageAccountName')]",
       "apiVersion": "2015-05-01-preview",
       "location": "[resourceGroup().location]",
       "properties": {
@@ -175,7 +170,7 @@
         "count": "[parameters('scaleNumber')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyIndex())]",
         "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
       ],
@@ -201,7 +196,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/', 'osdisk', copyIndex(), '.vhd')]"
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob,'vhds/', 'osdisk', copyIndex(), '.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
