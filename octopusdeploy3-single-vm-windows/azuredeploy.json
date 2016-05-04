@@ -2,12 +2,6 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "vmStorageAccountName": {
-      "type": "string",      
-      "metadata": {
-        "description": "Unique DNS Name for the Storage Account that will hold the Octopus Deploy Virtual Machine Disks."
-      }
-    },
     "vmAdminUsername": {
       "type": "string",
       "defaultValue": "octoadmin",
@@ -79,6 +73,7 @@
     }
   },
   "variables": {
+    "storageAccountName": "[concat(uniquestring(resourceGroup().id),'storage')]",
     "vmImagePublisher": "MicrosoftWindowsServer",
     "vmImageOffer": "WindowsServer",
     "vmOSDiskName": "osdiskforwindowssimple",
@@ -101,7 +96,7 @@
     "sqlDbCollation": "SQL_Latin1_General_CP1_CI_AS",
     "sqlDbMaxSizeBytes": "268435456000",
     "sqldbEditionPerformanceLevel": "1B1EBD4D-D903-4BAA-97F9-4EA675F5E928",
-    "sqlDbConnectionString": "[concat('Data Source=tcp:', parameters('sqlServerName'), '.database.windows.net,1433;Database=', variables('sqlDbName'), ';User Id=', parameters('sqlAdminUsername'), '@', parameters('sqlServerName'), ';Password=', parameters('sqlAdminPassword'), ';Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]",    
+    "sqlDbConnectionString": "[concat('Data Source=tcp:', parameters('sqlServerName'), '.database.windows.net,1433;Database=', variables('sqlDbName'), ';User Id=', parameters('sqlAdminUsername'), '@', parameters('sqlServerName'), ';Password=', parameters('sqlAdminPassword'), ';Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]",
     "installerUri": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/octopusdeploy3-single-vm-windows/Install-OctopusDeploy.ps1",
     "installerCommand": "[concat('powershell.exe -File Install-OctopusDeploy.ps1 ', base64(variables('sqlDbConnectionString')), ' ', base64(parameters('licenseFullName')), ' ', base64(parameters('licenseOrganisationName')), ' ', base64(parameters('licenseEmailAddress')), ' ', base64(parameters('octopusAdminUsername')), ' ', base64(parameters('octopusAdminPassword')), ' 2>&1 > D:\\Install-OctopusDeploy.ps1.log ')]"
   },
@@ -109,7 +104,7 @@
     {
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[parameters('vmStorageAccountName')]",
+      "name": "[variables('storageAccountName')]",
       "location": "[resourceGroup().location]",
       "tags": {
         "env": "trial",
@@ -200,7 +195,7 @@
         "vendor": "Octopus Deploy"
       },
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('vmStorageAccountName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('networkNicName'))]"
       ],
       "properties": {
@@ -222,7 +217,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://',parameters('vmStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('vmOSDiskName'),'.vhd')]"
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob,variables('vmStorageAccountContainerName'),'/',variables('vmOSDiskName'),'.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
