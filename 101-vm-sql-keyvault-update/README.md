@@ -9,7 +9,7 @@
 
 ## Solution overview and deployed resources
 
-+	This template will create a SQL Server 2014 IaasExtension Resoruce to update an existing SQL Server 2014 Virtual Machine
++	This template will create a SQL Server 2014 IaasExtension Resource to update an existing SQL Server 2014 Virtual Machine
 
 This template setup Azure Key Vault on any existing Azure Virtual machine with SQL Server Standard or Enterprise edition. 
 
