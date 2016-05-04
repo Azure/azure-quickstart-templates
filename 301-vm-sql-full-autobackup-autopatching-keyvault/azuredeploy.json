@@ -138,6 +138,72 @@
       ],
       "defaultValue": "General"
     },
+    "sqlAutopatchingDayOfWeek": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Auto Patching Day of A Week"
+      },
+      "allowedValues": [
+        "Everyday",
+        "Never",
+        "Sunday",
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday"
+      ],
+      "defaultValue": "Sunday"
+    },
+    "sqlAutopatchingStartHour": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Auto Patching Starting Hour"
+      },
+      "allowedValues": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15",
+        "16",
+        "17",
+        "18",
+        "19",
+        "20",
+        "21",
+        "22",
+        "23"
+      ],
+      "defaultValue": "2"
+    },
+    "sqlAutopatchingWindowDuration": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Auto Patching Duration Window in minutes"
+      },
+      "allowedValues": [
+        "30",
+        "60",
+        "90",
+        "120",
+        "150",
+        "180"
+      ],
+      "defaultValue": "60"
+    },
     "sqlAutobackupRetentionPeriod": {
       "type": "string",
       "metadata": {
@@ -183,12 +249,36 @@
         "description": "SQL Server Auto Backup Storage Account Name"
       }
     },
-        "sqlAutobackupEncryptionPassword": {
+    "sqlAutobackupEncryptionPassword": {
             "type": "string",
             "metadata": {
                 "description": "SQL Server Auto Backup Encryption Password"
             }
         },
+    "sqlAkvCredentialName": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL credential name to create on the SQL Server virtual machine"
+      }
+    },
+    "sqlAkvUrl": {
+      "type": "string",
+      "metadata": {
+        "description": "Azure Key Vault URL"
+      }
+    },
+    "sqlAkvPrincipalName": {
+      "type": "string",
+      "metadata": {
+        "description": "Azure Key Vault principal name or id"
+      }
+    },
+    "sqlAkvPrincipalSecret": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Azure Key Vault principal secret"
+      }
+    },
     "sqlAuthenticationLogin": {
       "type": "string",
       "metadata": {
@@ -287,21 +377,37 @@
         "type": "SqlIaaSAgent",
         "publisher": "Microsoft.SqlServer.Management",
         "typeHandlerVersion": "1.2",
-        "autoUpgradeMinorVersion": "true",
+        "autoUpgradeMinorVersion": true,
         "settings": {
           "AutoTelemetrySettings": {
             "Region": "[resourceGroup().location]"
+          },
+          "AutoPatchingSettings": {
+            "PatchCategory": "WindowsMandatoryUpdates",
+            "Enable": true,
+            "DayOfWeek": "[parameters('sqlAutopatchingDayOfWeek')]",
+            "MaintenanceWindowStartingHour": "[parameters('sqlAutopatchingStartHour')]",
+            "MaintenanceWindowDuration": "[parameters('sqlAutopatchingWindowDuration')]"
           },
           "AutoBackupSettings": {
             "Enable": true,
             "RetentionPeriod": "[parameters('sqlAutobackupRetentionPeriod')]",
             "EnableEncryption": true
           },
+          "KeyVaultCredentialSettings": {
+            "Enable": true,
+            "CredentialName": "[parameters('sqlAkvCredentialName')]"
+          }
         },
         "protectedSettings": {
           "StorageUrl": "[reference(resourceId('Microsoft.Storage/storageAccounts', parameters('sqlAutobackupStorageAccountName')), '2015-06-15').primaryEndpoints['blob']]",
           "StorageAccessKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('sqlAutobackupStorageAccountName')), '2015-06-15').key1]",
-           "Password": "[parameters('sqlAutobackupEncryptionPassword')]"
+           "Password": "[parameters('sqlAutobackupEncryptionPassword')]",
+          "PrivateKeyVaultCredentialSettings": {
+            "AzureKeyVaultUrl": "[parameters('sqlAkvUrl')]",
+            "ServicePrincipalName": "[parameters('sqlAkvPrincipalName')]",
+            "ServicePrincipalSecret": "[parameters('sqlAkvPrincipalSecret')]"
+          }
         }
       }
     },
@@ -315,7 +421,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-vm-sql-full-autobackup/nested/preparingSqlServerSa.json"
+          "uri": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-vm-sql-full/nested/preparingSqlServerSa.json"
         },
         "parameters": {
           "sqlVMName": {
@@ -352,7 +458,7 @@
             "value": "[parameters('sqlConnectivityType')]"
           },
           "sqlVMPrepareModulesURL": {
-            "value": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-vm-sql-full-autobackup/scripts/PrepareSqlServer.ps1.zip"
+            "value": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-vm-sql-full/scripts/PrepareSqlServer.ps1.zip"
           },
           "sqlVMPrepareConfigurationFunction": {
             "value": "PrepareSqlServerSa.ps1\\PrepareSqlServerSa"
