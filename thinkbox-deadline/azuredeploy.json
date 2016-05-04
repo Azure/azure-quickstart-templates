@@ -14,12 +14,6 @@
                 "description": "Unique public DNS prefix for the deployment. The fqdn will look something like '<dnsname>.westus.cloudapp.azure.com'. Up to 62 chars, digits or dashes, lowercase, should start with a letter: must conform to '^[a-z][a-z0-9-]{1,61}[a-z0-9]$'."
             }
         },
-        "newStorageAccount": {
-            "type": "string",
-            "metadata": {
-                "description": "Name of the Storage Account. This has to be a unique name, up to 24 chars, all lowercase."
-            }
-        },
         "adminUsername": {
             "type": "string",
             "metadata": {
@@ -53,20 +47,21 @@
             }
         }
     },
-    "variables": {
-        "virtualNetworkName": "[concat( parameters('clusterName'), '-vnet')]",
-        "vnetAddressRange": "10.0.0.0/16",
-        "subnetAddressRange": "10.0.0.0/24",
-        "subnetName": "[concat( parameters('clusterName'), '-subnet')]",
-        "subnet-id": "[concat(resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName')),'/subnets/',variables('subnetName'))]",
-        "apiVersion": "2015-05-01-preview",
-        "repositoryName": "[concat( parameters('clusterName'), '-repository')]",
-        "slaveName": "[concat( parameters('clusterName'), '-slave')]",
-        "publicIpName": "[concat( parameters('clusterName'), '-publicIp')]",
-        "networkSecurityGroupName": "[concat( parameters('clusterName'), '-nsg')]",
-        "networkInterfaceName": "[concat( parameters('clusterName'), '-nif')]",
-        "fullDnsName": "[concat( parameters('clusterName'), parameters('publicDnsName'))]"
-    },
+  "variables": {
+    "storageAccountName": "[concat(uniquestring(resourceGroup().id),'storage')]",
+    "virtualNetworkName": "[concat( parameters('clusterName'), '-vnet')]",
+    "vnetAddressRange": "10.0.0.0/16",
+    "subnetAddressRange": "10.0.0.0/24",
+    "subnetName": "[concat( parameters('clusterName'), '-subnet')]",
+    "subnet-id": "[concat(resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName')),'/subnets/',variables('subnetName'))]",
+    "apiVersion": "2015-05-01-preview",
+    "repositoryName": "[concat( parameters('clusterName'), '-repository')]",
+    "slaveName": "[concat( parameters('clusterName'), '-slave')]",
+    "publicIpName": "[concat( parameters('clusterName'), '-publicIp')]",
+    "networkSecurityGroupName": "[concat( parameters('clusterName'), '-nsg')]",
+    "networkInterfaceName": "[concat( parameters('clusterName'), '-nif')]",
+    "fullDnsName": "[concat( parameters('clusterName'), parameters('publicDnsName'))]"
+  },
     "resources": [
       {
         "apiVersion": "[variables('apiVersion')]",
@@ -99,7 +94,7 @@
       {
         "apiVersion": "[variables('apiVersion')]",
         "type": "Microsoft.Storage/storageAccounts",
-        "name": "[parameters('newStorageAccount')]",
+        "name": "[variables('storageAccountName')]",
         "location": "[resourceGroup().location]",
         "properties": {
           "accountType": "Standard_LRS"
@@ -230,7 +225,7 @@
         "name": "[variables('repositoryName')]",
         "location": "[resourceGroup().location]",
         "dependsOn": [
-          "[resourceId('Microsoft.Storage/storageAccounts',parameters('newStorageAccount'))]",
+          "[resourceId('Microsoft.Storage/storageAccounts',variables('storageAccountName'))]",
           "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceName'))]"
         ],
         "plan": {
@@ -257,7 +252,7 @@
             "osDisk": {
               "name": "osdisk",
               "vhd": {
-                "uri": "[concat('http://',parameters('newStorageAccount'),'.blob.core.windows.net/vhds/', variables('repositoryName'),'osdisk.vhd')]"
+                "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob,'vhds/', variables('repositoryName'),'osdisk.vhd')]"
               },
               "caching": "ReadWrite",
               "createOption": "FromImage"
@@ -307,7 +302,7 @@
           "product": "deadline7-2"
         },
         "dependsOn": [
-          "[resourceId('Microsoft.Storage/storageAccounts',parameters('newStorageAccount'))]",
+          "[resourceId('Microsoft.Storage/storageAccounts',variables('storageAccountName'))]",
           "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('networkInterfaceName'), copyindex()))]",
           "[resourceId('Microsoft.Compute/virtualMachines', variables('repositoryName'))]",
           "[concat( 'Microsoft.Compute/virtualMachines/', variables('repositoryName'), '/extensions/autoconf')]"
@@ -332,7 +327,7 @@
             "osDisk": {
               "name": "osdisk",
               "vhd": {
-                "uri": "[concat('http://',parameters('newStorageAccount'),'.blob.core.windows.net/vhds/', variables('slaveName') , copyindex(), '-osdisk.vhd')]"
+                "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob,'vhds/', variables('slaveName') , copyindex(), '-osdisk.vhd')]"
               },
               "caching": "ReadWrite",
               "createOption": "FromImage"
