@@ -2,12 +2,6 @@
   "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "storageName": {
-      "type": "string",
-      "metadata": {
-        "description": "Globally unique storage account name"
-      }
-    },
     "storageType": {
       "type": "string",
       "defaultValue": "Premium_LRS",
@@ -92,6 +86,7 @@
   },
 
   "variables": {
+    "storageAccountName": "[concat(uniquestring(resourceGroup().id),'storage')]",
     "vnet01Prefix": "10.0.0.0/16",
     "vnet01Subnet1Name": "Subnet-1",
     "vnet01Subnet1Prefix": "10.0.0.0/24",
@@ -106,7 +101,7 @@
   },
   "resources": [
     {
-      "name": "[parameters('storageName')]",
+      "name": "[variables('storageAccountName')]",
       "type": "Microsoft.Storage/storageAccounts",
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-05-01-preview",
@@ -178,7 +173,7 @@
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-05-01-preview",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('storageName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('vmNicName'))]"
       ],
       "tags": {
@@ -203,7 +198,7 @@
           "osDisk": {
             "name": "VMOSDisk",
             "vhd": {
-              "uri": "[concat('http://', parameters('storageName'), '.blob.core.windows.net/', variables('vmStorageAccountContainerName'), '/', variables('vmOSDiskName'), '.vhd')]"
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob, variables('vmStorageAccountContainerName'), '/', variables('vmOSDiskName'), '.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
