@@ -49,7 +49,8 @@
         "description": "SQL Server Virtual Machine Storage Account Type"
       },
       "allowedValues":[  
-            "Premium_LRS"
+            "Premium_LRS",
+            "Standard_LRS"
          ],
       "defaultValue":"Premium_LRS"
     },
@@ -138,31 +139,12 @@
       ],
       "defaultValue": "General"
     },
-    "sqlAutopatchingDayOfWeek": {
+    "sqlAutobackupRetentionPeriod": {
       "type": "string",
       "metadata": {
-        "description": "SQL Server Auto Patching Day of A Week"
+        "description": "SQL Server Auto Backup Retention Period"
       },
       "allowedValues": [
-        "Everyday",
-        "Never",
-        "Sunday",
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday",
-        "Saturday"
-      ],
-      "defaultValue": "Sunday"
-    },
-    "sqlAutopatchingStartHour": {
-      "type": "string",
-      "metadata": {
-        "description": "SQL Server Auto Patching Starting Hour"
-      },
-      "allowedValues": [
-        "0",
         "1",
         "2",
         "3",
@@ -185,25 +167,29 @@
         "20",
         "21",
         "22",
-        "23"
+        "23",
+        "24",
+        "25",
+        "26",
+        "27",
+        "28",
+        "29",
+        "30"
       ],
-      "defaultValue": "2"
+      "defaultValue": "30"
     },
-    "sqlAutopatchingWindowDuration": {
+    "sqlAutobackupStorageAccountName": {
       "type": "string",
       "metadata": {
-        "description": "SQL Server Auto Patching Duration Window in minutes"
-      },
-      "allowedValues": [
-        "30",
-        "60",
-        "90",
-        "120",
-        "150",
-        "180"
-      ],
-      "defaultValue": "60"
+        "description": "SQL Server Auto Backup Storage Account Name"
+      }
     },
+        "sqlAutobackupEncryptionPassword": {
+            "type": "string",
+            "metadata": {
+                "description": "SQL Server Auto Backup Encryption Password"
+            }
+        },
     "sqlAuthenticationLogin": {
       "type": "string",
       "metadata": {
@@ -302,18 +288,21 @@
         "type": "SqlIaaSAgent",
         "publisher": "Microsoft.SqlServer.Management",
         "typeHandlerVersion": "1.2",
-        "autoUpgradeMinorVersion": "true",
+        "autoUpgradeMinorVersion": true,
         "settings": {
           "AutoTelemetrySettings": {
             "Region": "[resourceGroup().location]"
           },
-          "AutoPatchingSettings": {
-            "PatchCategory": "WindowsMandatoryUpdates",
+          "AutoBackupSettings": {
             "Enable": true,
-            "DayOfWeek": "[parameters('sqlAutopatchingDayOfWeek')]",
-            "MaintenanceWindowStartingHour": "[parameters('sqlAutopatchingStartHour')]",
-            "MaintenanceWindowDuration": "[parameters('sqlAutopatchingWindowDuration')]"
-          }
+            "RetentionPeriod": "[parameters('sqlAutobackupRetentionPeriod')]",
+            "EnableEncryption": true
+          },
+        },
+        "protectedSettings": {
+          "StorageUrl": "[reference(resourceId('Microsoft.Storage/storageAccounts', parameters('sqlAutobackupStorageAccountName')), '2015-06-15').primaryEndpoints['blob']]",
+          "StorageAccessKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('sqlAutobackupStorageAccountName')), '2015-06-15').key1]",
+           "Password": "[parameters('sqlAutobackupEncryptionPassword')]"
         }
       }
     },
@@ -327,7 +316,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-vm-sql-full-autopatching/nested/preparingSqlServerSa.json"
+          "uri": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-vm-sql-full-autobackup/nested/preparingSqlServerSa.json"
         },
         "parameters": {
           "sqlVMName": {
@@ -364,7 +353,7 @@
             "value": "[parameters('sqlConnectivityType')]"
           },
           "sqlVMPrepareModulesURL": {
-            "value": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-vm-sql-full-autopatching/scripts/PrepareSqlServer.ps1.zip"
+            "value": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-vm-sql-full-autobackup/scripts/PrepareSqlServer.ps1.zip"
           },
           "sqlVMPrepareConfigurationFunction": {
             "value": "PrepareSqlServerSa.ps1\\PrepareSqlServerSa"
@@ -379,6 +368,15 @@
       "location": "[resourceGroup().location]",
       "properties": {
         "accountType": "[parameters('storageAccountType')]"
+      }
+    },
+    {
+      "name": "[parameters('sqlAutobackupStorageAccountName')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "accountType": "['Standard_LRS']"
       }
     },
     {
