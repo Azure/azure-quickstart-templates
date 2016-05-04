@@ -4,6 +4,7 @@
   "parameters": {
     "adminUserName": {
       "type": "string",
+      "defaultValue": "azureuser",
       "metadata": {
         "description": "User name for the Virtual Machine."
       }
@@ -16,6 +17,7 @@
     },
     "dnsLabelPrefix": {
       "type": "string",
+      "defaultValue": "sshlinux",
       "metadata": {
         "description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
       }
@@ -29,6 +31,7 @@
     },
     "vmName": {
       "type": "string",
+      "defaultValue": "sshvm",
       "metadata": {
         "description": "Name of the VM"
       }
@@ -48,6 +51,7 @@
   },
   "variables": {
     "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'sasshvm')]",
+    "uniqueDnsLabelPrefix": "[concat(parameters('dnsLabelPrefix'),uniquestring(resourceGroup().id))]",
     "location": "[resourceGroup().location]",
     "imagePublisher": "Canonical",
     "imageOffer": "UbuntuServer",
@@ -62,7 +66,7 @@
     "storageAccountType": "Standard_LRS",
     "virtualNetworkName": "sshVNET",
     "networkSecurityGroupName": "networkSecurityGroup1",
-    "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
+    "sshKeyPath": "[concat('/home/',parameters('adminUserName'),'/.ssh/authorized_keys')]",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
     "subnet1Ref": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]",
     "apiVersion": "2015-06-15"
@@ -109,7 +113,7 @@
       "properties": {
         "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
         "dnsSettings": {
-          "domainNameLabel": "[parameters('dnsLabelPrefix')]"
+          "domainNameLabel": "[variables('uniqueDnsLabelPrefix')]"
         }
       }
     },
@@ -181,7 +185,7 @@
         },
         "osProfile": {
           "computerName": "[parameters('vmName')]",
-          "adminUsername": "[parameters('adminUsername')]",
+          "adminUsername": "[parameters('adminUserName')]",
           "linuxConfiguration": {
             "disablePasswordAuthentication": "true",
             "ssh": {
@@ -225,5 +229,11 @@
         }
       }
     }
-  ]
+  ],
+    "outputs": {
+    "sshCommand": {
+      "type": "string",
+      "value": "[concat('ssh ', parameters('adminUsername'), '@', variables('uniqueDnsLabelPrefix'), '.', resourceGroup().location, '.cloudapp.azure.com')]"
+    } 
+  }
 }
