@@ -1,6 +1,6 @@
 # Create a new Microsoft BI environment with Active Directory
 
-This template creates two new Azure VMs, each with a public IP address and load balancer and a VNet, it configures one VM to be an AD DC for a new Forest and Domain. Other VM with SQL Server db engin/SSAS MD/SSRS domain joined, both VMs have public facing RDP
+This template creates two new Azure VMs, each with a public IP address and load balancer and a VNet, it configures one VM to be an AD DC for a new Forest and Domain. Other VM with SQL Server db engin/SSAS MD/SSRS domain joined, both VMs have public facing RDP.
 
 Most of the configuration for opening the SSRS Report Manager up to the internet is completed. All that remains is to open the HTTP port on the firewall of the SQL VM. However, this should NOT recommended until the Security Group has been configured to limit access.
 
