@@ -109,7 +109,6 @@ mountDriveForLogCloudera()
 	dirname=/log
 	drivename=/dev/sdc
 	mke2fs -F -t ext4 -b 4096 -E lazy_itable_init=1 -O sparse_super,dir_index,extent,has_journal,uninit_bg -m1 $drivename
-	mkdir /log
 	mkdir $dirname
 	mount -o noatime,barrier=1 -t ext4 $drivename $dirname
 	UUID=`sudo lsblk -no UUID $drivename`
@@ -120,7 +119,7 @@ mountDriveForLogCloudera()
 
 mountDriveForZookeeper()
 {
-	dirname=/var/lib/zookeep
+	dirname=/log/cloudera/zookeeper
 	drivename=/dev/sdd
 	mke2fs -F -t ext4 -b 4096 -E lazy_itable_init=1 -O sparse_super,dir_index,extent,has_journal,uninit_bg -m1 $drivename
 	mkdir $dirname

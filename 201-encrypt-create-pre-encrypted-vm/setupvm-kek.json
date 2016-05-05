@@ -1,0 +1,115 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vmName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Virtual Machine"
+            }
+        },
+        "existingStorageAccountName": {
+            "type": "string",
+            "metadata": {
+                "description": "Storage account name"
+            }
+        },
+        "osVhdUri": {
+            "type": "string",
+            "metadata": {
+                "description": "URI of OS vhd. Ex: https://contosostorage.blob.core.windows.net/vhds/windowsvm.vhd"
+            }
+        },
+        "osType": {
+            "type": "string",
+            "defaultValue": "Windows",
+            "allowedValues": [
+                "Windows",
+                "Linux"
+            ],
+            "metadata": {
+                "description": "OS product type"
+            }
+        },
+        "vmSize": {
+            "type": "string",
+            "defaultValue": "Standard_D2",
+            "metadata": {
+                "description": "VM size"
+            }
+        },
+        "keyVaultResourceID": {
+            "type": "string",
+            "metadata": {
+                "description": "KeyVault resource id. Ex: /subscriptions/subscriptionid/resourceGroups/contosorg/providers/Microsoft.KeyVault/vaults/contosovault"
+            }
+        },
+        "keyVaultSecretUrl": {
+            "type": "string",
+            "metadata": {
+                "description": "KeyVault secret Url. Ex: https://contosovault.vault.azure.net/secrets/contososecret/e088818e865e48488cf363af16dea596"
+            }
+        },
+        "keyVaultKekUrl": {
+            "type": "string",
+            "metadata": {
+                "description": "KeyVault kek Url. Ex: https://contosovault.vault.azure.net/keys/contosokek/562a4bb76b524a1493a6afe8e536ee78"
+            }
+        }
+    },
+    "variables": {
+        "storageUri": "[toLower(concat('http://',parameters('existingStorageAccountName'),'.blob.core.windows.net'))]",
+        "nicName": "[toLower(concat('nic',parameters('vmName')))]"
+    },
+    "resources": [
+        {
+            "apiVersion": "2016-03-30",
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[parameters('vmName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('vmSize')]"
+                },
+                "storageProfile": {
+                    "osDisk": {
+                        "name": "[parameters('vmName')]",
+                        "osType": "[parameters('osType')]",
+                        "vhd": {
+                            "uri": "[parameters('osVhdUri')]"
+                        },
+                        "caching": "ReadWrite",
+                        "createOption": "Attach",
+                        "encryptionSettings": {
+                            "diskEncryptionKey": {
+                                "sourceVault": {
+                                    "id": "[parameters('keyVaultResourceID')]"
+                                },
+                                "secretUrl": "[parameters('keyVaultSecretUrl')]"
+                            },
+                            "keyEncryptionKey": {
+                                "sourceVault": {
+                                    "id": "[parameters('keyVaultResourceID')]"
+                                },
+                                "keyUrl": "[parameters('keyVaultKekUrl')]"
+                            }
+                        }
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": "true",
+                        "storageUri": "[variables('storageUri')]"
+                    }
+                }
+            }
+        }
+    ]
+}

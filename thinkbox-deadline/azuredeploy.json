@@ -1,106 +1,76 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
-
-    "parameters": 
-    {
-        "location": 
-        {
+    "parameters": {
+        "location": {
             "type": "string",
-            "allowedValues": 
-            [
+            "allowedValues": [
                 "West US",
                 "East US",
                 "West Europe",
                 "East Asia",
                 "Southeast Asia"
             ],
-            "metadata": 
-            {
+            "metadata": {
                 "description": "The region to deploy the resources into"
             }
         },
-
-        "clusterName":
-        {
+        "clusterName": {
             "type": "string",
-            "metadata":
-            {
+            "metadata": {
                 "description": "Prefix for all items created by this template."
             }
         },
-
-        "publicDnsName": 
-        {
+        "publicDnsName": {
             "type": "string",
-            "metadata": 
-            {
+            "metadata": {
                 "description": "Unique public DNS prefix for the deployment. The fqdn will look something like '<dnsname>.westus.cloudapp.azure.com'. Up to 62 chars, digits or dashes, lowercase, should start with a letter: must conform to '^[a-z][a-z0-9-]{1,61}[a-z0-9]$'."
             }
         },
-
-        "newStorageAccount": 
-        {
+        "newStorageAccount": {
             "type": "string",
-            "metadata": 
-            {
-                "description": "Name of the Storage Account. This has to be a uinique name, up to 24 chars, all lowercase."
+            "metadata": {
+                "description": "Name of the Storage Account. This has to be a unique name, up to 24 chars, all lowercase."
             }
         },
-
-        "adminUsername": 
-        {
+        "adminUsername": {
             "type": "string",
-            "metadata": 
-            {
+            "metadata": {
                 "description": "The name of the administrator of the new VM. Exclusion list: 'admin','administrator'"
             }
         },
-        "adminPassword": 
-        {
+        "adminPassword": {
             "type": "securestring",
-            "metadata": 
-            {
+            "metadata": {
                 "description": "The password for the administrator account of the new VM"
             }
         },
-
-        "repositoryVMSize":
-        {
+        "repositoryVMSize": {
             "type": "string",
             "defaultValue": "Standard_A1",
-            "metadata":
-            {
+            "metadata": {
                 "description": "Size of the repository."
             }
         },
-
-        "slaveVMSize":
-        {
+        "slaveVMSize": {
             "type": "string",
             "defaultValue": "Standard_A1",
-            "metadata":
-            {
+            "metadata": {
                 "description": "Size of the slave."
             }
         },
-
-        "numberOfSlaves":
-        {
+        "numberOfSlaves": {
             "type": "int",
-            "metadata": 
-            {
+            "metadata": {
                 "description": "The number of slave vms to start."
             }
         }
     },
-
-    "variables": 
-    {
+    "variables": {
         "virtualNetworkName": "[concat( parameters('clusterName'), '-vnet')]",
         "vnetAddressRange": "10.0.0.0/16",
         "subnetAddressRange": "10.0.0.0/24",
-        "subnetName":  "[concat( parameters('clusterName'), '-subnet')]",
+        "subnetName": "[concat( parameters('clusterName'), '-subnet')]",
         "subnet-id": "[concat(resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName')),'/subnets/',variables('subnetName'))]",
         "apiVersion": "2015-05-01-preview",
         "repositoryName": "[concat( parameters('clusterName'), '-repository')]",
@@ -110,68 +80,54 @@
         "networkInterfaceName": "[concat( parameters('clusterName'), '-nif')]",
         "fullDnsName": "[concat( parameters('clusterName'), parameters('publicDnsName'))]"
     },
-
-    "resources": 
-    [
+    "resources": [
         {
             "apiVersion": "[variables('apiVersion')]",
             "type": "Microsoft.Network/publicIPAddresses",
             "name": "[variables('publicIpName')]",
             "location": "[parameters('location')]",
-            "properties": 
-            {
+            "properties": {
                 "publicIPAllocationMethod": "Dynamic",
-                "dnsSettings": 
-                {
+                "dnsSettings": {
                     "domainNameLabel": "[variables('fullDnsName')]"
                 }
             }
         },
-
         {
             "apiVersion": "[variables('apiVersion')]",
             "type": "Microsoft.Network/publicIPAddresses",
             "name": "[concat( variables('publicIpName'), copyindex())]",
             "location": "[parameters('location')]",
-            "copy":
-            {
+            "copy": {
                 "name": "ipLoop",
                 "count": "[parameters('numberOfSlaves')]"
             },
-            "properties": 
-            {
+            "properties": {
                 "publicIPAllocationMethod": "Dynamic",
-                "dnsSettings": 
-                {
+                "dnsSettings": {
                     "domainNameLabel": "[concat(variables('fullDnsName'), copyindex())]"
                 }
             }
         },
-
         {
             "apiVersion": "[variables('apiVersion')]",
             "type": "Microsoft.Storage/storageAccounts",
             "name": "[parameters('newStorageAccount')]",
             "location": "[parameters('location')]",
-            "properties": 
-            {
+            "properties": {
                 "accountType": "Standard_LRS"
             }
         },
-
         {
             "apiVersion": "[variables('apiVersion')]",
             "type": "Microsoft.Network/networkSecurityGroups",
             "name": "[variables('networkSecurityGroupName')]",
             "location": "[parameters('location')]",
-            "properties": 
-            {
-                "securityRules":
-                [
+            "properties": {
+                "securityRules": [
                     {
                         "name": "mongo",
-                        "properties":
-                        {
+                        "properties": {
                             "protocol": "Tcp",
                             "sourcePortRange": "*",
                             "destinationPortRange": "27070",
@@ -184,8 +140,7 @@
                     },
                     {
                         "name": "rdp",
-                        "properties":
-                        {
+                        "properties": {
                             "protocol": "Tcp",
                             "sourcePortRange": "*",
                             "destinationPortRange": "3389",
@@ -199,31 +154,26 @@
                 ]
             }
         },
-
         {
             "apiVersion": "[variables('apiVersion')]",
             "type": "Microsoft.Network/virtualNetworks",
             "name": "[variables('virtualNetworkName')]",
-            "dependsOn":
-            [
+            "dependsOn": [
                 "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
             ],
             "location": "[parameters('location')]",
-            "properties": 
-            {
-                "addressSpace": 
-                {
-                    "addressPrefixes": [ "[variables('vnetAddressRange')]" ]
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('vnetAddressRange')]"
+                    ]
                 },
-                "subnets": 
-                [
+                "subnets": [
                     {
                         "name": "[variables('subnetName')]",
-                        "properties": 
-                        {
+                        "properties": {
                             "addressPrefix": "[variables('subnetAddressRange')]",
-                            "networkSecurityGroup":
-                            {
+                            "networkSecurityGroup": {
                                 "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
                             }
                         }
@@ -231,32 +181,25 @@
                 ]
             }
         },
-
         {
             "apiVersion": "[variables('apiVersion')]",
             "type": "Microsoft.Network/networkInterfaces",
             "name": "[variables('networkInterfaceName')]",
             "location": "[parameters('location')]",
-            "dependsOn": 
-            [
+            "dependsOn": [
                 "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
                 "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpName'))]"
             ],
-            "properties": 
-            {
-                "ipConfigurations": 
-                [
+            "properties": {
+                "ipConfigurations": [
                     {
                         "name": "ipconfig",
-                        "properties": 
-                        {
+                        "properties": {
                             "privateIPAllocationMethod": "Dynamic",
-                            "subnet": 
-                            {
+                            "subnet": {
                                 "id": "[variables('subnet-id')]"
                             },
-                            "publicIPAddress":
-                            {
+                            "publicIPAddress": {
                                 "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpName'))]"
                             }
                         }
@@ -264,38 +207,29 @@
                 ]
             }
         },
-
-
         {
             "apiVersion": "[variables('apiVersion')]",
             "type": "Microsoft.Network/networkInterfaces",
             "name": "[concat( variables('networkInterfaceName'), copyindex())]",
             "location": "[parameters('location')]",
-            "copy":
-            {
+            "copy": {
                 "name": "nifLoop",
                 "count": "[parameters('numberOfSlaves')]"
             },
-            "dependsOn": 
-            [
+            "dependsOn": [
                 "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
                 "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('publicIpName'), copyindex()))]"
             ],
-            "properties": 
-            {
-                "ipConfigurations": 
-                [
+            "properties": {
+                "ipConfigurations": [
                     {
                         "name": "ipconfig",
-                        "properties": 
-                        {
+                        "properties": {
                             "privateIPAllocationMethod": "Dynamic",
-                            "subnet": 
-                            {
+                            "subnet": {
                                 "id": "[variables('subnet-id')]"
                             },
-                            "publicIPAddress":
-                            {
+                            "publicIPAddress": {
                                 "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('publicIpName'), copyindex()))]"
                             }
                         }
@@ -303,59 +237,47 @@
                 ]
             }
         },
-
         {
             "apiVersion": "[variables('apiVersion')]",
             "type": "Microsoft.Compute/virtualMachines",
             "name": "[variables('repositoryName')]",
             "location": "[parameters('location')]",
-            "dependsOn": 
-            [
+            "dependsOn": [
                 "[resourceId('Microsoft.Storage/storageAccounts',parameters('newStorageAccount'))]",
                 "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceName'))]"
             ],
-            "plan":
-            {
+            "plan": {
                 "name": "deadline-repository-7-2",
                 "publisher": "thinkboxsoftware",
                 "product": "deadline7-2"
             },
-            "properties": 
-            {
-                "hardwareProfile": 
-                {
+            "properties": {
+                "hardwareProfile": {
                     "vmSize": "[parameters('repositoryVMSize')]"
                 },
-                "osProfile": 
-                {
+                "osProfile": {
                     "computername": "azure-repo",
                     "adminUsername": "[parameters('adminUserName')]",
                     "adminPassword": "[parameters('adminPassword')]"
                 },
-                "storageProfile": 
-                {
-                    "imageReference":
-                    {
+                "storageProfile": {
+                    "imageReference": {
                         "publisher": "thinkboxsoftware",
                         "offer": "deadline7-2",
                         "sku": "deadline-repository-7-2",
                         "version": "1.0.0"
                     },
-                    "osDisk": 
-                    {
+                    "osDisk": {
                         "name": "osdisk",
-                        "vhd": 
-                        {
+                        "vhd": {
                             "uri": "[concat('http://',parameters('newStorageAccount'),'.blob.core.windows.net/vhds/', variables('repositoryName'),'osdisk.vhd')]"
                         },
                         "caching": "ReadWrite",
                         "createOption": "FromImage"
                     }
                 },
-                "networkProfile": 
-                {
-                    "networkInterfaces": 
-                    [
+                "networkProfile": {
+                    "networkInterfaces": [
                         {
                             "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceName'))]"
                         }
@@ -363,44 +285,36 @@
                 }
             }
         },
-
         {
             "apiVersion": "[variables('apiVersion')]",
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "name": "[concat( variables('repositoryName'), '/autoconf')]",
             "location": "[parameters('location')]",
-            "dependsOn": 
-            [
+            "dependsOn": [
                 "[resourceId('Microsoft.Compute/virtualMachines', variables('repositoryName'))]"
             ],
-            "properties":
-            {
+            "properties": {
                 "publisher": "Microsoft.Compute",
                 "type": "CustomScriptExtension",
                 "typeHandlerVersion": "1.4",
-                "settings":
-                {
-                    "fileUris": 
-                    [ 
+                "settings": {
+                    "fileUris": [
                         "https://deadline.blob.core.windows.net/scripts/repo-autoconf.py"
                     ],
                     "commandToExecute": "[concat('python', ' repo-autoconf.py')]"
                 }
             }
         },
-
         {
             "apiVersion": "[variables('apiVersion')]",
             "type": "Microsoft.Compute/virtualMachines",
             "name": "[concat(variables('slaveName'), copyindex())]",
             "location": "[parameters('location')]",
-            "copy":
-            {
+            "copy": {
                 "name": "nifLoop",
                 "count": "[parameters('numberOfSlaves')]"
             },
-            "plan":
-            {
+            "plan": {
                 "name": "deadline-slave-7-2",
                 "publisher": "thinkboxsoftware",
                 "product": "deadline7-2"
@@ -411,43 +325,34 @@
                 "[resourceId('Microsoft.Compute/virtualMachines', variables('repositoryName'))]",
                 "[concat( 'Microsoft.Compute/virtualMachines/', variables('repositoryName'), '/extensions/autoconf')]"
             ],
-            "properties": 
-            {
-                "hardwareProfile": 
-                {
+            "properties": {
+                "hardwareProfile": {
                     "vmSize": "[parameters('slaveVMSize')]"
                 },
-                "osProfile": 
-                {
+                "osProfile": {
                     "computername": "[concat('azure-slave', copyindex())]",
                     "adminUsername": "[parameters('adminUserName')]",
                     "adminPassword": "[parameters('adminPassword')]",
-                    "customData" : "[base64(reference(variables('networkInterfaceName')).ipConfigurations[0].properties.privateIPAddress)]"
+                    "customData": "[base64(reference(variables('networkInterfaceName')).ipConfigurations[0].properties.privateIPAddress)]"
                 },
-                "storageProfile": 
-                {
-                    "imageReference":
-                    {
+                "storageProfile": {
+                    "imageReference": {
                         "publisher": "thinkboxsoftware",
                         "offer": "deadline7-2",
                         "sku": "deadline-slave-7-2",
                         "version": "1.0.0"
                     },
-                    "osDisk": 
-                    {
+                    "osDisk": {
                         "name": "osdisk",
-                        "vhd": 
-                        {
+                        "vhd": {
                             "uri": "[concat('http://',parameters('newStorageAccount'),'.blob.core.windows.net/vhds/', variables('slaveName') , copyindex(), '-osdisk.vhd')]"
                         },
                         "caching": "ReadWrite",
                         "createOption": "FromImage"
                     }
                 },
-                "networkProfile": 
-                {
-                    "networkInterfaces": 
-                    [
+                "networkProfile": {
+                    "networkInterfaces": [
                         {
                             "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('networkInterfaceName'), copyindex()) )]"
                         }

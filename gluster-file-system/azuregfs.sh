@@ -186,6 +186,20 @@ activate_secondnic_centos() {
     fi
 }
 
+activate_secondnic_ubuntu() {
+    if [ -n "$SECONDNIC" ];
+    then
+        echo "" >> /etc/network/interfaces
+        echo "auto $SECONDNIC" >> /etc/network/interfaces
+        echo "iface $SECONDNIC inet dhcp" >> /etc/network/interfaces
+        defaultgw=$(ip route show |sed -n "s/^default via //p")
+        declare -a gateway=(${defaultgw// / })
+        echo "" >> /etc/network/interfaces
+        echo "post-up ip route add default via $gateway" >> /etc/network/interfaces
+        /etc/init.d/networking restart    
+    fi
+}
+
 configure_network() {
     open_ports
     if [ $iscentos -eq 0 ];
@@ -194,39 +208,72 @@ configure_network() {
         disable_selinux_centos
     elif [ $isubuntu -eq 0 ];
     then
+        activate_secondnic_ubuntu
         disable_apparmor_ubuntu
     fi
 }
 
 install_glusterfs_ubuntu() {
-    return
-}
-
-install_glusterfs_centos() {
-    yum list installed glusterfs-server-3.6.2-1.el6.x86_64
+    dpkg -l | grep glusterfs
     if [ ${?} -eq 0 ];
     then
         return
     fi
+
+    if [ ! -e /etc/apt/sources.list.d/gluster* ];
+    then
+        echo "adding gluster ppa"
+        apt-get  -y install python-software-properties
+        apt-add-repository -y ppa:gluster/glusterfs-3.7
+        apt-get -y update
+    fi
+    
     echo "installing gluster"
-    wget --no-cache http://download.gluster.org/pub/gluster/glusterfs/LATEST/CentOS/glusterfs-epel.repo
+    apt-get -y install glusterfs-server
+    
+    return
+}
+
+install_glusterfs_centos() {
+    yum list installed glusterfs-server
+    if [ ${?} -eq 0 ];
+    then
+        return
+    fi
+    
+    if [ ! -e /etc/yum.repos.d/epel.repo ];
+    then
+        echo "Installing extra packages for enterprise linux"
+        wget https://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm
+        rpm -Uvh ./epel-release-latest-6*.rpm
+        rm ./epel-release-latest-6*.rpm
+        yum -y update
+    fi
+    
+    echo "installing gluster"
+    wget --no-cache http://download.gluster.org/pub/gluster/glusterfs/LATEST/EPEL.repo/glusterfs-epel.repo
     mv glusterfs-epel.repo  /etc/yum.repos.d/
-    wget -l 1 -nd -nc -r -A.rpm http://download.gluster.org/pub/gluster/glusterfs/3.6/3.6.3/RHEL/epel-6/x86_64/
-    yum -y install glusterfs-3.6.3-1.el6.x86_64.rpm glusterfs-fuse-3.6.3-1.el6.x86_64.rpm glusterfs-geo-replication-3.6.3-1.el6.x86_64.rpm glusterfs-server-3.6.3-1.el6.x86_64.rpm
+    yum -y update
+    yum -y install glusterfs-cli glusterfs-geo-replication glusterfs-fuse glusterfs-server glusterfs
 }
 
 configure_gluster() {
-    /etc/init.d/glusterd status
-    if [ ${?} -ne 0 ];
+    if [ $iscentos -eq 0 ];
     then
-        if [ $iscentos -eq 0 ];
+        /etc/init.d/glusterd status
+        if [ ${?} -ne 0 ];
         then
             install_glusterfs_centos
-        elif [ $isubuntu -eq 0 ];
+        fi
+        /etc/init.d/glusterd start        
+    elif [ $isubuntu -eq 0 ];
+    then
+        /etc/init.d/glusterfs-server status
+        if [ ${?} -ne 0 ];
         then
             install_glusterfs_ubuntu
         fi
-        /etc/init.d/glusterd start
+        /etc/init.d/glusterfs-server start
     fi
 
     GLUSTERDIR="${MOUNTPOINT}/brick"
@@ -286,14 +333,21 @@ allow_passwordssh() {
     fi
     sed -i "s/^#PasswordAuthentication.*/PasswordAuthentication yes/I" /etc/ssh/sshd_config
     sed -i "s/^PasswordAuthentication no.*/PasswordAuthentication yes/I" /etc/ssh/sshd_config
-    /etc/init.d/sshd reload
+    if [ $iscentos -eq 0 ];
+    then
+        /etc/init.d/sshd reload
+    elif [ $isubuntu -eq 0 ];
+    then
+        /etc/init.d/ssh reload
+    fi
 }
+
+check_os
 
 # temporary workaround form CRP 
 allow_passwordssh  
 
-check_os
-if [ $iscentos -ne 0 ];
+if [ $iscentos -ne 0 ] && [ $isubuntu -ne 0];
 then
     echo "unsupported operating system"
     exit 1 
