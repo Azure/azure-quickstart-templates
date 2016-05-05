@@ -171,14 +171,20 @@ fi
 
 
 echo "start initiating the replica set"
-curl ifconfig.me > /tmp/ip.txt 2> /dev/null
-publicIP=`cat /tmp/ip.txt`
+publicIp=`curl -s ip.cn|grep -Po '\d+.\d+.\d+.\d+'`
+if [[ -z $publicIp ]];then
+	finalIp=$staticIp
+else
+	finalIp=$publicIp
+fi
+
+echo "the ip address is $finalIp"
 
 
 mongo<<EOF
 use admin
 db.auth("$mongoAdminUser", "$mongoAdminPasswd")
-config ={_id:"$replSetName",members:[{_id:0,host:"$staticIp:27017"}]}
+config ={_id:"$replSetName",members:[{_id:0,host:"$finalIp:27017"}]}
 rs.initiate(config)
 exit
 EOF
