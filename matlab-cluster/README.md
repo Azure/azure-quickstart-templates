@@ -1,6 +1,6 @@
-Run your MATLAB compute-intensive parallel
-workloads by creating one or more MATLAB Distributed Computing Server™ clusters using
-Azure Virtual Machines.
+# Provision a MATLAB Distributed Computing Server using Azure VMs
+
+Run your MATLAB compute-intensive parallel workloads by creating one or more MATLAB Distributed Computing Server™ clusters using Azure Virtual Machines.
 
 # Pre-Requisites
 

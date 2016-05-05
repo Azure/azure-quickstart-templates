@@ -98,7 +98,7 @@ function mdcs_create($p) {
   echo "Downloading setup templates..."
   $datetimestr = (Get-Date).ToString('yyyy-MM-dd-HH-mm-ss')
   $template_uri = $script:GITHUB_BASE_URL + "azuredeploy.json"
-  $template_param_uri = $script:GITHUB_BASE_URL + "azuredeploy.parameters.json"
+  $template_param_uri = $script:GITHUB_BASE_URL + "scripts\azuredeploy.parameters.script.driven.template.json"
   $template = "$env:TEMP\mdcs-$datetimestr.json"
   $template_param = "$env:TEMP\mdcs-param-$datetimestr.json"
   $updated_template_param = "$env:TEMP\mdcs-param-updated-$datetimestr.json"
@@ -148,20 +148,17 @@ Admin user credential for all VMs. The supplied password must be between 8-123 c
 
   echo "updating parameters for template deployment"
   (Get-Content $template_param) `
-    -replace 'australiasoutheast', $location `
     -replace '\[\[dnsName\]\]', $dnsname `
     -replace '\[\[imageUri\]\]', $imageuri `
-    -replace '\[\[scriptUri\]\]', $script:GITHUB_BASE_URL `
     -replace '\[\[vhdContainer\]\]', $vhdcontainer `
-    -replace '3', $NumberWorkers `
-    -replace '5', $NumberWorkersMJS `
-    -replace '7', $NumberWorkersWorker `
-    -replace 'Standard_D2', $ClientVmSize `
-    -replace 'Standard_D3', $MJSVmSize `
-    -replace 'Standard_D4', $WorkerVmSize `
+    -replace '\[\[scaleNumber\]\]', $NumberWorkers `
+    -replace '\[\[nbOfWorkerOnMJS\]\]', $NumberWorkersMJS `
+    -replace '\[\[nbOfWorker\]\]', $NumberWorkersWorker `
+    -replace '\[\[vmSizeClient\]\]', $ClientVmSize `
+    -replace '\[\[vmSizeMJS\]\]', $MJSVmSize `
+    -replace '\[\[vmSizeWorker\]\]', $WorkerVmSize `
     -replace '\[\[adminUserName\]\]', $VmUsername `
-    -replace 'GEN-PASSWORD', $VmPassword `
-    -replace 'second regex', 'second replacement' |
+    -replace '\[\[adminPassword\]\]', $VmPassword |
   Out-File $updated_template_param
 
   echo "Creating resource group"
