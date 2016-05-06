@@ -1,7 +1,7 @@
 # Utility to setup/delete/list/pause/resume mdcs cluster
 
 # Global configuration
-$script:GITHUB_BASE_URL = "https://raw.githubusercontent.com/YidingZhou/azure-quickstart-templates/master/matlab-cluster/"
+$script:GITHUB_BASE_URL = "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/matlab-cluster/"
 
 function PrepAzureContext() {
   echo "Validating Azure logon..."
@@ -103,8 +103,8 @@ function mdcs_create($p) {
   $template_param = "$env:TEMP\mdcs-param-$datetimestr.json"
   $updated_template_param = "$env:TEMP\mdcs-param-updated-$datetimestr.json"
 
-  Invoke-WebRequest $template_uri -Out $template
-  Invoke-WebRequest $template_param_uri -Out $template_param
+  Invoke-WebRequest $template_uri -OutFile $template
+  Invoke-WebRequest $template_param_uri -OutFile $template_param
 
   echo "a few questions..."
   $rgname = readstring "ResourceGroup" $script:config["ClusterName"]
@@ -177,7 +177,7 @@ function mdcs_list($p) {
       } else {
         $deployment = (Get-AzureRmResourceGroupDeployment -WarningAction:SilentlyContinue -ResourceGroupName $_.ResourceGroupName)
         $keys = $deployment.Parameters.Keys
-        if(($keys -ne $null) -and $keys.Contains('dnsName') -and $keys.Contains('vmSizeMJS') -and $keys.Contains('vmSizeClient') -and $keys.Contains('vmSizeWorker') -and $keys.Contains('numWorkerVms')) {
+        if(($keys -ne $null) -and $keys.Contains('dnsLabelPrefix') -and $keys.Contains('vmSizeMJS') -and $keys.Contains('vmSizeClient') -and $keys.Contains('vmSizeWorker') -and $keys.Contains('numWorkerVms')) {
           # now retrieve vm state
           $totalworkers = 0
           $workerstates = @{}
