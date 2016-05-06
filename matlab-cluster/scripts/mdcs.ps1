@@ -1,7 +1,7 @@
 # Utility to setup/delete/list/pause/resume mdcs cluster
 
 # Global configuration
-$script:GITHUB_BASE_URL = "https://raw.githubusercontent.com/YidingZhou/azure-quickstart-templates/master/matlab-cluster/"
+$script:GITHUB_BASE_URL = "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/matlab-cluster/"
 
 function PrepAzureContext() {
   echo "Validating Azure logon..."
