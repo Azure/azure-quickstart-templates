@@ -177,7 +177,7 @@ function mdcs_list($p) {
       } else {
         $deployment = (Get-AzureRmResourceGroupDeployment -WarningAction:SilentlyContinue -ResourceGroupName $_.ResourceGroupName)
         $keys = $deployment.Parameters.Keys
-        if(($keys -ne $null) -and $keys.Contains('dnsName') -and $keys.Contains('vmSizeMJS') -and $keys.Contains('vmSizeClient') -and $keys.Contains('vmSizeWorker') -and $keys.Contains('numWorkerVms')) {
+        if(($keys -ne $null) -and $keys.Contains('dnsLabelPrefix') -and $keys.Contains('vmSizeMJS') -and $keys.Contains('vmSizeClient') -and $keys.Contains('vmSizeWorker') -and $keys.Contains('numWorkerVms')) {
           # now retrieve vm state
           $totalworkers = 0
           $workerstates = @{}
