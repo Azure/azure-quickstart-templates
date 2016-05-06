@@ -18,6 +18,12 @@ We look forward to hearing your feedback and suggestions!
 ```
 Template Changelog
 
+# v1.4.2 (2016-05-06)
+
+- Upgrade versions
+  - Upgrade bosh version to 256.2
+- Remove redis from bosh.yml as of bosh v256+
+
 # v1.4.1 (2016-04-28)
 
 - Add a retry for apt-get update
