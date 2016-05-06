@@ -103,8 +103,8 @@ function mdcs_create($p) {
   $template_param = "$env:TEMP\mdcs-param-$datetimestr.json"
   $updated_template_param = "$env:TEMP\mdcs-param-updated-$datetimestr.json"
 
-  Invoke-WebRequest $template_uri -Out $template
-  Invoke-WebRequest $template_param_uri -Out $template_param
+  Invoke-WebRequest $template_uri -OutFile $template
+  Invoke-WebRequest $template_param_uri -OutFile $template_param
 
   echo "a few questions..."
   $rgname = readstring "ResourceGroup" $script:config["ClusterName"]
