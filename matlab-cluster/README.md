@@ -1,6 +1,6 @@
 # Provision a MATLAB Distributed Computing Server using Azure VMs
 
-Run your MATLAB compute-intensive parallel workloads by creating one or more MATLAB Distributed Computing Server™ clusters using Azure Virtual Machines.
+Run your MATLAB compute-intensive parallel workloads by creating one or more MATLAB Distributed Computing Server clusters using Azure Virtual Machines.
 
 # Pre-Requisites
 
@@ -12,11 +12,11 @@ and Azure Storage accounts.
 - Azure PowerShell is required to run the script used to create and manage the clusters.
 See "[How to install and configure Azure PowerShell](https://azure.microsoft.com/en-us/documentation/articles/powershell-install-configure/)" for installation instructions.
 
-- MATLAB, Parallel Computing Toolbox, and MDCS hosted licenses; the cluster
+- MATLAB, Parallel Computing Toolbox, and MATLAB Distributed Computing Server hosted licenses; the cluster
 configuration assumes that the MathWorks Hosted License Manager is used for
     all licenses. See http://www.mathworks.com/products/parallel-computing/mathworks-hosted-license-manager/.
 
-- Access to the MDCS software that will need to be downloaded and then installed
+- Access to the MATLAB Distributed Computing Server software that will need to be downloaded and then installed
 on a virtual machine that will be used as a “base” VM image for the clusters.
 
 - Copy the mdcs.ps1 file from this GitHib folder to a folder on your local computer.
@@ -26,11 +26,11 @@ then copy the text and paste it into a local file.
 
 # Create a “Base” Virtual Machine Image
 
-A VM that will be used as the basis for all cluster VM’s needs
-to be created with MDCS installed.
+A VM that will be used as the basis for all cluster VMs needs
+to be created with MATLAB Distributed Computing Server installed.
 
 **This process normally only has to be done once; the only reason for it
-to be repeated would be to cater for new versions of the MDCS
+to be repeated would be to cater for new versions of the MATLAB Distributed Computing Server
 software. In the future we plan to remove or drastically reduce this
 preparation work.**
 
@@ -47,11 +47,11 @@ preparation work.**
     -   Configure the basic settings:
 
         -   Set the Name field; the recommendation is to include the
-            MDCS version; e.g. “mdcsimage2016a”
+            MATLAB Distributed Computing Server version; e.g. “mdcsimage2016a”
 
         -   Pick and note down the user name and password; these will be
             required to connect to the VM later to install the
-            MDCS software.
+            MATLAB Distributed Computing Server software.
 
         -   If you do not have an existing resource group you’d like to
             use, then simply use the same value as the name field; e.g.
@@ -73,8 +73,8 @@ preparation work.**
 
             -   A storage account needs to be created to store both the
                 base VM image as well as the images of the cluster VM’s.
-                **It is stronhly recommended that a Premium storage account is used
-                to ensure optimal performance of MDCS.**
+                **It is strongly recommended that a Premium storage account is used
+                to ensure optimal performance of the MATLAB software.**
 
            -   Set ‘Disk type’ to “Premium (SSD)”
 
@@ -96,7 +96,7 @@ preparation work.**
         -   Select “OK” and wait for the VM to be created and
             become available.
 
--   Install MDCS on the VM:
+-   Install MATLAB Distributed Computing Server on the VM:
 
     -   Login to the VM just created using Remote Desktop; the easiest
         way to do this is to use the Azure portal:
@@ -112,7 +112,7 @@ preparation work.**
         -   Open the file and enter the username and password you chose
             when creating the VM to login to the VM.
 
-    -   Download the MDCS software:
+    -   Download the MATLAB Distributed Computing Server software:
 
         -   The first time you connect to VM, a Server Manager window
             will show. Click “Local Server” on the left, and then "IE
@@ -120,7 +120,7 @@ preparation work.**
             configuration to "Off" for the administrators.
 
         -   Use Internet Explorer to navigate to the MathWorks web site;
-            download the MDCS software and install in the default
+            download the MATLAB Distributed Computing Server software and install in the default
             directory on the C drive. Windows 64-bit.
 
 -   Prepare the VM so it can be used as a base image:
@@ -189,7 +189,7 @@ Azure PowerShell and use the following commands:
     cd <folder>
 
 The following Azure PowerShell script enables the creation and
-management of MDCS clusters:
+management of MATLAB Distributed Computing Server clusters:
 
     .\mdcs.ps1 <command> <command parameters>
 
@@ -206,8 +206,8 @@ The following commands and arguments are provided:
         modifying what needs to be changed. See below for the format of
         the INI file.
 
-    -   Note: it is recommended that up to 30 VM’s can use one storage
-        account for their disks; if more than 30 VM’s are required then
+    -   Note: it is recommended that up to 30 VMs can use one storage
+        account for their disks; if more than 30 VMs are required then
         additional storage accounts should be created, the “base” VHD
         copied, and the INI file updated appropriately. It is therefore
         better to use fewer VM’s with more cores (1 worker per core)
@@ -216,23 +216,23 @@ The following commands and arguments are provided:
 -   .\\mdcs list
 
     -   Lists created clusters together with information regarding how
-        many VM’s are configured and whether the VM’s are active
+        many VM’s are configured and whether the VMs are active
         or suspended.
 
 -   .\\mdcs pause &lt;cluster name&gt;
 
-    -   Pauses the cluster; this means that the VM’s are shutdown and
+    -   Pauses the cluster; this means that the VMs are shutdown and
         de-allocated so that there is no compute billing; the disks are
         still present in Azure storage and do incur a charge
 
 -   .\\mdcs resume &lt;cluster name&gt;
 
-    -   Resumes the cluster; this means that new VM’s are allocated and
+    -   Resumes the cluster; this means that new VMs are allocated and
         started using the saved disks
 
 -   .\\mdcs delete &lt;cluster name&gt;
 
-    -   Deletes the specified cluster, shutting down the VM’s and
+    -   Deletes the specified cluster, shutting down the VMs and
         deleting the VM disks
 
     -   NOTE: This includes any data stored in the shared folder on the
@@ -240,9 +240,9 @@ The following commands and arguments are provided:
 
 ## Create a Cluster
 
-One way to create a cluster is from Azure portal. Click the following button will bring you to Azure portal UI to deploy MDCS cluster. Refer to the following section for parameter values.
+One way to create a cluster is from Azure portal. Click the following button will bring you to Azure portal UI to deploy MATLAB Distributed Computing Server cluster. Refer to the following section for parameter values.
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FYidingZhou%2Fazure-quickstart-templates%2master%2Fmatlab-cluster%2Fazuredeploy.private.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2master%2Fmatlab-cluster%2Fazuredeploy.private.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
@@ -290,23 +290,23 @@ INI file parameters:
     - VM Sizes are listed on the following page:
       <https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-size-specs/>
 - *MJSVmSize*
-    - Size of the VM that will run MJS
+    - Size of the VM that will run MATLAB job scheduler
     - The recommended size is "Standard_DS2"
 - *NumWorkersOnMjsVm*
-    - Number of MDCS workers to run on the VM running MJS; zero workers are recommended
+    - Number of MATLAB Distributed Computing Server workers to run on the VM running MATLAB job scheduler; zero workers are recommended
 - *WorkerVmSize*
-    - Size of the VM that will contain with MDCS worker processes
+    - Size of the VM that will contain with MATLAB Distributed Computing Server worker processes
     -   There is one worker created per core on the VM
     -   Recommended sizes are "Standard_DS2" (2 core) to "Standard_DS14" (16 core)
 - *NumWorkerVms*
-    -   Number of VM’s that will run MDCS workers
+    -   Number of VMs that will run MATLAB Distributed Computing Server workers
 - *NumWorkersOnWorkerVms*
-    - Number of MDCS workers to run on the worker VM’s
+    - Number of MATLAB Distributed Computing Server workers to run on the worker VMs
     -   Using -1 creates one worker per core
 - *VmUsername*
-    - Username that can be used to login to any of the cluster VM’s
+    - Username that can be used to login to any of the cluster VMs
 - *SubscriptionId*
-    - Subscription under which all VM’s and storage accounts will be created
+    - Subscription under which all VMs and storage accounts will be created
 
 
 To create the cluster:
@@ -368,9 +368,9 @@ A Cluster Profile needs to be created using the MATLAB client:
 
     -   Enter the hostname; this will always be “MASTER”
 
-    -   The name of the MJS will always be “mymjs”
+    -   The name of the MATLAB job scheduler will always be “mymjs”
 
-    -   You must enter the license number for the MDCS license
+    -   You must enter the license number for the MATLAB Distributed Computing Server license
         (configured to use the Mathworks Hosted License Manager)
 
     -   Select “Done”
@@ -389,8 +389,8 @@ A Cluster Profile needs to be created using the MATLAB client:
 ## Listing Clusters
 
 The script lists the cluster name, number of workers, and the state of
-the VM’s.  Running VM's, which are billed, can be distinguished
-from suspended VM's).
+the VMs.  Running VMs, which are billed, can be distinguished
+from suspended VMs).
 
 ## Pausing and Resuming a Cluster
 
@@ -416,3 +416,4 @@ Please submit feedback using one of the following mechanisms:
     GitHub account)
 
 -   Create a post in the [Azure Batch MSDN forum](https://social.msdn.microsoft.com/forums/azure/en-US/home?forum=azurebatch).
+
