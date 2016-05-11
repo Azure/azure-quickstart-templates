@@ -8,7 +8,7 @@ if [[ $(id -u) -ne 0 ]] ; then
     exit 1
 fi
 
-if [ $# != 4 ]; then
+if [ $# != 6 ]; then
     echo "Usage: $0 <MasterHostname> <TemplateBaseUrl> <mountFolder> <numDataDisks> <dockerVer> <dockerComposeVer>"
     exit 1
 fi
