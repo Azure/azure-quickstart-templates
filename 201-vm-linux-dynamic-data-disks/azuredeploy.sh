@@ -9,7 +9,7 @@ if [[ $(id -u) -ne 0 ]] ; then
 fi
 
 if [ $# != 4 ]; then
-    echo "Usage: $0 <MasterHostname> <TemplateBaseUrl> <mountFolder> <numDataDisks>"
+    echo "Usage: $0 <MasterHostname> <TemplateBaseUrl> <mountFolder> <numDataDisks> <dockerVer> <dockerComposeVer>"
     exit 1
 fi
 
@@ -23,6 +23,8 @@ SHARE_HOME=$MNT_POINT/home
 SHARE_DATA=$MNT_POINT/data
 
 numberofDisks="$4"
+dockerVer="$5"
+dockerComposeVer="6"
 
 
 # Installs all required packages.
@@ -38,7 +40,7 @@ install_pkgs()
     wget -qO- "https://pgp.mit.edu/pks/lookup?op=get&search=0xee6d536cf7dc86e2d7d56f59a178ac6c6238f52e" 
     rpm --import "https://pgp.mit.edu/pks/lookup?op=get&search=0xee6d536cf7dc86e2d7d56f59a178ac6c6238f52e"
     yum install -y yum-utils
-    yum-config-manager --add-repo https://packages.docker.com/1.10/yum/repo/main/centos/7
+    yum-config-manager --add-repo https://packages.docker.com/$dockerVer/yum/repo/main/centos/7
     yum install -y docker-engine 
     systemctl stop firewalld
     systemctl disable firewalld
@@ -50,7 +52,7 @@ install_pkgs()
     glibc-devel.i686 glibc-devel.x86_64 ksh compat-libstdc++-33 libaio.i686 libaio.x86_64 libaio-devel.i686 libaio-devel.x86_64 \
     libgcc.i686 libgcc.x86_64 libstdc++.i686 libstdc++.x86_64 libstdc++-devel.i686 libstdc++-devel.x86_64 libXi.i686 libXi.x86_64 \
     libXtst.i686 libXtst.x86_64 make.x86_64 sysstat.x86_64
-    curl -L https://github.com/docker/compose/releases/download/1.6.2/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
+    curl -L https://github.com/docker/compose/releases/download/$dockerComposeVer/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
     curl -L https://github.com/docker/machine/releases/download/v0.7.0-rc1/docker-machine-`uname -s`-`uname -m` >/usr/local/bin/docker-machine && \
     chmod +x /usr/local/bin/docker-machine
     chmod +x /usr/local/bin/docker-compose
