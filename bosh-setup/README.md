@@ -18,6 +18,34 @@ We look forward to hearing your feedback and suggestions!
 ```
 Template Changelog
 
+# v1.4.2 (2016-05-06)
+
+- Upgrade versions
+  - Upgrade bosh version to 256.2
+- Remove redis from bosh.yml as of bosh v256+
+
+# v1.4.1 (2016-04-28)
+
+- Add a retry for apt-get update
+- Add https://gems.ruby-china.org/ as a gem source
+
+# v1.4.0 (2016-04-21)
+
+- Add AzureChinaCloud support
+- Upgrade versions
+  - Upgrade Azure CPI version to v10. Please see new features in https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release
+
+# v1.3.0 (2016-04-01)
+- Does not bind network security groups to subnets but bind network security groups to VMs.
+- Upgrade versions
+  - Upgrade Azure CPI version to v9. Please see new features in https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release
+
+# v1.2.0 (2016-03-28)
+- Add a subnet for Diego
+- Create network security groups for all subnets
+- Upgrade versions
+  - Upgrade Azure CPI version to v8. Please see new features in https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release
+
 # v1.1.3 (2016-03-08)
 - Upgrade versions
   - Upgrade bosh version to 255.3

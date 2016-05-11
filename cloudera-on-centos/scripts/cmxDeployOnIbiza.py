@@ -77,15 +77,7 @@ def init_cluster():
 
     # Update Cloudera Manager configuration
     cm = api.get_cloudera_manager()
-    cm.update_config({"REMOTE_PARCEL_REPO_URLS": "http://archive.cloudera.com/cdh5/parcels/{latest_supported}/,"
-                                                 "http://archive.cloudera.com/impala/parcels/{latest_supported}/,"
-                                                 "http://archive.cloudera.com/cdh4/parcels/{latest_supported}/,"
-                                                 "http://archive.cloudera.com/search/parcels/{latest_supported}/,"
-                                                 "http://archive.cloudera.com/spark/parcels/{latest_supported}/,"
-                                                 "http://archive.cloudera.com/sqoop-connectors/parcels/{latest_supported}/,"
-                                                 "http://archive.cloudera.com/accumulo/parcels/{latest_supported}/,"
-                                                 "http://archive.cloudera.com/accumulo-c5/parcels/{latest_supported},"
-                                                 "http://archive.cloudera.com/gplextras5/parcels/{latest_supported}",
+    cm.update_config({"REMOTE_PARCEL_REPO_URLS": "http://archive.cloudera.com/cdh5/parcels/{latest_supported}",
                       "PHONE_HOME": False, "PARCEL_DISTRIBUTE_RATE_LIMIT_KBS_PER_SECOND": "1024000"})
 
     print "> Initialise Cluster"
@@ -1803,10 +1795,6 @@ def parse_options():
     # Install CDH5 latest version
     cmx_config_options['parcel'].append(manifest_to_dict(
         'http://archive.cloudera.com/cdh5/parcels/5/manifest.json'))
-
-    # Install GPLEXTRAS5 latest version
-    cmx_config_options['parcel'].append(manifest_to_dict(
-        'http://archive.cloudera.com/gplextras5/parcels/5/manifest.json'))
 
     msg_req_args = "Please specify the required arguments: "
     if cmx_config_options['cm_server'] is None:

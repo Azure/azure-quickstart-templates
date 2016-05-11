@@ -61,9 +61,6 @@ then
     exit 3
 fi
 
-#A set of disks to ignore from partitioning and formatting
-BLACKLIST="/dev/sda|/dev/sdb"
-
 # Base path for data disk mount points
 DATA_BASE="/datadisks"
 
@@ -120,7 +117,7 @@ has_filesystem() {
 scan_for_new_disks() {
     # Looks for unpartitioned disks
     declare -a RET
-    DEVS=($(ls -1 /dev/sd*|egrep -v "${BLACKLIST}"|egrep -v "[0-9]$"))
+    DEVS=($(ls -1 /dev/sd*|egrep -v "[0-9]$"))
     for DEV in "${DEVS[@]}";
     do
         # The disk will be considered a candidate for partitioning
