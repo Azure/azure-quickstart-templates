@@ -1,0 +1,88 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "premiumNamespaceName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Event Hub namespace"
+            }
+        },
+        "skuCapacity": {
+            "type": "int",
+            "allowedValues": [
+                1,
+                2,
+                4
+            ],
+            "defaultValue": 1,
+            "metadata": {
+                "description": "MessagingUnits for premium namespace"
+            }
+        },
+        "namespaceSASKeyName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Namespace AuthorizationRule"
+            }
+        }
+    },
+    "variables": {
+        "ehVersion": "2015-08-01",
+        "defaultSASKeyName": "RootManageSharedAccessKey",
+        "customSASKeyName": "[concat(parameters('premiumNamespaceName'), concat('/', parameters('namespaceSASKeyName')))]",
+        "defaultAuthRuleResourceId": "[resourceId('Microsoft.ServiceBus/namespaces/authorizationRules', parameters('premiumNamespaceName'), variables('defaultSASKeyName'))]",
+        "customAuthRuleResourceId": "[resourceId('Microsoft.ServiceBus/namespaces/authorizationRules', parameters('premiumNamespaceName'), parameters('namespaceSASKeyName'))]"
+    },
+    "resources": [
+      {
+        "apiVersion": "[variables('ehVersion')]",
+        "name": "[parameters('premiumNamespaceName')]",
+        "type": "Microsoft.ServiceBus/namespaces",
+        "location": "[resourceGroup().location]",
+        "kind": "Messaging",
+        "sku": {
+          "name": "PremiumSku",
+          "tier": "Premium",
+          "capacity": "[parameters('skuCapacity')]"
+        },
+        "properties": {
+          "createACSNamespace": true
+        }
+      },
+      {
+        "apiVersion": "[variables('ehVersion')]",
+        "name": "[variables('customSASKeyName')]",
+        "type": "Microsoft.ServiceBus/namespaces/authorizationRules",
+        "dependsOn": [
+          "[concat('Microsoft.ServiceBus/namespaces/', parameters('premiumNamespaceName'))]"
+        ],
+        "location": "[resourceGroup().location]",
+        "properties": {
+          "Rights": [
+            "Send",
+            "Listen",
+            "Manage"
+          ]
+        }
+      }
+    ],
+    "outputs": {
+        "NamespaceDefaultConnectionString": {
+            "type": "string",
+            "value": "[listkeys(variables('defaultAuthRuleResourceId'), variables('ehVersion')).primaryConnectionString]"
+        },
+        "DefaultSharedAccessPolicyPrimaryKey": {
+            "type": "string",
+            "value": "[listkeys(variables('defaultAuthRuleResourceId'), variables('ehVersion')).primaryKey]"
+        },
+        "NamespaceCustomConnectionString": {
+            "type": "string",
+            "value": "[listkeys(variables('customAuthRuleResourceId'), variables('ehVersion')).primaryConnectionString]"
+        },
+        "CustomSharedAccessPolicyPrimaryKey": {
+            "type": "string",
+            "value": "[listkeys(variables('customAuthRuleResourceId'), variables('ehVersion')).primaryKey]"
+        }
+    }
+}

@@ -1,0 +1,110 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "serviceBusNamespaceName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Service Bus namespace"
+            }
+        },
+        "namespaceAuthorizationRuleName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Namespace AuthorizationRule"
+            }
+        },
+        "serviceBusQueueName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Queue"
+            }
+        },
+        "queueAuthorizationRuleName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Queue AuthorizationRule"
+            }
+        },
+        "serviceBusApiVersion": {
+            "type": "string",
+            "defaultValue": "2015-08-01",
+            "metadata": {
+                "description": "Service Bus ApiVersion used by the template"
+            }
+        }
+    },
+    "variables": {
+        "location": "[resourceGroup().location]",
+        "sbVersion": "[parameters('serviceBusApiVersion')]",
+        "namespaceAuthRuleName": "[concat(parameters('serviceBusNamespaceName'), concat('/', parameters('namespaceAuthorizationRuleName')))]",
+        "nsAuthorizationRuleResourceId": "[resourceId('Microsoft.ServiceBus/namespaces/authorizationRules', parameters('serviceBusNamespaceName'), parameters('namespaceAuthorizationRuleName'))]",
+        "ehAuthorizationRuleResourceId": "[resourceId('Microsoft.ServiceBus/namespaces/queues/authorizationRules', parameters('serviceBusNamespaceName'), parameters('serviceBusQueueName'), parameters('queueAuthorizationRuleName'))]"
+    },
+    "resources": [
+        {
+            "apiVersion": "[variables('sbVersion')]",
+            "name": "[parameters('serviceBusNamespaceName')]",
+            "type": "Microsoft.ServiceBus/namespaces",
+            "location": "[variables('location')]",
+            "kind": "Messaging",
+            "sku": {
+                "name": "StandardSku",
+                "tier": "Standard"
+            },
+            "resources": [
+                {
+                    "apiVersion": "[variables('sbVersion')]",
+                    "name": "[parameters('serviceBusQueueName')]",
+                    "type": "Queues",
+                    "dependsOn": [
+                        "[concat('Microsoft.ServiceBus/namespaces/', parameters('serviceBusNamespaceName'))]"
+                    ],
+                    "properties": {
+                        "path": "[parameters('serviceBusQueueName')]"
+                    },
+                    "resources": [
+                        {
+                            "apiVersion": "[variables('sbVersion')]",
+                            "name": "[parameters('queueAuthorizationRuleName')]",
+                            "type": "authorizationRules",
+                            "dependsOn": [
+                                "[parameters('serviceBusQueueName')]"
+                            ],
+                            "properties": {
+                                "Rights": ["Listen"]
+                            }
+                        }
+                    ]
+                }
+            ]
+        }, {
+            "apiVersion": "[variables('sbVersion')]",
+            "name": "[variables('namespaceAuthRuleName')]",
+            "type": "Microsoft.ServiceBus/namespaces/authorizationRules",
+            "dependsOn": ["[concat('Microsoft.ServiceBus/namespaces/', parameters('serviceBusNamespaceName'))]"],
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "Rights": ["Send"]
+            }
+        }
+    ],
+    "outputs": {
+        "NamespaceConnectionString": {
+            "type": "string",
+            "value": "[listkeys(variables('nsAuthorizationRuleResourceId'), variables('sbVersion')).primaryConnectionString]"
+        },
+        "NamespaceSharedAccessPolicyPrimaryKey": {
+            "type": "string",
+            "value": "[listkeys(variables('nsAuthorizationRuleResourceId'), variables('sbVersion')).primaryKey]"
+        },
+        "EventHubConnectionString": {
+            "type": "string",
+            "value": "[listkeys(variables('ehAuthorizationRuleResourceId'), variables('sbVersion')).primaryConnectionString]"
+        },
+        "EventHubSharedAccessPolicyPrimaryKey": {
+            "type": "string",
+            "value": "[listkeys(variables('ehAuthorizationRuleResourceId'), variables('sbVersion')).primaryKey]"
+        }
+    }
+}
