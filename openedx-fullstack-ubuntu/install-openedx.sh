@@ -7,9 +7,9 @@ export OPENEDX_RELEASE=$1
 CONFIG_REPO=https://github.com/edx/configuration.git
 ANSIBLE_ROOT=/edx/app/edx_ansible
 
-wget https://raw.githubusercontent.com/edx/configuration/master/util/install/ansible-bootstrap.sh -O- | sudo bash
+wget https://raw.githubusercontent.com/edx/configuration/master/util/install/ansible-bootstrap.sh -O- | bash
 
-sudo bash -c "cat <<EOF >extra-vars.yml
+bash -c "cat <<EOF >extra-vars.yml
 ---
 edx_platform_version: \"$OPENEDX_RELEASE\"
 certs_version: \"$OPENEDX_RELEASE\"
@@ -26,7 +26,7 @@ git clone $CONFIG_REPO
 
 cd configuration
 git checkout $OPENEDX_RELEASE
-sudo pip install -r requirements.txt
+pip install -r requirements.txt
 
 cd playbooks
-sudo ansible-playbook -i localhost, -c local vagrant-fullstack.yml -e@$ANSIBLE_ROOT/server-vars.yml -e@$ANSIBLE_ROOT/extra-vars.yml
+ansible-playbook -i localhost, -c local vagrant-fullstack.yml -e@$ANSIBLE_ROOT/server-vars.yml -e@$ANSIBLE_ROOT/extra-vars.yml
