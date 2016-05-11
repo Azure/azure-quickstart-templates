@@ -107,7 +107,7 @@ acomghbot is a bot designed to enforce the above rules and check the syntactic c
 
 ## Travis CI
 
-We are in the process of activating automated template validation through Travis CI. These builds can be accessed by clicking the 'Details' link at the bottom of the pull-request dialog. This process will ensure that your template conforms to all the rules mentioned above and will also deploy your template to our test azure subscription.
+We have automated template validation through Travis CI. These builds can be accessed by clicking the 'Details' link at the bottom of the pull-request dialog. This process will ensure that your template conforms to all the rules mentioned above and will also deploy your template to our test azure subscription.
 
 ### Parameters File Placeholders
 
