@@ -2,12 +2,6 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "newStorageAccountName": {
-      "type": "string",
-      "metadata": {
-        "description": "The name of the new storage account created to store the VMs disks. Name must be between 3 and 24 characters and use lowercase alphanumeric only."
-      }
-    },
     "adminUsername": {
       "type": "string",
       "defaultValue": "openedxuser",
@@ -21,10 +15,10 @@
         "description": "Administrator password."
       }
     },
-    "dnsNameForPublicIP": {
+    "dnsLabelPrefix": {
       "type": "string",
       "metadata": {
-        "description": "Unique DNS name for the Public IP used to access the Virtual Machine."
+        "description": "DNS Label for the Public IP. Must be lowercase. It should match with the following regular expression: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$ or it will raise an error."
       }
     },
     "vmSize": {
@@ -68,7 +62,7 @@
     "openedxVersion": "named-release/dogwood.3",
     "scriptDownloadUri": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/openedx-fullstack-ubuntu/master/",
     "installScript": "install-openedx.sh",
-    "installCommand": "[concat('sudo bash -c ''nohup ./', variables('installScript'), ' ', variables('openedxVersion'), ' </dev/null &>/var/log/azure/openedx-install.log &''')]",
+    "installCommand": "[concat('bash -c ''nohup ./', variables('installScript'), ' ', variables('openedxVersion'), ' </dev/null &>/var/log/azure/openedx-install.log &''')]",
     "vmName": "jumpbox2",
     "osImagePublisher": "Canonical",
     "osImageOffer": "UbuntuServer",
@@ -86,13 +80,14 @@
     "nsgName": "node-nsg",
     "nsgID": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('nsgName'))]",
     "storageAccountType": "Standard_LRS",
+    "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'vhdsa')]",
     "vhdBlobContainer": "vhds"
   },
   "resources": [
     {
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[parameters('newStorageAccountName')]",
+      "name": "[parameters('storageAccountName')]",
       "location": "[resourceGroup().location]",
       "properties": {
         "accountType": "[variables('storageAccountType')]"
@@ -106,7 +101,7 @@
       "properties": {
         "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
         "dnsSettings": {
-          "domainNameLabel": "[parameters('dnsNameForPublicIP')]"
+          "domainNameLabel": "[parameters('dnsLabelPrefix')]"
         }
       }
     },
@@ -221,7 +216,7 @@
       "name": "[variables('vmName')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('vmName'), '-nic')]"
       ],
       "properties": {
@@ -243,7 +238,7 @@
           "osDisk": {
             "name": "[concat(variables('vmName'),'-osdisk')]",
             "vhd": {
-              "uri": "[concat('http://', parameters('newStorageAccountName'), '.blob.core.windows.net/', variables('vhdBlobContainer'), '/', variables('vmName'), '-osdisk.vhd')]"
+              "uri": "[concat('http://', parameters('storageAccountName'), '.blob.core.windows.net/', variables('vhdBlobContainer'), '/', variables('vmName'), '-osdisk.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -270,6 +265,7 @@
         "publisher": "Microsoft.OSTCExtensions",
         "type": "CustomScriptForLinux",
         "typeHandlerVersion": "1.4",
+        "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
             "[concat(variables('scriptDownloadUri'), variables('installScript'))]",
