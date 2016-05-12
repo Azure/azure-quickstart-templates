@@ -24,7 +24,7 @@ SHARE_DATA=$MNT_POINT/data
 
 numberofDisks="$4"
 dockerVer="$5"
-dockerComposeVer="6"
+dockerComposeVer="$6"
 
 
 # Installs all required packages.
