@@ -8,6 +8,15 @@
 <img src="http://armviz.io/visualizebutton.png"/> </a>  
 
 ### This creates configurable number of disks with configurable size for centos
-* Latest Docker
-* Latest Rancher available @ <code>8080</code>
-* Azure CLI usage is <code>docker exec -ti azure-cli bash</code>
+* Latest Docker configurable - default is 1.10
+* Latest docker-compose configurable - default is 1.7.1
+* Latest Rancher available @ <code>8080</code> <Unauthenticated.. Authentication is manual setup>
+* Azure CLI usage is <code>docker exec -ti azure-cli bash -c "azure login && bash"</code>
+* Disk auto mounting is at /<<parameter>>/data
+* NFS4 is on on the above
+* Strict ssh public key enabled 
+* Nodes that share public RSA key shared can be used as direct jump boxes as azureuser@DNS
+* NSG is required.
+* Internal firewalld is off.
+* gcc and other necessary software available
+* WALinuxAgent updates are disabled on first deployment.
