@@ -9,8 +9,30 @@ sudo apt-get install -y --force-yes oracle-java8-installer
 unzip waves-testnet-0.0.1.zip
 mv waves-testnet-0.0.1 waves
 cd waves
-#rm waves-testnet.json
 sudo dpkg -i waves_0.0.1_all.deb
-waves waves-testnet.json
-echo sigwotesting
+rm waves-testnet.json
+echo "{
+  "p2p": {
+    "bindAddress": "0.0.0.0",
+    "upnp": false,
+    "upnpGatewayTimeout": 7000,
+    "upnpDiscoverTimeout": 3000,
+    "port": 6868,
+    "knownPeers": ["52.58.115.4:6868","52.36.177.184:6868"],
+    "maxConnections": 10
+  },
+  "walletDir": "/tmp/scorex/waves/wallet",
+  "walletSeed": "testing1234",
+  "walletPassword": "tester",
+  "dataDir": "/tmp/scorex/waves/data",
+  "rpcPort": 6869,
+  "rpcAllowed": [],
+  "blockGenerationDelay": 1000,
+  "cors": true,
+  "maxRollback": 100,
+  "history": "blockchain",
+  "offlineGeneration": false
+}" >> waves-testnet.json
 echo
+echo
+waves waves-testnet.json
