@@ -12,4 +12,5 @@ cd waves
 #rm waves-testnet.json
 sudo dpkg -i waves_0.0.1_all.deb
 waves waves-testnet.json
-cat <<< "sigwotesting"
+echo sigwotesting
+echo
