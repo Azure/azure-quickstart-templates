@@ -1,10 +1,5 @@
 #!/bin/bash
 
-
-
-
-
-
 cat > inputs2.sh << 'END'
 
 mountDriveForLogCloudera()
