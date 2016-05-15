@@ -1,14 +1,13 @@
-## Deploying GAPCOIN on Microsoft Azure ##
+# Deploying GAPCOIN on Microsoft Azure
 
-This Microsoft Azure template deploys GAPCOIN to use a CryptoCurrency.
-
-[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fgapcoin-blockchain-ubuntu%2Fazuredeploy.json)
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fgapcoin-blockchain-ubuntu%2Fazuredeploy.json" target="_blank">
+<img src="http://azuredeploy.net/deploybutton.png"/>
+</a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fgapcoin-blockchain-ubuntu%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
+<img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-
-
+This Microsoft Azure template deploys GAPCOIN to use a CryptoCurrency.
 Once your deployment is complete you will have a GAPCOIN cryptocurrency node that operate in the Azure VM.<br>
 Azure VM is independent from the system. It also provides a very strong security and reliability, durability.<br>
 ***By using Azure, you can have a complete system that can be used only cryptocurrency node.***
