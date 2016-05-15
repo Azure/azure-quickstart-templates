@@ -1,15 +1,15 @@
 #!/bin/bash
-wget https://github.com/wavesplatform/Waves/releases/download/v0.0.1/waves-testnet-0.0.1.zip
+wget https://github.com/wavesplatform/Waves/releases/download/v0.1.3/waves-testnet-0.1.3.zip
 sudo apt-get update
 sudo apt-get install -y software-properties-common unzip
 sudo add-apt-repository ppa:webupd8team/java -y
 sudo apt-get update
 echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | sudo /usr/bin/debconf-set-selections
 sudo apt-get install -y --force-yes oracle-java8-installer
-unzip waves-testnet-0.0.1.zip
-mv waves-testnet-0.0.1 waves
+unzip waves-testnet-0.1.3.zip
+mv waves-testnet-0.1.3 waves
 cd waves
-sudo dpkg -i waves_0.0.1_all.deb
+sudo dpkg -i waves_0.1.3_all.deb
 rm waves-testnet.json
 echo "{
   "p2p": {
