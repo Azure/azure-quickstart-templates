@@ -28,7 +28,7 @@ When you launch the installation of the cluster, you need to specify the followi
 * `vmDnsPrefix`: this is the public DNS name for the VM. You just need to specify an unique name as you wish.<br>
 * `adminUsername`: self-explanatory. This is the account you will use for connecting to the node<br>
 * `adminPassword`: self-explanatory. Be aware that Azure requires passwords to have One upper case, one lower case, a special character, and a number<br>
-* `vmSize`: The type of VM that you want to use for the node. The default size is D1 (1 core 3.5GB RAM) but you can change that if you expect to run<br> workloads that require more RAM or CPU resources.<br>
+* `vmSize`: The type of VM that you want to use for the node. The default size is D1 (1 core 3.5GB RAM) but you can change that if you expect to run workloads that require more RAM or CPU resources.<br>
 
 # Gapcoin Walkthrough
 Before starting the Walkthrough, you will have to "Adding Blockchain Artifact Library to Azure DevTest Labs" first.<br>
