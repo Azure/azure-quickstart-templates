@@ -8,8 +8,8 @@ if [[ $(id -u) -ne 0 ]] ; then
     exit 1
 fi
 
-if [ $# != 5 ]; then
-    echo "Usage: $0 <MasterHostname> <mountFolder> <numDataDisks> <dockerVer> <dockerComposeVer>"
+if [ $# != 6 ]; then
+    echo "Usage: $0 <MasterHostname> <mountFolder> <numDataDisks> <dockerVer> <dockerComposeVer> <adminUserName>"
     exit 1
 fi
 
@@ -24,6 +24,7 @@ SHARE_DATA=$MNT_POINT/data
 numberofDisks="$3"
 dockerVer="$4"
 dockerComposeVer="$5"
+userName="$6"
 
 
 # Installs all required packages.
@@ -45,6 +46,7 @@ install_pkgs()
     systemctl stop firewalld
     systemctl disable firewalld
     #service docker start
+    gpasswd -a $userName docker
     systemctl start docker
     systemctl enable docker
     wget https://storage.googleapis.com/golang/go1.6.2.linux-amd64.tar.gz
@@ -147,12 +149,10 @@ done
         mount /dev/md10
     fi
 }
-# Creates and exports two shares on the master nodes:
+# Creates and exports two shares on the node:
 #
-# /share/home (for HPC user)
+# /share/home 
 # /share/data
-#
-# These shares are mounted on all worker nodes.
 #
 setup_shares()
 {
