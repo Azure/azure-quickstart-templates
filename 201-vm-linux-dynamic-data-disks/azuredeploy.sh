@@ -230,5 +230,5 @@ install_pkgs_all()
     #install_ib
 }
 
-setup_shares
 install_pkgs_all
+setup_shares
