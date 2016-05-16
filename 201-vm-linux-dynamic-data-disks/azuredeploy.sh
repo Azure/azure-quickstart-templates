@@ -201,7 +201,8 @@ install_ib()
     chkconfig rdma on
     #reboot
 }
-
+# Installs individual packages of interest.
+#
 install_packages()
 {
     yum -y install zlib zlib-devel bzip2 bzip2-devel bzip2-libs openssl openssl-devel openssl-libs gcc gcc-c++ nfs-utils rpcbind git libicu libicu-devel make zip unzip mdadm wget \
