@@ -8,23 +8,22 @@ if [[ $(id -u) -ne 0 ]] ; then
     exit 1
 fi
 
-if [ $# != 6 ]; then
-    echo "Usage: $0 <MasterHostname> <TemplateBaseUrl> <mountFolder> <numDataDisks> <dockerVer> <dockerComposeVer>"
+if [ $# != 5 ]; then
+    echo "Usage: $0 <MasterHostname> <mountFolder> <numDataDisks> <dockerVer> <dockerComposeVer>"
     exit 1
 fi
 
 # Set user args
 MASTER_HOSTNAME=$1
-TEMPLATE_BASE_URL="$2"
 
 # Shares
-MNT_POINT="$3"
+MNT_POINT="$2"
 SHARE_HOME=$MNT_POINT/home
 SHARE_DATA=$MNT_POINT/data
 
-numberofDisks="$4"
-dockerVer="$5"
-dockerComposeVer="$6"
+numberofDisks="$3"
+dockerVer="$4"
+dockerComposeVer="$5"
 
 
 # Installs all required packages.
