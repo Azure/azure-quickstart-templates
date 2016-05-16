@@ -27,58 +27,6 @@ dockerComposeVer="$5"
 userName="$6"
 
 
-# Installs all required packages.
-#
-install_pkgs()
-{
-    rpm --rebuilddb
-    updatedb
-    yum clean all
-    yum -y install epel-release
-    yum  -y update --exclude=WALinuxAgent
-    #yum  -y update
-    yum -y install zlib zlib-devel bzip2 bzip2-devel bzip2-libs openssl openssl-devel openssl-libs gcc gcc-c++ nfs-utils rpcbind git libicu libicu-devel make wget zip unzip mdadm wget
-    wget -qO- "https://pgp.mit.edu/pks/lookup?op=get&search=0xee6d536cf7dc86e2d7d56f59a178ac6c6238f52e" 
-    rpm --import "https://pgp.mit.edu/pks/lookup?op=get&search=0xee6d536cf7dc86e2d7d56f59a178ac6c6238f52e"
-    yum install -y yum-utils
-    yum-config-manager --add-repo https://packages.docker.com/$dockerVer/yum/repo/main/centos/7
-    yum install -y docker-engine 
-    systemctl stop firewalld
-    systemctl disable firewalld
-    #service docker start
-    gpasswd -a $userName docker
-    systemctl start docker
-    systemctl enable docker
-    wget https://storage.googleapis.com/golang/go1.6.2.linux-amd64.tar.gz
-    tar -C /usr/local -xzf go1.6.2.linux-amd64.tar.gz
-    export PATH=$PATH:/usr/local/go/bin
-    yum install -y binutils.x86_64 compat-libcap1.x86_64 gcc.x86_64 gcc-c++.x86_64 glibc.i686 glibc.x86_64 \
-    glibc-devel.i686 glibc-devel.x86_64 ksh compat-libstdc++-33 libaio.i686 libaio.x86_64 libaio-devel.i686 libaio-devel.x86_64 \
-    libgcc.i686 libgcc.x86_64 libstdc++.i686 libstdc++.x86_64 libstdc++-devel.i686 libstdc++-devel.x86_64 libXi.i686 libXi.x86_64 \
-    libXtst.i686 libXtst.x86_64 make.x86_64 sysstat.x86_64
-    curl -L https://github.com/docker/compose/releases/download/$dockerComposeVer/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
-    curl -L https://github.com/docker/machine/releases/download/v0.7.0/docker-machine-`uname -s`-`uname -m` >/usr/local/bin/docker-machine && \
-    chmod +x /usr/local/bin/docker-machine
-    chmod +x /usr/local/bin/docker-compose
-    export PATH=$PATH:/usr/local/bin/
-    mv /etc/localtime /etc/localtime.bak
-    ln -s /usr/share/zoneinfo/Europe/Amsterdam /etc/localtime
-    #yum -y install icu patch ruby ruby-devel rubygems python-pip
-    yum install -y nodejs
-    yum install -y npm
-    npm install -g azure-cli
-    # Setting tomcat
-    #docker run -it -dp 80:8080 -p 8009:8009  rossbachp/apache-tomcat8
-    docker run -dti --restart=always --name=azure-cli microsoft/azure-cli 
-    docker run -it -d --restart=always -p 8080:8080 rancher/server
-    systemctl enable docker
-    #yum groupinstall -y "Infiniband Support"
-    #yum install -y infiniband-diags perftest qperf opensm
-    #chkconfig opensm on
-    #chkconfig rdma on
-    #reboot
-}
-
 
 setup_dynamicdata_disks()
 {
@@ -179,6 +127,108 @@ setup_shares()
 }
 
 
-setup_shares
-install_pkgs
+set_time()
+{
+    mv /etc/localtime /etc/localtime.bak
+    ln -s /usr/share/zoneinfo/Europe/Amsterdam /etc/localtime
+}
 
+
+# System Update.
+#
+system_update()
+{
+    rpm --rebuilddb
+    updatedb
+    yum clean all
+    yum -y install epel-release
+    yum  -y update --exclude=WALinuxAgent
+    #yum  -y update
+
+    set_time
+}
+
+install_docker()
+{
+
+    wget -qO- "https://pgp.mit.edu/pks/lookup?op=get&search=0xee6d536cf7dc86e2d7d56f59a178ac6c6238f52e" 
+    rpm --import "https://pgp.mit.edu/pks/lookup?op=get&search=0xee6d536cf7dc86e2d7d56f59a178ac6c6238f52e"
+    yum install -y yum-utils
+    yum-config-manager --add-repo https://packages.docker.com/$dockerVer/yum/repo/main/centos/7
+    yum install -y docker-engine 
+    systemctl stop firewalld
+    systemctl disable firewalld
+    #service docker start
+    gpasswd -a $userName docker
+    systemctl start docker
+    systemctl enable docker
+    systemctl enable docker
+    curl -L https://github.com/docker/compose/releases/download/$dockerComposeVer/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
+    curl -L https://github.com/docker/machine/releases/download/v0.7.0/docker-machine-`uname -s`-`uname -m` >/usr/local/bin/docker-machine && \
+    chmod +x /usr/local/bin/docker-machine
+    chmod +x /usr/local/bin/docker-compose
+    export PATH=$PATH:/usr/local/bin/
+}
+
+install_go()
+{
+    wget https://storage.googleapis.com/golang/go1.6.2.linux-amd64.tar.gz
+    tar -C /usr/local -xzf go1.6.2.linux-amd64.tar.gz
+    export PATH=$PATH:/usr/local/go/bin
+}
+
+install_azure_cli()
+{
+    yum install -y nodejs
+    yum install -y npm
+    npm install -g azure-cli
+}
+
+install_docker_apps()
+{
+
+    # Setting tomcat
+    #docker run -it -dp 80:8080 -p 8009:8009  rossbachp/apache-tomcat8
+    docker run -dti --restart=always --name=azure-cli microsoft/azure-cli 
+    docker run -it -d --restart=always -p 8080:8080 rancher/server
+}
+
+install_ib()
+{
+    yum groupinstall -y "Infiniband Support"
+    yum install -y infiniband-diags perftest qperf opensm
+    chkconfig opensm on
+    chkconfig rdma on
+    #reboot
+}
+
+install_packages()
+{
+    yum install -y zlib zlib-devel bzip2 bzip2-devel bzip2-libs openssl openssl-devel openssl-libs gcc gcc-c++ nfs-utils rpcbind git libicu libicu-devel make wget zip unzip mdadm wget \
+    binutils.x86_64 compat-libcap1.x86_64 gcc.x86_64 gcc-c++.x86_64 glibc.i686 glibc.x86_64 \
+    glibc-devel.i686 glibc-devel.x86_64 ksh compat-libstdc++-33 libaio.i686 libaio.x86_64 libaio-devel.i686 libaio-devel.x86_64 \
+    libgcc.i686 libgcc.x86_64 libstdc++.i686 libstdc++.x86_64 libstdc++-devel.i686 libstdc++-devel.x86_64 libXi.i686 libXi.x86_64 \
+    libXtst.i686 libXtst.x86_64 make.x86_64 sysstat.x86_64
+    #yum -y install icu patch ruby ruby-devel rubygems python-pip
+}
+# Installs all required packages.
+#
+install_pkgs_all()
+{
+    system_update
+
+    install_docker
+
+    install_docker_apps
+
+    install_azure_cli
+
+    install_packages
+
+    #install_go
+
+    #install_ib
+}
+
+setup_shares
+install_pkgs_all
