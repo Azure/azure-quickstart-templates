@@ -221,7 +221,7 @@ install_pkgs_all()
 
     install_docker_apps
 
-    install_azure_cli
+    #install_azure_cli
 
     install_packages
 
