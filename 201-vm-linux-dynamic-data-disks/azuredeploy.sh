@@ -44,8 +44,9 @@ install_pkgs()
     yum install -y docker-engine 
     systemctl stop firewalld
     systemctl disable firewalld
-    service docker start
+    #service docker start
     systemctl start docker
+    systemctl enable docker
     wget https://storage.googleapis.com/golang/go1.6.2.linux-amd64.tar.gz
     tar -C /usr/local -xzf go1.6.2.linux-amd64.tar.gz
     export PATH=$PATH:/usr/local/go/bin
@@ -54,19 +55,19 @@ install_pkgs()
     libgcc.i686 libgcc.x86_64 libstdc++.i686 libstdc++.x86_64 libstdc++-devel.i686 libstdc++-devel.x86_64 libXi.i686 libXi.x86_64 \
     libXtst.i686 libXtst.x86_64 make.x86_64 sysstat.x86_64
     curl -L https://github.com/docker/compose/releases/download/$dockerComposeVer/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
-    curl -L https://github.com/docker/machine/releases/download/v0.7.0-rc1/docker-machine-`uname -s`-`uname -m` >/usr/local/bin/docker-machine && \
+    curl -L https://github.com/docker/machine/releases/download/v0.7.0/docker-machine-`uname -s`-`uname -m` >/usr/local/bin/docker-machine && \
     chmod +x /usr/local/bin/docker-machine
     chmod +x /usr/local/bin/docker-compose
     export PATH=$PATH:/usr/local/bin/
     mv /etc/localtime /etc/localtime.bak
     ln -s /usr/share/zoneinfo/Europe/Amsterdam /etc/localtime
     #yum -y install icu patch ruby ruby-devel rubygems python-pip
-    #yum install -y nodejs
-    #yum install -y npm
-    #npm install -g azure-cli
+    yum install -y nodejs
+    yum install -y npm
+    npm install -g azure-cli
     # Setting tomcat
     #docker run -it -dp 80:8080 -p 8009:8009  rossbachp/apache-tomcat8
-    docker run -dti --name=azure-cli microsoft/azure-cli 
+    docker run -dti --restart=always --name=azure-cli microsoft/azure-cli 
     docker run -it -d --restart=always -p 8080:8080 rancher/server
     systemctl enable docker
     #yum groupinstall -y "Infiniband Support"
