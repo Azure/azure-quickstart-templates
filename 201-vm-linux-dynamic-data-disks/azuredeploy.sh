@@ -8,8 +8,8 @@ if [[ $(id -u) -ne 0 ]] ; then
     exit 1
 fi
 
-if [ $# != 6 ]; then
-    echo "Usage: $0 <MasterHostname> <mountFolder> <numDataDisks> <dockerVer> <dockerComposeVer> <adminUserName>"
+if [ $# != 7 ]; then
+    echo "Usage: $0 <MasterHostname> <mountFolder> <numDataDisks> <dockerVer> <dockerComposeVer> <adminUserName> <imageSku>"
     exit 1
 fi
 
@@ -25,6 +25,7 @@ numberofDisks="$3"
 dockerVer="$4"
 dockerComposeVer="$5"
 userName="$6"
+skuName="$7"
 
 
 
@@ -218,11 +219,14 @@ install_pkgs_all()
 {
     system_update
 
-    install_docker
+	if [ "$skuName" == "6.5" ] || [ "$skuName" == "6.6" ] ; then
+    		install_azure_cli
+	elif [ "$skuName" == "7.2" ]; then
 
-    install_docker_apps
+    		install_docker
 
-    #install_azure_cli
+    		install_docker_apps
+	fi
 
     install_packages
 
