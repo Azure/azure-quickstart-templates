@@ -9,7 +9,7 @@ Before starting you will need the following:
 - An Azure account and subscription are required to create cluster virtual machines
 and Azure Storage accounts.
 
-- Azure PowerShell is required to run the script used to create and manage the clusters.
+- Azure PowerShell is a set of modules that provide cmdlets to manage Azure with Windows PowerShell. The Azure PowerShell cmdlets are required to run the script used to create and manage the clusters.
 See "[How to install and configure Azure PowerShell](https://azure.microsoft.com/en-us/documentation/articles/powershell-install-configure/)" for installation instructions.
 
 - MATLAB, Parallel Computing Toolbox, and MATLAB Distributed Computing Server hosted licenses; the cluster
@@ -19,9 +19,7 @@ configuration assumes that the MathWorks Hosted License Manager is used for
 - Access to the MATLAB Distributed Computing Server software that will need to be downloaded and then installed
 on a virtual machine that will be used as a “base” VM image for the clusters.
 
-- Copy the mdcs.ps1 file from this GitHib folder to a folder on your local computer.
-If you do not have a GitHub account select the mdscs.ps1 file, then select the "Raw" button,
-then copy the text and paste it into a local file.
+- Copy the mdcs.ps1 file from the scripts folder to a folder on your local computer. If you do not have a GitHub account select the mdscs.ps1 file, then select the "Raw" button, then copy the text and paste it into a local file.
 
 
 # Create a “Base” Virtual Machine Image
@@ -138,10 +136,7 @@ preparation work.**
         RDP connection will be closed automatically.
 
 -   Save the VM image:
-
-    -   Open an Azure PowerShell window in Admin mode run the following
-        commands; the result will be a VHD file saved in the storage
-        account created previously.
+    -   Using your local computer, open a Windows PowerShell window in Admin mode run the following commands; the result will be a VHD file saved in the storage account created previously.
 
             # Login - provide your Azure account credentials when prompted  
             Login-AzureRmAccount
@@ -172,9 +167,8 @@ preparation work.**
 
 # Cluster Management Scripts
 
-Before any of the scripts are used Azure PowerShell must be invoked, you
-must login, and you must set the subscription you want to use. Invoke
-Azure PowerShell and use the following commands:
+Before any of the scripts are used Windows PowerShell must be invoked, you
+must login, and you must set the subscription you want to use.
 
     # Login - provide your Azure account credentials when prompted
     Login-AzureRmAccount
@@ -188,7 +182,7 @@ Azure PowerShell and use the following commands:
     # Change to the folder containing mdcs.ps1
     cd <folder>
 
-The following Azure PowerShell script enables the creation and
+The following PowerShell script enables the creation and
 management of MATLAB Distributed Computing Server clusters:
 
     .\mdcs.ps1 <command> <command parameters>
@@ -416,4 +410,3 @@ Please submit feedback using one of the following mechanisms:
     GitHub account)
 
 -   Create a post in the [Azure Batch MSDN forum](https://social.msdn.microsoft.com/forums/azure/en-US/home?forum=azurebatch).
-
