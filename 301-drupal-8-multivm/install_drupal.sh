@@ -142,26 +142,96 @@ fi
 
 install_required_packages()
 {
-until apt-get -y update && apt-get -y install apache2 php5
-do
-  echo "Try again"
-  sleep 2
-done
+  # Install required packages
+  echo "installing required packages"
+  add-apt-repository ppa:gluster/glusterfs-3.7 -y
+  until apt-get -y update && apt-get -y install apache2 php5 php5-gd php5-mysql glusterfs-client mysql-client git 
+  do
+    echo "Still installing required packages"
+    sleep 2
+  done
+  
+  # Install Drush
+  php -r "readfile('http://files.drush.org/drush.phar');" > drush
+  chmod +x drush
+  mv drush /usr/local/bin
+  
+  # Install Composer
+  curl -sS https://getcomposer.org/installer | php
+  mv composer.phar /usr/local/bin/composer
 }
 
 configure_prequisites()
 {
-  
+ echo "configuring prerquisites"
+
+ # uncomments lines below to display errors
+   #  sed -i 's/display_errors = Off/display_errors = On/' /etc/php5/apache2/php.ini
+   #  sed -i 's/display_errors = Off/display_errors = On/' /etc/php5/cli/php.ini
+ 
+ # Set overrides on in apache2.conf
+ sed -i 's/AllowOverride None/AllowOverride All/' /etc/apache2/apache2.conf
+ 
+ # override  web root
+ sed -i 's/DocumentRoot \/var\/www\/html/DocumentRoot \/var\/www\/html\/drupal/g' /etc/apache2/sites-enabled/000-default.conf
+ 
+ a2enmod rewrite ssl
+ service apache2 restart
+ 
+ # create gluster mount point
+ mkdir -p /data
+ 
+ # mount gluster files system
+ mount -t glusterfs $GLUSTER_FIRST_NODE_NAME:/$GLUSTER_VOLUME_NAME /data
+ 
+ # if first drupal node then create /data/files directory on glusterfs
+ if [ "$IS_FIRST_MEMBER" = true ]; then
+      mkdir -p /data/files
+ fi
+ 
+ 
 }
 
-install_drupal
+install_drupal()
 {
-  
+ echo "installing drupal"
+ 
+ composer create-project drupal/drupal drupal8-site $DRUPAL_VERSION --keep-vcs
+ cd drupal8-site/
+ composer install
+ cd ..
+ mv drupal8-site /var/www/html/drupal
+ cd /var/www/html/drupal/sites/default
+ 
+ ln -s /data/files files
+ 
+ if [ "$IS_FIRST_MEMBER" = true ]; then
+     cp default.settings.php /data/settings.php
+     cp default.services.yml /data/services.yml
+ fi
+ 
+ ln -s /data/settings.php ./settings.php
+ ln -s /data/services.yml ./services.yml
+ chmod -R 777 /var/www/html/drupal/sites/default/files/
+ chmod -R 755 /var/www/html/drupal/sites/default/
+ chmod 777 /var/www/html/drupal/sites/default/settings.php
+ chmod 777 /var/www/html/drupal/sites/default/services.yml
+ 
 }
 
-create_drupal_site
+install_drupal_site()
 {
-  
+ echo "creating drupal site"
+ cd /var/www/html/drupal/
+ 
+ drush site-install --site-name="drupal-site" --db-url=mysql://$MYSQL_USER:$MYSQL_PASSWORD@$MYSQL_FQDN/$MYSQL_NEW_DB_NAME --account-name=$DRUPAL_ADMIN_USER --account-pass=$DRUPAL_ADMIN_PASSWORD -y
+}
+
+secure_files()
+{
+ chmod 444 /var/www/html/drupal/sites/default/settings.php
+ chmod 444 /var/www/html/drupal/sites/default/services.yml
+ service apache2 restart
 }
 
 # Step 1
@@ -174,4 +244,9 @@ configure_prequisites
 install_drupal
 
 # Step 4
-create_drupal_site
+if [ "$IS_FIRST_MEMBER" = true ]; then
+  install_drupal_site
+fi
+
+# Step 5
+secure_files
