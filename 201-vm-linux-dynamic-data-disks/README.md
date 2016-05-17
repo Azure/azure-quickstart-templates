@@ -8,15 +8,16 @@
 <img src="http://armviz.io/visualizebutton.png"/> </a>  
 
 ### This creates configurable number of disks with configurable size for centos
-* Latest Docker configurable - default is 1.10
-* Latest docker-compose configurable - default is 1.7.1
-* Latest Rancher available @ <code>8080</code> <Unauthenticated.. Authentication is manual setup>
-* Azure CLI usage is <code>docker exec -ti azure-cli bash -c "azure login && bash"</code>
-* Disk auto mounting is at /<<parameter>>/data
-* NFS4 is on on the above
-* Strict ssh public key enabled 
-* Nodes that share public RSA key shared can be used as direct jump boxes as azureuser@DNS
+* Latest Docker configurable - default is 1.10 (Only for 7.1/7.2, kernel 3.10.x and above).
+* Latest docker-compose configurable - default is 1.7.1 (Only for 7.1/7.2, kernel 3.10.x and above).
+* Latest Rancher available dockerized (7.1/7.2) @ <code>8080</code> i.e. <code>http://<DNS Name>.<location>.cloudapp.azure.com<Unauthenticated.. Authentication and agent setup is manual setup>.
+* Azure CLI usage is <code>docker exec -ti azure-cli bash -c "azure login && bash"</code>.
+* Disk auto mounting is at /<<parameter>>/data.
+* NFS4 is on on the above.
+* Strict ssh public key enabled.
+* Nodes that share public RSA key shared can be used as direct jump boxes as azureuser@DNS.
 * NSG is required.
 * Internal firewalld is off.
-* gcc and other necessary software available
+* gcc and other necessary software available for Plain CentOS 6.5/6.6/7.1/7.2.
 * WALinuxAgent updates are disabled on first deployment.
+* Specific Logic in install_packages_all() to distinguish between sku for CentOS 6.5/6.6 and 7.1/7.2, primarily for docker usage.
