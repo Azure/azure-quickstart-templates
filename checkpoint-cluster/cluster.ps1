@@ -15,7 +15,7 @@ Add-Type -AssemblyName System.Web
 $UserPrincipalName = ""
 # Description : The above user's password used by the cluster to make Azure API calls
 # Mandatory   : Yes
-$ClusterPassword = [System.Web.Security.Membership]::GeneratePassword(20,10)
+$ClusterPassword = [System.Web.Security.Membership]::GeneratePassword(16,8)
 
 # Description : Name of the resource group to create
 # Mandatory   : Yes
