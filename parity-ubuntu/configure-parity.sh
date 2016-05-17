@@ -1,0 +1,86 @@
+#!/bin/bash
+
+PARITY_DEB_URL=https://vanity-service.ethcore.io/github-data/latest-parity-deb
+
+echo "Installing parity"
+
+sudo apt-get update
+sudo apt-get install -y curl expect expect-dev
+
+file=/tmp/parity.deb
+
+curl -Lk $PARITY_DEB_URL > $file
+sudo dpkg -i $file
+rm $file
+
+password=$1
+
+echo $password > $HOME/.parity-pass
+
+address=0x$(expect -c "
+spawn parity account new
+
+expect \"Type password: \"
+send ${password}\n
+expect \"Repeat password: \"
+send ${password}\n
+interact
+" | awk 'END{print}' | tr -cd '[[:alnum:]]._-')
+
+cat > $HOME/chain.json <<EOL
+{
+  "name": "Private",
+  "engine": {
+    "BasicAuthority": {
+      "params": {
+        "gasLimitBoundDivisor": "0x0400",
+        "durationLimit": "0x0d",
+        "authorities" : ["${address}"]
+      }
+    }
+  },
+  "params": {
+    "accountStartNonce": "0x00",
+    "maximumExtraDataSize": "0x20",
+    "minGasLimit": "0x1388",
+    "networkID" : "0xad"
+  },
+  "genesis": {
+    "seal": {
+      "generic": {
+        "fields": 1,
+        "rlp": "0x11bbe8db4e347b4e8c937c1c8370e4b5ed33adb3db69cbdb7a38e1e50b1b82fa"
+      }
+    },
+    "difficulty": "0x20000",
+    "author": "0x0000000000000000000000000000000000000000",
+    "timestamp": "0x00",
+    "parentHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "extraData": "0x",
+    "gasLimit": "0x2fefd8"
+  },
+  "nodes": [
+  ],
+  "accounts": {
+    "0000000000000000000000000000000000000001": { "balance": "1", "nonce": "1048576", "builtin": { "name": "ecrecover", "pricing": { "linear": { "base": 3000, "word": 0 } } } },
+    "0000000000000000000000000000000000000002": { "balance": "1", "nonce": "1048576", "builtin": { "name": "sha256", "pricing": { "linear": { "base": 60, "word": 12 } } } },
+    "0000000000000000000000000000000000000003": { "balance": "1", "nonce": "1048576", "builtin": { "name": "ripemd160", "pricing": { "linear": { "base": 600, "word": 120 } } } },
+    "0000000000000000000000000000000000000004": { "balance": "1", "nonce": "1048576", "builtin": { "name": "identity", "pricing": { "linear": { "base": 15, "word": 3 } } } },
+    "${address}": {
+      "balance": "1606938044258990275541962092341162602522202993782792835301376"
+    }
+  }
+}
+EOL
+
+address=0x255004b2808f080a70b44fab078a523f638d349e
+
+command="parity --chain ~/chain.json --author ${address} --unlock ${address} --password $HOME/.parity-pass --rpccorsdomain '*' --jsonrpc-interface all"
+
+printf "%s\n%s" "#!/bin/sh" "$command" | sudo tee /etc/init.d/parity
+
+sudo chmod +x /etc/init.d/parity
+sudo update-rc.d parity defaults
+
+jnohup $command & exit 0
+
