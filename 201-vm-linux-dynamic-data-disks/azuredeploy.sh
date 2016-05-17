@@ -219,16 +219,17 @@ install_pkgs_all()
 {
     system_update
 
+    install_packages
+
 	if [ "$skuName" == "6.5" ] || [ "$skuName" == "6.6" ] ; then
     		install_azure_cli
-	elif [ "$skuName" == "7.2" ]; then
+	elif [ "$skuName" == "7.2" ] || [ "$skuName" == "7.1" ] ; then
 
     		install_docker
 
     		install_docker_apps
 	fi
 
-    install_packages
 
     #install_go
 
