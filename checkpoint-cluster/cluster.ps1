@@ -252,6 +252,9 @@ New-MsolUser `
 New-AzureRmResourceGroup -Name $ResourceGroup `
     -Location $Location
 
+# Sleep is needed for the new user to propogate in Azure
+Start-Sleep 30
+
 # Assign the user with permission to modify the resources in the resource group
 New-AzureRmRoleAssignment `
     -ResourceGroupName $ResourceGroup `
