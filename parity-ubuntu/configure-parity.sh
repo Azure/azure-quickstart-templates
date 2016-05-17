@@ -1,6 +1,8 @@
 #!/bin/bash
 
 PARITY_DEB_URL=https://vanity-service.ethcore.io/github-data/latest-parity-deb
+AZUREUSER=$2
+HOMEDIR="/home/$AZUREUSER"
 
 echo "Installing parity"
 
@@ -15,7 +17,7 @@ rm $file
 
 password=$1
 
-echo $password > $HOME/.parity-pass
+echo $password > $HOMEDIR/.parity-pass
 
 address=0x$(expect -c "
 spawn parity account new
@@ -27,7 +29,7 @@ send ${password}\n
 interact
 " | awk 'END{print}' | tr -cd '[[:alnum:]]._-')
 
-cat > $HOME/chain.json <<EOL
+cat > $HOMEDIR/chain.json <<EOL
 {
   "name": "Private",
   "engine": {
@@ -75,7 +77,7 @@ EOL
 
 address=0x255004b2808f080a70b44fab078a523f638d349e
 
-command="parity --chain ~/chain.json --author ${address} --unlock ${address} --password $HOME/.parity-pass --rpccorsdomain '*' --jsonrpc-interface all"
+command="parity --chain ~/chain.json --author ${address} --unlock ${address} --password $HOMEDIR/.parity-pass --rpccorsdomain '*' --jsonrpc-interface all"
 
 printf "%s\n%s" "#!/bin/sh" "$command" | sudo tee /etc/init.d/parity
 
