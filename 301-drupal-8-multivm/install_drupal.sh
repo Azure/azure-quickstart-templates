@@ -186,8 +186,9 @@ configure_prequisites()
  mount -t glusterfs $GLUSTER_FIRST_NODE_NAME:/$GLUSTER_VOLUME_NAME /data
  
  # check if this is the first drupal node based on host name, and existance of files directory, and set IS_FIRST_MEMBER
- hname = $HOSTNAME
- lastchar = ${hname: -1}
+hname=$(hostname)
+lastchar=${hname: -1}
+
 if [ ! -d /data/files ] && [ "$lastchar" = "0" ]; then
   IS_FIRST_MEMBER=true
 fi
