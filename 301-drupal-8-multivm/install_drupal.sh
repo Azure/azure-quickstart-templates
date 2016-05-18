@@ -87,7 +87,7 @@ fi
 
 
 # Parse script parameters
-while getopts :d:u:p:g:v:s:n:P:k optname; do
+while getopts :d:u:p:g:v:s:n:P:k:h optname; do
 
 	# Log input parameters (except the admin password) to facilitate troubleshooting
 	if [ ! "$optname" == "p" ] && [ ! "$optname" == "P" ]; then
@@ -122,9 +122,9 @@ while getopts :d:u:p:g:v:s:n:P:k optname; do
 	k) # new drupal database name
 		MYSQL_NEW_DB_NAME=${OPTARG}
 		;;    
-	f) # first drupal node indicator
-		IS_FIRST_MEMBER=true
-		;;	
+	h) # new drupal database name
+		;;    
+	
 	\?) # Unrecognized option - show help
 		echo -e \\n"Option -${BOLD}$OPTARG${NORM} not allowed."
 		help
