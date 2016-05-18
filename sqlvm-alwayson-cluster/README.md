@@ -30,6 +30,8 @@ This template will create a SQL Server 2014/2012 Always On Availability Group us
 
 ## Notes
 
++ 	File Share Witness and SQL Server VMs are from the same Availability Set and currently there is a constrain for mixing DS-Series machine and GS-Series machine into the same Availability Set. If you decide to have DS-Series SQL Server VMs you must also have a DS-Series File Share Witness; If you decide to have GS-Series SQL Server VMs you must also have a GS-Series File Share Witness.
+
 +	The default settings for SQL Server storage are to deploy using **premium storage**, the AD witness uses a P10 Disk and the SQL VMs use P30 disks, these sizes can be changed by changing the relevant variables. In addition there is a P10 Disk used for each VMs OS Disk.
 
 + 	In default settings for compute require that you have at least 15 cores of free quota to deploy.

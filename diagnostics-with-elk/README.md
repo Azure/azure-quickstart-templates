@@ -10,7 +10,7 @@
 This template deploys an Elasticsearch cluster, Logstash and Kibana.
 You can specify a custom Logstash configuration using the encodedConfigString parameter.
 To create a custom Logstash configuration visit http://codepen.io/skkandia/pen/mPjOdR.
-If you don't want to enter a custom Logstash configuration and would like to use the logstash-input-azurewadtable plugin to
+If you don't want to enter a custom Logstash configuration and would like to use the <a href="https://github.com/Azure/azure-diagnostics-tools/tree/master/Logstash/logstash-input-azurewadtable">logstash-input-azurewadtable</a> plugin to
 input diagnostics data from Azure Table storage, then set the encodedConfigString parameter to 'na' and provide values for the
 existingDiagnosticsStorageAccountName, existingDiagnosticsStorageAccountKey and existingDiagnosticsStorageTableNames parameters.
 
@@ -20,4 +20,5 @@ After the deployment completes you can view the diagnostics data in Kibana. To g
 
 #Notes
 - This template uses the Elasticsearch template from: <a href="../elasticsearch">azure-quickstart-templates/elasticsearch/<a/>
+- It installs the Logstash input plugin for WAD table from: <a href="https://github.com/Azure/azure-diagnostics-tools/tree/master/Logstash/logstash-input-azurewadtable">logstash-input-azurewadtable</a>
 
