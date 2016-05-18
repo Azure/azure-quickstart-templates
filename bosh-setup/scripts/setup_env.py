@@ -36,7 +36,14 @@ def render_bosh_manifest(settings):
     ip = netaddr.IPNetwork(settings['SUBNET_ADDRESS_RANGE_FOR_BOSH'])
     gateway_ip = str(ip[1])
     bosh_director_ip = str(ip[4])
-    
+
+    ntp_servers_maps = {
+        "AzureCloud": "0.north-america.pool.ntp.org",
+        "AzureChinaCloud": "1.cn.pool.ntp.org, 1.asia.pool.ntp.org, 0.asia.pool.ntp.org"
+    }
+    environment = settings["ENVIRONMENT"]
+    ntp_servers = ntp_servers_maps[environment]
+
     # Render the manifest for bosh-init
     bosh_template = 'bosh.yml'
     if os.path.exists(bosh_template):
@@ -69,6 +76,7 @@ def render_bosh_manifest(settings):
         contents = re.compile(re.escape("REPLACE_WITH_SSH_PUBLIC_KEY")).sub(ssh_public_key, contents)
         contents = re.compile(re.escape("REPLACE_WITH_GATEWAY_IP")).sub(gateway_ip, contents)
         contents = re.compile(re.escape("REPLACE_WITH_BOSH_DIRECTOR_IP")).sub(bosh_director_ip, contents)
+        contents = re.compile(re.escape("REPLACE_WITH_NTP_SERVERS")).sub(ntp_servers, contents)
         with open(bosh_template, 'w') as tmpfile:
             tmpfile.write(contents)
 
