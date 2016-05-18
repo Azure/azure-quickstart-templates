@@ -75,7 +75,7 @@ cat > $HOMEDIR/chain.json <<EOL
 }
 EOL
 
-command="parity --chain ~/chain.json --author ${address} --unlock ${address} --password $HOMEDIR/.parity-pass --rpccorsdomain '*' --jsonrpc-interface all"
+command="parity --chain $HOMEDIR/chain.json --author ${address} --unlock ${address} --password $HOMEDIR/.parity-pass --rpccorsdomain '*' --jsonrpc-interface all"
 
 printf "%s\n%s" "#!/bin/sh" "$command" | sudo tee /etc/init.d/parity
 
