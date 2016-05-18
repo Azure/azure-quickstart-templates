@@ -187,7 +187,7 @@ configure_prequisites()
  
  # check if this is the first drupal node based on host name, and existance of files directory, and set IS_FIRST_MEMBER
  hname = $HOSTNAME
- lastchar = ${str: -1}
+ lastchar = ${hname: -1}
 if [ ! -d /data/files ] && [ "$lastchar" = "0" ]; then
   IS_FIRST_MEMBER=true
 fi
