@@ -20,6 +20,36 @@
         "description": "The Ubuntu version for the Drupal VM. This will pick a fully patched image of this given Ubuntu version. Allowed values are: 15.10, 14.04.4-LTS."
       }
     },
+    
+    "drupalAdminUser": {
+      "type": "string",
+      "defaultValue": "admin",
+      
+      "metadata": {
+        "description": "Admin User for the Drupal Installation"
+      }
+    },
+    
+    "drupalAdminPassword": {
+      "type": "securestring",
+      "defaultValue": "Drupal Administrator Password",
+      
+      "metadata": {
+        "description": "The Ubuntu version for the Drupal VM. This will pick a fully patched image of this given Ubuntu version. Allowed values are: 15.10, 14.04.4-LTS."
+      }
+    },
+    
+    "drupalVersion": {
+      "type": "string",
+      "defaultValue": "8.1.1",
+      "allowedValues": [
+        "8.1.1"
+      ],
+      "metadata": {
+        "description": "The Drupal Version to be installed"
+      }
+    },
+    
     "vmssName": {
       "type": "string",
       "metadata": {
@@ -55,38 +85,79 @@
         "description": "Admin password on all Drupal and gluster VMs."
       }
     },
-    "mySqlDnsName": {
+    
+    "drupalInstallationDatabaseName" : {
       "type": "string",
+      "defaultValue": "drupaldb",
+      
       "metadata": {
-        "description": "Connect to your cluster using dnsName.location.cloudapp.azure.com"
+        "description": "The MySQL Database to which drupal will be installed"
       }
     },
-
-
+    
+    "createNewDrupalDBServer": {
+      "type": "string",
+      "defaultValue": "No",
+      "allowedValues": [
+        "Yes",
+        "No"
+      ],
+      "metadata": {
+        "description": "If Yes new MySQL server will be provisioned using the mysql replication template"
+      }
+    },
+    
+    "mySqlFQDN": {
+      "type": "string",
+      "metadata": {
+        "description": "Fully qualified domain name of the existing mysql server"
+      }
+    },
+    
+    "mySqlDnsName": {
+      "type": "string",
+      "defaultValue": "NA",
+      "metadata": {
+        "description": "Required when creating new MySQL server, FQDN of server will be using dnsName.location.cloudapp.azure.com"
+      }
+    },
 
     "mySqlVmUserName": {
       "type": "string",
+      "defaultValue": "NA",
       "metadata": {
-        "description": "user name to ssh to the VMs"
+        "description": "Required when creating new MySQL server. User name to ssh to the VMs"
       }
     },
+    
     "mySqlVmPassword": {
       "type": "securestring",
+      "defaultValue": "NA",
       "metadata": {
-        "description": "password to ssh to the VMs"
+        "description": "Required when creating new MySQL server. Password to ssh to the VMs"
       }
     },
-    "mysqlRootPassword": {
+    
+    "mysqlUser": {
+      "type": "securestring",
+      "defaultValue": "admin",
+      "metadata": {
+        "description": "mysql username. When creating New MySQL server using mysql replication template this will be admin."
+      }
+    },
+    
+    "mysqlUserPassword": {
       "type": "securestring",
       "metadata": {
-        "description": "mysql root/admin user password"
+        "description": "mysql user password"
       }
     },
+    
     "mySqlVmSize": {
       "type": "string",
       "defaultValue": "Standard_D2",
       "metadata": {
-        "description": "size for the mySql VMs"
+        "description": "Required when creating new MySQL server. size for the mySql VMs"
       }
     },
 
@@ -98,17 +169,10 @@
         "6.6"
       ],
       "metadata": {
-        "description": "VM OS version"
+        "description": "Required when creating new MySQL server. VM OS version"
       }
     },
 
-    "mysqlTemplateLocation": {
-      "type": "string",
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/mysql-replication/",
-      "metadata": {
-        "description": "file location for mysql template and my.cnf.template"
-      }
-    },
     "glusterTemplateLocation": {
       "type": "string",
       "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/gluster-file-system/",
@@ -116,7 +180,7 @@
         "description": "file location for gluster template"
       }
     },
-    "websiteTemplateLocation": {
+    "templateLocation": {
       "type": "string",
       "defaultValue": "https://github.com/maniSbindra/azure-quickstart-templates/tree/master/301-drupal-8-multivm",
       "metadata": {
@@ -184,15 +248,16 @@
     "longNamingInfix": "[toLower(parameters('vmssName'))]",
     "mysqlFrontEndPort0": 3306,
     "mysqlFrontEndPort1": 3307,
-    "mysqlProbePassword": "[parameters('mysqlRootPassword')]",
+    "mysqlProbePassword": "[parameters('mysqlUserPassword')]",
     "mysqlProbePort0": 9200,
     "mysqlProbePort1": 9201,
     "mySqlpublicIPName": "mysqlIP01",
-    "mysqlReplicationPassword": "[parameters('mysqlRootPassword')]",
+    "mysqlReplicationPassword": "[parameters('mysqlUserPassword')]",
     "mysqlsshNatRuleFrontEndPort0": 64001,
     "mysqlsshNatRuleFrontEndPort1": 64002,
     "mySqlSubnetName": "dbsubnet",
     "mySqlSubnetPrefix": "10.1.1.0/24",
+    "mysqlTemplateLocation": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/mysql-replication/",
     "mySqlVnetAddressPrefix": "10.1.0.0/16",
     "mySqlVnetName": "dbvnet",
     "namingInfix": "[toLower(substring(concat(parameters('vmssName'), uniqueString(resourceGroup().id)), 0, 9))]",
@@ -338,13 +403,10 @@
       "name": "mysql",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "[variables('templateAPIVersion')]",
-      "dependsOn": [
-        "gluster"
-      ],
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('mysqlTemplateLocation'), '/azuredeploy.json')]",
+          "uri": "[concat(parameters('templateLocation'), '/mysql-resources_',parameters('createNewDrupalDBServer'),'.json')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -352,7 +414,7 @@
           "location": { "value": "[variables('location')]" },
           "vmUserName": { "value": "[parameters('mySqlVmUserName')]" },
           "vmPassword": { "value": "[parameters('mySqlVmPassword')]" },
-          "mysqlRootPassword": { "value": "[parameters('mysqlRootPassword')]" },
+          "mysqlRootPassword": { "value": "[parameters('mysqlUserPassword')]" },
           "mysqlReplicationPassword": { "value": "[variables('mysqlReplicationPassword')]" },
           "mysqlProbePassword": { "value": "[variables('mysqlProbePassword')]" },
           "vmSize": { "value": "[parameters('mySqlVmSize')]" },
@@ -373,7 +435,7 @@
           "sshNatRuleFrontEndPort1": { "value": "[variables('mysqlsshNatRuleFrontEndPort1')]" },
           "mysqlProbePort0": { "value": "[variables('mysqlProbePort0')]" },
           "mysqlProbePort1": { "value": "[variables('mysqlProbePort1')]" },
-          "artifactsPath": { "value": "[parameters('mysqlTemplateLocation')]" },
+          "artifactsPath": { "value": "[variables('mysqlTemplateLocation')]" },
           "publicIPName": { "value": "[variables('mySqlpublicIPName')]" },
           "storageAccountNamePrefix": { "value": "[variables('dbStorageAccountNamePrefix')]" }
         }
@@ -491,11 +553,14 @@
                   "autoUpgradeMinorVersion": false,
                   "settings": {
                     "fileUris": [
-                      "https://raw.githubusercontent.com/maniSbindra/azure-quickstart-templates/master/301-drupal-8-multivm/install_lap.sh",
-                      "https://raw.githubusercontent.com/maniSbindra/azure-quickstart-templates/master/301-drupal-8-multivm/index.php",
-                      "https://raw.githubusercontent.com/maniSbindra/azure-quickstart-templates/master/301-drupal-8-multivm/do_work.php"
-                    ],
-                    "commandToExecute": "bash install_lap.sh"
+                      [
+                        "[concat(parameters('templateLocation'),'/install_drupal.sh')]",
+                        "[concat(parameters('templateLocation'),'/index.php')]",
+                        "[concat(parameters('templateLocation'),'/do_work.php')]"
+                      ],
+                      "commandToExecute",
+                      :
+                      "[concat('bash install_drupal.sh -d ',parameters('drupalVersion') ,' -u ',parameters('drupalAdminUser'),' -p ',parameters('drupalAdminPassword') ,' -g ',variables('glusterVMNamePrefix'),'0 -v gfsvol -s ', parameters('mysqlFQDN'),' -n ', parameters('mysqlUser'),' -P ', parameters('mysqlUserPassword'),' -k ',parameters('drupalInstallationDatabaseName'))]"
                   }
                 }
               },
