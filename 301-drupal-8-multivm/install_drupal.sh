@@ -66,7 +66,6 @@ help()
 	echo "		-n mysql root user name"
 	echo "		-P mysql root user password"
   echo "		-k new drupal database name"
-	echo "		-f first drupal node indicator"	
 }
 
 log()
@@ -85,8 +84,10 @@ then
     exit 3
 fi
 
+
+
 # Parse script parameters
-while getopts :d:u:p:g:v:s:n:P:k:f optname; do
+while getopts :d:u:p:g:v:s:n:P:k optname; do
 
 	# Log input parameters (except the admin password) to facilitate troubleshooting
 	if [ ! "$optname" == "p" ] && [ ! "$optname" == "P" ]; then
@@ -184,6 +185,13 @@ configure_prequisites()
  # mount gluster files system
  mount -t glusterfs $GLUSTER_FIRST_NODE_NAME:/$GLUSTER_VOLUME_NAME /data
  
+ # check if this is the first drupal node based on host name, and existance of files directory, and set IS_FIRST_MEMBER
+ hname = $HOSTNAME
+ lastchar = ${str: -1}
+if [ ! -d /data/files ] && [ "$lastchar" = "0" ]; then
+  IS_FIRST_MEMBER=true
+fi
+ 
  # if first drupal node then create /data/files directory on glusterfs
  if [ "$IS_FIRST_MEMBER" = true ]; then
       mkdir -p /data/files
@@ -208,6 +216,11 @@ install_drupal()
  if [ "$IS_FIRST_MEMBER" = true ]; then
      cp default.settings.php /data/settings.php
      cp default.services.yml /data/services.yml
+ else
+     while [ ! -f /data/services.yml ] ;
+     do
+      sleep 2
+     done
  fi
  
  ln -s /data/settings.php ./settings.php
