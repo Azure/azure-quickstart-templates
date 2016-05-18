@@ -185,11 +185,12 @@ configure_prequisites()
  # mount gluster files system
  mount -t glusterfs $GLUSTER_FIRST_NODE_NAME:/$GLUSTER_VOLUME_NAME /data
  
- # check if this is the first drupal node based on host name, and existance of files directory, and set IS_FIRST_MEMBER
-hname=$(hostname)
-lastchar=${hname: -1}
+ # check if this is the first drupal node based on existance of files directory and lockfile, and set IS_FIRST_MEMBER
+# hname=$(hostname)
+# lastchar=${hname: -1}
 
-if [ ! -d /data/files ] && [ "$lastchar" = "0" ]; then
+if [ ! -d /data/files ] && [ ! -f /data/flock.lock ]; then
+  touch /data/flock.lock
   IS_FIRST_MEMBER=true
 fi
  
