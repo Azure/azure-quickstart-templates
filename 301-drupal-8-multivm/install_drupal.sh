@@ -194,11 +194,13 @@ if [ ! -d /data/files ] && [ ! -f /data/flock.lock ]; then
   echo "first drupal node :" >> /data/flock.lock
   echo $(hostname) >> /data/flock.lock
   IS_FIRST_MEMBER=true
+  echo "lock created: Now acting as first drupal node"
 fi
  
  # if first drupal node then create /data/files directory on glusterfs
  if [ "$IS_FIRST_MEMBER" = true ]; then
       mkdir -p /data/files
+	  echo "creating files folder on shared mount.."
  fi
  
  
@@ -220,11 +222,12 @@ install_drupal()
  if [ "$IS_FIRST_MEMBER" = true ]; then
      cp default.settings.php /data/settings.php
      cp default.services.yml /data/services.yml
+	 echo "copied settings.php and services.yml to shared mount..."
  else
      while [ ! -f /data/services.yml ] ;
      do
       sleep 5
-	  echo "Sleeping, waiting for node 1 to create required files"
+	  echo "Sleeping, waiting for node 1 to create required files.."
      done
 	 echo "services.yml file found, exiting sleep loop.." 
  fi
@@ -244,6 +247,7 @@ install_drupal_site()
  cd /var/www/html/drupal/
  
  drush site-install --site-name="drupal-site" --db-url=mysql://$MYSQL_USER:$MYSQL_PASSWORD@$MYSQL_FQDN/$MYSQL_NEW_DB_NAME --account-name=$DRUPAL_ADMIN_USER --account-pass=$DRUPAL_ADMIN_PASSWORD -y
+ echo "drupal site created...."
 }
 
 secure_files()
@@ -251,6 +255,7 @@ secure_files()
  chmod 444 /var/www/html/drupal/sites/default/settings.php
  chmod 444 /var/www/html/drupal/sites/default/services.yml
  service apache2 restart
+ echo "Files secured . Web server restarted...."
 }
 
 # Step 1
@@ -264,6 +269,7 @@ install_drupal
 
 # Step 4
 if [ "$IS_FIRST_MEMBER" = true ]; then
+  echo "Invoking Drupal Site Installation routine...."
   install_drupal_site
 fi
 
