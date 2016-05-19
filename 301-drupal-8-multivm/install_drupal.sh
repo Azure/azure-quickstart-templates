@@ -191,6 +191,8 @@ configure_prequisites()
 
 if [ ! -d /data/files ] && [ ! -f /data/flock.lock ]; then
   touch /data/flock.lock
+  echo "first drupal node :" >> /data/flock.lock
+  echo $(hostname) >> /data/flock.lock
   IS_FIRST_MEMBER=true
 fi
  
@@ -224,6 +226,7 @@ install_drupal()
       sleep 5
 	  echo "Sleeping, waiting for node 1 to create required files"
      done
+	 echo "services.yml file found, exiting sleep loop.." 
  fi
  
  ln -s /data/settings.php ./settings.php
