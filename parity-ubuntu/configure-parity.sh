@@ -28,8 +28,8 @@ rm $file
 echo $PASSWORD > $HOME/.parity-pass
 
 expect_out= expect -c "
-spawn parity account new
-
+spawn sudo parity account new
+puts $HOME
 expect \"Type password: \"
 send ${PASSWORD}\n
 expect \"Repeat password: \"
