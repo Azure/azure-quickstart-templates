@@ -1,9 +1,14 @@
 #!/bin/bash
 
 PARITY_DEB_URL=https://vanity-service.ethcore.io/github-data/latest-parity-deb
+PASSWORD=$1
 AZUREUSER=$2
-HOMEDIR="/home/$AZUREUSER"
-export HOME=$HOMEDIR
+#HOMEDIR="/home/$AZUREUSER"
+
+echo "home: $HOME"
+whoami
+ls /
+ls /home/
 
 echo "Installing parity"
 
@@ -16,21 +21,23 @@ curl -Lk $PARITY_DEB_URL > $file
 sudo dpkg -i $file
 rm $file
 
-password=$1
 
-echo $password > $HOMEDIR/.parity-pass
+
+echo $PASSWORD > $HOME/.parity-pass
 
 address=0x$(expect -c "
 spawn parity account new
 
 expect \"Type password: \"
-send ${password}\n
+send ${PASSWORD}\n
 expect \"Repeat password: \"
-send ${password}\n
+send ${PASSWORD}\n
 interact
 " | awk 'END{print}' | tr -cd '[[:alnum:]]._-')
 
-cat > $HOMEDIR/chain.json <<EOL
+echo "address: $address"
+
+cat > $HOME/chain.json <<EOL
 {
   "name": "Private",
   "engine": {
@@ -76,7 +83,7 @@ cat > $HOMEDIR/chain.json <<EOL
 }
 EOL
 
-command="parity --chain $HOMEDIR/chain.json --author ${address} --unlock ${address} --password $HOMEDIR/.parity-pass --rpccorsdomain '*' --jsonrpc-interface all"
+command="parity --chain $HOME/chain.json --author ${address} --unlock ${address} --password $HOME/.parity-pass --rpccorsdomain '*' --jsonrpc-interface all"
 
 printf "%s\n%s" "#!/bin/sh" "$command" | sudo tee /etc/init.d/parity
 
