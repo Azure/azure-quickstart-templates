@@ -189,6 +189,9 @@ configure_prequisites()
  # hname=$(hostname)
  # lastchar=${hname: -1}
 
+# Sleep for 2 minutes (added to take care of observed condition when 1st member of vm scale set was going down after some time). first of the remaining nodes will be marked as the first member node
+sleep 2m
+
 if [ ! -d /data/files ] && [ ! -f /data/flock.lock ]; then
   touch /data/flock.lock
   echo "first drupal node :" >> /data/flock.lock
@@ -247,6 +250,8 @@ install_drupal_site()
  cd /var/www/html/drupal/
  
  drush site-install --site-name="drupal-site" --db-url=mysql://$MYSQL_USER:$MYSQL_PASSWORD@$MYSQL_FQDN/$MYSQL_NEW_DB_NAME --account-name=$DRUPAL_ADMIN_USER --account-pass=$DRUPAL_ADMIN_PASSWORD -y
+ 
+#  next 3 statements added for debugging purposes
  touch /data/startDrupalCreation
  echo $(hostname) >> /data/startDrupalCreation
  echo "drupal site created...."
@@ -260,6 +265,8 @@ secure_files()
  echo "Files secured . Web server restarted...."
 }
 
+
+
 # Step 1
 install_required_packages
 
@@ -270,7 +277,9 @@ configure_prequisites
 install_drupal
 
 # Step 4
-if [ "$IS_FIRST_MEMBER" = true ] || [ ! -f /data/startDrupalCreation ];  then
+# if [ "$IS_FIRST_MEMBER" = true ] || [ ! -f /data/startDrupalCreation ];  then
+
+if [ "$IS_FIRST_MEMBER" = true ];  then
   echo "Invoking Drupal Site Installation routine...."
   install_drupal_site
   
