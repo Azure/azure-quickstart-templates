@@ -15,8 +15,11 @@ This template deploys a Drupal 8 installation using a VM scale set.  It has the 
 - Deploys a load balancer in front of the Drupal VM Scaleset, so that the VMs are not directly exposed to the internet.  SSH ports on the VMs are exposed through the load balancer (Natted ports)
 
 ### How to Deploy
-You can deploy the template with Azure Portal, or PowerShell, or Azure cross platform command line tools.  
+You can deploy the template with Azure Portal, or PowerShell, or Azure cross platform command line tools.
+You can either deploy using an existing MySQL server, or by creating mysql server using the template  
 * Deployment using existing MySQL Server
+** OVerview
+
 * Deployment creating a new MySQL Server
 
 ### Drupal
