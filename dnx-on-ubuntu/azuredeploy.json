@@ -1,0 +1,236 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "virtualMachines_dnx_on_ubuntu_adminPassword": {
+      "defaultValue": null,
+      "type": "securestring"
+    },
+    "virtualMachines_dnx_on_ubuntu_adminusername": {
+      "defaultValue": "serveradmin",
+      "type": "string"
+    },
+    "virtualMachines_dnx_on_ubuntu_name": {
+      "defaultValue": "dnx-on-ubuntu",
+      "type": "string"
+    },
+    "networkInterfaces_dnx_on_ubuntu620_name": {
+      "defaultValue": "dnx-on-ubuntu620",
+      "type": "string"
+    },
+    "networkSecurityGroups_dnx_on_ubuntu_name": {
+      "defaultValue": "dnx-on-ubuntu",
+      "type": "string"
+    },
+    "publicIPAddresses_dnx_on_ubuntu_name": {
+      "defaultValue": "dnx-on-ubuntu",
+      "type": "string"
+    },
+    "virtualNetworks_dnx_on_ubuntu_name": {
+      "defaultValue": "dnx-on-ubuntu",
+      "type": "string"
+    },
+    "storageAccounts_dnxonubuntudiagstore_name": {
+      "defaultValue": "dnxonubuntudiagstore",
+      "type": "string"
+    },
+    "storageAccounts_dnxonubuntustore_name": {
+      "defaultValue": "dnxonubuntustore",
+      "type": "string"
+    }
+  },
+  "variables": {},
+  "resources": [
+    {
+      "comments": "Generalized from resource: '/subscriptions/92a240c5-5327-46c5-b231-6014fce10423/resourceGroups/dnx-on-ubuntu/providers/Microsoft.Compute/virtualMachines/dnx-on-ubuntu'.",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[parameters('virtualMachines_dnx_on_ubuntu_name')]",
+      "apiVersion": "2015-06-15",
+      "location": "westeurope",
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "Standard_DS2"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "Canonical",
+            "offer": "UbuntuServer",
+            "sku": "14.04.4-LTS",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[parameters('virtualMachines_dnx_on_ubuntu_name')]",
+            "createOption": "FromImage",
+            "vhd": {
+              "uri": "[concat('https', '://', parameters('storageAccounts_dnxonubuntustore_name'), '.blob.core.windows.net', concat('/vhds/', parameters('virtualMachines_dnx_on_ubuntu_name'),'201641492245.vhd'))]"
+            },
+            "caching": "ReadWrite"
+          },
+          "dataDisks": []
+        },
+        "osProfile": {
+          "computerName": "[parameters('virtualMachines_dnx_on_ubuntu_name')]",
+          "adminUsername": "[parameters('virtualMachines_dnx_on_ubuntu_adminusername')]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": false
+          },
+          "secrets": [],
+          "adminPassword": "[parameters('virtualMachines_dnx_on_ubuntu_adminPassword')]"
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaces_dnx_on_ubuntu620_name'))]"
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_dnxonubuntustore_name'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaces_dnx_on_ubuntu620_name'))]"
+      ],     
+      "resources": [
+        {
+          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "name": "[concat(parameters('virtualMachines_dnx_on_ubuntu_name'),'/installcustomscript')]",
+          "apiVersion": "2016-03-30",
+          "location": "westeurope",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', parameters('virtualMachines_dnx_on_ubuntu_name') )]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.OSTCExtensions",
+            "type": "CustomScriptForLinux",
+            "typeHandlerVersion": "1.4",
+            "settings": {
+              "fileUris": [
+                "https://raw.githubusercontent.com/jochenvw/azure-quickstart-templates/master/dnx-on-ubuntu/post_deployment.sh"
+              ],
+              "commandToExecute": "[concat('/bin/bash post_deployment.sh ', parameters('virtualMachines_dnx_on_ubuntu_adminusername'))]"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "comments": "Generalized from resource: '/subscriptions/92a240c5-5327-46c5-b231-6014fce10423/resourceGroups/dnx-on-ubuntu/providers/Microsoft.Network/networkInterfaces/dnx-on-ubuntu620'.",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[parameters('networkInterfaces_dnx_on_ubuntu620_name')]",
+      "apiVersion": "2015-06-15",
+      "location": "westeurope",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAddress": "10.2.0.4",
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddresses_dnx_on_ubuntu_name'))]"
+              },
+              "subnet": {
+                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_dnx_on_ubuntu_name')), '/subnets/default')]"
+              }
+            }
+          }
+        ],
+        "dnsSettings": {
+          "dnsServers": []
+        },
+        "enableIPForwarding": false,
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_dnx_on_ubuntu_name'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddresses_dnx_on_ubuntu_name'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_dnx_on_ubuntu_name'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_dnx_on_ubuntu_name'))]"
+      ]
+    },
+    {
+      "comments": "Generalized from resource: '/subscriptions/92a240c5-5327-46c5-b231-6014fce10423/resourceGroups/dnx-on-ubuntu/providers/Microsoft.Network/networkSecurityGroups/dnx-on-ubuntu'.",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[parameters('networkSecurityGroups_dnx_on_ubuntu_name')]",
+      "apiVersion": "2015-06-15",
+      "location": "westeurope",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "default-allow-ssh",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1000,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      },
+      "dependsOn": []
+    },
+    {
+      "comments": "Generalized from resource: '/subscriptions/92a240c5-5327-46c5-b231-6014fce10423/resourceGroups/dnx-on-ubuntu/providers/Microsoft.Network/publicIPAddresses/dnx-on-ubuntu'.",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[parameters('publicIPAddresses_dnx_on_ubuntu_name')]",
+      "apiVersion": "2015-06-15",
+      "location": "westeurope",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "idleTimeoutInMinutes": 4
+      },
+      "dependsOn": []
+    },
+    {
+      "comments": "Generalized from resource: '/subscriptions/92a240c5-5327-46c5-b231-6014fce10423/resourceGroups/dnx-on-ubuntu/providers/Microsoft.Network/virtualNetworks/dnx-on-ubuntu'.",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[parameters('virtualNetworks_dnx_on_ubuntu_name')]",
+      "apiVersion": "2015-06-15",
+      "location": "westeurope",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.2.0.0/16"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "default",
+            "properties": {
+              "addressPrefix": "10.2.0.0/24"
+            }
+          }
+        ]
+      },
+      "dependsOn": []
+    },
+    {
+      "comments": "Generalized from resource: '/subscriptions/92a240c5-5327-46c5-b231-6014fce10423/resourceGroups/dnx-on-ubuntu/providers/Microsoft.Storage/storageAccounts/dnxonubuntudiagstore'.",
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[parameters('storageAccounts_dnxonubuntudiagstore_name')]",
+      "apiVersion": "2015-06-15",
+      "location": "westeurope",
+      "tags": {},
+      "properties": {
+        "accountType": "Standard_LRS"
+      },
+      "dependsOn": []
+    },
+    {
+      "comments": "Generalized from resource: '/subscriptions/92a240c5-5327-46c5-b231-6014fce10423/resourceGroups/dnx-on-ubuntu/providers/Microsoft.Storage/storageAccounts/dnxonubuntustore'.",
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[parameters('storageAccounts_dnxonubuntustore_name')]",
+      "apiVersion": "2015-06-15",
+      "location": "westeurope",
+      "tags": {},
+      "properties": {
+        "accountType": "Premium_LRS"
+      },
+      "dependsOn": []
+    }
+  ]
+}
