@@ -247,6 +247,8 @@ install_drupal_site()
  cd /var/www/html/drupal/
  
  drush site-install --site-name="drupal-site" --db-url=mysql://$MYSQL_USER:$MYSQL_PASSWORD@$MYSQL_FQDN/$MYSQL_NEW_DB_NAME --account-name=$DRUPAL_ADMIN_USER --account-pass=$DRUPAL_ADMIN_PASSWORD -y
+ touch /data/startDrupalCreation
+ echo $(hostname) >> /data/startDrupalCreation
  echo "drupal site created...."
 }
 
@@ -269,10 +271,9 @@ install_drupal
 
 # Step 4
 if [ "$IS_FIRST_MEMBER" = true ] || [ ! -f /data/startDrupalCreation ];  then
-  touch /data/startDrupalCreation
-  echo $(hostname) >> /data/startDrupalCreation
   echo "Invoking Drupal Site Installation routine...."
   install_drupal_site
+  
 fi
 
 # Step 5
