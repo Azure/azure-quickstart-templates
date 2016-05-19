@@ -2,6 +2,7 @@
 $RGName = "RG-VS-Dev";
 $VMName = "jdvs2015vm";
 $VMUsername = "jmd";
+$DeployLocation = "West Europe"
 $ChocoPackages = "'linqpad;sysinternals;agentransack;beyondcompare;fiddler4;visualstudiocode;imageresizerapp;gimp'";
 $ARMTemplate = "C:\@SourceControl\GitHub\ARMChocolatey\AzureDeploy.json"
 
