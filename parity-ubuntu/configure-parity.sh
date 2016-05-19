@@ -7,25 +7,27 @@ export HOME="/root"
 
 echo "home: $HOME"
 echo "user: $(whoami)"
-ls /
-ls /home/
 
 echo "Installing parity"
 
 sudo apt-get update -qq
 sudo apt-get install -y -qq curl expect expect-dev
 
+##################
+# install parity #
+##################
 file=/tmp/parity.deb
-
 curl -Lk $PARITY_DEB_URL > $file
 sudo dpkg -i $file
 rm $file
 
 
-
+#####################
+# create an account #
+#####################
 echo $PASSWORD > $HOME/.parity-pass
 
-address=0x$(expect -c "
+expect_out= expect -c "
 spawn parity account new
 
 expect \"Type password: \"
@@ -33,7 +35,11 @@ send ${PASSWORD}\n
 expect \"Repeat password: \"
 send ${PASSWORD}\n
 interact
-" | awk 'END{print}' | tr -cd '[[:alnum:]]._-')
+"
+
+echo $expect_out
+
+address=0x$(parity account list | awk 'END{print}' | tr -cd '[[:alnum:]]._-')
 
 echo "address: $address"
 
