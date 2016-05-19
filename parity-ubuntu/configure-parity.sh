@@ -6,14 +6,14 @@ AZUREUSER=$2
 #HOMEDIR="/home/$AZUREUSER"
 
 echo "home: $HOME"
-whoami
+echo "user: $(whoami)"
 ls /
 ls /home/
 
 echo "Installing parity"
 
-sudo apt-get update
-sudo apt-get install -y curl expect expect-dev
+sudo apt-get update -qq
+sudo apt-get install -y -qq curl expect expect-dev
 
 file=/tmp/parity.deb
 
