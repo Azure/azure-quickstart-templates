@@ -18,7 +18,8 @@ This template deploys a Drupal 8 installation using a VM scale set.  It has the 
 You can deploy the template with Azure Portal, or PowerShell, or Azure cross platform command line tools.
 You can either deploy using an existing MySQL server, or by creating mysql server using the template  
 * Deployment using existing MySQL Server
-** OVerview
+  
+  ![Deployment Overview](https://raw.githubusercontent.com/maniSbindra/azure-quickstart-templates/master/301-drupal-8-multivm/Overview/Drupal%208%20ARM%20template%20overview.jpg "Deployment Overview")
 
 * Deployment creating a new MySQL Server
 
