@@ -8,8 +8,8 @@ if [[ $(id -u) -ne 0 ]] ; then
     exit 1
 fi
 
-if [ $# != 7 ]; then
-    echo "Usage: $0 <MasterHostname> <mountFolder> <numDataDisks> <dockerVer> <dockerComposeVer> <adminUserName> <imageSku>"
+if [ $# != 8 ]; then
+    echo "Usage: $0 <MasterHostname> <mountFolder> <numDataDisks> <dockerVer> <dockerComposeVer> <adminUserName> <imageSku> <dockerMachineVer>"
     exit 1
 fi
 
@@ -26,6 +26,7 @@ dockerVer="$4"
 dockerComposeVer="$5"
 userName="$6"
 skuName="$7"
+dockMVer="$8"
 
 
 
@@ -164,7 +165,7 @@ install_docker()
     systemctl start docker
     systemctl enable docker
     curl -L https://github.com/docker/compose/releases/download/$dockerComposeVer/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
-    curl -L https://github.com/docker/machine/releases/download/v0.7.0/docker-machine-`uname -s`-`uname -m` >/usr/local/bin/docker-machine && \
+    curl -L https://github.com/docker/machine/releases/download/v$dockMVer/docker-machine-`uname -s`-`uname -m` >/usr/local/bin/docker-machine && \
     chmod +x /usr/local/bin/docker-machine
     chmod +x /usr/local/bin/docker-compose
     export PATH=$PATH:/usr/local/bin/
