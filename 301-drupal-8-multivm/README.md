@@ -23,7 +23,7 @@ You can either deploy using an existing MySQL server, or by creating mysql serve
 
 * Deployment creating a new MySQL Server
 
-### Drupal
+### How to access the Drupal Site
 * Access Drupal using the public DNS name.  By default, the drupal admin users name and password are parameters of the template
 
 ### How to SSH into the Drupal VMs
