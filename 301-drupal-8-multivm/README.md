@@ -30,7 +30,7 @@ You can either deploy using an existing MySQL server, or by creating mysql serve
 
 ### How to SSH into the Drupal VMs
 * MySQL health can be checked by issuing HTTP query to the MySQL probes and verify that the query returns 200 status code.  Replace the following command with your own dns name and location.
-```sh
+```
 
 ```
 
