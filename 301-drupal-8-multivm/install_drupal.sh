@@ -255,12 +255,10 @@ install_drupal_site()
  mv stdout /data/stdout1
  
 drush site-install --site-name="drupal-site" --db-url=mysql://$MYSQL_USER:$MYSQL_PASSWORD@$MYSQL_FQDN/$MYSQL_NEW_DB_NAME --account-name=$DRUPAL_ADMIN_USER --account-pass=$DRUPAL_ADMIN_PASSWORD -y
- 
-  
-#  next 3 statements added for debugging purposes
- mv errout /data/errout2
- mv stdout /data/stdout2
- 
+
+wget localhost 
+
+chmod -R 777 /var/www/html/drupal/sites/default/files/  
  echo "drupal site created...."
  echo "drupal site created...."  >> /data/flock.lock
 }
