@@ -186,14 +186,6 @@ configure_prequisites()
  mount -t glusterfs $GLUSTER_FIRST_NODE_NAME:/$GLUSTER_VOLUME_NAME /data
  
  # check if this is the first drupal node based on existance of files directory and lockfile, and set IS_FIRST_MEMBER
- # hname=$(hostname)
- # lastchar=${hname: -1}
-
-# Sleep for 2 minutes (added to take care of observed condition when 1st member of vm scale set was going down after some time). first of the remaining nodes will be marked as the first member node
-# echo " sleeping for 2 minutes...."
-# sleep 2m
-# echo " awake after 2 minutes..."
-
 if [ ! -d /data/files ] && [ ! -f /data/flock.lock ]; then
   touch /data/flock.lock
   echo "first drupal node :" >> /data/flock.lock
@@ -230,10 +222,10 @@ install_drupal()
 	 echo "copied settings.php and services.yml to shared mount..."
 	 echo "copied settings.php and services.yml to shared mount..." >> /data/flock.lock
  else
-     while [ ! -d /data/files/css ] ;
+     while [ ! -d /data/files/styles ] ;
      do
-      sleep 10
-	  echo "Sleeping, waiting for node 1 to create required files.."
+      sleep 30
+	  echo "Sleeping, waiting for node 1 to create drupal site"
      done
 	 echo "Directory created, exiting sleep loop.." 
  fi
