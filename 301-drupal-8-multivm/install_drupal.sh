@@ -230,12 +230,12 @@ install_drupal()
 	 echo "copied settings.php and services.yml to shared mount..."
 	 echo "copied settings.php and services.yml to shared mount..." >> /data/flock.lock
  else
-     while [ ! -f /data/services.yml ] ;
+     while [ ! -d /data/files/css ] ;
      do
-      sleep 5
+      sleep 10
 	  echo "Sleeping, waiting for node 1 to create required files.."
      done
-	 echo "services.yml file found, exiting sleep loop.." 
+	 echo "Directory created, exiting sleep loop.." 
  fi
  
  ln -s /data/settings.php ./settings.php
