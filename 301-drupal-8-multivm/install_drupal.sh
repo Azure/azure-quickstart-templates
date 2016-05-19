@@ -270,6 +270,7 @@ install_drupal
 # Step 4
 if [ "$IS_FIRST_MEMBER" = true ] || [ ! -f /data/startDrupalCreation ];  then
   touch /data/startDrupalCreation
+  echo $(hostname) >> /data/startDrupalCreation
   echo "Invoking Drupal Site Installation routine...."
   install_drupal_site
 fi
