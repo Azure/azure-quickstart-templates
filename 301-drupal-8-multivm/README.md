@@ -17,11 +17,13 @@ This template deploys a Drupal 8 installation using a VM scale set.  It has the 
 ### How to Deploy
 You can deploy the template with Azure Portal, or PowerShell, or Azure cross platform command line tools.
 You can either deploy using an existing MySQL server, or by creating mysql server using the template  
-* Deployment using existing MySQL Server
+* **Deployment using existing MySQL Server**
   
   ![Deployment Overview](https://raw.githubusercontent.com/maniSbindra/azure-quickstart-templates/master/301-drupal-8-multivm/Overview/Drupal%208%20ARM%20template%20overview.jpg "Deployment Overview")
 
-* Deployment creating a new MySQL Server
+* **Deployment creating a new MySQL Server**
+
+  ![Deployment Overview](https://raw.githubusercontent.com/maniSbindra/azure-quickstart-templates/master/301-drupal-8-multivm/Overview/Deployment%20with%20new%20mysql%20server.jpg "Deployment Overview")
 
 ### How to access the Drupal Site
 * Access Drupal using the public DNS name.  By default, the drupal admin users name and password are parameters of the template
