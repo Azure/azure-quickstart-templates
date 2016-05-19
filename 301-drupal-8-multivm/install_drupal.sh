@@ -222,7 +222,7 @@ install_drupal()
 	 echo "copied settings.php and services.yml to shared mount..."
 	 echo "copied settings.php and services.yml to shared mount..." >> /data/flock.lock
  else
-     while [ ! -d /data/files/styles ] ;
+     while [ ! -d /data/files/js ] ;
      do
       sleep 30
 	  echo "Sleeping, waiting for node 1 to create drupal site"
@@ -232,17 +232,17 @@ install_drupal()
  
  ln -s /data/settings.php ./settings.php
  ln -s /data/services.yml ./services.yml
- chmod -R 777 /var/www/html/drupal/sites/default/files/
- chmod -R 755 /var/www/html/drupal/sites/default/
- chmod 777 /var/www/html/drupal/sites/default/settings.php
- chmod 777 /var/www/html/drupal/sites/default/services.yml
+ echo "Created Sym links..."
  
- echo "created sym links and modified permisssions on files for installation"
+ if [ "$IS_FIRST_MEMBER" = true ];  then
+   chmod -R 777 /var/www/html/drupal/sites/default/files/
+   chmod -R 755 /var/www/html/drupal/sites/default/
+   chmod 777 /var/www/html/drupal/sites/default/settings.php
+   chmod 777 /var/www/html/drupal/sites/default/services.yml
+   echo "modified permisssions on files for installation..."
+fi
  
- if [ "$IS_FIRST_MEMBER" = true ]; then
-      echo "created sym links and modified permisssions on files for installation" >> /data/flock.lock
- fi
- 
+    
 }
 
 install_drupal_site()
@@ -254,12 +254,9 @@ install_drupal_site()
  mv errout /data/errout1
  mv stdout /data/stdout1
  
- until drush site-install --site-name="drupal-site" --db-url=mysql://$MYSQL_USER:$MYSQL_PASSWORD@$MYSQL_FQDN/$MYSQL_NEW_DB_NAME --account-name=$DRUPAL_ADMIN_USER --account-pass=$DRUPAL_ADMIN_PASSWORD -y
- do
-    echo "Still installing required packages"
-	echo "Still installing required packages" >> /data/flock.lock
-    sleep 2
-  done
+drush site-install --site-name="drupal-site" --db-url=mysql://$MYSQL_USER:$MYSQL_PASSWORD@$MYSQL_FQDN/$MYSQL_NEW_DB_NAME --account-name=$DRUPAL_ADMIN_USER --account-pass=$DRUPAL_ADMIN_PASSWORD -y
+ 
+  
 #  next 3 statements added for debugging purposes
  mv errout /data/errout2
  mv stdout /data/stdout2
@@ -272,8 +269,14 @@ secure_files()
 {
  chmod 444 /var/www/html/drupal/sites/default/settings.php
  chmod 444 /var/www/html/drupal/sites/default/services.yml
- service apache2 restart
- echo "Files secured . Web server restarted...."
+ 
+ echo "Files secured"
+}
+
+restart_webserver()
+{
+service apache2 restart	
+echo "Web server restarted...."
 }
 
 
@@ -297,4 +300,9 @@ if [ "$IS_FIRST_MEMBER" = true ];  then
 fi
 
 # Step 5
-secure_files
+if [ "$IS_FIRST_MEMBER" = true ];  then
+	secure_files
+fi
+
+# Step 6
+restart_webserver
