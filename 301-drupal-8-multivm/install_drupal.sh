@@ -190,7 +190,9 @@ configure_prequisites()
  # lastchar=${hname: -1}
 
 # Sleep for 2 minutes (added to take care of observed condition when 1st member of vm scale set was going down after some time). first of the remaining nodes will be marked as the first member node
+echo " sleeping for 2 minutes...."
 sleep 2m
+echo " awake after 2 minutes..."
 
 if [ ! -d /data/files ] && [ ! -f /data/flock.lock ]; then
   touch /data/flock.lock
@@ -226,6 +228,7 @@ install_drupal()
      cp default.settings.php /data/settings.php
      cp default.services.yml /data/services.yml
 	 echo "copied settings.php and services.yml to shared mount..."
+	 echo "copied settings.php and services.yml to shared mount..." >> /data/flock.lock
  else
      while [ ! -f /data/services.yml ] ;
      do
@@ -242,6 +245,12 @@ install_drupal()
  chmod 777 /var/www/html/drupal/sites/default/settings.php
  chmod 777 /var/www/html/drupal/sites/default/services.yml
  
+ echo "created sym links and modified permisssions on files for installation"
+ 
+ if [ "$IS_FIRST_MEMBER" = true ]; then
+      echo "created sym links and modified permisssions on files for installation" >> /data/flock.lock
+ fi
+ 
 }
 
 install_drupal_site()
@@ -249,12 +258,22 @@ install_drupal_site()
  echo "creating drupal site"
  cd /var/www/html/drupal/
  
- drush site-install --site-name="drupal-site" --db-url=mysql://$MYSQL_USER:$MYSQL_PASSWORD@$MYSQL_FQDN/$MYSQL_NEW_DB_NAME --account-name=$DRUPAL_ADMIN_USER --account-pass=$DRUPAL_ADMIN_PASSWORD -y
+ echo "before execution of drush site-install command" >> /data/flock.lock
+ mv errout /data/errout1
+ mv stdout /data/stdout1
  
+ until drush site-install --site-name="drupal-site" --db-url=mysql://$MYSQL_USER:$MYSQL_PASSWORD@$MYSQL_FQDN/$MYSQL_NEW_DB_NAME --account-name=$DRUPAL_ADMIN_USER --account-pass=$DRUPAL_ADMIN_PASSWORD -y
+ do
+    echo "Still installing required packages"
+	echo "Still installing required packages" >> /data/flock.lock
+    sleep 2
+  done
 #  next 3 statements added for debugging purposes
- touch /data/startDrupalCreation
- echo $(hostname) >> /data/startDrupalCreation
+ mv errout /data/errout2
+ mv stdout /data/stdout2
+ 
  echo "drupal site created...."
+ echo "drupal site created...."  >> /data/flock.lock
 }
 
 secure_files()
