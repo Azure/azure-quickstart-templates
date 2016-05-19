@@ -190,9 +190,9 @@ configure_prequisites()
  # lastchar=${hname: -1}
 
 # Sleep for 2 minutes (added to take care of observed condition when 1st member of vm scale set was going down after some time). first of the remaining nodes will be marked as the first member node
-echo " sleeping for 2 minutes...."
-sleep 2m
-echo " awake after 2 minutes..."
+# echo " sleeping for 2 minutes...."
+# sleep 2m
+# echo " awake after 2 minutes..."
 
 if [ ! -d /data/files ] && [ ! -f /data/flock.lock ]; then
   touch /data/flock.lock
