@@ -128,7 +128,11 @@ install_required_packages()
   # Install required packages
   echo "installing required packages"
   add-apt-repository ppa:gluster/glusterfs-3.7 -y
-  apt-get -y update && apt-get -y install apache2 php5 php5-gd php5-mysql glusterfs-client mysql-client git 
+  until apt-get -y update && apt-get -y install apache2 php5 php5-gd php5-mysql glusterfs-client mysql-client git 
+  do
+  echo "installing required packages....."
+  sleep 2
+  done
   
   
   # Install Drush
