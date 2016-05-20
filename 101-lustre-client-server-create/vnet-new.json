@@ -1,0 +1,149 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Location for the Lustre nodes"
+      }
+    },
+    "vnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Virtual Network name (e.g. vnet-lustre)"
+      }
+    },
+    "vnetResourceGroup": {
+      "type": "string",
+      "metadata": {
+        "description": "Virtual Network Resource Group"
+      }
+    },
+    "vnetAddressPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Virtual Network Address Prefix (i.e. CIDR)"
+      }
+    },
+    "subnetServersName": {
+      "type": "string",
+      "metadata": {
+        "description": "Lustre servers will be deployed into this subnet within the Virtual Network"
+      }
+    },
+    "subnetServersAddressPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Virtual Network Lustre Servers subnet Address Prefix (i.e. CIDR)"
+      }
+    },
+    "subnetClientsName": {
+      "type": "string",
+      "metadata": {
+        "description": "Lustre clients can be deployed into this subnet within the Virtual Network"
+      }
+    },
+    "subnetClientsAddressPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Virtual Network Lustre Clients subnet Address Prefix (i.e. CIDR)"
+      }
+    }
+  },
+  "variables": {
+    "subnetNetworkSecurityGroupName": "[concat(parameters('vnetName'),'-','nsg')]",
+    "vnetID": "[resourceId(parameters('vnetResourceGroup'), 'Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('subnetNetworkSecurityGroupName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "ssh_rule",
+            "properties": {
+              "description": "Allow SSH access",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "http_rule",
+            "properties": {
+              "description": "Allow HTTP access",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 101,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "https_rule",
+            "properties": {
+              "description": "Allow HTTPS access",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 102,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[parameters('vnetName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('subnetNetworkSecurityGroupName'))]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('vnetAddressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[parameters('subnetServersName')]",
+            "properties": {
+              "addressPrefix": "[parameters('subnetServersAddressPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('subnetNetworkSecurityGroupName'))]"
+              }
+            }
+          },
+          {
+            "name": "[parameters('subnetClientsName')]",
+            "properties": {
+              "addressPrefix": "[parameters('subnetClientsAddressPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('subnetNetworkSecurityGroupName'))]"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "outputs": {}
+}
