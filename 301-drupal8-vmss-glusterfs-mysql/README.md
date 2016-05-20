@@ -1,7 +1,7 @@
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FmaniSbindra%2Fazure-quickstart-templates%2Fmaster%2F301-drupal-8-multivm%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FmaniSbindra%2Fazure-quickstart-templates%2Fmaster%2F301-drupal8-vmss-glusterfs-mysql%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FmaniSbindra%2Fazure-quickstart-templates%2Fmaster%2F301-drupal-8-multivm%2Fazuredeploy.json" target="_blank">
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FmaniSbindra%2Fazure-quickstart-templates%2Fmaster%2F301-drupal8-vmss-glusterfs-mysql%2Fazuredeploy.json" target="_blank">
   <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
@@ -19,11 +19,11 @@ You can deploy the template with Azure Portal, or PowerShell, or Azure cross pla
 You can either deploy using an existing MySQL server, or by creating mysql server using the template  
 * **Deployment using existing MySQL Server**
   
-  ![Deployment Overview](https://raw.githubusercontent.com/maniSbindra/azure-quickstart-templates/master/301-drupal-8-multivm/Overview/Drupal%208%20ARM%20template%20overview.jpg "Deployment Overview")
+  ![Deployment Overview](https://raw.githubusercontent.com/maniSbindra/azure-quickstart-templates/master/301-drupal8-vmss-glusterfs-mysql/Overview/Drupal%208%20ARM%20template%20overview.jpg "Deployment Overview")
 
 * **Deployment creating a new MySQL Server**
 
-  ![Deployment Overview](https://raw.githubusercontent.com/maniSbindra/azure-quickstart-templates/master/301-drupal-8-multivm/Overview/Deployment%20with%20new%20mysql%20server.jpg "Deployment Overview")
+  ![Deployment Overview](https://raw.githubusercontent.com/maniSbindra/azure-quickstart-templates/master/301-drupal8-vmss-glusterfs-mysql/Overview/Deployment%20with%20new%20mysql%20server.jpg "Deployment Overview")
 
 ### How to access the Drupal Site
 * Access Drupal using the public DNS name.  By default, the drupal admin users name and password are parameters of the template
