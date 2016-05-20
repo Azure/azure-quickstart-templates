@@ -22,22 +22,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# install Apache and PHP (in a loop because a lot of installs happen
-# on VM init, so won't be able to grab the dpkg lock immediately)
-# until apt-get -y update && apt-get -y install apache2 php5
-# do
-#   echo "Try again"
-#   sleep 2
-# done
-
-
-# write some PHP; these scripts are downloaded beforehand as fileUris
-# cp index.php /var/www/html/
-# cp do_work.php /var/www/html/
-# rm /var/www/html/index.html
-# restart Apache
-# apachectl restart
-
 
 # Variables
 DRUPAL_VERSION="8.1.1"
@@ -70,8 +54,6 @@ help()
 
 log()
 {
-	# If you want to enable this logging add a un-comment the line below and add your account key 
-	#curl -X POST -H "content-type:text/plain" --data-binary "$(date) | ${HOSTNAME} | $1" https://logs-01.loggly.com/inputs/${LOGGING_KEY}/tag/redis-extension,${HOSTNAME}
 	echo "$1"
 }
 
@@ -146,11 +128,8 @@ install_required_packages()
   # Install required packages
   echo "installing required packages"
   add-apt-repository ppa:gluster/glusterfs-3.7 -y
-  until apt-get -y update && apt-get -y install apache2 php5 php5-gd php5-mysql glusterfs-client mysql-client git 
-  do
-    echo "Still installing required packages"
-    sleep 2
-  done
+  apt-get -y update && apt-get -y install apache2 php5 php5-gd php5-mysql glusterfs-client mysql-client git 
+  
   
   # Install Drush
   php -r "readfile('http://files.drush.org/drush.phar');" > drush
@@ -185,7 +164,9 @@ configure_prequisites()
  # mount gluster files system
  mount -t glusterfs $GLUSTER_FIRST_NODE_NAME:/$GLUSTER_VOLUME_NAME /data
  
- # check if this is the first drupal node based on existance of files directory and lockfile, and set IS_FIRST_MEMBER
+ # Check if this is the first drupal node based on existance of files directory and lockfile, and set IS_FIRST_MEMBER
+ # The first member node will be the only one which will install the drupal site using drush site-install.
+ # Other member nodes will wait for the drupal site to install
 if [ ! -d /data/files ] && [ ! -f /data/flock.lock ]; then
   touch /data/flock.lock
   echo "first drupal node :" >> /data/flock.lock
@@ -207,13 +188,19 @@ install_drupal()
 {
  echo "installing drupal"
  
+ # create drupal project will given drupal version
  composer create-project drupal/drupal drupal8-site $DRUPAL_VERSION --keep-vcs
  cd drupal8-site/
  composer install
  cd ..
+ 
+ # Move the drupal directory under html folder
  mv drupal8-site /var/www/html/drupal
+ 
+ # Navigate to the drupal default directory
  cd /var/www/html/drupal/sites/default
  
+ # Create Sym Link to the files folder
  ln -s /data/files files
  
  if [ "$IS_FIRST_MEMBER" = true ]; then
@@ -251,9 +238,7 @@ install_drupal_site()
  cd /var/www/html/drupal/
  
  echo "before execution of drush site-install command" >> /data/flock.lock
- mv errout /data/errout1
- mv stdout /data/stdout1
- 
+  
 drush site-install --site-name="drupal-site" --db-url=mysql://$MYSQL_USER:$MYSQL_PASSWORD@$MYSQL_FQDN/$MYSQL_NEW_DB_NAME --account-name=$DRUPAL_ADMIN_USER --account-pass=$DRUPAL_ADMIN_PASSWORD -y
 
 wget localhost 
@@ -267,6 +252,9 @@ secure_files()
 {
  chmod 444 /var/www/html/drupal/sites/default/settings.php
  chmod 444 /var/www/html/drupal/sites/default/services.yml
+ 
+ # Set lock file to readonly.
+ chmod 444 /data/flock.loc
  
  echo "Files secured"
 }
