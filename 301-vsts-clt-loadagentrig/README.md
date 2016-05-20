@@ -5,7 +5,7 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template will help you to spin up a set of VMs that can be used to generate load through CLT service. The [parameters file](./azuredeploy.parameters.json) takes your VSTS account information and the number of desired VMs. These objects look like the following:
+Using this template, you can create your own load test rig on Azure IaaS virtual machines. The test rig will be configured for your Visual Studio Team Services (VSTS) account and can be used to run cloud-based load tests using Visual Studio. The cloud-load testing service will use this registered rig instead of provisioning one dynamically. Sample parameter values are as follows:
 
 ```json
 {
