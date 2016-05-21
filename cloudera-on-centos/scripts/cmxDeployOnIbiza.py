@@ -1009,8 +1009,8 @@ def setup_hdfs_ha():
             if hive is not None:
                 check.status_for_command("Update Hive Metastore NameNodes", hive.update_metastore_namenodes())
 
-            cdh('ZOOKEEPER').start().wait()
-            cdh('HDFS').start().wait()
+            cdh('ZOOKEEPER').start()
+            cdh('HDFS').start()
 
     except ApiException as err:
         print " ERROR: %s" % err.message
