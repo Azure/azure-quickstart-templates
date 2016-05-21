@@ -1,0 +1,129 @@
+{
+   "$schema":"https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+   "contentVersion":"1.0.0.0",
+   "parameters":{
+      "certificateOrderName":{
+         "type":"string",
+         "metadata":{
+            "description":"Name of the App Service Certificate"
+         }
+      },
+      "productType":{
+         "type":"string",
+         "allowedValues":[
+            "StandardDomainValidatedSsl",
+            "StandardDomainValidatedWildCardSsl"
+         ],
+         "defaultValue":"StandardDomainValidatedSsl",
+         "metadata":{
+            "description":"App Service Certificate type"
+         }
+      },
+      "existingKeyVaultId":{
+         "type":"string",
+         "metadata":{
+            "description":"Existing Key Vault resource Id that already has access policies to allow Microsoft.CertificateRegistration and Microsoft.Web RPs to perform required operations on secret (Checkout README.md for more information)"
+         }
+      },
+      "existingAppName":{
+         "type":"string",
+         "metadata":{
+            "description":"Existing App name to use for verification and assignment. This App should have the domain assigned as a custom domain"
+         }
+      },
+      "rootHostname":{
+         "type":"string",
+         "metadata":{
+            "description":"Hostname for App Service Certificate. The root and www subdomain should be assigned to the Web App as custom domains"
+         }
+      },
+      "existingAppLocation":{
+         "type":"string",
+         "metadata":{
+            "description":"App location"
+         }
+      }
+   },
+   "variables":{
+      "distinguishedName":"[concat('CN=', parameters('rootHostname'))]",
+      "wwwHostname":"[concat('www.', parameters('rootHostname'))]"
+   },
+   "resources":[
+      {
+         "type":"Microsoft.CertificateRegistration/certificateOrders",
+         "name":"[parameters('certificateOrderName')]",
+         "apiVersion":"2015-08-01",
+         "location":"global",
+         "properties":{
+            "DistinguishedName":"[variables('distinguishedName')]",
+            "ValidityInYears":1,
+            "ProductType":"[parameters('productType')]"
+         }
+      },
+      {
+         "type":"Microsoft.Web/sites/domainOwnershipIdentifiers",
+         "name":"[concat(parameters('existingAppName'), concat('/', parameters('certificateOrderName')))]",
+         "apiVersion":"2015-08-01",
+         "location":"[parameters('existingAppLocation')]",
+         "dependsOn":[
+            "[resourceId('Microsoft.CertificateRegistration/certificateOrders', parameters('certificateOrderName'))]"
+         ],
+         "properties":{
+            "id":"[reference(resourceId('Microsoft.CertificateRegistration/certificateOrders', parameters('certificateOrderName'))).DomainVerificationToken]"
+         }
+      },
+      {
+         "type":"Microsoft.CertificateRegistration/certificateOrders/certificates",
+         "name":"[concat(parameters('certificateOrderName'), concat('/', parameters('certificateOrderName')))]",
+         "apiVersion":"2015-08-01",
+         "location":"global",
+         "dependsOn":[
+            "[resourceId('Microsoft.CertificateRegistration/certificateOrders', parameters('certificateOrderName'))]",
+            "[resourceId('Microsoft.Web/sites/domainOwnershipIdentifiers', parameters('existingAppName'), parameters('certificateOrderName'))]"
+         ],
+         "properties":{
+            "existingKeyVaultId":"[parameters('existingKeyVaultId')]",
+            "keyVaultSecretName":"[parameters('certificateOrderName')]"
+         }
+      },
+      {
+         "type":"Microsoft.Web/certificates",
+         "name":"[parameters('certificateOrderName')]",
+         "apiVersion":"2015-08-01",
+         "location":"[parameters('existingAppLocation')]",
+         "dependsOn":[
+            "[resourceId('Microsoft.CertificateRegistration/certificateOrders/certificates', parameters('certificateOrderName'), parameters('certificateOrderName'))]"
+         ],
+         "properties":{
+            "existingKeyVaultId":"[parameters('existingKeyVaultId')]",
+            "keyVaultSecretName":"[parameters('certificateOrderName')]"
+         }
+      },
+      {
+         "type":"Microsoft.Web/sites",
+         "name":"[parameters('existingAppName')]",
+         "apiVersion":"2015-08-01",
+         "location":"[parameters('existingAppLocation')]",
+         "dependsOn":[
+            "[resourceId('Microsoft.Web/certificates', parameters('certificateOrderName'))]"
+         ],
+         "properties":{
+            "name":"[parameters('existingAppName')]",
+            "hostNameSslStates":[
+               {
+                  "name":"[parameters('rootHostname')]",
+                  "sslState":1,
+                  "thumbprint":"[reference(resourceId('Microsoft.CertificateRegistration/certificateOrders', parameters('certificateOrderName'))).SignedCertificate.Thumbprint]",
+                  "toUpdate":true
+               },
+               {
+                  "name":"[variables('wwwHostname')]",
+                  "sslState":1,
+                  "thumbprint":"[reference(resourceId('Microsoft.CertificateRegistration/certificateOrders', parameters('certificateOrderName'))).SignedCertificate.Thumbprint]",
+                  "toUpdate":true
+               }
+            ]
+         }
+      }
+   ]
+}
