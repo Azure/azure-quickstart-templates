@@ -1001,8 +1001,8 @@ def setup_hdfs_ha():
             # hdfs-HTTPFS
             cdh.create_service_role(hdfs, "HTTPFS", [x for x in hosts if x.id == 0][0])
             # Configure HUE service dependencies
-            cdh('HDFS').stop().wait()
-            cdh('ZOOKEEPER').stop().wait()
+            cdh('HDFS').stop()
+            cdh('ZOOKEEPER').stop()
 
             if hue is not None:
                 hue.update_config(cdh.dependencies_for(hue))
