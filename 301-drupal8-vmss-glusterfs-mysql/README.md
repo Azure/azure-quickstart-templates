@@ -19,22 +19,22 @@ You can deploy the template with Azure Portal, or PowerShell, or Azure cross pla
 You can either deploy using an existing MySQL server, or by creating mysql server using the template  
 * **Deployment using existing MySQL Server**
   
-  ![Deployment Overview - Existing MySQL Server](https://raw.githubusercontent.com/maniSbindra/azure-quickstart-templates/master/301-drupal8-vmss-glusterfs-mysql/Overview/Drupal%208%20ARM%20template%20overview.jpg "Deployment Overview - Existing MySQL Server")
+  ![Deployment Overview - Existing MySQL Server](https://raw.githubusercontent.com/maniSbindra/azure-quickstart-templates/master/301-drupal8-vmss-glusterfs-mysql/images/Drupal%208%20ARM%20template%20overview.jpg "Deployment Overview - Existing MySQL Server")
   
   For Details of Parameter configurations when using existing MySQL server please refer https://blogs.msdn.microsoft.com/manibindra/2016/05/23/how-to-configure-your-drupal-8-arm-template-deployment-to-azure-using-existing-mysql-server/ 
 
 * **Deployment creating a new MySQL Server**
 
-  ![Deployment Overview - New MySQL Server](https://raw.githubusercontent.com/maniSbindra/azure-quickstart-templates/master/301-drupal8-vmss-glusterfs-mysql/Overview/Deployment%20with%20new%20mysql%20server.jpg "Deployment Overview - New MySQL Server")
+  ![Deployment Overview - New MySQL Server](https://raw.githubusercontent.com/maniSbindra/azure-quickstart-templates/master/301-drupal8-vmss-glusterfs-mysql/images/Deployment%20with%20new%20mysql%20server.jpg "Deployment Overview - New MySQL Server")
 
 ### How to access the Drupal Site
 * Access Drupal using the VMSS load balancer fully qualified domain name.  This will bring up the Drupal home page.  The Drupal admin user name and password which were entered during the template deployment can be used for logging in as administrator.
- ![How to Access Drupal site](https://raw.githubusercontent.com/maniSbindra/azure-quickstart-templates/master/301-drupal8-vmss-glusterfs-mysql/Overview/AccessingDrupalSite.jpg "Access Drupal Site")
+ ![How to Access Drupal site](https://raw.githubusercontent.com/maniSbindra/azure-quickstart-templates/master/301-drupal8-vmss-glusterfs-mysql/images/AccessingDrupalSite.jpg "Access Drupal Site")
 
 ### How to SSH into the Drupal VMs
 * You can ssh into the VMs in the VM scaleset if needed, using the inbound NAT Pool ports on the load balancer. So for VM 0 ssh in to port 50000, for VM 1 ssh to port 50001 and so on. You can use https://resources.azure.com/ to see the VMs in the VM scale set. See Screen shot below:
 
- ![SSH into Drupal VMs](https://raw.githubusercontent.com/maniSbindra/azure-quickstart-templates/master/301-drupal8-vmss-glusterfs-mysql/Overview/azureResourceExplorer.png "SSH into Drupal VMs")
+ ![SSH into Drupal VMs](https://raw.githubusercontent.com/maniSbindra/azure-quickstart-templates/master/301-drupal8-vmss-glusterfs-mysql/images/azureResourceExplorer.png "SSH into Drupal VMs")
 
 
 License
