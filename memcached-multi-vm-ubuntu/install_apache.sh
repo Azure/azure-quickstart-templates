@@ -33,7 +33,7 @@ apt-get -y install apache2 php5 php5-memcached
 rm /var/www/html/index.html
  
 # Download cache_test.php page
-wget -O /var/www/html/index.php https://raw.githubusercontent.com/azure/azure-quickstart-templates/master/memcached-multi-vm-ubuntu/cache_test.php
+wget -O /var/www/html/index.php https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/memcached-multi-vm-ubuntu/cache_test.php
 
 # Replace the placeholder with the string of comma delimited memcached server IPs that was passed to this script as a parameter
 sed -i "s/{COMMA_DELIMITED_SERVERS_LIST}/$servers/g" /var/www/html/index.php
