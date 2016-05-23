@@ -7,7 +7,7 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template creates a new AppService Environment on a specified Subnet in a pre-existign Virtual Netowrk.
+This template creates a new AppService Environment on a specified Subnet in a pre-existing Virtual Netowrk.
 It proceeds to create an AppService hosting plan preparing the environment to recieve Web, API and Logic apps.
 Finally - it deploys a sample Logic app that calls http://www.example.com on a schedule
 

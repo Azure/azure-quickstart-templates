@@ -1,4 +1,4 @@
-# Gnome Desktop on Ubuntu VM
+# Xfce Desktop on Ubuntu VM
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fubuntu-desktop-xfce-rdp%2Fazuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
 
@@ -14,3 +14,12 @@ sudo apt-get install xubuntu-desktop -y
 sudo service xrdp restart
 
 Then re-connect it with Remote Desktop from a Windows machine.
+
+
+
+
+Please kindly note for Ubuntu 15.10, if you face the connection issue, saying "connecting to sesman ip 127.0.0.1 port 3350" then couldn't move on, this is  xrdp-sesman didn't start hence caused the issue. To fix it, please use putty to connect to the VM, execute the simple command below
+
+sudo service xrdp restart
+
+Then re-connect it with Remote Desktop from a Windows machine. 

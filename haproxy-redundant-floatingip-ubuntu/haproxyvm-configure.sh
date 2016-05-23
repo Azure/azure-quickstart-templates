@@ -92,7 +92,7 @@ listen http 0.0.0.0:$LB_PORT
         if [[ -z $APPVM_IP ]]; then
             echo "Unknown hostname $APPVM. Cannot be added to $HAPROXY_CFG." >&2
         else
-            echo "    server $APPVM $APPVM_IP:$APPVM_PORT maxconn 5000" >> $HAPROXY_CFG
+            echo "    server $APPVM $APPVM_IP:$APPVM_PORT maxconn 5000 check" >> $HAPROXY_CFG
         fi 
     done
 

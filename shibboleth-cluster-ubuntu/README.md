@@ -2,7 +2,7 @@
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fshibboleth-cluster-ubuntu%2Fazuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
 
-This template deploys Shibboleth Identity Provider on Ubuntu in a clustered configuration. It creates a one or more Ubuntu VM for the front end and a single VM for the backend. It does a silent install of Apache Tomcat and Open JDK on the front end VM's, and then deploys Shibboleth IDP on each of them. It also deploys MySQL on the backend VM.  It configures a load balancer for directing requests to the front end VM's. It also configures NAT rules to allow admin access to each of the VM's. On backend VM's, it configures the database using JPA. After the deployment is successful, you can go to /idp/profile/Status to check success. For further instructions, please refer to the Shibboleth IDP documentation at https://wiki.shibboleth.net/confluence/display/IDP30/Clustering.
+This template deploys Shibboleth Identity Provider on Ubuntu in a clustered configuration. It creates a one or more Ubuntu VM for the front end and a single VM for the backend. It does a silent install of Apache Tomcat and Open JDK on the front end VM's, and then deploys Shibboleth IDP on each of them. It also deploys MySQL on the backend VM.  It configures a load balancer for directing requests to the front end VM's. It also configures NAT rules to allow admin access to each of the VM's. On backend VM's, it configures the database using JPA. After the deployment is successful, you can go to https://your-domain:8443/idp/profile/status (note port number) to check success. For further details, please refer to the Shibboleth IDP documentation at https://wiki.shibboleth.net/confluence/display/IDP30/Clustering.
 
 # Notes
 
@@ -24,7 +24,7 @@ Here are the steps you can follow to create a testing setup including Shibboleth
 Create a deployment of Shibboleth IDP Cluster using this template and SSH into the each of the front end VM's deployed.
 
 ## Update ldap.properties inside /opt/conf directory as per the LDAP configuration.
-Following are the settings for Online LDAP Test Server installation hosted at http://www.forumsys.com/tutorials/integration-how-to/ldap/online-ldap-test-server/
+    Following are the settings for Online LDAP Test Server installation hosted at http://www.forumsys.com/tutorials/integration-how-to/ldap/online-ldap-test-server/
 	- set idp.authn.LDAP.authenticator = bindSearchAuthenticator
 	- set idp.authn.LDAP.ldapURL = ldap://ldap.forumsys.com:389
 	- set idp.authn.LDAP.useStartTLS = false
@@ -36,7 +36,7 @@ Following are the settings for Online LDAP Test Server installation hosted at ht
 	- Comment out idp.authn.LDAP.sslConfig & Comment out idp.authn.LDAP.trustCertificates as SSL is not used here
 
 ## Create metadata xml file for the service provider
-http://testshib.org is used as Service provider and Shibboleth is used as IDP.
+    Note: http://testshib.org is used as Service provider and Shibboleth is used as IDP.
 	- Download metadata file from - https://www.testshib.org/metadata/testshib-providers.xml inside /opt/conf directory
 	- Configure the metadata provider inside /opt/conf/metadata-providers.xml file as follows
 	<!-- TestShib -->
