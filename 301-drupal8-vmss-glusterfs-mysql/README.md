@@ -27,13 +27,12 @@ You can either deploy using an existing MySQL server, or by creating mysql serve
 
 ### How to access the Drupal Site
 * Access Drupal using the VMSS load balancer fully qualified domain name.  This will bring up the Drupal home page.  The Drupal admin user name and password which were entered during the template deployment can be used for logging in as administrator.
- ![Deployment Overview](https://raw.githubusercontent.com/maniSbindra/azure-quickstart-templates/master/301-drupal8-vmss-glusterfs-mysql/Overview/AccessingDrupalSite.jpg "Deployment Overview")
+ ![How to Access Drupal site](https://raw.githubusercontent.com/maniSbindra/azure-quickstart-templates/master/301-drupal8-vmss-glusterfs-mysql/Overview/AccessingDrupalSite.jpg "Access Drupal Site")
 
 ### How to SSH into the Drupal VMs
-* MySQL health can be checked by issuing HTTP query to the MySQL probes and verify that the query returns 200 status code.  Replace the following command with your own dns name and location.
-```
+* You can ssh into the VMs in the VM scaleset if needed, using the inbound NAT Pool ports on the load balancer. So for VM 0 ssh in to port 50000, for VM 1 ssh to port 50001 and so on. You can use https://resources.azure.com/ to see the VMs in the VM scale set. See Screen shot below:
 
-```
+ ![SSH into Drupal VMs](https://raw.githubusercontent.com/maniSbindra/azure-quickstart-templates/master/301-drupal8-vmss-glusterfs-mysql/Overview/azureResourceExplorer.png "SSH into Drupal VMs")
 
 
 License
