@@ -1,6 +1,9 @@
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Fmysql-replication%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmysql-replication%2Fazuredeploy.json" target="_blank">
+  <img src="http://armviz.io/visualizebutton.png"/>
+</a>
 
 # MySQL Replication Template
 
@@ -91,7 +94,7 @@ mysql> change master to master_host='10.0.1.5', master_user='admin', master_pass
 ```
 Similarly, this can also be done in the Azure portal. First update the NSG for the new master:
 ![Alt text](/mysql-replication/screenshots/2updateSlaveNSG.PNG?raw=true "Update the NSG for the new master")
-Then update the NSG for the old master back to valid values: 
+Then update the NSG for the old master back to valid values:
 ![Alt text](/mysql-replication/screenshots/3updateOldMasterToSlave.PNG?raw=true "Update the NSG for the old master")
 
 * Add the old master back to replication as a slave, on the old master, run the following, assuming the new master is 10.0.1.5:
@@ -113,6 +116,57 @@ on the slave:
 mysql> show slave status\G;
 ```
 
+### How to backup databases to Azure blob storage
+* There are several ways to
+take mysql backups as shown at <a href="https://dev.mysql.com/doc/refman/5.6/en/backup-and-recovery.html" >Mysql Backup and Recovery</a>. The example below shows mysql dump from the slave. 
+```sh
+# Create backups directory if not already created (modify folder as required)
+>mkdir  /home/admin/backups/
+
+# Install npm and azure-cli
+# For latest instructions for installing azure cli see https://azure.microsoft.com/en-in/documentation/articles/xplat-cli-install/. (sample commands below)
+> sudo yum update -y
+> sudo yum upgrade -y
+> sudo yum install epel-release -y
+> sudo yum install nodejs -y
+> sudo yum install npm -y
+> sudo npm install -g azure-cli
+
+# Login to azure account using azure cli 
+> azure login
+
+# Environment settings for your system
+> export AZURE_STORAGE_ACCOUNT=mysqlbkp
+> export AZURE_STORAGE_ACCESS_KEY=<your access key>
+> export image_to_upload=/home/admin/backups/db_bkp.sql.gz
+> export container_name=<your azure container name>
+> export blob_name=db-backup-$(date +%m-%d-%Y-%H%M%S).sql.gz
+> export destination_folder=<your azure destination folder name>
+
+> cd /home/admin/backups/
+
+# Stop replication to slave
+> mysqladmin stop-slave -u admin -p
+
+# Take mysql backup for all databases
+> mysqldump --all-databases > alldbs.sql -u admin -p
+
+# Compress the mysql backup
+> gzip alldbs.sql
+
+# Start slave replication
+> mysqladmin start-slave -u admin -p
+
+# Remove previous backup file
+> rm -Rf $image_to_upload
+
+# Move compressed mysql backup to the to be uploaded file
+> mv alldbs.sql.gz $image_to_upload
+
+# Move the backup to Azure Blob storage
+> azure storage blob upload $image_to_upload $container_name $blob_name
+ 
+```
 
 License
 ----
