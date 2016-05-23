@@ -19,14 +19,15 @@ You can deploy the template with Azure Portal, or PowerShell, or Azure cross pla
 You can either deploy using an existing MySQL server, or by creating mysql server using the template  
 * **Deployment using existing MySQL Server**
   
-  ![Deployment Overview](https://raw.githubusercontent.com/maniSbindra/azure-quickstart-templates/master/301-drupal8-vmss-glusterfs-mysql/Overview/Drupal%208%20ARM%20template%20overview.jpg "Deployment Overview")
+  ![Deployment Overview - Existing MySQL Server](https://raw.githubusercontent.com/maniSbindra/azure-quickstart-templates/master/301-drupal8-vmss-glusterfs-mysql/Overview/Drupal%208%20ARM%20template%20overview.jpg "Deployment Overview - Existing MySQL Server")
 
 * **Deployment creating a new MySQL Server**
 
-  ![Deployment Overview](https://raw.githubusercontent.com/maniSbindra/azure-quickstart-templates/master/301-drupal8-vmss-glusterfs-mysql/Overview/Deployment%20with%20new%20mysql%20server.jpg "Deployment Overview")
+  ![Deployment Overview - New MySQL Server](https://raw.githubusercontent.com/maniSbindra/azure-quickstart-templates/master/301-drupal8-vmss-glusterfs-mysql/Overview/Deployment%20with%20new%20mysql%20server.jpg "Deployment Overview - New MySQL Server")
 
 ### How to access the Drupal Site
-* Access Drupal using the public DNS name.  By default, the drupal admin users name and password are parameters of the template
+* Access Drupal using the VMSS load balancer fully qualified domain name.  This will bring up the Drupal home page.  The Drupal admin user name and password which were entered during the template deployment can be used for logging in as administrator.
+ ![Deployment Overview](https://raw.githubusercontent.com/maniSbindra/azure-quickstart-templates/master/301-drupal8-vmss-glusterfs-mysql/Overview/AccessingDrupalSite.jpg "Deployment Overview")
 
 ### How to SSH into the Drupal VMs
 * MySQL health can be checked by issuing HTTP query to the MySQL probes and verify that the query returns 200 status code.  Replace the following command with your own dns name and location.
