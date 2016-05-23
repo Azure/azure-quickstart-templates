@@ -5,6 +5,9 @@
     "sqlVMName": {
       "type": "string"
     },
+    "location": {
+      "type": "string"
+    },
     "adminUsername" : {
       "type" : "string"
     },
@@ -77,7 +80,7 @@
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('sqlwVMName'),'/CreateFileShareWitness')]",
       "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "publisher": "Microsoft.Powershell",
         "type": "DSC",
@@ -89,7 +92,7 @@
           "configurationFunction": "[parameters('fswConfigurationFunction')]",
           "properties": {
             "domainName": "[parameters('domainName')]",
-            "adminCreds": {
+            "adminCreds":{
               "userName": "[parameters('adminUserName')]",
               "password": "privateSettingsRef:adminPassword"
             }
@@ -103,101 +106,101 @@
         }
       }
     },
-    {
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(parameters('sqlVMName'),'0/SQLAOSetup')]",
-      "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
-      "properties": {
-        "publisher": "Microsoft.Powershell",
-        "type": "DSC",
-        "typeHandlerVersion": "2.13",
-        "autoUpgradeMinorVersion": false,
-        "settings": {
-          "modulesURL": "[parameters('sqlAOConfigurationModulesURL')]",
-          "wmfVersion": "4.0",
-          "configurationFunction": "[parameters('sqlAOConfigurationFunction')]",
-          "properties": {
-            "domainName": "[parameters('domainName')]",
-            "sqlAlwaysOnEndpointName": "[parameters('sqlAOEPName')]",
-            "adminCreds": {
-              "userName": "[parameters('adminUserName')]",
-              "password": "privateSettingsRef:AdminPassword"
-            },
-            "sqlServiceCreds": {
-              "userName": "[parameters('sqlServerServiceAccountUserName')]",
-              "password": "privateSettingsRef:SqlServerServiceAccountPassword"
-            },
-            "sharePointSetupUserAccountcreds": {
-              "userName": "[parameters('sharePointSetupUserAccountUserName')]",
-              "password": "privateSettingsRef:SharePointSetupUserAccountPassword"
-            }
-          }
-        },
-        "protectedSettings": {
-          "items": {
-            "adminPassword": "[parameters('adminPassword')]",
-            "sqlServerServiceAccountPassword": "[parameters('sqlServerServiceAccountPassword')]",
-            "sharePointSetupUserAccountPassword": "[parameters('sharePointSetupUserAccountPassword')]"
+  {
+    "type": "Microsoft.Compute/virtualMachines/extensions",
+    "name": "[concat(parameters('sqlVMName'),'0/SQLAOSetup')]",
+    "apiVersion": "2015-06-15",
+    "location": "[parameters('location')]",
+    "properties": {
+      "publisher": "Microsoft.Powershell",
+      "type": "DSC",
+      "typeHandlerVersion": "2.13",
+      "autoUpgradeMinorVersion": false,
+      "settings": {
+        "modulesURL": "[parameters('sqlAOConfigurationModulesURL')]",
+        "wmfVersion": "4.0",
+        "configurationFunction": "[parameters('sqlAOConfigurationFunction')]",
+        "properties": {
+          "domainName": "[parameters('domainName')]",
+          "sqlAlwaysOnEndpointName":"[parameters('sqlAOEPName')]",
+          "adminCreds":{
+            "userName": "[parameters('adminUserName')]",
+            "password": "privateSettingsRef:AdminPassword"
+          },
+          "sqlServiceCreds":{
+            "userName": "[parameters('sqlServerServiceAccountUserName')]",
+            "password": "privateSettingsRef:SqlServerServiceAccountPassword"
+          },
+          "sharePointSetupUserAccountcreds":{
+            "userName": "[parameters('sharePointSetupUserAccountUserName')]",
+            "password": "privateSettingsRef:SharePointSetupUserAccountPassword"
           }
         }
-      }
-    },
-    {
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(parameters('sqlVMName'),'1/CreateCluster')]",
-      "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
-      "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/',parameters('sqlVMName'),'0/extensions/SQLAOSetup')]",
-        "[concat('Microsoft.Compute/virtualMachines/',parameters('sqlwVMName'),'/extensions/CreateFileShareWitness')]"
-      ],
-      "properties": {
-        "publisher": "Microsoft.Powershell",
-        "type": "DSC",
-        "typeHandlerVersion": "2.13",
-        "autoUpgradeMinorVersion": false,
-        "settings": {
-          "modulesURL": "[parameters('configureClusterModulesURL')]",
-          "wmfVersion": "4.0",
-          "configurationFunction": "[parameters('configureClusterConfigurationFunction')]",
-          "properties": {
-            "domainName": "[parameters('domainName')]",
-            "clusterName": "[parameters('clusterName')]",
-            "sharePath": "[concat('\\\\',parameters('sqlwVMName'),'\\',parameters('sharePath'))]",
-            "nodes": [ "[concat(parameters('sqlVMName'),'0')]", "[concat(parameters('sqlVMName'),'1')]" ],
-            "sqlAlwaysOnEndpointName": "[parameters('sqlAOEPName')]",
-            "sqlAlwaysOnAvailabilityGroupName": "[parameters('sqlAOAGName')]",
-            "sqlAlwaysOnAvailabilityGroupListenerName": "[parameters('sqlAOListenerName')]",
-            "databaseNames": null,
-            "lbName": "[parameters('sqlLBName')]",
-            "lbAddress": "[parameters('sqlLBIPAddress')]",
-            "primaryReplica": "[concat(parameters('sqlVMName'),'1')]",
-            "secondaryReplica": "[concat(parameters('sqlVMName'),'0')]",
-            "dnsServerName": "[parameters('adPDCVMName')]",
-            "adminCreds": {
-              "userName": "[parameters('adminUserName')]",
-              "password": "privateSettingsRef:adminPassword"
-            },
-            "sqlServiceCreds": {
-              "userName": "[parameters('sqlServerServiceAccountUserName')]",
-              "password": "privateSettingsRef:sqlServerServiceAccountPassword"
-            },
-            "sharePointSetupUserAccountcreds": {
-              "userName": "[parameters('sharePointSetupUserAccountUserName')]",
-              "password": "privateSettingsRef:sharePointSetupUserAccountPassword"
-            }
-          }
-        },
-        "protectedSettings": {
-          "items": {
-            "adminPassword": "[parameters('adminPassword')]",
-            "sqlServerServiceAccountPassword": "[parameters('sqlServerServiceAccountPassword')]",
-            "sharePointSetupUserAccountPassword": "[parameters('sharePointSetupUserAccountPassword')]"
-          }
+      },
+      "protectedSettings": {
+        "items": {
+          "adminPassword": "[parameters('adminPassword')]",
+          "sqlServerServiceAccountPassword": "[parameters('sqlServerServiceAccountPassword')]",
+          "sharePointSetupUserAccountPassword": "[parameters('sharePointSetupUserAccountPassword')]"
         }
       }
     }
+  },
+  {
+    "type": "Microsoft.Compute/virtualMachines/extensions",
+    "name": "[concat(parameters('sqlVMName'),'1/CreateCluster')]",
+    "apiVersion": "2015-06-15",
+    "location": "[parameters('location')]",
+    "dependsOn":[
+      "[concat('Microsoft.Compute/virtualMachines/',parameters('sqlVMName'),'0/extensions/SQLAOSetup')]",
+      "[concat('Microsoft.Compute/virtualMachines/',parameters('sqlwVMName'),'/extensions/CreateFileShareWitness')]"
+    ],
+    "properties": {
+      "publisher": "Microsoft.Powershell",
+      "type": "DSC",
+      "typeHandlerVersion": "2.13",
+      "autoUpgradeMinorVersion": false,
+      "settings": {
+        "modulesURL": "[parameters('configureClusterModulesURL')]",
+        "wmfVersion": "4.0",
+        "configurationFunction": "[parameters('configureClusterConfigurationFunction')]",
+        "properties": {
+          "domainName": "[parameters('domainName')]",
+          "clusterName":"[parameters('clusterName')]",
+          "sharePath":"[concat('\\\\',parameters('sqlwVMName'),'\\',parameters('sharePath'))]",
+          "nodes":["[concat(parameters('sqlVMName'),'0')]","[concat(parameters('sqlVMName'),'1')]"],
+          "sqlAlwaysOnEndpointName":"[parameters('sqlAOEPName')]",
+          "sqlAlwaysOnAvailabilityGroupName":"[parameters('sqlAOAGName')]",
+          "sqlAlwaysOnAvailabilityGroupListenerName":"[parameters('sqlAOListenerName')]",
+          "databaseNames":null,
+          "lbName":"[parameters('sqlLBName')]",
+          "lbAddress":"[parameters('sqlLBIPAddress')]",
+          "primaryReplica":"[concat(parameters('sqlVMName'),'1')]",
+          "secondaryReplica":"[concat(parameters('sqlVMName'),'0')]",
+          "dnsServerName":"[parameters('adPDCVMName')]",
+          "adminCreds":{
+            "userName": "[parameters('adminUserName')]",
+            "password": "privateSettingsRef:adminPassword"
+          },
+          "sqlServiceCreds":{
+            "userName": "[parameters('sqlServerServiceAccountUserName')]",
+            "password": "privateSettingsRef:sqlServerServiceAccountPassword"
+          },
+          "sharePointSetupUserAccountcreds":{
+            "userName": "[parameters('sharePointSetupUserAccountUserName')]",
+            "password": "privateSettingsRef:sharePointSetupUserAccountPassword"
+          }
+        }
+      },
+      "protectedSettings": {
+        "items": {
+          "adminPassword": "[parameters('adminPassword')]",
+          "sqlServerServiceAccountPassword": "[parameters('sqlServerServiceAccountPassword')]",
+          "sharePointSetupUserAccountPassword": "[parameters('sharePointSetupUserAccountPassword')]"
+        }
+      }
+    }
+  }
   ],
   "outputs": {}
 }

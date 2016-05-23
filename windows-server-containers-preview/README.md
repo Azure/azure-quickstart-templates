@@ -11,13 +11,13 @@ The template will deploy a Windows Server 2016 Technical Preview virtual machine
 
 The following actions are completed:
 
-- Deploy the Widows Server 2016 Technical Preview system.
+- Deploy the Windows Server 2016 Technical Preview system.
 - Enable the Windows containers role.
 - Download and install the Windows Server Core container base OS image.
 - Download and configure Docker.
 
-Once the template has been deployed, the virtual machine will be rebooted. At first logon, a second configuration script will be run to completes the process. Due to a large download, this configuration can take quite some time.
+Once the template has been deployed, the virtual machine will be rebooted. At first logon, a second configuration script will be run to complete the process. Due to a large download, this configuration can take quite some time.
 
-Windows Server 2016 TP5 and Windows Containers are in an early preview release and are not production ready and or supported.
+Windows Server 2016 TP5 and Windows Containers are in an early preview release and are not production ready or supported.
 
-> Microsoft Azure does not support Hyper-V containers. To complete Hyper-V Container exercises, you need an on-prem container host.    
+> Microsoft Azure does not support Hyper-V containers. To complete Hyper-V Container exercises, you need an on-premises container host.    
