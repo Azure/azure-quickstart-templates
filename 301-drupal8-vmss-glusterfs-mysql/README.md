@@ -20,6 +20,8 @@ You can either deploy using an existing MySQL server, or by creating mysql serve
 * **Deployment using existing MySQL Server**
   
   ![Deployment Overview - Existing MySQL Server](https://raw.githubusercontent.com/maniSbindra/azure-quickstart-templates/master/301-drupal8-vmss-glusterfs-mysql/Overview/Drupal%208%20ARM%20template%20overview.jpg "Deployment Overview - Existing MySQL Server")
+  
+  For Details of Parameter configurations when using existing MySQL server please refer https://blogs.msdn.microsoft.com/manibindra/2016/05/23/how-to-configure-your-drupal-8-arm-template-deployment-to-azure-using-existing-mysql-server/ 
 
 * **Deployment creating a new MySQL Server**
 
