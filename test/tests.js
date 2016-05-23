@@ -159,6 +159,11 @@ function prepTemplate(templatePath, parametersPath) {
 function validateTemplate(templatePath, parametersPath) {
   var requestBody = prepTemplate(templatePath, parametersPath);
 
+  if (process.env.TRAVIS_PULL_REQUEST &&
+    process.env.TRAVIS_PULL_REQUEST !== 'false') {
+    requestBody.pull_request = process.env.TRAVIS_PULL_REQUEST;
+  }
+
   // validate the template paramters, particularly the description field
   validateTemplateParameters(templatePath, requestBody.template);
 
