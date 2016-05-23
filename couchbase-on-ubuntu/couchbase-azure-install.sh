@@ -56,7 +56,7 @@ else
 fi
 
 #Script Parameters
-PACKAGE_NAME="couchbase-server-enterprise_3.0.3-ubuntu12.04_amd64.deb"
+PACKAGE_NAME=""
 CLUSTER_NAME=""
 IP_LIST=""
 ADMINISTRATOR=""
@@ -84,7 +84,7 @@ while getopts d:n:i:a:p:r:l optname; do
 	p) #Password for the admin
 	  PASSWORD=${OPTARG}
 	  ;;         
-	r) #Recommended RAM amount
+	r) #Recommended RAM amount - used for both index and data service
 	  RAM_FOR_COUCHBASE=${OPTARG}
 	  ;;              
 	l) #is this for the last node?
@@ -96,7 +96,8 @@ done
 # Install couchbase
 install_cb()
 {
-	# First prepare the environment as per http://blog.couchbase.com/often-overlooked-linux-os-tweaks
+	# First prepare the environment as per the documentation
+	# Installation Guide: http://developer.couchbase.com/documentation/server/4.1/install/installation.html
 
 	log "Disable swappiness"
 	# We may not reboot, disable with the running system
@@ -171,13 +172,13 @@ if [ "$IS_LAST_NODE" -eq 1 ]; then
 	log "Initializing the first node of the cluster on ${MY_IP}."
 	/opt/couchbase/bin/couchbase-cli node-init -c "$MY_IP":8091 --node-init-data-path="${COUCHBASE_DATA}" -u "${ADMINISTRATOR}" -p "${PASSWORD}"
 	log "Setting up cluster"
-	/opt/couchbase/bin/couchbase-cli cluster-init -c "$MY_IP":8091  -u "${ADMINISTRATOR}" -p "${PASSWORD}" --cluster-init-port=8091 --cluster-init-ramsize="${RAM_FOR_COUCHBASE}"
+	/opt/couchbase/bin/couchbase-cli cluster-init -c "$MY_IP":8091  -u "${ADMINISTRATOR}" -p "${PASSWORD}" --cluster-init-port=8091 --cluster-init-ramsize="${RAM_FOR_COUCHBASE}" --services="data,index,query" --cluster-index-ramsize="${RAM_FOR_COUCHBASE}"
 	log "Setting autofailover"
 	/opt/couchbase/bin/couchbase-cli setting-autofailover  -c "$MY_IP":8091  -u "${ADMINISTRATOR}" -p "${PASSWORD}" --enable-auto-failover=1 --auto-failover-timeout=30
 
 	for (( i = 0; i < ${#MEMBER_IP_ADDRESSES[@]}; i++ )); do
 		log "Adding node ${MEMBER_IP_ADDRESSES[$i]} to cluster"
-		/opt/couchbase/bin/couchbase-cli server-add -c "$MY_IP":8091 -u "${ADMINISTRATOR}" -p "${PASSWORD}" --server-add="${MEMBER_IP_ADDRESSES[$i]}" 
+		/opt/couchbase/bin/couchbase-cli server-add -c "$MY_IP":8091 -u "${ADMINISTRATOR}" -p "${PASSWORD}" --server-add="${MEMBER_IP_ADDRESSES[$i]}" --services="data,index,query" 
 	done
 
 	log "Reblancing the cluster"

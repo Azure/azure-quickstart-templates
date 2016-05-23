@@ -1,0 +1,367 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Username for the Virtual Machine."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the Virtual Machine."
+      }
+    },
+    "rancherApi": {
+      "type": "string",
+      "metadata": {
+        "description": "The api link to your RancherHost. Example : http://myrancherhost.kvaes.be:8080/v1/scripts/AA12A123A1A1234A12A1:1234567890000:aAaaaaA1AaAaAlaAAaaaaAAAaaA"
+      }
+    },
+	"rancherNodeName": {
+      "type": "string",
+      "metadata": {
+        "description": "The prefix you want to use as hostname"
+      }
+    },
+	"rancherVmSize": {
+	  "type": "string",
+	  "metadata": {
+	    "description": "The size of the virtual machine used for the nodes"
+	  },
+	  "allowedValues": [
+		"Standard_A0",
+		"Standard_A1",
+		"Standard_A2",
+		"Standard_A3",
+		"Standard_A4",
+		"Basic_A0",
+		"Basic_A1",
+		"Basic_A2",
+		"Basic_A3",
+		"Basic_A4",
+		"Standard_A5",
+		"Standard_A6",
+		"Standard_A7",
+		"Standard_D1",
+		"Standard_D2",
+		"Standard_D3",
+		"Standard_D4",
+		"Standard_D11",
+		"Standard_D12",
+		"Standard_D13",
+		"Standard_D14",
+		"Standard_D1_v2",
+		"Standard_D2_v2",
+		"Standard_D3_v2",
+		"Standard_D4_v2",
+		"Standard_D5_v2",
+		"Standard_D11_v2",
+		"Standard_D12_v2",
+		"Standard_D13_v2",
+		"Standard_D14_v2",
+		"Standard_DS1",
+		"Standard_DS2",
+		"Standard_DS3",
+		"Standard_DS4",
+		"Standard_DS11",
+		"Standard_DS12",
+		"Standard_DS13",
+		"Standard_DS14",
+		"Standard_G1",
+		"Standard_G2",
+		"Standard_G3",
+		"Standard_G4",
+		"Standard_G5",
+		"Standard_GS1",
+		"Standard_GS2",
+		"Standard_GS3",
+		"Standard_GS4",
+		"Standard_GS5",
+		"Standard_A8",
+		"Standard_A9",
+		"Standard_A10",
+		"Standard_A11"
+	  ],
+	  "defaultValue": "Standard_A2"
+	},
+	"rancherCount": {
+      "type": "int",
+      "metadata": {
+        "description": "The amount of nodes to be provisioned"
+      },
+	  "minValue": 1,
+	  "maxValue": 250
+    }
+  },
+  "variables": {
+    "apiVersion": "2015-06-15",  
+    "availabilitySet": "[parameters('rancherNodeName')]",
+    "storageAccountName": "[parameters('rancherNodeName')]",
+	"storageAccountName": "[concat(uniquestring(resourceGroup().id), 'ranchernode')]",
+    "networkSecurityGroupName": "[parameters('rancherNodeName')]",
+    "imagePublisher": "Canonical",
+    "imageOffer": "UbuntuServer",
+    "ubuntuOSVersion": "14.04.2-LTS",
+    "OSDiskName": "rancherosdisk",
+    "nicName": "ranchernic",
+    "virtualNetworkName": "[parameters('rancherNodeName')]",
+    "addressPrefix": "192.168.253.0/24",
+    "subnetName": "[parameters('rancherNodeName')]",
+    "subnetPrefix": "192.168.253.0/24",
+    "publicIPAddressType": "Dynamic",
+    "storageAccountType": "Standard_LRS",
+    "vmStorageAccountContainerName": "vhds",
+    "vmSize": "[parameters('rancherVmSize')]",
+    "extensionName": "DockerExtension",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
+    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('storageAccountName')]",
+      "apiVersion": "[variables('apiVersion')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "accountType": "[variables('storageAccountType')]"
+      }
+    },
+	{
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[variables('availabilitySet')]",
+      "apiVersion": "[variables('apiVersion')]",
+      "location": "[resourceGroup().location]",
+      "properties": {}
+    },
+    
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('networkSecurityGroupName')]",
+      "apiVersion": "[variables('apiVersion')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "securityRules": [
+		  {
+            "name": "SSH",
+            "properties": {
+              "description": "SSH",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+		  
+          {
+            "name": "rVPN500",
+            "properties": {
+              "description": "rVPN500",
+              "protocol": "Udp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "500",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 300,
+              "direction": "Inbound"
+            }
+          },
+
+          {
+            "name": "rVPN4500",
+            "properties": {
+              "description": "rVPN4500",
+              "protocol": "Udp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "4500",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 400,
+              "direction": "Inbound"
+            }
+          },
+
+          {
+            "name": "Docker",
+            "properties": {
+              "description": "Docker",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "2375",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 200,
+              "direction": "Inbound"
+            }
+          }
+
+        ]
+      }
+    },
+    
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('networkSecurityGroupName'))]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat(parameters('rancherNodeName'), copyIndex())]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "pipLoopNode",
+        "count": "[parameters('rancherCount')]"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[concat(parameters('rancherNodeName'), copyIndex())]"
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(parameters('rancherNodeName'), copyIndex(), '-nic')]",
+      "location": "[resourceGroup().location]",
+	  "copy": {
+        "name": "nicLoopNode",
+        "count": "[parameters('rancherCount')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', parameters('rancherNodeName'), copyIndex())]",
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('rancherNodeName'), copyIndex()))]"
+              },
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(parameters('rancherNodeName'), copyIndex())]",	  
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "vmLoopNode",
+        "count": "[parameters('rancherCount')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', parameters('rancherNodeName'), copyIndex(), '-nic')]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[concat(parameters('rancherNodeName'), copyIndex())]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[variables('ubuntuOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+			"name": "[concat(parameters('rancherNodeName'), copyIndex(),'-osdisk')]",
+            "vhd": {
+              "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',parameters('rancherNodeName'), copyIndex(),'-osdisk','.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('rancherNodeName'), copyIndex(), '-nic'))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('rancherNodeName'), copyIndex(),'/', variables('extensionName'))]",
+      "apiVersion": "[variables('apiVersion')]",
+      "location": "[resourceGroup().location]",
+	  "copy": {
+        "name": "extLoopNode",
+        "count": "[parameters('rancherCount')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('rancherNodeName'), copyIndex())]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "DockerExtension",
+        "typeHandlerVersion": "1.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "docker": {
+            "port": "2375"
+          },
+          "compose": {
+            "rancheragent": {
+              "image": "rancher/agent:v0.11.0",
+              "restart": "always",
+			  "privileged": true,
+			  "volumes": [
+                "/var/run/docker.sock:/var/run/docker.sock"
+              ],
+              "command": "[parameters('rancherApi')]"
+            }
+          }
+        }
+      }
+    }
+  ]
+}
