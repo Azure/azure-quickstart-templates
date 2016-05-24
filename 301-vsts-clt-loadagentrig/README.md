@@ -9,11 +9,11 @@ Using this template, you can create your own load test rig on Azure IaaS virtual
 
 ```json
 {
-    "VSTSAccountName": "dpksinghal",    
-    "PATToken": "<get pat token for VSTS accoutn>",
+    "VSTSAccountName": "xyz",    
+    "PATToken": "<get pat token for VSTS account>",
     "vmCount": 1,
-    "adminUsername": "cltuser",
-    "adminPassword": "pass" 
+    "adminUsername": "admin",
+    "adminPassword": "password" 
 }
 ```
 
