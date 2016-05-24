@@ -13,7 +13,7 @@ Using this template, you can create your own load test rig on Azure IaaS virtual
     "PATToken": "<get pat token for VSTS accoutn>",
     "vmCount": 1,
     "adminUsername": "cltuser",
-    "adminPassword": "password!"    
+    "adminPassword": "pass" 
 }
 ```
 
