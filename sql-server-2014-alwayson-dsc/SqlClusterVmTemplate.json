@@ -79,33 +79,6 @@
       }
     },
 
-    "location": {
-      "type": "string",
-      "allowedValues": [
-        "West US",
-        "East US",
-        "East US 2",
-        "Central US",
-        "South Central US",
-        "North Central US",
-        "North Europe",
-        "West Europe",
-        "East Asia",
-        "Southeast Asia",
-        "Japan East",
-        "Japan West",
-        "Brazil South",
-        "Australia East",
-        "Australia Southeast",
-        "Central India",
-        "South India",
-        "West India"
-      ],
-      "metadata": {
-        "description": "The region to deploy the resources into"
-      }
-    },
-
     "vmSize": {
       "type": "string",
       "allowedValues": [
@@ -180,180 +153,180 @@
   },
   "resources": [
     {
-			"type": "Microsoft.Storage/storageAccounts",
-			"name": "[concat(parameters('storageAccount'), copyindex())]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[concat(parameters('storageAccount'), copyindex())]",
       "apiVersion": "[variables('apiVersionStorage')]",
       "copy": {
-				"name": "storageAccountLoop",
-				"count": 2
-			},
-			"location": "[parameters('location')]",
-			"properties": {
-			"accountType": "[parameters('storageAccountType')]"
-			}
-		},
+        "name": "storageAccountLoop",
+        "count": 2
+      },
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "accountType": "[parameters('storageAccountType')]"
+      }
+    },
     {
-			"apiVersion": "[variables('apiVersionNetworks')]",
-			"name": "[variables('publicLBName')]",
-			"type": "Microsoft.Network/loadBalancers",
-			"location": "[parameters('location')]",
-			"dependsOn": [
-			],
-			"properties": {
-				"frontendIPConfigurations": [
-					{
-						"name": "[variables('lbFE')]",
-						"properties": {
-							"privateIPAllocationMethod": "Static",
-							"privateIPAddress" :"[parameters('sqlLBIPAddress')]",
-							"subnet": {
-								"id": "[parameters('lbSubnetUri')]"
-							}
-						}
-					}
-				],
-				"backendAddressPools": [
-					{
-						"name": "[variables('lbBE')]"
-					}
-				],
-				"loadBalancingRules": [
-					{
-						"name": "[variables('sqlAOListener')]",
-						"properties": {
-						"frontendIPConfiguration": {
-							"id": "[variables('sqllbFEConfigID')]"
-						},
-						"backendAddressPool": {
-							"id": "[variables('sqlBEAddressPoolID')]"
-						},
-						"probe": {
-							"id": "[variables('sqllbProbeID')]"
-						},
-						"protocol": "tcp",
-						"frontendPort": 1433,
-						"backendPort": 1433,
-						"enableFloatingIP": true
-						}
-					}
-				],
-				"probes": [
-					{
-						"name": "[variables('sqlAOProbe')]",
-						"properties": {
-							"protocol": "tcp",
-							"port": 59999,
-							"intervalInSeconds": "5",
-							"numberOfProbes": "2"
-						}
-					}
-				]
-			}
-		},
+      "apiVersion": "[variables('apiVersionNetworks')]",
+      "name": "[variables('publicLBName')]",
+      "type": "Microsoft.Network/loadBalancers",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+      ],
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "[variables('lbFE')]",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[parameters('sqlLBIPAddress')]",
+              "subnet": {
+                "id": "[parameters('lbSubnetUri')]"
+              }
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "[variables('lbBE')]"
+          }
+        ],
+        "loadBalancingRules": [
+          {
+            "name": "[variables('sqlAOListener')]",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[variables('sqllbFEConfigID')]"
+              },
+              "backendAddressPool": {
+                "id": "[variables('sqlBEAddressPoolID')]"
+              },
+              "probe": {
+                "id": "[variables('sqllbProbeID')]"
+              },
+              "protocol": "tcp",
+              "frontendPort": 1433,
+              "backendPort": 1433,
+              "enableFloatingIP": true
+            }
+          }
+        ],
+        "probes": [
+          {
+            "name": "[variables('sqlAOProbe')]",
+            "properties": {
+              "protocol": "tcp",
+              "port": 59999,
+              "intervalInSeconds": "5",
+              "numberOfProbes": "2"
+            }
+          }
+        ]
+      }
+    },
 
     {
-			"name": "[concat(variables('sqlNicName'), copyindex())]",
-			"type": "Microsoft.Network/networkInterfaces",
-			"location": "[parameters('location')]",
-			"apiVersion": "[variables('apiVersionNetworks')]",
-			"copy": {
-				"name": "nicLoop",
-				"count": 2
-			},
-			"dependsOn": [
-				"[concat('Microsoft.Network/loadBalancers/',variables('publicLBName'))]"
-			],
-			"properties": {
-				"ipConfigurations": [
-					{
-						"name": "ipconfig1",
-						"properties": {
-							"privateIPAllocationMethod": "Dynamic",
-							"subnet": {
-								"id": "[parameters('nicSubnetUri')]"
-							},
-							"loadBalancerBackendAddressPools": [
-								{
-									"id":"[variables('sqlBEAddressPoolID')]"
-								}
-							]
-						}
-					}
-				]
-			}
-		},
+      "name": "[concat(variables('sqlNicName'), copyindex())]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "[variables('apiVersionNetworks')]",
+      "copy": {
+        "name": "nicLoop",
+        "count": 2
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/loadBalancers/',variables('publicLBName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[parameters('nicSubnetUri')]"
+              },
+              "loadBalancerBackendAddressPools": [
+                {
+                  "id": "[variables('sqlBEAddressPoolID')]"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
     {
-			"apiVersion": "[variables('apiVersionVirtualMachines')]",
-			"type": "Microsoft.Compute/virtualMachines",
-			"name": "[concat(parameters('vmNamePrefix'), copyindex())]",
-			"location": "[parameters('location')]",
-			"copy": {
-				"name": "virtualMachineLoop",
-				"count": 2
-			},
-			"dependsOn": [
-				"[resourceId('Microsoft.Storage/storageAccounts',concat(parameters('storageAccount'),  copyindex()))]",
-				"[resourceId('Microsoft.Network/networkInterfaces',concat(variables('sqlNicName'), copyindex()))]"
-			],
-			"properties": {
-				"hardwareProfile": {
-					"vmSize": "[parameters('vmSize')]"
-				},
-				"availabilitySet": {
-					"id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySetName'))]"
-				},
-				"osProfile": {
-					"computerName": "[concat(parameters('vmNamePrefix'), copyindex())]",
-					"adminUsername": "[parameters('adminUsername')]",
-					"adminPassword": "[parameters('adminPassword')]"
-				},
-				"storageProfile": {
-					"imageReference": {
-						"publisher": "[parameters('windowsImagePublisher')]",
-						"offer": "[parameters('windowsImageOffer')]",
-						"sku": "[parameters('windowsImageSKU')]",
-						"version": "[parameters('windowsImageVersion')]"
-					},
-					"osDisk": {
-						"name": "osdisk",
-						"vhd": {
-							"uri": "[concat('http://',parameters('storageAccount'),copyindex(), '.blob.core.windows.net/',variables('vmContainerName'),'/', parameters('vmNamePrefix'), copyindex(),'-osdisk.vhd')]"
-						},
-						"caching": "ReadWrite",
-						"createOption": "FromImage"
-					},
-					"dataDisks": [
-						{
-							"vhd": {
-								"uri":"[concat('http://',parameters('storageAccount'),copyindex(), '.blob.core.windows.net/',variables('vmContainerName'),'/', parameters('vmNamePrefix'), copyindex(),'data-1.vhd')]"
-							},
-							"name":"[concat(parameters('vmNamePrefix'), copyindex(),'data-1.vhd')]",
-							"caching" : "None",
-							"createOption": "empty",
-							"diskSizeGB": "[parameters('sqlDiskSize')]",
-							"lun": 0
-						},
-						{
-							"vhd": {
-								"uri":"[concat('http://',parameters('storageAccount'), copyindex(), '.blob.core.windows.net/',variables('vmContainerName'),'/', parameters('vmNamePrefix'), copyindex(),'log-1.vhd')]"
-							},
-							"name":"[concat(parameters('vmNamePrefix'), copyindex(),'log-1.vhd')]",
-							"caching" : "None",
-							"createOption": "empty",
-							"diskSizeGB": "[parameters('sqlDiskSize')]",
-							"lun": 1
-						}
-					]
-				},
-				"networkProfile": {
-					"networkInterfaces": [
-						{
-							"id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('sqlNicName'), copyindex()))]"
-						}
-					]
-				}
-			}
-		}
+      "apiVersion": "[variables('apiVersionVirtualMachines')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(parameters('vmNamePrefix'), copyindex())]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "virtualMachineLoop",
+        "count": 2
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts',concat(parameters('storageAccount'),  copyindex()))]",
+        "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('sqlNicName'), copyindex()))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySetName'))]"
+        },
+        "osProfile": {
+          "computerName": "[concat(parameters('vmNamePrefix'), copyindex())]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[parameters('windowsImagePublisher')]",
+            "offer": "[parameters('windowsImageOffer')]",
+            "sku": "[parameters('windowsImageSKU')]",
+            "version": "[parameters('windowsImageVersion')]"
+          },
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat('http://',parameters('storageAccount'),copyindex(), '.blob.core.windows.net/',variables('vmContainerName'),'/', parameters('vmNamePrefix'), copyindex(),'-osdisk.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          },
+          "dataDisks": [
+            {
+              "vhd": {
+                "uri": "[concat('http://',parameters('storageAccount'),copyindex(), '.blob.core.windows.net/',variables('vmContainerName'),'/', parameters('vmNamePrefix'), copyindex(),'data-1.vhd')]"
+              },
+              "name": "[concat(parameters('vmNamePrefix'), copyindex(),'data-1.vhd')]",
+              "caching": "None",
+              "createOption": "empty",
+              "diskSizeGB": "[parameters('sqlDiskSize')]",
+              "lun": 0
+            },
+            {
+              "vhd": {
+                "uri": "[concat('http://',parameters('storageAccount'), copyindex(), '.blob.core.windows.net/',variables('vmContainerName'),'/', parameters('vmNamePrefix'), copyindex(),'log-1.vhd')]"
+              },
+              "name": "[concat(parameters('vmNamePrefix'), copyindex(),'log-1.vhd')]",
+              "caching": "None",
+              "createOption": "empty",
+              "diskSizeGB": "[parameters('sqlDiskSize')]",
+              "lun": 1
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('sqlNicName'), copyindex()))]"
+            }
+          ]
+        }
+      }
+    }
   ],
     "outputs": {
     }
