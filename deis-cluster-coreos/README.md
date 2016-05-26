@@ -39,13 +39,13 @@ This template allows you to create a Deis cluster. The cluster is made up by thr
 		./deploy-deis.sh -n "[resource group name]" -l "West US" -f ./azuredeploy.json -e ./azuredeploy-parameters.json -c ./cloud-config.yaml
 
 
->**Note:** If you chose to use the "Deploy to Azure" button experience, you'll need to manually encode **cloud-config.yaml** as a Base64 string and enter the encoded string to the **customData** parameter. Although the template can be updated to use the built-in base64() founction, I found the triple-encoding is rather troublesome especially for readability and maintenance.
-
 8. Create load balancer API rule:
 
       In order to expose the API (port 80) to the network, run the following command:
 
 		azure network lb rule create -g "[resource group name]" -l loadBalancer -n loadBalancerAPIRule -p tcp -f 888 -b 888 -e false -i 10 -a apiProbe
+
+>**Note:** If you chose to use the "Deploy to Azure" button experience, you'll need to manually encode **cloud-config.yaml** as a Base64 string and enter the encoded string to the **customData** parameter. Although the template can be updated to use the built-in base64() founction, I found the triple-encoding is rather troublesome especially for readability and maintenance.
 
 ##Install the client
 You need **deisctl** to control your Deis cluster. *deisctl* is automatically installed in all the cluster nodes. However, it's a good practice to use *deisctl* on a separate administrative machine. Because all nodes are configured with only private IP addresses, you'll need to use an SSH tunnel through the load balancer, which has a public IP, to the node machines. The following are the steps of setting up *deisctl* on a separate machine.
