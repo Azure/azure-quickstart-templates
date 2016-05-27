@@ -20,6 +20,16 @@
         "description": "Please copy the content of your SSH RSA public key and paste it here. You can use \"ssh-keygen -t rsa -b 2048\" to generate your SSH key pairs."
       }
     },
+    "environment": {
+      "type": "string",
+      "allowedValues": [
+        "AzureCloud",
+        "AzureChinaCloud"
+      ],
+      "metadata": {
+        "description": "Different environments in Azure. Choose AzureCloud for Global Azure, and choose AzureChinaCloud for Mooncake (Azure China Cloud)."
+      }
+    },
     "tenantID": {
       "type": "string",
       "minLength": 36,
@@ -72,6 +82,9 @@
     "subnetAddressRangeForCloudFoundry": "10.0.16.0/20",
     "subnetNameForDiego": "Diego",
     "subnetAddressRangeForDiego": "10.0.32.0/20",
+    "devboxNetworkSecurityGroup": "nsg-devbox",
+    "boshNetworkSecurityGroup": "nsg-bosh",
+    "cfNetworkSecurityGroup": "nsg-cf",
 
     "vmSize": "Standard_D1",
     "nicName": "[parameters('vmName')]",
@@ -81,14 +94,60 @@
     "ubuntuOSVersion": "14.04.3-LTS",
     "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
 
-    "baseUri": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/bosh-setup/",
+    "baseUriAzureCloud": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/bosh-setup/",
+    "baseUriAzureChinaCloud": "https://cloudfoundry.blob.core.chinacloudapi.cn/",
 
-    "environment": "AzureCloud",
-    "serviceHostBase": "core.windows.net",
-    "keepUnreachableVMs": "false",
-    "devboxNetworkSecurityGroup": "nsg-devbox",
-    "boshNetworkSecurityGroup": "nsg-bosh",
-    "cfNetworkSecurityGroup": "nsg-cf"
+    "filesToDownloadAzureCloud": [
+      "[uri(variables('baseUriAzureCloud'), 'scripts/setup_env')]",
+      "[uri(variables('baseUriAzureCloud'), 'scripts/setup_env.py')]",
+      "[uri(variables('baseUriAzureCloud'), 'scripts/create_cert.sh')]",
+      "[uri(variables('baseUriAzureCloud'), 'scripts/init.sh')]",
+      "[uri(variables('baseUriAzureCloud'), 'scripts/deploy_bosh.sh')]",
+      "[uri(variables('baseUriAzureCloud'), 'scripts/deploy_cloudfoundry.sh')]",
+      "[uri(variables('baseUriAzureCloud'), 'manifests/bosh.yml')]",
+      "[uri(variables('baseUriAzureCloud'), 'manifests/single-vm-cf.yml')]",
+      "[uri(variables('baseUriAzureCloud'), 'manifests/multiple-vm-cf.yml')]",
+      "http://go-cli.s3-website-us-east-1.amazonaws.com/releases/v6.14.1/cf-cli-installer_6.14.1_x86-64.deb"
+    ],
+    "filesToDownloadAzureChinaCloud": [
+      "[uri(variables('baseUriAzureChinaCloud'), 'scripts/setup_env')]",
+      "[uri(variables('baseUriAzureChinaCloud'), 'scripts/setup_env.py')]",
+      "[uri(variables('baseUriAzureChinaCloud'), 'scripts/create_cert.sh')]",
+      "[uri(variables('baseUriAzureChinaCloud'), 'scripts/init.sh')]",
+      "[uri(variables('baseUriAzureChinaCloud'), 'scripts/deploy_bosh.sh')]",
+      "[uri(variables('baseUriAzureChinaCloud'), 'scripts/deploy_cloudfoundry.sh')]",
+      "[uri(variables('baseUriAzureChinaCloud'), 'manifests/bosh.yml')]",
+      "[uri(variables('baseUriAzureChinaCloud'), 'manifests/single-vm-cf.yml')]",
+      "[uri(variables('baseUriAzureChinaCloud'), 'manifests/multiple-vm-cf.yml')]",
+      "[uri(variables('baseUriAzureChinaCloud'), 'cf-cli/cf.deb')]"
+    ],
+    "filesToDownload": "[variables(concat('filesToDownload', parameters('environment')))]",
+
+    "environmentAzureCloud": {
+      "serviceHostBase": "core.windows.net",
+      "boshReleaseUrl": "https://bosh.io/d/github.com/cloudfoundry/bosh?v=256.2",
+      "boshReleaseSha1": "ff2f4e16e02f66b31c595196052a809100cfd5a8",
+      "boshAzureCPIReleaseUrl": "https://bosh.io/d/github.com/cloudfoundry-incubator/bosh-azure-cpi-release?v=10",
+      "boshAzureCPIReleaseSha1": "48725899f8b3f0f625bdb3bcff97bc0d6bf193e1",
+      "stemcellUrl": "https://bosh.io/d/stemcells/bosh-azure-hyperv-ubuntu-trusty-go_agent?v=3169",
+      "stemcellSha1": "ff13c47ac7ce121dee6153c1564bd8965edf9f59",
+      "boshInitUrl": "https://s3.amazonaws.com/bosh-init-artifacts/bosh-init-0.0.81-linux-amd64",
+      "cfReleaseUrl": "https://bosh.io/d/github.com/cloudfoundry/cf-release?v=231"
+    },
+    "environmentAzureChinaCloud": {
+      "serviceHostBase": "core.chinacloudapi.cn",
+      "boshReleaseUrl": "[uri(variables('baseUriAzureChinaCloud'), 'releases/bosh-256.2.tgz')]",
+      "boshReleaseSha1": "ff2f4e16e02f66b31c595196052a809100cfd5a8",
+      "boshAzureCPIReleaseUrl": "[uri(variables('baseUriAzureChinaCloud'), 'releases/bosh-azure-cpi-release-10.tgz')]",
+      "boshAzureCPIReleaseSha1": "48725899f8b3f0f625bdb3bcff97bc0d6bf193e1",
+      "stemcellUrl": "[uri(variables('baseUriAzureChinaCloud'), 'stemcells/bosh-stemcell-3169-azure-hyperv-ubuntu-trusty-go_agent.tgz')]",
+      "stemcellSha1": "ff13c47ac7ce121dee6153c1564bd8965edf9f59",
+      "boshInitUrl": "[uri(variables('baseUriAzureChinaCloud'), 'bosh-init/bosh-init-0.0.81-linux-amd64')]",
+      "cfReleaseUrl": "[uri(variables('baseUriAzureChinaCloud'), 'releases/cf-release-231.tgz')]"
+    },
+    "environment": "[variables(concat('environment', parameters('environment')))]",
+
+    "keepUnreachableVMs": "false"
   },
   "resources": [
     {
@@ -360,7 +419,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://',variables('defaultStorageAccountName'),'.blob.',variables('serviceHostBase'),'/',variables('vmStorageAccountContainerName'),'/',parameters('vmName'),'-osdisk.vhd')]"
+              "uri": "[concat('http://',variables('defaultStorageAccountName'),'.blob.',variables('environment').serviceHostBase,'/',variables('vmStorageAccountContainerName'),'/',parameters('vmName'),'-osdisk.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -388,21 +447,37 @@
         "type": "CustomScriptForLinux",
         "typeHandlerVersion": "1.4",
         "settings": {
-          "fileUris": [
-            "[uri(variables('baseUri'), 'scripts/setup_env')]",
-            "[uri(variables('baseUri'), 'scripts/setup_env.py')]",
-            "[uri(variables('baseUri'), 'scripts/create_cert.sh')]",
-            "[uri(variables('baseUri'), 'scripts/init.sh')]",
-            "[uri(variables('baseUri'), 'scripts/deploy_bosh.sh')]",
-            "[uri(variables('baseUri'), 'scripts/deploy_cloudfoundry.sh')]",
-            "[uri(variables('baseUri'), 'manifests/bosh.yml')]",
-            "[uri(variables('baseUri'), 'manifests/single-vm-cf.yml')]",
-            "[uri(variables('baseUri'), 'manifests/multiple-vm-cf.yml')]"
-          ],
-          "enableInternalDNSCheck": false
+          "fileUris": "[variables('filesToDownload')]",
+          "enableInternalDNSCheck": false,
+          "VNET_NAME": "[variables('virtualNetworkName')]",
+          "SUBNET_NAME_FOR_BOSH": "[variables('subnetNameForBosh')]",
+          "SUBNET_ADDRESS_RANGE_FOR_BOSH": "[variables('subnetAddressRangeForBosh')]",
+          "SUBNET_NAME_FOR_CLOUD_FOUNDRY": "[variables('subnetNameForCloudFoundry')]",
+          "SUBNET_ADDRESS_RANGE_FOR_CLOUD_FOUNDRY": "[variables('subnetAddressRangeForCloudFoundry')]",
+          "CLOUD_FOUNDRY_PUBLIC_IP": "[reference(concat(parameters('vmName'),'-cf')).ipAddress]",
+          "BOSH_PUBLIC_IP": "[reference(concat(parameters('vmName'),'-bosh')).ipAddress]",
+          "NSG_NAME_FOR_BOSH": "[variables('boshNetworkSecurityGroup')]",
+          "NSG_NAME_FOR_CLOUD_FOUNDRY": "[variables('cfNetworkSecurityGroup')]",
+          "SUBSCRIPTION_ID": "[subscription().subscriptionId]",
+          "RESOURCE_GROUP_NAME": "[resourceGroup().name]",
+          "DEFAULT_STORAGE_ACCOUNT_NAME": "[variables('defaultStorageAccountName')]",
+          "STORAGE_ACCESS_KEY": "[listKeys(variables('storageid'), variables('apiVersion')).key1]",
+          "ADMIN_USER_NAME": "[parameters('adminUserName')]",
+          "ENVIRONMENT": "[parameters('environment')]",
+          "SERVICE_HOST_BASE": "[variables('environment').serviceHostBase]",
+          "BOSH_RELEASE_URL": "[variables('environment').boshReleaseUrl]",
+          "BOSH_RELEASE_SHA1": "[variables('environment').boshReleaseSha1]",
+          "BOSH_AZURE_CPI_RELEASE_URL": "[variables('environment').boshAzureCPIReleaseUrl]",
+          "BOSH_AZURE_CPI_RELEASE_SHA1": "[variables('environment').boshAzureCPIReleaseSha1]",
+          "STEMCELL_URL": "[variables('environment').stemcellUrl]",
+          "STEMCELL_SHA1": "[variables('environment').stemcellSha1]",
+          "CF_RELEASE_URL": "[variables('environment').cfReleaseUrl]",
+          "BOSH_INIT_URL": "[variables('environment').boshInitUrl]",
+          "KEEP_UNREACHABLE_VMS": "[variables('keepUnreachableVMs')]",
+          "AUTO_DEPLOY_BOSH": "[parameters('autoDeployBosh')]"
         },
         "protectedSettings": {
-          "commandToExecute": "[concat('./setup_env', ' ', '\"VNET_NAME:', variables('virtualNetworkName'), ';SUBNET_NAME_FOR_BOSH:', variables('subnetNameForBosh'), ';SUBNET_ADDRESS_RANGE_FOR_BOSH:', variables('subnetAddressRangeForBosh'), ';SUBNET_NAME_FOR_CLOUD_FOUNDRY:', variables('subnetNameForCloudFoundry'), ';SUBNET_ADDRESS_RANGE_FOR_CLOUD_FOUNDRY:', variables('subnetAddressRangeForCloudFoundry'), ';CLOUD_FOUNDRY_PUBLIC_IP:', reference(concat(parameters('vmName'),'-cf')).ipAddress, ';BOSH_PUBLIC_IP:', reference(concat(parameters('vmName'),'-bosh')).ipAddress, ';SUBSCRIPTION_ID:', subscription().subscriptionId, ';DEFAULT_STORAGE_ACCOUNT_NAME:', variables('defaultStorageAccountName'), ';STORAGE_ACCESS_KEY:', listKeys(variables('storageid'), variables('apiVersion')).key1, ';RESOURCE_GROUP_NAME:', resourceGroup().name, ';KEEP_UNREACHABLE_VMS:', variables('keepUnreachableVMs'), ';NSG_NAME_FOR_BOSH:', variables('boshNetworkSecurityGroup'), ';NSG_NAME_FOR_CLOUD_FOUNDRY:', variables('cfNetworkSecurityGroup'), '\" ', parameters('tenantID'), ' ', parameters('clientID'), ' \"', parameters('clientSecret'), '\" ', parameters('adminUserName'), ' ', parameters('autoDeployBosh'))]"
+          "commandToExecute": "[concat('./setup_env', ' ', parameters('tenantID'), ' ', parameters('clientID'), ' \"', parameters('clientSecret'), '\"')]"
         }
       }
     }
