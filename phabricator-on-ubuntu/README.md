@@ -7,4 +7,14 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template deploys Phabricator on a Ubuntu Virtual Machine. This template also deploys a Storage Account, Virtual Network, Public IP addresses and a Network Interface.
+This template deploys [Phabricator](http://phabricator.org/) on a Ubuntu Virtual Machine 16.04.0-LTS.
+
+![phabricator img](./imgs/landing.png)
+
+This template also deploys a Storage Account, Virtual Network, Public IP addresses and a Network Interface.
+
+After the deployment, you should be able to access at phabricator through your DNSNAMEFORPUBLICIP parameter:
+
+![phabricator img](./imgs/phabricatorHowTo.png)
+
+Next steps for the configuration of phabricator : https://secure.phabricator.com/book/phabricator/article/configuration_guide/ 
