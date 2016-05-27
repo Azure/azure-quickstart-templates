@@ -50,8 +50,8 @@ else
   (cd phabricator && git pull --rebase)
 fi
 
-sudo debconf-set-selections <<< 'mysql-server mysql-server/root_password password pass@word1'
-sudo debconf-set-selections <<< 'mysql-server mysql-server/root_password_again password pass@word1'
+sudo echo 'mysql-server mysql-server/root_password password pass@word1' | debconf-set-selections
+sudo echo 'mysql-server mysql-server/root_password_again password pass@word1' | debconf-set-selections
 sudo apt-get -y install mysql-server
 
 
@@ -68,9 +68,9 @@ sudo echo "  RewriteRule ^/favicon.ico   -                       [L,QSA]" >> /et
 sudo echo '  RewriteRule ^(.*)$          /index.php?__path__=$1  [B,L,QSA]' >> /etc/apache2/sites-available/phabricator.conf
 sudo echo "</VirtualHost>" >> /etc/apache2/sites-available/phabricator.conf
 
-echo '<Directory "/opt/phabricator/webroot">' >> /etc/apache2/apache2.conf
-echo '  Require all granted' >> /etc/apache2/apache2.conf
-echo "</Directory>" >> /etc/apache2/apache2.conf
+sudo echo '<Directory "/opt/phabricator/webroot">' >> /etc/apache2/apache2.conf
+sudo echo '  Require all granted' >> /etc/apache2/apache2.conf
+sudo echo "</Directory>" >> /etc/apache2/apache2.conf
 
 sudo a2dissite 000-default.conf
 sudo a2ensite phabricator.conf
