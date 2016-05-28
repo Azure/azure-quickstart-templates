@@ -132,7 +132,7 @@ cat >/etc/chef/node.json <<end
     },
     "web_port": 10443,
     "web_conf": {
-      "splunkdConnectionTimeout": 120
+      "splunkdConnectionTimeout": 120,
       "updateCheckerBaseURL": 0
     },
     "ssl_options": {
