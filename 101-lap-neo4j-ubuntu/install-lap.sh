@@ -6,11 +6,13 @@ apt-get -y update
 export DEBIAN_FRONTEND=noninteractive
 
 #install php apache
-apt-get -y install apache2 php5 libapache2-mod-php5
+apt-get -y install apache2
 
 cd /var/www/html
 #install composer
-#curl -sS https://getcomposer.org/installer | sudo php -- --install-dir=/usr/local/bin --filename=composer
+curl -sS https://getcomposer.org/installer | sudo php -- --install-dir=/usr/local/bin --filename=composer
+
+apt-get -y install libapache2-mod-php5
 
 #php test file
 cat > /var/www/html/info.php <<EOF
