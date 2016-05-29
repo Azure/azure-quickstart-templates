@@ -1,7 +1,5 @@
 #!/bin/bash
 
-LAPIP=$1
-
 wget -O - http://debian.neo4j.org/neotechnology.gpg.key | apt-key add -
 
 echo 'deb http://debian.neo4j.org/repo stable/' > /etc/apt/sources.list.d/neo4j.list
