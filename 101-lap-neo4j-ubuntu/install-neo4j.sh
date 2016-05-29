@@ -19,5 +19,10 @@ sudo apt-get install -y oracle-java8-installer
 
 #install neo4j server
 sudo apt-get -y install neo4j
+#make a copy of the config file
+cp -p /etc/neo4j/neo4j.conf /etc/neo4j/neo4j.conf.bak
+#open the http access at port 7474 to apache node
+sed -i -e '/dbms.connector.http.address/s/^#//' /etc/neo4j/neo4j.conf
+service neo4j restart
 
 
