@@ -10,7 +10,9 @@ apt-get -y install apache2
 
 cd /var/www/html
 #install composer
-curl -sS https://getcomposer.org/installer | sudo php -- --install-dir=/usr/local/bin --filename=composer
+#curl -sS https://getcomposer.org/installer | sudo php -- --install-dir=/usr/local/bin --filename=composer
+curl -sS https://getcomposer.org/installer | sudo php
+
 
 apt-get -y install libapache2-mod-php5
 
@@ -48,6 +50,8 @@ if (!\$client) {
 }
 echo 'Connected sucessfully';
 EOF
+
+echo "everything installed successfully, lets install composer dependecies"
 
 #composer install
 #cd /var/www/html
