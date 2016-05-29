@@ -1,7 +1,5 @@
 #!/bin/bash
 
-REMOTEMYSQLIP=$1
-
 apt-get -y update
 
 #no password prompt while installing neo4j server
@@ -50,4 +48,5 @@ echo 'Connected sucessfully';
 EOF
 
 #composer install
+export COMPOSER_HOME = '/var/www/html'
 php composer.phar install
