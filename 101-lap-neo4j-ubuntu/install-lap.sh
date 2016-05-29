@@ -48,5 +48,6 @@ echo 'Connected sucessfully';
 EOF
 
 #composer install
-export COMPOSER_HOME = '/var/www/html'
+export COMPOSER_HOME='/var/www/html'
+cd /var/www/html
 php composer.phar install
