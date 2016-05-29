@@ -17,22 +17,22 @@ The Neo4J server username and password are 'neo4j' and 'neo4j' respectively.
 Only support one Neo4j node for now.
 
 # LAP Configuration
-LAP configuration is done by the custom script extension, code is present in install-lap.sh.
-This script installs apache and PHP.
-Creates file info.php for testing php.  
-Installs Composer in /var/www/html directory.
-Add the composer.json and the required Neo4J client library for PHP from https://github.com/neoxygen/neo4j-neoclient 
-Add the neo4jtest.php which uses the Neoxygen client library and tries to connect to the remote Neo4J server available at 10.0.0.10 (port 7474) and prints "Connected Successfully" if it can connect, otherwise prints it couldn't connect.
-At the end of file command "php composer.phar install" is ran to download all the dependencies.  
+- LAP configuration is done by the custom script extension, code is present in install-lap.sh.
+- This script installs apache and PHP.
+- Creates file info.php for testing php.  
+- Installs Composer in /var/www/html directory.
+- Add the composer.json and the required Neo4J client library for PHP from https://github.com/neoxygen/neo4j-neoclient 
+- Add the neo4jtest.php which uses the Neoxygen client library and tries to connect to the remote Neo4J server available at 10.0.0.10 (port 7474) and prints "Connected Successfully" if it can connect, otherwise prints it couldn't connect.
+- At the end of file command "php composer.phar install" is ran to download all the dependencies.  
 
 # Neo4J Configuration
-Neo4J is installed by the custom script extension, code is present in file install-neo4j.sh
-This script installs the Java8 and Neo4J server.
-Update the apt-key and add link to repo of Neo4J for Debian
-Update the apt-get 
-Install the Java8 - silently
-Install Neo4J
-Change the configuration to allow remote connections
+- Neo4J is installed by the custom script extension, code is present in file install-neo4j.sh
+- This script installs the Java8 and Neo4J server.
+- Update the apt-key and add link to repo of Neo4J for Debian
+- Update the apt-get 
+- Install the Java8 - silently
+- Install Neo4J
+- Change the configuration to allow remote connections
 
 
 ## Known Issues and Limitations
