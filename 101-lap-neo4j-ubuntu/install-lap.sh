@@ -51,4 +51,4 @@ EOF
 
 #composer install
 #cd /var/www/html
-#php composer.phar install
+php composer.phar install
