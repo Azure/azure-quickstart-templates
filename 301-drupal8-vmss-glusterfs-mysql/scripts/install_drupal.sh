@@ -132,7 +132,7 @@ while getopts :d:u:p:g:v:s:n:P:k:z:S:h optname; do
 done
 
 # Validate parameters
-if [ "$GLUSTER_FIRST_NODE_NAME" == "" ] || [ "$GLUSTER_VOLUME_NAME" == "" ] || [ "$MYSQL_FQDN" == "" ] || [ "$MYSQL_USER" == "" ] || [ "$MYSQL_PASSWORD" == "" ];
+if [ "$GLUSTER_FIRST_NODE_NAME" == "" ] || [ "$GLUSTER_VOLUME_NAME" == "" ] || [ "$MYSQL_PASSWORD" == "" ];
 then
     log "Script executed without required parameters"
     echo "You must provide all required parameters." >&2
