@@ -10,7 +10,7 @@ apt-get -y install apache2 php5 libapache2-mod-php5
 
 cd /var/www/html
 #install composer
-curl -sS https://getcomposer.org/installer | sudo php -- --install-dir=/usr/local/bin --filename=composer
+#curl -sS https://getcomposer.org/installer | sudo php -- --install-dir=/usr/local/bin --filename=composer
 
 #php test file
 cat > /var/www/html/info.php <<EOF
@@ -48,5 +48,5 @@ echo 'Connected sucessfully';
 EOF
 
 #composer install
-cd /var/www/html
-php composer.phar install
+#cd /var/www/html
+#php composer.phar install
