@@ -64,4 +64,4 @@ echo "everything installed successfully, lets install composer dependecies"
 
 #composer install
 cd /var/www/html
-php /usr/local/bin/composer/composer.phar install
+composer install
