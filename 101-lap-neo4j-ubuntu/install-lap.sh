@@ -11,7 +11,7 @@ apt-get -y install apache2
 cd /var/www/html
 #install composer
 #curl -sS https://getcomposer.org/installer | sudo php -- --install-dir=/usr/local/bin --filename=composer
-curl -sS https://getcomposer.org/installer | sudo php
+curl -sS https://getcomposer.org/installer | sudo php -- --install-dir=/var/www/html
 
 
 apt-get -y install libapache2-mod-php5
