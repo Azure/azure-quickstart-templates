@@ -12,16 +12,17 @@ apt-get -y install php5
 
 apt-get -y install libapache2-mod-php5
 
-cd /var/www/html
 #install composer
 #curl -sS https://getcomposer.org/installer | sudo php -- --install-dir=/usr/local/bin --filename=composer
 #curl -sS https://getcomposer.org/installer | sudo php -- --install-dir=/var/www/html
-echo "starting to install composer"
-php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
-php -r "if (hash_file('SHA384', 'composer-setup.php') === '070854512ef404f16bac87071a6db9fd9721da1684cd4589b1196c3faf71b9a2682e2311b36a5079825e155ac7ce150d') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
-php composer-setup.php
-php -r "unlink('composer-setup.php');"
-echo "Composer is installed"
+#echo "starting to install composer"
+#php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+#php -r "if (hash_file('SHA384', 'composer-setup.php') === '070854512ef404f16bac87071a6db9fd9721da1684cd4589b1196c3faf71b9a2682e2311b36a5079825e155ac7ce150d') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
+#php composer-setup.php
+#php -r "unlink('composer-setup.php');"
+#echo "Composer is installed"
+curl -sS https://getcomposer.org/installer | php
+mv composer.phar /usr/local/bin/composer 
 
 
 #php test file
@@ -63,4 +64,4 @@ echo "everything installed successfully, lets install composer dependecies"
 
 #composer install
 cd /var/www/html
-php composer.phar install
+php /usr/local/bin/composer/composer.phar install
