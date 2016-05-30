@@ -202,7 +202,7 @@ if (!$SSHPassword -and !$SSHPublicKey) {
     Throw "An SSH password or public key must be specified"
 }
 if (!$ResourceGroup) {
-    Throw -Message "Invalid resource group name"
+    Throw "Invalid resource group name"
 }
 if (!$Location) {
     Throw "Invalid Location"
@@ -218,13 +218,13 @@ for (; $StorageAccount.Length -lt 24; $x++) {
 }
 
 if ($SicKey.Length -lt 8) {
-    Throw -Message "SIC key should be at least 8 characters"
+    Throw "SIC key should be at least 8 characters"
 }
 if (!$ClusterName) {
-    Throw -Message "Invalid cluster name"
+    Throw "Invalid cluster name"
 }
 if (!@("sg-byol", "sg-ngtp").Contains($SKU))  {
-    Throw -Message "Invalid SKU"
+    Throw "Invalid SKU"
 }
 
 #############################################################################
