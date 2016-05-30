@@ -31,7 +31,7 @@
 # Log method to control/redirect log output
 log()
 {    
-    echo $1
+    echo $1 >> ~\initial_provision.log
 }
 
 log "Begin execution of couchbase script extension on ${HOSTNAME}"
