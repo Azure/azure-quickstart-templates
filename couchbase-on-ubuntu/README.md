@@ -20,13 +20,12 @@ Template allows configurable number of Couchbase Server 4.1 cluster nodes and no
 - Large Cluster = 5 Nodes of Standard_D14
 
 The cluster nodes are internal and only accessible on the internal virtual network. The cluster can be accessed through a jumpbox. ARM Template provides two Jumpbox Options: 
-- Ubuntu Linux VM accessible through SSH (port 22) or,
-- Windows Server VM through RDP, 
-Jumpbox comes with a public IP that allows access from the outside world. The assumption for the deployment is, the cluster is going to be provisioned as the back end of a service, and never be exposed to internet directly. 
+- Ubuntu Linux VM accessible through SSH: Simply ssh into port 22 of any one fo the nodes 10.0.0.X and run /opt/couchbase/bin/couchbase-cli server-list -c nodePrivateIP -u $AdminUsername -p $AdminPassword to see cluster node status)
+- Windows Server VM through RDP: Simply visit 10.0.0.X:8091 private IPs of nodes to see Couchbase Server web console.
 
-The index and data service grabs 50% of the recomended RAM. However if you can adjust the RAM allocation in favor of Data service or Index service. You can find more detailed sizing guidelines in the Couchbase Server documentation [here](http://developer.couchbase.com/documentation/server/4.1/install/sizing-general.html). 
+Jumpbox comes with a public IP that allows access from the outside world. The assumption for the deployment is, the cluster is going to be provisioned as the back end of a service, and never be exposed to internet directly. If you have chosen not to have a jumpbox, you may need to get to the web console through the public internet. This isn't the best practice but for simple tests, simply poke a hole with a direct PublicIP to get to port 8091 on any one of the Couchbase Server nodes for the web console to get started. 
 
-The cluster is deployed to one single availability set to ensure the distribution of VMs across different update domains (UD) and fault domains (FD). Although Couchbase Server replicates your data across multiple nodes, the placement of the replicas is important to align across FDs. It is important to make sure the primary data partition and the replicas are not under the same FD; otherwise, in the case of a failure, it could result in possible data unavailability. So, even though it is possible to specify (thus indirectly influence the distribution of VMs across UD and FD) the number of FDs and UDs with "PlatformFaultDomainCount" and "PlatformUpdateDomainCount" properties of the availability set, we have chosen not to specify those and let that to the discretion of the administrator.
+The index and data service grabs 50% of the recommended RAM. However if you can adjust the RAM allocation in favor of Data service or Index service. You can find more detailed sizing guidelines in the Couchbase Server documentation [here](http://developer.couchbase.com/documentation/server/4.1/install/sizing-general.html). 
 
 ##Known Issues and Limitations
 - The deployment scripts are not currently idempotent and this template should only be used for provisioning a new cluster at the moment.
