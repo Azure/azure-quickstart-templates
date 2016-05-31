@@ -178,7 +178,6 @@ if [ "$IS_LAST_NODE" -eq 1 ]; then
 
 	for (( i = 0; i < ${#MEMBER_IP_ADDRESSES[@]}; i++ )); do
 		log "Adding node ${MEMBER_IP_ADDRESSES[$i]} to cluster"
-		log "/opt/couchbase/bin/couchbase-cli server-add -c $MY_IP:8091 -u ${ADMINISTRATOR} -p ${PASSWORD} --server-add=${MEMBER_IP_ADDRESSES[$i]} --services=data,index,query"
 		/opt/couchbase/bin/couchbase-cli server-add -c "$MY_IP":8091 -u "${ADMINISTRATOR}" -p "${PASSWORD}" --server-add="${MEMBER_IP_ADDRESSES[$i]}" --services="data,index,query" --server-add-username="${ADMINISTRATOR}" --server-add-password="${PASSWORD}"
 		log "Done adding node"
 	done
@@ -186,4 +185,4 @@ if [ "$IS_LAST_NODE" -eq 1 ]; then
 	log "Reblancing the cluster"
 	/opt/couchbase/bin/couchbase-cli rebalance -c "$MY_IP":8091 -u "${ADMINISTRATOR}" -p "${PASSWORD}"
 fi
-log "Install couchbase complete!"
+log "Install & Setup for couchbase complete!"
