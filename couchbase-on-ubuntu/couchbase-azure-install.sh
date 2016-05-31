@@ -177,6 +177,9 @@ if [ "$IS_LAST_NODE" -eq 1 ]; then
 	/opt/couchbase/bin/couchbase-cli setting-autofailover  -c "$MY_IP":8091  -u "${ADMINISTRATOR}" -p "${PASSWORD}" --enable-auto-failover=1 --auto-failover-timeout=30
 
 	for (( i = 0; i < ${#MEMBER_IP_ADDRESSES[@]}; i++ )); do
+		log "Initializing the node of the cluster on ${MEMBER_IP_ADDRESSES[$i]}."
+		/opt/couchbase/bin/couchbase-cli node-init -c "${MEMBER_IP_ADDRESSES[$i]}":8091 --node-init-data-path="${COUCHBASE_DATA}" -u "${ADMINISTRATOR}" -p "${PASSWORD}"
+		
 		log "Adding node ${MEMBER_IP_ADDRESSES[$i]} to cluster"
 		/opt/couchbase/bin/couchbase-cli server-add -c "$MY_IP":8091 -u "${ADMINISTRATOR}" -p "${PASSWORD}" --server-add="${MEMBER_IP_ADDRESSES[$i]}" --services="data,index,query" --server-add-username="${ADMINISTRATOR}" --server-add-password="${PASSWORD}"
 		log "Done adding node"
