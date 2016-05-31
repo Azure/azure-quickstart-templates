@@ -20,8 +20,8 @@ Template allows configurable number of Couchbase Server 4.1 cluster nodes and no
 - Large Cluster = 5 Nodes of Standard_D14
 
 The cluster nodes are internal and only accessible on the internal virtual network. The cluster can be accessed through a jumpbox. ARM Template provides two Jumpbox Options: 
-- Ubuntu Linux VM accessible through SSH: Simply ssh into port 22 of any one fo the nodes 10.0.0.X and run /opt/couchbase/bin/couchbase-cli server-list -c nodePrivateIP -u $AdminUsername -p $AdminPassword to see cluster node status)
-- Windows Server VM through RDP: Simply visit 10.0.0.X:8091 private IPs of nodes to see Couchbase Server web console.
+- Ubuntu Linux VM accessible through SSH: Simply ssh into port 22 of any one fo the nodes 10.0.0.X and run "/opt/couchbase/bin/couchbase-cli server-list -c nodePrivateIP -u $AdminUsername -p $AdminPassword" to see cluster node status.
+- Windows Server VM through RDP: Simply visit http://10.0.0.X:8091 private IPs of nodes to see Couchbase Server web console.
 
 Jumpbox comes with a public IP that allows access from the outside world. The assumption for the deployment is, the cluster is going to be provisioned as the back end of a service, and never be exposed to internet directly. If you have chosen not to have a jumpbox, you may need to get to the web console through the public internet. This isn't the best practice but for simple tests, simply poke a hole with a direct PublicIP to get to port 8091 on any one of the Couchbase Server nodes for the web console to get started. 
 
