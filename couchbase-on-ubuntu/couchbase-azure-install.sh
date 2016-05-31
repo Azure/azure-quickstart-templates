@@ -31,7 +31,7 @@
 # Log method to control/redirect log output
 log()
 {    
-    echo $1 >> ~\initial_provision.log
+    echo $1 >> initial_provision.log
 }
 
 log "Begin execution of couchbase script extension on ${HOSTNAME}"
@@ -178,7 +178,9 @@ if [ "$IS_LAST_NODE" -eq 1 ]; then
 
 	for (( i = 0; i < ${#MEMBER_IP_ADDRESSES[@]}; i++ )); do
 		log "Adding node ${MEMBER_IP_ADDRESSES[$i]} to cluster"
+		log "/opt/couchbase/bin/couchbase-cli server-add -c $MY_IP:8091 -u ${ADMINISTRATOR} -p ${PASSWORD} --server-add=${MEMBER_IP_ADDRESSES[$i]} --services=data,index,query"
 		/opt/couchbase/bin/couchbase-cli server-add -c "$MY_IP":8091 -u "${ADMINISTRATOR}" -p "${PASSWORD}" --server-add="${MEMBER_IP_ADDRESSES[$i]}" --services="data,index,query" 
+		log "Done adding node"
 	done
 
 	log "Reblancing the cluster"
