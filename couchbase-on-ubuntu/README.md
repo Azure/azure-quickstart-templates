@@ -40,7 +40,7 @@ You can get started with a sample app or run a SQL Query on a sample database wi
 - Full Getting Started Guide with SDKs: Skip Step1 here in the [Getting Started](http://www.couchbase.com/get-started-developing-nosql) guide since you will have Couchbase Server already deployed.
 
 ##Known Issues and Limitations
-- The deployment scripts are not currently idempotent and this template should only be used for provisioning a new cluster at the moment.
+- The deployment scripts are not idempotent and this template should only be used for provisioning a new cluster at the moment.
 - http://10.0.0.10:8091 needs to be added to IE "Trusted Sites" list to open the admin tool on the Windows VM deployed in test configuration - You can turn off EI Enhanced Security through the "Server Manager" Tool.
 - For best availability and smart replica placement in production systems, Couchbase Server also needs to use Server Groups to align with UPs and FDs (upgrade and fault domain).
 
