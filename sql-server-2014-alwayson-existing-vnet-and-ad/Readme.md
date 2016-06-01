@@ -15,12 +15,12 @@ This template creates the following resources:
 
 +	3 Azure storage accounts
 +	1 internal load balancer for the SQL Server replicas
-..+    A SQL Server Always On listener is created using this internal load balancer
+++    A SQL Server Always On listener is created using this internal load balancer
 +	3 virtual machines in a Windows Server Cluster
-..+    2 SQL Server 2014 Enterprise edition replicas with an availability group
-..+    1 virtual machine is a File Share Witness for the Cluster
+++    2 SQL Server 2014 Enterprise edition replicas with an availability group
+++    1 virtual machine is a File Share Witness for the Cluster
 +	1 Availability Set for these 3 virtual machines
-..+    configured with three Update Domains and three Fault Domains
+++    configured with three Update Domains and three Fault Domains
 
 For nested templates and DSC resources specific to SQL Server AlwaysOn, this template references these resources from this <a href="https://github.com/Azure/azure-quickstart-templates/tree/master/sql-server-2014-alwayson-dsc">SQL Server AlwaysOn AG QuickStart</a> template repository.
 
