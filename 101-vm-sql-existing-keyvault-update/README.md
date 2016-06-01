@@ -1,4 +1,4 @@
-# This template setup Azure Key Vault on any existing Azure Virtual machine with SQL Server Standard or Enterprise edition.
+# This template setup Azure Key Vault on any existing Azure Virtual machine with SQL Server Enterprise edition.
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-vm-sql-existing-keyvault-update%2Fazuredeploy.json" target="_blank">
   <img src="http://azuredeploy.net/deploybutton.png"/>
@@ -11,7 +11,7 @@
 
 +	This template will create a SQL Server 2014 IaasExtension Resource to update an existing SQL Server 2014 Virtual Machine
 
-This template setup Azure Key Vault on any existing Azure Virtual machine with SQL Server Standard or Enterprise edition. 
+This template setup Azure Key Vault on any existing Azure Virtual machine with SQL Server Enterprise edition. 
 
 There are multiple SQL Server encryption features, such as transparent data encryption (TDE), column level encryption (CLE), and backup encryption. These forms of encryption require you to manage and store the cryptographic keys you use for encryption. The Azure Key Vault (AKV) service is designed to improve the security and management of these keys in a secure and highly available location. The SQL Server Connector enables SQL Server to use these keys from Azure Key Vault.
 
