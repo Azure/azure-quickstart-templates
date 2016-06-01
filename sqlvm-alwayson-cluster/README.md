@@ -21,16 +21,16 @@ This template will create a SQL Server 2014/2012 Always On Availability Group us
 
 +	A Virtual Network
 +	Four Storage Accounts one is used for AD VMs, one for SQL Server VMs , one for Failover Cluster File Share Witness and one for Deployment diagnostics
-+	one external and one internal load balancers
-+	A NAT Rule to allow RDP to one VM which can be used as a jumpbox, a load balancer rule for ILB for a SQL Listener
-+ 	One public IP addresses for RDP access
++	One internal load balancer
++	A load balancer rule for ILB for a SQL Listener
++ 	Four public IP addresses for Primary Domain Controller, Secondary Domain Controller, Primary SQL Server and Secondary SQL Server
 +	Two VMs as Domain Controllers for a new Forest and Domain
 +	Two VMs in a Windows Server Cluster running SQL Server 2014/2012 with an availability group, an additional VM acts as a File Share Witness for the Cluster
 +	Two Availability Sets one for the AD VMs, one for the SQL and Witness VMs
 
 ## Notes
 
-+ 	File Share Witness and SQL Server VMs are from the same Availability Set and currently there is a constrain for mixing DS-Series machine and GS-Series machine into the same Availability Set. If you decide to have DS-Series SQL Server VMs you must also have a DS-Series File Share Witness; If you decide to have GS-Series SQL Server VMs you must also have a GS-Series File Share Witness.
++ 	File Share Witness and SQL Server VMs are from the same Availability Set and currently there is a constrain for mixing DS-Series machine, DS_v2-Series machine and GS-Series machine into the same Availability Set. If you decide to have DS-Series SQL Server VMs you must also have a DS-Series File Share Witness; If you decide to have GS-Series SQL Server VMs you must also have a GS-Series File Share Witness; If you decide to have DS_v2-Series SQL Server VMs you must also have a DS_v2-Series File Share Witness.
 
 +	The default settings for SQL Server storage are to deploy using **premium storage**, the AD witness uses a P10 Disk and the SQL VMs use P30 disks, these sizes can be changed by changing the relevant variables. In addition there is a P10 Disk used for each VMs OS Disk.
 
@@ -46,3 +46,25 @@ This template will create a SQL Server 2014/2012 Always On Availability Group us
 ## Deployment steps
 
 You can click the "deploy to Azure" button at the beginning of this document.
+
+|Name|Description|Example|
+|:---|:---------------------|:---------------|
+|adminUsername|The name of the Administrator of the new VMs and Domain|autohaadmin|
+|adminPassword|The name of the Administrator of the new VMs and Domain|Password123|
+|adVMSize|The size of the AD VMs |Standard_D1|
+|sqlVMSize|The size of the SQL VMs |Standard_DS4|
+|witnessVMSize|The size of the Witness VM |Standard_DS1|
+|domainName|The FQDN of the AD Domain|contoso.local|
+|sqlServerServiceAccountUserName|The SQL Server Service Account name|sqlservice|
+|sqlServerServiceAccountPassword|The SQL Server Service Account password|Password123|
+|sqlStorageAccountName|The name of Sql Server Storage Account|autohastorageaccountsql|
+|sqlStorageAccountType|he type of the Sql Server Storage Account created|Premium_LRS|
+|dcStorageAccountName|The name of  DC Storage Account|autohastorageaccountdc|
+|dcStorageAccountType|The type of the DC Storage Account created|Standard_LRS|
+|sqlAutopatchingDayOfWeek|Patches installed day. Sunday to Saturday for a specific day; Everyday for daily Patches or Never to disable Auto Patching|Monday|
+|sqlAutopatchingStartHour|Begin updates hour|22|
+|sqlAutopatchingWindowDuration|Patches must be installed within this duration minutes.|60|
+|workloadType|The Sql VM work load type: GENERAL - general work load; DW - datawear house work load; OLTP - Transactional processing work load|GENERAL|
+|numberOfSqlVMDisks|The Sql VM Disk Size : 1TB,2TB,3TB and 4TB|2|
+|sqlServerVersion|The Sql Server Version|SQL2016-WS2012R2|
+
