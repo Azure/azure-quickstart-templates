@@ -20,3 +20,5 @@ $sw | Format-List -Property *
 #4. Get the RDP file
 Get-AzureRmRemoteDesktopFile -ResourceGroupName $RGName -Name $VMName -Launch -Verbose -Debug
 
+
+
