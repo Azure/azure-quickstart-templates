@@ -3,7 +3,7 @@ $RGName = "RG-VS-Dev";
 $VMName = "jdvs2015vm";
 $VMUsername = "jmd";
 $DeployLocation = "West Europe"
-$ChocoPackages = "'linqpad;sysinternals;agentransack;beyondcompare;fiddler4;visualstudiocode;imageresizerapp;gimp'";
+$ChocoPackages = "linqpad;sysinternals;agentransack;beyondcompare;fiddler4;visualstudiocode;imageresizerapp;gimp";
 $ARMTemplate = "C:\@SourceControl\GitHub\ARMChocolatey\AzureDeploy.json"
 
 # 1. Login
@@ -14,9 +14,11 @@ New-AzureRmResourceGroup -Name $RGName -Location $DeployLocation -Force
 
 #3. Create resources within RG
 $sw = [system.diagnostics.stopwatch]::startNew()
-New-AzureRmResourceGroupDeployment -ResourceGroupName $RGName -TemplateFile $ARMTemplate -vmName $VMName -vmAdminUserName $VMUsername -dnsLabelPrefix $VMName -vmVisualStudioVersion VS-2015-Ent-AzureSDK-2.8-WS2012R2 -chocoPackages $ChocoPackages -Mode Complete -Force 
+New-AzureRmResourceGroupDeployment -ResourceGroupName $RGName -TemplateFile $ARMTemplate -deployLocation $DeployLocation -vmName $VMName -vmAdminUserName $VMUsername -vmIPPublicDnsName $VMName -chocoPackages $ChocoPackages -Mode Complete -Force 
 $sw | Format-List -Property *
 
 #4. Get the RDP file
 Get-AzureRmRemoteDesktopFile -ResourceGroupName $RGName -Name $VMName -Launch -Verbose -Debug
+
+
 
