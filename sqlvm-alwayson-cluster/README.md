@@ -15,19 +15,19 @@ This template creates the following resources:
 
 +   1 Virtual Network
 +   4 Azure storage accounts
-..+    1 for domain controller virtual machines
-..+    1 for SQL Server virtual machines
-..+    1 for Failover Cluster File Share Witness
-..+    1 for deployment diagnostics
+++    1 for domain controller virtual machines
+++    1 for SQL Server virtual machines
+++    1 for Failover Cluster File Share Witness
+++    1 for deployment diagnostics
 +   1 internal load balancer
 +   1 external load balancer
 +   3 virtual machines in a Windows Server Cluster
-..+    2 SQL Server 2014 Enterprise edition replicas with an availability group
-..+    1 virtual machine is a File Share Witness for the Cluster
+++    2 SQL Server 2014 Enterprise edition replicas with an availability group
+++    1 virtual machine is a File Share Witness for the Cluster
 +   2 domain controller virtual machines replicas for a new Forest and Domain
 +   2 Availability Sets
-..+     1 for domain controller virtual machines
-..+     1 for SQL Server and Witness virtual machines
+++     1 for domain controller virtual machines
+++     1 for SQL Server and Witness virtual machines
 +   1 public IP addresses for RDP access
 
 `Tags: SQL Server, AlwaysOn, High Availability, Cluster `
