@@ -7,9 +7,8 @@ fi
 
 set -e
 
-stemcell_url=`grep azure-hyperv-ubuntu-trusty-go_agent bosh.yml | awk '{print $2}'`
-bosh upload stemcell $stemcell_url
-bosh upload release https://bosh.io/d/github.com/cloudfoundry/cf-release?v=231
+bosh upload stemcell REPLACE_WITH_STEMCELL_URL --skip-if-exists
+bosh upload release REPLACE_WITH_CF_RELEASE_URL --skip-if-exists
 
 manifest=$1
 bosh deployment $manifest
