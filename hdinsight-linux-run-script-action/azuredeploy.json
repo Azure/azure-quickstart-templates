@@ -2,24 +2,6 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "location": {
-            "type": "string",
-            "allowedValues": [
-                "Central US",
-                "East Asia",
-                "East US",
-                "Japan East",
-                "Japan West",
-                "North Europe",
-                "South Central US",
-                "Southeast Asia",
-                "West Europe",
-                "West US"
-            ],
-            "metadata": {
-                "description": "The location where all azure resources will be deployed."
-            }
-        },
         "clusterVNetAddressSpace": {
             "type": "string",
             "defaultValue": "10.0.0.0/16",
@@ -111,152 +93,152 @@
         "hbaseZookeeperSize": "Medium"
     },
     "resources": [
-        {
-            "name": "[variables('clusterVNetName')]",
-            "type": "Microsoft.Network/virtualNetworks",
-            "location": "[parameters('location')]",
-            "apiVersion": "[variables('defaultApiVersion')]",
-            "dependsOn": [ ],
-            "tags": { },
-            "properties": {
-                "addressSpace": {
-                    "addressPrefixes": [
-                        "[parameters('clusterVNetAddressSpace')]"
-                    ]
-                },
-                "subnets": [
-                    {
-                        "name": "[parameters('clusterVNetSubnetName')]",
-                        "properties": {
-                            "addressPrefix": "[parameters('clusterVNetSubnetAddressRange')]"
-                        }
-                    }
-                ]
+      {
+        "name": "[variables('clusterVNetName')]",
+        "type": "Microsoft.Network/virtualNetworks",
+        "location": "[resourceGroup().location]",
+        "apiVersion": "[variables('defaultApiVersion')]",
+        "dependsOn": [ ],
+        "tags": { },
+        "properties": {
+          "addressSpace": {
+            "addressPrefixes": [
+              "[parameters('clusterVNetAddressSpace')]"
+            ]
+          },
+          "subnets": [
+            {
+              "name": "[parameters('clusterVNetSubnetName')]",
+              "properties": {
+                "addressPrefix": "[parameters('clusterVNetSubnetAddressRange')]"
+              }
             }
-        },
-        {
-            "name": "[parameters('clusterStorageAccountName')]",
-            "type": "Microsoft.Storage/storageAccounts",
-            "location": "[parameters('location')]",
-            "apiVersion": "[variables('defaultApiVersion')]",
-            "dependsOn": [ ],
-            "tags": { },
-            "properties": {
-                "accountType": "Standard_LRS"
-            }
-        },
-        {
-            "name": "[parameters('clusterName')]",
-            "type": "Microsoft.HDInsight/clusters",
-            "location": "[parameters('location')]",
-            "apiVersion": "[variables('clusterApiVersion')]",
-            "dependsOn": [
-                "[concat('Microsoft.Storage/storageAccounts/',parameters('clusterStorageAccountName'))]",
-                "[concat('Microsoft.Network/virtualNetworks/',variables('clusterVNetName'))]"
-            ],
-            "tags": { },
-            "properties": {
-                "clusterVersion": "3.2",
-                "osType": "Linux",
-                "clusterDefinition": {
-                    "kind": "[parameters('clusterType')]",
-
-                    "configurations": {
-                        "gateway": {
-                            "restAuthCredential.isEnabled": true,
-                            "restAuthCredential.username": "[parameters('clusterLoginUserName')]",
-                            "restAuthCredential.password": "[parameters('clusterLoginPassword')]"
-                        }
-                    }
-                },
-                "storageProfile": {
-                    "storageaccounts": [
-                        {
-                            "name": "[concat(parameters('clusterStorageAccountName'),'.blob.core.windows.net')]",
-                            "isDefault": true,
-                            "container": "[parameters('clusterName')]",
-                            "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('clusterStorageAccountName')), variables('defaultApiVersion')).key1]"
-                        }
-                    ]
-                },
-                "computeProfile": {
-                    "roles": [
-                        {
-                            "name": "headnode",
-                            "targetInstanceCount": "2",
-                            "hardwareProfile": {
-                                "vmSize": "Large"
-                            },
-                            "osProfile": {
-                                "linuxOperatingSystemProfile": {
-                                    "username": "[parameters('sshUserName')]",
-                                    "password": "[parameters('sshPassword')]"
-                                }
-                            },
-                            "virtualNetworkProfile": {
-                                "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName'))]",
-                                "subnet": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName')), '/subnets/', parameters('clusterVNetSubnetName'))]"
-                            },
-                            "scriptActions": [
-                                {
-                                    "name": "setenvironmentvariable",
-                                    "uri": "[parameters('scriptActionUri')]",
-                                    "parameters": "headnode"
-                                }
-                            ]
-                        },
-                        {
-                            "name": "workernode",
-                            "targetInstanceCount": "[parameters('clusterWorkerNodeCount')]",
-                            "hardwareProfile": {
-                                "vmSize": "Large"
-                            },
-                            "osProfile": {
-                                "linuxOperatingSystemProfile": {
-                                    "username": "[parameters('sshUserName')]",
-                                    "password": "[parameters('sshPassword')]"
-                                }
-                            },
-                            "virtualNetworkProfile": {
-                                "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName'))]",
-                                "subnet": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName')), '/subnets/', parameters('clusterVNetSubnetName'))]"
-                            },
-                            "scriptActions": [
-                                {
-                                    "name": "setenvironmentvariable",
-                                    "uri": "[parameters('scriptActionUri')]",
-                                    "parameters": "workernode"
-                                }
-                            ]
-                        },
-                        {
-                            "name": "zookeepernode",
-                            "targetInstanceCount": "3",
-                            "hardwareProfile": {
-                                "vmSize": "[variables(concat(parameters('clusterType'),'ZookeeperSize'))]"
-                            },
-                            "osProfile": {
-                                "linuxOperatingSystemProfile": {
-                                    "username": "[parameters('sshUserName')]",
-                                    "password": "[parameters('sshPassword')]"
-                                }
-                            },
-                            "virtualNetworkProfile": {
-                                "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName'))]",
-                                "subnet": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName')), '/subnets/', parameters('clusterVNetSubnetName'))]"
-                            },
-                            "scriptActions": [
-                                {
-                                    "name": "setenvironmentvariable",
-                                    "uri": "[parameters('scriptActionUri')]",
-                                    "parameters": "zookeepernode"
-                                }
-                            ]
-                        }
-                    ]
-                }
-            }
+          ]
         }
+      },
+      {
+        "name": "[parameters('clusterStorageAccountName')]",
+        "type": "Microsoft.Storage/storageAccounts",
+        "location": "[resourceGroup().location]",
+        "apiVersion": "[variables('defaultApiVersion')]",
+        "dependsOn": [ ],
+        "tags": { },
+        "properties": {
+          "accountType": "Standard_LRS"
+        }
+      },
+      {
+        "name": "[parameters('clusterName')]",
+        "type": "Microsoft.HDInsight/clusters",
+        "location": "[resourceGroup().location]",
+        "apiVersion": "[variables('clusterApiVersion')]",
+        "dependsOn": [
+          "[concat('Microsoft.Storage/storageAccounts/',parameters('clusterStorageAccountName'))]",
+          "[concat('Microsoft.Network/virtualNetworks/',variables('clusterVNetName'))]"
+        ],
+        "tags": { },
+        "properties": {
+          "clusterVersion": "3.2",
+          "osType": "Linux",
+          "clusterDefinition": {
+            "kind": "[parameters('clusterType')]",
+
+            "configurations": {
+              "gateway": {
+                "restAuthCredential.isEnabled": true,
+                "restAuthCredential.username": "[parameters('clusterLoginUserName')]",
+                "restAuthCredential.password": "[parameters('clusterLoginPassword')]"
+              }
+            }
+          },
+          "storageProfile": {
+            "storageaccounts": [
+              {
+                "name": "[concat(parameters('clusterStorageAccountName'),'.blob.core.windows.net')]",
+                "isDefault": true,
+                "container": "[parameters('clusterName')]",
+                "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('clusterStorageAccountName')), variables('defaultApiVersion')).key1]"
+              }
+            ]
+          },
+          "computeProfile": {
+            "roles": [
+              {
+                "name": "headnode",
+                "targetInstanceCount": "2",
+                "hardwareProfile": {
+                  "vmSize": "Large"
+                },
+                "osProfile": {
+                  "linuxOperatingSystemProfile": {
+                    "username": "[parameters('sshUserName')]",
+                    "password": "[parameters('sshPassword')]"
+                  }
+                },
+                "virtualNetworkProfile": {
+                  "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName'))]",
+                  "subnet": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName')), '/subnets/', parameters('clusterVNetSubnetName'))]"
+                },
+                "scriptActions": [
+                  {
+                    "name": "setenvironmentvariable",
+                    "uri": "[parameters('scriptActionUri')]",
+                    "parameters": "headnode"
+                  }
+                ]
+              },
+              {
+                "name": "workernode",
+                "targetInstanceCount": "[parameters('clusterWorkerNodeCount')]",
+                "hardwareProfile": {
+                  "vmSize": "Large"
+                },
+                "osProfile": {
+                  "linuxOperatingSystemProfile": {
+                    "username": "[parameters('sshUserName')]",
+                    "password": "[parameters('sshPassword')]"
+                  }
+                },
+                "virtualNetworkProfile": {
+                  "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName'))]",
+                  "subnet": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName')), '/subnets/', parameters('clusterVNetSubnetName'))]"
+                },
+                "scriptActions": [
+                  {
+                    "name": "setenvironmentvariable",
+                    "uri": "[parameters('scriptActionUri')]",
+                    "parameters": "workernode"
+                  }
+                ]
+              },
+              {
+                "name": "zookeepernode",
+                "targetInstanceCount": "3",
+                "hardwareProfile": {
+                  "vmSize": "[variables(concat(parameters('clusterType'),'ZookeeperSize'))]"
+                },
+                "osProfile": {
+                  "linuxOperatingSystemProfile": {
+                    "username": "[parameters('sshUserName')]",
+                    "password": "[parameters('sshPassword')]"
+                  }
+                },
+                "virtualNetworkProfile": {
+                  "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName'))]",
+                  "subnet": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('clusterVNetName')), '/subnets/', parameters('clusterVNetSubnetName'))]"
+                },
+                "scriptActions": [
+                  {
+                    "name": "setenvironmentvariable",
+                    "uri": "[parameters('scriptActionUri')]",
+                    "parameters": "zookeepernode"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
 
     ],
     "outputs": {
