@@ -29,8 +29,6 @@ time sudo apt-get install -y nodejs
 time sudo apt-get install -y build-essential
 time sudo apt-get -y install git
 time sudo apt-get -y install libssl-dev
-time curl -sL https://deb.nodesource.com/setup_4.x | sudo -E bash -
-time sudo apt-get install -y nodejs
 
 ####################
 # Intsall Geth
@@ -60,8 +58,8 @@ time sudo apt-get update
 sudo -u $AZUREUSER wget https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/master/augur-on-ubuntu/genesis.json
 sudo -u $AZUREUSER wget https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/master/augur-on-ubuntu/priv_genesis.key
 sudo -u $AZUREUSER wget https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/master/augur-on-ubuntu/mining_toggle.js
-sudo -u $AZUREUSER wget https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/web/augur-on-ubuntu/geth.conf
-sudo -u $AZUREUSER wget https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/web/augur-on-ubuntu/augur_ui.conf
+sudo -u $AZUREUSER wget https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/master/augur-on-ubuntu/geth.conf
+sudo -u $AZUREUSER wget https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/master/augur-on-ubuntu/augur_ui.conf
 sudo -u $AZUREUSER sed -i "s/auguruser/$AZUREUSER/g" geth.conf
 sudo -u $AZUREUSER sed -i "s/auguruser/$AZUREUSER/g" augur_ui.conf
 
