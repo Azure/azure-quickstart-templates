@@ -66,33 +66,6 @@
       "defaultValue": [ "testdb1", "testdb2" ]
     },
 
-    "location": {
-      "type": "string",
-      "allowedValues": [
-        "West US",
-        "East US",
-        "East US 2",
-        "Central US",
-        "South Central US",
-        "North Central US",
-        "North Europe",
-        "West Europe",
-        "East Asia",
-        "Southeast Asia",
-        "Japan East",
-        "Japan West",
-        "Brazil South",
-        "Australia East",
-        "Australia Southeast",
-        "Central India",
-        "South India",
-        "West India"
-      ],
-      "metadata": {
-        "description": "The region to deploy the resources into"
-      }
-    },
-
     "sqlServerServiceAccountUserName": {
       "type": "string",
       "metadata": {
@@ -166,17 +139,17 @@
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('sqlVMNamePrefix'),'0/sqlAOPrepare')]",
       "apiVersion": "[variables('apiVersionVMExtensions')]",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "dependsOn": [
       ],
       "properties": {
         "publisher": "Microsoft.Powershell",
         "type": "DSC",
-        "typeHandlerVersion": "2.13",
-		    "autoUpgradeMinorVersion": false,
+        "typeHandlerVersion": "2.17",
+        "autoUpgradeMinorVersion": false,
         "settings": {
-          "wmfVersion": "4.0",
-		  "modulesUrl": "[variables('sqlAOPrepareModulesURL')]",
+          "wmfVersion": "5.0",
+          "modulesUrl": "[variables('sqlAOPrepareModulesURL')]",
           "configurationFunction": "[variables('sqlAOPrepareConfigurationFunction')]",
           "properties": {
             "domainName": "[parameters('domainName')]",
@@ -200,55 +173,55 @@
       }
     },
     {
-			"type": "Microsoft.Compute/virtualMachines/extensions",
-			"name": "[concat(parameters('sqlVMNamePrefix'),'1/CreateCluster')]",
-			"apiVersion": "[variables('apiVersionVMExtensions')]",
-			"location": "[parameters('location')]",
-			"dependsOn":[
-				"[concat('Microsoft.Compute/virtualMachines/',parameters('sqlVMNamePrefix'),'0/extensions/sqlAOPrepare')]"
-			],
-			"properties": {
-				"publisher": "Microsoft.Powershell",
-				"type": "DSC",
-				"typeHandlerVersion": "2.13",
-				"autoUpgradeMinorVersion": false,
-				"settings": {
-					"wmfVersion": "4.0",
-					"modulesUrl": "[variables('createClusterModulesURL')]",
-					"configurationFunction": "[variables('createClusterConfigurationFunction')]",
-					"properties": {
-						"domainName": "[parameters('domainName')]",
-						"clusterName":"[variables('clusterName')]",
-						"sharePath":"[concat('\\\\',parameters('sqlwVMName'),'\\',parameters('sharePath'))]",
-						"nodes":["[concat(parameters('sqlVMNamePrefix'),'0')]","[concat(parameters('sqlVMNamePrefix'),'1')]"],
-						"sqlAlwaysOnEndpointName":"[parameters('sqlAlwaysOnEndpointName')]",
-						"sqlAlwaysOnAvailabilityGroupName":"[parameters('sqlAlwaysOnAvailabilityGroupName')]",
-						"sqlAlwaysOnAvailabilityGroupListenerName":"[parameters('sqlAlwaysOnAvailabilityGroupListenerName')]",
-						"sqlAlwaysOnAvailabilityGroupListenerPort":1433,
-						"lbName":"[parameters('sqlLBName')]",
-						"lbAddress":"[parameters('sqlLBIPAddress')]",
-						"primaryReplica":"[concat(parameters('sqlVMNamePrefix'),'1')]",
-						"secondaryReplica":"[concat(parameters('sqlVMNamePrefix'),'0')]",
-						"databaseNames":"[parameters('databaseNames')]",
-						"dnsServerName":"[parameters('dnsServerName')]",
-						"adminCreds":{
-							"userName": "[parameters('adminUserName')]",
-							"password": "PrivateSettingsRef:adminPassword"
-						},
-						"sQLServiceCreds":{
-							"userName": "[parameters('sqlServerServiceAccountUserName')]",
-							"password": "PrivateSettingsRef:sqlServerServiceAccountPassword"
-						}
-					}
-				},
-				"protectedSettings": {
-					"items": {
-						"adminPassword": "[parameters('adminPassword')]",
-						"sqlServerServiceAccountPassword": "[parameters('sqlServerServiceAccountPassword')]"
-					}
-				}
-			}
-		}
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('sqlVMNamePrefix'),'1/CreateCluster')]",
+      "apiVersion": "[variables('apiVersionVMExtensions')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/',parameters('sqlVMNamePrefix'),'0/extensions/sqlAOPrepare')]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Powershell",
+        "type": "DSC",
+        "typeHandlerVersion": "2.17",
+        "autoUpgradeMinorVersion": false,
+        "settings": {
+          "wmfVersion": "5.0",
+          "modulesUrl": "[variables('createClusterModulesURL')]",
+          "configurationFunction": "[variables('createClusterConfigurationFunction')]",
+          "properties": {
+            "domainName": "[parameters('domainName')]",
+            "clusterName": "[variables('clusterName')]",
+            "sharePath": "[concat('\\\\',parameters('sqlwVMName'),'\\',parameters('sharePath'))]",
+            "nodes": [ "[concat(parameters('sqlVMNamePrefix'),'0')]", "[concat(parameters('sqlVMNamePrefix'),'1')]" ],
+            "sqlAlwaysOnEndpointName": "[parameters('sqlAlwaysOnEndpointName')]",
+            "sqlAlwaysOnAvailabilityGroupName": "[parameters('sqlAlwaysOnAvailabilityGroupName')]",
+            "sqlAlwaysOnAvailabilityGroupListenerName": "[parameters('sqlAlwaysOnAvailabilityGroupListenerName')]",
+            "sqlAlwaysOnAvailabilityGroupListenerPort": 1433,
+            "lbName": "[parameters('sqlLBName')]",
+            "lbAddress": "[parameters('sqlLBIPAddress')]",
+            "primaryReplica": "[concat(parameters('sqlVMNamePrefix'),'1')]",
+            "secondaryReplica": "[concat(parameters('sqlVMNamePrefix'),'0')]",
+            "databaseNames": "[parameters('databaseNames')]",
+            "dnsServerName": "[parameters('dnsServerName')]",
+            "adminCreds": {
+              "userName": "[parameters('adminUserName')]",
+              "password": "PrivateSettingsRef:adminPassword"
+            },
+            "sQLServiceCreds": {
+              "userName": "[parameters('sqlServerServiceAccountUserName')]",
+              "password": "PrivateSettingsRef:sqlServerServiceAccountPassword"
+            }
+          }
+        },
+        "protectedSettings": {
+          "items": {
+            "adminPassword": "[parameters('adminPassword')]",
+            "sqlServerServiceAccountPassword": "[parameters('sqlServerServiceAccountPassword')]"
+          }
+        }
+      }
+    }
   ],
     "outputs": {
     }
