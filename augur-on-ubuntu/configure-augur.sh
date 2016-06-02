@@ -62,8 +62,8 @@ sudo -u $AZUREUSER wget https://raw.githubusercontent.com/kevinday/azure-quickst
 sudo -u $AZUREUSER wget https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/master/augur-on-ubuntu/mining_toggle.js
 sudo -u $AZUREUSER wget https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/web/augur-on-ubuntu/geth.conf
 sudo -u $AZUREUSER wget https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/web/augur-on-ubuntu/augur_ui.conf
-sed -i "s/auguruser/$AZUREUSER/g" geth.conf
-sed -i "s/auguruser/$AZUREUSER/g" augur_ui.conf
+sudo -u $AZUREUSER sed -i "s/auguruser/$AZUREUSER/g" geth.conf
+sudo -u $AZUREUSER sed -i "s/auguruser/$AZUREUSER/g" augur_ui.conf
 
 touch /var/log/geth.sys.log
 touch /var/log/augur_ui.sys.log
@@ -84,7 +84,6 @@ start geth
 #Pregen DAG so miniing can start immediately
 sudo -u $AZUREUSER mkdir .ethash
 sudo -i -u $AZUREUSER geth makedag 0 .ethash
-
 
 ####################
 #Install Augur Contracts
