@@ -24,13 +24,9 @@ cd $HOMEDIR
 #####################
 # install tools
 #####################
-time curl -sL https://deb.nodesource.com/setup_4.x | sudo -E bash -
-time sudo apt-get install -y nodejs
-time sudo apt-get install -y build-essential
+time sudo apt-get install -y build-essential automake pkg-config libtool libffi-dev libgmp-dev
 time sudo apt-get -y install git
 time sudo apt-get -y install libssl-dev
-time curl -sL https://deb.nodesource.com/setup_4.x | sudo -E bash -
-time sudo apt-get install -y nodejs
 
 ####################
 # Intsall Geth
@@ -46,7 +42,6 @@ time sudo apt-get install -y ethereum
 ####################
 time sudo apt-get install -y python-dev
 time sudo apt-get install -y python-pip
-time sudo apt-get install -y build-essential automake pkg-config libtool libffi-dev libgmp-dev -y
 time sudo pip install ethereum-serpent
 time sudo pip install ethereum
 time sudo pip install requests --upgrade
@@ -74,7 +69,8 @@ chown $AZUREUSER /var/log/augur_ui.sys.log
 # Setup Geth
 ####################
 sudo -i -u $AZUREUSER geth init genesis.json 
-sudo -u $AZUREUSER echo "password" > pw.txt
+pw=`< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c${1:-16};echo;`
+sudo -u $AZUREUSER echo $pw > pw.txt
 sudo -i -u $AZUREUSER geth --password pw.txt account import priv_genesis.key
 
 #make geth a service, turn on.
@@ -89,7 +85,7 @@ sudo -i -u $AZUREUSER geth makedag 0 .ethash
 #Install Augur Contracts
 ####################
 sudo -i -u $AZUREUSER git clone https://github.com/AugurProject/augur-core.git
-cd  augur-core
+cd  augur-core/load_contracts
 python load_contracts.py
 cd ..
 
@@ -105,12 +101,15 @@ swapon /swapfile
 #Install Augur Front End
 ####################
 sudo -i -u $AZUREUSER git clone https://github.com/AugurProject/augur.git
-sudo -i -u $AZUREUSER  bash -c "cd augur; npm install"
-sudo -i -u $AZUREUSER bash -c "cd augur; npm run build"
+sudo -i -u $AZUREUSER mkdir ui
+sudo -i -u $AZUREUSER cp -r augur/azure/2.0.0 ui/2.0.0
+rm -rf augur
+#TODO: search/replace UI.
 
 #allow nodejs to run on port 80 w/o sudo
 setcap 'cap_net_bind_service=+ep' /usr/bin/nodejs
 
+#TODO: modify to serve static files.
 #Make augur_ui a service, turn on.
 #cp augur_ui.conf /etc/init/
 #start augur_ui 
