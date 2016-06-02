@@ -2,10 +2,10 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "newStorageAccountName": {
+    "uniqueNamePrefix": {
       "type": "string",
       "metadata": {
-        "description": "Unique DNS Name for the Storage Account where the Virtual Machine's disks will be placed."
+        "description": "Unique name that will be used to generate various other names including the name of the Public IP used to access the Virtual Machine."
       }
     },
     "adminUsername": {
@@ -32,19 +32,19 @@
         "description": "Full name of the Moodle site displayed in the UI."
       }
     },
-    "shortNameOfSite":  {
+    "shortNameOfSite": {
       "type": "string",
       "metadata": {
         "description": "Short name of the Moodle site."
       }
     },
-    "moodleAdminUsername":{
+    "moodleAdminUsername": {
       "type": "string",
       "metadata": {
         "description": "User name for the Moodle site administrator."
       }
     },
-    "moodleAdminPassword":  {
+    "moodleAdminPassword": {
       "type": "securestring",
       "metadata": {
         "description": "Password for the Moodle site administrator."
@@ -56,25 +56,19 @@
         "description": "Email for the Moodle site administrator. It should be in the correct email address format such as: abc@xyz.com"
       }
     },
-    "uniqueNamePrefix": {
-      "type": "string",
-      "metadata": {
-        "description": "Unique name that will be used to generate various other names including the name of the Public IP used to access the Virtual Machine."
-      }
-    },
     "webVMCount": {
-        "type": "int",
-        "defaultValue": 2,
-        "allowedValues": [
-          1,
-          2,
-          3,
-          4,
-          5
-        ],
-        "metadata": {
-            "description": "Number of web front end VMs to create."
-        }
+      "type": "int",
+      "defaultValue": 2,
+      "allowedValues": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "metadata": {
+        "description": "Number of web front end VMs to create."
+      }
     },
     "vmSize": {
       "type": "string",
@@ -133,9 +127,30 @@
       "metadata": {
         "description": "The size of the database backend VM."
       }
+    },
+    "moodleVersion": {
+      "type": "string",
+      "defaultValue": "MOODLE_30_STABLE",
+      "allowedValues": [
+        "MOODLE_30_STABLE",
+        "MOODLE_29_STABLE",
+        "MOODLE_28_STABLE",
+        "MOODLE_27_STABLE"
+      ],
+      "metadata": {
+        "description": "The Moodle version you want to install."
+      }
+    },
+    "installOfficePlugins": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Do you want to install the Office 365 plugins for Moodle?"
+      }
     }
   },
   "variables": {
+    "newStorageAccountName": "[concat(uniquestring(resourceGroup().id), 'mdc')]",
     "imagePublisher": "Canonical",
     "imageOffer": "UbuntuServer",
     "ubuntuOSVersion": "14.04.2-LTS",
@@ -154,7 +169,6 @@
     "publicIPAddressType": "Dynamic",
     "vmStorageAccountContainerName": "vhds",
     "vmName": "[concat(parameters('uniqueNamePrefix'),'VM')]",
-    "dataDiskUri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',parameters('uniqueNamePrefix'),'-data.vhd')]",
     "dataDiskSizeGB": "100",
     "virtualNetworkName": "[concat(parameters('uniqueNamePrefix'),'VNet')]",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
@@ -169,17 +183,17 @@
     "SharedAzureFileName": "moodlefileshare",
     "installFrontendScriptName": "install_frontend.sh",
     "installFrontendScriptUri": "[concat('https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/moodle-cluster-ubuntu/', variables('installFrontendScriptName'))]",
-    "installFrontendCommand": "[concat('sh ', variables('installFrontendScriptName'), ' ', parameters('mySqlPassword'), ' ', parameters('newStorageAccountName'), ' ', variables('SharedAzureFileName'))]",
+    "installFrontendCommand": "[concat('sh ', variables('installFrontendScriptName'), ' ', parameters('mySqlPassword'), ' ', variables('newStorageAccountName'), ' ', variables('SharedAzureFileName'), ' ', parameters('fullNameOfSite'), ' ', parameters('shortNameOfSite'), ' ', parameters('moodleAdminUsername'), ' ', parameters('moodleAdminPassword'), ' ', parameters('moodleAdminEmail'), ' ', parameters('moodleVersion'), ' ', parameters('installOfficePlugins'))]",
     "installBackendScriptName": "install_backend.sh",
     "installBackendScriptUri": "[concat('https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/moodle-cluster-ubuntu/', variables('installBackendScriptName'))]",
-    "installBackendCommand": "[concat('sh ', variables('installBackendScriptName'), ' ', parameters('mySqlPassword'), ' ', parameters('newStorageAccountName'), ' ', variables('SharedAzureFileName'))]",
+    "installBackendCommand": "[concat('sh ', variables('installBackendScriptName'), ' ', parameters('mySqlPassword'), ' ', variables('newStorageAccountName'), ' ', variables('SharedAzureFileName'))]",
     "apiVersion": "2015-06-15"
   },
   "resources": [
     {
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[parameters('newStorageAccountName')]",
+      "name": "[variables('newStorageAccountName')]",
       "location": "[resourceGroup().location]",
       "properties": {
         "accountType": "[variables('storageAccountType')]"
@@ -458,7 +472,7 @@
       "name": "[concat(variables('vmName'),copyIndex())]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/',parameters('newStorageAccountName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/',variables('newStorageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/',concat(variables('nicName'),copyIndex()))]",
         "[concat('Microsoft.Compute/availabilitySets/',variables('availabilitySetName'))]",
         "[concat('Microsoft.Compute/virtualMachines/',variables('vmName'),'db','/extensions/newuserscript')]"
@@ -485,7 +499,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),copyIndex(),'.vhd')]"
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName')), variables('apiVersion')).primaryEndpoints.blob, variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),copyIndex(),'.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -522,7 +536,7 @@
           ]
         },
         "protectedSettings": {
-          "commandToExecute": "[concat(variables('installFrontendCommand'), ' ',listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('newStorageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).key1, ' ',reference(variables('publicIPAddressID'),providers('Microsoft.Network','publicIPAddresses').apiVersions[0]).dnsSettings.fqdn, ' ',reference(variables('publicDBIPAddressID'),providers('Microsoft.Network','publicIPAddresses').apiVersions[0]).dnsSettings.fqdn, ' ',parameters('fullNameOfSite'), ' ',parameters('shortNameOfSite'), ' ',parameters('moodleAdminUsername'), ' ',parameters('moodleAdminPassword'), ' ',parameters('moodleAdminEmail'))]"
+          "commandToExecute": "[concat(variables('installFrontendCommand'), ' ', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('newStorageAccountName')), variables('apiVersion')).key1, ' ', reference(variables('publicIPAddressID'),providers('Microsoft.Network','publicIPAddresses').apiVersions[0]).dnsSettings.fqdn, ' ', reference(variables('publicDBIPAddressID'),providers('Microsoft.Network','publicIPAddresses').apiVersions[0]).dnsSettings.fqdn)]"
         }
       },
       "copy": {
@@ -585,7 +599,7 @@
       "name": "[concat(variables('vmName'),'db')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/',parameters('newStorageAccountName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/',variables('newStorageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/',variables('nicName'),'db')]",
         "[concat('Microsoft.Compute/availabilitySets/',variables('availabilitySetName'),'db')]"
       ],
@@ -611,7 +625,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'db.vhd')]"
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName')), variables('apiVersion')).primaryEndpoints.blob, variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'db.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -644,9 +658,10 @@
           ]
         },
         "protectedSettings": {
-          "commandToExecute": "[concat(variables('installBackendCommand'), ' ',listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('newStorageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).key1)]"
+          "commandToExecute": "[concat(variables('installBackendCommand'), ' ', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('newStorageAccountName')), variables('apiVersion')).key1)]"
         }
       }
     }
   ]
 }
+
