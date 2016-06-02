@@ -4,7 +4,7 @@ $VMName = "jdvs2015vm";
 $VMUsername = "jmd";
 $DeployLocation = "West Europe"
 $ChocoPackages = "linqpad;sysinternals;agentransack;beyondcompare;fiddler4;visualstudiocode;imageresizerapp;gimp";
-$ARMTemplate = "C:\@SourceControl\GitHub\ARMChocolatey\AzureDeploy.json"
+$ARMTemplate = "C:\@SourceControl\GitHub\ARMChocolatey\azuredeploy.json"
 
 # 1. Login
 #Login-AzureRmAccount
