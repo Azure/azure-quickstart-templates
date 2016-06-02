@@ -2,25 +2,25 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "VM admin password": {
+    "VMAdminPassword": {
       "defaultValue": "PASSw0rd",
       "type": "securestring",
       "metadata": {
         "description": "The admin password for the Ubuntu machine"
       }
     },
-    "VM admin username": {
+    "VMAdminUsername": {
       "defaultValue": "serveradmin",
       "type": "string",
       "metadata": {
         "description": "The admin username for the Ubuntu machine"
       }      
     },
-    "VM name": {
+    "VMName": {
       "defaultValue": "dnx-on-ubuntu",
       "type": "string",
       "metadata": {
-        "description": "The VM name"
+        "description": "The VMName"
       }      
     }
   },
@@ -29,13 +29,13 @@
     "NSG name": "dnx-on-ubuntu-nsg",
     "PIP name": "dnx-on-ubuntu-pip",
     "VNET name": "dnx-on-ubuntu-vnet",
-    "SA for diagnostics - name": "dnxonubuntudiagstore",
-    "SA for VMs - name": "dnxonubuntustore"
+    "SA for diagnostics - name": "[concat(uniquestring(resourceGroup().id), 'diagsa')]",
+    "SA for VMs - name": "[concat(uniquestring(resourceGroup().id), 'vmsa')]",
   },
   "resources": [
     {
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[parameters('VM name')]",
+      "name": "[parameters('VMName')]",
       "apiVersion": "2015-06-15",
       "location": "westeurope",
       "properties": {
@@ -50,23 +50,23 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[parameters('VM name')]",
+            "name": "[parameters('VMName')]",
             "createOption": "FromImage",
             "vhd": {
-              "uri": "[concat('https', '://', variables('SA for VMs - name'), '.blob.core.windows.net', concat('/vhds/', parameters('VM name'),'201641492245.vhd'))]"
+              "uri": "[concat('https', '://', variables('SA for VMs - name'), '.blob.core.windows.net', concat('/vhds/', parameters('VMName'),'201641492245.vhd'))]"
             },
             "caching": "ReadWrite"
           },
           "dataDisks": []
         },
         "osProfile": {
-          "computerName": "[parameters('VM name')]",
-          "adminUsername": "[parameters('VM admin username')]",
+          "computerName": "[parameters('VMName')]",
+          "adminUsername": "[parameters('VMAdminUsername')]",
           "linuxConfiguration": {
             "disablePasswordAuthentication": false
           },
           "secrets": [],
-          "adminPassword": "[parameters('VM admin password')]"
+          "adminPassword": "[parameters('VMAdminPassword')]"
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -82,12 +82,12 @@
       ],     
       "resources": [
         {
-          "type": "extensions",
-          "name": "[concat(parameters('VM name'),'/installcustomscript')]",
+          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "name": "[concat(parameters('VMName'),'/installcustomscript')]",
           "apiVersion": "2015-06-15",
           "location": "westeurope",
           "dependsOn": [
-            "[concat('Microsoft.Compute/virtualMachines/', parameters('VM name') )]"
+            "[concat('Microsoft.Compute/virtualMachines/', parameters('VMName') )]"
           ],
           "properties": {
             "publisher": "Microsoft.OSTCExtensions",
@@ -97,7 +97,7 @@
               "fileUris": [
                 "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/dnx-on-ubuntu/scripts/post_deployment.sh"
               ],
-              "commandToExecute": "[concat('/bin/bash post_deployment.sh ', parameters('VM admin username'))]"
+              "commandToExecute": "[concat('/bin/bash post_deployment.sh ', parameters('VMAdminUsername'))]"
             }
           }
         }
