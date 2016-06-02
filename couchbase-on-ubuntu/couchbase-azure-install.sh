@@ -31,7 +31,7 @@
 # Log method to control/redirect log output
 log()
 {    
-    echo $1
+    echo $1 >> provision-couchbase.log
 }
 
 log "Begin execution of couchbase script extension on ${HOSTNAME}"
@@ -171,17 +171,21 @@ if [ "$IS_LAST_NODE" -eq 1 ]; then
 
 	log "Initializing the first node of the cluster on ${MY_IP}."
 	/opt/couchbase/bin/couchbase-cli node-init -c "$MY_IP":8091 --node-init-data-path="${COUCHBASE_DATA}" -u "${ADMINISTRATOR}" -p "${PASSWORD}"
-	log "Setting up cluster"
+	log "Setting up cluster with all services - data,index,query on each node"
 	/opt/couchbase/bin/couchbase-cli cluster-init -c "$MY_IP":8091  -u "${ADMINISTRATOR}" -p "${PASSWORD}" --cluster-init-port=8091 --cluster-init-ramsize="${RAM_FOR_COUCHBASE}" --services="data,index,query" --cluster-index-ramsize="${RAM_FOR_COUCHBASE}"
-	log "Setting autofailover"
+	log "Setting autofailover on and timeout to 30 seconds"
 	/opt/couchbase/bin/couchbase-cli setting-autofailover  -c "$MY_IP":8091  -u "${ADMINISTRATOR}" -p "${PASSWORD}" --enable-auto-failover=1 --auto-failover-timeout=30
 
 	for (( i = 0; i < ${#MEMBER_IP_ADDRESSES[@]}; i++ )); do
+		log "Initializing the node of the cluster on ${MEMBER_IP_ADDRESSES[$i]}."
+		/opt/couchbase/bin/couchbase-cli node-init -c "${MEMBER_IP_ADDRESSES[$i]}":8091 --node-init-data-path="${COUCHBASE_DATA}" -u "${ADMINISTRATOR}" -p "${PASSWORD}"
+		
 		log "Adding node ${MEMBER_IP_ADDRESSES[$i]} to cluster"
-		/opt/couchbase/bin/couchbase-cli server-add -c "$MY_IP":8091 -u "${ADMINISTRATOR}" -p "${PASSWORD}" --server-add="${MEMBER_IP_ADDRESSES[$i]}" --services="data,index,query" 
+		/opt/couchbase/bin/couchbase-cli server-add -c "$MY_IP":8091 -u "${ADMINISTRATOR}" -p "${PASSWORD}" --server-add="${MEMBER_IP_ADDRESSES[$i]}" --services="data,index,query" --server-add-username="${ADMINISTRATOR}" --server-add-password="${PASSWORD}"
+		log "Done adding node"
 	done
 
 	log "Reblancing the cluster"
 	/opt/couchbase/bin/couchbase-cli rebalance -c "$MY_IP":8091 -u "${ADMINISTRATOR}" -p "${PASSWORD}"
 fi
-log "Install couchbase complete!"
+log "Install & Setup for couchbase complete!"
