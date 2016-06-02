@@ -59,7 +59,7 @@ done
 chown -R $minecraft_user $minecraft_server_path
 
 # adjust memory usage depending on VM size
-totalMem=$(free -m | awk '/Mem:/ { print $3 }')
+totalMem=$(free -m | awk '/Mem:/ { print $2 }')
 if [ $totalMem -lt 1024 ]; then
     memoryAlloc=512m
 else

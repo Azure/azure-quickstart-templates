@@ -1,13 +1,41 @@
 #!/usr/bin/env bash
 
+echo "Start to update package lists from repositories..."
+n=0
+max=10
+interval=30
+until [ $n -ge $max ]
+do
+  apt-get update && break
+  n=$[$n+1]
+  echo "Failed to update package lists. Sleep $interval seconds and retry #$n ..."
+  sleep $interval
+done
+if [ $n -ge $max ]; then
+  echo "Failed to update package lists with retrying $max times"
+  exit 1
+fi
+
 set -e
 
-username=$5
-home_dir="/home/$username"
+apt-get -y install python-pip jq
+pip install msrest msrestazure azure==2.0.0rc1 azure-storage netaddr
 
-apt-get update >/dev/null 2>&1
-apt-get -y install python-pip >/dev/null 2>&1
-pip install msrest msrestazure azure==2.0.0rc1 azure-storage netaddr >/dev/null 2>&1
+seq_no=$(cat ../../mrseq)
+custom_script_config_file="../../config/${seq_no}.settings"
+settings=$(cat $custom_script_config_file | jq '.runtimeSettings[0].handlerSettings.publicSettings' -r)
+tenant_id=$1
+client_id=$2
+client_secret=$3
+
+function get_setting() {
+  key=$1
+  local value=$(echo $settings | jq ".$key" -r)
+  echo $value
+}
+
+username=$(get_setting ADMIN_USER_NAME)
+home_dir="/home/$username"
 
 # Generate SSH key pair for BOSH
 bosh_key="bosh"
@@ -22,7 +50,7 @@ cf_key="cloudfoundry.key"
 cf_cert="cloudfoundry.cert"
 ./create_cert.sh $cf_key $cf_cert
 
-bosh_director_ip=`python setup_env.py $1 $2 $3 $4`
+bosh_director_ip=$(python setup_env.py ${tenant_id} ${client_id} ${client_secret} ${custom_script_config_file})
 
 # For backward compatibility
 sed -i "s/CLOUD_FOUNDRY_PUBLIC_IP/cf-ip/g" settings
@@ -40,13 +68,16 @@ mkdir -p $example_manifests
 cp single-vm-cf.yml $example_manifests 
 cp multiple-vm-cf.yml $example_manifests
 
+cp cf* $home_dir
+environment=$(get_setting ENVIRONMENT)
+bosh_init_url=$(get_setting BOSH_INIT_URL)
 install_log="$home_dir/install.log"
 chmod +x init.sh
-./init.sh >$install_log 2>&1
+./init.sh $environment $bosh_init_url >$install_log 2>&1
 
 chown -R $username $home_dir
 
-auto_deploy_bosh=$6
+auto_deploy_bosh=$(get_setting AUTO_DEPLOY_BOSH)
 if [ "$auto_deploy_bosh" != "enabled" ]; then
   exit 0
 fi

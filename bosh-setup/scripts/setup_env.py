@@ -16,8 +16,9 @@ from azure.mgmt.network import NetworkManagementClient, NetworkManagementClientC
 def prepare_storage(settings):
     default_storage_account_name = settings["DEFAULT_STORAGE_ACCOUNT_NAME"]
     storage_access_key = settings["STORAGE_ACCESS_KEY"]
+    endpoint_suffix = settings["SERVICE_HOST_BASE"]
 
-    blob_service = AppendBlobService(default_storage_account_name, storage_access_key)
+    blob_service = AppendBlobService(account_name=default_storage_account_name, account_key=storage_access_key, endpoint_suffix=endpoint_suffix)
     blob_service.create_container('bosh')
     blob_service.create_container(
         container_name='stemcell',
@@ -25,64 +26,8 @@ def prepare_storage(settings):
     )
 
     # Prepare the table for storing meta datas of storage account and stemcells
-    table_service = TableService(default_storage_account_name, storage_access_key)
+    table_service = TableService(account_name=default_storage_account_name, account_key=storage_access_key, endpoint_suffix=endpoint_suffix)
     table_service.create_table('stemcells')
-
-def prepare_network_security_group(settings, static_ip, nsg_name, rules):
-    credentials = ServicePrincipalCredentials(
-        client_id = settings["CLIENT_ID"],
-        secret = settings["CLIENT_SECRET"],
-        tenant = settings["TENANT_ID"]
-    )
-    network_client = NetworkManagementClient(
-        NetworkManagementClientConfiguration(
-            credentials,
-            settings["SUBSCRIPTION_ID"]
-        )
-    )
-
-    priority = 200
-    for protocol in rules:
-        for name,port in rules[protocol].items():
-            params = azure.mgmt.network.models.SecurityRule(
-                protocol,
-                '*',
-                static_ip+"/32",
-                'Allow',
-                'Inbound',
-                source_port_range='*',
-                destination_port_range=port,
-                priority=priority,
-                name=name)
-            priority += 1
-            ret=network_client.security_rules.create_or_update(settings["RESOURCE_GROUP_NAME"], nsg_name, name, params)
-            ret.wait()
-
-def prepare_network_security_group_for_bosh(settings, static_ip):
-    tcp_rules = dict()
-    tcp_rules['bosh-ssh'] = 22
-    tcp_rules['bosh-agent'] = 6868
-    tcp_rules['bosh-director'] = 25555
-
-    udp_rules = dict()
-
-    rules = dict()
-    rules['TCP'] = tcp_rules
-    rules['UDP'] = udp_rules
-    prepare_network_security_group(settings, static_ip, settings["NSG_NAME_FOR_BOSH"], rules)
-
-def prepare_network_security_group_for_cloudfoundry(settings, static_ip):
-    tcp_rules = dict()
-    tcp_rules['cf-https'] = 443
-    tcp_rules['cf-log'] = 4443
-
-    udp_rules = dict()
-
-    rules = dict()
-    rules['TCP'] = tcp_rules
-    rules['UDP'] = udp_rules
-
-    prepare_network_security_group(settings, static_ip, settings["NSG_NAME_FOR_CF"], rules)
 
 def render_bosh_manifest(settings):
     with open('bosh.pub', 'r') as tmpfile:
@@ -91,28 +36,55 @@ def render_bosh_manifest(settings):
     ip = netaddr.IPNetwork(settings['SUBNET_ADDRESS_RANGE_FOR_BOSH'])
     gateway_ip = str(ip[1])
     bosh_director_ip = str(ip[4])
-    
+
+    ntp_servers_maps = {
+        "AzureCloud": "0.north-america.pool.ntp.org",
+        "AzureChinaCloud": "1.cn.pool.ntp.org, 1.asia.pool.ntp.org, 0.asia.pool.ntp.org"
+    }
+    environment = settings["ENVIRONMENT"]
+    ntp_servers = ntp_servers_maps[environment]
+
     # Render the manifest for bosh-init
     bosh_template = 'bosh.yml'
     if os.path.exists(bosh_template):
         with open(bosh_template, 'r') as tmpfile:
             contents = tmpfile.read()
-        for k in ["SUBNET_ADDRESS_RANGE_FOR_BOSH", "VNET_NAME", "SUBNET_NAME_FOR_BOSH", "SUBSCRIPTION_ID", "DEFAULT_STORAGE_ACCOUNT_NAME", "RESOURCE_GROUP_NAME", "KEEP_UNREACHABLE_VMS", "TENANT_ID", "CLIENT_ID", "CLIENT_SECRET", "BOSH_PUBLIC_IP"]:
+        keys = [
+            "SUBNET_ADDRESS_RANGE_FOR_BOSH",
+            "VNET_NAME",
+            "SUBNET_NAME_FOR_BOSH",
+            "SUBSCRIPTION_ID",
+            "DEFAULT_STORAGE_ACCOUNT_NAME",
+            "RESOURCE_GROUP_NAME",
+            "KEEP_UNREACHABLE_VMS",
+            "TENANT_ID",
+            "CLIENT_ID",
+            "CLIENT_SECRET",
+            "BOSH_PUBLIC_IP",
+            "NSG_NAME_FOR_BOSH",
+            "BOSH_RELEASE_URL",
+            "BOSH_RELEASE_SHA1",
+            "BOSH_AZURE_CPI_RELEASE_URL",
+            "BOSH_AZURE_CPI_RELEASE_SHA1",
+            "STEMCELL_URL",
+            "STEMCELL_SHA1",
+            "ENVIRONMENT"
+        ]
+        for k in keys:
             v = settings[k]
-            contents = re.compile(re.escape("REPLACE_WITH_{0}".format(k))).sub(v, contents)
+            contents = re.compile(re.escape("REPLACE_WITH_{0}".format(k))).sub(str(v), contents)
         contents = re.compile(re.escape("REPLACE_WITH_SSH_PUBLIC_KEY")).sub(ssh_public_key, contents)
         contents = re.compile(re.escape("REPLACE_WITH_GATEWAY_IP")).sub(gateway_ip, contents)
         contents = re.compile(re.escape("REPLACE_WITH_BOSH_DIRECTOR_IP")).sub(bosh_director_ip, contents)
+        contents = re.compile(re.escape("REPLACE_WITH_NTP_SERVERS")).sub(ntp_servers, contents)
         with open(bosh_template, 'w') as tmpfile:
             tmpfile.write(contents)
-
-    prepare_network_security_group_for_bosh(settings, bosh_director_ip)
 
     return bosh_director_ip
 
 def get_cloud_foundry_configuration(scenario, settings):
     config = {}
-    for key in ["SUBNET_ADDRESS_RANGE_FOR_CLOUD_FOUNDRY", "VNET_NAME", "SUBNET_NAME_FOR_CLOUD_FOUNDRY", "CLOUD_FOUNDRY_PUBLIC_IP"]:
+    for key in ["SUBNET_ADDRESS_RANGE_FOR_CLOUD_FOUNDRY", "VNET_NAME", "SUBNET_NAME_FOR_CLOUD_FOUNDRY", "CLOUD_FOUNDRY_PUBLIC_IP", "NSG_NAME_FOR_CLOUD_FOUNDRY"]:
         config[key] = settings[key]
 
     with open('cloudfoundry.cert', 'r') as tmpfile:
@@ -158,20 +130,28 @@ def render_cloud_foundry_manifest(settings):
                 contents = re.compile(re.escape("REPLACE_WITH_{0}".format(key))).sub(value, contents)
             with open(cloudfoundry_template, 'w') as tmpfile:
                 tmpfile.write(contents)
-            if scenario == "single-vm-cf":
-                prepare_network_security_group_for_cloudfoundry(settings, config["STATIC_IP"])
-            elif scenario == "multiple-vm-cf":
-                prepare_network_security_group_for_cloudfoundry(settings, config["HAPROXY_IP"])
 
+def render_cloud_foundry_deployment_cmd(settings):
+    cloudfoundry_deployment_cmd = "deploy_cloudfoundry.sh"
+    if os.path.exists(cloudfoundry_deployment_cmd):
+        with open(cloudfoundry_deployment_cmd, 'r') as tmpfile:
+            contents = tmpfile.read()
+        keys = ["CF_RELEASE_URL", "STEMCELL_URL"]
+        for key in keys:
+            value = settings[key]
+            contents = re.compile(re.escape("REPLACE_WITH_{0}".format(key))).sub(value, contents)
+        with open(cloudfoundry_deployment_cmd, 'w') as tmpfile:
+            tmpfile.write(contents)
 
 def get_settings():
     settings = dict()
-    for item in sys.argv[1].split(';'):
-        key, value = item.split(':')
-        settings[key] = value
-    settings['TENANT_ID'] = sys.argv[2]
-    settings['CLIENT_ID'] = sys.argv[3]
-    settings['CLIENT_SECRET'] = sys.argv[4]
+    config_file = sys.argv[4]
+    with open(config_file) as f:
+        settings = json.load(f)["runtimeSettings"][0]["handlerSettings"]["publicSettings"]
+    settings['TENANT_ID'] = sys.argv[1]
+    settings['CLIENT_ID'] = sys.argv[2]
+    settings['CLIENT_SECRET'] = sys.argv[3]
+
     return settings
 
 def main():
@@ -185,6 +165,7 @@ def main():
     print bosh_director_ip
 
     render_cloud_foundry_manifest(settings)
+    render_cloud_foundry_deployment_cmd(settings)
 
 if __name__ == "__main__":
     main()
