@@ -2,76 +2,40 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "virtualMachines_dnx_on_ubuntu_adminPassword": {
+    "VM admin password": {
       "defaultValue": "PASSw0rd",
       "type": "securestring",
       "metadata": {
         "description": "The admin password for the Ubuntu machine"
       }
     },
-    "virtualMachines_dnx_on_ubuntu_adminusername": {
+    "VM admin username": {
       "defaultValue": "serveradmin",
       "type": "string",
       "metadata": {
         "description": "The admin username for the Ubuntu machine"
       }      
     },
-    "virtualMachines_dnx_on_ubuntu_name": {
+    "VM name": {
       "defaultValue": "dnx-on-ubuntu",
       "type": "string",
       "metadata": {
         "description": "The VM name"
       }      
-    },
-    "networkInterfaces_dnx_on_ubuntu620_name": {
-      "defaultValue": "dnx-on-ubuntu620",
-      "type": "string",
-      "metadata": {
-        "description": "The NIC name"
-      }      
-    },
-    "networkSecurityGroups_dnx_on_ubuntu_name": {
-      "defaultValue": "dnx-on-ubuntu",
-      "type": "string",
-      "metadata": {
-        "description": "The NSG name"
-      }
-    },
-    "publicIPAddresses_dnx_on_ubuntu_name": {
-      "defaultValue": "dnx-on-ubuntu",
-      "type": "string",
-      "metadata": {
-        "description": "The PIP name"
-      }      
-    },
-    "virtualNetworks_dnx_on_ubuntu_name": {
-      "defaultValue": "dnx-on-ubuntu",
-      "type": "string",
-      "metadata": {
-        "description": "The VNET name"
-      }      
-    },
-    "storageAccounts_dnxonubuntudiagstore_name": {
-      "defaultValue": "dnxonubuntudiagstore",
-      "type": "string",
-      "metadata": {
-        "description": "The storage account name for diagnostic data"
-      }      
-    },
-    "storageAccounts_dnxonubuntustore_name": {
-      "defaultValue": "dnxonubuntustore",
-      "type": "string",
-      "metadata": {
-        "description": "The storage account name for the VM data"
-      }      
     }
   },
-  "variables": {},
+  "variables": {
+    "NIC name": "dnx-on-ubuntu-nic",
+    "NSG name": "dnx-on-ubuntu-nsg",
+    "PIP name": "dnx-on-ubuntu-pip",
+    "VNET name": "dnx-on-ubuntu-vnet",
+    "SA for diagnostics - name": "dnxonubuntudiagstore",
+    "SA for VMs - name": "dnxonubuntustore",
+  },
   "resources": [
     {
-      "comments": "Generalized from resource: '/subscriptions/92a240c5-5327-46c5-b231-6014fce10423/resourceGroups/dnx-on-ubuntu/providers/Microsoft.Compute/virtualMachines/dnx-on-ubuntu'.",
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[parameters('virtualMachines_dnx_on_ubuntu_name')]",
+      "name": "[parameters('VM name')]",
       "apiVersion": "2015-06-15",
       "location": "westeurope",
       "properties": {
@@ -86,44 +50,44 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[parameters('virtualMachines_dnx_on_ubuntu_name')]",
+            "name": "[parameters('VM name')]",
             "createOption": "FromImage",
             "vhd": {
-              "uri": "[concat('https', '://', parameters('storageAccounts_dnxonubuntustore_name'), '.blob.core.windows.net', concat('/vhds/', parameters('virtualMachines_dnx_on_ubuntu_name'),'201641492245.vhd'))]"
+              "uri": "[concat('https', '://', variables('SA for VMs - name'), '.blob.core.windows.net', concat('/vhds/', parameters('VM name'),'201641492245.vhd'))]"
             },
             "caching": "ReadWrite"
           },
           "dataDisks": []
         },
         "osProfile": {
-          "computerName": "[parameters('virtualMachines_dnx_on_ubuntu_name')]",
-          "adminUsername": "[parameters('virtualMachines_dnx_on_ubuntu_adminusername')]",
+          "computerName": "[parameters('VM name')]",
+          "adminUsername": "[parameters('VM admin username')]",
           "linuxConfiguration": {
             "disablePasswordAuthentication": false
           },
           "secrets": [],
-          "adminPassword": "[parameters('virtualMachines_dnx_on_ubuntu_adminPassword')]"
+          "adminPassword": "[parameters('VM admin password')]"
         },
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaces_dnx_on_ubuntu620_name'))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('NIC name'))]"
             }
           ]
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_dnxonubuntustore_name'))]",
-        "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaces_dnx_on_ubuntu620_name'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('SA for VMs - name'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('NIC name'))]"
       ],     
       "resources": [
         {
           "type": "Microsoft.Compute/virtualMachines/extensions",
-          "name": "[concat(parameters('virtualMachines_dnx_on_ubuntu_name'),'/installcustomscript')]",
+          "name": "[concat(parameters('VM name'),'/installcustomscript')]",
           "apiVersion": "2016-03-30",
           "location": "westeurope",
           "dependsOn": [
-            "[concat('Microsoft.Compute/virtualMachines/', parameters('virtualMachines_dnx_on_ubuntu_name') )]"
+            "[concat('Microsoft.Compute/virtualMachines/', parameters('VM name') )]"
           ],
           "properties": {
             "publisher": "Microsoft.OSTCExtensions",
@@ -131,18 +95,17 @@
             "typeHandlerVersion": "1.4",
             "settings": {
               "fileUris": [
-                "https://raw.githubusercontent.com/jochenvw/azure-quickstart-templates/master/dnx-on-ubuntu/post_deployment.sh"
+                "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/dnx-on-ubuntu/scripts/post_deployment.sh"
               ],
-              "commandToExecute": "[concat('/bin/bash post_deployment.sh ', parameters('virtualMachines_dnx_on_ubuntu_adminusername'))]"
+              "commandToExecute": "[concat('/bin/bash post_deployment.sh ', parameters('VM admin username'))]"
             }
           }
         }
       ]
     },
     {
-      "comments": "Generalized from resource: '/subscriptions/92a240c5-5327-46c5-b231-6014fce10423/resourceGroups/dnx-on-ubuntu/providers/Microsoft.Network/networkInterfaces/dnx-on-ubuntu620'.",
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[parameters('networkInterfaces_dnx_on_ubuntu620_name')]",
+      "name": "[variables('NIC name')]",
       "apiVersion": "2015-06-15",
       "location": "westeurope",
       "properties": {
@@ -153,10 +116,10 @@
               "privateIPAddress": "10.2.0.4",
               "privateIPAllocationMethod": "Dynamic",
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddresses_dnx_on_ubuntu_name'))]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('PIP name'))]"
               },
               "subnet": {
-                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_dnx_on_ubuntu_name')), '/subnets/default')]"
+                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('VNET name')), '/subnets/default')]"
               }
             }
           }
@@ -166,19 +129,18 @@
         },
         "enableIPForwarding": false,
         "networkSecurityGroup": {
-          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_dnx_on_ubuntu_name'))]"
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('NSG name'))]"
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddresses_dnx_on_ubuntu_name'))]",
-        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_dnx_on_ubuntu_name'))]",
-        "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroups_dnx_on_ubuntu_name'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('PIP name'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('VNET name'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('NSG name'))]"
       ]
     },
     {
-      "comments": "Generalized from resource: '/subscriptions/92a240c5-5327-46c5-b231-6014fce10423/resourceGroups/dnx-on-ubuntu/providers/Microsoft.Network/networkSecurityGroups/dnx-on-ubuntu'.",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "name": "[parameters('networkSecurityGroups_dnx_on_ubuntu_name')]",
+      "name": "[variables('NSG name')]",
       "apiVersion": "2015-06-15",
       "location": "westeurope",
       "properties": {
@@ -201,9 +163,8 @@
       "dependsOn": []
     },
     {
-      "comments": "Generalized from resource: '/subscriptions/92a240c5-5327-46c5-b231-6014fce10423/resourceGroups/dnx-on-ubuntu/providers/Microsoft.Network/publicIPAddresses/dnx-on-ubuntu'.",
       "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[parameters('publicIPAddresses_dnx_on_ubuntu_name')]",
+      "name": "[variables('PIP name')]",
       "apiVersion": "2015-06-15",
       "location": "westeurope",
       "properties": {
@@ -213,9 +174,8 @@
       "dependsOn": []
     },
     {
-      "comments": "Generalized from resource: '/subscriptions/92a240c5-5327-46c5-b231-6014fce10423/resourceGroups/dnx-on-ubuntu/providers/Microsoft.Network/virtualNetworks/dnx-on-ubuntu'.",
       "type": "Microsoft.Network/virtualNetworks",
-      "name": "[parameters('virtualNetworks_dnx_on_ubuntu_name')]",
+      "name": "[variables('VNET name')]",
       "apiVersion": "2015-06-15",
       "location": "westeurope",
       "properties": {
@@ -236,9 +196,8 @@
       "dependsOn": []
     },
     {
-      "comments": "Generalized from resource: '/subscriptions/92a240c5-5327-46c5-b231-6014fce10423/resourceGroups/dnx-on-ubuntu/providers/Microsoft.Storage/storageAccounts/dnxonubuntudiagstore'.",
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[parameters('storageAccounts_dnxonubuntudiagstore_name')]",
+      "name": "[variables('SA for diagnostics - name')]",
       "apiVersion": "2015-06-15",
       "location": "westeurope",
       "tags": {},
@@ -248,9 +207,8 @@
       "dependsOn": []
     },
     {
-      "comments": "Generalized from resource: '/subscriptions/92a240c5-5327-46c5-b231-6014fce10423/resourceGroups/dnx-on-ubuntu/providers/Microsoft.Storage/storageAccounts/dnxonubuntustore'.",
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[parameters('storageAccounts_dnxonubuntustore_name')]",
+      "name": "[variables('SA for VMs - name')]",
       "apiVersion": "2015-06-15",
       "location": "westeurope",
       "tags": {},
