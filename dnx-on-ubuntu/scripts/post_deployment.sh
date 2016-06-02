@@ -12,7 +12,7 @@ apt-get install -y unzip curl
 apt-get install -y libunwind8 gettext libssl-dev libcurl4-openssl-dev zlib1g libicu-dev uuid-dev
 
 
-wget https://raw.githubusercontent.com/jochenvw/azure-quickstart-templates/master/dnx-on-ubuntu/install-dnx.sh -P /home/${admin_username}
+wget https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/dnx-on-ubuntu/scripts/install-dnx.sh -P /home/${admin_username}
 sudo -u ${admin_username} /bin/bash /home/${admin_username}/install-dnx.sh ${admin_username}
 
 # Nano syntax highlighting for C#
