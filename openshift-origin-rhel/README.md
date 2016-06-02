@@ -52,7 +52,7 @@ You'll need to generate a pair of SSH keys in order to provision this template. 
      Get-AzureRmADUser -UserPrincipalName user@azuread.com [where user@azuread.com is your Azure AD email address] </br>
 	
 	Alternatively, the CLI command is: </br>
-		azure ad user show upn --user@azuread.com [where user@azuread.com is your Azure AD email address]
+		azure ad user show --upn user@azuread.com [where user@azuread.com is your Azure AD email address]
 
 ## Deploy Template
 
