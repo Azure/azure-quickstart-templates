@@ -8,5 +8,5 @@
 </a>
 
 <p>This template will use existing backup vault and policy, and enables protection of registered IaasVM containers.</p>
-<p>To create backup vault and backup policy use existing template: https://github.com/Azure/azure-quickstart-templates/tree/master/101-create-backup-vault-policy </p>
+<p>To create backup vault and backup policy use existing template: https://github.com/Azure/azure-quickstart-templates/tree/master/101-backup-vault-create </p>
 <p>Know more about IaasVM Backup: https://azure.microsoft.com/en-us/blog/azure-backup-announcing-support-for-backup-of-azure-iaas-vms/</p>

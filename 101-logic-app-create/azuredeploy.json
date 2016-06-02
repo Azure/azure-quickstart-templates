@@ -8,13 +8,7 @@
         "description": "The name of the logic app to create."
       }
     },
-    "svcPlanName": {
-      "type": "string",
-      "metadata": {
-        "description": "The name of the App Service plan to create for hosting the logic app."
-      }
-    },
-    "sku": {
+    "flowSkuName": {
       "type": "string",
       "defaultValue": "Standard",
       "allowedValues": [
@@ -27,16 +21,39 @@
         "description": "The pricing tier for the logic app."
       }
     },
-    "svcPlanSize": {
-      "defaultValue": "0",
+    "hostingPlanName": {
       "type": "string",
+      "metadata": {
+        "description": "The name of the App Service plan to create for hosting the logic app."
+      }
+    },
+    "hostingSkuName": {
+      "type": "string",
+      "defaultValue": "S1",
       "allowedValues": [
-        "0",
-        "1",
-        "2"
+        "F1",
+        "D1",
+        "B1",
+        "B2",
+        "B3",
+        "S1",
+        "S2",
+        "S3",
+        "P1",
+        "P2",
+        "P3",
+        "P4"
       ],
       "metadata": {
-        "description": "The instance size of the app."
+        "description": "Describes plan's pricing tier and instance size."
+      }
+    },
+    "hostingSkuCapacity": {
+      "type": "int",
+      "defaultValue": 1,
+      "minValue": 1,
+      "metadata": {
+        "description": "Describes plan's instance count"
       }
     },
     "testUri": {
@@ -50,23 +67,24 @@
   "variables": {},
   "resources": [
     {
-      "apiVersion": "2014-06-01",
-      "name": "[parameters('svcPlanName')]",
+      "apiVersion": "2015-08-01",
+      "name": "[parameters('hostingPlanName')]",
       "type": "Microsoft.Web/serverfarms",
       "location": "[resourceGroup().location]",
       "tags": {
-        "displayName": "AppServicePlan"
+        "displayName": "HostingPlan"
+      },
+      "sku": {
+        "name": "[parameters('hostingSkuName')]",
+        "capacity": "[parameters('hostingSkuCapacity')]"
       },
       "properties": {
-        "name": "[parameters('svcPlanName')]",
-        "sku": "[parameters('sku')]",
-        "workerSize": "[parameters('svcPlanSize')]",
-        "numberOfWorkers": 1
+        "name": "[parameters('hostingPlanName')]"
       }
     },
     {
       "type": "Microsoft.Logic/workflows",
-      "apiVersion": "2015-02-01-preview",
+      "apiVersion": "2015-08-01-preview",
       "name": "[parameters('logicAppName')]",
       "location": "[resourceGroup().location]",
       "tags": {
@@ -74,9 +92,9 @@
       },
       "properties": {
         "sku": {
-          "name": "[parameters('sku')]",
+          "name": "[parameters('flowSkuName')]",
           "plan": {
-            "id": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/',parameters('svcPlanName'))]"
+            "id": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/',parameters('hostingPlanName'))]"
           }
         },
         "definition": {
