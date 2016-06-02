@@ -2,12 +2,6 @@
   "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "storageName": {
-      "type": "string",
-      "metadata": {
-        "description": "Globally unique storage account name"
-      }
-    },
     "storageType": {
       "type": "string",
       "defaultValue": "Premium_LRS",
@@ -17,23 +11,6 @@
       ],
       "metadata": {
         "description": "Which type of storage you want to use"
-      }
-    },
-    "deployLocation": {
-      "type": "string",
-      "allowedValues": [
-        "Central US",
-        "East US 2",
-        "West US",
-        "North Europe",
-        "West Europe",
-        "South East Asia",
-        "Japan East",
-        "Japan West",
-        "Australia East"
-      ],
-      "metadata": {
-        "description": "Which datacenter you would like to deploy to? Only locations where premium storage are supported are listed. See azure.microsoft.com/en-us/regions/#services"
       }
     },
     "vmName": {
@@ -109,6 +86,7 @@
   },
 
   "variables": {
+    "storageAccountName": "[concat(uniquestring(resourceGroup().id),'storage')]",
     "vnet01Prefix": "10.0.0.0/16",
     "vnet01Subnet1Name": "Subnet-1",
     "vnet01Subnet1Prefix": "10.0.0.0/24",
@@ -123,9 +101,9 @@
   },
   "resources": [
     {
-      "name": "[parameters('storageName')]",
+      "name": "[variables('storageAccountName')]",
       "type": "Microsoft.Storage/storageAccounts",
-      "location": "[parameters('deployLocation')]",
+      "location": "[resourceGroup().location]",
       "apiVersion": "2015-05-01-preview",
       "dependsOn": [ ],
       "tags": {
@@ -138,7 +116,7 @@
     {
       "name": "VNet01",
       "type": "Microsoft.Network/virtualNetworks",
-      "location": "[parameters('deployLocation')]",
+      "location": "[resourceGroup().location]",
       "apiVersion": "2015-05-01-preview",
       "dependsOn": [ ],
       "tags": {
@@ -150,18 +128,20 @@
             "[variables('vnet01Prefix')]"
           ]
         },
-        "subnets": [{
-          "name": "[variables('vnet01Subnet1Name')]",
-          "properties": {
-            "addressPrefix": "[variables('vnet01Subnet1Prefix')]"
+        "subnets": [
+          {
+            "name": "[variables('vnet01Subnet1Name')]",
+            "properties": {
+              "addressPrefix": "[variables('vnet01Subnet1Prefix')]"
+            }
           }
-        }]
+        ]
       }
     },
     {
       "name": "[variables('vmNicName')]",
       "type": "Microsoft.Network/networkInterfaces",
-      "location": "[parameters('deployLocation')]",
+      "location": "[resourceGroup().location]",
       "apiVersion": "2015-05-01-preview",
       "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/', 'Vnet01')]",
@@ -190,10 +170,10 @@
     {
       "name": "[parameters('vmName')]",
       "type": "Microsoft.Compute/virtualMachines",
-      "location": "[parameters('deployLocation')]",
+      "location": "[resourceGroup().location]",
       "apiVersion": "2015-05-01-preview",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('storageName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('vmNicName'))]"
       ],
       "tags": {
@@ -218,7 +198,7 @@
           "osDisk": {
             "name": "VMOSDisk",
             "vhd": {
-              "uri": "[concat('http://', parameters('storageName'), '.blob.core.windows.net/', variables('vmStorageAccountContainerName'), '/', variables('vmOSDiskName'), '.vhd')]"
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob, variables('vmStorageAccountContainerName'), '/', variables('vmOSDiskName'), '.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -236,7 +216,7 @@
         {
           "name": "CustomScript",
           "type": "extensions",
-          "location": "[parameters('deployLocation')]",
+          "location": "[resourceGroup().location]",
           "apiVersion": "2015-05-01-preview",
           "dependsOn": [
             "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
@@ -258,7 +238,7 @@
     {
       "name": "[variables('vmIP01Name')]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "location": "[parameters('deployLocation')]",
+      "location": "[resourceGroup().location]",
       "apiVersion": "2015-05-01-preview",
       "dependsOn": [ ],
       "tags": {
