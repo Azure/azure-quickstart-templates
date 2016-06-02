@@ -2,10 +2,17 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+<<<<<<< HEAD
     "newStorageAccountName": {
       "type": "string",
       "metadata": {
         "description": "Unique DNS Name for the Storage Account where the Virtual Machine's disks will be placed."
+=======
+    "uniqueNamePrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Unique name that will be used to generate various other names including the name of the Public IP used to access the Virtual Machine."
+>>>>>>> 4893d08be92ce260160fbd1e27196fb6a6d24851
       }
     },
     "adminUsername": {
@@ -24,12 +31,6 @@
       "type": "securestring",
       "metadata": {
         "description": "Password for the MySQL 'root' admin user."
-      }
-    },
-    "uniqueNamePrefix": {
-      "type": "string",
-      "metadata": {
-        "description": "Unique name that will be used to generate various other names including the name of the Public IP used to access the Virtual Machine."
       }
     },
     "vmSize": {
@@ -60,9 +61,30 @@
       "metadata": {
         "description": "The size of the VM."
       }
+    },
+    "moodleVersion": {
+      "type": "string",
+      "defaultValue": "MOODLE_30_STABLE",
+      "allowedValues": [
+        "MOODLE_30_STABLE",
+        "MOODLE_29_STABLE",
+        "MOODLE_28_STABLE",
+        "MOODLE_27_STABLE"
+      ],
+      "metadata": {
+        "description": "The Moodle version you want to install."
+      }
+    },
+    "installOfficePlugins": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Do you want to install the Office 365 plugins for Moodle?"
+      }
     }
   },
   "variables": {
+    "newStorageAccountName": "[concat(uniquestring(resourceGroup().id), 'mds')]",
     "imagePublisher": "Canonical",
     "imageOffer": "UbuntuServer",
     "ubuntuOSVersion": "14.04.2-LTS",
@@ -81,14 +103,18 @@
     "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
     "installScriptName": "install_lamp_moodle.sh",
     "installScriptUri": "[concat('https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/moodle-singlevm-ubuntu/', variables('installScriptName'))]",
-    "installCommand": "[concat('sh ', variables('installScriptName'), ' ', parameters('mySqlPassword'))]",
+    "installCommand": "[concat('sh ', variables('installScriptName'), ' ', parameters('mySqlPassword'), ' ', parameters('moodleVersion'), ' ', parameters('installOfficePlugins'))]",
     "apiVersion": "2015-06-15"
   },
   "resources": [
     {
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Storage/storageAccounts",
+<<<<<<< HEAD
       "name": "[parameters('newStorageAccountName')]",
+=======
+      "name": "[variables('newStorageAccountName')]",
+>>>>>>> 4893d08be92ce260160fbd1e27196fb6a6d24851
       "location": "[resourceGroup().location]",
       "properties": {
         "accountType": "[variables('storageAccountType')]"
@@ -159,7 +185,7 @@
       "name": "[variables('vmName')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
       ],
       "properties": {
@@ -181,7 +207,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]"
+              "uri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
