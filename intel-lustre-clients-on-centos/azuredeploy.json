@@ -138,12 +138,6 @@
                 "description": "IP address of the Lustre MGS node"
             }
         },
-        "storageAccountPrefix": {
-            "type": "string",
-            "metadata": {
-                "description": "Storage account prefix that will be used to create storage accounts for Lustre nodes"
-            }
-        },
         "storageAccountType": {
             "type": "string",
             "defaultValue": "Standard_LRS",
@@ -176,38 +170,39 @@
             }
         }
     },
-    "variables": {
-        "imagePublisher": "openlogic",
-        "imageOffer": "CentOS",
-        "clientAvailabilitySetSettings": {
-            "name": "[concat(parameters('clientAvailabilitySetName'))]",
-            "faultDomainCount": "3",
-            "updateDomainCount": "5"
-        },
-        "baseUrl": "[concat(parameters('artifactsBaseUrl'),'/')]",
-        "vnetID": "[resourceId(parameters('existingVnetResourceGroupName'), 'Microsoft.Network/virtualNetworks', parameters('existingVnetName'))]",
-        "subnetClientsID": "[concat(variables('vnetID'), '/subnets/', parameters('existingSubnetClientsName'))]",
-        "scriptUrlLustreClient": "[concat(variables('baseUrl'),'lustre_client.sh')]",
-        "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
-        "linuxConfiguration_sshPublicKey": {
-            "disablePasswordAuthentication": "true",
-            "ssh": {
-                "publicKeys": [
-                    {
-                        "path": "[variables('sshKeyPath')]",
-                        "keyData": "[parameters('sshPublicKey')]"
-                    }
-                ]
-            }
-        },
-        "linuxConfiguration_password": { },
-        "linuxConfiguration": "[variables(concat('linuxConfiguration_',parameters('authenticationType')))]"
+  "variables": {
+    "storageAccountName": "[concat(uniquestring(resourceGroup().id),'storage')]",
+    "imagePublisher": "openlogic",
+    "imageOffer": "CentOS",
+    "clientAvailabilitySetSettings": {
+      "name": "[concat(parameters('clientAvailabilitySetName'))]",
+      "faultDomainCount": "3",
+      "updateDomainCount": "5"
     },
+    "baseUrl": "[concat(parameters('artifactsBaseUrl'),'/')]",
+    "vnetID": "[resourceId(parameters('existingVnetResourceGroupName'), 'Microsoft.Network/virtualNetworks', parameters('existingVnetName'))]",
+    "subnetClientsID": "[concat(variables('vnetID'), '/subnets/', parameters('existingSubnetClientsName'))]",
+    "scriptUrlLustreClient": "[concat(variables('baseUrl'),'lustre_client.sh')]",
+    "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
+    "linuxConfiguration_sshPublicKey": {
+      "disablePasswordAuthentication": "true",
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[variables('sshKeyPath')]",
+            "keyData": "[parameters('sshPublicKey')]"
+          }
+        ]
+      }
+    },
+    "linuxConfiguration_password": { },
+    "linuxConfiguration": "[variables(concat('linuxConfiguration_',parameters('authenticationType')))]"
+  },
     "resources": [
       {
         "apiVersion": "2015-05-01-preview",
         "type": "Microsoft.Storage/storageAccounts",
-        "name": "[concat(parameters('storageAccountPrefix'))]",
+        "name": "[variables('storageAccountName')]",
         "location": "[resourceGroup().location]",
         "properties": {
           "accountType": "[parameters('storageAccountType')]"
@@ -290,7 +285,7 @@
         "name": "[concat(parameters('vmNamePrefix'), 'client', copyIndex())]",
         "location": "[resourceGroup().location]",
         "dependsOn": [
-          "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountPrefix'))]",
+          "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
           "[concat('Microsoft.Compute/availabilitySets/', variables('clientAvailabilitySetSettings').name)]",
           "[concat('Microsoft.Network/networkInterfaces/', parameters('vmNamePrefix'), 'client', copyIndex())]"
         ],
@@ -324,7 +319,7 @@
             "osDisk": {
               "name": "osdisk",
               "vhd": {
-                "uri": "[concat('http://', parameters('storageAccountPrefix'), '.blob.core.windows.net/vhds-client/', concat(parameters('vmNamePrefix'),'client',copyIndex()), '-osdisk.vhd')]"
+                "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2015-05-01-preview').primaryEndpoints.blob, 'vhds-client/', concat(parameters('vmNamePrefix'),'client',copyIndex()), '-osdisk.vhd')]"
               },
               "caching": "ReadWrite",
               "createOption": "FromImage"
