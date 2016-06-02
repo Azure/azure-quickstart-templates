@@ -34,13 +34,13 @@
         ],
         "steps": [
             {
-                "name": "infrastructureInfo",
-                "label": "Infrastructure information",
+                "name": "networkSettings",
+                "label": "Network Settings",
                 "subLabel": {
-                    "preValidation": "Provide infrastructure information",
+                    "preValidation": "Required",
                     "postValidation": "Done"
                 },
-                "bladeTitle": "Infrastructure information",
+                "bladeTitle": "Network Settings",
                 "elements": [
                     {
                         "name": "vnetSpec",
@@ -90,13 +90,13 @@
                 ]
             },
             {
-                "name": "splunkSettings",
-                "label": "Splunk settings",
+                "name": "splunkSizing",
+                "label": "Splunk Sizing",
                 "subLabel": {
-                    "preValidation": "Provide Splunk settings",
+                    "preValidation": "Required",
                     "postValidation": "Done"
                 },
-                "bladeTitle": "Splunk settings",
+                "bladeTitle": "Splunk Sizing",
                 "elements": [
                     {
                         "name": "splunkDomainName",
@@ -149,8 +149,7 @@
                         "label": "Cluster Master VM size",
                         "toolTip": "",
                         "recommendedSizes": [
-                            "Standard_D4_v2",
-                            "Standard_D5_v2"
+                            "Standard_D3_v2"
                         ],
                         "constraints": {
                             "required": true,
@@ -240,6 +239,7 @@
                       "defaultValue": 3,
                       "toolTip": "Number of peer nodes in the indexer cluster",
                       "constraints": {
+                        "required": true,
                         "allowedValues": [
                           {
                             "label": "3",
@@ -429,34 +429,110 @@
                         }
                     }
                 ]
+            },
+            {
+                "name": "splunkAccess",
+                "label": "Splunk Access",
+                "subLabel": {
+                    "preValidation": "Required",
+                    "postValidation": "Done"
+                },
+                "bladeTitle": "Splunk Access",
+                "elements": [
+                    {
+                        "name": "splunkDomainName",
+                        "type": "Microsoft.Network.PublicIpAddressCombo",
+                        "label": {
+                            "publicIpAddress": "New public IP name",
+                            "domainNameLabel": "Domain name for Splunk"
+                        },
+                        "toolTip": {
+                            "publicIpAddress": "Only new public IP is currently supported. Name must be unique across a resource group",
+                            "domainNameLabel": "Splunk will be accessible from this domain"
+                        },
+                        "defaultValue": {
+                            "publicIpAddressName": "splunkIP",
+                            "domainNameLabel": "change_me_to_be_unique"
+                        },
+                        "constraints": {
+                            "required": {
+                                "domainNameLabel": true
+                            }
+                        },
+                        "options": {
+                            "hideNone": true,
+                            "hideDomainNameLabel": false
+                        }
+                    },
+                    {
+                        "name": "splunkAdminPassword",
+                        "type": "Microsoft.Common.PasswordBox",
+                        "label": {
+                            "password": "Splunk admin password",
+                            "confirmPassword": "Confirm password"
+                        },
+                        "toolTip": "",
+                        "constraints": {
+                            "required": true,
+                            "regex": "^((?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])|(?=.*[0-9])(?=.*[a-z])(?=.*[!@#$%^&*])|(?=.*[0-9])(?=.*[A-Z])(?=.*[!@#$%^&*])|(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*])).{6,72}$",
+                            "validationMessage": "Password must be at least 6 characters long and have 3 out of the following: one number, one lower case, one upper case, or one special character"
+                        },
+                        "options": {
+                            "hideConfirmation": false
+                        }
+                    },
+                    {
+                        "name": "ipRangeToSSHFrom",
+                        "type": "Microsoft.Common.TextBox",
+                        "label": "IP range to SSH from",
+                        "defaultValue": "0.0.0.0/0",
+                        "toolTip": "CIDR block to restrict SSH access to (Recommended). By default, SSH access is available from anywhere",
+                        "constraints": {
+                            "required": true,
+                            "regex": "^(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\/(\\d|[1-2]\\d|3[0-2])$",
+                            "validationMessage": "IP range must be a valid CIDR range of the form x.x.x.x/x"
+                        }
+                    },
+                    {
+                        "name": "ipRangeToReceiveDataFrom",
+                        "type": "Microsoft.Common.TextBox",
+                        "label": "IP range to receive data from",
+                        "defaultValue": "0.0.0.0/0",
+                        "toolTip": "CIDR block to restrict where data is forwarded from (Recommended). By default, data can be forwarded from anywhere",
+                        "constraints": {
+                            "required": true,
+                            "regex": "^(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\/(\\d|[1-2]\\d|3[0-2])$",
+                            "validationMessage": "IP range must be a valid CIDR range of the form x.x.x.x/x"
+                        }
+                    }
+                ]
             }
         ],
         "outputs": {
             "location": "[location()]",
-            "deploymentType": "[steps('splunkSettings').deploymentType]",
-            "standaloneVmSize": "[steps('splunkSettings').standaloneVmSize]",
-            "clusterMasterVmSize": "[steps('splunkSettings').clusterMasterVmSize]",
-            "clusterSearchheadVmSize": "[steps('splunkSettings').clusterSearchheadVmSize]",
-            "clusterIndexerVmSize": "[steps('splunkSettings').clusterIndexerVmSize]",
-            "clusterIndexerVmCount": "[steps('splunkSettings').clusterIndexerVmCount]",
-            "domainNamePrefix": "[steps('splunkSettings').splunkDomainName.domainNameLabel]",
-            "publicIPName": "[steps('splunkSettings').splunkDomainName.name]",
             "adminUsername": "[basics('vmUsername')]",
             "adminPassword": "[basics('vmPassword')]",
-            "splunkAdminPassword": "[steps('splunkSettings').splunkAdminPassword]",
-            "sshFrom": "[steps('splunkSettings').ipRangeToSSHFrom]",
-            "forwardedDataFrom": "[steps('splunkSettings').ipRangeToReceiveDataFrom]",
-            "vmSize": "[steps('infrastructureInfo').vmSize]",
-            "virtualNetworkName": "[steps('infrastructureInfo').vnetSpec.name]",
-            "virtualNetworkNewOrExisting": "[steps('infrastructureInfo').vnetSpec.newOrExisting]",
-            "virtualNetworkExistingRGName": "[steps('infrastructureInfo').vnetSpec.resourceGroup]",
-            "virtualNetworkAddressPrefix": "[steps('infrastructureInfo').vnetSpec.addressPrefix]",
-            "subnet1Name": "[steps('infrastructureInfo').vnetSpec.subnets.subnet1.name]",
-            "subnet2Name": "[steps('infrastructureInfo').vnetSpec.subnets.subnet2.name]",
-            "subnet1Prefix": "[steps('infrastructureInfo').vnetSpec.subnets.subnet1.addressPrefix]",
-            "subnet2Prefix": "[steps('infrastructureInfo').vnetSpec.subnets.subnet2.addressPrefix]",
-            "subnet1StartAddress": "[steps('infrastructureInfo').vnetSpec.subnets.subnet1.startAddress]",
-            "subnet2StartAddress": "[steps('infrastructureInfo').vnetSpec.subnets.subnet2.startAddress]"
+            "deploymentType": "[steps('splunkSizing').deploymentType]",
+            "standaloneVmSize": "[steps('splunkSizing').standaloneVmSize]",
+            "clusterMasterVmSize": "[steps('splunkSizing').clusterMasterVmSize]",
+            "clusterSearchheadVmSize": "[steps('splunkSizing').clusterSearchheadVmSize]",
+            "clusterIndexerVmSize": "[steps('splunkSizing').clusterIndexerVmSize]",
+            "clusterIndexerVmCount": "[steps('splunkSizing').clusterIndexerVmCount]",
+            "domainNamePrefix": "[steps('splunkAccess').splunkDomainName.domainNameLabel]",
+            "publicIPName": "[steps('splunkAccess').splunkDomainName.name]",
+            "splunkAdminPassword": "[steps('splunkAccess').splunkAdminPassword]",
+            "sshFrom": "[steps('splunkAccess').ipRangeToSSHFrom]",
+            "forwardedDataFrom": "[steps('splunkAccess').ipRangeToReceiveDataFrom]",
+            "virtualNetworkName": "[steps('networkSettings').vnetSpec.name]",
+            "virtualNetworkNewOrExisting": "[steps('networkSettings').vnetSpec.newOrExisting]",
+            "virtualNetworkExistingRGName": "[steps('networkSettings').vnetSpec.resourceGroup]",
+            "virtualNetworkAddressPrefix": "[steps('networkSettings').vnetSpec.addressPrefix]",
+            "subnet1Name": "[steps('networkSettings').vnetSpec.subnets.subnet1.name]",
+            "subnet2Name": "[steps('networkSettings').vnetSpec.subnets.subnet2.name]",
+            "subnet1Prefix": "[steps('networkSettings').vnetSpec.subnets.subnet1.addressPrefix]",
+            "subnet2Prefix": "[steps('networkSettings').vnetSpec.subnets.subnet2.addressPrefix]",
+            "subnet1StartAddress": "[steps('networkSettings').vnetSpec.subnets.subnet1.startAddress]",
+            "subnet2StartAddress": "[steps('networkSettings').vnetSpec.subnets.subnet2.startAddress]"
         }
     }
 }
