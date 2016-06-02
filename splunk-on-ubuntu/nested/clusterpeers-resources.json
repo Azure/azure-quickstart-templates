@@ -36,9 +36,9 @@
   "variables": {
     "templateAPIVersion": "2015-01-01",
     "resourceAPIVersion": "2015-06-15",
-    "splunkServerRole": "splunk_server",
+    "splunkServerRole": "splunk_cluster_peer",
     "securityGroupName": "[concat(parameters('namespace'), '-nsg')]",
-    "splunkTemplateUrl": "[concat(parameters('templateBaseUrl'), 'splunk-8disk-resources.json')]"
+    "splunkTemplateUrl": "[concat(parameters('templateBaseUrl'), 'splunk-8disk-resources-loop.json')]"
   },
   "resources": [
     {
@@ -63,6 +63,20 @@
             }
           },
           {
+            "name": "Allow-Receiver-TCP",
+            "properties": {
+              "description": "Allows receiver TCP traffic on port 9997",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "9997",
+              "sourceAddressPrefix": "[parameters('machineSettings').forwardedDataFrom]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 110,
+              "direction": "Inbound"
+            }
+          },
+          {
             "name": "Allow-HTTP",
             "properties": {
               "description": "Allows HTTP traffic on port 8000",
@@ -72,7 +86,7 @@
               "sourceAddressPrefix": "*",
               "destinationAddressPrefix": "*",
               "access": "Allow",
-              "priority": 110,
+              "priority": 120,
               "direction": "Inbound"
             }
           },
@@ -86,21 +100,35 @@
               "sourceAddressPrefix": "*",
               "destinationAddressPrefix": "*",
               "access": "Allow",
-              "priority": 120,
+              "priority": 130,
               "direction": "Inbound"
             }
           },
           {
-            "name": "Allow-Receiver-TCP",
+            "name": "Allow-HTTP-Event-Collector",
             "properties": {
-              "description": "Allows receiver TCP traffic on port 9997",
+              "description": "Allows HTTP(S) Event Collector traffic on port 8088",
               "protocol": "Tcp",
               "sourcePortRange": "*",
-              "destinationPortRange": "9997",
-              "sourceAddressPrefix": "[parameters('machineSettings').forwardedDataFrom]",
+              "destinationPortRange": "8088",
+              "sourceAddressPrefix": "*",
               "destinationAddressPrefix": "*",
               "access": "Allow",
-              "priority": 130,
+              "priority": 140,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Allow-Replication-TCP",
+            "properties": {
+              "description": "Allows replication TCP traffic on port 9887 from VNET only",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "9887",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 150,
               "direction": "Inbound"
             }
           },
@@ -114,7 +142,7 @@
               "sourceAddressPrefix": "VirtualNetwork",
               "destinationAddressPrefix": "*",
               "access": "Allow",
-              "priority": 140,
+              "priority": 160,
               "direction": "Inbound"
             }
           }
@@ -124,7 +152,7 @@
     {
       "apiVersion": "[variables('templateAPIVersion')]",
       "type": "Microsoft.Resources/deployments",
-      "name": "standalone",
+      "name": "clusterpeers",
       "dependsOn": [
         "[concat('Microsoft.Network/networkSecurityGroups/', variables('securityGroupName'))]"
       ],
