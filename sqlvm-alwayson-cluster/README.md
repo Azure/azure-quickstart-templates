@@ -43,28 +43,4 @@ This template will create a SQL Server 2014/2012 Always On Availability Group us
 
 + 	Once deployed access can be gained by the public IP address of Primary Domain Controller
 
-## Deployment steps
-
-You can click the "deploy to Azure" button at the beginning of this document.
-
-|Name|Description|Example|
-|:---|:---------------------|:---------------|
-|adminUsername|The name of the Administrator of the new VMs and Domain|autohaadmin|
-|adminPassword|The name of the Administrator of the new VMs and Domain|Password123|
-|adVMSize|The size of the AD VMs |Standard_D1|
-|sqlVMSize|The size of the SQL VMs |Standard_DS4|
-|witnessVMSize|The size of the Witness VM |Standard_DS1|
-|domainName|The FQDN of the AD Domain|contoso.local|
-|sqlServerServiceAccountUserName|The SQL Server Service Account name|sqlservice|
-|sqlServerServiceAccountPassword|The SQL Server Service Account password|Password123|
-|sqlStorageAccountName|The name of Sql Server Storage Account|autohastorageaccountsql|
-|sqlStorageAccountType|he type of the Sql Server Storage Account created|Premium_LRS|
-|dcStorageAccountName|The name of  DC Storage Account|autohastorageaccountdc|
-|dcStorageAccountType|The type of the DC Storage Account created|Standard_LRS|
-|sqlAutopatchingDayOfWeek|Patches installed day. Sunday to Saturday for a specific day; Everyday for daily Patches or Never to disable Auto Patching|Monday|
-|sqlAutopatchingStartHour|Begin updates hour|22|
-|sqlAutopatchingWindowDuration|Patches must be installed within this duration minutes.|60|
-|workloadType|The Sql VM work load type: GENERAL - general work load; DW - datawear house work load; OLTP - Transactional processing work load|GENERAL|
-|numberOfSqlVMDisks|The Sql VM Disk Size : 1TB,2TB,3TB and 4TB|2|
-|sqlServerVersion|The Sql Server Version|SQL2016-WS2012R2|
 
