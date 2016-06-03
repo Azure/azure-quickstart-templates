@@ -2,16 +2,10 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "newStorageAccountName": {
-      "type": "string",
-      "metadata":{
-        "description": "Storage account name"
-      }
-    },
     "dnsNameForPublicIP": {
       "type": "string",
       "metadata":{
-        "description": "Public DNS Name for your VIP"
+        "description": "DNS Label for the Public IP. Must be lowercase. It should match with the following regular expression: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$ or it will raise an error."
       }
     },
     "adminUserName": {
@@ -26,33 +20,11 @@
         "description": "Admin Password for the Linux VM"
       }
     },
-    "location": {
-      "type": "string",
-      "defaultValue": "West US",
-      "allowedValues": [
-        "East US",
-        "West US",
-        "West Europe",
-        "East Asia",
-        "Canada Central",
-        "South East Asia"
-      ],
-      "metadata": {
-        "description": "Deployment location"
-      }
-    },
     "vmSize": {
       "type": "string",
       "defaultValue": "Standard_A2",
       "metadata":{
         "description": "Size for the VM"
-      }
-    },
-    "publicIPAddressName": {
-      "type": "string",
-      "defaultValue": "myPublicIP",
-      "metadata":{
-        "description": "Public IP name for the resource inside Azure"
       }
     },
     "vmName": {
@@ -61,41 +33,32 @@
       "metadata":{
         "description": "VM name for the resource inside Azure"
       }
-    },
-    "virtualNetworkName": {
-      "type": "string",
-      "defaultValue": "myVNET",
-      "metadata":{
-        "description": "VNet name for the resource inside Azure"
-      }
-    },
-    "nicName": {
-      "type": "string",
-      "defaultValue": "myNIC",
-      "metadata":{
-        "description": "NIC name for the resource inside Azure"
-      }
     }
   },
   "variables": {
     "addressPrefix": "10.0.0.0/16",
     "subnet1Name": "DefaultSubnet",
     "subnet1Prefix": "10.0.0.0/24",
+    "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'phab')]",
     "vmStorageAccountContainerName": "vhds",
     "publicIPAddressType": "Dynamic",
     "storageAccountType": "Standard_LRS",
+    "publicIPAddressName":"phabricatorvip",
+    "location":"resourceGroup().location",
     "imagePublisher":"Canonical",
     "imageOffer":"UbuntuServer",
     "imageSKU":"16.04.0-LTS",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
+    "virtualNetworkName":"phabricatorvnet",
+    "nicName":"phabricatornic",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
     "subnet1Ref": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]"
   },
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[parameters('newStorageAccountName')]",
-      "apiVersion": "2015-05-01-preview",
-      "location": "[parameters('location')]",
+      "name": "[variables('storageAccountName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[variables('location')]",
       "properties": {
         "accountType": "[variables('storageAccountType')]"
       }
@@ -103,8 +66,8 @@
     {
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[parameters('publicIPAddressName')]",
-      "location": "[parameters('location')]",
+      "name": "[variables('publicIPAddressName')]",
+      "location": "[variables('location')]",
       "properties": {
         "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
         "dnsSettings": {
@@ -115,8 +78,8 @@
     {
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/virtualNetworks",
-      "name": "[parameters('virtualNetworkName')]",
-      "location": "[parameters('location')]",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[variables('location')]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -136,11 +99,11 @@
     {
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[parameters('nicName')]",
-      "location": "[parameters('location')]",
+      "name": "[variables('nicName')]",
+      "location": "[variables('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', parameters('publicIPAddressName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -149,7 +112,7 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('publicIPAddressName'))]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
               },
               "subnet": {
                 "id": "[variables('subnet1Ref')]"
@@ -163,10 +126,10 @@
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('vmName')]",
-      "location": "[parameters('location')]",
+      "location": "[variables('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', parameters('nicName'))]"
+        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -187,7 +150,7 @@
           "osDisk": {
             "name": "osdisk1",
             "vhd": {
-              "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/','osdisk1spec.vhd')]"
+              "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/','osdisk1spec.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -196,7 +159,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',parameters('nicName'))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
             }
           ]
         }
@@ -206,19 +169,20 @@
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('vmName'),'/installphabricator')]",
       "apiVersion": "2015-05-01-preview",
-      "location": "[parameters('location')]",
+      "location": "[variables('location')]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
       ],
       "properties": {
         "publisher": "Microsoft.OSTCExtensions",
         "type": "CustomScriptForLinux",
-        "typeHandlerVersion": "1.2",
+        "typeHandlerVersion": "1.4",
+        "autoupgrademinorversion":"true",
         "settings": {
           "fileUris": [
-            "https://raw.githubusercontent.com/julienstroheker/azure-quickstart-templates/master/phabricator-on-ubuntu/phabricator-install-ubuntu.sh"
+            "https://raw.githubusercontent.com/julienstroheker/azure-quickstart-templates/master/phabricator-on-ubuntu/scripts/phabricator-install-ubuntu.sh"
           ],
-          "commandToExecute": "[concat('sudo sh phabricator-install-ubuntu.sh ', reference(resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddressName'))).dnsSettings.fqdn)]"
+          "commandToExecute": "[concat('sudo sh phabricator-install-ubuntu.sh ', reference(resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))).dnsSettings.fqdn)]"
         }
       }
     }
