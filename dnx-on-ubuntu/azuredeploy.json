@@ -2,42 +2,41 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "VMAdminPassword": {
-      "defaultValue": "PASSw0rd",
+    "vmAdminPassword": {
       "type": "securestring",
       "metadata": {
         "description": "The admin password for the Ubuntu machine"
       }
     },
-    "VMAdminUsername": {
-      "defaultValue": "serveradmin",
+    "vmAdminUsername": {
       "type": "string",
       "metadata": {
         "description": "The admin username for the Ubuntu machine"
       }      
     },
-    "VMName": {
+    "vmName": {
       "defaultValue": "dnx-on-ubuntu",
       "type": "string",
       "metadata": {
-        "description": "The VMName"
+        "description": "The name of the Ubuntu machine"
       }      
     }
   },
   "variables": {
-    "NIC name": "dnx-on-ubuntu-nic",
-    "NSG name": "dnx-on-ubuntu-nsg",
-    "PIP name": "dnx-on-ubuntu-pip",
-    "VNET name": "dnx-on-ubuntu-vnet",
-    "SA for diagnostics - name": "[concat(uniquestring(resourceGroup().id), 'diagsa')]",
-    "SA for VMs - name": "[concat(uniquestring(resourceGroup().id), 'vmsa')]"
+    "prefix": "dnx-on-ubuntu",
+    "nicName": "[concat(variables('prefix'),'-nic')]",
+    "nsgName": "[concat(variables('prefix'),'-nsg')]",
+    "pipName": "[concat(variables('prefix'),'-pip')]",
+    "vnetName": "[concat(variables('prefix'),'-vnet')]",
+    "storageAccountDiagnostics": "[concat(uniquestring(resourceGroup().id), 'diagsa')]",
+    "storageAccountVms": "[concat(uniquestring(resourceGroup().id), 'vmsa')]"
   },
   "resources": [
     {
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[parameters('VMName')]",
+      "name": "[parameters('vmName')]",
       "apiVersion": "2015-06-15",
-      "location": "westeurope",
+      "location": "[resourceGroup().location]",
       "properties": {
         "hardwareProfile": {
           "vmSize": "Standard_DS2"
@@ -50,54 +49,55 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[parameters('VMName')]",
+            "name": "[parameters('vmName')]",
             "createOption": "FromImage",
             "vhd": {
-              "uri": "[concat('https', '://', variables('SA for VMs - name'), '.blob.core.windows.net', concat('/vhds/', parameters('VMName'),'201641492245.vhd'))]"
+              "uri": "[concat('https', '://', variables('storageAccountVms'), '.blob.core.windows.net', concat('/vhds/', parameters('vmName'),'201641492245.vhd'))]"
             },
             "caching": "ReadWrite"
           },
           "dataDisks": []
         },
         "osProfile": {
-          "computerName": "[parameters('VMName')]",
-          "adminUsername": "[parameters('VMAdminUsername')]",
+          "computerName": "[parameters('vmName')]",
+          "adminUsername": "[parameters('vmAdminUsername')]",
           "linuxConfiguration": {
             "disablePasswordAuthentication": false
           },
           "secrets": [],
-          "adminPassword": "[parameters('VMAdminPassword')]"
+          "adminPassword": "[parameters('vmAdminPassword')]"
         },
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('NIC name'))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
             }
           ]
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts', variables('SA for VMs - name'))]",
-        "[resourceId('Microsoft.Network/networkInterfaces', variables('NIC name'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountVms'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
       ],     
       "resources": [
         {
           "type": "Microsoft.Compute/virtualMachines/extensions",
-          "name": "[concat(parameters('VMName'),'/installcustomscript')]",
+          "name": "[concat(parameters('vmName'),'/installcustomscript')]",
           "apiVersion": "2015-06-15",
-          "location": "westeurope",
+          "location": "[resourceGroup().location]",
           "dependsOn": [
-            "[concat('Microsoft.Compute/virtualMachines/', parameters('VMName') )]"
+            "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName') )]"
           ],
           "properties": {
             "publisher": "Microsoft.OSTCExtensions",
             "type": "CustomScriptForLinux",
             "typeHandlerVersion": "1.4",
+            "autoUpgradeMinorVersion": true,
             "settings": {
               "fileUris": [
                 "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/dnx-on-ubuntu/scripts/post_deployment.sh"
               ],
-              "commandToExecute": "[concat('/bin/bash post_deployment.sh ', parameters('VMAdminUsername'))]"
+              "commandToExecute": "[concat('/bin/bash post_deployment.sh ', parameters('vmAdminUsername'))]"
             }
           }
         }
@@ -105,9 +105,9 @@
     },
     {
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[variables('NIC name')]",
+      "name": "[variables('nicName')]",
       "apiVersion": "2015-06-15",
-      "location": "westeurope",
+      "location": "[resourceGroup().location]",
       "properties": {
         "ipConfigurations": [
           {
@@ -116,10 +116,10 @@
               "privateIPAddress": "10.2.0.4",
               "privateIPAllocationMethod": "Dynamic",
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('PIP name'))]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('pipName'))]"
               },
               "subnet": {
-                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('VNET name')), '/subnets/default')]"
+                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('vnetName')), '/subnets/default')]"
               }
             }
           }
@@ -129,20 +129,20 @@
         },
         "enableIPForwarding": false,
         "networkSecurityGroup": {
-          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('NSG name'))]"
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIPAddresses', variables('PIP name'))]",
-        "[resourceId('Microsoft.Network/virtualNetworks', variables('VNET name'))]",
-        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('NSG name'))]"
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('pipName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
       ]
     },
     {
       "type": "Microsoft.Network/networkSecurityGroups",
-      "name": "[variables('NSG name')]",
+      "name": "[variables('nsgName')]",
       "apiVersion": "2015-06-15",
-      "location": "westeurope",
+      "location": "[resourceGroup().location]",
       "properties": {
         "securityRules": [
           {
@@ -164,9 +164,9 @@
     },
     {
       "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[variables('PIP name')]",
+      "name": "[variables('pipName')]",
       "apiVersion": "2015-06-15",
-      "location": "westeurope",
+      "location": "[resourceGroup().location]",
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "idleTimeoutInMinutes": 4
@@ -175,9 +175,9 @@
     },
     {
       "type": "Microsoft.Network/virtualNetworks",
-      "name": "[variables('VNET name')]",
+      "name": "[variables('vnetName')]",
       "apiVersion": "2015-06-15",
-      "location": "westeurope",
+      "location": "[resourceGroup().location]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -197,9 +197,9 @@
     },
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('SA for diagnostics - name')]",
+      "name": "[variables('storageAccountDiagnostics')]",
       "apiVersion": "2015-06-15",
-      "location": "westeurope",
+      "location": "[resourceGroup().location]",
       "tags": {},
       "properties": {
         "accountType": "Standard_LRS"
@@ -208,9 +208,9 @@
     },
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('SA for VMs - name')]",
+      "name": "[variables('storageAccountVms')]",
       "apiVersion": "2015-06-15",
-      "location": "westeurope",
+      "location": "[resourceGroup().location]",
       "tags": {},
       "properties": {
         "accountType": "Premium_LRS"
