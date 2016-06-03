@@ -13,7 +13,7 @@ This template deploys [Phabricator](http://phabricator.org/) on a Ubuntu Virtual
 
 This template also deploys a Storage Account, Virtual Network, Public IP addresses and a Network Interface.
 
-After the deployment, you should be able to access at phabricator through your DNSNAMEFORPUBLICIP parameter:
+After the deployment, you should be able to access at phabricator through your DNSNAMEFORPUBLICIP parameter on the port 80 :
 
 ![phabricator img](./images/phabricatorHowTo.png)
 
