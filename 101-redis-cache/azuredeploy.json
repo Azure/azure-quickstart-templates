@@ -8,12 +8,6 @@
         "description": "The name of the Azure Redis Cache to create."
       }
     },
-    "redisCacheLocation": {
-      "type": "string",
-      "metadata": {
-        "description": "The location of the Redis Cache. For best performance, use the same location as the app to be used with the cache."
-      }
-    },
     "redisCacheSKU": {
       "type": "string",
       "allowedValues": [
@@ -48,13 +42,6 @@
         "description": "The size of the new Azure Redis Cache instance. "
       }
     },
-    "redisCacheVersion": {
-      "type": "string",
-      "defaultValue": "2.8",
-     "metadata": {
-        "description": "The Redis server version of the new cache."
-      }
-    },
     "existingDiagnosticsStorageAccountName": {
       "type": "string",
       "metadata": {
@@ -71,9 +58,9 @@
       "type": "string",
       "defaultValue": "ON",
       "allowedValues": [
-            "ON",
-            "OFF"
-        ],
+        "ON",
+        "OFF"
+      ],
       "metadata": {
         "description": "A value that indicates whether diagnostices is enabled. Use ON or OFF."
       }
@@ -84,31 +71,30 @@
       "apiVersion": "2015-08-01",
       "name": "[parameters('redisCacheName')]",
       "type": "Microsoft.Cache/Redis",
-      "location": "[parameters('redisCacheLocation')]",
+      "location": "[resourceGroup().location]",
       "properties": {
         "enableNonSslPort": "[parameters('enableNonSslPort')]",
-        "redisVersion": "[parameters('redisCacheVersion')]",
         "sku": {
           "capacity": "[parameters('redisCacheCapacity')]",
           "family": "[parameters('redisCacheFamily')]",
           "name": "[parameters('redisCacheSKU')]"
         }
       },
-              "resources": [
-          {
-            "apiVersion": "2014-04-01",
-            "type": "diagnosticSettings",
-            "name": "service", 
-            "location": "[parameters('redisCacheLocation')]",
-            "dependsOn": [
-              "[concat('Microsoft.Cache/Redis/', parameters('redisCacheName'))]"
-            ],
-            "properties": {
-              "status": "[parameters('diagnosticsStatus')]",
-              "storageAccountName": "[parameters('diagnosticsStorageAccountName')]"
-            }
+      "resources": [
+        {
+          "apiVersion": "2015-07-01",
+          "type": "Microsoft.Cache/redis/providers/diagnosticsettings",
+          "name": "[concat(parameters('redisCacheName'), '/Microsoft.Insights/service')]",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[concat('Microsoft.Cache/Redis/', parameters('redisCacheName'))]"
+          ],
+          "properties": {
+            "status": "[parameters('diagnosticsStatus')]",
+            "storageAccountName": "[parameters('existingDiagnosticsStorageAccountName')]"
           }
-        ]
+        }
+      ]
     }
   ]
 }
