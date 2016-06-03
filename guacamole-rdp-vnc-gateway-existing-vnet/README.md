@@ -4,20 +4,6 @@ This template deploys a VM with [Guacamole](http://guac-dev.org), the open sourc
 
 You will need an existing Virtual Network, and you will need the name of the VNet and a subnet in that VNet. This template deploys Guacamole and MariaDB using Docker containers, and it's based on CoreOS (channel "stable").
 
-## Template parameters
-
-| Parameter | Description | Default value |
-| --- | --- | --- |
-| `location` | Azure Region in which to deploy the VM (must be the same region as the VNet) | - |
-| `vmName` | Name for the VM | `GuacamoleVM` |
-| `vmSize` | Size for the VM (see [documentation](https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-linux-sizes/)) | `Standard_A1` |
-| `storageAccountNamePrefix` | Name prefix for the storage account in which the VM disk is stored (maximum 8 characters) | - |
-| `adminUsername` | Username for the VM admin | - |
-| `sshKeyData` | Key for SSH authentication (refer to the *SSH Key* section below) | - |
-| `existingVirtualNetworkName` | Name of the existing Virtual Network in which to deploy the VM | - |
-| `existingVirtualNetworkResourceGroup` | Name of the Resource Group containing the VNet | - |
-| `existingSubnetName` | Name of the subnet in the VNet in which to deploy the VM | - |
-
 ### SSH key
 
 This template requires you to provide a **SSH RSA public key**.
