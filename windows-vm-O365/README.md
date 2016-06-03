@@ -1,4 +1,4 @@
-# ARMChocolatey
+# Office 365 Desktop VM
 
 ARM Template to provision a VM complete with either Office 2013 or Office 2016 pre-installed.  
 
