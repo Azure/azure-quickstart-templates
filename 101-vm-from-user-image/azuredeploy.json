@@ -77,12 +77,10 @@
     }
   },
   "variables": {
-    "location": "[resourceGroup().location]",
     "publicIPAddressName": "userImagePublicIP",
     "vmName": "[parameters('customVmName')]",
     "nicName": "[concat(parameters('customVmName'),'Nic')]",
     "publicIPAddressType": "Dynamic",
-    "osDiskVhdName": "[concat('http://',parameters('userImageStorageAccountName'),'.blob.core.windows.net/vhds/',variables('vmName'),'osDisk.vhd')]",
     "apiVersion": "2015-06-15",
     "templatelink": "[concat('https://raw.githubusercontent.com/azure/azure-quickstart-templates/master/101-vm-from-user-image/',parameters('newOrExisting'),'vnet.json')]"
   },
@@ -111,7 +109,7 @@
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
-      "location": "[variables('location')]",
+      "location": "[resourceGroup().location]",
       "properties": {
         "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
         "dnsSettings": {
@@ -123,7 +121,7 @@
       "apiVersion": "2016-03-30",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
-      "location": "[variables('location')]",
+      "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
         "Microsoft.Resources/deployments/vnet-template"
@@ -149,7 +147,7 @@
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmName')]",
-      "location": "[variables('location')]",
+      "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
       ],
@@ -172,7 +170,7 @@
               "uri": "[parameters('osDiskVhdUri')]"
             },
             "vhd": {
-              "uri": "[variables('osDiskVhdName')]"
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', parameters('userImageStorageAccountName')), variables('apiVersion')).primaryEndpoints.blob, 'vhds/',variables('vmName'),'osDisk.vhd')]"
             }
           }
         },
@@ -185,8 +183,8 @@
         },
         "diagnosticsProfile": {
           "bootDiagnostics": {
-             "enabled": "true",
-             "storageUri": "[concat('http://',parameters('userImageStorageAccountName'),'.blob.core.windows.net')]"
+            "enabled": "true",
+            "storageUri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', parameters('userImageStorageAccountName')), variables('apiVersion')).primaryEndpoints.blob)]"
           }
         }
       }
