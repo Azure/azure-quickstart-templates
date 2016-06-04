@@ -10,42 +10,12 @@
         "artifactsBaseUrl": ""
       }
     },
-    "location": {
-      "type": "string",
-      "allowedValues": [
-        "West US",
-        "East US 2",
-        "East US",
-        "Central US",
-        "South Central US",
-        "North Central US",
-        "West Europe",
-        "North Europe",
-        "East Asia",
-        "Southeast Asia",
-        "Japan West",
-        "Japan East",
-        "Brazil South",
-        "Australia East",
-        "Australia Southeast",
-        "Central India",
-        "West India",
-        "South India",
-        "Canada Central",
-        "Canada East",
-        "UK North",
-        "UK South 2"
-      ],
-      "metadata": {
-        "description": "Location for the Lustre nodes"
-      }
-    },
     "image": {
       "type": "string",
       "defaultValue": "OpenLogic:CentOS-HPC:7.1",
       "allowedValues": [
         "OpenLogic:CentOS-HPC:7.1",
-		"OpenLogic:CentOS-HPC:6.5",
+        "OpenLogic:CentOS-HPC:6.5",
         "OpenLogic:CentOS:6.6",
         "OpenLogic:CentOS:7.0"
       ],
@@ -195,12 +165,6 @@
         "description": "IP address of the Lustre MGS node"
       }
     },
-    "storageAccountPrefix": {
-      "type": "string",
-      "metadata": {
-        "description": "Storage account prefix that will be used to create storage accounts for Lustre nodes"
-      }
-    },
     "storageAccountType": {
       "type": "string",
       "defaultValue": "Standard_LRS",
@@ -234,13 +198,14 @@
     }
   },
   "variables": {
+    "storageAccountName": "[concat(uniquestring(resourceGroup().id),'storage')]",
     "imageReference_OpenLogic:CentOS-HPC:7.1": {
       "publisher": "OpenLogic",
       "offer": "CentOS-HPC",
       "sku": "7.1",
       "version": "latest"
     },
-	"imageReference_OpenLogic:CentOS-HPC:6.5": {
+    "imageReference_OpenLogic:CentOS-HPC:6.5": {
       "publisher": "OpenLogic",
       "offer": "CentOS-HPC",
       "sku": "6.5",
@@ -287,8 +252,8 @@
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[concat(parameters('storageAccountPrefix'))]",
-      "location": "[parameters('location')]",
+      "name": "[variables('storageAccountName')]",
+      "location": "[resourceGroup().location]",
       "properties": {
         "accountType": "[parameters('storageAccountType')]"
       }
@@ -297,7 +262,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('clientAvailabilitySetSettings').name]",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "properties": {
         "platformFaultDomainCount": "[variables('clientAvailabilitySetSettings').faultDomainCount]",
         "platformUpdateDomainCount": "[variables('clientAvailabilitySetSettings').updateDomainCount]"
@@ -307,7 +272,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[concat(parameters('vmNamePrefix'),'client0')]",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "idleTimeoutInMinutes": 4,
@@ -320,7 +285,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(parameters('vmNamePrefix'), 'client0')]",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', parameters('vmNamePrefix'), 'client0')]"
       ],
@@ -345,7 +310,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(parameters('vmNamePrefix'), 'client', copyIndex(1))]",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "copy": {
         "name": "clientNicCopy",
         "count": "[sub(parameters('clientCount'),1)]"
@@ -368,9 +333,9 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(parameters('vmNamePrefix'), 'client', copyIndex())]",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountPrefix'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
         "[concat('Microsoft.Compute/availabilitySets/', variables('clientAvailabilitySetSettings').name)]",
         "[concat('Microsoft.Network/networkInterfaces/', parameters('vmNamePrefix'), 'client', copyIndex())]"
       ],
@@ -399,7 +364,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://', parameters('storageAccountPrefix'), '.blob.core.windows.net/vhds-client/', concat(parameters('vmNamePrefix'),'client',copyIndex()), '-osdisk.vhd')]"
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2015-06-15').primaryEndpoints.blob, 'vhds-client/', concat(parameters('vmNamePrefix'),'client',copyIndex()), '-osdisk.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -418,7 +383,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('vmNamePrefix'), 'client', copyIndex(), '/init')]",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', concat(parameters('vmNamePrefix'),'client',copyIndex()))]"
       ],
