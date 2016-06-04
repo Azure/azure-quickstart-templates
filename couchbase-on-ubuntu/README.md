@@ -30,11 +30,11 @@ The cluster nodes are internal and only accessible on the internal virtual netwo
 
 Jumpbox comes with a public IP that allows access from the outside world. The assumption for the deployment is, the cluster is provisioned as the back end of a service, and never be exposed to internet directly. If you have chosen not to have a jumpbox, you may need to get to the web console through the public internet. This isn't the best practice but for simple tests, simply poke a hole with a direct PublicIP to get to port 8091 on any one of the Couchbase Server nodes for the web console to get started. 
 
-Getting Started with Couchbase Server Samples
----------------------------------------------
+Getting Started with Couchbase Server and Samples
+-------------------------------------------------
 You can get started with a sample app or run a SQL Query on a sample database with Couchbase Server installation. 
 - Running you first SQL Query: Simply enable the travel sample bucket (database) 
-    - Visit 10.0.0.10:8091 or any one of the nodes provisioned.
+    - Visit 10.0.0.10:8091 or any privateIP of the nodes provisioned.
     - Under Web Console, enable the sample bucket (Settings Tab > Sample Buckets) bu checking beer-sample
     - Under the Web Console, go to Query Tab and run "SELECT * FROM `beer-sample` WHERE type="beer" LIMIT 10;". You can find more detailed instructions [here](http://developer.couchbase.com/documentation/server/4.1/getting-started/first-n1ql-query.html#first-n1ql)
 - Full Getting Started Guide with SDKs: Skip Step1 here in the [Getting Started](http://www.couchbase.com/get-started-developing-nosql) guide since you will have Couchbase Server already deployed.
