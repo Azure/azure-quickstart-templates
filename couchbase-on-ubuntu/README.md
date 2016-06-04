@@ -46,6 +46,7 @@ You can get started with a sample app or run a SQL Query on a sample database wi
 
 
 ##References
+- Couchbase Server 4.1 [Getting Started](http://developer.couchbase.com/documentation/server/4.1/getting-started/index.html)
 - Couchbase Server 4.1 [Installation Guide](http://developer.couchbase.com/documentation/server/4.1/install/installation-guide-intro.html). 
 - Couchbase Server 4.1 [Concepts and Architecture](http://developer.couchbase.com/documentation/server/4.1/concepts/concepts-architecture-intro.html)
 - Couchbase Server 4.1 [Administraion Guide](http://developer.couchbase.com/documentation/server/4.1/admin/admin-intro.html)
