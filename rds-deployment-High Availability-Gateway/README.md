@@ -10,7 +10,10 @@ The template will join all new VM’s to the domain.
 •	Post configurations for web/Gateway VM's such as defining the Machine keys for IIS modules.
 
 Prerequisites:
-RDS-deployment-HA is an extension to the Basic-RDS-Deployment and it is mandatory to deploy any one of the template as prerequisite “rds-deployment”, “rds-deployment-custom-image-rdsh”, “rds-deployment-existing-ad”
+RDS-deployment-HA is an extension to the Basic-RDS-Deployment and it is mandatory to deploy any one of the template as prerequisite rds-deployment: https://github.com/Azure/azure-quickstart-templates/tree/master/rds-deployment 
+rds-deployment-custom-image-rdsh: https://github.com/Azure/azure-quickstart-templates/tree/master/rds-deployment-custom-image-rdsh
+�rds-deployment-existing-ad : https://github.com/Azure/azure-quickstart-templates/tree/master/rds-deployment-existing-ad
+
 This template expects the same names of resources from RDS deployment, if resource names are changed in your deployment then please edit the parameters and resources accordingly, example of such resources are below:
 StorageAccountName: Resource must be exact same to existing RDS deployment.
 publicIpRef : Resource must be exact same to existing RDS deployment.
