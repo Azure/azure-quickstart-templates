@@ -54,12 +54,6 @@
         "description": "Location for the Lustre nodes"
       }
     },
-    "storageAccountPrefix": {
-      "type": "string",
-      "metadata": {
-        "description": "Storage account prefix that will be concatenated with the numeric suffix to create storage accounts for Lustre nodes"
-      }
-    },
     "storageAccountCount": {
       "type": "int",
       "defaultValue": 1,
@@ -67,7 +61,7 @@
         "description": "Number of storage accounts that will be created for the Lustre nodes to spread the VHDs evenly"
       }
     },
-    "storageAccountResourceGroup": {
+    "existingStorageAccountResourceGroup": {
       "type": "string",
       "metadata": {
         "description": "Storage account resource group for future cases when existing storage account is used"
@@ -550,12 +544,6 @@
         "description": "IP address of the Lustre MGS node"
       }
     },
-    "clientStorageAccountPrefix": {
-      "type": "string",
-      "metadata": {
-        "description": "Storage account prefix that will be used to create storage accounts for Lustre nodes"
-      }
-    },
     "clientStorageAccountType": {
       "type": "string",
       "defaultValue": "Standard_LRS",
@@ -647,6 +635,8 @@
       "faultDomainCount": "3",
       "updateDomainCount": "5"
     },
+	"storageAccountName": "[concat(uniquestring(resourceGroup().id), 'server')]",
+	"clientStorageAccountName": "[concat(uniquestring(resourceGroup().id), 'client')]",
     "linuxConfiguration_password": {},
     "linuxConfiguration": "[variables(concat('linuxConfiguration_',parameters('authenticationType')))]",
     "vnetID": "[resourceId(parameters('vnetResourceGroup'), 'Microsoft.Network/virtualNetworks', parameters('vnetName'))]",
@@ -680,8 +670,8 @@
     {
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[concat(parameters('storageAccountPrefix'),copyIndex(1))]",
-      "location": "[resourceGroup().location]",
+      "name": "[concat(variables('storageAccountName'),copyIndex(1))]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "storageAccountsCopy",
         "count": "[parameters('storageAccountCount')]"
@@ -702,7 +692,7 @@
         },
         "parameters": {
           "location": {
-            "value": "[resourceGroup().location]"
+            "value": "[parameters('location')]"
           },
           "vnetName": {
             "value": "[parameters('vnetName')]"
@@ -732,7 +722,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('ossAvailabilitySetSettings').name]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "platformFaultDomainCount": "[variables('ossAvailabilitySetSettings').faultDomainCount]",
         "platformUpdateDomainCount": "[variables('ossAvailabilitySetSettings').updateDomainCount]"
@@ -742,7 +732,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[concat(parameters('vmNamePrefix'),'mgs')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "idleTimeoutInMinutes": 4,
@@ -755,7 +745,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(parameters('vmNamePrefix'),'mgs')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Resources/deployments/', 'vnet')]",
         "[concat('Microsoft.Network/publicIPAddresses/', concat(parameters('vmNamePrefix'),'mgs'))]"
@@ -786,7 +776,7 @@
         "product": "lustre-cloud-edition-cv-image",
         "name": "eval-lustre-2-7"
       },
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "storageAccountsCopy",
         "[concat('Microsoft.Network/networkInterfaces/', parameters('vmNamePrefix'), 'mgs')]"
@@ -814,7 +804,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://', parameters('storageAccountPrefix'), variables('mgsStorageAccountNumber'), '.blob.core.windows.net/vhds/', concat(parameters('vmNamePrefix'),'mgs'), '-osdisk.vhd')]"
+              "uri": "[concat('http://', variables('storageAccountName'), variables('mgsStorageAccountNumber'), '.blob.core.windows.net/vhds/', concat(parameters('vmNamePrefix'),'mgs'), '-osdisk.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -825,7 +815,7 @@
               "diskSizeGB": 5,
               "lun": 0,
               "vhd": {
-                "Uri": "[concat('http://', parameters('storageAccountPrefix'), variables('mgsStorageAccountNumber'), '.blob.core.windows.net/vhds/', concat(parameters('vmNamePrefix'),'mgs'), '-datadisk0.vhd')]"
+                "Uri": "[concat('http://', variables('storageAccountName'), variables('mgsStorageAccountNumber'), '.blob.core.windows.net/vhds/', concat(parameters('vmNamePrefix'),'mgs'), '-datadisk0.vhd')]"
               },
               "caching": "None",
               "createOption": "Empty"
@@ -835,7 +825,7 @@
               "diskSizeGB": 16,
               "lun": 1,
               "vhd": {
-                "Uri": "[concat('http://', parameters('storageAccountPrefix'), variables('mgsStorageAccountNumber'), '.blob.core.windows.net/vhds/', concat(parameters('vmNamePrefix'),'mgs'), '-datadisk1.vhd')]"
+                "Uri": "[concat('http://', variables('storageAccountName'), variables('mgsStorageAccountNumber'), '.blob.core.windows.net/vhds/', concat(parameters('vmNamePrefix'),'mgs'), '-datadisk1.vhd')]"
               },
               "caching": "None",
               "createOption": "Empty"
@@ -855,7 +845,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('vmNamePrefix'), 'mgs', '/init')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', concat(parameters('vmNamePrefix'), 'mgs'))]"
       ],
@@ -875,7 +865,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(parameters('vmNamePrefix'),'mds')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Resources/deployments/', 'vnet')]",
         "[concat('Microsoft.Network/networkInterfaces/', parameters('vmNamePrefix'), 'mgs')]"
@@ -903,7 +893,7 @@
         "product": "lustre-cloud-edition-cv-image",
         "name": "eval-lustre-2-7"
       },
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "storageAccountsCopy",
         "[concat('Microsoft.Network/networkInterfaces/', parameters('vmNamePrefix'), 'mds')]"
@@ -931,7 +921,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://', parameters('storageAccountPrefix'), variables('mdsStorageAccountNumber'), '.blob.core.windows.net/vhds/', concat(parameters('vmNamePrefix'),'mds'), '-osdisk.vhd')]"
+              "uri": "[concat('http://', variables('storageAccountName'), variables('mdsStorageAccountNumber'), '.blob.core.windows.net/vhds/', concat(parameters('vmNamePrefix'),'mds'), '-osdisk.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -942,7 +932,7 @@
               "diskSizeGB": 128,
               "lun": 0,
               "vhd": {
-                "uri": "[concat('http://', parameters('storageAccountPrefix'), variables('mdsStorageAccountNumber'), '.blob.core.windows.net/vhds/', concat(parameters('vmNamePrefix'),'mds'), '-datadisk0.vhd')]"
+                "uri": "[concat('http://', variables('storageAccountName'), variables('mdsStorageAccountNumber'), '.blob.core.windows.net/vhds/', concat(parameters('vmNamePrefix'),'mds'), '-datadisk0.vhd')]"
               },
               "caching": "None",
               "createOption": "Empty"
@@ -962,7 +952,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('vmNamePrefix'), 'mds', '/init')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', concat(parameters('vmNamePrefix'), 'mds'))]",
         "[concat('Microsoft.Compute/virtualMachines/', parameters('vmNamePrefix'), 'mgs', '/extensions/init')]"
@@ -983,7 +973,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(parameters('vmNamePrefix'), 'oss', copyIndex())]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Resources/deployments/', 'vnet')]",
         "[concat('Microsoft.Network/networkInterfaces/', parameters('vmNamePrefix'), 'mds')]"
@@ -1015,7 +1005,7 @@
         "product": "lustre-cloud-edition-cv-image",
         "name": "eval-lustre-2-7"
       },
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "storageAccountsCopy",
         "[concat('Microsoft.Network/networkInterfaces/', parameters('vmNamePrefix'), 'oss', copyIndex())]"
@@ -1050,7 +1040,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://', parameters('storageAccountPrefix'), add(mod(copyIndex(),parameters('storageAccountCount')),1), '.blob.core.windows.net/vhds/', concat(parameters('vmNamePrefix'),'oss',copyIndex()), '-osdisk.vhd')]"
+              "uri": "[concat('http://', variables('storageAccountName'), add(mod(copyIndex(),parameters('storageAccountCount')),1), '.blob.core.windows.net/vhds/', concat(parameters('vmNamePrefix'),'oss',copyIndex()), '-osdisk.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -1061,7 +1051,7 @@
               "diskSizeGB": "[parameters('ossDiskSize')]",
               "lun": 0,
               "vhd": {
-                "Uri": "[concat('http://', parameters('storageAccountPrefix'), add(mod(copyIndex(),parameters('storageAccountCount')),1), '.blob.core.windows.net/vhds/', concat(parameters('vmNamePrefix'),'oss',copyIndex()), '-datadisk0.vhd')]"
+                "Uri": "[concat('http://', variables('storageAccountName'), add(mod(copyIndex(),parameters('storageAccountCount')),1), '.blob.core.windows.net/vhds/', concat(parameters('vmNamePrefix'),'oss',copyIndex()), '-datadisk0.vhd')]"
               },
               "caching": "None",
               "createOption": "Empty"
@@ -1071,7 +1061,7 @@
               "diskSizeGB": "[parameters('ossDiskSize')]",
               "lun": 1,
               "vhd": {
-                "Uri": "[concat('http://', parameters('storageAccountPrefix'), add(mod(copyIndex(),parameters('storageAccountCount')),1), '.blob.core.windows.net/vhds/', concat(parameters('vmNamePrefix'),'oss',copyIndex()), '-datadisk1.vhd')]"
+                "Uri": "[concat('http://', variables('storageAccountName'), add(mod(copyIndex(),parameters('storageAccountCount')),1), '.blob.core.windows.net/vhds/', concat(parameters('vmNamePrefix'),'oss',copyIndex()), '-datadisk1.vhd')]"
               },
               "caching": "None",
               "createOption": "Empty"
@@ -1081,7 +1071,7 @@
               "diskSizeGB": "[parameters('ossDiskSize')]",
               "lun": 2,
               "vhd": {
-                "Uri": "[concat('http://', parameters('storageAccountPrefix'), add(mod(copyIndex(),parameters('storageAccountCount')),1), '.blob.core.windows.net/vhds/', concat(parameters('vmNamePrefix'),'oss',copyIndex()), '-datadisk2.vhd')]"
+                "Uri": "[concat('http://', variables('storageAccountName'), add(mod(copyIndex(),parameters('storageAccountCount')),1), '.blob.core.windows.net/vhds/', concat(parameters('vmNamePrefix'),'oss',copyIndex()), '-datadisk2.vhd')]"
               },
               "caching": "None",
               "createOption": "Empty"
@@ -1101,7 +1091,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('vmNamePrefix'), 'oss', copyIndex(), '/init')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', concat(parameters('vmNamePrefix'), 'oss', copyIndex()))]",
         "[concat('Microsoft.Compute/virtualMachines/', parameters('vmNamePrefix'), 'mds', '/extensions/init')]"
@@ -1137,7 +1127,7 @@
             },
             "parameters": {
                 "location": {
-                    "value": "[resourceGroup().location]"
+                    "value": "[parameters('location')]"
                 },
                 "vmNamePrefix": {
                     "value": "[parameters('vmNamePrefix')]"
@@ -1166,8 +1156,8 @@
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[concat(parameters('clientStorageAccountPrefix'))]",
-      "location": "[resourceGroup().location]",
+      "name": "[variables('clientStorageAccountName')]",
+      "location": "[parameters('location')]",
       "properties": {
         "accountType": "[parameters('clientStorageAccountType')]"
       }
@@ -1176,7 +1166,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('clientAvailabilitySetSettings').name]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "platformFaultDomainCount": "[variables('clientAvailabilitySetSettings').faultDomainCount]",
         "platformUpdateDomainCount": "[variables('clientAvailabilitySetSettings').updateDomainCount]"
@@ -1186,7 +1176,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[concat(parameters('clientVmNamePrefix'),'client0')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "idleTimeoutInMinutes": 4,
@@ -1199,7 +1189,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(parameters('clientVmNamePrefix'), 'client0')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', parameters('clientVmNamePrefix'), 'client0')]"
       ],
@@ -1224,7 +1214,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(parameters('clientVmNamePrefix'), 'client', copyIndex(1))]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "clientNicCopy",
         "count": "[sub(parameters('clientCount'),1)]"
@@ -1247,9 +1237,9 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(parameters('clientVmNamePrefix'), 'client', copyIndex())]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('clientStorageAccountPrefix'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('clientStorageAccountName'))]",
         "[concat('Microsoft.Compute/availabilitySets/', variables('clientAvailabilitySetSettings').name)]",
         "[concat('Microsoft.Network/networkInterfaces/', parameters('clientVmNamePrefix'), 'client', copyIndex())]"
       ],
@@ -1278,7 +1268,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://', parameters('clientStorageAccountPrefix'), '.blob.core.windows.net/vhds-client/', concat(parameters('clientVmNamePrefix'),'client',copyIndex()), '-osdisk.vhd')]"
+              "uri": "[concat('http://', variables('clientStorageAccountName'), '.blob.core.windows.net/vhds-client/', concat(parameters('clientVmNamePrefix'),'client',copyIndex()), '-osdisk.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -1297,7 +1287,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('clientVmNamePrefix'), 'client', copyIndex(), '/init')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', concat(parameters('clientVmNamePrefix'),'client',copyIndex()))]"
       ],
