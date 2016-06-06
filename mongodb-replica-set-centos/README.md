@@ -17,11 +17,11 @@ The replica set nodes are exposed on public IP addresses that you can access thr
 
 The nodes are under the same subnet 10.0.1.0/24. The primary node ip is 10.0.1.240, the secondary nodes ip address start from 10.0.1.4. For example:
 
-primary node ip: 10.0.1.240
+- primary node ip: 10.0.1.240
 
-secondary node 1 ip: 10.0.1.4
+- secondary node 1 ip: 10.0.1.4
 
-secondary node 2 ip: 10.0.1.5
+- secondary node 2 ip: 10.0.1.5
 
 
 ##Important Notice
@@ -31,43 +31,43 @@ Each VM of the replica set uses raid0 to improve performance. We use 4 data disk
 
 ##After deployment, you can do below to verify if the replica set really works or not:
 
-1 SSH connect to primary node, execute below
+1. SSH connect to primary node, execute below
+  ```
+  $mongo -u "<mongouser>" -p "<mongopassword>" "admin"
 
-$mongo -u "\<mongouser\>" -p "\<mongopassword\>" "admin"
+  rs.status()
 
-rs.status()
+  exit
+  ```
 
-exit
-
-
-Upper rs.status() command will show the replica set details. 
-
-
-2 You can also check the data replication status. SSH connect to primary node, execute below:
-
-$mongo -u "\<mongouser\>" -p "\<mongopassword\>" "admin"
-
-use test
-
-db.mycol.insert({"title":"MongoDB Overview"})
-
-db.mycol.find()
+  Upper rs.status() command will show the replica set details. 
 
 
-2.1 SSH connect to secondary nodes, execute below
+2. You can also check the data replication status. SSH connect to primary node, execute below:
+  ```
+  $mongo -u "<mongouser>" -p "<mongopassword>" "admin"
 
-$mongo -u "\<mongouser\>" -p "\<mongopassword\>" "admin"
+  use test
 
-use test
+  db.mycol.insert({"title":"MongoDB Overview"})
 
-db.getMongo().setSlaveOk()
+  db.mycol.find()
+  ```
 
-show collections
+- 2.1 SSH connect to secondary nodes, execute below
+  ```
+  $mongo -u "<mongouser>" -p "<mongopassword>" "admin"
 
-db.mycol.find()
+  use test
 
+  db.getMongo().setSlaveOk()
 
-2.2 If db.mycol.find() command can show the result like primary node does, then means the replica set works.
+  show collections
+
+  db.mycol.find()
+  ```
+
+- 2.2 If db.mycol.find() command can show the result like primary node does, then means the replica set works.
 
 
 
