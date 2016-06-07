@@ -17,13 +17,13 @@
     "adminUserName": {
       "type": "string",
       "metadata": {
-        "description": "This is the the username you wish to assign to your VMs admin account"
+        "description": "This is the username you wish to assign to your VMs admin account"
       }
     },
     "adminPassword": {
       "type": "securestring",
       "metadata": {
-        "description": "This is the the password you wish to assign to your VMs admin account"
+        "description": "This is the password you wish to assign to your VMs admin account"
       }
     },
     "vmSize": {
@@ -31,16 +31,9 @@
       "metadata": {
         "description": "Size of VM"
       }
-    },
-    "location": {
-      "type": "string",
-      "metadata": {
-        "description": "Location of VM"
-      }
     }
   },
   "variables": {
-    "location": "[parameters('location')]",
     "addressPrefix": "10.0.0.0/16",
     "imagePublisher": "Canonical",
     "imageVersion": "latest",
@@ -64,7 +57,7 @@
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[parameters('newStorageAccountName')]",
       "apiVersion": "2015-05-01-preview",
-      "location": "[variables('location')]",
+      "location": "[resourceGroup().location]",
       "properties": {
         "accountType": "[variables('storageAccountType')]"
       }
@@ -73,7 +66,7 @@
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
-      "location": "[variables('location')]",
+      "location": "[resourceGroup().location]",
       "properties": {
         "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
         "dnsSettings": {
@@ -85,7 +78,7 @@
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
-      "location": "[variables('location')]",
+      "location": "[resourceGroup().location]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -106,7 +99,7 @@
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
-      "location": "[variables('location')]",
+      "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
@@ -132,7 +125,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmName')]",
-      "location": "[variables('location')]",
+      "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
@@ -171,8 +164,8 @@
         },
         "diagnosticsProfile": {
           "bootDiagnostics": {
-             "enabled": "true",
-             "storageUri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net')]"
+            "enabled": "true",
+            "storageUri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net')]"
           }
         }
       }
@@ -181,14 +174,15 @@
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmName'),'/configuremongo')]",
       "apiVersion": "2015-05-01-preview",
-      "location": "[variables('location')]",
+      "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
       ],
       "properties": {
         "publisher": "Microsoft.OSTCExtensions",
         "type": "CustomScriptForLinux",
-        "typeHandlerVersion": "1.2",
+        "typeHandlerVersion": "1.5",
+        "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
             "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-dependency-between-scripts-using-extensions/mongo-configure-ubuntu.sh"
@@ -211,9 +205,6 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "location": {
-            "value": "[variables('location')]"
-          },
           "vmName": {
             "value": "[variables('vmName')]"
           }

@@ -18,7 +18,54 @@ We look forward to hearing your feedback and suggestions!
 ```
 Template Changelog
 
-# V1.1 (2016-02-13)
+# v1.5.0 (2016-05-23)
+
+- Upgrade versions
+  - Upgrade Azure CPI version to v11. Please see new features in https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release
+- Fix [#1958](https://github.com/Azure/azure-quickstart-templates/issues/1958).
+
+# v1.4.2 (2016-05-06)
+
+- Upgrade versions
+  - Upgrade bosh version to 256.2
+- Remove redis from bosh.yml as of bosh v256+
+
+# v1.4.1 (2016-04-28)
+
+- Add a retry for apt-get update
+- Add https://gems.ruby-china.org/ as a gem source
+
+# v1.4.0 (2016-04-21)
+
+- Add AzureChinaCloud support
+- Upgrade versions
+  - Upgrade Azure CPI version to v10. Please see new features in https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release
+
+# v1.3.0 (2016-04-01)
+- Does not bind network security groups to subnets but bind network security groups to VMs.
+- Upgrade versions
+  - Upgrade Azure CPI version to v9. Please see new features in https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release
+
+# v1.2.0 (2016-03-28)
+- Add a subnet for Diego
+- Create network security groups for all subnets
+- Upgrade versions
+  - Upgrade Azure CPI version to v8. Please see new features in https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release
+
+# v1.1.3 (2016-03-08)
+- Upgrade versions
+  - Upgrade bosh version to 255.3
+  - Upgrade cf version to 231
+
+# v1.1.2 (2016-03-01)
+- Change the default value of "autoDeployBosh" to "enabled"
+- Run "apt-get update" at the beginning of "setup_env"
+
+# v1.1.1 (2016-02-23)
+- Upgrade versions
+  - Upgrade bosh version to 255.1
+
+# v1.1 (2016-02-13)
 - New features
   - Support deploying Bosh automatically
 - Parameters and Variables
@@ -43,7 +90,7 @@ Template Changelog
     - Put commandToExecute into protectedSettings to protect users' credentials
 - Add CI pipeline to test bosh-setup deployment
 
-# V1.0 (2015-11-02) - GA Version
+# v1.0 (2015-11-02) - GA Version
 
 # Preview II Version (2015-08-25)
 
