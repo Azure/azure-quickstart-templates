@@ -57,16 +57,25 @@ $ManagementGUIClientNetwork="0.0.0.0/0"
 # Mandatory   : Yes
 $SicKey = ""
 
-# Description : The name of the Virtual Network to create
+# Description: Determines if a new virtual network should be created or not
+# Mandatory   : Yes
+# Valid values: "true", "false"
+$CreateVNet = "true"
+
+# Description: If using an existing virtual network, the name of its resource group
+# Mandatory   : Only if $CreateVNet if set to "false"
+$ExistingVNetResourceGroup = ""
+
+# Description : The name of the Virtual Network
 # Mandatory   : Yes
 $VNetName = "vnet"
 
-# Description : The address range of the Virtual Network to create
+# Description : The address range of the Virtual Network
 # Mandatory   : Yes
 # Valid values: CIDR notation
 $AddressPrefix = "10.0.0.0/16"
 
-# Description : The names of the subnets to create
+# Description : The names of the subnets
 # Mandatory   : Yes
 $Subnet1Name = "Frontend"
 $Subnet2Name = "Web"
@@ -152,6 +161,10 @@ for (; $StorageAccount.Length -lt 24; $x++) {
     $StorageAccount += $set | Get-Random
 }
 
+if ($CreateVNet -eq "false" -and !$ExistingVNetResourceGroup) {
+	Throw "Missing existing VNet resource group name"
+}
+
 # Login:
 Login-AzureRmAccount
 
@@ -165,7 +178,7 @@ New-AzureRmResourceGroup -Name $ResourceGroup `
     -Location $Location
         
 
-# Create the Virtual Network, its subnets and routing tables
+# Create the routing tables
 $Subnet1RT = New-AzureRmRouteTable `
     -ResourceGroupName $ResourceGroup `
     -Location $Location `
@@ -234,31 +247,49 @@ Add-AzureRmRouteConfig `
     -NextHopType VirtualAppliance `
     -NextHopIpAddress $Subnet3PrivateAddress | Set-AzureRmRoutetable
 
-$Subnet1 = New-AzureRmVirtualNetworkSubnetConfig `
-    -Name $Subnet1Name `
-    -AddressPrefix $Subnet1Prefix `
-    -RouteTable $Subnet1RT
-$Subnet2 = New-AzureRmVirtualNetworkSubnetConfig `
-    -Name $Subnet2Name `
-    -AddressPrefix $Subnet2Prefix `
-    -RouteTable $Subnet2RT
-$Subnet3 = New-AzureRmVirtualNetworkSubnetConfig `
-    -Name $Subnet3Name `
-    -AddressPrefix $Subnet3Prefix `
-    -RouteTable $Subnet3RT
-    
-$Vnet = New-AzureRmVirtualNetwork `
-    -ResourceGroupName $ResourceGroup `
-    -Location $location `
-    -Name $VNetName `
-    -AddressPrefix $AddressPrefix `
-    -Subnet @($Subnet1, $Subnet2, $Subnet3)
+# Create the Virtual Network and its subnets
+if (CreateVNet -eq "true") {
+	$Subnet1 = New-AzureRmVirtualNetworkSubnetConfig `
+	    -Name $Subnet1Name `
+	    -AddressPrefix $Subnet1Prefix `
+	    -RouteTable $Subnet1RT
+	$Subnet2 = New-AzureRmVirtualNetworkSubnetConfig `
+	    -Name $Subnet2Name `
+	    -AddressPrefix $Subnet2Prefix `
+	    -RouteTable $Subnet2RT
+	$Subnet3 = New-AzureRmVirtualNetworkSubnetConfig `
+	    -Name $Subnet3Name `
+	    -AddressPrefix $Subnet3Prefix `
+	    -RouteTable $Subnet3RT
+
+	$Vnet = New-AzureRmVirtualNetwork `
+	    -ResourceGroupName $ResourceGroup `
+	    -Location $location `
+	    -Name $VNetName `
+	    -AddressPrefix $AddressPrefix `
+	    -Subnet @($Subnet1, $Subnet2, $Subnet3)
+} else {
+	$Vnet = Get-AzureRmVirtualNetwork `
+		-ResourceGroupName $ExistingVNetResourceGroup `
+		-Name $VNetName
+	$Subnet1 = Get-AzureRmVirtualNetworkSubnetConfig `
+		-VirtualNetwork $Vnet -Name $Subnet1Name
+	$Subnet2 = Get-AzureRmVirtualNetworkSubnetConfig `
+		-VirtualNetwork $Vnet -Name $Subnet2Name
+	$Subnet3 = Get-AzureRmVirtualNetworkSubnetConfig `
+		-VirtualNetwork $Vnet -Name $Subnet3Name
+	$Subnet1.RouteTable = $Subnet1RT
+	$Subnet2.RouteTable = $Subnet2RT
+	$Subnet3.RouteTable = $Subnet3RT
+	$Vnet = Set-AzureRmVirtualNetwork -VirtualNetwork $Vnet
+}
+
 $Subnet1 = Get-AzureRmVirtualNetworkSubnetConfig `
-    -VirtualNetwork $Vnet -Name $Subnet1Name
+	-VirtualNetwork $Vnet -Name $Subnet1Name
 $Subnet2 = Get-AzureRmVirtualNetworkSubnetConfig `
-    -VirtualNetwork $Vnet -Name $Subnet2Name
+	-VirtualNetwork $Vnet -Name $Subnet2Name
 $Subnet3 = Get-AzureRmVirtualNetworkSubnetConfig `
-    -VirtualNetwork $Vnet -Name $Subnet3Name
+	-VirtualNetwork $Vnet -Name $Subnet3Name
 
 
 # Create a storage account for storing the disk and boot diagnostics
@@ -384,7 +415,7 @@ Set-AzureRmVMOperatingSystem -VM $VMConfig `
     -Linux `
     -ComputerName $GatewayName `
     -Credential $OSCred `
-    -CustomData $CustomData `
+    -CustomData $CustomData
     
 if ($SSHPublicKey) {
     Add-AzureRmVMSshPublicKey -VM $VMConfig `
