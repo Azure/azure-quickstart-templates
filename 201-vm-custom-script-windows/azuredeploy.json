@@ -38,17 +38,19 @@
                 "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version. Allowed values: 2008-R2-SP1, 2012-Datacenter, 2012-R2-Datacenter."
             }
         },
-        "scriptFile": {
+        "_artifactsLocation": {
             "type": "string",
             "metadata": {
-                  "description": "The script file location."
-            }
+                "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+            },
+            "defaultValue": "https://raw.githubusercontent.com/bmoore-msft/AzureRM-Samples/master/VMCustomScript"
         },
-        "scriptName": {
-            "type": "string",
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
             "metadata": {
-                  "description": "Name of the script file"
-            }
+                "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+            },
+            "defaultValue": "?"
         }
     },
     "variables": {
@@ -67,7 +69,9 @@
         "vmSize": "Standard_A2",
         "virtualNetworkName": "MyVNET",
         "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
-        "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]"
+        "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
+        "ScriptFolder": ".",
+        "ScriptFileName": "CreateFolder.ps1"
     },
     "resources": [
         {
@@ -152,7 +156,7 @@
                     "vmSize": "[variables('vmSize')]"
                 },
                 "osProfile": {
-                    "computername": "[variables('vmName')]",
+                    "computerName": "[variables('vmName')]",
                     "adminUsername": "[parameters('adminUsername')]",
                     "adminPassword": "[parameters('adminPassword')]"
                 },
@@ -182,23 +186,26 @@
             },
             "resources": [
               {
-                  "type": "Microsoft.Compute/virtualMachines/extensions",
-                  "name": "[concat(variables('vmName'),'/CustomScriptExtension')]",
+                  "type": "extensions",
+                  "name": "CustomScriptExtension",
                   "apiVersion": "2015-05-01-preview",
                   "location": "[resourceGroup().location]",
                   "dependsOn": [
                       "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
                   ],
                   "properties": {
-       	           "publisher": "Microsoft.Compute",
-       	           "type": "CustomScriptExtension",
-                     "typeHandlerVersion": "1.2",
-                     "settings": {
-                         "fileUris": [ "[parameters('scriptFile')]" ],
-       	                  "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -file ',parameters('scriptName'))]"
-                     }
-                 }
-              }
+                      "publisher": "Microsoft.Compute",
+                      "type": "CustomScriptExtension",
+                      "typeHandlerVersion": "1.8",
+                      "autoUpgradeMinorVersion": true,
+                      "settings": {
+                      "fileUris": [
+                          "[concat(parameters('_artifactsLocation'), '/', variables('ScriptFolder'), '/', variables('ScriptFileName'), parameters('_artifactsLocationSasToken'))]"
+                        ],
+                      "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', variables('ScriptFolder'), '/', variables('ScriptFileName'))]"
+                        }
+                    }
+               }
             ]
         }
     ]
