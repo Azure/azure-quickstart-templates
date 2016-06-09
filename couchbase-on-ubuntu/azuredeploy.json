@@ -5,47 +5,13 @@
     "adminUsername": {
       "type": "string",
       "metadata": {
-        "description": "Admin username used when provisioning virtual machines"
+        "description": "Admin username used when provisioning virtual machines and administering Couchbase Server"
       }
     },
     "adminPassword": {
       "type": "securestring",
       "metadata": {
-        "description": "Admin password used when provisioning virtual machines"
-      }
-    },
-    "storageAccountNamePrefix": {
-      "type": "string",
-      "defaultValue": "cbstorage",
-      "metadata": {
-        "description": "Storage account name"
-      }
-    },
-    "region": {
-      "type": "string",
-      "allowedValues": [
-        "West US",
-        "East US",
-        "East Asia",
-        "Southeast Asia",
-        "West Europe"
-      ],
-      "metadata": {
-        "description": "Location where resources will be provisioned"
-      }
-    },
-    "virtualNetworkName": {
-      "type": "string",
-      "defaultValue": "cbVNet",
-      "metadata": {
-        "description": "Virtual Network"
-      }
-    },
-    "clusterName": {
-      "type": "string",
-      "defaultValue": "couchbaseCluster",
-      "metadata": {
-        "description": "The name of the Couchbase cluster"
+        "description": "Admin password used when provisioning virtual machines and administering Couchbase Server"
       }
     },
     "tshirtSize": {
@@ -57,14 +23,7 @@
         "Large"
       ],
       "metadata": {
-        "description": "T-shirt size of the Couchbase cluster"
-      }
-    },
-    "vmNamePrefix": {
-      "type": "string",
-      "defaultValue": "cbnode",
-      "metadata": {
-        "description": "Prefix for VM names on the cluster"
+        "description": "T-shirt size of the Couchbase Server cluster - Small is 3 x Standard_A2 nodes, Medium is 4 x Standard_A6 nodes and Large is 5 x Standard_D14."
       }
     },
     "cbPackageDownloadBase": {
@@ -97,10 +56,10 @@
   "variables": {
     "commonSettings": {
       "availabilitySet": "cbClusterAvailabilitySet",
-      "region": "[parameters('region')]"
+       "region": "[resourceGroup().location]"
     },
     "networkSettings": {
-      "virtualNetworkName": "[parameters('virtualNetworkName')]",
+      "virtualNetworkName": "['cbVNet']",
       "addressPrefix": "10.0.0.0/16",
       "subnet": {
         "name": "couchSubnet",
@@ -111,7 +70,7 @@
     "machineSettings": {
       "adminUsername": "[parameters('adminUsername')]",
       "adminPassword": "[parameters('adminPassword')]",
-      "machineNamePrefix": "[parameters('vmNamePrefix')]",
+      "machineNamePrefix": "['cbnode']",
       "imageReference": "[variables('imageReference')]",
       "dataDiskSize": 1023
     },
@@ -145,7 +104,7 @@
       "couchbaseRamQuota": 1400,
       "vmSize": "Standard_A2",
       "maxNumberOfDataDisksForVmSizeNotUsedButHereForReference": 4,
-      "vmTemplate": "[concat(variables('templateBaseUrl'), 'nested/cluster-nodes-A2.json')]",
+      "vmTemplate": "[concat(variables('templateBaseUrl'), 'nested/cluster-nodes-',parameters('jumpbox'),'A2.json')]",
       "backendIPConfigurations": [
         {
           "id": "[concat(resourceId('Microsoft.Network/networkInterfaces',  'nic0'),'/ipConfigurations/ipconfig1')]"
@@ -215,10 +174,12 @@
         "[concat(parameters('cbPackageDownloadBase'), parameters('cbPackage'))]",
         "[concat(variables('sharedBaseUrl'), 'vm-disk-utils-0.1.sh')]"
       ],
-      "installCommand": "[concat('bash couchbase-azure-install.sh -d ', parameters('cbPackage'), ' -n ', parameters('clusterName'), ' -i ', concat(variables('networkSettings').nodesIpPrefix, '-', variables('clusterSpec').clusterSize), ' -a ', variables('machineSettings').adminUsername, ' -p ', variables('machineSettings').adminPassword, ' -r ', variables('clusterSpec').couchbaseRamQuota)]",
-      "setupCommand": "[concat('bash couchbase-azure-install.sh -d ', parameters('cbPackage'), ' -n ', parameters('clusterName'), ' -i ', concat(variables('networkSettings').nodesIpPrefix, '-', variables('clusterSpec').clusterSize), ' -a ', variables('machineSettings').adminUsername, ' -p ', variables('machineSettings').adminPassword, ' -r ', variables('clusterSpec').couchbaseRamQuota, ' -l')]"
+      "installCommand": "[concat('bash couchbase-azure-install.sh -d ', parameters('cbPackage'), ' -n ', 'couchbaseCluster', ' -i ', concat(variables('networkSettings').nodesIpPrefix, '-', variables('clusterSpec').clusterSize), ' -a ', variables('machineSettings').adminUsername, ' -p ', variables('machineSettings').adminPassword, ' -r ', variables('clusterSpec').couchbaseRamQuota)]",
+      "setupCommand": "[concat('bash couchbase-azure-install.sh -d ', parameters('cbPackage'), ' -n ', 'couchbaseCluster', ' -i ', concat(variables('networkSettings').nodesIpPrefix, '-', variables('clusterSpec').clusterSize), ' -a ', variables('machineSettings').adminUsername, ' -p ', variables('machineSettings').adminPassword, ' -r ', variables('clusterSpec').couchbaseRamQuota, ' -l')]"
     },
     "clusterSpec": "[variables(concat('tshirtSize', parameters('tshirtSize')))]"
+    
+    
   },
   "resources": [
     {
@@ -237,21 +198,18 @@
           },
           "networkSettings": {
             "value": "[variables('networkSettings')]"
-          },
-          "storageAccountNamePrefix": {
-            "value": "[parameters('storageAccountNamePrefix')]"
           }
         }
       }
     },
     {
-      "name": "[concat(parameters('storageAccountNamePrefix'), copyindex())]",
+      "location": "[resourceGroup().location]",
+      "name": "[concat('cbstorage', copyindex())]",
       "type": "Microsoft.Storage/storageAccounts",
       "apiVersion": "2015-05-01-preview",
       "dependsOn": [
         "[concat('Microsoft.Resources/deployments/', 'shared-resources')]"
       ],
-      "location": "[variables('commonSettings').region]",
       "copy": {
         "name": "storageAccountsLoop",
         "count": "[variables('clusterSpec').storageAccountCount]"
@@ -288,7 +246,7 @@
             "value": "[variables('machineSettings')]"
           },
           "storageAccountName": {
-            "value": "[concat(parameters('storageAccountNamePrefix'), variables(concat('storageAccountSuffixForNode', parameters('tshirtSize'), copyindex())))]"
+            "value": "[concat('cbstorage', variables(concat('storageAccountSuffixForNode', parameters('tshirtSize'), copyindex())))]"
           },
           "nodeId": {
             "value": "[copyindex()]"
@@ -329,7 +287,7 @@
             "value": "[variables('machineSettings')]"
           },
           "storageAccountName": {
-            "value": "[concat(parameters('storageAccountNamePrefix'), variables(concat('storageAccountSuffixForNode', parameters('tshirtSize'), variables('clusterSpec').lastNodeId)))]"
+            "value": "[concat('cbstorage', variables(concat('storageAccountSuffixForNode', parameters('tshirtSize'), variables('clusterSpec').lastNodeId)))]"
           },
           "nodeId": {
             "value": "[variables('clusterSpec').lastNodeId]"
@@ -368,9 +326,6 @@
           },
           "machineSettings": {
             "value": "[variables('machineSettings')]"
-          },
-          "storageAccountNamePrefix": {
-            "value": "[parameters('storageAccountNamePrefix')]"
           }
         }
       }
