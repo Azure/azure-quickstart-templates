@@ -7,7 +7,32 @@ The following information is relevant to get started with contributing to this r
 + [**Best practices**](/1-CONTRIBUTION-GUIDE/best-practices.md#best-practices). Best practices for improving the quality of your template design.
 + [**Git tutorial**](/1-CONTRIBUTION-GUIDE/git-tutorial.md#git-tutorial). Step by step to get you started with Git.
 
-You are currently reading the contribution guide.
+## Deploying Samples
+
+You can deploy these samples directly through the Azure Portal or by using the scripts supplied in the root of the repo.
+
+To deploy a sammple using the Azure Portal, click the **Deploye to Azure** button found in the README.md of each sample.
+
+To deploy the sample via the command line (using [Azure PowerShell or the Azure CLI](https://azure.microsoft.com/en-us/downloads/)) you can use the scripts.
+
+Simple execute the script and pass in the folder name of the sample you want to deploy.  For example:
+
+```PowerShell
+.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactsStagingDirectory '[foldername]'
+```
+```bash
+azure-group-deploy.sh -a [foldername] -l eastus -u
+```
+If the sample has artifacts that need to be "staged" for deployment (Configuration Scripts, Nested Templates, DSC Packages) then set the upload switch on the command.
+You can optionally specify a storage account to use, if so the storage account must already exist within the subscription.  If you don't want to specify a storage account
+one will be created by the script or reused if it already exists (think of this as "temp" storage for AzureRM).
+
+```PowerShell
+.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactsStagingDirectory '201-vm-custom-script-windows' -UploadArtifacts 
+```
+```bash
+azure-group-deploy.sh -a '201-vm-custom-script-windows' -l eastus -u
+```
 
 ## Contribution guide
 
@@ -18,20 +43,18 @@ To make sure your template is added to Azure.com index, please follow these guid
 1. Every deployment template and its associated files must be contained in its own **folder**. Name this folder something that describes what your template does. Usually this naming pattern looks like **appName-osName** or **level-platformCapability** (e.g. 101-vm-user-image) 
  + **Required** - Numbering should start at 101. 100 is reserved for things that need to be at the top.
  + **Protip** - Try to keep the name of your template folder short so that it fits inside the Github folder name column width.
-1. Github uses ASCII for ordering files and folder. For consistent ordering **create all files and folders in lowercase**. The only **exception** to this guideline is the **README.md**, that should be in the format **UPPERCASE.lowercase**.
-1. Include a **README.md** file that explains how the template works. 
+2. Github uses ASCII for ordering files and folder. For consistent ordering **create all files and folders in lowercase**. The only **exception** to this guideline is the **README.md**, that should be in the format **UPPERCASE.lowercase**.
+3. Include a **README.md** file that explains how the template works. 
  + Guidelines on the README.md file below.
-1. The deployment template file must be named **azuredeploy.json**.
-1. There should be a parameters file named **azuredeploy.parameters.json**. 
+4. The deployment template file must be named **azuredeploy.json**.
+5. There should be a parameters file named **azuredeploy.parameters.json**. 
  + Please fill out the values for the parameters according to rules defined in the template (allowed values etc.), For parameters without rules, a simple "changeme" will do as the acomghbot only checks for syntactic correctness using the ARM Validate Template [API](https://msdn.microsoft.com/en-us/library/azure/dn790547.aspx).
-1. The template folder must contain a **metadata.json** file to allow the template to be indexed on [Azure.com](http://azure.microsoft.com/). 
+6. The template folder must contain a **metadata.json** file to allow the template to be indexed on [Azure.com](http://azure.microsoft.com/). 
  + Guidelines on the metadata.json file below.
-1. The custom scripts that are needed for successful template execution must be placed in a folder called **scripts**.
-1. Linked templates must be placed in a folder called **nestedtemplates**.
-1. DSC configuration scripts and packages must be placed in a folder called **dsc**.
-1. Images used in the README.md must be placed in a folder called **images**. 
-1. Any resources that need to be setup outside the template should be named prefixed with existing (e.g. existingVNET, existingDiagnosticsStorageAccount) and remain in the same folder as **azuredeploy.json**.
-1. The template can be deployed using both the **Deploy-AzureResourceGroup.ps1** script and the **azure-group-deploy.sh**.  This includes staging any artifacts required for the deployment into Azure storage as an alternative to the raw github location (the scripts will perform this staging).
+7. The custom scripts that are needed for successful template execution must be placed in a folder called **scripts**.
+8. Linked templates must be placed in a folder called **nested**.
+9. Images used in the README.md must be placed in a folder called **images**. 
+10. Any resources that need to be setup outside the template should be named prefixed with existing (e.g. existingVNET, existingDiagnosticsStorageAccount).
 
 ![alt text](/1-CONTRIBUTION-GUIDE/images/namingConvention.png "Files, folders and naming conventions")
  
