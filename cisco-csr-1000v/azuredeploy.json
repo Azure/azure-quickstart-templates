@@ -106,12 +106,6 @@
                 "description": "Name for the Virtual Machine."
             }
         },
-        "newStorageAccountName": {
-            "type": "string",
-            "metadata": {
-                "description": "Unique Name for Storage Account where the Virtual Machine's disks will be placed."
-            }
-        },
         "storageAccountType": {
             "type": "string",
             "defaultValue": "Standard_LRS",
@@ -181,46 +175,47 @@
             "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/cisco-csr-1000v"
         }
     },
-    "variables": {
-        "imagePublisher": "cisco",
-        "imageOffer": "cisco-csr-1000v",
-        "imageSKU": "csr-azure-byol",
-        "OSDiskName": "osdiskforwindowssimple",
-        "vmStorageAccountContainerName": "vhds",
-        "vmSize": "Standard_D2",
-        "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
-        "subnet1Ref": "[concat(variables('vnetID'),'/subnets/', parameters('Subnet1Name'))]",
-        "subnet2Ref": "[concat(variables('vnetID'),'/subnets/', parameters('Subnet2Name'))]",
-        "nsgname": "[concat(parameters('vmName'),'-SSH-SecurityGroup')]",
-        "apiVer": "2015-06-15",
-        "publicIPAddressType": "Dynamic",
-        "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
-        "storageAccountSetupURL": "[concat(parameters('baseUrl'),'/storageAccount-',parameters('storageAccountNewOrExisting'),'.json')]",
-        "publicIPSetupURL": "[concat(parameters('baseUrl'),'/publicip-',parameters('publicIPNewOrExisting'),'.json')]",
-        "virtualNetworkSetupURL": "[concat(parameters('baseUrl'),'/vnet-',parameters('vnetNewOrExisting'),'.json')]",
-        
-        "osProfile": "[variables(concat('osprofile',parameters('authenticationType')))]",
-        "osProfilesshPublicKey": {
-            "computerName": "[parameters('vmName')]",
-            "adminUsername": "[parameters('adminUsername')]",
-            "linuxConfiguration": {
-                "disablePasswordAuthentication": "true",
-                "ssh": {
-                    "publicKeys": [
-                        {
-                            "path": "[variables('sshKeyPath')]",
-                            "keyData": "[parameters('sshPublicKey')]"
-                        }
-                    ]
-                }
+  "variables": {
+    "storageAccountName": "[concat(uniquestring(resourceGroup().id),'storage')]",
+    "imagePublisher": "cisco",
+    "imageOffer": "cisco-csr-1000v",
+    "imageSKU": "csr-azure-byol",
+    "OSDiskName": "osdiskforwindowssimple",
+    "vmStorageAccountContainerName": "vhds",
+    "vmSize": "Standard_D2",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
+    "subnet1Ref": "[concat(variables('vnetID'),'/subnets/', parameters('Subnet1Name'))]",
+    "subnet2Ref": "[concat(variables('vnetID'),'/subnets/', parameters('Subnet2Name'))]",
+    "nsgname": "[concat(parameters('vmName'),'-SSH-SecurityGroup')]",
+    "apiVer": "2015-06-15",
+    "publicIPAddressType": "Dynamic",
+    "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
+    "storageAccountSetupURL": "[concat(parameters('baseUrl'),'/nested/storageAccount-',parameters('storageAccountNewOrExisting'),'.json')]",
+    "publicIPSetupURL": "[concat(parameters('baseUrl'),'/nested/publicip-',parameters('publicIPNewOrExisting'),'.json')]",
+    "virtualNetworkSetupURL": "[concat(parameters('baseUrl'),'/nested/vnet-',parameters('vnetNewOrExisting'),'.json')]",
+
+    "osProfile": "[variables(concat('osprofile',parameters('authenticationType')))]",
+    "osProfilesshPublicKey": {
+      "computerName": "[parameters('vmName')]",
+      "adminUsername": "[parameters('adminUsername')]",
+      "linuxConfiguration": {
+        "disablePasswordAuthentication": "true",
+        "ssh": {
+          "publicKeys": [
+            {
+              "path": "[variables('sshKeyPath')]",
+              "keyData": "[parameters('sshPublicKey')]"
             }
-        },
-        "osProfilepassword": {
-            "computerName": "[parameters('vmName')]",
-            "adminUsername": "[parameters('adminUsername')]",
-            "adminPassword": "[parameters('adminPassword')]"
+          ]
         }
+      }
     },
+    "osProfilepassword": {
+      "computerName": "[parameters('vmName')]",
+      "adminUsername": "[parameters('adminUsername')]",
+      "adminPassword": "[parameters('adminPassword')]"
+    }
+  },
     "resources": [
         {
             "name": "SettingUpStorageAccount",
@@ -237,7 +232,7 @@
                         "value": "[parameters('storageAccountType')]"
                     },
                     "storageAccountName": {
-                        "value": "[parameters('newStorageAccountName')]"
+                        "value": "[variables('storageAccountName')]"
                     },
                     "storageAccountExistingRG": {
                         "value": "[parameters('storageAccountExistingRG')]"
@@ -431,7 +426,7 @@
             "osDisk": {
               "name": "osdisk",
               "vhd": {
-                "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/', 'osdisk', '.vhd')]"
+                "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2015-06-15').primaryEndpoints.blob,'vhds/', 'osdisk', '.vhd')]"
               },
               "caching": "ReadWrite",
               "createOption": "FromImage"
@@ -456,7 +451,7 @@
           "diagnosticsProfile": {
             "bootDiagnostics": {
               "enabled": "true",
-              "storageUri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net')]"
+              "storageUri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2015-06-15').primaryEndpoints.blob)]"
             }
           }
         }
