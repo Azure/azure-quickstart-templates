@@ -2,12 +2,6 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "newStorageAccountName": {
-            "type": "string",
-            "metadata": {
-                "description": "Unique DNS Name for the Storage Account where the Virtual Machine's disks will be placed."
-            }
-        },
         "adminUsername": {
             "type": "string",
             "metadata": {
@@ -20,19 +14,14 @@
                 "description": "Password for the Virtual Machine."
             }
         },
-        "dnsNameForPublicIP": {
-            "type": "string",
-            "metadata": {
-                  "description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
-            }
-        },
         "windowsOSVersion": {
             "type": "string",
             "defaultValue": "2012-R2-Datacenter",
             "allowedValues": [
                 "2008-R2-SP1",
                 "2012-Datacenter",
-                "2012-R2-Datacenter"
+                "2012-R2-Datacenter",
+                "Windows-Server-Technical-Preview"
             ],
             "metadata": {
                 "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version. Allowed values: 2008-R2-SP1, 2012-Datacenter, 2012-R2-Datacenter."
@@ -71,12 +60,14 @@
         "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
         "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
         "scriptFolder": ".",
-        "scriptFileName": "CreateFolder.ps1"
+        "scriptFileName": "CreateFolder.ps1",
+        "vhdStorageAccountName":"[concat(uniqueString(resourceGroup().id), 'storage')]",
+        "dnsNameForPublicIP" : "[uniqueString(resourceGroup().id)]"
     },
     "resources": [
         {
             "type": "Microsoft.Storage/storageAccounts",
-            "name": "[parameters('newStorageAccountName')]",
+            "name": "[variables('vhdStorageAccountName')]",
             "apiVersion": "2015-05-01-preview",
             "location": "[resourceGroup().location]",
             "properties": {
@@ -91,7 +82,7 @@
             "properties": {
                 "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
                 "dnsSettings": {
-                    "domainNameLabel": "[parameters('dnsNameForPublicIP')]"
+                    "domainNameLabel": "[variables('dnsNameForPublicIP')]"
                 }
             }
         },
@@ -122,8 +113,8 @@
             "name": "[variables('nicName')]",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
-                "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+                "[variables('publicIPAddressName')]",
+                "[variables('virtualNetworkName')]"
             ],
             "properties": {
                 "ipConfigurations": [
@@ -148,8 +139,8 @@
             "name": "[variables('vmName')]",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
-                "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+                "[variables('vhdStorageAccountName')]",
+                "[variables('nicName')]"
             ],
             "properties": {
                 "hardwareProfile": {
@@ -170,7 +161,7 @@
                    "osDisk" : {
                         "name": "osdisk",
                         "vhd": {
-                            "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]"
+                            "uri": "[concat(reference(variables('vhdStorageAccountName'), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob, variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]"
                         },
                         "caching": "ReadWrite",
                         "createOption": "FromImage"
@@ -191,7 +182,7 @@
                   "apiVersion": "2015-05-01-preview",
                   "location": "[resourceGroup().location]",
                   "dependsOn": [
-                      "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+                      "[variables('vmName')]"
                   ],
                   "properties": {
                       "publisher": "Microsoft.Compute",
@@ -208,5 +199,11 @@
                }
             ]
         }
-    ]
+    ],
+    "outputs": {
+        "vm-fqdn": {
+        "type": "string",
+        "value": "[reference(variables('publicIPAddressName'),providers('Microsoft.Network','publicIPAddresses').apiVersions[0]).dnsSettings.fqdn]"
+        }        
+    }
 }
