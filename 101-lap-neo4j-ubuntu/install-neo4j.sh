@@ -9,14 +9,14 @@ apt-get -y update
 export DEBIAN_FRONTEND=noninteractive
 
 #install java
-sudo apt-get install -y python-software-properties debconf-utils
-sudo add-apt-repository -y ppa:webupd8team/java
-sudo apt-get update
-echo "oracle-java8-installer shared/accepted-oracle-license-v1-1 select true" | sudo debconf-set-selections
-sudo apt-get install -y oracle-java8-installer
+apt-get install -y python-software-properties debconf-utils
+add-apt-repository -y ppa:webupd8team/java
+apt-get update
+echo "oracle-java8-installer shared/accepted-oracle-license-v1-1 select true" | debconf-set-selections
+apt-get install -y oracle-java8-installer
 
 #install neo4j server
-sudo apt-get -y install neo4j
+apt-get -y install neo4j
 #make a copy of the config file
 cp -p /etc/neo4j/neo4j.conf /etc/neo4j/neo4j.conf.bak
 #open the http access at port 7474 to apache node
