@@ -1,8 +1,8 @@
 ﻿cls
-$RGName = "RG-o365-dev"; 
+$RGName = "RG-o365-devf2"; 
 $VMName = "o2016vs2015u2";
 $VMUsername = "o365dev";
-$Dnsprefix = "jdo365vm"
+$Dnsprefix = "jdo365vmf2"
 
 $ARMTemplatePath = (get-item $PSScriptRoot).parent.FullName + "\azuredeploy.json"
 $DeployLocation = "West Europe"
@@ -11,7 +11,7 @@ $DeployLocation = "West Europe"
 $OfficeVersion  = "Office2016"; # Office2016
 
 # 2. Login
-Login-AzureRmAccount
+#Login-AzureRmAccount
 
 # 3. Create a resource group
 New-AzureRmResourceGroup -Name $RGName -Location $DeployLocation -Force
