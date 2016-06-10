@@ -23,20 +23,19 @@ cd $HOMEDIR
 #####################
 # install tools
 #####################
-time sudo apt-get install -y build-essential automake pkg-config libtool libffi-dev libgmp-dev
-time sudo apt-get -y install git
-time sudo apt-get -y install libssl-dev
+time sudo apt-get update
+time sudo apt-get -y install build-essential automake pkg-config libtool libffi-dev libgmp-dev libssl-dev git
 time curl -sL https://deb.nodesource.com/setup_4.x | sudo -E bash -
 time sudo apt-get -y install nodejs
 
 ####################
 # Intsall Geth
 ####################
-time sudo apt-get install -y software-properties-common
+time sudo apt-get -y install software-properties-common
 time sudo add-apt-repository -y ppa:ethereum/ethereum
 time sudo add-apt-repository -y ppa:ethereum/ethereum-dev
 time sudo apt-get update
-time sudo apt-get install -y ethereum
+time sudo apt-get -y install ethereum
 
 ####################
 # Install Serpent
@@ -61,8 +60,8 @@ sudo -u $AZUREUSER wget https://raw.githubusercontent.com/kevinday/azure-quickst
 sudo -u $AZUREUSER sed -i "s/auguruser/$AZUREUSER/g" geth.conf
 sudo -u $AZUREUSER sed -i "s/auguruser/$AZUREUSER/g" augur_ui.conf
 
-touch /var/log/geth.sys.log
-touch /var/log/augur_ui.sys.log
+sudo touch /var/log/geth.sys.log
+sudo touch /var/log/augur_ui.sys.log
 chown $AZUREUSER /var/log/geth.sys.log
 chown $AZUREUSER /var/log/augur_ui.sys.log
 
