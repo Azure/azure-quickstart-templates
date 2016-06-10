@@ -1,8 +1,8 @@
 ﻿cls
 $RGName = "RG-o365-dev"; 
-$VMName = "o2016vs2015";
+$VMName = "o2016vs2015u2";
 $VMUsername = "o365dev";
-$Dnsprefix = "yourdns"
+$Dnsprefix = "jdo365vm"
 
 $ARMTemplatePath = (get-item $PSScriptRoot).parent.FullName + "\azuredeploy.json"
 $DeployLocation = "West Europe"
@@ -19,7 +19,7 @@ New-AzureRmResourceGroup -Name $RGName -Location $DeployLocation -Force
 # 4. Create resources - select which vmOSVersion you want to use
 $sw = [system.diagnostics.stopwatch]::startNew()
 New-AzureRmResourceGroupDeployment -ResourceGroupName $RGName -TemplateFile $ARMTemplatePath -vmName $VMName `
-    -vmAdminUserName $VMUsername -dnsLabelPrefix $Dnsprefix -vmVisualStudioVersion VS-2015-Ent-AzureSDK-29-W10T-Win10-N `
+    -vmAdminUserName $VMUsername -dnsLabelPrefix $Dnsprefix -vmVisualStudioVersion VS-2015-Comm-VSU2-AzureSDK-29-W10T-N-x64 `
     -officeVersion $OfficeVersion -Mode Complete -Force | Out-Null
 $sw | Format-List -Property *
 

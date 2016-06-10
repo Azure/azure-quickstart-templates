@@ -30,4 +30,8 @@ $targetFilePath = "$env:temp\configuration.xml"
 Generate-ODTConfigurationXml -Languages AllInUseLanguages -TargetFilePath $targetFilePath | Set-ODTAdd -Version $NULL | Set-ODTDisplay -AcceptEULA $true -Level None | Install-OfficeClickToRun -OfficeVersion $OfficeVersion
 
 # Configuration.xml file for Click-to-Run for Office 365 products reference. https://technet.microsoft.com/en-us/library/JJ219426.aspx
+
+# Install the VS 2015 Update 2 Office Tools via the WPI
+webpicmd /install /Products:OfficeToolsForVS2015 /accepteula /suppressreboot
+
 }
