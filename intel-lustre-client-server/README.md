@@ -16,7 +16,7 @@ This template creates Lustre client and server node VMs and related infrastructu
 * Creates 2 or more Intel Lustre 2.7 client virtual machines using Azure gallery CentOS 6.6 or 7.0 image and mounts an existing Intel Lustre file-system
 * These Lustre client nodes are added in an availability set for HA
 * Public IP will be attached to the client0 node. That node can be accessed via SSH [dnsNamePrefix].[region].cloudapp.azure.com.
-* To run this template you must first deploy a Lustre cluster in your subscription and use the existing virtual network when deploying the clients.
+* To run this template you must first deploy a Lustre cluster in your subscription and use the existing virtual network when deploying the clients and server.
 * The required artifacts for deploying the Lustre cluster and virtual network are in prerequisite folder.
 	* Use Azure CLI to login to subscription.
 	* Execute the deploy.bat by replacing the arguments in parameters.txt file.
