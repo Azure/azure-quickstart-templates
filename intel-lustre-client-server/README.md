@@ -17,3 +17,7 @@ This template creates Lustre client and server node VMs and related infrastructu
 * These Lustre client nodes are added in an availability set for HA
 * Public IP will be attached to the client0 node. That node can be accessed via SSH [dnsNamePrefix].[region].cloudapp.azure.com.
 * To run this template you must first deploy a Lustre cluster in your subscription and use the existing virtual network when deploying the clients.
+* The required artifacts for deploying the Lustre cluster and virtual network are in prerequisite folder.
+	* Use Azure CLI to login to subscription.
+	* Execute the deploy.bat by replacing the arguments in parameters.txt file.
+	* Keep deploy.bat and parameters.txt file in same folder.
