@@ -104,14 +104,6 @@ done
 
 log "Started node-setup on ${HOSTNAME} with role ${NODE_ROLE}"
 
-# Stop Splunk process & update server & input config
-log "Stop Splunk process before configuration"
-service splunk stop
-/bin/su - splunk -c '/opt/splunk/bin/splunk set servername "${HOSTNAME}"'
-/bin/su - splunk -c '/opt/splunk/bin/splunk set default-hostname "${HOSTNAME}"'
-# Remove first time login
-/bin/su - splunk -c 'touch /opt/splunk/etc/.ui_login'
-
 # Retrieve new list of packages
 apt-get -y update
 
@@ -131,15 +123,21 @@ fi
 cat >/etc/chef/node.json <<end
 {
   "splunk": {
-    "web_port": 10443,
-    "ssl_options": {
-      "enable_ssl": true,
-      "use_default_certs": true
-    },
+    "accept_license": true,
+    "is_server": true,
     "server": {
       "runasroot": false,
       "edit_datastore_dir": true,
       "datastore_dir": "${SPLUNK_DB_DIR}"
+    },
+    "web_port": 10443,
+    "web_conf": {
+      "splunkdConnectionTimeout": 300,
+      "updateCheckerBaseURL": 0
+    },
+    "ssl_options": {
+      "enable_ssl": true,
+      "use_default_certs": true
     }
   },
   "run_list": [
