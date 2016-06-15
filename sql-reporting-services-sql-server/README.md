@@ -19,13 +19,13 @@ By Default it will create the SQL machines using the image ***SQL2014SP1-WS2012R
 
 For example
 * **sqlImageVersion:** SQL2014SP1-WS2012R2 **sku:** Enterprise 
-* **sqlImageVersion:** SQL2016CTP3.3-WS2012R2 **sku:** Evaluation
+* **sqlImageVersion:** SQL2016RC1-WS2012R2 **sku:** Evaluation
 
 
 ***For CTP Versions of SQL the only SKU available is Evaluation*** 
 
 ***
-It contains a modified version of xSQLServerRSConfig that supports machines that are non domain join and uses SQL authentication for connection SSRS with the database 
+It contains a modified version of xSQLServerRSConfig that supports machines that are non domain join and uses SQL authentication for connecting SSRS with the database 
 based on the DSC package http://www.powershellgallery.com/packages/xSQLServer/1.4.0.0.
 
 It contains the DSC scripts from https://sqlvmgroup.blob.core.windows.net/singlevm/PrepareSqlServer.ps1.zip used by the Azure marketplace to create SQL Machines

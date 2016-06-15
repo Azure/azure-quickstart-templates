@@ -29,7 +29,7 @@ help()
 {
     echo "Usage: $(basename $0) [-v es_version] [-t target_host] [-m] [-s] [-h]"
     echo "Options:"
-    echo "  -v    elasticsearch version to target (default: 2.2.0)"
+    echo "  -v    elasticsearch version to target (default: 2.3.1)"
     echo "  -t    target host (default: http://10.0.1.4:9200)"
     echo "  -m    install marvel (default: no)"
     echo "  -s    install sense (default: no)"
@@ -51,17 +51,22 @@ install_java() {
 }
 
 install_kibana() {
-    # default - ES 2.2.0
-    kibana_url="https://download.elastic.co/kibana/kibana/kibana-4.4.0-linux-x64.tar.gz"
+    # default - ES 2.3.1
+	kibana_url="https://download.elastic.co/kibana/kibana/kibana-4.5.0-linux-x64.tar.gz"
+	
+	if [[ "${ES_VERSION}" == "2.2.2" ]]; 
+    then
+		kibana_url="https://download.elastic.co/kibana/kibana/kibana-4.4.2-linux-x64.tar.gz"
+	fi
     
     if [[ "${ES_VERSION}" == "2.1.2" ]]; 
     then
-        kibana_url="https://download.elastic.co/kibana/kibana/kibana-4.3.1-linux-x64.tar.gz"
+        kibana_url="https://download.elastic.co/kibana/kibana/kibana-4.3.3-linux-x64.tar.gz"
     fi
     
     if [[ "${ES_VERSION}" == "1.7.5" ]]; 
     then
-        kibana_url="https://download.elastic.co/kibana/kibana/kibana-4.1.4-linux-x64.tar.gz"
+        kibana_url="https://download.elastic.co/kibana/kibana/kibana-4.1.6-linux-x64.tar.gz"
     fi
     
     groupadd -g 999 kibana
@@ -84,16 +89,11 @@ install_kibana() {
     # install the marvel plugin for 2.x
     if [ ${INSTALL_MARVEL} -ne 0 ];
     then
-        if [[ "${ES_VERSION}" == "2.2.0" ]];
+		if [[ "${ES_VERSION}" == \2* ]];
         then
-            /opt/kibana/bin/kibana plugin --install elasticsearch/marvel/2.2.0
+            /opt/kibana/bin/kibana plugin --install elasticsearch/marvel/${ES_VERSION}
         fi
-        
-        if [[ "${ES_VERSION}" == "2.1.2" ]]; 
-        then
-            /opt/kibana/bin/kibana plugin --install elasticsearch/marvel/2.1.2
-        fi
-        
+
         # for 1.x marvel is installed only within the cluster, not on the kibana node 
     fi
     
@@ -130,7 +130,7 @@ then
     error "You must be root to run this script."
 fi
 
-ES_VERSION="2.2.0"
+ES_VERSION="2.3.1"
 INSTALL_MARVEL=0
 INSTALL_SENSE=0
 ELASTICSEARCH_URL="http://10.0.1.4:9200"
