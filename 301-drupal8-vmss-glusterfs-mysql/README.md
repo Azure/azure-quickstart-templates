@@ -21,11 +21,13 @@ You can either deploy using an existing MySQL server, or by creating mysql serve
   
   ![Deployment Overview - Existing MySQL Server](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/301-drupal8-vmss-glusterfs-mysql/images/Drupal%208%20ARM%20template%20overview.jpg "Deployment Overview - Existing MySQL Server")
   
-  For Details of Parameter configurations when using existing MySQL server please refer https://blogs.msdn.microsoft.com/manibindra/2016/05/23/how-to-configure-your-drupal-8-arm-template-deployment-to-azure-using-existing-mysql-server/ 
+  For details of Parameter configurations when using existing MySQL server please refer https://blogs.msdn.microsoft.com/manibindra/2016/05/23/how-to-configure-your-drupal-8-arm-template-deployment-to-azure-using-existing-mysql-server/ 
 
 * **Deployment creating a new MySQL Server**
 
   ![Deployment Overview - New MySQL Server](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/301-drupal8-vmss-glusterfs-mysql/images/Deployment%20with%20new%20mysql%20server.jpg "Deployment Overview - New MySQL Server")
+  
+  For details of Parameter configurations when creating new MySQL servers, and information on managing the newly created MySql Servers (Master and Slave)  please refer https://blogs.msdn.microsoft.com/manibindra/2016/05/30/how-to-configure-your-drupal-8-arm-template-deployment-to-azure-creating-new-mysql-servers/
 
 ### How to access the Drupal Site
 * Access Drupal using the VMSS load balancer fully qualified domain name.  This will bring up the Drupal home page.  The Drupal admin user name and password which were entered during the template deployment can be used for logging in as administrator.
@@ -36,6 +38,11 @@ You can either deploy using an existing MySQL server, or by creating mysql serve
 
  ![SSH into Drupal VMs](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/301-drupal8-vmss-glusterfs-mysql/images/azureResourceExplorer.png "SSH into Drupal VMs")
 
+### Backlog of Planned Changes
+* Updrade to PHP7 
+* Install Drupal Console 
+* Optionally supply new relic key as parameter, to send VM metrics to new relic
+* Optionally adding nginx and memcache into the mix
 
 License
 ----
