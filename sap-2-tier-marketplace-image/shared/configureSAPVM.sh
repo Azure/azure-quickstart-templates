@@ -19,20 +19,9 @@ function addtofstab()
 	then
 		log "Adding fstab entry"
 		local uuid=${BASH_REMATCH[1]};
-		local vLinux=$(cat /etc/os-release)
 		local mountCmd=""
-		if [[ $vLinux =~ VERSION=\"11\..\" && $vLinux =~ NAME=\"SLES\" ]];
-		then
-			#SLES 11
-			log "adding fstab entry for SLES 11"
-			mountCmd="UUID=$uuid $mountPath xfs  defaults  0  2"
-		fi
-		if [[ $vLinux =~ VERSION=\"12\" && $vLinux =~ NAME=\"SLES\" ]];
-		then
-			#SLES 12
-			log "adding fstab entry for SLES 12"
-			mountCmd="/dev/disk/by-uuid/$uuid $mountPath xfs  defaults  0  2"
-		fi
+		log "adding fstab entry"
+		mountCmd="/dev/disk/by-uuid/$uuid $mountPath xfs  defaults  0  2"
 		echo "$mountCmd" >> /etc/fstab
 		$(mount $mountPath)
 	else
@@ -101,10 +90,10 @@ function createmdadm()
 		$(mkfs -t xfs $mdadmPath)
 
 		local vLinux=$(cat /etc/os-release)		
-		if [[ $vLinux =~ VERSION=\"11\..\" && $vLinux =~ NAME=\"SLES\" ]];
+		if [[ $vLinux =~ ID=\"rhel\" ]];
 		then
-			#SLES 11
-			log "createmdadm - SLES 11"
+			#RHEL
+			log "createmdadm - RHEL"
 			$(chkconfig --add boot.md)
 			$(echo 'DEVICE /dev/sd*[0-9]' >> /etc/mdadm.conf)
 		fi
@@ -136,6 +125,80 @@ function createmdadm()
 	log "createmdadm done"
 }
 
+function createlvm()
+{
+	# pvcreate /dev/sdf
+	# vgcreate data-vg01 /dev/sd[cde]
+ 	# lvcreate --extents 100%FREE --stripes 3 --name data-lv01 data-vg01
+	# mkfs -t ext4 /dev/data-vg01/data-lv01
+
+	log "createlvm"
+	
+	lunsA=(${1//,/ })	
+	vgName=$2
+	lvName=$3
+	mountPath=$4
+
+	arraynum=${#lunsA[@]}
+	echo "count $arraynum"
+	if [[ $arraynum -gt 1 ]]
+	then
+		log "createlvm - creating lvm"
+		
+		numRaidDevices=0
+		raidDevices=""
+		num=${#lunsA[@]}
+		log "num luns $num"
+		for ((i=0; i<num; i++))
+		do
+			log "trying to find device path"
+			lun=${lunsA[$i]}
+			getdevicepath $lun
+			devicePath=$getdevicepathresult;
+			if [ -n "$devicePath" ];
+			then
+				log " Device Path is $devicePath"
+				numRaidDevices=$((numRaidDevices + 1))
+				raidDevices="$raidDevices $devicePath "				
+			else
+				log "no device path for LUN $lun"
+				exit -1;
+			fi
+		done
+		log "num: $numRaidDevices paths: '$raidDevices'"
+		$(pvcreate $raidDevices)
+		$(vgcreate $vgName $raidDevices)
+		$(lvcreate --extents 100%FREE --stripes $numRaidDevices --name $lvName $vgName)
+		$(mkfs -t xfs /dev/$vgName/$lvName)
+
+		$(mkdir $mountPath)
+		addtofstab /dev/$vgName/$lvName		
+	else
+		log "createlvm - creating single disk"
+		
+		lun=${lunsA[0]}
+		getdevicepath $lun;
+		devicePath=$getdevicepathresult;
+		if [ -n "$devicePath" ];
+		then
+			log " Device Path is $devicePath"
+			# http://superuser.com/questions/332252/creating-and-formating-a-partition-using-a-bash-script
+			$(echo -e "n\np\n1\n\n\nw" | fdisk $devicePath)
+			partPath="$devicePath""1"
+			$(mkfs -t xfs $partPath)
+			$(mkdir $mountPath)	
+
+			addtofstab $partPath
+		else
+			log "no device path for LUN $lun"
+			exit -1;
+		fi
+	fi
+
+	log "createlvm done"
+
+}
+
 dbluns=""
 dbname="dbdata"
 logluns=""
@@ -157,18 +220,12 @@ done
 
 if [[ -n "$dbluns" ]];
 then
-	createmdadm $dbluns "/dev/md127" "/$dbname";
+	#createmdadm $dbluns "/dev/md127" "/$dbname";
+	createlvm $dbluns "vg-$dbname" "lv-$dbname" "/$dbname";
 fi
 
 if [[ -n "$logluns" ]];
 then
-	createmdadm $logluns "/dev/md128" "/$logname";
-fi
-
-vLinux=$(cat /etc/os-release)		
-if [[ $vLinux =~ VERSION=\"11\..\" && $vLinux =~ NAME=\"SLES\" ]];
-then
-	#SLES 11
-	log "SLES 11 - restarting"
-	$(shutdown -r now)
+	#createmdadm $logluns "/dev/md128" "/$logname";
+	createlvm $logluns "vg-$logname" "lv-$logname" "/$dbname";
 fi
