@@ -87,8 +87,8 @@ sudo -i -u $AZUREUSER git clone https://github.com/AugurProject/augur-core.git
 cd  augur-core/load_contracts
 python load_contracts.py
 contracts="`python generate_gospel.py -j`"
-contracts=${contracts//\"/\\\"}
-contracts=${contracts//[$'\t\r\n ']}
+contracts=$(echo $contracts | sed 's|\x22|\\\"|g')
+contracts=$(echo $contracts | sed "s|[$'\t\r\n ']||g")
 cd ../..
 
 ####################
