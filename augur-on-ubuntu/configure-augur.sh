@@ -33,7 +33,6 @@ time sudo apt-get -y install nodejs
 ####################
 time sudo apt-get -y install software-properties-common
 time sudo add-apt-repository -y ppa:ethereum/ethereum
-time sudo add-apt-repository -y ppa:ethereum/ethereum-dev
 time sudo apt-get update
 time sudo apt-get -y install ethereum
 
@@ -62,20 +61,20 @@ sudo -u $AZUREUSER sed -i "s/auguruser/$AZUREUSER/g" augur_ui.conf
 
 sudo touch /var/log/geth.sys.log
 sudo touch /var/log/augur_ui.sys.log
-chown $AZUREUSER /var/log/geth.sys.log
-chown $AZUREUSER /var/log/augur_ui.sys.log
+sudo chown $AZUREUSER /var/log/geth.sys.log
+sudo chown $AZUREUSER /var/log/augur_ui.sys.log
 
 ####################
 # Setup Geth
 ####################
 sudo -i -u $AZUREUSER geth init genesis.json 
 pw=`< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c${1:-16};echo;`
-sudo -u $AZUREUSER echo $pw > pw.txt
+sudo -i -u $AZUREUSER echo $pw > pw.txt
 sudo -i -u $AZUREUSER geth --password pw.txt account import priv_genesis.key
 
 #make geth a service, turn on.
-cp geth.conf /etc/init/
-start geth
+sudo cp geth.conf /etc/init/
+sudo start geth
 
 #Pregen DAG so miniing can start immediately
 sudo -u $AZUREUSER mkdir .ethash
@@ -95,34 +94,35 @@ cd ../..
 ####################
 #Make a swap file (node can get hungry)
 ####################
-fallocate -l 128MiB /swapfile
-chmod 600 /swapfile
-mkswap /swapfile
-swapon /swapfile
+sudo fallocate -l 128MiB /swapfile
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
 
 ####################
 #Install Augur Front End
 ####################
 sudo -i -u $AZUREUSER git clone https://github.com/AugurProject/augur.git
 sudo -i -u $AZUREUSER mkdir ui
-udo -i -u $AZUREUSER cp -r augur/azure ui
+sudo -i -u $AZUREUSER cp -r augur/azure ui
 rm -rf augur
 sudo -u $AZUREUSER find ui -type f -exec sed -i "s|\"{{ \$BUILD_AZURE_WSURL }}\"|null|g" {} \;
 sudo -u $AZUREUSER find ui -type f -exec sed -i "s|{{ \$BUILD_AZURE_LOCALNODE }}|$ETHEREUM_HOST_RPC|g" {} \;
 sudo -u $AZUREUSER find ui -type f -exec sed -i "s|\"{{ \$BUILD_AZURE_CONTRACTS }}\"|'$contracts'|g" {} \;
+sudo -u $AZUREUSER find ui -type f -exec sed -i "s|process.env.BUILD_AZURE|true|g" {} \;
 
 
 ###################
 #Install augur webserver
 ####################
-git clone https://github.com/AugurProject/augur-ui-webserver.git
+sudo -i -u $AZUREUSER git clone https://github.com/AugurProject/augur-ui-webserver.git
 sudo -i -u $AZUREUSER  bash -c "cd augur-ui-webserver; npm install"
 
 #allow nodejs to run on port 80 w/o sudo
-setcap 'cap_net_bind_service=+ep' /usr/bin/nodejs
+sudo setcap 'cap_net_bind_service=+ep' /usr/bin/nodejs
 
 #Make augur_ui a service, turn on.
-cp augur_ui.conf /etc/init/
+sudo cp augur_ui.conf /etc/init/
 start augur_ui 
 
 date
