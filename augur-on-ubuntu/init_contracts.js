@@ -2,8 +2,7 @@
 
 "use strict";
 
-//var augur = require("augur.js");
-
+var augur = require("augur.js");
 var args = process.argv.slice(2);
 
 var http = args[0] || "http://127.0.0.1:8545";
