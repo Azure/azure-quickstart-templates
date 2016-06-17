@@ -48,6 +48,11 @@ time sudo pip install pyethapp
 
 time sudo apt-get update
 
+##################
+# Install node.js
+##################
+time sudo -u $AZUREUSER npm install node.js
+
 ###############################
 # Fetch Genesis and Private Key
 ###############################
@@ -56,6 +61,7 @@ sudo -u $AZUREUSER wget https://raw.githubusercontent.com/kevinday/azure-quickst
 sudo -u $AZUREUSER wget https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/master/augur-on-ubuntu/mining_toggle.js
 sudo -u $AZUREUSER wget https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/master/augur-on-ubuntu/geth.conf
 sudo -u $AZUREUSER wget https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/master/augur-on-ubuntu/augur_ui.conf
+sudo -u $AZUREUSER wget https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/master/augur-on-ubuntu/init_contracts.js
 sudo -u $AZUREUSER sed -i "s/auguruser/$AZUREUSER/g" geth.conf
 sudo -u $AZUREUSER sed -i "s/auguruser/$AZUREUSER/g" augur_ui.conf
 
@@ -90,6 +96,8 @@ contracts="`python generate_gospel.py -j`"
 contracts=$(echo $contracts | sed 's|\x22|\\\"|g')
 contracts=$(echo $contracts | sed "s|[$'\t\r\n ']||g")
 cd ../..
+sudo -u $AZUREUSER sed -i "s|\"{{ \$BUILD_AZURE_CONTRACTS }}\"|'$contracts'|g" init_contracts.js
+node init_contracts.js
 
 ####################
 #Make a swap file (node can get hungry)
