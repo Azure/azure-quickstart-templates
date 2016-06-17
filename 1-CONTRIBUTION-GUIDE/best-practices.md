@@ -1,6 +1,6 @@
 # Azure Resource Manager QuickStart Templates
 
-This repo contains all currently available Azure Resource Manager templates contributed by the community. A searchable template index is maintained at https://azure.microsoft.com/en-us/documentation/templates/.
+This repository contains all currently available Azure Resource Manager templates contributed by the community. A searchable template index is maintained at https://azure.microsoft.com/en-us/documentation/templates/.
 The following information is relevant to get started with contributing to this repository.
 
 + [**Contribution guide**](/1-CONTRIBUTION-GUIDE/README.md#contribution-guide). Describes the minimal guidelines for contributing.
@@ -19,9 +19,9 @@ The following guidelines are relevant to the main deployment template and nested
 
 1. Template parameters should follow **camelCasing**.
 1. Minimize parameters whenever possible, this allows for a good "hello world" experience where the user doesn't have to answer a number of questions to complete a deployment.  If you can use a variable or a literal, do so.  Users who want to parameterize something will likely have the skills to do so. Only provide parameters for:
- + Things that are globally unique (e.g. website name).  These are usually endpoints that the user may need to be aware of, however in many cases a unique name can be generated automatically by using the [uniqueString()](https://azure.microsoft.com/en-us/documentation/articles/resource-group-template-functions/#uniquestring) template language function.
- + Other things a user must know to complete a workflow (e.g. admin user name on a vm)
- + Secrets (e.g. admin password on a vm)
+ + Things that are globally unique (e.g. website name).  These are usually endpoints that the user may need to be aware of. However, in many cases a unique name can be generated automatically by using the [uniqueString()](https://azure.microsoft.com/en-us/documentation/articles/resource-group-template-functions/#uniquestring) template language function.
+ + Other things a user must know to complete a workflow (e.g. admin user name on a VM)
+ + Secrets (e.g. admin password on a VM)
  + If you must include a parameter, define a defaultValue, unless the parameter is used for a password.
 1. Every parameter in the template should have the **lower-case description** tag specified using the metadata property. This looks like below
 
@@ -30,7 +30,7 @@ The following guidelines are relevant to the main deployment template and nested
    "storageAccountType": {
      "type": "string",
      "metadata": {
-     "description": "The type of the new storage account created to store the VMs disks"
+     "description": "The type of the new storage account created to store the VM disks"
      }
    }
  }
@@ -56,11 +56,11 @@ The following guidelines are relevant to the main deployment template and nested
 
 1. Name **variables** using this scheme **templateScenarioResourceName** (e.g. simpleLinuxVMVNET, userRoutesNSG, elasticsearchPublicIP etc.) that describe the scenario rather. This ensures when a user browses all the resources in the Portal there aren't a bunch of resources with the same name (e.g. myVNET, myPublicIP, myNSG)
 
-1. Do not create a parameter for a **storage account name**. Storage account names need to be lower case and can't contain hyphens (-) in addition to other domain name restrictions. A storage account has a limit of 24 characters. They also need to be globally unique. To prevent any validation issue configure a variables (using the expression **uniqueString** and a static value **storage**). Storage accounts with a common prefix (uniquestring) will not get clustered on the same racks.
+1. Do not create a parameter for a **storage account name**. Storage account names need to be lower case and can't contain hyphens (-) in addition to other domain name restrictions. A storage account has a limit of 24 characters. They also need to be globally unique. To prevent any validation issue configure a variables (using the expression **uniqueString** and a static value **storage**). Storage accounts with a common prefix (uniqueString) will not get clustered on the same racks.
 	
  ```
  "variables": {
- 	"storageAccountName": "[concat(uniquestring(resourceGroup().id),'storage')]"
+ 	"storageAccountName": "[concat(uniqueString(resourceGroup().id),'storage')]"
  }
  ```
  
@@ -83,7 +83,7 @@ The following guidelines are relevant to the main deployment template and nested
  ]
  ```
 	
-1. Specifying a lower-case **comments** property for each resource in the template, helps other contributors to understand the purpose of the resource.
+1. Specifying a lower-case **comments** property for each resource in the template helps other contributors to understand the purpose of the resource.
 
  ```	
  "resources": [
@@ -144,15 +144,15 @@ The following guidelines are relevant to the main deployment template and nested
 
  Note: In order to ensure that secrets which are passed as parameters to virtualMachines/extensions are encrypted, the protectedSettings property of the relevant extensions must be used.
  
-11. Use tags to add metadata to resources allows you to add additional information about your resources. A good use case for tags is adding metadata to a resource for billing detail purposes. 
+11. Using tags to add metadata to resources allows you to add additional information about your resources. A good use case for tags is adding metadata to a resource for billing detail purposes. 
 
-12. You can group variables into complex objects. You can reference a value from a complex object in the format variable.subentry (e.g. `"[variables('storage').storageAccounts.type]"`). Grouping variables helps you to keep track of related variables and improves readability of the template.
+12. You can group variables into complex objects. You can reference a value from a complex object in the format variable.subentry (e.g. `"[variables('storage').storageAccounts.type]"`). Grouping variables helps you keep track of related variables and improves readability of the template.
 
  ```
  "variables": {
  	"storage": {
  		"storageAccounts": {
- 		"name": "[concat(uniquestring(resourceGroup().id),'storage')]",
+ 		"name": "[concat(uniqueString(resourceGroup().id),'storage')]",
  		"type": "Standard_LRS"
  		}
  	}
@@ -170,9 +170,9 @@ The following guidelines are relevant to the main deployment template and nested
  ]
  ```
 
- Note: A complex object cannot contain an expression that references a value from a complex object. Define a seperate variable for this purpose.
+ Note: A complex object cannot contain an expression that references a value from a complex object. Define a separate variable for this purpose.
 
-13. The **domainNameLabel** property for publicIPAddresses used must be **unique**. domainNameLabel is required to be betweeen 3 and 63 charcters long and to follow the rules specified by this regular expression ^[a-z][a-z0-9-]{1,61}[a-z0-9]$. As the uniqueString function will generate a string that is 13 characters long in the example below it is presumed that the dnsPrefixString prefix string has been checked to be no more than 50 charcters long and to conform to those rules.
+13. The **domainNameLabel** property for publicIPAddresses must be **unique**. domainNameLabel is required to be betweeen 3 and 63 characters long and to follow the rules specified by this regular expression ^[a-z][a-z0-9-]{1,61}[a-z0-9]$. As the uniqueString function will generate a string that is 13 characters long in the example below it is presumed that the dnsPrefixString prefix string has been checked to be no more than 50 characters long and to conform to those rules.
 
  ```
  "parameters": {
@@ -204,11 +204,11 @@ The following guidelines are relevant to the main deployment template and nested
 }
 ```
 
-15. publicIPAddresses assigned to a Virtual Machine Instance should only be used when these are required for application purposes, for connectivity to the resources for debug, management or administrative purposes either inboundNatRules, virtualNetworkGateways or a jumpbox should be used.
+15. publicIPAddresses assigned to a Virtual Machine instance should only be used when these are required for application purposes, for connectivity to the resources for debug, management or administrative purposes either inboundNatRules, virtualNetworkGateways or a jumpbox should be used.
 
 ## Single template or nested templates
 
-It is obvious to create a single deployment template for deploying a single resource. Nested templates are common for more advanced scenarios. The following section is by no means a hard requirement, but more of a guidance to help to decide between a single template or a decomposed nested template design. 
+It is obvious to create a single deployment template for deploying a single resource. Nested templates are common for more advanced scenarios. The following section is by no means a hard requirement, but more of a guidance to help you decide between a single template or a decomposed nested template design. 
 
 * Create a single template for a single tier application
 * Create a nested templates deployment for a multitier application
@@ -216,12 +216,12 @@ It is obvious to create a single deployment template for deploying a single reso
 
 ### Samples that contain extra artifacts (Custom Scripts, nested templates, etc)
 
-When samples contain scripts, templates or other artifacts that need to be made available during deployment, using the standard parameters for staging those artifacts will enable command line deployment with the scripts provided at the root of the repo.  This allows the template to be used in a variety of workflows without changing the templates or default parameters and the artifacts will be staged to a private location, rather than the public github uri.
+When samples contain scripts, templates or other artifacts that need to be made available during deployment, using the standard parameters for staging those artifacts will enable command line deployment with the scripts provided at the root of the repository.  This allows the template to be used in a variety of workflows without changing the templates or default parameters and the artifacts will be staged to a private location, rather than the public GitHub URI.
 
 First, define two standard parameters:
 
-* _artifactsLocation - this is the base uri where all artifacts for the deployment will be staged.  The default value should be the samples folder so that the sample can be easily deployed in scenarios where a private location is not required.
-* _artifactsocationSasToken - this is the sasToken required to access _artifactsLocation.  The default value should be "?" for scenarios where the _artifactsLocation is not secured, for example, the raw github URI.
+* _artifactsLocation - this is the base URI where all artifacts for the deployment will be staged.  The default value should be the samples folder so that the sample can be easily deployed in scenarios where a private location is not required.
+* _artifactsocationSasToken - this is the sasToken required to access _artifactsLocation.  The default value should be "?" for scenarios where the _artifactsLocation is not secured, for example, the raw GitHub URI.
 
 ```
   "parameters": {
@@ -261,7 +261,7 @@ In this example, the custom script extension can be authored using a common patt
 
 ### Nested templates
 
-Nested templates that link to templates within the same sample can be authoried using the same pattern described above for scripts.
+Nested templates that link to templates within the same sample can be authored using the same pattern described above for scripts.
 
 ```
   "resources": [
@@ -281,7 +281,7 @@ Nested templates that link to templates within the same sample can be authoried 
 ```
 
 
-When authoring a template that references another sample, define a complex object variable in the azuredeploy.json that contains the absolute Uri of the repository folder. Add an relative path entry in that variable for each nested template you are using in your deployment. This gives quick overview of the nested templates referenced in your resources. Store all nested templates in the **nestedtemplates** folder. The templatelink in the resource combines the absolute Uri with the relative path. When you fork a repository you only need to update the absolute Uri in the azuredeploy.json file. 
+When authoring a template that references another sample, define a complex object variable in the azuredeploy.json that contains the absolute URI of the repository folder. Add a relative path entry in that variable for each nested template you are using in your deployment. This gives quick overview of the nested templates referenced in your resources. Store all nested templates in the **nestedtemplates** folder. The templatelink in the resource combines the absolute URI with the relative path. When you fork a repository you only need to update the absolute URI in the azuredeploy.json file. 
 
 ```
 "variables": {
@@ -307,10 +307,10 @@ When authoring a template that references another sample, define a complex objec
 ```
 
 
-_**Note:** Using this approach will still require pulling the dependent artifact from the raw github location.  The sample scripts do not privately stage artifacts from adjacent solutions.  In practice, it is expected that this technique would be rarely used because the main template being deployed has a dependency on a shared template that may have a different lifecycle, resulting in unexpected changes in the configuration.  In a real-world scenario, all the templates that make up the deployment should be under the same span of control and could be staged together.  Simply put share the same parent.  This will work for a shared environment of the repo, but a best practice would be to refactor these samples to ensure a proper configuration is maintained._
+_**Note:** Using this approach will still require pulling the dependent artifact from the raw GitHub location.  The sample scripts do not privately stage artifacts from adjacent solutions.  In practice, it is expected that this technique would be rarely used because the main template being deployed has a dependency on a shared template that may have a different lifecycle, resulting in unexpected changes in the configuration.  In a real-world scenario, all the templates that make up the deployment should be under the same span of control and could be staged together.  Simply put share the same parent.  This will work for a shared environment of the repository, but a best practice would be to refactor these samples to ensure a proper configuration is maintained._
 
 
-It is possible to deploy a nested template based on parameter input. The parameter input is used to concatenate the relative path to a nested template. Based on the user input a different template is deployed. This enabled a conditional nested template deployment. The paramater is used to define the name of the template. Ensure the allowedValues of the input paramater match the names of the nested templates.
+It is possible to deploy a nested template based on parameter input. The parameter input is used to concatenate the relative path to a nested template. Based on the user input a different template is deployed. This enables a conditional nested template deployment. The paramater is used to define the name of the template. Ensure the allowedValues of the input parameter match the names of the nested templates.
 
 ### Nested templates design for more advanced scenarios
 
