@@ -1,5 +1,5 @@
 # Deploy a Deis cluster
-
+  
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdeis-cluster-coreos%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
@@ -38,6 +38,12 @@ This template allows you to create a Deis cluster. The cluster is made up by thr
 
 		./deploy-deis.sh -n "[resource group name]" -l "West US" -f ./azuredeploy.json -e ./azuredeploy-parameters.json -c ./cloud-config.yaml
 
+
+8. Create load balancer API rule:
+
+      In order to expose the API (port 80) to the network, run the following command:
+
+		azure network lb rule create -g "[resource group name]" -l loadBalancer -n loadBalancerAPIRule -p tcp -f 888 -b 888 -e false -i 10 -a apiProbe
 
 >**Note:** If you chose to use the "Deploy to Azure" button experience, you'll need to manually encode **cloud-config.yaml** as a Base64 string and enter the encoded string to the **customData** parameter. Although the template can be updated to use the built-in base64() founction, I found the triple-encoding is rather troublesome especially for readability and maintenance.
 
