@@ -97,7 +97,7 @@ done
 install_cb()
 {
 	# First prepare the environment as per the documentation
-	# Installation Guide: http://developer.couchbase.com/documentation/server/4.1/install/installation.html
+	# Installation Guide: http://developer.couchbase.com/documentation/server/4.5/install/installation.html
 
 	log "Disable swappiness"
 	# We may not reboot, disable with the running system
