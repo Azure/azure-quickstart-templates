@@ -36,27 +36,27 @@ If you are looking to accomplish the above scenario through PowerShell instead o
     $osDiskName = $vmName + "osDisk"
 
 ##### Resource Group
-    New-AzureResourceGroup -Name $rgName -Location $location
+    New-AzureRmResourceGroup -Name $rgName -Location $location
 
 ##### Storage
-    $storageacc = New-AzureStorageAccount -ResourceGroupName $rgName -Name $storageName -Type $storageType -Location $location
+    $storageacc = New-AzureRmStorageAccount -ResourceGroupName $rgName -Name $storageName -Type $storageType -Location $location
 
 ##### Network
-    $pip = New-AzurePublicIpAddress -Name $nicname -ResourceGroupName $rgName -Location $location -AllocationMethod Dynamic
-    $subnetconfig = New-AzureVirtualNetworkSubnetConfig -Name $subnet1Name -AddressPrefix $vnetSubnetAddressPrefix
-    $vnet = New-AzureVirtualNetwork -Name $vnetName -ResourceGroupName $rgName -Location $location -AddressPrefix $vnetAddressPrefix -Subnet $subnetconfig
-    $nic = New-AzureNetworkInterface -Name $nicname -ResourceGroupName $rgName -Location $location -SubnetId $vnet.Subnets[0].Id -PublicIpAddressId $pip.Id
+    $pip = New-AzureRmPublicIpAddress -Name $nicname -ResourceGroupName $rgName -Location $location -AllocationMethod Dynamic
+    $subnetconfig = New-AzureRmVirtualNetworkSubnetConfig -Name $subnet1Name -AddressPrefix $vnetSubnetAddressPrefix
+    $vnet = New-AzureRmVirtualNetwork -Name $vnetName -ResourceGroupName $rgName -Location $location -AddressPrefix $vnetAddressPrefix -Subnet $subnetconfig
+    $nic = New-AzureRmNetworkInterface -Name $nicname -ResourceGroupName $rgName -Location $location -SubnetId $vnet.Subnets[0].Id -PublicIpAddressId $pip.Id
 
 ##### Compute
 
     ## Setup local VM object
     $cred = Get-Credential
-    $vm = New-AzureVMConfig -VMName $vmName -VMSize $vmSize
+    $vm = New-AzureRmVMConfig -VMName $vmName -VMSize $vmSize
 
-    $vm = Add-AzureVMNetworkInterface -VM $vm -Id $nic.Id
+    $vm = Add-AzureRmVMNetworkInterface -VM $vm -Id $nic.Id
 
     $osDiskUri = "https://test.blob.core.windows.net/vhds/osdiskforlinuxsimple.vhd"
-    $vm = Set-AzureVMOSDisk -VM $vm -Name $osDiskName -VhdUri $osDiskUri -CreateOption attach -Linux
+    $vm = Set-AzureRmVMOSDisk -VM $vm -Name $osDiskName -VhdUri $osDiskUri -CreateOption attach -Linux
 
     ## Create the VM in Azure
-    New-AzureVM -ResourceGroupName $rgName -Location $location -VM $vm -Verbose -Debug
+    New-AzureRmVM -ResourceGroupName $rgName -Location $location -VM $vm -Verbose -Debug

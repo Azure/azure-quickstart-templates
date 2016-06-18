@@ -42,12 +42,6 @@
 				"description": "This field must be a valid SSH public key."
 			}
 		},
-		"clusterStorageAccountName": {
-			"type": "string",
-			"metadata": {
-				"description": "The name of the storage account to be created and be used as the cluster's storage."
-			}
-		},
 		"clusterWorkerNodeCount": {
 			"type": "int",
 			"defaultValue": 4,
@@ -56,13 +50,14 @@
 			}
 		}
 	},
-	"variables": {
-		"defaultApiVersion": "2015-05-01-preview",
-		"clusterApiVersion": "2015-03-01-preview"
-	},
+  "variables": {
+    "storageAccountName": "[concat(uniquestring(resourceGroup().id),'storage')]",
+    "defaultApiVersion": "2015-05-01-preview",
+    "clusterApiVersion": "2015-03-01-preview"
+  },
   "resources": [
     {
-      "name": "[parameters('clusterStorageAccountName')]",
+      "name": "[variables('storageAccountName')]",
       "type": "Microsoft.Storage/storageAccounts",
       "location": "[resourceGroup().location]",
       "apiVersion": "[variables('defaultApiVersion')]",
@@ -79,7 +74,7 @@
       "type": "Microsoft.HDInsight/clusters",
       "location": "[resourceGroup().location]",
       "apiVersion": "[variables('clusterApiVersion')]",
-      "dependsOn": [ "[concat('Microsoft.Storage/storageAccounts/',parameters('clusterStorageAccountName'))]" ],
+      "dependsOn": [ "[concat('Microsoft.Storage/storageAccounts/',variables('storageAccountName'))]" ],
       "tags": {
 
       },
@@ -99,10 +94,10 @@
         "storageProfile": {
           "storageaccounts": [
             {
-              "name": "[concat(parameters('clusterStorageAccountName'),'.blob.core.windows.net')]",
+              "name": "[replace(replace(concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), variables('defaultApiVersion')).primaryEndpoints.blob),'https:',''),'/','')]",
               "isDefault": true,
               "container": "[parameters('clusterName')]",
-              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('clusterStorageAccountName')), variables('defaultApiVersion')).key1]"
+              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), variables('defaultApiVersion')).key1]"
             }
           ]
         },

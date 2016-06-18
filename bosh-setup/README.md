@@ -18,11 +18,17 @@ We look forward to hearing your feedback and suggestions!
 ```
 Template Changelog
 
+# v1.6.0 (2016-06-08)
+
+- Upgrade versions
+  - Upgrade Azure CPI version to v12. Please see new features in https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release
+- Disable snapshot by default.
+
 # v1.5.0 (2016-05-23)
 
 - Upgrade versions
   - Upgrade Azure CPI version to v11. Please see new features in https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release
-- Fix [#1958](https://github.com/Azure/azure-quickstart-templates/issues/1958).
+- Fix https://github.com/Azure/azure-quickstart-templates/issues/1958.
 
 # v1.4.2 (2016-05-06)
 
