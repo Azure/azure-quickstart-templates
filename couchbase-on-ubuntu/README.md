@@ -40,8 +40,7 @@ You can get started with a sample app or run a SQL Query on a sample database wi
     
     ```SELECT * FROM `beer-sample` WHERE type="beer" LIMIT 10;``` 
     
-You can find more detailed instructions on running N1QL queries [here](http://developer.couchbase.com/documentation/server/4.5/getting-started/first-n1ql-query.html#first-n1ql).
-    - Full Getting Started Guide with SDKs: Skip **Step-1** here in the [Getting Started](http://www.couchbase.com/get-started-developing-nosql) guide since you will have Couchbase Server already deployed.
+You can find more detailed instructions on running N1QL queries [here](http://developer.couchbase.com/documentation/server/4.5/getting-started/first-n1ql-query.html#first-n1ql). OR Find the full [Getting Started](http://www.couchbase.com/get-started-developing-nosql) guide and skip **Step-1** since you will have Couchbase Server already deployed.
 
 ##Known Issues and Limitations
 - The deployment scripts are not idempotent and this template should only be used for provisioning a new cluster at the moment.
