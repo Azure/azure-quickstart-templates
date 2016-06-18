@@ -36,7 +36,7 @@ You can get started with a sample app or run a SQL Query on a sample database wi
 - Running you first SQL Query: Simply enable the travel sample bucket (database) 
     - Visit 10.0.0.10:8091 or any privateIP of the nodes provisioned.
     - Under Web Console, enable the sample bucket (Settings Tab > Sample Buckets) bu checking beer-sample
-    - Under the Web Console, go to Query Tab and run "SELECT * FROM `beer-sample` WHERE type="beer" LIMIT 10;". You can find more detailed instructions [here](http://developer.couchbase.com/documentation/server/4.1/getting-started/first-n1ql-query.html#first-n1ql)
+    - Under the Web Console, go to Query Tab and run "SELECT * FROM `beer-sample` WHERE type="beer" LIMIT 10;". You can find more detailed instructions [here](http://developer.couchbase.com/documentation/server/4.5/getting-started/first-n1ql-query.html#first-n1ql)
 - Full Getting Started Guide with SDKs: Skip Step1 here in the [Getting Started](http://www.couchbase.com/get-started-developing-nosql) guide since you will have Couchbase Server already deployed.
 
 ##Known Issues and Limitations
