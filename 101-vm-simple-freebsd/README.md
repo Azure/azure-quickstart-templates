@@ -8,4 +8,4 @@
 </a>
 
 
-This template allows you to deploy a simple FreeBSD VM using a few different options for the FreeBSD version, using the latest patched version. This will deploy in West US on a D1 VM Size.
+This template allows you to deploy a simple FreeBSD VM using a few different options for the FreeBSD version, using the latest patched version. This will deploy in resource group location on a D1 VM Size.
