@@ -36,8 +36,12 @@ You can get started with a sample app or run a SQL Query on a sample database wi
 - Running you first SQL Query: Simply enable the travel sample bucket (database) 
     - Visit 10.0.0.10:8091 or any privateIP of the nodes provisioned.
     - Under Web Console, enable the sample bucket (Settings Tab > Sample Buckets) bu checking beer-sample
-    - Under the Web Console, go to Query Tab and run "SELECT * FROM `beer-sample` WHERE type="beer" LIMIT 10;". You can find more detailed instructions [here](http://developer.couchbase.com/documentation/server/4.5/getting-started/first-n1ql-query.html#first-n1ql)
-- Full Getting Started Guide with SDKs: Skip Step1 here in the [Getting Started](http://www.couchbase.com/get-started-developing-nosql) guide since you will have Couchbase Server already deployed.
+    - Under the Web Console, go to Query Tab and run 
+    
+    ```SELECT * FROM `beer-sample` WHERE type="beer" LIMIT 10;``` 
+    
+You can find more detailed instructions on running N1QL queries [here](http://developer.couchbase.com/documentation/server/4.5/getting-started/first-n1ql-query.html#first-n1ql).
+    - Full Getting Started Guide with SDKs: Skip **Step-1** here in the [Getting Started](http://www.couchbase.com/get-started-developing-nosql) guide since you will have Couchbase Server already deployed.
 
 ##Known Issues and Limitations
 - The deployment scripts are not idempotent and this template should only be used for provisioning a new cluster at the moment.
@@ -48,11 +52,11 @@ You can get started with a sample app or run a SQL Query on a sample database wi
 ##References
 - Couchbase Server 4.5 [Getting Started](http://developer.couchbase.com/documentation/server/4.5/getting-started/index.html)
 - Couchbase Server 4.5 [Installation Guide](http://developer.couchbase.com/documentation/server/4.5/install/installation-guide-intro.html). 
-- Couchbase Server 4.5 [Concepts and Architecture](http://developer.couchbase.com/documentation/server/4.5/concepts/concepts-architecture-intro.html)
+- Couchbase Server 4.5 [Concepts and Architecture](http://developer.couchbase.com/documentation/server/4.5/concepts/concepts-intro.html)
 - Couchbase Server 4.5 [Administraion Guide](http://developer.couchbase.com/documentation/server/4.5/admin/admin-intro.html)
 - Couchbase Server 4.5 [Developer Guide](http://developer.couchbase.com/documentation/server/4.5/developer-guide/intro.html)
 - Couchbase Server 4.5 [SDKs](http://developer.couchbase.com/documentation/server/4.5/sdks/intro.html)
-- Couchbase Server [N1QL Reference Guide](http://developer.couchbase.com/documentation/server/4.5/n1ql/index.html) (SQL-like Query Language for JSON)
+- Couchbase Server [N1QL, SQL for JSON, Reference Guide](http://developer.couchbase.com/documentation/server/4.5/n1ql/n1ql-language-reference/index.html)
 - [Security Considerations](http://developer.couchbase.com/documentation/server/4.5/install/install-security-bp.html) for Couchbase Server 4.5 Installations
 - [Cluster Sizing Guidelines](http://developer.couchbase.com/documentation/server/4.5/install/sizing-general.html) for Couchbase Server 4.5
 
