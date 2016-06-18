@@ -7,20 +7,20 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template deploys a Couchbase Server 4.1 cluster on the Ubuntu 12 virtual machines. The template provisions clusters with a storage account, virtual network, availability sets, public IP addresses and network interfaces required for high performance Couchbase Server cluster installation.
+This template deploys a Couchbase Server 4.5 cluster on the Ubuntu 12 virtual machines. The template provisions clusters with a storage account, virtual network, availability sets, public IP addresses and network interfaces required for high performance Couchbase Server cluster installation.
 
 Couchbase Server Cluster Topology and Settings
 ----------------------------------------------
-Cluster Sizes: Template allows configurable number of Couchbase Server 4.1 cluster nodes and node sizes. Cluster sizes comes in 3 options;
+Cluster Sizes: Template allows configurable number of Couchbase Server 4.5 cluster nodes and node sizes. Cluster sizes comes in 3 options;
 - Small Cluster = 3 Nodes of Standard_A2
 - Medium Cluster  = 4 Nodes of Standard_A6
 - Large Cluster = 5 Nodes of Standard_D14
 
-Simple Deployment Topology: This template deploys Couchbase Server 4.1 Data Service (key based core data operations), Index Service (global secondary index) and Query Service (N1QL Query Engine) on every node. Changing you topology can be done online if you prefer a different deployment topology with services. You can find recommendations on other deployment configurations in Couchbase Server documentation [here](http://developer.couchbase.com/documentation/server/4.1/clustersetup/services-mds.html).
+Simple Deployment Topology: This template deploys Couchbase Server 4.5 Data Service (key based core data operations), Index Service (global secondary index) and Query Service (N1QL Query Engine) on every node. Changing you topology can be done online if you prefer a different deployment topology with services. You can find recommendations on other deployment configurations in Couchbase Server documentation [here](http://developer.couchbase.com/documentation/server/4.5/clustersetup/services-mds.html).
 
-Settings: The index and data service grabs 50% of the recommended RAM. However if you can adjust the RAM allocation in favor of Data service or Index service. You can find more detailed sizing guidelines in the Couchbase Server documentation [here](http://developer.couchbase.com/documentation/server/4.1/install/sizing-general.html). 
+Settings: The index and data service grabs 50% of the recommended RAM. However if you can adjust the RAM allocation in favor of Data service or Index service. You can find more detailed sizing guidelines in the Couchbase Server documentation [here](http://developer.couchbase.com/documentation/server/4.5/install/sizing-general.html). 
 
-Storage: Each node is configured to store data and indexes under the mounted /datadisks folder (non-ephemeral drive)  using a RAID0 configuration for high performance storage. 
+Storage: Each node is configured to store data and indexes under the mounted /datadisks folder (non-ephemeral drive) using a RAID0 configuration for high performance storage. 
 
 Jumpbox for Secure Access to Cluster
 ------------------------------------
@@ -46,13 +46,13 @@ You can get started with a sample app or run a SQL Query on a sample database wi
 
 
 ##References
-- Couchbase Server 4.1 [Getting Started](http://developer.couchbase.com/documentation/server/4.1/getting-started/index.html)
-- Couchbase Server 4.1 [Installation Guide](http://developer.couchbase.com/documentation/server/4.1/install/installation-guide-intro.html). 
-- Couchbase Server 4.1 [Concepts and Architecture](http://developer.couchbase.com/documentation/server/4.1/concepts/concepts-architecture-intro.html)
-- Couchbase Server 4.1 [Administraion Guide](http://developer.couchbase.com/documentation/server/4.1/admin/admin-intro.html)
-- Couchbase Server 4.1 [Developer Guide](http://developer.couchbase.com/documentation/server/4.1/developer-guide/intro.html)
-- Couchbase Server 4.1 [SDKs](http://developer.couchbase.com/documentation/server/4.1/sdks/intro.html)
-- Couchbase Server [N1QL Reference Guide](http://developer.couchbase.com/documentation/server/4.1/n1ql/index.html) (SQL-like Query Language for JSON)
-- [Security Considerations](http://developer.couchbase.com/documentation/server/4.1/install/install-security-bp.html) for Couchbase Server 4.1 Installations
-- [Cluster Sizing Guidelines](http://developer.couchbase.com/documentation/server/4.1/install/sizing-general.html) for Couchbase Server 4.1
+- Couchbase Server 4.5 [Getting Started](http://developer.couchbase.com/documentation/server/4.5/getting-started/index.html)
+- Couchbase Server 4.5 [Installation Guide](http://developer.couchbase.com/documentation/server/4.5/install/installation-guide-intro.html). 
+- Couchbase Server 4.5 [Concepts and Architecture](http://developer.couchbase.com/documentation/server/4.5/concepts/concepts-architecture-intro.html)
+- Couchbase Server 4.5 [Administraion Guide](http://developer.couchbase.com/documentation/server/4.5/admin/admin-intro.html)
+- Couchbase Server 4.5 [Developer Guide](http://developer.couchbase.com/documentation/server/4.5/developer-guide/intro.html)
+- Couchbase Server 4.5 [SDKs](http://developer.couchbase.com/documentation/server/4.5/sdks/intro.html)
+- Couchbase Server [N1QL Reference Guide](http://developer.couchbase.com/documentation/server/4.5/n1ql/index.html) (SQL-like Query Language for JSON)
+- [Security Considerations](http://developer.couchbase.com/documentation/server/4.5/install/install-security-bp.html) for Couchbase Server 4.5 Installations
+- [Cluster Sizing Guidelines](http://developer.couchbase.com/documentation/server/4.5/install/sizing-general.html) for Couchbase Server 4.5
 
