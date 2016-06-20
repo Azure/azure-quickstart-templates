@@ -17,6 +17,8 @@ Once your deployment is complete you will have a private Augur instance with:
 
 ** Note this private key is exposed on a public GitHub repository. It should _never_ be used on a public network. If you use this key for anything besides your private Augur instance, your funds will be lost!
 
+![Augur-Azure](https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/master/augur-on-ubuntu/images/augur_logo.png)
+
 # Template Parameters
 When you launch the installation, you need to specify the following parameters:
 * `newStorageAccountNamePrefix`: make sure this is a unique identifier. Azure Storage's accounts are global so make sure you use a prefix that is unique to your account otherwise there is a good change it will clash with names already in use.
@@ -40,7 +42,7 @@ sudo start/stop augur_ui
 ```
 
 #Security/Privacy
-By default, your Augur instance is publicly available without restriction, assuming they know its URL. If you'd prefer to restrict access to an ip/ip range, this can be done by modifying the Network Security Group in your VM's Azure Portal.
+By default, your Augur instance is publicly available without restriction, assuming they know its URL. If you'd prefer to restrict access to an ip/ip range, this can be done by modifying the Network Security Group in the Azure Portal.
 
 Your VM will also be left with geth's RPC server available, and an unlocked account that contains all of your private chain's ether. Without further access restriction, it is trivial for anyone who knows your RPC server's address to drain your account of private ether.
 
