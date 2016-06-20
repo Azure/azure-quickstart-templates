@@ -14,7 +14,7 @@ function addtofstab()
 {
 	log "addtofstab"
 	partPath=$1
-	local blkid=$(sudo /sbin/blkid $partPath)
+	local blkid=$(/sbin/blkid $partPath)
 	if [[ $blkid =~  UUID=\"(.{36})\" ]]
 	then
 		log "Adding fstab entry"
