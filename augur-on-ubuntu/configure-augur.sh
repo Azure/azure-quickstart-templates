@@ -14,9 +14,13 @@ LOCATION=$2
 VMNAME=`hostname`
 HOMEDIR="/home/$AZUREUSER"
 ETHEREUM_HOST_RPC="http://${VMNAME}.${LOCATION}.cloudapp.azure.com:8545"
+#Save for easy upgrades.
+sudo -u $AZUREUSER echo $ETHEREUM_HOST_RPC > .eth_host_rpc
+
 echo "User: $AZUREUSER"
 echo "User home dir: $HOMEDIR"
 echo "vmname: $VMNAME"
+echo "HOST_RPC: $ETHEREUM_HOST_RPC"
 
 cd $HOMEDIR
 
