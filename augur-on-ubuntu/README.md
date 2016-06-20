@@ -46,3 +46,10 @@ By default, your Augur instance is publicly available without restriction, assum
 
 Your VM will also be left with geth's RPC server available, and an unlocked account that contains all of your private chain's ether. Without further access restriction, it is trivial for anyone who knows your RPC server's address to drain your account of private ether.
 
+#Updates
+Augur is in Beta and undergoing rapid development. Not all features of the UI are guaranteed to work. To update to the latest UI at any point, ssh into your VM and run this as your adminUser (not root).
+```
+curl -sL https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/master/augur-on-ubuntu/update-augur.sh | bash
+```
+
+
