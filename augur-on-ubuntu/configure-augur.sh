@@ -51,7 +51,7 @@ time sudo apt-get update
 ##################
 # Install node.js
 ##################
-time sudo -u $AZUREUSER npm install node.js
+time sudo npm install augur.js
 
 ###############################
 # Fetch Genesis and Private Key
@@ -97,7 +97,7 @@ contracts=$(echo $contracts | sed 's|\x22|\\\"|g')
 contracts=$(echo $contracts | sed "s|[$'\t\r\n ']||g")
 cd ../..
 sudo -u $AZUREUSER sed -i "s|\"{{ \$BUILD_AZURE_CONTRACTS }}\"|'$contracts'|g" init_contracts.js
-node init_contracts.js
+sudo -i -u $AZUREUSER node init_contracts.js
 
 ####################
 #Make a swap file (node can get hungry)
