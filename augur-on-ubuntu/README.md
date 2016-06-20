@@ -42,7 +42,7 @@ sudo start/stop augur_ui
 ```
 
 #Security/Privacy
-By default, your Augur instance is publicly available without restriction, assuming they know its URL. If you'd prefer to restrict access to an ip/ip range, this can be done by modifying the Network Security Group in the Azure Portal.
+By default your Augur instance is publicly available without restriction, assuming they know its URL. If you'd prefer to restrict access to an ip/ip range, this can be done by modifying the Network Security Group in the Azure Portal.
 
 Your VM will also be left with geth's RPC server available, and an unlocked account that contains all of your private chain's ether. Without further access restriction, it is trivial for anyone who knows your RPC server's address to drain your account of private ether.
 
