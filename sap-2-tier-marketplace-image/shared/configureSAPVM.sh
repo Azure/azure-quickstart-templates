@@ -227,5 +227,5 @@ fi
 if [[ -n "$logluns" ]];
 then
 	#createmdadm $logluns "/dev/md128" "/$logname";
-	createlvm $logluns "vg-$logname" "lv-$logname" "/$dbname";
+	createlvm $logluns "vg-$logname" "lv-$logname" "/$logname";
 fi
