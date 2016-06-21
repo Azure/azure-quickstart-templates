@@ -1,104 +1,98 @@
 {
-    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
-    "contentVersion": "1.0.0.0",
-    "parameters": {
-        "redisCacheName": {
-            "type": "string",
-            "metadata": {
-                "description": "The name of the Azure Redis Cache to create."
-            }
-        },
-        "redisCacheLocation": {
-            "type": "string",
-            "metadata": {
-                "description": "The location of the Redis Cache. For best performance, use the same location as the app to be used with the cache."
-            }
-        },
-        "redisShardCount": {
-            "type": "int",
-            "metadata": {
-                "description": "Number of highly available shards to create in the cluster. Requires Premium SKU. Set to 0 to not set up clustering."
-            }
-        },
-        "redisCacheCapacity": {
-            "type": "int",
-            "allowedValues": [
-                1,
-                2,
-                3,
-                4
-            ],
-            "defaultValue": 1,
-            "metadata": {
-                "description": "The size of the new Azure Redis Cache instance. Valid family and capacity combinations are (C0..C6, P1..P4)."
-            }
-        },
-        "virtualNetwork": {
-            "type": "string",
-            "metadata": {
-                "description": "Name of an existing virtual network to join, in same subscription and region. Requires Premium SKU."
-            }
-        },
-        "subnet": {
-            "type": "string",
-            "metadata": {
-                "description": "Name of an existing subnet to join in the virtual network. Requires configuring a virtualNetwork."
-            }
-        },
-        "redisCacheStaticIP": {
-            "type": "string",
-            "metadata": {
-                "description": "The static IP address the redis cache should have, for a cache in a virtual network subnet. Requires configuring a virtualNetwork."
-            }
-        },
-        "existingDiagnosticsStorageAccountName": {
-            "type": "string",
-            "metadata": {
-                "description": "Name of an existing storage account for diagnostics. Must be in the same subscription."
-            }
-        },
-        "enableNonSslPort": {
-            "type": "bool",
-            "defaultValue": false,
-            "metadata": {
-                "description": "Set to true to allow access to redis on port 6379, without SSL tunneling (less secure)."
-            }
-        }
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "redisCacheName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the Azure Redis Cache to create."
+      }
     },
-    "resources": [
+    "redisShardCount": {
+      "type": "int",
+      "metadata": {
+        "description": "Number of highly available shards to create in the cluster. Requires Premium SKU. Set to 0 to not set up clustering."
+      }
+    },
+    "redisCacheCapacity": {
+      "type": "int",
+      "allowedValues": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "defaultValue": 1,
+      "metadata": {
+        "description": "The size of the new Azure Redis Cache instance. Valid family and capacity combinations are (C0..C6, P1..P4)."
+      }
+    },
+    "virtualNetwork": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of an existing virtual network to join, in same subscription and region. Requires Premium SKU."
+      }
+    },
+    "subnet": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of an existing subnet to join in the virtual network. Requires configuring a virtualNetwork."
+      }
+    },
+    "redisCacheStaticIP": {
+      "type": "string",
+      "metadata": {
+        "description": "The static IP address the redis cache should have, for a cache in a virtual network subnet. Requires configuring a virtualNetwork."
+      }
+    },
+    "existingDiagnosticsStorageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of an existing storage account for diagnostics. Must be in the same subscription."
+      }
+    },
+    "enableNonSslPort": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Set to true to allow access to redis on port 6379, without SSL tunneling (less secure)."
+      }
+    }
+  },
+  "resources": [
+    {
+      "apiVersion": "2015-08-01",
+      "name": "[parameters('redisCacheName')]",
+      "type": "Microsoft.Cache/Redis",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "enableNonSslPort": "[parameters('enableNonSslPort')]",
+        "shardCount": "[parameters('redisShardCount')]",
+        "sku": {
+          "capacity": "[parameters('redisCacheCapacity')]",
+          "family": "P",
+          "name": "Premium"
+        },
+        "staticIP": "[parameters('redisCacheStaticIP')]",
+        "subnet": "[parameters('subnet')]",
+        "virtualNetwork": "[parameters('virtualNetwork')]"
+      },
+      "resources": [
         {
-            "apiVersion": "2015-08-01",
-            "name": "[parameters('redisCacheName')]",
-            "type": "Microsoft.Cache/Redis",
-            "location": "[parameters('redisCacheLocation')]",
-            "properties": {
-                "redisVersion": "3.0",
-                "enableNonSslPort": "[parameters('enableNonSslPort')]",
-                "shardCount": "[parameters('redisShardCount')]",
-                "sku": {
-                    "capacity": "[parameters('redisCacheCapacity')]",
-                    "family": "P",
-                    "name": "Premium"
-                },
-                "staticIP": "[parameters('redisCacheStaticIP')]",
-                "subnet": "[parameters('subnet')]",
-                "virtualNetwork": "[parameters('virtualNetwork')]"
-            },
-            "resources": [
-                {
-                    "apiVersion": "2015-07-01", 
-                    "name": "[concat(parameters('redisCacheName'), '/Microsoft.Insights/service')]",
-                    "type": "Microsoft.Cache/redis/providers/diagnosticsettings", 
-                    "location": "[parameters('redisCacheLocation')]",
-                    "dependsOn": [
-                        "[concat('Microsoft.Cache/Redis/', parameters('redisCacheName'))]"
-                    ],
-                    "properties": {
-                        "status": "ON",
-                        "storageAccountName": "[parameters('existingDiagnosticsStorageAccountName')]"
-                    }
-                }
-            ]
+          "apiVersion": "2015-07-01",
+          "name": "[concat(parameters('redisCacheName'), '/Microsoft.Insights/service')]",
+          "type": "Microsoft.Cache/redis/providers/diagnosticsettings",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[concat('Microsoft.Cache/Redis/', parameters('redisCacheName'))]"
+          ],
+          "properties": {
+            "status": "ON",
+            "storageAccountName": "[parameters('existingDiagnosticsStorageAccountName')]"
+          }
         }
-    ]
+      ]
+    }
+  ]
 }
+

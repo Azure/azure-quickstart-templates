@@ -106,7 +106,8 @@
       "Linux": {
         "Publisher": "Microsoft.OSTCExtensions",
         "Name": "CustomScriptForLinux",
-        "Version": "1.3",
+        "autoUpgradeMinorVersion": true,
+        "Version": "1.5",
         "script": "[concat(variables('github'), 'configureSAPVM.sh')]",
         "scriptCall": "sh configureSAPVM.sh"
       }
@@ -203,7 +204,6 @@
     "ascsvmCount": "[variables('vmSizes')[parameters('sapSystemSize')][parameters('systemAvailability')].ascsservercount]",
     "divmSize": "[variables('vmSizes')[parameters('sapSystemSize')][parameters('systemAvailability')].diserversize]",
     "divmCount": "[variables('vmSizes')[parameters('sapSystemSize')][parameters('systemAvailability')].diservercount]",
-    "location": "[resourceGroup().location]",
     "sidlower": "[toLower(parameters('sapSystemId'))]",
     "vmName": "[variables('sidlower')]",
     "storageAccountName": "[concat(variables('sidlower'), uniqueString(variables('sidlower'), resourceGroup().id))]",
@@ -236,11 +236,10 @@
     "storageAccountNameASCS": "[concat('ascs', variables('storageAccountName'))]",
     "internalStorageTypeASCS": "Standard_LRS",
     "loadBalancerNameASCS": "[concat(variables('sidlower'), '-lb-ascs')]",
-    "lbProbePortInternalASCS": 62300,
+    "idleTimeoutInMinutesASCS": 30,
     "vmNameASCS": "[concat(variables('vmName'), '-ascs')]",
     "nicNameASCS": "[concat(variables('sidlower'), '-nic-ascs')]",
 
-    "lbProbePortInternalDB": "62300",
     "avSetNameDB": "[concat(variables('sidlower'), '-avset-db')]",
     "storageAccountNameDB": "[concat('db', variables('storageAccountName'))]",
     "internalStorageTypeDB": "Premium_LRS",
@@ -255,7 +254,17 @@
     "vmNameDI": "[concat(variables('vmName'), '-di')]",
     "osDiskType": "image",
     "apiVerion": "2015-06-15",
-    "apiVerionRm": "2015-01-01"
+    "apiVerionRm": "2015-01-01",
+
+    "BackendPoolASCS": "backendPoolASCS",
+    "LoadBalancerFrontendASCS": "lbFrontendASCS",
+    "lbProbeASCS": "lbProbeASCS",
+    "lbProbePortInternalASCS": 62300,
+
+    "BackendPoolDB": "backendPoolDB",
+    "LoadBalancerFrontendDB": "lbFrontendDB",
+    "LBProbePortDB": "lbProbeDB",
+    "lbProbePortInternalDB": 62400
   },
   "resources": [
 
@@ -273,8 +282,7 @@
           "vnetName": { "value": "[variables('vnetName')]" },
           "addressPrefix": { "value": "[variables('addressPrefix')]" },
           "subnetName": { "value": "[variables('subnetName')]" },
-          "subnetPrefix": { "value": "[variables('subnetPrefix')]" },
-          "location": { "value": "[variables('location')]" }
+          "subnetPrefix": { "value": "[variables('subnetPrefix')]" }
         }
       }
     },
@@ -283,7 +291,7 @@
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('avSetNameASCS')]",
       "apiVersion": "[variables('apiVerion')]",
-      "location": "[variables('location')]",
+      "location": "[resourceGroup().location]",
       "properties": {
         "platformFaultDomainCount": 3,
         "platformUpdateDomainCount": 20
@@ -306,8 +314,7 @@
         },
         "parameters": {
           "publicIpName": { "value": "[concat(variables('publicIpNameASCS'), '-', copyIndex())]" },
-          "publicIPAddressType": { "value": "[variables('publicIPAddressType')]" },
-          "location": { "value": "[variables('location')]" }
+          "publicIPAddressType": { "value": "[variables('publicIPAddressType')]" }
         }
       }
     },
@@ -328,7 +335,6 @@
         },
         "parameters": {
           "nsgName": { "value": "[concat(variables('nsgNameASCS'), '-', copyIndex())]" },
-          "location": { "value": "[variables('location')]" },
           "osType": { "value": "[variables('internalOSType')]" }
         }
       }
@@ -341,7 +347,7 @@
         "name": "nicLoop",
         "count": "[variables('ascsvmCount')]"
       },
-      "location": "[variables('location')]",
+      "location": "[resourceGroup().location]",
       "properties": {
         "accountType": "[variables('internalStorageTypeASCS')]"
       }
@@ -353,7 +359,7 @@
       "dependsOn": [
         "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameVnet'))]"
       ],
-      "location": "[variables('location')]",
+      "location": "[resourceGroup().location]",
       "properties": {
         "frontendIPConfigurations": [
           {
@@ -363,194 +369,374 @@
               },
               "privateIPAllocationMethod": "Dynamic"
             },
-            "name": "LoadBalancerFrontend"
+            "name": "[variables('LoadBalancerFrontendASCS')]"
           }
         ],
         "backendAddressPools": [
           {
-            "name": "BackendPool1"
+            "name": "[variables('BackendPoolASCS')]"
           }
         ],
         "loadBalancingRules": [
           {
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/frontendIpConfigurations/LoadBalancerFrontend')]"
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/frontendIpConfigurations/', variables('LoadBalancerFrontendASCS'))]"
               },
               "backendAddressPool": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/backendAddressPools/BackendPool1')]"
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/backendAddressPools/', variables('BackendPoolASCS'))]"
               },
               "probe": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/probes/lbprobe')]"
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/probes/', variables('lbProbeASCS'))]"
               },
               "protocol": "Tcp",
               "frontendPort": 445,
               "backendPort": 445,
-              "idleTimeoutInMinutes": 15
+              "idleTimeoutInMinutes": "[variables('idleTimeoutInMinutesASCS')]"
             },
             "name": "lbrule445"
           },
           {
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/frontendIpConfigurations/LoadBalancerFrontend')]"
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/frontendIpConfigurations/', variables('LoadBalancerFrontendASCS'))]"
               },
               "backendAddressPool": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/backendAddressPools/BackendPool1')]"
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/backendAddressPools/', variables('BackendPoolASCS'))]"
               },
               "probe": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/probes/lbprobe')]"
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/probes/', variables('lbProbeASCS'))]"
               },
               "protocol": "Tcp",
               "frontendPort": 3200,
               "backendPort": 3200,
-              "idleTimeoutInMinutes": 15
+              "idleTimeoutInMinutes": "[variables('idleTimeoutInMinutesASCS')]"
             },
             "name": "lbrule3200"
           },
           {
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/frontendIpConfigurations/LoadBalancerFrontend')]"
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/frontendIpConfigurations/', variables('LoadBalancerFrontendASCS'))]"
               },
               "backendAddressPool": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/backendAddressPools/BackendPool1')]"
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/backendAddressPools/', variables('BackendPoolASCS'))]"
               },
               "probe": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/probes/lbprobe')]"
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/probes/', variables('lbProbeASCS'))]"
               },
               "protocol": "Tcp",
-              "frontendPort": 3300,
-              "backendPort": 3300,
-              "idleTimeoutInMinutes": 15
+              "frontendPort": 3201,
+              "backendPort": 3201,
+              "idleTimeoutInMinutes": "[variables('idleTimeoutInMinutesASCS')]"
             },
-            "name": "lbrule3300"
+            "name": "lbrule3201"
           },
           {
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/frontendIpConfigurations/LoadBalancerFrontend')]"
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/frontendIpConfigurations/', variables('LoadBalancerFrontendASCS'))]"
               },
               "backendAddressPool": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/backendAddressPools/BackendPool1')]"
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/backendAddressPools/', variables('BackendPoolASCS'))]"
               },
               "probe": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/probes/lbprobe')]"
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/probes/', variables('lbProbeASCS'))]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 3301,
+              "backendPort": 3301,
+              "idleTimeoutInMinutes": "[variables('idleTimeoutInMinutesASCS')]"
+            },
+            "name": "lbrule3301"
+          },
+          {
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/frontendIpConfigurations/', variables('LoadBalancerFrontendASCS'))]"
+              },
+              "backendAddressPool": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/backendAddressPools/', variables('BackendPoolASCS'))]"
+              },
+              "probe": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/probes/', variables('lbProbeASCS'))]"
               },
               "protocol": "Tcp",
               "frontendPort": 3600,
               "backendPort": 3600,
-              "idleTimeoutInMinutes": 15
+              "idleTimeoutInMinutes": "[variables('idleTimeoutInMinutesASCS')]"
             },
             "name": "lbrule3600"
           },
           {
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/frontendIpConfigurations/LoadBalancerFrontend')]"
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/frontendIpConfigurations/', variables('LoadBalancerFrontendASCS'))]"
               },
               "backendAddressPool": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/backendAddressPools/BackendPool1')]"
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/backendAddressPools/', variables('BackendPoolASCS'))]"
               },
               "probe": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/probes/lbprobe')]"
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/probes/', variables('lbProbeASCS'))]"
               },
               "protocol": "Tcp",
               "frontendPort": 3900,
               "backendPort": 3900,
-              "idleTimeoutInMinutes": 15
+              "idleTimeoutInMinutes": "[variables('idleTimeoutInMinutesASCS')]"
             },
             "name": "lbrule3900"
           },
           {
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/frontendIpConfigurations/LoadBalancerFrontend')]"
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/frontendIpConfigurations/', variables('LoadBalancerFrontendASCS'))]"
               },
               "backendAddressPool": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/backendAddressPools/BackendPool1')]"
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/backendAddressPools/', variables('BackendPoolASCS'))]"
               },
               "probe": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/probes/lbprobe')]"
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/probes/', variables('lbProbeASCS'))]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 3901,
+              "backendPort": 3901,
+              "idleTimeoutInMinutes": "[variables('idleTimeoutInMinutesASCS')]"
+            },
+            "name": "lbrule3901"
+          },
+          {
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/frontendIpConfigurations/', variables('LoadBalancerFrontendASCS'))]"
+              },
+              "backendAddressPool": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/backendAddressPools/', variables('BackendPoolASCS'))]"
+              },
+              "probe": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/probes/', variables('lbProbeASCS'))]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 5985,
+              "backendPort": 5985,
+              "idleTimeoutInMinutes": "[variables('idleTimeoutInMinutesASCS')]"
+            },
+            "name": "lbrule5985"
+          },
+          {
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/frontendIpConfigurations/', variables('LoadBalancerFrontendASCS'))]"
+              },
+              "backendAddressPool": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/backendAddressPools/', variables('BackendPoolASCS'))]"
+              },
+              "probe": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/probes/', variables('lbProbeASCS'))]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 8100,
+              "backendPort": 8100,
+              "idleTimeoutInMinutes": "[variables('idleTimeoutInMinutesASCS')]"
+            },
+            "name": "lbrule8100"
+          },
+          {
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/frontendIpConfigurations/', variables('LoadBalancerFrontendASCS'))]"
+              },
+              "backendAddressPool": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/backendAddressPools/', variables('BackendPoolASCS'))]"
+              },
+              "probe": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/probes/', variables('lbProbeASCS'))]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 8101,
+              "backendPort": 8101,
+              "idleTimeoutInMinutes": "[variables('idleTimeoutInMinutesASCS')]"
+            },
+            "name": "lbrule8101"
+          },
+          {
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/frontendIpConfigurations/', variables('LoadBalancerFrontendASCS'))]"
+              },
+              "backendAddressPool": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/backendAddressPools/', variables('BackendPoolASCS'))]"
+              },
+              "probe": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/probes/', variables('lbProbeASCS'))]"
               },
               "protocol": "Tcp",
               "frontendPort": 50013,
               "backendPort": 50013,
-              "idleTimeoutInMinutes": 15
+              "idleTimeoutInMinutes": "[variables('idleTimeoutInMinutesASCS')]"
             },
             "name": "lbrule50013"
           },
           {
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/frontendIpConfigurations/LoadBalancerFrontend')]"
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/frontendIpConfigurations/', variables('LoadBalancerFrontendASCS'))]"
               },
               "backendAddressPool": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/backendAddressPools/BackendPool1')]"
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/backendAddressPools/', variables('BackendPoolASCS'))]"
               },
               "probe": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/probes/lbprobe')]"
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/probes/', variables('lbProbeASCS'))]"
               },
               "protocol": "Tcp",
-              "frontendPort": 50014,
-              "backendPort": 50014,
-              "idleTimeoutInMinutes": 15
+              "frontendPort": 50113,
+              "backendPort": 50113,
+              "idleTimeoutInMinutes": "[variables('idleTimeoutInMinutesASCS')]"
             },
-            "name": "lbrule50014"
+            "name": "lbrule50113"
           },
           {
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/frontendIpConfigurations/LoadBalancerFrontend')]"
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/frontendIpConfigurations/', variables('LoadBalancerFrontendASCS'))]"
               },
               "backendAddressPool": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/backendAddressPools/BackendPool1')]"
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/backendAddressPools/', variables('BackendPoolASCS'))]"
               },
               "probe": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/probes/lbprobe')]"
-              },
-              "protocol": "Tcp",
-              "frontendPort": 50016,
-              "backendPort": 50016,
-              "idleTimeoutInMinutes": 15
-            },
-            "name": "lbrule50016"
-          },
-          {
-            "properties": {
-              "frontendIPConfiguration": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/frontendIpConfigurations/LoadBalancerFrontend')]"
-              },
-              "backendAddressPool": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/backendAddressPools/BackendPool1')]"
-              },
-              "probe": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/probes/lbprobe')]"
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/probes/', variables('lbProbeASCS'))]"
               },
               "protocol": "Tcp",
               "frontendPort": 51013,
               "backendPort": 51013,
-              "idleTimeoutInMinutes": 15
+              "idleTimeoutInMinutes": "[variables('idleTimeoutInMinutesASCS')]"
             },
             "name": "lbrule51013"
           },
           {
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/frontendIpConfigurations/LoadBalancerFrontend')]"
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/frontendIpConfigurations/', variables('LoadBalancerFrontendASCS'))]"
               },
               "backendAddressPool": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/backendAddressPools/BackendPool1')]"
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/backendAddressPools/', variables('BackendPoolASCS'))]"
               },
               "probe": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/probes/lbprobe')]"
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/probes/', variables('lbProbeASCS'))]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 51113,
+              "backendPort": 51113,
+              "idleTimeoutInMinutes": "[variables('idleTimeoutInMinutesASCS')]"
+            },
+            "name": "lbrule51113"
+          },
+          {
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/frontendIpConfigurations/', variables('LoadBalancerFrontendASCS'))]"
+              },
+              "backendAddressPool": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/backendAddressPools/', variables('BackendPoolASCS'))]"
+              },
+              "probe": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/probes/', variables('lbProbeASCS'))]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 50014,
+              "backendPort": 50014,
+              "idleTimeoutInMinutes": "[variables('idleTimeoutInMinutesASCS')]"
+            },
+            "name": "lbrule50014"
+          },
+          {
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/frontendIpConfigurations/', variables('LoadBalancerFrontendASCS'))]"
+              },
+              "backendAddressPool": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/backendAddressPools/', variables('BackendPoolASCS'))]"
+              },
+              "probe": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/probes/', variables('lbProbeASCS'))]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 50114,
+              "backendPort": 50114,
+              "idleTimeoutInMinutes": "[variables('idleTimeoutInMinutesASCS')]"
+            },
+            "name": "lbrule50114"
+          },
+          {
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/frontendIpConfigurations/', variables('LoadBalancerFrontendASCS'))]"
+              },
+              "backendAddressPool": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/backendAddressPools/', variables('BackendPoolASCS'))]"
+              },
+              "probe": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/probes/', variables('lbProbeASCS'))]"
               },
               "protocol": "Tcp",
               "frontendPort": 51014,
               "backendPort": 51014,
-              "idleTimeoutInMinutes": 15
+              "idleTimeoutInMinutes": "[variables('idleTimeoutInMinutesASCS')]"
             },
             "name": "lbrule51014"
+          },
+          {
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/frontendIpConfigurations/', variables('LoadBalancerFrontendASCS'))]"
+              },
+              "backendAddressPool": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/backendAddressPools/', variables('BackendPoolASCS'))]"
+              },
+              "probe": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/probes/', variables('lbProbeASCS'))]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 51114,
+              "backendPort": 51114,
+              "idleTimeoutInMinutes": "[variables('idleTimeoutInMinutesASCS')]"
+            },
+            "name": "lbrule51114"
+          },
+          {
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/frontendIpConfigurations/', variables('LoadBalancerFrontendASCS'))]"
+              },
+              "backendAddressPool": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/backendAddressPools/', variables('BackendPoolASCS'))]"
+              },
+              "probe": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/probes/', variables('lbProbeASCS'))]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 50016,
+              "backendPort": 50016,
+              "idleTimeoutInMinutes": "[variables('idleTimeoutInMinutesASCS')]"
+            },
+            "name": "lbrule50016"
+          },
+          {
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/frontendIpConfigurations/', variables('LoadBalancerFrontendASCS'))]"
+              },
+              "backendAddressPool": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/backendAddressPools/', variables('BackendPoolASCS'))]"
+              },
+              "probe": {
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/probes/', variables('lbProbeASCS'))]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 50116,
+              "backendPort": 50116,
+              "idleTimeoutInMinutes": "[variables('idleTimeoutInMinutesASCS')]"
+            },
+            "name": "lbrule50116"
           }
         ],
         "probes": [
@@ -561,7 +747,7 @@
               "intervalInSeconds": 10,
               "numberOfProbes": 2
             },
-            "name": "lbprobe"
+            "name": "[variables('lbProbeASCS')]"
           }
         ]
       }
@@ -605,7 +791,7 @@
         "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameVnet'))]",
         "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerNameASCS'))]"
       ],
-      "location": "[variables('location')]",
+      "location": "[resourceGroup().location]",
       "properties": {
         "networkSecurityGroup": "[reference(concat(variables('nestedDeploymentNameNICASCS'), '-', copyIndex())).outputs.selectedConfiguration.value.networkSecurityGroup]",
         "ipConfigurations": [
@@ -617,7 +803,7 @@
               "subnet": "[reference(concat(variables('nestedDeploymentNameNICASCS'), '-', copyIndex())).outputs.selectedConfiguration.value.subnet]",
               "loadBalancerBackendAddressPools": [
                 {
-                  "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/backendAddressPools/BackendPool1')]"
+                  "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameASCS')), '/backendAddressPools/', variables('BackendPoolASCS'))]"
                 }
               ]
             }
@@ -681,7 +867,6 @@
           "imageReference": { "value": "[reference(concat(variables('nestedDeploymentNameProf'), '-ascs-', copyIndex())).outputs.imageReference.value]" },
           "osDisk": { "value": "[reference(concat(variables('nestedDeploymentNameProf'), '-ascs-', copyIndex())).outputs.osDisk.value]" },
           "osDiskType": { "value": "[variables('osDiskType')]" },
-          "location": { "value": "[variables('location')]" },
           "sidlower": { "value": "[variables('sidlower')]" },
           "vmName": { "value": "[concat(variables('vmNameASCS'), '-', copyIndex())]" },
           "vmSize": { "value": "[variables('ascsvmSize')]" },
@@ -704,7 +889,7 @@
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('avSetNameDB')]",
       "apiVersion": "[variables('apiVerion')]",
-      "location": "[variables('location')]",
+      "location": "[resourceGroup().location]",
       "properties": {
         "platformFaultDomainCount": 3,
         "platformUpdateDomainCount": 20
@@ -714,7 +899,7 @@
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('storageAccountNameDB')]",
       "apiVersion": "[variables('apiVerion')]",
-      "location": "[variables('location')]",
+      "location": "[resourceGroup().location]",
       "properties": {
         "accountType": "[variables('internalStorageTypeDB')]"
       }
@@ -726,7 +911,7 @@
       "dependsOn": [
         "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameVnet'))]"
       ],
-      "location": "[variables('location')]",
+      "location": "[resourceGroup().location]",
       "properties": {
         "frontendIPConfigurations": [
           {
@@ -736,25 +921,25 @@
               },
               "privateIPAllocationMethod": "Dynamic"
             },
-            "name": "LoadBalancerFrontend"
+            "name": "[variables('LoadBalancerFrontendDB')]"
           }
         ],
         "backendAddressPools": [
           {
-            "name": "BackendPool1"
+            "name": "[variables('BackendPoolDB')]"
           }
         ],
         "loadBalancingRules": [
           {
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameDB')), '/frontendIpConfigurations/LoadBalancerFrontend')]"
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameDB')), '/frontendIpConfigurations/', variables('LoadBalancerFrontendDB'))]"
               },
               "backendAddressPool": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameDB')), '/backendAddressPools/BackendPool1')]"
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameDB')), '/backendAddressPools/', variables('BackendPoolDB'))]"
               },
               "probe": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameDB')), '/probes/lbprobe')]"
+                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameDB')), '/probes/', variables('LBProbePortDB'))]"
               },
               "protocol": "Tcp",
               "frontendPort": 1433,
@@ -771,7 +956,7 @@
               "intervalInSeconds": 5,
               "numberOfProbes": 2
             },
-            "name": "lbprobe"
+            "name": "[variables('LBProbePortDB')]"
           }
         ]
       }
@@ -813,7 +998,7 @@
         "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameVnet'))]",
         "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameNICDB'), '-', copyIndex())]"
       ],
-      "location": "[variables('location')]",
+      "location": "[resourceGroup().location]",
       "properties": {
         "ipConfigurations": [
           {
@@ -823,7 +1008,7 @@
               "subnet": "[reference(concat(variables('nestedDeploymentNameNICDB'), '-', copyIndex())).outputs.selectedConfiguration.value.subnet]",
               "loadBalancerBackendAddressPools": [
                 {
-                  "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameDB')), '/backendAddressPools/BackendPool1')]"
+                  "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerNameDB')), '/backendAddressPools/', variables('BackendPoolDB'))]"
                 }
               ]
             }
@@ -886,7 +1071,6 @@
           "imageReference": { "value": "[reference(concat(variables('nestedDeploymentNameProf'), '-db-', copyIndex())).outputs.imageReference.value]" },
           "osDisk": { "value": "[reference(concat(variables('nestedDeploymentNameProf'), '-db-', copyIndex())).outputs.osDisk.value]" },
           "osDiskType": { "value": "[variables('osDiskType')]" },
-          "location": { "value": "[variables('location')]" },
           "sidlower": { "value": "[variables('sidlower')]" },
           "vmName": { "value": "[concat(variables('vmNameDB'), '-', copyIndex())]" },
           "vmSize": { "value": "[variables('dbvmSize')]" },
@@ -908,7 +1092,7 @@
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('avSetNameDI')]",
       "apiVersion": "[variables('apiVerion')]",
-      "location": "[variables('location')]",
+      "location": "[resourceGroup().location]",
       "properties": {
         "platformFaultDomainCount": 3,
         "platformUpdateDomainCount": 20
@@ -951,7 +1135,7 @@
         "name": "nicLoop",
         "count": "[variables('divmCount')]"
       },
-      "location": "[variables('location')]",
+      "location": "[resourceGroup().location]",
       "properties": {
         "ipConfigurations": [
           {
@@ -972,7 +1156,7 @@
         "name": "nicLoop",
         "count": "[add(div(variables('divmCount'), 3), 1)]"
       },
-      "location": "[variables('location')]",
+      "location": "[resourceGroup().location]",
       "properties": {
         "accountType": "[variables('internalStorageTypeDI')]"
       }
@@ -1032,7 +1216,6 @@
           "imageReference": { "value": "[reference(concat(variables('nestedDeploymentNameProf'), '-di-', copyIndex())).outputs.imageReference.value]" },
           "osDisk": { "value": "[reference(concat(variables('nestedDeploymentNameProf'), '-di-', copyIndex())).outputs.osDisk.value]" },
           "osDiskType": { "value": "[variables('osDiskType')]" },
-          "location": { "value": "[variables('location')]" },
           "sidlower": { "value": "[variables('sidlower')]" },
           "vmName": { "value": "[concat(variables('vmNameDI'), '-', copyIndex())]" },
           "vmSize": { "value": "[variables('ascsvmSize')]" },
