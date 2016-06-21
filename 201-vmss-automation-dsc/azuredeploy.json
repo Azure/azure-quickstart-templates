@@ -8,29 +8,6 @@
                 "description": "The public DNS name label for the service.  The pattern will follow: <domainNamePrefix>.<region>.cloudapp.azure.com"
             }
         },
-        "resourceLocation": {
-            "type": "string",
-            "allowedValues": [
-                "East US",
-                "East US 2",
-                "West US",
-                "Central US",
-                "South Central US",
-                "North Central US",
-                "North Europe",
-                "West Europe",
-                "Southeast Asia",
-                "East Asia",
-                "Japan West",
-                "Japan East",
-                "Brazil South",
-                "Australia East",
-                "Australia Southeast"
-            ],
-            "metadata": {
-                "description": "Azure region where all resources will be deployed. This is distinct from resource group location."
-            }
-        },
         "vmSku": {
             "type": "string",
             "defaultValue": "Standard_A2",
@@ -342,389 +319,389 @@
                 }
             ]
         },
-        {
-            "type": "Microsoft.Storage/storageAccounts",
-            "name": "[concat(variables('uniqueStringArray')[copyIndex()], variables('newStorageAccountSuffix'))]",
-            "location": "[parameters('resourceLocation')]",
-            "apiVersion": "[variables('storageApi')]",
-            "copy": {
-                "name": "storageLoop",
-                "count": "[variables('saCount')]"
-            },
-            "properties": {
-                "accountType": "[variables('storageAccountType')]"
-            }
+      {
+        "type": "Microsoft.Storage/storageAccounts",
+        "name": "[concat(variables('uniqueStringArray')[copyIndex()], variables('newStorageAccountSuffix'))]",
+        "location": "[resourceGroup().location]",
+        "apiVersion": "[variables('storageApi')]",
+        "copy": {
+          "name": "storageLoop",
+          "count": "[variables('saCount')]"
         },
-        {
-            "type": "Microsoft.Storage/storageAccounts",
-            "name": "[variables('diagnosticsStorageAccountName')]",
-            "location": "[parameters('resourceLocation')]",
-            "apiVersion": "[variables('storageApi')]",
-            "properties": {
-                "accountType": "[variables('storageAccountType')]"
-            }
-        },
-        {
-            "type": "Microsoft.Network/virtualNetworks",
-            "name": "[variables('virtualNetworkName')]",
-            "location": "[parameters('resourceLocation')]",
-            "apiVersion": "[variables('networkApi')]",
-            "properties": {
-                "addressSpace": {
-                    "addressPrefixes": [
-                        "[variables('addressPrefix')]"
-                    ]
-                },
-                "subnets": [
-                    {
-                        "name": "[variables('subnetName')]",
-                        "properties": {
-                            "addressPrefix": "[variables('subnetPrefix')]"
-                        }
-                    }
-                ]
-            }
-        },
-        {
-            "type": "Microsoft.Network/publicIPAddresses",
-            "name": "[variables('publicIPAddressName')]",
-            "location": "[parameters('resourceLocation')]",
-            "apiVersion": "[variables('networkApi')]",
-            "properties": {
-                "publicIPAllocationMethod": "Dynamic",
-                "dnsSettings": {
-                    "domainNameLabel": "[parameters('domainNamePrefix')]"
-                }
-            }
-        },
-        {
-            "type": "Microsoft.Network/loadBalancers",
-            "name": "[variables('loadBalancerName')]",
-            "location": "[parameters('resourceLocation')]",
-            "apiVersion": "[variables('networkApi')]",
-            "dependsOn": [
-                "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
-            ],
-            "properties": {
-                "frontendIPConfigurations": [
-                    {
-                        "name": "[variables('frontendIPConfigurationsName')]",
-                        "properties": {
-                            "publicIPAddress": {
-                                "id": "[variables('publicIPAddressID')]"
-                            }
-                        }
-                    }
-                ],
-                "backendAddressPools": [
-                    {
-                        "name": "[variables('backendAddressPoolsName')]"
-                    }
-                ],
-                "loadBalancingRules": [
-                    {
-                        "name": "[variables('loadBalancingRulesName')]",
-                        "properties": {
-                            "frontendIPConfiguration": {
-                                "id": "[variables('frontEndIPConfigurationsID')]"
-                            },
-                            "backendAddressPool": {
-                                "id": "[variables('backendAddressPoolID')]"
-                            },
-                            "protocol": "tcp",
-                            "frontendPort": 80,
-                            "backendPort": 80,
-                            "enableFloatingIP": false,
-                            "idleTimeoutInMinutes": 5,
-                            "probe": {
-                                "id": "[variables('httpProbeID')]"
-                            }
-                        }
-                    }
-                ],
-                "probes": [
-                    {
-                        "name": "[variables('httpProbeName')]",
-                        "properties": {
-                            "protocol": "http",
-                            "port": 80,
-                            "intervalInSeconds": 5,
-                            "numberOfProbes": 2,
-                            "requestPath": "[variables('httpProbeRequestPath')]"
-                        }
-                    }
-                ],
-                "inboundNatPools": [
-                    {
-                        "name": "[variables('natRDPPoolName')]",
-                        "properties": {
-                            "frontendIPConfiguration": {
-                                "id": "[variables('frontEndIPConfigurationsID')]"
-                            },
-                            "protocol": "tcp",
-                            "frontendPortRangeStart": "[variables('natRDPStartPort')]",
-                            "frontendPortRangeEnd": "[variables('natRDPEndPort')]",
-                            "backendPort": "[variables('natRDPBackendPort')]"
-                        }
-                    },
-                    {
-                        "name": "[variables('natWinRMPoolName')]",
-                        "properties": {
-                            "frontendIPConfiguration": {
-                                "id": "[variables('frontEndIPConfigurationsID')]"
-                            },
-                            "protocol": "tcp",
-                            "frontendPortRangeStart": "[variables('natWinRMStartPort')]",
-                            "frontendPortRangeEnd": "[variables('natWinRMEndPort')]",
-                            "backendPort": "[variables('natWinRMBackendPort')]"
-                        }
-                    }
-                ]
-            }
-        },
-        {
-            "type": "Microsoft.Compute/virtualMachineScaleSets",
-            "name": "[variables('namingInfix')]",
-            "location": "[parameters('resourceLocation')]",
-            "apiVersion": "[variables('computeApi')]",
-            "dependsOn": [
-                "[concat('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]",
-                "[concat('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'),'/Modules/',variables('dscModules').xNetworking.ModuleName)]",
-                "[concat('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'),'/Configurations/', parameters('configurationName'))]",
-                "storageLoop",
-                "[concat('Microsoft.Storage/storageAccounts/', variables('diagnosticsStorageAccountName'))]",
-                "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]",
-                "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
-            ],
-            "sku": {
-                "name": "[parameters('vmSku')]",
-                "tier": "Standard",
-                "capacity": "[parameters('instanceCount')]"
-            },
-            "properties": {
-	            "overprovision": "true", 
-                "upgradePolicy": {
-                    "mode": "Manual"
-                },
-                "virtualMachineProfile": {
-                    "storageProfile": {
-                        "osDisk": {
-                            "vhdContainers": [
-                                "[concat('https://', variables('uniqueStringArray')[0], variables('newStorageAccountSuffix'), '.blob.core.windows.net/', variables('vhdContainerName'))]",
-                                "[concat('https://', variables('uniqueStringArray')[1], variables('newStorageAccountSuffix'), '.blob.core.windows.net/', variables('vhdContainerName'))]",
-                                "[concat('https://', variables('uniqueStringArray')[2], variables('newStorageAccountSuffix'), '.blob.core.windows.net/', variables('vhdContainerName'))]",
-                                "[concat('https://', variables('uniqueStringArray')[3], variables('newStorageAccountSuffix'), '.blob.core.windows.net/', variables('vhdContainerName'))]",
-                                "[concat('https://', variables('uniqueStringArray')[4], variables('newStorageAccountSuffix'), '.blob.core.windows.net/', variables('vhdContainerName'))]"
-                            ],
-                            "name": "[variables('osDiskName')]",
-                            "caching": "ReadOnly",
-                            "createOption": "FromImage"
-                        },
-                        "imageReference": "[variables('imageReference')]"
-                    },
-                    "extensionProfile": {
-                        "extensions": [
-                            {
-                                "name": "Microsoft.Powershell.DSC",
-                                "properties": {
-                                    "publisher": "Microsoft.Powershell",
-                                    "type": "DSC",
-                                    "typeHandlerVersion": "2.15",
-				    "autoUpgradeMinorVersion": true,
-                                    "protectedSettings": {
-                                        "Items": {
-                                            "registrationKeyPrivate": "[parameters('registrationKey')]"
-                                        }
-                                    },
-                                    "settings": {
-                                        "ModulesUrl": "https://raw.github.com/Azure/azure-quickstart-templates/master/201-vmss-automation-dsc/UpdateLCMforAAPull.zip",
-                                        "SasToken": "",
-                                        "ConfigurationFunction": "UpdateLCMforAAPull.ps1\\ConfigureLCMforAAPull",
-                                        "Properties": [
-                                            {
-                                                "Name": "RegistrationKey",
-                                                "Value": {
-                                                    "UserName": "PLACEHOLDER_DONOTUSE",
-                                                    "Password": "PrivateSettingsRef:registrationKeyPrivate"
-                                                },
-                                                "TypeName": "System.Management.Automation.PSCredential"
-                                            },
-                                            {
-                                                "Name": "RegistrationUrl",
-                                                "Value": "[parameters('registrationUrl')]",
-                                                "TypeName": "System.String"
-                                            },
-                                            {
-                                                "Name": "NodeConfigurationName",
-                                                "Value": "[parameters('nodeConfigurationName')]",
-                                                "TypeName": "System.String"
-                                            },
-                                            {
-                                                "Name": "ConfigurationMode",
-                                                "Value": "[parameters('configurationMode')]",
-                                                "TypeName": "System.String"
-                                            },
-                                            {
-                                                "Name": "ConfigurationModeFrequencyMins",
-                                                "Value": "[parameters('configurationModeFrequencyMins')]",
-                                                "TypeName": "System.Int32"
-                                            },
-                                            {
-                                                "Name": "RefreshFrequencyMins",
-                                                "Value": "[parameters('refreshFrequencyMins')]",
-                                                "TypeName": "System.Int32"
-                                            },
-                                            {
-                                                "Name": "RebootNodeIfNeeded",
-                                                "Value": "[parameters('rebootNodeIfNeeded')]",
-                                                "TypeName": "System.Boolean"
-                                            },
-                                            {
-                                                "Name": "ActionAfterReboot",
-                                                "Value": "[parameters('actionAfterReboot')]",
-                                                "TypeName": "System.String"
-                                            },
-                                            {
-                                                "Name": "AllowModuleOverwrite",
-                                                "Value": "[parameters('allowModuleOverwrite')]",
-                                                "TypeName": "System.Boolean"
-                                            },
-                                            {
-                                                "Name": "Timestamp",
-                                                "Value": "[parameters('timestamp')]",
-                                                "TypeName": "System.String"
-                                            }
-                                        ]
-                                    }
-                                }
-                            },
-                            {
-								"name": "Microsoft.Insights.VMDiagnosticsSettings",
-								"properties": {
-									"publisher": "Microsoft.Azure.Diagnostics",
-									"type": "IaaSDiagnostics",
-                                    "typeHandlerVersion": "1.5",
-									"autoUpgradeMinorVersion": true,
-									"settings": {
-										"xmlCfg": "[base64(concat(variables('wadcfgxstart'),variables('wadmetricsresourceid'),variables('wadcfgxend')))]",
-										"storageAccount": "[variables('diagnosticsStorageAccountName')]"
-									},
-									"protectedSettings": {
-										"storageAccountName": "[variables('diagnosticsStorageAccountName')]",
-										"storageAccountKey": "[listkeys(variables('accountid'), '2015-06-15').key1]",
-										"storageAccountEndPoint": "https://core.windows.net"
-									}
-								}
-							}
-                        ]
-                    },
-                    "osProfile": {
-                        "computerNamePrefix": "[variables('namingInfix')]",
-                        "adminUsername": "[parameters('adminUsername')]",
-                        "adminPassword": "[parameters('adminPassword')]"
-                    },
-                    "networkProfile": {
-                        "networkInterfaceConfigurations": [
-                            {
-                                "name": "[variables('nicName')]",
-                                "properties": {
-                                    "primary": "true",
-                                    "ipConfigurations": [
-                                        {
-                                            "name": "[variables('ipConfigName')]",
-                                            "properties": {
-                                                "subnet": {
-                                                    "id": "[variables('subnetID')]"
-                                                },
-                                                "loadBalancerBackendAddressPools": [
-                                                    {
-                                                        "id": "[variables('backendAddressPoolID')]"
-                                                    }
-                                                ],
-                                                "loadBalancerInboundNatPools": [
-                                                    {
-                                                        "id": "[variables('natRDPPoolID')]"
-                                                    },
-                                                    {
-                                                        "id": "[variables('natWinRMPoolID')]"
-                                                    }
-                                                ]
-                                            }
-                                        }
-                                    ]
-                                }
-                            }
-                        ]
-                    }
-                }
-            }
-        },
-        {
-            "type": "Microsoft.Insights/autoscaleSettings",
-            "apiVersion": "[variables('insightsApi')]",
-            "name": "[variables('autoscalewad')]",
-            "location":"[parameters('resourceLocation')]",
-            "dependsOn": [
-                "[concat('Microsoft.Compute/virtualMachineScaleSets/', parameters('vmssName'))]"
-            ],
-            "properties": {
-                "name": "[variables('autoscalewad')]",
-                "targetResourceUri": "[concat('/subscriptions/',subscription().subscriptionId, '/resourceGroups/',  resourceGroup().name, '/providers/Microsoft.Compute/virtualMachineScaleSets/', parameters('vmssName'))]",
-                "enabled": true,
-                "profiles": [
-                {
-                    "name": "[variables('autoscaleProcProfile')]",
-                    "capacity": {
-                    "minimum": "2",
-                    "maximum": "25",
-                    "default": "2"
-                    },
-                    "rules": [
-                    {
-                        "metricTrigger":{
-                                   "metricName":"\\Processor(_Total)\\% Processor Time",
-                                   "metricNamespace":"",
-                                   "metricResourceUri": "[concat('/subscriptions/',subscription().subscriptionId, '/resourceGroups/',  resourceGroup().name, '/providers/Microsoft.Compute/virtualMachineScaleSets/', variables('namingInfix'))]",
-                                   "timeGrain":"PT1M",
-                                   "statistic":"Average",
-                                   "timeWindow":"PT5M",
-                                   "timeAggregation":"Average",
-                                   "operator":"GreaterThan",
-                                   "threshold":50.0
-                               },
-
-                        "scaleAction": {
-                        "direction": "Increase",
-                        "type": "ChangeCount",
-                        "value": "1",
-                        "cooldown": "PT1M"
-                        }
-                    },
-                    {
-                        "metricTrigger":{
-                                   "metricName":"\\Processor(_Total)\\% Processor Time",
-                                   "metricNamespace":"",
-                                   "metricResourceUri": "[concat('/subscriptions/',subscription().subscriptionId, '/resourceGroups/',  resourceGroup().name, '/providers/Microsoft.Compute/virtualMachineScaleSets/', variables('namingInfix'))]",
-                                   "timeGrain":"PT1M",
-                                   "statistic":"Average",
-                                   "timeWindow":"PT5M",
-                                   "timeAggregation":"Average",
-                                   "operator":"LessThan",
-                                   "threshold":50.0
-                               },
-
-                        "scaleAction": {
-                        "direction": "Decrease",
-                        "type": "ChangeCount",
-                        "value": "1",
-                        "cooldown": "PT1M"
-                        }
-                    }
-                    ]
-                }
-                ]
-            }
+        "properties": {
+          "accountType": "[variables('storageAccountType')]"
         }
+      },
+      {
+        "type": "Microsoft.Storage/storageAccounts",
+        "name": "[variables('diagnosticsStorageAccountName')]",
+        "location": "[resourceGroup().location]",
+        "apiVersion": "[variables('storageApi')]",
+        "properties": {
+          "accountType": "[variables('storageAccountType')]"
+        }
+      },
+      {
+        "type": "Microsoft.Network/virtualNetworks",
+        "name": "[variables('virtualNetworkName')]",
+        "location": "[resourceGroup().location]",
+        "apiVersion": "[variables('networkApi')]",
+        "properties": {
+          "addressSpace": {
+            "addressPrefixes": [
+              "[variables('addressPrefix')]"
+            ]
+          },
+          "subnets": [
+            {
+              "name": "[variables('subnetName')]",
+              "properties": {
+                "addressPrefix": "[variables('subnetPrefix')]"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "type": "Microsoft.Network/publicIPAddresses",
+        "name": "[variables('publicIPAddressName')]",
+        "location": "[resourceGroup().location]",
+        "apiVersion": "[variables('networkApi')]",
+        "properties": {
+          "publicIPAllocationMethod": "Dynamic",
+          "dnsSettings": {
+            "domainNameLabel": "[parameters('domainNamePrefix')]"
+          }
+        }
+      },
+      {
+        "type": "Microsoft.Network/loadBalancers",
+        "name": "[variables('loadBalancerName')]",
+        "location": "[resourceGroup().location]",
+        "apiVersion": "[variables('networkApi')]",
+        "dependsOn": [
+          "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
+        ],
+        "properties": {
+          "frontendIPConfigurations": [
+            {
+              "name": "[variables('frontendIPConfigurationsName')]",
+              "properties": {
+                "publicIPAddress": {
+                  "id": "[variables('publicIPAddressID')]"
+                }
+              }
+            }
+          ],
+          "backendAddressPools": [
+            {
+              "name": "[variables('backendAddressPoolsName')]"
+            }
+          ],
+          "loadBalancingRules": [
+            {
+              "name": "[variables('loadBalancingRulesName')]",
+              "properties": {
+                "frontendIPConfiguration": {
+                  "id": "[variables('frontEndIPConfigurationsID')]"
+                },
+                "backendAddressPool": {
+                  "id": "[variables('backendAddressPoolID')]"
+                },
+                "protocol": "tcp",
+                "frontendPort": 80,
+                "backendPort": 80,
+                "enableFloatingIP": false,
+                "idleTimeoutInMinutes": 5,
+                "probe": {
+                  "id": "[variables('httpProbeID')]"
+                }
+              }
+            }
+          ],
+          "probes": [
+            {
+              "name": "[variables('httpProbeName')]",
+              "properties": {
+                "protocol": "http",
+                "port": 80,
+                "intervalInSeconds": 5,
+                "numberOfProbes": 2,
+                "requestPath": "[variables('httpProbeRequestPath')]"
+              }
+            }
+          ],
+          "inboundNatPools": [
+            {
+              "name": "[variables('natRDPPoolName')]",
+              "properties": {
+                "frontendIPConfiguration": {
+                  "id": "[variables('frontEndIPConfigurationsID')]"
+                },
+                "protocol": "tcp",
+                "frontendPortRangeStart": "[variables('natRDPStartPort')]",
+                "frontendPortRangeEnd": "[variables('natRDPEndPort')]",
+                "backendPort": "[variables('natRDPBackendPort')]"
+              }
+            },
+            {
+              "name": "[variables('natWinRMPoolName')]",
+              "properties": {
+                "frontendIPConfiguration": {
+                  "id": "[variables('frontEndIPConfigurationsID')]"
+                },
+                "protocol": "tcp",
+                "frontendPortRangeStart": "[variables('natWinRMStartPort')]",
+                "frontendPortRangeEnd": "[variables('natWinRMEndPort')]",
+                "backendPort": "[variables('natWinRMBackendPort')]"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "type": "Microsoft.Compute/virtualMachineScaleSets",
+        "name": "[variables('namingInfix')]",
+        "location": "[resourceGroup().location]",
+        "apiVersion": "[variables('computeApi')]",
+        "dependsOn": [
+          "[concat('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]",
+          "[concat('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'),'/Modules/',variables('dscModules').xNetworking.ModuleName)]",
+          "[concat('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'),'/Configurations/', parameters('configurationName'))]",
+          "storageLoop",
+          "[concat('Microsoft.Storage/storageAccounts/', variables('diagnosticsStorageAccountName'))]",
+          "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]",
+          "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        ],
+        "sku": {
+          "name": "[parameters('vmSku')]",
+          "tier": "Standard",
+          "capacity": "[parameters('instanceCount')]"
+        },
+        "properties": {
+          "overprovision": "true",
+          "upgradePolicy": {
+            "mode": "Manual"
+          },
+          "virtualMachineProfile": {
+            "storageProfile": {
+              "osDisk": {
+                "vhdContainers": [
+                  "[concat('https://', variables('uniqueStringArray')[0], variables('newStorageAccountSuffix'), '.blob.core.windows.net/', variables('vhdContainerName'))]",
+                  "[concat('https://', variables('uniqueStringArray')[1], variables('newStorageAccountSuffix'), '.blob.core.windows.net/', variables('vhdContainerName'))]",
+                  "[concat('https://', variables('uniqueStringArray')[2], variables('newStorageAccountSuffix'), '.blob.core.windows.net/', variables('vhdContainerName'))]",
+                  "[concat('https://', variables('uniqueStringArray')[3], variables('newStorageAccountSuffix'), '.blob.core.windows.net/', variables('vhdContainerName'))]",
+                  "[concat('https://', variables('uniqueStringArray')[4], variables('newStorageAccountSuffix'), '.blob.core.windows.net/', variables('vhdContainerName'))]"
+                ],
+                "name": "[variables('osDiskName')]",
+                "caching": "ReadOnly",
+                "createOption": "FromImage"
+              },
+              "imageReference": "[variables('imageReference')]"
+            },
+            "extensionProfile": {
+              "extensions": [
+                {
+                  "name": "Microsoft.Powershell.DSC",
+                  "properties": {
+                    "publisher": "Microsoft.Powershell",
+                    "type": "DSC",
+                    "typeHandlerVersion": "2.15",
+                    "autoUpgradeMinorVersion": true,
+                    "protectedSettings": {
+                      "Items": {
+                        "registrationKeyPrivate": "[parameters('registrationKey')]"
+                      }
+                    },
+                    "settings": {
+                      "ModulesUrl": "https://raw.github.com/Azure/azure-quickstart-templates/master/201-vmss-automation-dsc/UpdateLCMforAAPull.zip",
+                      "SasToken": "",
+                      "ConfigurationFunction": "UpdateLCMforAAPull.ps1\\ConfigureLCMforAAPull",
+                      "Properties": [
+                        {
+                          "Name": "RegistrationKey",
+                          "Value": {
+                            "UserName": "PLACEHOLDER_DONOTUSE",
+                            "Password": "PrivateSettingsRef:registrationKeyPrivate"
+                          },
+                          "TypeName": "System.Management.Automation.PSCredential"
+                        },
+                        {
+                          "Name": "RegistrationUrl",
+                          "Value": "[parameters('registrationUrl')]",
+                          "TypeName": "System.String"
+                        },
+                        {
+                          "Name": "NodeConfigurationName",
+                          "Value": "[parameters('nodeConfigurationName')]",
+                          "TypeName": "System.String"
+                        },
+                        {
+                          "Name": "ConfigurationMode",
+                          "Value": "[parameters('configurationMode')]",
+                          "TypeName": "System.String"
+                        },
+                        {
+                          "Name": "ConfigurationModeFrequencyMins",
+                          "Value": "[parameters('configurationModeFrequencyMins')]",
+                          "TypeName": "System.Int32"
+                        },
+                        {
+                          "Name": "RefreshFrequencyMins",
+                          "Value": "[parameters('refreshFrequencyMins')]",
+                          "TypeName": "System.Int32"
+                        },
+                        {
+                          "Name": "RebootNodeIfNeeded",
+                          "Value": "[parameters('rebootNodeIfNeeded')]",
+                          "TypeName": "System.Boolean"
+                        },
+                        {
+                          "Name": "ActionAfterReboot",
+                          "Value": "[parameters('actionAfterReboot')]",
+                          "TypeName": "System.String"
+                        },
+                        {
+                          "Name": "AllowModuleOverwrite",
+                          "Value": "[parameters('allowModuleOverwrite')]",
+                          "TypeName": "System.Boolean"
+                        },
+                        {
+                          "Name": "Timestamp",
+                          "Value": "[parameters('timestamp')]",
+                          "TypeName": "System.String"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "name": "Microsoft.Insights.VMDiagnosticsSettings",
+                  "properties": {
+                    "publisher": "Microsoft.Azure.Diagnostics",
+                    "type": "IaaSDiagnostics",
+                    "typeHandlerVersion": "1.5",
+                    "autoUpgradeMinorVersion": true,
+                    "settings": {
+                      "xmlCfg": "[base64(concat(variables('wadcfgxstart'),variables('wadmetricsresourceid'),variables('wadcfgxend')))]",
+                      "storageAccount": "[variables('diagnosticsStorageAccountName')]"
+                    },
+                    "protectedSettings": {
+                      "storageAccountName": "[variables('diagnosticsStorageAccountName')]",
+                      "storageAccountKey": "[listkeys(variables('accountid'), '2015-06-15').key1]",
+                      "storageAccountEndPoint": "https://core.windows.net"
+                    }
+                  }
+                }
+              ]
+            },
+            "osProfile": {
+              "computerNamePrefix": "[variables('namingInfix')]",
+              "adminUsername": "[parameters('adminUsername')]",
+              "adminPassword": "[parameters('adminPassword')]"
+            },
+            "networkProfile": {
+              "networkInterfaceConfigurations": [
+                {
+                  "name": "[variables('nicName')]",
+                  "properties": {
+                    "primary": "true",
+                    "ipConfigurations": [
+                      {
+                        "name": "[variables('ipConfigName')]",
+                        "properties": {
+                          "subnet": {
+                            "id": "[variables('subnetID')]"
+                          },
+                          "loadBalancerBackendAddressPools": [
+                            {
+                              "id": "[variables('backendAddressPoolID')]"
+                            }
+                          ],
+                          "loadBalancerInboundNatPools": [
+                            {
+                              "id": "[variables('natRDPPoolID')]"
+                            },
+                            {
+                              "id": "[variables('natWinRMPoolID')]"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "type": "Microsoft.Insights/autoscaleSettings",
+        "apiVersion": "[variables('insightsApi')]",
+        "name": "[variables('autoscalewad')]",
+        "location": "[resourceGroup().location]",
+        "dependsOn": [
+          "[concat('Microsoft.Compute/virtualMachineScaleSets/', parameters('vmssName'))]"
+        ],
+        "properties": {
+          "name": "[variables('autoscalewad')]",
+          "targetResourceUri": "[concat('/subscriptions/',subscription().subscriptionId, '/resourceGroups/',  resourceGroup().name, '/providers/Microsoft.Compute/virtualMachineScaleSets/', parameters('vmssName'))]",
+          "enabled": true,
+          "profiles": [
+            {
+              "name": "[variables('autoscaleProcProfile')]",
+              "capacity": {
+                "minimum": "2",
+                "maximum": "25",
+                "default": "2"
+              },
+              "rules": [
+                {
+                  "metricTrigger": {
+                    "metricName": "\\Processor(_Total)\\% Processor Time",
+                    "metricNamespace": "",
+                    "metricResourceUri": "[concat('/subscriptions/',subscription().subscriptionId, '/resourceGroups/',  resourceGroup().name, '/providers/Microsoft.Compute/virtualMachineScaleSets/', variables('namingInfix'))]",
+                    "timeGrain": "PT1M",
+                    "statistic": "Average",
+                    "timeWindow": "PT5M",
+                    "timeAggregation": "Average",
+                    "operator": "GreaterThan",
+                    "threshold": 50.0
+                  },
+
+                  "scaleAction": {
+                    "direction": "Increase",
+                    "type": "ChangeCount",
+                    "value": "1",
+                    "cooldown": "PT1M"
+                  }
+                },
+                {
+                  "metricTrigger": {
+                    "metricName": "\\Processor(_Total)\\% Processor Time",
+                    "metricNamespace": "",
+                    "metricResourceUri": "[concat('/subscriptions/',subscription().subscriptionId, '/resourceGroups/',  resourceGroup().name, '/providers/Microsoft.Compute/virtualMachineScaleSets/', variables('namingInfix'))]",
+                    "timeGrain": "PT1M",
+                    "statistic": "Average",
+                    "timeWindow": "PT5M",
+                    "timeAggregation": "Average",
+                    "operator": "LessThan",
+                    "threshold": 50.0
+                  },
+
+                  "scaleAction": {
+                    "direction": "Decrease",
+                    "type": "ChangeCount",
+                    "value": "1",
+                    "cooldown": "PT1M"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      }
     ],
     "outputs": {
 		"fqdn": {

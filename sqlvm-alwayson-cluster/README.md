@@ -1,4 +1,4 @@
-# Solution name
+# # Create an Always On Availability Group with SQL Server 2014 replica virtual machines
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsqlvm-alwayson-cluster%2Fazuredeploy.json" target="_blank">
 <img src="http://azuredeploy.net/deploybutton.png"/>
@@ -21,16 +21,16 @@ This template will create a SQL Server 2014/2012 Always On Availability Group us
 
 +	A Virtual Network
 +	Four Storage Accounts one is used for AD VMs, one for SQL Server VMs , one for Failover Cluster File Share Witness and one for Deployment diagnostics
-+	one external and one internal load balancers
-+	A NAT Rule to allow RDP to one VM which can be used as a jumpbox, a load balancer rule for ILB for a SQL Listener
-+ 	One public IP addresses for RDP access
++	One internal load balancer
++	A load balancer rule for ILB for a SQL Listener
++ 	Four public IP addresses for Primary Domain Controller, Secondary Domain Controller, Primary SQL Server and Secondary SQL Server
 +	Two VMs as Domain Controllers for a new Forest and Domain
 +	Two VMs in a Windows Server Cluster running SQL Server 2014/2012 with an availability group, an additional VM acts as a File Share Witness for the Cluster
 +	Two Availability Sets one for the AD VMs, one for the SQL and Witness VMs
 
 ## Notes
 
-+ 	File Share Witness and SQL Server VMs are from the same Availability Set and currently there is a constrain for mixing DS-Series machine and GS-Series machine into the same Availability Set. If you decide to have DS-Series SQL Server VMs you must also have a DS-Series File Share Witness; If you decide to have GS-Series SQL Server VMs you must also have a GS-Series File Share Witness.
++ 	File Share Witness and SQL Server VMs are from the same Availability Set and currently there is a constrain for mixing DS-Series machine, DS_v2-Series machine and GS-Series machine into the same Availability Set. If you decide to have DS-Series SQL Server VMs you must also have a DS-Series File Share Witness; If you decide to have GS-Series SQL Server VMs you must also have a GS-Series File Share Witness; If you decide to have DS_v2-Series SQL Server VMs you must also have a DS_v2-Series File Share Witness.
 
 +	The default settings for SQL Server storage are to deploy using **premium storage**, the AD witness uses a P10 Disk and the SQL VMs use P30 disks, these sizes can be changed by changing the relevant variables. In addition there is a P10 Disk used for each VMs OS Disk.
 
@@ -43,6 +43,4 @@ This template will create a SQL Server 2014/2012 Always On Availability Group us
 
 + 	Once deployed access can be gained by the public IP address of Primary Domain Controller
 
-## Deployment steps
 
-You can click the "deploy to Azure" button at the beginning of this document.
