@@ -23,86 +23,72 @@
     "subnet": {
       "type": "object",
       "metadata": {
-        "description": "The name of the subnet to deploy resources into"
+        "description": "The VNET and Subnet to deploy the nodes in to"
+      }
+    },
+    "masterNodesIpPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "IP Prefix used to append index for static addresses"
       }
     },
     "vmSize": {
       "type": "string",
-      "defaultValue": "Standard_A1",
+      "defaultValue": "Standard_A0",
       "metadata": {
-        "description": "Size of the Elasticsearch data nodes"
-      }
-    },
-    "vmCount": {
-      "type": "int",
-      "defaultValue": 2,
-      "metadata": {
-        "description": "Number of Elasticsearch data nodes"
+        "description": "Size of the Elasticsearch master nodes"
       }
     },
     "osSettings": {
       "type": "object",
       "metadata": {
-        "description": "OS settings to deploy on"
-      }
-    },
-    "dataDiskSize": {
-      "type": "int",
-      "defaultValue": 1023,
-      "metadata": {
-        "description": "Size of each data disk attached to data nodes in (Gb)"
+        "description": "Elasticsearch deployment platform settings"
       }
     },
     "namespace": {
       "type": "string",
       "metadata": {
-        "description": "The namespace for resources created by this template"
-      }
-    },
-    "lbBackendPools": {
-      "type": "object",
-      "metadata": {
-        "description": "loadBalancerBackendAddressPools config object"
+        "description": "Namespace for resources created by this template"
       }
     }
   },
   "variables": {
-    "vmStorageAccountContainerName": "vhd",
     "subnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('subnet').vnet), '/subnets/', parameters('subnet').name)]",
-    "storageAccountName": "[parameters('storageSettings').prefix]",
+    "storageAccountName": "[parameters('storageSettings').shared]",
     "storageAccountNameAFS": "[parameters('storageSettings').afs]",
-    "vmName": "[concat(parameters('namespace'), '-vm')]"
+    "vmName": "[concat(parameters('namespace'), '-vm')]",
+    "nicName": "[concat(parameters('namespace'), '-nic')]"
   },
   "resources": [
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/availabilitySets",
-      "name": "es-data-set",
+      "name": "es-master-set",
       "location": "[resourceGroup().location]",
       "properties": {
-        "platformUpdateDomainCount": 20,
+        "platformUpdateDomainCount": 3,
         "platformFaultDomainCount": 3
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "2016-03-30",
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[concat(parameters('namespace'), '-nic', copyindex())]",
+      "name": "[concat(variables('nicName'), copyindex())]",
       "location": "[resourceGroup().location]",
       "copy": {
-        "name": "[concat(parameters('namespace'),'nicLoop')]",
-        "count": "[parameters('vmCount')]"
+        "name": "masterNodesNicLoop",
+        "count": 3
       },
       "properties": {
         "ipConfigurations": [
           {
             "name": "ipconfig1",
             "properties": {
-              "privateIPAllocationMethod": "Dynamic",
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[concat(parameters('masterNodesIpPrefix'), copyindex())]",
               "subnet": {
                 "id": "[variables('subnetRef')]"
-              },
-              "loadBalancerBackendAddressPools": "[parameters('lbBackendPools').backendPools]"
+              }
             }
           }
         ]
@@ -114,22 +100,22 @@
       "name": "[concat(variables('vmName'), copyindex())]",
       "location": "[resourceGroup().location]",
       "copy": {
-        "name": "[concat(parameters('namespace'), 'virtualMachineLoop')]",
-        "count": "[parameters('vmCount')]"
+        "name": "masterVmLoop",
+        "count": 3
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', parameters('namespace'), '-nic', copyindex())]",
-        "[resourceId('Microsoft.Compute/availabilitySets', 'es-data-set')]"
+        "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'), copyindex()))]",
+        "[resourceId('Microsoft.Compute/availabilitySets', 'es-master-set')]"
       ],
       "properties": {
         "availabilitySet": {
-          "id": "[resourceId('Microsoft.Compute/availabilitySets', 'es-data-set')]"
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', 'es-master-set')]"
         },
         "hardwareProfile": {
           "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
-          "computerName": "[concat('data-vm', copyIndex())]",
+          "computerName": "[concat('master-vm', copyIndex())]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('authSet').password]",
           "linuxConfiguration": "[parameters('osSettings').linuxConfiguration]"
@@ -139,7 +125,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://', variables('storageAccountName'), parameters('storageSettings').mapping[copyindex()], '.blob.core.windows.net/vhds/', variables('vmName'), copyindex(), '-osdisk.vhd')]"
+              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2016-01-01').primaryEndpoints.blob, 'vhds/', variables('vmName'), copyindex(), '-osdisk.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -148,27 +134,27 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('namespace'),'-nic', copyindex()))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'), copyindex()))]"
             }
           ]
         }
       },
       "resources": [
         {
-          "type": "Microsoft.Compute/virtualMachines/extensions",
-          "name": "[concat(variables('vmName'), copyindex(), '/installelasticsearch')]",
+          "type": "extensions",
+          "name": "installelasticsearch",
           "apiVersion": "2015-06-15",
           "location": "[resourceGroup().location]",
           "dependsOn": [
-            "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'), copyindex())]"
+            "[resourceId('Microsoft.Compute/virtualMachines', concat(variables('vmName'), copyindex()))]"
           ],
           "properties": {
-            "publisher": "[parameters('osSettings').extensionSettings.data.publisher]",
-            "type": "[parameters('osSettings').extensionSettings.data.type]",
-            "typeHandlerVersion": "[parameters('osSettings').extensionSettings.data.typeHandlerVersion]",
+            "publisher": "[parameters('osSettings').extensionSettings.master.publisher]",
+            "type": "[parameters('osSettings').extensionSettings.master.type]",
+            "typeHandlerVersion": "[parameters('osSettings').extensionSettings.master.typeHandlerVersion]",
             "settings": {
-              "fileUris": "[parameters('osSettings').extensionSettings.data.settings.fileUris]",
-              "commandToExecute": "[concat(parameters('osSettings').extensionSettings.data.settings.commandToExecute, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameAFS')), '2015-05-01-preview').key1)]"
+              "fileUris": "[parameters('osSettings').extensionSettings.master.settings.fileUris]",
+              "commandToExecute": "[concat(parameters('osSettings').extensionSettings.master.settings.commandToExecute, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameAFS')), '2016-01-01').keys[0].value)]"
             }
           }
         }
