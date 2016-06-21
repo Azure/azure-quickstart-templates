@@ -18,6 +18,10 @@ We look forward to hearing your feedback and suggestions!
 ```
 Template Changelog
 
+# v1.6.1 (2016-06-16)
+
+- Fix the timeout issue of "pip install" in China
+
 # v1.6.0 (2016-06-08)
 
 - Upgrade versions
