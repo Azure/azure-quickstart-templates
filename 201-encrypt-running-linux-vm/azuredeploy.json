@@ -1,0 +1,155 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+
+  "parameters": {
+    "aadClientID": {
+      "metadata": {
+        "description": "Client ID of AAD app which has permissions to KeyVault"
+      },
+      "type": "string"
+    },
+    "aadClientSecret": {
+      "metadata": {
+        "description": "Client Secret of AAD app which has permissions to KeyVault"
+      },
+      "type": "securestring"
+    },
+    "diskFormatQuery": {
+      "defaultValue": "",
+      "metadata": {
+        "description": "the query string used to identify the disks to format and encrypt. This parameter only works when you choose the EncryptionOperation as EnableEncryptionFormat.[{\"scsi\":\"6:0:0:1\",\"name\":\"azuredisk\"},{\"dev_path\":\"/dev/sdx\",\"name\":\"azuredisk2\",\"file_system\":\"ext4\"}], the scsi means the disk scsi number, the name means the mount point name, the file_system is the file system to use."
+      },
+      "type": "string"
+    },
+    "encryptionOperation": {
+      "allowedValues": [ "EnableEncryption", "EnableEncryptionFormat" ],
+      "defaultValue": "EnableEncryption",
+      "metadata": {
+        "description": "EnableEncryption would encrypt the disks in place and EnableEncryptionFormat would format the disks directly"
+      },
+      "type": "string"
+    },
+    "keyEncryptionKeyURL": {
+      "defaultValue": "",
+      "metadata": {
+        "description": "URL of the KeyEncryptionKey used to encrypt the volume encryption key"
+      },
+      "type": "string"
+    },
+    "keyVaultName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the KeyVault to place the volume encryption key"
+      }
+    },
+    "keyVaultResourceGroup": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource group of the KeyVault"
+      }
+    },
+    "passphrase": {
+      "defaultValue": "",
+      "metadata": {
+        "description": "The passphrase for the disks"
+      },
+      "type": "securestring"
+    },
+    "sequenceVersion": {
+      "defaultValue": "1",
+      "metadata": {
+        "description": "sequence version of the bitlocker operation. Increment this everytime an operation is performed on the same VM"
+      },
+      "type": "string"
+    },
+    "useExistingKek": {
+      "allowedValues": [
+        "nokek",
+        "kek"
+      ],
+      "defaultValue": "nokek",
+      "metadata": {
+        "description": "Select kek if the secret should be encrypted with a key encryption key"
+      },
+      "type": "string"
+    },
+    "vmName": {
+      "metadata": {
+        "description": "Name of the virtual machine"
+      },
+      "type": "string"
+    }
+  },
+  "variables": {
+    "extensionName": "AzureDiskEncryptionForLinux",
+    "extensionVersion": "0.1",
+    "keyEncryptionAlgorithm": "RSA-OAEP",
+    "updateVmUrl": "[concat('https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-encrypt-running-linux-vm/updatevm-',parameters('useExistingKek'),'.json')]",
+    "volumeType": "Data",
+    "keyVaultURL": "[concat('https://', parameters('keyVaultName'), '.vault.azure.net/')]",
+    "keyVaultResourceID": "[concat(subscription().id,'/resourceGroups/',parameters('keyVaultResourceGroup'),'/providers/Microsoft.KeyVault/vaults/', parameters('keyVaultName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmName'),'/', variables('extensionName'))]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "protectedSettings": {
+          "AADClientSecret": "[parameters('aadClientSecret')]",
+          "Passphrase": "[parameters('passphrase')]"
+        },
+        "publisher": "Microsoft.OSTCExtensions",
+        "settings": {
+          "AADClientID": "[parameters('aadClientID')]",
+          "DiskFormatQuery": "[parameters('diskFormatQuery')]",
+          "EncryptionOperation": "[parameters('encryptionOperation')]",
+          "KeyEncryptionAlgorithm": "[variables('keyEncryptionAlgorithm')]",
+          "KeyEncryptionKeyURL": "[parameters('keyEncryptionKeyURL')]",
+          "KeyVaultURL": "[variables('keyVaultURL')]",
+          "SequenceVersion": "[parameters('sequenceVersion')]",
+          "VolumeType": "[variables('volumeType')]"
+        },
+        "type": "AzureDiskEncryptionForLinux",
+        "typeHandlerVersion": "[variables('extensionVersion')]"
+      }
+    },
+    {
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions',  parameters('vmName'), variables('extensionName'))]"
+      ],
+      "name": "updatevm",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "parameters": {
+          "keyEncryptionKeyURL": {
+            "value": "[parameters('keyEncryptionKeyURL')]"
+          },
+          "keyVaultResourceID": {
+            "value": "[variables('keyVaultResourceID')]"
+          },
+          "keyVaultSecretUrl": {
+            "value": "[reference(resourceId('Microsoft.Compute/virtualMachines/extensions',  parameters('vmName'), variables('extensionName'))).instanceView.statuses[0].message]"
+          },
+          "vmName": {
+            "value": "[parameters('vmName')]"
+          }
+        },
+        "templateLink": {
+          "contentVersion": "1.0.0.0",
+          "uri": "[variables('updateVmUrl')]"
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "BitLockerKey": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Compute/virtualMachines/extensions',  parameters('vmName'), variables('extensionName'))).instanceView.statuses[0].message]"
+    }
+  }
+}

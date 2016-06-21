@@ -3,6 +3,9 @@
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdocker-swarm-cluster%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdocker-swarm-cluster%2Fazuredeploy.json" target="_blank">
+    <img src="http://armviz.io/visualizebutton.png"/>
+</a>
 
 This template deploys a [Docker Swarm](http://docs.docker.com/swarm) cluster on
 Azure with 3 Swarm managers and specified number of Swarm nodes in the location
@@ -21,6 +24,10 @@ and private key pairs. The `sshPublicKey` argument should be contents of the
 This template creates the following cluster topology:
 
 > [![docker-swarm-azure](img/cluster-network.png)](img/cluster-network.png)
+
+The cluster will be interconnected with Docker multi-host networking setup
+so that you can easily create overlay networks with `docker network create`
+command.
 
 #### Swarm Managers
 

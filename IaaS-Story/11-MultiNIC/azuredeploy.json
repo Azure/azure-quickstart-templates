@@ -1,0 +1,288 @@
+﻿{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vnetName": {
+      "type": "string",
+      "defaultValue": "WTestVNet",
+      "metadata": {
+        "description": "Name for the new VNet."
+      }
+    },
+    "backEndSubnetName": {
+      "type": "string",
+      "defaultValue": "BackEnd",
+      "metadata": {
+        "description": "Name for the back end subnet."
+      }
+    },
+    "backEndNSGName": {
+      "type": "string",
+      "defaultValue": "NSG-BackEnd",
+      "metadata": {
+        "description": "Name for the NSG used to allow DB access, and block Internet."
+      }
+    },
+    "remoteAccessNSGName": {
+      "type": "string",
+      "defaultValue": "NSG-RemoteAccess",
+      "metadata": {
+        "description": "Name for the NSG used to allow remote access."
+      }
+    },
+    "stdStorageName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name for simple storage account."
+      }
+    },
+    "prmStorageName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name for simple storage account."
+      }
+    },
+    "prmStorageType": {
+      "type": "string",
+      "defaultValue": "Premium_LRS",
+      "allowedValues": [
+        "Premium_LRS",
+        "Premium_GRS",
+        "Premium_ZRS"
+      ]
+    },
+    "osType": {
+      "type": "string",
+      "defaultValue": "Windows",
+      "allowedValues": [
+        "Windows",
+        "Ubuntu"
+      ],
+      "metadata": {
+        "description": "Type of OS to use for VMs: Windows or Ubuntu."
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": { "description": "Username for local admin account." }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": { "description": "Password for local admin account." }
+    },
+    "dbCount": {
+      "type": "int",
+      "defaultValue": 2,
+      "metadata": {
+        "description": "Number of database VMs to be deployed to the backend end subnet."
+      }
+    },
+    "parentRG": {
+      "type": "string",
+      "defaultValue": "IaaSStory",
+      "metadata": {
+        "description": "Name of resource group containing vnet and front end resources."
+      }
+    }
+  },
+  "variables": {
+    "dbVMSettings": {
+      "Windows": {
+        "vmSize": "Standard_DS3",
+        "publisher": "MicrosoftSQLServer",
+        "offer": "SQL2014SP1-WS2012R2",
+        "sku": "Standard",
+        "version": "latest",
+        "vmName": "DB",
+        "osdisk": "osdiskdb",
+        "datadisk": "datadiskdb",
+        "nicName": "NICDB",
+        "ipAddress": "192.168.2.",
+        "extensionDeployment": "",
+        "avsetName": "ASDB",
+        "remotePort": 3389,
+        "dbPort": 1433
+      },
+      "Ubuntu": {
+        "vmSize": "Standard_DS3",
+        "publisher": "Canonical",
+        "offer": "UbuntuServer",
+        "sku": "14.04.2-LTS",
+        "version": "latest",
+        "vmName": "DB",
+        "osdisk": "osdiskdb",
+        "datadisk": "datadiskdb",
+        "nicName": "NICDB",
+        "ipAddress": "192.168.2.",
+        "extensionDeployment": "",
+        "avsetName": "ASDB",
+        "remotePort": 22,
+        "dbPort": 1433
+      }
+    },
+    "vmStorageAccountContainerName": "vhds",
+    "vnetID": "[resourceId(parameters('parentRG'),'Microsoft.Network/virtualNetworks',parameters('vnetName'))]",
+    "backEndSubnetRef": "[concat(variables('vnetID'),'/subnets/',parameters('backEndSubnetName'))]",
+    "dbVMSetting": "[variables('dbVMSettings')[parameters('osType')]]"
+  },
+    "resources": [
+      {
+        "apiVersion": "2015-06-15",
+        "type": "Microsoft.Storage/storageAccounts",
+        "name": "[parameters('prmStorageName')]",
+        "location": "[resourceGroup().location]",
+        "tags": {
+          "displayName": "Storage Account - Premium"
+        },
+        "properties": {
+          "accountType": "[parameters('prmStorageType')]"
+        }
+      },
+      {
+        "apiVersion": "2015-06-15",
+        "type": "Microsoft.Network/networkInterfaces",
+        "name": "[concat(variables('dbVMSetting').nicName,'-DA-', copyindex(1))]",
+        "location": "[resourceGroup().location]",
+        "tags": {
+          "displayName": "NetworkInterfaces - DB DA"
+        },
+        "copy": {
+          "name": "dbniccount",
+          "count": "[parameters('dbCount')]"
+        },
+        "properties": {
+          "ipConfigurations": [
+            {
+              "name": "ipconfig1",
+              "properties": {
+                "privateIPAllocationMethod": "Static",
+                "privateIPAddress": "[concat(variables('dbVMSetting').ipAddress,copyindex(4))]",
+                "subnet": {
+                  "id": "[variables('backEndSubnetRef')]"
+                }
+              }
+            }
+          ]
+        }
+      },
+      {
+        "apiVersion": "2015-06-15",
+        "type": "Microsoft.Network/networkInterfaces",
+        "name": "[concat(variables('dbVMSetting').nicName, '-RA-',copyindex(1))]",
+        "location": "[resourceGroup().location]",
+        "tags": {
+          "displayName": "NetworkInterfaces - DB RA"
+        },
+        "copy": {
+          "name": "dbniccount",
+          "count": "[parameters('dbCount')]"
+        },
+        "properties": {
+          "ipConfigurations": [
+            {
+              "name": "ipconfig1",
+              "properties": {
+                "networkSecurityGroup": {
+                  "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('remoteAccessNSGName'))]"
+                },
+                "privateIPAllocationMethod": "Static",
+                "privateIPAddress": "[concat(variables('dbVMSetting').ipAddress,copyindex(54))]",
+                "subnet": {
+                  "id": "[variables('backEndSubnetRef')]"
+                }
+              }
+            }
+          ]
+        }
+      },
+      {
+        "apiVersion": "2015-06-15",
+        "type": "Microsoft.Compute/availabilitySets",
+        "name": "[variables('dbVMSetting').avsetName]",
+        "location": "[resourceGroup().location]",
+        "tags": {
+          "displayName": "AvailabilitySet - DB"
+        }
+      },
+      {
+        "apiVersion": "2015-06-15",
+        "type": "Microsoft.Compute/virtualMachines",
+        "name": "[concat(variables('dbVMSetting').vmName,copyindex(1))]",
+        "location": "[resourceGroup().location]",
+        "dependsOn": [
+          "[concat('Microsoft.Network/networkInterfaces/', variables('dbVMSetting').nicName,'-DA-', copyindex(1))]",
+          "[concat('Microsoft.Network/networkInterfaces/', variables('dbVMSetting').nicName,'-RA-', copyindex(1))]",
+          "[concat('Microsoft.Compute/availabilitySets/', variables('dbVMSetting').avsetName)]",
+          "[concat('Microsoft.Storage/storageAccounts/', parameters('prmStorageName'))]"
+        ],
+        "tags": {
+          "displayName": "VMs - DB"
+        },
+        "copy": {
+          "name": "dbvmcount",
+          "count": "[parameters('dbCount')]"
+        },
+        "properties": {
+          "availabilitySet": {
+            "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('dbVMSetting').avsetName)]"
+          },
+          "hardwareProfile": {
+            "vmSize": "[variables('dbVMSetting').vmSize]"
+          },
+          "osProfile": {
+            "computerName": "[concat(variables('dbVMSetting').vmName,copyindex(1))]",
+            "adminUsername": "[parameters('adminUsername')]",
+            "adminPassword": "[parameters('adminPassword')]"
+          },
+          "storageProfile": {
+            "imageReference": {
+              "publisher": "[variables('dbVMSetting').publisher]",
+              "offer": "[variables('dbVMSetting').offer]",
+              "sku": "[variables('dbVMSetting').sku]",
+              "version": "[variables('dbVMSetting').version]"
+            },
+            "osDisk": {
+              "name": "[concat(variables('dbVMSetting').osdisk,copyindex(1))]",
+              "vhd": {
+                "uri": "[concat('http://', parameters('stdStorageName'), '.blob.core.windows.net/', variables('vmStorageAccountContainerName'), '/', variables('dbVMSetting').osdisk, copyindex(1),'.vhd')]"
+              },
+              "caching": "ReadWrite",
+              "createOption": "FromImage"
+            },
+            "dataDisks": [
+              {
+                "vhd": {
+                  "uri": "[concat('http://', parameters('prmStorageName'), '.blob.core.windows.net/', variables('vmStorageAccountContainerName'), '/', variables('dbVMSetting').datadisk, copyindex(1),'-1','.vhd')]"
+                },
+                "name": "[concat(variables('dbVMSetting').datadisk,copyindex(1),'-data-disk1')]",
+                "diskSizeGB": "127",
+                "createOption": "Empty",
+                "lun": 0
+              },
+              {
+                "vhd": {
+                  "uri": "[concat('http://', parameters('prmStorageName'), '.blob.core.windows.net/', variables('vmStorageAccountContainerName'), '/', variables('dbVMSetting').datadisk, copyindex(1),'-2','.vhd')]"
+                },
+                "name": "[concat(variables('dbVMSetting').datadisk,copyindex(1),'-data-disk2')]",
+                "diskSizeGB": "127",
+                "createOption": "Empty",
+                "lun": 1
+              }
+            ]
+          },
+          "networkProfile": {
+            "networkInterfaces": [
+              {
+                "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('dbVMSetting').nicName,'-DA-',copyindex(1)))]",
+                "properties": { "primary": true }
+              },
+              {
+                "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('dbVMSetting').nicName,'-RA-',copyindex(1)))]",
+                "properties": { "primary": false }
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
