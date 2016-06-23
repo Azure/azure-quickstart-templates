@@ -1,8 +1,8 @@
 # Important Note
 
-For the most up to date version of this template, please do not use this repo. Instead go [here](https://github.com/DSPN/azure-resource-manager-dse).
+For the most up to date version of this template, please do not use this repo. Instead go [here](https://github.com/DSPN/azure-resource-manager-dse).  We strongly encourage use of the latest version as it incorporates bug fixes and is more flexible.
 
-# datastax-enterprise
+# Deploying this DataStax ARM Template
 
 This template deploys a DataStax Enterprise (DSE) cluster to Azure running on Ubuntu virtual machines in a single datacenter.  The template can provision a cluster from 1 to 40 nodes.  Creating a greater number of nodes may cause issues with storage account I/O contention.
 
