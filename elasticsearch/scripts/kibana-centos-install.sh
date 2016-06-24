@@ -71,6 +71,12 @@ install_kibana() {
         KIBANA_VERSION='4.4'    
     fi 
     
+    # TODO: Install Kibana 4.3 for ES 2.1.*
+    if [[ "${ES_VERSION}" == \2.\1* ]]; then
+        echo "Kibana installation for ES_VERSION 2.1.* is unimplemented."
+        exit 1
+    fi 
+    
     if [[ "${ES_VERSION}" == \1.\7* ]]; then
         KIBANA_VERSION='4.1'    
     fi 
