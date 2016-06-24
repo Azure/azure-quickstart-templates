@@ -10,6 +10,9 @@ yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarc
 # Clean yum metadata and cache to make sure we see the latest packages available
 yum -y clean all
 
+# Install the Ansible 1.9.4 package directly from koji
+yum -y install https://kojipkgs.fedoraproject.org//packages/ansible/1.9.4/1.el7/noarch/ansible-1.9.4-1.el7.noarch.rpm
+
 # Disable EPEL to prevent unexpected packages from being pulled in during installation.
 yum-config-manager epel --disable
 

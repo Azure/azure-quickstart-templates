@@ -3,19 +3,18 @@
 set -e
 
 SUDOUSER=$1
-PUBLICKEY=$2
-PRIVATEKEY=$3
-MASTER=$4
-MASTERPUBLICIPHOSTNAME=$5
-MASTERPUBLICIPADDRESS=$6
-NODEPREFIX=$7
-NODECOUNT=$8
-AZUREADAPPNAME=$9
-AZUREADCLIENTID=${10}
-AZUREADCLIENTSECRET=${11}
-AZUREADTENANTID=${12}
-AZUREADLOGOUTREDIRECTURI=${13}
+PASSWORD=$2
+PUBLICKEY=$3
+PRIVATEKEY=$4
+MASTER=$5
+MASTERPUBLICIPHOSTNAME=$6
+MASTERPUBLICIPADDRESS=$7
+NODEPREFIX=$8
+NODECOUNT=$9
+
 DOMAIN=$( awk 'NR==2' /etc/resolv.conf | awk '{ print $2 }' )
+
+# Generate public / private keys for use by Ansible
 
 echo "Generating keys"
 
@@ -28,6 +27,8 @@ echo "Configuring SSH ControlPath to use shorter path name"
 sed -i -e "s/^# control_path = %(directory)s\/%%h-%%r/control_path = %(directory)s\/%%h-%%r/" /etc/ansible/ansible.cfg
 sed -i -e "s/^#host_key_checking = False/host_key_checking = False/" /etc/ansible/ansible.cfg
 sed -i -e "s/^#pty=False/pty=False/" /etc/ansible/ansible.cfg
+
+# Create Ansible Hosts File
 
 echo "Generating Ansible hosts file"
 
@@ -50,8 +51,7 @@ openshift_master_cluster_public_hostname=$MASTERPUBLICIPHOSTNAME
 openshift_master_cluster_public_vip=$MASTERPUBLICIPADDRESS
 
 # Enable Azure AD auth
-openshift_master_identity_providers=[{'name': '$AZUREADAPPNAME', 'login': 'true', 'challenge': 'false', 'kind': 'OpenIDIdentityProvider', 'client_id': '$AZUREADCLIENTID', 'client_secret': '$AZUREADCLIENTSECRET', 'extra_scopes': [], 'extra_authorize_parameters': {}, 'claims': { 'id': ['sub'], 'preferredUsername': ['unique_name'], 'name': ['unique_name'], 'email': ['unique_name']}, 'urls': {'authorize': 'https://login.microsoftonline.com/$AZUREADTENANTID/oauth2/authorize', 'token': 'https://login.microsoftonline.com/$AZUREADTENANTID/oauth2/token'}}]
-openshift_master_logout_url='https://login.microsoftonline.com/$AZUREADTENANTID/oauth2/logout?post_logout_redirect_uri=$AZUREADLOGOUTREDIRECTURI'
+openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/master/htpasswd'}]
 
 # host group for masters
 [masters]
@@ -67,6 +67,8 @@ do
   echo "$NODEPREFIX-$c.$DOMAIN" >> /etc/ansible/hosts
 done
 
+mkdir -p /etc/origin/master
+htpasswd -cb /etc/origin/master/htpasswd ${SUDOUSER} ${PASSWORD}
 
 # Reverting to April 22, 2016 commit
 
