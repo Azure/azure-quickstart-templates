@@ -65,8 +65,16 @@ install_java() {
 
 install_kibana() {
     # create repository files
+    # default - ES 2.3.1
     KIBANA_VERSION='4.5'
-       
+    if [[ "${ES_VERSION}" == \2.\2* ]]; then
+        KIBANA_VERSION='4.4'    
+    fi 
+    
+    if [[ "${ES_VERSION}" == \1.\7* ]]; then
+        KIBANA_VERSION='4.1'    
+    fi 
+    
     echo "[kibana-${KIBANA_VERSION}]
 name=Kibana repository for ${KIBANA_VERSION}.x packages
 baseurl=http://packages.elastic.co/kibana/${KIBANA_VERSION}/centos
@@ -91,8 +99,12 @@ enabled=1" | tee /etc/yum.repos.d/kibana.repo
     
     mv /opt/kibana/config/kibana.yml /opt/kibana/config/kibana.yml.bak
 
-    echo "elasticsearch.url: \"$ELASTICSEARCH_URL\"" >> /opt/kibana/config/kibana.yml
-
+    if [[ "${KIBANA_VERSION}" == "4.1" ]];
+    then
+        cat /opt/kibana/config/kibana.yml.bak | sed "s|http://localhost:9200|${ELASTICSEARCH_URL}|" >> /opt/kibana/config/kibana.yml 
+    else
+        echo "elasticsearch.url: \"$ELASTICSEARCH_URL\"" >> /opt/kibana/config/kibana.yml
+    fi
 
     # install the marvel plugin for 2.x
     if [ ${INSTALL_MARVEL} -ne 0 ];

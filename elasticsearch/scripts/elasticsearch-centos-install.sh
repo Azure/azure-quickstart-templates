@@ -242,18 +242,29 @@ install_es()
     fi
     
     # Create a new yum repository file for Elasticsearch
-    echo '[elasticsearch-2.x]
+    if [[ "${ES_VERSION}" == \2* ]]; then
+        echo '[elasticsearch-2.x]
 name=Elasticsearch repository for 2.x packages
 baseurl=http://packages.elastic.co/elasticsearch/2.x/centos
 gpgcheck=1
 gpgkey=http://packages.elastic.co/GPG-KEY-elasticsearch
 enabled=1' | tee /etc/yum.repos.d/elasticsearch.repo
-
+    fi
+    
+    if [[ "${ES_VERSION}" == \1* ]]; then
+        echo '[elasticsearch-1.7]
+name=Elasticsearch repository for 1.7.x packages
+baseurl=http://packages.elastic.co/elasticsearch/1.7/centos
+gpgcheck=1
+gpgkey=http://packages.elastic.co/GPG-KEY-elasticsearch
+enabled=1' | tee /etc/yum.repos.d/elasticsearch.repo    
+    fi
+    
     # Install Elasticsearch
     RETRY=0
     while [ $RETRY -lt $MAX_RETRY ]; do
         log "Retry $RETRY: installing elasticsearch..."
-        yum -y install elasticsearch
+        yum -y install elasticsearch-${ES_VERSION}
         if [ $? -ne 0 ]; then
             let RETRY=RETRY+1
         else
