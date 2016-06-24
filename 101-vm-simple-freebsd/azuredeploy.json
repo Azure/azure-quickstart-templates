@@ -2,16 +2,10 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "dnsLabelPrefix": {
-      "type": "string",
-      "metadata": {
-        "description": "Unique DNS Name for the Storage Account where the Virtual Machine's disks will be placed."
-      }
-    },
     "adminUsername": {
       "type": "string",
       "metadata": {
-        "description": "Username for the Virtual Machine."
+        "description": "User name for the Virtual Machine."
       }
     },
     "adminPassword": {
@@ -20,37 +14,33 @@
         "description": "Password for the Virtual Machine."
       }
     },
-    "vmSize": {
+    "dnsLabelPrefix": {
       "type": "string",
       "metadata": {
-        "description": "Size of VM"
-      }
-    },
-    "sizeOfEachDataDiskInGB": {
-      "type": "string",
-      "metadata": {
-        "description": "Size of each data disk in GB"
+        "description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
       }
     }
   },
   "variables": {
-    "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'saddiskvm')]",
+    "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'savm')]",
+    "dataDisk1VhdName": "datadisk1",
+    "imagePublisher": "MicrosoftOSTC",
+    "imageOffer": "FreeBSD",
+    "freeBSDOSVersion": "10.3",
+    "OSDiskName": "osdiskforfreebsdsimple",
+    "nicName": "myVMNic",
     "addressPrefix": "10.0.0.0/16",
-    "subnet1Name": "Subnet-1",
-    "subnet1Prefix": "10.0.0.0/24",
-    "vmStorageAccountContainerName": "vhds",
-    "imagePublisher": "MicrosoftWindowsServer",
-    "imageOffer": "WindowsServer",
-    "imageSKU": "2012-Datacenter",
-    "imageVersion": "latest",
+    "subnetName": "Subnet",
+    "subnetPrefix": "10.0.0.0/24",
+    "storageAccountType": "Standard_LRS",
     "publicIPAddressName": "myPublicIP",
     "publicIPAddressType": "Dynamic",
-    "storageAccountType": "Standard_LRS",
-    "virtualNetworkName": "myVNET",
-    "vmName": "myVM",
+    "vmStorageAccountContainerName": "vhds",
+    "vmName": "MyFreeBSDVM",
+    "vmSize": "Standard_D1",
+    "virtualNetworkName": "MyVNET",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
-    "nicName": "myNIC",
-    "subnet1Ref": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]",
+    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
     "apiVersion": "2015-06-15"
   },
   "resources": [
@@ -88,9 +78,9 @@
         },
         "subnets": [
           {
-            "name": "[variables('subnet1Name')]",
+            "name": "[variables('subnetName')]",
             "properties": {
-              "addressPrefix": "[variables('subnet1Prefix')]"
+              "addressPrefix": "[variables('subnetPrefix')]"
             }
           }
         ]
@@ -115,7 +105,7 @@
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
               },
               "subnet": {
-                "id": "[variables('subnet1Ref')]"
+                "id": "[variables('subnetRef')]"
               }
             }
           }
@@ -123,7 +113,7 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmName')]",
       "location": "[resourceGroup().location]",
@@ -133,7 +123,7 @@
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[parameters('vmSize')]"
+          "vmSize": "[variables('vmSize')]"
         },
         "osProfile": {
           "computerName": "[variables('vmName')]",
@@ -144,55 +134,28 @@
           "imageReference": {
             "publisher": "[variables('imagePublisher')]",
             "offer": "[variables('imageOffer')]",
-            "sku": "[variables('imageSKU')]",
-            "version": "[variables('imageVersion')]"
+            "sku": "[variables('freeBSDOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
           },
           "dataDisks": [
             {
               "name": "datadisk1",
-              "diskSizeGB": "[parameters('sizeOfEachDataDiskInGB')]",
+              "diskSizeGB": "100",
               "lun": 0,
               "vhd": {
-                "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), variables('apiVersion')).primaryEndpoints.blob, variables('vmStorageAccountContainerName'),'/',variables('vmName'),'dataDisk1.vhd')]"
-              },
-              "createOption": "Empty"
-            },
-            {
-              "name": "datadisk2",
-              "diskSizeGB": "[parameters('sizeOfEachDataDiskInGB')]",
-              "lun": 1,
-              "vhd": {
-                "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), variables('apiVersion')).primaryEndpoints.blob, variables('vmStorageAccountContainerName'),'/',variables('vmName'),'dataDisk2.vhd')]"
-              },
-              "createOption": "Empty"
-            },
-            {
-              "name": "datadisk3",
-              "diskSizeGB": "[parameters('sizeOfEachDataDiskInGB')]",
-              "lun": 2,
-              "vhd": {
-                "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), variables('apiVersion')).primaryEndpoints.blob, variables('vmStorageAccountContainerName'),'/',variables('vmName'),'dataDisk3.vhd')]"
-              },
-              "createOption": "Empty"
-            },
-            {
-              "name": "datadisk4",
-              "diskSizeGB": "[parameters('sizeOfEachDataDiskInGB')]",
-              "lun": 3,
-              "vhd": {
-                "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), variables('apiVersion')).primaryEndpoints.blob, variables('vmStorageAccountContainerName'),'/',variables('vmName'),'dataDisk4.vhd')]"
+                "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('dataDisk1VhdName'),'.vhd')]"
               },
               "createOption": "Empty"
             }
-          ],
-          "osDisk": {
-            "name": "osdisk1",
-            "vhd": {
-              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), variables('apiVersion')).primaryEndpoints.blob, variables('vmStorageAccountContainerName'),'/','osDisk1.vhd')]"
-            },
-            "caching": "ReadWrite",
-            "createOption": "FromImage"
-          }
+          ]
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -204,10 +167,20 @@
         "diagnosticsProfile": {
           "bootDiagnostics": {
             "enabled": "true",
-            "storageUri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), variables('apiVersion')).primaryEndpoints.blob)]"
+            "storageUri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net')]"
           }
         }
       }
     }
-  ]
+  ],
+  "outputs": {
+     "hostname": {
+         "type": "string",
+         "value": "[concat(parameters('dnsLabelPrefix'), '.', resourceGroup().location, '.cloudapp.azure.com')]"
+     },
+    "sshCommand": {
+      "type": "string",
+      "value": "[concat('ssh ', parameters('adminUsername'), '@', parameters('dnsLabelPrefix'), '.', resourceGroup().location, '.cloudapp.azure.com')]"
+    }
+  }
 }
