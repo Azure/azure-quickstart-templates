@@ -7,4 +7,4 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template will create a simple DMZ with four windows servers, a VNet with two subnets, and a Network Security Group.
+This template will create a simple DMZ with four windows servers, a VNet with two subnets, and a Network Security Group. 
