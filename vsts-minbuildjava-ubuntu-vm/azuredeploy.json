@@ -5,7 +5,7 @@
     "vstsAccountURL": {
       "type": "string",
       "metadata": {
-        "description": "Team Services account URL"
+        "description": "Team Services Account URL"
       }
     },
     "vstsPAT": {
@@ -28,44 +28,23 @@
         "description": "Team Services Agent Name"
       }
     },    
-    "newStorageAccountName": {
-      "type": "string",
-      "metadata": {
-        "description": "Name of the Storage Account"
-      }
-    },
     "adminUserName": {
       "type": "string"
     },
     "adminPassword": {
       "type": "securestring"
     },
-    "imagePublisher": {
+    "dnsLabelPrefix": {
       "type": "string",
-      "defaultValue": "canonical",
       "metadata": {
-        "description": "Image Publisher"
+        "description": "DNS Label for the Public IP. Must be lowercase. It should match with the following regular expression: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$ or it will raise an error."
       }
     },
-    "imageOffer": {
-      "type": "string",
-      "defaultValue": "ubuntuserver",
-      "metadata": {
-        "description": "Image Offer"
-      }
-    },
-    "imageSKU": {
-      "type": "string",
-      "defaultValue": "16.04.0-LTS",
-      "metadata": {
-        "description": "Image SKU"
-      }
-    },
-    "vmDnsName": {
-      "type": "string"
-    }
   },
   "variables": {
+    "imagePublisher": "canonical",
+    "imageOffer": "ubuntuserver",
+    "imageSKU":"16.04.0-LTS",
     "nicName": "[concat('myNic2',uniqueString(resourceGroup().id, deployment().name))]",
     "addressPrefix": "10.0.0.0/16",
     "subnet1Name": "Subnet-1",
@@ -73,32 +52,36 @@
     "publicIPAddressName": "[concat('myIP2',uniqueString(resourceGroup().id, deployment().name))]",
     "publicIPAddressType": "Dynamic",
     "vmStorageAccountContainerName": "vhds",
-    "vmName": "[parameters('vmDnsName')]",
+    "vmName": "[parameters('dnsLabelPrefix')]",
     "vmSize": "Standard_A0",
     "virtualNetworkName": "MyVNET",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
     "storageAccountType": "Standard_LRS",
+    "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'vstsbuild')]",
     "subnet1Ref": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]"
   },
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[parameters('newStorageAccountName')]",
-      "apiVersion": "2015-05-01-preview",
+      "name": "[variables('StorageAccountName')]",
+      "apiVersion": "2016-01-01",
       "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "[variables('storageAccountType')]"
+      },
+      "kind": "Storage",
       "properties": {
-        "accountType": "[variables('storageAccountType')]"
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
       "location": "[resourceGroup().location]",
       "properties": {
         "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
         "dnsSettings": {
-          "domainNameLabel": "[parameters('vmDnsName')]"
+          "domainNameLabel": "[parameters('dnsLabelPrefix')]"
         }
       }
     },
@@ -155,7 +138,7 @@
       "name": "[variables('vmName')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('StorageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
       ],
       "properties": {
@@ -169,15 +152,15 @@
         },
         "storageProfile": {
           "imageReference": {
-            "publisher": "[parameters('imagePublisher')]",
-            "offer": "[parameters('imageOffer')]",
-            "sku": "[parameters('imageSKU')]",
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[variables('imageSKU')]",
             "version": "latest"
           },
           "osDisk": {
             "name": "osdisk1",
             "vhd": {
-              "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/','osdisk1spec.vhd')]"
+              "uri": "[concat('http://',variables('StorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/','osdisk1spec.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -203,10 +186,11 @@
       "properties": {
         "publisher": "Microsoft.OSTCExtensions",
         "type": "CustomScriptForLinux",
-        "typeHandlerVersion": "1.2",
-        "settings": {
+        "typeHandlerVersion": "1.5",
+        "autoUpgradeMinorVersion":true,
+        "protectedSettings": {
           "fileUris": [
-            "https://raw.githubusercontent.com/azure/azure-quickstart-templates/master/vsts-minbuildjava-ubuntu-vm/java-vstsbuild-install.sh"
+            "https://raw.githubusercontent.com/azure/azure-quickstart-templates/master/vsts-minbuildjava-ubuntu-vm/scripts/java-vstsbuild-install.sh"
           ],
           "commandToExecute": "[concat('sh java-vstsbuild-install.sh',' ',parameters('vstsAccountURL'),' ',parameters('vstsPAT'),' ',parameters('vstsPoolName'),' ',parameters('vstsAgentName'),' ',parameters('adminUserName'))]"
         }
