@@ -5,7 +5,7 @@
     "vstsAccountURL": {
       "type": "string",
       "metadata": {
-        "description": "Team Services account URL"
+        "description": "Team Services Account URL (e.g. https://myaccount.visualstudio.com)"
       }
     },
     "vstsPAT": {
@@ -23,82 +23,70 @@
     },
     "vstsAgentName": {
       "type": "string",
-      "defaultValue": "fullbuild-ubuntu-auto",
+      "defaultValue": "ubuntu-build-full",
       "metadata": {
         "description": "Team Services Agent Name"
       }
     },    
-    "newStorageAccountName": {
-      "type": "string",
-      "metadata": {
-        "description": "Name of the Storage Account"
-      }
-    },
     "adminUserName": {
-      "type": "string"
+      "type": "string",
+      "defaultValue": "vstsbuild",
+      "metadata": {
+        "description": "Linux VM User Account Name"
+      }
     },
     "adminPassword": {
       "type": "securestring"
     },
-    "imagePublisher": {
+    "dnsLabelPrefix": {
       "type": "string",
-      "defaultValue": "canonical",
       "metadata": {
-        "description": "Image Publisher"
+        "description": "DNS Label for the Public IP. Must be lowercase. It should match with the following regular expression: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$ or it will raise an error."
       }
-    },
-    "imageOffer": {
-      "type": "string",
-      "defaultValue": "ubuntuserver",
-      "metadata": {
-        "description": "Image Offer"
-      }
-    },
-    "imageSKU": {
-      "type": "string",
-      "defaultValue": "16.04.0-LTS",
-      "metadata": {
-        "description": "Image SKU"
-      }
-    },
-    "vmDnsName": {
-      "type": "string"
     }
   },
   "variables": {
-    "nicName": "[concat('myNic1',uniqueString(resourceGroup().id, deployment().name))]",
+    "imagePublisher": "canonical",
+    "imageOffer": "ubuntuserver",
+    "imageSKU":"16.04.0-LTS",
+    "baseName": "[uniquestring(parameters('dnsLabelPrefix'),resourceGroup().id,uniquestring(deployment().name))]",
+    "nicName": "[concat('myNic1',variables('baseName'))]",
     "addressPrefix": "10.0.0.0/16",
     "subnet1Name": "Subnet-1",
     "subnet1Prefix": "10.0.0.0/24",
-    "publicIPAddressName": "[concat('myIP1',uniqueString(resourceGroup().id, deployment().name))]",
+    "publicIPAddressName": "[concat('myIP1',variables('baseName'))]",
     "publicIPAddressType": "Dynamic",
     "vmStorageAccountContainerName": "vhds",
-    "vmName": "[parameters('vmDnsName')]",
+    "vmName": "[parameters('dnsLabelPrefix')]",
     "vmSize": "Standard_A0",
     "virtualNetworkName": "MyVNET",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
     "storageAccountType": "Standard_LRS",
+    "storageAccountName": "[concat('vsts1',variables('baseName'))]",
     "subnet1Ref": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]"
   },
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[parameters('newStorageAccountName')]",
-      "apiVersion": "2015-05-01-preview",
+      "name": "[variables('StorageAccountName')]",
+      "apiVersion": "2016-01-01",
       "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "[variables('storageAccountType')]"
+      },
+      "kind": "Storage",
       "properties": {
-        "accountType": "[variables('storageAccountType')]"
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
       "location": "[resourceGroup().location]",
       "properties": {
         "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
         "dnsSettings": {
-          "domainNameLabel": "[parameters('vmDnsName')]"
+          "domainNameLabel": "[parameters('dnsLabelPrefix')]"
         }
       }
     },
@@ -155,7 +143,7 @@
       "name": "[variables('vmName')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('StorageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
       ],
       "properties": {
@@ -169,15 +157,15 @@
         },
         "storageProfile": {
           "imageReference": {
-            "publisher": "[parameters('imagePublisher')]",
-            "offer": "[parameters('imageOffer')]",
-            "sku": "[parameters('imageSKU')]",
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[variables('imageSKU')]",
             "version": "latest"
           },
           "osDisk": {
             "name": "osdisk1",
             "vhd": {
-              "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/','osdisk1spec.vhd')]"
+              "uri": "[concat('http://',variables('StorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/','osdisk1spec.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -197,18 +185,17 @@
       "name": "[concat(variables('vmName'),'/newuserscript')]",
       "apiVersion": "2015-05-01-preview",
       "location": "[resourceGroup().location]",
-      "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
-      ],
+      "dependsOn": ["[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"],
       "properties": {
         "publisher": "Microsoft.OSTCExtensions",
         "type": "CustomScriptForLinux",
-        "typeHandlerVersion": "1.2",
+        "typeHandlerVersion": "1.5",
+        "autoUpgradeMinorVersion":true,
         "settings": {
           "fileUris": [
-            "https://raw.githubusercontent.com/azure/azure-quickstart-templates/master/vsts-fullbuild-ubuntu-vm/full-vstsbuild-install.sh"
+            "https://raw.githubusercontent.com/paultbarham/azure-quickstart-templates/azuremerge/vsts-fullbuildjava-ubuntu-vm/scripts/full-vstsbuild-install.sh"
           ],
-          "commandToExecute": "[concat('sh full-vstsbuild-install.sh',' ',parameters('vstsAccountURL'),' ',parameters('vstsPAT'),' ',parameters('vstsPoolName'),' ',parameters('vstsAgentName'),' ',parameters('adminUserName'))]"
+          "commandToExecute": "[concat('sh java-vstsbuild-install.sh',' ',parameters('vstsAccountURL'),' ',parameters('vstsPAT'),' ',parameters('vstsPoolName'),' ',parameters('vstsAgentName'),' ',parameters('adminUserName'))]"
         }
       }
     }

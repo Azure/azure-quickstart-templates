@@ -78,7 +78,7 @@ echo "Downloading VSTS Build agent package" >> /home/$5/install.progress.txt
 cd /home/$5/downloads
 
 # sudo -u $5 wget https://github.com/Microsoft/vsts-agent/releases/download/v2.101.1/vsts-agent-ubuntu.14.04-x64-2.101.1.tar.gz
-sudo -u $5 wget https://github.com/Microsoft/vsts-agent/releases/download/v2.102.0/vsts-agent-ubuntu.14.04-x64-2.102.0.tar.gz
+sudo -u $5 wget https://github.com/Microsoft/vsts-agent/releases/download/v2.102.0/vsts-agent-ubuntu.14.04-x64-2.102.1.tar.gz
 sudo -u $5 wget http://security.ubuntu.com/ubuntu/pool/main/i/icu/libicu52_52.1-8ubuntu0.2_amd64.deb
 sudo dpkg -i libicu52_52.1-8ubuntu0.2_amd64.deb
 
@@ -112,8 +112,13 @@ echo "JAVA_HOME_8_X64=/usr/lib/jvm/java-8-openjdk-amd64" >> .env
 echo "export JAVA_HOME_8_X64=/usr/lib/jvm/java-8-openjdk-amd64" >> /home/$5/.bashrc
 export JAVA_HOME_8_X64=/usr/lib/jvm/java-8-openjdk-amd64
 
-
-echo Running Agent.Listener > /home/$5/vsts.install.log.txt 2>&1
+echo URL: $1 > /home/$5/vsts.install.log.txt 2>&1
+echo PAT: HIDDEN >> /home/$5/vsts.install.log.txt 2>&1
+echo Pool: $3 >> /home/$5/vsts.install.log.txt 2>&1
+echo Agent: $4 >> /home/$5/vsts.install.log.txt 2>&1
+echo User: $5 >> /home/$5/vsts.install.log.txt 2>&1
+echo =============================== >> /home/$5/vsts.install.log.txt 2>&1
+echo Running Agent.Listener >> /home/$5/vsts.install.log.txt 2>&1
 sudo -u $5 -E bin/Agent.Listener --configure --unattended --nostart --replace --acceptteeeula --url $1 --auth PAT --token $2 --pool $3 --agent $4 >> /home/$5/vsts.install.log.txt 2>&1
 echo =============================== >> /home/$5/vsts.install.log.txt 2>&1
 echo Running ./svc.sh install >> /home/$5/vsts.install.log.txt 2>&1
