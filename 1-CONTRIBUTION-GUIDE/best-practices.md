@@ -221,7 +221,7 @@ When samples contain scripts, templates or other artifacts that need to be made 
 First, define two standard parameters:
 
 * _artifactsLocation - this is the base URI where all artifacts for the deployment will be staged.  The default value should be the samples folder so that the sample can be easily deployed in scenarios where a private location is not required.
-* _artifactsocationSasToken - this is the sasToken required to access _artifactsLocation.  The default value should be "?" for scenarios where the _artifactsLocation is not secured, for example, the raw GitHub URI.
+* _artifactsocationSasToken - this is the sasToken required to access _artifactsLocation.  The default value should be "" for scenarios where the _artifactsLocation is not secured, for example, the raw GitHub URI.
 
 ```
   "parameters": {
@@ -237,7 +237,7 @@ First, define two standard parameters:
           "metadata": {
               "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
           },
-          "defaultValue": "?"
+          "defaultValue": ""
       }
   },
 
