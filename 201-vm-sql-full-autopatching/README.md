@@ -16,10 +16,18 @@ This template provisions a virtual machine with **SQL Server 2014 SP1 running on
 This template will also create the following resources:
 
 +	A Virtual Network
-+	Two Storage Accounts one is used for SQL Server VM, one for SQL Server VM Autobackup 
++	Two Storage Accounts one is used for SQL Server VM, one for SQL Server VM Autobackup
 + 	One public IP address
 +	One network interface
 +	One network security group
+
+## Auto Patching
+
+The Automated Patching feature can be used to schedule a patching window during which all Windows and SQL Server updates will take place. More information on this feature can be found [here](https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-windows-sql-automated-patching/).
+
+This template can be used to enable or change the configuration of Automated Patching.
+
+If you wish to disable Automated Patching, you must edit *azuredeploy.json* and change "Enable" to be false.
 
 ## Notable Parameters
 
@@ -29,13 +37,6 @@ This template will also create the following resources:
 |sqlAutopatchingStartHour|Begin updates hour|22|
 |sqlAutopatchingWindowDuration|Patches must be installed within this duration minutes.|60|
 
-## Auto Patching
-
-The Automated Patching feature can be used to schedule a patching window during which all Windows and SQL Server updates will take place. More information on this feature can be found [here](https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-windows-sql-automated-patching/).
-
-This template can be used to enable or change the configuration of Automated Patching.
-
-If you wish to disable Automated Patching, you must edit *azuredeploy.json* and change "Enable" to be false.
 
 ## SQL Server IaaS Agent extension
 
