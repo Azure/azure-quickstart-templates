@@ -1,7 +1,6 @@
 ﻿{
   "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
-
   "parameters": {
 
     "namePrefix": {
@@ -71,109 +70,25 @@
     "vmDiskSize": 128,
 
     "adNamePrefix": "[concat(parameters('namePrefix'),'-ad-')]",
-    "adVMName": "[concat(variables('adNamePrefix'),'0')]",
+    "adVMName": "[concat(variables('adNamePrefix'),'1')]",
     "adNicName": "[concat(variables('adVMName'),'-nic')]",
     "adAvailabilitySetName": "[concat(variables('adNamePrefix'),'as')]",
-    "adDnsPrefix": "[concat(parameters('namePrefix'),'ad')]",
-
-    "adLBName": "[concat(variables('adNamePrefix'),'elb')]",
-    "adPublicIPName": "[concat(variables('adNamePrefix'),'ip')]",
-    "lbFE": "[concat(variables('adNamePrefix'),'elbfe')]",
-    "lbBE": "[concat(variables('adNamePrefix'),'elbbe')]",
-    "rpdNAT": "[concat(variables('adNamePrefix'),'elbrdpnat')]",
-    "adLBID": "[resourceId('Microsoft.Network/loadBalancers',variables('adLBName'))]",
-    "adLBFEConfigID": "[concat(variables('adLBID'),'/frontendIPConfigurations/',variables('lbFE'))]",
-    "rdpPort": 3389,
-    "adLBBEAddressPoolID": "[concat(variables('adLBID'),'/backendAddressPools/',variables('lbBE'))]",
-    "adRDPNATRuleID": "[concat(variables('adLBID'),'/inboundNatRules/',variables('rpdNAT'))]",
 
     "adStorageAccountName": "[concat(parameters('namePrefix'),'adstor')]",
     "vmContainerName": "vhds",
 
-    "adPDCModulesURL": "[concat(parameters('assetLocation'),'/CreateADPDC.ps1.zip')]",
-    "adPDCConfigurationFunction": "CreateADPDC.ps1\\CreateADPDC"
+    "adBDCModulesURL": "[concat(parameters('assetLocation'),'/scripts/create-ad-bdc.ps1.zip')]",
+    "adBDCConfigurationFunction": "CreateADBDC.ps1\\CreateADBDC"
 
   },
 
   "resources": [
 
-    {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('adStorageAccountName')]",
-      "apiVersion": "[variables('apiVersionStorage')]",
-      "location": "[resourceGroup().location]",
-      "properties": {
-        "accountType": "[parameters('storageAccountType')]"
-      }
-    },
-
-    {
-      "apiVersion": "[variables('apiVersionNetworks')]",
-      "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[variables('adPublicIPName')]",
-      "location": "[resourceGroup().location]",
-      "properties": {
-        "publicIPAllocationMethod": "Dynamic",
-        "dnsSettings": {
-          "domainNameLabel": "[variables('adDnsPrefix')]"
-        }
-      }
-    },
-
-    {
-      "type": "Microsoft.Compute/availabilitySets",
-      "name": "[variables('adAvailabilitySetName')]",
-      "apiVersion": "[variables('apiVersionNetworks')]",
-      "location": "[resourceGroup().location]"
-    },
-
-        {
-      "apiVersion": "[variables('apiVersionNetworks')]",
-      "name": "[variables('adLBName')]",
-      "type": "Microsoft.Network/loadBalancers",
-      "location": "[resourceGroup().location]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIPAddresses',variables('adPublicIPName'))]"
-      ],
-      "properties": {
-        "frontendIPConfigurations": [
-          {
-            "name": "[variables('lbFE')]",
-            "properties": {
-              "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('adPublicIPName'))]"
-              }
-            }
-          }
-        ],
-        "backendAddressPools": [
-          {
-            "name": "[variables('lbBE')]"
-          }
-        ],
-        "inboundNatRules": [
-          {
-            "name": "[variables('rpdNAT')]",
-            "properties": {
-              "frontendIPConfiguration": {
-                "id": "[variables('adLBFEConfigID')]"
-              },
-              "protocol": "tcp",
-              "frontendPort": "[variables('rdpPort')]",
-              "backendPort": 3389,
-              "enableFloatingIP": false
-            }
-          }
-        ]
-      }
-    },
-
-    {
+  {
       "name": "[variables('adNicName')]",
       "type": "Microsoft.Network/networkInterfaces",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[resourceId('Microsoft.Network/loadBalancers',variables('adLBName'))]"
       ],
       "apiVersion": "[variables('apiVersionNetworks')]",
       "properties": {
@@ -185,17 +100,7 @@
               "privateIPAddress": "[parameters('adIpAddress')]",
               "subnet": {
                 "id": "[parameters('subnetUri')]"
-              },
-              "loadBalancerBackendAddressPools": [
-                {
-                  "id": "[variables('adLBBEAddressPoolID')]"
-                }
-              ],
-              "loadBalancerInboundNatRules": [
-                {
-                  "id": "[variables('adRDPNATRuleID')]"
-                }
-              ]
+              }
             }
           }
         ]
@@ -208,10 +113,7 @@
       "apiVersion": "[variables('apiVersionVirtualMachines')]",      
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts',variables('adStorageAccountName'))]",
-        "[resourceId('Microsoft.Network/networkInterfaces',variables('adNicName'))]",
-        "[resourceId('Microsoft.Compute/availabilitySets', variables('adAvailabilitySetName'))]",
-        "[resourceId('Microsoft.Network/loadBalancers',variables('adLBName'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces',variables('adNicName'))]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -278,8 +180,8 @@
 		    "autoUpgradeMinorVersion": false,
         "settings": {
           "wmfVersion": "5.0",
-          "modulesUrl": "[variables('adPDCModulesURL')]",
-          "configurationFunction": "[variables('adPDCConfigurationFunction')]",
+          "modulesUrl": "[variables('adBDCModulesURL')]",
+          "configurationFunction": "[variables('adBDCConfigurationFunction')]",
           "properties": {
             "domainName": "[parameters('domainName')]",
             "adminCreds": {
@@ -303,6 +205,6 @@
       "value": "[variables('adVMName')]",
       "type": "string"
     }
-
+    
   }
 }

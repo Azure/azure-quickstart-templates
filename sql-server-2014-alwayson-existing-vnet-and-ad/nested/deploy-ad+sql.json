@@ -51,6 +51,58 @@
       "defaultValue": "Standard_DS1"
     },
 
+    "sqlVMSize": {
+      "type": "string",
+      "allowedValues": [
+        "Standard_D1",
+        "Standard_DS1",
+        "Standard_D2",
+        "Standard_DS2",
+        "Standard_D3",
+        "Standard_DS3",
+        "Standard_D4",
+        "Standard_DS4",
+        "Standard_D11",
+        "Standard_DS11",
+        "Standard_D12",
+        "Standard_DS12",
+        "Standard_D13",
+        "Standard_DS13",
+        "Standard_D14",
+        "Standard_DS14"
+      ],
+      "metadata": {
+        "description": "Size of the SQL VMs to be created"
+      },
+      "defaultValue": "Standard_DS3"
+    },
+
+    "sqlWitnessVMSize": {
+      "type": "string",
+      "allowedValues": [
+        "Standard_D1",
+        "Standard_DS1",
+        "Standard_D2",
+        "Standard_DS2",
+        "Standard_D3",
+        "Standard_DS3",
+        "Standard_D4",
+        "Standard_DS4",
+        "Standard_D11",
+        "Standard_DS11",
+        "Standard_D12",
+        "Standard_DS12",
+        "Standard_D13",
+        "Standard_DS13",
+        "Standard_D14",
+        "Standard_DS14"
+      ],
+      "metadata": {
+        "description": "Size of the Witness VM to be created"
+      },
+      "defaultValue": "Standard_DS1"
+    },
+
     "domainName": {
       "type": "string",
       "metadata": {
@@ -70,6 +122,20 @@
       "type": "securestring",
       "metadata": {
         "description": "Password for the Administrator account of the new VMs and Domain"
+      }
+    },
+
+    "sqlServerServiceAccountUserName": {
+      "type": "string",
+      "metadata": {
+        "description": "The SQL Server Service account name"
+      }
+    },
+
+    "sqlServerServiceAccountPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The SQL Server Service account password"
       }
     },
 
@@ -113,12 +179,20 @@
       "defaultValue": "10.0.0.5"
     },
 
+    "sqlLBIPAddress": {
+      "type": "string",
+      "metadata": {
+        "description": "IP address of ILB for the SQL Server AlwaysOn listener to be created"
+      },
+      "defaultValue": "10.0.1.10"
+    },
+
     "assetLocation": {
       "type": "string",
       "metadata": {
         "description": "Location of resources that the script is dependent on such as linked templates and DSC modules"
       },
-      "defaultValue": "https://raw.githubusercontent.com/robotechredmond/sql-server-2014-alwayson-dsc/master"
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sql-server-2014-alwayson-existing-vnet-and-AD"
     }
   },
 
@@ -154,15 +228,19 @@
       }
     ], 
 
-    "deployPrimaryAdTemplateURL": "[concat(parameters('assetLocation'),'/DeployPrimaryAD.json')]",
+    "deployPrimaryAdTemplateURL": "[concat(parameters('assetLocation'),'/nested/deploy-primary-ad.json')]",
     "deployPrimaryAd": "deployPrimaryAd",
     "deployPrimaryAdId": "[concat('Microsoft.Resources/deployments/', variables('deployPrimaryAd'))]",
 
-    "deploySecondaryAdTemplateURL": "[concat(parameters('assetLocation'),'/DeploySecondaryAD.json')]",
+    "deploySecondaryAdTemplateURL": "[concat(parameters('assetLocation'),'/nested/deploy-secondary-ad.json')]",
     "deploySecondaryAd": "deploySecondaryAd",
     "deploySecondaryAdId": "[concat('Microsoft.Resources/deployments/', variables('deploySecondaryAd'))]",
     
-    "vnetWithDNSTemplateUri": "[concat(parameters('assetLocation'),'/vnet-with-dns-server.json')]",
+    "deploySqlClusterTemplateURL": "[concat(parameters('assetLocation'),'/nested/deploy-sql-cluster.json')]",
+    "deploySqlCluster": "deploySqlCluster",
+    "deploySqlClusterId": "[concat('Microsoft.Resources/deployments/', variables('deploySqlCluster'))]",
+
+    "vnetWithDNSTemplateUri": "[concat(parameters('assetLocation'),'/nested/vnet-with-dns-server.json')]",
     "updateVNetDNS1": "updateVNetDNS1",
     "updateVNetDNS1Id": "[concat('Microsoft.Resources/deployments/', variables('updateVNetDNS1'))]",
 
@@ -284,8 +362,41 @@
           "dnsServerAddress": { "value": [ "[parameters('primaryAdIpAddress')]", "[parameters('secondaryAdIpAddress')]" ] }
         }
       }
+    },
+
+    {
+      "name": "[variables('deploySqlCluster')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "[variables('apiVersion')]",
+      "dependsOn": [
+        "[variables('vnetId')]",
+        "[variables('updateVNetDNS2Id')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('deploySqlClusterTemplateURL')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "namePrefix": { "value": "[parameters('namePrefix')]" },
+          "domainName": { "value": "[parameters('domainName')]" },
+          "dnsServerName": { "value": "[reference(variables('deployPrimaryAd')).outputs.adVMName.value]" },
+          "adminUsername": { "value": "[parameters('adminUsername')]" },
+          "adminPassword": { "value": "[parameters('adminPassword')]" },
+          "sqlServerServiceAccountUserName": { "value": "[parameters('sqlServerServiceAccountUserName')]" },
+          "sqlServerServiceAccountPassword": { "value": "[parameters('sqlServerServiceAccountPassword')]" },
+          "storageAccountType": { "value": "[parameters('storageAccountType')]" },
+          "nicSubnetUri": { "value": "[variables('sqlSubnetRef')]" },
+          "lbSubnetUri": { "value": "[variables('sqlSubnetRef')]" },
+          "sqlLBIPAddress": { "value": "[parameters('sqlLBIPAddress')]" },
+          "sqlVMSize": { "value": "[parameters('sqlVMSize')]" },
+          "sqlWitnessVMSize": { "value": "[parameters('sqlWitnessVMSize')]" },
+          "assetLocation": { "value": "[parameters('assetLocation')]" }
+        }
+      }
     }
-    
+
   ],
 
   "outputs": {
