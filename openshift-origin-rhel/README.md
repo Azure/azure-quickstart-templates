@@ -25,11 +25,17 @@ You'll need to generate a pair of SSH keys in order to provision this template. 
 
 You will need to create a Key Vault to store your SSH Private Key that will then be used as part of the deployment.
 
-1. Create KeyVault using Powershell<br/>
+1. Create KeyVault using Powershell <br/>
   a.  Create new resource group: New-AzureRMResourceGroup -Name 'ResourceGroupName' -Location 'West US'<br/>
   b.  Create key vault: New-AzureRmKeyVault -VaultName 'KeyVaultName' -ResourceGroup 'ResourceGroupName' -Location 'West US'<br/>
   c.  Create variable with sshPrivateKey: $securesecret = ConvertTo-SecureString -String '[copy ssh Private Key here - including line feeds]' -AsPlainText -Force<br/>
   d.  Create Secret: Set-AzureKeyVaultSecret -Name 'SecretName' -SecretValue $securesecret -VaultName 'KeyVaultName'<br/>
+
+2. Create Key Vault using Azure CLI - must be run from a Linux machine or Mac<br/>
+  a.  Create new Resource Group: azure group create \<name\> \<location\> [azure group create ResourceGroupName 'East US'] <br/>
+  b.  Create Key Vault: azure keyvault create -u \<vault-name\> -g \<resource-group\> -l \<location\> [azure keyvault create -u KeyVaultName -g ResourceGroupName -l 'East US'] <br/>
+  c.  Create Secret: azure keyvault secret set -u \<vault-name\> -s \<secret-name\> -w \<secret-value\> [azure keyvault secret set -u KeyVaultName -s SecretName -w <Paste private key here>] <br/>
+     1. Do not include the first line "-----BEGIN RSA PRIVATE KEY-----" and the last line "-----END RSA PRIVATE KEY-----" <br/>
    
 ### azuredeploy.Parameters.json File Explained
 
