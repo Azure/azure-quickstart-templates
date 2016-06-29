@@ -273,9 +273,10 @@ create_striped_volume()
 	done
 
     MDDEVICE=$(get_next_md_device)    
-    
+	sudo udevadm control --stop-exec-queue
 	mdadm --create ${MDDEVICE} --level 0 --raid-devices ${#PARTITIONS[@]} ${PARTITIONS[*]}
-
+	sudo udevadm control --start-exec-queue
+	
 	MOUNTPOINT=$(get_next_mountpoint)
 	echo "Next mount point appears to be ${MOUNTPOINT}"
 	[ -d "${MOUNTPOINT}" ] || mkdir -p "${MOUNTPOINT}"
@@ -297,8 +298,8 @@ create_striped_volume()
 check_mdadm() {
     dpkg -s mdadm >/dev/null 2>&1
     if [ ${?} -ne 0 ]; then
-        apt-get -y update
-        DEBIAN_FRONTEND=noninteractive apt-get -y install mdadm --fix-missing
+        (apt-get -y update || (sleep 15; apt-get -y update)) > /dev/null
+        DEBIAN_FRONTEND=noninteractive sudo apt-get -y install mdadm --fix-missing
     fi
 }
 
