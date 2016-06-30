@@ -8,9 +8,9 @@ export DEBIAN_FRONTEND=noninteractive
 #install php apache
 apt-get -y install apache2 
 
-apt-get -y install php5
+apt-get -y install php
 
-apt-get -y install libapache2-mod-php5
+apt-get -y install libapache2-mod-php
 
 #install composer
 #curl -sS https://getcomposer.org/installer | sudo php -- --install-dir=/usr/local/bin --filename=composer
