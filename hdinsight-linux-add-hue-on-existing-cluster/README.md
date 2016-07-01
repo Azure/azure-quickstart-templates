@@ -1,7 +1,7 @@
 # Install Hue as an HDInsight Iaas Cluster Application
 
 Installs Hue as an Iaas Cluster Application on an existing cluster -<br>
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fbharathsreenivas%2Fazure-quickstart-templates%2Fmaster%2Fhdinsight-linux-add-hue-on-existing-cluster%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fbharathsreenivas%2Fazure-quickstart-templates%2Fappstest%2Fhdinsight-linux-add-hue-on-existing-cluster%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
