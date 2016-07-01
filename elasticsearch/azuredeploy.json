@@ -27,6 +27,7 @@
       "defaultValue": "ubuntu",
       "allowedValues": [
         "ubuntu",
+        "centos",
         "windows"
       ],
       "metadata": {
@@ -41,14 +42,14 @@
         "sshPublicKey"
       ],
       "metadata": {
-        "description": "Whether to use a password or ssh key (Ubuntu only) as authentication"
+        "description": "Whether to use a password or ssh key (Linux only) as authentication"
       }
     },
     "sshPublicKey": {
       "type": "string",
       "defaultValue": "",
       "metadata": {
-        "description": "The public ssh key to use for authentication (Ubuntu only)"
+        "description": "The public ssh key to use for authentication (Linux only)"
       }
     },
     "loadBalancerType": {
@@ -389,6 +390,10 @@
         "yes": " -m ",
         "no": ""
       },
+      "centos": {
+        "yes": " -m ",
+        "no": ""
+      },
       "windows": {
         "yes": " -m ",
         "no": ""
@@ -399,6 +404,10 @@
         "yes": "[concat(' -a ', variables('storageAccountNameAFS'), ' -c -k ')]",
         "no": "[concat(' -a ', variables('storageAccountNameAFS'), ' -k ')]"
       },
+      "centos": {
+        "yes": "",
+        "no": ""
+      },
       "windows": {
         "yes": "",
         "no": ""
@@ -408,6 +417,10 @@
       "ubuntu": {
         "yes": "[concat(' -e ', variables('marvelNodesIpPrefix'), '-3')]",
         "no": ""
+      },
+      "centos" : {
+        "yes" : "[concat(' -e ', variables('marvelNodesIpPrefix'), '-3')]",
+        "no": ""  
       },
       "windows": {
         "yes": "[concat(' -marvelEndpoints ', variables('marvelNodesIpPrefix'), '-3')]",
@@ -438,6 +451,11 @@
       "[concat(variables('scriptsLocation'), 'kibana-install.sh', parameters('_artifactsLocationSasToken'))]",
       "[concat(variables('sharedScriptsLocation'), 'vm-disk-utils-0.1.sh')]",
       "[concat(variables('sharedScriptsLocation'), 'afs-utils-0.1.sh')]"
+    ],
+    "centosScripts": [
+      "[concat(variables('scriptsLocation'), 'elasticsearch-centos-install.sh', parameters('_artifactsLocationSasToken'))]",
+      "[concat(variables('scriptsLocation'), 'kibana-centos-install.sh', parameters('_artifactsLocationSasToken'))]",
+      "[concat(variables('sharedScriptsLocation'), 'vm-disk-utils-0.1.sh')]"
     ],
     "windowsScripts": [
       "[concat(variables('scriptsLocation'), 'elasticsearch-windows-install.ps1', parameters('_artifactsLocationSasToken'))]"
@@ -514,6 +532,63 @@
           "settings": {
             "fileUris": "[variables('ubuntuScripts')]",
             "commandToExecute": "[concat('bash kibana-install.sh -v ', variables('esSettings').version, variables('marvelParamValue'), variables('senseParamValue'), ' -t ', variables('kibanaIP'))]"
+          }
+        }
+      }
+    },
+    "centosSettings": {
+      "imageReference":{
+        "publisher": "OpenLogic",
+        "offer": "CentOS",
+        "sku": "7.2",
+        "version": "latest"
+      },
+      "linuxConfiguration": "[variables('configurationObject')[parameters('authenticationType')]]",
+      "managementPort":"22",
+      "extensionSettings":{
+        "marvel": {
+            "publisher": "Microsoft.OSTCExtensions",
+            "type": "CustomScriptForLinux",
+            "typeHandlerVersion": "1.4",
+            "settings": {
+              "fileUris": "[variables('centosScripts')]",
+              "commandToExecute": "[concat('bash elasticsearch-centos-install.sh -wn ', variables('esSettings').marvelClusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').marvelHosts, ' -k ')]"
+            }
+          },
+        "master": {
+            "publisher": "Microsoft.OSTCExtensions",
+            "type": "CustomScriptForLinux",
+            "typeHandlerVersion": "1.4",
+            "settings": {
+              "fileUris": "[variables('centosScripts')]",
+              "commandToExecute": "[concat('bash elasticsearch-centos-install.sh -xn ', variables('esSettings').clusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').discoveryHosts, variables('marvelParamValue'), variables('jmeterParamValue'), variables('cloudAzureParamValue'), variables('marvelExportParamValue'), variables('afsParamValue'))]"
+            }
+          },
+        "client": {
+            "publisher": "Microsoft.OSTCExtensions",
+            "type": "CustomScriptForLinux",
+            "typeHandlerVersion": "1.4",
+            "settings": {
+              "fileUris": "[variables('centosScripts')]",
+              "commandToExecute": "[concat('bash elasticsearch-centos-install.sh -yn ', variables('esSettings').clusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').discoveryHosts, variables('marvelParamValue'), variables('jmeterParamValue'),  variables('cloudAzureParamValue'),variables('marvelExportParamValue'), variables('afsParamValue'))]"
+            }
+          },
+        "data": {
+          "publisher": "Microsoft.OSTCExtensions",
+          "type": "CustomScriptForLinux",
+          "typeHandlerVersion": "1.4",
+          "settings": {
+            "fileUris": "[variables('centosScripts')]",
+            "commandToExecute": "[concat('bash elasticsearch-centos-install.sh -zn ', variables('esSettings').clusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').discoveryHosts, variables('marvelParamValue'), variables('jmeterParamValue'),  variables('cloudAzureParamValue'),variables('marvelExportParamValue'), variables('afsParamValue'))]"
+          }
+        },
+        "kibana": {
+          "publisher": "Microsoft.OSTCExtensions",
+          "type": "CustomScriptForLinux",
+          "typeHandlerVersion": "1.4",
+          "settings": {
+            "fileUris": "[variables('centosScripts')]",
+            "commandToExecute": "[concat('bash kibana-centos-install.sh -v ', variables('esSettings').version, variables('marvelParamValue'), variables('senseParamValue'), ' -t ', variables('kibanaIP'))]"
           }
         }
       }
@@ -970,7 +1045,7 @@
             "value": "[variables('networkSettings').subnet.other]"
           },
           "osSettings": {
-            "value": "[variables('ubuntuSettings')]"
+            "value": "[variables('osSettings')]"
           },
           "namespace": {
             "value": "[concat(parameters('esClusterName'), '-kibana')]"
