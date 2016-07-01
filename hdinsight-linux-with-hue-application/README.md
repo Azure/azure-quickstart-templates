@@ -1,8 +1,11 @@
-# Install Hue as an HDInsight Iaas Cluster Application
+# Create HDInsight Linux Cluster with Edge Node and Hue installed on that Edge Node
 
-Installs Hue as an Iaas Cluster Application on an existing cluster -<br>
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fbharathsreenivas%2Fazure-quickstart-templates%2Fmaster%2Fhdinsight-linux-add-hue-on-existing-cluster%2Fazuredeploy.json" target="_blank">
+Create HDInsight Linux Cluster with Edge Node and Hue app installed on Edge Node -<br>
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fbharathsreenivas%2Fazure-quickstart-templates%2Fmaster%2Fhdinsight-linux-with-hue-application%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
+</a>
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fbharathsreenivas%2Fazure-quickstart-templates%2Fmaster%2Fhdinsight-linux-with-hue-application%2Fazuredeploy.json" target="_blank">
+    <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
 Template installs Hue as an Iaas Cluster Application on an existing cluster. 
@@ -17,6 +20,7 @@ As an example, if you wanted to list all files and directories at the root of th
 
 The external wasb endpoint can be viewed from the Apps pane in the portal, by clicking on the hue app. When executing wasb commands against the external endpoint, use the basic authentication with the cluster username and password.<br /> Example command from outside the cluster: 
 <pre>curl -u clusteruser:clusterPassword https://clustername-was.apps.azurehdinsight.net:443/WebWasb/webhdfs/v1/?op=LISTSTATUS</pre>
+
 
 More information about installing applications on HDInsight clusters can be found here: 
 <a href="https://azure.microsoft.com/en-us/documentation/articles/hdinsight-apps-install-custom-applications" target="_blank">
