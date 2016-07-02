@@ -389,7 +389,7 @@ function mdcs_delete($p) {
       # getting storage context for deleting
       $storageaccount = (Get-AzureRmStorageAccount | ? {$_.StorageAccountName -eq $storageaccountname})
       $storagekey = Get-AzureRmStorageAccountKey -ResourceGroupName $storageaccount.ResourceGroupName -Name $storageaccount.StorageAccountName
-      $storagecontext = New-AzureStorageContext -StorageAccountName $storageaccount.StorageAccountName -StorageAccountKey $storagekey.Key1
+      $storagecontext = New-AzureStorageContext -StorageAccountName $storageaccount.StorageAccountName -StorageAccountKey $storagekey[0].Value
 
       $vhds | % {
         $vhd = $_
