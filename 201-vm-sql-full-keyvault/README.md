@@ -1,40 +1,33 @@
-# This template will create a SQL Server 2014 SP1 Enterprise edition with Azure Key Vault Integration feature enabled.
+# Create an Azure virtual machine running SQL Server 2014 SP1 Enterprise edition with Azure Key Vault Integration feature enabled.
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-vm-sql-full-keyvault%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vm-sql-full-keyvault%2Fazuredeploy.json" target="_blank">
   <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-vm-sql-full-keyvault%2Fazuredeploy.json" target="_blank">
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vm-sql-full-keyvault%2Fazuredeploy.json" target="_blank">
   <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template deploys a **SQL SERVER 2014 SP1 Virtual Machine** solution with all necessary components. It also enable Azure Key Vault Integration feature.
+## Solution overview
+
+This template provisions a virtual machine with **SQL Server 2014 SP1 running on Windows Server 2012 R2**. It also enable Azure Key Vault Integration feature.
 
 `Tags: SQL Server, Azure Key Vault, SQL Server 2014 Enterprise`
 
-## Solution overview and deployed resources
-
-This is an overview of the solution
-
-This template will create a SQL Server 2014 Enterprise edition with Auto Patching, Auto Backup and Azure Key Vault Integration features enabled:
+This template will also create the following resources:
 
 +	A Virtual Network
-+	Two Storage Accounts one is used for SQL Server VM, one for SQL Server VM Autobackup 
++	Two Storage Accounts one is used for SQL Server VM, one for SQL Server VM Autobackup
 + 	One public IP address
 +	One network interface
 +	One network security group
 
-## SQL Server IaaS Agent
-
-A component that will be installed on the VM when features are enabled and this component is called SQL Server IaaS Agent. It is built in the form of Azure VM Extension meaning all the Azure VM Extension concepts are applicable making it perfect tool for the management of SQL in Azure VMs on scale. You can push this IaaS Agent to a number of VMs at once, you can configure, and you can remove or disable it as well.
-
 ## Azure Key Vault Integration
 
-There are multiple SQL Server encryption features, such as transparent data encryption (TDE), column level encryption (CLE), and backup encryption. These forms of encryption require you to manage and store the cryptographic keys you use for encryption. The Azure Key Vault (AKV) service is designed to improve the security and management of these keys in a secure and highly available location. The SQL Server Connector enables SQL Server to use these keys from Azure Key Vault.
+The Azure Key Vault integration feature will configure your virtual machine to be able to connect to your Azure key vault. It achieves this by installing the latest version of the SQL Server Connector, configuring EKM provider to access Azure Key Vault, and creates the credential to allow you to access your vault. More information on this feature can be found [here](https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-windows-ps-sql-keyvault/).
 
-Azure Key Vault provider is configured on SQL Server as an EKM provider and a new credential is created on the SQL Server that with its keys secured in Azure Key Vault provided in the parameters. User can also create credentials on the server using the same provider and store.
+This template can be used to enable or change the configuration of Azure Key Vault Integration.
 
-When this feature is enabled, it automatically installs the SQL Server Connector, configures the EKM provider to access Azure Key Vault, and creates the credential to allow you to access your vault.
-
+If you wish to disable this feature, you must edit *azuredeploy.json* and change "Enable" to be false.
 
 ## Notable Parameters
 
@@ -44,3 +37,7 @@ When this feature is enabled, it automatically installs the SQL Server Connector
 |sqlAkvUrl|The location of the key vault|https://contosokeyvault.vault.azure.net/|
 |servicePrincipalName|Azure Active Directory service principal name. This is also referred to as the Client ID.|fde2b411-33d5-4e11-af04eb07b669ccf2|
 |servicePrincipalSecret|Azure Active Directory service principal secret. This is also referred to as the Client Secret.|9VTJSQwzlFepD8XODnzy8n2V01Jd8dAjwm/azF1XDKM=|
+
+## SQL Server IaaS Agent extension
+
+Automated Patching is supported in your virtual machine through the SQL Server IaaS Agent extension. This extension must be installed on the VM to be able to use this feature. When you enable Automated Patching on your virtual machine, the extension will be automatically installed. This extension will also report back the latest status of this feature to you. More information on this extension can be found [here](https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-windows-sql-server-agent-extension/).
