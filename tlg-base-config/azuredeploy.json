@@ -1,0 +1,568 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "localAdmin": {
+            "type": "string",
+            "defaultValue": "localAdmin",
+            "metadata": { 
+	            "description": "The 'localAdmin' account on each of the Virtual Machines (also becomes EA/DA on DC Promotion of DC1)" 
+            }
+        },
+        "localAdminPassword": {
+            "type": "securestring",
+            "metadata": { 
+	            "description": "Password for the 'localAdmin' account on each of the Virtual Machines" 
+            }
+        },
+        "safemodeAdmin": {
+            "type": "string",
+            "defaultValue": "safemodeAdmin",
+            "metadata": { 
+	            "description": "The safemodeAdmin account for the Domain" 
+            }
+        },
+        "safemodeAdminPassword": {
+            "type": "securestring",
+            "metadata": { 
+	            "description": "Password for the 'safemodeAdmin'" 
+            }
+        },
+        "genericUser": {
+            "type": "string",
+            "defaultValue": "User1",
+            "metadata": { 
+	            "description": "The account to be created and promoted to EA/DA" 
+            }
+        },
+        "genericUserPassword": {
+            "type": "securestring",
+            "metadata": { 
+	            "description": "Password for the 'genericUser' account" 
+            }
+        },
+        "newStorageAccountName": { 
+	        "type": "string", 
+	        "metadata": { 
+	            "description": "Unique DNS Name for the Storage Account where the Virtual Machine's disks will be placed. (Length: 3-24; Case: Lower; Valid: Alphanumeric; Unique: Global)" 
+            } 
+        }
+    },
+    "variables": {
+        "githubroot": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/tlg-base-config/dsc/",
+        "storageAccountType": "Standard_LRS",
+        "imageSku": "2012-R2-Datacenter",
+        "vmSize": "Standard_A1",
+        "virtualNetworkName": "TestLab",
+        "virtualSubnetName": "Corpnet",
+        "domainName": "corp\\",
+        "dscConfigZIP": "[concat(variables('githubroot'), 'dsc_config.zip')]",
+        "dscConfigFile": "dsc_config.ps1",
+        "dscConfigScript": "WindowsTestConfigEnv"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "APP1",
+            "apiVersion": "2015-06-15",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[variables('vmSize')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "MicrosoftWindowsServer",
+                        "offer": "WindowsServer",
+                        "sku": "[variables('imageSku')]",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "APP1-OSDisk",
+                        "createOption": "FromImage",
+                        "vhd": {
+                            "uri": "[concat('https://', parameters('newStorageAccountName'), '.blob.core.windows.net/vhds/APP1-OSDisk.vhd')]"
+                        },
+                        "caching": "ReadWrite"
+                    },
+                    "dataDisks": []
+                },
+                "osProfile": {
+                    "computerName": "APP1",
+                    "adminUsername": "localAdmin",
+                    "adminPassword": "[parameters('localAdminPassword')]",
+                    "windowsConfiguration": {
+                        "provisionVMAgent": true,
+                        "enableAutomaticUpdates": true
+                    },
+                    "secrets": []
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', 'APP1-NIC')]"
+                        }
+                    ]
+                }
+            },
+            "resources": [
+                {
+                    "type": "extensions",
+                    "name": "APP1_DSC",
+                    "apiVersion": "2015-06-15",
+                    "location": "[resourceGroup().location]",
+                    "dependsOn": [
+                        "[concat('Microsoft.Compute/virtualMachines/', 'APP1')]"
+                    ],
+                    "properties": {
+                        "publisher": "Microsoft.Powershell",
+                        "type": "DSC",
+                        "typeHandlerVersion": "2.19",
+                        "autoUpgradeMinorVersion": true,
+                        "settings": {
+                            "wmfVersion": "latest",
+                            "configuration": {
+                                "url": "[variables('dscConfigZIP')]",
+                                "script": "[variables('dscConfigFile')]",
+                                "function": "[variables('dscConfigScript')]"
+                            },
+                            "configurationData": {
+                                "url": "[concat(variables('githubroot'), 'dsc_configdata_APP1.psd1')]"
+                            },
+                            "privacy": {
+                                "dataCollection": "disable"
+                            }
+                        },
+                        "protectedSettings": {
+                            "configurationArguments": {
+                                "localAdminCredential": {
+                                    "userName": "[parameters('localAdmin')]",
+                                    "password": "[parameters('localAdminPassword')]"
+                                },
+                                "domainAdminCredential": {
+                                    "userName": "[concat(variables('domainName'), parameters('localAdmin'))]",
+                                    "password": "[parameters('localAdminPassword')]"
+                                },
+                                "safemodeAdminCredential": {
+                                    "userName": "[parameters('safemodeAdmin')]",
+                                    "password": "[parameters('safemodeAdminPassword')]"
+                                },
+                                "genericUserCredential": {
+                                    "userName": "[parameters('genericUser')]",
+                                    "password": "[parameters('genericUserPassword')]"
+                                }
+                            }
+                        }
+                    }
+                }
+            ],
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('newStorageAccountName'))]",
+                "[resourceId('Microsoft.Network/networkInterfaces', 'APP1-NIC')]"
+            ]
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "CLIENT1",
+            "apiVersion": "2015-06-15",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[variables('vmSize')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "MicrosoftWindowsServer",
+                        "offer": "WindowsServer",
+                        "sku": "[variables('imageSku')]",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "CLIENT1-OSDisk",
+                        "createOption": "FromImage",
+                        "vhd": {
+                            "uri": "[concat('https://', parameters('newStorageAccountName'), '.blob.core.windows.net/vhds/CLIENT1-OSDisk.vhd')]"
+                        },
+                        "caching": "ReadWrite"
+                    },
+                    "dataDisks": []
+                },
+                "osProfile": {
+                    "computerName": "CLIENT1",
+                    "adminUsername": "localAdmin",
+                    "adminPassword": "[parameters('localAdminPassword')]",
+                    "windowsConfiguration": {
+                        "provisionVMAgent": true,
+                        "enableAutomaticUpdates": true
+                    },
+                    "secrets": []
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', 'CLIENT1-NIC')]"
+                        }
+                    ]
+                }
+            },
+            "resources": [
+                {
+                    "type": "extensions",
+                    "name": "CLIENT1_DSC",
+                    "apiVersion": "2015-06-15",
+                    "location": "[resourceGroup().location]",
+                    "dependsOn": [
+                        "[concat('Microsoft.Compute/virtualMachines/', 'CLIENT1')]"
+                    ],
+                    "properties": {
+                        "publisher": "Microsoft.Powershell",
+                        "type": "DSC",
+                        "typeHandlerVersion": "2.19",
+                        "autoUpgradeMinorVersion": true,
+                        "settings": {
+                            "wmfVersion": "latest",
+                            "configuration": {
+                                "url": "[variables('dscConfigZIP')]",
+                                "script": "[variables('dscConfigFile')]",
+                                "function": "[variables('dscConfigScript')]"
+                            },
+                            "configurationData": {
+                                "url": "[concat(variables('githubroot'), 'dsc_configdata_CLIENT1.psd1')]"
+                            },
+                            "privacy": {
+                                "dataCollection": "disable"
+                            }
+                        },
+                        "protectedSettings": {
+                            "configurationArguments": {
+                                "localAdminCredential": {
+                                    "userName": "[parameters('localAdmin')]",
+                                    "password": "[parameters('localAdminPassword')]"
+                                },
+                                "domainAdminCredential": {
+                                    "userName": "[concat(variables('domainName'), parameters('localAdmin'))]",
+                                    "password": "[parameters('localAdminPassword')]"
+                                },
+                                "safemodeAdminCredential": {
+                                    "userName": "[parameters('safemodeAdmin')]",
+                                    "password": "[parameters('safemodeAdminPassword')]"
+                                },
+                                "genericUserCredential": {
+                                    "userName": "[parameters('genericUser')]",
+                                    "password": "[parameters('genericUserPassword')]"
+                                }
+                            }
+                        }
+                    }
+                }
+            ],
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('newStorageAccountName'))]",
+                "[resourceId('Microsoft.Network/networkInterfaces', 'CLIENT1-NIC')]"
+            ]
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "DC1",
+            "apiVersion": "2015-06-15",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[variables('vmSize')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "MicrosoftWindowsServer",
+                        "offer": "WindowsServer",
+                        "sku": "[variables('imageSku')]",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "DC1-OSDisk",
+                        "createOption": "FromImage",
+                        "vhd": {
+                            "uri": "[concat('https://', parameters('newStorageAccountName'), '.blob.core.windows.net/vhds/DC1-OSDisk.vhd')]"
+                        },
+                        "caching": "ReadWrite"
+                    },
+                    "dataDisks": [
+                        {
+                            "lun": 0,
+                            "name": "ADDS-Data",
+                            "createOption": "Empty",
+                            "vhd": {
+                                "uri": "[concat('https://', parameters('newStorageAccountName'), '.blob.core.windows.net/vhds/DC1-ADDSDisk.vhd')]"
+                            },
+                            "caching": "None",
+                            "diskSizeGB": "20"
+                        }
+                    ]
+                },
+                "osProfile": {
+                    "computerName": "DC1",
+                    "adminUsername": "localAdmin",
+                    "adminPassword": "[parameters('localAdminPassword')]",
+                    "windowsConfiguration": {
+                        "provisionVMAgent": true,
+                        "enableAutomaticUpdates": true
+                    },
+                    "secrets": []
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', 'DC1-NIC')]"
+                        }
+                    ]
+                }
+            },
+            "resources": [
+                {
+                    "type": "extensions",
+                    "name": "DC1_DSC",
+                    "apiVersion": "2015-06-15",
+                    "location": "[resourceGroup().location]",
+                    "dependsOn": [
+                        "[concat('Microsoft.Compute/virtualMachines/', 'DC1')]"
+                    ],
+                    "properties": {
+                        "publisher": "Microsoft.Powershell",
+                        "type": "DSC",
+                        "typeHandlerVersion": "2.19",
+                        "autoUpgradeMinorVersion": true,
+                        "settings": {
+                            "wmfVersion": "latest",
+                            "configuration": {
+                                "url": "[variables('dscConfigZIP')]",
+                                "script": "[variables('dscConfigFile')]",
+                                "function": "[variables('dscConfigScript')]"
+                            },
+                            "configurationData": {
+                                "url": "[concat(variables('githubroot'), 'dsc_configdata_DC1.psd1')]"
+                            },
+                            "privacy": {
+                                "dataCollection": "disable"
+                            }
+                        },
+                        "protectedSettings": {
+                            "configurationArguments": {
+                                "localAdminCredential": {
+                                    "userName": "[parameters('localAdmin')]",
+                                    "password": "[parameters('localAdminPassword')]"
+                                },
+                                "domainAdminCredential": {
+                                    "userName": "[concat(variables('domainName'), parameters('localAdmin'))]",
+                                    "password": "[parameters('localAdminPassword')]"
+                                },
+                                "safemodeAdminCredential": {
+                                    "userName": "[parameters('safemodeAdmin')]",
+                                    "password": "[parameters('safemodeAdminPassword')]"
+                                },
+                                "genericUserCredential": {
+                                    "userName": "[parameters('genericUser')]",
+                                    "password": "[parameters('genericUserPassword')]"
+                                }
+                            }
+                        }
+                    }
+                }
+            ],
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('newStorageAccountName'))]",
+                "[resourceId('Microsoft.Network/networkInterfaces', 'DC1-NIC')]"
+            ]
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "APP1-NIC",
+            "apiVersion": "2016-03-30",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAddress": "10.0.0.5",
+                            "privateIPAllocationMethod": "Static",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'APP1-PublicIP')]"
+                            },
+                            "subnet": {
+                                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName')), '/subnets/', variables('virtualSubnetName'))]"
+                            },
+                            "primary": true,
+                            "privateIPAddressVersion": "IPv4"
+                        }
+                    }
+                ],
+                "enableIPForwarding": false
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses', 'APP1-PublicIP')]",
+                "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "CLIENT1-NIC",
+            "apiVersion": "2016-03-30",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAddress": "10.0.0.6",
+                            "privateIPAllocationMethod": "Static",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'CLIENT1-PublicIP')]"
+                            },
+                            "subnet": {
+                                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName')), '/subnets/', variables('virtualSubnetName'))]"
+                            },
+                            "primary": true,
+                            "privateIPAddressVersion": "IPv4"
+                        }
+                    }
+                ],
+                "enableIPForwarding": false
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses', 'CLIENT1-PublicIP')]",
+                "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "DC1-NIC",
+            "apiVersion": "2016-03-30",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAddress": "10.0.0.4",
+                            "privateIPAllocationMethod": "Static",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', 'DC1-PublicIP')]"
+                            },
+                            "subnet": {
+                                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName')), '/subnets/', variables('virtualSubnetname'))]"
+                            },
+                            "primary": true,
+                            "privateIPAddressVersion": "IPv4"
+                        }
+                    }
+                ],
+                "enableIPForwarding": false
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses', 'DC1-PublicIP')]",
+                "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[concat(variables('virtualNetworkName'), '-NSG')]",
+            "apiVersion": "2016-03-30",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "RDPTraffic",
+                        "properties": {
+                            "description": "Allow RDP to all VMs on the subnet",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "3389",
+                            "sourceAddressPrefix": "Internet",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 100,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            },
+            "dependsOn": []
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "APP1-PublicIP",
+            "apiVersion": "2016-03-30",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "publicIPAllocationMethod": "Dynamic",
+                "idleTimeoutInMinutes": 4
+            },
+            "dependsOn": []
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "CLIENT1-PublicIP",
+            "apiVersion": "2016-03-30",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "publicIPAllocationMethod": "Dynamic",
+                "idleTimeoutInMinutes": 4
+            },
+            "dependsOn": []
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "DC1-PublicIP",
+            "apiVersion": "2016-03-30",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "publicIPAllocationMethod": "Dynamic",
+                "idleTimeoutInMinutes": 4
+            },
+            "dependsOn": []
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[variables('virtualNetworkName')]",
+            "apiVersion": "2016-03-30",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "10.0.0.0/8"
+                    ]
+                },
+                "dhcpOptions": {
+                    "dnsServers": [
+                        "10.0.0.4",
+                        "168.63.129.16"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[variables('virtualSubnetName')]",
+                        "properties": {
+                            "addressPrefix": "10.0.0.0/24",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(variables('virtualNetworkName'), '-NSG'))]"
+                            }
+                        }
+                    }
+                ]
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', concat(variables('virtualNetworkName'), '-NSG'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[parameters('newStorageAccountName')]",
+            "apiVersion": "2015-06-15",
+            "location": "[resourceGroup().location]",
+            "tags": {},
+            "properties": {
+                "accountType": "[variables('storageAccountType')]"
+            },
+            "dependsOn": []
+        }
+    ]
+}
