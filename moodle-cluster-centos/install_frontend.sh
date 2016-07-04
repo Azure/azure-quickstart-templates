@@ -1,17 +1,26 @@
 #!/bin/bash
 
 dbpass=$1
-moodleVersion=$2
-installOfficePlugins=$3
+SharedStorageAccountName=$2
+SharedAzureFileName=$3
+FullNameOfSite=$4
+ShortNameOfSite=$5
+MoodleAdminUser=$6
+MoodleAdminPass=$7
+MoodleAdminEmail=$8
+moodleVersion=$9
+installOfficePlugins=${10}
+SharedStorageAccountKey=${11}
+LoadbalancerFqdn=${12}
+DbFqdn=${13}
 
-# Installing development tools
+
+#Installing development tools
 yum install -y make bison bzr cmake gcc gcc-c++ ncurses-devel perl 
-yum install -y 'perl(Data::Dumper)'
 
-#Iterate loop to avoid below commands failing
 CommandStatus=$?
-
-for i in {1..10}
+#Iterate loop to avoid below commands failing
+while true
 do
 if [ $CommandStatus -eq 0 ]; then
 break
@@ -24,7 +33,7 @@ done
 yum -y install kernel-headers --disableexcludes=main
 CommandStatus=$?
 
-for i in {1..10}
+while true
 do
 if [ $CommandStatus -eq 0 ]; then
 break
@@ -34,29 +43,11 @@ CommandStatus=$?
 fi
 done
 
-#Secure centos security 
+#Securing  centos 
 yum -y install gamin-python
 yum -y install epel-release
 yum -y install fail2ban fail2ban-systemd 
 yum -y update selinux-policy*
-
-yum localinstall http://yum.puppetlabs.com/puppetlabs-release-el-7.noarch.rpm -y
-yum install -y puppet git
-git clone https://legeek@bitbucket.org/legeek/bkraft-securingc7.git
-
-cd bkraft-securingc7
-git checkout -b puppet4.0
-git branch --set-upstream-to=remotes/origin/puppet4.0
-git pull
-cd /
-
-cp -r bkraft-securingc7/ /usr/share/puppet/modules/
-
-cd /usr/share/puppet/modules/
-puppet apply -e 'include bkraft-securingc7::services'
-puppet apply  -e 'include bkraft-securingc7::fail2ban'
-puppet apply  -e 'include bkraft-securingc7::openssh'
-puppet apply  -e 'include bkraft-securingc7::general'
 
 echo "[sshd]
 enabled = true
@@ -73,109 +64,85 @@ cd /opt/setup
 #Download Apache Source code
 wget http://apache.mirror.digitalpacific.com.au//httpd/httpd-2.4.20.tar.gz
 
-#Download APR Apache dependency Source code
+#Download APR  Apache dependency Source code
 wget http://mirror.ventraip.net.au/apache/apr/apr-1.5.2.tar.gz
 
-#Download APR-Util Apache dependency Source code
+#Download APR-Util  Apache dependency Source code
 wget http://mirror.ventraip.net.au/apache//apr/apr-util-1.5.4.tar.gz
 
 #Download PHP Source code
 wget http://au2.php.net/get/php-5.4.40.tar.gz/from/this/mirror
 
-#Download MySql Source code
-wget http://dev.mysql.com/get/Downloads/MySQL-5.6/mysql-5.6.14.tar.gz
-
-#Extract all files
+#Extract all tar files
 tar xvzf httpd-2.4.20.tar.gz
 tar xvzf apr-1.5.2.tar.gz
 tar xvzf apr-util-1.5.4.tar.gz
-tar xvzf mysql-5.6.14.tar.gz
 tar xvzf mirror
 
-#Enabling firewall and opening HTTP and HTTPS port for public
+#Security Script
+cd /
+yum localinstall http://yum.puppetlabs.com/puppetlabs-release-el-7.noarch.rpm -y
+yum install -y puppet git
+git clone https://legeek@bitbucket.org/legeek/bkraft-securingc7.git
+
+cd bkraft-securingc7
+git checkout -b puppet4.0
+git branch --set-upstream-to=remotes/origin/puppet4.0
+git pull
+cd /
+cp -r bkraft-securingc7/ /usr/share/puppet/modules/
+
+cd /usr/share/puppet/modules/
+puppet apply -e 'include bkraft-securingc7::services'
+puppet apply  -e 'include bkraft-securingc7::fail2ban'
+puppet apply  -e 'include bkraft-securingc7::openssh'
+puppet apply  -e 'include bkraft-securingc7::general'
+
+#Enable Firewwall and set http and https to public zone
 systemctl enable firewalld
 systemctl start firewalld
 firewall-cmd --permanent --zone=public --add-service=http	
 firewall-cmd --permanent --zone=public --add-service=https	
 firewall-cmd --reload
 
-# Compile and install MySql from source code
-cd /opt/setup/mysql-5.6.14/
-
-#Add mysql user and group
-groupadd mysql
-useradd -g mysql -s /bin/false mysql
-
-CC='gcc' CXX='g++'
-export CC CXX
-
-mkdir /usr/local/mysql  
-mkdir /usr/local/mysql/data
-
-#Build and compile mysql source code
-cmake . -DCMAKE_INSTALL_PREFIX=/usr/local/mysql -DDEFAULT_CHARSET=utf8 -DDEFAULT_COLLATION=utf8_general_ci -DWITH_INNOBASE_STORAGE_ENGINE:BOOL=ON
-make -j15     
-make install
-
-#Added mysql user permission to mysql installation folder 
-chown -R mysql:mysql /usr/local/mysql
-chown -R mysql:mysql /usr/local/mysql/data
-yes | cp support-files/my-default.cnf /etc/my.cnf
-yes | cp support-files/mysql.server /etc/init.d/
-chmod 755 /etc/init.d/mysql.server
-cd /etc/init.d
-cp mysql.server mysql.server.respaldo
-
-/usr/bin/rpm -Uvf ftp://ftp.muug.mb.ca/mirror/centos/7.2.1511/os/x86_64/Packages/perl-Data-Dumper-2.145-3.el7.x86_64.rpm
-cd /usr/local/mysql/
-scripts/mysql_install_db --user=mysql
-
-/etc/init.d/mysql.server start
-
-# Enable barracuda table format
-echo 'innodb_file_per_table = 1' >> /etc/my.cnf
-echo 'innodb_file_format = barracuda' >> /etc/my.cnf
-
-# Restart mysql
-/etc/init.d/mysql.server restart
-
 # Compile and install Apache from source code
 cd /opt/setup/httpd-2.4.20
 yum -y install pcre-devel.x86_64 openssl-devel.x86_64
-#Apache depends on Apr and Apr-util packages and move to srclib
 mv /opt/setup/apr-1.5.2 /opt/setup/httpd-2.4.20/srclib/apr
 mv /opt/setup/apr-util-1.5.4 /opt/setup/httpd-2.4.20/srclib/apr-util
 
 ./configure --prefix=/usr/local/apache --enable-ssl --with-ssl=/usr/local/ssl --enable-so --enable-rewrite --enable-deflate --enable-expires
-make -j11
+make
 make install
 
-mkdir -p /www/htdocs
-
 #Add index.html and index.php file to check apache and php server running
+mkdir -p /www/htdocs
 echo "<html><body> <h1>Hello world</h1></body></html>" >>/www/htdocs/index.html
- echo "<?php echo phpinfo(); ?>" >>/www/htdocs/index.php
-
-#Add apache user and group
+echo "<?php echo phpinfo(); ?>" >>/www/htdocs/index.php
+ 
+ 
+#Create apache user and group 
 groupadd apache
 useradd -g apache apache
 cd /usr/local/apache/conf
 cp httpd.conf httpd.conf.respaldo
 
-# Apache Hardening steps
+#Apache Hardening
 echo "ServerTokens Prod" >>httpd.conf
 echo "ServerSignature Off" >>httpd.conf
 
+#Apache hardening script
 sed -i 's/User[[:space:]]daemon/User apache/' httpd.conf
 sed -i 's/Group[[:space:]]daemon/Group apache/' httpd.conf
 sed -i 's|/usr/local/apache/htdocs|/www/htdocs|' httpd.conf
 sed -i 's|index.html|index.html index.php|' httpd.conf
 sed -i 's|Indexes| |' httpd.conf
-sed -i 's|MultiViews | |' httpd.conf
+sed -i 's|MultiViews | |' http.conf
 sed -i 's|access_log" [[:space:]] common|access_log" combined|' httpd.conf
 
-# Set php configuration for apache
 echo " application/x-httpd-php php html" >> mime.types 
+echo "ServerTokens Prod" >>httpd.conf
+echo "ServerSignature Off" >>httpd.conf
 
 echo "<IfModule mod_deflate.c>
 # compress text, html, javascript, css, xml:
@@ -191,10 +158,9 @@ AddOutputFilterByType DEFLATE application/x-javascript
 AddOutputFilterByType DEFLATE image/x-icon
 </IfModule>" >>/usr/local/apache/conf/httpd.conf
 
-# Restart apache server
+#Restart apache server
 /usr/local/apache/bin/apachectl  restart
 
-# Install PHP
 cd /opt/setup/php-5.4.40/
 yum -y install libjpeg-turbo-devel-1.2.1-1.el6.x86_64 libpng.x86_64 libpng-devel.x86_64 giflib.x86_64 giflib.x86_64 gd.x86_64 libXpm.x86_64 freetype-devel.x86_64 libxml2.x86_64 libxml2-devel.x86_64 mingw32-iconv-static.noarch openssl098e.x86_64 openldap-devel libXpm-devel libjpeg-devel libcurl-devel.x86_64
 
@@ -240,27 +206,26 @@ opcache.enable_file_override = 0 " >>/etc/php.ini
 # Restart apache server
 /usr/local/apache/bin/apachectl restart
 
-# Install Moodle
+#Install Moodle
 cd /www/htdocs
 wget https://github.com/moodle/moodle/archive/$moodleVersion.zip
+
 unzip $moodleVersion.zip
 mv moodle-$moodleVersion moodle
 
-# Set permission to moodle
-chmod -R 750 /www/htdocs/moodle
+#Set permission to moodle
+chmod -R 755 /www/htdocs/moodle
 chown -R apache:apache /www/htdocs/moodle
 
-# Make moodle data directory
+#Set permission to moodledata
 mkdir /www/moodledata
-
-# Set permission to moodledata
-chmod -R 750 /www/moodledata
+chmod -R 755 /www/moodledata
 chown -R apache:apache /www/moodledata
 
-# Restart apache server
+#Restart apache server
 /usr/local/apache/bin/apachectl restart
 
-# Install Office 365 plugins if asked for
+# install Office 365 plugins if asked for
 if [ "$installOfficePlugins" = "True" ]; then
     curl -k --max-redirs 10 https://github.com/Microsoft/o365-moodle/archive/$moodleVersion.zip -L -o o365.zip
     unzip o365.zip
@@ -268,11 +233,25 @@ if [ "$installOfficePlugins" = "True" ]; then
     rm -rf o365-moodle-$moodleVersion
 fi
 
-# Create moodle database and set permission to root user
-/usr/local/mysql/bin/mysql -u root -e "use mysql;CREATE DATABASE moodle DEFAULT CHARACTER SET UTF8 COLLATE utf8_unicode_ci;flush privileges; UPDATE user SET password=PASSWORD('$dbpass') WHERE User='root';"
-/usr/local/mysql/bin/mysql -u root -e "grant all privileges on *.* to root@'localhost'";
-
-
-# Restart mysql and apache 
-/etc/init.d/mysql.server restart
+#Restart apache server
 /usr/local/apache/bin/apachectl restart
+
+# mount share file on /var/www/moodledata
+yum -y install samba-client samba-common cifs-utils
+mount -t cifs //$SharedStorageAccountName.file.core.windows.net/$SharedAzureFileName /www/moodledata -o uid=$(id -u apache),vers=3.0,username=$SharedStorageAccountName,password=$SharedStorageAccountKey,dir_mode=0770,file_mode=0770 
+	
+#add mount to /etc/fstab to persist across reboots
+chmod 770 /etc/fstab
+echo "//$SharedStorageAccountName.file.core.windows.net/$SharedAzureFileName /www/moodledata cifs uid=$(id -u apache),vers=3.0,username=$SharedStorageAccountName,password=$SharedStorageAccountKey,dir_mode=0770,file_mode=0770" >> /etc/fstab
+
+cd /www/htdocs/moodle
+
+#resolve domain name to ip address
+wwwrootval="http://$(dig +short $LoadbalancerFqdn):80/moodle"
+DbIpAddress=$(dig +short $DbFqdn)
+
+#Command line moodle installation
+sed -i "s/Defaults    requiretty/#Defaults    requiretty/" /etc/sudoers
+
+sudo -u apache /usr/local/php/bin/php admin/cli/install.php --chmod=770 --lang=en --wwwroot=$wwwrootval --dataroot='/www/moodledata' --dbhost=$DbIpAddress --dbpass=$dbpass --fullname=$FullNameOfSite --shortname=$ShortNameOfSite --adminuser=$MoodleAdminUser --adminpass=$MoodleAdminPass --adminemail=$MoodleAdminEmail --non-interactive --agree-license --allow-unstable || true
+
