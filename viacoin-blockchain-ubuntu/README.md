@@ -16,7 +16,7 @@ in a similar way that email and web are built on top of the internet protocol.
 This allows the building of fully decentralized exchanges, issuing of new currencies, asset tracking, betting, 
 digital voting, reputation management and even form the basis of fully decentralized market places. Our protocol for this will be called ClearingHouse.
 
-+ TECHNOLOGY: Proof of Stake
++ Technology: Proof of Work
 + Total supply: ~23,000,000 (92MM)
 + Algorithm: Scrypt (POW)
 + Block time: 24 seconds
