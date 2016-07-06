@@ -104,7 +104,9 @@ def get_cloud_foundry_configuration(scenario, settings):
     config["SYSTEM_DOMAIN"] = "{0}.xip.io".format(settings["CLOUD_FOUNDRY_PUBLIC_IP"])
 
     if scenario == "single-vm-cf":
-        config["STATIC_IP"] = str(ip[4])
+        config["STATIC_IP_FROM"] = str(ip[4])
+        config["STATIC_IP_TO"] = str(ip[100])
+        config["POSTGRES_IP"] = str(ip[11])
     elif scenario == "multiple-vm-cf":
         config["STATIC_IP_FROM"] = str(ip[4])
         config["STATIC_IP_TO"] = str(ip[100])
