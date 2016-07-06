@@ -14,8 +14,6 @@ LOCATION=$2
 VMNAME=`hostname`
 HOMEDIR="/home/$AZUREUSER"
 ETHEREUM_HOST_RPC="http://${VMNAME}.${LOCATION}.cloudapp.azure.com:8545"
-#Save for easy upgrades.
-sudo -u $AZUREUSER echo $ETHEREUM_HOST_RPC > .eth_host_rpc
 
 echo "User: $AZUREUSER"
 echo "User home dir: $HOMEDIR"
@@ -23,6 +21,9 @@ echo "vmname: $VMNAME"
 echo "HOST_RPC: $ETHEREUM_HOST_RPC"
 
 cd $HOMEDIR
+
+#Save for easy upgrades.
+sudo -u $AZUREUSER echo $ETHEREUM_HOST_RPC > .eth_host_rpc
 
 #####################
 # install tools
@@ -50,6 +51,10 @@ time sudo pip install ethereum
 time sudo pip install requests --upgrade
 time sudo pip install pyethapp
 
+#TODO: replace with
+#pip install -r requirements-load.txt
+#pip install -r requirements.txt
+#?
 time sudo apt-get update
 
 ##################
@@ -95,8 +100,9 @@ sudo -i -u $AZUREUSER geth makedag 0 .ethash
 ####################
 sudo -i -u $AZUREUSER git clone https://github.com/AugurProject/augur-core.git
 cd  augur-core/load_contracts
+pip install -r requirements-load.txt
 python load_contracts.py
-contracts="`python generate_gospel.py -j`"
+contracts="`python generate_gospel.py -j`"  #TODO: -j deprecated
 contracts=$(echo $contracts | sed 's|\x22|\\\"|g')
 contracts=$(echo $contracts | sed "s|[$'\t\r\n ']||g")
 cd ../..
