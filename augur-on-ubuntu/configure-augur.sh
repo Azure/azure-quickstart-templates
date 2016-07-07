@@ -51,10 +51,6 @@ time sudo pip install ethereum
 time sudo pip install requests --upgrade
 time sudo pip install pyethapp
 
-#TODO: replace with
-#pip install -r requirements-load.txt
-#pip install -r requirements.txt
-#?
 time sudo apt-get update
 
 ##################
