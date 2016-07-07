@@ -51,6 +51,7 @@ def render_bosh_manifest(settings):
             contents = tmpfile.read()
         keys = [
             "SUBNET_ADDRESS_RANGE_FOR_BOSH",
+            "SECONDARY_DNS",
             "VNET_NAME",
             "SUBNET_NAME_FOR_BOSH",
             "SUBSCRIPTION_ID",
@@ -84,7 +85,15 @@ def render_bosh_manifest(settings):
 
 def get_cloud_foundry_configuration(scenario, settings):
     config = {}
-    for key in ["SUBNET_ADDRESS_RANGE_FOR_CLOUD_FOUNDRY", "VNET_NAME", "SUBNET_NAME_FOR_CLOUD_FOUNDRY", "CLOUD_FOUNDRY_PUBLIC_IP", "NSG_NAME_FOR_CLOUD_FOUNDRY"]:
+    keys = [
+        "SUBNET_ADDRESS_RANGE_FOR_CLOUD_FOUNDRY",
+        "SECONDARY_DNS",
+        "VNET_NAME",
+        "SUBNET_NAME_FOR_CLOUD_FOUNDRY",
+        "CLOUD_FOUNDRY_PUBLIC_IP",
+        "NSG_NAME_FOR_CLOUD_FOUNDRY"
+    ]
+    for key in keys:
         config[key] = settings[key]
 
     with open('cloudfoundry.cert', 'r') as tmpfile:
