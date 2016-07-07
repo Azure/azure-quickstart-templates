@@ -16,10 +16,10 @@ Using this template, you can create your own load test rig on Azure IaaS virtual
     "VSTSAccountName": "<VSTS account name using for CLT>",
     "VSTSPersonalAccessToken": "<Get PAT token for VSTS account>",
     "AgentCount": 1,
-    "AdminUsername": "<Admin user name>",
-    "AdminPassword": "<password>" 
+    "AdminUsername":"<Admin user name>",
+    "AdminPassword":"<password>" 
 	"ExistingVNetResourceGroupName": "<Resource group name where the Vnet exists"
-	"ExistingVNetName": "<VNet name>"
-	"SubnetName": "<Subnet under VNet where you want to deployment load agents>"
+	"ExistingVNetName":"<VNet name>"
+	"SubnetName":"<Subnet under VNet where you want to deployment load agents>"
 }
 ```
