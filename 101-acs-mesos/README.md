@@ -15,3 +15,6 @@ Click the "Deploy to Azure" button and then follow the relevant walkthrough for 
 3. The installation log for the masters, agents, and jumpbox are in /var/log/azure/cluster-bootstrap.log
 4. Even though the agent VMs finish quickly DC/OS can take 5-15 minutes to install, check /var/log/azure/cluster-bootstrap.log for the completion status.
 5. Visit [Common Issues](https://github.com/Azure/azure-quickstart-templates/blob/master/101-acs-dcos/docs/CommonIssues.md) if you have trouble deploying.
+
+##Note
+This template has been depreciate in favor of [101-acs-dcos](https://github.com/Azure/azure-quickstart-templates/tree/master/101-acs-dcos). Please use it instead of this template. At some point in the future this template will be removed. 
