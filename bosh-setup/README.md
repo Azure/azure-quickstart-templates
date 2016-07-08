@@ -17,6 +17,10 @@ We look forward to hearing your feedback and suggestions!
 
 ```
 Template Changelog
+# v1.7.0 (2016-07-06)
+
+- Upgrade cf-release to v238
+- Upgrade bosh stemcell to version 3232.11
 
 # v1.7.0 (2016-06-23)
 
