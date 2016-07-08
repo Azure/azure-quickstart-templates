@@ -8,7 +8,7 @@ Create HDInsight Linux Cluster with Edge Node and Hue app installed on Edge Node
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-Template installs Hue as an Iaas Cluster Application on the edge node of an existing cluster. 
+The template creates a new HDInsight Linux cluster and installs the Hue application on the Edge Node. 
 The Hue dashboard is accessible via Https by using the cluster username and password.
 To access the Hue dashboard, go to the cluster in the Azure portal and click on the Apps pane.
 
