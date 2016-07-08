@@ -27,7 +27,7 @@ The target audience for these solution templates are IT professionals who need t
  
 ##Solution Summary
 The goal of this solution stack is to provide an automated way of managing security on existing as well as new cloud workloads at scale. Such a solution would require a centralized workload protection platform(master) to secure applications and operating systems running on Virtual Machines on Azure. It would also require an automated way of ensuring the VM's (existing as well as new) are bootstrapped to the master. This is achieved using multiple ISV products and integrating them in an automated way.
-![](https://trendmicrop2p.blob.core.windows.net/trendmicropushtopilot/p2pimages/azure-trend-splunk-chef.png)
+![](images/azure-trend-splunk-chef.png)
 
 The core component of this stack is Trend Micro Deep Security Manager, which is a cloud security control platform. There are two pieces to the platform: the Deep Security Manager and the Deep Security Agents. The Manager runs centrally, and the Agents are deployed on the virtual machines you want protected. The Manager allows you to set up and customize security policy, monitor events, and deliver security rule updates. The Agent does all the heavy lifting by delivering the following controls:
 
@@ -40,7 +40,7 @@ The core component of this stack is Trend Micro Deep Security Manager, which is 
 
 These controls provide much-needed security to your operating systems and applications. This lines up nicely with the way security works in the Azure Cloud, which operates under the Shared Responsibility Model. This model draws a clear line where Azure responsibility for security ends and where your responsibility begins.
 
-![]( https://trendmicrop2p.blob.core.windows.net/trendmicropushtopilot/p2pimages/microosftazure.png)
+![]( images/microosftazure.png)
 
 TrendMicro DSM is an agents based security control platform. The agents need to be deployed and configured to integrate with the Master server. As new VM's are launched in the cloud, there needs to be an automated way of bootstrapping these agents to the master. This is a typical problem in many cloud deployments. This solution stack provides two ways of deploying the agents in a dynamic manner
 
@@ -52,7 +52,7 @@ This solution stack implements the second option (with Chef). It deploys a Chef 
 Cloud security monitoring is another critical aspect of enabling security at scale. The logs and data that is generated on the VMs can be monitored using Splunk's intelligence platform service, part of Splunk Enterprise. This solution stack also deploys the Splunk Enterprise solution and automatically integrates it with TrendMicro DSM to collect all logs and event data from the VMs.
  
 ##Reference Architecture Diagram
-![[](https://trendmicrop2p.blob.core.windows.net/trendmicropushtopilot/p2pimages/trend-architecture-new.png)](https://trendmicrop2p.blob.core.windows.net/trendmicropushtopilot/p2pimages/trend-architecture-new.png)
+![[](images/trend-architecture-new.png)](images/trend-architecture-new.png)
 
 The diagram above provides the overall deployment architecture for this test drive.
 As a part of deployment the template launches the following:
@@ -96,7 +96,7 @@ The deployment takes about 30-45 mins. Once it is deployed there are few minor m
 #### Connect
 Login to Trend Micro DSM with the provided output URL & Credentials and perform apply basic policies and approve forwards logs to Splunk.
 
-You can use the [this guide](https://trendmicrop2p.blob.core.windows.net/trendmicropushtopilot/TrendMicrop2pManualSteps.pdf) to set policies and enable log forwarding to Splunk.
+You can use the [this guide](images/TrendMicrop2pManualSteps.pdf) to set policies and enable log forwarding to Splunk.
 
 ##Support
 For any support-related issues or questions, please contact azuremarketplace@sysgain.com for assistance.
