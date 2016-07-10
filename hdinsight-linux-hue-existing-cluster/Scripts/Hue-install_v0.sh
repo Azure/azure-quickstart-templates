@@ -1,76 +1,74 @@
 #! /bin/bash
-
 CORESITEPATH=/etc/hadoop/conf/core-site.xml
+YARNSITEPATH=/etc/hadoop/conf/yarn-site.xml
 AMBARICONFIGS_SH=/var/lib/ambari-server/resources/scripts/configs.sh
 PORT=8080
 
 WEBWASB_TARFILE=webwasb-tomcat.tar.gz
-WEBWASB_TARFILEURI=https://hdiconfigactions.blob.core.windows.net/linuxhueconfigactionedgenodev01/$WEBWASB_TARFILE
+WEBWASB_TARFILEURI=https://hdiconfigactions.blob.core.windows.net/linuxhueconfigactionv01/$WEBWASB_TARFILE
 WEBWASB_TMPFOLDER=/tmp/webwasb
 WEBWASB_INSTALLFOLDER=/usr/share/webwasb-tomcat
 
 HUE_TARFILE=hue-binaries.tgz
-HUE_TARFILEURI=https://hdiconfigactions.blob.core.windows.net/linuxhueconfigactionedgenodev01/$HUE_TARFILE
+
+OS_VERSION=$(lsb_release -sr)
+if [[ $OS_VERSION == 14* ]]; then
+    echo "OS verion is $OS_VERSION. Using hue-binaries-14-04."
+    HUE_TARFILE=hue-binaries-14-04.tgz
+fi
+
+HUE_TARFILEURI=https://hdiconfigactions.blob.core.windows.net/linuxhueconfigactionv01/$HUE_TARFILE
 HUE_TMPFOLDER=/tmp/hue
 HUE_INSTALLFOLDER=/usr/share/hue
 HUE_INIPATH=$HUE_INSTALLFOLDER/desktop/conf/hue.ini
+ACTIVEAMBARIHOST=headnodehost
 
 usage() {
     echo ""
-    echo "Usage: sudo -E bash install-hue-edge-v01.sh <CLUSTERNAME> <USERID> <PASSWORD>";
-    echo "       [CLUSTERNAME]: Mandatory parameter cluster name";
-    echo "       [USERID]: Mandatory parameter user name/id";
-    echo "       [PASSWORD]: Mandatory cluster password for cluster user surrounded by single quotes. E.g. 'Your password goes here'";
-    exit 1;
+    echo "Usage: sudo -E bash install-hue-uber-v02.sh";
+    echo "This script does NOT require Ambari username and password";
+    exit 132;
 }
 
-selectActiveAmbariHost() {
-	echo "Selecting active ambari host"
-	
-    ACTIVEAMBARIHOST=headnode0
-    coreSiteContent=$(bash $AMBARICONFIGS_SH -u $USERID -p $PASSWD get $ACTIVEAMBARIHOST $CLUSTERNAME core-site)
-    if [[ $coreSiteContent == *"[ERROR]"* ]]; then
-        if [[ $coreSiteContent == *"Bad credentials"* ]]; then
-            echo "[ERROR] Username and password are invalid. Exiting!"
-            exit 1
-        else
-            ACTIVEAMBARIHOST=headnode1
+checkHostNameAndSetClusterName() {
+    fullHostName=$(hostname -f)
+    echo "fullHostName=$fullHostName"
+    CLUSTERNAME=$(sed -n -e 's/.*\.\(.*\)-ssh.*/\1/p' <<< $fullHostName)
+    if [ -z "$CLUSTERNAME" ]; then
+        CLUSTERNAME=$(echo -e "import hdinsight_common.ClusterManifestParser as ClusterManifestParser\nprint ClusterManifestParser.parse_local_manifest().deployment.cluster_name" | python)
+        if [ $? -ne 0 ]; then
+            echo "[ERROR] Cannot determine cluster name. Exiting!"
+            exit 133
         fi
     fi
-    
+    echo "Cluster Name=$CLUSTERNAME"
+}
+
+validateUsernameAndPassword() {
     coreSiteContent=$(bash $AMBARICONFIGS_SH -u $USERID -p $PASSWD get $ACTIVEAMBARIHOST $CLUSTERNAME core-site)
-    if [[ $coreSiteContent == *"[ERROR]"* ]]; then
-        if [[ $coreSiteContent == *"Bad credentials"* ]]; then
-            echo "[ERROR] Username and password are invalid. Exiting!"
-            exit 1
-        else
-            echo "[ERROR] There is no active Ambari host. Exiting!"
-            exit 1
-        fi
+    if [[ $coreSiteContent == *"[ERROR]"* && $coreSiteContent == *"Bad credentials"* ]]; then
+        echo "[ERROR] Username and password are invalid. Exiting!"
+        exit 134
     fi
-	
-	echo "Active ambari host is $ACTIVEAMBARIHOST"
 }
 
 updateAmbariConfigs() {
-	echo "Updating ambari configs, adding hue user to oozie configs"
-	
     updateResult=$(bash $AMBARICONFIGS_SH -u $USERID -p $PASSWD set $ACTIVEAMBARIHOST $CLUSTERNAME core-site "hadoop.proxyuser.oozie.groups" "*")
     
     if [[ $updateResult != *"Tag:version"* ]] && [[ $updateResult == *"[ERROR]"* ]]; then
         echo "[ERROR] Failed to update core-site. Exiting!"
         echo $updateResult
-        exit 1
+        exit 135
     fi
     
-    echo "Updated hadoop.proxyuser.oozie.groups = *"
+    echo "Updated hadoop.proxyuser.hue.groups = *"
     
     updateResult=$(bash $AMBARICONFIGS_SH -u $USERID -p $PASSWD set $ACTIVEAMBARIHOST $CLUSTERNAME oozie-site "oozie.service.ProxyUserService.proxyuser.hue.hosts" "*")
     
     if [[ $updateResult != *"Tag:version"* ]] && [[ $updateResult == *"[ERROR]"* ]]; then
         echo "[ERROR] Failed to update oozie-site. Exiting!"
         echo $updateResult
-        exit 1
+        exit 135
     fi
     
     echo "Updated oozie.service.ProxyUserService.proxyuser.hue.hosts = *"
@@ -80,16 +78,16 @@ updateAmbariConfigs() {
     if [[ $updateResult != *"Tag:version"* ]] && [[ $updateResult == *"[ERROR]"* ]]; then
         echo "[ERROR] Failed to update oozie-site. Exiting!"
         echo $updateResult
-        exit 1
+        exit 135
     fi
     
-    echo "Updated oozie.service.ProxyUserService.proxyuser.hue.groups = *"
+    echo "Updated oozie.service.ProxyUserService.proxyuser.hue.hosts = *"
 }
 
 stopServiceViaRest() {
     if [ -z "$1" ]; then
         echo "Need service name to stop service"
-        exit 1
+        exit 136
     fi
     SERVICENAME=$1
     echo "Stopping $SERVICENAME"
@@ -99,7 +97,7 @@ stopServiceViaRest() {
 startServiceViaRest() {
     if [ -z "$1" ]; then
         echo "Need service name to start service"
-        exit 1
+        exit 136
     fi
     sleep 2
     SERVICENAME=$1
@@ -168,7 +166,7 @@ setupHueService() {
     if [ -z "$defaultfsnode" ]
       then
         echo "[ERROR] Cannot find fs.defaultFS configuration in core-site.xml. Exiting"
-        exit 1
+        exit 137
     fi
 
     defaultfs=$(sed -n -e 's/.*<value>\(.*\)<\/value>.*/\1/p' <<< $defaultfsnode)
@@ -176,11 +174,28 @@ setupHueService() {
     if [[ $defaultfs != wasb* ]]
       then
         echo "[ERROR] fs.defaultFS is not WASB. Exiting."
-        exit 1
+        exit 138
     fi
 
     sed -i "s|DEFAULTFSPLACEHOLDER|$defaultfs|g" $HUE_INIPATH
     
+    rm1node=$(sed -n '/<name>yarn.resourcemanager.hostname.rm1/,/<\/value>/p' $YARNSITEPATH)
+    rm2node=$(sed -n '/<name>yarn.resourcemanager.hostname.rm2/,/<\/value>/p' $YARNSITEPATH)
+    
+    rm1Host=$(sed -n -e 's/.*<value>\(.*\)<\/value>.*/\1/p' <<< $rm1node)
+    rm2Host=$(sed -n -e 's/.*<value>\(.*\)<\/value>.*/\1/p' <<< $rm2node)
+    
+    echo "headnode 0 = $rm1Host"
+    echo "headnode 1 = $rm2Host"
+    sed -i "s|http://headnode0:8088|http://$rm1Host:8088|g" $HUE_INIPATH
+    sed -i "s|http://headnode1:8088|http://$rm2Host:8088|g" $HUE_INIPATH
+
+    sed -i "s|## hive_server_host=localhost|hive_server_host=$rm1Host|g" $HUE_INIPATH
+    sed -i "s|## oozie_url=http://localhost:11000/oozie|oozie_url=http://$rm1Host:11000/oozie|g" $HUE_INIPATH
+    sed -i "s|## proxy_api_url=http://localhost:8088|proxy_api_url=http://$rm1Host:8088|g" $HUE_INIPATH
+    sed -i "s|## history_server_api_url=http://localhost:19888|history_server_api_url=http://$rm1Host:19888|g" $HUE_INIPATH
+    sed -i "s|## jobtracker_host=localhost|jobtracker_host=$rm1Host|g" $HUE_INIPATH
+
     echo "Adding hue user"
     useradd -r hue
     chown -R hue:hue /usr/share/hue
@@ -193,11 +208,16 @@ setupHueService() {
 }
 
 ##############################
-
 if [ "$(id -u)" != "0" ]; then
     echo "[ERROR] The script has to be run as root."
     usage
 fi
+
+USERID=$(echo -e "import hdinsight_common.Constants as Constants\nprint Constants.AMBARI_WATCHDOG_USERNAME" | python)
+
+echo "USERID=$USERID"
+
+PASSWD=$(echo -e "import hdinsight_common.ClusterManifestParser as ClusterManifestParser\nimport hdinsight_common.Constants as Constants\nimport base64\nbase64pwd = ClusterManifestParser.parse_local_manifest().ambari_users.usersmap[Constants.AMBARI_WATCHDOG_USERNAME].password\nprint base64.b64decode(base64pwd)" | python)
 
 export JAVA_HOME=/usr/lib/jvm/java-7-openjdk-amd64
 
@@ -208,28 +228,8 @@ fi
 
 echo JAVA_HOME=$JAVA_HOME
 
-CLUSTERNAME=$1;
-if [ -z "$CLUSTERNAME" ]; then
-    echo "[ERROR] No cluster name specified. Exiting!"
-    usage
-fi
-echo "CLUSTERNAME=$CLUSTERNAME";
-
-USERID=$2;
-if [ -z "$USERID" ]; then
-    echo "[ERROR] No user id specified. Exiting!"
-    usage
-fi
-echo "USERID=$USERID";
-
-PASSWD=$3;
-if [ -z "$PASSWD" ]; then
-    echo "[ERROR] No password specified. Exiting!"
-    usage
-fi
-echo "PASSWD=$PASSWD";
-
-selectActiveAmbariHost
+checkHostNameAndSetClusterName
+validateUsernameAndPassword
 updateAmbariConfigs
 stopServiceViaRest HDFS
 stopServiceViaRest YARN
@@ -247,4 +247,3 @@ startServiceViaRest HDFS
 
 setupWebWasbService
 setupHueService
-
