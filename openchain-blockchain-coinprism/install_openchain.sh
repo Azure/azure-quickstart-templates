@@ -12,7 +12,6 @@ git clone https://github.com/openchain/docker.git openchain
 cd openchain
 git checkout v$2
 cp templates/docker-compose-proxy.yml docker-compose.yml
-cp templates/project.json openchain/project.json
 cp templates/nginx.conf nginx/nginx.conf
 mkdir data
 cp templates/config.json data/config.json
