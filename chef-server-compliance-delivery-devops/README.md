@@ -1,4 +1,4 @@
-# Trend Micro - Cloud Security Solution Template 001
+# Chef - Cloud Devops Solution Template
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fchef-server-compliance-delivery-devops%2Fazuredeploy.json" target="_blank">
 <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
@@ -7,7 +7,9 @@
 </a>
 ## Solution Template Overview
 ***Solution Templates*** provide customers with a highly automated process to launch enterprise ready first and 3rd party ISV solution stacks on Azure in a pre-production environment. The **Solution Template** effort is complimentary to the [Azure Marketplace test drive program](https://azure.microsoft.com/en-us/marketplace/test-drives/). These fully baked stacks enable customers to quickly stand up a PoC or Piloting environments and also integrate it with their systems and customization.
+
 Customers benefit greatly from solution templates because of the ease with which they can stand up enterprise-grade, fully integrated stacks on Azure. The extensive automation and testing of these solutions will allow them to spin up pre-production environments with minimal manual steps and customization. Most importantly, customers now have the confidence to transition the solution into a fully production-ready environment with confidence.
+
 **Chef end to end solution template** launches a devops stack that provides an automated provisioning, configuration and integration of multiple products ([Chef Server](https://azure.microsoft.com/en-us/marketplace/partners/chef-software/chef-server/), [Chef Compliance](https://azure.microsoft.com/en-us/marketplace/partners/chef-software/chef-compliance/) & [Chef Delivery](https://www.chef.io/delivery/)) that are needed for Continuous Delivery & compliance of application as well as infrastructure code.This is intended as a pilot solution and not production ready.
 Please [contact us](azuremarketplace@sysgain.com) if you need further info or support on this solution.
 ##Licenses & Costs
@@ -18,7 +20,8 @@ The target audience for these solution templates are IT professionals who need t
 * Azure Subscription - if you want to test drive individual ISV products, please check out the [Azure Marketplace Test Drive Program ](https://azure.microsoft.com/en-us/marketplace/test-drives/)
 * Azure user account with Contributor/Admin Role
 * Sufficient Quota - 18+ Cores( with default VM Sizes)
-##Solution Summary
+
+## Solution Summary
 The goal of this solution is to build out a complete Chef Solution Stack involving various components that are needed for Continuous Delivery & compliance of application as well as infrastructure code. This is achieved through various products from Chef.
 * The core component for configuration & infrastructure management is achieved through Chef Server.
 * Local Development of chef cookbooks can be performed using a workstation. This can be a developer’s own workstation. However, for simplicity we provide a workstation
@@ -60,22 +63,33 @@ You can click the "deploy to Azure" button at the beginning of this document.
 The deployment takes about 1-1.5 hours.
 The Deployment automation is divided into 3 steps
 1. The first automation template(azuredeploy.json) deploys the VNET and required Subnets and storage accounts. It also deploys an instance of chef compliance from Azure Marketplace image. Once this template is deployed, the user needs to login to Chef Compliance web interface by providing the FQDN prefix, accept EULA and create an admin account. Please note down the user-id and password as this needs to be provided as an input to the next deployment.
+
 ![](images/chefcompliance-credentialsreview.png)
 
 (For security purposes the Chef Compliance setup wizard has a one hour timeout. If you try to create the users after this timeout, the setup page does not work. In this case, please follow the troubleshooting section [here](https://docs.chef.io/install_compliance.html).
 2. The second deployment(azuredeploy2.json) automates rest of the infrastructure provisioning configuration and installation of all the nodes .At the end of this deployment, all nodes as per the deployment diagram are created.
+
 *Please note that it is important to provide the same user id and password while registering for Chef Compliance as an input to this template; otherwise the deployment will fail.*****
+
 Input Parameters:
+
 ![Input parameters](images/azuredeploy2-input%20parameters.png)
+
 Resources created at the end of deployment:
+
 ![](images/chefp2p-resources-created.png)
 
 3. The final step is to log in to chef Provisioning Server using ssh client and run " sh install.sh" command. once this command run is completed, the delivery cluster is also setup. You can then run "sh delivery_credentials.sh" to retrieve the credentials for delivery node and delivery account on chef sever.
 * Login to Provisioining node and run install.sh
+
 ![](images/chefdelivery-run-installsh.png)
+
 * You should see output similar to the following at the end of the command run. This should take 5-10 mins.
+
 ![](images/chefdelivery-install-output.png)
+
 * Run delivery_crendentials script to retrieve the credentials for Chef Server - delivery user and delivery UI.
+
 ![](images/chefdelivery-crendentials.png)
  
 ##Usage
@@ -93,5 +107,7 @@ Tutorials are docs are provided [here](https://learn.chef.io)
 2. The Orchestrator service only supports HTTP and is internal to the VNET, so no authentication is implemented. This is intended for pilot installations. For Production implementations, a more secure solution should be integrated with or this application can be updated to work with keyVaults.
 3. Currently deployment only allows access to chef delivery web UI from a workstation on the internal network. You can use the workstation provided in the deployment to access the UI.
 4. The current key pair for delivery cluster is reused across multiple deployments. You can always copy your private key to Chef Provisioning server and public keys to Chef Server, Chef Build node and Chef delivery server. However, please note that the key pairs are unique per deployment for Chef Server Validaton.pem and Chef Compliance.
+
+
 ##Support
 For any support-related issues or questions, please contact azuremarketplace@sysgain.com for assistance.
