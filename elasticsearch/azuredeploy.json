@@ -27,6 +27,7 @@
       "defaultValue": "ubuntu",
       "allowedValues": [
         "ubuntu",
+        "centos",
         "windows"
       ],
       "metadata": {
@@ -41,14 +42,14 @@
         "sshPublicKey"
       ],
       "metadata": {
-        "description": "Whether to use a password or ssh key (Ubuntu only) as authentication"
+        "description": "Whether to use a password or ssh key (Linux only) as authentication"
       }
     },
     "sshPublicKey": {
       "type": "string",
       "defaultValue": "",
       "metadata": {
-        "description": "The public ssh key to use for authentication (Ubuntu only)"
+        "description": "The public ssh key to use for authentication (Linux only)"
       }
     },
     "loadBalancerType": {
@@ -295,14 +296,14 @@
     },
     "_artifactsLocation": {
       "type": "string",
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/elasticsearch/",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/elasticsearch",
       "metadata": {
         "description": "Change this value to your repo name if deploying from a fork"
       }
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
-      "defaultValue": "?",
+      "defaultValue": "",
       "metadata": {
         "description": "Auto-generated token to access _artifactsLocation"
       }
@@ -310,8 +311,7 @@
   },
   "variables": {
     "nestedTemplatesFolderName": "nestedtemplates",
-    "scriptsFolderName": "scripts",
-    "scriptsLocation": "[concat(parameters('_artifactsLocation'), '/', variables('scriptsFolderName'), '/')]",
+    "scriptsLocation": "[concat(parameters('_artifactsLocation'), '/scripts/')]",
     "sharedScriptsLocation": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/shared_scripts/ubuntu/",
     "storageAccountPrefix": "[concat(substring(uniqueString(resourceGroup().id, parameters('esClusterName')), 0, 6), substring(parameters('esClusterName'), 0, 3))]",
     "storageAccountNameAFS": "[concat(variables('storageAccountPrefix'), 'afs')]",
@@ -390,6 +390,10 @@
         "yes": " -m ",
         "no": ""
       },
+      "centos": {
+        "yes": " -m ",
+        "no": ""
+      },
       "windows": {
         "yes": " -m ",
         "no": ""
@@ -400,6 +404,10 @@
         "yes": "[concat(' -a ', variables('storageAccountNameAFS'), ' -c -k ')]",
         "no": "[concat(' -a ', variables('storageAccountNameAFS'), ' -k ')]"
       },
+      "centos": {
+        "yes": "",
+        "no": ""
+      },
       "windows": {
         "yes": "",
         "no": ""
@@ -409,6 +417,10 @@
       "ubuntu": {
         "yes": "[concat(' -e ', variables('marvelNodesIpPrefix'), '-3')]",
         "no": ""
+      },
+      "centos" : {
+        "yes" : "[concat(' -e ', variables('marvelNodesIpPrefix'), '-3')]",
+        "no": ""  
       },
       "windows": {
         "yes": "[concat(' -marvelEndpoints ', variables('marvelNodesIpPrefix'), '-3')]",
@@ -439,6 +451,11 @@
       "[concat(variables('scriptsLocation'), 'kibana-install.sh', parameters('_artifactsLocationSasToken'))]",
       "[concat(variables('sharedScriptsLocation'), 'vm-disk-utils-0.1.sh')]",
       "[concat(variables('sharedScriptsLocation'), 'afs-utils-0.1.sh')]"
+    ],
+    "centosScripts": [
+      "[concat(variables('scriptsLocation'), 'elasticsearch-centos-install.sh', parameters('_artifactsLocationSasToken'))]",
+      "[concat(variables('scriptsLocation'), 'kibana-centos-install.sh', parameters('_artifactsLocationSasToken'))]",
+      "[concat(variables('sharedScriptsLocation'), 'vm-disk-utils-0.1.sh')]"
     ],
     "windowsScripts": [
       "[concat(variables('scriptsLocation'), 'elasticsearch-windows-install.ps1', parameters('_artifactsLocationSasToken'))]"
@@ -519,6 +536,63 @@
         }
       }
     },
+    "centosSettings": {
+      "imageReference":{
+        "publisher": "OpenLogic",
+        "offer": "CentOS",
+        "sku": "7.2",
+        "version": "latest"
+      },
+      "linuxConfiguration": "[variables('configurationObject')[parameters('authenticationType')]]",
+      "managementPort":"22",
+      "extensionSettings":{
+        "marvel": {
+            "publisher": "Microsoft.OSTCExtensions",
+            "type": "CustomScriptForLinux",
+            "typeHandlerVersion": "1.4",
+            "settings": {
+              "fileUris": "[variables('centosScripts')]",
+              "commandToExecute": "[concat('bash elasticsearch-centos-install.sh -wn ', variables('esSettings').marvelClusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').marvelHosts, ' -k ')]"
+            }
+          },
+        "master": {
+            "publisher": "Microsoft.OSTCExtensions",
+            "type": "CustomScriptForLinux",
+            "typeHandlerVersion": "1.4",
+            "settings": {
+              "fileUris": "[variables('centosScripts')]",
+              "commandToExecute": "[concat('bash elasticsearch-centos-install.sh -xn ', variables('esSettings').clusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').discoveryHosts, variables('marvelParamValue'), variables('jmeterParamValue'), variables('cloudAzureParamValue'), variables('marvelExportParamValue'), variables('afsParamValue'))]"
+            }
+          },
+        "client": {
+            "publisher": "Microsoft.OSTCExtensions",
+            "type": "CustomScriptForLinux",
+            "typeHandlerVersion": "1.4",
+            "settings": {
+              "fileUris": "[variables('centosScripts')]",
+              "commandToExecute": "[concat('bash elasticsearch-centos-install.sh -yn ', variables('esSettings').clusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').discoveryHosts, variables('marvelParamValue'), variables('jmeterParamValue'),  variables('cloudAzureParamValue'),variables('marvelExportParamValue'), variables('afsParamValue'))]"
+            }
+          },
+        "data": {
+          "publisher": "Microsoft.OSTCExtensions",
+          "type": "CustomScriptForLinux",
+          "typeHandlerVersion": "1.4",
+          "settings": {
+            "fileUris": "[variables('centosScripts')]",
+            "commandToExecute": "[concat('bash elasticsearch-centos-install.sh -zn ', variables('esSettings').clusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').discoveryHosts, variables('marvelParamValue'), variables('jmeterParamValue'),  variables('cloudAzureParamValue'),variables('marvelExportParamValue'), variables('afsParamValue'))]"
+          }
+        },
+        "kibana": {
+          "publisher": "Microsoft.OSTCExtensions",
+          "type": "CustomScriptForLinux",
+          "typeHandlerVersion": "1.4",
+          "settings": {
+            "fileUris": "[variables('centosScripts')]",
+            "commandToExecute": "[concat('bash kibana-centos-install.sh -v ', variables('esSettings').version, variables('marvelParamValue'), variables('senseParamValue'), ' -t ', variables('kibanaIP'))]"
+          }
+        }
+      }
+    },
     "windowsSettings": {
       "imageReference": {
         "publisher": "MicrosoftWindowsServer",
@@ -535,7 +609,7 @@
           "typeHandlerVersion": "1.4",
           "settings": {
             "fileUris": "[variables('windowsScripts')]",
-            "commandToExecute": "[concat('powershell.exe -File ', variables('scriptsFolderName'), '/elasticsearch-windows-install.ps1 -elasticSearchVersion ', variables('esSettings').version, ' -elasticClusterName ', variables('esSettings').marvelClusterName, ' -discoveryEndpoints ', variables('esSettings').marvelHosts, ' -marvelOnlyNode -storageKey ')]"
+            "commandToExecute": "[concat('powershell.exe -File elasticsearch-windows-install.ps1 -elasticSearchVersion ', variables('esSettings').version, ' -elasticClusterName ', variables('esSettings').marvelClusterName, ' -discoveryEndpoints ', variables('esSettings').marvelHosts, ' -marvelOnlyNode -storageKey ')]"
           }
         },
         "master": {
@@ -544,7 +618,7 @@
           "typeHandlerVersion": "1.4",
           "settings": {
             "fileUris": "[variables('windowsScripts')]",
-            "commandToExecute": "[concat('powershell.exe -File ', variables('scriptsFolderName'), '/elasticsearch-windows-install.ps1 -elasticSearchVersion ', variables('esSettings').version, ' -elasticClusterName ', variables('esSettings').clusterName, ' -discoveryEndpoints ', variables('esSettings').discoveryHosts, variables('cloudAzureParamValue'), variables('marvelParamValue'), variables('marvelExportParamValue'), ' -masterOnlyNode -storageKey ')]"
+            "commandToExecute": "[concat('powershell.exe -File elasticsearch-windows-install.ps1 -elasticSearchVersion ', variables('esSettings').version, ' -elasticClusterName ', variables('esSettings').clusterName, ' -discoveryEndpoints ', variables('esSettings').discoveryHosts, variables('cloudAzureParamValue'), variables('marvelParamValue'), variables('marvelExportParamValue'), ' -masterOnlyNode -storageKey ')]"
           }
         },
         "client": {
@@ -553,7 +627,7 @@
           "typeHandlerVersion": "1.4",
           "settings": {
             "fileUris": "[variables('windowsScripts')]",
-            "commandToExecute": "[concat('powershell.exe -File ', variables('scriptsFolderName'), '/elasticsearch-windows-install.ps1 -elasticSearchVersion ', variables('esSettings').version, ' -elasticClusterName ', variables('esSettings').clusterName, ' -discoveryEndpoints ', variables('esSettings').discoveryHosts, variables('cloudAzureParamValue'), variables('marvelParamValue'), variables('marvelExportParamValue'), ' -clientOnlyNode -storageKey ')]"
+            "commandToExecute": "[concat('powershell.exe -File elasticsearch-windows-install.ps1 -elasticSearchVersion ', variables('esSettings').version, ' -elasticClusterName ', variables('esSettings').clusterName, ' -discoveryEndpoints ', variables('esSettings').discoveryHosts, variables('cloudAzureParamValue'), variables('marvelParamValue'), variables('marvelExportParamValue'), ' -clientOnlyNode -storageKey ')]"
           }
         },
         "data": {
@@ -562,7 +636,7 @@
           "typeHandlerVersion": "1.4",
           "settings": {
             "fileUris": "[variables('windowsScripts')]",
-            "commandToExecute": "[concat('powershell.exe -File ', variables('scriptsFolderName'), '/elasticsearch-windows-install.ps1 -elasticSearchVersion ', variables('esSettings').version, ' -elasticClusterName ', variables('esSettings').clusterName, ' -discoveryEndpoints ', variables('esSettings').discoveryHosts, variables('cloudAzureParamValue'), variables('marvelParamValue'), variables('marvelExportParamValue'), ' -dataOnlyNode -storageKey ')]"
+            "commandToExecute": "[concat('powershell.exe -File elasticsearch-windows-install.ps1 -elasticSearchVersion ', variables('esSettings').version, ' -elasticClusterName ', variables('esSettings').clusterName, ' -discoveryEndpoints ', variables('esSettings').discoveryHosts, variables('cloudAzureParamValue'), variables('marvelParamValue'), variables('marvelExportParamValue'), ' -dataOnlyNode -storageKey ')]"
           }
         }
       }
@@ -971,7 +1045,7 @@
             "value": "[variables('networkSettings').subnet.other]"
           },
           "osSettings": {
-            "value": "[variables('ubuntuSettings')]"
+            "value": "[variables('osSettings')]"
           },
           "namespace": {
             "value": "[concat(parameters('esClusterName'), '-kibana')]"
