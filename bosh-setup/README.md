@@ -17,10 +17,21 @@ We look forward to hearing your feedback and suggestions!
 
 ```
 Template Changelog
+# v1.7.0 (2016-07-06)
+
+- Upgrade cf-release to v238
+- Upgrade bosh stemcell to version 3232.11
+
+# v1.7.0 (2016-06-23)
+
+- Upgrade versions
+  - Upgrade Azure CPI version to v13. Please see new features in https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release
+- Add a secondary DNS server
 
 # v1.6.1 (2016-06-16)
 
 - Fix the timeout issue of "pip install" in China
+- Add the acceptance test and smoke test for Cloud Foundry
 
 # v1.6.0 (2016-06-08)
 
