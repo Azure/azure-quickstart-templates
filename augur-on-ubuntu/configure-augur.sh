@@ -22,9 +22,6 @@ echo "HOST_RPC: $ETHEREUM_HOST_RPC"
 
 cd $HOMEDIR
 
-#Save for easy upgrades.
-sudo -u $AZUREUSER echo $ETHEREUM_HOST_RPC > .eth_host_rpc
-
 #####################
 # install tools
 #####################
@@ -67,8 +64,10 @@ sudo -u $AZUREUSER wget https://raw.githubusercontent.com/kevinday/azure-quickst
 sudo -u $AZUREUSER wget https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/master/augur-on-ubuntu/geth.conf
 sudo -u $AZUREUSER wget https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/master/augur-on-ubuntu/augur_ui.conf
 sudo -u $AZUREUSER wget https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/master/augur-on-ubuntu/init_contracts.js
-sudo -u $AZUREUSER sed -i "s/auguruser/$AZUREUSER/g" geth.conf
-sudo -u $AZUREUSER sed -i "s/auguruser/$AZUREUSER/g" augur_ui.conf
+sudo -u $AZUREUSER wget https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/master/augur-on-ubuntu/env.json
+sudo -u $AZUREUSER sed -i "s|azure_http_url|$ETHEREUM_HOST_RPC|g" env.json
+sudo -u $AZUREUSER sed -i "s|auguruser|$AZUREUSER|g" geth.conf
+sudo -u $AZUREUSER sed -i "s|auguruser|$AZUREUSER|g" augur_ui.conf
 
 sudo touch /var/log/geth.sys.log
 sudo touch /var/log/augur_ui.sys.log
@@ -98,11 +97,13 @@ sudo -i -u $AZUREUSER git clone https://github.com/AugurProject/augur-core.git
 cd  augur-core/load_contracts
 pip install -r requirements-load.txt
 python load_contracts.py
-contracts="`python generate_gospel.py -j`"  #TODO: -j deprecated
-contracts=$(echo $contracts | sed 's|\x22|\\\"|g')
-contracts=$(echo $contracts | sed "s|[$'\t\r\n ']||g")
+python generate_gospel.py -o contracts.json -n 1101011
+contracts=`cat contracts.json`
+contracts=$(echo $contracts | sed "s|\"|\'|g")
+sudo -u $AZUREUSER sed -i "s|azure_contracts|$contracts|g" $HOMEDIR/env.json
+sudo -u $AZUREUSER sed -i "s|\'|\"|g" $HOMEDIR/env.json
+sed -i "s|\x27|\x22|g" $HOMEDIR/env.json
 cd ../..
-sudo -u $AZUREUSER sed -i "s|\"{{ \$BUILD_AZURE_CONTRACTS }}\"|'$contracts'|g" init_contracts.js
 sudo -i -u $AZUREUSER node init_contracts.js
 
 ####################
@@ -118,13 +119,9 @@ sudo swapon /swapfile
 ####################
 sudo -i -u $AZUREUSER git clone https://github.com/AugurProject/augur.git
 sudo -i -u $AZUREUSER mkdir ui
-sudo -i -u $AZUREUSER cp -r augur/azure ui
+sudo -i -u $AZUREUSER cp -r augur/azure/* ui
+sudo -i -u $AZUREUSER cp $HOMEDIR/env.json ui/
 rm -rf augur
-sudo -u $AZUREUSER find ui -type f -exec sed -i "s|\"{{ \$BUILD_AZURE_WSURL }}\"|null|g" {} \;
-sudo -u $AZUREUSER find ui -type f -exec sed -i "s|{{ \$BUILD_AZURE_LOCALNODE }}|$ETHEREUM_HOST_RPC|g" {} \;
-sudo -u $AZUREUSER find ui -type f -exec sed -i "s|\"{{ \$BUILD_AZURE_CONTRACTS }}\"|'$contracts'|g" {} \;
-sudo -u $AZUREUSER find ui -type f -exec sed -i "s|process.env.BUILD_AZURE|true|g" {} \;
-
 
 ###################
 #Install augur webserver
