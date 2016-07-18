@@ -1,0 +1,657 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Administrator user name used when provisioning virtual machines"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Administrator password used when provisioning virtual machines"
+      }
+    },
+    "mysqlPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "MySQL password used when provisioning MySQL Clusters"
+      }
+    },
+    "dnsNamePrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "DNS Name for the publicly accessible primary node. Must be lowercase. It should match with the following regular expression: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$ or it will raise an error."
+      }
+    },
+    "environment": {
+      "type": "string",
+      "allowedValues": [
+        "AzureCloud",
+        "AzureChinaCloud"
+      ],
+      "metadata": {
+        "description": "Different environments in Azure. Choose AzureCloud for Global Azure, and choose AzureChinaCloud for Mooncake (Azure China Cloud)."
+      }
+    },
+    "sizeOfDataDiskInGB": {
+      "type": "int",
+      "minValue": 1,
+      "maxValue": 1023,
+      "defaultValue": 20,
+      "metadata": {
+        "description": "The size of each data disk, the value is between 1 and 1023. We use 4 data disks on each VM for raid0 to improve performance."
+      }
+    },
+    "centOsVersion": {
+      "type": "string",
+      "defaultValue": "7.0",
+      "allowedValues": [
+        "6.5",
+        "6.6",
+        "6.7",
+        "7.0",
+        "7.1",
+        "7.2"		
+      ],
+      "metadata": {
+        "description": "The CentOS version for the VM. This will pick a fully patched image of this given CentOS version."
+      }
+    },
+    "webNodeCount": {
+      "type": "int",
+      "minValue": 1,
+      "maxValue": 11,
+      "defaultValue": 3,
+      "metadata": {
+        "description": "Number of web server nodes"
+      }
+    },
+    "lbNodeVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_A3",
+      "allowedValues": [
+        "Standard_A2",
+        "Standard_A3",
+        "Standard_A4",
+        "Standard_A5",
+        "Standard_A6",
+        "Standard_A7",
+        "Standard_D2",
+        "Standard_D3",
+        "Standard_D4",
+        "Standard_D2_v2",
+        "Standard_D3_v2",
+        "Standard_D4_v2"
+      ],
+      "metadata": {
+        "description": "The size of the virtual machines used when provisioning the lb node"
+      }
+    },
+    "webNodeVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_A3",
+      "allowedValues": [
+        "Standard_A2",
+        "Standard_A3",
+        "Standard_A4",
+        "Standard_A5",
+        "Standard_A6",
+        "Standard_A7",
+        "Standard_D2",
+        "Standard_D3",
+        "Standard_D4",
+        "Standard_D2_v2",
+        "Standard_D3_v2",
+        "Standard_D4_v2"
+      ],
+      "metadata": {
+        "description": "The size of the virtual machines used when provisioning the web server nodes"
+      }
+    },
+    "dbNodeVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_A3",
+      "allowedValues": [
+        "Standard_A2",
+        "Standard_A3",
+        "Standard_A4",
+        "Standard_A5",
+        "Standard_A6",
+        "Standard_A7",
+        "Standard_D2",
+        "Standard_D3",
+        "Standard_D4",
+        "Standard_D2_v2",
+        "Standard_D3_v2",
+        "Standard_D4_v2"
+      ],
+      "metadata": {
+        "description": "The size of the virtual machines used when provisioning redis and MySQL nodes"
+      }
+    },
+    "zabbixServerIPAddress": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+	    "description": "The zabbix server IP which will monitor the nodes' status. Null means no zabbix server."
+	  }
+	}
+  },
+  "variables": {
+    "baseUrl": "https://raw.githubusercontent.com/251744647/azure-quickstart-templates/master/website-cluster-centos/",
+    "baseChinaUrl": "http://msmirrors.blob.core.chinacloudapi.cn/website-cluster-centos/",
+    "environmentAzureCloud": {
+      "serviceEndPoint": ".blob.core.windows.net/vhds/",
+      "templateBaseUrl": "[concat(variables('baseUrl'), 'nested/')]",
+      "lbNodeScript": "[concat(variables('baseUrl'), 'scripts/lb.sh')]",
+      "webNodeScript": "[concat(variables('baseUrl'), 'scripts/web.sh')]",
+      "redisMasterNodeScript": "[concat(variables('baseUrl'), 'scripts/redisMaster.sh')]",
+      "redisSlaveNodeScript": "[concat(variables('baseUrl'), 'scripts/redisSlave.sh')]",
+      "mysqlMasterNodeScript": "[concat(variables('baseUrl'), 'scripts/mysqlMaster.sh')]",
+      "mysqlSlaveNodeScript": "[concat(variables('baseUrl'), 'scripts/mysqlSlave.sh')]"
+    },
+    "environmentAzureChinaCloud": {
+      "serviceEndPoint": ".blob.core.chinacloudapi.cn/vhds/",
+      "templateBaseUrl": "[concat(variables('baseChinaUrl'), 'nested/')]",
+      "lbNodeScript": "[concat(variables('baseChinaUrl'), 'scripts/lb.sh')]",
+      "webNodeScript": "[concat(variables('baseChinaUrl'), 'scripts/web.sh')]",
+      "redisMasterNodeScript": "[concat(variables('baseChinaUrl'), 'scripts/redisMaster.sh')]",
+      "redisSlaveNodeScript": "[concat(variables('baseChinaUrl'), 'scripts/redisSlave.sh')]",
+      "mysqlMasterNodeScript": "[concat(variables('baseChinaUrl'), 'scripts/mysqlMaster.sh')]",
+      "mysqlSlaveNodeScript": "[concat(variables('baseChinaUrl'), 'scripts/mysqlSlave.sh')]"
+    },
+    "environment": "[variables(concat('environment', parameters('environment')))]",    
+    "sharedTemplateUrl": "[concat(variables('environment').templateBaseUrl, 'shared-resources.json')]",
+    "lbTemplateUrl": "[concat(variables('environment').templateBaseUrl, 'lb-resources.json')]",
+    "webTemplateUrl": "[concat(variables('environment').templateBaseUrl, 'web-resources.json')]",
+    "redisMasterTemplateUrl": "[concat(variables('environment').templateBaseUrl, 'redisMaster-resources.json')]",
+    "redisSlaveTemplateUrl": "[concat(variables('environment').templateBaseUrl, 'redisSlave-resources.json')]",
+    "mysqlMasterTemplateUrl": "[concat(variables('environment').templateBaseUrl, 'mysqlMaster-resources.json')]",
+    "mysqlSlaveTemplateUrl": "[concat(variables('environment').templateBaseUrl, 'mysqlSlave-resources.json')]",
+    "namespace": "websiteCluster-",
+    "virtualNetworkName": "websiteVNET1",
+    "numDataDisks": "4",
+    "apiVersion": "2015-01-01",
+    "networkSettings": {
+      "virtualNetworkName": "[variables('virtualNetworkName')]",
+      "addressPrefix": "10.0.0.0/24",
+      "subnet": {
+        "web": {
+          "name": "web",
+          "prefix": "10.0.0.0/28",
+          "vnet": "[variables('virtualNetworkName')]"
+        },
+        "mysql": {
+          "name": "mysql",
+          "prefix": "10.0.0.16/28",
+          "vnet": "[variables('virtualNetworkName')]"
+        },
+        "redis": {
+          "name": "redis",
+          "prefix": "10.0.0.32/28",
+          "vnet": "[variables('virtualNetworkName')]"
+        },
+        "haproxy": {
+          "name": "haproxy",
+          "prefix": "10.0.0.48/28",
+          "vnet": "[variables('virtualNetworkName')]"
+        }
+      },
+      "statics": {
+        "clusterRange": {
+          "base": "10.0.0.",
+          "start": 5
+        },
+        "primaryIp": "10.0.0.240"
+      }
+    },
+    "lbOsSettings": {
+      "imageReference": {
+        "publisher": "OpenLogic",
+        "offer": "CentOS",
+        "sku": "[parameters('centOsVersion')]",
+        "version": "latest"
+      },
+      "scripts": [
+        "[variables('environment').lbNodeScript]"
+      ]
+    },
+    "webOsSettings": {
+      "imageReference": {
+        "publisher": "OpenLogic",
+        "offer": "CentOS",
+        "sku": "[parameters('centOsVersion')]",
+        "version": "latest"
+      },
+      "scripts": [
+        "[variables('environment').webNodeScript]"
+      ]
+    },
+    "redisMasterOsSettings": {
+      "imageReference": {
+        "publisher": "OpenLogic",
+        "offer": "CentOS",
+        "sku": "[parameters('centOsVersion')]",
+        "version": "latest"
+      },
+      "scripts": [
+        "[variables('environment').redisMasterNodeScript]"
+      ]
+    },
+    "redisSlaveOsSettings": {
+      "imageReference": {
+        "publisher": "OpenLogic",
+        "offer": "CentOS",
+        "sku": "[parameters('centOsVersion')]",
+        "version": "latest"
+      },
+      "scripts": [
+        "[variables('environment').redisSlaveNodeScript]"
+      ]
+    },
+    "mysqlMasterOsSettings": {
+      "imageReference": {
+        "publisher": "OpenLogic",
+        "offer": "CentOS",
+        "sku": "[parameters('centOsVersion')]",
+        "version": "latest"
+      },
+      "scripts": [
+        "[variables('environment').mysqlMasterNodeScript]"
+      ]
+    },
+    "mysqlSlaveOsSettings": {
+      "imageReference": {
+        "publisher": "OpenLogic",
+        "offer": "CentOS",
+        "sku": "[parameters('centOsVersion')]",
+        "version": "latest"
+      },
+      "scripts": [
+        "[variables('environment').mysqlSlaveNodeScript]"
+      ]
+    }
+  },
+  "resources": [
+    {
+      "name": "shared",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "[variables('apiVersion')]",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('sharedTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "networkSettings": {
+            "value": "[variables('networkSettings')]"
+          },
+          "namespace": {
+            "value": "[variables('namespace')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "[concat('webNode', copyindex())]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "[variables('apiVersion')]",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', 'shared')]"
+      ],
+      "copy": {
+        "name": "vmLoop",
+        "count": "[parameters('webNodeCount')]"
+      },
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('webTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "mysqlPassword": {
+            "value": "[parameters('mysqlPassword')]"
+          },
+          "namespace": {
+            "value": "[variables('namespace')]"
+          },
+          "vmbasename": {
+            "value": "[concat('web', copyindex())]"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnet.web]"
+          },
+          "sizeOfDataDiskInGB": {
+            "value": "[parameters('sizeOfDataDiskInGB')]"
+          },
+          "numDataDisks": {
+            "value": "[variables('numDataDisks')]"
+          },
+          "templateBaseUrl": {
+            "value": "[variables('environment').templateBaseUrl]"
+          },
+          "serviceEndPoint": {
+            "value": "[variables('environment').serviceEndPoint]"
+          },
+          "dnsname": {
+            "value": "[parameters('dnsNamePrefix')]"
+          },
+          "vmSize": {
+            "value": "[parameters('webNodeVmSize')]"
+          },
+          "zabbixServerIPAddress": {
+             "value": "[parameters('zabbixServerIPAddress')]"
+          },
+          "osSettings": {
+            "value": "[variables('webOsSettings')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "redisMasterNode",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "[variables('apiVersion')]",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', 'shared')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('redisMasterTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "namespace": {
+            "value": "[variables('namespace')]"
+          },
+          "vmbasename": {
+            "value": "redisMaster"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnet.redis]"
+          },
+          "dnsname": {
+            "value": "[parameters('dnsNamePrefix')]"
+          },
+          "sizeOfDataDiskInGB": {
+            "value": "[parameters('sizeOfDataDiskInGB')]"
+          },
+          "numDataDisks": {
+            "value": "[variables('numDataDisks')]"
+          },
+          "templateBaseUrl": {
+            "value": "[variables('environment').templateBaseUrl]"
+          },
+          "serviceEndPoint": {
+            "value": "[variables('environment').serviceEndPoint]"
+          },
+          "vmSize": {
+            "value": "[parameters('dbNodeVmSize')]"
+          },
+          "zabbixServerIPAddress": {
+             "value": "[parameters('zabbixServerIPAddress')]"
+          },
+          "osSettings": {
+            "value": "[variables('redisMasterOsSettings')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "redisSlaveNode",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "[variables('apiVersion')]",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', 'shared')]",
+        "[concat('Microsoft.Resources/deployments/', 'redisMasterNode')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('redisSlaveTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "namespace": {
+            "value": "[variables('namespace')]"
+          },
+          "vmbasename": {
+            "value": "redisSlave"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnet.redis]"
+          },
+          "dnsname": {
+            "value": "[parameters('dnsNamePrefix')]"
+          },
+          "sizeOfDataDiskInGB": {
+            "value": "[parameters('sizeOfDataDiskInGB')]"
+          },
+          "numDataDisks": {
+            "value": "[variables('numDataDisks')]"
+          },
+          "templateBaseUrl": {
+            "value": "[variables('environment').templateBaseUrl]"
+          },
+          "serviceEndPoint": {
+            "value": "[variables('environment').serviceEndPoint]"
+          },
+          "vmSize": {
+            "value": "[parameters('dbNodeVmSize')]"
+          },
+          "zabbixServerIPAddress": {
+             "value": "[parameters('zabbixServerIPAddress')]"
+          },
+          "osSettings": {
+            "value": "[variables('redisSlaveOsSettings')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "mysqlMasterNode",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "[variables('apiVersion')]",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', 'shared')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('mysqlMasterTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "mysqlPassword": {
+            "value": "[parameters('mysqlPassword')]"
+          },
+          "namespace": {
+            "value": "[variables('namespace')]"
+          },
+          "vmbasename": {
+            "value": "mysqlMaster"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnet.mysql]"
+          },
+          "dnsname": {
+            "value": "[parameters('dnsNamePrefix')]"
+          },
+          "sizeOfDataDiskInGB": {
+            "value": "[parameters('sizeOfDataDiskInGB')]"
+          },
+          "numDataDisks": {
+            "value": "[variables('numDataDisks')]"
+          },
+          "templateBaseUrl": {
+            "value": "[variables('environment').templateBaseUrl]"
+          },
+          "serviceEndPoint": {
+            "value": "[variables('environment').serviceEndPoint]"
+          },
+          "vmSize": {
+            "value": "[parameters('dbNodeVmSize')]"
+          },
+          "zabbixServerIPAddress": {
+             "value": "[parameters('zabbixServerIPAddress')]"
+          },
+          "osSettings": {
+            "value": "[variables('mysqlMasterOsSettings')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "mysqlSlaveNode",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "[variables('apiVersion')]",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', 'shared')]",
+        "[concat('Microsoft.Resources/deployments/', 'mysqlMasterNode')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('mysqlSlaveTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "mysqlPassword": {
+            "value": "[parameters('mysqlPassword')]"
+          },
+          "namespace": {
+            "value": "[variables('namespace')]"
+          },
+          "vmbasename": {
+            "value": "mysqlSlave"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnet.mysql]"
+          },
+          "dnsname": {
+            "value": "[parameters('dnsNamePrefix')]"
+          },
+          "sizeOfDataDiskInGB": {
+            "value": "[parameters('sizeOfDataDiskInGB')]"
+          },
+          "numDataDisks": {
+            "value": "[variables('numDataDisks')]"
+          },
+          "templateBaseUrl": {
+            "value": "[variables('environment').templateBaseUrl]"
+          },
+          "serviceEndPoint": {
+            "value": "[variables('environment').serviceEndPoint]"
+          },
+          "vmSize": {
+            "value": "[parameters('dbNodeVmSize')]"
+          },
+          "zabbixServerIPAddress": {
+             "value": "[parameters('zabbixServerIPAddress')]"
+          },
+          "osSettings": {
+            "value": "[variables('mysqlSlaveOsSettings')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "lbNode",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "[variables('apiVersion')]",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', 'shared')]",
+        "[concat('Microsoft.Resources/deployments/', 'mysqlSlaveNode')]",
+        "['vmLoop']"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('lbTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "namespace": {
+            "value": "[variables('namespace')]"
+          },
+          "vmbasename": {
+            "value": "lb"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnet.haproxy]"
+          },
+          "dnsname": {
+            "value": "[parameters('dnsNamePrefix')]"
+          },
+          "sizeOfDataDiskInGB": {
+            "value": "[parameters('sizeOfDataDiskInGB')]"
+          },
+          "numDataDisks": {
+            "value": "[variables('numDataDisks')]"
+          },
+          "webNodeCount": {
+            "value": "[parameters('webNodeCount')]"
+          },
+          "templateBaseUrl": {
+            "value": "[variables('environment').templateBaseUrl]"
+          },
+          "serviceEndPoint": {
+            "value": "[variables('environment').serviceEndPoint]"
+          },
+          "vmSize": {
+            "value": "[parameters('lbNodeVmSize')]"
+          },
+          "zabbixServerIPAddress": {
+             "value": "[parameters('zabbixServerIPAddress')]"
+          },
+          "osSettings": {
+            "value": "[variables('lbOsSettings')]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}
