@@ -7,11 +7,14 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
+<P>
 In order to deploy this template, you need to have the following resources:  <br />
 1. A Key Vault (specified in 'existingKeyVaultId' parameter) <br />
 2. A Key Vault Secret containting a PFX certificate stored in base64 encoded format (PowerShell script is given below)  <br />
 3. A Web App (specified in 'existingWebAppName' parameter)  <br />
+</P>
 
+<P>
 By default, 'Microsoft.Web' Resource Provider (RP) doesn't have access to the Key Vault specified in the template hence you need to authorize it by executing 
 the following PowerShell commands before deploying the template:  <br />
 
@@ -20,6 +23,7 @@ Login-AzureRmAccount  <br />
 Set-AzureRmContext -SubscriptionId AZURE_SUBSCRIPTION_ID  <br />
 Set-AzureRmKeyVaultAccessPolicy -VaultName KEY_VAULT_NAME -ServicePrincipalName abfa0a7c-a6b6-4736-8310-5855508787cd -PermissionsToSecrets get  <br />
 </I>
+</P>
 
 ServicePrincipalName parameter represents Microsoft.Web RP in user tenant and will remain same for all Azure subscriptions. This is a onetime operation. Once you have a configured a Key Vault properly, 
 you can use it for deploying as many certificates as you want without executing these PowerShell commands again. You can go through the Key Vault documentation for more information: <br />
