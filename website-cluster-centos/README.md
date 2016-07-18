@@ -1,10 +1,10 @@
 # Install Website Cluster
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2F251744647%2Fazure-quickstart-templates%2Fmaster%2Fwebsite-cluster-centos%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fwebsite-cluster-centos%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 <a href="
-http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2F251744647%2Fazure-quickstart-templates%2Fmaster%2Fwebsite-cluster-centos%2Fazuredeploy.json" target="_blank">
+http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fwebsite-cluster-centos%2Fazuredeploy.json" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
@@ -71,5 +71,5 @@ Each server uses raid0 to improve performance. We use 4 data disks on each serve
 
 
 ##Known Limitations
-- The website uses one load balancer and the load balancer uses haproxy software. You can create more load balancers and you can even use Azure's traffic manager to do the load balanceing.
+- The website uses one load balancer and the load balancer uses haproxy software. You can create more load balancers and you can even use Azure's traffic manager to do the load balancing.
 - You can add more web servers and database servers after the deployment.
