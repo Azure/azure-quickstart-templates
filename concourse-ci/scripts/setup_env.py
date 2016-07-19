@@ -82,6 +82,31 @@ def render_bosh_manifest(settings):
 
     return bosh_director_ip
 
+def render_cloud_config_manifest(settings):
+    ip = netaddr.IPNetwork(settings['SUBNET_ADDRESS_RANGE_FOR_CONCOURSE'])
+    gateway_ip = str(ip[1])
+    reserved_ip_start = str(ip[2])
+    reserved_ip_end = str(ip[3])
+
+    cloud_config_template = 'cloud.yml'
+    if os.path.exists(cloud_config_template):
+        with open(cloud_config_template, 'r') as tmpfile:
+            contents = tmpfile.read()
+        keys = [
+            "VNET_NAME",
+            "SUBNET_NAME_FOR_CONCOURSE",
+            "SUBNET_ADDRESS_RANGE_FOR_CONCOURSE",
+            "NSG_NAME_FOR_CONCOURSE"
+        ]
+        for k in keys:
+            v = settings[k]
+            contents = re.compile(re.escape("REPLACE_WITH_{0}".format(k))).sub(str(v), contents)
+        contents = re.compile(re.escape("REPLACE_WITH_CONCOURSE_GATEWAY_IP")).sub(gateway_ip, contents)
+        contents = re.compile(re.escape("REPLACE_WITH_RESERVED_IP_START")).sub(reserved_ip_start, contents)
+        contents = re.compile(re.escape("REPLACE_WITH_RESERVED_IP_END")).sub(reserved_ip_end, contents)
+        with open(cloud_config_template, 'w') as tmpfile:
+            tmpfile.write(contents)
+
 def render_concourse_manifest(settings):
     # Render the manifest for concourse
     concourse_template = 'concourse.yml'
@@ -89,14 +114,28 @@ def render_concourse_manifest(settings):
         with open(concourse_template, 'r') as tmpfile:
             contents = tmpfile.read()
         keys = [
-            "VNET_NAME",
-            "SUBNET_NAME_FOR_CONCOURSE",
-            "CONCOURSE_PUBLIC_IP"
+            "CONCOURSE_PUBLIC_IP",
+            "CONCOURSE_USERNAME",
+            "CONCOURSE_PASSWORD",
+            "CONCOURSE_DB_ROLE_NAME",
+            "CONCOURSE_DB_ROLE_PASSWORD"
         ]
         for k in keys:
             v = settings[k]
             contents = re.compile(re.escape("REPLACE_WITH_{0}".format(k))).sub(str(v), contents)
         with open(concourse_template, 'w') as tmpfile:
+            tmpfile.write(contents)
+
+def render_concourse_deployment_cmd(settings):
+    concourse_deployment_cmd = "deploy_concourse.sh"
+    if os.path.exists(concourse_deployment_cmd):
+        with open(concourse_deployment_cmd, 'r') as tmpfile:
+            contents = tmpfile.read()
+        keys = ["GARDEN_RELEASE_URL", "CONCOURSE_RELEASE_URL", "STEMCELL_URL"]
+        for key in keys:
+            value = settings[key]
+            contents = re.compile(re.escape("REPLACE_WITH_{0}".format(key))).sub(value, contents)
+        with open(concourse_deployment_cmd, 'w') as tmpfile:
             tmpfile.write(contents)
 
 def get_settings():
@@ -120,7 +159,9 @@ def main():
     bosh_director_ip = render_bosh_manifest(settings)
     print bosh_director_ip
 
+    render_cloud_config_manifest(settings)
     render_concourse_manifest(settings)
+    render_concourse_deployment_cmd(settings)
 
 if __name__ == "__main__":
     main()

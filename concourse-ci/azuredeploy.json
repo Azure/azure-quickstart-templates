@@ -5,7 +5,7 @@
     "vmName": {
       "type": "string",
       "metadata": {
-        "description": "name of the vm, will be used as DNS Name for the Public IP used to access the Virtual Machine"
+        "description": "Name of the vm, will be used as DNS Name for the Public IP used to access the Virtual Machine"
       }
     },
     "adminUsername": {
@@ -20,6 +20,18 @@
         "description": "Please copy the content of your SSH RSA public key and paste it here. You can use \"ssh-keygen -t rsa -b 2048\" to generate your SSH key pairs."
       }
     },
+    "concourseUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Login username for Concourse web portal or Fly CLI"
+      }
+    },
+    "concoursePassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Login password for Concourse web portal or Fly CLI"
+      }
+    },
     "environment": {
       "type": "string",
       "defaultValue" : "AzureCloud",
@@ -27,7 +39,7 @@
         "AzureCloud"
       ],
       "metadata": {
-        "description": "Different environments in Azure. Choose AzureCloud for Global Azure, [NOT SUPPORT NOW]and choose AzureChinaCloud for Mooncake (Azure China Cloud)."
+        "description": "Different environments in Azure. Only AzureCloud is supported for now."
       }
     },
     "tenantID": {
@@ -67,7 +79,7 @@
   "variables": {
     "apiVersion": "2015-06-15",
 
-    "defaultStorageAccountName": "[concat('ccsto', uniqueString(resourceGroup().id))]",
+    "defaultStorageAccountName": "[concat('concourse', uniqueString(resourceGroup().id))]",
     "storageAccountType": "Standard_RAGRS",
     "vmStorageAccountContainerName": "vhds",
     "storageid": "[resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccountName'))]",
@@ -83,6 +95,8 @@
     "devboxNetworkSecurityGroup": "nsg-devbox",
     "boshNetworkSecurityGroup": "nsg-bosh",
     "concourseNetworkSecurityGroup": "nsg-concourse",
+    "concourseDbRoleName": "admin",
+    "concourseDbRolePassword": "admin",
 
     "vmSize": "Standard_D1",
     "nicName": "[parameters('vmName')]",
@@ -100,7 +114,9 @@
       "[uri(variables('baseUriAzureCloud'), 'scripts/create_cert.sh')]",
       "[uri(variables('baseUriAzureCloud'), 'scripts/init.sh')]",
       "[uri(variables('baseUriAzureCloud'), 'scripts/deploy_bosh.sh')]",
+      "[uri(variables('baseUriAzureCloud'), 'scripts/deploy_concourse.sh')]",
       "[uri(variables('baseUriAzureCloud'), 'manifests/bosh.yml')]",
+      "[uri(variables('baseUriAzureCloud'), 'manifests/cloud.yml')]",
       "[uri(variables('baseUriAzureCloud'), 'manifests/concourse.yml')]"
     ],
     "filesToDownload": "[variables(concat('filesToDownload', parameters('environment')))]",
@@ -262,9 +278,9 @@
             }
           },
           {
-            "name": "concourse-web",
+            "name": "concourse-atc",
             "properties": {
-              "description": "Allow Concourse Web Portal",
+              "description": "Allow Concourse ATC",
               "protocol": "Tcp",
               "sourcePortRange": "*",
               "destinationPortRange": "8080",
@@ -272,6 +288,48 @@
               "destinationAddressPrefix": "*",
               "access": "Allow",
               "priority": 203,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "concourse-tsa",
+            "properties": {
+              "description": "Allow Concourse TSA",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "2222",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 204,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "concourse-garden",
+            "properties": {
+              "description": "Allow Concourse Garden",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "7777",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 205,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "concourse-baggageclaim",
+            "properties": {
+              "description": "Allow Concourse Baggageclaim",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "7788",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 206,
               "direction": "Inbound"
             }
           }
@@ -469,7 +527,11 @@
           "GARDEN_RELEASE_URL": "[variables('environment').gardenReleaseUrl]",
           "BOSH_INIT_URL": "[variables('environment').boshInitUrl]",
           "KEEP_UNREACHABLE_VMS": "[variables('keepUnreachableVMs')]",
-          "AUTO_DEPLOY_BOSH": "[parameters('autoDeployBosh')]"
+          "AUTO_DEPLOY_BOSH": "[parameters('autoDeployBosh')]",
+          "CONCOURSE_USERNAME": "[parameters('concourseUsername')]",
+          "CONCOURSE_PASSWORD": "[parameters('concoursePassword')]",
+          "CONCOURSE_DB_ROLE_NAME": "[variables('concourseDbRoleName')]",
+          "CONCOURSE_DB_ROLE_PASSWORD": "[variables('concourseDbRolePassword')]"
         },
         "protectedSettings": {
           "commandToExecute": "[concat('./setup_env', ' ', parameters('tenantID'), ' ', parameters('clientID'), ' \"', parameters('clientSecret'), '\"')]"
