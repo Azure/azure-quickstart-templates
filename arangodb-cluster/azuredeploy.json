@@ -1,0 +1,436 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Location where resources will be provisioned"
+      }
+    },
+    "dnsName": {
+      "type": "string",
+      "metadata": {
+        "description": "Connect to your cluster using dnsName.location.cloudapp.azure.com"
+      }
+    },
+    "vmUserName": {
+      "type": "string",
+      "metadata": {
+        "description": "user name to ssh to the VMs"
+      }
+    },
+    "vmSSHKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "password to ssh to the VMs"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D4_v2",
+      "metadata": {
+        "description": "size for the VMs"
+      }
+    },
+    "nodeCount": {
+      "type": "int",
+      "defaultValue": 3,
+      "metadata": {
+        "description": "number of db servers, each db server will have a coordinator"
+      }
+    },
+    "storageAccountType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "metadata": {
+        "description": "Storage account type for the cluster"
+      }
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "defaultValue": "arangodbvnet",
+      "metadata": {
+        "description": "Virtual network name for the cluster"
+      }
+    },
+    "vnetNewOrExisting": {
+      "type": "string",
+      "defaultValue": "new",
+      "allowedValues": [
+        "new",
+        "existing"
+      ],
+      "metadata": {
+        "description": "Identifies whether to use new or existing Virtual Network"
+      }
+    },
+    "virtualNetworkExistingRGName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "If using existing VNet, specifies the resource group for the existing VNet"
+      }
+    },
+    "dbSubnetName": {
+      "type": "string",
+      "defaultValue": "dbsubnet",
+      "metadata": {
+        "description": "subnet name for the MySQL nodes"
+      }
+    },
+    "vnetAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/16",
+      "metadata": {
+        "description": "IP address in CIDR for virtual network"
+      }
+    },
+    "dbSubnetAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.1.0/24",
+      "metadata": {
+        "description": "IP address in CIDR for db subnet"
+      }
+    },
+    "dbSubnetStartAddress": {
+      "type": "string",
+      "defaultValue": "10.0.1.4",
+      "metadata": {
+        "description": "Start IP address in the subnet for the VMs"
+      }
+    },
+    "artifactsPath": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/liupeirong/azure-quickstart-templates/master/arangodb-cluster",
+      "metadata": {
+        "description": "template and script file location",
+        "artifactsBaseUrl": "Base URL of the Publisher Template gallery package"
+      }
+    }
+  },
+  "variables": {
+    "templateAPIVersion": "2015-01-01",
+    "resourceAPIVersion": "2015-06-15",
+    "handlerVersion": "1.5",
+    "sshKeyPath": "[concat('/home/',parameters('vmUserName'),'/.ssh/authorized_keys')]",
+    "storageAccountName": "[concat(uniquestring(resourceGroup().id),'storage')]",
+    "tempPwd": "[uniquestring(resourceGroup().id]",
+    "nsgName": "[concat(parameters('dnsName'), '-nsg')]",
+    "pipName": "[concat(parameters('dnsName'), '-pip')]",
+    "nicName": "[concat(parameters('dnsName'), '-nic')]",
+    "availabilitySetName": "[concat(parameters('dnsName'), '-set')]",
+    "installDockerScript": "[concat(parameters('artifactsPath'), '/installDocker.sh')]",
+    "installArangoDBScript": "[concat(parameters('artifactsPath'), '/installArangoDB.sh')]",
+    "singleQuote": "",
+    "virtualNetworkSetupURL": "[concat(parameters('artifactsPath'),'/vnet-',parameters('vnetNewOrExisting'),'.json')]",
+    "sa": "[parameters('dbSubnetStartAddress')]",
+    "ipOctet01": "[concat(split(variables('sa'), '.')[0], '.', split(variables('sa'), '.')[1], '.')]",
+    "ipOctet2": "[int(split(variables('sa'), '.')[2])]",
+    "ipOctet3": "[int(split(variables('sa'), '.')[3])]"
+  },
+  "resources": [
+    {
+      "apiVersion": "[parameters('resourceAPIVersion')]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('nsgName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "SSH",
+            "properties": {
+              "description": "Allows SSH traffic",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Cooridnator",
+            "properties": {
+              "description": "Allows Coordinator traffic",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "8529",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 101,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "DBServer",
+            "properties": {
+              "description": "Allows DBServer traffic",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "8629",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 102,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Replica",
+            "properties": {
+              "description": "Allows SSH traffic",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "8630",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 103,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "[variables('templateAPIVersion')]",
+      "type": "Microsoft.Resources/deployments",
+      "name": "SettingUpVirtualNetwork",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+      ],
+        "properties",
+        :
+        {
+          "mode": "Incremental",
+          "templateLink": {
+            "uri": "[variables('virtualNetworkSetupURL')]",
+            "contentVersion": "1.0.0.0"
+          },
+          "parameters": {
+            "location": {
+              "value": "[parameters('location')]"
+            },
+            "nsgName": {
+              "value": "[variables('nsgName')]"
+            },
+            "virtualNetworkName": {
+              "value": "[parameters('virtualNetworkName')]"
+            },
+            "virtualNetworkAddressPrefix": {
+              "value": "[parameters('vnetAddressPrefix')]"
+            },
+            "dbSubnetName": {
+              "value": "[parameters('dbSubnetName')]"
+            },
+            "dbSubnetAddressPrefix": {
+              "value": "[parameters('dbSubnetAddressPrefix')]"
+            },
+            "virtualNetworkExistingRGName": {
+              "value": "[parameters('virtualNetworkExistingRGName')]"
+            }
+          }
+        }
+    },
+    {
+      "apiVersion": "[variables('resourceAPIVersion')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('storageAccountName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "accountType": "[parameters('storageAccountType')]"
+      }
+    },
+    {
+      "apiVersion": "[variables('resourceAPIVersion')]",
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[variables('availabilitySetName')]",
+      "location": "[parameters('location')]",
+      "properties": { }
+    },
+    {
+      "apiVersion": "[variables('resourceAPIVersion')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat(variables('pipName'), copyIndex())]",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "ipLoop",
+        "count": "[parameters('nodeCount')]"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[concat(parameters('dnsName'), copyIndex())]"
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('resourceAPIVersion')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('nicName'), copyIndex())]",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "nicLoop",
+        "count": "[variables('nodeCount')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', 'SettingUpVirtualNetwork')]",
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('nsgName'))]",
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('pipName'), copyIndex())]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "[concat('ipconfig', copyIndex())]",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[concat(variables('ipOctet01'), add(variables('ipOctet2'), div(copyIndex(variables('ipOctet3')), 255)), '.', mod(copyIndex(variables('ipOctet3')), 255))]",
+              "subnet": {
+                "id": "[reference('Microsoft.Resources/deployments/SettingUpVirtualNetwork', variables('templateAPIVersion')).outputs.dbSubnetRef.value]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat(variables('pipName'), copyIndex()))]"
+              }
+            }
+          }
+        ],
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('resourceAPIVersion')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(parameters('dnsName'), copyIndex())]",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "vmLoop",
+        "count": "[parameters('nodeCount')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyIndex())]"
+      ],
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySetName'))]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[concat(parameters('dnsName'), copyIndex())]",
+          "adminUsername": "[parameters('vmUserName')]",
+          "adminPassword": "[variables('tempPwd')]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": "false",
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[variables('sshKeyPath')]",
+                  "keyData": "[parameters('sshKeyData')]"
+                }
+              ]
+            }
+          }
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "Canonical",
+            "offer": "UbuntuServer",
+            "sku": "16.04.0-LTS",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), variables('resourceAPIVersion')).primaryEndpoints.blob, 'vhds/', parameters('dnsName'), copyIndex(), 'osdisk.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[concat(resourceId('Microsoft.Network/networkInterfaces',variables('nicName')), copyIndex())]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('resourceAPIVersion')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('dnsName'), copyIndex(), '/setupDocker')]",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "extLoop",
+        "count": "[parameters('nodeCount')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('dnsName'), copyIndex())]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.OSTCExtensions",
+        "type": "CustomScriptForLinux",
+        "typeHandlerVersion": "[variables('handlerVersion')]",
+        "settings": {
+          "fileUris": [
+            "[variables('installDockerScript')]"
+          ]
+        },
+        "protectedSettings": {
+          "commandToExecute": "installDocker.sh"
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('resourceAPIVersion')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('dnsName'), '1/installArangoDB')]",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "extLoop2",
+        "count": "[parameters('nodeCount')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', variables('dnsName'), copyIndex(), '/extensions/setupDocker')]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.OSTCExtensions",
+        "type": "CustomScriptForLinux",
+        "typeHandlerVersion": "[variables('handlerVersion')]",
+        "settings": {
+          "fileUris": [
+            "[variables('installArangoDBScript')]"
+          ]
+        },
+        "protectedSettings": {
+          "commandToExecute": "[concat('installArangoDB, ' ', variables('singleQuote'), variables('tempPwd'), variables('singleQuote'), ' ', parameters('dnsName'), ' ', parameters('nodeCount'))]",
+          "Items": {
+            "mysqlRootPassword": "[parameters('mysqlRootPassword')]",
+            "mysqlReplicationPassword": "[parameters('mysqlReplicationPassword')]",
+            "mysqlProbePassword": "[parameters('mysqlProbePassword')]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "fqdnCoordinator": {
+      "value": "concat([reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('pipName'), '1')),providers('Microsoft.Network', 'publicIPAddresses').apiVersions[0]).dnsSettings.fqdn], ':8529')",
+      "type": "string"
+    },
+    "fqdnDBServer": {
+      "value": "concat([reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('pipName'), '1')),providers('Microsoft.Network', 'publicIPAddresses').apiVersions[0]).dnsSettings.fqdn], ':8629')",
+      "type": "string"
+    }
+  }
+}
