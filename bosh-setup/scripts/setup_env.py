@@ -154,7 +154,7 @@ def render_cloud_foundry_deployment_cmd(settings):
     if os.path.exists(cloudfoundry_deployment_cmd):
         with open(cloudfoundry_deployment_cmd, 'r') as tmpfile:
             contents = tmpfile.read()
-        keys = ["CF_RELEASE_URL", "STEMCELL_URL"]
+        keys = ["STEMCELL_URL", "STEMCELL_SHA1", "CF_RELEASE_URL", "CF_RELEASE_SHA1"]
         for key in keys:
             value = settings[key]
             contents = re.compile(re.escape("REPLACE_WITH_{0}".format(key))).sub(value, contents)
