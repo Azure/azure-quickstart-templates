@@ -7,10 +7,9 @@
 
 # Deploys an ArangoDB Cluster
 
-This template deploys an ArangoDB cluster with N DB servers, each also runs a Coordinator.  It also deploys 3 Agencies in the cluster.
+This template deploys an ArangoDB cluster. The first 3 VMs will be running Agents. The rest of the VMs will each run a DB servers and a Coordinator.
 
-To access the Coordinators, go to http://[dnsname][n].[location].azure.cloudapp.com:8529
-To access the DB servers, go to http://[dnsname][n].[location].azure.cloudapp.com:8629
+To access the Coordinators, go to http://[dnsname][3-n].[location].azure.cloudapp.com:8529
 
 ```
 
