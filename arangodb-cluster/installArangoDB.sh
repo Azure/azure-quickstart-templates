@@ -1,7 +1,5 @@
 #!/bin/bash
 
-echo $@
-
 if [ "$#" -lt 4 ]; then
   echo "Usage: $0 <username> <password> <dns-prefix> <count>"
   exit 1
@@ -54,10 +52,21 @@ wget https://www.arangodb.com/repositories/arangodb3/xUbuntu_16.04/Release.key
 apt-key add - < Release.key
 
 echo 'deb https://www.arangodb.com/repositories/arangodb3/xUbuntu_16.04/ /' | tee /etc/apt/sources.list.d/arangodb.list
-apt-get update
+RESULT=1
+while true; do
+  apt-get update
+  if [ "\$?" = "0" ]; then
+    break
+  fi
+done
 echo arangodb3 arangodb/password password | debconf-set-selections
 echo arangodb3 arangodb/password_again password | debconf-set-selections
-yes | apt-get install arangodb3
+while true; do
+  yes | apt-get install arangodb3
+  if [ "\$?" = "0" ]; then
+    break
+  fi
+done
 /etc/init.d/arangodb3 stop
 rm /etc/rc*.d/*arangodb3
 rm /etc/init.d/arangodb3
