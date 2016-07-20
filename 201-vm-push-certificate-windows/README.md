@@ -13,20 +13,25 @@ Pre-Requisistes - You need a certificate. A self-signed test certificate can be 
 
 These are the steps that need to be followed to upload the certificate into the Key Vault as a secret
 
-1.	base64 encode the cert file
+1.	Base64 encode the cert file
 2.	Paste the base64 value into data field in this JSON object
-          {
-            “data”:”<Base64-encoded-file>”,
-            “dataType” :”<file-format: pfx or cer>”,
-            “password”:”<pfx-file-password>”
-          }
 
-3.	base64 the above JSON object
+    ```
+    {
+        "data": "<Base64-encoded-file>",
+        "dataType": "<file-format: pfx or cer>",
+        "password": "<pfx-file-password>"
+    }
+    ```
+
+3.	Base64 the above JSON object
 4.	Convert the base64 value into a secure string
-$secret = ConvertTo-SecureString -String 'password' -AsPlainText –Force
+
+	`$secret = ConvertTo-SecureString -String 'password' -AsPlainText -Force`
 
 5.	Then use the secure string value for the SecretValue in this cmdlet
-          Set-AzureKeyVaultSecret -VaultName 'Contoso' -Name 'ITSecret' –SecretValue $secret
+
+    `Set-AzureKeyVaultSecret -VaultName 'Contoso' -Name 'ITSecret' -SecretValue $secret`
 
 The following PowerShell script can make these steps easy
 
@@ -36,14 +41,14 @@ The following PowerShell script can make these steps easy
 
     $jsonObject = @"
     {
-    "data": "$filecontentencoded",
-    "dataType" :"pfx",
-    "password": "<fill-in>"
+        "data": "$filecontentencoded",
+        "dataType" :"pfx",
+        "password": "<fill-in>"
     }
     "@
 
     $jsonObjectBytes = [System.Text.Encoding]::UTF8.GetBytes($jsonObject)
     $jsonEncoded = [System.Convert]::ToBase64String($jsonObjectBytes)
 
-    $secret = ConvertTo-SecureString -String $jsonEncoded -AsPlainText –Force
+    $secret = ConvertTo-SecureString -String $jsonEncoded -AsPlainText -Force
     Set-AzureKeyVaultSecret -VaultName kayvault -Name testkay -SecretValue $secret
