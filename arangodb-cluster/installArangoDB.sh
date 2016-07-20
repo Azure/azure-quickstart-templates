@@ -7,6 +7,9 @@ if [ "$#" -lt 3 ]; then
   exit 1
 fi
 
+USERNAME=$1
+shift
+
 PASSWORD=$1
 shift
 
@@ -30,7 +33,7 @@ while [ $i -lt $2 ]; do
   RESULT=1
   while true; do
     echo "Trying to reach $ip..."
-    sshpass -p "$PASSWORD" ssh -o StrictHostKeyChecking=no $ip ls &>/dev/null
+    sshpass -p "$PASSWORD" ssh -o StrictHostKeyChecking=no $USERNAME@$ip ls &>/dev/null
     RESULT=$?
     if [ "$RESULT" = "0" ]; then
       break
@@ -105,8 +108,8 @@ systemctl enable arangodb-$3
 systemctl restart arangodb-$3
 EOF
 
-  sshpass -p "$PASSWORD" scp -o StrictHostKeyChecking=no /tmp/systemd-$3.service $1:/etc/systemd/system/arangodb-$3.service
-  sshpass -p "$PASSWORD" ssh -o StrictHostKeyChecking=no $1 'bash -s' < /tmp/enable-systemd-$3.sh
+  sshpass -p "$PASSWORD" scp -o StrictHostKeyChecking=no /tmp/systemd-$3.service $USERNAME@$1:/etc/systemd/system/arangodb-$3.service
+  sshpass -p "$PASSWORD" ssh -o StrictHostKeyChecking=no $USERNAME@$1 'bash -s' < /tmp/enable-systemd-$3.sh
 }
 
 deploy_agent() {
@@ -122,8 +125,8 @@ endpoint = $4
 endpoint = $5
 EOF
 
-  sshpass -p "$PASSWORD" ssh -o StrictHostKeyChecking=no $1 'bash -s' < /tmp/install.sh
-  sshpass -p "$PASSWORD" scp -o StrictHostKeyChecking=no /tmp/agency-$1.conf $1:/etc/arangodb3/arangodb-agent.conf
+  sshpass -p "$PASSWORD" ssh -o StrictHostKeyChecking=no $USERNAME@$1 'bash -s' < /tmp/install.sh
+  sshpass -p "$PASSWORD" scp -o StrictHostKeyChecking=no /tmp/agency-$1.conf $USERNAME@$1:/etc/arangodb3/arangodb-agent.conf
   start_systemd $1 "Agent" "agent" /etc/arangodb3/arangodb-agent.conf
 }
 
@@ -156,9 +159,9 @@ app-path = /var/lib/arangodb3-coordinator-apps
 EOF
   sed -i -e 's/^endpoint.*/endpoint = tcp:\/\/0.0.0.0:8530/g' /tmp/dbserver-$1.conf
   
-  sshpass -p "$PASSWORD" ssh -o StrictHostKeyChecking=no $1 'bash -s' < /tmp/install.sh
-  sshpass -p "$PASSWORD" scp -o StrictHostKeyChecking=no /tmp/coordinator-$1.conf $1:/etc/arangodb3/arangodb-coordinator.conf
-  sshpass -p "$PASSWORD" scp -o StrictHostKeyChecking=no /tmp/dbserver-$1.conf $1:/etc/arangodb3/arangodb-dbserver.conf
+  sshpass -p "$PASSWORD" ssh -o StrictHostKeyChecking=no $USERNAME@$1 'bash -s' < /tmp/install.sh
+  sshpass -p "$PASSWORD" scp -o StrictHostKeyChecking=no /tmp/coordinator-$1.conf $USERNAME@$1:/etc/arangodb3/arangodb-coordinator.conf
+  sshpass -p "$PASSWORD" scp -o StrictHostKeyChecking=no /tmp/dbserver-$1.conf $USERNAME@$1:/etc/arangodb3/arangodb-dbserver.conf
   start_systemd $1 "Coordinator" "coordinator" /etc/arangodb3/arangodb-coordinator.conf
   start_systemd $1 "DBServer" "dbserver" /etc/arangodb3/arangodb-dbserver.conf
 }
