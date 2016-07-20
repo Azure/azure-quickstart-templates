@@ -1,6 +1,8 @@
 # Load test rig in a specific VNet for testing private apps
 
 
+[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3a%2f%2fraw.githubusercontent.com%2fAzure%2fazure-quickstart-templates%2fmaster%2f201-vsts-cloudloadtest-rig-usingVNet%2fazuredeploy.json)
+<a href="http://armviz.io/#/?load=https%3a%2f%2fraw.githubusercontent.com%2fAzure%2fazure-quickstart-templates%2fmaster%2f201-vsts-cloudloadtest-rig-usingVNet%2fazuredeploy.json" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
           
@@ -13,6 +15,7 @@ Using this template, you can create your own load test rig on Azure IaaS virtual
 {
     "VSTSAccountName": "<VSTS account name using for CLT>",
     "VSTSPersonalAccessToken": "<Get PAT token for VSTS account>",
+    "AgentCount": "<number of desired VMs>",
     "AdminUsername":"<Admin user name>",
     "AdminPassword":"<password>" 
 	"ExistingVNetResourceGroupName": "<Resource group name where the Vnet exists"
