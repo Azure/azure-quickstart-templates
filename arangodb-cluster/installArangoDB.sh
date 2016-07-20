@@ -77,10 +77,10 @@ cat <<EOF >/tmp/base.conf
 endpoint = tcp://0.0.0.0:8529
 authentication = false
 statistics = true
-threads = 4
+threads = 16
 
 [scheduler]
-threads = 2
+threads = 3
 
 [database]
 directory = /var/lib/arangodb3
@@ -93,6 +93,14 @@ app-path = /var/lib/arangodb3-apps
 level = info
 EOF
 
+cat <<EOF >/tmp/prepare_agent.sh
+mkdir -p /var/lib/arangodb3-agent
+mkdir -p /var/lib/arangodb3-agent-apps
+
+chown arangodb.arangodb /var/lib/arangodb3-agent
+chown arangodb.arangodb /var/lib/arangodb3-agent-apps
+EOF
+
 cat <<EOF >/tmp/prepare_combo_server.sh
 mkdir -p /var/lib/arangodb3-coordinator
 mkdir -p /var/lib/arangodb3-coordinator-apps
@@ -103,7 +111,6 @@ chown arangodb.arangodb /var/lib/arangodb3-coordinator
 chown arangodb.arangodb /var/lib/arangodb3-coordinator-apps
 chown arangodb.arangodb /var/lib/arangodb3-dbserver
 chown arangodb.arangodb /var/lib/arangodb3-dbserver-apps
-
 EOF
 
 start_systemd() {
@@ -146,6 +153,10 @@ notify = true
 endpoint = $3
 endpoint = $4
 endpoint = $5
+[database]
+directory = /var/lib/arangodb3-agent
+[javascript]
+app-path = /var/lib/arangodb3-agent-apps
 EOF
 
   sshpass -p "$PASSWORD" ssh -o StrictHostKeyChecking=no $USERNAME@$1 'sudo bash -s' < /tmp/install.sh
@@ -159,6 +170,10 @@ deploy_combo_server() {
   cp /tmp/base.conf /tmp/dbserver-$1.conf
   
   cat <<EOF >>/tmp/coordinator-$1.conf
+[server]
+threads = 60
+[scheduler]
+threads = 4
 [cluster]
 my-role = COORDINATOR
 my-address = tcp://$1:8529
@@ -171,6 +186,10 @@ app-path = /var/lib/arangodb3-coordinator-apps
 EOF
   
 cat <<EOF >>/tmp/dbserver-$1.conf
+[server]
+threads = 5
+[scheduler]
+threads = 3
 [cluster]
 my-role = PRIMARY
 my-address = tcp://$1:8530
