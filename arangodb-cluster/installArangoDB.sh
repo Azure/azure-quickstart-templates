@@ -58,6 +58,8 @@ while true; do
   if [ "\$?" = "0" ]; then
     break
   fi
+  sleep 1
+  echo "Retrying apt-get update!"
 done
 echo arangodb3 arangodb/password password | debconf-set-selections
 echo arangodb3 arangodb/password_again password | debconf-set-selections
@@ -66,6 +68,8 @@ while true; do
   if [ "\$?" = "0" ]; then
     break
   fi
+  sleep 1
+  echo "Retrying apt-get install!"
 done
 /etc/init.d/arangodb3 stop
 rm /etc/rc*.d/*arangodb3
@@ -161,7 +165,8 @@ EOF
 
   sshpass -p "$PASSWORD" ssh -o StrictHostKeyChecking=no $USERNAME@$1 'sudo bash -s' < /tmp/install.sh
   sshpass -p "$PASSWORD" scp -o StrictHostKeyChecking=no /tmp/agency-$1.conf $USERNAME@$1:/tmp/arangodb-agent.conf
-  sshpass -p "$PASSWORD" ssh -o StrictHostKeyChecking=no $USERNAME@$1 'sudo mv /tmp/arangodb-agent.conf /etc/arangodb3/arangodb-agent.conf && chown root.root /etc/arangodb3/arangodb-agent.conf'
+  sshpass -p "$PASSWORD" ssh -o StrictHostKeyChecking=no $USERNAME@$1 'sudo bash -s' < /tmp/prepare_agent.sh
+  sshpass -p "$PASSWORD" ssh -o StrictHostKeyChecking=no $USERNAME@$1 'sudo mv /tmp/arangodb-agent.conf /etc/arangodb3/arangodb-agent.conf && sudo chown root.root /etc/arangodb3/arangodb-agent.conf'
   start_systemd $1 "Agent" "agent" /etc/arangodb3/arangodb-agent.conf
 }
 
