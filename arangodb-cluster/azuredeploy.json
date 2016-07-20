@@ -2,12 +2,6 @@
   "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "location": {
-      "type": "string",
-      "metadata": {
-        "description": "Location where resources will be provisioned"
-      }
-    },
     "dnsName": {
       "type": "string",
       "metadata": {
@@ -35,7 +29,7 @@
     },
     "nodeCount": {
       "type": "int",
-      "defaultValue": 3,
+      "defaultValue": 4,
       "metadata": {
         "description": "number of db servers, each db server will have a coordinator"
       }
@@ -113,14 +107,14 @@
     "templateAPIVersion": "2015-01-01",
     "resourceAPIVersion": "2015-06-15",
     "handlerVersion": "1.5",
+    "location": "[resourceGroup().location]",
     "sshKeyPath": "[concat('/home/',parameters('vmUserName'),'/.ssh/authorized_keys')]",
     "storageAccountName": "[concat(uniquestring(resourceGroup().id),'storage')]",
-    "tempPwd": "[uniquestring(resourceGroup().id]",
+    "tempPwd": "[concat(uniquestring(resourceGroup().id), 'Ar0')]",
     "nsgName": "[concat(parameters('dnsName'), '-nsg')]",
     "pipName": "[concat(parameters('dnsName'), '-pip')]",
     "nicName": "[concat(parameters('dnsName'), '-nic')]",
     "availabilitySetName": "[concat(parameters('dnsName'), '-set')]",
-    "installDockerScript": "[concat(parameters('artifactsPath'), '/installDocker.sh')]",
     "installArangoDBScript": "[concat(parameters('artifactsPath'), '/installArangoDB.sh')]",
     "singleQuote": "",
     "virtualNetworkSetupURL": "[concat(parameters('artifactsPath'),'/vnet-',parameters('vnetNewOrExisting'),'.json')]",
@@ -131,10 +125,10 @@
   },
   "resources": [
     {
-      "apiVersion": "[parameters('resourceAPIVersion')]",
+      "apiVersion": "[variables('resourceAPIVersion')]",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('nsgName')]",
-      "location": "[parameters('location')]",
+      "location": "[variables('location')]",
       "properties": {
         "securityRules": [
           {
@@ -171,25 +165,11 @@
               "description": "Allows DBServer traffic",
               "protocol": "Tcp",
               "sourcePortRange": "*",
-              "destinationPortRange": "8629",
+              "destinationPortRange": "8530",
               "sourceAddressPrefix": "*",
               "destinationAddressPrefix": "*",
               "access": "Allow",
               "priority": 102,
-              "direction": "Inbound"
-            }
-          },
-          {
-            "name": "Replica",
-            "properties": {
-              "description": "Allows SSH traffic",
-              "protocol": "Tcp",
-              "sourcePortRange": "*",
-              "destinationPortRange": "8630",
-              "sourceAddressPrefix": "*",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 103,
               "direction": "Inbound"
             }
           }
@@ -201,46 +181,44 @@
       "type": "Microsoft.Resources/deployments",
       "name": "SettingUpVirtualNetwork",
       "dependsOn": [
-        "[concat('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('nsgName'))]"
       ],
-        "properties",
-        :
-        {
-          "mode": "Incremental",
-          "templateLink": {
-            "uri": "[variables('virtualNetworkSetupURL')]",
-            "contentVersion": "1.0.0.0"
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('virtualNetworkSetupURL')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[variables('location')]"
           },
-          "parameters": {
-            "location": {
-              "value": "[parameters('location')]"
-            },
-            "nsgName": {
-              "value": "[variables('nsgName')]"
-            },
-            "virtualNetworkName": {
-              "value": "[parameters('virtualNetworkName')]"
-            },
-            "virtualNetworkAddressPrefix": {
-              "value": "[parameters('vnetAddressPrefix')]"
-            },
-            "dbSubnetName": {
-              "value": "[parameters('dbSubnetName')]"
-            },
-            "dbSubnetAddressPrefix": {
-              "value": "[parameters('dbSubnetAddressPrefix')]"
-            },
-            "virtualNetworkExistingRGName": {
-              "value": "[parameters('virtualNetworkExistingRGName')]"
-            }
+          "nsgName": {
+            "value": "[variables('nsgName')]"
+          },
+          "virtualNetworkName": {
+            "value": "[parameters('virtualNetworkName')]"
+          },
+          "virtualNetworkAddressPrefix": {
+            "value": "[parameters('vnetAddressPrefix')]"
+          },
+          "dbSubnetName": {
+            "value": "[parameters('dbSubnetName')]"
+          },
+          "dbSubnetAddressPrefix": {
+            "value": "[parameters('dbSubnetAddressPrefix')]"
+          },
+          "virtualNetworkExistingRGName": {
+            "value": "[parameters('virtualNetworkExistingRGName')]"
           }
         }
+      }
     },
     {
       "apiVersion": "[variables('resourceAPIVersion')]",
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('storageAccountName')]",
-      "location": "[parameters('location')]",
+      "location": "[variables('location')]",
       "properties": {
         "accountType": "[parameters('storageAccountType')]"
       }
@@ -249,14 +227,14 @@
       "apiVersion": "[variables('resourceAPIVersion')]",
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('availabilitySetName')]",
-      "location": "[parameters('location')]",
+      "location": "[variables('location')]",
       "properties": { }
     },
     {
       "apiVersion": "[variables('resourceAPIVersion')]",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[concat(variables('pipName'), copyIndex())]",
-      "location": "[parameters('location')]",
+      "location": "[variables('location')]",
       "copy": {
         "name": "ipLoop",
         "count": "[parameters('nodeCount')]"
@@ -272,10 +250,10 @@
       "apiVersion": "[variables('resourceAPIVersion')]",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('nicName'), copyIndex())]",
-      "location": "[parameters('location')]",
+      "location": "[variables('location')]",
       "copy": {
         "name": "nicLoop",
-        "count": "[variables('nodeCount')]"
+        "count": "[parameters('nodeCount')]"
       },
       "dependsOn": [
         "[concat('Microsoft.Resources/deployments/', 'SettingUpVirtualNetwork')]",
@@ -307,7 +285,7 @@
       "apiVersion": "[variables('resourceAPIVersion')]",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(parameters('dnsName'), copyIndex())]",
-      "location": "[parameters('location')]",
+      "location": "[variables('location')]",
       "copy": {
         "name": "vmLoop",
         "count": "[parameters('nodeCount')]"
@@ -334,7 +312,7 @@
               "publicKeys": [
                 {
                   "path": "[variables('sshKeyPath')]",
-                  "keyData": "[parameters('sshKeyData')]"
+                  "keyData": "[parameters('vmSSHKey')]"
                 }
               ]
             }
@@ -368,40 +346,10 @@
     {
       "apiVersion": "[variables('resourceAPIVersion')]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(parameters('dnsName'), copyIndex(), '/setupDocker')]",
-      "location": "[parameters('location')]",
-      "copy": {
-        "name": "extLoop",
-        "count": "[parameters('nodeCount')]"
-      },
+      "name": "[concat(parameters('dnsName'), '0/installArangoDB')]",
+      "location": "[variables('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('dnsName'), copyIndex())]"
-      ],
-      "properties": {
-        "publisher": "Microsoft.OSTCExtensions",
-        "type": "CustomScriptForLinux",
-        "typeHandlerVersion": "[variables('handlerVersion')]",
-        "settings": {
-          "fileUris": [
-            "[variables('installDockerScript')]"
-          ]
-        },
-        "protectedSettings": {
-          "commandToExecute": "installDocker.sh"
-        }
-      }
-    },
-    {
-      "apiVersion": "[variables('resourceAPIVersion')]",
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(parameters('dnsName'), '1/installArangoDB')]",
-      "location": "[parameters('location')]",
-      "copy": {
-        "name": "extLoop2",
-        "count": "[parameters('nodeCount')]"
-      },
-      "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('dnsName'), copyIndex(), '/extensions/setupDocker')]"
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('dnsName'), '0')]"
       ],
       "properties": {
         "publisher": "Microsoft.OSTCExtensions",
@@ -413,23 +361,14 @@
           ]
         },
         "protectedSettings": {
-          "commandToExecute": "[concat('installArangoDB, ' ', variables('singleQuote'), variables('tempPwd'), variables('singleQuote'), ' ', parameters('dnsName'), ' ', parameters('nodeCount'))]",
-          "Items": {
-            "mysqlRootPassword": "[parameters('mysqlRootPassword')]",
-            "mysqlReplicationPassword": "[parameters('mysqlReplicationPassword')]",
-            "mysqlProbePassword": "[parameters('mysqlProbePassword')]"
-          }
+          "commandToExecute": "[concat('./installArangoDB.sh ', variables('singleQuote'), variables('tempPwd'), variables('singleQuote'), ' ', parameters('dnsName'), ' ', parameters('nodeCount'))]"
         }
       }
     }
   ],
   "outputs": {
     "fqdnCoordinator": {
-      "value": "concat([reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('pipName'), '1')),providers('Microsoft.Network', 'publicIPAddresses').apiVersions[0]).dnsSettings.fqdn], ':8529')",
-      "type": "string"
-    },
-    "fqdnDBServer": {
-      "value": "concat([reference(resourceId('Microsoft.Network/publicIPAddresses', concat(variables('pipName'), '1')),providers('Microsoft.Network', 'publicIPAddresses').apiVersions[0]).dnsSettings.fqdn], ':8629')",
+      "value": "[concat('http://', parameters('dnsName'), '3.', tolower(replace(variables('location'),' ','')), '.cloudapp.azure.com:8529')]",
       "type": "string"
     }
   }
