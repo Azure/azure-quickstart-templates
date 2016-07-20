@@ -1,0 +1,167 @@
+{
+  "handler": "Microsoft.Compute.MultiVm",
+  "version": "0.0.1-preview",
+  "parameters": {
+    "basics": [
+      {
+        "name": "dnsName",
+        "type": "Microsoft.Network.PublicIpAddressCombo",
+        "label": {
+          "publicIpAddress": "New public IP name",
+          "domainNameLabel": "DNS Prefix for the cluster VMs"
+        },
+        "toolTip": {
+          "publicIpAddress": "Only new public IP is currently supported",
+          "domainNameLabel": "ArangoDB will be accessible from port 8529 of this domain"
+        },
+        "defaultValue": {
+          "publicIpAddressName": "arangopip",
+          "domainNameLabel": "change_me_to_be_unique"
+        },
+        "constraints": {
+          "required": true
+        },
+        "options": {
+          "hideDomainNameLabel": false
+        }
+      },
+      {
+        "name": "vmUserName",
+        "type": "Microsoft.Compute.UserNameTextBox",
+        "label": "VM user name",
+        "defaultValue": "",
+        "toolTip": "",
+        "constraints": {
+          "required": true
+        },
+        "osPlatform": "Linux"
+      },
+      {
+        "name": "SSHCredntials",
+        "type": "Microsoft.Compute.CredentialsCombo",
+        "label": {
+          "authenticationType": "Authentication type",
+          "password": "Password",
+          "confirmPassword": "Confirm password",
+          "sshPublicKey": "SSH public key"
+        },
+        "toolTip": {
+          "authenticationType": "",
+          "password": "",
+          "sshPublicKey": ""
+        },
+        "constraints": {
+          "required": true
+        },
+        "options": {
+          "hideConfirmation": false,
+          "hidePassword": true
+        },
+        "osPlatform": "Linux",
+        "visible": true
+      },
+      {
+        "name": "vmSize",
+        "type": "Microsoft.Compute.SizeSelector",
+        "label": "Database VM size",
+        "toolTip": "",
+        "recommendedSizes": [
+          "Standard_D2_v2",
+          "Standard_D3_v2",
+          "Standard_D4_v2"
+        ],
+        "constraints": {
+          "required": true,
+          "excludedSizes": [
+            "Basic_A0",
+            "Basic_A1",
+            "Basic_A2",
+            "Basic_A3",
+            "Basic_A4",
+            "Standard_A0"
+          ]
+        },
+        "osPlatform": "Linux",
+        "imageReference": {
+          "publisher": "Canonical",
+          "offer": "UbuntuServer",
+          "sku": "16.04.0-LTS"
+        },
+        "count": 4
+      },
+      {
+        "name": "nodeCount",
+        "type": "Microsoft.Common.TextBox",
+        "label": "Number of DB Server nodes",
+        "defaultValue": "3",
+        "toolTip": "Number of DB Server nodes, 4 to 10",
+        "constraints": {
+          "required": true,
+          "regex": "^([4-9]|10)$",
+          "validationMessage": "Number of DB Server nodes must within 4 to 10"
+        }
+      }
+    ],
+    "steps": [
+      {
+        "name": "networkInfo",
+        "label": "Virtual network information",
+        "subLabel": {
+          "preValidation": "Provide virtual network information",
+          "postValidation": "Done"
+        },
+        "bladeTitle": "Virtual network information",
+        "elements": [
+          {
+            "name": "vnetSpec",
+            "type": "Microsoft.Network.VirtualNetworkCombo",
+            "label": {
+              "virtualNetwork": "Virtual network",
+              "subnets": "Subnets"
+            },
+            "toolTip": {
+              "virtualNetwork": "",
+              "subnets": ""
+            },
+            "defaultValue": {
+              "name": "arangodbvnet",
+              "addressPrefixSize": "/16"
+            },
+            "constraints": {
+              "minAddressPrefixSize": "/29"
+            },
+            "subnets": {
+              "subnet1": {
+                "label": "DB subnet",
+                "defaultValue": {
+                  "name": "dbsubnet",
+                  "addressPrefixSize": "/24"
+                },
+                "constraints": {
+                  "minAddressPrefixSize": "/29",
+                  "minAddressCount": 4,
+                  "requireContiguousAddresses": true
+                }
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "outputs": {
+      "location": "[location()]",
+      "dnsName": "[basics('dnsName').domainNameLabel]",
+      "vmUserName": "[basics('vmUserName')]",
+      "vmSSHKey": "[basics('SSHCredntials').sshPublicKey]",
+      "vmSize": "[basics('vmSize')]",
+      "nodeCount": "[basics('webSiteName')]",
+      "virtualNetworkName": "[steps('networkInfo').vnetSpec.name]",
+      "vnetNewOrExisting": "[steps('networkInfo').vnetSpec.newOrExisting]",
+      "virtualNetworkExistingRGName": "[steps('networkInfo').vnetSpec.resourceGroup]",
+      "dbSubnetName": "[steps('networkInfo').vnetSpec.subnets.subnet1.name]",
+      "vnetAddressPrefix": "[steps('networkInfo').vnetSpec.addressPrefix]",
+      "dbSubnetAddressPrefix": "[steps('networkInfo').vnetSpec.subnets.subnet1.addressPrefix]",
+      "dbSubnetStartAddress": "[steps('networkInfo').vnetSpec.subnets.subnet1.startAddress]"
+    }
+  }
+}
