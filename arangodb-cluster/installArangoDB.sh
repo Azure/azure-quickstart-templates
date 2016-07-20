@@ -2,8 +2,8 @@
 
 echo $@
 
-if [ "$#" -lt 3 ]; then
-  echo "Usage: $0 <password> <dns-prefix> <count>"
+if [ "$#" -lt 4 ]; then
+  echo "Usage: $0 <username> <password> <dns-prefix> <count>"
   exit 1
 fi
 
@@ -18,8 +18,8 @@ if [ $2 -lt 4 ]; then
   exit 3
 fi
 
-apt-get update
-yes | apt-get install sshpass
+sudo apt-get update
+yes | sudo apt-get install sshpass
 
 i=0
 ips=()
@@ -84,6 +84,19 @@ app-path = /var/lib/arangodb3-apps
 level = info
 EOF
 
+cat <<EOF >/tmp/prepare_combo_server.sh
+mkdir -p /var/lib/arangodb3-coordinator
+mkdir -p /var/lib/arangodb3-coordinator-apps
+mkdir -p /var/lib/arangodb3-dbserver
+mkdir -p /var/lib/arangodb3-dbserver-apps
+
+chown arangodb.arangodb /var/lib/arangodb3-coordinator
+chown arangodb.arangodb /var/lib/arangodb3-coordinator-apps
+chown arangodb.arangodb /var/lib/arangodb3-dbserver
+chown arangodb.arangodb /var/lib/arangodb3-dbserver-apps
+
+EOF
+
 start_systemd() {
   cat <<EOF >/tmp/systemd-$3.service
 [Unit]
@@ -91,8 +104,7 @@ Description=ArangoDB $2
 After=network.target auditd.service
 
 [Service]
-EnvironmentFile=-/etc/default/ssh
-ExecStart=/usr/sbin/arangod -c $4
+ExecStart=/usr/sbin/arangod --uid arangodb --gid arangodb -c $4
 ExecReload=/bin/kill -HUP $MAINPID
 KillMode=process
 RestartPreventExitStatus=255
@@ -102,14 +114,16 @@ WantedBy=multi-user.target
 EOF
 
   cat <<EOF >/tmp/enable-systemd-$3.sh
+chown root.root /tmp/arangodb-$3.service
+cp /tmp/arangodb-$3.service /etc/systemd/system/arangodb-$3.service
 chmod 664 /etc/systemd/system/arangodb-$3.service
 systemctl daemon-reload
 systemctl enable arangodb-$3
 systemctl restart arangodb-$3
 EOF
 
-  sshpass -p "$PASSWORD" scp -o StrictHostKeyChecking=no /tmp/systemd-$3.service $USERNAME@$1:/etc/systemd/system/arangodb-$3.service
-  sshpass -p "$PASSWORD" ssh -o StrictHostKeyChecking=no $USERNAME@$1 'bash -s' < /tmp/enable-systemd-$3.sh
+  sshpass -p "$PASSWORD" scp -o StrictHostKeyChecking=no /tmp/systemd-$3.service $USERNAME@$1:/tmp/arangodb-$3.service
+  sshpass -p "$PASSWORD" ssh -o StrictHostKeyChecking=no $USERNAME@$1 'sudo bash -s' < /tmp/enable-systemd-$3.sh
 }
 
 deploy_agent() {
@@ -125,8 +139,9 @@ endpoint = $4
 endpoint = $5
 EOF
 
-  sshpass -p "$PASSWORD" ssh -o StrictHostKeyChecking=no $USERNAME@$1 'bash -s' < /tmp/install.sh
-  sshpass -p "$PASSWORD" scp -o StrictHostKeyChecking=no /tmp/agency-$1.conf $USERNAME@$1:/etc/arangodb3/arangodb-agent.conf
+  sshpass -p "$PASSWORD" ssh -o StrictHostKeyChecking=no $USERNAME@$1 'sudo bash -s' < /tmp/install.sh
+  sshpass -p "$PASSWORD" scp -o StrictHostKeyChecking=no /tmp/agency-$1.conf $USERNAME@$1:/tmp/arangodb-agent.conf
+  sshpass -p "$PASSWORD" ssh -o StrictHostKeyChecking=no $USERNAME@$1 'sudo mv /tmp/arangodb-agent.conf /etc/arangodb3/arangodb-agent.conf && chown root.root /etc/arangodb3/arangodb-agent.conf'
   start_systemd $1 "Agent" "agent" /etc/arangodb3/arangodb-agent.conf
 }
 
@@ -155,13 +170,17 @@ cluster.agency-endpoint = $2
 [database]
 directory = /var/lib/arangodb3-dbserver
 [javascript]
-app-path = /var/lib/arangodb3-coordinator-apps
+app-path = /var/lib/arangodb3-dbserver-apps
 EOF
   sed -i -e 's/^endpoint.*/endpoint = tcp:\/\/0.0.0.0:8530/g' /tmp/dbserver-$1.conf
   
-  sshpass -p "$PASSWORD" ssh -o StrictHostKeyChecking=no $USERNAME@$1 'bash -s' < /tmp/install.sh
-  sshpass -p "$PASSWORD" scp -o StrictHostKeyChecking=no /tmp/coordinator-$1.conf $USERNAME@$1:/etc/arangodb3/arangodb-coordinator.conf
-  sshpass -p "$PASSWORD" scp -o StrictHostKeyChecking=no /tmp/dbserver-$1.conf $USERNAME@$1:/etc/arangodb3/arangodb-dbserver.conf
+  sshpass -p "$PASSWORD" ssh -o StrictHostKeyChecking=no $USERNAME@$1 'sudo bash -s' < /tmp/install.sh
+  sshpass -p "$PASSWORD" scp -o StrictHostKeyChecking=no /tmp/coordinator-$1.conf $USERNAME@$1:/tmp/arangodb-coordinator.conf
+  sshpass -p "$PASSWORD" scp -o StrictHostKeyChecking=no /tmp/dbserver-$1.conf $USERNAME@$1:/tmp/arangodb-dbserver.conf
+  sshpass -p "$PASSWORD" ssh -o StrictHostKeyChecking=no $USERNAME@$1 'sudo bash -s' < /tmp/prepare_combo_server.sh
+  sshpass -p "$PASSWORD" ssh -o StrictHostKeyChecking=no $USERNAME@$1 'sudo mv /tmp/arangodb-coordinator.conf /etc/arangodb3/arangodb-coordinator.conf'
+  sshpass -p "$PASSWORD" ssh -o StrictHostKeyChecking=no $USERNAME@$1 'sudo mv /tmp/arangodb-dbserver.conf /etc/arangodb3/arangodb-dbserver.conf'
+
   start_systemd $1 "Coordinator" "coordinator" /etc/arangodb3/arangodb-coordinator.conf
   start_systemd $1 "DBServer" "dbserver" /etc/arangodb3/arangodb-dbserver.conf
 }
