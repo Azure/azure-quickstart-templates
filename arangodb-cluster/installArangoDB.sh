@@ -151,12 +151,8 @@ deploy_agent() {
   cat <<EOF >>/tmp/agency-$1.conf
 [agency]
 supervision = true
-size = 3
+size = 1
 id = $2
-notify = true
-endpoint = $3
-endpoint = $4
-endpoint = $5
 [database]
 directory = /var/lib/arangodb3-agent
 [javascript]
@@ -220,12 +216,8 @@ EOF
 
 AGENCY_ENDPOINT=tcp://$1:8529
 
-deploy_agent $1 0 tcp://$1:8529 tcp://$2:8529 tcp://$3:8529 &
-deploy_agent $2 1 tcp://$1:8529 tcp://$2:8529 tcp://$3:8529 &
-deploy_agent $3 2 tcp://$1:8529 tcp://$2:8529 tcp://$3:8529 &
+deploy_agent $1 0 &
 
-shift
-shift
 shift
 
 while [ $# -gt 0 ]; do
