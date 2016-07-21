@@ -2,9 +2,15 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
+        "_artifactsLocation": {
+            "type": "string",
+            "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/tlg-base-config/",
+            "metadata": {
+                "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+            }            
+        },      
         "localAdmin": {
             "type": "string",
-            "defaultValue": "localAdmin",
             "metadata": { 
 	            "description": "The 'localAdmin' account on each of the Virtual Machines (also becomes EA/DA on DC Promotion of DC1)" 
             }
@@ -17,7 +23,6 @@
         },
         "safemodeAdmin": {
             "type": "string",
-            "defaultValue": "safemodeAdmin",
             "metadata": { 
 	            "description": "The safemodeAdmin account for the Domain" 
             }
@@ -40,25 +45,20 @@
             "metadata": { 
 	            "description": "Password for the 'genericUser' account" 
             }
-        },
-        "newStorageAccountName": { 
-	        "type": "string", 
-	        "metadata": { 
-	            "description": "Unique DNS Name for the Storage Account where the Virtual Machine's disks will be placed. (Length: 3-24; Case: Lower; Valid: Alphanumeric; Unique: Global)" 
-            } 
         }
     },
     "variables": {
-        "githubroot": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/tlg-base-config/dsc/",
         "storageAccountType": "Standard_LRS",
         "imageSku": "2012-R2-Datacenter",
         "vmSize": "Standard_A1",
         "virtualNetworkName": "TestLab",
         "virtualSubnetName": "Corpnet",
         "domainName": "corp\\",
-        "dscConfigZIP": "[concat(variables('githubroot'), 'dsc_config.zip')]",
+        "dscConfigBase": "[concat(parameters('_artifactsLocation'), 'dsc/')]",
+        "dscConfigZIP": "[concat(variables('dscConfigBase'), 'dsc_config.zip')]",
         "dscConfigFile": "dsc_config.ps1",
-        "dscConfigScript": "WindowsTestConfigEnv"
+        "dscConfigScript": "WindowsTestConfigEnv",
+        "newStorageAccountName": "[concat(uniqueString(resourceGroup().id),'storage')]"
     },
     "resources": [
         {
@@ -81,7 +81,7 @@
                         "name": "APP1-OSDisk",
                         "createOption": "FromImage",
                         "vhd": {
-                            "uri": "[concat('https://', parameters('newStorageAccountName'), '.blob.core.windows.net/vhds/APP1-OSDisk.vhd')]"
+                            "uri": "[concat('https://', variables('newStorageAccountName'), '.blob.core.windows.net/vhds/APP1-OSDisk.vhd')]"
                         },
                         "caching": "ReadWrite"
                     },
@@ -127,7 +127,7 @@
                                 "function": "[variables('dscConfigScript')]"
                             },
                             "configurationData": {
-                                "url": "[concat(variables('githubroot'), 'dsc_configdata_APP1.psd1')]"
+                                "url": "[concat(variables('dscConfigBase'), 'dsc_configdata_APP1.psd1')]"
                             },
                             "privacy": {
                                 "dataCollection": "disable"
@@ -157,7 +157,7 @@
                 }
             ],
             "dependsOn": [
-                "[resourceId('Microsoft.Storage/storageAccounts', parameters('newStorageAccountName'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('newStorageAccountName'))]",
                 "[resourceId('Microsoft.Network/networkInterfaces', 'APP1-NIC')]"
             ]
         },
@@ -181,7 +181,7 @@
                         "name": "CLIENT1-OSDisk",
                         "createOption": "FromImage",
                         "vhd": {
-                            "uri": "[concat('https://', parameters('newStorageAccountName'), '.blob.core.windows.net/vhds/CLIENT1-OSDisk.vhd')]"
+                            "uri": "[concat('https://', variables('newStorageAccountName'), '.blob.core.windows.net/vhds/CLIENT1-OSDisk.vhd')]"
                         },
                         "caching": "ReadWrite"
                     },
@@ -227,7 +227,7 @@
                                 "function": "[variables('dscConfigScript')]"
                             },
                             "configurationData": {
-                                "url": "[concat(variables('githubroot'), 'dsc_configdata_CLIENT1.psd1')]"
+                                "url": "[concat(variables('dscConfigBase'), 'dsc_configdata_CLIENT1.psd1')]"
                             },
                             "privacy": {
                                 "dataCollection": "disable"
@@ -257,7 +257,7 @@
                 }
             ],
             "dependsOn": [
-                "[resourceId('Microsoft.Storage/storageAccounts', parameters('newStorageAccountName'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('newStorageAccountName'))]",
                 "[resourceId('Microsoft.Network/networkInterfaces', 'CLIENT1-NIC')]"
             ]
         },
@@ -281,7 +281,7 @@
                         "name": "DC1-OSDisk",
                         "createOption": "FromImage",
                         "vhd": {
-                            "uri": "[concat('https://', parameters('newStorageAccountName'), '.blob.core.windows.net/vhds/DC1-OSDisk.vhd')]"
+                            "uri": "[concat('https://', variables('newStorageAccountName'), '.blob.core.windows.net/vhds/DC1-OSDisk.vhd')]"
                         },
                         "caching": "ReadWrite"
                     },
@@ -291,7 +291,7 @@
                             "name": "ADDS-Data",
                             "createOption": "Empty",
                             "vhd": {
-                                "uri": "[concat('https://', parameters('newStorageAccountName'), '.blob.core.windows.net/vhds/DC1-ADDSDisk.vhd')]"
+                                "uri": "[concat('https://', variables('newStorageAccountName'), '.blob.core.windows.net/vhds/DC1-ADDSDisk.vhd')]"
                             },
                             "caching": "None",
                             "diskSizeGB": "20"
@@ -338,7 +338,7 @@
                                 "function": "[variables('dscConfigScript')]"
                             },
                             "configurationData": {
-                                "url": "[concat(variables('githubroot'), 'dsc_configdata_DC1.psd1')]"
+                                "url": "[concat(variables('dscConfigBase'), 'dsc_configdata_DC1.psd1')]"
                             },
                             "privacy": {
                                 "dataCollection": "disable"
@@ -368,7 +368,7 @@
                 }
             ],
             "dependsOn": [
-                "[resourceId('Microsoft.Storage/storageAccounts', parameters('newStorageAccountName'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('newStorageAccountName'))]",
                 "[resourceId('Microsoft.Network/networkInterfaces', 'DC1-NIC')]"
             ]
         },
@@ -555,7 +555,7 @@
         },
         {
             "type": "Microsoft.Storage/storageAccounts",
-            "name": "[parameters('newStorageAccountName')]",
+            "name": "[variables('newStorageAccountName')]",
             "apiVersion": "2015-06-15",
             "location": "[resourceGroup().location]",
             "tags": {},
