@@ -30,7 +30,7 @@ Each server has dynamic private ip address. Web servers belong to web subnet, th
 
 
 ##Important Notice
-Each server uses raid0 to improve performance. We use 4 data disks on each server for raid0. The size of data disks(setup raid0) on each server are determined by yourself. However, there is size of data disks limit per the server size. Before you set the size of data disks, please refer to the link https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-linux-sizes/ for the correct choice.
+Each server uses raid0 to improve performance. We use 4 data disks on each server for raid0. The size of each data disk is set to 100GB. Execute the command "df -h" to find out the mount details, /dev/md0 is for the data disks. The VM size is set to Standard_A3. You can check the VM size details by clicking the URL https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-linux-sizes/ .
 
 
 
