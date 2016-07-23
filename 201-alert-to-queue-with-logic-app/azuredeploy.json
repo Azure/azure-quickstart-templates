@@ -2,44 +2,25 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "svcPlanName": {
-      "type": "string",
-      "metadata": {
-        "description": "The name of the App Service Plan."
-      }
-    },
     "logicAppName": {
       "type": "string",
       "metadata": {
         "description": "The name for the logic app."
       }
     },
-    "sku": {
-      "type": "string",
-      "defaultValue": "Standard",
-      "allowedValues": [
-        "Free",
-        "Basic",
-        "Standard",
-        "Premium"
-      ],
-      "metadata": {
-        "description": "The pricing tier for the logic app."
-      }
-    },
-    "servicebusconnectionString": {
+    "serviceBusConnectionString": {
       "type": "securestring",
       "metadata": {
         "description": "The Azure Service Bus namespace connection string."
       }
     },
-    "servicebusConnectionName": {
+    "serviceBusConnectionName": {
       "type": "string",
       "metadata": {
         "description": "The name for the Service Bus connection."
       }
     },
-    "servicebusQueueName": {
+    "serviceBusQueueName": {
       "type": "string",
       "metadata": {
         "description": "The name of the queue to add a message to."
@@ -51,50 +32,31 @@
   },
   "resources": [
     {
-      "apiVersion": "2014-06-01",
-      "name": "[parameters('svcPlanName')]",
-      "type": "Microsoft.Web/serverfarms",
-      "location": "[resourceGroup().location]",
-      "properties": {
-        "name": "[parameters('svcPlanName')]",
-        "sku": "[parameters('sku')]",
-        "workerSize": "0",
-        "numberOfWorkers": 1
-      }
-    },
-    {
       "type": "Microsoft.Web/connections",
-      "apiVersion": "2015-08-01-preview",
+      "apiVersion": "2016-06-01",
       "location": "[resourceGroup().location]",
-      "name": "[parameters('servicebusConnectionName')]",
+      "name": "[parameters('serviceBusConnectionName')]",
       "properties": {
         "api": {
-          "id": "[concat('/subscriptions/80d4fe69-c95b-4dd2-a938-9250f1c8ab03/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/servicebus')]"
+          "id": "[concat(subscription().id,'/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/servicebus')]"
         },
         "displayName": "servicebus",
         "parameterValues": {
-          "connectionString": "[parameters('servicebusconnectionString')]"
+          "connectionString": "[parameters('serviceBusConnectionString')]"
         }
       }
     },
     {
       "type": "Microsoft.Logic/workflows",
-      "apiVersion": "2015-08-01-preview",
+      "apiVersion": "2016-06-01",
       "name": "[parameters('logicAppName')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[resourceId('Microsoft.Web/serverfarms', parameters('svcPlanName'))]",
-        "[resourceId('Microsoft.Web/connections', parameters('servicebusConnectionName'))]"
+        "[resourceId('Microsoft.Web/connections', parameters('serviceBusConnectionName'))]"
       ],
       "properties": {
-        "sku": {
-          "name": "[parameters('sku')]",
-          "plan": {
-            "id": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/',parameters('svcPlanName'))]"
-          }
-        },
         "definition": {
-          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2015-08-01-preview/workflowdefinition.json#",
+          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
           "contentVersion": "1.0.0.0",
           "parameters": {
             "$connections": {
@@ -104,7 +66,8 @@
           },
           "triggers": {
             "manual": {
-              "type": "Manual",
+              "type": "request",
+              "kind": "Http",
               "inputs": {
                 "schema": {}
               }
@@ -123,9 +86,9 @@
                   }
                 },
                 "method": "post",
-                "path": "[concat('/@{encodeURIComponent(', variables('$singleQuote'), parameters('servicebusQueueName'), variables('$singleQuote'), ')}/messages')]"
+                "path": "[concat('/@{encodeURIComponent(', variables('$singleQuote'), parameters('serviceBusQueueName'), variables('$singleQuote'), ')}/messages')]"
               },
-              "conditions": []
+              "runAfter": {}
             }
           },
           "outputs": {}
@@ -134,8 +97,8 @@
           "$connections": {
             "value": {
               "servicebus": {
-                "id": "[concat('/subscriptions/80d4fe69-c95b-4dd2-a938-9250f1c8ab03/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/servicebus')]",
-                "connectionId": "[resourceId('Microsoft.Web/connections', parameters('servicebusConnectionName'))]"
+                "id": "[concat(subscription().id,'/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/servicebus')]",
+                "connectionId": "[resourceId('Microsoft.Web/connections', parameters('serviceBusConnectionName'))]"
               }
             }
           }
@@ -146,7 +109,7 @@
   "outputs": {
       "WebHookURI": { 
             "type": "string", 
-            "value": "[listCallbackURL(concat(resourceId('Microsoft.Logic/workflows/', parameters('logicAppName')), '/triggers/manual'), '2015-08-01-preview').value]" 
+            "value": "[listCallbackURL(concat(resourceId('Microsoft.Logic/workflows/', parameters('logicAppName')), '/triggers/manual'), '2016-06-01').value]" 
        } 
   }
 }
