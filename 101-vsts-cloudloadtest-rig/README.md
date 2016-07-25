@@ -18,4 +18,5 @@ Using this template, you can create your own load test rig on Azure IaaS virtual
 ```
 
 If you wish to deploy a rig of load test agents in a private VNet (to directly generate load on a private application) please use the following ARM template.
+
 <a href="https://github.com/Azure/azure-quickstart-templates/tree/master/201-vsts-cloudloadtest-rig-existing-vnet"> Load test rig in a specific VNet for testing private apps </a>
