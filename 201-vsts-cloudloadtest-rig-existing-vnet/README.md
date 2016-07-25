@@ -23,3 +23,7 @@ Using this template, you can create your own load test rig on Azure IaaS virtual
 	"SubnetName":"<Subnet under VNet where you want to deployment load agents>"
 }
 ```
+
+If you wish to deploy a simple rig without an existing VNet, please use the following ARM template.
+
+<a href="https://github.com/Azure/azure-quickstart-templates/tree/master/101-vsts-cloudloadtest-rig"> Create VM rig for load testing using VSTS CLT service </a>
