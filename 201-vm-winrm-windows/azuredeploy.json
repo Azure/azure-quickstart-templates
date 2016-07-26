@@ -5,7 +5,7 @@
         "adminUsername": {
             "type": "string",
             "metadata": {
-               "description": "Username for the Virtual Machine."
+                "description": "Username for the Virtual Machine."
             }
         },
         "adminPassword": {
@@ -17,7 +17,7 @@
         "dnsLabelPrefix": {
             "type": "string",
             "metadata": {
-                  "description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
+                "description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
             }
         },
         "windowsOSVersion": {
@@ -36,21 +36,21 @@
     "variables": {
         "imagePublisher": "MicrosoftWindowsServer",
         "imageOffer": "WindowsServer",
-        "OSDiskName": "osdiskforwindowssimple",
-        "nicName": "myVMNic",
+        "OSDiskName": "[concat(parameters('dnsLabelPrefix'),'-osdisk')]",
+        "nicName": "[concat(parameters('dnsLabelPrefix'),'-nic')]",
         "addressPrefix": "10.0.0.0/16",
         "subnetName": "Subnet",
         "subnetPrefix": "10.0.0.0/24",
         "storageAccountType": "Standard_LRS",
-        "publicIPAddressName": "myPublicIP",
+        "publicIPAddressName": "[concat(parameters('dnsLabelPrefix'),'-pip')]",
         "publicIPAddressType": "Dynamic",
         "vmStorageAccountContainerName": "vhds",
-        "vmName": "MyWindowsVM",
+        "vmName": "[parameters('dnsLabelPrefix')]",
         "vmSize": "Standard_A2",
-        "virtualNetworkName": "MyVNET",
+        "virtualNetworkName": "[concat(parameters('dnsLabelPrefix'),'-vnet')]",
         "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
         "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
-        "newStorageAccountName": "[concat(uniqueString(resourceGroup().id),'winrmsa')]",
+        "newStorageAccountName": "[concat(uniqueString(concat(parameters('dnsLabelPrefix'),resourceGroup().id)),'winrmsa')]",
         "apiVersion": "2015-06-15",
         "hostDNSNameScriptArgument": "[concat('*.',resourceGroup().location,'.cloudapp.azure.com')]"
     },
@@ -75,7 +75,7 @@
                     "domainNameLabel": "[parameters('dnsLabelPrefix')]"
                 }
             }
-        },        
+        },
         {
             "apiVersion": "[variables('apiVersion')]",
             "type": "Microsoft.Network/virtualNetworks",
@@ -92,7 +92,7 @@
                         "name": "[variables('subnetName')]",
                         "properties": {
                             "addressPrefix": "[variables('subnetPrefix')]"
-                      }
+                        }
                     }
                 ]
             }
@@ -145,10 +145,10 @@
                     "imageReference": {
                         "publisher": "[variables('imagePublisher')]",
                         "offer": "[variables('imageOffer')]",
-                        "sku" : "[parameters('windowsOSVersion')]",
-                        "version":"latest"
+                        "sku": "[parameters('windowsOSVersion')]",
+                        "version": "latest"
                     },
-                   "osDisk" : {
+                    "osDisk": {
                         "name": "osdisk",
                         "vhd": {
                             "uri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]"
@@ -166,28 +166,28 @@
                 }
             },
             "resources": [
-              {
-                  "type": "Microsoft.Compute/virtualMachines/extensions",
-                  "name": "[concat(variables('vmName'),'/WinRMCustomScriptExtension')]",
-                  "apiVersion": "[variables('apiVersion')]",
-                  "location": "[resourceGroup().location]",
-                  "dependsOn": [
-                      "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
-                  ],
-                  "properties": {
-       	           "publisher": "Microsoft.Compute",
-       	           "type": "CustomScriptExtension",
-                     "typeHandlerVersion": "1.4",
-                     "settings": {
-						 "fileUris": [ 
-									"https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vm-winrm-windows/ConfigureWinRM.ps1",
-									"https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vm-winrm-windows/makecert.exe",
-									"https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vm-winrm-windows/winrmconf.cmd"
-								],
-						 "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -file ConfigureWinRM.ps1 ',variables('hostDNSNameScriptArgument'))]"
-                     }
-                 }
-              }
+                {
+                    "type": "Microsoft.Compute/virtualMachines/extensions",
+                    "name": "[concat(variables('vmName'),'/WinRMCustomScriptExtension')]",
+                    "apiVersion": "[variables('apiVersion')]",
+                    "location": "[resourceGroup().location]",
+                    "dependsOn": [
+                        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+                    ],
+                    "properties": {
+                        "publisher": "Microsoft.Compute",
+                        "type": "CustomScriptExtension",
+                        "typeHandlerVersion": "1.4",
+                        "settings": {
+                            "fileUris": [
+                                "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vm-winrm-windows/ConfigureWinRM.ps1",
+                                "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vm-winrm-windows/makecert.exe",
+                                "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vm-winrm-windows/winrmconf.cmd"
+                            ],
+                            "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -file ConfigureWinRM.ps1 ',variables('hostDNSNameScriptArgument'))]"
+                        }
+                    }
+                }
             ]
         }
     ]
