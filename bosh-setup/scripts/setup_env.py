@@ -51,8 +51,10 @@ def render_bosh_manifest(settings):
             contents = tmpfile.read()
         keys = [
             "SUBNET_ADDRESS_RANGE_FOR_BOSH",
+            "SECONDARY_DNS",
             "VNET_NAME",
             "SUBNET_NAME_FOR_BOSH",
+            "DNS_RECURSOR",
             "SUBSCRIPTION_ID",
             "DEFAULT_STORAGE_ACCOUNT_NAME",
             "RESOURCE_GROUP_NAME",
@@ -82,10 +84,24 @@ def render_bosh_manifest(settings):
 
     return bosh_director_ip
 
-def get_cloud_foundry_configuration(scenario, settings):
+def get_cloud_foundry_configuration(scenario, settings, bosh_director_ip):
     config = {}
-    for key in ["SUBNET_ADDRESS_RANGE_FOR_CLOUD_FOUNDRY", "VNET_NAME", "SUBNET_NAME_FOR_CLOUD_FOUNDRY", "CLOUD_FOUNDRY_PUBLIC_IP", "NSG_NAME_FOR_CLOUD_FOUNDRY"]:
+    keys = [
+        "SUBNET_ADDRESS_RANGE_FOR_CLOUD_FOUNDRY",
+        "VNET_NAME",
+        "SUBNET_NAME_FOR_CLOUD_FOUNDRY",
+        "CLOUD_FOUNDRY_PUBLIC_IP",
+        "NSG_NAME_FOR_CLOUD_FOUNDRY"
+    ]
+    for key in keys:
         config[key] = settings[key]
+
+    dns_maps = {
+        "AzureCloud": "168.63.129.16, {0}".format(settings["SECONDARY_DNS"]),
+        "AzureChinaCloud": bosh_director_ip
+    }
+    environment = settings["ENVIRONMENT"]
+    config["DNS"] = dns_maps[environment]
 
     with open('cloudfoundry.cert', 'r') as tmpfile:
         ssl_cert = tmpfile.read()
@@ -104,7 +120,9 @@ def get_cloud_foundry_configuration(scenario, settings):
     config["SYSTEM_DOMAIN"] = "{0}.xip.io".format(settings["CLOUD_FOUNDRY_PUBLIC_IP"])
 
     if scenario == "single-vm-cf":
-        config["STATIC_IP"] = str(ip[4])
+        config["STATIC_IP_FROM"] = str(ip[4])
+        config["STATIC_IP_TO"] = str(ip[100])
+        config["POSTGRES_IP"] = str(ip[11])
     elif scenario == "multiple-vm-cf":
         config["STATIC_IP_FROM"] = str(ip[4])
         config["STATIC_IP_TO"] = str(ip[100])
@@ -118,13 +136,13 @@ def get_cloud_foundry_configuration(scenario, settings):
 
     return config
 
-def render_cloud_foundry_manifest(settings):
+def render_cloud_foundry_manifest(settings, bosh_director_ip):
     for scenario in ["single-vm-cf", "multiple-vm-cf"]:
         cloudfoundry_template = "{0}.yml".format(scenario)
         if os.path.exists(cloudfoundry_template):
             with open(cloudfoundry_template, 'r') as tmpfile:
                 contents = tmpfile.read()
-            config = get_cloud_foundry_configuration(scenario, settings)
+            config = get_cloud_foundry_configuration(scenario, settings, bosh_director_ip)
             for key in config:
                 value = config[key]
                 contents = re.compile(re.escape("REPLACE_WITH_{0}".format(key))).sub(value, contents)
@@ -164,7 +182,7 @@ def main():
     bosh_director_ip = render_bosh_manifest(settings)
     print bosh_director_ip
 
-    render_cloud_foundry_manifest(settings)
+    render_cloud_foundry_manifest(settings, bosh_director_ip)
     render_cloud_foundry_deployment_cmd(settings)
 
 if __name__ == "__main__":

@@ -2,10 +2,10 @@
 
 replSetName=$1
 secondaryNodes=$2
-zabbixServer=$3
-mongoAdminUser=$4
-mongoAdminPasswd=$5
-staticIp=$6
+mongoAdminUser=$3
+mongoAdminPasswd=$4
+staticIp=$5
+zabbixServer=$6
 
 install_mongo3() {
 
@@ -43,6 +43,7 @@ EOF
 
 disk_format() {
 	cd /tmp
+	yum install wget -y
 	for ((j=1;j<=3;j++))
 	do
 		wget https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/shared_scripts/ubuntu/vm-disk-utils-0.1.sh 

@@ -1,4 +1,4 @@
-# Configure the Azure Key Vault Integration feature on  setup Azure Key Vault on any existing Azure Virtual machine with SQL Server Enterprise edition.
+# Configure the Azure Key Vault Integration feature on any existing Azure Virtual machine with SQL Server Enterprise edition.
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-vm-sql-existing-keyvault-update%2Fazuredeploy.json" target="_blank">
   <img src="http://azuredeploy.net/deploybutton.png"/>
@@ -9,7 +9,11 @@
 
 ## Solution overview
 
-+	This template can be used for any Azure virtual machine running SQL Server 2012 or newer, Enterprise edition.
+This template can be used for any Azure virtual machine running SQL Server 2012 or newer, Enterprise edition.
+
+All resources used in this template must be ARM resources.
+
+## Azure Key Vault Integration
 
 The Azure Key Vault integration feature will configure your virtual machine to be able to connect to your Azure key vault. It achieves this by installing the latest version of the SQL Server Connector, configuring EKM provider to access Azure Key Vault, and creates the credential to allow you to access your vault. More information on this feature can be found [here](https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-windows-ps-sql-keyvault/).
 
@@ -25,10 +29,6 @@ If you wish to disable this feature, you must edit *azuredeploy.json* and change
 |sqlAkvUrl|The URL for your key vault|https://contosokeyvault.vault.azure.net/|
 |servicePrincipalName|Azure Active Directory service principal name. This is also referred to as the Client ID.|fde2b411-33d5-4e11-af04eb07b669ccf2|
 |servicePrincipalSecret|Azure Active Directory service principal secret. This is also referred to as the Client Secret.|9VTJSQwzlFepD8XODnzy8n2V01Jd8dAjwm/azF1XDKM=|
-
-## Requirements
-
-    + All resources used in this template must be ARM resources.
 
 ## SQL Server IaaS Agent extension
 

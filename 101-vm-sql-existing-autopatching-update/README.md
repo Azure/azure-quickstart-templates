@@ -9,7 +9,11 @@
 
 ## Solution overview
 
-+	This template can be used for any Azure virtual machine, whether it is running SQL Server or not. If your virtual machine is running SQL Server, it must be SQL Server 2012 or newer.
+This template can be used for any Azure virtual machine, whether it is running SQL Server or not. If your virtual machine is running SQL Server, it must be SQL Server 2012 or newer.
+
+All resources used in this template must be ARM resources.
+
+## Automated Patching
 
 The Automated Patching feature can be used to schedule a patching window during which all Windows and SQL Server updates will take place. More information on this feature can be found [here](https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-windows-sql-automated-patching/).
 
@@ -24,10 +28,6 @@ If you wish to disable Automated Patching, you must edit *azuredeploy.json* and 
 |sqlAutopatchingDayOfWeek|Scheduled day during which patching can take place. Allowed values: Sunday - Saturday, or Everyday or Never to disable Auto Patching|Monday|
 |sqlAutopatchingStartHour|The hour during the specified day(s) that patching can begin. This is based on your virtual machine's local time. Allowed values (24 hour clock): 0-23|22|
 |sqlAutopatchingWindowDuration|Length of time following the start hour during which patching and restarts are allowed to take place. When this window ends, patching will stop and will not continue until the next patching window. Allowed values (in minutes): 30, 60, 90, 120, 180|60|
-
-## Requirements
-
-    + All resources used in this template must be ARM resources.
 
 ## SQL Server IaaS Agent extension
 
