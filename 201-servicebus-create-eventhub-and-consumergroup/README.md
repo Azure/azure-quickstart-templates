@@ -4,4 +4,4 @@
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-For information about using this template, see [Create a Service Bus namespace with EventHub and ConsumerGroup using an ARM template](http://azure.microsoft.com/documentation/articles/service-bus-resource-manager-namespace-event-hub/).
+For information about using this template, see [Create a EventHubs namespace with EventHub and ConsumerGroup using an ARM template](http://azure.microsoft.com/documentation/articles/service-bus-resource-manager-namespace-event-hub/).
