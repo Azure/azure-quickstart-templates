@@ -14,6 +14,12 @@
         "description": "Password for the Virtual Machine. Used for both SSH and RDP access."
       }
     },
+    "consolePassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the Puppet Enterprise Console."
+      }
+    },
     "windowsAgentCount": {
       "type": "int",
       "metadata": {
@@ -61,16 +67,19 @@
   },
   "resources": [
     {
+      "apiVersion": "2016-01-01",
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('newStorageAccountName')]",
-      "apiVersion": "2015-05-01-preview",
       "location": "[resourceGroup().location]",
+      "sku": {
+          "name": "[variables('storageAccountType')]"
+      },
+      "kind": "Storage",
       "properties": {
-        "accountType": "[variables('storageAccountType')]"
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2016-03-30",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
       "location": "[resourceGroup().location]",
@@ -82,7 +91,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2016-03-30",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[concat('peagentip', copyIndex())]",
       "location": "[resourceGroup().location]",
@@ -98,7 +107,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2016-03-30",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[resourceGroup().location]",
@@ -125,7 +134,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2016-03-30",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "puppetNetworkSecurityGroup",
       "location": "[resourceGroup().location]",
@@ -217,7 +226,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2016-03-30",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
       "location": "[resourceGroup().location]",
@@ -243,7 +252,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2016-03-30",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat('peAgentNic',copyIndex())]",
       "location": "[resourceGroup().location]",
@@ -294,7 +303,7 @@
           "computername": "[variables('puppetMasterVmName')]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]",
-          "customData": "[base64(concat('#!/bin/bash\n\ncat <<EOF >/tmp/puppet_override.answers\n','azure_externalFQDN=',reference(resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName')), '2016-03-30').dnsSettings.fqdn,'\n','azure_internalFQDN=$(hostname -f)\n\nq_puppet_enterpriseconsole_auth_password=',parameters('adminPassword'),'\nq_database_host=\\${azure_externalFQDN}\nq_puppet_enterpriseconsole_master_hostname=\\${azure_externalFQDN}\nq_puppet_enterpriseconsole_smtp_host=\\${azure_externalFQDN}\nq_puppetagent_certname=\\${azure_externalFQDN}\nq_puppetmaster_dnsaltnames=puppet,$(hostname),\\${azure_internalFQDN},\\${azure_externalFQDN}\nq_puppetagent_server=\\${azure_externalFQDN}\nq_puppetdb_hostname=\\${azure_externalFQDN}\nq_puppetmaster_certname=\\${azure_externalFQDN}\nEOF\nchmod +x /tmp/puppet_override.answers\n'))]"
+          "customData": "[base64(concat('#!/bin/bash\n\ncat <<EOF >/tmp/puppet_override.answers\n','azure_externalFQDN=',reference(resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName')), '2016-03-30').dnsSettings.fqdn,'\n','azure_internalFQDN=$(hostname -f)\n\nq_puppet_enterpriseconsole_auth_password=',parameters('consolePassword'),'\nq_database_host=\\${azure_externalFQDN}\nq_puppet_enterpriseconsole_master_hostname=\\${azure_externalFQDN}\nq_puppet_enterpriseconsole_smtp_host=\\${azure_externalFQDN}\nq_puppetagent_certname=\\${azure_externalFQDN}\nq_puppetmaster_dnsaltnames=puppet,$(hostname),\\${azure_internalFQDN},\\${azure_externalFQDN}\nq_puppetagent_server=\\${azure_externalFQDN}\nq_puppetdb_hostname=\\${azure_externalFQDN}\nq_puppetmaster_certname=\\${azure_externalFQDN}\nEOF\nchmod +x /tmp/puppet_override.answers\n'))]"
         },
         "storageProfile": {
           "imageReference": {
@@ -330,7 +339,7 @@
     {
         "type": "Microsoft.Compute/virtualMachines/extensions",
         "name": "[concat(variables('puppetMasterVmName'),'/CustomScriptExtension')]",
-        "apiVersion": "2015-05-01-preview",
+        "apiVersion": "2016-03-30",
         "location": "[resourceGroup().location]",
         "dependsOn": [
             "[concat('Microsoft.Compute/virtualMachines/', variables('puppetMasterVmName'))]"
@@ -340,7 +349,7 @@
            "type": "CustomScriptForLinux",
            "typeHandlerVersion": "1.3",
            "settings": {
-              "fileUris": ["https://raw.githubusercontent.com/kenazk/kenaztemplates/master/puppet-enterprise-cluster/wait.sh"],
+              "fileUris": ["https://raw.githubusercontent.com/azure/azure-quickstart-templates/master/puppet-enterprise-cluster/wait.sh"],
               "commandToExecute": "./wait.sh"
            }
        }
@@ -401,7 +410,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat('WindowsAgentVm',copyIndex(),'/puppetExtension')]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2016-03-30",
       "location": "[resourceGroup().location]",
       "copy": {
         "name": "puppetAgentExtLoop",
@@ -476,7 +485,7 @@
     {
         "type": "Microsoft.Compute/virtualMachines/extensions",
         "name": "[concat('UbuntuAgentVM',copyIndex(),'/CustomScriptExtension')]",
-        "apiVersion": "2015-05-01-preview",
+        "apiVersion": "2016-03-30",
         "location": "[resourceGroup().location]",
         "copy": {
           "name": "linuxAgentExtLoop",
@@ -490,15 +499,16 @@
            "publisher": "Microsoft.OSTCExtensions",
            "type": "CustomScriptForLinux",
            "typeHandlerVersion": "1.3",
+           "autoUpgradeMinorVersion" : "true",
            "settings": {
-              "fileUris": ["https://raw.githubusercontent.com/kenazk/kenaztemplates/master/puppet-enterprise-cluster/install_puppet_agent.sh"],
+              "fileUris": ["https://raw.githubusercontent.com/azure/azure-quickstart-templates/master/puppet-enterprise-cluster/install_puppet_agent.sh"],
               "commandToExecute": "[concat('./install_puppet_agent.sh ', reference(resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName')), '2016-03-30').dnsSettings.fqdn)]"
            }
        }
     }
   ],
   "outputs" : {
-    "Here is the SSH URL:": {
+    "Puppet Enterprise Console FQDN:": {
       "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName')), '2016-03-30').dnsSettings.fqdn]",
       "type": "string"
     }
