@@ -1,3 +1,10 @@
+# v1.9.0 (2016-08-01)
+
+- Enable diego by default on the manifests
+  - diego version: 0.1476.0
+  - garden-linux version: 0.338.0
+  - cflinuxfs2-rootfs: 1.16.0
+
 # v1.8.3 (2016-07-19)
 
 - Add --sha1 for bosh upload command (stemcell && CF release)

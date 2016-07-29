@@ -154,7 +154,18 @@ def render_cloud_foundry_deployment_cmd(settings):
     if os.path.exists(cloudfoundry_deployment_cmd):
         with open(cloudfoundry_deployment_cmd, 'r') as tmpfile:
             contents = tmpfile.read()
-        keys = ["STEMCELL_URL", "STEMCELL_SHA1", "CF_RELEASE_URL", "CF_RELEASE_SHA1"]
+        keys = [
+            "STEMCELL_URL",
+            "STEMCELL_SHA1",
+            "CF_RELEASE_URL",
+            "CF_RELEASE_SHA1",
+            "DIEGO_RELEASE_URL",
+            "DIEGO_RELEASE_SHA1",
+            "GARDEN_RELEASE_URL",
+            "GARDEN_RELEASE_SHA1",
+            "CFLINUXFS2_RELEASE_URL",
+            "CFLINUXFS2_RELEASE_SHA1"
+        ]
         for key in keys:
             value = settings[key]
             contents = re.compile(re.escape("REPLACE_WITH_{0}".format(key))).sub(value, contents)
