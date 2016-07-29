@@ -1,3 +1,9 @@
+# v1.8.3 (2016-07-19)
+
+- Add --sha1 for bosh upload command (stemcell && CF release)
+- Switch to mirror.azure.cn to download releases and stemcells in AzureChinaCloud
+- Write more logs to install.log in dev-box
+
 # v1.8.2 (2016-07-18)
 
 - Add powerdns in bosh.yml
