@@ -1,0 +1,213 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmname": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Enter name for the Virtual Machine."
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2",
+      "metadata": {
+        "description": "Size of the Virtual Machine."
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Username for the Virtual Machine."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the Virtual Machine."
+      }
+    },
+    "storageaccountname": {
+      "type": "string",
+      "metadata": {
+        "description": "Storage account name"
+      }
+    },
+    "vnetname": {
+      "type": "string",
+      "metadata": {
+        "description": "Virtual Network Name"
+      }
+    },
+    "subnet1name": {
+      "type": "string",
+      "metadata": {
+        "description": "Enter Subnet 1 Name"
+      }
+    },
+    "subnet2name": {
+      "type": "string",
+      "metadata": {
+        "description": "Enter Subnet 2 name"
+      }
+    },
+
+    "dnsNameForPublicIP": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Globally unique DNS Name for the Public IP used to access the Virtual Machine."
+      }
+    },
+    "windowsOSVersion": {
+      "type": "string",
+      "defaultValue": "2012-R2-Datacenter",
+      "allowedValues": [
+        "2008-R2-SP1",
+        "2012-Datacenter",
+        "2012-R2-Datacenter"
+      ],
+      "metadata": {
+        "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version. Allowed values: 2008-R2-SP1, 2012-Datacenter, 2012-R2-Datacenter."
+      }
+    }
+  },
+  "variables": {
+    "imagePublisher": "MicrosoftWindowsServer",
+    "imageOffer": "WindowsServer",
+    "OSDiskName": "[concat(parameters('vmname'),'osdisk')]",
+    "nic1Name": "[concat(parameters('vmname'),'nic1')]",
+    "nic2Name": "[concat(parameters('vmname'),'nic2')]",
+    "publicIPAddressName": "[concat(parameters('vmname'),'publicip')]",
+    "publicIPAddressType": "Dynamic",
+    "vhdStorageContainerName": "vhds",
+    "vnetId": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetname'))]",
+    "subnet1Ref": "[concat(variables('vnetId'), '/subnets/', parameters('subnet1name'))]",
+    "subnet2Ref": "[concat(variables('vnetId'), '/subnets/', parameters('subnet2name'))]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIPAddressName')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "PublicIPAddress"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('dnsNameForPublicIP')]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nic1Name')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "NetworkInterface"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
+      ],
+
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
+              },
+              "subnet": {
+                "id": "[variables('subnet1Ref')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+
+    {
+
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nic2Name')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "NetworkInterface2"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig2",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('subnet2Ref')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[parameters('vmname')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "VirtualMachine"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nic1Name'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nic2Name'))]"
+
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('vmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[parameters('windowsOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat('http://', parameters('storageaccountname'), '.blob.core.windows.net/', variables('vhdStorageContainerName'), '/', variables('OSDiskName'), '.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nic1Name'))]",
+              "properties": { "primary": true }
+
+            },
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nic2Name'))]",
+              "properties": { "primary": false }
+            }
+          ]
+        }
+      }
+    }
+  ]
+} 
