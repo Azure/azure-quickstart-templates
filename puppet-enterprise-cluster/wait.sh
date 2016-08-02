@@ -7,3 +7,4 @@ do
   fi
   sleep 5
 done
+sleep 3m
