@@ -1,6 +1,9 @@
 #ChangeLog
 
 ```
+# v1.0.1 (2016-08-04)
+- Add concourse worker disk size options
+
 # v1.0.0 (2016-07-05)
 - Improve deployment routine for Concourse 
 - Upgrade versions
