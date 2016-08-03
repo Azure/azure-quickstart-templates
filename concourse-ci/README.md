@@ -37,6 +37,7 @@ This ARM template can help you to deploy all the above resources on Azure. Just 
 | sshKeyData | **YES** | | SSH **RSA** public key file as a string. |
 | concourseUsername | **YES** | | Login username for Concourse web portal or Fly CLI. |
 | concoursePassword | **YES** | | Login password for Concourse web portal or Fly CLI. |
+| concourseWorkerDiskSize | **YES** | 30 | Disk size of Concourse worker instance in GB, value must be between 30GB to 1023GB |
 | environment | **YES**  | AzureCloud | Different environments in Azure. Only AzureCloud is supported for now. |
 | tenantID | **YES**  | | ID of the tenant |
 | clientID | **YES**  | | ID of the client |
