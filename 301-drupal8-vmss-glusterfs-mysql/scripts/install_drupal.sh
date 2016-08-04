@@ -23,7 +23,7 @@
 # SOFTWARE.
 
 
-# Variables
+# Variables - Initialize default values
 DRUPAL_VERSION="8.1.1"
 DRUPAL_ADMIN_USER="admin"
 DRUPAL_ADMIN_PASSWORD=""
@@ -33,9 +33,17 @@ GLUSTER_FIRST_NODE_NAME=""
 GLUSTER_VOLUME_NAME=""
 
 MYSQL_FQDN=""
+EXISTING_MYSQL_FQDN=""
+NEW_MYSQL_FQDN=""
+
 MYSQL_USER="admin"
+EXISTING_MYSQL_USER="admin"
+NEW_MYSQL_USER="admin"
+
 MYSQL_PASSWORD=""
 MYSQL_NEW_DB_NAME="drupaldb"  
+
+CREATE_NEW_MYSQL_SERVER="no"
 
 help()
 {
@@ -46,10 +54,12 @@ help()
 	echo "		-p drupal admin password"
   echo "		-g gluster first node name"
   echo "		-v gluster file system volume name"
-	echo "		-s mysql server fqdn"
+	echo "		-s Existing mysql server fqdn"
 	echo "		-n mysql root user name"
 	echo "		-P mysql root user password"
   echo "		-k new drupal database name"
+  echo "		-z if Yes connect to newly created mysql server, else connect to existing mysql server"
+  echo "		-S FQDN of the newly created MySQL Server"
 }
 
 log()
@@ -69,7 +79,7 @@ fi
 
 
 # Parse script parameters
-while getopts :d:u:p:g:v:s:n:P:k:h optname; do
+while getopts :d:u:p:g:v:s:n:P:k:z:S:h optname; do
 
 	# Log input parameters (except the admin password) to facilitate troubleshooting
 	if [ ! "$optname" == "p" ] && [ ! "$optname" == "P" ]; then
@@ -93,10 +103,10 @@ while getopts :d:u:p:g:v:s:n:P:k:h optname; do
 		GLUSTER_VOLUME_NAME=${OPTARG}
 		;;
 	s) # mysql server fqdn
-		MYSQL_FQDN=${OPTARG}
+		EXISTING_MYSQL_FQDN=${OPTARG}
 		;;	
 	n) # mysql root user name
-		MYSQL_USER=${OPTARG}
+		EXISTING_MYSQL_USER=${OPTARG}
 		;;		
 	P) # mysql root user password
 		MYSQL_PASSWORD=${OPTARG}
@@ -104,6 +114,12 @@ while getopts :d:u:p:g:v:s:n:P:k:h optname; do
 	k) # new drupal database name
 		MYSQL_NEW_DB_NAME=${OPTARG}
 		;;    
+	z) # "yes" or "no" value indicating whether new mysql server is to be used ("yes") or existing  mysql server is to be used ("no")
+		CREATE_NEW_MYSQL_SERVER=${OPTARG}
+		;;
+	S) # FQDN of the newly created mysql server
+		NEW_MYSQL_FQDN=${OPTARG}
+		;;
 	h) # new drupal database name
 		;;    
 	
@@ -116,11 +132,20 @@ while getopts :d:u:p:g:v:s:n:P:k:h optname; do
 done
 
 # Validate parameters
-if [ "$GLUSTER_FIRST_NODE_NAME" == "" ] || [ "$GLUSTER_VOLUME_NAME" == "" ] || [ "$MYSQL_FQDN" == "" ] || [ "$MYSQL_USER" == "" ] || [ "$MYSQL_PASSWORD" == "" ];
+if [ "$GLUSTER_FIRST_NODE_NAME" == "" ] || [ "$GLUSTER_VOLUME_NAME" == "" ] || [ "$MYSQL_PASSWORD" == "" ];
 then
     log "Script executed without required parameters"
     echo "You must provide all required parameters." >&2
     exit 3
+fi
+
+# set mysql server FQDN to be used (existing or new), and the mysql username to used (existing or "admin")
+if [ "$CREATE_NEW_MYSQL_SERVER" == "no" ]; then
+  MYSQL_FQDN=$EXISTING_MYSQL_FQDN
+  MYSQL_USER=$EXISTING_MYSQL_USER
+else
+  MYSQL_FQDN=$NEW_MYSQL_FQDN
+  MYSQL_USER="admin"
 fi
 
 install_required_packages()
