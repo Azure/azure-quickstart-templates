@@ -16,18 +16,10 @@ This template provisions a virtual machine with **SQL Server 2014 SP1 running on
 This template will also create the following resources:
 
 +	A Virtual Network
-+	Two Storage Accounts one is used for SQL Server VM, one for SQL Server VM Autobackup 
++	Two Storage Accounts one is used for SQL Server VM, one for SQL Server VM Autobackup
 + 	One public IP address
 +	One network interface
 +	One network security group
-
-## Notable Parameters
-
-|Name|Description|Example|
-|:---|:---------------------|:---------------|
-|sqlAutobackupRetentionPeriod|Backup retention period in days, 1-30 days|20|
-|sqlAutobackupStorageAccountName|What storage account to use for backups|myExistingBackupStoragAccountName|
-|sqlAutobackupEncryptionPassword|a password which will be used to protect the encryption certificates used for encrypting and decrypting your backups|Password123|
 
 ## Automated Backup
 
@@ -36,6 +28,14 @@ The Automated Backup feature can be used to configure an automated backup schedu
 This template can be used to enable or change the configuration of Automated Backup.
 
 If you wish to disable Automated Backup, you must edit *azuredeploy.json* and change "Enable" to be false.
+
+## Notable Parameters
+
+|Name|Description|Example|
+|:---|:---------------------|:---------------|
+|sqlAutobackupRetentionPeriod|Backup retention period in days, 1-30 days|20|
+|sqlAutobackupStorageAccountName|What storage account to use for backups|myExistingBackupStoragAccountName|
+|sqlAutobackupEncryptionPassword|a password which will be used to protect the encryption certificates used for encrypting and decrypting your backups|Password123|
 
 ## SQL Server IaaS Agent extension
 

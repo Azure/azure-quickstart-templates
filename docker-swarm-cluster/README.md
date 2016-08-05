@@ -1,4 +1,4 @@
-# Docker Swarm Cluster
+# Docker Swarm Cluster (pre-docker 1.12)
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdocker-swarm-cluster%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
@@ -6,6 +6,11 @@
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fdocker-swarm-cluster%2Fazuredeploy.json" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
+
+> :warning: :warning: **NOTE:** This template is designed for Docker versions earlier than v1.12
+for which Docker Swarm was still distributed as a separate container. As of Docker v1.12,
+Docker Engine has the Swarm functionalities built in. This template has not been
+updated to accomodate these changes.
 
 This template deploys a [Docker Swarm](http://docs.docker.com/swarm) cluster on
 Azure with 3 Swarm managers and specified number of Swarm nodes in the location
