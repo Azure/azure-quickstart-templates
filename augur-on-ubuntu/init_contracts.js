@@ -9,7 +9,7 @@ var http = args[0] || "http://127.0.0.1:8545";
 var options = {};
 options.http = http;
 options.ws = null;
-options.contracts = JSON.parse("{{ $BUILD_AZURE_CONTRACTS }}");
+options.contracts = azure_contracts;
 
 augur.connect(options, function (connected) {
     if (!connected) return console.error("connect failed:", connected);
