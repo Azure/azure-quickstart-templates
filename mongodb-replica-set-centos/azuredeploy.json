@@ -32,6 +32,16 @@
         "description": "DNS Name for the publicly accessible primary node. Must be lowercase. It should match with the following regular expression: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$ or it will raise an error."
       }
     },
+    "environment": {
+      "type": "string",
+      "allowedValues": [
+        "AzureCloud",
+        "AzureChinaCloud"
+      ],
+      "metadata": {
+        "description": "Different environments in Azure. Choose AzureCloud for Global Azure, and choose AzureChinaCloud for Mooncake (Azure China Cloud)."
+      }
+    },
     "sizeOfDataDiskInGB": {
       "type": "int",
       "minValue": 1,
@@ -114,10 +124,24 @@
 	}
   },
   "variables": {
-    "templateBaseUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/mongodb-replica-set-centos/nested/",
-    "sharedTemplateUrl": "[concat(variables('templateBaseUrl'), 'shared-resources.json')]",
-    "primaryTemplateUrl": "[concat(variables('templateBaseUrl'), 'primary-resources.json')]",
-    "secondaryTemplateUrl": "[concat(variables('templateBaseUrl'), 'secondary-resources.json')]",
+    "baseUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/mongodb-replica-set-centos/",
+    "baseChinaUrl": "http://msmirrors.blob.core.chinacloudapi.cn/mongodb/mongodb-replica-set-centos/",
+    "environmentAzureCloud": {
+      "serviceEndPoint": "core.windows.net",
+      "templateBaseUrl": "[concat(variables('baseUrl'), 'nested/')]",
+      "primaryNodeScript": "[concat(variables('baseUrl'), 'scripts/primary.sh')]",
+      "secondaryNodeScript": "[concat(variables('baseUrl'), 'scripts/secondary.sh')]"
+    },
+    "environmentAzureChinaCloud": {
+      "serviceEndPoint": "core.chinacloudapi.cn",
+      "templateBaseUrl": "[concat(variables('baseChinaUrl'), 'nested/')]",
+      "primaryNodeScript": "[concat(variables('baseChinaUrl'), 'scripts/primary.sh')]",
+      "secondaryNodeScript": "[concat(variables('baseChinaUrl'), 'scripts/secondary.sh')]"
+    },
+    "environment": "[variables(concat('environment', parameters('environment')))]",    
+    "sharedTemplateUrl": "[concat(variables('environment').templateBaseUrl, 'shared-resources.json')]",
+    "primaryTemplateUrl": "[concat(variables('environment').templateBaseUrl, 'primary-resources.json')]",
+    "secondaryTemplateUrl": "[concat(variables('environment').templateBaseUrl, 'secondary-resources.json')]",
     "namespace": "mongodb-",
     "virtualNetworkName": "myVNET1",
     "numDataDisks": "4",
@@ -148,7 +172,7 @@
         "version": "latest"
       },
       "scripts": [
-        "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/mongodb-replica-set-centos/scripts/primary.sh"
+        "[variables('environment').primaryNodeScript]"
       ]
     },
     "secondaryOsSettings": {
@@ -159,7 +183,7 @@
         "version": "latest"
       },
       "scripts": [
-        "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/mongodb-replica-set-centos/scripts/secondary.sh"
+        "[variables('environment').secondaryNodeScript]"
       ]
     }
   },
@@ -227,7 +251,7 @@
             "value": "[variables('numDataDisks')]"
           },
           "templateBaseUrl": {
-            "value": "[variables('templateBaseUrl')]"
+            "value": "[variables('environment').templateBaseUrl]"
           },
           "dnsname": {
             "value": "[parameters('dnsNamePrefix')]"
@@ -299,7 +323,7 @@
             "value": "[variables('numDataDisks')]"
           },
           "templateBaseUrl": {
-            "value": "[variables('templateBaseUrl')]"
+            "value": "[variables('environment').templateBaseUrl]"
           },
           "vmSize": {
             "value": "[parameters('primaryNodeVmSize')]"

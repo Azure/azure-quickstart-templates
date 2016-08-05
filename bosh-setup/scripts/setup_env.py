@@ -51,6 +51,7 @@ def render_bosh_manifest(settings):
             contents = tmpfile.read()
         keys = [
             "SUBNET_ADDRESS_RANGE_FOR_BOSH",
+            "SECONDARY_DNS",
             "VNET_NAME",
             "SUBNET_NAME_FOR_BOSH",
             "SUBSCRIPTION_ID",
@@ -84,7 +85,15 @@ def render_bosh_manifest(settings):
 
 def get_cloud_foundry_configuration(scenario, settings):
     config = {}
-    for key in ["SUBNET_ADDRESS_RANGE_FOR_CLOUD_FOUNDRY", "VNET_NAME", "SUBNET_NAME_FOR_CLOUD_FOUNDRY", "CLOUD_FOUNDRY_PUBLIC_IP", "NSG_NAME_FOR_CLOUD_FOUNDRY"]:
+    keys = [
+        "SUBNET_ADDRESS_RANGE_FOR_CLOUD_FOUNDRY",
+        "SECONDARY_DNS",
+        "VNET_NAME",
+        "SUBNET_NAME_FOR_CLOUD_FOUNDRY",
+        "CLOUD_FOUNDRY_PUBLIC_IP",
+        "NSG_NAME_FOR_CLOUD_FOUNDRY"
+    ]
+    for key in keys:
         config[key] = settings[key]
 
     with open('cloudfoundry.cert', 'r') as tmpfile:
@@ -104,7 +113,9 @@ def get_cloud_foundry_configuration(scenario, settings):
     config["SYSTEM_DOMAIN"] = "{0}.xip.io".format(settings["CLOUD_FOUNDRY_PUBLIC_IP"])
 
     if scenario == "single-vm-cf":
-        config["STATIC_IP"] = str(ip[4])
+        config["STATIC_IP_FROM"] = str(ip[4])
+        config["STATIC_IP_TO"] = str(ip[100])
+        config["POSTGRES_IP"] = str(ip[11])
     elif scenario == "multiple-vm-cf":
         config["STATIC_IP_FROM"] = str(ip[4])
         config["STATIC_IP_TO"] = str(ip[100])
