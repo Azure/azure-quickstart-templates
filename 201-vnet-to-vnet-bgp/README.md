@@ -7,6 +7,8 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template creates two VNETs in two different locations, each containing a subnet and Gateway subnet. It creates two public IPs which are used to create two VPN Gateways in the two VNETs, both with BGP enabled using private ASNs. Finally it establishes a BGP enabled connection between the two gateways.
+This template creates two VNETs in the same location, each containing a subnet and Gateway subnet. It creates two public IPs which are used to create two VPN Gateways in the two VNETs, both with BGP enabled using private ASNs. Finally it establishes a BGP enabled connection between the two gateways.
 
-Modify parameters file to change default values.
+The Autonomous System Numbers (ASNs) can be private or public
+
+Enter the Pre-shared Key as a parameter
