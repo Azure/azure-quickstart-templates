@@ -88,6 +88,11 @@ def render_cloud_config_manifest(settings):
     reserved_ip_start = str(ip[2])
     reserved_ip_end = str(ip[3])
 
+    ephemeral_disk_size = int(settings['CONCOURSE_WORKER_DISK_SIZE'])
+    ephemeral_disk_size_in_mb = ephemeral_disk_size * 1024
+    # Set 40% of the ephemeral disk size as graph cleanup threshold, which equals 80% of the garden data disk size, for Concourse use half of the ephemeral disk as garden graph store
+    settings["CONCOURSE_GRAPH_CLEANUP_THRESHOLD"] = str(ephemeral_disk_size_in_mb * 2 / 5)
+
     cloud_config_template = 'cloud.yml'
     if os.path.exists(cloud_config_template):
         with open(cloud_config_template, 'r') as tmpfile:
@@ -104,6 +109,7 @@ def render_cloud_config_manifest(settings):
         contents = re.compile(re.escape("REPLACE_WITH_CONCOURSE_GATEWAY_IP")).sub(gateway_ip, contents)
         contents = re.compile(re.escape("REPLACE_WITH_RESERVED_IP_START")).sub(reserved_ip_start, contents)
         contents = re.compile(re.escape("REPLACE_WITH_RESERVED_IP_END")).sub(reserved_ip_end, contents)
+        contents = re.compile(re.escape("REPLACE_WITH_CONCOURSE_WORKER_DISK_SIZE")).sub(str(ephemeral_disk_size_in_mb), contents)
         with open(cloud_config_template, 'w') as tmpfile:
             tmpfile.write(contents)
 
@@ -118,7 +124,8 @@ def render_concourse_manifest(settings):
             "CONCOURSE_USERNAME",
             "CONCOURSE_PASSWORD",
             "CONCOURSE_DB_ROLE_NAME",
-            "CONCOURSE_DB_ROLE_PASSWORD"
+            "CONCOURSE_DB_ROLE_PASSWORD",
+            "CONCOURSE_GRAPH_CLEANUP_THRESHOLD"
         ]
         for k in keys:
             v = settings[k]
