@@ -25,7 +25,7 @@ while getopts "a:l:g:s:f:e:u" opt; do
     esac
 done
     
-[[ $# -eq 0 || -z $artifactsStagingDirectory || -z $location ]] && { echo "Usage: $0 <-a foldername> <-l location> [-e parameters-file] [-g resource-group-name] [-u] [-s storageAccountName"; exit 1; }
+[[ $# -eq 0 || -z $artifactsStagingDirectory || -z $location ]] && { echo "Usage: $0 <-a foldername> <-l location> [-e parameters-file] [-g resource-group-name] [-u] [-s storageAccountName]"; exit 1; }
 
 if [[ -z $templateFile ]]
 then
@@ -76,7 +76,7 @@ then
     artifactsStorageContainerName=${resourceGroupName}"-stageartifacts"
     artifactsStorageContainerName=$( echo "$artifactsStorageContainerName" | awk '{print tolower($0)}')
     
-    artifactsStorageAccountKey=$( azure storage account keys list -g "$artifactsResourceGroupName" "$artifactsStorageAccountName" --json | jq -r '.key1' )
+    artifactsStorageAccountKey=$( azure storage account keys list -g "$artifactsResourceGroupName" "$artifactsStorageAccountName" --json | jq -r '.[0].value' )
     azure storage container create --container "$artifactsStorageContainerName" -p Off -a "$artifactsStorageAccountName" -k "$artifactsStorageAccountKey" >/dev/null 2>&1
     
     # Get a 4-hour SAS Token for the artifacts container. Fall back to OSX date syntax if Linux syntax fails.
