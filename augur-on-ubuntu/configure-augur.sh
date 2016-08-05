@@ -101,8 +101,7 @@ python generate_gospel.py -o contracts.json -n 1101011
 contracts=`cat contracts.json`
 contracts=$(echo $contracts | sed "s|\"|\'|g")
 sudo -u $AZUREUSER sed -i "s|azure_contracts|$contracts|g" $HOMEDIR/env.json
-sudo -u $AZUREUSER sed -i "s|\'|\"|g" $HOMEDIR/env.json
-sed -i "s|\x27|\x22|g" $HOMEDIR/env.json
+sudo -u $AZUREUSER sed -i "s|\x27|\x22|g" $HOMEDIR/env.json
 cd ../..
 sudo -i -u $AZUREUSER node init_contracts.js
 
