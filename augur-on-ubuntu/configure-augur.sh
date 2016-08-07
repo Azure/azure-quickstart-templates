@@ -35,7 +35,7 @@ time sudo apt-get -y install nodejs
 ####################
 time sudo apt-get -y install software-properties-common
 time sudo add-apt-repository -y ppa:ethereum/ethereum
-time sudo add-apt-repository -y ppa:ethereum/ethereum-dev
+#time sudo add-apt-repository -y ppa:ethereum/ethereum-dev
 time sudo apt-get update
 time sudo apt-get -y install ethereum
 
