@@ -66,6 +66,7 @@
   },
   "variables": {
     "apiVersion": "2015-06-15",
+    "apiVersionForDeployment": "2015-01-01",
 
     "defaultStorageAccountName": "[concat(uniqueString(resourceGroup().id), 'cfdefaultsa')]",
     "storageAccountType": "Standard_RAGRS",
@@ -77,7 +78,7 @@
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
     "subnetNameForBosh": "Bosh",
     "subnetAddressRangeForBosh": "10.0.0.0/24",
-    "subnetRefForBosh": "[concat(variables('vnetID'),'/subnets/', variables('subnetNameForBosh'))]",
+    "subnetRefForBosh": "[concat(variables('vnetID'), '/subnets/', variables('subnetNameForBosh'))]",
     "subnetNameForCloudFoundry": "CloudFoundry",
     "subnetAddressRangeForCloudFoundry": "10.0.16.0/20",
     "devboxNetworkSecurityGroup": "nsg-devbox",
@@ -90,7 +91,7 @@
     "imagePublisher": "Canonical",
     "imageOffer": "UbuntuServer",
     "ubuntuOSVersion": "14.04.3-LTS",
-    "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
+    "sshKeyPath": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
 
     "baseUriAzureCloud": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/bosh-setup/",
     "baseUriAzureChinaCloud": "https://cloudfoundry.blob.core.chinacloudapi.cn/",
@@ -334,7 +335,7 @@
     {
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[concat(parameters('vmName'),'-devbox')]",
+      "name": "[concat(parameters('vmName'), '-devbox')]",
       "location": "[resourceGroup().location]",
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
@@ -346,7 +347,7 @@
     {
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[concat(parameters('vmName'),'-bosh')]",
+      "name": "[concat(parameters('vmName'), '-bosh')]",
       "location": "[resourceGroup().location]",
       "properties": {
         "publicIPAllocationMethod": "static"
@@ -420,13 +421,69 @@
       }
     },
     {
+      "name": "generate-customdata",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "[variables('apiVersionForDeployment')]",
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', variables('defaultStorageAccountName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('baseUriAzureCloud'), 'generate-customdata.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "customData": {
+            "value": {
+              "VNET_NAME": "[variables('virtualNetworkName')]",
+              "SUBNET_NAME_FOR_BOSH": "[variables('subnetNameForBosh')]",
+              "SUBNET_ADDRESS_RANGE_FOR_BOSH": "[variables('subnetAddressRangeForBosh')]",
+              "SUBNET_NAME_FOR_CLOUD_FOUNDRY": "[variables('subnetNameForCloudFoundry')]",
+              "SUBNET_ADDRESS_RANGE_FOR_CLOUD_FOUNDRY": "[variables('subnetAddressRangeForCloudFoundry')]",
+              "CLOUD_FOUNDRY_PUBLIC_IP": "[reference(concat(parameters('vmName'), '-cf')).ipAddress]",
+              "BOSH_PUBLIC_IP": "[reference(concat(parameters('vmName'), '-bosh')).ipAddress]",
+              "NSG_NAME_FOR_BOSH": "[variables('boshNetworkSecurityGroup')]",
+              "NSG_NAME_FOR_CLOUD_FOUNDRY": "[variables('cfNetworkSecurityGroup')]",
+              "DNS_RECURSOR": "[variables('environment').dnsRecursor]",
+              "SUBSCRIPTION_ID": "[subscription().subscriptionId]",
+              "RESOURCE_GROUP_NAME": "[resourceGroup().name]",
+              "DEFAULT_STORAGE_ACCOUNT_NAME": "[variables('defaultStorageAccountName')]",
+              "STORAGE_ACCESS_KEY": "[listKeys(variables('storageid'), variables('apiVersion')).key1]",
+              "ADMIN_USER_NAME": "[parameters('adminUsername')]",
+              "ENVIRONMENT": "[parameters('environment')]",
+              "SERVICE_HOST_BASE": "[variables('environment').serviceHostBase]",
+              "SECONDARY_DNS": "[variables('environment').secondaryDNS]",
+              "BOSH_RELEASE_URL": "[variables('environment').boshReleaseUrl]",
+              "BOSH_RELEASE_SHA1": "[variables('environment').boshReleaseSha1]",
+              "BOSH_AZURE_CPI_RELEASE_URL": "[variables('environment').boshAzureCPIReleaseUrl]",
+              "BOSH_AZURE_CPI_RELEASE_SHA1": "[variables('environment').boshAzureCPIReleaseSha1]",
+              "STEMCELL_URL": "[variables('environment').stemcellUrl]",
+              "STEMCELL_SHA1": "[variables('environment').stemcellSha1]",
+              "CF_RELEASE_URL": "[variables('environment').cfReleaseUrl]",
+              "CF_RELEASE_SHA1": "[variables('environment').cfReleaseSha1]",
+              "DIEGO_RELEASE_URL": "[variables('environment').diegoReleaseUrl]",
+              "DIEGO_RELEASE_SHA1": "[variables('environment').diegoReleaseSha1]",
+              "GARDEN_RELEASE_URL": "[variables('environment').gardenReleaseUrl]",
+              "GARDEN_RELEASE_SHA1": "[variables('environment').gardenReleaseSha1]",
+              "CFLINUXFS2_RELEASE_URL": "[variables('environment').cflinuxfs2ReleaseUrl]",
+              "CFLINUXFS2_RELEASE_SHA1": "[variables('environment').cflinuxfs2ReleaseSha1]",
+              "BOSH_INIT_URL": "[variables('environment').boshInitUrl]",
+              "KEEP_UNREACHABLE_VMS": "[variables('keepUnreachableVMs')]",
+              "AUTO_DEPLOY_BOSH": "[parameters('autoDeployBosh')]"
+            }
+          }
+        }
+      }
+    },
+    {
       "apiversion": "[variables('apiVersion')]",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('vmName')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/',variables('defaultStorageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/',variables('nicName'))]"
+        "Microsoft.Resources/deployments/generate-customdata"
       ],
       "properties": {
         "hardwareProfile": {
@@ -445,7 +502,8 @@
                 }
               ]
             }
-          }
+          },
+          "customData": "[reference('Microsoft.Resources/deployments/generate-customdata', variables('apiVersionForDeployment')).outputs.customData.value]"
         },
         "storageProfile": {
           "imageReference": {
@@ -457,7 +515,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://',variables('defaultStorageAccountName'),'.blob.',variables('environment').serviceHostBase,'/',variables('vmStorageAccountContainerName'),'/',parameters('vmName'),'-osdisk.vhd')]"
+              "uri": "[concat('http://', variables('defaultStorageAccountName'), '.blob.', variables('environment').serviceHostBase, '/', variables('vmStorageAccountContainerName'), '/', parameters('vmName'), '-osdisk.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -466,7 +524,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
             }
           ]
         }
@@ -474,7 +532,7 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(parameters('vmName'),'/initdevbox')]",
+      "name": "[concat(parameters('vmName'), '/initdevbox')]",
       "apiVersion": "[variables('apiVersion')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
@@ -485,43 +543,7 @@
         "type": "CustomScriptForLinux",
         "typeHandlerVersion": "1.4",
         "settings": {
-          "fileUris": "[variables('filesToDownload')]",
-          "enableInternalDNSCheck": false,
-          "VNET_NAME": "[variables('virtualNetworkName')]",
-          "SUBNET_NAME_FOR_BOSH": "[variables('subnetNameForBosh')]",
-          "SUBNET_ADDRESS_RANGE_FOR_BOSH": "[variables('subnetAddressRangeForBosh')]",
-          "SUBNET_NAME_FOR_CLOUD_FOUNDRY": "[variables('subnetNameForCloudFoundry')]",
-          "SUBNET_ADDRESS_RANGE_FOR_CLOUD_FOUNDRY": "[variables('subnetAddressRangeForCloudFoundry')]",
-          "CLOUD_FOUNDRY_PUBLIC_IP": "[reference(concat(parameters('vmName'),'-cf')).ipAddress]",
-          "BOSH_PUBLIC_IP": "[reference(concat(parameters('vmName'),'-bosh')).ipAddress]",
-          "NSG_NAME_FOR_BOSH": "[variables('boshNetworkSecurityGroup')]",
-          "NSG_NAME_FOR_CLOUD_FOUNDRY": "[variables('cfNetworkSecurityGroup')]",
-          "DNS_RECURSOR": "[variables('environment').dnsRecursor]",
-          "SUBSCRIPTION_ID": "[subscription().subscriptionId]",
-          "RESOURCE_GROUP_NAME": "[resourceGroup().name]",
-          "DEFAULT_STORAGE_ACCOUNT_NAME": "[variables('defaultStorageAccountName')]",
-          "STORAGE_ACCESS_KEY": "[listKeys(variables('storageid'), variables('apiVersion')).key1]",
-          "ADMIN_USER_NAME": "[parameters('adminUsername')]",
-          "ENVIRONMENT": "[parameters('environment')]",
-          "SERVICE_HOST_BASE": "[variables('environment').serviceHostBase]",
-          "SECONDARY_DNS": "[variables('environment').secondaryDNS]",
-          "BOSH_RELEASE_URL": "[variables('environment').boshReleaseUrl]",
-          "BOSH_RELEASE_SHA1": "[variables('environment').boshReleaseSha1]",
-          "BOSH_AZURE_CPI_RELEASE_URL": "[variables('environment').boshAzureCPIReleaseUrl]",
-          "BOSH_AZURE_CPI_RELEASE_SHA1": "[variables('environment').boshAzureCPIReleaseSha1]",
-          "STEMCELL_URL": "[variables('environment').stemcellUrl]",
-          "STEMCELL_SHA1": "[variables('environment').stemcellSha1]",
-          "CF_RELEASE_URL": "[variables('environment').cfReleaseUrl]",
-          "CF_RELEASE_SHA1": "[variables('environment').cfReleaseSha1]",
-          "DIEGO_RELEASE_URL": "[variables('environment').diegoReleaseUrl]",
-          "DIEGO_RELEASE_SHA1": "[variables('environment').diegoReleaseSha1]",
-          "GARDEN_RELEASE_URL": "[variables('environment').gardenReleaseUrl]",
-          "GARDEN_RELEASE_SHA1": "[variables('environment').gardenReleaseSha1]",
-          "CFLINUXFS2_RELEASE_URL": "[variables('environment').cflinuxfs2ReleaseUrl]",
-          "CFLINUXFS2_RELEASE_SHA1": "[variables('environment').cflinuxfs2ReleaseSha1]",
-          "BOSH_INIT_URL": "[variables('environment').boshInitUrl]",
-          "KEEP_UNREACHABLE_VMS": "[variables('keepUnreachableVMs')]",
-          "AUTO_DEPLOY_BOSH": "[parameters('autoDeployBosh')]"
+          "fileUris": "[variables('filesToDownload')]"
         },
         "protectedSettings": {
           "commandToExecute": "[concat('bash -l -c \"./setup_env', ' ', parameters('tenantID'), ' ', parameters('clientID'), ' \"', parameters('clientSecret'), '\" >/home/', parameters('adminUsername'), '/install.log 2>&1\"')]"
@@ -536,7 +558,7 @@
     },
     "cloudFoundryIP": {
       "type": "string",
-      "value": "[reference(concat(parameters('vmName'),'-cf')).ipAddress]"
+      "value": "[reference(concat(parameters('vmName'), '-cf')).ipAddress]"
     }
   }
 }
