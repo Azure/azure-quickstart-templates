@@ -1,3 +1,7 @@
+# v1.9.1 (2016-08-08)
+
+- Use CustomData to pass information to CustomScript
+
 # v1.9.0 (2016-08-01)
 
 - Enable diego by default on the manifests
