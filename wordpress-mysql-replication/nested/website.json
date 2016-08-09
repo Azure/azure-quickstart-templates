@@ -31,30 +31,6 @@
             ],
             "defaultValue": "0"
         },
-        "webDeploy_AuthenticationKey": {
-            "type": "securestring"
-        },
-        "webDeploy_SecureAuthenticationKey": {
-            "type": "securestring"
-        },
-        "webDeploy_LoggedInKey": {
-            "type": "securestring"
-        },
-        "webDeploy_NonceKey": {
-            "type": "securestring"
-        },
-        "webDeploy_AuthenticationSalt": {
-            "type": "securestring"
-        },
-        "webDeploy_SecureAuthenticationSalt": {
-            "type": "securestring"
-        },
-        "webDeploy_LoggedInSalt": {
-            "type": "securestring"
-        },
-        "webDeploy_NonceSalt": {
-            "type": "securestring"
-        },
         "dbServer": {
             "type": "string"
         },
@@ -75,7 +51,9 @@
         }
     },
     "variables": { 
-        "connectionString": "[concat('Server=', parameters('dbServer'), ';Database=', parameters('dbName'), ';Uid=admin;Pwd=', parameters('dbAdminPassword'), ';')]"
+        "connectionString": "[concat('Data Source=', parameters('dbServer'), ';Database=', parameters('dbName'), ';Uer Id=admin;Password=', parameters('dbAdminPassword'), ';')]",
+        "repoUrl":"https://github.com/azureappserviceoss/WordPress",
+        "branch":"master"
     },
     "resources": [
       {
@@ -107,46 +85,26 @@
           "serverFarmId": "[concat('/subscriptions/', subscription().subscriptionId,'/resourcegroups/', parameters('serverFarmResourceGroup'), '/providers/Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]",
           "hostingEnvironment": ""
         },
-        "resources": [       
-         {
-            "apiVersion": "2014-06-01",
-            "name": "MSDeploy",
-            "type": "Extensions",
-            "dependsOn": [
-              "[concat('Microsoft.Web/Sites/', parameters('siteName'))]"            
-            ],
-            "properties": {
-              "packageUri": "https://auxmktplceprod.blob.core.windows.net/packages/wordpress-4.5.3-IIS.zip",
-              "dbType": "MySQL",
-              "connectionString": "[variables('connectionString')]",
-              "setParameters": {
-                "AppPath": "[parameters('siteName')]",
-                "DbServer": "[parameters('dbServer')]",
-                "DbName": "[parameters('dbName')]",
-                "DbUsername": "[parameters('dbUsername')]",
-                "DbPassword": "[parameters('dbPassword')]",
-                "DbAdminUsername": "[parameters('dbAdminUsername')]",
-                "DbAdminPassword": "[parameters('dbAdminPassword')]",
-                "Authentication Key": "[parameters('webDeploy_AuthenticationKey')]",
-                "Secure Authentication Key": "[parameters('webDeploy_SecureAuthenticationKey')]",
-                "Logged In Key": "[parameters('webDeploy_LoggedInKey')]",
-                "Nonce Key": "[parameters('webDeploy_NonceKey')]",
-                "Authentication Salt": "[parameters('webDeploy_AuthenticationSalt')]",
-                "Secure Authentication Salt": "[parameters('webDeploy_SecureAuthenticationSalt')]",
-                "Logged In Salt": "[parameters('webDeploy_LoggedInSalt')]",
-                "Nonce Salt": "[parameters('webDeploy_NonceSalt')]"
-              }
-            }
+        "resources": [   
+        {
+          "apiVersion": "2015-08-01",
+          "name": "web",
+          "type": "sourcecontrols",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/Sites', parameters('siteName'))]"
+          ],
+          "properties": {
+            "RepoUrl": "[variables('repoUrl')]",
+            "branch": "[variables('branch')]",
+            "IsManualIntegration": true
           }
-        ]
-      },
-     {
+        },         
+       {
           "apiVersion": "2015-04-01",
           "name": "connectionstrings",
           "type": "config",
           "dependsOn": [
-            "[concat('Microsoft.Web/Sites/', parameters('siteName'))]",
-            "[concat('Microsoft.Web/Sites/', parameters('siteName'), '/Extensions/MSDeploy')]"
+            "[concat('Microsoft.Web/Sites/', parameters('siteName'))]"
           ],
           "properties": {
             "defaultConnection": {
@@ -160,9 +118,7 @@
             "name": "web",
             "type": "config",
             "dependsOn": [
-             "[concat('Microsoft.Web/Sites/', parameters('siteName'))]",
-             "[concat('Microsoft.Web/Sites/', parameters('siteName'), '/config/connectionstrings')]",
-             "[concat('Microsoft.Web/Sites/', parameters('siteName'), '/Extensions/MSDeploy')]"
+             "[concat('Microsoft.Web/Sites/', parameters('siteName'))]"
             ],
             "properties": {
               "phpVersion": "5.5"
