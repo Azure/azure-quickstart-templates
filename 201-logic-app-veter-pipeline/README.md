@@ -24,8 +24,8 @@ Once the deployment is completed, you can perform below steps to test your Logic
 - Open the Logic App in the designer to get the HTTP Request endpoint url.
 [HTTP request trigger](images/http-request-trigger.png "HTTP request trigger")
 - Perform HTTP POST operation on the http endpoint obtained from #1 using your favorite HTTP client.
--- Set content-type header to application/xml.
--- Set request body to the content of sample-order.xml (it is present under artifacts folder in this template).
+    - Set content-type header to application/xml.
+    - Set request body to the content of sample-order.xml (it is present under artifacts folder in this template).
 - On successful execution, the logic app will respond with the transformed message (an SAP order) in response body.
 [Sample request-response](images/request-response.png "Sample request-response")
 
