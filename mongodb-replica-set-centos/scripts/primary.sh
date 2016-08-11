@@ -105,6 +105,7 @@ install_zabbix
 mongod --dbpath /var/lib/mongo/ --logpath /var/log/mongodb/mongod.log --fork
 
 sleep 30
+ps -ef |grep -v grep|grep mongod 
 n=$(ps -ef |grep -v grep|grep mongod |wc -l)
 echo "the number of mongod process is: $n"
 if [[ $n -eq 1 ]];then
@@ -127,6 +128,8 @@ fi
 
 #stop mongod
 sleep 15
+echo "the running mongo process id is below:"
+ps -ef |grep -v grep |grep mongod|awk '{print $2}'
 MongoPid=`ps -ef |grep -v grep |grep mongod|awk '{print $2}'`
 kill -2 $MongoPid
 
