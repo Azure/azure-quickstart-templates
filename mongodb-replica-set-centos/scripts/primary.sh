@@ -67,7 +67,7 @@ install_zabbix() {
 	#install zabbix agent
 	cd /tmp
 	yum install -y gcc wget > /dev/null 
-	wget http://jaist.dl.sourceforge.net/project/zabbix/ZABBIX%20Latest%20Stable/2.2.5/zabbix-2.2.5.tar.gz > /dev/null
+	wget http://jaist.dl.sourceforge.net/project/zabbix/ZABBIX%20Latest%20Stable/2.2.5/zabbix-2.2.5.tar.gz > /dev/null 2>&1
 	tar zxvf zabbix-2.2.5.tar.gz
 	cd zabbix-2.2.5
 	groupadd zabbix
@@ -105,11 +105,12 @@ install_zabbix
 mongod --dbpath /var/lib/mongo/ --logpath /var/log/mongodb/mongod.log --fork
 
 sleep 30
-n=`ps -ef |grep -v grep|grep mongod |wc -l`
+n=$(ps -ef |grep -v grep|grep mongod |wc -l)
+echo "the number of mongod process is: $n"
 if [[ $n -eq 1 ]];then
     echo "mongod started successfully"
 else
-    echo "mongod started failed!"
+    echo "strange thing happens!"
 fi
 
 #create users
