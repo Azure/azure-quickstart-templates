@@ -149,7 +149,7 @@ def get_settings():
     settings = dict()
     config_file = sys.argv[4]
     with open(config_file) as f:
-        settings = json.load(f)["runtimeSettings"][0]["handlerSettings"]["publicSettings"]
+        settings = json.load(f)
     settings['TENANT_ID'] = sys.argv[1]
     settings['CLIENT_ID'] = sys.argv[2]
     settings['CLIENT_SECRET'] = sys.argv[3]

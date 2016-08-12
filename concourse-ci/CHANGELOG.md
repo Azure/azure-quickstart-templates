@@ -1,6 +1,9 @@
 #ChangeLog
 
 ```
+# v1.0.2 (2016-08-11)
+- Use CustomData to pass information to CustomScript
+
 # v1.0.1 (2016-08-04)
 - Add concourse worker disk size options
 
