@@ -24,12 +24,12 @@ Note: The Logic App and the Azure Function App need to be deployed in the same r
 
 Once the deployment is completed, you can perform below steps to test your Logic App:
 - Open the Logic App in the designer to get the HTTP Request endpoint url.
-[Image of HTTP request trigger](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-logic-app-veter-pipeline/images/http-request-trigger.png)
+![Image of HTTP request trigger](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-logic-app-veter-pipeline/images/http-request-trigger.png "HTTP request trigger")
 - Perform HTTP POST operation on the http endpoint obtained from #1 using your favorite HTTP client.
     - Set content-type header to application/xml.
     - Set request body to the content of sample-order.xml (it is present under artifacts folder in this template).
 - On successful execution, the logic app will respond with the transformed message (an SAP order) in response body.
-[Image of sample request-response](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-logic-app-veter-pipeline/images/request-response.png)
+![Image of sample request-response](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-logic-app-veter-pipeline/images/request-response.png "Sample request-response")
 
 ## Notes
 
