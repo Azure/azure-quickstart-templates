@@ -32,7 +32,7 @@ def prepare_storage(settings):
 
 def render_bosh_manifest(settings):
     with open('bosh.pub', 'r') as tmpfile:
-        ssh_public_key = tmpfile.read()
+        ssh_public_key = tmpfile.read().strip()
 
     ip = netaddr.IPNetwork(settings['SUBNET_ADDRESS_RANGE_FOR_BOSH'])
     gateway_ip = str(ip[1])
