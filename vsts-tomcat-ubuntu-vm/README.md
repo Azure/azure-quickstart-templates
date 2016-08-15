@@ -18,11 +18,20 @@ http://java.visualstudio.com/
 
 To create the VM, you will need to:
 
-1. Choose an admin user name and password for your VM.
+1. Choose an admin user name and password for your VM.  This user name and password will be used as the Team Services generic endpoint User name and Password for FTPS.
 
-2. Choose a name for your VM.
+2. Choose a name for your VM. 
 
-3. Choose a Tomcat user name and password to enable the Tomcat manager UI and deployment method.
+3. Choose a Tomcat user name and password to enable the Tomcat manager UI and deployment method.  This user name and password will be used as the Team Services Apache Tomcat deployment task manager user name and password.
 
-4. Choose a Pass phrase to use with your SSH certificate.
+4. Choose a Pass phrase to use with your SSH certificate.  This pass phrase will be used as the Team Services SSH endpoint passphrase.
+
+## After you Deploy to Azure
+
+Once you create the VM, use an SSH client (such as the Windows command prompt SSH or a tool such as MobaXterm) to login (using the admin user name and password from above) and then examine the contents of the file 
+"vsts_ssh_info" (i.e. cat vsts_ssh_info)  in the home directory to discover the SSH private key needed when using the Team Services Copy files via SSH deployment task (when setting up the SSH endpoint).
+
+
+
+
 

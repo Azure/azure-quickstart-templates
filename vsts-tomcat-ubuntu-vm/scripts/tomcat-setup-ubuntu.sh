@@ -173,10 +173,5 @@ echo "These original files were saved in case you want to return to default sett
 sudo find /etc -name ORIG_* -print >> /home/$1/install.progress.txt
 
 
-echo "" >> /home/$1/vsts_ssh_info
-echo "For FTP, edit the file /etc/vsftpd.conf and update your VM public IP address on the specified line." >> /home/$1/vsts_ssh_info
-echo "Then type the command:  sudo service vsftpd restart" >> /home/$1/vsts_ssh_info
-
-
 chown $1.tomcat7 /home/$1/install.progress.txt
 
