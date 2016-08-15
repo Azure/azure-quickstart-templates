@@ -16,7 +16,7 @@ In order to properly deploy this ARM template, you need to first create an Azure
 Create an Azure Function App - https://portal.azure.com/#create/Microsoft.FunctionApp
 
 ### Tip: ###
-Make a note of the the name of the Azure Functions container and the Azure function, you will need them in the next step.
+Make a note of the the name of the Azure Function App, you will need it in the next step.
 
 ## Deployment steps
 
