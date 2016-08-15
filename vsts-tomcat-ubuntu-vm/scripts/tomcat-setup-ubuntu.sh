@@ -157,10 +157,7 @@ sudo echo "require_ssl_reuse=NO" >> /tmp/vsftpd.conf
 sudo echo "ssl_ciphers=HIGH" >> /tmp/vsftpd.conf
 sudo echo "debug_ssl=YES" >> /tmp/vsftpd.conf
 sudo echo "pasv_enable=YES" >> /tmp/vsftpd.conf
-sudo echo "# -----------------------" >> /tmp/vsftpd.conf
-sudo echo "# Uncomment line below and replace placeholder with your Azure public IP address" >> /tmp/vsftpd.conf
-sudo echo "# pasv_address=xxx.xx.xx.xxx" >> /tmp/vsftpd.conf
-sudo echo "# -----------------------" >> /tmp/vsftpd.conf
+sudo echo "pasv_address=`wget http://ipinfo.io/ip -qO -`" >> /tmp/vsftpd.conf
 sudo echo "pasv_min_port=13450" >> /tmp/vsftpd.conf
 sudo echo "pasv_max_port=13454" >> /tmp/vsftpd.conf
 sudo mv /tmp/vsftpd.conf /etc
