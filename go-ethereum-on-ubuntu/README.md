@@ -3,6 +3,9 @@
 This Microsoft Azure template deploys a single Ethereum client with a private chain for development and testing.
 
 [![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fgo-ethereum-on-ubuntu%2Fazuredeploy.json)
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fgo-ethereum-on-ubuntu%2Fazuredeploy.json" target="_blank">
+    <img src="http://armviz.io/visualizebutton.png"/>
+</a>
 
 Once your deployment is complete you will have a sandbox environment with:
 
@@ -20,7 +23,7 @@ Once your deployment is complete you will have a sandbox environment with:
 # Template Parameters
 When you launch the installation of the cluster, you need to specify the following parameters:
 * `newStorageAccountNamePrefix`: make sure this is a unique identifier. Azure Storage's accounts are global so make sure you use a prefix that is unique to your account otherwise there is a good change it will clash with names already in use.
-* `vmDnsName`: this is the public DNS name for the VM that you will use interact with your geth console. You just need to specify an unique name.
+* `vmDnsPrefix`: this is the public DNS name for the VM that you will use interact with your geth console. You just need to specify an unique name.
 * `adminUsername`: self-explanatory. This is the account you will use for connecting to the node
 * `adminPassword`: self-explanatory. Be aware that Azure requires passwords to have One upper case, one lower case, a special character, and a number
 * `vmSize`: The type of VM that you want to use for the node. The default size is D1 (1 core 3.5GB RAM) but you can change that if you expect to run workloads that require more RAM or CPU resources.
@@ -55,7 +58,7 @@ Welcome to the Ethereum ecosystem. You are now on your journey to becoming a dec
 
 Earlier when you ran the `ls` command there was a file named `GuestBook.sol` - this is a very simple guest book contract written in the Solidity smart contract programming language.
 
-Learning Solidity is beyond the scope of this walk through, but feel free to read the code and try to understand what the contract is trying to do.  
+[Learning Solidity](https://solidity.readthedocs.org) is beyond the scope of this walk through, but feel free to read the code and try to understand what the contract is trying to do.  
 
 Getting familiar with Solidity contracts and deploying them to the network can be a bit of a learning curve - there are a number of different steps in the journey from source code to having a contract live on the public network; we'll try to address each of these steps.
 
@@ -142,7 +145,7 @@ On the public network this would be solved for us simply by waiting approximatel
 Interesting. How do we solve this problem? By turning on CPU mining locally:
 
 ```
-web3.miner.start()
+web3.miner.start(1)
 ```
 
 We'll have to wait a little bit while your node generates its Directed Acyclic Graph (DAG). This process is what helps the Ethereum network be resistant to ASIC mining; but that's a topic for another time.
@@ -158,7 +161,7 @@ Congratulations - your contract is now alive on the Ethereum Network!
 
 Go ahead and stop your miner for the moment:
 ```
-web3.miner.stop()
+web3.miner.stop(1)
 ```
 
 ## Reading from the contract

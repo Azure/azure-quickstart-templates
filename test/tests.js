@@ -128,7 +128,9 @@ function validateParamtersFile(parametersPath) {
   assert.ok(parametersObject.parameters, parametersPath + ' - Expected a \'.parameters\' field within the parameters file');
   for (var k in parametersObject.parameters) {
     if (typeof k === 'string') {
-      assert.ok(parametersObject.parameters[k].value,
+      assert.ok(parametersObject.parameters[k].value !== null &&
+        parametersObject.parameters[k].value !== undefined &&
+        parametersObject.parameters[k].value !== '',
         parametersPath + ' -  Parameter \"' + k + '\" is missing its value field');
     }
   }
@@ -157,6 +159,11 @@ function prepTemplate(templatePath, parametersPath) {
 function validateTemplate(templatePath, parametersPath) {
   var requestBody = prepTemplate(templatePath, parametersPath);
 
+  if (process.env.TRAVIS_PULL_REQUEST &&
+    process.env.TRAVIS_PULL_REQUEST !== 'false') {
+    requestBody.pull_request = process.env.TRAVIS_PULL_REQUEST;
+  }
+
   // validate the template paramters, particularly the description field
   validateTemplateParameters(templatePath, requestBody.template);
 
@@ -166,7 +173,7 @@ function validateTemplate(templatePath, parametersPath) {
       .send(JSON.stringify(requestBody))
       .end(function (response) {
         if (response.status !== 200) {
-          return reject(response.body);
+          return reject(response);
         }
 
         return resolve(response.body);
@@ -359,7 +366,7 @@ describe('Template', function () {
               errorString += ' --template-file ' + test.args[0] + ' --parameters-file ' + test.args[1] + '\n';
               errorString += 'azure group deployment create --resource-group (your_group_name) ';
               errorString += ' --template-file ' + test.args[0] + ' --parameters-file ' + test.args[1];
-              assert(false, errorString + ' \n\nServer Error:' + JSON.stringify(err));
+              assert(false, errorString + ' \n\nServer Error:' + JSON.stringify(err, null, 4));
             });
         });
       });

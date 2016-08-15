@@ -8,8 +8,10 @@ Create the dbX cluster (Please be patient - this is preview of deployment on Azu
 
 NOTE: You may need to be already logged into your Azure account before hitting the below "deploy" button in order for the Azure deployment screen to come up.
 
-[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fxtremedata%2Fazure-quickstart-templates%2Fmaster%2Fxtremedata-dbx-cluster-centos%2Fazuredeploy.json) 
-
+[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fxtremedata-dbx-cluster-centos%2Fazuredeploy.json) 
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fxtremedata-dbx-cluster-centos%2Fazuredeploy.json" target="_blank">
+    <img src="http://armviz.io/visualizebutton.png"/>
+</a>
 
 ##Requirements
 *   Please make sure the subscription you use allows creation of the requested number of virtual

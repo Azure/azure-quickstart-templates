@@ -1,0 +1,140 @@
+﻿{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.1.0.0",
+  "parameters": {
+    "labVNetPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "VNet prefix (CIDR)"
+      }
+    },
+    "subnets": {
+      "type": "array",
+      "metadata": {
+        "description": "Array of subnets to be created"
+      }
+    },
+    "dnsLabel": {
+      "type": "string",
+      "metadata": {
+        "description": "Unique public DNS label for the deployment. The fqdn will look something like '<dnsname>.<region>.cloudapp.azure.com'. Up to 62 chars, digits or dashes, lowercase, should start with a letter: must conform to '^[a-z][a-z0-9-]{1,61}[a-z0-9]$'."
+      }
+    },
+    "vnetName": {
+      "type": "string",
+      "defaultValue": "labVNet",
+      "metadata": {
+        "description": "Virtual Network name"
+      }
+    },
+    "publicIPAddressName": {
+      "type": "string",
+      "defaultValue": "PublicIP",
+      "metadata": {
+        "description": "Public address name, for lb configuration."
+      }
+    },
+    "addedSubnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the subnet to add"
+      }
+    },
+    "addedSubnetPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "CIDR prefix of the subnet to add"
+      }
+    }
+
+  },
+  "variables": {
+    "apiVersion": "2015-06-15",
+    "location": "[resourceGroup().location]",
+    "publicIPAddressName": "[uniqueString(resourceGroup().id, 'PublicIP')]",
+    "lbName": "[uniqueString(resourceGroup().id, 'labLB')]",
+    "sbn": [
+      {
+        "name": "[parameters('addedSubnetName')]",
+        "properties": { "addressPrefix": "[parameters('addedSubnetPrefix')]" }
+      }
+    ]
+  },
+  "resources": [
+    {
+      "apiVersion": "2015-06-15",
+      "name": "[variables('lbName')]",
+      "type": "Microsoft.Network/loadBalancers",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', parameters('publicIPAddressName'))]"
+      ],
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "LoadBalancerFrontend",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('publicIPAddressName'))]"
+              }
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "LoadBalancerBackend"
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[parameters('publicIPAddressName')]",
+      "location": "[variables('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('dnsLabel')]"
+        }
+      }
+    },
+    {
+      "name": "[parameters('vnetName')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "[variables('apiVersion')]",
+      "dependsOn": [ "[concat('Microsoft.Network/publicIPAddresses/', parameters('publicIPAddressName'))]" ],
+      "tags": {
+        "displayName": "[parameters('vnetName')]"
+      },
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('labVNetPrefix')]"
+          ]
+        },
+        "subnets": "[concat(parameters('subnets'),variables('sbn'))]"
+      }
+    }
+  ],
+  "outputs": {
+    "vnetSubnets": {
+      "type": "array",
+      "value": "[reference(parameters('vnetName')).subnets]"
+    },
+    "vnetLength": {
+      "type": "int",
+      "value": "[length(reference(parameters('vnetName')).subnets)]"
+    },
+    "publicIPAddressName": {
+      "type": "string",
+      "value": "[variables('publicIPAddressName')]"
+    },
+    "lbName": {
+      "type": "string",
+      "value": "[variables('lbName')]"
+    }
+
+  }
+}
