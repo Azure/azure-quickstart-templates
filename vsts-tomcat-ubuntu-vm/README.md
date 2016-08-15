@@ -1,4 +1,4 @@
-# VM-Ubuntu - Team Services Build Agent and Cross-Platform SDKs installation
+# VM-Ubuntu - Team Services Apache 2 Tomcat 7 installation
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fpaultbarham%2Fazure-quickstart-templates%2Fazuremerge%2Fvsts-tomcat-ubuntu-vm%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
