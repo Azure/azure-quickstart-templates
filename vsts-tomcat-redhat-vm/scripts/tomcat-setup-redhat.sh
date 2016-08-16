@@ -153,6 +153,7 @@ firewall-cmd --zone=public --add-port=22/tcp --permanent >> /home/$1/install.out
 firewall-cmd --reload >> /home/$1/install.out.txt 2>&1
 
 # Create an RSA public and private key for SSH
+mkdir /home/$1/.ssh
 ssh-keygen -q -N $4 -f /home/$1/.ssh/id_rsa >> /home/$1/install.out.txt 2>&1
 cd /home/$1/.ssh
 cp id_rsa.pub authorized_keys
@@ -222,6 +223,7 @@ echo "pasv_address=`wget http://ipinfo.io/ip -qO -`" >> /tmp/vsftpd.conf
 echo "pasv_min_port=13450" >> /tmp/vsftpd.conf
 echo "pasv_max_port=13454" >> /tmp/vsftpd.conf
 mv /tmp/vsftpd.conf /etc/vsftpd
+chmod 0600 /etc/vsftpd/vsftpd.conf
 
 # Restart the ftp service:
 service vsftpd restart >> /home/$1/install.out.txt 2>&1
