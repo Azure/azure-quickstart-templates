@@ -11,14 +11,14 @@ The following information is relevant to get started with contributing to this r
 
 You can deploy these samples directly through the Azure Portal or by using the scripts supplied in the root of the repo.
 
-To deploy a sammple using the Azure Portal, click the **Deploy to Azure** button found in the README.md of each sample.
+To deploy a sample using the Azure Portal, click the **Deploy to Azure** button found in the README.md of each sample.
 
 To deploy the sample via the command line (using [Azure PowerShell or the Azure CLI](https://azure.microsoft.com/en-us/downloads/)) you can use the scripts.
 
-Simple execute the script and pass in the folder name of the sample you want to deploy.  For example:
+Simply execute the script and pass in the folder name of the sample you want to deploy.  For example:
 
 ```PowerShell
-.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactsStagingDirectory '[foldername]'
+.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactStagingDirectory '[foldername]'
 ```
 ```bash
 azure-group-deploy.sh -a [foldername] -l eastus -u
@@ -28,7 +28,7 @@ You can optionally specify a storage account to use, if so the storage account m
 one will be created by the script or reused if it already exists (think of this as "temp" storage for AzureRM).
 
 ```PowerShell
-.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactsStagingDirectory '201-vm-custom-script-windows' -UploadArtifacts 
+.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactStagingDirectory '201-vm-custom-script-windows' -UploadArtifacts 
 ```
 ```bash
 azure-group-deploy.sh -a '201-vm-custom-script-windows' -l eastus -u
@@ -257,4 +257,8 @@ Server Error:{
         }
     }
 }
+```
+
+```
+This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
 ```
