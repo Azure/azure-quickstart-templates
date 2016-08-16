@@ -37,6 +37,6 @@ Once the deployment is completed, you can perform below steps to test your Logic
 ## Notes
 
 Learn more about: Azure Logic Apps
-* **Azure Logic Apps** - https://azure.microsoft.com/en-us/documentation/articles/app-service-logic-what-are-logic-apps/
+* **Azure Logic Apps** - https://azure.microsoft.com/documentation/articles/app-service-logic-what-are-logic-apps/
 * **Logic Apps Enterprise Integration Pack** - https://blogs.msdn.microsoft.com/logicapps/2016/06/30/public-preview-of-logic-apps-enteprise-integration-pack/
-* **XML Processing capabilities in Logic Apps** - https://azure.microsoft.com/en-us/documentation/articles/app-service-logic-enterprise-integration-xml/
+* **XML Processing capabilities in Logic Apps** - https://azure.microsoft.com/documentation/articles/app-service-logic-enterprise-integration-xml/
