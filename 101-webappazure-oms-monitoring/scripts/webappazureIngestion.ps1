@@ -58,7 +58,7 @@ if($WebApps -ne $Null)
             foreach($metricValue in $metric.MetricValues)
             {
                 $sx = New-Object PSObject -Property @{
-                    Timestamp = $metricValue.Timestamp.ToString()
+                    Timestamp = $metricValue.Timestamp.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
                     MetricName = $metric.Name; 
                     Average = $metricValue.Average;
                     SubscriptionID = $Conn.SubscriptionID;
