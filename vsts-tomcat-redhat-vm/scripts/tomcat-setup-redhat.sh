@@ -170,8 +170,6 @@ echo "Installing and Configuring FTP" >> /home/$1/install.progress.txt
 
 # Install the vsftp package (i.e. FTP) and create some needed directories:
 yum install -y vsftpd >> /home/$1/install.out.txt 2>&1
-cd /etc/vsftpd
-mv vsftpd.conf ORIG_vsftpd.conf
 mkdir /var/run/vsftpd
 mkdir /var/run/vsftpd/empty
 
@@ -226,6 +224,7 @@ mv /tmp/vsftpd.conf /etc/vsftpd
 chmod 0600 /etc/vsftpd/vsftpd.conf
 
 # Restart the ftp service:
+echo "Restart vsftp" >> /home/$1/install.out.txt 2>&1
 service vsftpd restart >> /home/$1/install.out.txt 2>&1
 systemctl enable vsftpd >> /home/$1/install.out.txt 2>&1
 
