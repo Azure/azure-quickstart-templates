@@ -3,7 +3,7 @@
 # $1 - VM Host User Name
 
 sudo /bin/date +%H:%M:%S > /home/$1/install.progress.txt
-echo "ooooo      TOMCAT INSTALL      ooooo" >> /home/$1/install.progress.txt
+echo "ooooo      REDHAT TOMCAT INSTALL      ooooo" >> /home/$1/install.progress.txt
 
 echo "Initial Tomcat setup" >> /home/$1/install.progress.txt
 
@@ -77,7 +77,7 @@ sudo systemctl daemon-reload
 # Configure SELinux to allow mod_jk to work
 sudo yum install -y policycoreutils-python
 sudo mkdir /var/run/mod_jk
-sudo semanage fcontext -a -t httpd_var_run_t "/var/run/mod_jk(/.*)?"
+sudo /usr/sbin/semanage fcontext -a -t httpd_var_run_t "/var/run/mod_jk(/.*)?"
 
 # Remove unnecessary http modules that create warnings
 sudo cp /etc/httpd/conf.modules.d/00-proxy.conf /etc/httpd/conf.modules.d/ORIG_00-proxy.conf
