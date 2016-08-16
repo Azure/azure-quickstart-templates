@@ -8,19 +8,19 @@ echo "ooooo      REDHAT TOMCAT INSTALL      ooooo" >> /home/$1/install.progress.
 echo "Initial Tomcat setup" >> /home/$1/install.progress.txt
 
 # Install Apache2, Tomcat7 and then build mod-jk package
-sudo yum install -y httpd
-sudo yum install -y tomcat
-sudo yum install -y tomcat-webapps tomcat-admin-webapps
-sudo yum install -y gcc
-sudo yum install -y gcc-c++
-sudo yum install -y httpd-devel
+sudo yum install -y httpd > install.out.txt 2>&1
+sudo yum install -y tomcat > install.out.txt 2>&1
+sudo yum install -y tomcat-webapps tomcat-admin-webapps > install.out.txt 2>&1
+sudo yum install -y gcc > install.out.txt 2>&1
+sudo yum install -y gcc-c++ > install.out.txt 2>&1
+sudo yum install -y httpd-devel > install.out.txt 2>&1
 cd
-wget http://www-us.apache.org/dist/tomcat/tomcat-connectors/jk/tomcat-connectors-1.2.41-src.tar.gz
-tar xvfz tomcat-connectors-1.2.41-src.tar.gz
+wget http://www-us.apache.org/dist/tomcat/tomcat-connectors/jk/tomcat-connectors-1.2.41-src.tar.gz > install.out.txt 2>&1
+tar xvfz tomcat-connectors-1.2.41-src.tar.gz > install.out.txt 2>&1
 cd tomcat-connectors-1.2.41-src/native/
-./configure --with-apxs=/usr/bin/apxs
-make
-sudo make install
+./configure --with-apxs=/usr/bin/apxs > install.out.txt 2>&1
+make > install.out.txt 2>&1
+sudo make install > install.out.txt 2>&1
 
 # Create a mod_jk config file
 sudo echo "# Load mod_jk module" > /etc/httpd/conf/mod_jk.conf
@@ -72,28 +72,28 @@ sudo chown tomcat.tomcat /usr/share/tomcat
 # Set the default umask for Tomcat
 sudo cp /usr/libexec/tomcat/server /usr/libexec/tomcat/ORIG_server
 sudo sed -i 's,run start,umask 002\n  run start,g' /usr/libexec/tomcat/server
-sudo systemctl daemon-reload
+sudo systemctl daemon-reload > install.out.txt 2>&1
 
 # Configure SELinux to allow mod_jk to work
-sudo yum install -y policycoreutils-python
+sudo yum install -y policycoreutils-python >> install.out.txt 2>&1
 sudo mkdir /var/run/mod_jk
-sudo /usr/sbin/semanage fcontext -a -t httpd_var_run_t "/var/run/mod_jk(/.*)?"
+sudo /usr/sbin/semanage fcontext -a -t httpd_var_run_t "/var/run/mod_jk(/.*)?" >> install.out.txt 2>&1
 
 # Remove unnecessary http modules that create warnings
 sudo cp /etc/httpd/conf.modules.d/00-proxy.conf /etc/httpd/conf.modules.d/ORIG_00-proxy.conf
 sudo sed -i 's,LoadModule lbmethod_heartbeat,# LoadModule lbmethod_heartbeat,g' /etc/httpd/conf.modules.d/00-proxy.conf
 
 #Configure the system to run httpd and tomcat every time the server is booted:
-sudo systemctl enable httpd
-sudo systemctl enable tomcat
+sudo systemctl enable httpd  >> install.out.txt 2>&1
+sudo systemctl enable tomcat  >> install.out.txt 2>&1
 
 # Restart the Tomcat7 and Apache2 servers:
-sudo service httpd start
-sudo service tomcat start
+sudo service httpd start  >> install.out.txt 2>&1
+sudo service tomcat start  >> install.out.txt 2>&1
 
 # Open Red Hat software firewall for port 80:
-sudo firewall-cmd --zone=public --add-port=80/tcp --permanent
-sudo firewall-cmd --reload
+sudo firewall-cmd --zone=public --add-port=80/tcp --permanent  >> install.out.txt 2>&1
+sudo firewall-cmd --reload  >> install.out.txt 2>&1
 
 echo "Done." >> /home/$1/install.progress.txt
 sudo /bin/date +%H:%M:%S >> /home/$1/install.progress.txt
