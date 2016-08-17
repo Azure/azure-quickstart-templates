@@ -1,36 +1,10 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
-  "parameters": {
-    "vstsAccountURL": {
-      "type": "string",
-      "metadata": {
-        "description": "Team Services Account URL (e.g. https://myaccount.visualstudio.com)"
-      }
-    },
-    "vstsPAT": {
-      "type": "string",
-      "metadata": {
-        "description": "Team Services PAT for user with build permissions"
-      }
-    },
-    "vstsPoolName": {
-      "type": "string",
-      "defaultValue": "default",
-      "metadata": {
-        "description": "Team Services Agent Pool Name"
-      }
-    },
-    "vstsAgentName": {
-      "type": "string",
-      "defaultValue": "ubuntu-build-full",
-      "metadata": {
-        "description": "Team Services Agent Name"
-      }
-    },    
+  "parameters": {    
     "adminUserName": {
       "type": "string",
-      "defaultValue": "vstsbuild",
+      "defaultValue": "tcdeploy",
       "metadata": {
         "description": "Linux VM User Account Name"
       }
@@ -43,6 +17,25 @@
       "metadata": {
         "description": "DNS Label for the Public IP. Must be lowercase. It should match with the following regular expression: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$ or it will raise an error."
       }
+    },
+    "tomcatUserName": {
+      "type": "string",
+      "defaultValue": "tcdeploy",
+      "metadata": {
+        "description": "User name for Tomcat manager"
+      }
+    },
+    "tomcatPassword": {
+      "type": "string",
+      "metadata": {
+        "description": "Password for Tomcat manager"
+      }
+    },
+    "sshPassPhrase": {
+      "type": "string",
+      "metadata": {
+        "description": "Pass phrase for SSH certificate"
+      }
     }
   },
   "variables": {
@@ -50,19 +43,20 @@
     "imageOffer": "ubuntuserver",
     "imageSKU":"16.04.0-LTS",
     "baseName": "[uniquestring(parameters('dnsLabelPrefix'),resourceGroup().id,uniquestring(deployment().name))]",
-    "nicName": "[concat('myNic1',variables('baseName'))]",
+    "nicName": "[concat('myNic7',variables('baseName'))]",
     "addressPrefix": "10.0.0.0/16",
     "subnet1Name": "Subnet-1",
     "subnet1Prefix": "10.0.0.0/24",
-    "publicIPAddressName": "[concat('myIP1',variables('baseName'))]",
+    "publicIPAddressName": "[concat('myIP7',variables('baseName'))]",
     "publicIPAddressType": "Dynamic",
     "vmStorageAccountContainerName": "vhds",
     "vmName": "[parameters('dnsLabelPrefix')]",
     "vmSize": "Standard_F1",
-    "virtualNetworkName": "MyVNET",
+    "virtualNetworkName": "MyVNET7",
+    "frontEndNSGName": "[concat(parameters('dnsLabelPrefix'),'-nsg7')]",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
     "storageAccountType": "Standard_LRS",
-    "storageAccountName": "[concat('vsts1',variables('baseName'))]",
+    "storageAccountName": "[concat('vsts7',variables('baseName'))]",
     "subnet1Ref": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]"
   },
   "resources": [
@@ -91,10 +85,82 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('frontEndNSGName')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "Custom Network Security Group"
+      },
+      "properties": {
+        "securityRules": [
+          {
+            "name": "default-allow-ssh",
+            "properties": {
+              "description": "Allow SSH",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1000,
+              "direction": "Inbound"
+            }
+          },
+        {
+            "name": "default-allow-tomcat",
+            "properties": {
+              "description": "Allow WEB/Tomcat",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1010,
+              "direction": "Inbound"
+            }
+          },
+         {
+            "name": "default-allow-ftp",
+            "properties": {
+              "description": "Allow FTP",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "21",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1020,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "default-allow-ftps",
+            "properties": {
+              "description": "Allow FTPS",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "13450-13454",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1030,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('frontEndNSGName'))]"
+      ],
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -105,22 +171,29 @@
           {
             "name": "[variables('subnet1Name')]",
             "properties": {
-              "addressPrefix": "[variables('subnet1Prefix')]"
+              "addressPrefix": "[variables('subnet1Prefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('frontEndNSGName'))]"
+               }
             }
           }
         ]
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('frontEndNSGName'))]"
       ],
       "properties": {
+          "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('frontEndNSGName'))]"
+          },
         "ipConfigurations": [
           {
             "name": "ipconfig1",
@@ -138,7 +211,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmName')]",
       "location": "[resourceGroup().location]",
@@ -153,7 +226,8 @@
         "osProfile": {
           "computerName": "[variables('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPassword')]",
+          "customData": "[base64(variables('publicIPAddressName'))]"
         },
         "storageProfile": {
           "imageReference": {
@@ -183,7 +257,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmName'),'/newuserscript')]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2015-06-15",
       "location": "[resourceGroup().location]",
       "dependsOn": ["[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"],
       "properties": {
@@ -193,9 +267,9 @@
         "autoUpgradeMinorVersion":true,
         "settings": {
           "fileUris": [
-            "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/vsts-fullbuild-ubuntu-vm/scripts/full-vstsbuild-install.sh"
+            "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/vsts-tomcat-ubuntu-vm/scripts/tomcat-setup-ubuntu.sh"
           ],
-          "commandToExecute": "[concat('sh full-vstsbuild-install.sh',' ',parameters('vstsAccountURL'),' ',parameters('vstsPAT'),' ',parameters('vstsPoolName'),' ',parameters('vstsAgentName'),' ',parameters('adminUserName'))]"
+          "commandToExecute": "[concat('sh tomcat-setup-ubuntu.sh',' ',parameters('adminUserName'),' ',parameters('tomcatUserName'),' ',parameters('tomcatPassword'),' ',parameters('sshPassPhrase'))]"
         }
       }
     }
