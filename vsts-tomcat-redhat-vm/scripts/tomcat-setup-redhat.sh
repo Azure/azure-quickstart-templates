@@ -133,11 +133,15 @@ echo "Done." >> /home/$1/install.progress.txt
 # Update SSHd config to not use passwords and set default umask to be 002
 cp /etc/ssh/sshd_config /etc/ssh/ORIG_sshd_config
 sed -i 's,PasswordAuthentication yes,PasswordAuthentication no,g' /etc/ssh/sshd_config
-echo "Match User tcdeploy" >> /etc/ssh/sshd_config
+echo "Match User "$1 >> /etc/ssh/sshd_config
 echo "    ForceCommand internal-sftp -u 002" >> /etc/ssh/sshd_config
 
 # Change group of user to same as Tomcat
+echo "Changing group of user "$1  >> /home/$1/install.out.txt 2>&1
+gpasswd -d $1 $1 >> /home/$1/install.out.txt 2>&1
+gpasswd -a $1 tomcat >> /home/$1/install.out.txt 2>&1
 usermod -g tomcat $1 >> /home/$1/install.out.txt 2>&1
+
 
 # Configure the default umask for SSH to enable RW for user and group
 cp /etc/pam.d/sshd /etc/pam.d/ORIG_sshd
