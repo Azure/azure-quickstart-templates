@@ -223,11 +223,6 @@ echo "pasv_max_port=13454" >> /tmp/vsftpd.conf
 mv /tmp/vsftpd.conf /etc/vsftpd
 chmod 0600 /etc/vsftpd/vsftpd.conf
 
-# Restart the ftp service:
-echo "Restart vsftp" >> /home/$1/install.out.txt 2>&1
-service vsftpd restart >> /home/$1/install.out.txt 2>&1
-systemctl enable vsftpd >> /home/$1/install.out.txt 2>&1
-
 # Configure SELinux to use Linux ACL's for file protection
 setsebool -P allow_ftpd_full_access 1 >> /home/$1/install.out.txt 2>&1
 
@@ -240,12 +235,20 @@ firewall-cmd --zone=public --add-port=13453/tcp --permanent >> /home/$1/install.
 firewall-cmd --zone=public --add-port=13454/tcp --permanent >> /home/$1/install.out.txt 2>&1
 firewall-cmd --reload >> /home/$1/install.out.txt 2>&1
 
+# Seeing a race condition timing error so sleep to deplay
+sleep 20
+
+# Restart the ftp service:
+echo "Restart vsftp" >> /home/$1/install.out.txt 2>&1
+service vsftpd restart >> /home/$1/install.out.txt 2>&1
+systemctl enable vsftpd >> /home/$1/install.out.txt 2>&1
+
 echo "ALL DONE!" >> /home/$1/install.progress.txt
 /bin/date +%H:%M:%S >> /home/$1/install.progress.txt
 
 echo "These original files were saved in case you want to return to default settings:" >> /home/$1/install.progress.txt
 find /etc -name ORIG_* -print >> /home/$1/install.progress.txt
-find /usr/share/tomcat -name ORIG_* -print >> /home/$1/install.progress.txt
+find /usr/share/tomcat/conf -name ORIG_* -print >> /home/$1/install.progress.txt
 find /usr/libexec/tomcat -name ORIG_* -print >> /home/$1/install.progress.txt
 
 
