@@ -69,6 +69,7 @@ sed -i 's,"localhost">,"localhost" jvmRoute="worker1">,g' /usr/share/tomcat/conf
 # Update the permissions on the Tomcat webapps and install directory
 chown -R tomcat.tomcat /var/lib/tomcat/webapps
 chown tomcat.tomcat /usr/share/tomcat
+chown tomcat.tomcat /var/lib/tomcat
 
 # Set the default umask for Tomcat
 cp /usr/libexec/tomcat/server /usr/libexec/tomcat/ORIG_server
@@ -157,6 +158,7 @@ firewall-cmd --zone=public --add-port=22/tcp --permanent >> /home/$1/install.out
 firewall-cmd --reload >> /home/$1/install.out.txt 2>&1
 
 # Create an RSA public and private key for SSH
+cd /home/$1
 mkdir /home/$1/.ssh
 ssh-keygen -q -N $4 -f /home/$1/.ssh/id_rsa >> /home/$1/install.out.txt 2>&1
 cd /home/$1/.ssh
