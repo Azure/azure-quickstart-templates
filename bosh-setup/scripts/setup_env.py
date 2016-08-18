@@ -154,7 +154,18 @@ def render_cloud_foundry_deployment_cmd(settings):
     if os.path.exists(cloudfoundry_deployment_cmd):
         with open(cloudfoundry_deployment_cmd, 'r') as tmpfile:
             contents = tmpfile.read()
-        keys = ["STEMCELL_URL", "STEMCELL_SHA1", "CF_RELEASE_URL", "CF_RELEASE_SHA1"]
+        keys = [
+            "STEMCELL_URL",
+            "STEMCELL_SHA1",
+            "CF_RELEASE_URL",
+            "CF_RELEASE_SHA1",
+            "DIEGO_RELEASE_URL",
+            "DIEGO_RELEASE_SHA1",
+            "GARDEN_RELEASE_URL",
+            "GARDEN_RELEASE_SHA1",
+            "CFLINUXFS2_RELEASE_URL",
+            "CFLINUXFS2_RELEASE_SHA1"
+        ]
         for key in keys:
             value = settings[key]
             contents = re.compile(re.escape("REPLACE_WITH_{0}".format(key))).sub(value, contents)
@@ -165,7 +176,7 @@ def get_settings():
     settings = dict()
     config_file = sys.argv[4]
     with open(config_file) as f:
-        settings = json.load(f)["runtimeSettings"][0]["handlerSettings"]["publicSettings"]
+        settings = json.load(f)
     settings['TENANT_ID'] = sys.argv[1]
     settings['CLIENT_ID'] = sys.argv[2]
     settings['CLIENT_SECRET'] = sys.argv[3]
