@@ -18,7 +18,7 @@ networks:
   subnets: # You need to update the subnet configuration if you change to another subnet
   - range: REPLACE_WITH_SUBNET_ADDRESS_RANGE_FOR_BOSH
     gateway: REPLACE_WITH_GATEWAY_IP
-    dns: [168.63.129.16]
+    dns: [168.63.129.16, REPLACE_WITH_SECONDARY_DNS]
     cloud_properties:
       virtual_network_name: REPLACE_WITH_VNET_NAME # Replace with virtual network name
       subnet_name: REPLACE_WITH_SUBNET_NAME_FOR_BOSH # Replace with subnet name for BOSH VM
@@ -41,6 +41,7 @@ jobs:
   templates:
   - {name: nats, release: bosh}
   - {name: postgres, release: bosh}
+  - {name: powerdns, release: bosh}
   - {name: blobstore, release: bosh}
   - {name: director, release: bosh}
   - {name: health_monitor, release: bosh}
@@ -59,31 +60,36 @@ jobs:
     nats:
       address: 127.0.0.1
       user: nats
-      password: nats-password
+      password: REPLACE_WITH_NATS_PASSWORD
 
     postgres: &db
       listen_address: 127.0.0.1
       host: 127.0.0.1
       user: postgres
-      password: postgres-password
+      password: REPLACE_WITH_POSTGRES_PASSWORD
       database: bosh
       adapter: postgres
+
+    dns:
+      address: REPLACE_WITH_BOSH_DIRECTOR_IP
+      db: *db
+      recursor: REPLACE_WITH_DNS_RECURSOR
 
     registry:
       address: REPLACE_WITH_BOSH_DIRECTOR_IP
       host: REPLACE_WITH_BOSH_DIRECTOR_IP
       db: *db
-      http: {user: admin, password: admin, port: 25777}
+      http: {user: admin, password: REPLACE_WITH_REGISTRY_PASSWORD, port: 25777}
       username: admin
-      password: admin
+      password: REPLACE_WITH_REGISTRY_PASSWORD
       port: 25777
 
     blobstore:
       address: REPLACE_WITH_BOSH_DIRECTOR_IP
       port: 25250
       provider: dav
-      director: {user: director, password: director-password}
-      agent: {user: agent, password: agent-password}
+      director: {user: director, password: REPLACE_WITH_DIRECTOR_PASSWORD}
+      agent: {user: agent, password: REPLACE_WITH_AGENT_PASSWORD}
 
     director:
       address: 127.0.0.1
@@ -98,11 +104,11 @@ jobs:
         provider: local
         local:
           users:
-          - {name: admin, password: admin}
-          - {name: hm-user, password: hm-password}
+          - {name: admin, password: REPLACE_WITH_ADMIN_PASSWORD}
+          - {name: hm-user, password: REPLACE_WITH_HM_PASSWORD}
 
     hm:
-      director_account: {user: hm-user, password: hm-password}
+      director_account: {user: hm-user, password: REPLACE_WITH_HM_PASSWORD}
       resurrector_enabled: true
 
     azure: &azure
@@ -117,7 +123,7 @@ jobs:
       ssh_public_key: REPLACE_WITH_SSH_PUBLIC_KEY
       default_security_group: REPLACE_WITH_NSG_NAME_FOR_BOSH
 
-    agent: {mbus: "nats://nats:nats-password@REPLACE_WITH_BOSH_DIRECTOR_IP:4222"}
+    agent: {mbus: "nats://nats:REPLACE_WITH_NATS_PASSWORD@REPLACE_WITH_BOSH_DIRECTOR_IP:4222"}
 
     ntp: &ntp [REPLACE_WITH_NTP_SERVERS]
 
@@ -131,11 +137,11 @@ cloud_provider:
     user: vcap # The user must be as same as above ssh_user
     private_key: ~/bosh
 
-#  mbus: https://mbus-user:mbus-password@REPLACE_WITH_BOSH_PUBLIC_IP:6868
-  mbus: https://mbus-user:mbus-password@REPLACE_WITH_BOSH_DIRECTOR_IP:6868
+#  mbus: https://mbus-user:REPLACE_WITH_MBUS_PASSWORD@REPLACE_WITH_BOSH_PUBLIC_IP:6868
+  mbus: https://mbus-user:REPLACE_WITH_MBUS_PASSWORD@REPLACE_WITH_BOSH_DIRECTOR_IP:6868
 
   properties:
     azure: *azure
-    agent: {mbus: "https://mbus-user:mbus-password@0.0.0.0:6868"}
+    agent: {mbus: "https://mbus-user:REPLACE_WITH_MBUS_PASSWORD@0.0.0.0:6868"}
     blobstore: {provider: local, path: /var/vcap/micro_bosh/data/cache}
     ntp: *ntp

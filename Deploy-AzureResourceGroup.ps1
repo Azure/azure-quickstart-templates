@@ -75,7 +75,7 @@ if ($UploadArtifacts) {
     
     if (Get-Member -InputObject $TemplateFileContent.parameters -Name _artifactsLocation) {
         if (Get-Member -InputObject $TemplateParameters -Name _artifactsLocation) {
-            $OptionalParameters.Add($ArtifactsLocationName, $TemplateParameters._artifactsLocation)
+            $OptionalParameters.Add($ArtifactsLocationName, $TemplateParameters._artifactsLocation.value)
         }                
         else {
             $OptionalParameters.Add($ArtifactsLocationName, $StorageAccountContext.BlobEndPoint + $StorageContainerName)
@@ -84,7 +84,7 @@ if ($UploadArtifacts) {
 
     if (Get-Member -InputObject $TemplateFileContent.parameters -Name _artifactsLocationResourceId) {
         if (Get-Member -InputObject $TemplateParameters -Name _artifactsLocationResourceId) {
-            $OptionalParameters.Add($artifactsLocationResourceIdName, $TemplateParameters._artifactsLocationResourceId)
+            $OptionalParameters.Add($artifactsLocationResourceIdName, $TemplateParameters._artifactsLocationResourceId.value)
         }
         else {
             $OptionalParameters.Add($artifactsLocationResourceIdName, $storageAccount.Id)
@@ -112,7 +112,7 @@ if ($UploadArtifacts) {
     # Generate the value for artifacts location SAS token if it is not provided in the parameter file
     if (Get-Member -InputObject $TemplateFileContent.parameters -Name _artifactsLocationSasToken) {
         if (Get-Member -InputObject $TemplateParameters -Name _artifactsLocationSasToken) {
-            $OptionalParameters.Add($ArtifactsLocationSasTokenName, $TemplateParameters._artifactsLocationSasToken)
+            $OptionalParameters.Add($ArtifactsLocationSasTokenName, $TemplateParameters._artifactsLocationSasToken.value)
         }
         else {
             $ArtifactsLocationSasToken = New-AzureStorageContainerSASToken -Container $StorageContainerName -Context $StorageAccountContext -Permission r -ExpiryTime (Get-Date).AddHours(4)
