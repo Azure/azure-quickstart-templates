@@ -1,8 +1,8 @@
 #!/bin/bash
 
-zabbixServer=$1
-mongoAdminUser=$2
-mongoAdminPasswd=$3
+mongoAdminUser=$1
+mongoAdminPasswd=$2
+zabbixServer=$3
 
 install_mongo3() {
 #create repo
