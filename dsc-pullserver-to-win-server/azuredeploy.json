@@ -1,0 +1,255 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "newStorageAccount": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the new storage account created to store the VMs disks"
+      }
+    },
+    "storageType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_GRS",
+        "Standard_ZRS"
+      ],
+      "metadata": {
+        "description": "The storage type created to store the VMs disks"
+      }
+    },
+    "adminUserName": {
+      "type": "string",
+      "metadata": {
+        "description": "The admin user name for the VM created."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The admin password for the VM created."
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2",
+      "allowedValues": [
+        "Standard_A0",
+        "Standard_A1",
+        "Standard_A2",
+        "Standard_A3",
+        "Standard_A4",
+        "Standard_D1",
+        "Standard_D2",
+        "Standard_D3",
+        "Standard_D4"
+      ],
+      "metadata": {
+        "description": "The machine type for the server vm."
+      }
+    },
+    "dscPullSrvName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the Windows vm."
+      }
+    },
+    "dscPullIPDnsName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the public ip address"
+      }
+    },
+    "assetLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The location of resources such as templates and DSC modules that the script is dependent"
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/dsc-pullserver-to-win-server/"
+    }
+  },
+  "variables": {
+    "VirtualNetworkPrefix": "10.0.0.0/16",
+    "VirtualNetworkSubnet1Name": "Subnet-1",
+    "VirtualNetworkSubnet1Prefix": "10.0.0.0/24",
+    "VirtualNetworkSubnet2Name": "Subnet-2",
+    "VirtualNetworkSubnet2Prefix": "10.0.1.0/24",
+    "dscPullSrvOSDiskName": "osdisk",
+    "dscPullSrvVnetID": "[resourceId('Microsoft.Network/virtualNetworks', 'dscVirtualNetwork')]",
+    "dscPullSrvSubnetRef": "[concat(variables('dscPullSrvVnetID'), '/subnets/', variables('VirtualNetworkSubnet1Name'))]",
+    "dscPullSrvStorageAccountContainerName": "vhds",
+    "dscPullSrvNicName": "dscNetworkInterface",
+    "dscPullIPName": "dscPublicIPAddress",
+    "deployDSCPullServerConfigurationFile": "[concat(parameters('assetLocation'), 'ConfigurePullServer.ps1.zip')]",
+    "deployDSCPullServerConfigurationFunction": "ConfigurePullServer.ps1\\ConfigurePullServer",
+    "windowsOSVersion": "2012-R2-Datacenter",
+    "imagePublisher": "MicrosoftWindowsServer",
+    "imageOffer": "WindowsServer"
+  },
+  "resources": [
+    {
+      "name": "[parameters('newStorageAccount')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-05-01-preview",
+      "dependsOn": [ ],
+      "tags": {
+        "displayName": "Storage"
+      },
+      "properties": {
+        "accountType": "[parameters('storageType')]"
+      }
+    },
+    {
+      "name": "dscVirtualNetwork",
+      "type": "Microsoft.Network/virtualNetworks",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-05-01-preview",
+      "dependsOn": [ ],
+      "tags": {
+        "displayName": "VirtualNetwork"
+      },
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('VirtualNetworkPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('VirtualNetworkSubnet1Name')]",
+            "properties": {
+              "addressPrefix": "[variables('VirtualNetworkSubnet1Prefix')]"
+            }
+          },
+          {
+            "name": "[variables('VirtualNetworkSubnet2Name')]",
+            "properties": {
+              "addressPrefix": "[variables('VirtualNetworkSubnet2Prefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[variables('dscPullSrvNicName')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-05-01-preview",
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', 'dscVirtualNetwork')]"
+      ],
+      "tags": {
+        "displayName": "dscPullSrvNic"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAddress": "10.0.0.5",
+              "privateIPAllocationMethod": "Static",
+              "subnet": {
+                "id": "[variables('dscPullSrvSubnetRef')]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('dscPullIPName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[parameters('dscPullSrvName')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-05-01-preview",
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccount'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('dscPullSrvNicName'))]"
+      ],
+      "tags": {
+        "displayName": "dscPullSrv"
+      },
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('dscPullSrvName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[variables('windowsOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "dscPullSrvOSDisk",
+            "vhd": {
+              "uri": "[concat('http://', parameters('newStorageAccount'), '.blob.core.windows.net/', variables('dscPullSrvStorageAccountContainerName'), '/', variables('dscPullSrvOSDiskName'), '.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('dscPullSrvNicName'))]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "name": "deployDSCPullServer",
+          "type": "extensions",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2015-05-01-preview",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', parameters('dscPullSrvName'))]"
+          ],
+          "tags": {
+            "displayName": "deployDSCPullServer"
+          },
+          "properties": {
+            "publisher": "Microsoft.Powershell",
+            "type": "DSC",
+            "typeHandlerVersion": "2.19",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "modulesUrl": "[variables('deployDSCPullServerConfigurationFile')]",
+              "configurationFunction": "[variables('deployDSCPullServerConfigurationFunction')]",
+              "properties": { }
+            },
+            "protectedSettings": { }
+          }
+        }
+      ]
+    },
+    {
+      "name": "[variables('dscPullIPName')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-05-01-preview",
+      "dependsOn": [ ],
+      "tags": {
+        "displayName": "dscPullIP"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('dscPullIPDnsName')]"
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}
