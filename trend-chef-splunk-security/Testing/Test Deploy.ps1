@@ -8,7 +8,7 @@ Login-AzureRmAccount
 # Login-AzureRmAccount -TenantId xxxx
 
 # To view all subscriptions for your account
-#Get-AzureRmSubscription
+Get-AzureRmSubscription
 
 # To select a default subscription for your current session
 Get-AzureRmSubscription –SubscriptionName “Cloudly Dev (Visual Studio Ultimate)” | Select-AzureRmSubscription
@@ -32,4 +32,4 @@ Get-AzureRmContext
 New-AzureRmResourceGroup -Name datameer-trend-chef -Location "West US"
 
 # deploy the template to the resource group
-New-AzureRmResourceGroupDeployment -Name datameer-trend-chef -ResourceGroupName datameer-trend-chef -TemplateFile ..\azuredeploy.json
+New-AzureRmResourceGroupDeployment -Name ExampleDeployment -ResourceGroupName datameer-trend-chef -TemplateFile ./azuredeploy.json
