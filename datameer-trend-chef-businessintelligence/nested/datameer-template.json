@@ -1,0 +1,180 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+    "contentVersion": "0.9.0.0",
+    "parameters": {
+        "clusterName": {
+            "type": "String",
+            "metadata": {
+                "description": "The name of the HDInsight cluster to create."
+            }
+        },
+        "clusterAdmin": {
+            "type": "String",
+            "metadata": {
+                "description": "The username for administering the HDInsight cluster"
+            }
+        },
+        "clusterPassword": {
+            "type": "String",
+            "metadata": {
+                "description": "The password for administering the HDInsight cluster"
+            }
+        },
+        "sshAdmin": {
+            "type": "String",
+            "metadata": {
+                "description": "The username for SSH access to the HDInsight cluster"
+            }
+        },
+        "sshPassword": {
+            "type": "String",
+            "metadata": {
+                "description": "The password for SSH access to the HDInsight cluster"
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "westus",
+            "allowedValues": [
+                "westus",
+                "eastus",
+                "centralus"
+            ],
+            "metadata": {
+                "description": "Location where all the resources will be deployed"
+            }
+        },
+        "storageAccount": {
+            "type": "String",
+            "metadata": {
+                "description": "The name of the storage account to use"
+            }
+        }
+    },
+    "resources": [
+        {
+            "type": "Microsoft.HDInsight/clusters",
+            "name": "[parameters('clusterName')]",
+            "apiVersion": "2015-03-01-preview",
+            "location": "[parameters('location')]",
+            "properties": {
+                "clusterVersion": "3.2",
+                "osType": "Linux",
+                "tier": "Standard",
+                "clusterDefinition": {
+                    "kind": "hadoop",
+                    "configurations": {
+                        "gateway": {
+                            "restAuthCredential.isEnabled": true,
+                            "restAuthCredential.username": "[parameters('clusterAdmin')]",
+                            "restAuthCredential.password": "[parameters('clusterPassword')]"
+                        },
+                        "core-site": {
+                            "fs.defaultFS": "[concat('wasb://data@', parameters('storageAccount'), '.blob.core.windows.net')]",
+                            "fs.azure.account.key.atstrdtmuswdmo.blob.core.windows.net": "[listKeys(concat('Microsoft.Storage/storageAccounts/', parameters('storageAccount')), '2015-05-01-preview').key1]"
+                        }
+                    }
+                },
+                "computeProfile": {
+                    "roles": [
+                        {
+                            "name": "headnode",
+                            "minInstanceCount": 1,
+                            "targetInstanceCount": 2,
+                            "hardwareProfile": {
+                                "vmSize": "Large"
+                            },
+                            "osProfile": {
+                                "linuxOperatingSystemProfile": {
+                                    "username": "[parameters('sshAdmin')]",
+                                    "password": "[parameters('sshPassword')]"
+                                }
+                            },
+                            "virtualNetworkProfile": {
+                                "id": "###TOBEDONE###",
+                                "subnet": "###TOBEDONE###"
+                            },
+                            "scriptActions": []
+                        },
+                        {
+                            "name": "workernode",
+                            "minInstanceCount": 1,
+                            "targetInstanceCount": 2,
+                            "hardwareProfile": {
+                                "vmSize": "Large"
+                            },
+                            "osProfile": {
+                                "linuxOperatingSystemProfile": {
+                                    "username": "[parameters('sshAdmin')]",
+                                    "password": "[parameters('sshPassword')]"
+                                }
+                            },
+                            "virtualNetworkProfile": {
+                                "id": "###TOBEDONE###",
+                                "subnet": "###TOBEDONE###"
+                            },
+                            "scriptActions": []
+                        },
+                        {
+                            "name": "zookeepernode",
+                            "minInstanceCount": 1,
+                            "targetInstanceCount": 3,
+                            "hardwareProfile": {
+                                "vmSize": "Small"
+                            },
+                            "osProfile": {
+                                "linuxOperatingSystemProfile": {
+                                    "username": "[parameters('sshAdmin')]",
+                                    "password": "[parameters('sshPassword')]"
+                                }
+                            },
+                            "virtualNetworkProfile": {
+                                "id": "###TOBEDONE###",
+                                "subnet": "###TOBEDONE###"
+                            },
+                            "scriptActions": []
+                        }
+                    ]
+                }
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccount'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[parameters('storageAccount')]",
+            "apiVersion": "2015-05-01-preview",
+            "location": "[parameters('location')]",
+            "properties": {
+                "accountType": "Standard_LRS"
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "name": "datameerdatameer_2016-08-12T19.37.23.326Z",
+            "apiVersion": "2015-01-01",
+            "properties": {
+                "mode": "incremental",
+                "templateLink": {
+                    "uri": "https://gallery.azure.com/artifact/20151001/datameer.datameerdatameer.1.0.2/Artifacts/mainTemplate.json",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "clusterName": {
+                        "value": "[parameters('clusterName')]"
+                    },
+                    "galleryPackageIdentity": {
+                        "value": "datameer.datameerdatameer.1.0.2"
+                    },
+                    "edgeNodeSize": {
+                        "value": "STANDARD_D3_V2"
+                    }
+                }
+            },
+            "dependsOn": [
+                "[concat('Microsoft.HDInsight/clusters/', parameters('clusterName'))]"
+            ]
+        }
+    ]
+}
