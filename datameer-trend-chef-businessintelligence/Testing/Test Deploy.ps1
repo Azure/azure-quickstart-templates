@@ -3,6 +3,7 @@ Get-Module –ListAvailable
 
 $path = ".\DONOTCHECKIN-LoggedInServicePrincipal.json"
 
+# To login to Azure Resource Manager
 if(![System.IO.File]::Exists($path)){
     # file with path $path doesn't exist
 
@@ -14,15 +15,6 @@ if(![System.IO.File]::Exists($path)){
 Select-AzureRmProfile -Path $path
 
 
-# To login to Azure Resource Manager
-
-
-# You can also use a specific Tenant if you would like a faster login experience
-# Login-AzureRmAccount -TenantId xxxx
-
-# To view all subscriptions for your account
-#Get-AzureRmSubscription
-
 # To select a default subscription for your current session
 Get-AzureRmSubscription –SubscriptionName “Cloudly Dev (Visual Studio Ultimate)” | Select-AzureRmSubscription
 
@@ -31,18 +23,19 @@ Get-AzureRmSubscription –SubscriptionName “Cloudly Dev (Visual Studio Ultimate)”
 Get-AzureRmContext
 
 
-
+#----------- PARAMETERS--------
+#------------------------------
+$resourceGroup = "datameer-hdinsight-1"
+$deploymentName = "datameer-trend-chef"
 
 #Create Resource Group
-New-AzureRmResourceGroup -Name datameer-trend-chef -Location "West US"
+New-AzureRmResourceGroup -Name $resourceGroup -Location "West US"
 
 # deploy the template to the resource group
-#New-AzureRmResourceGroupDeployment -Name datameer-trend-chef -ResourceGroupName datameer-trend-chef -TemplateFile ..\azuredeploy.json
+#New-AzureRmResourceGroupDeployment -Name datameer-trend-chef -ResourceGroupName $resourceGroup -TemplateFile ..\azuredeploy.json -TemplateParameterFile ..\azuredeploy.parameters.json
 
 #Standalonee Datameer-HDInsight Deploy
-#New-AzureRmResourceGroupDeployment -Name datameer-trend-chef -ResourceGroupName datameer-trend-chef -TemplateFile ..\nested\datameer-hdinsight.json
-
-
+New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $resourceGroup -TemplateFile ..\nested\datameer-hdinsight.json -TemplateParameterFile ..\nested\datameer-hdinsight.parameters.json
 
 
 
