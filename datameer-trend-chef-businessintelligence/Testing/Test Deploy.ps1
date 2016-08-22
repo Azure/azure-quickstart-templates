@@ -1,6 +1,3 @@
-# To make sure the Azure PowerShell module is available after you install
-Get-Module –ListAvailable 
-
 $path = ".\DONOTCHECKIN-LoggedInServicePrincipal.json"
 
 # To login to Azure Resource Manager
@@ -20,13 +17,14 @@ Get-AzureRmSubscription –SubscriptionName “Cloudly Dev (Visual Studio Ultimate)”
 
 # View your current Azure PowerShell session context
 # This session state is only applicable to the current session and will not affect other sessions
-Get-AzureRmContext
+#Get-AzureRmContext
 
 
 #----------- PARAMETERS--------
 #------------------------------
-$resourceGroup = "datameer-hdinsight-1"
-$deploymentName = "datameer-trend-chef"
+$resourceGroup = "datameer-hdinsight" 
+$deploymentName = "datameer-hdinsight-deploy--" + [System.DateTime]::Now.ToString("dd-MMMM-yyyy")
+
 
 #Create Resource Group
 New-AzureRmResourceGroup -Name $resourceGroup -Location "West US"
@@ -36,20 +34,3 @@ New-AzureRmResourceGroup -Name $resourceGroup -Location "West US"
 
 #Standalonee Datameer-HDInsight Deploy
 New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $resourceGroup -TemplateFile ..\nested\datameer-hdinsight.json -TemplateParameterFile ..\nested\datameer-hdinsight.parameters.json
-
-
-
-
-
-
-
-# -------------- TRIALS --------------------------
-# To select the default storage context for your current session
-#Set-AzureRmCurrentStorageAccount –ResourceGroupName “1-datameer-trend-chef” –StorageAccountName “your storage account name”
-
-# View your current Azure PowerShell session context
-# Note: the CurrentStorageAccount is now set in your session context
-##Get-AzureRmContext
-
-# To list all of the blobs in all of your containers in all of your accounts
-##Get-AzureRmStorageAccount | Get-AzureStorageContainer | Get-AzureStorageBlob
