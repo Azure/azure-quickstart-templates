@@ -330,13 +330,68 @@
         "description": "Count of Linux Deep Security Agents to deploy"
       }
     },
+    "clusterType": {
+      "type": "string",
+      "allowedValues": [
+        "hadoop",
+        "hbase",
+        "storm",
+        "spark"
+      ],
+      "metadata": {
+        "description": "The type of the HDInsight cluster to create."
+      }
+    },
+    "clusterName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the HDInsight cluster to create."
+      }
+    },
+    "clusterLoginUserName": {
+      "type": "string",
+      "metadata": {
+        "description": "These credentials can be used to submit jobs to the cluster and to log into cluster dashboards."
+      }
+    },
+    "clusterLoginPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The password must be at least 10 characters in length and must contain at least one digit, one non-alphanumeric character, and one upper or lower case letter."
+      }
+    },
+    "sshUserName": {
+      "type": "string",
+      "metadata": {
+        "description": "These credentials can be used to remotely access the cluster."
+      }
+    },
+    "sshPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The password must be at least 10 characters in length and must contain at least one digit, one non-alphanumeric character, and one upper or lower case letter."
+      }
+    },
+    "clusterWorkerNodeCount": {
+      "type": "int",
+      "defaultValue": 2,
+      "metadata": {
+        "description": "The number of nodes in the HDInsight cluster."
+      }
+    },
+    "storageAccount": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the storage account to use"
+      }
+    },
     "baseUrl": {
       "type": "string",
       "metadata": {
         "description": "The base URL for dependent deployment files",
         "artifactsBaseUrl": ""
       },
-      "defaultValue": "https://raw.githubusercontent.com/uday-sg/azure-quickstart-templates/add-trend-push-to-pilot/trend-chef-splunk-security"
+      "defaultValue": "https://github.com/AvyanConsultingCorp/azure-quickstart-templates/tree/master/datameer-trend-chef-businessintelligence"
     }
   },
   "variables": {
@@ -356,7 +411,7 @@
     "networkSecurityGroupNameChefServer": "[concat(variables('networkInterfaceNameChefServer'),'-nsg')]",
     "networkSecurityGroupNameSplunkEnterprise": "[concat(variables('networkInterfaceNameSplunkEnterprise'),'-nsg')]",
     "networkSecurityGroupNameOrchServer": "[concat(variables('networkInterfaceNameOrchServer'),'-nsg')]",
-    "virtualNetworkName": "trendMicroP2PVnet",
+    "virtualNetworkName": "datameerp2pVnet",
     "vnetAddressPrefix": "10.7.0.0/16",
     "subnet1Name": "trendMicroDSMsubnet",
     "subnet1Prefix": "10.7.0.0/24",
@@ -367,6 +422,8 @@
     "subnet3StartAddress": "10.7.2.5",
     "subnet4Name": "vmsubnet",
     "subnet4Prefix": "10.7.3.0/24",
+    "clusterVnetAddressSpace": "10.7.0.0/16",
+    "clusterVNetSubnetAddressRange": "10.7.4.0/24",
     "publicIPAddressType": "Dynamic",
     "publicIPAddressNameTrendDSM": "publicIPTrendDSM",
     "publicIPAddressNameChefServer": "publicIPChefServer",
@@ -453,6 +510,18 @@
         ]
       }
     },
+    "datameerHDInsightCluster": {
+      "clusterName": "[parameters('clusterName')]",
+      "standaloneTemplateUrl": "[concat(parameters('baseUrl'), '/nested/datameer-hdinsight.json')]",
+      "clusterType": "[parameters('clusterType]",
+      "clusterLoginUserName": "[parameters('clusterLoginUserName]",
+      "clusterLoginPassword": "[parameters('clusterLoginPassword]",
+      "sshUserName": "[parameters('sshUserName]",
+      "sshPassword": "[parameters('sshPassword]",
+      "storageAccount": "[parameters('storageAccount]",
+      "clusterVnetAddressSpace":"[parameters('clusterVnetAddressSpace]",
+      "clusterVNetSubnetAddressRange":"[parameters('clusterVNetSubnetAddressRange]"
+    },
     "osSettingsSplunk": {
       "imageReference": {
         "publisher": "splunk",
@@ -508,8 +577,8 @@
     "TenantIdentifier": "NA",
     "TenantActivationPassword": "NA",
     "tagvalues": {
-      "program": "p2p",
-      "project": "TrendMicro"
+      "program": "PushToPilot",
+      "project": "DatameerTrendHDInsight"
     },
     "vmAuthTypeTrendDSM": "password",
     "vmAdminSshPublicKeyTrendDSM": "",
@@ -955,6 +1024,50 @@
           },
           "udpPort": {
             "value": "[variables('udpPort')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('deployment-api-version2')]",
+      "type": "Microsoft.Resources/deployments",
+      "name": "DatameerHDInsight",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('datameerHDInsightCluster').standaloneTemplateUrl]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[variables('location')]"
+          },
+          "clusterName": {
+            "value": "[variables('datameerHDInsightCluster').clusterName]"
+          },
+          "clusterType": {
+            "value": "variables('datameerHDInsightCluster').clusterType]"
+          }, 
+          "clusterLoginUserName": {
+            "value": "variables('datameerHDInsightCluster').clusterLoginUserName"
+          }, 
+          "clusterLoginPassword": {
+            "value": "variables('datameerHDInsightCluster').clusterLoginPassword"
+          }, 
+          "sshUserName": {
+            "value": "variables('datameerHDInsightCluster').sshUserName"
+          }, 
+          "sshPassword": {
+            "value": "variables('datameerHDInsightCluster').sshPassword]"
+          }, 
+          "storageAccount": {
+            "value": "variables('datameerHDInsightCluster').storageAccount"
+          },
+          "clusterVnetAddressSpace": {
+            "value": "variables('datameerHDInsightCluster').clusterVnetAddressSpace"
+          },
+          "clusterVNetSubnetAddressRange": {
+            "value": "variables('datameerHDInsightCluster').clusterVNetSubnetAddressRange"
           }
         }
       }

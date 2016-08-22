@@ -30,7 +30,7 @@ $deploymentName = "datameer-hdinsight-deploy--" + [System.DateTime]::Now.ToStrin
 New-AzureRmResourceGroup -Name $resourceGroup -Location "West US"
 
 # deploy the template to the resource group
-#New-AzureRmResourceGroupDeployment -Name datameer-trend-chef -ResourceGroupName $resourceGroup -TemplateFile ..\azuredeploy.json -TemplateParameterFile ..\azuredeploy.parameters.json
+New-AzureRmResourceGroupDeployment -Name datameer-trend-chef -ResourceGroupName $resourceGroup -TemplateFile ..\azuredeploy.json -TemplateParameterFile ..\azuredeploy.parameters.json
 
 #Standalonee Datameer-HDInsight Deploy
-New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $resourceGroup -TemplateFile ..\nested\datameer-hdinsight.json -TemplateParameterFile ..\nested\datameer-hdinsight.parameters.json
+#New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $resourceGroup -TemplateFile ..\nested\datameer-hdinsight.json -TemplateParameterFile ..\nested\datameer-hdinsight.parameters.json
