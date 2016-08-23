@@ -3,8 +3,6 @@
 PARITY_DEB_URL=https://vanity-service.ethcore.io/github-data/latest-parity-deb
 PASSWORD=$1
 
-export HOME="/root"
-
 echo "home: $HOME"
 echo "user: $(whoami)"
 
@@ -25,10 +23,11 @@ rm $file
 #####################
 # create an account #
 #####################
-echo $PASSWORD > $HOME/.parity-pass
+passfile=$HOME/.parity-pass
+echo $PASSWORD | tee -a $passfile
 
 expect_out= expect -c "
-spawn sudo parity account new
+spawn parity account new
 puts $HOME
 expect \"Type password: \"
 send ${PASSWORD}\n
@@ -39,7 +38,7 @@ interact
 
 echo $expect_out
 
-address=0x$(parity account list | awk 'END{print}' | tr -cd '[[:alnum:]]._-')
+address=0x$(parity account list | sed 's/\[\(.*\)\]/\1/g')
 
 echo "address: $address"
 
@@ -89,12 +88,13 @@ cat > $HOME/chain.json <<EOL
 }
 EOL
 
-command="parity --chain $HOME/chain.json --author ${address} --unlock ${address} --password $HOME/.parity-pass --rpccorsdomain \"*\" --jsonrpc-interface all >&1 1>>/var/log/parity.log 2>&1 &"
+#command="parity --chain $HOME/chain.json --author ${address} --unlock ${address} --password $passfile --rpccorsdomain \"*\" --jsonrpc-interface all >&1 1>>/var/log/parity.log 2>&1 &"
+command="parity --chain $HOME/chain.json --author ${address} --unlock ${address} --password $passfile --rpccorsdomain \"*\" --jsonrpc-interface all --jsonrpc-hosts all >&1 1>>$HOME/parity.log 2>&1 &"
 
 printf "%s\n%s" "#!/bin/sh" "$command" | sudo tee /etc/init.d/parity
 
 sudo chmod +x /etc/init.d/parity
 sudo update-rc.d parity defaults
 
-sudo service parity start
+service parity start
 
