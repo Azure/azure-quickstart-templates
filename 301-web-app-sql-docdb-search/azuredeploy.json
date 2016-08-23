@@ -2,12 +2,13 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "databaseAccountName": {
+    "costCenter": {
       "type": "string",
       "minLength": 3,
       "metadata": {
-        "description": "The DocumentDB database account name."
-      }
+        "description": "The cost center for these resources."
+      },
+      "defaultValue": "31337-H4X"
     },
     "consistencyLevel": {
       "type": "string",
@@ -45,20 +46,15 @@
       "minLength": 1,
       "metadata": {
         "description": "The SQL server admin username."
-      }
+      },
+      "defaultValue": "demosqlsa"
     },
     "sqlServerAdminLoginPassword": {
       "type": "securestring",
       "metadata": {
         "description": "The SQL server admin password"
-      }
-    },
-    "sqlDatabaseName": {
-      "type": "string",
-      "minLength": 1,
-      "metadata": {
-        "description": "The SQL database name"
-      }
+      },
+      "defaultValue": "!Slalom@zure2016!"
     },
     "sqlDatabaseCollation": {
       "type": "string",
@@ -94,13 +90,6 @@
       ],
       "metadata": {
         "description": "Describes the performance level for Edition"
-      }
-    },
-    "webAppName": {
-      "type": "string",
-      "minLength": 1,
-      "metadata": {
-        "description": "The name of the Web App"
       }
     },
     "webAppSKU": {
@@ -140,12 +129,6 @@
       ],
       "metadata": {
         "description": "The storage account type"
-      }
-    },
-    "azureSearchname": {
-      "type": "string",
-      "metadata": {
-        "description": "The azure search instance name"
       }
     },
     "azureSearchSku": {
@@ -202,20 +185,26 @@
     }
   },
   "variables": {
-    "sqlServerName": "[concat(uniquestring(resourceGroup().id), 'sqlserver')]",
-    "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'storage')]"
+    "sqlServerName": "[concat('sqlserver', uniquestring(resourceGroup().id))]",
+    "storageAccountName": "[concat('storage', uniquestring(resourceGroup().id))]",
+    "webAppName": "[concat('web', uniquestring(resourceGroup().id))]",
+    "sqlDatabaseName": "[concat('database', uniquestring(resourceGroup().id))]",
+    "azureSearchName": "[concat('search', uniquestring(resourceGroup().id))]",
+    "documentDbServiceName": "[concat('docdb', uniquestring(resourceGroup().id))]",
+    "appInsightsName": "[concat('appinsights', uniquestring(resourceGroup().id))]"
   },
   "resources": [
     {
       "apiVersion": "2015-04-08",
       "type": "Microsoft.DocumentDB/databaseAccounts",
-      "name": "[parameters('databaseAccountName')]",
+      "name": "[variables('documentDbServiceName')]",
       "location": "[resourceGroup().location]",
       "tags": {
-        "displayName": "DocumentDB"
+        "displayName": "DocumentDB",
+        "costCenter": "[parameters('costCenter')]"
       },
       "properties": {
-        "name": "[parameters('databaseAccountName')]",
+        "name": "[variables('documentDbServiceName')]",
         "databaseAccountOfferType": "[parameters('documentDBofferType')]",
         "consistencyPolicy": {
           "defaultConsistencyLevel": "[parameters('consistencyLevel')]",
@@ -231,7 +220,8 @@
       "apiVersion": "2014-04-01-preview",
       "dependsOn": [ ],
       "tags": {
-        "displayName": "SQL Server"
+        "displayName": "SQL Server",
+        "costCenter": "[parameters('costCenter')]"
       },
       "properties": {
         "administratorLogin": "[parameters('sqlServerAdminLogin')]",
@@ -253,7 +243,7 @@
           }
         },
         {
-          "name": "[parameters('sqlDatabaseName')]",
+          "name": "[variables('sqlDatabaseName')]",
           "type": "databases",
           "location": "[resourceGroup().location]",
           "apiVersion": "2014-04-01-preview",
@@ -261,7 +251,8 @@
             "[variables('sqlServerName')]"
           ],
           "tags": {
-            "displayName": "SQL Database"
+            "displayName": "SQL Database",
+            "costCenter": "[parameters('costCenter')]"
           },
           "properties": {
             "collation": "[parameters('sqlDatabaseCollation')]",
@@ -273,36 +264,38 @@
       ]
     },
     {
-      "name": "[parameters('webAppName')]",
+      "name": "[variables('webAppName')]",
       "type": "Microsoft.Web/serverfarms",
       "location": "[resourceGroup().location]",
       "apiVersion": "2014-06-01",
       "dependsOn": [ ],
       "tags": {
-        "displayName": "App Service Plan"
+        "displayName": "App Service Plan",
+        "costCenter": "[parameters('costCenter')]"
       },
       "properties": {
-        "name": "[parameters('webAppName')]",
+        "name": "[variables('webAppName')]",
         "sku": "[parameters('webAppSKU')]",
         "workerSize": "[parameters('workerSize')]",
         "numberOfWorkers": 1
       }
     },
     {
-      "name": "[parameters('webAppName')]",
+      "name": "[variables('webAppName')]",
       "type": "Microsoft.Web/sites",
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-08-01",
       "dependsOn": [
-        "[concat('Microsoft.Web/serverfarms/', parameters('webAppName'))]"
+        "[concat('Microsoft.Web/serverfarms/', variables('webAppName'))]"
       ],
       "tags": {
-        "[concat('hidden-related:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', parameters('webAppName'))]": "Resource",
-        "displayName": "Web App"
+        "[concat('hidden-related:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('webAppName'))]": "Resource",
+        "displayName": "Web App",
+        "costCenter": "[parameters('costCenter')]"
       },
       "properties": {
-        "name": "[parameters('webAppName')]",
-        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms/', parameters('webAppName'))]"
+        "name": "[variables('webAppName')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms/', variables('webAppName'))]"
       },
       "resources": [
         
@@ -315,7 +308,8 @@
       "apiVersion": "2015-06-15",
       "dependsOn": [ ],
       "tags": {
-        "displayName": "Storage Account"
+        "displayName": "Storage Account",
+        "costCenter": "[parameters('costCenter')]"
       },
       "properties": {
         "accountType": "[parameters('storageAccountType')]"
@@ -323,11 +317,12 @@
     },
     {
       "apiVersion": "2015-02-28",
-      "name": "[parameters('azureSearchname')]",
+      "name": "[variables('azureSearchName')]",
       "type": "Microsoft.Search/searchServices",
       "location": "[resourceGroup().location]",
       "tags": {
-        "displayName": "Azure Search"
+        "displayName": "Azure Search",
+        "costCenter": "[parameters('costCenter')]"
       },
       "properties": {
         "sku": {
@@ -338,18 +333,19 @@
       }
     },
       {
-          "name": "appinsights",
+          "name": "[variables('appInsightsName')]",
           "type": "Microsoft.Insights/components",
           "location": "Central US",
           "apiVersion": "2014-04-01",
         "dependsOn": [
-          "[concat('Microsoft.Web/sites/', parameters('webAppName'))]"
+          "[concat('Microsoft.Web/sites/', variables('webAppName'))]"
         ],
           "tags": {
-              "displayName": "Application Insights"
+              "displayName": "Application Insights",
+              "costCenter": "[parameters('costCenter')]"
           },
         "properties": {
-          "applicationId": "[parameters('webAppName')]"
+          "applicationId": "[variables('webAppName')]"
         }
       }
 
