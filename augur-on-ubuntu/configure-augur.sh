@@ -50,6 +50,7 @@ time sudo pip install requests --upgrade
 time sudo pip install pyethapp
 
 time sudo apt-get update
+time sudo apt-get upgrade -y
 
 ##################
 # Install node.js
