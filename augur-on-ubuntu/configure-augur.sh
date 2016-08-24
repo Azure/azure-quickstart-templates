@@ -46,6 +46,7 @@ time sudo apt-get install -y python-dev
 time sudo apt-get install -y python-pip
 git clone https://github.com/ethereum/serpent
 cd serpent
+git checkout develop
 time make
 time sudo make install
 time sudo python setup.py install
