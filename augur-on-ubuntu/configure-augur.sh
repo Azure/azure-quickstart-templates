@@ -14,11 +14,13 @@ LOCATION=$2
 VMNAME=`hostname`
 HOMEDIR="/home/$AZUREUSER"
 ETHEREUM_HOST_RPC="http://${VMNAME}.${LOCATION}.cloudapp.azure.com:8545"
+ETHEREUM_HOST_WS="ws://${VMNAME}.${LOCATION}.cloudapp.azure.com:8546"
 
 echo "User: $AZUREUSER"
 echo "User home dir: $HOMEDIR"
 echo "vmname: $VMNAME"
 echo "HOST_RPC: $ETHEREUM_HOST_RPC"
+echo "HOST_WS: $ETHEREUM_HOST_WS"
 
 cd $HOMEDIR
 
@@ -75,6 +77,7 @@ sudo -u $AZUREUSER wget https://raw.githubusercontent.com/kevinday/azure-quickst
 sudo -u $AZUREUSER wget https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/master/augur-on-ubuntu/init_contracts.js
 sudo -u $AZUREUSER wget https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/master/augur-on-ubuntu/env.json
 sudo -u $AZUREUSER sed -i "s|azure_http_url|$ETHEREUM_HOST_RPC|g" env.json
+sudo -u $AZUREUSER sed -i "s|azure_ws_url|$ETHEREUM_HOST_WS|g" env.json
 sudo -u $AZUREUSER sed -i "s|auguruser|$AZUREUSER|g" geth.conf
 sudo -u $AZUREUSER sed -i "s|auguruser|$AZUREUSER|g" augur_ui.conf
 
