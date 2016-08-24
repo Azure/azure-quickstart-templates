@@ -28,7 +28,7 @@ passfile=$HOME/.parity-pass
 echo $PASSWORD | tee -a $passfile
 
 expect_out= expect -c "
-spawn parity account new
+sudo spawn parity account new
 puts $HOME
 expect \"Type password: \"
 send ${PASSWORD}\n
