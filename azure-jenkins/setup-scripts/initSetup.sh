@@ -16,9 +16,9 @@ if [ ! -f $SETUP_SCRIPTS_LOCATION ]; then
        echo "Downloading azure configuration scripts.... " > $temp
 
        #downloading jenkins azure storage job configuration script
-       sudo curl -o $SETUP_SCRIPTS_LOCATION$CONFIG_JENKINS_JOB_SCRIPT $SOURCE_URI$CONFIG_JENKINS_JOB_SCRIPT
+       sudo wget -O $SETUP_SCRIPTS_LOCATION$CONFIG_JENKINS_JOB_SCRIPT $SOURCE_URI$CONFIG_JENKINS_JOB_SCRIPT
        #downloading service princeple script
-       sudo curl -o $SETUP_SCRIPTS_LOCATION$SET_AZURE_CREDENTIAL_SCRIPT $SOURCE_URI$SET_AZURE_CREDENTIAL_SCRIPT
+       sudo wget -O $SETUP_SCRIPTS_LOCATION$SET_AZURE_CREDENTIAL_SCRIPT $SOURCE_URI$SET_AZURE_CREDENTIAL_SCRIPT
 
        echo "Download is complete. " >> $temp
 
