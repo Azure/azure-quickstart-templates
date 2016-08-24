@@ -21,3 +21,5 @@ You can click the "Deploy to Azure" button at the beginning of this document to 
 ## Note
 
 This template use a base image which will be updated regularly to include new features for azure plugin on jenkins. Readme will be updated accordingly.
+
+DO NOT CHANGE ANYTHING in the setup-scripts

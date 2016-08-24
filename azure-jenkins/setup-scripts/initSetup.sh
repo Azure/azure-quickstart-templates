@@ -1,4 +1,4 @@
-#! /bin/bash
+#!/bin/bash
 
 CURRENT_USER=$(whoami)
 SETUP_SCRIPTS_LOCATION="/tmp/azurejenkinslog/"
@@ -6,7 +6,7 @@ SETUP_SCRIPT="initSetup.sh"
 SETUP_SCRIPT_LOG="initsetupbm.log"
 CONFIG_JENKINS_JOB_SCRIPT="config_storage.sh"
 SET_AZURE_CREDENTIAL_SCRIPT="set_azure_credentials.sh"
-SOURCE_URI="https://raw.githubusercontent.com/azure-quickstart-templates/master/azure-jenkins/setup-scripts/"
+SOURCE_URI="https://raw.githubusercontent.com/arroyc/azure-quickstart-templates/master/azure-jenkins/setup-scripts/"
 temp=$(mktemp)
 
 if [ ! -f $SETUP_SCRIPTS_LOCATION ]; then
