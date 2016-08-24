@@ -1,0 +1,88 @@
+---
+name: concourse
+
+# replace with `bosh status --uuid`
+director_uuid: REPLACE_WITH_DIRECTOR_ID
+
+releases:
+- name: concourse
+  version: latest
+- name: garden-runc
+  version: latest
+
+stemcells:
+- alias: trusty
+  name: bosh-azure-hyperv-ubuntu-trusty-go_agent
+  version: latest
+
+instance_groups:
+- name: web
+  instances: 1
+  # replace with a VM type from your BOSH Director's cloud config
+  vm_type: concourse_web_or_db
+  stemcell: trusty
+  azs: [z1]
+  networks: [{name: concourse, default: [dns, gateway]}, {name: public, static_ips: [REPLACE_WITH_CONCOURSE_PUBLIC_IP]}]
+  jobs:
+  - name: atc
+    release: concourse
+    properties:
+      # replace with your CI's externally reachable URL, e.g. https://ci.foo.com
+      external_url: http://REPLACE_WITH_CONCOURSE_PUBLIC_IP:8080
+
+      # replace with username/password, or configure GitHub auth
+      basic_auth_username: REPLACE_WITH_CONCOURSE_USERNAME
+      basic_auth_password: REPLACE_WITH_CONCOURSE_PASSWORD
+
+      postgresql_database: &atc_db atc
+  - name: tsa
+    release: concourse
+    properties: {}
+
+- name: db
+  instances: 1
+  # replace with a VM type from your BOSH Director's cloud config
+  vm_type: concourse_web_or_db
+  stemcell: trusty
+  # replace with a disk type from your BOSH Director's cloud config
+  persistent_disk_type: default
+  azs: [z1]
+  networks: [{name: concourse}]
+  jobs:
+  - name: postgresql
+    release: concourse
+    properties:
+      databases:
+      - name: *atc_db
+        # make up a role and password
+        role: REPLACE_WITH_CONCOURSE_DB_ROLE_NAME
+        password: REPLACE_WITH_CONCOURSE_DB_ROLE_PASSWORD
+
+- name: worker
+  instances: 1
+  # replace with a VM type from your BOSH Director's cloud config
+  vm_type: concourse_worker
+  stemcell: trusty
+  azs: [z1]
+  networks: [{name: concourse}]
+  jobs:
+  - name: groundcrew
+    release: concourse
+    properties: {}
+  - name: baggageclaim
+    release: concourse
+    properties: {}
+  - name: garden
+    release: garden-runc
+    properties:
+      garden:
+        graph_cleanup_threshold_in_mb: REPLACE_WITH_CONCOURSE_GRAPH_CLEANUP_THRESHOLD
+        listen_network: tcp
+        listen_address: 0.0.0.0:7777
+
+update:
+  canaries: 1
+  max_in_flight: 1
+  serial: false
+  canary_watch_time: 1000-60000
+  update_watch_time: 1000-60000
