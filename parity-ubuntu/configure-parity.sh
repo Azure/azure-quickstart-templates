@@ -2,7 +2,9 @@
 
 PARITY_DEB_URL=https://vanity-service.ethcore.io/github-data/latest-parity-deb
 PASSWORD=$1
+USER=$2
 
+su - $USER
 
 echo "home: $HOME"
 echo "user: $(whoami)"
