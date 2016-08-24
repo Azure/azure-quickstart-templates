@@ -19,6 +19,10 @@ $OMSWorkspaceId = Get-AutomationVariable -Name 'OMSWorkspaceId'
 $OMSWorkspaceKey = Get-AutomationVariable -Name 'OMSWorkspaceKey'
 $OMSWorkspaceName = Get-AutomationVariable -Name 'OMSWorkspaceName'
 $OMSResourceGroupName = Get-AutomationVariable -Name 'OMSResourceGroupName'
+$AzureSubscriptionId = Get-AutomationVariable -Name 'AzureSubscriptionId'
+
+# Looking for Azure Site Recovery vaults in the subscription...
+
 
 $vaults = Find-AzureRmResource `
                                -ResourceType microsoft.recoveryservices/vaults
@@ -26,20 +30,19 @@ $vaults = Find-AzureRmResource `
 foreach ($vault in $vaults)
 {
     $vaultsettings = Get-AzureRmRecoveryServicesVault `
-                    -Name $vault.name -ResourceGroupName $vault.resourcegroupname
-                
+                    -Name $vault.name -ResourceGroupName $vault.resourcegroupname              
 
 # Setting vault context
 
 $location = $vault.Location
+
+
 Set-AzureRmSiteRecoveryVaultSettings `
                                      -ARSVault $vaultsettings
                                       
 $con = Get-AzureRmSiteRecoveryProtectionContainer
 
-if ([string]::IsNullOrEmpty($con) -eq $true)
-
-    {
+if ([string]::IsNullOrEmpty($con) -eq $true) {
         Write-Output "ASR Recovery Vault isn't completely configured yet. No data to ingest from the specific Recovery Vault at this point"
     }
 else {
@@ -49,7 +52,6 @@ $heartbeat = ([datetime]$DRServer.LastHeartbeat).ToUniversalTime().ToString('yyy
 	$Table = @()
 foreach ($c in $con) {
     $protectionEntity = Get-AzureRmSiteRecoveryProtectionEntity -ProtectionContainer $c
-
     if ($protectionentity.ReplicationProvider -eq "InMageAzureV2") {
         foreach ($entity in $protectionEntity) {
             $sx = New-Object PSObject -Property @{
@@ -60,7 +62,8 @@ foreach ($c in $con) {
             ReplicationHealth = $entity.ReplicationHealth;
             ReplicationProvider = $entity.ReplicationProvider;
             ActiveLocation = $entity.ActiveLocation;
-            TestFailoverStateDescription = $entity.TestFailoverDescription
+            TestFailoverStateDescription = $entity.TestFailoverDescription;
+            SubscriptionId = $AzureSubscriptionId
 	    }
 	    $table = $table += $sx
  
@@ -87,7 +90,8 @@ foreach ($c in $con) {
             SiteRecoveyServerConnectionStatus = $drserver.Connected;
             SiteRecoveryServerProviderVersion = $drserver.ProviderVersion;
             SiteRecoveryServerServerVersion = $drserver.ServerVersion;
-            SiteRecoveryServer = $DRServer.FriendlyName             
+            SiteRecoveryServer = $DRServer.FriendlyName;
+            SubscriptionId = $AzureSubscriptionId             
 	    }
 	    $table = $table += $sx
  
@@ -98,21 +102,20 @@ foreach ($c in $con) {
     Send-OMSAPIIngestionData -customerId $OMSWorkspaceId -sharedKey $OMSWorkspaceKey -body $jsonTable -logType $logType
         }
      }
-   }
 
-$Table2 = @()
+# Getting ASR Protection Info
     foreach ($c in $con) {
     $recoveryVm = Get-AzureRmSiteRecoveryVM -ProtectionContainer $c | where-object {$_.ProtectionStatus -eq "Protected"}
 	foreach($rVm in $recoveryVm) {        
-       if ($rvm.ReplicationProvider -eq "InMageAzureV2")
-       {
+       if ($rvm.ReplicationProvider -eq "InMageAzureV2") {
             $vnetInfo = "None"
             $vnetRgName = "None"
             $storageInfo = "None"
             $storageRgName = "None"
             $storageName = "None"
-            
-         $sx2 = New-Object PSObject -Property @{
+         
+         $vmwaretable = @()   
+         $vmware = New-Object PSObject -Property @{
 	        VMName = $rVm.FriendlyName;
             vNetName = $vnetInfo;
             vNetResourceGroup = $vnetRgName;
@@ -124,19 +127,20 @@ $Table2 = @()
             ActiveLocation = $rVm.ActiveLocation;
             TestFailoverStateDescription = $rVm.TestFailoverStateDescription;
             ReplicationProvider = $rVm.ReplicationProvider;
-            ProtectionStatus = $rVm.ProtectionStatus             
+            ProtectionStatus = $rVm.ProtectionStatus;
+            SubscriptionId = $AzureSubscriptionId             
 	            }      
-	    $table2 = $table2 += $sx2 
+	    $vmwaretable = $vmwaretable += $vmware
  
-      $jsonTable2 = ConvertTo-Json -InputObject $table2
+      $vmwaretable = ConvertTo-Json -InputObject $vmwaretable
       
-     $jsonTable2
+     $vmwaretable
      $logType2 = "ASRProtection"      
-     Send-OMSAPIIngestionData -customerId $OMSWorkspaceId -sharedKey $OMSWorkspaceKey -body $jsonTable2 -logType $logType2
+     Send-OMSAPIIngestionData -customerId $OMSWorkspaceId -sharedKey $OMSWorkspaceKey -body $vmwaretable -logType $logType2
       }         
         else {
-        if($rVm.SelectedRecoveryAzureNetworkId -ne $null)
-        {
+        if($rVm.SelectedRecoveryAzureNetworkId -ne $null) {
+            foreach ($r in $rvm) {        
         $vnetInfo = $rVm.SelectedRecoveryAzureNetworkId.split("/")
         $vnetRgName = $vnetInfo[4]
         $vnetName = $vnetInfo[8]
@@ -144,7 +148,8 @@ $Table2 = @()
         $storageRgName = $storageInfo[4]
         $storageName = $storageInfo[8]
 
-	    $sx2 = New-Object PSObject -Property @{
+        $hypervtable = @()
+	    $hyperv = New-Object PSObject -Property @{
 	        VMName = $rVm.FriendlyName;
             vNetName = $vnetName;
             vNetResourceGroup = $vnetRgName;
@@ -156,20 +161,24 @@ $Table2 = @()
             ActiveLocation = $rVm.ActiveLocation;
             TestFailoverStateDescription = $rVm.TestFailoverStateDescription;
             ReplicationProvider = $rVm.ReplicationProvider;
-            ProtectionStatus = $rVm.ProtectionStatus             
+            ProtectionStatus = $rVm.ProtectionStatus;
+            SubscriptionId = $AzureSubscriptionId             
 	            }
-	    $table2 = $table2 += $sx2
+	    $hypervtable = $hypervtable += $hyperv
  
-      $jsonTable2 = ConvertTo-Json -InputObject $table2
+      $hypervtable = ConvertTo-Json -InputObject $hypervtable
 	        
-	$jsonTable2
+	$hypervtable
     $logType2 = "ASRProtection"
-    Send-OMSAPIIngestionData -customerId $OMSWorkspaceId -sharedKey $OMSWorkspaceKey -body $jsonTable2 -logType $logType2
-      }
+    Send-OMSAPIIngestionData -customerId $OMSWorkspaceId -sharedKey $OMSWorkspaceKey -body $hypervtable -logType $logType2
+       }
+    }
        else {
         $vnetInfo = "None"
         $vnetRgName = "None"
-        $sx2 = New-Object PSObject -Property @{
+
+        $hypervtable2 = @()
+        $hyperv2 = New-Object PSObject -Property @{
 	        VMName = $rVm.FriendlyName;
             vNetName = $vnetInfo;
             vNetResourceGroup = $vnetRgName;
@@ -181,15 +190,16 @@ $Table2 = @()
             ActiveLocation = $rVm.ActiveLocation;
             TestFailoverStateDescription = $rVm.TestFailoverStateDescription;
             ReplicationProvider = $rVm.ReplicationProvider;
-            ProtectionStatus = $rVm.ProtectionStatus             
+            ProtectionStatus = $rVm.ProtectionStatus;
+            SubscriptionId = $AzureSubscriptionId             
 	            }
-	    $table2 = $table2 += $sx2
+	    $hypervtable2 = $hypervtable2 += $hyperv2
  
-      $jsonTable2 = ConvertTo-Json -InputObject $table2
+      $hypervtable2 = ConvertTo-Json -InputObject $hypervtable2
 	        
-	$jsonTable2
+	$hypervtable2
     $logType2 = "ASRProtection"
-    Send-OMSAPIIngestionData -customerId $OMSWorkspaceId -sharedKey $OMSWorkspaceKey -body $jsonTable2 -logType $logType2
+    Send-OMSAPIIngestionData -customerId $OMSWorkspaceId -sharedKey $OMSWorkspaceKey -body $hypervtable2 -logType $logType2
      }
     }
    }
@@ -203,11 +213,15 @@ $jobs = Get-AzureRmSiteRecoveryJob
 $Table3 = @()
 	foreach($job in $jobs) { 
     $starttime = ([datetime]$job.StartTime).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ss')
+    $now = (Get-Date).AddHours(-1)
+    $now = $now.ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ss')
     if ($job.EndTime -eq $null)
     { "Ignore"}
     else {
     $endtime = ([datetime]$job.EndTime).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ss')
     }
+    if ($starttime -gt $now) {
+
 	    $sx3 = New-Object PSObject -Property @{
 	        JobName = $job.DisplayName;
             JobType = $job.JobType;
@@ -220,16 +234,20 @@ $Table3 = @()
             Tasks = $job.Tasks;
             StartTime = $starttime;
             EndTime = $endtime;
-            ID = $job.ID;             
+            ID = $job.ID;
+            SubscriptionId = $AzureSubscriptionId             
 	    }
 	    $table3 = $table3 += $sx3
  
       $jsonTable3 = ConvertTo-Json -InputObject $table3
-	}
+	
 	$jsonTable3
     $logType3 = "ASRJobHistory"
     Send-OMSAPIIngestionData -customerId $OMSWorkspaceId -sharedKey $OMSWorkspaceKey -body $jsonTable3 -logType $logType3
-
+    }
+    else { Write-Output "No new data to ingest" 
+         }
+    }
 # Capacity planning
 
 $vmSize = Get-AzureRmVMSize -Location $location
@@ -244,20 +262,21 @@ $Table4  = @()
                 $sizeobj = Get-AzureRmVMSize -location $location | where-object {$_.Name -eq $vmSize.RecoveryAzureVmSize }
                 $usage = Get-AzureRmVMUsage -Location $location 
          $sx4  = New-Object PSObject -Property @{ 
-                         'NumberOfCores'        = $sizeobj.NumberOfCores;
-                         'VMName'             = $vmsize.FriendlyName;
-                         'VMSize'       = $vmsize.RecoveryAzureVMSize;
-                         'AzureSubscriptionVMCoresInUse' = $usage[1].CurrentValue;
-                         'AzureSubscriptionVMCoresTotalLimit' = $usage[1].Limit;
-                         'AzureSubscriptionVMsInUse' = $usage[2].CurrentValue;
-                         'AzureSubscriptionVMsTotalLimit' = $usage[2].Limit;
-                         'AzureSubscriptionStandard_DScoresTotalLimit' = $usage[4].Limit;
-                         'AzureSubscriptionStandard_DcoresTotalLimit' = $usage[5].Limit;
-                         'AzureSubscriptionStandard_AcoresTotalLimit' = $usage[6].Limit;
-                         'RecoveryVaultRegion' = $location;
-                         'CurrentVMsAcrossSubscription' = $allvms.Count;
-                         'CurrentStorageAccountsAcrossSubscription' = $currentStorage.CurrentValue;
-                         'StorageAccountLimit' = $currentStorage.Limit
+                         NumberOfCores = $sizeobj.NumberOfCores;
+                         VMName = $vmsize.FriendlyName;
+                         VMSize = $vmsize.RecoveryAzureVMSize;
+                         AzureSubscriptionVMCoresInUse = $usage[1].CurrentValue;
+                         AzureSubscriptionVMCoresTotalLimit = $usage[1].Limit;
+                         AzureSubscriptionVMsInUse = $usage[2].CurrentValue;
+                         AzureSubscriptionVMsTotalLimit = $usage[2].Limit;
+                         AzureSubscriptionStandard_DScoresTotalLimit = $usage[4].Limit;
+                         AzureSubscriptionStandard_DcoresTotalLimit = $usage[5].Limit;
+                         AzureSubscriptionStandard_AcoresTotalLimit = $usage[6].Limit;
+                         RecoveryVaultRegion = $location;
+                         CurrentVMsAcrossSubscription = $allvms.Count;
+                         CurrentStorageAccountsAcrossSubscription = $currentStorage.CurrentValue;
+                         StorageAccountLimit = $currentStorage.Limit;
+                         SubscriptionId = $AzureSubscriptionId
                          }
            $table4 = $table4 += $sx4
          
@@ -267,4 +286,5 @@ $Table4  = @()
     $jsontable4
     $logType4 = "ASRCapacityPlanning"
     Send-OMSAPIIngestionData -customerId $OMSWorkspaceId -sharedKey $OMSWorkspaceKey -body $jsonTable4 -logType $logType4
+  }
 }

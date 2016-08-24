@@ -7,7 +7,7 @@
 
 This solution (currently in private preview) will allow you to capture your Azure Site Recovery operations (across subscriptions and Recovery Vaults) and visualize them in Operations Management Suite (Log Analytics). This solution currently leverages an automation runbook in Azure Automation, the Log Analytics Ingestion API, together with Log Analytics to present data about all your ASR Recovery Vaults into a single log analytics workspace.
 
-![alt text](images/armasr.png "OMS ASR Monitoring")
+![alt text](images/knarmasr.png "OMS ASR Monitoring")
 
 ## Pre-reqs
 
@@ -31,23 +31,23 @@ If you **dont** have an existing OMS Log Analytics Workspace, the template will 
 
 ######Locate your existing OMS Log Analytics Workspace and note the name of the workspace, the location of the workspace, and the Resource Group
 
-![alt text](images/omsworkspace.png "omsws") 
+![alt text](images/knomsworkspace.png "omsws") 
 
 ######Next, create a new Automation Account and click on *New* and search for 'Automation'
 
-![alt text](images/automation.png "automation")
+![alt text](images/knautomation.png "automation")
  
 ######Select Automation and click *Create* 
 
-![alt text](images/create.png "create")
+![alt text](images/kncreate.png "create")
 
 ######Specify the name of the Automation Account and ensure you are selecting 'Use existing' and selects the Resource Group containing the OMS Log Analytics workspace. If possible, use the same Azure Region for the Automation Account. Ensure that 'Create Azure Run As account' is set to 'Yes' and click 'Create'
 
-![alt text](images/aaccount.png "Create account") 
+![alt text](images/knaaccount.png "Create account") 
 
 ######Once the deployment has completed, you should see the Automation account and the Log Analytics workspace in the same Resource Group
 
-![alt text](images/rg.png "Resource Group")
+![alt text](images/knrg.png "Resource Group")
 
 ######You can now deploy the template   
 [![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Fasr-oms-monitoring%2F%2Fazuredeploy.json)
@@ -59,17 +59,17 @@ If you **dont** have an existing OMS Log Analytics Workspace, the template will 
 ###### You should also change the *INGESTSCHEDULEGUID* value. You can generate your own using PowerShell with the following cmdlet:
 
 
-![alt text](images/guid.png "guid")
+![alt text](images/knguid.png "guid")
 
 ######Once you have customized all the parameters, click *Create*
 
-![alt text](images/armtemp.png "template")
+![alt text](images/knarmtemp.png "template")
 
 ######The ingestion will start 5-10 minutes post deployment, and this can be verified by opening the *Log Search* in Log Analytics and typing the following query:
 
 ##### * | measure count () by Type
 
-![alt text](images/logsearch.png "Log Search")
+![alt text](images/knlogsearch.png "Log Search")
 
 #####Note: You will not see any data ingestion if you don't have any Recovery Vaults in your subscription
 
@@ -81,19 +81,19 @@ If you **dont** have an existing OMS Log Analytics Workspace, the template will 
 
 ######Create a new Automation Account and click on *New* and search for 'Automation'
 
-![alt text](images/automation.png "automation")
+![alt text](images/knautomation.png "automation")
  
 ######Select Automation and click *Create* 
 
-![alt text](images/create.png "create")
+![alt text](images/kncreate.png "create")
 
 ######Specify the name of the Automation Account and create the account into a new Resource Group. Ensure that 'Create Azure Run As account' is set to 'Yes' and click 'Create'
 
-![alt text](images/newrg.png "Create account") 
+![alt text](images/knnewrg.png "Create account") 
 
 ######Once the deployment has completed, you should see the new Resource Group with the Automation account
 
-![alt text](images/autorg.png "RG")
+![alt text](images/knautorg.png "RG")
 
 ######You can now deploy the template   
 [![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Fasr-oms-monitoring%2F%2Fazuredeploy.json)
@@ -105,16 +105,16 @@ If you **dont** have an existing OMS Log Analytics Workspace, the template will 
 ###### You should also change the *INGESTSCHEDULEGUID* value. You can generate your own using PowerShell with the following cmdlet:
 
 
-![alt text](images/guid.png "guid")
+![alt text](images/knguid.png "guid")
 
 ######Once you have customized all the parameters, click *Create*
 
-![alt text](images/newoms.png "New workspace")
+![alt text](images/knnewoms.png "New workspace")
 
 ######The ingestion will start 5-10 minutes post deployment, and this can be verified by opening the *Log Search* in Log Analytics and typing the following query:
 
 ##### * | measure count () by Type
 
-![alt text](images/logsearch.png "Log Search")
+![alt text](images/knlogsearch.png "Log Search")
 
 #####Note: You will not see any data ingestion if you don't have any Recovery Vaults in your subscription             
