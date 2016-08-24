@@ -44,11 +44,21 @@ time sudo apt-get -y install ethereum
 ####################
 time sudo apt-get install -y python-dev
 time sudo apt-get install -y python-pip
-time sudo pip install ethereum-serpent
-time sudo pip install ethereum
+git clone https://github.com/ethereum/serpent
+cd serpent
+git checkout develop
+time make
+time sudo make install
+time sudo python setup.py install
+cd ..
+git clone https://github.com/ethereum/pyethereum
+cd pyethereum
+time sudo pip install -r requirements.txt
+time sudo python setup.py install
+cd ..
+# time sudo pip install ethereum-serpent
+# time sudo pip install ethereum
 time sudo pip install requests --upgrade
-time sudo pip install pyethapp
-
 time sudo apt-get update
 
 ##################
