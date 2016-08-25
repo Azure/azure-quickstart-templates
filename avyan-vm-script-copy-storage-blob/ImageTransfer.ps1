@@ -30,11 +30,13 @@
     within the Premier Customer Services Description.
 #>
 
+
+
 [CmdletBinding()]
 param
 (
 	[Parameter(Mandatory=$true)]
-	[string]$SourceImage,
+	[string]$SourceImage ,
 
 	[Parameter(Mandatory=$true)]
 	[string]$SourceSAKey,
@@ -47,6 +49,25 @@ param
 
 )
 
+
+<# --- to tests ------------
+[CmdletBinding()]
+param
+(
+	[Parameter(Mandatory=$false)]
+	[string]$SourceImage = "https://avyanignite201611.blob.core.windows.net/datameersamples/Log Format.xlsx",
+
+	[Parameter(Mandatory=$false)]
+	[string]$SourceSAKey = "ZG6vKKtB6AgaK5KPX0DAR5CzBmXhgeU8anTOq0J1czh0UqyApUCHvUfF3Evh3Ms7gY99b2a6NBphRR0eKzmWVw==",
+
+	[Parameter(Mandatory=$false)]
+	[string]$DestinationURI = "https://avyanhdicopyblob1sa.blob.core.windows.net/datameersamples/",
+
+	[Parameter(Mandatory=$false)]
+	[string]$DestinationSAKey = "dAN6+VAtV2S14OUNTPTAyI1Kwfl/ly75RFd0XovxIm65GirVZWl4lDoVbiAwZT0V0bBvE1O+hlu532rxZ2oGkw=="
+
+)
+#>
 
 function getBlobName
 {
@@ -169,7 +190,7 @@ try
 
 	# Downloading and installing AzCopt
 	$url = "http://aka.ms/downloadazcopy" 
-	$localPath = Join-Path $currentScriptFolder "MicrosoftAzureStorageToosl.msi" 
+	$localPath = Join-Path $currentScriptFolder "MicrosoftAzureStorageTools.msi" 
 
 	"Downloading AzCopy from $url" | Out-File "c:\$scriptName.txt" -Append
 
@@ -192,6 +213,7 @@ try
 	$installFolder = ($installLog | ? {$_ -match "AZURESTORAGETOOLSFOLDER"}).Split("=")[1].Trim()
 
 	$azCopyTool = Join-Path $installFolder "AzCopy\Azcopy.exe"
+Write-Host $azCopyTool -ForegroundColor Green
 
 	"Azcopy Path => $AzCopyTool" | Out-File "c:\$scriptName.txt" -Append
 	"Source images URLs =>" | Out-File "c:\$scriptName.txt" -Append 
@@ -220,7 +242,7 @@ try
 		"   azCopyLogFile = $azCopyLogFile" | Out-File "c:\$scriptName.txt" -Append
 
 		"   Running AzCopy Tool..." | Out-File "c:\$scriptName.txt" -Append
-		& $AzCopyTool "/Source:$SourceURIContainer","/SourceKey:$SourceSAKey", "/Dest:$DestinationURI", "/DestKey:$DestinationSAKey", "/Pattern:$blobName", "/Y" , "/V:$azCopyLogFile", "/Z:$PSScriptRoot", "/NC:20"
+		& $AzCopyTool "/Source:$SourceURIContainer", "/S", "/SourceKey:$SourceSAKey", "/Dest:$DestinationURI", "/DestKey:$DestinationSAKey", "/Pattern:$blobName", "/Y" , "/V:$azCopyLogFile", "/NC:20"
 
 		"   Checking blob copy status..." | Out-File "c:\$scriptName.txt" -Append
 		# Checking blob copy status
@@ -242,3 +264,15 @@ catch
 {
 	"An error ocurred: $_" | Out-File "c:\$scriptName.txt" -Append
 }
+
+
+
+
+
+
+
+
+
+
+#.\AzCopy.exe /Source:https://avyanignite201611.blob.core.windows.net/datameersamples /S /SourceKey:ZG6vKKtB6AgaK5KPX0DAR5CzBmXhgeU8anTOq0J1czh0UqyApUCHvUfF3Evh3Ms7gY99b2a6NBphRR0eKzmWVw== /Dest:https://avyanhdicopyblob1sa.blob.core.windows.net/datameersamples/ /DestKey:dAN6+VAtV2S14OUNTPTAyI1Kwfl/ly75RFd0XovxIm65GirVZWl4lDoVbiAwZT0V0bBvE1O+hlu532rxZ2oGkw== /Pattern:'Log Format.xlsx' /V:C:\Users\consu\Documents\GitHub\azure-quickstart-templates\avyan-vm-script-copy-storage-blob\azcopylog.txt /Y /Z:C:\Users\consu\Documents\GitHub\azure-quickstart-templates\avyan-vm-script-copy-storage-blob /NC:20
+
