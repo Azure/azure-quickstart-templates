@@ -13,8 +13,8 @@ then
     sudo touch $log_file_path
 fi
 
-ip_addr=$(ip route get 8.8.8.8 | awk '/8.8.8.8/ {print $NF}')
-instruction_goto_dashboard="Please go to Jenkins dashboard by inputing below address in your preferred browser:\n$ip_addr:8080"
+# ip_addr=$(ip route get 8.8.8.8 | awk '/8.8.8.8/ {print $NF}')
+instruction_goto_dashboard="Please go to Jenkins dashboard by inputting <Your VM IP address>:8080 in your preferred browser. You can find the IP address in Azure portal."
 
 dest_account_file_path='/var/lib/jenkins/com.microsoftopentechnologies.windowsazurestorage.WAStoragePublisher.xml'
 if [ -f $dest_account_file_path ]; then

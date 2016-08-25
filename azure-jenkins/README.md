@@ -28,6 +28,20 @@ You can click the "Deploy to Azure" button at the beginning of this document to 
    5. After source container is set, you will need to continue to select the destination container. If you have only one container in the selected storage account, it will be set as both source and destination container.
 3. Once the script is finished, storage account setup for Azure storage Jenkins plugin is done.
 
+## Use Azure Storage Jenkins plugin
+1. After storage account is set for the plugin, you can go to the Jenkins dashboard by navigating to the IP address plus the port number. E.g., your VM's IP address is 10.10.2.2, then open a browser and input 10.10.2.2:8080 and enter.
+2. You should see two Jenkins jobs and a Jenkins pipeline in the dashboard. The two Jenkins jobs are named *AzureStorageDownloadJob* and *AzureStorageUploadJob*. The Jenkins pipeline is named *AzureStoragePipeline*.
+3. Open *AzureStoragePipeline* and click **Build Now** on the left navigation bar. The pipeline will:
+   1. Build *AzureStorageDownloadJob*, which will download all files from the source container you configured.
+   2. Build the app, which currently just output something to logs.
+   3. Build *AzrueStorageUploadJob*, which will excute a Shell script that creates two text files and upload the two files to the destination container you configured.
+4. After a build is finished, you can hover over the green status square, click on the button named **Logs** that shows up and check the logs.
+* You can always add/delete/edit you storage account, download action and upload action.
+   * To configure storage account, go to *Manage Jenkins* | *Configure System* | *Microsoft Azure Storage Account Configuration* and fill out the needed information.
+   * To configure download action, go to *AzrueStorageDownloadJob* | *Configure* and scroll down to **Build** section and make the needed changes.
+   * To configure download action, go to *AzrueStorageUploadJob* | *Configure* and scroll down to **Post-Build Actions** section and make the needed changes.
+   * [Find more detailed instructions here](https://github.com/jenkinsci/windows-azure-storage-plugin)
+
 ## Note
 
 This template use a base image which will be updated regularly to include new features for azure plugin on jenkins. Readme will be updated accordingly.
