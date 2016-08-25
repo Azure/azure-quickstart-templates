@@ -30,7 +30,7 @@
     within the Premier Customer Services Description.
 #>
 
-
+#
 
 [CmdletBinding()]
 param
@@ -48,7 +48,7 @@ param
 	[string]$DestinationSAKey
 
 )
-
+#
 
 <# --- to tests ------------
 [CmdletBinding()]
@@ -61,10 +61,10 @@ param
 	[string]$SourceSAKey = "ZG6vKKtB6AgaK5KPX0DAR5CzBmXhgeU8anTOq0J1czh0UqyApUCHvUfF3Evh3Ms7gY99b2a6NBphRR0eKzmWVw==",
 
 	[Parameter(Mandatory=$false)]
-	[string]$DestinationURI = "https://avyanhdicopyblob1sa.blob.core.windows.net/datameersamples/",
+	[string]$DestinationURI = "https://mlqpi7j2kbbsq.blob.core.windows.net/datameersamples",
 
 	[Parameter(Mandatory=$false)]
-	[string]$DestinationSAKey = "dAN6+VAtV2S14OUNTPTAyI1Kwfl/ly75RFd0XovxIm65GirVZWl4lDoVbiAwZT0V0bBvE1O+hlu532rxZ2oGkw=="
+	[string]$DestinationSAKey = "JSsV/Unwe3I6Z4E3KFmKw7EpV+zcr4+xM6vy12i7tkV9SXR7LGs5KaAxLDm9srT6wSKPHcMCR01FC2eYslRrlQ=="
 
 )
 #>
@@ -213,7 +213,7 @@ try
 	$installFolder = ($installLog | ? {$_ -match "AZURESTORAGETOOLSFOLDER"}).Split("=")[1].Trim()
 
 	$azCopyTool = Join-Path $installFolder "AzCopy\Azcopy.exe"
-Write-Host $azCopyTool -ForegroundColor Green
+
 
 	"Azcopy Path => $AzCopyTool" | Out-File "c:\$scriptName.txt" -Append
 	"Source images URLs =>" | Out-File "c:\$scriptName.txt" -Append 
