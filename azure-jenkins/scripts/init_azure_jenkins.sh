@@ -19,13 +19,13 @@ SOURCE_URI="https://raw.githubusercontent.com/arroyc/azure-quickstart-templates/
 
 # sudo apt-get -y install npm
 
-# #azure-cli
-# echo "installing azure-cli"
-# sudo npm install -y -g azure-cli
+ #azure-cli
+ echo "installing azure-cli"
+ sudo npm install -y -g azure-cli
 
-# #install jq
-# sudo apt-get -y update
-# sudo apt-get -y install jq
+ #install jq
+ sudo apt-get -y update
+ sudo apt-get -y install jq
 
 # # install jenkins
 # echo  "Installing Jenkins CI Server"
