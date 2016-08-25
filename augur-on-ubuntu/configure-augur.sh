@@ -69,13 +69,13 @@ time sudo npm install augur.js
 ###############################
 # Fetch Genesis and Private Key
 ###############################
-sudo -u $AZUREUSER wget https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/master/augur-on-ubuntu/genesis.json
-sudo -u $AZUREUSER wget https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/master/augur-on-ubuntu/priv_genesis.key
-sudo -u $AZUREUSER wget https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/master/augur-on-ubuntu/mining_toggle.js
-sudo -u $AZUREUSER wget https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/master/augur-on-ubuntu/geth.conf
-sudo -u $AZUREUSER wget https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/master/augur-on-ubuntu/augur_ui.conf
-sudo -u $AZUREUSER wget https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/master/augur-on-ubuntu/init_contracts.js
-sudo -u $AZUREUSER wget https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/master/augur-on-ubuntu/env.json
+sudo -u $AZUREUSER wget https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/augur-on-ubuntu/genesis.json
+sudo -u $AZUREUSER wget https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/augur-on-ubuntu/priv_genesis.key
+sudo -u $AZUREUSER wget https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/augur-on-ubuntu/mining_toggle.js
+sudo -u $AZUREUSER wget https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/augur-on-ubuntu/geth.conf
+sudo -u $AZUREUSER wget https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/augur-on-ubuntu/augur_ui.conf
+sudo -u $AZUREUSER wget https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/augur-on-ubuntu/init_contracts.js
+sudo -u $AZUREUSER wget https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/augur-on-ubuntu/env.json
 sudo -u $AZUREUSER sed -i "s|azure_http_url|$ETHEREUM_HOST_RPC|g" env.json
 sudo -u $AZUREUSER sed -i "s|azure_ws_url|$ETHEREUM_HOST_WS|g" env.json
 sudo -u $AZUREUSER sed -i "s|auguruser|$AZUREUSER|g" geth.conf

@@ -2,8 +2,8 @@
 
 This Microsoft Azure template deploys a single Ethereum client with a private chain, and the Augur contracts and UI.
 
-[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fkevinday%2Fazure-quickstart-templates%2Fmaster%2Faugur-on-ubuntu%2Fazuredeploy.json)
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fkevinday%2Fazure-quickstart-templates%2Fmaster%2Faugur-on-ubuntu%2Fazuredeploy.json" target="_blank">
+[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Faugur-on-ubuntu%2Fazuredeploy.json)
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Faugur-on-ubuntu%2Fazuredeploy.json" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
@@ -17,7 +17,7 @@ Once your deployment is complete you will have a private Augur instance with:
 
 ** Note this private key is exposed on a public GitHub repository. It should _never_ be used on a public network. If you use this key for anything besides your private Augur instance, your funds will be lost!
 
-![Augur-Azure](https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/master/augur-on-ubuntu/images/augur_logo.png)
+![Augur-Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/augur-on-ubuntu/images/augur_logo.png)
 
 # Template Parameters
 When you launch the installation, you need to specify the following parameters:
@@ -49,7 +49,7 @@ Your VM will also be left with geth's RPC server available, and an unlocked acco
 #Updates
 Augur is in Beta and undergoing rapid development. Not all features of the UI are guaranteed to work. To update to the latest UI at any point, ssh into your VM and run this as your adminUser (not root).
 ```
-curl -sL https://raw.githubusercontent.com/kevinday/azure-quickstart-templates/master/augur-on-ubuntu/update-augur.sh | bash
+curl -sL https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/augur-on-ubuntu/update-augur.sh | bash
 ```
 
 
