@@ -20,8 +20,10 @@ You can click the "Deploy to Azure" button at the beginning of this document to 
 
 ## Azure Storage Jenkins plugin configure steps
 1. After the VM is provisioned, a script (/otc/config_storage.sh) need to be executed manually once you ssh into the VM. IF the script
-   is not in /otc, download the file using command [sudo wget -O ./config_storage.sh    "https://raw.githubusercontent.com/arroyc/azure-quickstart-templates/master/azure-jenkins/setup-scripts/config_storage.sh"]
-
+   is not in /otc, download the file using command
+   ```Shell
+   sudo wget -O ./config_storage.sh "https://raw.githubusercontent.com/arroyc/azure-quickstart-templates/master/azure-jenkins/setup-scripts/config_storage.sh"]
+   ```
    The script will guide you to set up the storage account needed for Azure Storage Jenkins plugin.
 2. The script will:
    1. Ask you to login to your Azure account.
