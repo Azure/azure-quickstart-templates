@@ -38,6 +38,8 @@ createkeyvault()
         azure keyvault create --vault-name $vaultname --resource-group $rgname --location $location
     fi  
 
+    azure keyvault set-policy -u $vaultname -g $rgname --enabled-for-template-deployment true --enabled-for-deployment true
+
 }
 
 convertcert()
@@ -102,8 +104,9 @@ EOF
         exit 1
     fi    
     
+    #echo $r 
 
-    id=$(echo $r | grep -o 'https:\/\/[a-z.]*/secrets\/[a-z]*/[a-z0-9]*')
+    id=$(echo $r | grep -o 'https:\/\/[a-z0-9.]*/secrets\/[a-z0-9]*/[a-z0-9]*')
     echo Secret ID is $id
 
 }
@@ -137,7 +140,7 @@ echo Storing $certpfxfile as $secretname
 storesecret $certpfxfile $secretname
 certid=$id   
 echo Storing $cacertpfxfile as $casecretname
-storesecret $certpfxfile $casecretname   
+storesecret $cacertpfxfile $casecretname   
 cacertid=$id
 
 # make sure pattern substitution succeeds
