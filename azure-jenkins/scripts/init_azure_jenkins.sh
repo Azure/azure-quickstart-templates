@@ -1,7 +1,7 @@
 #!/bin/bash
 
 CURRENT_USER=$(whoami)
-SETUP_SCRIPTS_LOCATION="/opt/azure_jenkins_config"
+SETUP_SCRIPTS_LOCATION="/opt/azure_jenkins_config/"
 SETUP_SCRIPT="config_storage.sh"
 CLEAN_STORAGE_SCRIPT="clear_storage_config.sh"
 SOURCE_URI="https://raw.githubusercontent.com/arroyc/azure-quickstart-templates/master/azure-jenkins/setup-scripts/"
