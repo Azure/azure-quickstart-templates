@@ -36,16 +36,18 @@ SOURCE_URI="https://raw.githubusercontent.com/arroyc/azure-quickstart-templates/
 # sudo apt-get -y update
 # sudo apt-get -y install jenkins
 
+#delete any existing config script
+sudo rm -f /opt/config_storage.sh
+
 if [ ! -e "$SETUP_SCRIPTS_LOCATION" ]; then
   sudo mkdir $SETUP_SCRIPTS_LOCATION
   
   #downloading clear_storage_config script
-  sudo wget -O $SETUP_SCRIPTS_LOCATION$SETUP_SCRIPT $SOURCE_URI$CLEAN_STORAGE_SCRIPT
+  sudo wget -O $SETUP_SCRIPTS_LOCATION$CLEAN_STORAGE_SCRIPT $SOURCE_URI$CLEAN_STORAGE_SCRIPT
   sudo chmod +x $SETUP_SCRIPTS_LOCATION$CLEAN_STORAGE_SCRIPT
   
   #downloading storage_config script
   sudo wget -O $SETUP_SCRIPTS_LOCATION$SETUP_SCRIPT $SOURCE_URI$SETUP_SCRIPT
-
   sudo chmod +x $SETUP_SCRIPTS_LOCATION$SETUP_SCRIPT
 
 fi
