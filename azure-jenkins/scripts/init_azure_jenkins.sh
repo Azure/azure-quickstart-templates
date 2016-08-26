@@ -1,8 +1,9 @@
 #!/bin/bash
 
 CURRENT_USER=$(whoami)
-SETUP_SCRIPTS_LOCATION="/opt/"
+SETUP_SCRIPTS_LOCATION="/opt/azure_jenkins_config"
 SETUP_SCRIPT="config_storage.sh"
+CLEAN_STORAGE_SCRIPT="clear_storage_config.sh"
 SOURCE_URI="https://raw.githubusercontent.com/arroyc/azure-quickstart-templates/master/azure-jenkins/setup-scripts/"
 
 # #java
@@ -35,6 +36,12 @@ SOURCE_URI="https://raw.githubusercontent.com/arroyc/azure-quickstart-templates/
 # sudo apt-get -y update
 # sudo apt-get -y install jenkins
 
+if [[ ! -e "$SETUP_SCRIPTS_LOCATION" ]]; then
+  sudo mkdir $SETUP_SCRIPTS_LOCATION
+fi
+
+#downloading clear_storage_config script
+sudo wget -O $SETUP_SCRIPTS_LOCATION$SETUP_SCRIPT $SOURCE_URI$CLEAN_STORAGE_SCRIPT
 #downloading storage_config script
 sudo wget -O $SETUP_SCRIPTS_LOCATION$SETUP_SCRIPT $SOURCE_URI$SETUP_SCRIPT
 
