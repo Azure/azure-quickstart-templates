@@ -118,7 +118,7 @@ sudo sh -c "echo '$(date): Copy temp config file to Jenkins directory' >> $log_f
 sudo cp $tmp_account_file_path $dest_account_file_path
 echo "Storage account was successfully added to Jenkins Azure Storage plugin."
 
-dest_download_container_file_path='/var/lib/jenkins/jobs/1.	Download Dependencies. Invoked by pipeline/config.xml'
+dest_download_container_file_path='/var/lib/jenkins/jobs/1. Download Dependencies. Invoked by pipeline/config.xml'
 dest_upload_container_file_path='/var/lib/jenkins/jobs/2. Upload test app. Invoked by pipeline/config.xml'
 if [ -f "$dest_download_container_file_path" ] && [ -f "$dest_upload_container_file_path" ]
 then
