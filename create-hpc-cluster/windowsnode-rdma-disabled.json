@@ -2,10 +2,22 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "apiVersion": { 
+    "apiVersion": {
       "type": "string",
       "metadata": {
         "description": "The API version"
+      }
+    },
+    "nicName": {
+      "type": "string",
+      "metadata": {
+        "description": "The network interface name for the VM"
+      }
+    },
+    "subnetId": {
+      "type": "string",
+      "metadata": {
+        "description": "The Id of the subnet in which the node is created"
       }
     },
     "vmName": {
@@ -50,12 +62,6 @@
         "description": "The version of the VM image"
       }
     },
-    "nicName": {
-      "type": "string",
-      "metadata": {
-        "description": "The network interface name"
-      }
-    },
     "adminUsername": {
       "type": "string",
       "metadata": {
@@ -74,26 +80,78 @@
         "description": "The availability set name"
       }
     },
-    "customData": { 
+    "customData": {
       "type": "string",
       "metadata": {
         "description": "The custom data in base64 format"
       }
+    },
+    "scriptBaseUri": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI of the script"
+      }
+    },
+    "clusterName": {
+      "type": "string",
+      "metadata": {
+        "description": "The HPC cluster name"
+      }
+    },
+    "privateDomainName": {
+      "type": "string",
+      "metadata": {
+        "description": "The fully qualified domain name (FQDN) for the private domain forest which will be created by this template, for example 'hpc.local'."
+      }
+    },
+    "computeNodePostConfigScript": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Optional URL of a public available PowerShell script you want to run on the compute nodes after they are configured. You can also specify arguments for the script, for example 'http://www.consto.com/mypostscript.ps1 -Arg1 arg1 -Arg2 arg2'."
+      }    
     }
   },
-
+  "variables":{
+    "osDiskUri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/', toLower(parameters('vmName')), '-os', uniqueString(parameters('subnetId')), '.vhd')]"
+  },
   "resources": [
+    {
+      "apiVersion": "[parameters('apiVersion')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[parameters('nicName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "IPConfig",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[parameters('subnetId')]"
+              }
+            }
+          }
+        ]
+      }
+    },
     {
       "apiVersion": "[parameters('apiVersion')]",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('vmName')]",
       "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', parameters('nicName'))]"
+      ],
       "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySetName'))]"
+        },
         "hardwareProfile": {
           "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
-          "computername": "[parameters('vmName')]",
+          "computerName": "[parameters('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]",
           "customData": "[parameters('customData')]"
@@ -108,7 +166,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/', toLower(parameters('vmName')), '-osdisk.vhd')]"
+              "uri": "[variables('osDiskUri')]"
             },
             "caching": "ReadOnly",
             "createOption": "FromImage"
@@ -121,7 +179,44 @@
             }
           ]
         }
-      }
+      },
+      "resources": [
+        {
+          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "name": "[concat(parameters('vmName'), '/configureComputeNode')]",
+          "apiVersion": "[parameters('apiVersion')]",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Powershell",
+            "type": "DSC",
+            "typeHandlerVersion": "2.19",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "wmfVersion": "4.0",
+              "configuration": {
+                "url": "[concat(parameters('scriptBaseUri'),'/ConfigComputeNode.ps1.zip')]",
+                "script": "ConfigComputeNode.ps1",
+                "function": "ConfigComputeNode"
+              },
+              "configurationArguments": {
+                "DomainName": "[parameters('privateDomainName')]",
+                "PostConfigScript": "[parameters('computeNodePostConfigScript')]"
+              }
+            },
+            "protectedSettings": {
+              "configurationArguments": {
+                "AdminCreds": {
+                  "UserName": "[parameters('adminUsername')]",
+                  "Password": "[parameters('adminPassword')]"
+                }
+              }
+            }
+          }
+        }
+      ]
     }
   ]
 }
