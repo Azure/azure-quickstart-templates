@@ -19,7 +19,10 @@ The second VM will be the actual instance of Jenkins. Once the second VM has bee
 You can click the "Deploy to Azure" button at the beginning of this document to deploy using the scripts in the root of this repo.
 
 ## Azure Storage Jenkins plugin configure steps
-1. After the VM is provisioned, a script (/tmp/config_storage.sh) need to be executed manually once you ssh into the VM. The script will guide you to set up the storage account needed for Azure Storage Jenkins plugin.
+1. After the VM is provisioned, a script (/tmp/config_storage.sh) need to be executed manually once you ssh into the VM. IF the script
+   is not in /tmp, download the file using command [sudo wget -O ./config_storage.sh    "https://raw.githubusercontent.com/arroyc/azure-quickstart-templates/master/azure-jenkins/setup-scripts/config_storage.sh"]
+
+   The script will guide you to set up the storage account needed for Azure Storage Jenkins plugin.
 2. The script will:
    1. Ask you to login to your Azure account.
    2. Once you login, there will be a list of subscriptions printed in the Console and ask you to select the subscription you want to use. If you have only one subscription, it will be selected as default automatically.
