@@ -22,7 +22,7 @@ Once the VM has been deployed, note down the IP generated in the Azure portal fo
 ## Configure Jenkins to access Azure
 1. Once you are logged into the VM, run /opt/config_storage.sh. This script will guide you to set up the storage account needed for Azure Storage Jenkins plugin.
    If the script doesn't exist, download it using below command
-   ```javascript
+   ```
    sudo wget -O ./opt/config_storage.sh "https://raw.githubusercontent.com/arroyc/azure-quickstart-templates/master/azure-jenkins/setup-scripts/config_storage.sh"
    ```
 2. Login to your Azure account using the live id you used when creating your Azure subscription or with any valid user in your Azure subscription.
