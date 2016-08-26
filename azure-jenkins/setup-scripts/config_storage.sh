@@ -118,9 +118,9 @@ sudo sh -c "echo '$(date): Copy temp config file to Jenkins directory' >> $log_f
 sudo cp $tmp_account_file_path $dest_account_file_path
 echo "Storage account was successfully added to Jenkins Azure Storage plugin."
 
-dest_download_container_file_path='/var/lib/jenkins/jobs/AzureStorageDownloadJob/config.xml'
-dest_upload_container_file_path='/var/lib/jenkins/jobs/AzureStorageUploadJob/config.xml'
-if [ -f $dest_download_container_file_path ] && [ -f $dest_upload_container_file_path ]
+dest_download_container_file_path='/var/lib/jenkins/jobs/1.	Download Dependencies. Invoked by pipeline/config.xml'
+dest_upload_container_file_path='/var/lib/jenkins/jobs/2. Upload test app. Invoked by pipeline/config.xml'
+if [ -f "$dest_download_container_file_path" ] && [ -f "$dest_upload_container_file_path" ]
 then
     echo "Blob containers have been set before.\n$instruction_goto_dashboard"
     exit 0
@@ -184,7 +184,7 @@ cat <<EOF > $tmp_download_container_file_path
 EOF
 
 sudo sh -c "echo '$(date): Copy temp source config file to Jenkins directory' >> $log_file_path"
-sudo cp $tmp_download_container_file_path $dest_download_container_file_path
+sudo cp $tmp_download_container_file_path "$dest_download_container_file_path"
 echo "Blob container with name $SOURCE_CONTAINER_NAME was successfully set as the download source."
 
 sudo sh -c "echo '$(date): Create temp dest container config file' >> $log_file_path"
@@ -236,7 +236,7 @@ date &gt; date.txt</command>
 EOF
 
 sudo sh -c "echo '$(date): Copy temp dest container config file to Jenkins directory' >> $log_file_path"
-sudo cp $tmp_upload_container_file_path $dest_upload_container_file_path
+sudo cp $tmp_upload_container_file_path "$dest_upload_container_file_path"
 echo "Blob container with name $DEST_CONTAINER_NAME was successfully set as the upload destination."
 
 echo "Storage account and containers are all set successfully.\n$instruction_goto_dashboard"
