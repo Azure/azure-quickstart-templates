@@ -1,7 +1,7 @@
 #!/bin/bash
 
 CURRENT_USER=$(whoami)
-SETUP_SCRIPTS_LOCATION="/tmp/"
+SETUP_SCRIPTS_LOCATION="/opt/"
 SETUP_SCRIPT="config_storage.sh"
 SOURCE_URI="https://raw.githubusercontent.com/arroyc/azure-quickstart-templates/master/azure-jenkins/setup-scripts/"
 
