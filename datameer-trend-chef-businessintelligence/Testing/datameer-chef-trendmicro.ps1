@@ -1,3 +1,4 @@
+Set-Location ".\"
 $path = ".\DONOTCHECKIN-LoggedInServicePrincipal.json"
 
 # To login to Azure Resource Manager
@@ -24,15 +25,15 @@ Get-AzureRmSubscription –SubscriptionName “Cloudly Dev (Visual Studio Ultimate)”
 
 #----------- PARAMETERS--------
 #------------------------------
-$resourceGroup = "datameer-hdinsight-chef-trendmicro" 
-$deploymentName = "datameer-hdinsight-deploy--" + [System.DateTime]::Now.ToString("dd-MMMM-yyyy")
+$resourceGroup = "datameer-hdi-chef-trendmicro-11" 
+$deploymentName = "datameer-hdideploy--" + [System.DateTime]::Now.ToString("dd-MMMM-yyyy")
 
 
 #Create Resource Group
 New-AzureRmResourceGroup -Name $resourceGroup -Location "West US"
 
 # deploy the template to the resource group
-New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $resourceGroup -TemplateFile .\azuredeploy.json -TemplateParameterFile .\azuredeploy.parameters.json -Force -Verbose
+New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $resourceGroup -TemplateFile .\azuredeploy.json -TemplateParameterFile .\azuredeploy.parameters.json -Force -Verbose -DeploymentDebugLogLevel All
 
 
 #Remove-AzureRMResourceGroupDeployment -ResourceGroupName datameer-hdinsight-chef-trendmicro-1 -Verbose
