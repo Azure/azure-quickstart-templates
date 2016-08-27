@@ -16,7 +16,7 @@ This template allows you to create an instance of Azure Jenkins. Azure Jenkins i
 
 ## Login remotely to the VM via SSH
 Once the VM has been deployed, note down the IP generated in the Azure portal for the VM with the name you supplied. To login -
-- If you are using Windows client you can use Putty or Gitbash to login to the VM with the username and password you supplied.
+- If you are using Windows client you can use Putty or any bash shell on Windows to login to the VM with the username and password you supplied.
 - If you are using Linux or Mac use Terminal to login to the VM with the username and password you supplied.
 
 ## Configure Jenkins to access Azure
