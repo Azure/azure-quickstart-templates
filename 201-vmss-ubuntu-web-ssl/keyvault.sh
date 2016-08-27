@@ -4,9 +4,8 @@
 
 usage()
 {
-    # TODO
-    #if
-    echo usage: keyvault.sh '<keyvaultname> <resource group name> <location> <secretname>'
+    echo usage: keyvault.sh '<keyvaultname> <resource group name> <location> <secretname> <certpemfile> <keypemfile> <cacertpemfile>'
+    echo The cacertpem file is optional. The template will accept a self-signed cert and key.
 }
 
 creategroup()
@@ -44,11 +43,11 @@ createkeyvault()
 
 convertcert()
 {
+    local cert=$1
+    local key=$2
+    local pfxfile=$3
+    local pass=$4
 
-cert=$1
-key=$2
-pfxfile=$3
-pass=$4
     echo Creating PFX $pfxfile
     openssl pkcs12 -export -out $pfxfile -inkey $key -in $cert -password pass:$pass 2> /dev/null
     if [ $? -eq 1 ]
@@ -58,12 +57,10 @@ pass=$4
     fi    
 
     fingerprint=$(openssl x509 -in $cert -noout -fingerprint | cut -d= -f2 | sed 's/://g' )
-
 }
 
 convertcacert()
 {
-
     local cert=$1
     local pfxfile=$2
     local pass=$3
@@ -77,7 +74,6 @@ convertcacert()
     fi    
 
     fingerprint=$(openssl x509 -in $cert -noout -fingerprint | cut -d= -f2 | sed 's/://g' )
-
 }
 
 storesecret()
@@ -103,12 +99,9 @@ EOF
         echo problem storing secret $name in $vaultname 
         exit 1
     fi    
-    
-    #echo $r 
 
     id=$(echo $r | grep -o 'https:\/\/[a-z0-9.]*/secrets\/[a-z0-9]*/[a-z0-9]*')
     echo Secret ID is $id
-
 }
 
 vaultname=$1
@@ -127,21 +120,28 @@ casecretname=ca$secretname
 
 createkeyvault
 
-# converting all certs to pfx
+# converting SSL cert to pfx
 convertcert $certfile $keyfile $certpfxfile $pwd
 certprint=$fingerprint
 echo $certpfxfile fingerprint is $fingerprint
-convertcacert $cacertfile $cacertpfxfile $pwd
-echo $cacertpfxfile fingerprint is $fingerprint
-cacertprint=$fingerprint
-
 # storing pfx in keyvault
 echo Storing $certpfxfile as $secretname
 storesecret $certpfxfile $secretname
 certid=$id   
-echo Storing $cacertpfxfile as $casecretname
-storesecret $cacertpfxfile $casecretname   
-cacertid=$id
+rm -f $certpfxfile
+
+if [ ! -z $cacertfile ]
+then
+    # converting CA cert to pfx
+    convertcacert $cacertfile $cacertpfxfile $pwd
+    echo $cacertpfxfile fingerprint is $fingerprint
+    cacertprint=$fingerprint
+    # storing pfx in key vault
+    echo Storing $cacertpfxfile as $casecretname
+    storesecret $cacertpfxfile $casecretname   
+    cacertid=$id
+    rm -f $cacertpfxfile
+fi
 
 # make sure pattern substitution succeeds
 cp ./azuredeploy.parameters.json.template ./azuredeploy.parameters.json
@@ -153,8 +153,5 @@ sed -i 's/REPLACE_CERTPRINT/'$certprint'/g' ./azuredeploy.parameters.json
 sed -i 's/REPLACE_CACERTPRINT/'$cacertprint'/g' ./azuredeploy.parameters.json
 sed -i 's/REPLACE_VAULTNAME/'$vaultname'/g' ./azuredeploy.parameters.json
 sed -i 's/REPLACE_VAULTRG/'$rgname'/g' ./azuredeploy.parameters.json
-
-rm -f $certpfxfile
-rm -f $cacertpfxfile
 
 echo Done
