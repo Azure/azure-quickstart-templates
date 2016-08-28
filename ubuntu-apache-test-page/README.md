@@ -9,9 +9,32 @@
 
 This template allows you to quickly create an Ubuntu VM running Apache2 with the test page content you define as a parameter. This can be useful for quick validation/demo/prototyping.
 
+## Static Test Page
+
+To deploy a static test page:
+
+#. Enter admin credentials for the new Web server.
+#. Enter DNS name for the new Web server.
+#. Enter page name, title and static HTML body markup.
+#. Select resource group and location for it.
+#. Deploy the template.
+
+## PHP Test Page
+
+To deploy a PHP test page:
+
+#. Enter admin credentials for the new Web server.
+#. Enter DNS name for the new Web server.
+#. Enter page name, title and PHP body markup.
+#. Set INSTALLPHP to "true".
+#. Select resource group and location for it.
+#. Deploy the template.
+
 ## After Deployment
 
-Once your test Web server is created use domain name and page name you entered to see the Web page with your markup.
+Once your test Web server is created use domain name and page name you entered to access the Web page with your markup. 
+Full URL to the test page will be: http://<DNS name entered>.<resource group location>.cloudapp.azure.com/<page name or none for index page>
+(example: http://mytest.westeurope.cloudapp.azure.com)
 
 
 
