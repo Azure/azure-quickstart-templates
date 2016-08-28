@@ -181,8 +181,31 @@
     "chefnodeCustomScripturl": {
       "type": "string",
       "defaultValue": ""
-    }
-  },
+    },
+    "sourceStorageAccountResourceGroup": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource group name of the source storage account."
+      }
+    },
+    "sourceBlobURI": {
+      "type": "string",
+      "metadata": {
+        "description": "Full URIs for one or more blobs that should be copied to the deployment storage account. URLs must be comma separated."
+      }
+    },
+    "destinationContainer": {
+      "type": "string",
+      "metadata": {
+        "description": "Destination Storage blob container"
+      }
+    },
+    "baseUrl" {
+      "type": "string",
+      "metadata": {
+        "description": "Base public URL for the script. Most likely this will be your Github, Azure Blob or Dropbox URL"
+      }
+    },
   "variables": {
     "publicIPAddressNameChefWorkstation": "publicIPChefWorkstation",
     "networkInterfaceNameChefWorkstation": "[concat(parameters('vmNameChefWorkstation'),'-nic')]",
@@ -285,7 +308,33 @@
               "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('chefprefix'),variables('networkInterfaceNameChefWorkstation')))]"
             }
           ]
-        }
+        },
+        "resources": [
+          {
+            "comments": "Custom Script that copies blob(s) from source storage account to destination storage account",
+            "apiVersion": "2015-06-15",
+            "type": "extensions",
+            "name": "[concat(parameters('chefprefix'),parameters('vmNameChefWorkstation'),'CustomScriptExtension')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+              "[concat('Microsoft.Compute/virtualMachines/', concat(parameters('chefprefix'),parameters('vmNameChefWorkstation'),'CustomScriptExtension'))]"
+            ],
+            "properties": {
+              "publisher": "Microsoft.Compute",
+              "type": "CustomScriptExtension",
+              "autoUpgradeMinorVersion": true,
+              "typeHandlerVersion": "1.4",
+              "settings": {
+                "fileUris": [
+                  "[concat(parameters('baseUrl'), '/scripts/BlobTransfer.ps1')]"
+                ]
+              },
+              "protectedSettings": {
+                "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ','BlobTransfer.ps1 -SourceImage ', '' ,parameters('sourceBlobURI'), '', '  -SourceSAKey ', listKeys(resourceId(parameters('sourceStorageAccountResourceGroup'),'Microsoft.Storage/storageAccounts', variables('sourceStorageAccountName')), '2015-06-15').key1, ' -DestinationURI https://', variables('destinationStorageAccountName'), '.blob.core.windows.net/', parameters('destinationContainer'), ' -DestinationSAKey ', listKeys(concat('Microsoft.Storage/storageAccounts/', variables('destinationStorageAccountName')), '2015-06-15').key1)]"
+              }
+            }
+          }
+        ]
       }
     },
     {
