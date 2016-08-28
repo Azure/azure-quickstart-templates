@@ -25,7 +25,7 @@ Get-AzureRmSubscription –SubscriptionName “Cloudly Dev (Visual Studio Ultimate)”
 
 #----------- PARAMETERS--------
 #------------------------------
-$resourceGroup = "datameer-hdi-chef-trendmicro-11" 
+$resourceGroup = "datameer-hdi-chef-trendmicro-12" 
 $deploymentName = "datameer-hdideploy--" + [System.DateTime]::Now.ToString("dd-MMMM-yyyy")
 
 
@@ -35,7 +35,17 @@ New-AzureRmResourceGroup -Name $resourceGroup -Location "West US"
 # deploy the template to the resource group
 New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $resourceGroup -TemplateFile .\azuredeploy.json -TemplateParameterFile .\azuredeploy.parameters.json -Force -Verbose -DeploymentDebugLogLevel All
 
-
-#Remove-AzureRMResourceGroupDeployment -ResourceGroupName datameer-hdinsight-chef-trendmicro-1 -Verbose
 #Standalonee Datameer-HDInsight Deploy
 #New-AzureRmResourceGroupDeployment -Name $deploymentName -ResourceGroupName $resourceGroup -TemplateFile ..\nested\datameer-hdinsight.json -TemplateParameterFile ..\nested\datameer-hdinsight.parameters.json -Force -Verbose
+
+
+$operations = Get-AzureRmResourceGroupDeploymentOperation –DeploymentName $deploymentName –ResourceGroupName $resourceGroup 
+
+foreach($operation in $operations)
+{
+    Write-Host $operation.id
+    Write-Host "Request:" -ForegroundColor Green
+    $operation.Properties.Request | ConvertTo-Json -Depth 15
+    Write-Host "Response:" -ForegroundColor Green
+    $operation.Properties.Response | ConvertTo-Json -Depth 15
+}
