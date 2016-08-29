@@ -1,0 +1,1210 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "omsRecoveryVaultName": {
+      "type": "string",
+      "defaultValue": "OMSRecovery",
+      "metadata": {
+        "description": "Assign a name for the OMS Recovery Vault"
+      }
+    },
+    "omsRecoveryVaultRegion": {
+      "type": "string",
+      "defaultValue": "West Europe",
+      "allowedValues": [
+        "West US",
+        "East US",
+        "North Europe",
+        "West Europe",
+        "Brazil South",
+        "East Asia",
+        "Southeast Asia",
+        "North Central US",
+        "South Central US",
+        "Japan East",
+        "Japan West",
+        "Australia East",
+        "Australia Southeast",
+        "Central US",
+        "East US 2",
+        "Central India",
+        "South India",
+        "Southeast Asia"
+      ],
+      "metadata": {
+        "description": "Specify the region for your Recovery Vault"
+      }
+    },
+    "omsWorkspaceName": {
+      "type": "string",
+      "defaultValue": "OMSLA",
+      "metadata": {
+        "description": "Assign a name for the Log Analytic Workspace Name"
+      }
+    },
+    "omsWorkspaceRegion": {
+      "type": "string",
+      "defaultValue": "West Europe",
+      "allowedValues": [
+        "East US",
+        "West Europe",
+        "Southeast Asia",
+        "Australia Southeast"
+      ],
+      "metadata": {
+        "description": "Specify the region for your Workspace"
+      }
+    },
+    "omsAutomationAccountName": {
+      "type": "string",
+      "defaultValue": "OMSAutomation",
+      "metadata": {
+        "description": "Assign a name for the Automation account"
+      }
+    },
+    "omsAutomationRegion": {
+      "type": "string",
+      "defaultValue": "West Europe",
+      "allowedValues": [
+        "Japan East",
+        "East US 2",
+        "West Europe",
+        "Southeast Asia",
+        "South Central US",
+        "North Europe",
+        "Canada Central",
+        "Australia Southeast",
+        "Central India",
+        "Japan East"
+      ],
+      "metadata": {
+        "description": "Specify the region for your Automation account"
+      }
+    }
+  },
+  "variables": {
+    "psModules": {
+      "azureRmProfile": {
+        "name": "AzureRm.Profile",
+        "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.profile.1.0.11.nupkg"
+      },
+      "azureRmResources": {
+        "name": "AzureRm.Resources",
+        "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.resources.2.0.2.nupkg"
+      },
+      "azureStorage": {
+        "name": "Azure.Storage",
+        "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azure.storage.1.1.5.nupkg"
+      },
+      "azureRmStorage": {
+        "name": "AzureRm.Storage",
+        "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.storage.1.1.3.nupkg"
+      },
+      "azureRmOperationalInsights": {
+        "name": "AzureRm.OperationalInsights",
+        "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.operationalinsights.1.0.9.nupkg"
+      },
+      "azureRmSiteRecovery": {
+        "name": "AzureRm.SiteRecovery",
+        "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.siterecovery.1.1.10.nupkg"
+      },
+      "azureRmRecoveryServices": {
+        "name": "AzureRm.RecoveryServices",
+        "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.recoveryservices.1.1.3.nupkg"
+      },
+      "azureRmBackup": {
+        "name": "AzureRm.Backup",
+        "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.backup.1.0.9.nupkg"
+      },
+      "azureRmCompute": {
+        "name": "AzureRm.Compute",
+        "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.compute.1.3.3.nupkg"
+      },
+      "azureRmAutomation": {
+        "name": "AzureRm.Automation",
+        "url": "https://devopsgallerystorage.blob.core.windows.net/packages/azurerm.automation.1.0.11.nupkg"
+      }
+    },
+    "runbooks": {
+      "omsABUscript": {
+        "name": "AzureIaasBackup",
+        "version": "1.0.0.0",
+        "description": "Runbook to automatically backup IaaS VMs within the ABU region",
+        "type": "PowerShell",
+        "Id": ""
+      }
+    },
+    "_assetLocation": "https://raw.githubusercontent.com/krnese/AzureDeploy/master/OMS/MSOMS/AzureIaaSBackup",
+    "scriptUri": "[concat(variables('_assetLocation'),'/scripts/Automated-IaaS-Backup.ps1')]",
+    "ingestInterval": "1",
+    "ingestFrequency": "hour",
+    "azureSubscriptionId": "AzureSubscriptionId",
+    "omsWorkspaceId": "OMSWorkspaceId",
+    "omsWorkspaceKey": "OMSWorkspacekey",
+    "omsWorkspaceName": "OMSWorkspaceName",
+    "omsResourceGroupName": "OMSResourceGroupName",
+    "omsRecoveryVault": "OMSRecoveryVault",
+    "recoveryStorageAccountName": "[toLower(concat('asr', uniqueString(resourceGroup().id)))]",
+    "recoveryStorageType": "Standard_LRS",
+    "securitySolution": "[concat('Security', '(', parameters('omsWorkspaceName'), ')')]",
+    "securitySolutionName": "Security",
+    "agentSolution": "[concat('AgentHealthAssessment', '(', parameters('omsWorkspaceName'), ')')]",
+    "agentSolutionName": "AgentHealthAssessment",
+    "changeTrackingSolution": "[concat('ChangeTracking', '(', parameters('omsWorkspaceName'), ')')]",
+    "changeTrackingSolutionName": "ChangeTracking",
+    "updatesSolution": "[concat('Updates', '(', parameters('omsWorkspaceName'), ')')]",
+    "updatesSolutionName": "Updates"
+  },
+  "resources": [
+    {
+      "apiVersion": "2016-06-01",
+      "location": "[parameters('omsRecoveryVaultRegion')]",
+      "name": "[parameters('omsRecoveryVaultName')]",
+      "type": "Microsoft.RecoveryServices/vaults",
+      "comments": "ASR Recovery Vault for OMS",
+      "sku": {
+        "name": "RS0",
+        "tier": "Standard"
+      },
+      "properties": { },
+      "resources": [
+        {
+          "apiVersion": "2016-06-01",
+          "name": "HyperVPrimarySite",
+          "type": "replicationFabrics",
+          "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.RecoveryServices/vaults/', parameters('omsRecoveryVaultName'), '/replicationFabrics/', 'HyperVPrimarySite')]",
+          "dependsOn": [
+            "[concat('Microsoft.RecoveryServices/vaults/', parameters('omsRecoveryVaultName'))]"
+          ],
+          "properties": {
+            "friendlyName": "PrimarySite",
+            "fabricType": "HyperVSite"
+          }
+        },
+        {
+          "apiVersion": "2016-06-01",
+          "name": "DefaultVMwarePolicy",
+          "type": "replicationPolicies",
+          "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.RecoveryServices/vaults/', parameters('omsRecoveryVaultName'), '/replicationPolicies/', 'DefaultVMwarePolicy')]",
+          "dependsOn": [
+            "[concat('Microsoft.RecoveryServices/vaults/', parameters('omsRecoveryVaultName'))]"
+          ],
+          "properties": {
+            "subscriptionid": "[subscription().subscriptionId]",
+            "friendlyName": "DefaultVMwarePolicy",
+            "providerSpecificInput": {
+              "instanceType": "InMageAzureV2",
+              "crashConsistentFrequencyInMinutes": 5,
+              "recoveryPointThresholdInMinutes": 15,
+              "recoveryPointHistory": 1440,
+              "appConsistentFrequencyInMinutes": 60,
+              "multiVmSyncStatus": "Enable"
+            }
+          }
+        },
+        {
+          "apiVersion": "2016-06-01",
+          "name": "DefaultVMwarePolicy-failback",
+          "type": "replicationPolicies",
+          "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.RecoveryServices/vaults/', parameters('omsRecoveryVaultName'), '/replicationPolicies/', 'DefaultVMwarePolicy-failback')]",
+          "dependsOn": [
+            "[concat('Microsoft.RecoveryServices/vaults/', parameters('omsRecoveryVaultName'))]",
+            "[concat('Microsoft.RecoveryServices/vaults/', parameters('omsRecoveryVaultName'), '/replicationPolicies/DefaultVMwarePolicy')]"
+          ],
+          "properties": {
+            "subscriptionid": "[subscription().subscriptionId]",
+            "friendlyName": "DefaultVMwarePolicy-failback",
+            "providerSpecificInput": {
+              "instanceType": "InMage",
+              "recoveryPointThresholdInMinutes": 15,
+              "recoveryPointHistory": 1440,
+              "appConsistentFrequencyInMinutes": 60,
+              "multiVmSyncStatus": "Enable"
+            }
+          }
+        },
+        {
+          "apiVersion": "2016-06-01",
+          "name": "DefaultHyperVPolicy",
+          "type": "replicationPolicies",
+          "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.RecoveryServices/vaults/', parameters('omsRecoveryVaultName'), '/replicationPolicies/', 'DefaultHyperVPolicy')]",
+          "dependsOn": [
+            "[concat('Microsoft.RecoveryServices/vaults/', parameters('omsRecoveryVaultName'))]"
+          ],
+          "properties": {
+            "subscriptionId": "[subscription().subscriptionId]",
+            "friendlyName": "DefaultHyperVPolicy",
+            "providerSpecificInput": {
+              "instanceType": "HyperVReplicaAzure",
+              "recoveryPointHistoryDurationInHours": 2,
+              "applicationConsistentSnapshotFrequencyInHours": 0,
+              "replicationInterval": 900,
+              "onlineReplicationStartTime": "",
+              "activeStorageAccountId": "[reference(resourceId('Microsoft.Storage/storageAccounts/',variables('recoveryStorageAccountName')))]",
+              "encryption": "Disable"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "location": "[parameters('omsRecoveryVaultRegion')]",
+      "name": "[variables('recoveryStorageAccountName')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "comments": "Storage account for ASR",
+      "properties": {
+        "accountType": "[variables('recoveryStorageType')]"
+      }
+    },
+    {
+      "apiVersion": "2015-11-01-preview",
+      "location": "[parameters('omsWorkspaceRegion')]",
+      "name": "[parameters('omsWorkspaceName')]",
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "comments": "Log Analytics workspace",
+      "properties": {
+        "sku": {
+          "name": "Free"
+        }
+      },
+      "resources": [
+        {
+          "name": "[concat(parameters('omsWorkspaceName'), '/', 'SoftwareUpdateFailed1')]",
+          "type": "Microsoft.OperationalInsights/workspaces/savedSearches",
+          "apiVersion": "2015-11-01-preview",
+          "dependsOn": [
+            "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+          ],
+          "tags": {
+          },
+          "properties": {
+            "ETag": "*",
+            "query": "Type=Event EventID=20 Source=\"Microsoft-Windows-WindowsUpdateClient\" EventLog=\"System\" TimeGenerated>NOW-24HOURS | Measure Count() By Computer",
+            "displayName": "A Software Update Installation Failed",
+            "category": "Software Updates"
+          }
+        },
+        {
+          "name": "[concat(parameters('omsWorkspaceName'), '/', 'SoftwareUpdateFailed2')]",
+          "type": "Microsoft.OperationalInsights/workspaces/savedSearches",
+          "apiVersion": "2015-11-01-preview",
+          "dependsOn": [
+            "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+          ],
+          "tags": {
+          },
+          "properties": {
+            "ETag": "*",
+            "query": "Type=Event EventID=20 Source=\"Microsoft-Windows-WindowsUpdateClient\" EventLog=\"System\" TimeGenerated>NOW-168HOURS",
+            "displayName": "A Software Update Installation Failed",
+            "category": "Software Updates"
+          }
+        },
+        {
+          "name": "[concat(parameters('omsWorkspaceName'), '/', 'Network1')]",
+          "type": "Microsoft.OperationalInsights/workspaces/savedSearches",
+          "apiVersion": "2015-11-01-preview",
+          "dependsOn": [
+            "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+          ],
+          "tags": {
+          },
+          "properties": {
+            "ETag": "*",
+            "query": "Type=Event EventID=4202 Source=\"TCPIP\" EventLog=\"System\" TimeGenerated>NOW-24HOURS | Measure Count() By Computer",
+            "displayName": "A Network adatper was disconnected from the network",
+            "category": "Networking"
+          }
+        },
+        {
+          "name": "[concat(parameters('omsWorkspaceName'), '/', 'Network2')]",
+          "type": "Microsoft.OperationalInsights/workspaces/savedSearches",
+          "apiVersion": "2015-11-01-preview",
+          "dependsOn": [
+            "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+          ],
+          "tags": {
+          },
+          "properties": {
+            "ETag": "*",
+            "query": "Type=Event EventID=4198 OR EventID=4199 Source=\"TCPIP\" EventLog=\"System\" TimeGenerated>NOW-24HOURS",
+            "displayName": "Duplicate IP address has been detected",
+            "category": "Networking"
+          }
+        },
+        {
+          "name": "[concat(parameters('omsWorkspaceName'), '/', 'NTFS1')]",
+          "type": "Microsoft.OperationalInsights/workspaces/savedSearches",
+          "apiVersion": "2015-11-01-preview",
+          "dependsOn": [
+            "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+          ],
+          "tags": {
+          },
+          "properties": {
+            "ETag": "*",
+            "query": "Type=Event EventID=98 Source=\"Microsoft-Windows-Ntfs\" EventLog=\"System\" TimeGenerated>NOW-24HOURS | Measure Count() By Computer",
+            "displayName": "NTFS File System Corruption",
+            "category": "NTFS"
+          }
+        },
+        {
+          "name": "[concat(parameters('omsWorkspaceName'), '/', 'NTFS2')]",
+          "type": "Microsoft.OperationalInsights/workspaces/savedSearches",
+          "apiVersion": "2015-11-01-preview",
+          "dependsOn": [
+            "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+          ],
+          "tags": {
+          },
+          "properties": {
+            "ETag": "*",
+            "query": "Type=Event EventID=40 OR EventID=36  Source=\"DISK\" EventLog=\"System\" TimeGenerated>NOW-24HOURS | Measure Count() By Compute",
+            "displayName": "NTFS Quouta treshold limit reached",
+            "category": "NTFS"
+          }
+        },
+        {
+          "apiVersion": "2015-11-01-preview",
+          "type": "datasources",
+          "name": "LogicalDisk1",
+          "dependsOn": [
+            "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+          ],
+          "kind": "WindowsPerformanceCounter",
+          "properties": {
+            "objectName": "LogicalDisk",
+            "instanceName": "*",
+            "intervalSeconds": 10,
+            "counterName": "Avg Disk sec/Read"
+          }
+        },
+        {
+          "apiVersion": "2015-11-01-preview",
+          "type": "datasources",
+          "name": "LogicalDisk2",
+          "dependsOn": [
+            "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+          ],
+          "kind": "WindowsPerformanceCounter",
+          "properties": {
+            "objectName": "LogicalDisk",
+            "instanceName": "*",
+            "intervalSeconds": 10,
+            "counterName": "Avg Disk sec/Write"
+          }
+        },
+        {
+          "apiVersion": "2015-11-01-preview",
+          "type": "datasources",
+          "name": "LogicalDisk3",
+          "dependsOn": [
+            "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+          ],
+          "kind": "WindowsPerformanceCounter",
+          "properties": {
+            "objectName": "LogicalDisk",
+            "instanceName": "*",
+            "intervalSeconds": 10,
+            "counterName": "Current Disk Queue Lenght"
+          }
+        },
+        {
+          "apiVersion": "2015-11-01-preview",
+          "type": "datasources",
+          "name": "LogicalDisk4",
+          "dependsOn": [
+            "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+          ],
+          "kind": "WindowsPerformanceCounter",
+          "properties": {
+            "objectName": "LogicalDisk",
+            "instanceName": "*",
+            "intervalSeconds": 10,
+            "counterName": "Disk Reads/sec"
+          }
+        },
+        {
+          "apiVersion": "2015-11-01-preview",
+          "type": "datasources",
+          "name": "LogicalDisk5",
+          "dependsOn": [
+            "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+          ],
+          "kind": "WindowsPerformanceCounter",
+          "properties": {
+            "objectName": "LogicalDisk",
+            "instanceName": "*",
+            "intervalSeconds": 10,
+            "counterName": "Disk Transfers/sec"
+          }
+        },
+        {
+          "apiVersion": "2015-11-01-preview",
+          "type": "datasources",
+          "name": "LogicalDisk6",
+          "dependsOn": [
+            "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+          ],
+          "kind": "WindowsPerformanceCounter",
+          "properties": {
+            "objectName": "LogicalDisk",
+            "instanceName": "*",
+            "intervalSeconds": 10,
+            "counterName": "Disk Writes/sec"
+          }
+        },
+        {
+          "apiVersion": "2015-11-01-preview",
+          "type": "datasources",
+          "name": "LogicalDisk7",
+          "dependsOn": [
+            "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+          ],
+          "kind": "WindowsPerformanceCounter",
+          "properties": {
+            "objectName": "LogicalDisk",
+            "instanceName": "*",
+            "intervalSeconds": 10,
+            "counterName": "Free Megabytes"
+          }
+        },
+        {
+          "apiVersion": "2015-11-01-preview",
+          "type": "datasources",
+          "name": "LogicalDisk8",
+          "dependsOn": [
+            "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+          ],
+          "kind": "WindowsPerformanceCounter",
+          "properties": {
+            "objectName": "LogicalDisk",
+            "instanceName": "*",
+            "intervalSeconds": 10,
+            "counterName": "% Free Space"
+          }
+        },
+        {
+          "apiVersion": "2015-11-01-preview",
+          "type": "datasources",
+          "name": "Memory1",
+          "dependsOn": [
+            "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+          ],
+          "kind": "WindowsPerformanceCounter",
+          "properties": {
+            "objectName": "Memory",
+            "instanceName": "*",
+            "intervalSeconds": 10,
+            "counterName": "Available MBytes"
+          }
+        },
+        {
+          "apiVersion": "2015-11-01-preview",
+          "type": "datasources",
+          "name": "Memory2",
+          "dependsOn": [
+            "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+          ],
+          "kind": "WindowsPerformanceCounter",
+          "properties": {
+            "objectName": "Memory",
+            "instanceName": "*",
+            "intervalSeconds": 10,
+            "counterName": "% Committed Bytes In Use"
+          }
+        },
+        {
+          "apiVersion": "2015-11-01-preview",
+          "type": "datasources",
+          "name": "Network1",
+          "dependsOn": [
+            "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+          ],
+          "kind": "WindowsPerformanceCounter",
+          "properties": {
+            "objectName": "Network Adapter",
+            "instanceName": "*",
+            "intervalSeconds": 10,
+            "counterName": "Bytes Received/sec"
+          }
+        },
+        {
+          "apiVersion": "2015-11-01-preview",
+          "type": "datasources",
+          "name": "Network2",
+          "dependsOn": [
+            "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+          ],
+          "kind": "WindowsPerformanceCounter",
+          "properties": {
+            "objectName": "Network Adapter",
+            "instanceName": "*",
+            "intervalSeconds": 10,
+            "counterName": "Bytes Sent/sec"
+          }
+        },
+        {
+          "apiVersion": "2015-11-01-preview",
+          "type": "datasources",
+          "name": "Network3",
+          "dependsOn": [
+            "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+          ],
+          "kind": "WindowsPerformanceCounter",
+          "properties": {
+            "objectName": "Network Adapter",
+            "instanceName": "*",
+            "intervalSeconds": 10,
+            "counterName": "Bytes Total/sec"
+          }
+        },
+        {
+          "apiVersion": "2015-11-01-preview",
+          "type": "datasources",
+          "name": "CPU1",
+          "dependsOn": [
+            "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+          ],
+          "kind": "WindowsPerformanceCounter",
+          "properties": {
+            "objectName": "Processor",
+            "instanceName": "_Total",
+            "intervalSeconds": 10,
+            "counterName": "% Processor Time"
+          }
+        },
+        {
+          "apiVersion": "2015-11-01-preview",
+          "type": "datasources",
+          "name": "CPU2",
+          "dependsOn": [
+            "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+          ],
+          "kind": "WindowsPerformanceCounter",
+          "properties": {
+            "objectName": "System",
+            "instanceName": "*",
+            "intervalSeconds": 10,
+            "counterName": "Processor Queue Lenght"
+          }
+        },
+        {
+          "apiVersion": "2015-11-01-preview",
+          "type": "datasources",
+          "name": "System",
+          "dependsOn": [
+            "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+          ],
+          "kind": "WindowsEvent",
+          "properties": {
+            "eventLogName": "System",
+            "eventTypes": [
+              {
+                "eventType": "Error"
+              },
+              {
+                "eventType": "Warning"
+              }
+            ]
+          }
+        },
+        {
+          "apiVersion": "2015-11-01-preview",
+          "type": "datasources",
+          "name": "Application",
+          "dependsOn": [
+            "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+          ],
+          "kind": "WindowsEvent",
+          "properties": {
+            "eventLogName": "Application",
+            "eventTypes": [
+              {
+                "eventType": "Error"
+              },
+              {
+                "eventType": "Warning"
+              }
+            ]
+          }
+        },
+        {
+          "apiVersion": "2015-11-01-preview",
+          "type": "datasources",
+          "name": "Microsoft-Windows-Hyper-V-VMMS-Admin",
+          "dependsOn": [
+            "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+          ],
+          "kind": "WindowsEvent",
+          "properties": {
+            "eventLogName": "Microsoft-Windows-Hyper-V-VMMS-Admin",
+            "eventTypes": [
+              {
+                "eventType": "Error"
+              },
+              {
+                "eventType": "Warning"
+              },
+              {
+                "eventType": "Information"
+              }
+            ]
+          }
+        },
+        {
+          "apiVersion": "2015-11-01-preview",
+          "type": "datasources",
+          "name": "Hyper-VAzureReplicationAgent1",
+          "dependsOn": [
+            "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+          ],
+          "kind": "WindowsPerformanceCounter",
+          "properties": {
+            "objectName": "Hyper-V Azure Replication Agent",
+            "instanceName": "*",
+            "intervalSeconds": 10,
+            "counterName": "Average Replication Size"
+          }
+        },
+        {
+          "apiVersion": "2015-11-01-preview",
+          "type": "datasources",
+          "name": "Hyper-VAzureReplicationAgent2",
+          "dependsOn": [
+            "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+          ],
+          "kind": "WindowsPerformanceCounter",
+          "properties": {
+            "objectName": "Hyper-V Azure Replication Agent",
+            "instanceName": "*",
+            "intervalSeconds": 10,
+            "counterName": "Replication Throughput"
+          }
+        },
+        {
+          "apiVersion": "2015-11-01-preview",
+          "type": "datasources",
+          "name": "Hyper-VAzureReplicationAgent3",
+          "dependsOn": [
+            "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+          ],
+          "kind": "WindowsPerformanceCounter",
+          "properties": {
+            "objectName": "Hyper-V Azure Replication Agent",
+            "instanceName": "*",
+            "intervalSeconds": 10,
+            "counterName": "Network Send Throughput"
+          }
+        },
+        {
+          "apiVersion": "2015-11-01-preview",
+          "type": "datasources",
+          "name": "Hyper-VAzureReplicationAgent4",
+          "dependsOn": [
+            "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+          ],
+          "kind": "WindowsPerformanceCounter",
+          "properties": {
+            "objectName": "Hyper-V Azure Replication Agent",
+            "instanceName": "*",
+            "intervalSeconds": 10,
+            "counterName": "Replication Count"
+          }
+        },
+        {
+          "apiVersion": "2015-11-01-preview",
+          "type": "datasources",
+          "name": "Hyper-VAzureReplicationAgent5",
+          "dependsOn": [
+            "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+          ],
+          "kind": "WindowsPerformanceCounter",
+          "properties": {
+            "objectName": "Hyper-V Azure Replication Agent",
+            "instanceName": "*",
+            "intervalSeconds": 10,
+            "counterName": "Network Bytes Sent"
+          }
+        },
+        {
+          "apiVersion": "2015-11-01-preview",
+          "type": "datasources",
+          "name": "Hyper-VAzureReplicationAgent6",
+          "dependsOn": [
+            "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+          ],
+          "kind": "WindowsPerformanceCounter",
+          "properties": {
+            "objectName": "Hyper-V Azure Replication Agent",
+            "instanceName": "*",
+            "intervalSeconds": 10,
+            "counterName": "Last Replication Size"
+          }
+        },
+        {
+          "apiVersion": "2015-11-01-preview",
+          "type": "datasources",
+          "name": "Hyper-VAzureReplicationAgent7",
+          "dependsOn": [
+            "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+          ],
+          "kind": "WindowsPerformanceCounter",
+          "properties": {
+            "objectName": "Hyper-V Azure Replication Agent",
+            "instanceName": "*",
+            "intervalSeconds": 10,
+            "counterName": "Resynchronized Bytes"
+          }
+        },
+        {
+          "apiVersion": "2015-11-01-preview",
+          "type": "datasources",
+          "name": "Linux",
+          "dependsOn": [
+            "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+          ],
+          "kind": "LinuxPerformanceObject",
+          "properties": {
+            "performanceCounters": [
+              {
+                "counterName": "% Used Inodes"
+              },
+              {
+                "counterName": "Free Megabytes"
+              },
+              {
+                "counterName": "% Used Space"
+              },
+              {
+                "counterName": "Disk Transfers/sec"
+              },
+              {
+                "counterName": "Disk Reads/sec"
+              },
+              {
+                "counterName": "Disk Writes/sec"
+              }
+            ],
+            "objectName": "Logical Disk",
+            "instanceName": "*",
+            "intervalSeconds": 10
+          }
+        },
+        {
+          "apiVersion": "2015-11-01-preview",
+          "type": "datasources",
+          "name": "LinuxPerfCollection",
+          "dependsOn": [
+            "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+          ],
+          "kind": "LinuxPerformanceCollection",
+          "properties": {
+            "state": "Enabled"
+          }
+        },
+        {
+          "apiVersion": "2015-11-01-preview",
+          "type": "datasources",
+          "name": "IISLog",
+          "dependsOn": [
+            "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+          ],
+          "kind": "IISLogs",
+          "properties": {
+            "state": "OnPremiseEnabled"
+          }
+        },
+        {
+          "apiVersion": "2015-11-01-preview",
+          "type": "datasources",
+          "name": "Syslog",
+          "dependsOn": [
+            "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+          ],
+          "kind": "LinuxSyslog",
+          "properties": {
+            "syslogName": "kern",
+            "syslogSeverities": [
+              {
+                "severity": "emerg"
+              },
+              {
+                "severity": "alert"
+              },
+              {
+                "severity": "crit"
+              },
+              {
+                "severity": "err"
+              },
+              {
+                "severity": "warning"
+              }
+            ]
+          }
+        },
+        {
+          "apiVersion": "2015-11-01-preview",
+          "type": "datasources",
+          "name": "SyslogCollection",
+          "dependsOn": [
+            "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+          ],
+          "kind": "LinuxSyslogCollection",
+          "properties": {
+            "state": "Enabled"
+          }
+        }
+      ]
+    },
+    {
+      "apiVersion": "2015-11-01-preview",
+      "name": "[variables('securitySolution')]",
+      "type": "Microsoft.OperationsManagement/solutions",
+      "location": "[parameters('omsWorkspaceRegion')]",
+      "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.OperationsManagement/solutions/', variables('securitySolution'))]",
+      "dependsOn": [
+        "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+      ],
+      "properties": {
+        "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+      },
+      "plan": {
+        "name": "[variables('securitySolution')]",
+        "publisher": "Microsoft",
+        "product": "[concat('OMSGallery/', variables('securitySolutionName'))]",
+        "promotionCode": ""
+      }
+    },
+    {
+      "apiVersion": "2015-11-01-preview",
+      "name": "[variables('updatesSolution')]",
+      "type": "Microsoft.OperationsManagement/solutions",
+      "location": "[parameters('omsWorkspaceRegion')]",
+      "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.OperationsManagement/solutions/', variables('updatesSolution'))]",
+      "dependsOn": [
+        "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+      ],
+      "properties": {
+        "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+      },
+      "plan": {
+        "name": "[variables('updatesSolution')]",
+        "publisher": "Microsoft",
+        "product": "[concat('OMSGallery/', variables('updatesSolutionName'))]",
+        "promotionCode": ""
+      }
+    },
+    {
+      "apiVersion": "2015-11-01-preview",
+      "name": "[variables('changeTrackingSolution')]",
+      "type": "Microsoft.OperationsManagement/solutions",
+      "location": "[parameters('omsWorkspaceRegion')]",
+      "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.OperationsManagement/solutions/', variables('changeTrackingSolution'))]",
+      "dependsOn": [
+        "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+      ],
+      "properties": {
+        "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+      },
+      "plan": {
+        "name": "[variables('changeTrackingSolution')]",
+        "publisher": "Microsoft",
+        "product": "[concat('OMSGallery/', variables('changeTrackingSolutionName'))]",
+        "promotionCode": ""
+      }
+    },
+    {
+      "apiVersion": "2015-11-01-preview",
+      "name": "[variables('agentSolution')]",
+      "type": "Microsoft.OperationsManagement/solutions",
+      "location": "[parameters('omsWorkspaceRegion')]",
+      "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.OperationsManagement/solutions/', variables('agentSolution'))]",
+      "dependsOn": [
+        "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+      ],
+      "properties": {
+        "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'))]"
+      },
+      "plan": {
+        "name": "[variables('agentSolution')]",
+        "publisher": "Microsoft",
+        "product": "[concat('OMSGallery/', variables('agentSolutionName'))]",
+        "promotionCode": ""
+      }
+    },
+    {
+      "apiversion": "2015-10-31",
+      "location": "[parameters('omsAutomationRegion')]",
+      "name": "[parameters('omsAutomationAccountName')]",
+      "type": "Microsoft.Automation/automationAccounts",
+      "comments": "Automation account for OMS",
+      "properties": {
+        "sku": {
+          "name": "Free"
+        }
+      },
+      "resources": [
+        {
+          "name": "[variables('omsWorkspaceId')]",
+          "type": "variables",
+          "apiVersion": "2015-10-31",
+          "dependsOn": [
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]"
+          ],
+          "tags": { },
+          "properties": {
+            "description": "OMS Workspace Id",
+            "value": "[concat('\"',reference(resourceId('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName')),'2015-11-01-preview').customerId,'\"')]"
+          }
+        },
+        {
+          "name": "[variables('omsWorkspaceKey')]",
+          "type": "variables",
+          "apiVersion": "2015-10-31",
+          "dependsOn": [
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]"
+          ],
+          "tags": { },
+          "properties": {
+            "description": "OMS Workspace key",
+            "value": "[concat('\"',listKeys(resourceId('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName')), '2015-11-01-preview').primarySharedKey,'\"')]"
+          }
+        },
+        {
+          "name": "[variables('azureSubscriptionId')]",
+          "type": "variables",
+          "apiVersion": "2015-10-31",
+          "dependsOn": [
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]"
+          ],
+          "tags": {
+          },
+          "properties": {
+            "description": "Azure Subscription Id",
+            "isEncrypted": 0,
+            "type": "string",
+            "value": "[concat('\"',subscription().subscriptionId,'\"')]"
+          }
+        },
+        {
+          "name": "[variables('omsRecoveryVault')]",
+          "type": "variables",
+          "apiVersion": "2015-10-31",
+          "dependsOn": [
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]"
+          ],
+          "tags": { },
+          "properties": {
+            "description": "OMS Recovery Vault Name",
+            "value": "[concat('\"',parameters('omsRecoveryVaultName'),'\"')]"
+          }
+        },
+        {
+          "name": "[variables('omsResourceGroupName')]",
+          "type": "variables",
+          "apiVersion": "2015-10-31",
+          "dependsOn": [
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]"
+          ],
+          "tags": { },
+          "properties": {
+            "description": "OMS Recovery Vault Name",
+            "value": "[concat('\"',resourceGroup().name,'\"')]"
+          }
+        },
+        {
+          "name": "[variables('psModules').azureRmOperationalInsights.name]",
+          "type": "Modules",
+          "apiVersion": "2015-10-31",
+          "tags": { },
+          "dependsOn": [
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]",
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Modules/', variables('psModules').azureRmProfile.name)]"
+          ],
+          "properties": {
+            "contentLink": {
+              "uri": "[variables('psModules').azureRMOperationalInsights.url]"
+            }
+          }
+        },
+        {
+          "name": "[variables('psModules').azureRmResources.name]",
+          "type": "Modules",
+          "apiVersion": "2015-10-31",
+          "tags": { },
+          "dependsOn": [
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]",
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Modules/', variables('psModules').azureRmProfile.name)]"
+          ],
+          "properties": {
+            "contentLink": {
+              "uri": "[variables('psModules').AzureRMResources.url]"
+            }
+          }
+        },
+        {
+          "name": "[variables('psModules').azureRmAutomation.name]",
+          "type": "Modules",
+          "apiVersion": "2015-10-31",
+          "tags": { },
+          "dependsOn": [
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]",
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Modules/', variables('psModules').azureRmProfile.name)]",
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Modules/', variables('psModules').azureRmResources.name)]"
+          ],
+          "properties": {
+            "contentLink": {
+              "uri": "[variables('psModules').azureRMAutomation.url]"
+            }
+          }
+        },
+        {
+          "name": "[variables('psModules').azureRmStorage.name]",
+          "type": "Modules",
+          "apiVersion": "2015-10-31",
+          "tags": { },
+          "dependsOn": [
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]",
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Modules/', variables('psModules').azureRmProfile.name)]",
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Modules/', variables('psModules').azureStorage.name)]"
+          ],
+          "properties": {
+            "contentLink": {
+              "uri": "[variables('psModules').azureRmStorage.url]"
+            }
+          }
+        },
+        {
+          "name": "[variables('psModules').azureStorage.name]",
+          "type": "Modules",
+          "apiVersion": "2015-10-31",
+          "tags": { },
+          "dependsOn": [
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]",
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Modules/', variables('psModules').azureRmProfile.name)]"
+          ],
+          "properties": {
+            "contentLink": {
+              "uri": "[variables('psModules').azureStorage.url]"
+            }
+          }
+        },
+        {
+          "name": "[variables('psModules').azureRmCompute.name]",
+          "type": "Modules",
+          "apiVersion": "2015-10-31",
+          "tags": { },
+          "dependsOn": [
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]",
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Modules/', variables('psModules').azureRmProfile.name)]"
+          ],
+          "properties": {
+            "contentLink": {
+              "uri": "[variables('psModules').azureRmCompute.url]"
+            }
+          }
+        },
+        {
+          "name": "[variables('psModules').azureRmSiteRecovery.name]",
+          "type": "Modules",
+          "apiVersion": "2015-10-31",
+          "tags": { },
+          "dependsOn": [
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]",
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Modules/', variables('psModules').azureRmProfile.name)]",
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Modules/', variables('psModules').azureStorage.name)]"
+          ],
+          "properties": {
+            "contentLink": {
+              "uri": "[variables('psModules').AzureRmSiteRecovery.url]"
+            }
+          }
+        },
+        {
+          "name": "[variables('psModules').azureRmbackup.name]",
+          "type": "Modules",
+          "apiVersion": "2015-10-31",
+          "tags": { },
+          "dependsOn": [
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]",
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Modules/', variables('psModules').azureRmProfile.name)]",
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Modules/', variables('psModules').azureStorage.name)]"
+          ],
+          "properties": {
+            "contentLink": {
+              "uri": "[variables('psModules').azureRmBackup.url]"
+            }
+          }
+        },
+        {
+          "name": "[variables('psModules').azureRmRecoveryServices.name]",
+          "type": "Modules",
+          "apiVersion": "2015-10-31",
+          "tags": { },
+          "dependsOn": [
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]",
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Modules/', variables('psModules').azureRmProfile.name)]",
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsautomationAccountName'), '/Modules/', variables('psModules').azureStorage.name)]"
+          ],
+          "properties": {
+            "contentLink": {
+              "uri": "[variables('psModules').azureRmRecoveryServices.url]"
+            }
+          }
+        },
+        {
+          "name": "[variables('psModules').azureRmProfile.name]",
+          "type": "Modules",
+          "apiVersion": "2015-10-31",
+          "tags": { },
+          "dependsOn": [
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]"
+          ],
+          "properties": {
+            "contentLink": {
+              "uri": "[variables('psModules').azureRmProfile.url]"
+            }
+          }
+        },
+        {
+          "name": "[variables('runbooks').omsABUscript.name]",
+          "type": "runbooks",
+          "apiVersion": "2015-10-31",
+          "location": "[parameters('omsAutomationRegion')]",
+          "dependsOn": [
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]",
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/variables/', variables('azureSubscriptionId'))]",
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/variables/', variables('omsWorkspaceId'))]",
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/variables/', variables('omsWorkspaceKey'))]",
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Modules/', variables('psModules').azureRmProfile.name)]",
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Modules/', variables('psModules').azureRmResources.name)]",
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Modules/', variables('psModules').azureRmCompute.name)]",
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Modules/', variables('psModules').azureStorage.name)]",
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Modules/', variables('psModules').azureRmStorage.name)]",
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Modules/', variables('psModules').azureRmRecoveryServices.name)]",
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Modules/', variables('psModules').azureRmSiteRecovery.name)]",
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Modules/', variables('psModules').azureRmBackup.name)]",
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Modules/', variables('psModules').azureRmOperationalInsights.name)]",
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/Modules/', variables('psModules').azureRmAutomation.name)]"
+          ],
+          "tags": { },
+          "properties": {
+            "runbookType": "[variables('runbooks').omsABUscript.type]",
+            "logProgress": "false",
+            "logVerbose": "false",
+            "description": "[variables('runbooks').omsABUscript.description]",
+            "publishContentLink": {
+              "uri": "[variables('scriptUri')]",
+              "version": "[variables('runbooks').omsABUscript.version]"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": { }
+}
