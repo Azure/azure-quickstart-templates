@@ -1,0 +1,555 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "dnsPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Unique public dns prefix where the master node will be exposed"
+      }
+    },
+    "adminUserName": {
+      "type": "string",
+      "defaultValue": "azureuser",
+      "metadata": {
+        "description": "User name for the Virtual Machine. Pick a valid username otherwise there will be a BadRequest error."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Admin password. Pick a complex password with uppercase letters, lowercase letters, digits, and symbols. The password should not be longer than 16. Otherwise you'll get a BadRequest error."
+      }
+    },
+    "hpcUserName": {
+      "type": "string",
+      "defaultValue": "hpc",
+      "metadata": {
+        "description": "User for running HPC applications with shared home directory and SSH public key authentication setup.  This user cannot login from outside the cluster. Pick a valid username otherwise there will be a BadRequest error."
+      }
+    },
+    "headNodeSize": {
+      "type": "string",
+      "defaultValue": "Standard_A8",
+      "allowedValues": [
+        "Standard_A4",
+        "Standard_A7",
+        "Standard_A8",
+        "Standard_A9",
+        "Standard_A10",
+        "Standard_A11",
+        "Standard_D4",
+		"Standard_D13",
+		"Standard_D14",
+        "Standard_DS4",
+		"Standard_DS13",
+		"Standard_DS14",
+		"Standard_G3",
+		"Standard_G4",
+		"Standard_G5",
+		"Standard_GS3",
+		"Standard_GS4",
+		"Standard_GS5"
+      ],
+      "metadata": {
+        "description": "Size of the head node."
+      }
+    },
+    "workerNodeSize": {
+      "type": "string",
+      "defaultValue": "Standard_A9",
+      "allowedValues": [
+        "Standard_A1",
+        "Standard_A2",
+        "Standard_A3",
+        "Standard_A4",
+        "Standard_A5",
+        "Standard_A6",
+        "Standard_A7",
+        "Standard_A8",
+        "Standard_A9",
+        "Standard_A10",
+        "Standard_A11",
+		"Standard_D1",
+		"Standard_D2",
+		"Standard_D3",
+        "Standard_D4",
+		"Standard_D11",
+		"Standard_D12",
+		"Standard_D13",
+		"Standard_D14",
+		"Standard_DS1",
+		"Standard_DS2",
+		"Standard_DS3",
+		"Standard_DS4",
+		"Standard_D11",
+		"Standard_D12",
+		"Standard_D13",
+		"Standard_D14",
+		"Standard_DS11",
+		"Standard_DS12",
+		"Standard_DS13",
+		"Standard_DS14",
+		"Standard_G1",
+		"Standard_G2",
+		"Standard_G3",
+		"Standard_G4",
+		"Standard_G5",
+		"Standard_GS1",
+		"Standard_GS2",
+		"Standard_GS3",
+		"Standard_GS4",
+		"Standard_GS5"
+      ],
+      "metadata": {
+        "description": "Size of the worker nodes."
+      }
+    },
+    "workerNodeCount": {
+      "type": "int",
+      "defaultValue": 2,
+      "metadata": {
+        "description": "This template creates N worker node. Use workerNodeCount to specify that N."
+      }
+    },
+    "dataDiskSize": {
+      "type": "int",
+      "defaultValue": 128,
+      "metadata": {
+        "description": "The size in GB of each data disk that is attached to the VM.  A RAID-0 volume is created with all data disks that is dataDiskSize * dataDiskCount in size."
+      }
+    }
+  },
+  "variables": {
+    "imagePublisher": "SUSE",
+    "imageOffer": "SLES-HPC",
+    "slesOSVersion": "12",
+    "newStorageAccountName": "[concat('st', uniqueString(resourceGroup().id))]",
+    "vmStorageAccountContainerName": "vhd",
+    "OSDiskName": "osdisk",
+    "publicIPAddressType": "Dynamic",
+    "publicIPAddressName": "publicips",
+    "masterVMName": "master",
+    "workerVMName": "worker",
+	"armApiVersion": "2015-06-15",
+    "nicName": "nic",
+    "networkSettings": {
+      "virtualNetworkName": "virtualnetwork",
+      "addressPrefix": "10.0.0.0/16",
+      "subnet": {
+        "dse": {
+          "name": "dse",
+          "prefix": "10.0.0.0/24",
+          "vnet": "virtualnetwork"
+        }
+      },
+      "statics": {
+        "workerRange": {
+          "base": "10.0.0.",
+          "start": 5
+        },
+        "master": "10.0.0.254"
+      }
+    },
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('networkSettings').virtualNetworkName)]",
+    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('networkSettings').subnet.dse.name)]",
+    "templateBaseUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/slurm-on-sles12-hpc/",
+    "installationCLI": "[concat('bash azuredeploy.sh ', variables('masterVMName'), ' ', variables('workerVMName'), ' ', parameters('workerNodeCount'), ' ', parameters('hpcUserName'), ' ', variables('templateBaseUrl'))]",
+    "storageAccountType": "Standard_LRS"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('newStorageAccountName')]",
+      "apiVersion": "[variables('armApiVersion')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "accountType": "[variables('storageAccountType')]"
+      }
+    },
+    {
+      "apiVersion": "[variables('armApiVersion')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('networkSettings').virtualNetworkName]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('networkSettings').addressPrefix]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('networkSettings').subnet.dse.name]",
+            "properties": {
+              "addressPrefix": "[variables('networkSettings').subnet.dse.prefix]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "[variables('armApiVersion')]",
+      "name": "[variables('publicIPAddressName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('dnsPrefix')]"
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('armApiVersion')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nicName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+        "[concat('Microsoft.Network/virtualNetworks/', variables('networkSettings').virtualNetworkName)]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[variables('networkSettings').statics.master]",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+              },
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "[variables('armApiVersion')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('masterVMName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('headNodeSize')]"
+        },
+        "osProfile": {
+          "computername": "[variables('masterVMName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[variables('slesOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),variables('masterVMName'),'.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          },
+          "dataDisks": [
+            {
+              "name": "datadisk0",
+              "diskSizeGB": "[parameters('dataDiskSize')]",
+              "lun": 0,
+              "vhd": {
+                "Uri":  "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('masterVMName'),'-datadisk0.vhd')]"
+              },
+              "caching": "None",
+              "createOption": "Empty"
+            },
+            {
+              "name": "datadisk1",
+              "diskSizeGB": "[parameters('dataDiskSize')]",
+              "lun": 1,
+              "vhd": {
+                "Uri":  "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('masterVMName'),'-datadisk1.vhd')]"
+              },
+              "caching": "None",
+              "createOption": "Empty"
+            },
+            {
+              "name": "datadisk2",
+              "diskSizeGB": "[parameters('dataDiskSize')]",
+              "lun": 2,
+              "vhd": {
+                "Uri":  "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('masterVMName'),'-datadisk2.vhd')]"
+              },
+              "caching": "None",
+              "createOption": "Empty"
+            },
+            {
+              "name": "datadisk3",
+              "diskSizeGB": "[parameters('dataDiskSize')]",
+              "lun": 3,
+              "vhd": {
+                "Uri":  "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('masterVMName'),'-datadisk3.vhd')]"
+              },
+              "caching": "None",
+              "createOption": "Empty"
+            },
+            {
+              "name": "datadisk4",
+              "diskSizeGB": "[parameters('dataDiskSize')]",
+              "lun": 4,
+              "vhd": {
+                "Uri":  "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('masterVMName'),'-datadisk4.vhd')]"
+              },
+              "caching": "None",
+              "createOption": "Empty"
+            },
+            {
+              "name": "datadisk5",
+              "diskSizeGB": "[parameters('dataDiskSize')]",
+              "lun": 5,
+              "vhd": {
+                "Uri":  "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('masterVMName'),'-datadisk5.vhd')]"
+              },
+              "caching": "None",
+              "createOption": "Empty"
+            },
+            {
+              "name": "datadisk6",
+              "diskSizeGB": "[parameters('dataDiskSize')]",
+              "lun": 6,
+              "vhd": {
+                "Uri":  "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('masterVMName'),'-datadisk6.vhd')]"
+              },
+              "caching": "None",
+              "createOption": "Empty"
+            },
+            {
+              "name": "datadisk7",
+              "diskSizeGB": "[parameters('dataDiskSize')]",
+              "lun": 7,
+              "vhd": {
+                "Uri":  "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('masterVMName'),'-datadisk7.vhd')]"
+              },
+              "caching": "None",
+              "createOption": "Empty"
+            },
+            {
+              "name": "datadisk8",
+              "diskSizeGB": "[parameters('dataDiskSize')]",
+              "lun": 8,
+              "vhd": {
+                "Uri":  "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('masterVMName'),'-datadisk8.vhd')]"
+              },
+              "caching": "None",
+              "createOption": "Empty"
+            },
+            {
+              "name": "datadisk9",
+              "diskSizeGB": "[parameters('dataDiskSize')]",
+              "lun": 9,
+              "vhd": {
+                "Uri":  "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('masterVMName'),'-datadisk9.vhd')]"
+              },
+              "caching": "None",
+              "createOption": "Empty"
+            },
+            {
+              "name": "datadisk10",
+              "diskSizeGB": "[parameters('dataDiskSize')]",
+              "lun": 10,
+              "vhd": {
+                "Uri":  "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('masterVMName'),'-datadisk10.vhd')]"
+              },
+              "caching": "None",
+              "createOption": "Empty"
+            },
+            {
+              "name": "datadisk11",
+              "diskSizeGB": "[parameters('dataDiskSize')]",
+              "lun": 11,
+              "vhd": {
+                "Uri":  "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('masterVMName'),'-datadisk11.vhd')]"
+              },
+              "caching": "None",
+              "createOption": "Empty"
+            },
+            {
+              "name": "datadisk12",
+              "diskSizeGB": "[parameters('dataDiskSize')]",
+              "lun": 12,
+              "vhd": {
+                "Uri":  "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('masterVMName'),'-datadisk12.vhd')]"
+              },
+              "caching": "None",
+              "createOption": "Empty"
+            },
+            {
+              "name": "datadisk13",
+              "diskSizeGB": "[parameters('dataDiskSize')]",
+              "lun": 13,
+              "vhd": {
+                "Uri":  "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('masterVMName'),'-datadisk13.vhd')]"
+              },
+              "caching": "None",
+              "createOption": "Empty"
+            },
+            {
+              "name": "datadisk14",
+              "diskSizeGB": "[parameters('dataDiskSize')]",
+              "lun": 14,
+              "vhd": {
+                "Uri":  "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('masterVMName'),'-datadisk14.vhd')]"
+              },
+              "caching": "None",
+              "createOption": "Empty"
+            },
+            {
+              "name": "datadisk15",
+              "diskSizeGB": "[parameters('dataDiskSize')]",
+              "lun": 15,
+              "vhd": {
+                "Uri":  "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('masterVMName'),'-datadisk15.vhd')]"
+              },
+              "caching": "None",
+              "createOption": "Empty"
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('armApiVersion')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('masterVMName'), '/Installation')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', variables('masterVMName'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.OSTCExtensions",
+        "type": "CustomScriptForLinux",
+        "typeHandlerVersion": "1.3",
+        "settings": {
+          "fileUris": [
+            "[concat(variables('templateBaseUrl'), 'azuredeploy.sh')]"
+          ],
+          "commandToExecute": "[variables('installationCLI')]"
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('armApiVersion')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('workerVMName'), copyindex(), '/Installation')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+	    "[concat('Microsoft.Compute/virtualMachines/', variables('masterVMName'),'/extensions/Installation')]",
+        "[concat('Microsoft.Compute/virtualMachines/', variables('workerVMName'), copyindex())]"
+      ],
+      "copy": {
+        "name": "foo",
+        "count": "[parameters('workerNodeCount')]"
+      },
+      "properties": {
+        "publisher": "Microsoft.OSTCExtensions",
+        "type": "CustomScriptForLinux",
+        "typeHandlerVersion": "1.3",
+        "settings": {
+          "fileUris": [
+            "[concat(variables('templateBaseUrl'), 'azuredeploy.sh')]"
+          ],
+          "commandToExecute": "[variables('installationCLI')]"
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('armApiVersion')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('nicName'), 'worker', copyindex())]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', variables('networkSettings').virtualNetworkName)]"
+      ],
+      "copy": {
+        "name": "foo",
+        "count": "[parameters('workerNodeCount')]"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[concat(variables('networkSettings').statics.workerRange.base, copyindex(variables('networkSettings').statics.workerRange.start))]",
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "[variables('armApiVersion')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(variables('workerVMName'), copyindex())]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), 'worker', copyindex())]"
+      ],
+      "copy": {
+        "name": "foo",
+        "count": "[parameters('workerNodeCount')]"
+      },
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('workerNodeSize')]"
+        },
+        "osProfile": {
+          "computername": "[concat(variables('workerVMName'), copyindex())]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[variables('slesOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),variables('workerVMName'),copyindex(),'.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('nicName'), 'worker', copyindex()))]"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

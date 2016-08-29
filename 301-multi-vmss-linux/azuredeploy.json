@@ -1,0 +1,112 @@
+{
+  "$schema":"http://schema.management.azure.com/schemas/2015-01-01-preview/deploymentTemplate.json",
+  "contentVersion":"1.0.0.0",
+  "parameters":{
+    "vmSSPrefix":{
+      "type":"string",
+      "maxLength":8,
+      "metadata":{
+        "description":"Base string for naming resources (max length of 8)"
+      }
+    },
+    "numberOfVMSS":{
+      "type":"int",
+      "maxValue":100,
+      "metadata":{
+        "description":"Number of VMSSes to deploy (max of 5)"
+      }
+    },
+    "instanceCountPerVMSS":{
+      "type":"int",
+      "maxValue":100,
+      "metadata":{
+        "description":"Number of VM instances per scale set (max of 100)"
+      }
+    },
+    "adminUsername":{
+      "type":"string",
+      "metadata":{
+        "description":"Admin username for all VMs"
+      }
+    },
+    "adminPassword":{
+      "type":"securestring",
+      "metadata":{
+        "description":"Admin password for all VMs"
+      }
+    }
+  },
+  "variables":{
+    "apiVersion":"2015-06-15",
+    "addressPrefix":"10.0.0.0/16",
+    "namingInfix":"[toLower(parameters('vmSSPrefix'))]",
+    "newVNETName":"[concat(variables('namingInfix'), 'vnet')]",
+    "newStorageAccountPrefix":"[concat(variables('namingInfix'), 'sa')]",
+    "subnetName":"subnet",
+    "subnetPrefix":"10.0.0.0/16",
+    "storageAccountType":"Standard_LRS",
+    "baseTemplateUri":"https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/301-multi-vmss-linux/base.json"
+  },
+  "resources":[
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('newVNETName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name":"[concat('clusterSet', copyindex())]",
+      "type":"Microsoft.Resources/deployments",
+      "apiVersion":"2015-11-01",
+      "copy":{
+        "name":"deploymentLoop",
+        "count":"[parameters('numberOfVMSS')]"
+      },
+      "dependsOn":[
+        "[concat('Microsoft.Network/virtualNetworks/', variables('newVNETName'))]"
+      ],
+      "properties":{
+        "mode":"Incremental",
+        "templateLink":{
+          "uri":"[variables('baseTemplateUri')]",
+          "contentVersion":"1.0.0.0"
+        },
+        "parameters":{
+          "vmSSName":{
+            "value":"[concat(parameters('vmSSPrefix'), padLeft(copyindex(), 2, '0'))]"
+          },
+          "instanceCount":{
+            "value":"[parameters('instanceCountPerVMSS')]"
+          },
+          "newStorageAccountPrefix":{
+            "value":"[concat(variables('newStorageAccountPrefix'), padLeft(copyindex(), 2, '0'))]"
+          },
+          "vnetName":{
+            "value":"[variables('newVNETName')]"
+          },
+          "adminUsername":{
+            "value":"[parameters('adminUsername')]"
+          },
+          "adminPassword":{
+            "value":"[parameters('adminPassword')]"
+          }
+        }
+      }
+    }
+  ]
+}
