@@ -46,7 +46,7 @@ You can leverage the pre-created storage account as target for your replication 
 
 ![alt text](images/vmwarepolicy.png "VMware")
 
-* Explore the solutions within Log Analytics
+* Explore the solutions within Log Analytics after adding VMs/servers and storage accounts
 
 The template will enable the following solutions:
 	
@@ -60,6 +60,18 @@ The template will enable the following solutions:
 Explore a rich list of saved searches within Log Search
 
 ![alt text](images/searches.png "Searches")
+
+Explore the Agent Health solution
+
+![alt text](images/agents.png "Agents overview")
+
+Explore the Updates solution
+
+![alt text](images/updates.png "Updates")
+
+Explore the Security solution
+
+![alt text](images/security.png "Security overview")
 
 *This template will be updated to add more capabilities*
 
