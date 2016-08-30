@@ -8,8 +8,8 @@
 
 This template deploys an Azure SQL Server, Azure SQL DB, Windows Server 2012R2 VM with SonarQube installed.  This template can be deployed to a new resource group (recommended) or to an existing resource group.
 
-[License](/oss/License.txt)  
-[Third Party Notices](/oss/ThirdPartyNotices.txt)
+[License](https://raw.githubusercontent.com/ALM-Rangers/azure-quickstart-templates/master/301-sonarqube-azuresql/oss/License.txt)  
+[Third Party Notices](https://raw.githubusercontent.com/ALM-Rangers/azure-quickstart-templates/master/301-sonarqube-azuresql/oss/ThirdPartyNotices.txt)
 
 * * *   
 
