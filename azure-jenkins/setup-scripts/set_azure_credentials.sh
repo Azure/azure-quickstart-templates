@@ -1,4 +1,4 @@
-##!/bin/bash
+#!/bin/sh
 
 echo "In order to use Jenkins with Azure web app you first create a service principal for Jenkins to run as and also to manage your azure subscription."
 echo "Background article: https://azure.microsoft.com/en-us/documentation/articles/resource-group-authenticate-service-principal/#authenticate-with-password---azure-cli"
@@ -17,14 +17,15 @@ echo "    azure ad sp create <AppId from previous step>"
 echo " "
 echo "Assign rights to service principal"
 echo "    azure role assignment create --objectId <Object ID from above step> -o Owner -c /subscriptions/{subscriptionId from above step}/"
+echo " "
+echo " "
 
 my_app_name_uuid=$(python -c 'import uuid; print str(uuid.uuid4())[:8]')
 MY_APP_NAME="app${my_app_name_uuid}"
 
-my_app_key=$(python -c 'import uuid; print str(uuid.uuid4())')
-MY_APP_KEY=$(echo ${my_app_key//-/})
+MY_APP_KEY=$(python -c 'import uuid; print uuid.uuid4().hex')
 
-my_app_id_URI="${my_app_name}_id"
+my_app_id_URI="${MY_APP_NAME}_id"
 
 # request the user to login. Azure CLI requires an interactive log in. If the user is already logged in, the asking them to login
 # again is effectively a no-op, although since this script is most likely to be run the first time they logon to the VM, they should not
@@ -34,16 +35,16 @@ echo "******* PLEASE LOGIN *******"
 
 subscriptions_list=$(azure account list --json)
 subscriptions_list_count=$(echo $subscriptions_list | jq '. | length')
-if [[ $subscriptions_list_count -eq 0 ]]
+if [ $subscriptions_list_count -eq 0 ]
 then
     echo "You need to sign up an Azure Subscription here: https://azure.microsoft.com"
     exit 1
-elif [[ $subscriptions_list_count -gt 1 ]]
+elif [ $subscriptions_list_count -gt 1 ]
 then
-    echo $azure_account_list | jq -r 'keys[] as $i | "\($i), \(.[$i] | .name)"'
+    echo $subscriptions_list | jq -r 'keys[] as $i | "\($i), \(.[$i] | .name)"'
     echo "Select a subscription by typing an index number from above list and press [Enter]."
     read subscription_index
-    subscription_id=`echo $azure_account_list | jq -r '.['$subscription_index'] | .id'`
+    subscription_id=`echo $subscriptions_list | jq -r '.['$subscription_index'] | .id'`
     azure account set $subscription_id
 fi
 
@@ -99,6 +100,7 @@ echo "Tenant ID:" $MY_TENANT_ID
 echo "Client ID:" $MY_CLIENT_ID
 echo "Client Secret:" $MY_APP_KEY
 echo "OAuth 2.0 Token Endpoint:" "https://login.microsoftonline.com/${MY_TENANT_ID}/oauth2/token"
+echo " "
 echo "You can verify the service principal was created properly by running:"
 echo "azure login -u "$MY_CLIENT_ID" --service-principal --tenant $MY_TENANT_ID"
 echo " "
