@@ -2,23 +2,6 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "location": {
-            "type": "string",
-            "allowedValues": ["Central US",
-                "East Asia",
-                "East US",
-                "East US 2",
-                "Japan East",
-                "Japan West",
-                "North Europe",
-                "South Central US",
-                "Southeast Asia",
-                "West Europe",
-                "West US"],
-            "metadata": {
-                "description": "The location where all resources will be deployed."
-            }
-        },
         "clusterName": {
             "type": "string",
             "metadata": {
@@ -143,84 +126,90 @@
         "defaultApiVersion": "2015-06-15",
         "clusterApiVersion": "2015-03-01-preview"
     },
-    "resources": [{
-        "name": "[parameters('clusterName')]",
-        "type": "Microsoft.HDInsight/clusters",
-        "location": "[parameters('location')]",
-        "apiVersion": "[variables('clusterApiVersion')]",
-        "properties": {
-            "clusterVersion": "[parameters('clusterVersion')]",
-            "osType": "Linux",
-            "clusterDefinition": {
-                "kind": "hadoop",
-                "configurations": {
-                    "gateway": {
-                        "restAuthCredential.isEnabled": true,
-                        "restAuthCredential.username": "[parameters('clusterLoginUserName')]",
-                        "restAuthCredential.password": "[parameters('clusterLoginPassword')]"
-                    },
-                    "hive-site": {
-                        "javax.jdo.option.ConnectionDriverName": "com.microsoft.sqlserver.jdbc.SQLServerDriver",
-                        "javax.jdo.option.ConnectionURL": "[concat('jdbc:sqlserver://',parameters('existingHiveMetastoreServerName'),';database=',parameters('existingHiveMetastoreDatabaseName'),';encrypt=true;trustServerCertificate=true;create=false;loginTimeout=300')]",
-                        "javax.jdo.option.ConnectionUserName": "[parameters('existingHiveMetastoreUsername')]",
-                        "javax.jdo.option.ConnectionPassword": "[parameters('existingHiveMetastorePassword')]"
-                    },
-                    "hive-env": {
-                        "hive_database": "Existing MSSQL Server database with SQL authentication",
-                        "hive_database_name": "[parameters('existingHiveMetastoreDatabaseName')]",
-                        "hive_database_type": "mssql",
-                        "hive_existing_mssql_server_database": "[parameters('existingHiveMetastoreDatabaseName')]",
-                        "hive_existing_mssql_server_host": "[parameters('existingHiveMetastoreServerName')]",
-                        "hive_hostname": "[parameters('existingHiveMetastoreServerName')]"
-                    }
-                }
+  "resources": [
+    {
+      "name": "[parameters('clusterName')]",
+      "type": "Microsoft.HDInsight/clusters",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "[variables('clusterApiVersion')]",
+      "properties": {
+        "clusterVersion": "[parameters('clusterVersion')]",
+        "osType": "Linux",
+        "clusterDefinition": {
+          "kind": "hadoop",
+          "configurations": {
+            "gateway": {
+              "restAuthCredential.isEnabled": true,
+              "restAuthCredential.username": "[parameters('clusterLoginUserName')]",
+              "restAuthCredential.password": "[parameters('clusterLoginPassword')]"
             },
-            "storageProfile": {
-                "storageaccounts": [{
-                    "name": "[concat(parameters('existingClusterStorageAccountName'),'.blob.core.windows.net')]",
-                    "isDefault": true,
-                    "container": "[parameters('newOrExistingClusterStorageContainerName')]",
-                    "key": "[listKeys(resourceId(parameters('existingClusterStorageResourceGroup'), 'Microsoft.Storage/storageAccounts', parameters('existingClusterStorageAccountName')), variables('defaultApiVersion')).key1]"
-                }]
+            "hive-site": {
+              "javax.jdo.option.ConnectionDriverName": "com.microsoft.sqlserver.jdbc.SQLServerDriver",
+              "javax.jdo.option.ConnectionURL": "[concat('jdbc:sqlserver://',parameters('existingHiveMetastoreServerName'),';database=',parameters('existingHiveMetastoreDatabaseName'),';encrypt=true;trustServerCertificate=true;create=false;loginTimeout=300')]",
+              "javax.jdo.option.ConnectionUserName": "[parameters('existingHiveMetastoreUsername')]",
+              "javax.jdo.option.ConnectionPassword": "[parameters('existingHiveMetastorePassword')]"
             },
-            "computeProfile": {
-                "roles": [{
-                    "name": "headnode",
-                    "targetInstanceCount": "2",
-                    "hardwareProfile": {
-                        "vmSize": "[parameters('headNodeSize')]"
-                    },
-                    "osProfile": {
-                        "linuxOperatingSystemProfile": {
-                            "username": "[parameters('sshUserName')]",
-                            "password": "[parameters('sshPassword')]"
-                        }
-                    },
-                    "virtualNetworkProfile": {
-                        "id": "[resourceId(parameters('existingVirtualNetworkResourceGroup'), 'Microsoft.Network/virtualNetworks', parameters('existingVirtualNetworkName'))]",
-                        "subnet": "[concat(resourceId(parameters('existingVirtualNetworkResourceGroup'), 'Microsoft.Network/virtualNetworks', parameters('existingVirtualNetworkName')), '/subnets/', parameters('existingVirtualNetworkSubnetName'))]"
-                    }
-                },
-                {
-                    "name": "workernode",
-                    "targetInstanceCount": "[parameters('workerNodeCount')]",
-                    "hardwareProfile": {
-                        "vmSize": "[parameters('workerNodeSize')]"
-                    },
-                    "osProfile": {
-                        "linuxOperatingSystemProfile": {
-                            "username": "[parameters('sshUserName')]",
-                            "password": "[parameters('sshPassword')]"
-                        }
-                    },
-                    "virtualNetworkProfile": {
-                        "id": "[resourceId(parameters('existingVirtualNetworkResourceGroup'), 'Microsoft.Network/virtualNetworks', parameters('existingVirtualNetworkName'))]",
-                        "subnet": "[concat(resourceId(parameters('existingVirtualNetworkResourceGroup'), 'Microsoft.Network/virtualNetworks', parameters('existingVirtualNetworkName')), '/subnets/', parameters('existingVirtualNetworkSubnetName'))]"
-                    }
-                }]
+            "hive-env": {
+              "hive_database": "Existing MSSQL Server database with SQL authentication",
+              "hive_database_name": "[parameters('existingHiveMetastoreDatabaseName')]",
+              "hive_database_type": "mssql",
+              "hive_existing_mssql_server_database": "[parameters('existingHiveMetastoreDatabaseName')]",
+              "hive_existing_mssql_server_host": "[parameters('existingHiveMetastoreServerName')]",
+              "hive_hostname": "[parameters('existingHiveMetastoreServerName')]"
             }
+          }
+        },
+        "storageProfile": {
+          "storageaccounts": [
+            {
+              "name": "[replace(replace(concat(reference(resourceId(parameters('existingClusterStorageResourceGroup'), 'Microsoft.Storage/storageAccounts/', parameters('existingClusterStorageAccountName')), variables('defaultApiVersion')).primaryEndpoints.blob),'https:',''),'/','')]",
+              "isDefault": true,
+              "container": "[parameters('newOrExistingClusterStorageContainerName')]",
+              "key": "[listKeys(resourceId(parameters('existingClusterStorageResourceGroup'), 'Microsoft.Storage/storageAccounts', parameters('existingClusterStorageAccountName')), variables('defaultApiVersion')).key1]"
+            }
+          ]
+        },
+        "computeProfile": {
+          "roles": [
+            {
+              "name": "headnode",
+              "targetInstanceCount": "2",
+              "hardwareProfile": {
+                "vmSize": "[parameters('headNodeSize')]"
+              },
+              "osProfile": {
+                "linuxOperatingSystemProfile": {
+                  "username": "[parameters('sshUserName')]",
+                  "password": "[parameters('sshPassword')]"
+                }
+              },
+              "virtualNetworkProfile": {
+                "id": "[resourceId(parameters('existingVirtualNetworkResourceGroup'), 'Microsoft.Network/virtualNetworks', parameters('existingVirtualNetworkName'))]",
+                "subnet": "[concat(resourceId(parameters('existingVirtualNetworkResourceGroup'), 'Microsoft.Network/virtualNetworks', parameters('existingVirtualNetworkName')), '/subnets/', parameters('existingVirtualNetworkSubnetName'))]"
+              }
+            },
+            {
+              "name": "workernode",
+              "targetInstanceCount": "[parameters('workerNodeCount')]",
+              "hardwareProfile": {
+                "vmSize": "[parameters('workerNodeSize')]"
+              },
+              "osProfile": {
+                "linuxOperatingSystemProfile": {
+                  "username": "[parameters('sshUserName')]",
+                  "password": "[parameters('sshPassword')]"
+                }
+              },
+              "virtualNetworkProfile": {
+                "id": "[resourceId(parameters('existingVirtualNetworkResourceGroup'), 'Microsoft.Network/virtualNetworks', parameters('existingVirtualNetworkName'))]",
+                "subnet": "[concat(resourceId(parameters('existingVirtualNetworkResourceGroup'), 'Microsoft.Network/virtualNetworks', parameters('existingVirtualNetworkName')), '/subnets/', parameters('existingVirtualNetworkSubnetName'))]"
+              }
+            }
+          ]
         }
-    }],
+      }
+    }
+  ],
     "outputs": {
         "cluster": {
             "type": "object",

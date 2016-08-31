@@ -8,12 +8,6 @@
                 "description": "The tenant ID that you Azure subscription is in."
             }
         },
-        "location": {
-            "type": "string",
-            "metadata": {
-                "description": "Where you want to deploy your Web app and Logic app."
-            }
-        },
         "webAppName": {
             "type": "string",
             "metadata": {
@@ -73,109 +67,109 @@
         }
     },
     "resources": [
-        {
-            "type": "Microsoft.Web/serverfarms",
-            "apiVersion": "2015-08-01",
-            "name": "[parameters('svcPlanName')]",
-            "location": "[parameters('location')]",
-            "sku": {
-                "name": "[parameters('svcPlanSize')]",
-                "tier": "[parameters('sku')]",
-                "capacity": 1
-            }
-        },
-        {
-            "type": "Microsoft.Web/sites",
-            "kind": "api",
-            "apiVersion": "2015-08-01",
-            "name": "[parameters('webAppName')]",
-            "location": "[parameters('location')]",
-            "resources": [
-                {
-                    "apiVersion": "2015-08-01",
-                    "name": "web",
-                    "type": "config",
-                    "dependsOn": [
-                        "[concat('Microsoft.Web/Sites/', parameters('webAppName'))]"
-                    ],
-                    "properties": {
-                        "siteAuthEnabled": true,
-                        "siteAuthSettings": {
-                            "clientId": "[parameters('webAppClientId')]",
-                            "issuer": "[concat('https://sts.windows.net/', parameters('tenantId') , '/')]"
-                        }
-                    }
-                }
-            ],
-            "dependsOn": [
-                "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/',parameters('svcPlanName'))]"
-            ],
-            "properties": {
-                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('svcPlanName'))]"
-            }
-        },
-        {
-            "type": "Microsoft.Logic/workflows",
-            "apiVersion": "2015-02-01-preview",
-            "name": "[parameters('logicAppName')]",
-            "location": "[parameters('location')]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Web/sites', parameters('webAppName'))]"
-            ],
-            "properties": {
-                "sku": {
-                    "name": "[parameters('sku')]",
-                    "plan": {
-                        "id": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/',parameters('svcPlanName'))]"
-                    }
-                },
-                "definition": {
-                    "$schema": "http://schema.management.azure.com/providers/Microsoft.Logic/schemas/2014-12-01-preview/workflowdefinition.json#",
-                    "contentVersion": "1.0.0.0",
-                    "parameters": {
-                        "clientSecret": {
-                            "type": "SecureString",
-							"defaultValue" :  "<<Specify the Secret for this Logic app's Application identity in the parameters>>"
-                        }
-                    },
-                    "triggers": {
-                        "recurrence": {
-                            "type": "recurrence",
-                            "recurrence": {
-                                "frequency": "Hour",
-                                "interval": 1
-                            }
-                        }
-                    },
-                    "actions": {
-                        "pingSite": {
-                            "type": "Http",
-                            "inputs": {
-								"uri": "[concat('https://', reference(resourceId('Microsoft.Web/sites', parameters('webAppName'))).hostNames[0])]",
-                                "method": "Get",
-                                "authentication": {
-                                    "type": "ActiveDirectoryOAuth",
-                                    "tenant": "[parameters('tenantId')]",
-                                    "audience": "[parameters('webAppClientId')]",
-                                    "clientId": "[parameters('logicAppClientId')]",
-                                    "secret": "@parameters('clientSecret')"
-                                }
-                            }
-                        }
-                    },
-                    "outputs": {
-                        "result": {
-                            "type": "string",
-                            "value": "@actions('pingSite').code"
-                        }
-                    }
-                },
-                "parameters": {
-                    "clientSecret": {
-                        "value": "[parameters('logicAppClientSecret')]"
-                    }
-                }
-            }
+      {
+        "type": "Microsoft.Web/serverfarms",
+        "apiVersion": "2015-08-01",
+        "name": "[parameters('svcPlanName')]",
+        "location": "[resourceGroup().location]",
+        "sku": {
+          "name": "[parameters('svcPlanSize')]",
+          "tier": "[parameters('sku')]",
+          "capacity": 1
         }
+      },
+      {
+        "type": "Microsoft.Web/sites",
+        "kind": "api",
+        "apiVersion": "2015-08-01",
+        "name": "[parameters('webAppName')]",
+        "location": "[resourceGroup().location]",
+        "resources": [
+          {
+            "apiVersion": "2015-08-01",
+            "name": "web",
+            "type": "config",
+            "dependsOn": [
+              "[concat('Microsoft.Web/Sites/', parameters('webAppName'))]"
+            ],
+            "properties": {
+              "siteAuthEnabled": true,
+              "siteAuthSettings": {
+                "clientId": "[parameters('webAppClientId')]",
+                "issuer": "[concat('https://sts.windows.net/', parameters('tenantId') , '/')]"
+              }
+            }
+          }
+        ],
+        "dependsOn": [
+          "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/',parameters('svcPlanName'))]"
+        ],
+        "properties": {
+          "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('svcPlanName'))]"
+        }
+      },
+      {
+        "type": "Microsoft.Logic/workflows",
+        "apiVersion": "2015-02-01-preview",
+        "name": "[parameters('logicAppName')]",
+        "location": "[resourceGroup().location]",
+        "dependsOn": [
+          "[resourceId('Microsoft.Web/sites', parameters('webAppName'))]"
+        ],
+        "properties": {
+          "sku": {
+            "name": "[parameters('sku')]",
+            "plan": {
+              "id": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/',parameters('svcPlanName'))]"
+            }
+          },
+          "definition": {
+            "$schema": "http://schema.management.azure.com/providers/Microsoft.Logic/schemas/2014-12-01-preview/workflowdefinition.json#",
+            "contentVersion": "1.0.0.0",
+            "parameters": {
+              "clientSecret": {
+                "type": "SecureString",
+                "defaultValue": "<<Specify the Secret for this Logic app's Application identity in the parameters>>"
+              }
+            },
+            "triggers": {
+              "recurrence": {
+                "type": "recurrence",
+                "recurrence": {
+                  "frequency": "Hour",
+                  "interval": 1
+                }
+              }
+            },
+            "actions": {
+              "pingSite": {
+                "type": "Http",
+                "inputs": {
+                  "uri": "[concat('https://', reference(resourceId('Microsoft.Web/sites', parameters('webAppName'))).hostNames[0])]",
+                  "method": "Get",
+                  "authentication": {
+                    "type": "ActiveDirectoryOAuth",
+                    "tenant": "[parameters('tenantId')]",
+                    "audience": "[parameters('webAppClientId')]",
+                    "clientId": "[parameters('logicAppClientId')]",
+                    "secret": "@parameters('clientSecret')"
+                  }
+                }
+              }
+            },
+            "outputs": {
+              "result": {
+                "type": "string",
+                "value": "@actions('pingSite').code"
+              }
+            }
+          },
+          "parameters": {
+            "clientSecret": {
+              "value": "[parameters('logicAppClientSecret')]"
+            }
+          }
+        }
+      }
     ]
 }

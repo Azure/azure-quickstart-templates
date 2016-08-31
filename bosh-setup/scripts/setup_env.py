@@ -7,6 +7,7 @@ import random
 import re
 import requests
 import sys
+import base64
 from azure.storage.blob import AppendBlobService
 from azure.storage.table import TableService
 import azure.mgmt.network
@@ -31,12 +32,19 @@ def prepare_storage(settings):
 
 def render_bosh_manifest(settings):
     with open('bosh.pub', 'r') as tmpfile:
-        ssh_public_key = tmpfile.read()
+        ssh_public_key = tmpfile.read().strip()
 
     ip = netaddr.IPNetwork(settings['SUBNET_ADDRESS_RANGE_FOR_BOSH'])
     gateway_ip = str(ip[1])
     bosh_director_ip = str(ip[4])
-    
+
+    ntp_servers_maps = {
+        "AzureCloud": "0.north-america.pool.ntp.org",
+        "AzureChinaCloud": "1.cn.pool.ntp.org, 1.asia.pool.ntp.org, 0.asia.pool.ntp.org"
+    }
+    environment = settings["ENVIRONMENT"]
+    ntp_servers = ntp_servers_maps[environment]
+
     # Render the manifest for bosh-init
     bosh_template = 'bosh.yml'
     if os.path.exists(bosh_template):
@@ -44,8 +52,10 @@ def render_bosh_manifest(settings):
             contents = tmpfile.read()
         keys = [
             "SUBNET_ADDRESS_RANGE_FOR_BOSH",
+            "SECONDARY_DNS",
             "VNET_NAME",
             "SUBNET_NAME_FOR_BOSH",
+            "DNS_RECURSOR",
             "SUBSCRIPTION_ID",
             "DEFAULT_STORAGE_ACCOUNT_NAME",
             "RESOURCE_GROUP_NAME",
@@ -69,15 +79,30 @@ def render_bosh_manifest(settings):
         contents = re.compile(re.escape("REPLACE_WITH_SSH_PUBLIC_KEY")).sub(ssh_public_key, contents)
         contents = re.compile(re.escape("REPLACE_WITH_GATEWAY_IP")).sub(gateway_ip, contents)
         contents = re.compile(re.escape("REPLACE_WITH_BOSH_DIRECTOR_IP")).sub(bosh_director_ip, contents)
+        contents = re.compile(re.escape("REPLACE_WITH_NTP_SERVERS")).sub(ntp_servers, contents)
         with open(bosh_template, 'w') as tmpfile:
             tmpfile.write(contents)
 
     return bosh_director_ip
 
-def get_cloud_foundry_configuration(scenario, settings):
+def get_cloud_foundry_configuration(scenario, settings, bosh_director_ip):
     config = {}
-    for key in ["SUBNET_ADDRESS_RANGE_FOR_CLOUD_FOUNDRY", "VNET_NAME", "SUBNET_NAME_FOR_CLOUD_FOUNDRY", "CLOUD_FOUNDRY_PUBLIC_IP", "NSG_NAME_FOR_CLOUD_FOUNDRY"]:
+    keys = [
+        "SUBNET_ADDRESS_RANGE_FOR_CLOUD_FOUNDRY",
+        "VNET_NAME",
+        "SUBNET_NAME_FOR_CLOUD_FOUNDRY",
+        "CLOUD_FOUNDRY_PUBLIC_IP",
+        "NSG_NAME_FOR_CLOUD_FOUNDRY"
+    ]
+    for key in keys:
         config[key] = settings[key]
+
+    dns_maps = {
+        "AzureCloud": "168.63.129.16, {0}".format(settings["SECONDARY_DNS"]),
+        "AzureChinaCloud": bosh_director_ip
+    }
+    environment = settings["ENVIRONMENT"]
+    config["DNS"] = dns_maps[environment]
 
     with open('cloudfoundry.cert', 'r') as tmpfile:
         ssl_cert = tmpfile.read()
@@ -96,7 +121,9 @@ def get_cloud_foundry_configuration(scenario, settings):
     config["SYSTEM_DOMAIN"] = "{0}.xip.io".format(settings["CLOUD_FOUNDRY_PUBLIC_IP"])
 
     if scenario == "single-vm-cf":
-        config["STATIC_IP"] = str(ip[4])
+        config["STATIC_IP_FROM"] = str(ip[4])
+        config["STATIC_IP_TO"] = str(ip[100])
+        config["POSTGRES_IP"] = str(ip[11])
     elif scenario == "multiple-vm-cf":
         config["STATIC_IP_FROM"] = str(ip[4])
         config["STATIC_IP_TO"] = str(ip[100])
@@ -110,25 +137,45 @@ def get_cloud_foundry_configuration(scenario, settings):
 
     return config
 
-def render_cloud_foundry_manifest(settings):
+def render_cloud_foundry_manifest(settings, bosh_director_ip):
     for scenario in ["single-vm-cf", "multiple-vm-cf"]:
         cloudfoundry_template = "{0}.yml".format(scenario)
         if os.path.exists(cloudfoundry_template):
             with open(cloudfoundry_template, 'r') as tmpfile:
                 contents = tmpfile.read()
-            config = get_cloud_foundry_configuration(scenario, settings)
+            config = get_cloud_foundry_configuration(scenario, settings, bosh_director_ip)
             for key in config:
                 value = config[key]
                 contents = re.compile(re.escape("REPLACE_WITH_{0}".format(key))).sub(value, contents)
             with open(cloudfoundry_template, 'w') as tmpfile:
                 tmpfile.write(contents)
 
+def render_bosh_deployment_cmd(bosh_director_ip):
+    bosh_deployment_cmd = "deploy_bosh.sh"
+    if os.path.exists(bosh_deployment_cmd):
+        with open(bosh_deployment_cmd, 'r') as tmpfile:
+            contents = tmpfile.read()
+        contents = re.compile(re.escape("REPLACE_WITH_BOSH_DIRECOT_IP")).sub(bosh_director_ip, contents)
+        with open(bosh_deployment_cmd, 'w') as tmpfile:
+            tmpfile.write(contents)
+
 def render_cloud_foundry_deployment_cmd(settings):
     cloudfoundry_deployment_cmd = "deploy_cloudfoundry.sh"
     if os.path.exists(cloudfoundry_deployment_cmd):
         with open(cloudfoundry_deployment_cmd, 'r') as tmpfile:
             contents = tmpfile.read()
-        keys = ["CF_RELEASE_URL", "STEMCELL_URL"]
+        keys = [
+            "STEMCELL_URL",
+            "STEMCELL_SHA1",
+            "CF_RELEASE_URL",
+            "CF_RELEASE_SHA1",
+            "DIEGO_RELEASE_URL",
+            "DIEGO_RELEASE_SHA1",
+            "GARDEN_RELEASE_URL",
+            "GARDEN_RELEASE_SHA1",
+            "CFLINUXFS2_RELEASE_URL",
+            "CFLINUXFS2_RELEASE_SHA1"
+        ]
         for key in keys:
             value = settings[key]
             contents = re.compile(re.escape("REPLACE_WITH_{0}".format(key))).sub(value, contents)
@@ -139,10 +186,14 @@ def get_settings():
     settings = dict()
     config_file = sys.argv[4]
     with open(config_file) as f:
-        settings = json.load(f)["runtimeSettings"][0]["handlerSettings"]["publicSettings"]
+        settings = json.load(f)
     settings['TENANT_ID'] = sys.argv[1]
     settings['CLIENT_ID'] = sys.argv[2]
-    settings['CLIENT_SECRET'] = sys.argv[3]
+    settings['CLIENT_SECRET'] = base64.b64decode(sys.argv[3])
+
+    print "tenant_id: {0}xxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx".format(settings['TENANT_ID'][0:4])
+    print "client_id: {0}xxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx".format(settings['CLIENT_ID'][0:4])
+    print "The length of client_secret is {0}".format(len(settings['CLIENT_SECRET']))
 
     return settings
 
@@ -154,9 +205,9 @@ def main():
     prepare_storage(settings)
 
     bosh_director_ip = render_bosh_manifest(settings)
-    print bosh_director_ip
+    render_bosh_deployment_cmd(bosh_director_ip)
 
-    render_cloud_foundry_manifest(settings)
+    render_cloud_foundry_manifest(settings, bosh_director_ip)
     render_cloud_foundry_deployment_cmd(settings)
 
 if __name__ == "__main__":
