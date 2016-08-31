@@ -36,7 +36,7 @@
     },
     "sqlEdition": {
       "type": "string",
-      "defaultValue": "Standard",
+      "defaultValue": "Basic",
       "metadata": {
         "description": "The type of database to create. The available options are: Web, Business, Basic, Standard, and Premium."
       }
@@ -45,7 +45,7 @@
       "type": "string",
       "defaultValue": "1073741824",
       "metadata": {
-        "description": "The maximum size, in bytes, for the database"
+        "description": "The maximum size, in bytes, for the database. Default is 1GB"
       }
     },
     "sqlRequestedServiceObjectiveName": {
@@ -54,23 +54,69 @@
       "metadata": {
         "description": "The name corresponding to the performance level for edition. The available options are: Shared, Basic, S0, S1, S2, S3, P1, P2, and P3."
       }
+    },
+    "omsWorkspaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Provide the OMS Workspace Name."
+      }
+    },
+    "automationAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Provide the name of an existing Automation Account with SPN."
+      }
+    },
+    "automationRegion": {
+      "type": "string",
+      "defaultValue": "East US 2",
+      "allowedValues": [
+        "Japan East",
+        "East US 2",
+        "Southeast Asia",
+        "Sout Central US",
+        "West Europe"
+      ],
+      "metadata": {
+        "description": "Location of the existing Automation Account."
+      }
+    },
+    "omsRegion": {
+      "type": "string",
+      "defaultValue": "East US",
+      "allowedValues": [
+        "australiasoutheast",
+        "East US",
+        "southeastasia",
+        "westeurope"
+      ],
+      "metadata": {
+        "description": "Location of the existing Automation Account."
+      }
+    },
+
+    "_artifactsLocation": {
+      "type": "string"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring"
     }
   },
   "variables": {
     "packageURI": "http://ankitstrg.blob.core.windows.net/azureadvbac/azureadvisorpublish.zip?sv=2014-02-14&sr=c&sig=GlrmihKmphs0eQHa7u5px5T4wpuUyqBAuY8hN1S2ofQ%3D&st=2016-08-24T18%3A30%3A00Z&se=2019-09-01T18%3A30%3A00Z&sp=rwl",
     "hostingPlanName": "[concat('CloudWiseHostingplan-', uniqueString(resourceGroup().id))]",
     "webSiteName": "[concat('CloudWise', uniqueString(resourceGroup().id))]",
-    "sqlserverName": "[concat(parameters('sqlserverName'), uniqueString(resourceGroup().id))]",
+    "sqlserverName": "[concat('sql',parameters('sqlserverName'), uniqueString(resourceGroup().id))]",
     "skuName": "F1",
     "skuCapacity": 1,
-    "administratorLogin": "azureuser",
-    "administratorLoginPassword": "Password@123",
-    "databaseName": "azureadvisor",
-    "collation": "SQL_Latin1_General_CP1_CI_AS",
-    "edition": "Basic",
-    "maxSizeBytes": "1073741824",
-    "requestedServiceObjectiveName": "Basic",
-    "insightsName": "[concat(variables('webSiteName'),'insights')]"
+    "insightsName": "[concat(variables('webSiteName'),'insights')]",
+
+    "OMSWebAppsRunBookAndDashboardTemplateFolder": "Templates/nested/WebappsRunbookOMSDashboard",
+    "OMSWebAppsRunBookAndDashboardTemplateFileName": "OMSAutomationWebAppRunbookDashboard.json",
+
+    "OMSCommonTemplateFolder": "Templates/nested/OMSCommon",
+    "OMSCommonTemplateFileName": "OMSCommon.json",
+    "OMSCommonTemplateParametersFileName": "OMSCommon.parameters.json"
   },
   "resources": [
     {
@@ -82,8 +128,8 @@
       },
       "apiVersion": "2014-04-01-preview",
       "properties": {
-        "administratorLogin": "[variables('administratorLogin')]",
-        "administratorLoginPassword": "[variables('administratorLoginPassword')]"
+        "administratorLogin": "[parameters('sqlAdministratorLogin')]",
+        "administratorLoginPassword": "[parameters('sqlAdministratorLoginPassword')]"
       },
       "resources": [
         {
@@ -175,7 +221,7 @@
           ],
           "properties": {
             "DefaultConnection": {
-              "value": "[concat('Data Source=tcp:', reference(concat('Microsoft.Sql/servers/', variables('sqlserverName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', variables('databaseName'), ';User Id=', variables('administratorLogin'), '@', variables('sqlserverName'), ';Password=', variables('administratorLoginPassword'), ';')]",
+              "value": "[concat('Data Source=tcp:', reference(concat('Microsoft.Sql/servers/', variables('sqlserverName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', parameters('sqlDatabaseName'), ';User Id=', parameters('sqlAdministratorLogin'), '@', variables('sqlserverName'), ';Password=', parameters('sqlAdministratorLoginPassword'), ';')]",
               "type": "SQLServer"
 
             }
@@ -412,6 +458,70 @@
       },
       "properties": {
         "applicationId": "[variables('webSiteName')]"
+      }
+    },
+    {
+      "name": "omsWorkspace",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('_artifactsLocation'), '/', variables('OMSCommonTemplateFolder'), '/', variables('OMSCommonTemplateFileName'), parameters('_artifactsLocationSasToken'))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "workspaceName": {
+            "value": "[parameters('omsWorkspaceName')]"
+          },
+          "location": {
+            "value": "[parameters('omsRegion')]"
+          },
+          "serviceTier": {
+            "value": "Free"
+          }
+        }
+      }
+    },
+    {
+      "name": "OMSWebAppsRunBookAndDashboard",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "['Microsoft.Resources/deployments/omsWorkspace']"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('_artifactsLocation'), '/', variables('OMSWebAppsRunBookAndDashboardTemplateFolder'), '/', variables('OMSWebAppsRunBookAndDashboardTemplateFileName'), parameters('_artifactsLocationSasToken'))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "omsId": {
+            "value": "[reference('omsWorkspace').outputs.workspaceIdOutput.value]"
+          },
+          "omsKey": {
+            "value": "[reference('omsWorkspace').outputs.sharedKeyOutput.value]"
+          },
+          "omsWorkspaceName": {
+            "value": "[parameters('omsWorkspaceName')]"
+          },
+          "automationAccountName": {
+            "value": "[parameters('automationAccountName')]"
+          },
+          "automationRegion": {
+            "value": "[parameters('automationRegion')]"
+          },
+          "omsworkspaceRegion": {
+            "value":  "[parameters('omsRegion')]"
+          },
+          "_artifactsLocation": {
+            "value": "[concat(parameters('_artifactsLocation'), '/', variables('OMSWebAppsRunBookAndDashboardTemplateFolder'))]"
+          },
+          "_artifactsLocationSasToken": {  "value": "[parameters('_artifactsLocationSasToken')]" }
+        }
+
       }
     }
   ]
