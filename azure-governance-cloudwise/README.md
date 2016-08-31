@@ -31,7 +31,6 @@ The target audience for these solution templates are IT professionals who need t
 * --Capture your OMS Workspace details ![](images/CaptureWorkspaceInformation.png)
  
 ##Solution Summary
-![](images/CloudWiseArchitecture.png)
 
  
 ##Reference Architecture Diagram
