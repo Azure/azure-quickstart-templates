@@ -12,8 +12,8 @@
 $BrokerServer = "broker.contoso.com"
 $PrimaryDBConString = "`"Driver={SQL Server Native Client 11.0};Server=tcp:lokisarsqlvm.database.windows.net,1433;Database=TestDataBase;Uid=lokisar@lokisarsqlvm;Pwd={Wh2`$tb0M};Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;`""
 $SecondaryDBConString = ""
-$username = "lokisar"
-$password = "Wh2`$tb0M"
+$username = ""
+$password = ""
 $cbDNSName = "brokers.contoso.com"
 $downloadClientURL = "http://go.microsoft.com/fwlink/?LinkID=239648"s
 $localhost = [System.Net.Dns]::GetHostByName((hostname)).HostName
