@@ -17,7 +17,7 @@ This solution (currently in private preview) will allow you to capture your Azur
 
 + Azure Subscription (if you don’t have one you can create one [here](https://azure.microsoft.com/en-us/free/))
 + Operations Management Suite Account (Free Sign Up – No credit card required. Sign up for your free OMS account [here](https://www.microsoft.com/en-us/cloud-platform/operations-management-suite))
-+**New Azure Automation Account (with RunAs Account). To create a new Automation Account refer to step 4 below.**
++ **New Azure Automation Account (with RunAs Account). To create a new Automation Account refer to step 4 below.**
 
 ## How do I get started?
 
