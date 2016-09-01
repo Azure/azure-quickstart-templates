@@ -45,6 +45,13 @@ The target audience for these solution templates are IT professionals who need t
 ## Deployment Steps
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
 
+# Post Deployment Steps
+* Currently, one has to manually start the scheduleIngestion Runbook. 
+** Please navigate to your automation account. Click on Runbooks
+** Click open the scheduleIngestion runbook and click start to run the runbook. This step will kickstart the data ingestion to the OMS workspace specified.
+![](images/StartIngestionRunbook.png)
+
+
 ***Please refer to parameter descriptions if you need more information on what needs to be provided as an input.***
 
 
