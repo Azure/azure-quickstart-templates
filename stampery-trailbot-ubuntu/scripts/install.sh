@@ -13,6 +13,7 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y git nodejs rng-tools mailutils
 #################################################################
 git clone https://github.com/trailbot/watcher
 cd watcher
+git checkout azure
 npm install --production --ignore-scripts
 
 #################################################################
