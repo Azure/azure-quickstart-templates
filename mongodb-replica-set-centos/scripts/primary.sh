@@ -111,7 +111,7 @@ echo "the number of mongod process is: $n"
 if [[ $n -eq 1 ]];then
     echo "mongod started successfully"
 else
-    echo "strange thing happens!"
+    echo "Error: The number of mongod processes is 2+ or mongod failed to start because of the db path issue!"
 fi
 
 #create users
