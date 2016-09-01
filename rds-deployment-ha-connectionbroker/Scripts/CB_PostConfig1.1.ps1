@@ -1,26 +1,19 @@
 ﻿
-#param 
- #   ( 
-  #   [String]$BrokerServer,
-   #  [String]$PrimaryDBConString,
-    # [String]$SecondaryDBConString,
-  #   [String]$username,
-  #   [String]$password,
-  #   [string]$cbDNSName,
-  #   [string]$downloadClientURL
-   # ) 
-$BrokerServer = "broker.contoso.com"
-$PrimaryDBConString = "`"Driver={SQL Server Native Client 11.0};Server=tcp:lokisarsqlvm.database.windows.net,1433;Database=TestDataBase;Uid=lokisar@lokisarsqlvm;Pwd={Wh2`$tb0M};Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;`""
-$SecondaryDBConString = ""
-$username = ""
-$password = ""
-$cbDNSName = "brokers.contoso.com"
-$downloadClientURL = "http://go.microsoft.com/fwlink/?LinkID=239648"s
+param 
+    ( 
+     [String]$BrokerServer,
+     [String]$PrimaryDBConString,
+     [String]$SecondaryDBConString,
+     [String]$username,
+     [String]$password,
+     [string]$cbDNSName,
+     [string]$downloadClientURL,
+     [string]$DomainNetbios,
+     [string]$DNSServer,
+     [string]$adDomainName
+    ) 
+
 $localhost = [System.Net.Dns]::GetHostByName((hostname)).HostName
-$username = $DomainNetbios + "\" + $Username
-$cred = New-Object System.Management.Automation.PSCredential -ArgumentList @($username,(ConvertTo-SecureString -String $password -AsPlainText -Force))
-
-
 $username = $DomainNetbios + "\" + $Username
 $cred = New-Object System.Management.Automation.PSCredential -ArgumentList @($username,(ConvertTo-SecureString -String $password -AsPlainText -Force))
 
@@ -43,6 +36,20 @@ $client.DownloadFile($downloadClientURL, $installPath)
 
 $result = (Start-Process -FilePath "msiexec.exe" -ArgumentList "/i $installPath /passive IACCEPTSQLINCLILICENSETERMS=YES APPGUID={OCC618CE-F36A-415E-84b4-FB1BFF6967E1}" -Wait -PassThru).ExitCode
 "Result from installing client: $result"
+
+Invoke-Command -ComputerName $BrokerServer -ScriptBlock {
+$installPath = "$env:temp\Install-$(Get-Date -format 'yyyy-dd hh-mm-ss').msi"
+
+if(!(Split-Path -parent $installPath) -or !(Test-Path -PathType Container (Split-Path -parent $installPath))) {
+   $installPath = Join-Path $pwd (Split-Path -leaf $path)
+}
+
+$client = New-Object System.Net.WebClient
+$client.DownloadFile($downloadClientURL, $installPath)
+
+$result = (Start-Process -FilePath "msiexec.exe" -ArgumentList "/i $installPath /passive IACCEPTSQLINCLILICENSETERMS=YES APPGUID={OCC618CE-F36A-415E-84b4-FB1BFF6967E1}" -Wait -PassThru).ExitCode
+"Result from installing client: $result"
+}
 
 $res = Get-RDConnectionBrokerHighAvailability $BrokerServer
 if ($null -eq $res )
@@ -73,3 +80,16 @@ if ( $res.Server.ToLower().StartsWith($localhost.ToLower()) )
 }
 "Add-RdServer -Server $localhost -Role RDS-CONNECTION-BROKER -ConnectionBroker $BrokerServer"
 Add-RdServer -Server $localhost -Role RDS-CONNECTION-BROKER -ConnectionBroker $BrokerServer
+
+$cb1IP = (Resolve-DnsName -Name $BrokerServer -Type A).IPAddress
+$cb2IP = (Resolve-DnsName -Name $localhost -Type A).IPAddress
+
+Invoke-Command -ComputerName $DNSServer -ScriptBlock {
+$result = (Start-Process -FilePath "dnscmd.exe" -ArgumentList "$DNSServer /RecordAdd $adDomainName $cbDNSName A $cb1IP" -Wait -PassThru).ExitCode
+"Result from adding  DNS entry: $result"
+
+$result = (Start-Process -FilePath "dnscmd.exe" -ArgumentList "$DNSServer /RecordAdd $adDomainName $cbDNSName A $cb2IP" -Wait -PassThru).ExitCode
+"Result from adding  DNS entry: $result"
+}
+
+

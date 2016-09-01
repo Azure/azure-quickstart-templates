@@ -8,18 +8,17 @@
         "description": "Unique public DNS prefix for the deployment. The fqdn will look something like '<dnsname>.westus.cloudapp.azure.com'. Up to 62 chars, digits or dashes, lowercase, should start with a letter: must conform to '^[a-z][a-z0-9-]{1,61}[a-z0-9]$'."
       }
     },
-    "loadBalancer": {
-      "type": "string",
-      "metadata": {
-        "description": "The Loadbalancer name must match from the RDS deployment. And default value taken by template is loadbalancer."
-      },
-      "defaultValue": "loadBalancer"
-    },
     "ConnectionBrokerMachine": {
       "type": "string",
       "defaultValue": "cb-vm",
       "metadata": {
         "description": "The name of the existing Connection Broker Machine."
+      }
+    },
+    "adDomainName": {
+      "type": "string",
+      "metadata": {
+        "description": "The domain to join the Connection Broker Machine to."
       }
     },
     "cb-AvailabilitySet": {
@@ -41,6 +40,12 @@
         "description": "The password for the administrator account of the new VM and the domain"
       }
     },
+    "domainNetbios": {
+      "type": "string",
+      "metadata": {
+        "description": "Netbios Name for Domain"
+      }
+    },
     "storageAccountName": {
       "type": "string",
       "metadata": {
@@ -58,170 +63,167 @@
       },
       "defaultValue": "2012-R2-Datacenter"
     },
-    "rdshVmSize": {
+    "cbVmSize": {
       "type": "string",
       "defaultValue": "Standard_D2",
       "metadata": {
-        "description": "The size of the RDSH VMs"
+        "description": "The size of the Connectionbroker vm"
       }
     },
     "clientURL": {
       "type": "string",
       "defaultValue": "http://go.microsoft.com/fwlink/?239648",
       "metadata": {
-        "description":  "URL for the location of the SQL client install"
-      }
-    }
-  },
-  "variables": {
-    "imagePublisher": "MicrosoftWindowsServer",
-    "imageOffer": "WindowsServer",
-    "imageSKU": "2012-R2-Datacenter",
-    "vnetAddressRange": "10.0.0.0/16",
-    "subnetAddressRange": "10.0.0.0/24",
-    "dnsServerPrivateIp": "10.0.0.8",
-    "subnetName": "Subnet",
-    "subnet-id": "[concat(resourceId('Microsoft.Network/virtualNetworks','vnet'),'/subnets/',variables('subnetName'))]",
-    "publicIpRef": "publicIp",
-    "assetLocation": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/rds-deployment",
-    "apiVersion": "2015-06-15",
-    "PublicIPLocation": "[concat(parameters('dnsLabelPrefix'),'.','[resourceGroup().location]','.cloudapp.azure.com')]"
-  },
-  "resources": [
-    {
-      "apiVersion": "[variables('apiVersion')]",
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[parameters('storageAccountName')]",
-      "location": "[resourceGroup().location]",
-      "properties": {
-        "accountType": "Standard_LRS"
+        "description": "URL for the location of the SQL client install"
       }
     },
-    {
-      "apiVersion": "[variables('apiVersion')]",
-      "type": "Microsoft.Compute/availabilitySets",
-      "name": "[Parameters('gw-availabilityset')]",
-      "location": "[resourceGroup().location]"
-    },
-    {
-      "apiVersion": "[variables('apiVersion')]",
-      "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[variables('publicIpRef')]",
-      "location": "[resourceGroup().location]",
-      "properties": {
-        "publicIPAllocationMethod": "Dynamic",
-        "dnsSettings": {
-          "domainNameLabel": "[parameters('dnsLabelPrefix')]"
+    "PrimaryDBConString": {
+      "type": "string",
+      "metadata": {
+        "description": "Specifies the database primary connection string. The database connection string supports both high availability configurations: -- Dedicated database server. Uses Windows Authentication to connect to the databse. -- Shared database server. Uses database authentication (such as SQL authentication) with a user name and password to connect to the database."
+      },
+      "SecondaryDBConString": {
+        "type": "string",
+        "metadata": {
+          "description": "Specifies the database secondary connection string. The database connection string supports both high availability configurations: -- Dedicated database server. Uses Windows Authentication to connect to the databse. -- Shared database server. Uses database authentication (such as SQL authentication) with a user name and password to connect to the database."
+        }
+      },
+      "DNSServer": {
+        "type": "string",
+        "metadata": {
+          "description": "The name of the DNS Server to add the DNS entry to for the Connection Broker Names"
         }
       }
     },
-    {
-      "apiVersion": "[variables('apiVersion')]",
-      "type": "Microsoft.Compute/virtualMachines",
-      "name": "cb-2-vm",
-      "location": "[resourceGroup().location]",
-      "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
-        "[resourceId('Microsoft.Compute/availabilitySets', parameters('cb-AvailabilitySet')]",
-        "Microsoft.Network/networkInterfaces/cb-2-nic"
-      ],
-      "properties": {
-        "hardwareProfile": {
-          "vmSize": "Standard_D2"
-        },
-        "availabilitySet": {
-          "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('cb-AvailabilitySet')]"
-        },
-        "osProfile": {
-          "computerName": "broker",
-          "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
-        },
-        "storageProfile": {
-          "imageReference": {
-            "publisher": "[variables('imagePublisher')]",
-            "offer": "[variables('imageOffer')]",
-            "sku": "[parameters('imageSKU')]",
-            "version": "latest"
+    "variables": {
+      "imagePublisher": "MicrosoftWindowsServer",
+      "imageOffer": "WindowsServer",
+      "imageSKU": "2012-R2-Datacenter",
+      "assetLocation": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/rds-deployment",
+      "apiVersion": "2015-06-15"
+    },
+    "resources": [
+      {
+        "apiVersion": "[variables('apiVersion')]",
+        "type": "Microsoft.Storage/storageAccounts",
+        "name": "[parameters('storageAccountName')]",
+        "location": "[resourceGroup().location]",
+        "properties": {
+          "accountType": "Standard_LRS"
+        }
+      },
+      {
+        "apiVersion": "[variables('apiVersion')]",
+        "type": "Microsoft.Compute/availabilitySets",
+        "name": "[Parameters('cb-AvailabilitySet')]",
+        "location": "[resourceGroup().location]"
+      },
+      {
+        "apiVersion": "[variables('apiVersion')]",
+        "type": "Microsoft.Compute/virtualMachines",
+        "name": "cb-2-vm",
+        "location": "[resourceGroup().location]",
+        "dependsOn": [
+          "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+          "[resourceId('Microsoft.Compute/availabilitySets', parameters('cb-AvailabilitySet')]",
+          "Microsoft.Network/networkInterfaces/cb-2-nic"
+        ],
+        "properties": {
+          "hardwareProfile": {
+            "vmSize": "[parameters('cbVmSize')]"
           },
-          "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/vhds/cb-2-vm-osdisk.vhd')]"
-            },
-            "caching": "ReadWrite",
-            "createOption": "FromImage"
-          }
-        },
-        "networkProfile": {
-          "networkInterfaces": [
-            {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces','cb-2-nic')]"
-            }
-          ]
-        }
-      }
-    },
-	{
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "cb-vm-2/rdsdeployment",
-      "apiVersion": "[variables('apiVersion')]",
-      "location": "[resourceGroup().location]",
-      "dependsOn": [
-        "Microsoft.Compute/virtualMachines/gw-vm/extensions/gateway",
-        "rdsh-vm-loop"
-      ],
-      "properties": {
-        "publisher": "Microsoft.Powershell",
-        "type": "DSC",
-        "typeHandlerVersion": "2.11",
-        "autoUpgradeMinorVersion": true,
-        "settings": {
-          "ModulesUrl": "[concat(variables('assetLocation'),'/Configuration.zip')]",
-          "ConfigurationFunction": "Configuration.ps1\\RDSDeployment",
-          "Properties": {
-            "domainName": "[parameters('adDomainName')]",
-            "adminCreds": {
-              "UserName": "[parameters('adminUsername')]",
-              "Password": "PrivateSettingsRef:adminPassword"
-            },
-            "connectionBroker": "[concat('broker.',parameters('adDomainName'))]",
-            "webAccessServer": "[concat('gateway.',parameters('adDomainName'))]",
-            "externalfqdn": "[reference(variables('publicIpRef')).dnsSettings.fqdn]",
-            "sessionHostNamingPrefix": "rdsh-",
-            "numberOfRdshInstances": "[parameters('numberOfRdshInstances')]"
-          }
-        },
-        "protectedSettings": {
-          "Items": {
+          "availabilitySet": {
+            "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('cb-AvailabilitySet')]"
+          },
+          "osProfile": {
+            "computerName": "broker",
+            "adminUsername": "[parameters('adminUsername')]",
             "adminPassword": "[parameters('adminPassword')]"
+          },
+          "storageProfile": {
+            "imageReference": {
+              "publisher": "[variables('imagePublisher')]",
+              "offer": "[variables('imageOffer')]",
+              "sku": "[parameters('imageSKU')]",
+              "version": "latest"
+            },
+            "osDisk": {
+              "name": "osdisk",
+              "vhd": {
+                "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/vhds/cb-2-vm-osdisk.vhd')]"
+              },
+              "caching": "ReadWrite",
+              "createOption": "FromImage"
+            }
+          },
+          "networkProfile": {
+            "networkInterfaces": [
+              {
+                "id": "[resourceId('Microsoft.Network/networkInterfaces','cb-2-nic')]"
+              }
+            ]
           }
         }
-      }
-    },
-	{
-	    "name": "[concat('cb-2-vm,'/CB_PostConfig1.1')]",
+      },
+      {
+        "type": "Microsoft.Compute/virtualMachines/extensions",
+        "name": "cb-vm-2/rdsdeployment",
+        "apiVersion": "[variables('apiVersion')]",
+        "location": "[resourceGroup().location]",
+        "dependsOn": [
+          "Microsoft.Compute/virtualMachines/gw-vm/extensions/gateway",
+          "rdsh-vm-loop"
+        ],
+        "properties": {
+          "publisher": "Microsoft.Powershell",
+          "type": "DSC",
+          "typeHandlerVersion": "2.11",
+          "autoUpgradeMinorVersion": true,
+          "settings": {
+            "ModulesUrl": "[concat(variables('assetLocation'),'/Configuration.zip')]",
+            "ConfigurationFunction": "Configuration.ps1\\RDSDeployment",
+            "Properties": {
+              "domainName": "[parameters('adDomainName')]",
+              "adminCreds": {
+                "UserName": "[parameters('adminUsername')]",
+                "Password": "PrivateSettingsRef:adminPassword"
+              },
+              "connectionBroker": "[concat('broker.',parameters('adDomainName'))]",
+              "webAccessServer": "[concat('gateway.',parameters('adDomainName'))]"
+            }
+          },
+          "protectedSettings": {
+            "Items": {
+              "adminPassword": "[parameters('adminPassword')]"
+            }
+          }
+        }
+      },
+      {
+        "name": "[concat('cb-2-vm,'/CB_PostConfig1.1')]",
         "type": "Microsoft.Compute/virtualMachines/extensions",
         "location": "[resourceGroup().location]",
         "apiVersion": "[variables('apiversion')]",
         "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', 'cb-vm-2')]",
-        "[concat('Microsoft.Compute/virtualMachines/cb-vm-2','/extensions/','rdsdeployment')]"
+          "[resourceId('Microsoft.Compute/virtualMachines', 'cb-vm-2')]",
+          "[concat('Microsoft.Compute/virtualMachines/cb-vm-2','/extensions/','rdsdeployment')]"
         ],
         "properties": {
-        "publisher": "Microsoft.Compute",
-        "type": "CustomScriptExtension",
-        "typeHandlerVersion": "1.8",
-        "autoUpgradeMinorVersion": true,
-        "settings": {
-            "fileUris": [ "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/rds-deployment-HA-CB/Scripts/CB_PostConfig1.1.ps1" ]
-              
-        },
-        "protectedSettings": {
+          "publisher": "Microsoft.Compute",
+          "type": "CustomScriptExtension",
+          "typeHandlerVersion": "1.8",
+          "autoUpgradeMinorVersion": true,
+          "settings": {
+            "fileUris": [ "https://raw.githubusercontent.com/klondon71/azure-quickstart-templates/master/rds-deployment-ha-connectionbroker/Scripts/CB_PostConfig1.1.ps1" ]
+
+          },
+          "protectedSettings": {
             "Items": { "AdminPassword": "[parameters('adminPassword')]" },
             "storageAccountName": "[parameters('storageaccountname')]",
-            "commandToExecute": "[Concat('powershell.exe -ExecutionPolicy Unrestricted -File', ' ', 'CB_PostConfig1.1.ps1',' ','-username \"',parameters('adminusername'),'\" ', '-password \"',parameters('adminpassword'),'\" ','-BrokerServer \"',parameters('BrokerServer'),'\" ','-WebURL \"',parameters('WebURL'),'\" ','-Domainname \"',parameters('adDomainName'),'\" ','-DomainNetbios \"',parameters('DomainNetbios'),'\" ','-numberofwebServers ',parameters('numberOfWebGwInstances'))]"
+            "commandToExecute": "[Concat('powershell.exe -ExecutionPolicy Unrestricted -File', ' ', 'CB_PostConfig1.1.ps1',' ','-username \"',parameters('adminusername'),'\" ', '-password \"',parameters('adminpassword'),'\" ','-BrokerServer \"',parameters('ConnectionBrokerMachine'),'\" ','-downloadClientURL \"',parameters('clientURL'),'\" ','-PrimaryDBConString \"',parameters('PrimaryDBConString'),'\" ','-SecondaryDBConString \"',parameters('SecondaryDBConString'),'\" ','-cbDNSName ',parameters('clientAccessName'),'\" ','-DomainNetbios ',parameters('DomainNetbios'),'\" ','-DNSServer ',parameters('DNSServer'),'\" ','-adDomainName ',parameters('adDomainName'))]"
+          }
         }
-	}
-  ]
+      }
+    ]
+  }
 }
