@@ -39,6 +39,9 @@ The target audience for these solution templates are IT professionals who need t
 # OMS Web Apps Monitoring dashboard
 ![](images/WebAppPaaS.png)
 
+# OMS Azure SQLDB Monitoring dashboard
+![](images/SQLAzurePaaS.png)
+
 ## Deployment Steps
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
 
