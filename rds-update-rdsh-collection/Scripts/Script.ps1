@@ -10,6 +10,8 @@ function Update-RdshCollection
         [int]$nTimeoutMinutes
         )
 
+	get-date
+
     ipmo remotedesktop
 
     $title = "System Maintenance"
