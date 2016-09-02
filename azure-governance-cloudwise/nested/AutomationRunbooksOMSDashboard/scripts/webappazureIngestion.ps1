@@ -40,14 +40,20 @@ $logType  = "webappazure"
 
 # Get all WebApps w/in an Azure Subscription 
 $WebApps = Find-AzureRmResource -ResourceType Microsoft.Web/sites #|where -Property Kind -eq Webapp
+
+#Debug list of webapps
+#"List of WebApps Properties"
+# $WebApps
+
 # Process each retrieved WebApp in list
 # Do not process if listing is $null  
 if($WebApps -ne $Null)
 {
 	foreach($WebApp in $WebApps)
 	{
+		
 		# Get resource usage metrics for a webapp for the specified time interval.
-		# This example will run every 10 minutes on a schedule and gather two data points for 15 metrics leveraging the ARM API 
+		# This example will run every 10 minutes on a schedule and gather data points for 30+ metrics leveraging the ARM API 
         $Metrics = @()
         $Metrics = $Metrics + (Get-AzureRmMetric -ResourceId $WebApp.ResourceId -TimeGrain ([TimeSpan]::FromMinutes(1)) -StartTime $StartTime)
 		
@@ -69,15 +75,20 @@ if($WebApps -ne $Null)
 					}
 					$table = $table += $sx
 				}
-			# Convert table to a JSON document for ingestion 
-			$jsonTable = ConvertTo-Json -InputObject $table
+				# Convert table to a JSON document for ingestion 
+				$jsonTable = ConvertTo-Json -InputObject $table
 			}
 		}
-					
-		#Post the data to the endpoint - looking for an "accepted" response code
-        Send-OMSAPIIngestionFile -customerId $customerId -sharedKey $sharedKey -body $jsonTable -logType $logType -TimeStampField $Timestampfield
-        # Uncomment below to troubleshoot
-		#$jsonTable
+		
+		# Uncomment below to troubleshoot
+		# $jsonTable
+
+		if ($jsonTable -ne $Null)			
+		{
+			#Post the data to the endpoint - looking for an "accepted" response code
+			Send-OMSAPIIngestionFile -customerId $customerId -sharedKey $sharedKey -body $jsonTable -logType $logType -TimeStampField $Timestampfield
+			
+		}
     }
 }
 #endregion
