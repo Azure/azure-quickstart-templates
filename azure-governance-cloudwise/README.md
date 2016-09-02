@@ -1,5 +1,3 @@
-<body>
-
 <h1 style:"color:purple;"> Azure Governance - Composite template 001 </h1>
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAvyanConsultingCorp%2Fazure-quickstart-templates%2Fmaster%2Fazure-governance-cloudwise%2Fazuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
@@ -21,12 +19,12 @@ A composite solution including
 - [Target Audience](#target-audience)
 - [Licenses & Costs](#licenses-costs)
 - [Prerequisites](#prerequisites)
-- [Solution Summary](#solution-summary)
 - [Reference Architecture Diagram](#reference-architecture-diagram)
 - [Dashboards](#dashboards)
+    - [PowerBI Dashboard (for IT Managers and Business Decision makers)](#powerbi-dashboard-for-it-managers-and-business-decision-makers)
     - [OMS Web Apps Monitoring dashboard (For Operations Teams)](#oms-web-apps-monitoring-dashboard-for-operations-teams)
     - [OMS Azure SQL Databases Monitoring dashboard (For Operations Teams)](#oms-azure-sql-databases-monitoring-dashboard-for-operations-teams)
-- [Deployment Steps](#deployment-steps)
+- [Deployment and Settings](#deployment-and-settings)
 - [Post Deployment Steps](#post-deployment-steps)
 - [Usage](#usage)
 - [Support](#support)
@@ -63,46 +61,28 @@ In its current state, solution templates come with licenses built-in – there m
 * Azure user account with Service Admin Role
 * Azure Marketplace Deployment Agreements - VM Images from Azure marketplace need a registered Azure credit card for deployments to be successful. We understand that some customers (especially EA and internal MS customers) may not have this configured leading to failed deployments.   
 * Operations Management Suite Account (Free Sign Up – No credit card required. Sign up for your free OMS account [here](https://www.microsoft.com/en-us/cloud-platform/operations-management-suite))
-    <br/> &nbsp ![](images/CreateOMSWorkspace.png))
+<br/> &nbsp;&nbsp;&nbsp;&nbsp; ![](images/CreateOMSWorkspace.png))
 * Create an Automation account with RunAs Service principal. Note down the resourceGroup and the AutomationAccount name
-* Capture your OMS Workspace details <br/> &nbsp ![](images/CaptureWorkspaceInformation.png)
+* Capture your OMS Workspace details 
+<br/> &nbsp;&nbsp;&nbsp;&nbsp; ![](images/CaptureWorkspaceInformation.png)
  
-##Solution Summary
 
- 
-<a name="refarch"></a>
 ## Reference Architecture Diagram
-<br/> ![[](images/CloudWiseArchitecture.png)](images/CloudWiseArchitecture.png)
+<br/> &nbsp;&nbsp;&nbsp;&nbsp; ![[](images/CloudWiseArchitecture.png)](images/CloudWiseArchitecture.png)
 
-<a name="dashboards"></a>
 ## Dashboards
-<ul class="tab">
-  <li><a href="#" class="tablinks" onclick="openCity(event, 'PowerBI')">PowerBI  (Usage and Inventory)</a></li>
-  <li><a href="#" class="tablinks" onclick="openCity(event, 'OMSWebApp')">OMS Web Apps Monitoring </a></li>
-  <li><a href="#" class="tablinks" onclick="openCity(event, 'OMSSQLDB')">OMS Azure SQL Databases Monitoring </a></li>
-</ul>
 
-<div id="PowerBI" class="tabcontent">
-  ### PowerBI Dashboard (for IT Managers and Business Decision makers)
-</div>
+### PowerBI Dashboard (for IT Managers and Business Decision makers)
 
-<div id="OMSWebApp" class="tabcontent">
 ### OMS Web Apps Monitoring dashboard (For Operations Teams)
-<br/> ![](images/WebAppPaaS.png)
-</div>
+<br/> &nbsp;&nbsp;&nbsp;&nbsp; ![](images/WebAppPaaS.png)
 
-<div id="OMSSQLDB" class="tabcontent">
 ### OMS Azure SQL Databases Monitoring dashboard (For Operations Teams)
-<br/> &nbsp ![](images/SQLAzurePaaS.png)
-</div>
+<br/> &nbsp;&nbsp;&nbsp;&nbsp; ![](images/SQLAzurePaaS.png)
 
 
 
-
-
-
-
-## Deployment Steps
+## Deployment and Settings
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
 
 ## Post Deployment Steps
@@ -124,67 +104,3 @@ For any support-related issues or questions, please contact us for assistance.
 
 > azuremarketplace@avyanconsulting.com [contact us](mailto:azuremarketplace@avyanconsulting.com) 
 
-
-</body>
-
-<style>
-body {font-family: "Lato", sans-serif;}
-
-ul.tab {
-    list-style-type: none;
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-    border: 1px solid #ccc;
-    background-color: #f1f1f1;
-}
-
-/* Float the list items side by side */
-ul.tab li {float: left;}
-
-/* Style the links inside the list items */
-ul.tab li a {
-    display: inline-block;
-    color: black;
-    text-align: center;
-    padding: 14px 16px;
-    text-decoration: none;
-    transition: 0.3s;
-    font-size: 17px;
-}
-
-/* Change background color of links on hover */
-ul.tab li a:hover {
-    background-color: #ddd;
-}
-
-/* Create an active/current tablink class */
-ul.tab li a:focus, .active {
-    background-color: #ccc;
-}
-
-/* Style the tab content */
-.tabcontent {
-    display: none;
-    padding: 6px 12px;
-    border: 1px solid #ccc;
-    border-top: none;
-}
-</style>
-
-
-<script>
-function openCity(evt, cityName) {
-    var i, tabcontent, tablinks;
-    tabcontent = document.getElementsByClassName("tabcontent");
-    for (i = 0; i < tabcontent.length; i++) {
-        tabcontent[i].style.display = "none";
-    }
-    tablinks = document.getElementsByClassName("tablinks");
-    for (i = 0; i < tablinks.length; i++) {
-        tablinks[i].className = tablinks[i].className.replace(" active", "");
-    }
-    document.getElementById(cityName).style.display = "block";
-    evt.currentTarget.className += " active";
-}
-</script>
