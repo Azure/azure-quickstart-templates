@@ -1,5 +1,3 @@
-function Update-RdshCollection
-{
     [cmdletbinding()]
     param(
         [string]$collection,
@@ -10,7 +8,7 @@ function Update-RdshCollection
         [int]$nTimeoutMinutes
         )
 
-	get-date
+    get-date
 
     ipmo remotedesktop
 
@@ -104,4 +102,3 @@ function Update-RdshCollection
 
 
     write-verbose "done."
- }
