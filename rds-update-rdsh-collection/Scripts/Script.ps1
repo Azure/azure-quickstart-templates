@@ -1,4 +1,3 @@
-    [cmdletbinding()]
     param(
         [string]$collection,
         
