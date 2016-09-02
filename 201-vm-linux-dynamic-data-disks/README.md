@@ -9,10 +9,10 @@
 <img src="http://armviz.io/visualizebutton.png"/> </a>  
 
 ### This creates configurable number of disks with configurable size for centos
-* Latest Docker configurable - default is 1.11 (Only for 7.1/7.2, kernel 3.10.x and above).
-* Latest docker-compose configurable - default is 1.7.1 (Only for 7.1/7.2, kernel 3.10.x and above).
-* Latest docker-machine configurable - default is the now latest v0.7.0 (Only for 7.1/7.2, kernel 3.10.x and above). [Docs](https://docs.docker.com/machine/drivers/azure/)
-* Latest Rancher available dockerized (7.1/7.2) @ <code>8080</code> i.e. <code>http://'DNS Name'.'location'.cloudapp.azure.com:8080 - Unauthenticated.. Authentication and agent setup is manual setup>.</code>
+* Latest Docker configurable - default is 1.12-1 (For CentOS 7.1/7.2, kernel 3.10.x and above) and for Ubuntu.
+* Latest docker-compose configurable - default is 1.8.0 (or CentOS 7.1/7.2, kernel 3.10.x and above) and for Ubuntu.
+* Latest docker-machine configurable - default is the now latest v0.8.1 (or CentOS 7.1/7.2, kernel 3.10.x and above) and for Ubuntu. [Docs](https://docs.docker.com/machine/drivers/azure/)
+* Latest Rancher available dockerized (7.1/7.2/16.04.0-LTS) @ <code>8080</code> i.e. <code>http://'DNS Name'.'location'.cloudapp.azure.com:8080 - Unauthenticated.. Authentication and agent setup is manual setup>.</code>
 * Azure CLI usage is <code>docker exec -ti azure-cli bash -c "azure login && bash"</code>.
 * Disk auto mounting is at /'parameter'/data.
 * NFS4 is on on the above.
@@ -20,6 +20,6 @@
 * Nodes that share public RSA key shared can be used as direct jump boxes as azureuser@DNS.
 * NSG is required.
 * Internal firewalld is off.
-* gcc and other necessary software available for Plain CentOS 6.5/6.6/7.1/7.2.
+* gcc and other necessary software available for Plain CentOS 6.5/6.6/7.1/7.2 and for Ubuntu 16.04.0-LTS
 * WALinuxAgent updates are disabled on first deployment.
-* Specific Logic in <code>install_packages_all()</code> to distinguish between sku for CentOS 6.5/6.6 and 7.1/7.2, primarily for docker usage.
+* Specific Logic in <code>install_packages_all()</code> to distinguish between sku for CentOS 6.5/6.6 and 7.1/7.2 as well as UbuntuServer 16.04.0-LTS, primarily for docker usage.
