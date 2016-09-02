@@ -71,6 +71,7 @@
     
 
     #  5. log users off 
+	#
     write-verbose "waiting $nTimeoutMinutes before logging users off..."
     start-sleep -s ($nTimeoutMinutes * 60)
 
@@ -93,7 +94,7 @@
     $serversToRemove  | % `
     {
         write-verbose "removing server $_ from the deployment..."
-        from-rdserver $_ -role Rds-Rd-Server -force
+        remove-rdserver $_ -role Rds-Rd-Server -force
     }
 
     write-verbose "shutting down servers $($serversToRemove -join '; ')..."
