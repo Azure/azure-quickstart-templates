@@ -11,7 +11,7 @@ A composite solution including
  - Azure Automation Runbooks [using OMSIngestion APIs] 
 
 ----------
-
+<h2> Table of Contents </h2>
 
 <!-- TOC -->
 
@@ -58,11 +58,13 @@ In its current state, solution templates come with licenses built-in – there m
 <a name="prereqs"></a>
 ## Prerequisites
 * Azure Subscription - if you want to test drive individual ISV products, please check out the [Azure Marketplace Test Drive Program ](https://azure.microsoft.com/en-us/marketplace/test-drives/)
-* Azure user account with Service Admin Role
+* Azure user account with <span style="color:red;"> **Service Admin Role** </span>. This is required for creating an AD applicaition as well as a RunAs Service Role.
 * Azure Marketplace Deployment Agreements - VM Images from Azure marketplace need a registered Azure credit card for deployments to be successful. We understand that some customers (especially EA and internal MS customers) may not have this configured leading to failed deployments.   
 * Operations Management Suite Account (Free Sign Up – No credit card required. Sign up for your free OMS account [here](https://www.microsoft.com/en-us/cloud-platform/operations-management-suite))
 <br/> &nbsp;&nbsp;&nbsp;&nbsp; ![](images/CreateOMSWorkspace.png))
-* Create an Automation account with RunAs Service principal. Note down the resourceGroup and the AutomationAccount name
+* Create an Automation account with RunAs Service principal. Unfortunately ARM templates don't allow for creating AD service principals as yet. So this step is currently a manual pre-requisite
+    * Refer the blog https://azure.microsoft.com/en-us/documentation/articles/automation-sec-configure-azure-runas-account/ for the steps.
+    * Creation of ServicePrincipal has a propensity to fail randomly. A basic verification whether it was successfully created is <span style="color:red;"> **mandatory** </span>
 * Capture your OMS Workspace details 
 <br/> &nbsp;&nbsp;&nbsp;&nbsp; ![](images/CaptureWorkspaceInformation.png)
  
@@ -89,7 +91,7 @@ You can click the "deploy to Azure" button at the beginning of this document or 
 * Currently, one has to manually start the scheduleIngestion Runbook. 
 ** Please navigate to your automation account. Click on Runbooks
 ** Click open the scheduleIngestion runbook and click start to run the runbook. This step will kickstart the data ingestion to the OMS workspace specified.
-    <br/> &nbsp ![](images/StartIngestionRunbook.png)
+<br/> &nbsp;&nbsp;&nbsp;&nbsp; ![](images/StartIngestionRunbook.png)
 
 
 ***Please refer to parameter descriptions if you need more information on what needs to be provided as an input.***
