@@ -1,13 +1,21 @@
     param(
+		[parameter(mandatory = $true)]
         [string]$collection,
-        
+		[parameter(mandatory = $true)]       
         [string]$iteration,
+		[parameter(mandatory = $true)] 
         [int]$nServers,
+		[parameter(mandatory = $true)] 
+        [int]$nTimeoutMinutes,
 
-        [int]$nTimeoutMinutes
+		[Parameter(ValueFromRemainingArguments = $true)]
+		$extraParameters
         )
 
+
     get-date
+
+	$PSBoundParameters
 
     ipmo remotedesktop
 
