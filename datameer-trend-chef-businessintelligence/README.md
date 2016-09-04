@@ -1,3 +1,14 @@
+<!-- vscode-markdown-toc -->
+* 1. [Solution Template Overview](#SolutionTemplateOverview-0)
+* 2. [Licenses & Costs](#LicensesCosts-1)
+* 3. [Target Audience](#TargetAudience-2)
+* 4. [Prerequisites](#Prerequisites-3)
+* 5. [Solution Summary](#SolutionSummary-4)
+* 6. [Deployment Steps](#DeploymentSteps-5)
+    * 6.1. [Connect](#Connect-6)
+
+<!-- /vscode-markdown-toc -->
+
 # Datameer, HDInsight, TrendMicro, Chef- Business Intelligence Composite template 001
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAvyanConsultingCorp%2Fazure-quickstart-templates%2Fmaster%2Fdatameer-trend-chef-businessintelligence%2Fazuredeploy.json" target="_blank">
 <img src="http://azuredeploy.net/deploybutton.png"/>
@@ -6,7 +17,8 @@
 <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-## Solution Template Overview
+
+##  1. <a name='SolutionTemplateOverview-0'></a>Solution Template Overview
 ***Solution Templates*** provide customers with a highly automated process to launch enterprise ready first and 3rd party ISV solution stacks on Azure in a pre-production environment. The **Solution Template** effort is complimentary to the [Azure Marketplace test drive program](https://azure.microsoft.com/en-us/marketplace/test-drives/). These fully baked stacks enable customers to quickly stand up a PoC or Piloting environments and also integrate it with their systems and customization.
 
 Customers benefit greatly from solution templates because of the ease with which they can stand up enterprise-grade, fully integrated stacks on Azure. The extensive automation and testing of these solutions will allow them to spin up pre-production environments with minimal manual steps and customization.  Most importantly, customers now have the confidence to transition the solution into a fully production-ready environment with confidence.
@@ -15,22 +27,22 @@ Customers benefit greatly from solution templates because of the ease with which
 *Disclaimer*: These are intended as pilot solutions and not production ready.
 Please [contact us](azuremarketplace@avyanconsulting.com) if you need further info or support on this solution.
 
-##Licenses & Costs
+##  2. <a name='LicensesCosts-1'></a>Licenses & Costs
 In its current state, solution templates come with licenses built-in – there may be a BYOL option included in the future. The solution template will be deployed in the Customer’s Azure subscription, and the Customer will incur Azure usage charges associated with running the solution stack.
 
-##Target Audience
+##  3. <a name='TargetAudience-2'></a>Target Audience
 The target audience for these solution templates are IT professionals who need to stand-up and/or deploy infrastructure stacks.
 
-## Prerequisites
+##  4. <a name='Prerequisites-3'></a>Prerequisites
 * Azure Subscription - if you want to test drive individual ISV products, please check out the [Azure Marketplace Test Drive Program ](https://azure.microsoft.com/en-us/marketplace/test-drives/)
 * Azure user account with Contributor/Admin Role
 * Sufficient Quota - At least 18 Cores( with default VM Sizes)
 * Azure Marketplace Deployment Agreements - VM Images from Azure marketplace need a registered Azure credit card for deployments to be successful. We understand that some customers (especially EA and internal MS customers) may not have this configured leading to failed deployments.   
  
-##Solution Summary
+##  5. <a name='SolutionSummary-4'></a>Solution Summary
 ![](images/azure-trend-splunk-chef.png)
 
-The core component of this stack is Trend Micro Deep Security Manager, which is a cloud security control platform. There are two pieces to the platform: the Deep Security Manager and the Deep Security Agents. The Manager runs centrally, and the Agents are deployed on the virtual machines you want protected. The Manager allows you to set up and customize security policy, monitor events, and deliver security rule updates. The Agent does all the heavy lifting by delivering the following controls:
+One of the core component of this stack is Trend Micro Deep Security Manager, which is a cloud security control platform. There are two pieces to the platform: the Deep Security Manager and the Deep Security Agents. The Manager runs centrally, and the Agents are deployed on the virtual machines you want protected. The Manager allows you to set up and customize security policy, monitor events, and deliver security rule updates. The Agent does all the heavy lifting by delivering the following controls:
 
 * anti-malware
 * web reputation (also known as content filtering)
@@ -43,12 +55,12 @@ These controls provide much-needed security to your operating systems and applic
 
 ![]( images/microosftazure.png)
 
-TrendMicro DSM is an agents based security control platform. The agents need to be deployed and configured to integrate with the Master server. As new VM's are launched in the cloud, there needs to be an automated way of bootstrapping these agents to the master. This is a typical problem in many cloud deployments. This solution stack provides two ways of deploying the agents in a dynamic manner
+TrendMicro DSM is an agent based security control platform. The agents need to be deployed and configured to integrate with the Master server. As new VMs are launched in the cloud, there needs to be an automated way of bootstrapping these agents to the master. This is a typical problem in many cloud deployments. This solution stack provides two ways of deploying the agents in a dynamic manner
 
 1. **TrendMicro Azure Extension:** Azure provides an extension to deploy and configure the agent on a VM.
 2. **TrendMicro Chef Cookbooks:** Configuration Management is a key aspect in configuring servers, its applications and handling security. Chef, which is a very popular configuration management solution, can be used to install and configure TrendMicro agents. Further Chef recipes can be used to manage configuration of the application and servers to ensure they fall in line with the security policies defined in Trend Micro DSM. 
 
-This solution stack implements the second option (with Chef). It deploys a Chef Server and an automated framework that allows any new VM's to bootstrap to chef Server as and when they get provisioned. Additionally, in order to integrate Chef Server with Chef Nodes in an automated way, additional microservices are deployed as a set of two Docker Containers (a Node.js app and a database).
+This solution stack implements the second option (with Chef). It deploys a Chef Server and an automated framework that allows any new VMs to bootstrap to chef Server as and when they get provisioned. Additionally, in order to integrate Chef Server with Chef Nodes in an automated way, additional microservices are deployed as a set of two Docker Containers (a Node.js app and a database).
 
  
 ##Reference Architecture Diagram
@@ -80,13 +92,13 @@ As a part of deployment the template launches the following:
 * Deploy 2 VMs (Linux, Windows) with bootstrap scripts to install TrendMicro agents (through extensions).
 * Deploy 1 VMs (Linux) with bootstrap scripts to install Chef Agents and connect them to the server using orchestrator.
 
-## Deployment Steps
+##  6. <a name='DeploymentSteps-5'></a>Deployment Steps
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
 
 ***Please refer to parameter descriptions if you need more information on what needs to be provided as an input.***
 The deployment takes about approximately 45mins. Once it is deployed there are few minor manual steps to 
 ##Usage
-#### Connect
+####  6.1. <a name='Connect-6'></a>Connect
 
 You can use the [this guide](images/*<guide goes here>*.pdf) to set policies and enable log forwarding to Splunk.
 
