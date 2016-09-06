@@ -167,7 +167,7 @@ yum -y install libjpeg-turbo-devel-1.2.1-1.el6.x86_64 libpng.x86_64 libpng-devel
 # Pre-instalaltion requirement for php
 rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
 rpm -Uvh  http://rpms.famillecollet.com/enterprise/remi-release-7.rpm
-yum --enablerepo=remi,remi-test install -y libmcrypt libmcrypt-devel  libicu-devel php-mbstring php-mcrypt gd gd-devel php-soap graphviz aspell php-pspell php-ldap php-xmlrpc php-gd php-mysql php-intl php-opcache 
+yum --enablerepo=remi install -y libmcrypt libmcrypt-devel  libicu-devel php-mbstring php-mcrypt gd gd-devel php-soap graphviz aspell php-pspell php-ldap php-xmlrpc php-gd php-mysql php-intl php-opcache 
 
 ln -s /usr/lib64/libldap.so /usr/lib/libldap.so
 ln -s /usr/lib64/libldap_r.so /usr/lib/libldap_r.so
