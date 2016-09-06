@@ -39,7 +39,7 @@ SOURCE_URI="https://raw.githubusercontent.com/arroyc/azure-quickstart-templates/
 #delete any existing config script
 sudo rm -f /opt/config_storage.sh
 
-if [ ! -e "$SETUP_SCRIPTS_LOCATION" ]; then
+if [ ! -d "$SETUP_SCRIPTS_LOCATION" ]; then
   sudo mkdir $SETUP_SCRIPTS_LOCATION
   
   #downloading clear_storage_config script
