@@ -1,0 +1,540 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "User name for the Virtual Machine. Used for both SSH and RDP access."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the Virtual Machine. Used for both SSH and RDP access."
+      }
+    },
+    "consolePassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the Puppet Enterprise Console."
+      }
+    },
+    "windowsAgentCount": {
+      "type": "int",
+      "metadata": {
+        "description": "Number of Windows Puppet Agents to deploy. Assumes Windows Server 2012 R2."
+      },
+      "defaultValue": 1,
+      "minValue":1,
+      "maxValue":100
+    },
+    "linuxAgentCount": {
+      "type": "int",
+      "metadata": {
+        "description": "Number of Linux Puppet Agents to deploy. Assumes Ubuntu 14.04-LTS."
+      },
+      "defaultValue": 1,
+      "minValue":1,
+      "maxValue":100
+    },
+    "vmSize": {
+      "type": "string",
+      "metadata": {
+        "description": "Size of Puppet agent VMs"
+      },
+      "defaultValue": "Standard_D1_v2"
+    },
+    "_artifactsLocation": {
+          "type": "string",
+          "metadata": {
+              "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+          },
+          "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/puppet-enterprise-cluster/"
+      },
+      "_artifactsLocationSasToken": {
+          "type": "securestring",
+          "metadata": {
+              "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+          },
+          "defaultValue": ""
+      }
+  },
+  "variables": {
+    "puppetAgentCount": "[add(parameters('windowsAgentCount'),parameters('linuxAgentCount'))]",
+    "newStorageAccountName": "[concat('str',uniqueString(resourceGroup().id, deployment().name))]",
+    "dnsNameForPublicIP": "[concat('dns',uniqueString(resourceGroup().id, deployment().name))]",
+    "imagePublisher": "Puppet",
+    "imageOffer": "Puppet-Enterprise",
+    "imageSku": "2016-1",
+    "OSDiskName": "puppetMasterDisk",
+    "nicName": "puppetmasterNic",
+    "addressPrefix": "10.0.0.0/16",
+    "subnetName": "Subnet",
+    "subnetPrefix": "10.0.0.0/24",
+    "storageAccountType": "Standard_LRS",
+    "publicIPAddressName": "myPublicIP",
+    "publicIPAddressType": "Dynamic",
+    "vmStorageAccountContainerName": "vhds",
+    "puppetMasterVmName": "puppetmaster",
+    "vmName": "peagent",
+    "virtualNetworkName": "vnet1",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
+    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
+    "publicIpId": "[resourceId(resourceGroup().Name,concat('Microsoft.Network','/','publicIPAddresses'),variables('publicIPAddressName'))]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2016-01-01",
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('newStorageAccountName')]",
+      "location": "[resourceGroup().location]",
+      "sku": {
+          "name": "[variables('storageAccountType')]"
+      },
+      "kind": "Storage",
+      "properties": {
+      }
+    },
+    {
+      "apiVersion": "2016-03-30",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIPAddressName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[variables('dnsNameForPublicIP')]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2016-03-30",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat('peagentip', copyIndex())]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "puppetAgentPipLoop",
+        "count": "[variables('puppetAgentCount')]"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[concat(variables('dnsNameForPublicIP'), copyIndex())]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2016-03-30",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkSecurityGroups/', 'puppetNetworkSecurityGroup')]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'puppetNetworkSecurityGroup')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2016-03-30",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "puppetNetworkSecurityGroup",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "puppet",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "8140",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "rdp",
+            "properties": {
+              "description": "Allow RDP",
+              "protocol": "tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3389",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 101,
+              "direction": "Inbound"
+            }
+          },
+          {
+	           "name": "ssh",
+            "properties": {
+              "description": "Allow RDP",
+              "protocol": "tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 201,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "MCollective",
+            "properties": {
+              "description": "MCollective",
+              "protocol": "tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "61613",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 102,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "https",
+            "properties": {
+              "description": "MCollective",
+              "protocol": "tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 103,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "orchestrator",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "8142",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 104,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2016-03-30",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nicName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+              },
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2016-03-30",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat('peAgentNic',copyIndex())]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "puppetAgentNicLoop",
+        "count": "[variables('puppetAgentCount')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/','peagentip',copyIndex())]",
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat('peagentip',copyIndex()))]"
+              },
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('puppetMasterVmName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+      ],
+      "plan": {
+        "name": "2016-1",
+        "product": "puppet-enterprise",
+        "publisher": "puppet"
+      },
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computername": "[variables('puppetMasterVmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]",
+          "customData": "[base64(concat('#!/bin/bash\n\ncat <<EOF >/tmp/puppet_override.answers\n','azure_externalFQDN=',reference(resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName')), '2016-03-30').dnsSettings.fqdn,'\n','azure_internalFQDN=$(hostname -f)\n\nq_puppet_enterpriseconsole_auth_password=',parameters('consolePassword'),'\nq_database_host=\\${azure_externalFQDN}\nq_puppet_enterpriseconsole_master_hostname=\\${azure_externalFQDN}\nq_puppet_enterpriseconsole_smtp_host=\\${azure_externalFQDN}\nq_puppetagent_certname=\\${azure_externalFQDN}\nq_puppetmaster_dnsaltnames=puppet,$(hostname),\\${azure_internalFQDN},\\${azure_externalFQDN}\nq_puppetagent_server=\\${azure_externalFQDN}\nq_puppetdb_hostname=\\${azure_externalFQDN}\nq_puppetmaster_certname=\\${azure_externalFQDN}\nEOF\nchmod +x /tmp/puppet_override.answers\n'))]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[variables('imageSku')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": "true",
+            "storageUri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net')]"
+          }
+        }
+      }
+    },
+    {
+        "type": "Microsoft.Compute/virtualMachines/extensions",
+        "name": "[concat(variables('puppetMasterVmName'),'/CustomScriptExtension')]",
+        "apiVersion": "2016-03-30",
+        "location": "[resourceGroup().location]",
+        "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', variables('puppetMasterVmName'))]"
+        ],
+        "properties": {
+           "publisher": "Microsoft.Azure.Extensions",
+           "type": "CustomScript",
+           "typeHandlerVersion": "2.0",
+           "autoUpgradeMinorVersion": true,
+           "settings": {
+              "fileUris": [
+                "[concat(parameters('_artifactsLocation'),'wait.sh')]"
+              ],
+              "commandToExecute": "./wait.sh"
+           }
+       }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat('WindowsAgentVM',copyIndex())]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "windowsAgentVmLoop",
+        "count": "[parameters('windowsAgentCount')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', 'peAgentNic', copyIndex())]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computername": "[concat('windowsAgentVM',copyIndex())]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "MicrosoftWindowsServer",
+            "offer": "WindowsServer",
+            "sku": "2012-R2-Datacenter",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/vhds/','osdisk',copyIndex(),'.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat('peAgentNic',copyIndex()))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": "true",
+            "storageUri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat('WindowsAgentVm',copyIndex(),'/puppetExtension')]",
+      "apiVersion": "2016-03-30",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "puppetAgentExtLoop",
+        "count": "[parameters('windowsAgentCount')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', concat('WindowsAgentVm',copyIndex()))]",
+        "[concat('Microsoft.Compute/virtualMachines/', variables('puppetMasterVmName'),'/extensions/CustomScriptExtension')]"
+      ],
+      "properties": {
+        "publisher": "Puppet",
+        "type": "PuppetAgent",
+        "typeHandlerVersion": "1.5",
+        "autoUpgradeMinorVersion" : "true",
+        "protectedSettings": {
+          "PUPPET_MASTER_SERVER": "[reference(variables('publicIPAddressName'),providers('Microsoft.Network', 'publicIPAddresses').apiVersions[0]).dnsSettings.fqdn]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat('UbuntuAgentVM',copyIndex())]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "ubuntuAgentVmLoop",
+        "count": "[parameters('linuxAgentCount')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', 'peAgentNic', add(copyIndex(),parameters('windowsAgentCount')))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computername": "[concat('UbuntuAgentVM',copyIndex())]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "canonical",
+            "offer": "ubuntuserver",
+            "sku": "14.04.2-LTS",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/vhds/','osdisk',add(copyIndex(),parameters('windowsAgentCount')),'.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat('peAgentNic',add(copyIndex(),parameters('windowsAgentCount'))))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": "true",
+            "storageUri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net')]"
+          }
+        }
+      }
+    },
+    {
+        "type": "Microsoft.Compute/virtualMachines/extensions",
+        "name": "[concat('UbuntuAgentVM',copyIndex(),'/CustomScriptExtension')]",
+        "apiVersion": "2016-03-30",
+        "location": "[resourceGroup().location]",
+        "copy": {
+          "name": "linuxAgentExtLoop",
+          "count": "[parameters('linuxAgentCount')]"
+        },
+        "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', concat('UbuntuAgentVm',copyIndex()))]",
+            "[concat('Microsoft.Compute/virtualMachines/', variables('puppetMasterVmName'),'/extensions/CustomScriptExtension')]"
+        ],
+        "properties": {
+           "publisher": "Microsoft.Azure.Extensions",
+           "type": "CustomScript",
+           "typeHandlerVersion": "2.0",
+           "autoUpgradeMinorVersion": true,
+           "settings": {
+              "fileUris": [
+                "[concat(parameters('_artifactsLocation'),'install_puppet_agent.sh')]"
+              ],
+              "commandToExecute": "[concat('./install_puppet_agent.sh ', reference(resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName')), '2016-03-30').dnsSettings.fqdn)]"
+           }
+       }
+    }
+  ],
+  "outputs" : {
+    "Puppet Enterprise Console FQDN:": {
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName')), '2016-03-30').dnsSettings.fqdn]",
+      "type": "string"
+    }
+  }
+}
