@@ -26,7 +26,7 @@ $ConfigData = @{
     )
 } # End of Config Data
 
-$Logfile = "$env:temp\CB_PostConfig1.1_{0}.log" -f (get-date -Format "yyyyMMddhhmmss")
+$Logfile = ".\CB_PostConfig1.1_{0}.log" -f (get-date -Format "yyyyMMddhhmmss")
  
 Function WriteLog
 {
