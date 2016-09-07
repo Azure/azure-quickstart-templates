@@ -74,17 +74,18 @@ try
 		Write-Output("FinishedDownloading Client and starting install")
 		$result = (Start-Process -FilePath "msiexec.exe" -ArgumentList "/i $installPath /passive IACCEPTSQLINCLILICENSETERMS=YES APPGUID={OCC618CE-F36A-415E-84b4-FB1BFF6967E1}" -Wait -PassThru).ExitCode
 		Write-Output("Result from installing client: $($result)")
-	}
+	} | Out-File -Append $Logfile
 }
 catch [Exception] {
     WriteLog("Exception installing the client on the localhost: $($_.Exception.Message)")
     throw
- } | Out-File -Append $Logfile
+ } 
 
 
 WriteLog("Getting Connection broker high availability")
 $res = Get-RDConnectionBrokerHighAvailability $BrokerServer
 WriteLog("Result from Broker high availability: $($res)")
+
 if ($null -eq $res )
 {
     if ($null -eq $SecondaryDBConString -or "" -eq $SecondaryDBConString )
@@ -98,12 +99,12 @@ if ($null -eq $res )
 
 
     WriteLog("Set-RDConnectionBrokerHighAvailability -ConnectionBroker $($BrokerServer) -DatabaseConnectionString $($PrimaryDBConString) $($secConnString) -ClientAccessName $($cbDNSName)")
-    Set-RDConnectionBrokerHighAvailability -ConnectionBroker $BrokerServer -DatabaseConnectionString $PrimaryDBConString $secConnString -ClientAccessName $cbDNSName
-	WriteLog("Returning from Set-RDConnectionBroker, checking high availability)
+    Set-RDConnectionBrokerHighAvailability -ConnectionBroker $BrokerServer -DatabaseConnectionString $PrimaryDBConString -DatabaseSecondaryConnectionString $secConnString -ClientAccessName $cbDNSName
+	WriteLog("Returning from Set-RDConnectionBroker, checking high availability")
     $res = Get-RDConnectionBrokerHighAvailability $BrokerServer
     if ( $null -eq $res )
     {
-       WriteLog "Failed to set the connection broker as high availability"
+       WriteLog "Unable to set the connection broker as high availability"
     }
 	WriteLog("Result from Get-RDConnectionBrokerHighAvailability: $($res)")
 }
