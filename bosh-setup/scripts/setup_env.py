@@ -30,61 +30,79 @@ def prepare_storage(settings):
     table_service = TableService(account_name=default_storage_account_name, account_key=storage_access_key, endpoint_suffix=endpoint_suffix)
     table_service.create_table('stemcells')
 
-def render_bosh_manifest(settings):
+def render_manifest(manifest_file, config):
+    if os.path.exists(manifest_file):
+        with open(manifest_file, 'r') as tmpfile:
+            contents = tmpfile.read()
+        for key in config:
+            value = config[key]
+            contents = re.compile(re.escape("REPLACE_WITH_{0}".format(key))).sub(value, contents)
+        with open(manifest_file, 'w') as tmpfile:
+            tmpfile.write(contents)
+    else:
+      print "{0} does not exist.".format(manifest_file)
+
+def get_bosh_configuration(settings):
+    config = {}
+    keys = [
+        "SUBNET_ADDRESS_RANGE_FOR_BOSH",
+        "SECONDARY_DNS",
+        "VNET_NAME",
+        "SUBNET_NAME_FOR_BOSH",
+        "DNS_RECURSOR",
+        "SUBSCRIPTION_ID",
+        "DEFAULT_STORAGE_ACCOUNT_NAME",
+        "RESOURCE_GROUP_NAME",
+        "KEEP_UNREACHABLE_VMS",
+        "TENANT_ID",
+        "CLIENT_ID",
+        "CLIENT_SECRET",
+        "BOSH_PUBLIC_IP",
+        "NSG_NAME_FOR_BOSH",
+        "BOSH_RELEASE_URL",
+        "BOSH_RELEASE_SHA1",
+        "BOSH_AZURE_CPI_RELEASE_URL",
+        "BOSH_AZURE_CPI_RELEASE_SHA1",
+        "STEMCELL_URL",
+        "STEMCELL_SHA1",
+        "ENVIRONMENT",
+        "BOSH_VM_SIZE"
+    ]
+    for key in keys:
+        config[key] = settings[key]
+
     with open('bosh.pub', 'r') as tmpfile:
         ssh_public_key = tmpfile.read().strip()
+    config["SSH_PUBLIC_KEY"] = ssh_public_key
 
     ip = netaddr.IPNetwork(settings['SUBNET_ADDRESS_RANGE_FOR_BOSH'])
-    gateway_ip = str(ip[1])
-    bosh_director_ip = str(ip[4])
+    config["GATEWAY_IP"] = str(ip[1])
+    config["BOSH_DIRECTOR_IP"] = str(ip[4])
 
+    environment = settings["ENVIRONMENT"]
     ntp_servers_maps = {
         "AzureCloud": "0.north-america.pool.ntp.org",
         "AzureChinaCloud": "1.cn.pool.ntp.org, 1.asia.pool.ntp.org, 0.asia.pool.ntp.org"
     }
-    environment = settings["ENVIRONMENT"]
     ntp_servers = ntp_servers_maps[environment]
+    config["NTP_SERVERS"] = ntp_servers
 
+    postgres_address_maps = {
+        "AzureCloud": "127.0.0.1",
+        "AzureChinaCloud": config["BOSH_DIRECTOR_IP"]
+    }
+    postgres_address = postgres_address_maps[environment]
+    config["POSTGRES_ADDRESS"] = postgres_address
+
+    return config
+
+def render_bosh_manifest(settings):
     # Render the manifest for bosh-init
     bosh_template = 'bosh.yml'
-    if os.path.exists(bosh_template):
-        with open(bosh_template, 'r') as tmpfile:
-            contents = tmpfile.read()
-        keys = [
-            "SUBNET_ADDRESS_RANGE_FOR_BOSH",
-            "SECONDARY_DNS",
-            "VNET_NAME",
-            "SUBNET_NAME_FOR_BOSH",
-            "DNS_RECURSOR",
-            "SUBSCRIPTION_ID",
-            "DEFAULT_STORAGE_ACCOUNT_NAME",
-            "RESOURCE_GROUP_NAME",
-            "KEEP_UNREACHABLE_VMS",
-            "TENANT_ID",
-            "CLIENT_ID",
-            "CLIENT_SECRET",
-            "BOSH_PUBLIC_IP",
-            "NSG_NAME_FOR_BOSH",
-            "BOSH_RELEASE_URL",
-            "BOSH_RELEASE_SHA1",
-            "BOSH_AZURE_CPI_RELEASE_URL",
-            "BOSH_AZURE_CPI_RELEASE_SHA1",
-            "STEMCELL_URL",
-            "STEMCELL_SHA1",
-            "ENVIRONMENT",
-            "BOSH_VM_SIZE"
-        ]
-        for k in keys:
-            v = settings[k]
-            contents = re.compile(re.escape("REPLACE_WITH_{0}".format(k))).sub(str(v), contents)
-        contents = re.compile(re.escape("REPLACE_WITH_SSH_PUBLIC_KEY")).sub(ssh_public_key, contents)
-        contents = re.compile(re.escape("REPLACE_WITH_GATEWAY_IP")).sub(gateway_ip, contents)
-        contents = re.compile(re.escape("REPLACE_WITH_BOSH_DIRECTOR_IP")).sub(bosh_director_ip, contents)
-        contents = re.compile(re.escape("REPLACE_WITH_NTP_SERVERS")).sub(ntp_servers, contents)
-        with open(bosh_template, 'w') as tmpfile:
-            tmpfile.write(contents)
+    config = get_bosh_configuration(settings)
+    render_manifest(bosh_template, config)
 
-    return bosh_director_ip
+    return config["BOSH_DIRECTOR_IP"]
 
 def get_cloud_foundry_configuration(scenario, settings, bosh_director_ip):
     config = {}
@@ -141,15 +159,8 @@ def get_cloud_foundry_configuration(scenario, settings, bosh_director_ip):
 def render_cloud_foundry_manifest(settings, bosh_director_ip):
     for scenario in ["single-vm-cf", "multiple-vm-cf"]:
         cloudfoundry_template = "{0}.yml".format(scenario)
-        if os.path.exists(cloudfoundry_template):
-            with open(cloudfoundry_template, 'r') as tmpfile:
-                contents = tmpfile.read()
-            config = get_cloud_foundry_configuration(scenario, settings, bosh_director_ip)
-            for key in config:
-                value = config[key]
-                contents = re.compile(re.escape("REPLACE_WITH_{0}".format(key))).sub(value, contents)
-            with open(cloudfoundry_template, 'w') as tmpfile:
-                tmpfile.write(contents)
+        config = get_cloud_foundry_configuration(scenario, settings, bosh_director_ip)
+        render_manifest(cloudfoundry_template, config)
 
 def render_bosh_deployment_cmd(bosh_director_ip):
     bosh_deployment_cmd = "deploy_bosh.sh"
@@ -197,7 +208,7 @@ def get_settings():
     print "The length of client_secret is {0}".format(len(settings['CLIENT_SECRET']))
 
     return settings
-
+ 
 def main():
     settings = get_settings()
     with open('settings', "w") as tmpfile:
@@ -210,6 +221,11 @@ def main():
 
     render_cloud_foundry_manifest(settings, bosh_director_ip)
     render_cloud_foundry_deployment_cmd(settings)
+
+    environment = settings["ENVIRONMENT"]
+    if environment == "AzureChinaCloud":
+        with open("/etc/resolvconf/resolv.conf.d/head", "a") as myfile:
+            myfile.write("\nnameserver {0}\n".format(bosh_director_ip))
 
 if __name__ == "__main__":
     main()

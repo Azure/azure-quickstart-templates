@@ -21,7 +21,8 @@ function retryop()
 echo "Start to update package lists from repositories..."
 retryop "apt-get update"
 
-retryop "apt-get -y install python-pip jq"
+echo "Start to install prerequisites..."
+retryop "apt-get -y install python-pip jq build-essential ruby2.0 ruby2.0-dev libxml2-dev libsqlite3-dev libxslt1-dev libpq-dev libmysqlclient-dev zlibc zlib1g-dev openssl libxslt-dev libssl-dev libreadline6 libreadline6-dev libyaml-dev sqlite3 libffi-dev"
 
 set -e
 
@@ -47,6 +48,8 @@ if [ "$environment" = "AzureChinaCloud" ]; then
   for pkg in $pkg_list; do
     retryop "pip install $pkg --index-url https://pypi.mirrors.ustc.edu.cn/simple/ --default-timeout=60"
   done
+  retryop "apt-get -y install python-dev"
+  retryop "pip install PyGreSQL --index-url https://pypi.mirrors.ustc.edu.cn/simple/ --default-timeout=60"
 else
   for pkg in $pkg_list; do
     retryop "pip install $pkg"
@@ -125,4 +128,11 @@ fi
 
 echo "Start to run deploy_bosh.sh..."
 su -c "./deploy_bosh.sh" - $username
+
+if [ "$environment" = "AzureChinaCloud" ]; then
+  echo "Start to inject some xip.io records to PowerDNS on BOSH VM..."
+  python inject_xip_io_records.py "$home_dir/bosh.yml" "$home_dir/settings"
+  resolvconf -u
+fi
+
 echo "Finish"
