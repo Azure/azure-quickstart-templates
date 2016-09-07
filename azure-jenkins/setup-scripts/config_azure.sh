@@ -17,10 +17,6 @@ fi
 instruction_goto_dashboard="Please go to Jenkins dashboard by inputting <Your VM IP address>:8080 in your preferred browser. You can find the IP address in Azure portal."
 
 dest_account_file_path='/var/lib/jenkins/com.microsoftopentechnologies.windowsazurestorage.WAStoragePublisher.xml'
-if [ -f $dest_account_file_path ]; then
-    echo "Storage account has been set before.\n$instruction_goto_dashboard"
-    exit 0
-fi
 
 echo "Usage:
   1 sh config_storage.sh
@@ -119,7 +115,7 @@ sudo cp $tmp_account_file_path $dest_account_file_path
 echo "Storage account was successfully added to Jenkins Azure Storage plugin."
 
 dest_download_container_file_path='/var/lib/jenkins/jobs/1. Download Dependencies. Invoked by pipeline/config.xml'
-dest_upload_container_file_path='/var/lib/jenkins/jobs/2. Upload test app. Invoked by pipeline/config.xml'
+dest_upload_container_file_path='/var/lib/jenkins/jobs/3. Upload test app. Invoked by pipeline/config.xml'
 if [ -f "$dest_download_container_file_path" ] && [ -f "$dest_upload_container_file_path" ]
 then
     echo "Blob containers have been set before.\n$instruction_goto_dashboard"
