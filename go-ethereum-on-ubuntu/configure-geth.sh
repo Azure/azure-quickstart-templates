@@ -49,4 +49,5 @@ wget https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/g
 wget https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/go-ethereum-on-ubuntu/GuestBook.sol
 
 date
+geth init genesis.json
 echo "completed geth install $$"
