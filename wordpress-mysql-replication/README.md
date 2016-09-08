@@ -7,7 +7,7 @@
   <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template deploys a WordPress site in Azure backed by MySQL replication with one master and one slave servers.  It has the following capabilities:
+This template deploys a WordPress site in Azure backed by MySQL replication with one master and one slave servers.  It has the following capabilities: 
 
 - Installs and configures GTID based MySQL replication on CentOS 6.
 - Deploys a load balancer in front of the 2 MySQL VMs.  MySQL, SSH, and MySQL probe ports are exposed through the load balancer using Network Security Group rules.  WordPress accesses MySQL through the load balancer.
