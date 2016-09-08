@@ -124,7 +124,7 @@ else
 $cb1IP = (Resolve-DnsName -Name $BrokerServer -Type A).IPAddress
 $cb2IP = (Resolve-DnsName -Name $localhost -Type A).IPAddress
 
-WriteLog("Adding DNS Command: Start-Process -FilePath "dnscmd.exe" -ArgumentList "$($DNSServer) /RecordAdd $($adDomainName) $($cbDNSName) A $($cb1IP)" -Wait -PassThru")
+WriteLog("Adding DNS Command: Start-Process -FilePath ""dnscmd.exe"" -ArgumentList ""$($DNSServer) /RecordAdd $($adDomainName) $($cbDNSName) A $($cb1IP)"" -Wait -PassThru")
 Invoke-Command -ComputerName $DNSServer -ScriptBlock {
 $result = (Start-Process -FilePath "dnscmd.exe" -ArgumentList "$DNSServer /RecordAdd $adDomainName $cbDNSName A $cb1IP" -Wait -PassThru).ExitCode
 Write-Output("Result from adding  DNS entry: $($result)")
