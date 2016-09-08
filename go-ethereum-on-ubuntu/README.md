@@ -127,11 +127,16 @@ var initializer =  {from:web3.eth.accounts[0], data: guestBookCompiled.GuestBook
 ## Deploying the Contract
 We are now ready to deploy! Remember that `new` method? We can finally use it:
 
+You will need to enter the password you entered when first importing the private key to unlock your account.
+
+```
+personal.unlockAccount(personal.listAccounts[0])
+```
+
 ```
 var guestBook = contract.new(initializer, callback);
 ```
 
-You will be prompted to enter the password you entered when first importing the private key.
 
 Congratulations - you have a contract deployed to the Ethereum network!
 
@@ -161,7 +166,7 @@ Congratulations - your contract is now alive on the Ethereum Network!
 
 Go ahead and stop your miner for the moment:
 ```
-web3.miner.stop(1)
+web3.miner.stop()
 ```
 
 ## Reading from the contract

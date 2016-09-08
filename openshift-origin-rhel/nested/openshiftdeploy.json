@@ -1,0 +1,105 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"openshiftMasterHostname": {
+			"type": "string",
+			"minLength": 1,
+			"metadata": {
+				"description": "OpenShift Master hostname"
+			}
+		},
+		"openshiftMasterPublicIpFqdn": {
+			"type": "string",
+			"minLength": 1,
+			"metadata": {
+				"description": "OpenShift Master VM public IP fully qualified domain name"
+			}
+		},
+		"openshiftMasterPublicIpAddress": {
+			"type": "string",
+			"minLength": 1,
+			"metadata": {
+				"description": "OpenShift Master VM public IP address"
+			}
+		},
+		"nodePrefix": {
+			"type": "string",
+			"minLength": 1,
+			"metadata": {
+				"description": "OpenShift Node VM prefix"
+			}
+		},
+		"nodeInstanceCount": {
+			"type": "int",
+			"minValue": 1,
+			"metadata": {
+				"description": "Number of OpenShift nodes"
+			}
+		},
+		"adminUsername": {
+			"type": "string",
+			"minLength": 1,
+			"metadata": {
+				"description": "Administrator username on all VMs"
+			}
+		},
+		"adminPassword": {
+			"type": "securestring",
+			"minLength": 1,
+			"metadata": {
+				"description": "Administrator password for OpenShift Console"
+			}
+		},
+		"sshPublicKey": {
+			"type": "securestring",
+			"metadata": {
+				"description": "SSH public key on all VMs"
+			}
+		},
+		"sshPrivateKey": {
+			"type": "securestring",
+			"minLength": 1,
+			"metadata": {
+				"description": "SSH private key for deploying OpenShift"
+			}
+		}
+	},
+	"variables": {
+		"vhdContainerName": "vhd",
+		"sshKeyPath": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+		"osType": {
+			"publisher": "RedHat",
+			"offer": "RHEL",
+			"sku": "7.2",
+			"version": "latest"
+		},
+		"imageReference": "[variables('osType')]",
+		"openshiftDeploymentScriptUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/openshift-origin-rhel/scripts/deployOpenShift.sh",
+		"openshiftDeploymentScriptFileName": "deployOpenShift.sh"
+	},
+	"resources": [{
+		"type": "Microsoft.Compute/virtualMachines/extensions",
+		"name": "[concat(parameters('openshiftMasterHostname'), '/deployOpenShift')]",
+		"location": "[resourceGroup().location]",
+		"apiVersion": "2015-06-15",
+		"tags": {
+			"displayName": "DeployOpenShift"
+		},
+		"properties": {
+			"publisher": "Microsoft.OSTCExtensions",
+			"type": "CustomScriptForLinux",
+			"typeHandlerVersion": "1.5",
+			"autoUpgradeMinorVersion": true,
+			"settings": {
+				"fileUris": [
+					"[variables('openshiftDeploymentScriptUrl')]"
+				]
+			},
+			"protectedSettings": {
+				"commandToExecute": "[concat('sh ', variables('openshiftDeploymentScriptFileName'), ' \"', parameters('adminUsername'), '\" \"', parameters('adminPassword'), '\" \"', parameters('sshPublicKey'), '\" \"', parameters('sshPrivateKey'), '\" \"', parameters('openshiftMasterHostname'), '\" \"', parameters('openshiftMasterPublicIpFqdn'), '\" \"', parameters('openshiftMasterPublicIpAddress'), '\" \"', parameters('nodePrefix'), '\" \"', parameters('nodeInstanceCount'), '\"')]"
+			}
+		}
+	}],
+	"outputs": {}
+}
