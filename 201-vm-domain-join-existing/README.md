@@ -6,7 +6,7 @@
 
 This template allows you to join an exitsing Windows virtual machine into an existing Windows Active Directory Domain.
 
-For this template to work we need the following pre-requisits to be met:
+For this template to work we need the following prerequisites to be met:
 
 1. Virtual machine to join to a domain must exist beforehand
 2. An Active Directory Forest must exist and a Domain Controller must be accessible by the virtual machine either on-premises or in Azure
