@@ -7,9 +7,9 @@
 
 
 This template deploys an Azure SQL Server, Azure SQL DB, Windows Server 2012R2 VM (Standard DS1 v2) with SonarQube installed.  This template 
-can be deployed to a new resource group (recommended) or to an existing resource group.  Once the deployment is complete you can increse the 
-resources provided to SonarQube by changing the VM from a Standard DS1 v2 machine to any larger DSx v2 
-machine without the need to redeploy SonarQube or migrate any data.
+can be deployed to a new resource group (recommended) or to an existing resource group.  
+
+Once the deployment is complete you can increse the resources provided to SonarQube by changing the VM from a Standard DS1 v2 machine to any larger DS_x_ v2 machine without the need to redeploy SonarQube or migrate any data.
 
 [License](https://raw.githubusercontent.com/ALM-Rangers/azure-quickstart-templates/master/301-sonarqube-azuresql/oss/License.txt)  
 [Third Party Notices](https://raw.githubusercontent.com/ALM-Rangers/azure-quickstart-templates/master/301-sonarqube-azuresql/oss/ThirdPartyNotices.txt)
@@ -17,10 +17,10 @@ machine without the need to redeploy SonarQube or migrate any data.
 * * *   
 
 ####Note:  
-This Beta release **does not deploy a secured SonarQube installation**.  To secure the installation we need to 
+This Beta release deploys a SonarQube installation that **is not secured**.  To secure the installation we need to 
 implement an IIS Reverse Proxy on the SonarQube VM.  This is planned for a future release, hopefully in the 
 full v1.0 version.  This means that your interaction with this SonarQube installation will happen in the clear 
-over HTTP.  Be warned that data sent can be intercepted and viewed. 
+over HTTP.  **_Be warned that data sent can be intercepted and viewed_**. 
 
 If you wish to manually configure IIS on your deployed SonarQube installation, please see [Running SonarQube behind a reversed proxy](https://blogs.msdn.microsoft.com/visualstudioalmrangers/2016/06/04/running-sonarqube-behind-an-iis-reversed-proxy/).
 
@@ -89,18 +89,19 @@ Once the deployment and configuration have finished you will be able to access y
 
 ## Contributors
 We thank the following contributors to this project: 
-Jean-Marc Prieur
-[Giulio Vian,](https://github.com/giuliov) 
-[Brian Randell](https://github.com/brianrandell), 
-[John Spinella,](https://github.com/jrspinella) 
-Cesar Solis, 
-Sergio Romero Ortiz, 
-[Hosam Kamel](https://github.com/hkamel),
-Kevin Mack, 
-Pierre Donyegro, 
-Rui Miguel Carriho de Melo, 
-David Corbin, 
-[Gordon Beeming](https://github.com/Gordon-Beeming), 
-Vinicius Moura, 
-Clementino de Mendonca, 
-[Steven St. Jean](https://github.com/sstjean).
+   
+Jean-Marc Prieur,  
+[Giulio Vian](https://github.com/giuliov),  
+[Brian Randell](https://github.com/brianrandell),   
+[John Spinella](https://github.com/jrspinella),   
+Cesar Solis,  
+Sergio Romero Ortiz,  
+[Hosam Kamel](https://github.com/hkamel),  
+Kevin Mack,  
+Pierre Donyegro,  
+Rui Miguel Carriho de Melo,  
+David Corbin,  
+[Gordon Beeming](https://github.com/Gordon-Beeming),  
+Vinicius Moura,  
+Clementino de Mendonca,  
+[Steven St. Jean](https://github.com/sstjean)
