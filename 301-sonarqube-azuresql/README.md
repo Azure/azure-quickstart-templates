@@ -6,7 +6,10 @@
 [![Visualize button](http://armviz.io/visualizebutton.png)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FALM-Rangers%2Fazure-quickstart-templates%2Fmaster%2F301-sonarqube-azuresql%2Fazuredeploy.json)
 
 
-This template deploys an Azure SQL Server, Azure SQL DB, Windows Server 2012R2 VM with SonarQube installed.  This template can be deployed to a new resource group (recommended) or to an existing resource group.
+This template deploys an Azure SQL Server, Azure SQL DB, Windows Server 2012R2 VM (Standard DS1 v2) with SonarQube installed.  This template 
+can be deployed to a new resource group (recommended) or to an existing resource group.  Once the deployment is complete you can increse the 
+resources provided to SonarQube by changing the VM from a Standard DS1 v2 machine to any larger DSx v2 
+machine without the need to redeploy SonarQube or migrate any data.
 
 [License](https://raw.githubusercontent.com/ALM-Rangers/azure-quickstart-templates/master/301-sonarqube-azuresql/oss/License.txt)  
 [Third Party Notices](https://raw.githubusercontent.com/ALM-Rangers/azure-quickstart-templates/master/301-sonarqube-azuresql/oss/ThirdPartyNotices.txt)
@@ -14,11 +17,16 @@ This template deploys an Azure SQL Server, Azure SQL DB, Windows Server 2012R2 V
 * * *   
 
 ####Note:  
-This Beta release **does not deploy a secured SonarQube installation**.  To secure the installation we need to implement an IIS Reverse Proxy on the SonarQube VM.  This is planned for a future release, hopefully in the full v1.0 version.  This means that your interaction with this SonarQube installation will happen in the clear over HTTP.  Be warned that data sent can be intercepted and viewed. 
+This Beta release **does not deploy a secured SonarQube installation**.  To secure the installation we need to 
+implement an IIS Reverse Proxy on the SonarQube VM.  This is planned for a future release, hopefully in the 
+full v1.0 version.  This means that your interaction with this SonarQube installation will happen in the clear 
+over HTTP.  Be warned that data sent can be intercepted and viewed. 
 
 If you wish to manually configure IIS on your deployed SonarQube installation, please see [Running SonarQube behind a reversed proxy](https://blogs.msdn.microsoft.com/visualstudioalmrangers/2016/06/04/running-sonarqube-behind-an-iis-reversed-proxy/).
 
 * * *
+
+
 ###Workflow
 This template performs the following workflow to create the SonarQube installation.  
 - Deploy an Azure SQL Server database (named in sqDB\_ServerName) into the selected resource group  
@@ -52,8 +60,8 @@ The deployment in Azure can take up to 30 minutes.  At the end of the deployment
 
 Once the deployment and configuration have finished you will be able to access your SonarQube by entering its public address into a browser.  The address format is:
 
-#####http://[sq\_PublicIP\_DnsPrefix].[AzureRegion].cloudapp.azure.com  
-**Ex:** http://my-sonarqube.eastus.cloudapp.azure.com  
+#####http://[sq\_PublicIP\_DnsPrefix].[AzureRegion].cloudapp.azure.com:9000  
+**Ex:** http://my-sonarqube.eastus.cloudapp.azure.com:9000  
 
 * * *
 
@@ -78,3 +86,21 @@ Once the deployment and configuration have finished you will be able to access y
 ![Template visualization](images/visualize.png)
 
 `Tags: SonarQube, SQL`
+
+## Contributors
+We thank the following contributors to this project: 
+Jean-Marc Prieur
+[Giulio Vian,](https://github.com/giuliov) 
+[Brian Randell](https://github.com/brianrandell), 
+[John Spinella,](https://github.com/jrspinella) 
+Cesar Solis, 
+Sergio Romero Ortiz, 
+[Hosam Kamel](https://github.com/hkamel),
+Kevin Mack, 
+Pierre Donyegro, 
+Rui Miguel Carriho de Melo, 
+David Corbin, 
+[Gordon Beeming](https://github.com/Gordon-Beeming), 
+Vinicius Moura, 
+Clementino de Mendonca, 
+[Steven St. Jean](https://github.com/sstjean).
