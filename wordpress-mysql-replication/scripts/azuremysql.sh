@@ -227,7 +227,6 @@ then
 CREATE USER 'probeuser'@'%' IDENTIFIED BY '${PROBEPWD}';
 GRANT SELECT ON *.* TO 'probeuser'@'%';
 FLUSH PRIVILEGES;
-CREATE DATABASE ${DBNAME};
 EOF
 fi
 
@@ -347,6 +346,7 @@ SET PASSWORD FOR 'root'@'::1' = PASSWORD('${ROOTPWD}');
 CREATE USER 'admin'@'%' IDENTIFIED BY '${ROOTPWD}';
 GRANT ALL PRIVILEGES ON *.* TO 'admin'@'%' with grant option;
 FLUSH PRIVILEGES;
+CREATE DATABASE ${DBNAME};
 EOF
 fi
     configure_mysql_replication
