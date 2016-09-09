@@ -117,7 +117,7 @@ if ( $res.Server.ToLower().StartsWith($localhost.ToLower()) )
 }
 else
 {
-	WriteLog("Add-RdServer -Server $($localhost) -Role RDS-CONNECTION-BROKER -ConnectionBroker $($BrokerServer)"
+	WriteLog("Add-RdServer -Server $($localhost) -Role RDS-CONNECTION-BROKER -ConnectionBroker $($BrokerServer)")
 	Add-RdServer -Server $localhost -Role RDS-CONNECTION-BROKER -ConnectionBroker $BrokerServer
 }
 
