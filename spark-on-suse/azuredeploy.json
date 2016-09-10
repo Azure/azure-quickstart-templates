@@ -1,0 +1,258 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminUserName": {
+      "defaultValue": null,
+      "type": "SecureString"
+    },
+    "adminPassword": {
+      "defaultValue": null,
+      "type": "SecureString"
+    },
+    "sparkOnSuse_nsg_name": {
+      "defaultValue": "sparkOnSuse-nsg",
+      "type": "String"
+    },
+    "sparkMasterSize": {
+      "defaultValue": "Basic_A1",
+      "type": "String"
+    }
+  },
+  "variables": {
+    "resourceGroupLocation": "[resourceGroup().location]",
+    "storageAccountName": "[concat(uniquestring(resourceGroup().id),'StorageAccount')]",
+    "virtualMachines_spark01_name": "sparkMaster",
+    "sparkNetWorkSecurityGroupName": "nsgroup",
+    "sparkVirtualNetworkName": "sparkVirtualNetwork",
+    "sparkMasterNetworkInterfaceName": "ni_master",
+    "networkInterfaces_slave1_name": "ni_slave1",
+    "sparkMasterInternalIP": "10.0.0.4",
+    "scriptUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/spark-on-suse/",
+    "numberOfSlavesInstances": "1"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('virtualMachines_spark01_name')]",
+      "apiVersion": "2015-06-15",
+      "location": "[variables('resourceGroupLocation')]",
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('sparkMasterSize')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "SUSE",
+            "offer": "SLES",
+            "sku": "12-SP1",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[variables('virtualMachines_spark01_name')]",
+            "createOption": "FromImage",
+            "vhd": {
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob,variables('vmStorageAccountContainerName'),'/','osdisksl', '9999' ,'.vhd')]"
+            },
+            "caching": "ReadWrite"
+          },
+          "dataDisks": []
+        },
+        "osProfile": {
+          "computername": "sparkmaster",
+          "adminUsername": "[parameters('adminUserName')]",
+          "adminPassword": "[parameters('adminPassword')]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": "false"
+          },
+          "secrets": []
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('sparkMasterNetworkInterfaceName'))]"
+            }
+          ]
+        }
+      },
+      "resources": [],
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('sparkMasterNetworkInterfaceName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('sparkMasterNetworkInterfaceName')]",
+      "apiVersion": "2016-03-30",
+      "location": "[variables('resourceGroupLocation')]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAddress": "[variables('sparkMasterInternalIP')]",
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddresses_spark01_ip_name'))]"
+              },
+              "subnet": {
+                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworks_SparkTraining_vnet_name')), '/subnets/default')]"
+              }
+            }
+          }
+        ],
+        "dnsSettings": {
+          "dnsServers": []
+        },
+        "enableIPForwarding": false,
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups',[variables('sparkNetWorkSecurityGroupName')])]"
+        }
+      },
+      "resources": [],
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', 'sparkMasterPublicIp' )]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('sparkVirtualNetworkName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('sparkNetWorkSecurityGroupName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "sparkMasterPublicIp",
+      "apiVersion": "2016-03-30",
+      "location": "[variables('resourceGroupLocation')]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "idleTimeoutInMinutes": 4
+      },
+      "resources": [],
+      "dependsOn": []
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('sparkVirtualNetwork')]",
+      "apiVersion": "2016-03-30",
+      "location": "[variables('resourceGroupLocation')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.0.0/16"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "default",
+            "properties": {
+              "addressPrefix": "10.0.0.0/24"
+            }
+          }
+        ]
+      },
+      "resources": [],
+      "dependsOn": []
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('sparkNetWorkSecurityGroupName')]",
+      "apiVersion": "2016-03-30",
+      "location": "[variables('resourceGroupLocation')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "default-allow-ssh",
+            "properties": {
+              "protocol": "TCP",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1000,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "SparkUI",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "4040",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1010,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "SparkMaster",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "8080",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1020,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "SparkHistoryServer",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "18080",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1030,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      },
+      "resources": [],
+      "dependsOn": []
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "sku": {
+        "name": "Standard_LRS",
+        "tier": "Standard"
+      },
+      "kind": "Storage",
+      "name": "[variables('storageAccountName')]",
+      "apiVersion": "2016-01-01",
+      "location": "[variables('resourceGroupLocation')]",
+      "tags": {},
+      "properties": {},
+      "resources": [],
+      "dependsOn": []
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "sparkmasterCustomScript",
+      "apiVersion": "2015-05-01-preview",
+      "location": "[variables('resourceGroupLocation')]",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', variables('virtualMachines_spark01_name') )]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('sparkMasterNetworkInterfaceName') )]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[concat(variables('scriptUrl'), 'install_spark_environment.sh')]"
+          ],
+          "commandToExecute": "[concat('bash spark-cluster-install.sh -k 2.0 -d ', reference([variables('sparkMasterNetworkInterfaceName')]).ipConfigurations[0].properties.privateIPAddress,' -s ',variables('numberOfSlavesInstances'),' -m 1 ', '  > /tmp/custom_script.log')]"
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}
