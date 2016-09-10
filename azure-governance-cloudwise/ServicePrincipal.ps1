@@ -8,24 +8,35 @@ Set-Location ".\"
 
 # STEPS TO MAKE THIS SCRIPT WORK FOR YOU
 # 1) Ensure you pass the right subscription name. Parameter $subscriptionName
-# 2) When prompted, signin with a Service Admin user for the subscription
-# 3) Usually that's all you have to do
+# 2) Run the ARM deployment and capture the Cloudwise App Service URL. 
+# 3) When prompted, signin with a Service Admin user for the subscription
+# 4) Usually that's all you have to do
 #****************************************************************************
 
 
-### 0. Ensure right Parameters, specially the $subscriptionName
-#############################################################################################
 
 
+$subscriptionName =     ""
+$cloudwiseAppServiceURL=""          # this is the Unique URL of the Cloudwise App Service deployed by the ARM script
+$suffix =               "Avyan"     #-- Name of the company/deployment. This is used to create a unique website name in your organization
 
-$subscriptionName =     "<your subscription name"
-$homepage =             "https://www.testapp2.org"
-$appIdentifier =        ($homepage + "/avyanxx")
+$appIdentifier =        ($cloudwiseAppServiceURL + "/avyanxx")
 $passwordADApp =        "Password@123" 
-$suffix =               "Avyan2"     #-- Name of the company/deployment. This is used to create a unique website name in your organization
+
 $Web1SiteName =         ("cloudwise" + $suffix)
-$displayName1 =         ("CloudWise - Azure Governance and Billing Portal -v" + $suffix)
+$displayName1 =         ("CloudWise - Azure Governance and Billing Portal (ver." + $suffix + ")")
 $servicePrincipalPath=  (".\" + $subscriptionName + ".json" )
+
+
+
+### 0. Validate Parameters.
+#############################################################################################
+if (($subscriptionName -eq "") -or ($cloudwiseAppServiceURL -eq ""))
+{
+    Write-Host "Please ensure parameters SubscriptionName and cloudwiseAppServiceURL are not empty" -foreground Red
+    return
+}
+
 
 ### 1. Login to Azure Resource Manager and save the profile locally to avoid relogins (used primarily for debugging purposes)
 #############################################################################################
@@ -61,22 +72,20 @@ $sub = Get-AzureRmSubscription –SubscriptionName $subscriptionName | Select-Az
 
     # Get tenant ID
     $tenantID = (Get-AzureRmContext).Tenant.TenantId
-    # This value is manually set in AD Application settings. Get that value from the portal, if not set you can set it as your HomePageURL
-    $PostLogoutRedirectUri1 = $homePageURL1
-
-    $replyURLs = @($PostLogoutRedirectUri1, "http://localhost:62080")
+   
+    $replyURLs = @($cloudwiseAppServiceURL, "http://localhost:62080")
 
     # Create Active Directory Application
-    $homePageURL1 = ("http://" + $Web1SiteName + ".azurewebsites.net")
-    $identifierURI1 = ("http://" + $defaultPrincipal + "/" + $Web1SiteName)
-$azureAdApplication1 = New-AzureRmADApplication -DisplayName $displayName1 -HomePage $homePageURL1 -IdentifierUris $identifierURI1 -Password $passwordADApp -ReplyUrls $replyURLs
-
-Start-Sleep -s 30 # Wait till the AP App is completely created. Usually takes 10-20secs. Needed as Role assignment needs a fully deployed AD App
+    
+    $identifierURI1 = $cloudwiseAppServiceURL
+$azureAdApplication1 = New-AzureRmADApplication -DisplayName $displayName1 -HomePage $cloudwiseAppServiceURL -IdentifierUris $identifierURI1 -Password $passwordADApp -ReplyUrls $replyURLs
 
 ### 3. Create a service principal for the AD Application and add a Reader role to the principal
 #############################################################################################
 
 $principal = New-AzureRmADServicePrincipal -ApplicationId $azureAdApplication1.ApplicationId
+Start-Sleep -s 30 # Wait till the ServicePrincipal is completely created. Usually takes 20+secs. Needed as Role assignment needs a fully deployed servicePrincipal
+
 
     Select-AzureRmSubscription -SubscriptionName $subscriptionName
     $scopedSubs = ("/subscriptions/" + $sub.Subscription)
@@ -96,20 +105,21 @@ Write-Host ("Parameters to be used in the registration / configuration.") -foreg
 Write-Host "SubscriptionID: " -foreground Green –NoNewLine
 Write-Host $sub.Subscription -foreground Red 
 Write-Host "Domain: " -foreground Green –NoNewLine
-Write-Host ($u3 + ".onmicrosoft.com") -foreground Red 
-Write-Host "ida:ClientID: " -foreground Green –NoNewLine
+Write-Host ($u3 + ".onmicrosoft.com") -foreground Red –NoNewLine
+Write-Host "- Please verify the domain with the management portal. For debugging purposes we have used the domain of the user signing in. You might have Custom / Organization domains" -foreground Yellow
+Write-Host "Application Client ID: " -foreground Green –NoNewLine
 Write-Host $azureAdApplication1.ApplicationId -foreground Red 
-Write-Host "ida:Password: " -foreground Green –NoNewLine
+Write-Host "Application Client Password: " -foreground Green –NoNewLine
 Write-Host $passwordADApp -foreground Red 
-Write-Host "ida:PostLogoutRedirectUri: " -foreground Green –NoNewLine
-Write-Host $PostLogoutRedirectUri1 -foreground Red 
-Write-Host "ida:TenantId: " -foreground Green –NoNewLine
+Write-Host "PostLogoutRedirectUri: " -foreground Green –NoNewLine
+Write-Host $cloudwiseAppServiceURL -foreground Red 
+Write-Host "TenantId: " -foreground Green –NoNewLine
 Write-Host $tenantID -foreground Red 
 
-Write-Host ("- Update '") -foreground Yellow –NoNewLine
+Write-Host ("TODO - Update permissions for the AD Application  '") -foreground Yellow –NoNewLine
 Write-Host $displayName1 -foreground Red –NoNewLine
-Write-Host ("' Active Directory Application (AD App) settings! (see README.md)") -foreground Yellow
-
-Write-Host ("- On the configuration page of the AD App, find the section name 'Reply URL' and add the URL of the Website deployed via the ARM script ") -foreground Yellow –NoNewLine
-Write-Host (" with http and https. Also add http://localhost:62080 in case debugging locally.") -foreground Yellow
+Write-Host ("'. Cloudwise would atleast need 2 apps") -foreground Yellow
+Write-Host ("`t 1) Windows Azure Active Directory ") -foreground Yellow
+Write-Host ("`t 2) Windows Azure Service Management API ") -foreground Yellow
+Write-Host ("see README.md for details") -foreground Yellow
 
