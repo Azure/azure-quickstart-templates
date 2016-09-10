@@ -43,14 +43,13 @@ $installPath = "$env:temp\Install-$(Get-Date -format 'yyyy-dd hh-mm-ss').msi"
 if(!(Split-Path -parent $installPath) -or !(Test-Path -PathType Container (Split-Path -parent $installPath))) {
    $installPath = Join-Path $pwd (Split-Path -leaf $path)
 }
-WriteLog("Install Path of Client: $($installPath)")
-
-$client = New-Object System.Net.WebClient
-$client.DownloadFile($downloadClientURL, $installPath)
+WriteLog("Install Path of Client: $($installPath), starting download from $($downloadClientURL)")
+Invoke-WebRequest -Uri $downloadClientURL -OutFile $installPath -UserAgent [Microsoft.PowerShell.Commands.PSUserAgent]::InternetExplorer
+WriteLog("Completed Download")
 
 WriteLog("Starting install of client on localhost")
 try{
-$result = (Start-Process -FilePath "msiexec.exe" -ArgumentList "/i $installPath /passive IACCEPTSQLINCLILICENSETERMS=YES APPGUID={OCC618CE-F36A-415E-84b4-FB1BFF6967E1}" -Wait -PassThru).ExitCode
+$result = (Start-Process -FilePath "msiexec.exe" -ArgumentList "/i ""$installPath"" /passive IACCEPTSQLINCLILICENSETERMS=YES" -Wait -PassThru).ExitCode
 }
 catch [Exception] {
     WriteLog("Exception installing the client on the localhost: $($_.Exception.Message)")
@@ -69,10 +68,9 @@ try
 		}
 
 		Write-Output("Downloading new client from: $($installPath)")
-		$client = New-Object System.Net.WebClient
-		$client.DownloadFile($downloadClientURL, $installPath)
+        Invoke-WebRequest -Uri $downloadClientURL -OutFile $installPath -UserAgent [Microsoft.PowerShell.Commands.PSUserAgent]::InternetExplorer
 		Write-Output("FinishedDownloading Client and starting install")
-		$result = (Start-Process -FilePath "msiexec.exe" -ArgumentList "/i $installPath /passive IACCEPTSQLINCLILICENSETERMS=YES APPGUID={OCC618CE-F36A-415E-84b4-FB1BFF6967E1}" -Wait -PassThru).ExitCode
+		$result = (Start-Process -FilePath "msiexec.exe" -ArgumentList "/i ""$installPath"" /passive IACCEPTSQLINCLILICENSETERMS=YES" -Wait -PassThru).ExitCode
 		Write-Output("Result from installing client: $($result)")
 	} | Out-File -Append $Logfile
 }
