@@ -182,30 +182,6 @@
       "type": "string",
       "defaultValue": ""
     },
-    "sourceStorageAccountResourceGroup": {
-      "type": "string",
-      "metadata": {
-        "description": "Resource group name of the source storage account."
-      }
-    },
-    "sourceBlobURI": {
-      "type": "string",
-      "metadata": {
-        "description": "Full URIs for one or more blobs that should be copied to the deployment storage account. URLs must be comma separated."
-      }
-    },
-    "destinationContainer": {
-      "type": "string",
-      "metadata": {
-        "description": "Destination Storage blob container"
-      }
-    },
-    "destinationStorageAccountName": {
-      "type": "string",
-      "metadata": {
-        "description": "Storage Account name to which the blob(s) will be transferred to"
-      }
-    },
     "baseUrl": {
       "type": "string",
       "metadata": {
@@ -224,8 +200,7 @@
     "networkInterfaceNameDSAgent": "[concat(parameters('vmNameDSAgent'),'-nic')]",
     "securityGroupNameDSAgent": "[concat(variables('networkInterfaceNameDSAgent'),'-nsg')]",
     "vmExtensionName": "ChefnodeExtension",
-    "vmExtensionName2": "ChefCustomScript",
-    "sourceStorageAccountName": "[substring(split(parameters('sourceBlobURI'),'.')[0],8)]"
+    "vmExtensionName2": "ChefCustomScript"
   },
   "resources": [
     {
@@ -319,30 +294,7 @@
         }
       },
       "resources": [
-        {
-          "comments": "Custom Script that copies blobs from source storage account to destination storage account",
-          "apiVersion": "2015-06-15",
-          "type": "extensions",
-          "name": "[concat(concat(parameters('chefprefix'),parameters('vmNameChefWorkstation')),'CustomScriptExtension')]",
-          "location": "[resourceGroup().location]",
-          "dependsOn": [
-            "[concat('Microsoft.Compute/virtualMachines/', concat(parameters('chefprefix'),parameters('vmNameChefWorkstation')))]"
-          ],
-          "properties": {
-            "publisher": "Microsoft.Compute",
-            "type": "CustomScriptExtension",
-            "autoUpgradeMinorVersion": true,
-            "typeHandlerVersion": "1.4",
-            "settings": {
-              "fileUris": [
-                "[concat(parameters('baseUrl'), '/scripts/BlobTransfer.ps1')]"
-              ]
-            },
-            "protectedSettings": {
-              "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ','BlobTransfer.ps1 -SourceImage ', '' ,parameters('sourceBlobURI'), '', '  -SourceSAKey ', listKeys(resourceId(parameters('sourceStorageAccountResourceGroup'),'Microsoft.Storage/storageAccounts', variables('sourceStorageAccountName')), '2015-06-15').key1, ' -DestinationURI https://', parameters('destinationStorageAccountName'), '.blob.core.windows.net/', parameters('destinationContainer'), ' -DestinationSAKey ', listKeys(concat('Microsoft.Storage/storageAccounts/', parameters('destinationStorageAccountName')), '2015-06-15').key1)]"
-            }
-          }
-        }
+        
       ]
     },
     {
@@ -502,9 +454,10 @@
         "[concat('Microsoft.Compute/virtualMachines/', parameters('chefprefix'),parameters('vmNameDSAgent'),copyindex(),'/extensions/',variables('vmExtensionName'))]"
       ],
       "properties": {
-        "publisher": "Microsoft.OSTCExtensions",
-        "type": "CustomScriptForLinux",
-        "typeHandlerVersion": "1.5",
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
             "[parameters('chefnodeCustomScripturl')]"
