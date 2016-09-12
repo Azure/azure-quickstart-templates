@@ -15,14 +15,14 @@ This solution (currently in private preview) will allow you to capture your Azur
  
 ## Prerequisites
 
-+ Azure Subscription (if you don’t have one you can create one [here](https://azure.microsoft.com/en-us/free/))
-+ Operations Management Suite Account (Free Sign Up – No credit card required. Sign up for your free OMS account [here](https://www.microsoft.com/en-us/cloud-platform/operations-management-suite))
-+ Azure Automation Account
++ Azure Subscription (if you donâ€™t have one you can create one [here](https://azure.microsoft.com/en-us/free/))
++ Operations Management Suite Account (Free Sign Up â€“ No credit card required. Sign up for your free OMS account [here](https://www.microsoft.com/en-us/cloud-platform/operations-management-suite))
++ **New Azure Automation Account (with RunAs Account). To create a new Automation Account refer to step 4 below.**
 
 ## How do I get started?
 
 1. We leverage the Azure Resource Manager (ARM) templates to configure this solution. You find the SQL Azure ARM Template [here](https://azure.microsoft.com/en-us/documentation/templates/101-sqlazure-oms-monitoring/).
-2. Click the button that says ‘**Deploy to Azure**’. This will launch the ARM Template you need to configure in the Azure Portal.
+2. Click the button that says â€˜**Deploy to Azure**â€™. This will launch the ARM Template you need to configure in the Azure Portal.
   
   ![all text](images/01sqlazure.png "SQL Azure") 
   
@@ -30,18 +30,18 @@ This solution (currently in private preview) will allow you to capture your Azur
   
   ![all text](images/02sqlazure.png "SQL Azure") 
   
- * **OMS Workspace ID + Primary Key**: If you haven’t created an OMS workspace you can create one [here](https://www.microsoft.com/en-us/cloud-platform/operations-management-suite). You can find the Workspace ID and Primary Key inside the OMS portal under **Settings** and then click the **Connected Sources** tab as shown in the image below.
+ * **OMS Workspace ID + Primary Key**: If you havenâ€™t created an OMS workspace you can create one [here](https://www.microsoft.com/en-us/cloud-platform/operations-management-suite). You can find the Workspace ID and Primary Key inside the OMS portal under **Settings** and then click the **Connected Sources** tab as shown in the image below.
    
    ![all text](images/03sqlazure.png "SQL Azure") 
    
 4. **Create a new Automation account**: Go back into the Azure Portal https://portal.azure.com opening a separate tab from the one that is already opened with the ARM Template.
  * If you have an existing OMS Log Analytics workspace in a Resource Group, proceed to create the Automation account in this Resource Group. It is recommended that the Azure region is the same as the OMS Log Analytics resource. By default, the wizard will create an SPN account as part of this process. Note: Make sure to create the new Automation Account leveraged for this solution in the subscription that you are wanting to monitor the SQL Azure databases.
- * If you don’t have an existing OMS Log Analytics workspace in a Resource Group, create a new Automation account into a new Resource Group. SPN account will be created by default.
+ * If you donâ€™t have an existing OMS Log Analytics workspace in a Resource Group, create a new Automation account into a new Resource Group. SPN account will be created by default.
    
    ![all text](images/04sqlazure.png "SQL Azure") 
    
-    Once you have created the Automation account, you can proceed to fill the Automation account name with what you created and specify the region you created the Automation account in. Click ‘OK’ on the ‘Parameters’ blade.
-5. Under the ‘Custom Deployment’ blade select the subscription you would like to use and select the **same Resource Group you used for the automation account** that is asked within the region you are in.
+    Once you have created the Automation account, you can proceed to fill the Automation account name with what you created and specify the region you created the Automation account in. Click â€˜OKâ€™ on the â€˜Parametersâ€™ blade.
+5. Under the â€˜Custom Deploymentâ€™ blade select the subscription you would like to use and select the **same Resource Group you used for the automation account** that is asked within the region you are in.
 6. Accept the licensing terms and click create. It takes **15-20 minutes** before data starts appearing in the OMS Log Analytics portal. To check if the data got in search for Type=sqlazure_CL
 
 ## Queries for alerts
