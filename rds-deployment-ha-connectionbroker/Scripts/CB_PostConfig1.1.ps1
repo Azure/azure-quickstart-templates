@@ -48,7 +48,7 @@ WriteLog("Completed Download")
 
 WriteLog("Starting install of client on localhost")
 try{
-$result = (Start-Process -FilePath "msiexec.exe" -ArgumentList "/i ""$installPath"" /passive IACCEPTSQLINCLILICENSETERMS=YES" -Wait -PassThru).ExitCode
+$result = (Start-Process -FilePath "msiexec.exe" -ArgumentList "/i ""$installPath"" /passive IACCEPTSQLNCLILICENSETERMS=YES" -Wait -PassThru).ExitCode
 }
 catch [Exception] {
     WriteLog("Exception installing the client on the localhost: $($_.Exception.Message)")
@@ -120,7 +120,7 @@ Invoke-Command -ComputerName $DNSServer  -ScriptBlock {
 	}
 	Write-Output("Successfully added ip address")
     Write-Output("Adding DNS for IP $($cb2IP)")
-	$rec = Add-DnsServerResourceRecordA -ZoneNmae ""$($adDomainName)"" -AllowUpdateAny -Ipv4Address ""$($cb2IP)"" -PassThru -TimeToLive 00:00:30
+	$rec = Add-DnsServerResourceRecordA -ZoneName ""$($adDomainName)"" -AllowUpdateAny -Ipv4Address ""$($cb2IP)"" -PassThru -TimeToLive 00:00:30
 	if ($rec -eq $null) 
 	{
 		throw "Unable to add Dns record for ip address $($cb2IP)"
