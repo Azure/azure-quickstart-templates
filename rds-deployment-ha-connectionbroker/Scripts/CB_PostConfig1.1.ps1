@@ -3,7 +3,6 @@ param
     ( 
      [String]$BrokerServer,
      [String]$PrimaryDBConString,
-     [String]$SecondaryDBConString,
      [String]$username,
      [String]$password,
      [string]$cbDNSName,
@@ -86,18 +85,8 @@ WriteLog("Result from Broker high availability: $($res)")
 
 if ($null -eq $res )
 {
-    if ($null -eq $SecondaryDBConString -or "" -eq $SecondaryDBConString )
-    {
-        $SecondaryDBConString = "-DatabaseSecondaryConnectionString $SecondaryDBConString"
-    }
-    else
-    {
-       $SecondaryDBConString = ""
-    }
-
-
-    WriteLog("Set-RDConnectionBrokerHighAvailability -ConnectionBroker $($BrokerServer) -DatabaseConnectionString $($PrimaryDBConString) $($secConnString) -ClientAccessName $($cbDNSName)")
-    Set-RDConnectionBrokerHighAvailability -ConnectionBroker $BrokerServer -DatabaseConnectionString $PrimaryDBConString -DatabaseSecondaryConnectionString $secConnString -ClientAccessName $cbDNSName
+    WriteLog("Set-RDConnectionBrokerHighAvailability -ConnectionBroker $($BrokerServer) -DatabaseConnectionString $($PrimaryDBConString) -ClientAccessName $($cbDNSName)")
+    Set-RDConnectionBrokerHighAvailability -ConnectionBroker $BrokerServer -DatabaseConnectionString $PrimaryDBConString -ClientAccessName $cbDNSName
 	WriteLog("Returning from Set-RDConnectionBroker, checking high availability")
     $res = Get-RDConnectionBrokerHighAvailability $BrokerServer
     if ( $null -eq $res )
@@ -122,13 +111,21 @@ else
 $cb1IP = (Resolve-DnsName -Name $BrokerServer -Type A).IPAddress
 $cb2IP = (Resolve-DnsName -Name $localhost -Type A).IPAddress
 
-WriteLog("Adding DNS Command: Start-Process -FilePath ""dnscmd.exe"" -ArgumentList ""$($DNSServer) /RecordAdd $($adDomainName) $($cbDNSName) A $($cb1IP)"" -Wait -PassThru")
-Invoke-Command -ComputerName $DNSServer -ScriptBlock {
-$result = (Start-Process -FilePath "dnscmd.exe" -ArgumentList "$DNSServer /RecordAdd $adDomainName $cbDNSName A $cb1IP" -Wait -PassThru).ExitCode
-Write-Output("Result from adding  DNS entry: $($result)")
-
-$result = (Start-Process -FilePath "dnscmd.exe" -ArgumentList "$DNSServer /RecordAdd $adDomainName $cbDNSName A $cb2IP" -Wait -PassThru).ExitCode
-Write-Output("Result from adding  DNS entry: $($result)")
-} | Out-File -Append $Logfile
-
+Invoke-Command -ComputerName $DNSServer  -ScriptBlock {
+	Write-Output("Adding DNS for IP $($cb1IP)")
+	$rec = Add-DnsServerResourceRecordA -ZoneNmae ""$($adDomainName)"" -AllowUpdateAny -Ipv4Address ""$($cb1IP)"" -PassThru -TimeToLive 00:00:30
+	if ($rec -eq $null) 
+	{
+		throw "Unable to add Dns record for ip address $($cb1IP)"
+	}
+	Write-Output("Successfully added ip address")
+    Write-Output("Adding DNS for IP $($cb2IP)")
+	$rec = Add-DnsServerResourceRecordA -ZoneNmae ""$($adDomainName)"" -AllowUpdateAny -Ipv4Address ""$($cb2IP)"" -PassThru -TimeToLive 00:00:30
+	if ($rec -eq $null) 
+	{
+		throw "Unable to add Dns record for ip address $($cb2IP)"
+	}
+	Write-Output("Succesfully added ip address")
+	} | Out-File -Append $Logfile
+    WriteLog("Completed setup")
 
