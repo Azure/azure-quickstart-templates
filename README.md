@@ -6,7 +6,6 @@ The following information is relevant to get started with contributing to this r
 + [**Contribution guide**](/1-CONTRIBUTION-GUIDE/README.md#contribution-guide). Describes the minimal guidelines for contributing.
 + [**Best practices**](/1-CONTRIBUTION-GUIDE/best-practices.md#best-practices). Best practices for improving the quality of your template design.
 + [**Git tutorial**](/1-CONTRIBUTION-GUIDE/git-tutorial.md#git-tutorial). Step by step to get you started with Git.
-+ [**Useful Tools**](/1-CONTRIBUTION-GUIDE/useful-tools). Some useful tools to get you started with Azure.
 
 ## Deploying Samples
 
