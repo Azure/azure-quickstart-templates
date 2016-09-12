@@ -1,0 +1,61 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "ipConfigurations": {
+      "type": "array",
+      "metadata": {
+        "description": "ipConfigurations info."
+      }
+    },
+    "serverIp": {
+      "type": "string",
+      "metadata": {
+        "description": "server ip."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/zabbix-monitoring-cluster"
+    }
+  },
+  "variables": {
+    "vmidPrefix": "[concat('/subscriptions/',subscription().subscriptionId,'/resourceGroups/',resourceGroup().name,'/providers/Microsoft.Compute/virtualMachines/')]",
+    "nics": "[parameters('ipConfigurations')]",
+    "subdepPrefix": "configMonitoringAgent-"
+  },
+  "resources": [
+    {
+      "name": "[concat(variables('subdepPrefix'), copyIndex())]",
+      "apiVersion": "2015-01-01",
+      "type": "Microsoft.Resources/deployments",
+      "copy": {
+        "name": "vmCopy",
+        "count": "[length(variables('nics'))]"
+      },
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('_artifactsLocation'), '/nested/monitoringAgentByVms.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "vmNames": {
+            "value": [
+              "[replace(reference(concat(variables('nics')[copyIndex()].id, '/../../'), '2016-03-30').virtualMachine.id, variables('vmidPrefix'),'')]"
+            ]
+          },
+          "serverIp": {
+            "value": "[parameters('serverIp')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          }
+        }
+      }
+    }
+  ]
+}
