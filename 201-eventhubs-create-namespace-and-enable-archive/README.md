@@ -4,4 +4,4 @@
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-For information about using this template, see [Create an Event Hubs namespace with Event Hub and enable Archive using an ARM template](http://azure.microsoft.com/documentation/articles/event-hubs-create-event-hub-and-enable-archive/).
+For information about using this template, see [Create an Event Hubs namespace with Event Hub and enable Archive using an ARM template](http://azure.microsoft.com/documentation/articles/event-hubs-create-event-hub-and-enable-archive/)
