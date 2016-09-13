@@ -108,3 +108,4 @@ printf 'generate-structures=%s\n' $9 >> $minecraft_server_path/server.properties
 printf 'level-seed=%s\n' ${10} >> $minecraft_server_path/server.properties
 
 systemctl start minecraft-server
+systemctl enable minecraft-server

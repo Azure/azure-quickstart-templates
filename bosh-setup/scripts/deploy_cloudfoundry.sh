@@ -23,8 +23,11 @@ password=$(echo $password | sed 's/\//\\\//g')
 password=${password:-$default_password}
 sed -i "s/REPLACE_WITH_PASSWORD/$password/g" $manifest
 
-bosh upload stemcell REPLACE_WITH_STEMCELL_URL --skip-if-exists
-bosh upload release REPLACE_WITH_CF_RELEASE_URL --skip-if-exists
+bosh upload stemcell REPLACE_WITH_STEMCELL_URL --sha1 REPLACE_WITH_STEMCELL_SHA1 --skip-if-exists
+bosh upload release REPLACE_WITH_CF_RELEASE_URL --sha1 REPLACE_WITH_CF_RELEASE_SHA1 --skip-if-exists
+bosh upload release REPLACE_WITH_DIEGO_RELEASE_URL --sha1 REPLACE_WITH_DIEGO_RELEASE_SHA1 --skip-if-exists
+bosh upload release REPLACE_WITH_GARDEN_RELEASE_URL --sha1 REPLACE_WITH_GARDEN_RELEASE_SHA1 --skip-if-exists
+bosh upload release REPLACE_WITH_CFLINUXFS2_RELEASE_URL --sha1 REPLACE_WITH_CFLINUXFS2_RELEASE_SHA1 --skip-if-exists
 
 bosh deployment $manifest
 bosh -n deploy
