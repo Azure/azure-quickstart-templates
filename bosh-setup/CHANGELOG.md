@@ -1,3 +1,7 @@
+# v2.0.1 (2016-08-24)
+
+- Expose the VM size of BOSH VM as a parameter
+
 # v2.0.0 (2016-08-16)
 
 - Upgrade versions
