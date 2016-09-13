@@ -18,7 +18,6 @@ This parity instance contains several features not available in other Ethereum i
 * `adminUsername`: the linux account name you will use for connecting to the host.
 * `adminPassword`: your password for the host.  Azure requires passwords to have One upper case, one lower case, a special character, and a number.
 * `vmSize`: the size of the VM to use. It is by default set to A2.
-* `ethAccountPass`: the password for your Ethereum account. This does not need to be secure, as this is a development-only deployment.
 
 ## Why should I use it?
 
