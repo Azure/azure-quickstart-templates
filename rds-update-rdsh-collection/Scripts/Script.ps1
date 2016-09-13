@@ -1,51 +1,51 @@
 [cmdletbinding()]
 param(
-	[parameter(mandatory = $true)]
-	[string]$collection,
-	[parameter(mandatory = $true)]       
-	[string]$iteration,
-	[parameter(mandatory = $true)] 
-	[int]$nServers,
-	[parameter(mandatory = $true)] 
-	[int]$nTimeoutMinutes,
+    [parameter(mandatory = $true)]
+    [string]$collection,
+    [parameter(mandatory = $true)]       
+    [string]$iteration,
+    [parameter(mandatory = $true)] 
+    [int]$nServers,
+    [parameter(mandatory = $true)] 
+    [int]$nTimeoutMinutes,
 
-	[Parameter(ValueFromRemainingArguments = $true)]
-	$extraParameters
-	)
+    [Parameter(ValueFromRemainingArguments = $true)]
+    $extraParameters
+    )
 
-	function log
-	{
-		param([string]$message)
+    function log
+    {
+        param([string]$message)
 
-		"$(get-date -f o)  $message" 
-	}
+        "$(get-date -f o)  $message" 
+    }
 
 
-	function add-server	
-	{ 
-		param(
-			[parameter(mandatory=$true)]
-			[string]$server
-			)
+    function add-server	
+    { 
+        param(
+            [parameter(mandatory=$true)]
+            [string]$server
+            )
 
-			$cs = gwmi win32_computersystem;  $broker = "$($cs.dnshostname).$($cs.domain)"
+            $cs = gwmi win32_computersystem;  $broker = "$($cs.dnshostname).$($cs.domain)"
 
-			log "adding server $server to the deployment..."
-			add-rdserver $server -role rds-rd-server -ev e
+            log "adding server $server to the deployment..."
+            add-rdserver $server -role rds-rd-server -ev e
 
-			if ($e -like '*deployment*not present*')
-			{
-				log "trying to create rds deployment..."
-				new-rdsessiondeployment -connectionbroker $broker -sessionhost $_ -ev e
+            if ($e -like '*deployment*not present*')
+            {
+                log "trying to create rds deployment..."
+                new-rdsessiondeployment -connectionbroker $broker -sessionhost $_ -ev e
 
-				if ($e -like "*$server*has reboots pending*")
-				{
-					log "attempting to reboot $server..."
-					restart-computer $server -force -wait
+                if ($e -like "*$server*has reboots pending*")
+                {
+                    log "attempting to reboot $server..."
+                    restart-computer $server -force -wait
 
-					log "attempting to create deployment with $server one more time..."
-					new-rdsessiondeployment -connectionbroker $broker -sessionhost $_ -ea stop
-				}
+                    log "attempting to create deployment with $server one more time..."
+                    new-rdsessiondeployment -connectionbroker $broker -sessionhost $_ -ea stop
+                }
 
                 elseif ($e)
                 {
@@ -53,16 +53,16 @@ param(
                 }
                 
                 log "create deployment - success."
-			}
-			
-			elseif ($e -like "*$server*has reboots pending*")
-			{
-				log "attempting to reboot $server..."
-				restart-computer $server -force -wait
+            }
+            
+            elseif ($e -like "*$server*has reboots pending*")
+            {
+                log "attempting to reboot $server..."
+                restart-computer $server -force -wait
 
-				log "attempting to add $server to deployment again after reboot..."
-				add-rdserver $server -role rds-rd-server -ea stop
-			}
+                log "attempting to add $server to deployment again after reboot..."
+                add-rdserver $server -role rds-rd-server -ea stop
+            }
 
             elseif ($e)
             {
@@ -70,39 +70,39 @@ param(
             }
 
             log "successfully added '$server' to the deployment."
-	}
+    }
 
 
-	log "script running"
+    log "script running"
 
-	$PSBoundParameters
+    $PSBoundParameters
 
-	ipmo remotedesktop -DisableNameChecking    # 4>$null
+    ipmo remotedesktop -DisableNameChecking    # 4>$null
 
-	$title = "System Maintenance"
-	$message = "Please save your work. You will be logged off in $($nTimeoutInMinutes) minute(s)."
+    $title = "System Maintenance"
+    $message = "Please save your work. You will be logged off in $($nTimeoutInMinutes) minute(s)."
 
-	$domain = (gwmi win32_computersystem).Domain
+    $domain = (gwmi win32_computersystem).Domain
 
-	$newServers = 0..$($nServers - 1) | % { "rdsh-$_$iteration.$domain" }
-	log "list of new servers:"
-	$newServers | % { "    $($_.tolower())" }
-
-
-	#  1. add new servers to the deployment
-	#
-	log "current list of servers in the rds deployment:"
-	$existingServers = (get-rdserver).Server
-	$existingServers |  % { "    $($_.tolower())" }
-
-	$newServers | ? { -not ($_ -in $existingServers) } | % { add-server $_ }
+    $newServers = 0..$($nServers - 1) | % { "rdsh-$_$iteration.$domain" }
+    log "list of new servers:"
+    $newServers | % { "    $($_.tolower())" }
 
 
-	#  2. add new  servers to the rdsh collection
-	#
-	log "current list of rdsh servers in collection $($collection):"
-	$existingServers = (get-rdsessionhost -CollectionName $collection).SessionHost
-	if ($existingServers) 
+    #  1. add new servers to the deployment
+    #
+    log "current list of servers in the rds deployment:"
+    $existingServers = (get-rdserver).Server
+    $existingServers |  % { "    $($_.tolower())" }
+
+    $newServers | ? { -not ($_ -in $existingServers) } | % { add-server $_ }
+
+
+    #  2. add new  servers to the rdsh collection
+    #
+    log "current list of rdsh servers in collection $($collection):"
+    $existingServers = (get-rdsessionhost -CollectionName $collection).SessionHost
+    if ($existingServers) 
     {
         $existingServers | % { "    $($_.tolower())" }
     }
@@ -111,30 +111,30 @@ param(
         "    --- no servers in the collection yet ----"
     }
 
-	$serversToAdd = $newServers | ? { -not ($_ -in $existingServers) } 
+    $serversToAdd = $newServers | ? { -not ($_ -in $existingServers) } 
 
-	if ($serversToAdd)
-	{
-		log "adding new servers $($serversToAdd -join '; ') to session host collection '$collection'..."
-		add-rdsessionhost -collectionname $collection -sessionhost $serversToAdd -ea stop
-	} 
+    if ($serversToAdd)
+    {
+        log "adding new servers $($serversToAdd -join '; ') to session host collection '$collection'..."
+        add-rdsessionhost -collectionname $collection -sessionhost $serversToAdd -ea stop
+    } 
 
-	
-	#  3. put old servers in drain mode
-	#
-	$serversToRemove = $existingServers | ? { -not ($_ -in $newServers) }
+    
+    #  3. put old servers in drain mode
+    #
+    $serversToRemove = $existingServers | ? { -not ($_ -in $newServers) }
 
     if ($serversToRemove) 
     { 
         $serversToRemove  | % `
-	    {
-		    log "putting server $_ in drain mode..."
-		    set-rdsessionhost -sessionhost $_ -newconnectionallowed No
-	    }
+        {
+            log "putting server $_ in drain mode..."
+            set-rdsessionhost -sessionhost $_ -newconnectionallowed No
+        }
     }
 
-	#  4. notify users they are going to be logged off in next <n> minutes
-	#
+    #  4. notify users they are going to be logged off in next <n> minutes
+    #
     log "querying for user sessions in collection '$collection'..."
     $sessions =	get-rdusersession -CollectionName $collection 
     log "found total $($sessions.count) user sessions,"
@@ -145,19 +145,19 @@ param(
     if ($sessionsToLogoff)
     { 
         $sessionsToLogoff| % `
-	    {
-		    log "sending message to user $($_.UserName) at host $($_.HostServer)..."
-		    send-rdusermessage -hostserver $_.HostServer -unifiedsessionid $_.UnifiedSessionId -messagetitle $title -messagebody $message
-	    }
+        {
+            log "sending message to user $($_.UserName) at host $($_.HostServer)..."
+            send-rdusermessage -hostserver $_.HostServer -unifiedsessionid $_.UnifiedSessionId -messagetitle $title -messagebody $message
+        }
     }    
-	
+    
 
-	#  5. log users off 
-	#
+    #  5. log users off 
+    #
     if ($sessionsToLogoff)
     {
-	    log "waiting $nTimeoutMinutes munites before logging users off..."
-	    start-sleep -s ($nTimeoutMinutes * 60)
+        log "waiting $nTimeoutMinutes munites before logging users off..."
+        start-sleep -s ($nTimeoutMinutes * 60)
 
 
         log "querying for user sessions again..."
@@ -168,31 +168,35 @@ param(
         log "out of those $($sessionsToLogoff.count) sessions to be logged off..."
         if ($sessionsToLogoff)
         {
-	        $sessionsToLogoff | % `
-	        {
-		        log "logging off user $($_.UserName) from host $($_.HostServer)..."
-		        invoke-rduserlogoff -hostserver $_.HostServer -unifiedsessionid $_.SessionId -force
-	        }
+            $sessionsToLogoff | % `
+            {
+                log "logging off user $($_.UserName) from host $($_.HostServer)..."
+                invoke-rduserlogoff -hostserver $_.HostServer -unifiedsessionid $_.SessionId -force
+            }
         }
     }
 
 
-	#  6. remove old servers from deployment
-	#
+    #  6. remove old servers from deployment
+    #
     if ($serversToRemove)
     {
-	    log "removing servers $($serversToRemove -join '; ') from session host collection '$collection'..."
-	    remove-rdsessionhost -sessionhost $serversToRemove -force
+        log "removing servers $($serversToRemove -join '; ') from session host collection '$collection'..."
+        remove-rdsessionhost -sessionhost $serversToRemove -force
 
-	    $serversToRemove  | % `
-	    {
-		    log "removing server $_ from the deployment..."
-		    remove-rdserver $_ -role Rds-Rd-Server -force
-	    }
+        $serversToRemove  | % `
+        {
+            log "removing server $_ from the deployment..."
+            remove-rdserver $_ -role rds-rd-server -force
+        }
 
-	    log "shutting down servers $($serversToRemove -join '; ')..."
-	    stop-computer -computer $serversToRemove -force
+        log "shutting down servers $($serversToRemove -join '; ')..."
+        stop-computer -computer $serversToRemove -force
+    }
+    else
+    {
+        log "nothing to do."
     }
 
 
-	log "done."
+    log "done."
