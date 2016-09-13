@@ -20,11 +20,11 @@ Once the VM has been deployed, note down the IP generated in the Azure portal fo
 - If you are using Linux or Mac use Terminal to login to the VM with the username and password you supplied.
 
 ## Configure placehoder Jenkins jobs
-1. Once you are logged into the VM, run /opt/azure_jenkins_config/config_storage.sh. This script will guide you to set up the storage account needed for Azure Storage Jenkins plugin.
+1. Once you are logged into the VM, run /opt/azure_jenkins_config/config_azure.sh. This script will guide you to set up the storage account needed for Azure Storage Jenkins plugin.
    > Note 1: If the script doesn't exist, download it using below command.
 
    ```bash
-   sudo wget -O /opt/azure_jenkins_config/config_storage.sh "https://raw.githubusercontent.com/arroyc/azure-quickstart-templates/master/azure-jenkins/setup-scripts/config_storage.sh"
+   sudo wget -O /opt/azure_jenkins_config/config_azure.sh "https://raw.githubusercontent.com/arroyc/azure-quickstart-templates/master/azure-jenkins/setup-scripts/config_azure.sh"
    ```
    > Note 2: You can always run /opt/azure_jenkins_config/clear_storage_config.sh to reset configurations of Azure Storage for Jenkins and then run #1 again.
 
