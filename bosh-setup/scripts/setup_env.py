@@ -71,7 +71,8 @@ def render_bosh_manifest(settings):
             "BOSH_AZURE_CPI_RELEASE_SHA1",
             "STEMCELL_URL",
             "STEMCELL_SHA1",
-            "ENVIRONMENT"
+            "ENVIRONMENT",
+            "BOSH_VM_SIZE"
         ]
         for k in keys:
             v = settings[k]

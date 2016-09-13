@@ -115,10 +115,29 @@ setup_shares()
         echo "$SHARE_HOME    *(rw,async)" >> /etc/exports
         echo "$SHARE_DATA    *(rw,async)" >> /etc/exports
 
-        systemctl enable rpcbind || echo "Already enabled"
-        systemctl enable nfs-server || echo "Already enabled"
-        systemctl start rpcbind || echo "Already enabled"
-        systemctl start nfs-server || echo "Already enabled"
+	if [ "$skuName" == "16.04.0-LTS" ] ; then
+	         DEBIAN_FRONTEND=noninteractive apt-get -y \
+		  -o DPkg::Options::=--force-confdef \
+		 -o DPkg::Options::=--force-confold \
+    		install nfs-kernel-server
+		/etc/init.d/apparmor stop 
+		/etc/init.d/apparmor teardown 
+		update-rc.d -f apparmor remove
+		apt-get -y remove apparmor
+                systemctl start rpcbind || echo "Already enabled"
+                systemctl start nfs-server || echo "Already enabled"
+                systemctl start nfs-kernel-server.service
+                systemctl enable rpcbind || echo "Already enabled"
+                systemctl enable nfs-server || echo "Already enabled"
+                systemctl enable nfs-kernel-server.service
+        else
+                systemctl start rpcbind || echo "Already enabled"
+                systemctl start nfs-server || echo "Already enabled"
+                systemctl enable rpcbind || echo "Already enabled"
+                systemctl enable nfs-server || echo "Already enabled"
+         fi
+        
+        
     #else
     #    echo "master:$SHARE_HOME $SHARE_HOME    nfs4    rw,auto,_netdev 0 0" >> /etc/fstab
     #    echo "master:$SHARE_DATA $SHARE_DATA    nfs4    rw,auto,_netdev 0 0" >> /etc/fstab
@@ -156,8 +175,15 @@ install_docker()
     wget -qO- "https://pgp.mit.edu/pks/lookup?op=get&search=0xee6d536cf7dc86e2d7d56f59a178ac6c6238f52e" 
     rpm --import "https://pgp.mit.edu/pks/lookup?op=get&search=0xee6d536cf7dc86e2d7d56f59a178ac6c6238f52e"
     yum install -y yum-utils
-    yum-config-manager --add-repo https://packages.docker.com/$dockerVer/yum/repo/main/centos/7
-    yum install -y docker-engine 
+    	if [ "$dockerVer" == "1.12.1-1" ] ; then
+           mkdir -p /opt/docker  &&  curl -L https://yum.dockerproject.org/repo/main/centos/7/Packages/docker-engine-1.12.1-1.el7.centos.x86_64.rpm > /opt/docker/docker-engine-1.12.1-1.el7.centos.x86_64.rpm && curl -L https://yum.dockerproject.org/repo/main/centos/7/Packages/docker-engine-selinux-1.12.1-1.el7.centos.noarch.rpm > /opt/docker/docker-engine-selinux-1.12.1-1.el7.centos.noarch.rpm && curl -L https://yum.dockerproject.org/repo/main/centos/7/Packages/docker-engine-debuginfo-1.12.1-1.el7.centos.x86_64.rpm > /opt/docker/docker-engine-debuginfo-1.12.1-1.el7.centos.x86_64.rpm 
+           chmod -R 755 /opt/docker/*
+           yum install -y /opt/docker/*.rpm
+           rm -rf /opt/docker/
+	elif [ "$dockerVer" == "1.11" ] ; then
+           yum-config-manager --add-repo https://packages.docker.com/$dockerVer/yum/repo/main/centos/7
+           yum install -y docker-engine 
+	fi
     systemctl stop firewalld
     systemctl disable firewalld
     #service docker start
@@ -165,7 +191,7 @@ install_docker()
     systemctl start docker
     systemctl enable docker
     curl -L https://github.com/docker/compose/releases/download/$dockerComposeVer/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
-    curl -L https://github.com/docker/machine/releases/download/v$dockMVer/docker-machine-`uname -s`-`uname -m` >/usr/local/bin/docker-machine && \
+    curl -L https://github.com/docker/machine/releases/download/v0.8.1/docker-machine-`uname -s`-`uname -m` >/usr/local/bin/docker-machine && \
     chmod +x /usr/local/bin/docker-machine
     chmod +x /usr/local/bin/docker-compose
     export PATH=$PATH:/usr/local/bin/
@@ -207,12 +233,11 @@ install_ib()
 #
 install_packages()
 {
-    yum -y install zlib zlib-devel bzip2 bzip2-devel bzip2-libs openssl openssl-devel openssl-libs gcc gcc-c++ nfs-utils rpcbind git libicu libicu-devel make zip unzip mdadm wget \
-    binutils.x86_64 compat-libcap1.x86_64 gcc.x86_64 gcc-c++.x86_64 glibc.i686 glibc.x86_64 \
-    glibc-devel.i686 glibc-devel.x86_64 ksh compat-libstdc++-33 libaio.i686 libaio.x86_64 libaio-devel.i686 libaio-devel.x86_64 \
-    libgcc.i686 libgcc.x86_64 libstdc++.i686 libstdc++.x86_64 libstdc++-devel.i686 libstdc++-devel.x86_64 libXi.i686 libXi.x86_64 \
-    libXtst.i686 libXtst.x86_64 make.x86_64 sysstat.x86_64
-    #yum -y install icu patch ruby ruby-devel rubygems python-pip
+    yum -y install zlib zlib-devel bzip2 bzip2-devel bzip2-libs openssl openssl-devel openssl-libs  nfs-utils rpcbind git libicu libicu-devel make zip unzip mdadm wget gsl bc rpm-build  readline-devel pam-devel libXtst.i686 libXtst.x86_64 make.x86_64 sysstat.x86_64 python-pip automake autoconf\
+    binutils.x86_64 compat-libcap1.x86_64 glibc.i686 glibc.x86_64 \
+    ksh compat-libstdc++-33 libaio.i686 libaio.x86_64 libaio-devel.i686 libaio-devel.x86_64 \
+    libgcc.i686 libgcc.x86_64 libstdc++.i686 libstdc++.x86_64 libstdc++-devel.i686 libstdc++-devel.x86_64 libXi.i686 libXi.x86_64
+    #yum -y install icu patch ruby ruby-devel rubygems  gcc gcc-c++ gcc.x86_64 gcc-c++.x86_64 glibc-devel.i686 glibc-devel.x86_64
 }
 # Installs all required packages.
 #
@@ -236,6 +261,43 @@ install_pkgs_all()
 
     #install_ib
 }
+install_packages_ubuntu()
+{
 
-install_pkgs_all
-setup_shares
+DEBIAN_FRONTEND=noninteractive apt-get install -y zlib1g zlib1g-dev  bzip2 libbz2-dev libssl1.0.0  libssl-doc libssl1.0.0-dbg libsslcommon2 libsslcommon2-dev libssl-dev  nfs-common rpcbind git zip libicu55 libicu-dev icu-devtools unzip mdadm wget gsl-bin libgsl2  bc ruby-dev gcc make autoconf bison build-essential libyaml-dev libreadline6-dev libncurses5 libncurses5-dev libffi-dev libgdbm3 libgdbm-dev libpam0g-dev libxtst6 libxtst6-* libxtst-* libxext6 libxext6-* libxext-* git-core libelf-dev asciidoc binutils-dev fakeroot crash kexec-tools makedumpfile kernel-wedge portmap
+
+DEBIAN_FRONTEND=noninteractive apt-get -y build-dep linux
+
+DEBIAN_FRONTEND=noninteractive apt-get upgrade -y
+
+DEBIAN_FRONTEND=noninteractive update-initramfs -u
+}
+install_docker_ubuntu()
+{
+	apt-get install -y apt-transport-https ca-certificates
+	apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D
+	echo 'deb https://apt.dockerproject.org/repo ubuntu-xenial main' >> /etc/apt/sources.list.d/docker.list	
+	apt-get update -y
+	apt-cache -y policy docker-engine
+	DEBIAN_FRONTEND=noninteractiv apt-get install -y linux-image-extra-$(uname -r) linux-image-extra-virtual
+	DEBIAN_FRONTEND=noninteractiv apt-get update -y 
+	DEBIAN_FRONTEND=noninteractive apt-get install -y --allow-unauthenticated docker-engine
+	groupadd docker
+	usermod -aG docker $userName
+	/etc/init.d/apparmor stop 
+	/etc/init.d/apparmor teardown 
+	update-rc.d -f apparmor remove
+	apt-get -y remove apparmor
+}
+
+
+
+	if [ "$skuName" == "16.04.0-LTS" ] ; then
+		install_packages_ubuntu
+		setup_shares
+                install_docker_ubuntu
+                install_docker_apps
+	elif [ "$skuName" == "6.5" ] || [ "$skuName" == "6.6" ] || [ "$skuName" == "7.2" ] || [ "$skuName" == "7.1" ] ; then
+		install_pkgs_all
+		setup_shares
+	fi
