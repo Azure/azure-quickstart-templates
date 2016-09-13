@@ -28,7 +28,7 @@ $Conn = Get-AutomationConnection -Name AzureRunAsConnection
  -ApplicationId $Conn.ApplicationID -CertificateThumbprint $Conn.CertificateThumbprint
 
 "Selecting Azure subscription..."
-Select-AzureRmSubscription -SubscriptionId $Conn.SubscriptionID -TenantId $Conn.tenantid 
+$SelectedAzureSub = Select-AzureRmSubscription -SubscriptionId $Conn.SubscriptionID -TenantId $Conn.tenantid 
 
 #endregion
 
@@ -93,7 +93,9 @@ if($SQLServers -ne $Null)
                                 			ResourceGroup = $db.ResourceGroupName;
                                 			ServerName = $SQLServer.Name;
                                 			DatabaseName = $db.DatabaseName;
-		                        		ElasticPoolName = $elasticPool
+		                        		ElasticPoolName = $elasticPool;
+		                        		AzureSubscription = $SelectedAzureSub.subscription.subscriptionName;
+		                        		ResourceLink = "https://portal.azure.com/#resource/subscriptions/$($Conn.SubscriptionID)/resourceGroups/$($db.ResourceGroupName)/providers/Microsoft.Sql/Servers/$($SQLServer.Name)/databases/$($db.DatabaseName)"
                             				}
                             				$table = $table += $sx
                         			}
