@@ -8,16 +8,15 @@ SOURCE_URI="https://raw.githubusercontent.com/arroyc/azure-quickstart-templates/
 
 if [ ! -d "$SETUP_SCRIPTS_LOCATION" ]; then
   sudo mkdir $SETUP_SCRIPTS_LOCATION
-
-  #downloading clear_storage_config script
-  sudo wget -O $SETUP_SCRIPTS_LOCATION$CLEAN_STORAGE_SCRIPT $SOURCE_URI$CLEAN_STORAGE_SCRIPT
-  sudo chmod +x $SETUP_SCRIPTS_LOCATION$CLEAN_STORAGE_SCRIPT
-
-  #downloading config_azure script
-  sudo wget -O $SETUP_SCRIPTS_LOCATION$CONFIG_AZURE_SCRIPT $SOURCE_URI$CONFIG_AZURE_SCRIPT
-  sudo chmod +x $SETUP_SCRIPTS_LOCATION$CONFIG_AZURE_SCRIPT
-
 fi
+
+# Download config_azure script
+sudo wget -O $SETUP_SCRIPTS_LOCATION$CONFIG_AZURE_SCRIPT $SOURCE_URI$CONFIG_AZURE_SCRIPT
+sudo chmod +x $SETUP_SCRIPTS_LOCATION$CONFIG_AZURE_SCRIPT
+
+# Download clear_storage_config script
+sudo wget -O $SETUP_SCRIPTS_LOCATION$CLEAN_STORAGE_SCRIPT $SOURCE_URI$CLEAN_STORAGE_SCRIPT
+sudo chmod +x $SETUP_SCRIPTS_LOCATION$CLEAN_STORAGE_SCRIPT
 
 #azure-cli
 sudo npm install -y -g azure-cli
@@ -27,7 +26,6 @@ sudo apt-get -y update
 sudo apt-get -y install jq
 
 #delete any existing config script
-
 old_config_storage_file="/opt/config_storage.sh"
 if [ -f $old_config_storage_file ]
 then
