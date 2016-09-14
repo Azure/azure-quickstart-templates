@@ -1,0 +1,289 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Administrator user name used when provisioning virtual machines"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Administrator password used when provisioning virtual machines"
+      }
+    },
+    "dnsNamePrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "DNS Name for the publicly accessible hadoop nameNode. Must be lowercase. It should match with the following regular expression: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$ or it will raise an error."
+      }
+    },
+    "environment": {
+      "type": "string",
+      "allowedValues": [
+        "AzureCloud",
+        "AzureChinaCloud"
+      ],
+      "metadata": {
+        "description": "Different environments in Azure. Choose AzureCloud for Global Azure, and choose AzureChinaCloud for Mooncake (Azure China Cloud)."
+      }
+    },
+    "dataNodeCount": {
+      "type": "int",
+      "minValue": 1,
+      "maxValue": 11,
+      "defaultValue": 2,
+      "metadata": {
+        "description": "Number of data nodes"
+      }
+    },
+    "zabbixServerIPAddress": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+	    "description": "The zabbix server IP which will monitor the nodes' status. Null means no zabbix server."
+	  }
+	},
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+      "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "https://raw.githubusercontent.com/251744647/azure-quickstart-templates/master/hadoop-cluster-ubuntu/"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+      "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    },
+    "_artifactsChinaLocation": {
+      "type": "string",
+      "metadata": {
+      "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "http://msmirrors.blob.core.chinacloudapi.cn/hadoop-cluster-ubuntu/"
+    },
+    "_artifactsChinaLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+      "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    }
+  },
+  "variables": {
+    "environmentAzureCloud": {
+      "serviceEndPoint": ".blob.core.windows.net/vhds/",
+      "templateBaseUrl": "[concat(parameters('_artifactsLocation'), 'nested/')]",
+      "templateBaseScriptsUrl": "[concat(parameters('_artifactsLocation'), 'scripts/')]"
+    },
+    "environmentAzureChinaCloud": {
+      "serviceEndPoint": ".blob.core.chinacloudapi.cn/vhds/",
+      "templateBaseUrl": "[concat(parameters('_artifactsChinaLocation'), 'nested/')]",
+      "templateBaseScriptsUrl": "[concat(parameters('_artifactsChinaLocation'), 'scripts/')]"
+    },
+    "environment": "[variables(concat('environment', parameters('environment')))]",    
+    "sharedTemplateUrl": "[concat(variables('environment').templateBaseUrl, 'shared-resources.json')]",
+    "nameNodeTemplateUrl": "[concat(variables('environment').templateBaseUrl, 'namenode-resources.json')]",
+    "dataNodeTemplateUrl": "[concat(variables('environment').templateBaseUrl, 'datanode-resources.json')]",
+    "nameNodeScript": "[concat(variables('environment').templateBaseScriptsUrl, 'nameNode.sh')]",
+    "dataNodeScript": "[concat(variables('environment').templateBaseScriptsUrl, 'dataNode.sh')]",
+    "namespace": "hadoop-",
+    "virtualNetworkName": "hadoopVNET1",
+    "numDataDisks": "4",
+    "sizeOfDataDiskInGB": 100,
+    "nameNodeVmSize": "Standard_A3",
+    "dataNodeVmSize": "Standard_A3",
+    "apiVersion": "2015-01-01",
+    "networkSettings": {
+      "virtualNetworkName": "[variables('virtualNetworkName')]",
+      "addressPrefix": "10.0.0.0/16",
+      "subnet": {
+        "dse": {
+          "name": "dse",
+          "prefix": "10.0.0.0/24",
+          "vnet": "[variables('virtualNetworkName')]"
+        }
+      },
+      "statics": {
+        "clusterRange": {
+          "base": "10.0.0.",
+          "start": 5
+        },
+        "primaryIp": "10.0.0.240"
+      }
+    },
+    "nameNodeOsSettings": {
+      "imageReference": {
+        "publisher": "Canonical",
+        "offer": "UbuntuServer",
+        "sku": "14.04.4-LTS",
+        "version": "latest"
+      },
+      "scripts": [
+        "[variables('nameNodeScript')]"
+      ]
+    },
+    "dataNodeOsSettings": {
+      "imageReference": {
+        "publisher": "Canonical",
+        "offer": "UbuntuServer",
+        "sku": "14.04.4-LTS",
+        "version": "latest"
+      },
+      "scripts": [
+        "[variables('dataNodeScript')]"
+      ]
+    }
+  },
+  "resources": [
+    {
+      "name": "shared",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('sharedTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "networkSettings": {
+            "value": "[variables('networkSettings')]"
+          },
+          "namespace": {
+            "value": "[variables('namespace')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "[concat('dataNode', copyindex())]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', 'shared')]"
+      ],
+      "copy": {
+        "name": "vmLoop",
+        "count": "[parameters('dataNodeCount')]"
+      },
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('dataNodeTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "namespace": {
+            "value": "[variables('namespace')]"
+          },
+          "vmbasename": {
+            "value": "[concat('data', copyindex())]"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnet.dse]"
+          },
+          "sizeOfDataDiskInGB": {
+            "value": "[variables('sizeOfDataDiskInGB')]"
+          },
+          "numDataDisks": {
+            "value": "[variables('numDataDisks')]"
+          },
+          "templateBaseUrl": {
+            "value": "[variables('environment').templateBaseUrl]"
+          },
+          "serviceEndPoint": {
+            "value": "[variables('environment').serviceEndPoint]"
+          },
+          "dnsname": {
+            "value": "[parameters('dnsNamePrefix')]"
+          },
+          "vmSize": {
+            "value": "[variables('dataNodeVmSize')]"
+          },
+          "zabbixServerIPAddress": {
+             "value": "[parameters('zabbixServerIPAddress')]"
+          },
+          "osSettings": {
+            "value": "[variables('dataNodeOsSettings')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "nameNode",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', 'shared')]",
+        "['vmLoop']"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('nameNodeTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "dataNodeCount": {
+            "value": "[parameters('dataNodeCount')]"
+          },
+          "namespace": {
+            "value": "[variables('namespace')]"
+          },
+          "vmbasename": {
+            "value": "master"
+          },
+          "subnet": {
+            "value": "[variables('networkSettings').subnet.dse]"
+          },
+          "nameNodeIp": {
+            "value": "[variables('networkSettings').statics.primaryIp]"
+          },
+          "dnsname": {
+            "value": "[parameters('dnsNamePrefix')]"
+          },
+          "sizeOfDataDiskInGB": {
+            "value": "[variables('sizeOfDataDiskInGB')]"
+          },
+          "numDataDisks": {
+            "value": "[variables('numDataDisks')]"
+          },
+          "templateBaseUrl": {
+            "value": "[variables('environment').templateBaseUrl]"
+          },
+          "serviceEndPoint": {
+            "value": "[variables('environment').serviceEndPoint]"
+          },
+          "vmSize": {
+            "value": "[variables('nameNodeVmSize')]"
+          },
+          "zabbixServerIPAddress": {
+             "value": "[parameters('zabbixServerIPAddress')]"
+          },
+          "osSettings": {
+            "value": "[variables('nameNodeOsSettings')]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}
