@@ -25,7 +25,7 @@ Each server uses raid0 to improve performance. We use 4 data disks on each serve
 
 ##After deployment, you can do below to verify if the hadoop cluster really works or not:
 
-1. Open the URL http://your name node public ip:8088/ to see if can connect to MySQL DB successfully.
+1. Open the URL http://your name node public ip:8088/ to check hadoop cluster information.
 
 
 2. Check each server's hadoop processes by executing below command:
@@ -35,12 +35,17 @@ Each server uses raid0 to improve performance. We use 4 data disks on each serve
 
   You should see the processes similar to below in name node:
   ```
-  
+  28568 Jps
+  28210 ResourceManager
+  28046 SecondaryNameNode
+  27801 NameNode
   ```
   
   You should see the processes similar to below in data nodes:
   ```
-  
+  27621 DataNode
+  27786 NodeManager
+  27973 Jps
   ```
 
 
