@@ -27,7 +27,9 @@ To get your Azure Application Gateway DNS name you can open Azure Application Ga
 
 ## Testing Your Setup
 
-In order to check your test setup you can try re-sending your requests, bring down/up the VMs/Web servers created as a part of the deployment, change Azure Application Gateway settings. When your HTTP request hits backend server, you should be able to see a page like the one below:
+In order to try your test setup in action you can re-send your requests, bring down/up the VMs/Web servers created as a part of the deployment, change Azure Application Gateway settings.
+
+When your HTTP request hits backend server, you should be able to see a page like the one below:
 
 ![alt text](images/serverhit.png "Backend server response")
 
