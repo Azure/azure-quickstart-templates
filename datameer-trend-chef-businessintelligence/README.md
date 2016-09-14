@@ -47,7 +47,9 @@ The target audience for these solution templates are
 * Azure Subscription - if you want to test drive individual ISV products, please check out the [Azure Marketplace Test Drive Program ](https://azure.microsoft.com/en-us/marketplace/test-drives/)
 * Azure user account with Contributor/Admin Role
 * Sufficient Quota - At least 20 Cores(with default VM Sizes)
-* Azure Marketplace Deployment Agreements - VM Images from Azure marketplace need a registered Azure credit card for deployments to be successful. We understand that some customers (especially EA and internal MS customers) may not have this configured leading to failed deployments.   
+* Azure Marketplace Deployment Agreements - VM Images from Azure marketplace need a registered Azure credit card for deployments to be successful. We understand that some customers (especially EA and internal MS customers) may not have this configured leading to failed deployments.
+* Programmatic deployments for Chef Server. (TrendMicro is optional)
+![[](images/LicenseRequirementsPrerequisite.png)](images/LicenseRequirementsPrerequisite.png)   
  
 ##  5. Solution Summary
 ![](images/enterprise-risk-analysis-solution-overview.png)
@@ -66,7 +68,7 @@ An integrated ARM Template (<a href="https://azure.microsoft.com/en-us/documenta
 
  
 ## 6. Reference Architecture Diagram
-![[](images/Datameer-TrendMicro-Chef_Solution_Architecture.png)](images/Datameer-TrendMicro-Chef_Solution_Architecture.png)
+![[] (images/Datameer-TrendMicro-Chef_Solution_Architecture.png)](images/Datameer-TrendMicro-Chef_Solution_Architecture.png)
 
 The diagram above provides the overall deployment architecture for this test drive.
 As a part of deployment the template launches the following:
@@ -101,6 +103,9 @@ You can click the "deploy to Azure" button at the beginning of this document or 
 
 ***Please refer to parameter descriptions if you need more information on what needs to be provided as an input.***
 The deployment takes about approximately 45mins. Once it is deployed there are few minor manual steps to 
+
+## Configuration
+
 ## Usage
 ####  7.1. Usage Guides
 
