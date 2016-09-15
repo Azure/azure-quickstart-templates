@@ -160,3 +160,8 @@ Once the VM has been deployed, note down the IP generated in the Azure portal fo
 
 ## Note
 This template use a base Azure Marketplace image which will be updated regularly to describe to use Azure resources with Jenkins. Readme instructions will be updated accordingly.
+
+## Known Issue
+Deployment failure due to unauthorized access to storage account. We are working on resolving this by publishing the image to Azure Marketplace.
+
+## Contact us – azdevopspub@microsoft.com
