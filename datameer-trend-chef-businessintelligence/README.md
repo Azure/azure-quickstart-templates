@@ -1,21 +1,5 @@
-<!-- TOC -->
 
-- [Datameer, HDInsight, TrendMicro, Chef- Business Intelligence Composite template 001](#datameer-hdinsight-trendmicro-chef-business-intelligence-composite-template-001)
-    - [1. Solution Template Overview](#1-solution-template-overview)
-    - [2. Licenses & Costs](#2-licenses-costs)
-    - [3. Target Audience](#3-target-audience)
-    - [4. Prerequisites](#4-prerequisites)
-    - [5. Solution Summary](#5-solution-summary)
-    - [6. Reference Architecture Diagram](#6-reference-architecture-diagram)
-        - [6.1 Deployed Infrastructure](#61-deployed-infrastructure)
-    - [7. Deployment Steps](#7-deployment-steps)
-    - [Usage](#usage)
-            - [7.1. Usage Guides](#71-usage-guides)
-    - [Support](#support)
-
-<!-- /TOC -->
-
-# Datameer, HDInsight, TrendMicro, Chef- Business Intelligence Composite template 001
+<h1> Datameer, HDInsight, TrendMicro, Chef- Business Intelligence Composite template version 1.0 </h1>
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAvyanConsultingCorp%2Fazure-quickstart-templates%2Fmaster%2Fdatameer-trend-chef-businessintelligence%2Fazuredeploy.json" target="_blank">
 <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
@@ -23,6 +7,24 @@
 <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
+
+<h2> Table Of Contents </h2>
+<!-- TOC -->
+
+- [1. Solution Template Overview](#1-solution-template-overview)
+- [2. Licenses & Costs](#2-licenses-costs)
+- [3. Target Audience](#3-target-audience)
+- [4. Prerequisites](#4-prerequisites)
+- [5. Solution Summary](#5-solution-summary)
+- [6. Reference Architecture Diagram](#6-reference-architecture-diagram)
+    - [6.1 Deployed Infrastructure](#61-deployed-infrastructure)
+- [7. Deployment Steps](#7-deployment-steps)
+- [8. Configuration](#8-configuration)
+- [9. Usage](#9-usage)
+        - [7.1. Usage Guides](#71-usage-guides)
+- [10. Support](#10-support)
+
+<!-- /TOC -->
 
 ##  1. Solution Template Overview
 ***Solution Templates*** provide customers with a highly automated process to launch enterprise ready first and 3rd party ISV solution stacks on Azure in a pre-production environment. The **Solution Template** effort is complimentary to the [Azure Marketplace test drive program](https://azure.microsoft.com/en-us/marketplace/test-drives/). These fully baked stacks enable customers to quickly stand up a PoC or Piloting environments and also integrate it with their systems and customization.
@@ -104,12 +106,12 @@ You can click the "deploy to Azure" button at the beginning of this document or 
 ***Please refer to parameter descriptions if you need more information on what needs to be provided as an input.***
 The deployment takes about approximately 45mins. Once it is deployed there are few minor manual steps to 
 
-## Configuration
+## 8. Configuration
 
-## Usage
+## 9. Usage
 ####  7.1. Usage Guides
 
 You can use the [this guide](images/*<guide goes here>*.pdf) to set policies and enable log forwarding to Splunk.
 
-## Support
+## 10. Support
 For any support-related issues or questions, please contact azuremarketplace@avyanconsulting.com for assistance.
