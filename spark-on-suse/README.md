@@ -30,9 +30,9 @@ You can optionally specify a storage account to use, if so the storage account m
 one will be created by the script or reused if it already exists (think of this as "temp" storage for AzureRM).
 
 ```PowerShell
-.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactsStagingDirectory '201-vm-custom-script-windows' -UploadArtifacts 
+.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactsStagingDirectory 'spark-on-suse' -UploadArtifacts 
 ```
 ```bash
-azure-group-deploy.sh -a '201-vm-custom-script-windows' -l eastus -u
+azure-group-deploy.sh -a 'spark-on-suse' -l eastus -u
 
 
