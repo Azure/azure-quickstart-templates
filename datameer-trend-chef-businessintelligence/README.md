@@ -59,7 +59,7 @@ The target audience for these solution templates are
 An integrated ARM Template (<a href="https://azure.microsoft.com/en-us/documentation/articles/resource-group-overview/">Azure Resource Manager</a>) that stitches all the above technology into a single deployment. The following is a feature table that is pulled together for your benefit.
 
 |Datameer and HDInsight                     |TrendMicro Deep Security                               |Chef Server and Workstation    |
-|------------------------                   |------------------------                               |------------------------       |
+|:------------------------                  |:------------------------                               |------------------------       |
 | Wide variety of Data Ingestion, Visualization (Internal and External to Enterprise)| Anti-malware, Content Filtering | Cloud Infrastructure Automation
 | Powered by Hadoop, but you never know it  | Intrusion prevention                                  | DevOps 
 | Self Service analytics                    | Integrity monitoring              | Compliance
@@ -76,7 +76,7 @@ The diagram above provides the overall deployment architecture for this test dri
 As a part of deployment the template launches the following:
 
 * A storage account in the resource group.
-* A Virtual Network with four subnets [subnet1 (Trendmicro), subnet2 (Chef & Orchestrator), Subnet3 (Splunk) & subnet4 (VM's& Workstation)].
+* A Virtual Network with four subnets Trendmicro, Chef & Orchestrator, Datameer, Test Apps and Chef Workstation.
 * Trend micro vm is built from the image reference in the subnet1:
 
 ### 6.1 Deployed Infrastructure
@@ -111,7 +111,13 @@ The deployment takes about approximately 45mins. Once it is deployed there are f
 ## 9. Usage
 ####  7.1. Usage Guides
 
-You can use the [this guide](images/*<guide goes here>*.pdf) to set policies and enable log forwarding to Splunk.
+You can use the following guide to use the solution.
+```sh
+<guide link goes here>
+```
 
 ## 10. Support
-For any support-related issues or questions, please contact azuremarketplace@avyanconsulting.com for assistance.
+For any support-related issues or questions, please contact us for assistance.
+```sh
+azuremarketplace@avyanconsulting.com
+```
