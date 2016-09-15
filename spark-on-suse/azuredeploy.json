@@ -10,9 +10,15 @@
     },
     "adminPassword": { "type": "securestring",
       "metadata": {
-        "description": "The LInux VM password"
+        "description": "The Linux VM password"
       }
     },
+	"numberOfSlaves" : {
+	  "type": "int",
+	  "metadata": {
+        "description": "Number Of Slaves"
+      }
+	},
     "_artifactsLocation": {
       "type": "string",
       "metadata": {
@@ -31,22 +37,22 @@
   "variables": {
 	"resourceGroupLocation": "[resourceGroup().location]",
 	"vmStorageAccountContainerName": "vhd",
-	"storageAccountName": "[concat(uniquestring(resourceGroup().id),'storageacc')]",
+	"storageAccountName": "[concat(uniquestring(resourceGroup().id),'storageac')]",
 	"virtualMachines_spark01_name": "sparkMaster",
 	"sparkSlavesName": "sparkslave",
 	"sparkMasterSize": "Basic_A3",
-	"sparkSlavesSize": "Basic_A2",
+	"sparkSlavesSize": "Basic_A1",
 	"sparkMasterPublicIpName": "sparkMasterPublicIp",
 	"sparkNetWorkSecurityGroupName": "nsgroup",
 	"sparkVirtualNetworkName": "sparkVirtualNetwork",
 	"sparkMasterNetworkInterfaceName": "ni_master",
-	"sparkSlaveNetworkInterfaceName": "ni_slave1",
+	"sparkSlaveNetworkInterfaceName": "ni_slave",
 	"sparkMasterInternalIP": "10.0.0.4",
 	"sparkSlaveInternalIP": "10.0.0.5",
 	"scriptUrl": "[parameters('_artifactsLocation')]",
 	"ScriptFolder" : "scripts",
 	"sparkInstallScriptName": "install_spark_environment.sh",
-	"numberOfSlavesInstances": "1"
+	"numberOfSlaves": "[parameters('numberOfSlaves')]"
   },
   "resources": [
     {
@@ -82,7 +88,7 @@
           }
         },
         "osProfile": {
-          "computername": "sparkmaster",
+          "computername": "[variables('virtualMachines_spark01_name')]",
           "adminUsername": "[parameters('adminUserName')]",
           "adminPassword": "[parameters('adminPassword')]",
           "linuxConfiguration": {
@@ -93,18 +99,46 @@
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
         "[resourceId('Microsoft.Network/networkInterfaces', variables('sparkMasterNetworkInterfaceName'))]"
-      ]
+      ],
+	  "resources": [
+		{
+			"type": "Microsoft.Compute/virtualMachines/extensions",
+			"name": "[concat('sparkmaster', '/configuresparkonmaster')]",
+			"apiVersion": "2015-06-15",
+			"location": "[variables('resourceGroupLocation')]",
+			"dependsOn": [
+				"[concat('Microsoft.Compute/virtualMachines/', variables('virtualMachines_spark01_name') )]",
+				"[concat('Microsoft.Network/networkInterfaces/', variables('sparkMasterNetworkInterfaceName') )]"
+			],
+			"properties": {
+				"publisher": "Microsoft.Azure.Extensions",
+				"type": "CustomScript",
+				"typeHandlerVersion": "2.0",
+				"autoUpgradeMinorVersion": true,
+				"settings": {
+					"fileUris": [
+						"[concat(parameters('_artifactsLocation'), '/', variables('ScriptFolder'), '/', variables('sparkInstallScriptName'), parameters('_artifactsLocationSasToken'))]"
+					],
+				"commandToExecute": "[concat('sudo sh install_spark_environment.sh ', '-m 1', parameters('_artifactsLocationSasToken'))]"
+			}
+		  }
+		}
+	  ]
     },
 	{
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[concat(variables('sparkSlavesName'), '1')]",
+      "name": "[concat(variables('sparkSlavesName'), copyindex() )]",
       "apiVersion": "2015-06-15",
       "location": "[variables('resourceGroupLocation')]",
+	  "copy": {
+        "name": "VMLoop",
+        "count": "[variables('numberOfSlaves')]"
+      },
       "properties": {
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('sparkSlaveNetworkInterfaceName'))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('sparkSlaveNetworkInterfaceName'), copyindex() ))]"
             }
           ]
         },
@@ -119,16 +153,16 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[concat(variables('sparkSlavesName'),'1')]",
+            "name": "[concat(variables('sparkSlavesName'), copyindex() )]",
             "createOption": "FromImage",
             "vhd": {
-              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob, variables('vmStorageAccountContainerName'),'/','osdisks', '_slave1' ,'.vhd')]"
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob, variables('vmStorageAccountContainerName'),'/','osdisks_', 'slave', copyindex() ,'.vhd')]"
             },
             "caching": "ReadWrite"
           }
         },
         "osProfile": {
-          "computername": "sparkmaster",
+          "computername": "[concat(variables('sparkSlavesName'), copyindex() )]",
           "adminUsername": "[parameters('adminUserName')]",
           "adminPassword": "[parameters('adminPassword')]",
           "linuxConfiguration": {
@@ -138,8 +172,33 @@
       },
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
-        "[resourceId('Microsoft.Network/networkInterfaces', variables('sparkSlaveNetworkInterfaceName'))]"
-      ]
+        "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('sparkSlaveNetworkInterfaceName'), copyindex() ) )]"
+      ],
+	  "resources": [
+		{
+			"type": "Microsoft.Compute/virtualMachines/extensions",
+			"name": "[concat('sparkslave', copyindex(), '/configuresparkonslave')]",
+			"apiVersion": "2015-06-15",
+			"location": "[variables('resourceGroupLocation')]",
+			"dependsOn": [
+				"[resourceId('Microsoft.Compute/virtualMachines', concat(variables('sparkSlavesName'), copyindex() ) )]",
+				"[concat('Microsoft.Network/networkInterfaces/', concat(variables('sparkSlaveNetworkInterfaceName'), copyindex() ) )]",
+				"[resourceId('Microsoft.Compute/virtualMachines', variables('virtualMachines_spark01_name'))]"
+			],
+			"properties": {
+				"publisher": "Microsoft.Azure.Extensions",
+				"type": "CustomScript",
+				"typeHandlerVersion": "2.0",
+				"autoUpgradeMinorVersion": true,
+				"settings": {
+					"fileUris": [
+						"[concat(parameters('_artifactsLocation'), '/', variables('ScriptFolder'), '/', variables('sparkInstallScriptName'), parameters('_artifactsLocationSasToken'))]"
+					],
+				"commandToExecute": "[concat('sudo sh install_spark_environment.sh ', '-m 0', ' -i ', reference(variables('sparkMasterNetworkInterfaceName')).ipConfigurations[0].properties.privateIPAddress , parameters('_artifactsLocationSasToken'))]"
+			}
+		  }
+		}
+	  ]
     },
     {
       "type": "Microsoft.Network/networkInterfaces",
@@ -157,7 +216,7 @@
             "name": "ipconfig1",
             "properties": {
               "privateIPAddress": "[variables('sparkMasterInternalIP')]",
-              "privateIPAllocationMethod": "Dynamic",
+              "privateIPAllocationMethod": "Static",
               "publicIPAddress": {
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('sparkMasterPublicIpName'))]"
               },
@@ -177,9 +236,13 @@
     },
 	{
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[variables('sparkSlaveNetworkInterfaceName')]",
+      "name": "[concat(variables('sparkSlaveNetworkInterfaceName'), copyIndex() )]",
       "apiVersion": "2016-03-30",
       "location": "[variables('resourceGroupLocation')]",
+	  "copy": {
+        "name": "NicSlavesLoop",
+        "count": "[variables('numberOfSlaves')]"
+      },
       "dependsOn": [
         "[resourceId('Microsoft.Network/virtualNetworks', variables('sparkVirtualNetworkName'))]",
         "[resourceId('Microsoft.Network/networkSecurityGroups', variables('sparkNetWorkSecurityGroupName'))]"
@@ -189,8 +252,8 @@
           {
             "name": "ipconfig1",
             "properties": {
-              "privateIPAddress": "[variables('sparkSlaveInternalIP')]",
-              "privateIPAllocationMethod": "Dynamic",
+              "privateIPAllocationMethod": "Static",
+			  "privateIPAddress": "[concat(variables('sparkSlaveInternalIP'), copyindex() )]",
               "subnet": {
                 "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('sparkVirtualNetworkName')), '/subnets/default')]"
               }
@@ -294,7 +357,33 @@
               "priority": 1030,
               "direction": "Inbound"
             }
-          }
+		  },
+		  {
+			"name": "MesosMaster",
+			"properties": {
+			  "protocol": "*",
+			  "sourcePortRange": "*",
+			  "destinationPortRange": "5050",
+			  "sourceAddressPrefix": "*",
+			  "destinationAddressPrefix": "*",
+			  "access": "Allow",
+			  "priority": 1040,
+			  "direction": "Inbound"
+			}
+		  },
+		  {
+			"name": "SparkWorker",
+			"properties": {
+			  "protocol": "*",
+			  "sourcePortRange": "*",
+			  "destinationPortRange": "8081",
+			  "sourceAddressPrefix": "*",
+			  "destinationAddressPrefix": "*",
+			  "access": "Allow",
+			  "priority": 1050,
+			  "direction": "Inbound"
+			}
+		  }
         ]
       }
     },
@@ -307,28 +396,6 @@
       "location": "[variables('resourceGroupLocation')]",
       "tags": {},
       "properties": {}
-    },
-    {
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat('sparkmaster', '/configuresparkonmaster')]",
-      "apiVersion": "2015-06-15",
-      "location": "[variables('resourceGroupLocation')]",
-      "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('virtualMachines_spark01_name') )]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('sparkMasterNetworkInterfaceName') )]"
-      ],
-      "properties": {
-        "publisher": "Microsoft.Azure.Extensions",
-        "type": "CustomScript",
-        "typeHandlerVersion": "2.0",
-        "autoUpgradeMinorVersion": true,
-        "settings": {
-          "fileUris": [
-            "[concat(parameters('_artifactsLocation'), '/', variables('ScriptFolder'), '/', variables('sparkInstallScriptName'), parameters('_artifactsLocationSasToken'))]"
-          ],
-          "commandToExecute": "[concat('sudo sh install_spark_environment.sh', parameters('_artifactsLocationSasToken'))]"
-        }
-      }
     }
   ],
   "outputs": {}
