@@ -1,5 +1,6 @@
 
-<h1> Datameer, HDInsight, TrendMicro, Chef- Business Intelligence Composite template version 1.0 </h1>
+<h1> Enterprise Risk Analysis using Datameer, HDInsight, TrendMicro, Chef </h1>
+<h3>Composite template version 1.0</h3>
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAvyanConsultingCorp%2Fazure-quickstart-templates%2Fmaster%2Fdatameer-trend-chef-businessintelligence%2Fazuredeploy.json" target="_blank">
 <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
