@@ -2,23 +2,14 @@
     "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "storageAccountName": {
-            "type": "string",
-            "defaultValue": "",
-            "metadata": {
-                "description": "Name of storage account"
-            }
-        },
         "adminUsername": {
             "type": "string",
-            "defaultValue": "",
             "metadata": {
                 "description": "Admin username"
             }
         },
         "adminPassword": {
             "type": "securestring",
-            "defaultValue": "",
             "metadata": {
                 "description": "Admin password"
             }
@@ -26,111 +17,37 @@
         "dnsNameforIPv4LbIP": {
             "type": "string",
             "metadata": {
-                "description": "DNS for Load Balancer IPv4 IP Address"
+                "description": "DNS prefix for IPv4 IP Address of the load balancer. It must be lowercase and match the regex: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$."
             }
         },
         "dnsNameforIPv6LbIP": {
             "type": "string",
             "metadata": {
-                "description": "DNS for Load Balancer IPv6 IP Address"
-            }
-        },
-        "vmNamePrefix": {
-            "type": "string",
-            "defaultValue": "myNrpIPv6VM",
-            "metadata": {
-                "description": "Prefix to use for VM names"
-            }
-        },
-        "imagePublisher": {
-            "type": "string",
-            "defaultValue": "MicrosoftWindowsServer",
-            "metadata": {
-                "description": "Image Publisher"
-            }
-        },
-        "imageOffer": {
-            "type": "string",
-            "defaultValue": "WindowsServer",
-            "metadata": {
-                "description": "Image Offer"
-            }
-        },
-        "imageSKU": {
-            "type": "string",
-            "defaultValue": "2012-R2-Datacenter",
-            "metadata": {
-                "description": "Image SKU"
-            }
-        },
-        "lbName": {
-            "type": "string",
-            "defaultValue": "myNrpIPv6LB",
-            "metadata": {
-                "description": "Load Balancer name"
-            }
-        },
-        "nicNamePrefix": {
-            "type": "string",
-            "defaultValue": "nrpIPv6Nic",
-            "metadata": {
-                "description": "Network Interface name prefix"
-            }
-        },
-        "ipv4PublicIPAddressName": {
-            "type": "string",
-            "defaultValue": "myIPv4PublicIP",
-            "metadata": {
-                "description": "Public IP Name"
-            }
-        },
-        "ipv6PublicIPAddressName": {
-            "type": "string",
-            "defaultValue": "myIPv6PublicIP",
-            "metadata": {
-                "description": "Public IP Name"
-            }
-        },
-        "vnetName": {
-            "type": "string",
-            "defaultValue": "myIPv4VNET",
-            "metadata": {
-                "description": "VNET name"
-            }
-        },
-        "vmSize": {
-            "type": "string",
-            "defaultValue": "Standard_DS1_v2",
-            "metadata": {
-                "description": "Size of the VM"
-            }
-        },
-        "storageLocation": {
-            "type": "string",
-            "defaultValue": "southcentralus",
-            "metadata": {
-                "description": "Location of the Storage Account."
+                "description": "DNS prefix for IPv6 IP Address of the load balancer. It must be lowercase and match the regex: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$."
             }
         }
     },
     "variables": {
-        "storageAccountType": "Standard_RAGRS",
-        "availabilitySetName": "myNrpIPv6AvSet",
+        "vmNamePrefix": "myIPv6VM",
+        "nicNamePrefix": "IPv6Nic",
+
+        "storageAccountName": "[concat(uniqueString(resourceGroup().id), 'vhds')]",
+        "availabilitySetName": "myIPv6AvSet",
         "addressPrefix": "10.0.0.0/16",
-        "subnetName": "IPv4-Subnet-1",
+        "subnetName": "myIPv4Subnet",
         "subnetPrefix": "10.0.0.0/24",
-        "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('vnetName'))]",
-        "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables ('subnetName'))]",
+        "vnetName": "myIPv4VNet",
         "ipv4PrivateIPAddressType": "Dynamic",
         "ipv6PrivateIPAddressType": "Dynamic",
         "numberOfInstances": 2,
 
+        "ipv6PublicIPAddressName": "myIPv6PublicIP",
+        "ipv4PublicIPAddressName": "myIPv4PublicIP",
         "ipv4PublicIPAddressType": "Dynamic",
         "ipv6PublicIPAddressType": "Dynamic",
-        "ipv4PublicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('ipv4PublicIPAddressName'))]",
-        "ipv6PublicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('ipv6PublicIPAddressName'))]",
 
-        "lbID": "[resourceId('Microsoft.Network/loadBalancers',parameters('lbName'))]",
+        "lbName":"myIPv4IPv6LB",
+        "lbID": "[resourceId('Microsoft.Network/loadBalancers',variables('lbName'))]",
         "ipv4FrontEndIPConfigID": "[concat(variables('lbID'),'/frontendIPConfigurations/LoadBalancerFrontEndIPv4')]",
         "ipv6FrontEndIPConfigID": "[concat(variables('lbID'),'/frontendIPConfigurations/LoadBalancerFrontEndIPv6')]",
         "ipv4LbBackendPoolID": "[concat(variables('lbID'),'/backendAddressPools/BackendPoolIPv4')]",
@@ -141,11 +58,11 @@
     "resources": [
         {
             "type": "Microsoft.Storage/storageAccounts",
-            "name": "[parameters('storageAccountName')]",
+            "name": "[variables('storageAccountName')]",
             "apiVersion": "2015-06-15",
-            "location": "[parameters('storageLocation')]",
+            "location": "[resourceGroup().location]",
             "properties": {
-                "accountType": "[variables('storageAccountType')]"
+                "accountType": "Standard_RAGRS"
             }
         },
         {
@@ -158,7 +75,7 @@
         {
             "apiVersion": "2016-03-30",
             "type": "Microsoft.Network/publicIPAddresses",
-            "name": "[parameters('ipv4PublicIPAddressName')]",
+            "name": "[variables('ipv4PublicIPAddressName')]",
             "location": "[resourceGroup().location]",
             "properties": {
                 "publicIPAddressVersion": "IPv4",
@@ -171,7 +88,7 @@
         {
             "apiVersion": "2016-03-30",
             "type": "Microsoft.Network/publicIPAddresses",
-            "name": "[parameters('ipv6PublicIPAddressName')]",
+            "name": "[variables('ipv6PublicIPAddressName')]",
             "location": "[resourceGroup().location]",
             "properties": {
                 "publicIPAddressVersion": "IPv6",
@@ -184,7 +101,7 @@
         {
             "apiVersion": "2016-03-30",
             "type": "Microsoft.Network/virtualNetworks",
-            "name": "[parameters('vnetName')]",
+            "name": "[variables('vnetName')]",
             "location": "[resourceGroup().location]",
             "properties": {
                 "addressSpace": {
@@ -205,15 +122,15 @@
         {
             "apiVersion": "2016-03-30",
             "type": "Microsoft.Network/networkInterfaces",
-            "name": "[concat(parameters('nicNamePrefix'), copyindex())]",
+            "name": "[concat(variables('nicNamePrefix'), copyindex())]",
             "location": "[resourceGroup().location]",
             "copy": {
                 "name": "nicLoop",
                 "count": "[variables('numberOfInstances')]"
             },
             "dependsOn": [
-                "[concat('Microsoft.Network/virtualNetworks/', parameters('vnetName'))]",
-                "[concat('Microsoft.Network/loadBalancers/', parameters('lbName'))]"
+                "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
+                "[concat('Microsoft.Network/loadBalancers/', variables('lbName'))]"
             ],
             "properties": {
                 "ipConfigurations": [
@@ -223,7 +140,7 @@
                             "privateIPAddressVersion": "IPv4",
                             "privateIPAllocationMethod": "[variables('ipv4PrivateIPAddressType')]",
                             "subnet": {
-                                "id": "[variables('subnetRef')]"
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets',variables('vnetName'), variables('subnetName'))]"
                             },
                             "loadBalancerBackendAddressPools": [
                                 {
@@ -254,12 +171,12 @@
         },
         {
             "apiVersion": "2016-03-30",
-            "name": "[parameters('lbName')]",
+            "name": "[variables('lbName')]",
             "type": "Microsoft.Network/loadBalancers",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[concat('Microsoft.Network/publicIPAddresses/', parameters('ipv4PublicIPAddressName'))]",
-                "[concat('Microsoft.Network/publicIPAddresses/', parameters('ipv6PublicIPAddressName'))]"
+                "[concat('Microsoft.Network/publicIPAddresses/', variables('ipv4PublicIPAddressName'))]",
+                "[concat('Microsoft.Network/publicIPAddresses/', variables('ipv6PublicIPAddressName'))]"
             ],
             "properties": {
                 "frontendIPConfigurations": [
@@ -267,7 +184,7 @@
                         "name": "LoadBalancerFrontEndIPv4",
                         "properties": {
                             "publicIPAddress": {
-                                "id": "[variables('ipv4PublicIPAddressID')]"
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('ipv4PublicIPAddressName'))]"
                             }
                         }
                     },
@@ -275,7 +192,7 @@
                         "name": "LoadBalancerFrontEndIPv6",
                         "properties": {
                             "publicIPAddress": {
-                                "id": "[variables('ipv6PublicIPAddressID')]"
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('ipv6PublicIPAddressName'))]"
                             }
                         }
                     }
@@ -324,7 +241,7 @@
                             "backendAddressPool": {
                                 "id": "[variables('ipv4LbBackendPoolID')]"
                             },
-                            "protocol": "tcp",
+                            "protocol": "Tcp",
                             "frontendPort": 80,
                             "backendPort": 80,
                             "enableFloatingIP": false,
@@ -343,7 +260,7 @@
                             "backendAddressPool": {
                                 "id": "[variables('ipv6LbBackendPoolID')]"
                             },
-                            "protocol": "tcp",
+                            "protocol": "Tcp",
                             "frontendPort": 80,
                             "backendPort": 8080,
                             "probe": {
@@ -356,10 +273,10 @@
                     {
                         "name": "[variables('ipv4ipv6lbProbeName')]",
                         "properties": {
-                            "protocol": "tcp",
+                            "protocol": "Tcp",
                             "port": 80,
-                            "intervalInSeconds": "5",
-                            "numberOfProbes": "2"
+                            "intervalInSeconds": 5,
+                            "numberOfProbes": 2
                         }
                     }
                 ]
@@ -368,15 +285,15 @@
         {
             "apiVersion": "2016-03-30",
             "type": "Microsoft.Compute/virtualMachines",
-            "name": "[concat(parameters('vmNamePrefix'), copyindex())]",
+            "name": "[concat(variables('vmNamePrefix'), copyindex())]",
             "copy": {
                 "name": "virtualMachineLoop",
                 "count": "[variables('numberOfInstances')]"
             },
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
-                "[concat('Microsoft.Network/networkInterfaces/', parameters('nicNamePrefix'), copyindex())]",
+                "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+                "[concat('Microsoft.Network/networkInterfaces/', variables('nicNamePrefix'), copyindex())]",
                 "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
             ],
             "properties": {
@@ -384,24 +301,24 @@
                     "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('availabilitySetName'))]"
                 },
                 "hardwareProfile": {
-                    "vmSize": "[parameters('vmSize')]"
+                    "vmSize": "Standard_DS1_v2"
                 },
                 "osProfile": {
-                    "computername": "[concat(parameters('vmNamePrefix'), copyIndex())]",
+                    "computerName": "[concat(variables('vmNamePrefix'), copyIndex())]",
                     "adminUsername": "[parameters('adminUsername')]",
                     "adminPassword": "[parameters('adminPassword')]"
                 },
                 "storageProfile": {
                     "imageReference": {
-                        "publisher": "[parameters('imagePublisher')]",
-                        "offer": "[parameters('imageOffer')]",
-                        "sku": "[parameters('imageSKU')]",
+                        "publisher": "MicrosoftWindowsServer",
+                        "offer": "WindowsServer",
+                        "sku": "2012-R2-Datacenter",
                         "version": "latest"
                     },
                     "osDisk": {
                         "name": "osdisk",
                         "vhd": {
-                            "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/','osdisk', copyindex(), '.vhd')]"
+                            "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2015-06-15').primaryEndpoints.blob, 'vhds/osdisk', copyIndex(), '.vhd')]"
                         },
                         "caching": "ReadWrite",
                         "createOption": "FromImage"
@@ -410,7 +327,7 @@
                 "networkProfile": {
                     "networkInterfaces": [
                         {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('nicNamePrefix'),copyindex()))]"
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('nicNamePrefix'),copyindex()))]"
                         }
                     ]
                 }
