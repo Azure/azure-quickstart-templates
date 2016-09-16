@@ -1,0 +1,165 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vaultName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Recovery Services Vault"
+            }
+        },
+        "policyName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the Backup Policy"
+            }
+        },
+        "scheduleRunDays": {
+            "type": "array",
+            "metadata": {
+                "description": "Backup Schedule will run on array of Days like, Monday, Tuesday etc. Applies in Weekly Backup Type only."
+            }
+        },
+        "scheduleRunTimes": {
+            "type": "array",
+            "metadata": {
+                "description": "Times in day when backup should be triggered. e.g. 01:00, 13:00. This will be used in LTR too for daily, weekly, monthly and yearly backup."
+            }
+        },
+        "weeklyRetentionDurationCount": {
+            "type": "int",
+            "metadata": {
+                "description": "Number of weeks you want to retain the backup"
+            }
+        },
+        "daysOfTheWeekForMontlyRetention": {
+            "type": "array",
+            "metadata": {
+                "description": "Array of Days for Monthly Retention (Min One or Max all values from scheduleRunDays, but not any other days which are not part of scheduleRunDays)"
+            }
+        },
+        "weeksOfTheMonthForMonthlyRetention": {
+            "type": "array",
+            "metadata": {
+                "description": "Array of Weeks for Monthly Retention - First, Second, Third, Fourth, Last"
+            }
+        },
+        "monthlyRetentionDurationCount": {
+            "type": "int",
+            "metadata": {
+                "description": "Number of months you want to retain the backup"
+            }
+        },
+        "monthsOfYear": {
+            "type": "array",
+            "metadata": {
+                "description": "Array of Months for Yearly Retention"
+            }
+        },
+        "daysOfTheWeekForYearlyRetention": {
+            "type": "array",
+            "metadata": {
+                "description": "Array of Days for Yearly Retention (Min One or Max all values from scheduleRunDays, but not any other days which are not part of scheduleRunDays)"
+            }
+        },
+        "weeksOfTheMonthForYearlyRetention": {
+            "type": "array",
+            "metadata": {
+                "description": "Array of Weeks for Yearly Retention - First, Second, Third, Fourth, Last"
+            }
+        },
+        "yearlyRetentionDurationCount": {
+            "type": "int",
+            "metadata": {
+                "description": "Number of years you want to retain the backup"
+            }
+        }
+    },
+    "resources": [
+      {
+        "type": "Microsoft.RecoveryServices/vaults",
+        "apiVersion": "2015-11-10",
+        "name": "[parameters('vaultName')]",
+        "location": "[resourceGroup().location]",
+        "sku": {
+          "name": "RS0",
+          "tier": "Standard"
+        },
+        "properties": {
+        }
+      },
+      {
+        "apiVersion": "2015-11-10",
+        "name": "[concat(parameters('vaultName'), '/', parameters('policyName'))]",
+        "type": "Microsoft.RecoveryServices/vaults/backupPolicies",
+        "dependsOn": [ "[concat('Microsoft.RecoveryServices/vaults/', parameters('vaultName'))]" ],
+        "location": "[resourceGroup().location]",
+        "properties": {
+          "backupManagementType": "AzureIaasVM",
+          "schedulePolicy": {
+            "scheduleRunFrequency": "Weekly",
+            "scheduleRunDays": "[parameters('scheduleRunDays')]",
+            "scheduleRunTimes": "[parameters('scheduleRunTimes')]",
+            "scheduleRunTimesNew": [ ],
+            "schedulePolicyType": "SimpleSchedulePolicy"
+          },
+          "retentionPolicy": {
+            "dailySchedule": null,
+            "weeklySchedule": {
+              "daysOfTheWeek": "[parameters('scheduleRunDays')]",
+              "retentionTimes": "[parameters('scheduleRunTimes')]",
+              "retentionTimesNew": [ ],
+              "retentionDuration": {
+                "count": "[parameters('weeklyRetentionDurationCount')]",
+                "durationType": "Weeks"
+              }
+            },
+            "monthlySchedule": {
+              "retentionScheduleFormatType": "Weekly",
+              "retentionScheduleDaily": {
+                "daysOfTheMonth": [
+                  {
+                    "date": 1,
+                    "isLast": false
+                  }
+                ]
+              },
+              "retentionScheduleWeekly": {
+                "daysOfTheWeek": "[parameters('daysOfTheWeekForMontlyRetention')]",
+                "weeksOfTheMonth": "[parameters('weeksOfTheMonthForMonthlyRetention')]"
+              },
+              "retentionTimes": "[parameters('scheduleRunTimes')]",
+              "retentionTimesNew": [ ],
+              "retentionDuration": {
+                "count": "[parameters('monthlyRetentionDurationCount')]",
+                "durationType": "Months"
+              }
+            },
+            "yearlySchedule": {
+              "retentionScheduleFormatType": "Weekly",
+              "monthsOfYear": "[parameters('monthsOfYear')]",
+              "retentionScheduleDaily": {
+                "daysOfTheMonth": [
+                  {
+                    "date": 1,
+                    "isLast": false
+                  }
+                ]
+              },
+              "retentionScheduleWeekly": {
+                "daysOfTheWeek": "[parameters('daysOfTheWeekForYearlyRetention')]",
+                "weeksOfTheMonth": "[parameters('weeksOfTheMonthForYearlyRetention')]"
+              },
+              "retentionTimes": "[parameters('scheduleRunTimes')]",
+              "retentionTimesNew": [ ],
+              "retentionDuration": {
+                "count": "[parameters('yearlyRetentionDurationCount')]",
+                "durationType": "Years"
+              }
+            },
+            "retentionPolicyType": "LongTermRetentionPolicy"
+          }
+        }
+      }
+    ]
+}

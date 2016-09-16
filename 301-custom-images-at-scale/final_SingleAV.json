@@ -1,0 +1,89 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01-preview/deploymentTemplate.json",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "uniquePrefix": {
+      "type": "string"
+    },
+    "numberOfSAs": {
+      "type": "int"
+    },
+    "instanceCountPerSA": {
+      "type": "int"
+    },
+    "vmSize": {
+      "type": "string"
+    },
+    "OSType": {
+      "type": "string"
+    },
+    "blobName": {
+      "type": "string"
+    },
+    "vnetName": {
+      "type": "string"
+    },
+    "addressPrefix": {
+      "type": "string"
+    },
+    "subnetName": {
+      "type": "string"
+    },
+    "subnetPrefix": {
+      "type": "string"
+    },
+    "templateLocation": {
+      "type": "string"
+    },
+    "adminUsername": {
+      "type": "string"
+    },
+    "adminPassword": {
+      "type": "securestring"
+    }
+  },
+  "variables": {
+    "baseTemplateUri": "[concat(parameters('templateLocation'), 'vm_baseSingleAV.json')]",
+    "availabilitySetName": "[concat(parameters('uniquePrefix'), 'av')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[variables('availabilitySetName')]",
+      "apiVersion": "2015-05-01-preview",
+      "location": "[resourceGroup().location]"
+    },
+    {
+      "name": "[concat('clusterSet', copyindex())]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
+      ],
+      "copy": {
+        "name": "deploymentLoop",
+        "count": "[parameters('numberOfSAs')]"
+      },
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('baseTemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "uniquePrefix": { "value": "[parameters('uniquePrefix')]" },
+          "clusterName": { "value": "[concat(parameters('uniquePrefix'), padLeft(copyindex(), 2, '0'))]" },
+          "sourceImageURI": { "value": "[concat('https://',uniqueString(concat(resourceGroup().id, parameters('uniquePrefix'), copyIndex())), parameters('uniquePrefix'),'.blob.core.windows.net/vhds/',parameters('blobName'))]" },
+          "baseVHDURI": { "value": "[concat('https://',uniqueString(concat(resourceGroup().id, parameters('uniquePrefix'), copyIndex())), parameters('uniquePrefix'),'.blob.core.windows.net/vhds/')]" },
+          "instanceCountPerSA": { "value": "[parameters('instanceCountPerSA')]" },
+          "vmSize": { "value": "[parameters('vmSize')]" },
+          "OSType": { "value": "[parameters('OSType')]" },
+          "vnetName": { "value": "[parameters('vnetName')]" },
+          "subnetName": { "value": "[parameters('subnetName')]" },
+          "adminUsername": { "value": "[parameters('adminUsername')]" },
+          "adminPassword": { "value": "[parameters('adminPassword')]" }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,207 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "resourcePrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Prefix string for all resources. This would become part of the fully qualified domain name for each VM in the cluster, thus it should be globally unique."
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Admin user name for cluster VMs."
+      },
+      "defaultValue": "monicake"
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Admin password for cluster VMs"
+      }
+    },
+    "vmCount": {
+      "type": "int",
+      "metadata": {
+        "description": "VM instance count in the cluster."
+      },
+      "defaultValue": 2,
+      "maxValue": 20
+    }
+  },
+  "variables": {
+    "prefix": "[parameters('resourcePrefix')]",
+    "location": "[resourceGroup().location]",
+    "imageReferences": [
+      {
+        "publisher": "Canonical",
+        "offer": "UbuntuServer",
+        "sku": "14.04.3-LTS",
+        "version": "latest"
+      },
+      {
+        "publisher": "OpenLogic",
+        "offer": "CentOS",
+        "sku": "7.2",
+        "version": "latest"
+      }
+    ],
+    "imageReferenceCount": "[length(variables('imageReferences'))]",
+    "OSDiskName": "[concat(variables('prefix'),'disk')]",
+    "nicName": "[concat(variables('prefix'),'nic')]",
+    "virtualNetworkName": "[concat(variables('prefix'),'vnet')]",
+    "addressPrefix": "192.168.0.0/16",
+    "subnetName": "default",
+    "subnetPrefix": "192.168.0.0/24",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
+    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
+    "publicIPAddressName": "[concat(variables('prefix'),'publicip')]",
+    "publicIPAddressType": "Dynamic",
+    "storageAccountName": "[concat(variables('prefix'),'sto')]",
+    "vmStorageAccountContainerName": "vhds",
+    "vmName": "[concat(variables('prefix'),'vm')]",
+    "vmSize": "Standard_D2",
+    "storageAccountType": "Standard_LRS",
+    "VMCount": "[parameters('vmCount')]",
+    "VMStart": 1
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('storageAccountName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[variables('location')]",
+      "properties": {
+        "accountType": "[variables('storageAccountType')]"
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[variables('location')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "copy": {
+        "name": "vmCountCopy",
+        "count": "[variables('VMCount')]"
+      },
+      "name": "[concat(variables('publicIPAddressName'),copyIndex(variables('VMStart')))]",
+      "location": "[variables('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[concat(variables('prefix'),'vm',copyIndex(variables('VMStart')))]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkInterfaces",
+      "copy": {
+        "name": "vmCountCopy",
+        "count": "[variables('VMCount')]"
+      },
+      "name": "[concat(variables('nicName'),copyIndex(variables('VMStart')))]",
+      "location": "[variables('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'),copyIndex(variables('VMStart')))]",
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat(variables('publicIPAddressName'),copyIndex(variables('VMStart'))))]"
+              },
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/virtualMachines",
+      "copy": {
+        "name": "vmCountCopy",
+        "count": "[variables('VMCount')]"
+      },
+      "name": "[concat(variables('vmName'),copyIndex(variables('VMStart')))]",
+      "location": "[variables('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyIndex(variables('VMStart')))]",
+        "[variables('storageAccountName')]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[concat(variables('vmName'),copyIndex(variables('VMStart')))]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "osDisk": {
+            "vhd": {
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/',variables('storageAccountName')), '2015-06-15').primaryEndpoints.blob,variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),copyIndex(variables('VMStart')),'.vhd')]"
+            },
+            "name": "osdisk",
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          },
+          "imageReference": "[variables('imageReferences')[mod(copyIndex(variables('VMStart')), variables('imageReferenceCount'))]]"
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('nicName'),copyIndex(variables('VMStart'))))]"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "prefix": {
+      "type": "string",
+      "value": "[variables('prefix')]"
+    },
+    "resourceGroup": {
+      "type": "string",
+      "value": "[resourceGroup().name]"
+    },
+    "storageAccountName": {
+      "type": "string",
+      "value": "[variables('storageAccountName')]"
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "value": "[variables('virtualNetworkName')]"
+    }
+  }
+}
