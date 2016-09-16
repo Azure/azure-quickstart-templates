@@ -22,7 +22,6 @@
     }
   },
   "variables": {
-    "region": "[parameters('commonSettings').region]",
     "namespace": "[parameters('commonSettings').namespace]",
     "subnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('subnet').vnet), '/subnets/', parameters('subnet').name)]",
     "storageAccountName": "[concat(parameters('storageSettings').name, variables('namespace'))]",
@@ -30,14 +29,14 @@
     "nicName": "[concat(variables('namespace'), 'nic')]",
     "adminUsername": "[parameters('commonSettings').adminUsername]",
     "vmCount": "[parameters('machineSettings').vmCount]",
-    "addprefix" : "[parameters('machineSettings').addprefix]"
+    "addprefix": "[parameters('machineSettings').addprefix]"
   },
   "resources": [
     {
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('nicName'), copyindex())]",
-      "location": "[variables('region')]",
+      "location": "[resourceGroup().location]",
       "copy": {
         "name": "nicCopyLoop",
         "count": "[variables('vmCount')]"
@@ -47,13 +46,12 @@
           {
             "name": "ipconfig1",
             "properties": {
-	    
-		    "privateIPAllocationMethod": "Static",
-		    "privateIPAddress": "[concat(variables('addprefix'), copyindex())]",
-		    "subnet": {
-			"id": "[variables('subnetRef')]"
-		    }
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[concat(variables('addprefix'), copyindex())]",
+              "subnet": {
+                "id": "[variables('subnetRef')]"
               }
+            }
           }
         ]
       }
@@ -62,7 +60,7 @@
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('vmName'), copyindex())]",
-      "location": "[variables('region')]",
+      "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyindex())]"
       ],
@@ -71,42 +69,42 @@
         "count": "[variables('vmCount')]"
       },
       "properties": {
-		"availabilitySet": {
-		  "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('machineSettings').availabilitySet)]"
-		},
-		"hardwareProfile": {
-		  "vmSize": "[parameters('machineSettings').vmSize]"
-		},
-		"osProfile": {
-		  "computername": "[concat(variables('vmName'), copyindex())]",
-		  "adminUsername": "[variables('adminUsername')]",
-		  "adminPassword": "[parameters('adminPassword')]"
-		},
-		"storageProfile": {
-		  "imageReference": "[parameters('osSettings').imageReference]",
-		  "osDisk": {
-		    "name": "osdisk",
-		    "vhd": {
-		      "uri": "[concat('http://',parameters('storageSettings').name, parameters('storageSettings').map[copyindex()],'.blob.core.windows.net/vhds/', variables('vmName'), copyindex(), '-osdisk.vhd')]"
-		    },
-		    "caching": "ReadWrite",
-		    "createOption": "FromImage"
-		  },
-		},
-		"networkProfile": {
-		  "networkInterfaces": [
-		    {
-		      "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'), copyindex()) )]"
-		    }
-		  ]
-		}
-	}
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('machineSettings').availabilitySet)]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('machineSettings').vmSize]"
+        },
+        "osProfile": {
+          "computerName": "[concat(variables('vmName'), copyindex())]",
+          "adminUsername": "[variables('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": "[parameters('osSettings').imageReference]",
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat('http://',parameters('storageSettings').name, parameters('storageSettings').map[copyindex()],'.blob.core.windows.net/vhds/', variables('vmName'), copyindex(), '-osdisk.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'), copyindex()) )]"
+            }
+          ]
+        }
+      }
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmName'), copyindex(), '/install_zookeeper')]",
       "apiVersion": "2015-05-01-preview",
-      "location": "[variables('region')]",
+      "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'), copyindex())]"
       ],
@@ -117,7 +115,8 @@
       "properties": {
         "publisher": "Microsoft.OSTCExtensions",
         "type": "CustomScriptForLinux",
-        "typeHandlerVersion": "1.2",
+        "typeHandlerVersion": "1.5",
+        "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": "[parameters('osSettings').scripts]",
           "commandToExecute": "[concat('bash kafka-cluster-install.sh -z ',' 1 ',' -c ', variables('vmCount'),' -i ', variables('addprefix'))]"
