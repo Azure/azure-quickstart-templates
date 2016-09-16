@@ -172,7 +172,7 @@ The following guidelines are relevant to the main deployment template and nested
 
  Note: A complex object cannot contain an expression that references a value from a complex object. Define a separate variable for this purpose.
 
-13. The **domainNameLabel** property for publicIPAddresses must be **unique**. domainNameLabel is required to be betweeen 3 and 63 characters long and to follow the rules specified by this regular expression ^[a-z][a-z0-9-]{1,61}[a-z0-9]$. As the uniqueString function will generate a string that is 13 characters long in the example below it is presumed that the dnsPrefixString prefix string has been checked to be no more than 50 characters long and to conform to those rules.
+13. The **domainNameLabel** property for publicIPAddresses must be **unique**. domainNameLabel is required to be between 3 and 63 characters long and to follow the rules specified by this regular expression ^[a-z][a-z0-9-]{1,61}[a-z0-9]$. As the uniqueString function will generate a string that is 13 characters long in the example below it is presumed that the dnsPrefixString prefix string has been checked to be no more than 50 characters long and to conform to those rules.
 
  ```
  "parameters": {
