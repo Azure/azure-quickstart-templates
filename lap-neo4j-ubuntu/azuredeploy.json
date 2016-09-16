@@ -1,0 +1,223 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "adminUsername": {
+            "type": "string",
+            "metadata": {
+                "description": "Administrator user name used when provisioning virtual machines"
+            }
+        },
+        "adminPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Administrator password used when provisioning virtual machines"
+            }
+        },
+        "dnsLabelPrefix": {
+            "type": "string",
+            "metadata": {
+                "description": "DNS Label for the Public IP. Must be lowercase. It should match with the following regular expression: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$ or it will raise an error."
+            }
+        },
+        "lapVmSize": {
+            "type": "string",
+            "defaultValue": "Standard_D1_V2",
+            "allowedValues": [
+                "Standard_A1",
+                "Standard_A2",
+                "Standard_A3",
+                "Standard_D1_V2",
+                "Standard_D3_V2",
+                "Standard_D4_V2"
+            ],
+            "metadata": {
+                "description": "The size of the virtual machines used when provisioning the Lap node"
+            }
+        },
+        "neo4jNodes": {
+            "type": "int",
+            "defaultValue": 1,
+            "metadata": {
+                "description": "Number of Neo4J node (1 is the default)"
+            }
+        },
+        "neo4jVmSize": {
+            "type": "string",
+            "defaultValue": "Standard_D1_V2",
+            "allowedValues": [
+                "Standard_A1",
+                "Standard_A2",
+                "Standard_A3",
+                "Standard_D1_V2",
+                "Standard_D3_V2",
+                "Standard_D4_V2"
+            ],
+            "metadata": {
+                "description": "The size of the virtual machines used when provisioning Neo4J node(s)"
+            }
+        }
+    },
+    "variables": {
+        "templateBaseUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/lap-neo4j-ubuntu/nested/",
+        "sharedTemplateUrl": "[concat(variables('templateBaseUrl'), 'shared-resources.json')]",
+        "lanpLapTemplateUrl": "[concat(variables('templateBaseUrl'), 'lanplap-resources.json')]",
+        "lanpneo4jTemplateUrl": "[concat(variables('templateBaseUrl'), 'lanpneo4j-resources.json')]",
+        "namespace": "lanp-",
+        "apiVersion": "2015-01-01",
+        "virtualNetworkName":"myVNET",
+        "networkSettings": {
+          "virtualNetworkName": "myVNET",
+          "addressPrefix": "10.0.0.0/16",
+            "subnet": {
+                "dse": {
+                    "name": "dse",
+                    "prefix": "10.0.0.0/24",
+                    "vnet": "myVNET"
+              }
+            },
+            "statics": {
+                "clusterRange": {
+                    "base": "10.0.0.",
+                    "start": 5
+                },
+                "lapip": "10.0.0.240",
+                "neo4jip": "10.0.0.10"
+            }
+        },
+        "lapOsSettings": {
+            "imageReference": {
+                "publisher": "Canonical",
+                "offer": "UbuntuServer",
+                "sku": "16.04.0-LTS",
+                "version": "latest"
+            },
+            "scripts": [
+                "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/lap-neo4j-ubuntu/scripts/install-lap.sh"
+            ]
+        },
+        "neo4jOsSettings": {
+            "imageReference": {
+                "publisher": "Canonical",
+                "offer": "UbuntuServer",
+                "sku": "16.04.0-LTS",
+                "version": "latest"
+            },
+            "scripts": [
+                "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/lap-neo4j-ubuntu/scripts/install-neo4j.sh"
+            ]
+        }
+    },
+    "resources": [{
+        "name": "shared",
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "[variables('apiVersion')]",
+        "properties": {
+            "mode": "Incremental",
+            "templateLink": {
+                "uri": "[variables('sharedTemplateUrl')]",
+                "contentVersion": "1.0.0.0"
+            },
+            "parameters": {
+                "networkSettings": {
+                    "value": "[variables('networkSettings')]"
+                }
+            }
+        }
+    }, {
+        "name": "lanpLapNode",
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "[variables('apiVersion')]",
+        "dependsOn": [
+            "[concat('Microsoft.Resources/deployments/', 'shared')]"
+        ],
+        "properties": {
+            "mode": "Incremental",
+            "templateLink": {
+                "uri": "[variables('lanpLapTemplateUrl')]",
+                "contentVersion": "1.0.0.0"
+            },
+            "parameters": {
+                "adminUsername": {
+                    "value": "[parameters('adminUsername')]"
+                },
+                "adminPassword": {
+                    "value": "[parameters('adminPassword')]"
+                },
+                "namespace": {
+                    "value": "[variables('namespace')]"
+                },
+                "vmbasename": {
+                    "value": "Lap"
+                },
+                "subnet": {
+                    "value": "[variables('networkSettings').subnet.dse]"
+                },
+                "dnsname": {
+                    "value": "[parameters('dnsLabelPrefix')]"
+                },
+                "staticIp": {
+                    "value": "[variables('networkSettings').statics.lapip]"
+                },
+                "vmSize": {
+                    "value": "[parameters('lapVmSize')]"
+                },
+                "neo4jNodes": {
+                    "value": "[parameters('neo4jNodes')]"
+                },
+                "osSettings": {
+                    "value": "[variables('lapOsSettings')]"
+                }
+            }
+        }
+    }, {
+        "name": "[concat('lanpNeo4jNode', copyindex())]",
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "[variables('apiVersion')]",
+        "dependsOn": [
+            "[concat('Microsoft.Resources/deployments/', 'shared')]",
+            "[concat('Microsoft.Resources/deployments/', 'lanpLapNode')]"
+        ],
+        "copy": {
+            "name": "vmLoop",
+            "count": "[parameters('neo4jNodes')]"
+        },
+        "properties": {
+            "mode": "Incremental",
+            "templateLink": {
+                "uri": "[variables('lanpneo4jTemplateUrl')]",
+                "contentVersion": "1.0.0.0"
+            },
+            "parameters": {
+                "adminUsername": {
+                    "value": "[parameters('adminUsername')]"
+                },
+                "adminPassword": {
+                    "value": "[parameters('adminPassword')]"
+                },
+                "namespace": {
+                    "value": "[variables('namespace')]"
+                },
+                "vmbasename": {
+                    "value": "[concat('neo4j', copyindex())]"
+                },
+                "lapNode": {
+                    "value": "[variables('networkSettings').statics.lapip]"
+                },
+                "neo4jstaticIp": {
+                    "value": "[variables('networkSettings').statics.neo4jip]"
+                },
+                "subnet": {
+                    "value": "[variables('networkSettings').subnet.dse]"
+                },
+                "vmSize": {
+                    "value": "[parameters('neo4jVmSize')]"
+                },
+                "osSettings": {
+                    "value": "[variables('neo4jOsSettings')]"
+                }
+            }
+        }
+    }],
+    "outputs": {}
+}

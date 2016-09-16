@@ -3,6 +3,9 @@
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fpostgresql-on-ubuntu%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fpostgresql-on-ubuntu%2Fazuredeploy.json" target="_blank">
+    <img src="http://armviz.io/visualizebutton.png"/>
+</a>
 
 This template creates one master PostgreSQL 9.3 server with streaming-replication to multiple (based on the T-Shirt size parameter) slave servers. Each database server is configured with multiple data disks that are striped into RAID-0 configuration using mdadm. The template also optionally creates one externally accessible VM to serve as a jumpbox for ssh into the backend database servers.
 
@@ -36,20 +39,6 @@ select * from table1;
 sudo -u postgres psql
 select * from table1;
 ```
-
-Template expects the following parameters
-
-| Name   | Description    |
-|:--- |:---|
-| region | Location where the resources will be deployed |
-| storageAccountNamePrefix  | Unique DNS name for the Storage Account where the Virtual Machines' disks will be placed |
-| domainName | Domain name of the publicly accessible jumpbox VM {domainName}.{region}.cloudapp.azure.com (e.g. mydomainname.westus.cloudapp.azure.com)|
-| adminUsername  | Username for the Virtual Machines  |
-| adminPassword  | Password for the Virtual Machine  |
-| tshirtSize  | Size of deployment to provision |
-| replicatorPassword | Password to use for the pgsql replication user (replicator) |
-| jumpbox | Enable jumpbox |
-| virtualNetworkName | Virtual network name |
 
 The following table outlines the deployment topology characteristics for each supported t-shirt size:
 

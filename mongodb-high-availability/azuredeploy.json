@@ -14,24 +14,33 @@
         "description": "Administrator password used when provisioning virtual machines (which is also a password for the system administrator in MongoDB)"
       }
     },
-    "storageAccountName": {
+    "storageAccountNamePrefix": {
       "type": "string",
       "defaultValue": "",
       "metadata": {
         "description": "Unique namespace for the Storage Account where the Virtual Machine's disks will be placed (this name will be used as a prefix to create one or more storage accounts as per t-shirt size)"
       }
     },
-    "location": {
+    "storageAccountType": {
       "type": "string",
+      "defaultValue": "Standard_LRS",
       "allowedValues": [
-        "West US",
-        "East US",
-        "East Asia",
-        "Southeast Asia",
-        "West Europe"
+        "Standard_LRS",
+        "Premium_LRS"
       ],
       "metadata": {
-        "description": "Location where resources will be provisioned"
+        "description": "Storage account type to be provisioned"
+      }
+    },
+    "vmSeries": {
+      "type": "string",
+      "defaultValue": "D",
+      "allowedValues": [
+        "D",
+        "DS"
+      ],
+      "metadata": {
+        "description": "Virtual machine series to use for data nodes in cluster"
       }
     },
     "virtualNetworkName": {
@@ -129,64 +138,64 @@
   "variables": {
     "_comment0": "/* T-shirt sizes may vary for different reasons, and some customers may want to modify these - so feel free to go ahead and define your favorite t-shirts */",
     "tshirtSizeXSmall": {
-      "vmSizeMember": "Standard_D1",
-      "vmSizeArbiter": "Standard_A1",
+      "vmSizeMember": "[concat('Standard_', parameters('vmSeries'), '1')]",
+      "vmSizeArbiter": "[concat('Standard_', parameters('vmSeries'), '1')]",
       "numberOfMembers": 1,
       "totalMemberCount": 2,
       "arbiter": "Enabled",
       "vmTemplate": "[concat(variables('templateBaseUrl'), 'member-resources-D1.json')]",
       "storageAccountCount": 1,
-      "dataDiskSize": 100
+      "dataDiskSize": 128
     },
     "tshirtSizeSmall": {
-      "vmSizeMember": "Standard_D1",
-      "vmSizeArbiter": "Standard_A1",
+      "vmSizeMember": "[concat('Standard_', parameters('vmSeries'), '1')]",
+      "vmSizeArbiter": "[concat('Standard_', parameters('vmSeries'), '1')]",
       "numberOfMembers": 2,
       "totalMemberCount": 3,
       "arbiter": "Disabled",
       "vmTemplate": "[concat(variables('templateBaseUrl'), 'member-resources-D1.json')]",
       "storageAccountCount": 1,
-      "dataDiskSize": 100
+      "dataDiskSize": 128
     },
     "tshirtSizeMedium": {
-      "vmSizeMember": "Standard_D2",
-      "vmSizeArbiter": "Standard_A1",
+      "vmSizeMember": "[concat('Standard_', parameters('vmSeries'), '2')]",
+      "vmSizeArbiter": "[concat('Standard_', parameters('vmSeries'), '1')]",
       "numberOfMembers": 3,
       "totalMemberCount": 4,
       "arbiter": "Enabled",
       "vmTemplate": "[concat(variables('templateBaseUrl'), 'member-resources-D2.json')]",
       "storageAccountCount": 2,
-      "dataDiskSize": 250
+      "dataDiskSize": 256
     },
     "tshirtSizeLarge": {
-      "vmSizeMember": "Standard_D2",
-      "vmSizeArbiter": "Standard_A1",
+      "vmSizeMember": "[concat('Standard_', parameters('vmSeries'), '2')]",
+      "vmSizeArbiter": "[concat('Standard_', parameters('vmSeries'), '1')]",
       "numberOfMembers": 7,
       "totalMemberCount": 8,
       "arbiter": "Enabled",
       "vmTemplate": "[concat(variables('templateBaseUrl'), 'member-resources-D2.json')]",
       "storageAccountCount": 4,
-      "dataDiskSize": 250
+      "dataDiskSize": 256
     },
     "tshirtSizeXLarge": {
-      "vmSizeMember": "Standard_D3",
-      "vmSizeArbiter": "Standard_A1",
+      "vmSizeMember": "[concat('Standard_', parameters('vmSeries'), '3')]",
+      "vmSizeArbiter": "[concat('Standard_', parameters('vmSeries'), '1')]",
       "numberOfMembers": 7,
       "totalMemberCount": 8,
       "arbiter": "Enabled",
       "vmTemplate": "[concat(variables('templateBaseUrl'), 'member-resources-D3.json')]",
       "storageAccountCount": 4,
-      "dataDiskSize": 500
+      "dataDiskSize": 512
     },
     "tshirtSizeXXLarge": {
-      "vmSizeMember": "Standard_D3",
-      "vmSizeArbiter": "Standard_A1",
+      "vmSizeMember": "[concat('Standard_', parameters('vmSeries'), '3')]",
+      "vmSizeArbiter": "[concat('Standard_', parameters('vmSeries'), '1')]",
       "numberOfMembers": 15,
       "totalMemberCount": 16,
       "arbiter": "Disabled",
       "vmTemplate": "[concat(variables('templateBaseUrl'), 'member-resources-D3.json')]",
       "storageAccountCount": 8,
-      "dataDiskSize": 500
+      "dataDiskSize": 512
     },
     "osFamilyUbuntu": {
       "osName": "ubuntu",
@@ -210,14 +219,15 @@
     "jumpboxTemplateUrl": "[concat(variables('templateBaseUrl'), variables(concat('jumpboxTemplate', parameters('jumpbox'))))]",
     "arbiterTemplateUrl": "[concat(variables('templateBaseUrl'), variables(concat('arbiterTemplate', variables('clusterSpec').arbiter)))]",
     "commonSettings": {
-      "availabilitySetName": "mongodbAvailSet",
-      "location": "[parameters('location')]"
+      "availabilitySetName": "mongodbAvailSet"
     },
     "storageSettings": {
-      "vhdStorageAccountName": "[parameters('storageAccountName')]",
+      "vhdStorageAccountName": "[parameters('storageAccountNamePrefix')]",
       "vhdContainerName": "[variables('vmStorageAccountContainerName')]",
-      "destinationVhdsContainer": "[concat('https://', parameters('storageAccountName'), variables('vmStorageAccountDomain'), '/', variables('vmStorageAccountContainerName'), '/')]",
-      "storageAccountCount": "[variables('clusterSpec').storageAccountCount]"
+      "vmSeries": "[parameters('vmSeries')]",
+      "destinationVhdsContainer": "[concat('https://', parameters('storageAccountNamePrefix'), variables('vmStorageAccountDomain'), '/', variables('vmStorageAccountContainerName'), '/')]",
+      "storageAccountCount": "[variables('clusterSpec').storageAccountCount]",
+      "storageAccountType": "[parameters('storageAccountType')]"
     },
     "networkSettings": {
       "virtualNetworkName": "[parameters('virtualNetworkName')]",
@@ -339,6 +349,7 @@
             "value": {
               "vhdStorageAccountName": "[concat(variables('storageSettings').vhdStorageAccountName, '0')]",
               "vhdContainerName": "[variables('storageSettings').vhdContainerName]",
+              "vmSeries": "[parameters('vmSeries')]",
               "destinationVhdsContainer": "[concat('https://', variables('storageSettings').vhdStorageAccountName, '0', variables('vmStorageAccountDomain'), '/', variables('storageSettings').vhdContainerName, '/')]"
             }
           },

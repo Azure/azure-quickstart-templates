@@ -9,6 +9,6 @@ if (args.length > 0) {
   for (int i = 0; i < cnt; i++) {
     String name = "Slave" + Integer.toString(i)
     
-    Jenkins.instance.addNode(new DumbSlave(name,"Description","/var/jenkens","1",Node.Mode.NORMAL,"label",new JNLPLauncher(),new RetentionStrategy.Always(),new LinkedList()))
+    Jenkins.instance.addNode(new DumbSlave(name,"Description","/var/jenkins","1",Node.Mode.NORMAL,"label",new JNLPLauncher(),new RetentionStrategy.Always(),new LinkedList()))
   }
 }

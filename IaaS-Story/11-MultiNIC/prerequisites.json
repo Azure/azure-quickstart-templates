@@ -1,0 +1,553 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vnetName": {
+      "type": "string",
+      "defaultValue": "WTestVNet",
+      "metadata": {
+        "description": "Name for the new VNet."
+      }
+    },
+    "vnetPrefix": {
+      "type": "string",
+      "defaultValue": "192.168.0.0/16",
+      "metadata": {
+        "description": "CIDR prefix for the VNet address space."
+      }
+    },
+    "frontEndSubnetName": {
+      "type": "string",
+      "defaultValue": "FrontEnd",
+      "metadata": {
+        "description": "Name for the front end subnet."
+      }
+    },
+    "frontEndSubnetPrefix": {
+      "type": "string",
+      "defaultValue": "192.168.1.0/24",
+      "metadata": {
+        "description": "CIDR address prefix for the front end subnet."
+      }
+    },
+    "backEndSubnetName": {
+      "type": "string",
+      "defaultValue": "BackEnd",
+      "metadata": {
+        "description": "Name for the back end subnet."
+      }
+    },
+    "backEndSubnetPrefix": {
+      "type": "string",
+      "defaultValue": "192.168.2.0/24",
+      "metadata": {
+        "description": "CIDR address prefix for the back end subnet."
+      }
+    },
+    "frontEndNSGName": {
+      "type": "string",
+      "defaultValue": "NSG-FrontEnd",
+      "metadata": {
+        "description": "Name for the NSG used to allow RDP, HTTP and HTPPS."
+      }
+    },
+    "backEndNSGName": {
+      "type": "string",
+      "defaultValue": "NSG-BackEnd",
+      "metadata": {
+        "description": "Name for the NSG used to allow DB access, and block Internet."
+      }
+    },
+    "remoteAccessNSGName": {
+      "type": "string",
+      "defaultValue": "NSG-RemoteAccess",
+      "metadata": {
+        "description": "Name for the NSG used to allow remote access."
+      }
+    },
+    "stdStorageName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name for standard storage account."
+      }
+    },
+    "stdStorageType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_GRS",
+        "Standard_ZRS"
+      ],
+      "metadata": {
+        "description": "Storage type."
+      }
+    },
+    "osType": {
+      "type": "string",
+      "defaultValue": "Windows",
+      "allowedValues": [
+        "Windows",
+        "Ubuntu"
+      ],
+      "metadata": {
+        "description": "Type of OS to use for VMs: Windows or Ubuntu."
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": { "description": "Username for local admin account." }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": { "description": "Password for local admin account." }
+    },
+    "webCount": {
+      "type": "int",
+      "defaultValue": 2,
+      "metadata": {
+        "description": "Number of VMs to be deployed to the front end subnet."
+      }
+    },
+    "dnsNameforLBIP": {
+      "type": "string",
+      "defaultValue": "iaasstory",
+      "metadata": {
+        "description": "Unique DNS name for LB VIP."
+      }
+    },
+    "lbName": {
+      "type": "string",
+      "defaultValue": "WWEBLB",
+      "metadata": {
+        "description": "Name for public facing load balancer."
+      }
+    },
+    "lbPIPName": {
+      "type": "string",
+      "defaultValue": "PIPLB",
+      "metadata": {
+        "description": "Name for load balancer PIP."
+      }
+    }
+  },
+  "variables": {
+    "webVMSettings": {
+      "Windows": {
+        "vmSize": "Standard_A3",
+        "publisher": "MicrosoftWindowsServer",
+        "offer": "WindowsServer",
+        "sku": "2012-R2-Datacenter",
+        "version": "latest",
+        "vmName": "WEB",
+        "osdisk": "osdiskweb",
+        "nicName": "NICWEB",
+        "ipAddress": "192.168.1.",
+        "extensionDeployment": "https://raw.githubusercontent.com/telmosampaio/azure-templates/master/IaaSStory/IaaSStory/Templates/04-Custom%20extension/iisaspnet.json",
+        "avsetName": "ASWEB",
+        "remotePort": 3389
+      },
+      "Ubuntu": {
+        "vmSize": "Standard_A3",
+        "publisher": "Canonical",
+        "offer": "UbuntuServer",
+        "sku": "14.04.2-LTS",
+        "version": "latest",
+        "vmName": "WEB",
+        "osdisk": "osdiskweb",
+        "nicName": "NICWEB",
+        "ipAddress": "192.168.1.",
+        "extensionDeployment": "https://raw.githubusercontent.com/telmosampaio/azure-templates/master/IaaSStory/IaaSStory/Templates/04-Custom%20extension/apache.json",
+        "avsetName": "ASWEB",
+        "remotePort": 22
+      }
+    },
+    "dbVMSettings": {
+      "Windows": {
+        "remotePort": 3389,
+        "dbPort": 1433
+      },
+      "Ubuntu": {
+        "remotePort": 22,
+        "dbPort": 1433
+      }
+    },
+    "vmStorageAccountContainerName": "vhds",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('vnetName'))]",
+    "frontEndSubnetRef": "[concat(variables('vnetID'),'/subnets/',parameters('frontEndSubnetName'))]",
+    "backEndSubnetRef": "[concat(variables('vnetID'),'/subnets/',parameters('backEndSubnetName'))]",
+    "webVMSetting": "[variables('webVMSettings')[parameters('osType')]]",
+    "dbVMSetting": "[variables('dbVMSettings')[parameters('osType')]]",
+    "lbID": "[resourceId('Microsoft.Network/loadBalancers',parameters('lbName'))]",
+    "frontEndIPConfigID": "[concat(variables('lbID'),'/frontendIPConfigurations/loadBalancerFrontend')]",
+    "lbPoolID": "[concat(variables('lbID'),'/backendAddressPools/loadBalancerBackend')]",
+    "lbProbeID": "[concat(variables('lbID'),'/probes/tcpProbe')]",
+    "dbDeploymentUri": ""
+  },
+    "resources": [
+      {
+        "apiVersion": "2015-06-15",
+        "type": "Microsoft.Storage/storageAccounts",
+        "name": "[parameters('stdStorageName')]",
+        "location": "[resourceGroup().location]",
+        "tags": {
+          "displayName": "Storage Account - Simple"
+        },
+        "properties": {
+          "accountType": "[parameters('stdStorageType')]"
+        }
+      },
+      {
+        "apiVersion": "2015-06-15",
+        "type": "Microsoft.Network/networkSecurityGroups",
+        "name": "[parameters('remoteAccessNSGName')]",
+        "location": "[resourceGroup().location]",
+        "tags": {
+          "displayName": "NSG - Remote access"
+        },
+        "properties": {
+          "securityRules": [
+            {
+              "name": "allow-remote-access",
+              "properties": {
+                "description": "Allow remote access",
+                "protocol": "Tcp",
+                "sourcePortRange": "*",
+                "destinationPortRange": "[variables('dbVMSetting').remotePort]",
+                "sourceAddressPrefix": "*",
+                "destinationAddressPrefix": "*",
+                "access": "Allow",
+                "priority": 200,
+                "direction": "Inbound"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "apiVersion": "2015-06-15",
+        "type": "Microsoft.Network/networkSecurityGroups",
+        "name": "[parameters('backEndNSGName')]",
+        "location": "[resourceGroup().location]",
+        "tags": {
+          "displayName": "NSG - Back End"
+        },
+        "properties": {
+          "securityRules": [
+            {
+              "name": "allow-frontend",
+              "properties": {
+                "description": "Allow FE Subnet",
+                "protocol": "Tcp",
+                "sourcePortRange": "*",
+                "destinationPortRange": "[variables('dbVMSetting').dbPort]",
+                "sourceAddressPrefix": "[parameters('frontEndSubnetPrefix')]",
+                "destinationAddressPrefix": "*",
+                "access": "Allow",
+                "priority": 100,
+                "direction": "Inbound"
+              }
+            },
+            {
+              "name": "block-internet",
+              "properties": {
+                "description": "Block Internet",
+                "protocol": "*",
+                "sourcePortRange": "*",
+                "destinationPortRange": "*",
+                "sourceAddressPrefix": "*",
+                "destinationAddressPrefix": "Internet",
+                "access": "Deny",
+                "priority": 100,
+                "direction": "Outbound"
+              }
+            }
+
+          ]
+        }
+      },
+      {
+        "apiVersion": "2015-06-15",
+        "type": "Microsoft.Network/networkSecurityGroups",
+        "name": "[parameters('frontEndNSGName')]",
+        "location": "[resourceGroup().location]",
+        "tags": {
+          "displayName": "NSG - Front End"
+        },
+        "properties": {
+          "securityRules": [
+            {
+              "name": "allow-http",
+              "properties": {
+                "description": "Allow HTTP",
+                "protocol": "Tcp",
+                "sourcePortRange": "*",
+                "destinationPortRange": "80",
+                "sourceAddressPrefix": "Internet",
+                "destinationAddressPrefix": "*",
+                "access": "Allow",
+                "priority": 101,
+                "direction": "Inbound"
+              }
+            },
+            {
+              "name": "allow-https",
+              "properties": {
+                "description": "Allow HTTPS",
+                "protocol": "Tcp",
+                "sourcePortRange": "*",
+                "destinationPortRange": "443",
+                "sourceAddressPrefix": "Internet",
+                "destinationAddressPrefix": "*",
+                "access": "Allow",
+                "priority": 102,
+                "direction": "Inbound"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "apiVersion": "2015-06-15",
+        "type": "Microsoft.Network/virtualNetworks",
+        "name": "[parameters('vnetName')]",
+        "location": "[resourceGroup().location]",
+        "dependsOn": [
+          "[concat('Microsoft.Network/networkSecurityGroups/', parameters('frontEndNSGName'))]",
+          "[concat('Microsoft.Network/networkSecurityGroups/', parameters('backEndNSGName'))]"
+        ],
+        "tags": {
+          "displayName": "VNet"
+        },
+        "properties": {
+          "addressSpace": {
+            "addressPrefixes": [
+              "[parameters('vnetPrefix')]"
+            ]
+          },
+          "subnets": [
+            {
+              "name": "[parameters('frontEndSubnetName')]",
+              "properties": {
+                "addressPrefix": "[parameters('frontEndSubnetPrefix')]",
+                "networkSecurityGroup": {
+                  "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('frontEndNSGName'))]"
+                }
+              }
+            },
+            {
+              "name": "[parameters('backEndSubnetName')]",
+              "properties": {
+                "addressPrefix": "[parameters('backEndSubnetPrefix')]",
+                "networkSecurityGroup": {
+                  "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('backEndNSGName'))]"
+                }
+              }
+            }
+          ]
+        }
+      },
+      {
+        "apiVersion": "2015-06-15",
+        "type": "Microsoft.Network/publicIPAddresses",
+        "name": "[parameters('lbPIPName')]",
+        "location": "[resourceGroup().location]",
+        "properties": {
+          "publicIPAllocationMethod": "Dynamic"
+        },
+        "tags": {
+          "displayName": "PublicIPAddress - LB"
+        }
+      },
+      {
+        "apiVersion": "2015-06-15",
+        "type": "Microsoft.Network/networkInterfaces",
+        "name": "[concat(variables('webVMSetting').nicName, copyindex(1))]",
+        "location": "[resourceGroup().location]",
+        "tags": {
+          "displayName": "NetworkInterfaces - Web"
+        },
+        "copy": {
+          "name": "webniccount",
+          "count": "[parameters('webCount')]"
+        },
+        "dependsOn": [
+          "[concat('Microsoft.Network/virtualNetworks/', parameters('vnetName'))]",
+          "[concat('Microsoft.Network/loadBalancers/', parameters('lbName'))]",
+          "[concat('Microsoft.Network/loadBalancers/',parameters('lbName'),'/inboundNatRules/', 'RDP-', variables('webVMSetting').vmName, copyIndex(1))]"
+        ],
+        "properties": {
+          "ipConfigurations": [
+            {
+              "name": "ipconfig1",
+              "properties": {
+                "networkSecurityGroup": {
+                  "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('remoteAccessNSGName'))]"
+                },
+                "privateIPAllocationMethod": "Static",
+                "privateIPAddress": "[concat(variables('webVMSetting').ipAddress,copyindex(4))]",
+                "subnet": {
+                  "id": "[variables('frontEndSubnetRef')]"
+                },
+                "loadBalancerBackendAddressPools": [
+                  {
+                    "id": "[concat(variables('lbID'), '/backendAddressPools/LoadBalancerBackend')]"
+                  }
+                ],
+                "loadBalancerInboundNatRules": [
+                  {
+                    "id": "[resourceId('Microsoft.Network/loadBalancers/inboundNatRules', parameters('lbName'),concat('RDP-', variables('webVMSetting').vmName, copyIndex(1)))]"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        "apiVersion": "2015-06-15",
+        "type": "Microsoft.Compute/availabilitySets",
+        "name": "[variables('webVMSetting').avsetName]",
+        "location": "[resourceGroup().location]",
+        "tags": {
+          "displayName": "AvailabilitySet - Web"
+        }
+      },
+      {
+        "apiVersion": "2015-06-15",
+        "type": "Microsoft.Compute/virtualMachines",
+        "name": "[concat(variables('webVMSetting').vmName,copyindex(1))]",
+        "location": "[resourceGroup().location]",
+        "dependsOn": [
+          "[concat('Microsoft.Network/networkInterfaces/', variables('webVMSetting').nicName, copyindex(1))]",
+          "[concat('Microsoft.Compute/availabilitySets/', variables('webVMSetting').avsetName)]",
+          "[concat('Microsoft.Storage/storageAccounts/', parameters('stdStorageName'))]"
+        ],
+        "tags": {
+          "displayName": "VMs - Web"
+        },
+        "copy": {
+          "name": "webvmcount",
+          "count": "[parameters('webCount')]"
+        },
+        "properties": {
+          "availabilitySet": {
+            "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('webVMSetting').avsetName)]"
+          },
+          "hardwareProfile": {
+            "vmSize": "[variables('webVMSetting').vmSize]"
+          },
+          "osProfile": {
+            "computerName": "[concat(variables('webVMSetting').vmName,copyindex(1))]",
+            "adminUsername": "[parameters('adminUsername')]",
+            "adminPassword": "[parameters('adminPassword')]"
+          },
+          "storageProfile": {
+            "imageReference": {
+              "publisher": "[variables('webVMSetting').publisher]",
+              "offer": "[variables('webVMSetting').offer]",
+              "sku": "[variables('webVMSetting').sku]",
+              "version": "[variables('webVMSetting').version]"
+            },
+            "osDisk": {
+              "name": "[concat(variables('webVMSetting').osdisk,copyindex(1))]",
+              "vhd": {
+                "uri": "[concat('http://', parameters('stdStorageName'), '.blob.core.windows.net/', variables('vmStorageAccountContainerName'), '/', variables('webVMSetting').osdisk, copyindex(1),'.vhd')]"
+              },
+              "caching": "ReadWrite",
+              "createOption": "FromImage"
+            }
+          },
+          "networkProfile": {
+            "networkInterfaces": [
+              {
+                "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('webVMSetting').nicName,copyindex(1)))]"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "apiVersion": "2015-05-01-preview",
+        "type": "Microsoft.Network/loadBalancers",
+        "name": "[parameters('lbName')]",
+        "location": "[resourceGroup().location]",
+        "dependsOn": [
+          "[concat('Microsoft.Network/publicIPAddresses/', parameters('lbPIPName'))]"
+        ],
+        "tags": {
+          "displayName": "LB - Public"
+        },
+        "properties": {
+          "frontendIPConfigurations": [
+            {
+              "name": "LoadBalancerFrontend",
+              "properties": {
+                "publicIPAddress": {
+                  "id": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('lbPIPName'))]"
+                }
+              }
+            }
+          ],
+          "backendAddressPools": [
+            {
+              "name": "loadBalancerBackend"
+            }
+          ],
+          "loadBalancingRules": [
+            {
+              "name": "LBRule-80",
+              "properties": {
+                "frontendIPConfiguration": {
+                  "id": "[variables('frontEndIPConfigID')]"
+                },
+                "backendAddressPool": { "id": "[variables('lbPoolID')]" },
+                "protocol": "tcp",
+                "frontendPort": 80,
+                "backendPort": 80,
+                "enableFloatingIP": false,
+                "idleTimeoutInMinutes": 5,
+                "probe": { "id": "[variables('lbProbeID')]" }
+              }
+            }
+          ],
+          "probes": [
+            {
+              "name": "tcpProbe",
+              "properties": {
+                "protocol": "tcp",
+                "port": 80,
+                "intervalInSeconds": 5,
+                "numberOfProbes": "[parameters('webCount')]"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "apiVersion": "2015-06-15",
+        "type": "Microsoft.Network/loadBalancers/inboundNatRules",
+        "name": "[concat(parameters('lbName'), '/RDP-', variables('webVMSetting').vmName, copyIndex(1))]",
+        "location": "[resourceGroup().location]",
+        "dependsOn": [
+          "[concat('Microsoft.Network/loadBalancers/', parameters('lbName'))]"
+        ],
+        "tags": {
+          "displayName": "LB - NAT Rules"
+        },
+        "copy": {
+          "name": "lbLoopNode",
+          "count": "[parameters('webCount')]"
+        },
+        "properties": {
+          "frontendIPConfiguration": {
+            "id": "[variables('frontEndIPConfigID')]"
+          },
+          "protocol": "tcp",
+          "frontendPort": "[add(50000,copyIndex(1))]",
+          "backendPort": "[variables('webVMSetting').remotePort]",
+          "enableFloatingIP": false
+        }
+      }
+    ]
+  }
