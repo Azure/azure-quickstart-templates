@@ -1,0 +1,148 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adPDCVMName": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    },
+    "storageAccountNamePrefix": {
+      "type": "string"
+    },
+    "availabilitySet": {
+      "type": "string"
+    },
+    "adVMSize": {
+      "type": "string"
+    },
+    "adminUsername": {
+      "type": "string"
+    },
+    "adminPassword": {
+      "type": "securestring"
+    },
+    "windowsImagePublisher": {
+      "type": "string"
+    },
+    "windowsImageOffer": {
+      "type": "string"
+    },
+    "windowsImageSKU": {
+      "type": "string"
+    },
+    "vmContainerName": {
+      "type": "string"
+    },
+    "adPDCNicName": {
+      "type": "string"
+    },
+    "domainName": {
+      "type": "string"
+    },
+    "adPDCConfigurationFunction": {
+      "type": "string"
+    },
+    "adPDCModulesURL": {
+      "type": "string"
+    }
+  },
+  "resources": [
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[parameters('adPDCVMName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('adVMSize')]"
+        },
+        "availabilitySet": {
+          "id": "[parameters('availabilitySet')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('adPDCVMName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[parameters('windowsImagePublisher')]",
+            "offer": "[parameters('windowsImageOffer')]",
+            "sku": "[parameters('windowsImageSKU')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts/', concat(parameters('storageAccountNamePrefix'), '1')), '2016-01-01').primaryEndpoints.blob, parameters('vmContainerName'),'/',parameters('adPDCVMName'),'-osdisk.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          },
+          "dataDisks": [
+            {
+              "vhd": {
+                "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts/', concat(parameters('storageAccountNamePrefix'), '1')), '2016-01-01').primaryEndpoints.blob, parameters('vmContainerName'),'/', parameters('adPDCVMName'),'data-1.vhd')]"
+              },
+              "name": "[concat(parameters('adPDCVMName'),'-data-disk1')]",
+              "createOption": "Empty",
+              "caching": "None",
+              "diskSizeGB": "128",
+              "lun": 0
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId(resourceGroup().name,'Microsoft.Network/networkInterfaces',parameters('adPDCNicName'))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": "true",
+            "storageUri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts/', concat(parameters('storageAccountNamePrefix'), '4')), '2016-01-01').primaryEndpoints.blob)]"
+          }
+        }
+      },
+      "resources": [
+        {
+          "type": "extensions",
+          "name": "InstallDomainController",
+          "apiVersion": "2015-06-15",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', parameters('adPDCVMName'))]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Powershell",
+            "type": "DSC",
+            "typeHandlerVersion": "2.17",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "modulesURL": "[parameters('adPDCModulesURL')]",
+              "wmfVersion": "4.0",
+              "configurationFunction": "[parameters('adPDCConfigurationFunction')]",
+              "properties": {
+                "domainName": "[parameters('domainName')]",
+                "adminCreds": {
+                  "userName": "[parameters('adminUserName')]",
+                  "password": "PrivateSettingsRef:adminPassword"
+                }
+              }
+            },
+            "protectedSettings": {
+              "items": {
+                "adminPassword": "[parameters('adminPassword')]"
+              }
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": {}
+}

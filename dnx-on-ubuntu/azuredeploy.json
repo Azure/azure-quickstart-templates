@@ -1,0 +1,221 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmAdminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The admin password for the Ubuntu machine"
+      }
+    },
+    "vmAdminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "The admin username for the Ubuntu machine"
+      }      
+    },
+    "vmName": {
+      "defaultValue": "dnx-on-ubuntu",
+      "type": "string",
+      "metadata": {
+        "description": "The name of the Ubuntu machine"
+      }      
+    }
+  },
+  "variables": {
+    "prefix": "dnx-on-ubuntu",
+    "nicName": "[concat(variables('prefix'),'-nic')]",
+    "nsgName": "[concat(variables('prefix'),'-nsg')]",
+    "pipName": "[concat(variables('prefix'),'-pip')]",
+    "vnetName": "[concat(variables('prefix'),'-vnet')]",
+    "storageAccountDiagnostics": "[concat(uniquestring(resourceGroup().id), 'diagsa')]",
+    "storageAccountVms": "[concat(uniquestring(resourceGroup().id), 'vmsa')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[parameters('vmName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "Standard_DS2"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "Canonical",
+            "offer": "UbuntuServer",
+            "sku": "14.04.4-LTS",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[parameters('vmName')]",
+            "createOption": "FromImage",
+            "vhd": {
+              "uri": "[concat('https', '://', variables('storageAccountVms'), '.blob.core.windows.net', concat('/vhds/', parameters('vmName'),'201641492245.vhd'))]"
+            },
+            "caching": "ReadWrite"
+          },
+          "dataDisks": []
+        },
+        "osProfile": {
+          "computerName": "[parameters('vmName')]",
+          "adminUsername": "[parameters('vmAdminUsername')]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": false
+          },
+          "secrets": [],
+          "adminPassword": "[parameters('vmAdminPassword')]"
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountVms'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+      ],     
+      "resources": [
+        {
+          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "name": "[concat(parameters('vmName'),'/installcustomscript')]",
+          "apiVersion": "2015-06-15",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName') )]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Azure.Extensions",
+			"type": "CustomScript",
+			"typeHandlerVersion": "2.0",
+			"autoUpgradeMinorVersion": true,
+            "settings": {
+              "fileUris": [
+                "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/dnx-on-ubuntu/scripts/post_deployment.sh"
+              ],
+              "commandToExecute": "[concat('/bin/bash post_deployment.sh ', parameters('vmAdminUsername'))]"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nicName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAddress": "10.2.0.4",
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('pipName'))]"
+              },
+              "subnet": {
+                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('vnetName')), '/subnets/default')]"
+              }
+            }
+          }
+        ],
+        "dnsSettings": {
+          "dnsServers": []
+        },
+        "enableIPForwarding": false,
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('pipName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('nsgName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "default-allow-ssh",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1000,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      },
+      "dependsOn": []
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('pipName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "idleTimeoutInMinutes": 4
+      },
+      "dependsOn": []
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('vnetName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.2.0.0/16"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "default",
+            "properties": {
+              "addressPrefix": "10.2.0.0/24"
+            }
+          }
+        ]
+      },
+      "dependsOn": []
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('storageAccountDiagnostics')]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "tags": {},
+      "properties": {
+        "accountType": "Standard_LRS"
+      },
+      "dependsOn": []
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('storageAccountVms')]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "tags": {},
+      "properties": {
+        "accountType": "Premium_LRS"
+      },
+      "dependsOn": []
+    }
+  ]
+}

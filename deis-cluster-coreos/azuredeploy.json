@@ -68,6 +68,19 @@
         "description": "Number of member nodes"
       },
       "defaultValue": "3"
+    },
+    "dockerVolumeSize": {
+      "type": "int",
+      "metadata": {
+        "description": "Size in GB of the Docker volume."
+      },
+      "defaultValue": "100"
+    },
+    "coreosVersion": {
+      "type": "string",
+      "metadata": {
+        "description": "Version of CoreOS to deploy."
+      }
     }
   },
   "variables": {
@@ -155,9 +168,6 @@
             "properties": {
               "loadBalancingRules": [
                 {
-                  "id": "[variables('lbAPIRuleID')]"
-                },
-                {
                   "id": "[variables('lbBuilderRuleID')]"
                 }
               ]
@@ -165,28 +175,6 @@
           }
         ],
         "loadBalancingRules": [
-          {
-            "name": "[variables('loadBalancerAPIRuleName')]",
-            "dependsOn": [
-              "[variables('lbIPConfig')]"
-            ],
-            "properties": {
-              "frontendIPConfiguration": {
-                "id": "[variables('lbIPConfig')]"
-              },
-              "backendAddressPool": {
-                "id": "[variables('lbPoolID')]"
-              },
-              "protocol": "TCP",
-              "frontendPort": "80",
-              "backendPort": "80",
-              "enableFloatingIP": false,
-              "idleTimeoutInMinutes": "10",
-              "probe": {
-                "id": "[variables('apiProbeID')]"
-              }
-            }
-          },
           {
             "name": "[variables('loadBalancerBuilderRuleName')]",
             "dependsOn": [
@@ -339,7 +327,7 @@
           "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
-          "computername": "[concat(variables('vmNamePrefix'), copyindex())]",
+          "computerName": "[concat(variables('vmNamePrefix'), copyindex())]",
           "adminUsername": "[parameters('adminUsername')]",
           "customData": "[parameters('customData')]",
           "linuxConfiguration": {
@@ -359,8 +347,19 @@
             "publisher": "[variables('imagePublisher')]",
             "offer": "[variables('imageOffer')]",
             "sku": "[variables('imageSKU')]",
-            "version": "latest"
+            "version": "[parameters('coreosVersion')]"
           },
+          "dataDisks": [
+            {
+              "name": "dockerdisk",
+              "diskSizeGB": "[parameters('dockerVolumeSize')]",
+              "lun": 0,
+              "vhd": {
+                "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/','datadisk', copyindex(),'.vhd')]"
+              },
+              "createOption": "Empty"
+            }
+          ],
           "osDisk": {
             "name": "osdisk",
             "vhd": {
