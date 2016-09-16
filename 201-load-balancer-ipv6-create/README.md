@@ -16,3 +16,5 @@ The template creates and configures the following Azure resources:
 - two load balancing rules to map the public VIPs to the private endpoints
 - an Availability Set that contains the two VMs
 - two virtual machines
+
+For a more information about this template, see [Deploy an Internet-facing load-balancer solution with IPv6 using a template](https://azure.microsoft.com/documentation/articles/load-balancer-ipv6-internet-template/)
