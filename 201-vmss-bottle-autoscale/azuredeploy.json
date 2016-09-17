@@ -2,34 +2,6 @@
   "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "resourceLocation": {
-      "type": "string",
-      "allowedValues": [
-        "East US",
-        "East US 2",
-        "West US",
-        "Canada Central",
-        "Canada East",
-        "Central US",
-        "South Central US",
-        "North Central US",
-        "North Europe",
-        "West Europe",
-        "Southeast Asia",
-        "East Asia",
-        "Japan West",
-        "Japan East",
-        "Brazil South",
-        "Australia East",
-        "Australia Southeast",
-        "South India",
-        "Central India",
-        "West India"
-      ],
-      "metadata": {
-        "description": "Azure region where all resources will be deployed. This is distinct from resource group location."
-      }
-    },
     "vmSku": {
       "type": "string",
       "defaultValue": "Standard_D1",
@@ -65,10 +37,7 @@
     }
   },
   "variables": {
-    "networkApi": "2016-06-01",
-    "storageApi": "2015-06-15",
-    "computeApi": "2016-03-30",
-    "insightsApi": "2015-04-01",
+    "location": "[resourceGroup().location]",
     "storageAccountType": "Standard_LRS",
     "saCount": 5,
     "newStorageAccountSuffix": "[concat(parameters('vmssName'), 'sa')]",
@@ -119,14 +88,18 @@
       "sku": "16.04.0-LTS",
       "version": "latest"
     },
-    "imageReference": "[variables('osType')]"
+    "imageReference": "[variables('osType')]",
+    "computeApiVersion": "2016-03-30",
+    "networkApiVersion": "2016-06-01",
+    "storageApiVersion": "2016-01-01",
+    "insightsApiVersion": "2015-04-01"
   },
   "resources": [
     {
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
-      "location": "[parameters('resourceLocation')]",
-      "apiVersion": "[variables('networkApi')]",
+      "location": "[variables('location')]",
+      "apiVersion": "[variables('networkApiVersion')]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -146,21 +119,23 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[concat(variables('uniqueStringArray')[copyIndex()], variables('newStorageAccountSuffix'))]",
-      "location": "[parameters('resourceLocation')]",
-      "apiVersion": "[variables('storageApi')]",
+      "location": "[variables('location')]",
+      "apiVersion": "[variables('storageApiVersion')]",
       "copy": {
         "name": "storageLoop",
         "count": "[variables('saCount')]"
       },
-      "properties": {
-        "accountType": "[variables('storageAccountType')]"
+      "properties": {},
+      "kind": "Storage",
+      "sku": {
+        "name": "[variables('storageAccountType')]"
       }
     },
     {
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
-      "location": "[parameters('resourceLocation')]",
-      "apiVersion": "[variables('networkApi')]",
+      "location": "[variables('location')]",
+      "apiVersion": "[variables('networkApiVersion')]",
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
@@ -171,8 +146,8 @@
     {
       "type": "Microsoft.Network/loadBalancers",
       "name": "[variables('loadBalancerName')]",
-      "location": "[parameters('resourceLocation')]",
-      "apiVersion": "[variables('networkApi')]",
+      "location": "[variables('location')]",
+      "apiVersion": "[variables('networkApiVersion')]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
       ],
@@ -223,8 +198,8 @@
     {
       "type": "Microsoft.Compute/virtualMachineScaleSets",
       "name": "[parameters('vmssName')]",
-      "location": "[parameters('resourceLocation')]",
-      "apiVersion": "[variables('computeApi')]",
+      "location": "[variables('location')]",
+      "apiVersion": "[variables('computeApiVersion')]",
       "dependsOn": [
         "storageLoop",
         "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]",
@@ -236,7 +211,7 @@
         "capacity": "[parameters('instanceCount')]"
       },
       "properties": {
-        "overprovision": "false",
+        "overprovision": "true",
         "upgradePolicy": {
           "mode": "Manual"
         },
@@ -319,7 +294,7 @@
                   },
                   "protectedSettings": {
                     "storageAccountName": "[variables('diagnosticsStorageAccountName')]",
-                    "storageAccountKey": "[listkeys(variables('accountid'), variables('storageApi')).key1]",
+                    "storageAccountKey": "[listkeys(variables('accountid'), variables('storageApi')).keys[0].value]",
                     "storageAccountEndPoint": "https://core.windows.net"
                   }
                 }
@@ -331,9 +306,9 @@
     },
     {
       "type": "Microsoft.Insights/autoscaleSettings",
-      "apiVersion": "[variables('insightsApi')]",
+      "apiVersion": "[variables('insightsApiVersion')]",
       "name": "autoscalewad",
-      "location": "[parameters('resourceLocation')]",
+      "location": "[variables('location')]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachineScaleSets/', parameters('vmSSName'))]"
       ],
@@ -395,5 +370,3 @@
     }
   ]
 }
-
-
