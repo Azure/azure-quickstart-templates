@@ -3,18 +3,12 @@
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAvyanConsultingCorp%2Fazure-quickstart-templates%2Fmaster%2Fazure-governance-cloudwise%2Fazuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAvyanConsultingCorp%2Fazure-quickstart-templates%2Fmaster%2Fazure-governance-cloudwise%2Fazuredeploy.json" target="_blank"> <img src="http://armviz.io/visualizebutton.png"/></a>
 
-A composite solution including 
-
- - Custom Web Application [using Ratecard,Usage and Service APIs], 
- - SQL DB, 
- - OMS Log Analytics, 
- - Azure Automation Runbooks [using OMSIngestion APIs] 
-
 ----------
 <h2> Table of Contents </h2>
 
 <!-- TOC -->
 
+- [Solution Overview](#solution-overview)
 - [Solution Template Overview](#solution-template-overview)
 - [Target Audience](#target-audience)
 - [Licenses & Costs](#licenses-costs)
@@ -34,8 +28,30 @@ A composite solution including
 
 ----------
 
+## Solution Overview
+Cloud adoption for an Enterprise, small or large, require responsible and efficient governance models to derive value from their cloud deployments.
 
-<a name="overview"></a>
+Cloudwise™, a composite solution available from Azure Quick Starts, is an adoption enabler for Customers, System Integrators and Partners alike, that delivers a self-serviceable, automated governance solution, focused on 
+
+* Optimizing Your Costs
+* Improve Your Application(s) Reliability 
+* Reducing Business Risk 
+
+The solution highlights the core governance pillars of **Visibility** and **Control**.
+
+This composite solution includes 
+
+ - Custom Web Application [using Azure Graph, Azure Ratecard, Azure Usage and Azure Service APIs],
+ - Visual Studio Application Insights 
+ - Azure SQL Database, 
+ - Azure Active Directory and Azure AD Application  
+ - Microsoft Operationa Management Suite
+    - Log Analytics,
+    - OMS custom dashboards 
+ - Azure Automation Runbooks [using OMSIngestion APIs]
+ - Power BI Dashboards
+ - Email Notifications 
+
 ## Solution Template Overview  
 
 **Solution Templates*** provide customers with a highly automated process to launch enterprise ready first and 3rd party ISV solution stacks on Azure in a pre-production environment. The **Solution Template** effort is complimentary to the [Azure Marketplace test drive program](https://azure.microsoft.com/en-us/marketplace/test-drives/). These fully baked stacks enable customers to quickly stand up a PoC or Piloting environments and also integrate it with their systems and customization.
