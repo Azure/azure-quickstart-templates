@@ -12,20 +12,38 @@
 <h2> Table Of Contents </h2>
 <!-- TOC -->
 
+- [1. Solution Overview](#1-solution-overview)
 - [1. Solution Template Overview](#1-solution-template-overview)
 - [2. Licenses & Costs](#2-licenses-costs)
 - [3. Target Audience](#3-target-audience)
 - [4. Prerequisites](#4-prerequisites)
-- [5. Solution Summary](#5-solution-summary)
 - [6. Reference Architecture Diagram](#6-reference-architecture-diagram)
     - [6.1 Deployed Infrastructure](#61-deployed-infrastructure)
 - [7. Deployment Steps](#7-deployment-steps)
 - [8. Configuration](#8-configuration)
+        - [8.1 Configuration Guides](#81-configuration-guides)
 - [9. Usage](#9-usage)
-        - [7.1. Usage Guides](#71-usage-guides)
+        - [9.1 Usage Guides](#91-usage-guides)
 - [10. Support](#10-support)
 
 <!-- /TOC -->
+
+##  1. Solution Overview
+
+
+An integrated ARM Template (<a href="https://azure.microsoft.com/en-us/documentation/articles/resource-group-overview/">Azure Resource Manager</a>) that stitches all the above technology into a single deployment. The following is a feature table that is pulled together for your benefit.
+
+|Datameer and HDInsight                     |TrendMicro Deep Security                               |Chef Server and Workstation    |
+|:------------------------                  |:------------------------                               |------------------------       |
+| Wide variety of Data Ingestion, Visualization (Internal and External to Enterprise)| Anti-malware, Content Filtering | Cloud Infrastructure Automation
+| Powered by Hadoop, but you never know it  | Intrusion prevention                                  | DevOps 
+| Self Service analytics                    | Integrity monitoring              | Compliance
+| MapReduce cluster                         | Log Inspection                    | Continuous Delivery |
+|                                           | TrendMicro Azure Extensions       | Chef cookbooks for TrendMicro '* 
+
+'* **TrendMicro Chef Cookbooks**: Solution deploys a Chef Server and an automated framework that allows any new VMs to bootstrap to chef Server as and when they get provisioned. Additionally, in order to integrate Chef Server with Chef Nodes in an automated way, additional microservices are deployed as a set of two Docker Containers (a Node.js app and a database).
+
+![](images/enterprise-risk-analysis-solution-overview.png)
 
 ##  1. Solution Template Overview
 ***Solution Templates*** provide customers with a highly automated process to launch enterprise ready first and 3rd party ISV solution stacks on Azure in a pre-production environment. The **Solution Template** effort is complimentary to the [Azure Marketplace test drive program](https://azure.microsoft.com/en-us/marketplace/test-drives/). These fully baked stacks enable customers to quickly stand up a PoC or Piloting environments and also integrate it with their systems and customization.
@@ -54,22 +72,7 @@ The target audience for these solution templates are
 * Programmatic deployments for Chef Server. (TrendMicro is optional)
 ![[](images/LicenseRequirementsPrerequisite.png)](images/LicenseRequirementsPrerequisite.png)   
  
-##  5. Solution Summary
-![](images/enterprise-risk-analysis-solution-overview.png)
 
-An integrated ARM Template (<a href="https://azure.microsoft.com/en-us/documentation/articles/resource-group-overview/">Azure Resource Manager</a>) that stitches all the above technology into a single deployment. The following is a feature table that is pulled together for your benefit.
-
-|Datameer and HDInsight                     |TrendMicro Deep Security                               |Chef Server and Workstation    |
-|:------------------------                  |:------------------------                               |------------------------       |
-| Wide variety of Data Ingestion, Visualization (Internal and External to Enterprise)| Anti-malware, Content Filtering | Cloud Infrastructure Automation
-| Powered by Hadoop, but you never know it  | Intrusion prevention                                  | DevOps 
-| Self Service analytics                    | Integrity monitoring              | Compliance
-| MapReduce cluster                         | Log Inspection                    | Continuous Delivery |
-|                                           | TrendMicro Azure Extensions       | Chef cookbooks for TrendMicro '* 
-
-'* **TrendMicro Chef Cookbooks**: Solution deploys a Chef Server and an automated framework that allows any new VMs to bootstrap to chef Server as and when they get provisioned. Additionally, in order to integrate Chef Server with Chef Nodes in an automated way, additional microservices are deployed as a set of two Docker Containers (a Node.js app and a database).
-
- 
 ## 6. Reference Architecture Diagram
 ![[] (images/Datameer-TrendMicro-Chef_Solution_Architecture.png)](images/Datameer-TrendMicro-Chef_Solution_Architecture.png)
 
@@ -108,9 +111,15 @@ You can click the "deploy to Azure" button at the beginning of this document or 
 The deployment takes about approximately 45mins. Once it is deployed there are few minor manual steps to 
 
 ## 8. Configuration
+####  8.1 Configuration Guides
+
+You can use the following guide to configure the components in the solution.
+```sh
+<guide link goes here>
+```
 
 ## 9. Usage
-####  7.1. Usage Guides
+####  9.1 Usage Guides
 
 You can use the following guide to use the solution.
 ```sh
