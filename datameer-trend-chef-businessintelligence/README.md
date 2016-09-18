@@ -113,12 +113,12 @@ The deployment takes about approximately 45mins. Once it is deployed there are f
 ## 8. Configuration
 ####  8.1 Configuration Guides
 
-You can use <a href= /images/HOL_Datameer_TrendMicro_Document.pdf > [this guide] </a> to configure the components in the solution.
+You can use [this guide](images/HOL_Datameer_TrendMicro_Document.pdf) to configure the components in the solution.
 
 ## 9. Usage
 ####  9.1 Usage Guides
 
-You can use <a href= /images/HOL_Datameer_TrendMicro_Document.pdf > [this guide] </a> to use this solution.
+You can use [this guide](images/HOL_Datameer_TrendMicro_Document.pdf)  to use this solution.
 
 ## 10. Support
 For any support-related issues or questions, please contact us for assistance.
