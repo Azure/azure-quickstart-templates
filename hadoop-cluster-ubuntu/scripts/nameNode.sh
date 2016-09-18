@@ -138,7 +138,7 @@ cat >> hdfs-site.xml <<EOF
     </property>
     <property>
         <name>dfs.replication</name>
-        <value>\${dataNodeCount}</value>
+        <value>2</value>
     </property>
     <property>
         <name>dfs.namenode.secondary.http-address</name>
