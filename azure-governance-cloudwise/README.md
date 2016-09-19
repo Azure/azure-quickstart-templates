@@ -131,7 +131,7 @@ You can use the following guide to use the solution.
 ## Terms of Use and Privacy Policies
 As the solution contains IP owned by Avyan Consulting Corp, please refer to
 This solution will be available in Azure Marketplace - tentatively around MS Ignite 2016 timeframe (End of Sept - Beginning Of Oct 2016)  
-* [Terms of Service](/termsofuse/CloudWise_Terms_Of_Service.pdf)
+* [Terms of Service](termsofuse/CloudWise_Terms_Of_Service.pdf)
 * [Privacy Policy](termsofuse/CloudWise_Privacy_Policy.pdf)
 
 ## Support
