@@ -13,10 +13,6 @@ parameters:
     type: object
     metadata:
       description: Storage Account Settings
-  location:
-    type: string
-    metadata:
-      description: Location where resources will be provisioned
   subnet:
     type: object
     metadata:
@@ -58,14 +54,14 @@ resources:
 - apiVersion: '2015-06-15'
   type: Microsoft.Compute/availabilitySets
   name: "es-data-set"
-  location: "[parameters('location')]"
+  location: "[resourceGroup().location]"
   properties:
     platformUpdateDomainCount: 20
     platformFaultDomainCount: 3
-- apiVersion: '2015-06-15'
+- apiVersion: '2016-03-30'
   type: Microsoft.Network/networkInterfaces
   name: "[concat(parameters('namespace'), '-nic', copyindex())]"
-  location: "[parameters('location')]"
+  location: "[resourceGroup().location]"
   copy:
     name: "[concat(parameters('namespace'),'nicLoop')]"
     count: "[parameters('vmCount')]"
@@ -80,12 +76,12 @@ resources:
 - apiVersion: '2015-06-15'
   type: Microsoft.Compute/virtualMachines
   name: "[concat(variables('vmName'), copyindex())]"
-  location: "[parameters('location')]"
+  location: "[resourceGroup().location]"
   copy:
     name: "[concat(parameters('namespace'), 'virtualMachineLoop')]"
     count: "[parameters('vmCount')]"
   dependsOn:
-  - "[concat('Microsoft.Network/networkInterfaces/', parameters('namespace'), '-nic', copyindex())]"
+  - "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('namespace'), '-nic', copyindex()))]"
   - "[resourceId('Microsoft.Compute/availabilitySets', 'es-data-set')]"
   properties:
     availabilitySet:
@@ -102,7 +98,7 @@ resources:
       osDisk:
         name: osdisk
         vhd:
-          uri: "[concat('http://', variables('storageAccountName'), parameters('storageSettings').mapping[copyindex()], '.blob.core.windows.net/vhds/', variables('vmName'), copyindex(), '-osdisk.vhd')]"
+          uri: "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', concat(variables('storageAccountName'), parameters('storageSettings').mapping[copyindex()])), '2016-01-01').primaryEndpoints.blob, 'vhds/', variables('vmName'), copyindex(), '-osdisk.vhd')]"
         caching: ReadWrite
         createOption: FromImage
       dataDisks:
@@ -110,23 +106,23 @@ resources:
         diskSizeGB: "[parameters('dataDiskSize')]"
         lun: 0
         vhd:
-          Uri: "[concat('http://', variables('storageAccountName'), parameters('storageSettings').mapping[copyindex()],'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/', parameters('namespace'),'vm', copyindex(),'dataDisk::index' ,'.vhd')]"
+          uri: "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', concat(variables('storageAccountName'), parameters('storageSettings').mapping[copyindex()])), '2016-01-01').primaryEndpoints.blob, variables('vmStorageAccountContainerName'), '/', parameters('namespace'), 'vm', copyindex(), 'dataDisk::index', '.vhd')]"
         caching: None
         createOption: Empty
     networkProfile:
       networkInterfaces:
-      - id: "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('namespace'),'-nic', copyindex()))]"
+      - id: "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('namespace'),'-nic', copyindex()))]"
   resources:
-  - type: Microsoft.Compute/virtualMachines/extensions
-    name: "[concat(variables('vmName'), copyindex(), '/installelasticsearch')]"
+  - type: extensions
+    name: "installelasticsearch"
     apiVersion: '2015-06-15'
-    location: "[parameters('location')]"
+    location: "[resourceGroup().location]"
     dependsOn:
-    - "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'), copyindex())]"
+    - "[resourceId('Microsoft.Compute/virtualMachines/', concat(variables('vmName'), copyindex()))]"
     properties: 
         publisher: "[parameters('osSettings').extensionSettings.data.publisher]"
         type: "[parameters('osSettings').extensionSettings.data.type]"
         typeHandlerVersion: "[parameters('osSettings').extensionSettings.data.typeHandlerVersion]"
         settings: 
             fileUris: "[parameters('osSettings').extensionSettings.data.settings.fileUris]"
-            commandToExecute: "[concat(parameters('osSettings').extensionSettings.data.settings.commandToExecute, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameAFS')), '2015-05-01-preview').key1)]"
+            commandToExecute: "[concat(parameters('osSettings').extensionSettings.data.settings.commandToExecute, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameAFS')), '2016-01-01').keys[0].value)]"
