@@ -44,7 +44,7 @@ An integrated ARM Template (<a href="https://azure.microsoft.com/en-us/documenta
 
 ![](images/enterprise-risk-analysis-solution-overview.png)
 
-You can watch [this vidoe](/images/Risk_Analysis_1080.mp4) for the quick overview of this solution.
+You can watch [this video](/images/Risk_Analysis_1080.mp4) for the quick overview of this solution.
 
 ##  2. Solution Template Overview
 ***Solution Templates*** provide customers with a highly automated process to launch enterprise ready first and 3rd party ISV solution stacks on Azure in a pre-production environment. The **Solution Template** effort is complimentary to the [Azure Marketplace test drive program](https://azure.microsoft.com/en-us/marketplace/test-drives/). These fully baked stacks enable customers to quickly stand up a PoC or Piloting environments and also integrate it with their systems and customization.
