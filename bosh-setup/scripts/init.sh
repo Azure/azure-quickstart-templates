@@ -37,4 +37,3 @@ wget $bosh_init_url
 chmod +x ./bosh-init-*
 sudo mv ./bosh-init-* /usr/local/bin/bosh-init
 
-echo "Finish"
