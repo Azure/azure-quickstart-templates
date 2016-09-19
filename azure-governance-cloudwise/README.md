@@ -22,6 +22,7 @@
 - [Deployment and Settings](#deployment-and-settings)
 - [Post Deployment Steps](#post-deployment-steps)
 - [Usage](#usage)
+- [Terms of use and Privacy Policies](#terms-of-use-and-privacy-policies)
 - [Support](#support)
 
 <!-- /TOC -->
@@ -93,9 +94,8 @@ In its current state, solution templates come with licenses built-in – there m
 
 ### PowerBI Dashboard (for IT Managers and Business Decision makers)
 Please download the link to the PowerBI dashboard
-```sh
-[CloudWise-Azure_Governance_PowerBI_Dashboard.zip](/images/CloudWise-Azure_Governance_PowerBI_Dashboard.zip)
-```
+[CloudWise-Azure_Governance_PowerBI_Dashboard.zip](images/CloudWise_Azure_Governance_PowerBI_Dashboard.zip)
+
 <br/> &nbsp;&nbsp;&nbsp;&nbsp; ![](images/CloudWise_PowerBI_Dashboard.png)
 
 
@@ -127,6 +127,13 @@ Usage Guides
 You can use the following guide to use the solution.
 
 <guide link goes here>
+
+## Terms of use and Privacy Policies
+As the solution contains IP owned by Avyan Consulting Corp, please refer to
+<br />
+[Terms of Service](/termsofuse/CloudWise_Terms_Of_Service.pdf)
+<br />
+[Privacy Policy](termsofuse/CloudWise_Privacy_Policy.pdf)
 
 ## Support
 For any support-related issues or questions, please contact us for assistance.
