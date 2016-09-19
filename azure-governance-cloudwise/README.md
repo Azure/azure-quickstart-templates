@@ -92,6 +92,12 @@ In its current state, solution templates come with licenses built-in – there m
 ## Dashboards
 
 ### PowerBI Dashboard (for IT Managers and Business Decision makers)
+Please download the link to the PowerBI dashboard
+```sh
+[CloudWise-Azure_Governance_PowerBI_Dashboard.zip](/images/CloudWise-Azure_Governance_PowerBI_Dashboard.zip)
+```
+<br/> &nbsp;&nbsp;&nbsp;&nbsp; ![](images/CloudWise_PowerBI_Dashboard.png)
+
 
 ### OMS Web Apps Monitoring dashboard (For Operations Teams)
 <br/> &nbsp;&nbsp;&nbsp;&nbsp; ![](images/WebAppPaaS.png)
@@ -124,6 +130,6 @@ You can use the following guide to use the solution.
 
 ## Support
 For any support-related issues or questions, please contact us for assistance.
-
-> azuremarketplace@avyanconsulting.com [contact us](mailto:azuremarketplace@avyanconsulting.com) 
-
+```sh
+> azuremarketplace@avyanconsulting.com 
+```
