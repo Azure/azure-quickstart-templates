@@ -1,37 +1,33 @@
-# This template will create a SQL Server 2014 SP1 Enterprise edition with Auto Backup feature enabled.
+# Create an Azure virtual machine running SQL Server 2014 SP1 Enterprise edition with Automated Backup feature enabled.
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-vm-sql-full-autobackup%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vm-sql-full-autobackup%2Fazuredeploy.json" target="_blank">
   <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-vm-sql-full-autobackup%2Fazuredeploy.json" target="_blank">
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vm-sql-full-autobackup%2Fazuredeploy.json" target="_blank">
   <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template deploys a **SQL SERVER 2014 SP1 Virtual Machine** solution with all necessary components. It also enable Auto Backup feature.
+## Solution overview
+
+This template provisions a virtual machine with **SQL Server 2014 SP1 running on Windows Server 2012 R2**. It also enables the Automated Backup feature.
 
 `Tags: SQL Server, Auto Backup, SQL Server 2014 Enterprise`
 
-## Solution overview and deployed resources
-
-This is an overview of the solution
-
-This template will create a SQL Server 2014 Enterprise edition with Auto Backu feature enabled:
+This template will also create the following resources:
 
 +	A Virtual Network
-+	Two Storage Accounts one is used for SQL Server VM, one for SQL Server VM Autobackup 
++	Two Storage Accounts one is used for SQL Server VM, one for SQL Server VM Autobackup
 + 	One public IP address
 +	One network interface
 +	One network security group
 
-## SQL Server IaaS Agent
+## Automated Backup
 
-A component that will be installed on the VM when features are enabled and this component is called SQL Server IaaS Agent. It is built in the form of Azure VM Extension meaning all the Azure VM Extension concepts are applicable making it perfect tool for the management of SQL in Azure VMs on scale. You can push this IaaS Agent to a number of VMs at once, you can configure, and you can remove or disable it as well.
+The Automated Backup feature can be used to configure an automated backup schedule for SQL databases on an Azure virtual machine running SQL Server. More information on this feature can be found [here](https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-windows-sql-automated-backup/).
 
-## Auto Backup
+This template can be used to enable or change the configuration of Automated Backup.
 
-This service enables you to configure a backup schedule on your SQL Server 2014 Enterprise and Standard Virtual Machines in a very convenient manner while ensuring your data is backed up consistently and safely. Automated Backup is configured to backup all existing and new databases for the default instance of SQL Server. This simplifies the usual process of configuring Managed Backup for new databases and then for each existing database by combining it into one simple automated setup.
-
-If you wish to customize the settings, you can specify the retention period, storage account, and whether you want encryption to be enabled. The retention period, as is standard for Managed Backup, can be anywhere between 1 and 30 days. The storage account defaults to the same storage account as the VM, but can be changed to any other storage account. This provides you with a DR option, allowing you to back up your databases to storage in another datacenter. If you decide to encrypt your backups, an encryption certificate will be generated and saved in the same storage account as the backups. In this scenario, you will also need to enter a password which will be used to protect the encryption certificates used for encrypting and decrypting your backups. This allows you to not worry about your backups beyond the configuration of this feature, and also ensures you can trust that your backups are secure.
+If you wish to disable Automated Backup, you must edit *azuredeploy.json* and change "Enable" to be false.
 
 ## Notable Parameters
 
@@ -41,3 +37,6 @@ If you wish to customize the settings, you can specify the retention period, sto
 |sqlAutobackupStorageAccountName|What storage account to use for backups|myExistingBackupStoragAccountName|
 |sqlAutobackupEncryptionPassword|a password which will be used to protect the encryption certificates used for encrypting and decrypting your backups|Password123|
 
+## SQL Server IaaS Agent extension
+
+Automated Backup is supported in your virtual machine through the SQL Server IaaS Agent extension. This extension must be installed on the VM to be able to use this feature. When you enable Automated Backup on your virtual machine, the extension will be automatically installed. This extension will also report back the latest status of this feature to you. More information on this extension can be found [here](https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-windows-sql-server-agent-extension/).
