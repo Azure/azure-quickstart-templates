@@ -78,8 +78,8 @@ In its current state, solution templates come with licenses built-in – there m
 * Azure user account with <span style="color:red;"> **Service Admin Role** </span>. This is required for creating an AD applicaition as well as a RunAs Service Role.
 * Azure Marketplace Deployment Agreements - VM Images from Azure marketplace need a registered Azure credit card for deployments to be successful. We understand that some customers (especially EA and internal MS customers) may not have this configured leading to failed deployments.   
 * Operations Management Suite Account (Free Sign Up – No credit card required. Sign up for your free OMS account [here](https://www.microsoft.com/en-us/cloud-platform/operations-management-suite))
-<br/> &nbsp;&nbsp;&nbsp;&nbsp; ![](images/CreateOMSWorkspace.png))
-* Create an Automation account with RunAs Service principal. Unfortunately ARM templates don't allow for creating AD service principals as yet. So this step is currently a manual pre-requisite
+<br/> &nbsp;&nbsp;&nbsp;&nbsp; ![](images/CreateOMSWorkspace.png)
+* Create an Automation account with RunAs Service principal. Unfortunately ARM templates don't allow for creating AD service principals as yet, so this step is currently a manual.
     * Refer the blog https://azure.microsoft.com/en-us/documentation/articles/automation-sec-configure-azure-runas-account/ for the steps.
     * Creation of ServicePrincipal has a propensity to fail randomly. A basic verification whether it was successfully created is <span style="color:red;"> **mandatory** </span>
 * Capture your OMS Workspace details 
@@ -116,7 +116,11 @@ You can click the "deploy to Azure" button at the beginning of this document or 
 
 ## Usage
 
+Usage Guides
 
+You can use the following guide to use the solution.
+
+<guide link goes here>
 
 ## Support
 For any support-related issues or questions, please contact us for assistance.
