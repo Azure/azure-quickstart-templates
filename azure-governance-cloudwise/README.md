@@ -22,7 +22,7 @@
 - [Deployment and Settings](#deployment-and-settings)
 - [Post Deployment Steps](#post-deployment-steps)
 - [Usage](#usage)
-- [Terms of use and Privacy Policies](#terms-of-use-and-privacy-policies)
+- [Terms of Use and Privacy Policies](#terms-of-use-and-privacy-policies)
 - [Support](#support)
 
 <!-- /TOC -->
@@ -128,12 +128,11 @@ You can use the following guide to use the solution.
 
 <guide link goes here>
 
-## Terms of use and Privacy Policies
+## Terms of Use and Privacy Policies
 As the solution contains IP owned by Avyan Consulting Corp, please refer to
-<br />
-[Terms of Service](/termsofuse/CloudWise_Terms_Of_Service.pdf)
-<br />
-[Privacy Policy](termsofuse/CloudWise_Privacy_Policy.pdf)
+This solution will be available in Azure Marketplace - tentatively around MS Ignite 2016 timeframe (End of Sept - Beginning Of Oct 2016)  
+* [Terms of Service](/termsofuse/CloudWise_Terms_Of_Service.pdf)
+* [Privacy Policy](termsofuse/CloudWise_Privacy_Policy.pdf)
 
 ## Support
 For any support-related issues or questions, please contact us for assistance.
