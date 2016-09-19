@@ -12,7 +12,7 @@ The following information is relevant to get started with contributing to this r
 
 You can deploy these samples directly through the Azure Portal or by using the scripts supplied in the root of the repo.
 
-To deploy a sammple using the Azure Portal, click the **Deploy to Azure** button found in the README.md of each sample.
+To deploy a sample using the Azure Portal, click the **Deploy to Azure** button found in the README.md of each sample.
 
 To deploy the sample via the command line (using [Azure PowerShell or the Azure CLI](https://azure.microsoft.com/en-us/downloads/)) you can use the scripts.
 
@@ -66,7 +66,7 @@ The README.md describes your deployment. A good description helps other communit
 + Deploy to Azure button
 + Visualize button
 + Description of what the template will deploy
-+ Tags, that can be used for seach. Specify the tags comma seperated and enclosed between two back-ticks (e.g Tags: `cluster, ha, sql`)
++ Tags, that can be used for search. Specify the tags comma separated and enclosed between two back-ticks (e.g Tags: `cluster, ha, sql`)
 + *Optional: Prerequisites
 + *Optional: Description on how to use the application
 + *Optional: Notes
