@@ -236,7 +236,7 @@ The following commands and arguments are provided:
 
 One way to create a cluster is from Azure portal. Click the following button will bring you to Azure portal UI to deploy MATLAB Distributed Computing Server cluster. Refer to the following section for parameter values.
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2master%2Fmatlab-cluster%2Fazuredeploy.private.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fmatlab-cluster%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 

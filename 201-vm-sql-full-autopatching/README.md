@@ -1,39 +1,33 @@
-# This template will create a SQL Server 2014 SP1 Enterprise edition with Auto Patching feature enabled.
+# Create an Azure virtual machine running SQL Server 2014 SP1 Enterprise edition with Automated Patching feature enabled.
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-vm-sql-full-autopatching%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vm-sql-full-autopatching%2Fazuredeploy.json" target="_blank">
   <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-vm-sql-full-autopatching%2Fazuredeploy.json" target="_blank">
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vm-sql-full-autopatching%2Fazuredeploy.json" target="_blank">
   <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template deploys a **SQL SERVER 2014 SP1 Virtual Machine** solution with all necessary components. It also enable Auto Patching feature.
+## Solution overview
+
+This template provisions a virtual machine with **SQL Server 2014 SP1 running on Windows Server 2012 R2**. It also enable Automated Patching feature.
 
 `Tags: SQL Server, Auto Patching, SQL Server 2014 Enterprise`
 
-## Solution overview and deployed resources
-
-This is an overview of the solution
-
-This template will create a SQL Server 2014 Enterprise edition with Auto Patching feature enabled:
+This template will also create the following resources:
 
 +	A Virtual Network
-+	Two Storage Accounts one is used for SQL Server VM, one for SQL Server VM Autobackup 
++	Two Storage Accounts one is used for SQL Server VM, one for SQL Server VM Autobackup
 + 	One public IP address
 +	One network interface
 +	One network security group
 
-## SQL Server IaaS Agent
-
-A component that will be installed on the VM when features are enabled and this component is called SQL Server IaaS Agent. It is built in the form of Azure VM Extension meaning all the Azure VM Extension concepts are applicable making it perfect tool for the management of SQL in Azure VMs on scale. You can push this IaaS Agent to a number of VMs at once, you can configure, and you can remove or disable it as well.
-
 ## Auto Patching
 
-Many customers told us that they would like to move their patching schedules off business hours. This feature enables you to do exactly this – define the maintenance window that would keep your patch installs in the range you have specified.
+The Automated Patching feature can be used to schedule a patching window during which all Windows and SQL Server updates will take place. More information on this feature can be found [here](https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-windows-sql-automated-patching/).
 
-When you look on the settings available for the Automated Patching you could find you are familiar with those, because they mimic settings available from the Windows Update Agent (service that drives patching of your Windows machine). Settings are simple and powerful at the same time. All that you need to define to make sure patches are applied when you want is: day of the week, start of the maintenance window, and duration of the maintenance window. It relies on the Windows Update and the Microsoft Update infrastructure and installs any update that matches the ‘Important’ category for the machine.
+This template can be used to enable or change the configuration of Automated Patching.
 
-This feature allows you to patch your Azure Virtual Machines in effective and predictable way even when those VMs are not joined to any domain and not controlled by any patching infrastructure
+If you wish to disable Automated Patching, you must edit *azuredeploy.json* and change "Enable" to be false.
 
 ## Notable Parameters
 
@@ -42,3 +36,8 @@ This feature allows you to patch your Azure Virtual Machines in effective and pr
 |sqlAutopatchingDayOfWeek|Patches installed day. Sunday to Saturday for a specific day; Everyday for daily Patches or Never to disable Auto Patching|Monday|
 |sqlAutopatchingStartHour|Begin updates hour|22|
 |sqlAutopatchingWindowDuration|Patches must be installed within this duration minutes.|60|
+
+
+## SQL Server IaaS Agent extension
+
+Automated Patching is supported in your virtual machine through the SQL Server IaaS Agent extension. This extension must be installed on the VM to be able to use this feature. When you enable Automated Patching on your virtual machine, the extension will be automatically installed. This extension will also report back the latest status of this feature to you. More information on this extension can be found [here](https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-windows-sql-server-agent-extension/).
