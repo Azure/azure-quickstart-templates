@@ -9,21 +9,20 @@
 </a>
 
 
-<h2> Table Of Contents </h2>
 <!-- TOC -->
 
 - [1. Solution Overview](#1-solution-overview)
-- [1. Solution Template Overview](#1-solution-template-overview)
-- [2. Licenses & Costs](#2-licenses-costs)
-- [3. Target Audience](#3-target-audience)
-- [4. Prerequisites](#4-prerequisites)
+- [2. Solution Template Overview](#2-solution-template-overview)
+- [3. Licenses & Costs](#3-licenses-costs)
+- [4. Target Audience](#4-target-audience)
+- [5. Prerequisites](#5-prerequisites)
 - [6. Reference Architecture Diagram](#6-reference-architecture-diagram)
     - [6.1 Deployed Infrastructure](#61-deployed-infrastructure)
 - [7. Deployment Steps](#7-deployment-steps)
 - [8. Configuration](#8-configuration)
-        - [8.1 Configuration Guides](#81-configuration-guides)
+    - [8.1 Configuration Guides](#81-configuration-guides)
 - [9. Usage](#9-usage)
-        - [9.1 Usage Guides](#91-usage-guides)
+    - [9.1 Usage Guides](#91-usage-guides)
 - [10. Support](#10-support)
 
 <!-- /TOC -->
@@ -45,7 +44,9 @@ An integrated ARM Template (<a href="https://azure.microsoft.com/en-us/documenta
 
 ![](images/enterprise-risk-analysis-solution-overview.png)
 
-##  1. Solution Template Overview
+You can watch [this vidoe](/images/Risk_Analysis_1080.mp4) for the quick overview of this solution.
+
+##  2. Solution Template Overview
 ***Solution Templates*** provide customers with a highly automated process to launch enterprise ready first and 3rd party ISV solution stacks on Azure in a pre-production environment. The **Solution Template** effort is complimentary to the [Azure Marketplace test drive program](https://azure.microsoft.com/en-us/marketplace/test-drives/). These fully baked stacks enable customers to quickly stand up a PoC or Piloting environments and also integrate it with their systems and customization.
 
 Customers benefit greatly from solution templates because of the ease with which they can stand up enterprise-grade, fully integrated stacks on Azure. The extensive automation and testing of these solutions will allow them to spin up pre-production environments with minimal manual steps and customization.  Most importantly, customers now have the confidence to transition the solution into a fully production-ready environment with confidence.
@@ -54,17 +55,17 @@ Customers benefit greatly from solution templates because of the ease with which
 *Disclaimer*: These are intended as pilot solutions and not production ready.
 Please [contact us](azuremarketplace@avyanconsulting.com) if you need further info or support on this solution.
 
-##  2. Licenses & Costs
+##  3. Licenses & Costs
 In its current state, solution templates come with licenses built-in – there may be a BYOL option included in the future. The solution template will be deployed in the Customer’s Azure subscription, and the Customer will incur Azure usage charges associated with running the solution stack.
 
-##  3. Target Audience
+##  4. Target Audience
 The target audience for these solution templates are 
 * **Business Decision Maker, IT Data Analyst** - or anybody w/i the organization who cares for the managing risk on Business transactions
 * **IT Decision Maker & Infrastructure Architects** - or any personnel w/i the organization that's responsibile for managing Infrastructure risk
 * **IT Decision Maker & Infrastructure Architects** - or any personnel w/i the organization that's responsibile for DevOps/IT Configuration management
 *  and lastly, but very importantly - **IT professionals** who need to stand-up and/or deploy infrastructure stacks.
 
-##  4. Prerequisites
+##  5. Prerequisites
 * Azure Subscription - if you want to test drive individual ISV products, please check out the [Azure Marketplace Test Drive Program ](https://azure.microsoft.com/en-us/marketplace/test-drives/)
 * Azure user account with Contributor/Admin Role
 * Sufficient Quota - At least 20 Cores(with default VM Sizes)
@@ -103,7 +104,6 @@ As a part of deployment the template launches the following:
 * Items marked with * are licenced components
 * Trial licences included for TrendMicro (30days) and Chef (30days). Datameer licences (trial for 14days) need to be enabled post installation and are then subsequently available for an annual contract renewal. Please reach out to us for any of the licencing related questions and we might be able to influence *some of the ISVs, some of the times*. 
 
-
 ##  7. Deployment Steps
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
 
@@ -111,12 +111,12 @@ You can click the "deploy to Azure" button at the beginning of this document or 
 The deployment takes about approximately 45mins. Once it is deployed there are few minor manual steps to 
 
 ## 8. Configuration
-####  8.1 Configuration Guides
+### 8.1 Configuration Guides
 
 You can use [this guide](/images/HOL_Datameer_TrendMicro_Document.pdf) to configure the components in the solution.
 
 ## 9. Usage
-####  9.1 Usage Guides
+### 9.1 Usage Guides
 
 You can use [this guide](/images/HOL_Datameer_TrendMicro_Document.pdf) to use this solution.
 
