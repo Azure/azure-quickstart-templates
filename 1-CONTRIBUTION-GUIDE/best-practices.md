@@ -129,8 +129,10 @@ The following guidelines are relevant to the main deployment template and nested
 
  ```
  "properties": {
- 	"publisher": "Microsoft.OSTCExtensions",
- 	"type": "CustomScriptForLinux",
+ 	"publisher": "Microsoft.Azure.Extensions",
+ 	"type": "CustomScript",
+	"version": "2.0",
+	"autoUpgradeMinorVersion": true,
  	"settings": {
  		"fileUris": [
  			"[concat(variables('template').assets, '/lamp-app/install_lamp.sh')]"
