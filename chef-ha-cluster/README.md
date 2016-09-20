@@ -7,7 +7,7 @@
 <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template has artifacts that need to be staged for deployment (Configuration Scripts) so use the below command with the upload flag to deploy this template.
+**This template has artifacts that need to be staged for deployment (Configuration Scripts) so use the below command with the upload flag to deploy this template or provide a storage account and SAS token when using the deploy button above.**
 You can optionally specify a storage account to use, if so the storage account must already exist within the subscription.  If you don't want to specify a storage account
 one will be created by the script (think of this as "temp" storage for AzureRM) and reused by subsequent deployments.
 
