@@ -248,7 +248,7 @@ Add-AzureRmRouteConfig `
     -NextHopIpAddress $Subnet3PrivateAddress | Set-AzureRmRoutetable
 
 # Create the Virtual Network and its subnets
-if (CreateVNet -eq "true") {
+if ($CreateVNet -eq "true") {
 	$Subnet1 = New-AzureRmVirtualNetworkSubnetConfig `
 	    -Name $Subnet1Name `
 	    -AddressPrefix $Subnet1Prefix `
