@@ -42,10 +42,9 @@ nodes
 # Set variables common for all OSEv3 hosts
 [OSEv3:vars]
 ansible_ssh_user=$SUDOUSER
-ansible_sudo=true
+ansible_become=yes
 deployment_type=origin
 docker_udev_workaround=True
-# containerized=true
 openshift_use_dnsmasq=no
 openshift_master_default_subdomain=$ROUTING
 
@@ -69,15 +68,7 @@ do
   echo "$NODEPREFIX-$c.$DOMAIN" >> /etc/ansible/hosts
 done
 
-mkdir -p /etc/origin/master
-htpasswd -cb /etc/origin/master/htpasswd ${SUDOUSER} ${PASSWORD}
-
-# Reverting to April 22, 2016 commit
-
-# echo "Cloning openshift-ansible repository and reseting to April 22, 2016 commit"
-
 runuser -l $SUDOUSER -c "git clone https://github.com/openshift/openshift-ansible /home/$SUDOUSER/openshift-ansible"
-# runuser -l $SUDOUSER -c "git --git-dir="/home/$SUDOUSER/openshift-ansible/.git" --work-tree="/home/$SUDOUSER/openshift-ansible/" reset --hard 04b5245"
 
 echo "Executing Ansible playbook"
 
@@ -99,3 +90,6 @@ runuser -l $SUDOUSER -c "sudo oadm router osrouter --replicas=$NODECOUNT --crede
 echo "Re-enabling requiretty"
 
 sed -i -e "s/# Defaults    requiretty/Defaults    requiretty/" /etc/sudoers
+
+mkdir -p /etc/origin/master
+htpasswd -cb /etc/origin/master/htpasswd ${SUDOUSER} ${PASSWORD}
