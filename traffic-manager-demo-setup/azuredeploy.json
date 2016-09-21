@@ -99,15 +99,21 @@
     "subnetPrefix": "10.0.0.0/28",
     "nestedTemplatesFolder": "nested",
     "webServerTemplateName": "azuredeploywebserver.json",
-    "server1TestPage": "[concat('<h1 style=\"color:red;font-size:300%;\">This is Server 1, Location: ', parameters('primarylocation'), '</h1>')]",
-    "server2TestPage": "[concat('<h1 style=\"color:blue;font-size:300%;\">This is Server 2, Location: ', parameters('secondarylocation'), '</h1>')]",
-    "serverTestPageInfo": "<p><strong>Request headers:</strong> <br /><?php $hs = apache_request_headers();foreach($hs as $h => $value){echo \"$h: $value <br />\n\";}?></p>"
+    "serverTestPage1": "[concat('<h1 style=\"color:red;font-size:300%;\">This is Server 1, Location: ', parameters('primarylocation'), '</h1>')]",
+    "serverTestPage2": "[concat('<h1 style=\"color:blue;font-size:300%;\">This is Server 2, Location: ', parameters('secondarylocation'), '</h1>')]",
+    "serverTestPageInfo": "<p><strong>Request headers:</strong> <br /><?php $hs = apache_request_headers();foreach($hs as $h => $value){echo \"$h: $value <br />\n\";}?></p>",
+    "location1": "[parameters('primarylocation')]",
+    "location2": "[parameters('secondarylocation')]"
   },
   "resources": [
     {
       "apiVersion": "2015-01-01",
-      "name": "webServer1",
+      "name": "[concat('webServer', copyIndex(1))]",
       "type": "Microsoft.Resources/deployments",
+      "copy": {
+        "name": "wscopy",
+        "count": 2
+      },
       "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
       ],
@@ -125,66 +131,22 @@
             "value": "[parameters('adminPassword')]"
           },
           "dnsNameForPublicIP": {
-            "value": "[concat(variables('backendDnsPrefix'), uniqueString(reference(concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))).resourceGuid), '-1')]"
+            "value": "[concat(variables('backendDnsPrefix'), uniqueString(reference(concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))).resourceGuid), '-', copyIndex(1))]"
           },
           "testPageBody": {
-            "value": "[concat(variables('server1TestPage'), variables('serverTestPageInfo'))]"
+            "value": "[concat(variables(concat('serverTestPage', copyIndex(1))), variables('serverTestPageInfo'))]"
           },
           "testPage": {
             "value": "index.php"
           },
           "testPageTitle": {
-            "value": "Server 1"
+            "value": "[concat('Server ', copyIndex(1))]"
           },
           "installPHP": {
             "value": true
           },
           "location": {
-            "value": "[parameters('primarylocation')]"
-          },
-          "_artifactsLocation": {
-            "value": "[concat(parameters('_artifactsLocation'), '/', variables('nestedTemplatesFolder'))]"
-          }
-        }
-      }
-    },
-    {
-      "apiVersion": "2015-01-01",
-      "name": "webServer2",
-      "type": "Microsoft.Resources/deployments",
-      "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
-      ],
-      "properties": {
-        "mode": "incremental",
-        "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'), '/', variables('nestedTemplatesFolder'), '/', variables('webServerTemplateName'))]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "adminUsername": {
-            "value": "[parameters('adminUsername')]"
-          },
-          "adminPassword": {
-            "value": "[parameters('adminPassword')]"
-          },
-          "dnsNameForPublicIP": {
-            "value": "[concat(variables('backendDnsPrefix'), uniqueString(reference(concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))).resourceGuid), '-2')]"
-          },
-          "testPageBody": {
-            "value": "[concat(variables('server2TestPage'), variables('serverTestPageInfo'))]"
-          },
-          "testPage": {
-            "value": "index.php"
-          },
-          "testPageTitle": {
-            "value": "Server 2"
-          },
-          "installPHP": {
-            "value": true
-          },
-          "location": {
-            "value": "[parameters('secondarylocation')]"
+            "value": "[variables(concat('location', copyIndex(1)))]"
           },
           "_artifactsLocation": {
             "value": "[concat(parameters('_artifactsLocation'), '/', variables('nestedTemplatesFolder'))]"
@@ -220,8 +182,7 @@
       "location": "global",
       "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
-        "webServer1",
-        "webServer2"
+        "wscopy"
       ],
       "properties": {
         "profileStatus": "Enabled",
