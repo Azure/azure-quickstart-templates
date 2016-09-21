@@ -1,9 +1,9 @@
 # Host Jenkins in an Azure VM
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Farroyc%2Fazure-quickstart-templates%2Fmaster%2Fazure-jenkins%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Fazure-jenkins%2Fazuredeploy.json" target="_blank">
 <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Farroyc%2Fazure-quickstart-templates%2Fmaster%2Fazure-jenkins%2Fazuredeploy.json" target="_blank">
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Fazure-jenkins%2Fazuredeploy.json" target="_blank">
 <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
@@ -24,7 +24,7 @@ Once the VM has been deployed, note down the IP generated in the Azure portal fo
    > Note 1: If the script doesn't exist, download it using below command.
 
    ```bash
-   sudo wget -O /opt/azure_jenkins_config/config_azure.sh "https://raw.githubusercontent.com/arroyc/azure-quickstart-templates/master/azure-jenkins/setup-scripts/config_azure.sh"
+   sudo wget -O /opt/azure_jenkins_config/config_azure.sh "https://raw.githubusercontent.com/azure/azure-quickstart-templates/master/azure-jenkins/setup-scripts/config_azure.sh"
    ```
    > Note 2: You can always run /opt/azure_jenkins_config/clear_storage_config.sh to reset configurations of Azure Storage for Jenkins and then run #1 again.
 
