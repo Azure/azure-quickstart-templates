@@ -42,6 +42,14 @@
 				"description": "OpenShift Node VM(s) size"
 			}
 		},
+		"osImage": {
+			"type": "string",
+			"allowedValues": ["centos", "rhel"],
+			"defaultValue": "centos",
+			"metadata": {
+				"description": "OS to use for image - CentOS or RHEL"
+			}
+		},
 		"openshiftMasterHostname": {
 			"type": "string",
 			"minLength": 1,
@@ -98,11 +106,32 @@
 				"description": "SSH public key on all VMs"
 			}
 		},
-		"sshPrivateKey": {
+		"subscriptionId": {
+			"type": "string",
+			"minLength": 1,
+			"metadata": {
+				"description": "Azure Subscription ID"
+			}
+		},
+		"keyVaultResourceGroup": {
+			"type": "string",
+			"minLength": 1,
+			"metadata": {
+				"description": "Resource Group that contains the Key Vault"
+			}
+		},
+		"keyVaultName": {
+			"type": "string",
+			"minLength": 1,
+			"metadata": {
+				"description": "Name of the Key Vault"
+			}
+		},
+		"keyVaultSecret": {
 			"type": "securestring",
 			"minLength": 1,
 			"metadata": {
-				"description": "SSH private key for deploying OpenShift"
+				"description": "Key Vault Secret Name that contains the Private Key"
 			}
 		}
 	},
@@ -126,13 +155,19 @@
 		"lbBackendPoolId": "[concat(variables('nodeLbId'),'/backendAddressPools/loadBalancerBackend')]",
 		"lbHttpProbeId": "[concat(variables('nodeLbId'),'/probes/httpProbe')]",
 		"lbHttpsProbeId": "[concat(variables('nodeLbId'),'/probes/httpsProbe')]",
-		"osType": {
+		"centos": { 
+			"publisher": "Openlogic", 
+			"offer": "CentOS", 
+			"sku": "7.2", 
+			"version": "latest" 
+		}, 
+		"rhel": {
 			"publisher": "RedHat",
 			"offer": "RHEL",
 			"sku": "7.2",
 			"version": "latest"
 		},
-		"imageReference": "[variables('osType')]",
+		"imageReference": "[parameters('osImage')]",
 		"sshKeyPath": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
 		"nodePrepScriptUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/openshift-origin-rhel/scripts/nodePrep.sh",
 		"masterPrepScriptUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/openshift-origin-rhel/scripts/masterPrep.sh",
@@ -722,7 +757,12 @@
 						"value": "[parameters('sshPublicKey')]"
 					},
 					"sshPrivateKey": {
-						"value": "[parameters('sshPrivateKey')]"
+						"reference": {
+							"keyvault": {
+								"id": "[concat('/subscriptions/', parameters('subscriptionId'), '/resourceGroups/', parameters('keyVaultResourceGroup'), '/providers/Microsoft.KeyVault/vaults/', parameters('keyVaultName'))]"
+							},
+							"secretName": "[parameters('keyVaultSecret')]"
+						}
 					}
 				}
 			}
