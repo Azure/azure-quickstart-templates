@@ -98,8 +98,7 @@
     "publicIPRef": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]",
     "applicationGatewayID": "[resourceId('Microsoft.Network/applicationGateways',variables('applicationGatewayName'))]",
     "backendDnsPrefix": "[concat(parameters('appGwName'),'-backend-')]",
-    "wsDeploymentName1": "[concat(parameters('appGwName'),'ws1')]",
-    "wsDeploymentName2": "[concat(parameters('appGwName'),'ws2')]",
+    "wsDeploymentName": "[concat(parameters('appGwName'),'ws')]",
     "appGatewayIPConfigName": "[concat(parameters('appGwName'),'-ipconfig')]",
     "appGatewayrequestRoutingRuleName": "[concat(parameters('appGwName'),'-rule1')]",
     "appGatewayHttpListenerName": "[concat(parameters('appGwName'),'-listener')]",
@@ -111,8 +110,8 @@
     "subnetPrefix": "10.0.0.0/28",
     "nestedTemplatesFolder": "nested",
     "webServerTemplateName": "azuredeploywebserver.json",
-    "server1TestPage": "[concat('<h1 style=\"color:red;font-size:300%;\">This is Server 1, Location: ', parameters('location'), '</h1>')]",
-    "server2TestPage": "[concat('<h1 style=\"color:blue;font-size:300%;\">This is Server 2, Location: ', parameters('location'), '</h1>')]",
+    "serverTestPage1": "[concat('<h1 style=\"color:red;font-size:300%;\">This is Server 1, Location: ', parameters('location'), '</h1>')]",
+    "serverTestPage2": "[concat('<h1 style=\"color:blue;font-size:300%;\">This is Server 2, Location: ', parameters('location'), '</h1>')]",
     "serverTestPageInfo": "<p>Send next request. If Cookie-based affinity is enabled, clear the cookies to change the backend server.</p><p><strong>Request headers:</strong> <br /><?php $hs = apache_request_headers();foreach($hs as $h => $value){echo \"$h: $value <br />\n\";}?></p>"
   },
   "outputs": {
@@ -124,8 +123,12 @@
   "resources": [
     {
       "apiVersion": "2015-01-01",
-      "name": "[variables('wsDeploymentName1')]",
+      "name": "[concat(variables('wsDeploymentName'), copyIndex(1))]",
       "type": "Microsoft.Resources/deployments",
+      "copy": {
+        "name": "wscopy",
+        "count": 2
+      },
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
       ],
@@ -143,57 +146,16 @@
             "value": "[parameters('adminPassword')]"
           },
           "dnsNameForPublicIP": {
-            "value": "[concat(variables('backendDnsPrefix'), uniqueString(reference(concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))).resourceGuid), '-1')]"
+            "value": "[concat(variables('backendDnsPrefix'), uniqueString(reference(concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))).resourceGuid), '-', copyIndex(1))]"
           },
           "testPageBody": {
-            "value": "[concat(variables('server1TestPage'), variables('serverTestPageInfo'))]"
+            "value": "[concat(variables(concat('serverTestPage', copyIndex(1))), variables('serverTestPageInfo'))]"
           },
           "testPage": {
             "value": "index.php"
           },
           "testPageTitle": {
-            "value": "Server 1"
-          },
-          "installPHP": {
-            "value": true
-          },
-          "location": {
-            "value": "[parameters('location')]"
-          }
-        }
-      }
-    },
-    {
-      "apiVersion": "2015-01-01",
-      "name": "[variables('wsDeploymentName2')]",
-      "type": "Microsoft.Resources/deployments",
-      "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
-      ],
-      "properties": {
-        "mode": "incremental",
-        "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'), '/', variables('nestedTemplatesFolder'), '/', variables('webServerTemplateName'))]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "adminUsername": {
-            "value": "[parameters('adminUsername')]"
-          },
-          "adminPassword": {
-            "value": "[parameters('adminPassword')]"
-          },
-          "dnsNameForPublicIP": {
-            "value": "[concat(variables('backendDnsPrefix'), uniqueString(reference(concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))).resourceGuid), '-2')]"
-          },
-          "testPageBody": {
-            "value": "[concat(variables('server2TestPage'), variables('serverTestPageInfo'))]"
-          },
-          "testPage": {
-            "value": "index.php"
-          },
-          "testPageTitle": {
-            "value": "Server 2"
+            "value": "[concat('Server ', copyIndex(1))]"
           },
           "installPHP": {
             "value": true
@@ -242,8 +204,7 @@
       "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
         "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
-        "[variables('wsDeploymentName1')]",
-        "[variables('wsDeploymentName2')]"
+        "wscopy"
       ],
       "properties": {
         "sku": {
@@ -285,10 +246,10 @@
             "properties": {
               "BackendAddresses": [
                 {
-                  "IpAddress": "[reference(variables('wsDeploymentName1')).outputs.fqdn.value]"
+                  "IpAddress": "[reference(concat(variables('wsDeploymentName'),'1')).outputs.fqdn.value]"
                 },
                 {
-                  "IpAddress": "[reference(variables('wsDeploymentName2')).outputs.fqdn.value]"
+                  "IpAddress": "[reference(concat(variables('wsDeploymentName'),'2')).outputs.fqdn.value]"
                 }
               ]
             }

@@ -63,7 +63,7 @@
         "Weighted",
         "Performance"
       ],
-      "defaultValue": "Weighted",
+      "defaultValue": "Priority",
       "metadata": {
         "description": "Traffic routing methods available in Traffic Manager"
       }
@@ -96,14 +96,20 @@
     "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
     "addressPrefix": "10.0.0.0/16",
     "subnetPrefix": "10.0.0.0/28",
-    "nestedTemplatesFolder":  "nested",
-    "appGwTemplateName": "azuredeployappgw.json"
+    "nestedTemplatesFolder": "nested",
+    "appGwTemplateName": "azuredeployappgw.json",
+    "location1": "[parameters('primarylocation')]",
+    "location2": "[parameters('secondarylocation')]"
   },
   "resources": [
     {
       "apiVersion": "2015-01-01",
-      "name": "appGw1",
+      "name": "[concat('appgw', copyIndex(1))]",
       "type": "Microsoft.Resources/deployments",
+      "copy": {
+        "name": "appgwcopy",
+        "count": 2
+      },
       "properties": {
         "mode": "incremental",
         "templateLink": {
@@ -118,39 +124,10 @@
             "value": "[parameters('adminPassword')]"
           },
           "location": {
-            "value": "[parameters('primarylocation')]"
+            "value": "[variables(concat('location', copyIndex(1)))]"
           },
           "appGwName": {
-            "value": "appgw1"
-          },
-          "_artifactsLocation": {
-            "value": "[concat(parameters('_artifactsLocation'), '/', variables('nestedTemplatesFolder'))]"
-          }
-        }
-      }
-    },
-    {
-      "apiVersion": "2015-01-01",
-      "name": "appGw2",
-      "type": "Microsoft.Resources/deployments",
-      "properties": {
-        "mode": "incremental",
-        "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'), '/', variables('nestedTemplatesFolder'), '/', variables('appGwTemplateName'))]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "adminUsername": {
-            "value": "[parameters('adminUsername')]"
-          },
-          "adminPassword": {
-            "value": "[parameters('adminPassword')]"
-          },
-          "location": {
-            "value": "[parameters('secondarylocation')]"
-          },
-          "appGwName": {
-            "value": "appgw2"
+            "value": "[concat('appgw', copyIndex(1))]"
           },
           "_artifactsLocation": {
             "value": "[concat(parameters('_artifactsLocation'), '/', variables('nestedTemplatesFolder'))]"
@@ -186,8 +163,7 @@
       "location": "global",
       "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
-        "appGw1",
-        "appGw2"
+        "appgwcopy"
       ],
       "properties": {
         "profileStatus": "Enabled",
@@ -206,7 +182,7 @@
             "name": "endpoint1",
             "type": "Microsoft.Network/trafficManagerProfiles/azureEndpoints",
             "properties": {
-              "targetResourceId": "[reference('appGw1').outputs.ipId.value]",
+              "targetResourceId": "[reference('appgw1').outputs.ipId.value]",
               "endpointStatus": "Enabled",
               "weight": 1
             }
@@ -215,7 +191,7 @@
             "name": "endpoint2",
             "type": "Microsoft.Network/trafficManagerProfiles/azureEndpoints",
             "properties": {
-              "targetResourceId": "[reference('appGw2').outputs.ipId.value]",
+              "targetResourceId": "[reference('appgw2').outputs.ipId.value]",
               "endpointStatus": "Enabled",
               "weight": 1
             }
