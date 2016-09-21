@@ -11,6 +11,7 @@ MASTERPUBLICIPHOSTNAME=$6
 MASTERPUBLICIPADDRESS=$7
 NODEPREFIX=$8
 NODECOUNT=$9
+ROUTING=${10}
 
 DOMAIN=$( awk 'NR==2' /etc/resolv.conf | awk '{ print $2 }' )
 
@@ -46,6 +47,7 @@ deployment_type=origin
 docker_udev_workaround=True
 # containerized=true
 openshift_use_dnsmasq=no
+openshift_master_default_subdomain=$ROUTING
 
 openshift_master_cluster_public_hostname=$MASTERPUBLICIPHOSTNAME
 openshift_master_cluster_public_vip=$MASTERPUBLICIPADDRESS
