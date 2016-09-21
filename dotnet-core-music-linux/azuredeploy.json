@@ -2,15 +2,8 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "vmName": {
-      "type": "string",
-      "minLength": 1,
-      "metadata": {
-        "description": "VM Name."
-      }
-    },
     "sshKeyData": {
-      "type": "string",
+      "type": "securestring",
       "metadata": {
         "description": "SSH String."
       }
@@ -30,8 +23,8 @@
     },
     "numberOfInstances": {
       "type": "int",
-      "minValue": 1,
-      "defaultValue": 1,
+      "minValue": 2,
+      "defaultValue": 2,
       "metadata": {
         "description": "Number of VM instances to be created behind load balancer."
       }
@@ -42,9 +35,17 @@
       "metadata": {
         "description": "Globally unique DNS Name for the Public IP used to access the Virtual Machine."
       }
+    },
+    "fileUris": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/dotnet-core-music-linux",
+      "metadata": {
+        "description": "The uri list of files. Split by a space."
+      }
     }
   },
   "variables": {
+    "vmName": "MusicApp",
     "imagePublisher": "Canonical",
     "imageOffer": "UbuntuServer",
     "ubuntuOSVersion": "14.04.2-LTS",
@@ -67,12 +68,14 @@
     "vnetId": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
     "networkSecurityGroup": "NetworkSecurityGroup",
     "musicStoreSqlName": "[concat('sql', uniqueString(resourceGroup().id))]",
-    "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]"
+    "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
+    "scripttestScriptFolder": "scripts",
+    "scripttestScriptFileName": "config-music.sh"
   },
 
   "resources": [
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "2016-03-30",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('networkSecurityGroup')]",
       "location": "[resourceGroup().location]",
@@ -98,7 +101,7 @@
           {
             "name": "ssh",
             "properties": {
-              "description": "http endpoint",
+              "description": "ssh endpoint",
               "protocol": "Tcp",
               "sourcePortRange": "*",
               "destinationPortRange": "22",
@@ -301,7 +304,7 @@
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[concat(parameters('vmName'),copyindex())]",
+      "name": "[concat(variables('vmName'),copyindex())]",
       "copy": {
         "name": "virtualMachineLoop",
         "count": "[parameters('numberOfInstances')]"
@@ -323,7 +326,7 @@
           "vmSize": "[variables('vmSize')]"
         },
         "osProfile": {
-          "computerName": "[concat(parameters('vmName'),copyindex())]",
+          "computerName": "[concat(variables('vmName'),copyindex())]",
           "adminUsername": "[parameters('adminUsername')]",
           "linuxConfiguration": {
             "disablePasswordAuthentication": "true",
@@ -347,7 +350,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://', variables('vhdStorageName'), '.blob.core.windows.net/vhds/', 'osdisk', copyindex(), '.vhd')]"
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/',variables('vhdStorageName')), '2015-06-15').primaryEndpoints.blob,'vhds/osdisk', copyindex(), '.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -368,7 +371,7 @@
           "location": "[resourceGroup().location]",
           "apiVersion": "2015-06-15",
           "dependsOn": [
-            "[concat('Microsoft.Compute/virtualMachines/', concat(parameters('vmName'),copyindex()))]"
+            "[concat('Microsoft.Compute/virtualMachines/', concat(variables('vmName'),copyindex()))]"
           ],
           "tags": {
             "displayName": "config-app"
@@ -380,9 +383,11 @@
             "autoUpgradeMinorVersion": true,
             "settings": {
               "fileUris": [
-                "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/dotnet-core-music-linux/scripts/config-music.sh"
-              ],
-              "commandToExecute": "[concat('sudo sh config-music.sh ',variables('musicStoreSqlName'), ' ', parameters('adminUsername'), ' ', parameters('sqlAdminPassword'))]"
+                "[concat(parameters('fileUris'), '/', variables('scripttestScriptFolder'), '/', variables('scripttestScriptFileName'))]"
+              ]              
+            },
+            "protectedSettings": {
+              "commandToExecute": "[concat('sudo sh ', variables('scripttestScriptFileName'), ' ', variables('musicStoreSqlName'), ' ', parameters('adminUsername'), ' ', parameters('sqlAdminPassword'))]"
             }
           }
         }
@@ -431,5 +436,11 @@
         }
       ]
     }
-  ]
+  ],
+  "outputs": {
+    "fqdn": {
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('publicIpAddressName')),providers('Microsoft.Network', 'publicIPAddresses').apiVersions[0]).dnsSettings.fqdn]",
+      "type": "string"
+    }
+  }
 }
