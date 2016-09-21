@@ -1,0 +1,286 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "primaryRegion": {
+            "type": "string",
+            "metadata": {
+                "description": "Location where first VNET, Gateway, PublicIP and Connection will be deployed."
+            }
+        },
+        "secondaryRegion": {
+            "type": "string",
+            "metadata": {
+                "description": "Location where second VNET, Gateway, PublicIP and Connection will be deployed."
+            }
+        },
+        "vpnGatewaySharedKey": {
+            "type": "string",
+            "defaultValue": "some1Random@String4TheGateaway",
+            "metadata": {
+                "description": "The shared key used for setting up the VPN connection for the cross region VNET, securely."
+            }
+        }
+    },
+    "variables": {
+        "apiVersion": "2016-04-01",
+        "primaryVirtualNetwork": "vnetPrimary",
+        "secondaryVirtualNetwork": "vnetSecondary",
+        "primaryVirtualNetworkAddressSpace": "10.10.0.0/16",
+        "secondaryVirtualNetworkAddressSpace": "10.12.0.0/16",
+        "primaryVirtualNetworkSubnet1": "vnetPrimarySubnetMariaDb",
+        "secondaryVirtualNetworkSubnet1": "vnetSecondarySubnetMariaDb",
+        "primaryVirtualNetworkSubnet1AddressSpace": "10.10.100.0/28",
+        "secondaryVirtualNetworkSubnet1AddressSpace": "10.12.100.0/28",
+        "primaryVirtualNetworkSubnet2": "vnetPrimarySubnetNfs",
+        "secondaryVirtualNetworkSubnet2": "vnetSecondarySubnetNfs",
+        "primaryVirtualNetworkSubnet2AddressSpace": "10.10.200.0/28",
+        "secondaryVirtualNetworkSubnet2AddressSpace": "10.12.200.0/28",
+        "primaryGatewayName": "gatewayPrimaryRegion",
+        "secondaryGatewayName": "gatewaySecondaryRegion",
+        "primaryGatewaySubnetPrefix": "10.10.100.32/28",
+        "secondaryGatewaySubnetPrefix": "10.12.100.32/28",
+        "primaryGatewayPublicIPName": "gatewayPrimaryRegionPublicIP",
+        "secondaryGatewayPublicIPName": "gatewaySecondaryRegionPublicIP",
+        "primary2SecondaryGatewayConnection": "gatewayConnectionPrimaryToSecondary",
+        "secondary2PrimaryGatewayConection": "gatewayConnectionSecondaryToPrimary",
+        "vnetID1": "[resourceId('Microsoft.Network/virtualNetworks',variables('primaryVirtualNetwork'))]",
+        "gatewaySubnetRef1": "[concat(variables('vnetID1'),'/subnets/','GatewaySubnet')]",
+        "primarySubnetRef1": "[concat(variables('vnetID1'),'/subnets/',variables('primaryVirtualNetworkSubnet1'))]",
+        "primarySubnetRef2": "[concat(variables('vnetID1'),'/subnets/',variables('primaryVirtualNetworkSubnet2'))]",
+        "vnetID2": "[resourceId('Microsoft.Network/virtualNetworks',variables('secondaryVirtualNetwork'))]",
+        "gatewaySubnetRef2": "[concat(variables('vnetID2'),'/subnets/','GatewaySubnet')]",
+        "secondarySubnetRef1": "[concat(variables('vnetID2'),'/subnets/',variables('secondaryVirtualNetworkSubnet1'))]",
+        "secondarySubnetRef2": "[concat(variables('vnetID2'),'/subnets/',variables('secondaryVirtualNetworkSubnet2'))]",
+        "dnsZoneName": "azure.cloud"
+    },
+    "resources": [
+        {
+            "apiVersion": "[variables('apiVersion')]",
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[variables('primaryVirtualNetwork')]",
+            "location": "[parameters('primaryRegion')]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('primaryVirtualNetworkAddressSpace')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[variables('primaryVirtualNetworkSubnet1')]",
+                        "properties": {
+                            "addressPrefix": "[variables('primaryVirtualNetworkSubnet1AddressSpace')]"
+                        }
+                    },
+                    {
+                        "name": "[variables('primaryVirtualNetworkSubnet2')]",
+                        "properties": {
+                            "addressPrefix": "[variables('primaryVirtualNetworkSubnet2AddressSpace')]"
+                        }
+                    },
+                    {
+                        "name": "GatewaySubnet",
+                        "properties": {
+                            "addressPrefix": "[variables('primaryGatewaySubnetPrefix')]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "[variables('apiVersion')]",
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[variables('secondaryVirtualNetwork')]",
+            "location": "[parameters('secondaryRegion')]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('secondaryVirtualNetworkAddressSpace')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[variables('secondaryVirtualNetworkSubnet1')]",
+                        "properties": {
+                            "addressPrefix": "[variables('secondaryVirtualNetworkSubnet1AddressSpace')]"
+                        }
+                    },
+                    {
+                        "name": "[variables('secondaryVirtualNetworkSubnet2')]",
+                        "properties": {
+                            "addressPrefix": "[variables('secondaryVirtualNetworkSubnet2AddressSpace')]"
+                        }
+                    },
+                    {
+                        "name": "GatewaySubnet",
+                        "properties": {
+                            "addressPrefix": "[variables('secondaryGatewaySubnetPrefix')]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "[variables('apiVersion')]",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[variables('primaryGatewayPublicIPName')]",
+            "location": "[parameters('primaryRegion')]",
+            "properties": {
+                "publicIPAllocationMethod": "Dynamic"
+            }
+        },
+        {
+            "apiVersion": "[variables('apiVersion')]",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[variables('secondaryGatewayPublicIPName')]",
+            "location": "[parameters('secondaryRegion')]",
+            "properties": {
+                "publicIPAllocationMethod": "Dynamic"
+            }
+        },
+        {
+            "apiVersion": "[variables('apiVersion')]",
+            "type": "Microsoft.Network/virtualNetworkGateways",
+            "name": "[variables('primaryGatewayName')]",
+            "location": "[parameters('primaryRegion')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/publicIPAddresses/', variables('primaryGatewayPublicIPName'))]",
+                "[concat('Microsoft.Network/virtualNetworks/', variables('primaryVirtualNetwork'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[variables('gatewaySubnetRef1')]"
+                            },
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('primaryGatewayPublicIPName'))]"
+                            }
+                        },
+                        "name": "vnetGatewayConfig1"
+                    }
+                ],
+                "gatewayType": "Vpn",
+                "vpnType": "RouteBased",
+                "enableBgp": "false"
+            }
+        },
+        {
+            "apiVersion": "[variables('apiVersion')]",
+            "type": "Microsoft.Network/virtualNetworkGateways",
+            "name": "[variables('secondaryGatewayName')]",
+            "location": "[parameters('secondaryRegion')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/publicIPAddresses/', variables('secondaryGatewayPublicIPName'))]",
+                "[concat('Microsoft.Network/virtualNetworks/', variables('secondaryVirtualNetwork'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[variables('gatewaySubnetRef2')]"
+                            },
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('secondaryGatewayPublicIPName'))]"
+                            }
+                        },
+                        "name": "vnetGatewayConfig2"
+                    }
+                ],
+                "gatewayType": "Vpn",
+                "vpnType": "RouteBased",
+                "enableBgp": "false"
+            }
+        },
+        {
+            "apiVersion": "[variables('apiVersion')]",
+            "type": "Microsoft.Network/connections",
+            "name": "[variables('primary2SecondaryGatewayConnection')]",
+            "location": "[parameters('primaryRegion')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/virtualNetworkGateways/', variables('primaryGatewayName'))]",
+                "[concat('Microsoft.Network/virtualNetworkGateways/', variables('secondaryGatewayName'))]"
+            ],
+            "properties": {
+                "virtualNetworkGateway1": {
+                    "id": "[resourceId('Microsoft.Network/virtualNetworkGateways',variables('primaryGatewayName'))]"
+                },
+                "virtualNetworkGateway2": {
+                    "id": "[resourceId('Microsoft.Network/virtualNetworkGateways',variables('secondaryGatewayName'))]"
+                },
+                "connectionType": "Vnet2Vnet",
+                "routingWeight": 3,
+                "sharedKey": "[parameters('vpnGatewaySharedKey')]",
+                "mode": "Incremental"
+            }
+        },
+        {
+            "apiVersion": "[variables('apiVersion')]",
+            "type": "Microsoft.Network/connections",
+            "name": "[variables('secondary2PrimaryGatewayConection')]",
+            "location": "[parameters('secondaryRegion')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/virtualNetworkGateways/', variables('primaryGatewayName'))]",
+                "[concat('Microsoft.Network/virtualNetworkGateways/', variables('secondaryGatewayName'))]"
+            ],
+            "properties": {
+                "virtualNetworkGateway1": {
+                    "id": "[resourceId('Microsoft.Network/virtualNetworkGateways',variables('secondaryGatewayName'))]"
+                },
+                "virtualNetworkGateway2": {
+                    "id": "[resourceId('Microsoft.Network/virtualNetworkGateways',variables('primaryGatewayName'))]"
+                },
+                "connectionType": "Vnet2Vnet",
+                "routingWeight": 3,
+                "sharedKey": "[parameters('vpnGatewaySharedKey')]",
+                "mode": "Incremental"
+            }
+        },
+        {
+            "apiVersion": "[variables('apiVersion')]",
+            "type": "Microsoft.Network/dnszones",
+            "name": "[variables('dnsZoneName')]",
+            "location": "global",
+            "properties": { }
+        }
+    ],
+    "outputs": {
+        "primaryVirtualNetworkNfsSubnetId": {
+            "type": "string",
+            "value": "[variables('primarySubnetRef2')]"
+        },
+        "primaryVirtualNetworkNfsSubnetAddressSpace": {
+            "type": "string",
+            "value": "[variables('primaryVirtualNetworkSubnet2AddressSpace')]"
+        },
+        "primaryVirtualNetworkMariaDbSubnetId": {
+            "type": "string",
+            "value": "[variables('primarySubnetRef1')]"
+        },
+        "primaryVirtualNetworkMariaDbSubnetAddressSpace": {
+            "type": "string",
+            "value": "[variables('primaryVirtualNetworkSubnet1AddressSpace')]"
+        },
+        "secondaryVirtualNetworkNfsSubnetId": {
+            "type": "string",
+            "value": "[variables('secondarySubnetRef2')]"
+        },
+        "secondaryVirtualNetworkNfsSubnetAddressSpace": {
+            "type": "string",
+            "value": "[variables('secondaryVirtualNetworkSubnet2AddressSpace')]"
+        },
+        "secondaryVirtualNetworkMariaDbSubnetId": {
+            "type": "string",
+            "value": "[variables('secondarySubnetRef1')]"
+        },
+        "secondaryVirtualNetworkMariaDbSubnetAddressSpace": {
+            "type": "string",
+            "value": "[variables('secondaryVirtualNetworkSubnet1AddressSpace')]"
+        }
+    }
+}

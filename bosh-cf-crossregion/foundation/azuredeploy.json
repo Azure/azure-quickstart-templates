@@ -1,0 +1,232 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "serviceName": {
+            "type": "string",
+            "metadata": {
+                "description": "Public DNS name prefix used for this deployment."
+            }
+        },
+        "primaryRegion": {
+            "type": "string",
+            "metadata": {
+                "description": "Location where first VNET, Gateway, PublicIP and Connection will be deployed."
+            }
+        },
+        "secondaryRegion": {
+            "type": "string",
+            "metadata": {
+                "description": "Location where second VNET, Gateway, PublicIP and Connection will be deployed."
+            }
+        },
+        "vpnGatewaySharedKey": {
+            "type": "string",
+            "defaultValue": "some1Random@String4TheGateaway",
+            "metadata": {
+                "description": "The shared key used for setting up the VPN connection for the cross region VNET, securely."
+            }
+        },
+        "jumpBoxAdminUsername": {
+            "type": "string",
+            "defaultValue": "adminjump",
+            "metadata": {
+                "description": "Name of the administrator/root-user of the Jump-Box."
+            }
+        },
+        "jumpBoxAdminUserPassword": {
+            "type": "string",
+            "metadata": {
+                "description": "Password of the administrator/root-user of the Jump-Box."
+            }
+        },
+        "jumpBoxSshKeyData": {
+            "type": "string",
+            "metadata": {
+                "description": "SSH Public Key data for connecting via certificates."
+            }
+        },
+        "nfsAdminUsername": {
+            "type": "string",
+            "defaultValue": "adminnfs",
+            "metadata": {
+                "description": "Root user name used for all NFS nodes in the cluster."
+            }
+        },
+        "nfsAdminPassword": {
+            "type": "string",
+            "metadata": {
+                "description": "Password of the administrator/root-user of the primary NFS-server in the primary region."
+            }
+        },
+        "nfsSshKeyData": {
+            "type": "string",
+            "metadata": {
+                "description": "SSH Public Key data for connecting via certificates."
+            }
+        },
+        "mariaDbAdminUsername": {
+            "type": "string",
+            "defaultValue": "adminmariadb",
+            "metadata": {
+                "description": "Root user name used for all MariaDB nodes in the cluster."
+            }
+        },
+        "mariaDbAdminPassword": {
+            "type": "string",
+            "metadata": {
+                "description": "Password of the administrator/root-user of MariaDB nodes in the deployment."
+            }
+        },
+        "mariaDbSshKeyData": {
+            "type": "string",
+            "metadata": {
+                "description": "SSH Public Key data for connecting via certificates."
+            }
+        }
+    },
+    "variables": {
+        "apiVersion": "2016-04-01",
+        "templateBaseUrl": "https://github.com/mszcool/azure-quickstart-templates/tree/master/bosh-cf-crossregion",
+        "templateVnetLink": "[concat(variables('templateBaseUrl'), '/nested/azuredeploy.networking.json')]",
+        "templateJumpBoxLink": "[concat(variables('templateBaseUrl'), '/nested/azuredeploy.jumpbox.json')]",
+        "templateNfsLink": "[concat(variables('templateBaseUrl'), '/nested/azuredeploy.nfs.json')]",
+        "templateMariaDbLink": "[concat(variables('templateBaseUrl'), '/nested/azuredeploy.mariadb.json')]"
+    },
+    "resources": [
+        {
+            "apiVersion": "[variables('apiVersion')]",
+            "name": "vnetTemplate",
+            "type": "Microsoft.Resources/deployments",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('templateVnetLink')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "primaryRegion": {
+                        "value": "[parameters('primaryRegion')]"
+                    },
+                    "secondaryRegion": {
+                        "value": "[parameters('secondaryRegion')]"
+                    },
+                    "vpnGatewaySharedKey": {
+                        "value": "[parameters('vpnGatewaySharedKey')]"
+                    }
+                }
+            }
+        },
+        {
+            "apiVersion": "[variables('apiVersion')]",
+            "name": "jumpBoxTemplate",
+            "type": "Microsoft.Resources/deployments",
+            "dependsOn": [
+                "[concat('Microsoft.Resources/deployments/vnetTemplate')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('templateJumpBoxLink')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "serviceName": {
+                        "value": "[parameters('serviceName')]"
+                    },
+                    "targetRegion": {
+                        "value": "[parameters('primaryRegion')]"
+                    },
+                    "jumpBoxAdminUsername": {
+                        "value": "[parameters('jumpBoxAdminUsername')]"
+                    },
+                    "jumpBoxAdminUserPassword": {
+                        "value": "[parameters('jumpBoxAdminUserPassword')]"
+                    },
+                    "jumpBoxSshKeyData": {
+                        "value": "[parameters('jumpBoxSshKeyData')]"
+                    },
+                    "targetVirtualNetworkSubnet": {
+                        "value": "[reference('vnetTemplate').outputs.primaryVirtualNetworkMariaDbSubnetId]"
+                    }
+                }
+            }
+        },
+        {
+            "apiVersion": "[variables('apiVersion')]",
+            "name": "nfsTemplate",
+            "type": "Microsoft.Resources/deployments",
+            "dependsOn": [
+                "[concat('Microsoft.Resources/deployments/vnetTemplate')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('templateNfsLink')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "primaryRegion": {
+                        "value": "[parameters('primaryRegion')]"
+                    },
+                    "secondaryRegion": {
+                        "value": "[parameters('secondaryRegion')]"
+                    },
+                    "nfsAdminUsername": {
+                        "value": "[parameters('nfsAdminUsername')]"
+                    },
+                    "nfsAdminPassword": {
+                        "value": "[parameters('nfsAdminPassword')]"
+                    },
+                    "nfsSshKeyData": {
+                        "value": "[parameters('nfsSshKeyData')]"
+                    },
+                    "primaryRegionVnetSubnetId": {
+                        "value": "[reference('vnetTemplate').outputs.primaryVirtualNetworkNfsSubnetId]"
+                    },
+                    "secondaryRegionVnetSubnetId": {
+                        "value": "[reference('vnetTemplate').outputs.secondaryVirtualNetworkNfsSubnetId]"
+                    }
+                }
+            }
+        },
+        {
+            "apiVersion": "[variables('apiVersion')]",
+            "name": "mariaDbTemplate",
+            "type": "Microsoft.Resources/deployments",
+            "dependsOn": [
+                "[concat('Microsoft.Resources/deployments/vnetTemplate')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('templateMariaDbLink')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "primaryRegion": {
+                        "value": "[parameters('primaryRegion')]"
+                    },
+                    "secondaryRegion": {
+                        "value": "[parameters('secondaryRegion')]"
+                    },
+                    "mariaDbAdminUsername": {
+                        "value": "[parameters('mariaDbAdminUsername')]"
+                    },
+                    "mariaDbAdminPassword": {
+                        "value": "[parameters('mariaDbAdminPassword')]"
+                    },
+                    "mariaDbSshKeyData": {
+                        "value": "[parameters('mariaDbSshKeyData')]"
+                    },
+                    "primaryRegionVnetSubnetId": {
+                        "value": "[reference('vnetTemplate').outputs.primaryVirtualNetworkMariaDbSubnetId]"
+                    },
+                    "secondaryRegionVnetSubnetId": {
+                        "value": "[reference('vnetTemplate').outputs.secondaryVirtualNetworkMariaDbSubnetId]"
+                    }
+                }
+            }
+        }
+    ]
+}

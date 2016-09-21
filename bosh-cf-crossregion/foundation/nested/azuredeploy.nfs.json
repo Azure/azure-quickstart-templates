@@ -1,0 +1,708 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "primaryRegion": {
+            "type": "string",
+            "metadata": {
+                "description": "Location where first VNET, Gateway, PublicIP and Connection will be deployed."
+            }
+        },
+        "secondaryRegion": {
+            "type": "string",
+            "metadata": {
+                "description": "Location where second VNET, Gateway, PublicIP and Connection will be deployed."
+            }
+        },
+        "nfsAdminUsername": {
+            "type": "string",
+            "defaultValue": "adminnfs",
+            "metadata": {
+                "description": "Root user name used for all NFS nodes in the cluster."
+            }
+        },
+        "nfsAdminPassword": {
+            "type": "string",
+            "metadata": {
+                "description": "Password of the administrator/root-user of the primary NFS-server in the primary region."
+            }
+        },
+        "nfsSshKeyData": {
+            "type": "string",
+            "metadata": {
+                "description": "SSH Public Key data for connecting via certificates."
+            }
+        },
+        "primaryRegionVnetSubnetId": {
+            "type": "string",
+            "metadata": {
+                "description": "The ID of the subnet for the NFS servers in the primary region."
+            }
+        },
+        "secondaryRegionVnetSubnetId": {
+            "type": "string",
+            "metadata": {
+                "description": "The ID of the subnet for the NFS servers in the secondary region."
+            }
+        }
+    },
+    "variables": {
+        "apiVersion": "2016-04-01",
+        "availabilitySets_primary_avset_nfs_name": "nfsPrimaryAvSet",
+        "virtualMachines_primary_primary_nfs_name": "nfsPrimaryNode01",
+        "virtualMachines_primary_secondary_nfs_name": "nfsPrimaryNode02",
+        "networkInterfaces_primary_primary_nfs_name": "nfsPrimaryNode01Nic",
+        "networkInterfaces_primary_primary_static_ip": "nfsPrimaryNode01StaticIP",
+        "networkInterfaces_primary_secondary_nfs_name": "nfsPrimaryNode02Nic",
+        "networkInterfaces_primary_secondary_static_ip": "nfsPrimaryNode02StaticIP",
+        "networkSecurityGroups_primary_nfs_security_name": "nfsPrimaryNetSecurityGroup",
+        "nfs_storage_primary_name": "[concat('nfspone', uniqueString(resourceGroup().id))]",
+        "availabilitySets_secondary_avset_nfs_name": "nfsSecondaryAvSet",
+        "virtualMachines_secondary_primary_nfs_name": "nfsSecondaryNode01",
+        "virtualMachines_secondary_secondary_nfs_name": "nfsSecondaryNode02",
+        "networkInterfaces_secondary_primary_nfs_name": "nfsSecondaryNode01Nic",
+        "networkInterfaces_secondary_primary_static_ip": "nfsSecondaryNode01StaticIP",
+        "networkInterfaces_secondary_secondary_nfs_name": "nfsSecondaryNode02Nic",
+        "networkInterfaces_secondary_secondary_static_ip": "nfsSecondaryNode02StaticIP",
+        "networkSecurityGroups_secondary_nfs_security_name": "nfsSecondaryNetSecurityGroup",
+        "nfs_storage_secondary_name": "[concat('nfssone', uniqueString(resourceGroup().id))]"
+   },
+    "resources": [
+        {
+            "comments": "NFS primary region availability set",
+            "apiVersion": "[variables('apiVersion')]",
+            "type": "Microsoft.Compute/availabilitySets",
+            "name": "[variables('availabilitySets_primary_avset_nfs_name')]",
+            "location": "[parameters('primaryRegion')]",
+            "tags": { },
+            "properties": {
+                "platformUpdateDomainCount": 5,
+                "platformFaultDomainCount": 3
+            },
+            "dependsOn": [ ]
+        },
+        {
+            "apiVersion": "[variables('apiVersion')]",
+            "comments": "NFS service, primary region, primary storage account",
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[variables('nfs_storage_primary_name')]",
+            "location": "[parameters('primaryRegion')]",
+            "tags": { },
+            "properties": {
+                "accountType": "Premium_LRS"
+            },
+            "dependsOn": [ ]
+        },
+        {
+            "apiVersion": "[variables('apiVersion')]",
+            "comments": "NFS network security group, primary region",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[variables('networkSecurityGroups_primary_nfs_security_name')]",
+            "location": "[parameters('primaryRegion')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "nfs-portmapper-primary",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "111",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 2000,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "nfs-mountd-primary",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "694",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 2100,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "nfs-nfsd-primary",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "2049",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 2200,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "nfs-portmapper-secondary",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "111",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 2300,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "nfs-mountd-secondary",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "694",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 2400,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "nfs-nfsd-secondary",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "2049",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 2500,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "default-allow-ssh",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "22",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1000,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            },
+            "dependsOn": [ ]
+        },
+        {
+            "apiVersion": "[variables('apiVersion')]",
+            "comments": "NFS primary region, primary VM network interface",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[variables('networkInterfaces_primary_primary_nfs_name')]",
+            "location": "[parameters('primaryRegion')]",
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAddress": "[variables('networkInterfaces_primary_primary_static_ip')]",
+                            "privateIPAllocationMethod": "Static",
+                            "subnet": {
+                                "id": "[parameters('primaryRegionVnetSubnetId')]"
+                            }
+                        }
+                    }
+                ],
+                "dnsSettings": {
+                    "dnsServers": [ ]
+                },
+                "enableIPForwarding": false,
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroups_primary_nfs_security_name'))]"
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroups_primary_nfs_security_name'))]"
+            ]
+        },
+        {
+            "comments": "NFS primary region, secondary VM network interface",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[variables('networkInterfaces_primary_secondary_nfs_name')]",
+            "apiVersion": "[variables('apiVersion')]",
+            "location": "[parameters('primaryRegion')]",
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAddress": "[variables('networkInterfaces_primary_secondary_static_ip')]",
+                            "privateIPAllocationMethod": "Static",
+                            "subnet": {
+                                "id": "[parameters('primaryRegionVnetSubnetId')]"
+                            }
+                        }
+                    }
+                ],
+                "dnsSettings": {
+                    "dnsServers": [ ]
+                },
+                "enableIPForwarding": false,
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroups_primary_nfs_security_name'))]"
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroups_primary_nfs_security_name'))]"
+            ]
+        },
+        {
+            "comments": "",
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[variables('virtualMachines_primary_primary_nfs_name')]",
+            "apiVersion": "[variables('apiVersion')]",
+            "location": "[parameters('primaryRegion')]",
+            "properties": {
+                "availabilitySet": {
+                    "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySets_primary_avset_nfs_name'))]"
+                },
+                "hardwareProfile": {
+                    "vmSize": "Standard_DS1"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "Canonical",
+                        "offer": "UbuntuServer",
+                        "sku": "14.04.4-LTS",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "[variables('virtualMachines_primary_primary_nfs_name')]",
+                        "createOption": "FromImage",
+                        "vhd": {
+                            "uri": "[concat('https', '://', variables('nfs_storage_primary_name'), '.blob.core.windows.net', concat('/vhds/', variables('virtualMachines_primary_primary_nfs_name'),'.vhd'))]"
+                        },
+                        "caching": "ReadWrite"
+                    },
+                    "dataDisks": [ ]
+                },
+                "osProfile": {
+                    "computerName": "[variables('virtualMachines_primary_primary_nfs_name')]",
+                    "adminUsername": "[parameters('nfsAdminUsername')]",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": true,
+                        "ssh": {
+                            "publicKeys": [
+                                {
+                                    "path": "[concat('/home/',parameters('nfsAdminUsername'),'/.ssh/authorized_keys')]",
+                                    "keyData": "[parameters('nfsSshKeyData')]"
+                                }
+                            ]
+                        }
+                    },
+                    "secrets": [ ],
+                    "adminPassword": "[parameters('nfsAdminPassword')]"
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaces_primary_primary_nfs_name'))]"
+                        }
+                    ]
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySets_primary_avset_nfs_name'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('nfs_storage_primary_name'))]",
+                "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaces_primary_primary_nfs_name'))]"
+            ]
+        },
+        {
+            "comments": "",
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[variables('virtualMachines_primary_secondary_nfs_name')]",
+            "apiVersion": "[variables('apiVersion')]",
+            "location": "[parameters('primaryRegion')]",
+            "properties": {
+                "availabilitySet": {
+                    "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySets_primary_avset_nfs_name'))]"
+                },
+                "hardwareProfile": {
+                    "vmSize": "Standard_DS1"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "Canonical",
+                        "offer": "UbuntuServer",
+                        "sku": "14.04.4-LTS",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "[variables('virtualMachines_primary_secondary_nfs_name')]",
+                        "createOption": "FromImage",
+                        "vhd": {
+                            "uri": "[concat('https', '://', variables('nfs_storage_primary_name'), '.blob.core.windows.net', concat('/vhds/', variables('virtualMachines_primary_secondary_nfs_name'),'.vhd'))]"
+                        },
+                        "caching": "ReadWrite"
+                    },
+                    "dataDisks": [ ]
+                },
+                "osProfile": {
+                    "computerName": "[variables('virtualMachines_primary_secondary_nfs_name')]",
+                    "adminUsername": "[parameters('nfsAdminUsername')]",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": true,
+                        "ssh": {
+                            "publicKeys": [
+                                {
+                                    "path": "[concat('/home/',parameters('nfsAdminUsername'),'/.ssh/authorized_keys')]",
+                                    "keyData": "[parameters('nfsSshKeyData')]"
+                                }
+                            ]
+                        }
+                    },
+                    "secrets": [ ],
+                    "adminPassword": "[parameters('nfsAdminPassword')]"
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaces_primary_secondary_nfs_name'))]"
+                        }
+                    ]
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySets_primary_avset_nfs_name'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('nfs_storage_primary_name'))]",
+                "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaces_primary_secondary_nfs_name'))]"
+            ]
+        },
+        {
+            "comments": "NFS secondary region availability set",
+            "apiVersion": "[variables('apiVersion')]",
+            "type": "Microsoft.Compute/availabilitySets",
+            "name": "[variables('availabilitySets_secondary_avset_nfs_name')]",
+            "location": "[parameters('secondaryRegion')]",
+            "tags": { },
+            "properties": {
+                "platformUpdateDomainCount": 5,
+                "platformFaultDomainCount": 3
+            },
+            "dependsOn": [ ]
+        },
+        {
+            "comments": "NFS service, secondary region, primary storage account",
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[variables('nfs_storage_secondary_name')]",
+            "apiVersion": "[variables('apiVersion')]",
+            "location": "[parameters('secondaryRegion')]",
+            "tags": { },
+            "properties": {
+                "accountType": "Premium_LRS"
+            },
+            "dependsOn": [ ]
+        },
+        {
+            "comments": "NFS service, secondary region, secondary storage account",
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[variables('nfs_storage_secondary_name')]",
+            "apiVersion": "[variables('apiVersion')]",
+            "location": "[parameters('secondaryRegion')]",
+            "tags": { },
+            "properties": {
+                "accountType": "Premium_LRS"
+            },
+            "dependsOn": [ ]
+        },
+        {
+            "comments": "NFS network security group, secondary region",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[variables('networkSecurityGroups_secondary_nfs_security_name')]",
+            "apiVersion": "[variables('apiVersion')]",
+            "location": "[parameters('secondaryRegion')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "nfs-portmapper-primary",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "111",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 2000,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "nfs-mountd-primary",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "694",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 2100,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "nfs-nfsd-primary",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "2049",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 2200,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "nfs-portmapper-secondary",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "111",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 2300,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "nfs-mountd-secondary",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "694",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 2400,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "nfs-nfsd-secondary",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "2049",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 2500,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "default-allow-ssh",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "22",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1000,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            },
+            "dependsOn": [ ]
+        },
+        {
+            "comments": "NFS secondary region, primary VM network interface",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[variables('networkInterfaces_secondary_primary_nfs_name')]",
+            "apiVersion": "[variables('apiVersion')]",
+            "location": "[parameters('secondaryRegion')]",
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAddress": "[variables('networkInterfaces_secondary_primary_static_ip')]",
+                            "privateIPAllocationMethod": "Static",
+                            "subnet": {
+                                "id": "[parameters('secondaryRegionVnetSubnetId')]"
+                            }
+                        }
+                    }
+                ],
+                "dnsSettings": {
+                    "dnsServers": [ ]
+                },
+                "enableIPForwarding": false,
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroups_secondary_nfs_security_name'))]"
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroups_secondary_nfs_security_name'))]"
+            ]
+        },
+        {
+            "comments": "NFS secondary region, secondary VM network interface",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[variables('networkInterfaces_secondary_secondary_nfs_name')]",
+            "apiVersion": "[variables('apiVersion')]",
+            "location": "[parameters('secondaryRegion')]",
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAddress": "[variables('networkInterfaces_secondary_secondary_static_ip')]",
+                            "privateIPAllocationMethod": "Static",
+                            "subnet": {
+                                "id": "[parameters('secondaryRegionVnetSubnetId')]"
+                            }
+                        }
+                    }
+                ],
+                "dnsSettings": {
+                    "dnsServers": [ ]
+                },
+                "enableIPForwarding": false,
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroups_secondary_nfs_security_name'))]"
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroups_secondary_nfs_security_name'))]"
+            ]
+        },
+        {
+            "comments": "",
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[variables('virtualMachines_secondary_primary_nfs_name')]",
+            "apiVersion": "[variables('apiVersion')]",
+            "location": "[parameters('secondaryRegion')]",
+            "properties": {
+                "availabilitySet": {
+                    "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySets_secondary_avset_nfs_name'))]"
+                },
+                "hardwareProfile": {
+                    "vmSize": "Standard_DS1"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "Canonical",
+                        "offer": "UbuntuServer",
+                        "sku": "14.04.4-LTS",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "[variables('virtualMachines_secondary_primary_nfs_name')]",
+                        "createOption": "FromImage",
+                        "vhd": {
+                            "uri": "[concat('https', '://', variables('nfs_storage_secondary_name'), '.blob.core.windows.net', concat('/vhds/', variables('virtualMachines_secondary_primary_nfs_name'),'.vhd'))]"
+                        },
+                        "caching": "ReadWrite"
+                    },
+                    "dataDisks": [ ]
+                },
+                "osProfile": {
+                    "computerName": "[variables('virtualMachines_secondary_primary_nfs_name')]",
+                    "adminUsername": "[parameters('nfsAdminUsername')]",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": true,
+                        "ssh": {
+                            "publicKeys": [
+                                {
+                                    "path": "[concat('/home/',parameters('nfsAdminUsername'),'/.ssh/authorized_keys')]",
+                                    "keyData": "[parameters('nfsSshKeyData')]"
+                                }
+                            ]
+                        }
+                    },
+                    "secrets": [ ],
+                    "adminPassword": "[parameters('nfsAdminPassword')]"
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaces_secondary_primary_nfs_name'))]"
+                        }
+                    ]
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySets_secondary_avset_nfs_name'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('nfs_storage_secondary_name'))]",
+                "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaces_secondary_primary_nfs_name'))]"
+            ]
+        },
+        {
+            "comments": "",
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[variables('virtualMachines_secondary_secondary_nfs_name')]",
+            "apiVersion": "[variables('apiVersion')]",
+            "location": "[parameters('secondaryRegion')]",
+            "properties": {
+                "availabilitySet": {
+                    "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySets_secondary_avset_nfs_name'))]"
+                },
+                "hardwareProfile": {
+                    "vmSize": "Standard_DS1"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "Canonical",
+                        "offer": "UbuntuServer",
+                        "sku": "14.04.4-LTS",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "[variables('virtualMachines_secondary_secondary_nfs_name')]",
+                        "createOption": "FromImage",
+                        "vhd": {
+                            "uri": "[concat('https', '://', variables('nfs_storage_secondary_name'), '.blob.core.windows.net', concat('/vhds/', variables('virtualMachines_secondary_secondary_nfs_name'),'.vhd'))]"
+                        },
+                        "caching": "ReadWrite"
+                    },
+                    "dataDisks": [ ]
+                },
+                "osProfile": {
+                    "computerName": "[variables('virtualMachines_secondary_secondary_nfs_name')]",
+                    "adminUsername": "[parameters('nfsAdminUsername')]",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": true,
+                        "ssh": {
+                            "publicKeys": [
+                                {
+                                    "path": "[concat('/home/',parameters('nfsAdminUsername'),'/.ssh/authorized_keys')]",
+                                    "keyData": "[parameters('nfsSshKeyData')]"
+                                }
+                            ]
+                        }
+                    },
+                    "secrets": [ ],
+                    "adminPassword": "[parameters('nfsAdminPassword')]"
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaces_secondary_secondary_nfs_name'))]"
+                        }
+                    ]
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySets_secondary_avset_nfs_name'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('nfs_storage_secondary_name'))]",
+                "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaces_secondary_secondary_nfs_name'))]"
+            ]
+        }
+    ]
+}

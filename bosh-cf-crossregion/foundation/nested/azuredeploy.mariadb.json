@@ -1,0 +1,863 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "primaryRegion": {
+            "type": "string",
+            "metadata": {
+                "description": "Location where first VNET, Gateway, PublicIP and Connection will be deployed."
+            }
+        },
+        "secondaryRegion": {
+            "type": "string",
+            "metadata": {
+                "description": "Location where second VNET, Gateway, PublicIP and Connection will be deployed."
+            }
+        },
+        "mariaDbAdminUsername": {
+            "type": "string",
+            "defaultValue": "adminmariadb",
+            "metadata": {
+                "description": "Root user name used for all MariaDB nodes in the cluster."
+            }
+        },
+        "mariaDbAdminPassword": {
+            "type": "string",
+            "metadata": {
+                "description": "Password of the administrator/root-user of MariaDB nodes in the deployment."
+            }
+        },
+        "mariaDbSshKeyData": {
+            "type": "string",
+            "metadata": {
+                "description": "SSH Public Key data for connecting via certificates."
+            }
+        },
+        "primaryRegionVnetSubnetId": {
+            "type": "string",
+            "metadata": {
+                "description": "The ID of the subnet for the NFS servers in the primary region."
+            }
+        },
+        "secondaryRegionVnetSubnetId": {
+            "type": "string",
+            "metadata": {
+                "description": "The ID of the subnet for the NFS servers in the secondary region."
+            }
+        }
+    },
+    "variables": {
+        "apiVersion": "2016-04-01",
+        "virtualMachines_mariaDb_namePrefix": "db",
+        "mariaDb_primary_storageAccountName": "[concat('dbprim', uniqueString(resourceGroup().id))]",
+        "mariaDb_secondary_storageAccountName": "[concat('dbsec', uniqueString(resourceGroup().id))]",
+        "mariaDb_primary_lbIPAddress": "10.10.100.20",
+        "mariaDb_secondary_lbIPAddress": "10.12.100.20",
+        "mariaDb_primary_Vm1IPAddress": "10.10.100.21",
+        "mariaDb_primary_Vm2IPAddress": "10.10.100.22",
+        "mariaDb_primary_Vm3IPAddress": "10.10.100.23",
+        "mariaDb_secondary_Vm1IPAddress": "10.12.100.21",
+        "mariaDb_secondary_Vm2IPAddress": "10.12.100.22",
+        "mariaDbVmNodeSize": "Standard_DS2",
+        "mariaDbPrimaryAvSetName": "mariaDbPrimaryAvSet",
+        "mariaDbPrimaryAvSetResId": "[resourceId('Microsoft.Compute/availabilitySets',variables('mariaDbPrimaryAvSetName'))]",
+        "mariaDbSecondaryAvSetName": "mariaDbSecondaryAvSet",
+        "mariaDbSecondaryAvSetResId": "[resourceId('Microsoft.Compute/availabilitySets',variables('mariaDbSecondaryAvSetName'))]",
+        "mariaDbPrimaryLbName": "mariaDbPrimaryLb",
+        "mariaDbPrimaryLbResId": "[resourceId('Microsoft.Network/loadBalancers/',variables('mariaDbPrimaryLbName'))]",
+        "mariaDbPrimaryLbPoolName": "mariaDbPrimaryLbIPPool",
+        "mariaDbPrimaryLbPoolId": "[concat(variables('mariaDbPrimaryLbResId'),'/backendAddressPools/',variables('mariaDbPrimaryLbPoolName'))]",
+        "mariaDbPrimaryLbProbeName": "mariaDbPrimaryLbProbe",
+        "mariaDbPrimaryLbProbleId": "[concat(variables('mariaDbPrimaryLbResId'),'/probes/',variables('mariaDbPrimaryLbProbeName'))]",
+        "mariaDbPrimaryLbFrontEndIpCfgName": "mariaDbPrimaryFrontEndIP",
+        "mariaDbPrimaryLbFrontEndIpCfgId": "[concat(variables('mariaDbPrimaryLbResId'),'/frontendIPConfigurations/',variables('mariaDbPrimaryLbFrontEndIpCfgName'))]",
+        "mariaDbPrimaryLbMySqlRuleName": "mariaDbMySqlInRule",
+        "mariaDbSecondaryLbName": "mariaDbSecondaryLb",
+        "mariaDbSecondaryLbResId": "[resourceId('Microsoft.Network/loadBalancers/',variables('mariaDbSecondaryLbName'))]",
+        "mariaDbSecondaryLbPoolName": "mariaDbSecondaryLbIPPool",
+        "mariaDbSecondaryLbPoolId": "[concat(variables('mariaDbSecondaryLbResId'),'/backendAddressPools/',variables('mariaDbSecondaryLbPoolName'))]",
+        "mariaDbSecondaryLbProbeName": "mariaDbSecondaryLbProbe",
+        "mariaDbSecondaryLbProbleId": "[concat(variables('mariaDbSecondaryLbResId'),'/probes/',variables('mariaDbSecondaryLbProbeName'))]",
+        "mariaDbSecondaryLbFrontEndIpCfgName": "mariaDbSecondaryFrontEndIP",
+        "mariaDbSecondaryLbFrontEndIpCfgId": "[concat(variables('mariaDbSecondaryLbResId'),'/frontendIPConfigurations/',variables('mariaDbSecondaryLbFrontEndIpCfgName'))]",
+        "mariaDbSecondaryLbMySqlRuleName": "mariaDbMySqlInRule",
+        "mariaDbPrimaryNsgName": "marioDbPrimaryNsg",
+        "mariaDbPrimaryNsgResId": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('mariaDbPrimaryNsgName'))]",
+        "mariaDbSecondaryNsgName": "marioDbSecondaryNsg",
+        "mariaDbSecondaryNsgResId": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('mariaDbSecondaryNsgName'))]",
+        "mariaDbPrimaryStorageAccountName": "[variables('mariaDb_primary_storageAccountName')]",
+        "mariaDbSecondaryStorageAccountName": "[variables('mariaDb_secondary_storageAccountName')]",
+        "mariaDbPrimaryVm1Name": "[concat(variables('virtualMachines_mariaDb_namePrefix'),'n1r1')]",
+        "mariaDbPrimaryVm1NicName": "[concat(variables('virtualMachines_mariaDb_namePrefix'),'n1r1nic')]",
+        "mariaDbPrimaryVm2Name": "[concat(variables('virtualMachines_mariaDb_namePrefix'),'n2r1')]",
+        "mariaDbPrimaryVm2NicName": "[concat(variables('virtualMachines_mariaDb_namePrefix'),'n2r1nic')]",
+        "mariaDbPrimaryVm3Name": "[concat(variables('virtualMachines_mariaDb_namePrefix'),'n3r1')]",
+        "mariaDbPrimaryVm3NicName": "[concat(variables('virtualMachines_mariaDb_namePrefix'),'n3r1nic')]",
+        "mariaDbSecondaryVm1Name": "[concat(variables('virtualMachines_mariaDb_namePrefix'),'n1r2')]",
+        "mariaDbSecondaryVm1NicName": "[concat(variables('virtualMachines_mariaDb_namePrefix'),'n1r2nic')]",
+        "mariaDbSecondaryVm2Name": "[concat(variables('virtualMachines_mariaDb_namePrefix'),'n2r2')]",
+        "mariaDbSecondaryVm2NicName": "[concat(variables('virtualMachines_mariaDb_namePrefix'),'n2r2nic')]"
+    },
+    "resources": [
+        {
+            "comments": "MariaDB primary region availability set",
+            "apiVersion": "[variables('apiVersion')]",
+            "type": "Microsoft.Compute/availabilitySets",
+            "name": "[variables('mariaDbPrimaryAvSetName')]",
+            "location": "[parameters('primaryRegion')]",
+            "tags": {},
+            "properties": {
+                "platformUpdateDomainCount": 5,
+                "platformFaultDomainCount": 3
+            },
+            "dependsOn": []
+        },
+        {
+            "comments": "MariaDB primary region storage account",
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[variables('mariaDbPrimaryStorageAccountName')]",
+            "apiVersion": "[variables('apiVersion')]",
+            "location": "[parameters('primaryRegion')]",
+            "tags": {},
+            "properties": {
+                "accountType": "Premium_LRS"
+            },
+            "dependsOn": []
+        },
+        {
+            "comments": "MariaDB primary region load balancer",
+            "type": "Microsoft.Network/loadBalancers",
+            "name": "[variables('mariaDbPrimaryLbName')]",
+            "apiVersion": "[variables('apiVersion')]",
+            "location": "[parameters('primaryRegion')]",
+            "properties": {
+                "frontendIPConfigurations": [
+                    {
+                        "name": "[variables('mariaDbPrimaryLbFrontEndIpCfgName')]",
+                        "properties": {
+                            "privateIPAddress": "[variables('mariaDb_primary_lbIPAddress')]",
+                            "privateIPAllocationMethod": "Static",
+                            "subnet": {
+                                "id": "[parameters('primaryRegionVnetSubnetId')]"
+                            }
+                        }
+                    }
+                ],
+                "backendAddressPools": [
+                    {
+                        "name": "[variables('mariaDbPrimaryLbPoolName')]"
+                    }
+                ],
+                "probes": [
+                    {
+                        "name": "[variables('mariaDbPrimaryLbProbeName')]",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "port": 3306,
+                            "intervalInSeconds": 5,
+                            "numberOfProbes": 2
+                        }
+                    }
+                ],
+                "loadBalancingRules": [
+                    {
+                        "name": "[variables('mariaDbPrimaryLbMySqlRuleName')]",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[variables('mariaDbPrimaryLbFrontEndIpCfgId')]"
+                            },
+                            "backendAddressPool": {
+                                "id": "[variables('mariaDbPrimaryLbPoolId')]"
+                            },
+                            "protocol": "Tcp",
+                            "frontendPort": 3306,
+                            "backendPort": 3306,
+                            "enableFloatingIP": false,
+                            "idleTimeoutInMinutes": 4,
+                            "probe": {
+                                "id": "[variables('mariaDbPrimaryLbProbleId')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "comments": "MariaDB primary region network security group",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[variables('mariaDbPrimaryNsgName')]",
+            "apiVersion": "[variables('apiVersion')]",
+            "location": "[parameters('primaryRegion')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "mysql",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "3306",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1100,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "default-allow-ssh",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "22",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1000,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "galera-replication",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "4567",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1200,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            },
+            "dependsOn": []
+        },
+        {
+            "comments": "MariaDB primary region node #1 NIC",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[variables('mariaDbPrimaryVm1NicName')]",
+            "apiVersion": "[variables('apiVersion')]",
+            "location": "[parameters('primaryRegion')]",
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAddress": "[variables('mariaDb_primary_Vm1IPAddress')]",
+                            "privateIPAllocationMethod": "Static",
+                            "subnet": {
+                                "id": "[parameters('primaryRegionVnetSubnetId')]"
+                            },
+                            "loadBalancerBackendAddressPools": [
+                                {
+                                    "id": "[variables('mariaDbPrimaryLbPoolId')]"
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "dnsSettings": {
+                    "dnsServers": []
+                },
+                "enableIPForwarding": false,
+                "networkSecurityGroup": {
+                    "id": "[variables('mariaDbPrimaryNsgResId')]"
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/loadBalancers', variables('mariaDbPrimaryLbName'))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('mariaDbPrimaryNsgName'))]"
+            ]
+        },
+        {
+            "comments": "MariaDB primary region node #2 NIC",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[variables('mariaDbPrimaryVm2NicName')]",
+            "apiVersion": "[variables('apiVersion')]",
+            "location": "[parameters('primaryRegion')]",
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAddress": "[variables('mariaDb_primary_Vm2IPAddress')]",
+                            "privateIPAllocationMethod": "Static",
+                            "subnet": {
+                                "id": "[parameters('primaryRegionVnetSubnetId')]"
+                            },
+                            "loadBalancerBackendAddressPools": [
+                                {
+                                    "id": "[variables('mariaDbPrimaryLbPoolId')]"
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "dnsSettings": {
+                    "dnsServers": []
+                },
+                "enableIPForwarding": false,
+                "networkSecurityGroup": {
+                    "id": "[variables('mariaDbPrimaryNsgResId')]"
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/loadBalancers', variables('mariaDbPrimaryLbName'))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('mariaDbPrimaryNsgName'))]"
+            ]
+        },
+        {
+            "comments": "MariaDB primary region node #3 NIC",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[variables('mariaDbPrimaryVm3NicName')]",
+            "apiVersion": "[variables('apiVersion')]",
+            "location": "[parameters('primaryRegion')]",
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAddress": "[variables('mariaDb_primary_Vm3IPAddress')]",
+                            "privateIPAllocationMethod": "Static",
+                            "subnet": {
+                                "id": "[parameters('primaryRegionVnetSubnetId')]"
+                            },
+                            "loadBalancerBackendAddressPools": [
+                                {
+                                    "id": "[variables('mariaDbPrimaryLbPoolId')]"
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "dnsSettings": {
+                    "dnsServers": []
+                },
+                "enableIPForwarding": false,
+                "networkSecurityGroup": {
+                    "id": "[variables('mariaDbPrimaryNsgResId')]"
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/loadBalancers', variables('mariaDbPrimaryLbName'))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('mariaDbPrimaryNsgName'))]"
+            ]
+        },
+        {
+            "comments": "Maria DB Galera Cluster Primary Region Node 1",
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[variables('mariaDbPrimaryVm1Name')]",
+            "apiVersion": "[variables('apiVersion')]",
+            "location": "[parameters('primaryRegion')]",
+            "properties": {
+                "availabilitySet": {
+                    "id": "[variables('mariaDbPrimaryAvSetResId')]"
+                },
+                "hardwareProfile": {
+                    "vmSize": "[variables('mariaDbVmNodeSize')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "Canonical",
+                        "offer": "UbuntuServer",
+                        "sku": "14.04.4-LTS",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "[concat(tolower(variables('mariaDbPrimaryVm1Name')),'osdisk.vhd')]",
+                        "createOption": "FromImage",
+                        "vhd": {
+                            "uri": "[concat('https://',variables('mariaDbPrimaryStorageAccountName'),'.blob.core.windows.net/vhds/', tolower(variables('mariaDbPrimaryVm1Name')),'osdisk.vhd')]"
+                        },
+                        "caching": "ReadWrite"
+                    },
+                    "dataDisks": []
+                },
+                "osProfile": {
+                    "computerName": "[variables('mariaDbPrimaryVm1Name')]",
+                    "adminUsername": "[parameters('mariaDbAdminUsername')]",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": true,
+                        "ssh": {
+                            "publicKeys": [
+                                {
+                                    "path": "[concat('/home/',parameters('mariaDbAdminUsername'),'/.ssh/authorized_keys')]",
+                                    "keyData": "[parameters('mariaDbSshKeyData')]"
+                                }
+                            ]
+                        }
+                    },
+                    "secrets": [],
+                    "adminPassword": "[parameters('mariaDbAdminPassword')]"
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('mariaDbPrimaryVm1NicName'))]"
+                        }
+                    ]
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/availabilitySets', variables('mariaDbPrimaryAvSetName'))]",
+                "[resourceId('Microsoft.Network/networkInterfaces', variables('mariaDbPrimaryVm1NicName'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('mariaDbPrimaryStorageAccountName'))]"
+            ]
+        },
+        {
+            "comments": "Maria DB Galera Cluster Primary Region Node 2",
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[variables('mariaDbPrimaryVm2Name')]",
+            "apiVersion": "[variables('apiVersion')]",
+            "location": "[parameters('primaryRegion')]",
+            "properties": {
+                "availabilitySet": {
+                    "id": "[variables('mariaDbPrimaryAvSetResId')]"
+                },
+                "hardwareProfile": {
+                    "vmSize": "[variables('mariaDbVmNodeSize')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "Canonical",
+                        "offer": "UbuntuServer",
+                        "sku": "14.04.4-LTS",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "[concat(tolower(variables('mariaDbPrimaryVm2Name')),'osdisk.vhd')]",
+                        "createOption": "FromImage",
+                        "vhd": {
+                            "uri": "[concat('https://',variables('mariaDbPrimaryStorageAccountName'),'.blob.core.windows.net/vhds/', tolower(variables('mariaDbPrimaryVm2Name')),'osdisk.vhd')]"
+                        },
+                        "caching": "ReadWrite"
+                    },
+                    "dataDisks": []
+                },
+                "osProfile": {
+                    "computerName": "[variables('mariaDbPrimaryVm2Name')]",
+                    "adminUsername": "[parameters('mariaDbAdminUsername')]",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": true,
+                        "ssh": {
+                            "publicKeys": [
+                                {
+                                    "path": "[concat('/home/',parameters('mariaDbAdminUsername'),'/.ssh/authorized_keys')]",
+                                    "keyData": "[parameters('mariaDbSshKeyData')]"
+                                }
+                            ]
+                        }
+                    },
+                    "secrets": [],
+                    "adminPassword": "[parameters('mariaDbAdminPassword')]"
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('mariaDbPrimaryVm2NicName'))]"
+                        }
+                    ]
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/availabilitySets', variables('mariaDbPrimaryAvSetName'))]",
+                "[resourceId('Microsoft.Network/networkInterfaces', variables('mariaDbPrimaryVm2NicName'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('mariaDbPrimaryStorageAccountName'))]"
+            ]
+        },
+        {
+            "comments": "Maria DB Galera Cluster Primary Region Node 3",
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[variables('mariaDbPrimaryVm3Name')]",
+            "apiVersion": "[variables('apiVersion')]",
+            "location": "[parameters('primaryRegion')]",
+            "properties": {
+                "availabilitySet": {
+                    "id": "[variables('mariaDbPrimaryAvSetResId')]"
+                },
+                "hardwareProfile": {
+                    "vmSize": "[variables('mariaDbVmNodeSize')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "Canonical",
+                        "offer": "UbuntuServer",
+                        "sku": "14.04.4-LTS",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "[concat(tolower(variables('mariaDbPrimaryVm1Name')),'osdisk.vhd')]",
+                        "createOption": "FromImage",
+                        "vhd": {
+                            "uri": "[concat('https://',variables('mariaDbPrimaryStorageAccountName'),'.blob.core.windows.net/vhds/', tolower(variables('mariaDbPrimaryVm3Name')),'osdisk.vhd')]"
+                        },
+                        "caching": "ReadWrite"
+                    },
+                    "dataDisks": []
+                },
+                "osProfile": {
+                    "computerName": "[variables('mariaDbPrimaryVm3Name')]",
+                    "adminUsername": "[parameters('mariaDbAdminUsername')]",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": true,
+                        "ssh": {
+                            "publicKeys": [
+                                {
+                                    "path": "[concat('/home/',parameters('mariaDbAdminUsername'),'/.ssh/authorized_keys')]",
+                                    "keyData": "[parameters('mariaDbSshKeyData')]"
+                                }
+                            ]
+                        }
+                    },
+                    "secrets": [],
+                    "adminPassword": "[parameters('mariaDbAdminPassword')]"
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('mariaDbPrimaryVm3NicName'))]"
+                        }
+                    ]
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/availabilitySets', variables('mariaDbPrimaryAvSetName'))]",
+                "[resourceId('Microsoft.Network/networkInterfaces', variables('mariaDbPrimaryVm3NicName'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('mariaDbPrimaryStorageAccountName'))]"
+            ]
+        },
+        {
+            "comments": "MariaDB secondary region availability set",
+            "apiVersion": "[variables('apiVersion')]",
+            "type": "Microsoft.Compute/availabilitySets",
+            "name": "[variables('mariaDbSecondaryAvSetName')]",
+            "location": "[parameters('secondaryRegion')]",
+            "tags": {},
+            "properties": {
+                "platformUpdateDomainCount": 5,
+                "platformFaultDomainCount": 3
+            },
+            "dependsOn": []
+        },
+        {
+            "comments": "MariaDB secondary region storage account",
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[variables('mariaDbSecondaryStorageAccountName')]",
+            "apiVersion": "[variables('apiVersion')]",
+            "location": "[parameters('secondaryRegion')]",
+            "tags": {},
+            "properties": {
+                "accountType": "Premium_LRS"
+            },
+            "dependsOn": []
+        },
+        {
+            "comments": "MariaDB secondary region load balancer",
+            "type": "Microsoft.Network/loadBalancers",
+            "name": "[variables('mariaDbSecondaryLbName')]",
+            "apiVersion": "[variables('apiVersion')]",
+            "location": "[parameters('secondaryRegion')]",
+            "properties": {
+                "frontendIPConfigurations": [
+                    {
+                        "name": "[variables('mariaDbSecondaryLbFrontEndIpCfgName')]",
+                        "properties": {
+                            "privateIPAddress": "[variables('mariaDb_secondary_lbIPAddress')]",
+                            "privateIPAllocationMethod": "Static",
+                            "subnet": {
+                                "id": "[parameters('secondaryRegionVnetSubnetId')]"
+                            }
+                        }
+                    }
+                ],
+                "backendAddressPools": [
+                    {
+                        "name": "[variables('mariaDbSecondaryLbPoolName')]"
+                    }
+                ],
+                "probes": [
+                    {
+                        "name": "[variables('mariaDbSecondaryLbProbeName')]",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "port": 3306,
+                            "intervalInSeconds": 5,
+                            "numberOfProbes": 2
+                        }
+                    }
+                ],
+                "loadBalancingRules": [
+                    {
+                        "name": "[variables('mariaDbSecondaryLbMySqlRuleName')]",
+                        "properties": {
+                            "frontendIPConfiguration": {
+                                "id": "[variables('mariaDbSecondaryLbFrontEndIpCfgId')]"
+                            },
+                            "backendAddressPool": {
+                                "id": "[variables('mariaDbSecondaryLbPoolId')]"
+                            },
+                            "protocol": "Tcp",
+                            "frontendPort": 3306,
+                            "backendPort": 3306,
+                            "enableFloatingIP": false,
+                            "idleTimeoutInMinutes": 4,
+                            "probe": {
+                                "id": "[variables('mariaDbSecondaryLbProbleId')]"
+                            }
+                        }
+                    }
+                ]
+            },
+            "dependsOn": [
+            ]
+        },
+        {
+            "comments": "MariaDB secondary region network security group",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[variables('mariaDbSecondaryNsgName')]",
+            "apiVersion": "[variables('apiVersion')]",
+            "location": "[parameters('secondaryRegion')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "mysql",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "3306",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1100,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "default-allow-ssh",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "22",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1000,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "galera-replication",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "4567",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1200,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            },
+            "dependsOn": []
+        },
+        {
+            "comments": "MariaDB secondary region node #1 NIC",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[variables('mariaDbSecondaryVm1NicName')]",
+            "apiVersion": "[variables('apiVersion')]",
+            "location": "[parameters('secondaryRegion')]",
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAddress": "[variables('mariaDb_secondary_Vm1IPAddress')]",
+                            "privateIPAllocationMethod": "Static",
+                            "subnet": {
+                                "id": "[parameters('secondaryRegionVnetSubnetId')]"
+                            },
+                            "loadBalancerBackendAddressPools": [
+                                {
+                                    "id": "[variables('mariaDbSecondaryLbPoolId')]"
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "dnsSettings": {
+                    "dnsServers": []
+                },
+                "enableIPForwarding": false,
+                "networkSecurityGroup": {
+                    "id": "[variables('mariaDbSecondaryNsgResId')]"
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/loadBalancers', variables('mariaDbSecondaryLbName'))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('mariaDbSecondaryNsgName'))]"
+            ]
+        },
+        {
+            "comments": "MariaDB secondary region node #2 NIC",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[variables('mariaDbSecondaryVm2NicName')]",
+            "apiVersion": "[variables('apiVersion')]",
+            "location": "[parameters('secondaryRegion')]",
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAddress": "[variables('mariaDb_secondary_Vm2IPAddress')]",
+                            "privateIPAllocationMethod": "Static",
+                            "subnet": {
+                                "id": "[parameters('secondaryRegionVnetSubnetId')]"
+                            },
+                            "loadBalancerBackendAddressPools": [
+                                {
+                                    "id": "[variables('mariaDbSecondaryLbPoolId')]"
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "dnsSettings": {
+                    "dnsServers": []
+                },
+                "enableIPForwarding": false,
+                "networkSecurityGroup": {
+                    "id": "[variables('mariaDbSecondaryNsgResId')]"
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/loadBalancers', variables('mariaDbSecondaryLbName'))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('mariaDbSecondaryNsgName'))]"
+            ]
+        },
+        {
+            "comments": "Maria DB Galera Cluster Secondary Region Node 1",
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[variables('mariaDbSecondaryVm1Name')]",
+            "apiVersion": "[variables('apiVersion')]",
+            "location": "[parameters('secondaryRegion')]",
+            "properties": {
+                "availabilitySet": {
+                    "id": "[variables('mariaDbSecondaryAvSetResId')]"
+                },
+                "hardwareProfile": {
+                    "vmSize": "[variables('mariaDbVmNodeSize')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "Canonical",
+                        "offer": "UbuntuServer",
+                        "sku": "14.04.4-LTS",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "[concat(tolower(variables('mariaDbSecondaryVm1Name')),'osdisk.vhd')]",
+                        "createOption": "FromImage",
+                        "vhd": {
+                            "uri": "[concat('https://',variables('mariaDbSecondaryStorageAccountName'),'.blob.core.windows.net/vhds/', tolower(variables('mariaDbSecondaryVm1Name')),'osdisk.vhd')]"
+                        },
+                        "caching": "ReadWrite"
+                    },
+                    "dataDisks": []
+                },
+                "osProfile": {
+                    "computerName": "[variables('mariaDbSecondaryVm1Name')]",
+                    "adminUsername": "[parameters('mariaDbAdminUsername')]",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": true,
+                        "ssh": {
+                            "publicKeys": [
+                                {
+                                    "path": "[concat('/home/',parameters('mariaDbAdminUsername'),'/.ssh/authorized_keys')]",
+                                    "keyData": "[parameters('mariaDbSshKeyData')]"
+                                }
+                            ]
+                        }
+                    },
+                    "secrets": [],
+                    "adminPassword": "[parameters('mariaDbAdminPassword')]"
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('mariaDbSecondaryVm1NicName'))]"
+                        }
+                    ]
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/availabilitySets', variables('mariaDbSecondaryAvSetName'))]",
+                "[resourceId('Microsoft.Network/networkInterfaces', variables('mariaDbSecondaryVm1NicName'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('mariaDbSecondaryStorageAccountName'))]"
+            ]
+        },
+        {
+            "comments": "Maria DB Galera Cluster Secondary Region Node 2",
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[variables('mariaDbSecondaryVm2Name')]",
+            "apiVersion": "[variables('apiVersion')]",
+            "location": "[parameters('secondaryRegion')]",
+            "properties": {
+                "availabilitySet": {
+                    "id": "[variables('mariaDbSecondaryAvSetResId')]"
+                },
+                "hardwareProfile": {
+                    "vmSize": "[variables('mariaDbVmNodeSize')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "Canonical",
+                        "offer": "UbuntuServer",
+                        "sku": "14.04.4-LTS",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "[concat(tolower(variables('mariaDbSecondaryVm2Name')),'osdisk.vhd')]",
+                        "createOption": "FromImage",
+                        "vhd": {
+                            "uri": "[concat('https://',variables('mariaDbSecondaryStorageAccountName'),'.blob.core.windows.net/vhds/', tolower(variables('mariaDbSecondaryVm2Name')),'osdisk.vhd')]"
+                        },
+                        "caching": "ReadWrite"
+                    },
+                    "dataDisks": []
+                },
+                "osProfile": {
+                    "computerName": "[variables('mariaDbSecondaryVm2Name')]",
+                    "adminUsername": "[parameters('mariaDbAdminUsername')]",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": true,
+                        "ssh": {
+                            "publicKeys": [
+                                {
+                                    "path": "[concat('/home/',parameters('mariaDbAdminUsername'),'/.ssh/authorized_keys')]",
+                                    "keyData": "[parameters('mariaDbSshKeyData')]"
+                                }
+                            ]
+                        }
+                    },
+                    "secrets": [],
+                    "adminPassword": "[parameters('mariaDbAdminPassword')]"
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('mariaDbSecondaryVm2NicName'))]"
+                        }
+                    ]
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/availabilitySets', variables('mariaDbSecondaryAvSetName'))]",
+                "[resourceId('Microsoft.Network/networkInterfaces', variables('mariaDbSecondaryVm2NicName'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('mariaDbSecondaryStorageAccountName'))]"
+            ]
+        }
+    ]
+}
