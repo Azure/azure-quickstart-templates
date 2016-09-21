@@ -1,0 +1,813 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmName": {
+      "type": "string",
+      "metadata": {
+        "description": "name of the vm, will be used as DNS Name for the Public IP used to access the Virtual Machine"
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "User name for the Virtual Machine"
+      }
+    },
+    "sshKeyData": {
+      "type": "string",
+      "metadata": {
+        "description": "Please copy the content of your SSH RSA public key and paste it here. You can use \"ssh-keygen -t rsa -b 2048\" to generate your SSH key pairs."
+      }
+    },
+    "environment": {
+      "type": "string",
+      "allowedValues": [
+        "AzureCloud"
+      ],
+      "metadata": {
+        "description": "AzureCloud is Global Azure"
+      }
+    },
+    "tenantID": {
+      "type": "string",
+      "minLength": 36,
+      "maxLength": 36,
+      "metadata": {
+        "description": "ID of the tenant. See https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/blob/master/docs/guidance.md"
+      }
+    },
+    "clientID": {
+      "type": "string",
+      "minLength": 36,
+      "maxLength": 36,
+      "metadata": {
+        "description": "ID of the client. See https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/blob/master/docs/guidance.md"
+      }
+    },
+    "clientSecret": {
+      "type": "securestring",
+      "metadata": {
+        "description": "secret of the client. See https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/blob/master/docs/guidance.md"
+      }
+    },
+    "autoDeployBosh": {
+      "type": "string",
+      "defaultValue": "enabled",
+      "allowedValues": [
+        "enabled",
+        "disabled"
+      ],
+      "metadata": {
+        "description": "The flag that enables automatic deployment of Bosh"
+      }
+    },
+    "primaryLocation": {
+      "type": "string",
+      "allowedValues": [
+          "North Europe",
+          "West Europe",
+          "East US",
+          "West US"
+      ],
+      "metadata": {
+        "description": "The primary location to provision resources for Bosh and CF"
+      }
+    },
+    "secondaryLocation": {
+      "type": "string",
+      "allowedValues": [
+          "North Europe",
+          "West Europe",
+          "East US",
+          "West US"
+      ],
+      "metadata": {
+        "description": "The secondary location to provision resources for Bosh and CF"
+      }
+    },
+    "vpnGwSharedKey": {
+      "type": "string",
+      "defaultValue": "youshould2changethisvalueforsure1time",
+      "metadata": {
+        "description": "Please provide a shared key for the VPN gateway. This field should not be blank."
+      }
+    },
+    "systemdomain": {
+      "type": "string",
+      "metadata": {
+        "description": "Domain name used for Cloud Foundry system domain"
+      }
+    },
+    "dbendpoint": {
+      "type": "string",
+      "metadata": {
+        "description": "Database host endpoint that has ccdb and uaadb provisioned with default admin account used in this template"
+      }
+    },
+    "nfsendpoint": {
+      "type": "string",
+      "metadata": {
+        "description": "NFS endpoint for Cloud Foundry"
+      }
+    }
+  },
+  "variables": {
+    "apiVersion": "2015-06-15",
+    "defaultprimaryStorageAccountName": "[concat('defprisa', uniqueString(resourceGroup().id))]",
+    "primaryStorageAccountName": "[concat('prisa', uniqueString(resourceGroup().id))]",
+    "defaultsecondaryStorageAccountName": "[concat('defsecsa', uniqueString(resourceGroup().id))]",
+    "secondaryStorageAccountName": "[concat('secsa', uniqueString(resourceGroup().id))]",
+    "defaultstorageAccountType": "Standard_RAGRS",
+    "storageAccountType": "Premium_LRS",
+    "vmStorageAccountContainerName": "vhds",
+    "primaryStorageid": "[resourceId('Microsoft.Storage/storageAccounts', variables('primaryStorageAccountName'))]",
+    "defaultprimaryStorageid": "[resourceId('Microsoft.Storage/storageAccounts', variables('defaultprimaryStorageAccountName'))]",
+    "secondaryStorageid": "[resourceId('Microsoft.Storage/storageAccounts', variables('secondaryStorageAccountName'))]",
+    "defaultsecondaryStorageid": "[resourceId('Microsoft.Storage/storageAccounts', variables('defaultsecondaryStorageAccountName'))]",
+    "primaryVirtualNetworkName": "primaryboshvnet-crp",
+    "secondaryVirtualNetworkName": "secondaryboshvnet-crp",
+    "primaryVirtualNetworkAddressSpace": "10.0.0.0/16",
+    "secondaryVirtualNetworkAddressSpace": "10.2.0.0/16",
+    "primaryVnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('primaryVirtualNetworkName'))]",
+    "secondaryVnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('secondaryVirtualNetworkName'))]",
+    "subnetNameForBosh": "Bosh",
+    "subnetAddressRangeForBosh": "10.0.0.0/24",
+    "subnetRefForBosh": "[concat(variables('primaryVnetID'),'/subnets/', variables('subnetNameForBosh'))]",
+    "subnetNameForCloudFoundry": "CloudFoundry",
+    "primarySubnetAddressRangeForCloudFoundry": "10.0.16.0/20",
+    "secondarySubnetAddressRangeForCloudFoundry": "10.2.16.0/20",
+    "subnetNameForGateway": "GatewaySubnet",
+    "primarySubnetAddressRangeForGateway": "10.0.254.0/24",
+    "primarySubnetGatewayRef": "[concat(variables('primaryVnetID'),'/subnets/',variables('subnetNameForGateway'))]",
+    "secondarySubnetAddressRangeForGateway": "10.2.254.0/24",
+    "secondarySubnetGatewayRef": "[concat(variables('secondaryVnetID'),'/subnets/',variables('subnetNameForGateway'))]",
+    "primaryVpnGatewayName": "[concat(variables('primaryVirtualNetworkName'), '-gw')]",
+    "primaryVpnGatewayPublicIPName": "[concat(variables('primaryVirtualNetworkName'), '-gw-publicip')]",
+    "secondaryVpnGatewayName": "[concat(variables('secondaryVirtualNetworkName'), '-gw')]",
+    "secondaryVpnGatewayPublicIPName": "[concat(variables('secondaryVirtualNetworkName'), '-gw-publicip')]",
+    "vpnGwSku": "HighPerformance",
+    "primaryVpnGwConnectionName": "Primary2Second",
+    "secondaryVpnGwConnectionName": "Secondary2Primary",
+    "vpnType": "RouteBased",
+    "subnetNameForDiego": "Diego",
+    "primarySubnetAddressRangeForDiego": "10.0.32.0/20",
+    "secondarySubnetAddressRangeForDiego": "10.2.32.0/20",
+    "devboxNetworkSecurityGroup": "nsg-devbox",
+    "boshNetworkSecurityGroup": "nsg-bosh",
+    "primaryCfNetworkSecurityGroup": "primarynsg-cf",
+    "secondaryCfNetworkSecurityGroup": "secondarynsg-cf",
+    "vmSize": "Standard_DS2",
+    "primaryNicName": "[concat('primary', parameters('vmName'))]",
+    "secondaryNicName": "[concat('secondary', parameters('vmName'))]",
+    "devboxPrivateIPAddress": "10.0.0.100",
+    "imagePublisher": "Canonical",
+    "imageOffer": "UbuntuServer",
+    "ubuntuOSVersion": "14.04.3-LTS",
+    "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
+    "baseUriAzureCloud": "https://raw.githubusercontent.com/ritazh/azure-quickstart-templates/cfcrossregion/bosh-cf-crossregion/",
+    "baseUriAzureChinaCloud": "https://cloudfoundry.blob.core.chinacloudapi.cn/",
+    "filesToDownloadAzureCloud": [
+      "[uri(variables('baseUriAzureCloud'), 'scripts/setup_env')]",
+      "[uri(variables('baseUriAzureCloud'), 'scripts/setup_env.py')]",
+      "[uri(variables('baseUriAzureCloud'), 'scripts/create_cert.sh')]",
+      "[uri(variables('baseUriAzureCloud'), 'scripts/init.sh')]",
+      "[uri(variables('baseUriAzureCloud'), 'scripts/deploy_bosh.sh')]",
+      "[uri(variables('baseUriAzureCloud'), 'scripts/deploy_cloudfoundry.sh')]",
+      "[uri(variables('baseUriAzureCloud'), 'manifests/bosh.yml')]",
+      "[uri(variables('baseUriAzureCloud'), 'manifests/cross.yml')]",
+      "http://go-cli.s3-website-us-east-1.amazonaws.com/releases/v6.14.1/cf-cli-installer_6.14.1_x86-64.deb"
+    ],
+    "filesToDownloadAzureChinaCloud": [
+      "[uri(variables('baseUriAzureChinaCloud'), 'scripts/setup_env')]",
+      "[uri(variables('baseUriAzureChinaCloud'), 'scripts/setup_env.py')]",
+      "[uri(variables('baseUriAzureChinaCloud'), 'scripts/create_cert.sh')]",
+      "[uri(variables('baseUriAzureChinaCloud'), 'scripts/init.sh')]",
+      "[uri(variables('baseUriAzureChinaCloud'), 'scripts/deploy_bosh.sh')]",
+      "[uri(variables('baseUriAzureChinaCloud'), 'scripts/deploy_cloudfoundry.sh')]",
+      "[uri(variables('baseUriAzureChinaCloud'), 'manifests/bosh.yml')]",
+      "[uri(variables('baseUriAzureChinaCloud'), 'manifests/cross.yml')]",
+      "[uri(variables('baseUriAzureChinaCloud'), 'cf-cli/cf.deb')]"
+    ],
+    "filesToDownload": "[variables(concat('filesToDownload', parameters('environment')))]",
+
+    "environmentAzureCloud": {
+      "serviceHostBase": "core.windows.net",
+      "boshReleaseUrl": "https://bosh.io/d/github.com/cloudfoundry/bosh?v=256.2",
+      "boshReleaseSha1": "ff2f4e16e02f66b31c595196052a809100cfd5a8",
+      "boshAzureCPIReleaseUrl": "https://bosh.io/d/github.com/cloudfoundry-incubator/bosh-azure-cpi-release?v=10",
+      "boshAzureCPIReleaseSha1": "48725899f8b3f0f625bdb3bcff97bc0d6bf193e1",
+      "stemcellUrl": "https://bosh.io/d/stemcells/bosh-azure-hyperv-ubuntu-trusty-go_agent?v=3169",
+      "stemcellSha1": "ff13c47ac7ce121dee6153c1564bd8965edf9f59",
+      "boshInitUrl": "https://s3.amazonaws.com/bosh-init-artifacts/bosh-init-0.0.81-linux-amd64",
+      "cfReleaseUrl": "https://bosh.io/d/github.com/cloudfoundry/cf-release?v=231"
+    },
+    "environmentAzureChinaCloud": {
+      "serviceHostBase": "core.chinacloudapi.cn",
+      "boshReleaseUrl": "[uri(variables('baseUriAzureChinaCloud'), 'releases/bosh-256.2.tgz')]",
+      "boshReleaseSha1": "ff2f4e16e02f66b31c595196052a809100cfd5a8",
+      "boshAzureCPIReleaseUrl": "[uri(variables('baseUriAzureChinaCloud'), 'releases/bosh-azure-cpi-release-10.tgz')]",
+      "boshAzureCPIReleaseSha1": "48725899f8b3f0f625bdb3bcff97bc0d6bf193e1",
+      "stemcellUrl": "[uri(variables('baseUriAzureChinaCloud'), 'stemcells/bosh-stemcell-3169-azure-hyperv-ubuntu-trusty-go_agent.tgz')]",
+      "stemcellSha1": "ff13c47ac7ce121dee6153c1564bd8965edf9f59",
+      "boshInitUrl": "[uri(variables('baseUriAzureChinaCloud'), 'bosh-init/bosh-init-0.0.81-linux-amd64')]",
+      "cfReleaseUrl": "[uri(variables('baseUriAzureChinaCloud'), 'releases/cf-release-231.tgz')]"
+    },
+    "environment": "[variables(concat('environment', parameters('environment')))]",
+
+    "keepUnreachableVMs": "false"
+  },
+  "resources": [
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('boshNetworkSecurityGroup')]",
+      "location": "[parameters('primaryLocation')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "ssh",
+            "properties": {
+              "description": "Allow SSH",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 200,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "bosh-agent",
+            "properties": {
+              "description": "Allow bosh-agent",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "6868",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 201,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "bosh-director",
+            "properties": {
+              "description": "Allow bosh-director",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "25555",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 202,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "dns",
+            "properties": {
+              "description": "Allow DNS",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "53",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 203,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('devboxNetworkSecurityGroup')]",
+      "location": "[parameters('primaryLocation')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "ssh",
+            "properties": {
+              "description": "Allow SSH",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 200,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('primaryCfNetworkSecurityGroup')]",
+      "location": "[parameters('primaryLocation')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "cf-https",
+            "properties": {
+              "description": "Allow cf-https",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 200,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "cf-log",
+            "properties": {
+              "description": "Allow cf-log",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "4443",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 201,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('secondaryCfNetworkSecurityGroup')]",
+      "location": "[parameters('secondaryLocation')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "cf-https",
+            "properties": {
+              "description": "Allow cf-https",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 200,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "cf-log",
+            "properties": {
+              "description": "Allow cf-log",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "4443",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 201,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('primaryStorageAccountName')]",
+      "apiVersion": "[variables('apiVersion')]",
+      "location": "[parameters('primaryLocation')]",
+      "properties": {
+        "accountType": "[variables('storageAccountType')]"
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('defaultprimaryStorageAccountName')]",
+      "apiVersion": "[variables('apiVersion')]",
+      "location": "[parameters('primaryLocation')]",
+      "properties": {
+        "accountType": "[variables('defaultstorageAccountType')]"
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('secondaryStorageAccountName')]",
+      "apiVersion": "[variables('apiVersion')]",
+      "location": "[parameters('secondaryLocation')]",
+      "properties": {
+        "accountType": "[variables('storageAccountType')]"
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('defaultsecondaryStorageAccountName')]",
+      "apiVersion": "[variables('apiVersion')]",
+      "location": "[parameters('secondaryLocation')]",
+      "properties": {
+        "accountType": "[variables('defaultstorageAccountType')]"
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat(parameters('vmName'),'-devbox')]",
+      "location": "[parameters('primaryLocation')]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[concat(toLower(parameters('vmName')), '-', uniqueString(resourceGroup().id))]"
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat(parameters('vmName'),'-bosh')]",
+      "location": "[parameters('primaryLocation')]",
+      "properties": {
+        "publicIPAllocationMethod": "static"
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat(parameters('vmName'), '-cf-primary')]",
+      "location": "[parameters('primaryLocation')]",
+      "properties": {
+        "publicIPAllocationMethod": "static"
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat(parameters('vmName'), '-cf-secondary')]",
+      "location": "[parameters('secondaryLocation')]",
+      "properties": {
+        "publicIPAllocationMethod": "static"
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('primaryVpnGatewayPublicIPName')]",
+      "location": "[parameters('primaryLocation')]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic"
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('secondaryVpnGatewayPublicIPName')]",
+      "location": "[parameters('secondaryLocation')]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic"
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('primaryVirtualNetworkName')]",
+      "location": "[parameters('primaryLocation')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('primaryVirtualNetworkAddressSpace')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetNameForBosh')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetAddressRangeForBosh')]"
+            }
+          },
+          {
+            "name": "[variables('subnetNameForCloudFoundry')]",
+            "properties": {
+              "addressPrefix": "[variables('primarySubnetAddressRangeForCloudFoundry')]"
+            }
+          },
+          {
+            "name": "[variables('subnetNameForDiego')]",
+            "properties": {
+              "addressPrefix": "[variables('primarySubnetAddressRangeForDiego')]"
+            }
+          },
+          {
+            "name": "[variables('subnetNameForGateway')]",
+            "properties": {
+              "addressPrefix": "[variables('primarySubnetAddressRangeForGateway')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('secondaryVirtualNetworkName')]",
+      "location": "[parameters('secondaryLocation')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('secondaryVirtualNetworkAddressSpace')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetNameForCloudFoundry')]",
+            "properties": {
+              "addressPrefix": "[variables('secondarySubnetAddressRangeForCloudFoundry')]"
+            }
+          },
+          {
+            "name": "[variables('subnetNameForDiego')]",
+            "properties": {
+              "addressPrefix": "[variables('secondarySubnetAddressRangeForDiego')]"
+            }
+          },
+          {
+            "name": "[variables('subnetNameForGateway')]",
+            "properties": {
+              "addressPrefix": "[variables('secondarySubnetAddressRangeForGateway')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('primaryNicName')]",
+      "location": "[parameters('primaryLocation')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', concat(parameters('vmName'), '-devbox'))]",
+        "[concat('Microsoft.Network/virtualNetworks/', variables('primaryVirtualNetworkName'))]",
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('devboxNetworkSecurityGroup'))]"
+      ],
+      "properties": {
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('devboxNetworkSecurityGroup'))]"
+        },
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[variables('devboxPrivateIPAddress')]",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('vmName'), '-devbox'))]"
+              },
+              "subnet": {
+                "id": "[variables('subnetRefForBosh')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/virtualNetworkGateways",
+      "name": "[variables('primaryVpnGatewayName')]",
+      "location": "[parameters('primaryLocation')]",
+      "dependsOn": [
+          "[concat('Microsoft.Network/publicIPAddresses/', variables('primaryVpnGatewayPublicIPName'))]",
+          "[concat('Microsoft.Network/virtualNetworks/', variables('primaryVirtualNetworkName'))]"
+      ],
+      "properties": {
+          "ipConfigurations": [
+              {
+                  "properties": {
+                      "privateIPAllocationMethod": "Dynamic",
+                      "subnet": {
+                          "id": "[variables('primarySubnetGatewayRef')]"
+                      },
+                      "publicIPAddress": {
+                          "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('primaryVpnGatewayPublicIPName'))]"
+                      }
+                  },
+                  "name": "vnetGatewayConfigMain"
+              }
+          ],
+           "sku": {
+            "name": "[variables('vpnGwSku')]",
+            "tier": "[variables('vpnGwSku')]"
+        },
+          "gatewayType": "Vpn",
+          "vpnType": "[variables('vpnType')]",
+          "enableBgp": "false"
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/virtualNetworkGateways",
+      "name": "[variables('secondaryVpnGatewayName')]",
+      "location": "[parameters('secondaryLocation')]",
+      "dependsOn": [
+          "[concat('Microsoft.Network/publicIPAddresses/', variables('secondaryVpnGatewayPublicIPName'))]",
+          "[concat('Microsoft.Network/virtualNetworks/', variables('secondaryVirtualNetworkName'))]"
+      ],
+      "properties": {
+          "ipConfigurations": [
+              {
+                  "properties": {
+                      "privateIPAllocationMethod": "Dynamic",
+                      "subnet": {
+                          "id": "[variables('secondarySubnetGatewayRef')]"
+                      },
+                      "publicIPAddress": {
+                          "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('secondaryVpnGatewayPublicIPName'))]"
+                      }
+                  },
+                  "name": "vnetGatewayConfigMain"
+              }
+          ],
+           "sku": {
+            "name": "[variables('vpnGwSku')]",
+            "tier": "[variables('vpnGwSku')]"
+        },
+          "gatewayType": "Vpn",
+          "vpnType": "[variables('vpnType')]",
+          "enableBgp": "false"
+      }
+    },
+    {
+        "apiVersion": "[variables('apiVersion')]",
+        "type": "Microsoft.Network/connections",
+        "name": "[variables('primaryVpnGwConnectionName')]",
+        "location": "[parameters('primaryLocation')]",
+        "dependsOn": [
+            "[concat('Microsoft.Network/virtualNetworkGateways/', variables('primaryVpnGatewayName'))]",
+            "[concat('Microsoft.Network/virtualNetworkGateways/', variables('secondaryVpnGatewayName'))]"
+        ],
+        "properties": {
+            "virtualNetworkGateway1": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworkGateways',variables('primaryVpnGatewayName'))]"
+            },
+            "virtualNetworkGateway2": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworkGateways',variables('secondaryVpnGatewayName'))]"
+            },
+            "connectionType": "Vnet2Vnet",
+            "routingWeight": 3,
+            "sharedKey": "[parameters('vpnGwSharedKey')]"
+        }
+    },
+    {
+        "apiVersion": "[variables('apiVersion')]",
+        "type": "Microsoft.Network/connections",
+        "name": "[variables('secondaryVpnGwConnectionName')]",
+        "location": "[parameters('secondaryLocation')]",
+        "dependsOn": [
+            "[concat('Microsoft.Network/virtualNetworkGateways/', variables('primaryVpnGatewayName'))]",
+            "[concat('Microsoft.Network/virtualNetworkGateways/', variables('secondaryVpnGatewayName'))]"
+        ],
+        "properties": {
+            "virtualNetworkGateway1": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworkGateways',variables('secondaryVpnGatewayName'))]"
+            },
+            "virtualNetworkGateway2": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworkGateways',variables('primaryVpnGatewayName'))]"
+            },
+            "connectionType": "Vnet2Vnet",
+            "routingWeight": 3,
+            "sharedKey": "[parameters('vpnGwSharedKey')]"
+        }
+    },
+    {
+      "apiversion": "[variables('apiVersion')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[parameters('vmName')]",
+      "location": "[parameters('primaryLocation')]",
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/',variables('defaultprimaryStorageAccountName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/',variables('primaryNicName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('vmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": "true",
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[variables('sshKeyPath')]",
+                  "keyData": "[parameters('sshKeyData')]"
+                }
+              ]
+            }
+          }
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[variables('ubuntuOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat('http://',variables('defaultprimaryStorageAccountName'),'.blob.',variables('environment').serviceHostBase,'/',variables('vmStorageAccountContainerName'),'/',parameters('vmName'),'-osdisk.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('primaryNicName'))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmName'),'/initdevbox')]",
+      "apiVersion": "[variables('apiVersion')]",
+      "location": "[parameters('primaryLocation')]",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.OSTCExtensions",
+        "type": "CustomScriptForLinux",
+        "typeHandlerVersion": "1.4",
+        "settings": {
+          "fileUris": "[variables('filesToDownload')]",
+          "enableInternalDNSCheck": false,
+          "VNET_NAME": "[variables('primaryVirtualNetworkName')]",
+          "SUBNET_NAME_FOR_BOSH": "[variables('subnetNameForBosh')]",
+          "SUBNET_ADDRESS_RANGE_FOR_BOSH": "[variables('subnetAddressRangeForBosh')]",
+          "SUBNET_NAME_FOR_CLOUD_FOUNDRY": "[variables('subnetNameForCloudFoundry')]",
+          "SUBNET_ADDRESS_RANGE_FOR_CLOUD_FOUNDRY": "[variables('primarySubnetAddressRangeForCloudFoundry')]",
+          "CLOUD_FOUNDRY_PUBLIC_IP": "[reference(concat(parameters('vmName'),'-cf-primary')).ipAddress]",
+          "BOSH_PUBLIC_IP": "[reference(concat(parameters('vmName'),'-bosh')).ipAddress]",
+          "NSG_NAME_FOR_BOSH": "[variables('boshNetworkSecurityGroup')]",
+          "NSG_NAME_FOR_CLOUD_FOUNDRY": "[variables('primaryCfNetworkSecurityGroup')]",
+          "SUBSCRIPTION_ID": "[subscription().subscriptionId]",
+          "RESOURCE_GROUP_NAME": "[resourceGroup().name]",
+          "DEFAULT_STORAGE_ACCOUNT_NAME": "[variables('defaultprimaryStorageAccountName')]",
+          "STORAGE_ACCESS_KEY": "[listKeys(variables('defaultprimaryStorageid'), variables('apiVersion')).key1]",
+          "ADMIN_USER_NAME": "[parameters('adminUserName')]",
+          "ENVIRONMENT": "[parameters('environment')]",
+          "SERVICE_HOST_BASE": "[variables('environment').serviceHostBase]",
+          "BOSH_RELEASE_URL": "[variables('environment').boshReleaseUrl]",
+          "BOSH_RELEASE_SHA1": "[variables('environment').boshReleaseSha1]",
+          "BOSH_AZURE_CPI_RELEASE_URL": "[variables('environment').boshAzureCPIReleaseUrl]",
+          "BOSH_AZURE_CPI_RELEASE_SHA1": "[variables('environment').boshAzureCPIReleaseSha1]",
+          "STEMCELL_URL": "[variables('environment').stemcellUrl]",
+          "STEMCELL_SHA1": "[variables('environment').stemcellSha1]",
+          "CF_RELEASE_URL": "[variables('environment').cfReleaseUrl]",
+          "BOSH_INIT_URL": "[variables('environment').boshInitUrl]",
+          "KEEP_UNREACHABLE_VMS": "[variables('keepUnreachableVMs')]",
+          "AUTO_DEPLOY_BOSH": "[parameters('autoDeployBosh')]",
+          "CUSTOM_SYSTEM_DOMAIN": "[parameters('systemdomain')]",
+          "EXTERNAL_DATABASE_ENDPOINT": "[parameters('dbendpoint')]",
+          "EXTERNAL_NFS_ENDPOINT": "[parameters('nfsendpoint')]",
+          "CLOUD_FOUNDRY_PUBLIC_IP_SECONDARY": "[reference(concat(parameters('vmName'),'-cf-secondary')).ipAddress]",
+          "STORAGE_ACCOUNT_NAME_PRIMARY": "[variables('primaryStorageAccountName')]",
+          "STORAGE_ACCESS_KEY_PRIMARY": "[listKeys(variables('primaryStorageid'), variables('apiVersion')).key1]",
+          "STORAGE_ACCOUNT_NAME_SECONDARY": "[variables('secondaryStorageAccountName')]",
+          "STORAGE_ACCESS_KEY_SECONDARY": "[listKeys(variables('secondaryStorageid'), variables('apiVersion')).key1]",
+          "DEFAULT_STORAGE_ACCOUNT_NAME_SECONDARY": "[variables('defaultsecondaryStorageAccountName')]",
+          "DEFAULT_STORAGE_ACCESS_KEY_SECONDARY": "[listKeys(variables('defaultsecondaryStorageid'), variables('apiVersion')).key1]",
+          "VNET_NAME_SECONDARY": "[variables('secondaryVirtualNetworkName')]"
+        },
+        "protectedSettings": {
+          "commandToExecute": "[concat('./setup_env', ' ', parameters('tenantID'), ' ', parameters('clientID'), ' \"', parameters('clientSecret'), '\"')]"
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "sshDevBox": {
+      "type": "string",
+      "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(concat('Microsoft.Network/publicIPAddresses/', parameters('vmName'), '-devbox')).dnsSettings.fqdn)]"
+    },
+    "cloudFoundryIP": {
+      "type": "string",
+      "value": "[reference(concat(parameters('vmName'),'-cf-primary')).ipAddress]"
+    }
+  }
+}
