@@ -1,4 +1,4 @@
-# Deployment of Red Hat Enterprise Linux VM (RHEL 7.2 or RHEL 6.7)
+# Deployment of RHEL 7.2 with full disk encryption
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fkrkhan%2Fazure-quickstart-templates%2Ffde-rhel%2F101-vm-full-disk-encrypted-rhel%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
