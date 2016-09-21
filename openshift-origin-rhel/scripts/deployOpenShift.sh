@@ -74,10 +74,10 @@ htpasswd -cb /etc/origin/master/htpasswd ${SUDOUSER} ${PASSWORD}
 
 # Reverting to April 22, 2016 commit
 
-echo "Cloning openshift-ansible repository and reseting to April 22, 2016 commit"
+# echo "Cloning openshift-ansible repository and reseting to April 22, 2016 commit"
 
 runuser -l $SUDOUSER -c "git clone https://github.com/openshift/openshift-ansible /home/$SUDOUSER/openshift-ansible"
-runuser -l $SUDOUSER -c "git --git-dir="/home/$SUDOUSER/openshift-ansible/.git" --work-tree="/home/$SUDOUSER/openshift-ansible/" reset --hard 04b5245"
+# runuser -l $SUDOUSER -c "git --git-dir="/home/$SUDOUSER/openshift-ansible/.git" --work-tree="/home/$SUDOUSER/openshift-ansible/" reset --hard 04b5245"
 
 echo "Executing Ansible playbook"
 
