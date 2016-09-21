@@ -10,9 +10,9 @@
 This template allows you to create an instance of Azure Jenkins. Azure Jenkins is a fully functional instance of Jenkins 2.7.2 pre-configured to use Azure resources. The current version of this image lets you use Azure as a package repository to upload and download your application and it's dependencies to Azure as part of a Jenkins continuous deployment v2 pipeline.
 
 ## Deploy Azure Jenkins VM
-1. Click "Deploy to Azure" button. If you haven't got an Azure subscription, it will guide you on how to signup for a free trial.
-2. Enter a valid name for the VM, as well as a user name and password that you will use to login remotely to the VM via SSH.
-3. Remember these. You will need this to access the VM next.
+A1. Click "Deploy to Azure" button. If you haven't got an Azure subscription, it will guide you on how to signup for a free trial.
+A2. Enter a valid name for the VM, as well as a user name and password that you will use to login remotely to the VM via SSH.
+A3. Remember these. You will need this to access the VM next.
 
 ## Login remotely to the VM via SSH
 Once the VM has been deployed, note down the IP generated in the Azure portal for the VM with the name you supplied. To login -
@@ -20,50 +20,50 @@ Once the VM has been deployed, note down the IP generated in the Azure portal fo
 - If you are using Linux or Mac use Terminal to login to the VM with the username and password you supplied.
 
 ## Configure placehoder Jenkins jobs
-1. Once you are logged into the VM, run /opt/azure_jenkins_config/config_azure.sh. This script will guide you to set up the storage account needed for Azure Storage Jenkins plugin.
-   > Note 1: If the script doesn't exist, download it using below command.
+B1. Once you are logged into the VM, run /opt/azure_jenkins_config/config_azure.sh. This script will guide you to set up the storage account needed for Azure Storage Jenkins plugin.
+   > Note 1: If the script doesn't exist inside the above directory, download it using below command.
 
    ```bash
-   sudo wget -O /opt/azure_jenkins_config/config_azure.sh "https://raw.githubusercontent.com/arroyc/azure-quickstart-templates/master/azure-jenkins/setup-scripts/config_azure.sh"
+   sudo wget -O /opt/azure_jenkins_config/config_azure.sh "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/azure-jenkins/setup-scripts/config_azure.sh"
    ```
    > Note 2: You can always run /opt/azure_jenkins_config/clear_storage_config.sh to reset configurations of Azure Storage for Jenkins and then run #1 again.
 
-2. Login to your Azure account using the live id you used when creating your Azure subscription or with any valid user in your Azure subscription.
-3. Select the subscription you want to use if you have more than one.
-4. Select the storage account you want to use if you have more than one.
-5. Select the destination container you will upload files to if you have more than one.
-6. Select a subscription for setting up service principal. Remember the returned subscription ID, client ID, client secret and OAuth 2.0 Token Endpoint. You'll need them for Azure slave plugin configuration.
+B2. Login to your Azure account using the live id you used when creating your Azure subscription or with any valid user in your Azure subscription.
+B3. Select the subscription you want to use if you have more than one.
+B4. Select the storage account you want to use if you have more than one.
+B5. Select the destination container you will upload files to if you have more than one.
+B6. Select a subscription to set up service principal. Remember the returned subscription ID, client ID, client secret and OAuth 2.0 Token Endpoint. You'll need them for Azure slave plugin configuration.
 
 ## Configure [Azure slave plugin](https://github.com/jenkinsci/azure-slave-plugin/tree/ARM-dev) : Azure profile configuration
-1. Within the Jenkins dashboard, click Manage Jenkins --> Configure System --> Scroll to the bottom of the page
+C1. Within the Jenkins dashboard, click Manage Jenkins --> Configure System --> Scroll to the bottom of the page
    and find the section with the dropdown "Add new cloud" --> click on it and select "Microsoft Azure"
-2. Enter the subscription ID, Client ID, Client Secret and the OAuth 2.0 Token Endpoint.
-3. Click on “Verify configuration” to make sure that the profile configuration is done correctly.
-4. Save and continue with the template configuration (See instructions below)
+C2. Enter the subscription ID, Client ID, Client Secret and the OAuth 2.0 Token Endpoint.
+C3. Click on “Verify configuration” to make sure that the profile configuration is done correctly.
+C4. Save and continue with the template configuration (See instructions below)
 
 ## Configure [Azure slave plugin](https://github.com/jenkinsci/azure-slave-plugin/tree/ARM-dev) : Template configuration.
-1. Click on the "Add" option to add a template. A template is used to define an Azure slave configuration, like
+D1. Click on the "Add" option to add a template. A template is used to define an Azure slave configuration, like
    its VM  size, its region, or its retention time.
-2. Provide a name for your new template. This field is not used for slave provisioning.
-3. For the description, provide any remarks you wish about this template configuration. This field is not
+D2. Provide a name for your new template. This field is not used for slave provisioning.
+D3. For the description, provide any remarks you wish about this template configuration. This field is not
    used for slave provisioning.
-4. For the label, provide any valid string. E.g. “windows” or “linux”. The label defined in a template can be
+D4. For the label, provide any valid string. E.g. “windows” or “linux”. The label defined in a template can be
    used during a job configuration.
-5. Select the desired region from the combo box.
-6. Select the desired VM size.
-7. Specify the Azure Storage account name. Alternatively you can leave it blank to let Jenkins create a storage
+D5. Select the desired region from the combo box.
+D6. Select the desired VM size.
+D7. Specify the Azure Storage account name. Alternatively you can leave it blank to let Jenkins create a storage
    account by using the default name "jenkinsarmst".
-8. Specify the retention time in minutes. This defines the number of minutes Jenkins can wait before automatically
+D8. Specify the retention time in minutes. This defines the number of minutes Jenkins can wait before automatically
    deleting an idle slave. Specify 0 if you do not want idle slaves to be deleted automatically.
-9. Select a usage option:
+D9. Select a usage option:
   * If "Utilize this node as much as possible" is selected, then Jenkins may run any job on the slave as long as it
     is available.
   * If "Leave this node for tied jobs only" is selected, Jenkins will only build a project (or job) on this node
     when that project specifically was tied to that node.This allows a slave to be reserved for certain kinds of jobs.
-10. Specify your Image Family. Choose between two possible alternatives:
+D10. Specify your Image Family. Choose between two possible alternatives:
   * use a custom user image (provide image URL and os type - note, your custom image has to be available into the same storage account in which you are going to create slave nodes);
   * give an image reference (provide image reference by publisher, offer, sku and version).
-11. For the launch method, select SSH or JNLP.
+D11. For the launch method, select SSH or JNLP.
   * Linux slaves can be launched using SSH only.
   * Windows slaves can be launched using SSH or JNLP. For Windows slaves, if the launch method is SSH then
     image needs to be custom-prepared with an SSH server pre-installed.<br>
@@ -77,7 +77,7 @@ Once the VM has been deployed, note down the IP generated in the Azure portal fo
 
       If the Jenkins master is running on Azure, then open an endpoint for "TCP port for JNLP slave agents" and, in case of
       Windows, add the necessary firewall rules inside virtual machine (Run --> firewall.cpl).
-12. For the Init script, provide a script to install at least a Java runtime if the image does not have Java
+D12. For the Init script, provide a script to install at least a Java runtime if the image does not have Java
       pre-installed.
 
       For the JNLP launch method, the init script must be in PowerShell.
@@ -87,15 +87,15 @@ Once the VM has been deployed, note down the IP generated in the Azure portal fo
       * [Capture Windows Image](http://azure.microsoft.com/en-us/documentation/articles/virtual-machines-capture-image-windows-server/)
       * [Capture Linux Image](http://azure.microsoft.com/en-us/documentation/articles/virtual-machines-linux-capture-image/)
 
-13. Specify a user name and a password as per the rules explained in the help text.
-14. Make sure to validate the template configuration by clicking on the link “Verify Template”. This will connect
+D13. Specify a user name and a password as per the rules explained in the help text.
+D14. Make sure to validate the template configuration by clicking on the link “Verify Template”. This will connect
       to your Azure account to verify the correctness of the supplied information.
 
 ## Template Configuration for Ubuntu images.
-1. Configure an Azure profile and Template as per the above instructions.
-2. If the init script is expected to take a long time to complete, it is recommended to use a custom-prepared Ubuntu
+D14.A1. Configure an Azure profile and Template as per the above instructions.
+D14.A2. If the init script is expected to take a long time to complete, it is recommended to use a custom-prepared Ubuntu
    image that has the required software pre-installed, including a Java runtime
-3. For platform images, you may specify an Init script as below to install Java, Git and Ant:
+D14.A3. For platform images, you may specify an Init script as below to install Java, Git and Ant:
 
 ```
       #Install Java
@@ -113,28 +113,14 @@ Once the VM has been deployed, note down the IP generated in the Azure portal fo
       sudo apt-get install -y ant
 ```
 
-## Template configuration for Windows images with launch method JNLP.
-1. Make sure to follow the instructions specified above for JNLP.
-2. If the Jenkins master does not have a security configuration, leave the Init script blank for the default
-   script to execute on the slave.
-3. If the Jenkins master has a security configuration, then refer to the script at
-   https://gist.github.com/snallami/5aa9ea2c57836a3b3635 and modify the script with the proper
-   Jenkins credentials.
-
-   At a minimum, the script needs to be modified with the Jenkins user name and API token.
-   To get the API token, click on your username --> configure --> show api token<br>
-
-   The below statement in the script needs to be modified:
-   $credentails="username:apitoken"
-
 ## Create a Jenkins job that runs on a Linux slave node on Azure
-1. In the Jenkins dashboard, click New Item/Job.
-2. Enter a name for the task/Job you are creating.
-3. For the project type, select Freestyle project and click OK.
-4. In the task configuration page, select Restrict where this project can be run.
-5. In the Label Expression field, enter label given during template configuration.
-6. In the Build section, click Add build step and select Execute shell.
-7. In the text area that appears, paste the following script.
+D14.C1. In the Jenkins dashboard, click New Item/Job.
+D14.C2. Enter a name for the task/Job you are creating.
+D14.C3. For the project type, select Freestyle project and click OK.
+D14.C4. In the task configuration page, select Restrict where this project can be run.
+D14.C5. In the Label Expression field, enter label given during template configuration.
+D14.C6. In the Build section, click Add build step and select Execute shell.
+D14.C7. In the text area that appears, paste the following script.
 
  ````
   # Clone from git repo
@@ -152,16 +138,43 @@ Once the VM has been deployed, note down the IP generated in the Azure portal fo
  #Execute build task
  ant
  ````
-8. Save Job and click on Build now.
-9. Jenkins will create a slave node on Azure cloud using the template created in the previous section and
+D14.C8. Save Job and click on Build now.
+D14.C9. Jenkins will create a slave node on Azure cloud using the template created in the previous section and
    execute the script you specified in the build step for this task.
-10. Logs are available @ Manage Jenkins --> System logs --> All Jenkins logs.
-11. Once the node is provisined in Azure, which typically takes about 5 to 7 minutes, node gets added to Jenkins.
+D14.C10. Logs are available @ Manage Jenkins --> System logs --> All Jenkins logs.
+D14.C11. Once the node is provisined in Azure, which typically takes about 5 to 7 minutes, node gets added to Jenkins.
+
+## Configure [Azure Container Service Plugin](https://github.com/Microsoft/azure-acs-plugin)
+Jenkins Plugin to create an Azure Container Service cluster with a DC/OS orchestrator and deploys a marathon config file to the cluster.
+
+## Pre-requirements
+Register and authorize your client application and retrieve and use Client ID and Client Secret to be sent to Azure AD during authentication. This should have been done by running the script in B6
+
+## How to install the Azure Container Service Plugin
+E1. Download the azure-acs-plugin.hpi file from [here](https://github.com/Microsoft/azure-acs-plugin/blob/master/install/azure-acs-plugin.hpi)
+E2. Within the Jenkins dashboard, click Manage Jenkins.
+E3. In the Manage Jenkins page, click Manage Plugins.
+E4. Click the Advanced tab.
+E5. Click on the Choose file button in the Upload Plugin section and choose the azure-acs-plugin.hpi file.
+E6. Click the Upload button in the Upload Plugin section.
+E6. Click either “Install without restart” or “Download now and install after restart”.
+E8. Restart Jenkins if necessary.
+
+## Configure the plugin
+F1. Within the Jenkins dashboard, Select a Job then select Configure
+F2. Scroll to the "Add post-build action" drop down.  
+F3. Select "Azure Container Service Configuration" 
+F4. Enter the subscription ID, Client ID, Client Secret and the OAuth 2.0 Token Endpoint in the Azure Profile Configuration section.
+F5. Enter the Region, DNS Name Prefix, Agent Count, Agent VM Size, Admin Username, Master Count, and SSH RSA Public Key in the Azure Container Service Profile Configuration section.
+F6. Enter the Marathon config file path, SSH RSA private file path, and SSH RSA private file password in the Marathon Profile Configuration section.
+F7. Save Job and click on Build now.
+F8. Jenkins will create an Azure Container Service cluster and deploy the marathon file to the cluster upon cluster creation if cluster doesn't exist.  Otherwise, the marathon file will be deployed to the existing Azure Container Service cluster. 
+F9. Logs are available in the builds console logs.
 
 ## Note
 This template use a base Azure Marketplace image which will be updated regularly to describe to use Azure resources with Jenkins. Readme instructions will be updated accordingly.
 
 ## Known Issue
-Deployment failure due to unauthorized access to storage account. We are working on resolving this by publishing the image to Azure Marketplace.
+Deployment failure due to not-unique dns name or password/admin name/resource group name doesn't follow the azure standard.  
 
 ## Contact us – azdevopspub@microsoft.com
