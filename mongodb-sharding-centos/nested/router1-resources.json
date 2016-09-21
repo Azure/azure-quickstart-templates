@@ -1,0 +1,216 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminUsername": {
+      "type": "string"
+    },
+    "adminPassword": {
+      "type": "securestring"
+    },
+	"mongoAdminUsername": {
+      "type": "string"
+    },
+    "mongoAdminPassword": {
+      "type": "securestring"
+    },
+    "namespace": {
+      "type": "string"
+    },
+    "vmbasename": {
+      "type": "string"
+    },
+    "osSettings": {
+      "type": "object"
+    },
+    "vmSize": {
+      "type": "string"
+    },
+    "dnsname": {
+      "type": "string"
+    },
+    "subnet": {
+      "type": "object"
+    },
+	"zabbixServerIPAddress": {
+	  "type": "string"
+	},
+    "staticIp": {
+      "type": "string"
+    }
+  },
+  "variables": {
+    "subnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('subnet').vnet), '/subnets/', parameters('subnet').name)]",
+	"apiVersion": "2015-06-15",
+	"storageAccountName": "[concat(uniquestring(resourceGroup().id), 'standardsa')]",
+    "securityGroupName": "[concat(parameters('namespace'), parameters('vmbasename'), 'nsg')]"
+  },
+  "resources": [
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('securityGroupName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "SSH",
+            "properties": {
+              "description": "Allows SSH traffic",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "MongoDB",
+            "properties": {
+              "description": "Allows MongoDB traffic",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "27017",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 110,
+              "direction": "Inbound"
+            }
+          },
+		  {
+            "name": "zabbixAgent",
+            "properties": {
+              "description": "Allows zabbix monitoring",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "10050",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 120,
+              "direction": "Inbound"
+            }
+          },
+		  {
+            "name": "zabbixAgent1",
+            "properties": {
+              "description": "Allows zabbix monitoring",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "10051",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 130,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'PublicIp')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[concat(parameters('dnsname'), 'a')]"
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(parameters('namespace'), concat(parameters('vmbasename'), 'nic'))]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', parameters('namespace'), parameters('vmbasename'), 'PublicIp')]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('namespace'), parameters('vmbasename'), 'PublicIp'))]"
+              },
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[parameters('staticIp')]",
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              },
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('securityGroupName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'vm')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', concat(parameters('namespace'), concat(parameters('vmbasename'), 'nic')))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[concat(parameters('dnsname'), 'a-', concat(parameters('vmbasename'), 'vm'))]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": "[parameters('osSettings').imageReference]",
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat('http://', variables('storageAccountName'),'.blob.core.windows.net/vhds/', parameters('vmbasename'), '-osdisk.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('namespace'), concat(parameters('vmbasename'), 'nic')))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'vm', '/router1Install')]",
+      "apiVersion": "[variables('apiVersion')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', concat(parameters('namespace'), concat(parameters('vmbasename'), 'vm')))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": "[parameters('osSettings').scripts]"
+		},
+		"protectedSettings": {
+          "commandToExecute": "[concat('bash router1.sh ', parameters('mongoAdminUsername'), ' ', parameters('mongoAdminPassword'), ' ',  parameters('zabbixServerIPAddress'))]"
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}
