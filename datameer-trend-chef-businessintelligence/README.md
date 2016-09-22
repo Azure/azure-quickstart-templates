@@ -44,7 +44,7 @@ An integrated ARM Template (<a href="https://azure.microsoft.com/en-us/documenta
 
 ![](images/enterprise-risk-analysis-solution-overview.png)
 
-You can watch [this video](/images/Risk_Analysis_1080.mp4) for the quick overview of this solution.
+You can watch [this video](images/Risk_Analysis_1080.mp4) for the quick overview of this solution.
 
 ##  2. Solution Template Overview
 ***Solution Templates*** provide customers with a highly automated process to launch enterprise ready first and 3rd party ISV solution stacks on Azure in a pre-production environment. The **Solution Template** effort is complimentary to the [Azure Marketplace test drive program](https://azure.microsoft.com/en-us/marketplace/test-drives/). These fully baked stacks enable customers to quickly stand up a PoC or Piloting environments and also integrate it with their systems and customization.
@@ -113,12 +113,12 @@ The deployment takes about approximately 45mins. Once it is deployed there are f
 ## 8. Configuration
 ### 8.1 Configuration Guides
 
-You can use [this guide](/images/HOL_Datameer_TrendMicro_Document.pdf) to configure the components in the solution.
+You can use [this guide](images/HOL_Datameer_TrendMicro_Document.pdf) to configure the components in the solution.
 
 ## 9. Usage
 ### 9.1 Usage Guides
 
-You can use [this guide](/images/HOL_Datameer_TrendMicro_Document.pdf) to use this solution.
+You can use [this guide](images/HOL_Datameer_TrendMicro_Document.pdf) to use this solution.
 
 ## 10. Support
 For any support-related issues or questions, please contact us for assistance.
