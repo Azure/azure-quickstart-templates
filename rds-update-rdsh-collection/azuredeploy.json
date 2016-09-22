@@ -37,6 +37,7 @@
             },
             "defaultValue": "Standard_A2",
             "allowedValues": [
+                "Standard_A1",
                 "Standard_A2",
                 "Standard_A3",
                 "Standard_A4",
@@ -47,9 +48,11 @@
                 "Standard_A9",
                 "Standard_A10",
                 "Standard_A11",
+                "Basic_A1",
                 "Basic_A2",
                 "Basic_A3",
                 "Basic_A4",
+                "Standard_D1",
                 "Standard_D2",
                 "Standard_D3",
                 "Standard_D4",
@@ -114,6 +117,14 @@
             }
         },
 
+        "storageAccountName": {
+            "type": "string",
+            "defaultValue": "[concat(uniquestring(resourceGroup().id), 'rds', 'storage')]",
+            "metadata": {
+                "description": "Storage account name;  has to be same storage account where template VHD resides (as specified by 'rdshTemplateImageUri' parameter)."
+            }
+        },
+
         "vnetName": {
             "type": "string",
             "defaultValue": "vnet",
@@ -134,7 +145,7 @@
     "variables": {
 
         "apiVersion": "2015-06-15",
-        "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'rds', 'storage')]",
+
         "assetLocation": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/rds-deployment/",
 
         "iteration": "[toLower(parameters('rdshUpdateIteration'))]",
@@ -142,7 +153,7 @@
         "vnetId": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]",
         "subnetId": "[concat(variables('vnetId'), '/subnets/', parameters('subnetName'))]",
 
-        "accountId": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/', 'Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+        "accountId": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/', 'Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
 
         "wad": {
             "logs": "<WadCfg> <DiagnosticMonitorConfiguration overallQuotaInMB=\"4096\" xmlns=\"http://schemas.microsoft.com/ServiceHosting/2010/10/DiagnosticsConfiguration\"> <DiagnosticInfrastructureLogs scheduledTransferLogLevelFilter=\"Error\"/> <WindowsEventLog scheduledTransferPeriod=\"PT1M\" > <DataSource name=\"Application!*[System[(Level = 1 or Level = 2)]]\" /> <DataSource name=\"Security!*[System[(Level = 1 or Level = 2)]]\" /> <DataSource name=\"System!*[System[(Level = 1 or Level = 2)]]\" /></WindowsEventLog>",
@@ -207,7 +218,6 @@
                     "adminPassword": "[parameters('adminPassword')]"
                 },
                 "storageProfile": {
-
                     "osDisk": {
                         "name": "[concat('rdsh-', copyindex(),variables('iteration'),'-osDisk')]",
                         "osType": "Windows",
@@ -217,7 +227,7 @@
                             "uri": "[parameters('rdshTemplateImageUri')]"
                         },
                         "vhd": {
-                            "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/vhds/rdsh-',copyindex(),variables('iteration'),'-osdisk.vhd')]"
+                            "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName')), '2016-01-01').primaryEndpoints.blob, 'vhds/rdsh-', copyindex(), variables('iteration'), '-osdisk.vhd')]"
                         }
 
                     }
@@ -228,6 +238,12 @@
                             "id": "[resourceId('Microsoft.Network/networkInterfaces',concat('rdsh-', copyindex(),variables('iteration'), '-nic'))]"
                         }
                     ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": "true",
+                        "storageUri": "[reference(concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName')), '2016-01-01').primaryEndpoints.blob]"
+                    }
                 }
             },
             "resources": [
@@ -281,10 +297,10 @@
                         "autoUpgradeMinorVersion": true,
                         "settings": {
                             "xmlCfg": "[base64(concat(variables('wadcfgx').start, 'Microsoft.Compute/virtualMachines/', 'rdsh-', copyindex(),variables('iteration'), variables('wadcfgx').end))]",
-                            "storageAccount": "[variables('storageAccountName')]"
+                            "storageAccount": "[parameters('storageAccountName')]"
                         },
                         "protectedSettings": {
-                            "storageAccountName": "[variables('storageAccountName')]",
+                            "storageAccountName": "[parameters('storageAccountName')]",
                             "storageAccountKey": "[listkeys(variables('accountid'), '2015-06-15').key1]",
                             "storageAccountEndPoint": "https://core.windows.net"
                         }
