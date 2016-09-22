@@ -1,9 +1,9 @@
 # Deployment of Red Hat Enterprise Linux VM (RHEL 7.2 or RHEL 6.7)
 
-<a href="https://raw.githubusercontent.com/krkhan/azure-quickstart-templates/fde-rhel/101-vm-simple-rhel/azuredeploy.json" target="_blank">
+<a href="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-vm-simple-rhel/azuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
-<a href="https://raw.githubusercontent.com/krkhan/azure-quickstart-templates/fde-rhel/101-vm-simple-rhel/azuredeploy.json" target="_blank">
+<a href="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-vm-simple-rhel/azuredeploy.json" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
