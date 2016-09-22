@@ -9,4 +9,4 @@
 
 This template allows you to create 2 Virtual Machines in an Availability Set and configure NAT rules through the load balancer. This template also deploys a Storage Account, Virtual Network, Public IP address and Network Interfaces.
 
-In this template, we use the resource loops capability to create the network interfaces and virtual machines
+In this template, we use copy loops to create the network interfaces and virtual machines instead of duplicating the resource definitions.
