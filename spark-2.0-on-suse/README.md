@@ -1,38 +1,88 @@
 
 
 
-# Install a Spark Environment on Suse Enterprise Server VM
+# Provision an Apache Spark 2.0 cluster on Suse Linux Enterprise Server 12
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fspark-on-suse%2Fazuredeploy.json" target="_blank">
+In Memory Cluster Computing to solve query optimization, slow Machine Learning and many other BI problems
+
+
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fspark-2.0-on-suse%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fspark-on-suse%2Fazuredeploy.json" target="_blank">
+
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fspark-2.0-on-suse%2Fazuredeploy.json" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
 
-## Deploying Samples
-
-To deploy a sammple using the Azure Portal, click the **Deploy to Azure** button found at the beginning of this page.
-
-To deploy the sample via the command line (using [Azure PowerShell or the Azure CLI](https://azure.microsoft.com/en-us/downloads/)) you can use the scripts.
-
-Simple execute the script and pass in the folder name of the sample you want to deploy.  For example:
+### To deploy this sample using a script in the root of this repo
 
 ```PowerShell
-.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactsStagingDirectory '[foldername]'
+.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactsStagingDirectory 'spark-2.0-on-suse' -UploadArtifacts 
 ```
 ```bash
-azure-group-deploy.sh -a [foldername] -l eastus -u
+azure-group-deploy.sh -a 'spark-2.0-on-suse' -l eastus -u
 ```
-If the sample has artifacts that need to be "staged" for deployment (Configuration Scripts, Nested Templates, DSC Packages) then set the upload switch on the command.
-You can optionally specify a storage account to use, if so the storage account must already exist within the subscription.  If you don't want to specify a storage account
-one will be created by the script or reused if it already exists (think of this as "temp" storage for AzureRM).
+This template deploys a **spark-2.0-on-suse** infrastructure. The **spark-2.0-on-suse** template is a Spark 2.0 environment based on Spark Standalone Cluster Manager; the template setup one master node and N worker nodes installing and configuring Spark 2.0.
+Details about installation are available on all the nodes under /tmp/ director
 
-```PowerShell
-.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactsStagingDirectory 'spark-on-suse' -UploadArtifacts 
-```
+
+## Solution overview and deployed resources
+
+This template deploys a **spark-2.0-on-suse** infrastructure. The **spark-2.0-on-suse** is a Spark 2.0 environment based on Spark Standalone Cluster Manager; the templte setup 1 master node and N worker nodes installing and configuring spark.
+Details about installation are available on all the nodes under /tmp/ director
+
+The following resources are deployed as part of the solution
+
+#### Virtual network
+
+The internal network that delimits the cluster environment
+
+#### Storage Account
+
+The storage account associated to the cluster for, automatically referenced on Spark using **wasb://** address
+
+#### Virtual Machine
+
+VMs will be used as spark master or N-th worker on the cluster
+
++ **sparkmaster**: The master node from the cluster
++ **sparkslave[i]**: the i-th worker node of the cluster
+
+#### Network Interface Card
+
++ **ni_master/nislave[i]**: master and worker network interfaces
+
+#### Public IP
+
++ **sparkMasterPublicIP**: the public IP of the master node
+
+#### Custom Script Example
+
++ **configuresparkonmaster/slave[i]**: The bash script that will install and configure the Spark 2.0 cluster
+
+#### Network Security group
+
++ **ns_spark**: The network security group for the Spark Cluster
+
+
+## Usage
+
+#### Connect
+
+Connect with ssh to your master node using username and password provided at deploy time
 ```bash
-azure-group-deploy.sh -a 'spark-on-suse' -l eastus -u
+ssh yourusername@YOUR_MASTER_PUBLIC_IP
+```
 
+#### Management
+
+You can see how application are executed consulting Spark Web UI at **http://YOUR_MASTER_PUBLIC_IP:8080**
+
+If running application on sparkmaster you can reach Spark Application UI at **http://YOUR_MASTER_PUBLIC_IP:4040**
+
+
+## Notes
+
+Spark 2.0 logs are provided under **/srv/spark/logs** directory
 
