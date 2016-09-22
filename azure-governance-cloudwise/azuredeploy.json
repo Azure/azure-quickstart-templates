@@ -2,6 +2,35 @@
   "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "skuName": {
+      "type": "string",
+      "defaultValue": "F1",
+      "allowedValues": [
+        "F1",
+        "D1",
+        "B1",
+        "B2",
+        "B3",
+        "S1",
+        "S2",
+        "S3",
+        "P1",
+        "P2",
+        "P3",
+        "P4"
+      ],
+      "metadata": {
+        "description": "Describes plan's pricing tier and instance size. Check details at https://azure.microsoft.com/en-us/pricing/details/app-service/"
+      }
+    },
+    "skuCapacity": {
+      "type": "int",
+      "defaultValue": 1,
+      "minValue": 1,
+      "metadata": {
+        "description": "Describes plan's instance count"
+      }
+    },
     "sqlServerName": {
       "type": "string",
       "defaultValue": "cloudwise",
@@ -77,7 +106,7 @@
         "Japan East",
         "East US 2",
         "Southeast Asia",
-        "Sout Central US",
+        "South Central US",
         "West Europe"
       ],
       "metadata": {
@@ -103,8 +132,11 @@
       "defaultValue": "https://raw.githubusercontent.com/AvyanConsultingCorp/azure-quickstart-templates/master/azure-governance-cloudwise"
     },
     "_artifactsLocationSasToken": {
-      "type": "securestring",
-       "defaultValue": ""
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Reserved for deploying using Visual Studio. Please keep it as an empty string"
+      }
     }
   },
   "variables": {
@@ -115,8 +147,7 @@
     "hostingPlanName": "[concat('CloudWiseHostingplan-', uniqueString(resourceGroup().id))]",
     "webSiteName": "[concat('CloudWise', uniqueString(resourceGroup().id))]",
     "sqlserverName": "[concat('sql',parameters('sqlserverName'), uniqueString(resourceGroup().id, deployment().name))]",
-    "skuName": "F1",
-    "skuCapacity": 1,
+
     "insightsName": "[concat(variables('webSiteName'),'insights')]",
     "omsWorkspaceName": "[concat(parameters('omsWorkspaceName'), uniqueString(resourceGroup().id, deployment().name))]",
 
@@ -124,8 +155,7 @@
     "OMSWebAppsRunBookAndDashboardTemplateFileName": "OMSAutomationRunbooksDashboard.json",
 
     "OMSCommonTemplateFolder": "nested/OMSCommon",
-    "OMSCommonTemplateFileName": "OMSCommon.json",
-    "OMSCommonTemplateParametersFileName": "OMSCommon.parameters.json"
+    "OMSCommonTemplateFileName": "OMSCommon.json"
   },
   "resources": [
     {
@@ -180,8 +210,8 @@
         "displayName": "HostingPlan"
       },
       "sku": {
-        "name": "[variables('skuName')]",
-        "capacity": "[variables('skuCapacity')]"
+        "name": "[parameters('skuName')]",
+        "capacity": "[parameters('skuCapacity')]"
       },
       "properties": {
         "name": "[variables('hostingPlanName')]"
@@ -232,7 +262,8 @@
             "DefaultConnection": {
               "value": "[concat('Data Source=tcp:', reference(concat('Microsoft.Sql/servers/', variables('sqlserverName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', parameters('sqlDatabaseName'), ';User Id=', parameters('sqlAdministratorLogin'), '@', variables('sqlserverName'), ';Password=', parameters('sqlAdministratorLoginPassword'), ';', 'MultipleActiveResultSets=True;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]",
               "type": "SQLServer"
-            },
+            }
+            ,
             "SQLCONNSTR_DefaultConnection": {
               "value": "[concat('Data Source=tcp:', reference(concat('Microsoft.Sql/servers/', variables('sqlserverName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', parameters('sqlDatabaseName'), ';User Id=', parameters('sqlAdministratorLogin'), '@', variables('sqlserverName'), ';Password=', parameters('sqlAdministratorLoginPassword'), ';', 'MultipleActiveResultSets=True;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]",
               "type": "SQLServer"
@@ -533,7 +564,6 @@
           },
           "_artifactsLocationSasToken": {  "value": "[parameters('_artifactsLocationSasToken')]" }
         }
-
       }
     }
   ]
