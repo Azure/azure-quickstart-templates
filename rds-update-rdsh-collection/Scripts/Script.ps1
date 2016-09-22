@@ -75,6 +75,8 @@ param(
 
     log "script running"
 
+	whoami
+
     $PSBoundParameters
 
     ipmo remotedesktop -DisableNameChecking    # 4>$null
