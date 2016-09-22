@@ -79,9 +79,11 @@ echo "Modifying sudoers"
 sed -i -e "s/Defaults    requiretty/# Defaults    requiretty/" /etc/sudoers
 sed -i -e '/Defaults    env_keep += "LC_TIME LC_ALL LANGUAGE LINGUAS _XKB_CHARSET XAUTHORITY"/aDefaults    env_keep += "PATH"' /etc/sudoers
 
+# Deploy Registry and Router
+
 echo "Deploying Registry"
 
-runuser -l $SUDOUSER -c "sudo oadm registry --config=/etc/origin/master/admin.kubeconfig --credentials=/etc/origin/master/openshift-registry.kubeconfig"
+runuser -l $SUDOUSER -c "sudo oadm registry"
 
 echo "Deploying Router"
 
@@ -91,5 +93,11 @@ echo "Re-enabling requiretty"
 
 sed -i -e "s/# Defaults    requiretty/Defaults    requiretty/" /etc/sudoers
 
+# Create OpenShift User
+
+echo "Creating OpenShift User"
+
 mkdir -p /etc/origin/master
 htpasswd -cb /etc/origin/master/htpasswd ${SUDOUSER} ${PASSWORD}
+
+echo "Script complete"
