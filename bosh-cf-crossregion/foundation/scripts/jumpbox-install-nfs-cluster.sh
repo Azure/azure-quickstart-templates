@@ -19,9 +19,9 @@ FIRST=nfsIP[0]
 
 if [ ! $NFSROOTUSER ]
 then
- echo "#########################################################"
- echo "## NFS ROOT USER NAME, HIT CTRL + C WITHIN 30 SECONDS! ##"
- echo "#########################################################"
+ echo "###################################################################"
+ echo "## NFS ROOT USER NAME, PLEASE UPDATE NFSROOTUSER= IN THIS SCRIPT ##"
+ echo "###################################################################"
  exit -1
 fi
 
@@ -29,7 +29,7 @@ fi
 # Prepare DSH for the NFS servers
 #
 isDSHAvailable=$(type -P dsh)
-if [ ! isDSHAvailable ]
+if [ ! $isDSHAvailable ]
 then
     sudo apt-get -y install dsh 
 fi
