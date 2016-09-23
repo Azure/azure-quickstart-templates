@@ -7,7 +7,7 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template disables encryption on a running Linux VM . This template assumes that the VM is located in the same region as the resource group. If not, please edit the template to pass appropriate location for the VM sub-resources.
+This template disables encryption on a running Linux VM . This template assumes that the VM is located in the same region as the resource group. If not, please edit the template to pass the appropriate location for the VM sub-resources.
 
 References:
 
