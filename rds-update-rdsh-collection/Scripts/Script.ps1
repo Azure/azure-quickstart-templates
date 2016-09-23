@@ -17,7 +17,7 @@ param(
     {
         param([string]$message)
 
-        "$(get-date -f o)  $message" 
+        "`n$(get-date -f o)  $message" 
     }
 
 
