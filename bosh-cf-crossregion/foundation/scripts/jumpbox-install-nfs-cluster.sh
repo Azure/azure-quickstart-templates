@@ -76,7 +76,7 @@ do :
     # Wait for the first synchronization to complete
     sleep 30
   else
-    ssh $NFSROOTUSER@$n "sudo ~/prep-datadrive.sh secondary"  
+    ssh $NFSROOTUSER@$n "sudo ~/prep-datadrive.sh"  
   fi
 done
 
