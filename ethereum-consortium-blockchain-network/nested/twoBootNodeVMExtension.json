@@ -1,0 +1,137 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "apiVersion" : {
+      "type": "string"
+    },
+    "txNode": {
+      "type": "int"
+    },
+    "bootMNNode": {
+      "type": "int"
+    },
+    "mnNode": {
+      "type": "int"
+    },
+    "txVMNamePrefix": {
+      "type": "string"
+    },
+    "numTXNodes": {
+      "type": "int"
+    },
+    "mnVMNamePrefix": {
+      "type": "string"
+    },
+    "numMNNodes": {
+      "type": "int"
+    },
+    "artifactsLocationURL": {
+      "type": "string"
+    },
+    "adminUsername": {
+      "type": "string"
+    },
+    "ethereumAccountPsswd": {
+      "type": "securestring"
+    },
+    "privateKeyForPrefundedAccount": {
+      "type": "securestring"
+    },
+    "ethereumNetworkID": {
+      "type": "int"
+    },
+    "maxPeers": {
+      "type": "int"
+    },
+    "nodeIDArray": {
+      "type": "array"
+    },
+    "mnNIPrefix": {
+      "type": "string"
+    },
+    "gethIPCPort": {
+      "type": "int"
+    },
+    "nodeKeyArray": {
+      "type": "array"
+    }
+  },
+  "variables": {
+    "numBootNodes": 2
+  },
+  "resources": [
+    {
+      "apiVersion": "[parameters('apiVersion')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('txVMNamePrefix'), copyIndex(), '/newuserscript')]",
+      "copy": {
+        "name": "txNodesConfigLoop",
+        "count": "[parameters('numTXNodes')]"
+      },
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[concat(parameters('artifactsLocationURL'), '/scripts/configure-geth.sh')]"
+          ]
+        },
+        "protectedSettings": {
+          "commandToExecute": "[concat('sh configure-geth.sh ', parameters('adminUsername'), ' ', parameters('ethereumAccountPsswd'), ' ', parameters('privateKeyForPrefundedAccount'), ' ', parameters('artifactsLocationURL'), ' ', parameters('ethereumNetworkID'), ' ', parameters('maxPeers'), ' ', parameters('txNode'), ' ', concat('enode://', parameters('nodeIDArray')[0], '@', reference(concat('Microsoft.Network/networkInterfaces/', parameters('mnNIPrefix'), 0), parameters('apiVersion')).ipConfigurations[0].properties.privateIPAddress, ':', parameters('gethIPCPort'), ',', 'enode://', parameters('nodeIDArray')[1], '@', reference(concat('Microsoft.Network/networkInterfaces/', parameters('mnNIPrefix'), 1), parameters('apiVersion')).ipConfigurations[0].properties.privateIPAddress, ':', parameters('gethIPCPort')), ' ', parameters('numMNNodes'), ' ', parameters('mnVMNamePrefix'), ' ', parameters('numTXNodes'), ' ', parameters('txVMNamePrefix'))]"
+        }
+      }
+    },
+    {
+      "apiVersion": "[parameters('apiVersion')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('mnVMNamePrefix'), copyIndex(), '/newuserscript')]",
+      "copy": {
+        "name": "bootMNNodesConfigLoop",
+        "count": "[variables('numBootNodes')]"
+      },
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[concat(parameters('artifactsLocationURL'), '/scripts/configure-geth.sh')]"
+          ]
+        },
+        "protectedSettings": {
+          "commandToExecute": "[concat('sh configure-geth.sh ', parameters('adminUsername'), ' ', parameters('ethereumAccountPsswd'), ' ', parameters('privateKeyForPrefundedAccount'), ' ', parameters('artifactsLocationURL'), ' ', parameters('ethereumNetworkID'), ' ', parameters('maxPeers'), ' ', parameters('bootMNNode'), ' ', concat('enode://', parameters('nodeIDArray')[0], '@', reference(concat('Microsoft.Network/networkInterfaces/', parameters('mnNIPrefix'), 0), parameters('apiVersion')).ipConfigurations[0].properties.privateIPAddress, ':', parameters('gethIPCPort'), ',', 'enode://', parameters('nodeIDArray')[1], '@', reference(concat('Microsoft.Network/networkInterfaces/', parameters('mnNIPrefix'), 1), parameters('apiVersion')).ipConfigurations[0].properties.privateIPAddress, ':', parameters('gethIPCPort')), ' ', parameters('numMNNodes'), ' ', parameters('nodeKeyArray')[copyIndex()])]"
+        }
+      }
+    },
+    {
+      "apiVersion": "[parameters('apiVersion')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('mnVMNamePrefix'), add(copyIndex(), variables('numBootNodes')),'/newuserscript')]",
+      "copy": {
+        "name": "regularMNNodesConfigLoop",
+        "count": "[sub(parameters('numMNNodes'), variables('numBootNodes'))]"
+      },
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[concat(parameters('artifactsLocationURL'), '/scripts/configure-geth.sh')]"
+          ]
+        },
+        "protectedSettings": {
+          "commandToExecute": "[concat('sh configure-geth.sh ', parameters('adminUsername'), ' ', parameters('ethereumAccountPsswd'), ' ', parameters('privateKeyForPrefundedAccount'), ' ', parameters('artifactsLocationURL'), ' ', parameters('ethereumNetworkID'), ' ', parameters('maxPeers'), ' ', parameters('mnNode'), ' ', concat('enode://', parameters('nodeIDArray')[0], '@', reference(concat('Microsoft.Network/networkInterfaces/', parameters('mnNIPrefix'), 0), parameters('apiVersion')).ipConfigurations[0].properties.privateIPAddress, ':', parameters('gethIPCPort'), ',', 'enode://', parameters('nodeIDArray')[1], '@', reference(concat('Microsoft.Network/networkInterfaces/', parameters('mnNIPrefix'), 1), parameters('apiVersion')).ipConfigurations[0].properties.privateIPAddress, ':', parameters('gethIPCPort')), ' ', parameters('numMNNodes'))]"
+        }
+      }
+    }
+  ]
+}

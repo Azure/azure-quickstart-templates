@@ -77,15 +77,7 @@ def init_cluster():
 
     # Update Cloudera Manager configuration
     cm = api.get_cloudera_manager()
-    cm.update_config({"REMOTE_PARCEL_REPO_URLS": "http://archive.cloudera.com/cdh5/parcels/{latest_supported}/,"
-                                                 "http://archive.cloudera.com/impala/parcels/{latest_supported}/,"
-                                                 "http://archive.cloudera.com/cdh4/parcels/{latest_supported}/,"
-                                                 "http://archive.cloudera.com/search/parcels/{latest_supported}/,"
-                                                 "http://archive.cloudera.com/spark/parcels/{latest_supported}/,"
-                                                 "http://archive.cloudera.com/sqoop-connectors/parcels/{latest_supported}/,"
-                                                 "http://archive.cloudera.com/accumulo/parcels/{latest_supported}/,"
-                                                 "http://archive.cloudera.com/accumulo-c5/parcels/{latest_supported},"
-                                                 "http://archive.cloudera.com/gplextras5/parcels/{latest_supported}",
+    cm.update_config({"REMOTE_PARCEL_REPO_URLS": "http://archive.cloudera.com/cdh5/parcels/{latest_supported}",
                       "PHONE_HOME": False, "PARCEL_DISTRIBUTE_RATE_LIMIT_KBS_PER_SECOND": "1024000"})
 
     print "> Initialise Cluster"
@@ -1009,12 +1001,16 @@ def setup_hdfs_ha():
             # hdfs-HTTPFS
             cdh.create_service_role(hdfs, "HTTPFS", [x for x in hosts if x.id == 0][0])
             # Configure HUE service dependencies
-            cdh(*['HDFS', 'HIVE', 'HUE', 'ZOOKEEPER']).stop()
+            cdh('HDFS').stop()
+            cdh('ZOOKEEPER').stop()
+
             if hue is not None:
                 hue.update_config(cdh.dependencies_for(hue))
             if hive is not None:
                 check.status_for_command("Update Hive Metastore NameNodes", hive.update_metastore_namenodes())
-            cdh(*['ZOOKEEPER', 'HDFS', 'HIVE', 'HUE']).start()
+
+            cdh('ZOOKEEPER').start()
+            cdh('HDFS').start()
 
     except ApiException as err:
         print " ERROR: %s" % err.message
@@ -1803,10 +1799,6 @@ def parse_options():
     # Install CDH5 latest version
     cmx_config_options['parcel'].append(manifest_to_dict(
         'http://archive.cloudera.com/cdh5/parcels/5/manifest.json'))
-
-    # Install GPLEXTRAS5 latest version
-    cmx_config_options['parcel'].append(manifest_to_dict(
-        'http://archive.cloudera.com/gplextras5/parcels/5/manifest.json'))
 
     msg_req_args = "Please specify the required arguments: "
     if cmx_config_options['cm_server'] is None:

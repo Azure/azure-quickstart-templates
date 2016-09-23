@@ -8,3 +8,5 @@
 </a>
 
 This template allows you to create a Virtual Machine with Custom Data. This template also deploys a Storage Account, Virtual Network, Public IP addresses and a Network Interface.
+
+You can verify the Custom Data in the file `/var/lib/cloud/instance/user-data.txt`.

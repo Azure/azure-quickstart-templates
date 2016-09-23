@@ -57,21 +57,20 @@
   },
   "variables": {
     "scriptsBaseUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/haproxy-redundant-floatingip-ubuntu/",
-	"apiVersion": "2015-06-15",
+    "apiVersion": "2015-06-15",
 
-    "location": "[resourceGroup().location]",
     "storageAccountName": "[concat(uniqueString(resourceGroup().id), 'haproxysa')]",
 
     "numberOfHAproxyInstances": 2,
     "masterHAproxyInstanceIndex": 0,
     "haproxyVMScripts": {
-    "fileUris": [
-      "[concat(variables('scriptsBaseUrl'), 'haproxyvm-configure.sh')]",
-      "[concat(variables('scriptsBaseUrl'), 'keepalived-action.sh')]",
-      "[concat(variables('scriptsBaseUrl'), 'keepalived-check-appsvc.sh')]"
-    ],
-    "commandToExecute": "[concat('sudo bash -x haproxyvm-configure.sh ', ' -a ', parameters('appVMNamePrefix'), '0 -a ', parameters('appVMNamePrefix'), '1 -p ', variables('appVMPort'), ' -l ', parameters('lbDNSLabelPrefix'), '.', variables('location'), '.cloudapp.azure.com -t ', variables('lbVIPPort'), ' -m ', parameters('haproxyVMNamePrefix'), '0 -b ', parameters('haproxyVMNamePrefix'), '1')]"
-  },
+      "fileUris": [
+        "[concat(variables('scriptsBaseUrl'), 'haproxyvm-configure.sh')]",
+        "[concat(variables('scriptsBaseUrl'), 'keepalived-action.sh')]",
+        "[concat(variables('scriptsBaseUrl'), 'keepalived-check-appsvc.sh')]"
+      ],
+      "commandToExecute": "[concat('sudo bash -x haproxyvm-configure.sh ', ' -a ', parameters('appVMNamePrefix'), '0 -a ', parameters('appVMNamePrefix'), '1 -p ', variables('appVMPort'), ' -l ', parameters('lbDNSLabelPrefix'), '.', resourceGroup().location, '.cloudapp.azure.com -t ', variables('lbVIPPort'), ' -m ', parameters('haproxyVMNamePrefix'), '0 -b ', parameters('haproxyVMNamePrefix'), '1')]"
+    },
 
     "numberOfAppInstances": 2,
     "appVMScripts": {
@@ -112,7 +111,7 @@
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('storageAccountName')]",
-      "location": "[variables('location')]",
+      "location": "[resourceGroup().location]",
       "properties": {
         "accountType": "[variables('storageAccountType')]"
       }
@@ -121,21 +120,21 @@
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('haproxyAvailabilitySetName')]",
-      "location": "[variables('location')]",
-      "properties": {}
+      "location": "[resourceGroup().location]",
+      "properties": { }
     },
     {
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('appAvailabilitySetName')]",
-      "location": "[variables('location')]",
-      "properties": {}
+      "location": "[resourceGroup().location]",
+      "properties": { }
     },
     {
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('lbPublicIPAddressName')]",
-      "location": "[variables('location')]",
+      "location": "[resourceGroup().location]",
       "properties": {
         "publicIPAllocationMethod": "[variables('lbPublicIPAddressType')]",
         "dnsSettings": {
@@ -147,7 +146,7 @@
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('vnetName')]",
-      "location": "[variables('location')]",
+      "location": "[resourceGroup().location]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -168,7 +167,7 @@
       "apiVersion": "[variables('apiVersion')]",
       "name": "[variables('lbName')]",
       "type": "Microsoft.Network/loadBalancers",
-      "location": "[variables('location')]",
+      "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', variables('lbPublicIPAddressName'))]"
       ],
@@ -252,7 +251,7 @@
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(parameters('haproxyVMNamePrefix'), variables('nicNamePrefix'), copyindex())]",
-      "location": "[variables('location')]",
+      "location": "[resourceGroup().location]",
       "copy": {
         "name": "haproxyNicLoop",
         "count": "[variables('numberOfHAproxyInstances')]"
@@ -293,7 +292,7 @@
         "name": "haproxyVMLoop",
         "count": "[variables('numberOfHAproxyInstances')]"
       },
-      "location": "[variables('location')]",
+      "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', parameters('haproxyVMNamePrefix'), variables('nicNamePrefix'), copyindex())]",
@@ -346,8 +345,8 @@
         },
         "diagnosticsProfile": {
           "bootDiagnostics": {
-             "enabled": "true",
-             "storageUri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net')]"
+            "enabled": "true",
+            "storageUri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net')]"
           }
         }
       }
@@ -356,7 +355,7 @@
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(parameters('appVMNamePrefix'), variables('nicNamePrefix'), copyindex())]",
-      "location": "[variables('location')]",
+      "location": "[resourceGroup().location]",
       "copy": {
         "name": "appNicLoop",
         "count": "[variables('numberOfAppInstances')]"
@@ -386,7 +385,7 @@
         "name": "appVMLoop",
         "count": "[variables('numberOfAppInstances')]"
       },
-      "location": "[variables('location')]",
+      "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', parameters('appVMNamePrefix'), variables('nicNamePrefix'), copyindex())]",
@@ -407,8 +406,8 @@
             "ssh": {
               "publicKeys": [
                 {
-                "path": "[variables('sshKeyPath')]",
-                "keyData": "[parameters('sshKeyData')]"
+                  "path": "[variables('sshKeyPath')]",
+                  "keyData": "[parameters('sshKeyData')]"
                 }
               ]
             }
@@ -439,8 +438,8 @@
         },
         "diagnosticsProfile": {
           "bootDiagnostics": {
-             "enabled": "true",
-             "storageUri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net')]"
+            "enabled": "true",
+            "storageUri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net')]"
           }
         }
       }
@@ -453,14 +452,15 @@
         "name": "appVMExtensionsLoop",
         "count": "[variables('numberOfAppInstances')]"
       },
-      "location": "[variables('location')]",
+      "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', parameters('appVMNamePrefix'), copyindex())]"
       ],
       "properties": {
-        "publisher": "Microsoft.OSTCExtensions",
-        "type": "CustomScriptForLinux",
-        "typeHandlerVersion": "1.4",
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": "[variables('appVMScripts').fileUris]",
           "commandToExecute": "[variables('appVMScripts').commandToExecute]"
@@ -475,15 +475,16 @@
         "name": "haproxyVMExtensionsLoop",
         "count": "[variables('numberOfHAproxyInstances')]"
       },
-      "location": "[variables('location')]",
+      "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', parameters('haproxyVMNamePrefix'), copyindex())]",
         "appVMExtensionsLoop"
       ],
       "properties": {
-        "publisher": "Microsoft.OSTCExtensions",
-        "type": "CustomScriptForLinux",
-        "typeHandlerVersion": "1.4",
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": "[variables('haproxyVMScripts').fileUris]",
           "commandToExecute": "[variables('haproxyVMScripts').commandToExecute]"
