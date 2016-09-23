@@ -42,8 +42,8 @@ fi
 touch ~/.dsh/group/$DSHGROUP
 for ip in "${nfsIP[@]}"
   do :
-  echo "$NFSROOTUSER@$I" | sudo tee --append /etc/dsh/machines.list > /dev/null
-  echo "$NFSROOTUSER@$I" >> ~/.dsh/group/$DSHGROUP
+  echo "$NFSROOTUSER@$ip" | sudo tee --append /etc/dsh/machines.list > /dev/null
+  echo "$NFSROOTUSER@$ip" >> ~/.dsh/group/$DSHGROUP
 done
 
 #
@@ -51,8 +51,8 @@ done
 #
 for n in "${nfsIP[@]}"
 do :
-  scp nfsnodes-prep-datadrives.sh $NFSROOTUSER@n:~/prep-datadrive.sh
-  scp nfsnodes.drbd.d.r0.res $NFSROOTUSER@n:~/nfsnodes.drbd.d.r0.res
+  scp nfsnodes-prep-datadrives.sh $NFSROOTUSER@$n:~/prep-datadrive.sh
+  scp nfsnodes.drbd.d.r0.res $NFSROOTUSER@$n:~/nfsnodes.drbd.d.r0.res
 done
 # Now make all shell-scripts executable
 dsh -M -g $DSHGROUP -c -- "chmod +x ~/prep-datadrive.sh"
