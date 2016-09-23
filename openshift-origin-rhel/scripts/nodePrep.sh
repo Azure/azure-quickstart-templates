@@ -5,7 +5,7 @@ yum -y update
 yum -y install wget git net-tools bind-utils iptables-services bridge-utils bash-completion pyOpenSSL httpd-tools
 
 # Install the epel repo if not already present
-yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+yum -y install https://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-8.noarch.rpm
 
 # Clean yum metadata and cache to make sure we see the latest packages available
 yum -y clean all
@@ -13,8 +13,8 @@ yum -y clean all
 # Disable EPEL to prevent unexpected packages from being pulled in during installation.
 yum-config-manager epel --disable
 
-# Install Docker 1.9.1 
-yum -y install docker-1.9.1-40.el7
+# Install Docker
+yum -y install docker
 
 # Create thin pool logical volume for Docker
 echo "DEVS=/dev/sdc" >> /etc/sysconfig/docker-storage-setup
