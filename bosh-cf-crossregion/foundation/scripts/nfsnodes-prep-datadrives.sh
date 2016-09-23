@@ -3,7 +3,7 @@
 #
 mkdir /datadrive
 
-if [ "$1" == "primary" ]
+if [ "$1" = "primary" ]
 then
 
     # On the primary server, copy the original NFS config data
