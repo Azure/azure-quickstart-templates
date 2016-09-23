@@ -25,11 +25,11 @@ MYSQLPASSWORD= # PUT A PASSWORD HERE
 INNOBUFFER=1024M # this seems a good size for A1 Standard on Azure, pick 80% of available memory for dedicated DB server
 
 # cluster node IP addresses
-IP[0]=192.168.100.5
-IP[1]=192.168.100.6
-IP[2]=192.168.100.7
-IP[3]=192.168.101.5
-IP[4]=192.168.101.6
+IP[0]=10.10.100.6
+IP[1]=10.10.100.7
+IP[2]=10.10.100.8
+IP[3]=10.12.100.6
+IP[4]=10.12.100.7
 
 # settings you shouldn't probably need to change ever
 # first node to start the cluster
