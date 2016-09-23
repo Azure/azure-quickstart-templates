@@ -10,7 +10,7 @@
 This template creates a full-encrypted RHEL 7.2 VM in Azure. The VM consists of:
 
 - 30 GB encrypted OS drive.
-- A 200 GB RAID-0 array mounted at /mnt/raidencrypted.
+- A 200 GB RAID-0 array mounted at `/mnt/raidencrypted`.
 
 ## Prerequisites:
 
