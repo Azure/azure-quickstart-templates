@@ -47,6 +47,40 @@ for ip in "${nfsIP[@]}"
 done
 
 #
-# Mount the data disks on each NFS server
+# Get all needed shell scripts to the target nodes
 #
-dsh -M -g $DSHGROUP -c -- 'sudo fdisk /dev/sdc'
+for n in "${nfsIP[@]}"
+do :
+  scp nfsnodes-prep-datadrives.sh $NFSROOTUSER@n:~/prep-datadrive.sh
+  scp nfsnodes.drbd.d.r0.res $NFSROOTUSER@n:~/nfsnodes.drbd.d.r0.res
+done
+# Now make all shell-scripts executable
+dsh -M -g $DSHGROUP -c -- "chmod +x ~/prep-datadrive.sh"
+
+#
+# Next install DRDB on the NFS Cluster
+#
+dsh -M -g $DSHGROUP -c -- "sudo apt-get install corosync pacemaker drbd8-utils"
+dsh -M -g $DSHGROUP -c -- "sudo cp ~/nfsnodes.drbd.d.r0.res /etc/drbd.d/r0.res"
+dsh -M -g $DSHGROUP -c -- "sudo drbdadm -c /etc/drbd.conf role r0"
+dsh -M -g $DSHGROUP -c -- "sudo drbdadm up r0"
+ssh $NFSROOTUSER@$FIRST "sudo drbdadm primary --force r0"
+
+# Mount the DRDB file system used for the NFS replication
+for n in "${nfsIP[@]}"
+do :
+  if [ "$n" == "$FIRST" ]
+  then
+    ssh $NFSROOTUSER@$n "sudo ~/prep-datadrive.sh primary"
+    # Wait for the first synchronization to complete
+    sleep 30
+  else
+    ssh $NFSROOTUSER@$n "sudo ~/prep-datadrive.sh secondary"  
+  fi
+done
+
+#
+# Install the NFS Server package on all target servers
+#
+dsh -M -g $DSHGROUP -c -- "sudo apt-get install nfs-kernel-server"
+dsh -M -g $DSHGROUP -c -- "sudo echo '/datadrive/exports/ 10.x.x.x/255.255.255.0(rw,no_root_squash,no_all_squash,sync)' >> /etc/exports"
