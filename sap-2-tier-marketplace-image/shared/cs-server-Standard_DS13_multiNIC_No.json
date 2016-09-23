@@ -16,15 +16,9 @@
     },
     "osDiskType": {
       "type": "string",
-      "allowedValues": [ "image", "userimage", "osdisk" ],
+      "allowedValues": [ "image", "userImage", "osdisk" ],
       "metadata": {
         "description": "The type of OS disk."
-      }
-    },
-    "location": {
-      "type": "string",
-      "metadata": {
-        "description": "Location where the template should be deployed."
       }
     },
     "sidlower": {
@@ -73,92 +67,107 @@
   "variables": {
     "osDiskName": "[concat(parameters('sidlower'),'-os.vhd')]",
     "osDiskCaching": "ReadWrite",
-    "osProfiles": {
+    "dataDisks": [
+      {
+        "name": "dbdisk1",
+        "lun": 0,
+        "vhd": {
+          "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/', parameters('vmName'), '/',parameters('sidlower'),'-dbdisk1.vhd')]"
+        },
+        "createOption": "Empty",
+        "caching": "None",
+        "diskSizeGB": "512"
+      },
+      {
+        "name": "dbdisk2",
+        "lun": 1,
+        "vhd": {
+          "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/', parameters('vmName'), '/',parameters('sidlower'),'-dbdisk2.vhd')]"
+        },
+        "createOption": "Empty",
+        "caching": "None",
+        "diskSizeGB": "512"
+      },
+      {
+        "name": "dbdisk3",
+        "lun": 2,
+        "vhd": {
+          "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/', parameters('vmName'), '/',parameters('sidlower'),'-dbdisk3.vhd')]"
+        },
+        "createOption": "Empty",
+        "caching": "None",
+        "diskSizeGB": "512"
+      },
+      {
+        "name": "dbdisk4",
+        "lun": 3,
+        "vhd": {
+          "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/', parameters('vmName'), '/',parameters('sidlower'),'-dbdisk4.vhd')]"
+        },
+        "createOption": "Empty",
+        "caching": "None",
+        "diskSizeGB": "127"
+      }
+    ],
+    "hardwareProfile": {
+      "vmSize": "[parameters('vmSize')]"
+    },
+    "networkProfile": {
+      "networkInterfaces": [
+        {
+          "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('nicName'))]"
+        }
+      ]
+    },
+    "availableProperties": {
       "image": {
+        "hardwareProfile": "[variables('hardwareProfile')]",
         "osProfile": {
           "computerName": "[parameters('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]"
-        }
+        },
+        "storageProfile": {
+          "imageReference": "[parameters('imageReference')]",
+          "osDisk": "[parameters('osDisk')]",
+          "dataDisks": "[variables('dataDisks')]"
+        },
+        "networkProfile": "[variables('networkProfile')]"
       },
-      "userimage": {
+
+      "userImage": {
+        "hardwareProfile": "[variables('hardwareProfile')]",
         "osProfile": {
           "computerName": "[parameters('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]"
-        }
+        },
+        "storageProfile": {
+          "osDisk": "[parameters('osDisk')]",
+          "dataDisks": "[variables('dataDisks')]"
+        },
+        "networkProfile": "[variables('networkProfile')]"
       },
+
       "osdisk": {
-        "osProfile": null
+        "hardwareProfile": "[variables('hardwareProfile')]",
+        "storageProfile": {
+          "osDisk": "[parameters('osDisk')]",
+          "dataDisks": "[variables('dataDisks')]"
+        },
+        "networkProfile": "[variables('networkProfile')]"
       }
     },
-    "osProfile": "[variables('osProfiles')[parameters('osDiskType')].osProfile]"
+    "internalProperties": "[variables('availableProperties')[parameters('osDiskType')]]"
+
   },
-  "resources": [    
+  "resources": [
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('vmName')]",
-      "location": "[parameters('location')]",
-      "properties": {
-        "hardwareProfile": {
-          "vmSize": "[parameters('vmSize')]"
-        },
-        "osProfile": "[variables('osProfile')]",
-        "storageProfile": {
-          "imageReference": "[parameters('imageReference')]",
-          "osDisk": "[parameters('osDisk')]",
-          "dataDisks": [
-            {
-              "name": "dbdisk1",
-              "lun": 0,
-              "vhd": {
-                "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/', parameters('vmName'), '/',parameters('sidlower'),'-dbdisk1.vhd')]"
-              },
-              "createOption": "Empty",
-              "caching": "None",
-              "diskSizeGB": "512"
-            },
-            {
-              "name": "dbdisk2",
-              "lun": 1,
-              "vhd": {
-                "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/', parameters('vmName'), '/',parameters('sidlower'),'-dbdisk2.vhd')]"
-              },
-              "createOption": "Empty",
-              "caching": "None",
-              "diskSizeGB": "512"
-            },
-            {
-              "name": "dbdisk3",
-              "lun": 2,
-              "vhd": {
-                "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/', parameters('vmName'), '/',parameters('sidlower'),'-dbdisk3.vhd')]"
-              },
-              "createOption": "Empty",
-              "caching": "None",
-              "diskSizeGB": "512"
-            },
-            {
-              "name": "dbdisk4",
-              "lun": 3,
-              "vhd": {
-                "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/', parameters('vmName'), '/',parameters('sidlower'),'-dbdisk4.vhd')]"
-              },
-              "createOption": "Empty",
-              "caching": "None",
-              "diskSizeGB": "127"
-            }
-          ]
-        },
-        "networkProfile": {
-          "networkInterfaces": [
-            {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('nicName'))]"
-            }
-          ]
-        }
-      }
+      "location": "[resourceGroup().location]",
+      "properties": "[variables('internalProperties')]"
     }
   ],
   "outputs": {

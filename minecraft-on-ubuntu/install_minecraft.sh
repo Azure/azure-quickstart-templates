@@ -59,7 +59,7 @@ done
 chown -R $minecraft_user $minecraft_server_path
 
 # adjust memory usage depending on VM size
-totalMem=$(free -m | awk '/Mem:/ { print $3 }')
+totalMem=$(free -m | awk '/Mem:/ { print $2 }')
 if [ $totalMem -lt 1024 ]; then
     memoryAlloc=512m
 else
@@ -108,3 +108,4 @@ printf 'generate-structures=%s\n' $9 >> $minecraft_server_path/server.properties
 printf 'level-seed=%s\n' ${10} >> $minecraft_server_path/server.properties
 
 systemctl start minecraft-server
+systemctl enable minecraft-server

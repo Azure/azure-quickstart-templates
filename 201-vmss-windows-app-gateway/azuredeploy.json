@@ -2,29 +2,6 @@
   "$schema": "http://schema.management.azure.com/schemas/2015-01-01-preview/deploymentTemplate.json",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "resourceLocation": {
-      "type": "string",
-      "allowedValues": [
-        "East US",
-        "East US 2",
-        "West US",
-        "Central US",
-        "South Central US",
-        "North Central US",
-        "North Europe",
-        "West Europe",
-        "Southeast Asia",
-        "East Asia",
-        "Japan West",
-        "Japan East",
-        "Brazil South",
-        "Australia East",
-        "Australia Southeast"
-      ],
-      "metadata": {
-        "description": "Azure region where all resources will be deployed. This is distinct from resource group location."
-      }
-    },
     "vmSku": {
       "type": "string",
       "defaultValue": "Standard_A1",
@@ -44,12 +21,12 @@
         "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version. Allowed values: 2008-R2-SP1, 2012-Datacenter, 2012-R2-Datacenter."
       }
     },
-    "vmssName": {
-      "type": "string",
-      "metadata": {
-        "description": "String used as a base for naming resources (9 characters or less). A hash is prepended to this string for some resources, and resource-specific information is appended."
+    "vmssName":{
+      "type":"string",
+      "metadata":{
+        "description":"String used as a base for naming resources. Must be 3-61 characters in length and globally unique across Azure. A hash is prepended to this string for some resources, and resource-specific information is appended."
       },
-      "maxLength": 9
+      "maxLength": 61
     },
     "instanceCount": {
       "type": "int",
@@ -73,8 +50,8 @@
   },
   "variables": {
     "storageAccountType": "Standard_LRS",
-    "saCount": 5,
-    "namingInfix": "[toLower(parameters('vmssName'))]",
+    "namingInfix": "[toLower(substring(concat(parameters('vmssName'), uniqueString(resourceGroup().id)), 0, 9))]",
+    "longNamingInfix": "[toLower(parameters('vmssName'))]",
     "newStorageAccountSuffix": "[concat(variables('namingInfix'), 'sa')]",
     "uniqueStringArray": [
       "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'), '0')))]",
@@ -83,6 +60,7 @@
       "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'), '3')))]",
       "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'), '4')))]"
     ],
+    "saCount": "[length(variables('uniqueStringArray'))]",
     "vhdContainerName": "[concat(variables('namingInfix'), 'vhd')]",
     "osDiskName": "[concat(variables('namingInfix'), 'osdisk')]",
     "addressPrefix": "10.0.0.0/16",
@@ -127,7 +105,7 @@
     {
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
-      "location": "[parameters('resourceLocation')]",
+      "location": "[resourceGroup().location]",
       "apiVersion": "[variables('networkApiVersion')]",
       "properties": {
         "addressSpace": {
@@ -154,7 +132,7 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[concat(variables('uniqueStringArray')[copyIndex()], variables('newStorageAccountSuffix'))]",
-      "location": "[parameters('resourceLocation')]",
+      "location": "[resourceGroup().location]",
       "apiVersion": "[variables('storageApiVersion')]",
       "copy": {
         "name": "storageLoop",
@@ -167,19 +145,19 @@
     {
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
-      "location": "[parameters('resourceLocation')]",
+      "location": "[resourceGroup().location]",
       "apiVersion": "[variables('networkApiVersion')]",
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
-          "domainNameLabel": "[variables('namingInfix')]"
+          "domainNameLabel": "[variables('longNamingInfix')]"
         }
       }
     },
     {
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('appGwPublicIPAddressName')]",
-      "location": "[parameters('resourceLocation')]",
+      "location": "[resourceGroup().location]",
       "apiVersion": "[variables('networkApiVersion')]",
       "properties": {
         "publicIPAllocationMethod": "Dynamic"
@@ -188,7 +166,7 @@
     {
       "type": "Microsoft.Network/loadBalancers",
       "name": "[variables('loadBalancerName')]",
-      "location": "[parameters('resourceLocation')]",
+      "location": "[resourceGroup().location]",
       "apiVersion": "[variables('networkApiVersion')]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
@@ -228,7 +206,7 @@
     {
       "type": "Microsoft.Network/applicationGateways",
       "name": "[variables('appGwName')]",
-      "location": "[parameters('resourceLocation')]",
+      "location": "[resourceGroup().location]",
       "apiVersion": "[variables('networkApiVersion')]",
       "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
@@ -320,7 +298,7 @@
     {
       "type": "Microsoft.Compute/virtualMachineScaleSets",
       "name": "[variables('namingInfix')]",
-      "location": "[parameters('resourceLocation')]",
+      "location": "[resourceGroup().location]",
       "apiVersion": "[variables('computeApiVersion')]",
       "dependsOn": [
         "storageLoop",
