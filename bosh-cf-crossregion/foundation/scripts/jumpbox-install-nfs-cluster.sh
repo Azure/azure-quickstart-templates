@@ -84,4 +84,4 @@ done
 # Install the NFS Server package on all target servers
 #
 dsh -M -g $DSHGROUP -c -- "sudo apt-get -y install nfs-kernel-server"
-dsh -M -g $DSHGROUP -c -- "sudo echo '/datadrive/exports/ 10.x.x.x/255.255.255.0(rw,no_root_squash,no_all_squash,sync)' >> /etc/exports"
+dsh -M -g $DSHGROUP -c -- "echo '/datadrive/exports/ 10.x.x.x/255.255.255.0(rw,no_root_squash,no_all_squash,sync)' | sudo tee -a /etc/exports"
