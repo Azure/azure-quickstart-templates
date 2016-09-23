@@ -1,4 +1,4 @@
-# Disable encryption on a running Windows VM. 
+# Disable encryption on a running Linux VM. 
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fkrkhan%2Fazure-quickstart-templates%2Fcnedemo%2F201-decrypt-running-linux-vm%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
