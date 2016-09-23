@@ -13,21 +13,11 @@
       "metadata": {
         "description": "Admin password"
       }
-    },
-    "dnsNameforLBIP": {
-      "type": "string",
-      "metadata": {
-        "description": "Unique DNS name prefix for the load balancer"
-      }
     }
   },
   "variables": {
-    "vmSize": "Standard_D1_v2",
-    "imageSKU": "Windows-Server-Technical-Preview",
-    "imageOffer": "WindowsServer",
-    "imagePublisher": "MicrosoftWindowsServer",
-    "storageAccountType": "Standard_LRS",
     "vmNamePrefix": "vm",
+    "dnsNameforLBIP": "[concat('lb-', uniqueString(resourceGroup().id))]",
     "availabilitySetName": "myAvSet",
     "lbName": "lb",
     "nicNamePrefix": "nic",
@@ -35,13 +25,9 @@
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet-1",
     "subnetPrefix": "10.0.0.0/24",
-    "publicIPAddressType": "Dynamic",
     "publicIPAddressName": "publicIP",
-    "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('subnetName'))]",
-    "publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]",
     "lbID": "[resourceId('Microsoft.Network/loadBalancers', variables('lbName'))]",
     "numberOfInstances": 2,
-    "frontEndIPConfigID": "[concat(variables('lbID'), '/frontendIPConfigurations/loadBalancerFrontend')]",
     "storageAccountName": "[uniqueString(resourceGroup().id)]"
   },
   "resources": [
@@ -52,13 +38,14 @@
       "location": "[resourceGroup().location]",
       "kind": "Storage",
       "sku": {
-        "name": "[variables('storageAccountType')]"
-      }
+        "name": "Standard_LRS"
+      },
+      "properties": {}
     },
     {
+      "apiVersion": "2016-03-30",
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('availabilitySetName')]",
-      "apiVersion": "2016-03-30",
       "location": "[resourceGroup().location]",
       "properties": {}
     },
@@ -68,9 +55,9 @@
       "name": "[variables('publicIPAddressName')]",
       "location": "[resourceGroup().location]",
       "properties": {
-        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+        "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
-          "domainNameLabel": "[parameters('dnsNameforLBIP')]"
+          "domainNameLabel": "[variables('dnsNameforLBIP')]"
         }
       }
     },
@@ -116,7 +103,7 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "subnet": {
-                "id": "[variables('subnetId')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('subnetName'))]"
               },
               "loadBalancerBackendAddressPools": [
                 {
@@ -147,7 +134,7 @@
             "name": "LoadBalancerFrontend",
             "properties": {
               "publicIPAddress": {
-                "id": "[variables('publicIPAddressID')]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
               }
             }
           }
@@ -173,7 +160,7 @@
       ],
       "properties": {
         "frontendIPConfiguration": {
-          "id": "[variables('frontEndIPConfigID')]"
+          "id": "[concat(variables('lbID'), '/frontendIPConfigurations/loadBalancerFrontend')]"
         },
         "protocol": "tcp",
         "frontendPort": "[copyIndex(5000)]",
@@ -200,7 +187,7 @@
           "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('availabilitySetName'))]"
         },
         "hardwareProfile": {
-          "vmSize": "[variables('vmSize')]"
+          "vmSize": "Standard_D1_v2"
         },
         "osProfile": {
           "computerName": "[concat(variables('vmNamePrefix'), copyIndex())]",
@@ -209,9 +196,9 @@
         },
         "storageProfile": {
           "imageReference": {
-            "publisher": "[variables('imagePublisher')]",
-            "offer": "[variables('imageOffer')]",
-            "sku": "[variables('imageSKU')]",
+            "publisher": "MicrosoftWindowsServer",
+            "offer": "WindowsServer",
+            "sku": "Windows-Server-Technical-Preview",
             "version": "latest"
           },
           "osDisk": {
@@ -238,5 +225,11 @@
         }
       }
     }
-  ]
+  ],
+    "outputs": {
+    "lb-fqdn": {
+      "type": "string",
+      "value": "[reference(variables('publicIPAddressName')).dnsSettings.fqdn]"
+    }
+  }
 }
