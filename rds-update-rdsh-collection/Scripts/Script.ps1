@@ -214,7 +214,8 @@ param(
 			}
 
 			log "shutting down servers $($serversToRemove -join '; ')..."
-			stop-computer -computer $serversToRemove -force
+			$creds = new-object System.Management.Automation.PSCredential ("$domain\$username", (convertto-securestring $password -asplaintext -force))
+			stop-computer -computer $serversToRemove -credential $creds -force
 		}
 		else
 		{
