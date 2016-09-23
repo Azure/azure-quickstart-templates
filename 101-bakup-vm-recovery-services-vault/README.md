@@ -14,3 +14,5 @@ To create new Recovery Services Vault, please use this existing template: [Creat
 To create Recovery Services Vault and Backup Policy, please use this existing template: [Create Recovery Services Vault and Weekly Backup Policy] (https://github.com/Azure/azure-quickstart-templates/tree/master/101-recovery-services-weekly-backup-policy-create)
 
 For more information, Visit [Back up Resource Manager VMs to a Recovery Services vault] (https://azure.microsoft.com/en-us/documentation/articles/backup-azure-vms-first-look-arm/)
+
+`Tags: Backup, RecoveryServices, Azure Backup`
