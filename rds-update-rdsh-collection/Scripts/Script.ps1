@@ -222,11 +222,16 @@ param(
 			log "nothing to do."
 		}
 
-	} 
+	}
+    catch
+    {
+        log "ERROR: caught exception"
+        throw
+    }
 	finally 
 	{
 		log "remove impersonation..."
 		Remove-ImpersonateUser
 	}
 
-    log "done."
+    log "done. success."
