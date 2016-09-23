@@ -11,6 +11,7 @@ MASTERPUBLICIPHOSTNAME=$6
 MASTERPUBLICIPADDRESS=$7
 NODEPREFIX=$8
 NODECOUNT=$9
+ROUTING=${10}
 
 DOMAIN=$( awk 'NR==2' /etc/resolv.conf | awk '{ print $2 }' )
 
@@ -41,11 +42,11 @@ nodes
 # Set variables common for all OSEv3 hosts
 [OSEv3:vars]
 ansible_ssh_user=$SUDOUSER
-ansible_sudo=true
+ansible_become=yes
 deployment_type=origin
 docker_udev_workaround=True
-# containerized=true
 openshift_use_dnsmasq=no
+openshift_master_default_subdomain=$ROUTING
 
 openshift_master_cluster_public_hostname=$MASTERPUBLICIPHOSTNAME
 openshift_master_cluster_public_vip=$MASTERPUBLICIPADDRESS
@@ -67,15 +68,7 @@ do
   echo "$NODEPREFIX-$c.$DOMAIN" >> /etc/ansible/hosts
 done
 
-mkdir -p /etc/origin/master
-htpasswd -cb /etc/origin/master/htpasswd ${SUDOUSER} ${PASSWORD}
-
-# Reverting to April 22, 2016 commit
-
-echo "Cloning openshift-ansible repository and reseting to April 22, 2016 commit"
-
 runuser -l $SUDOUSER -c "git clone https://github.com/openshift/openshift-ansible /home/$SUDOUSER/openshift-ansible"
-runuser -l $SUDOUSER -c "git --git-dir="/home/$SUDOUSER/openshift-ansible/.git" --work-tree="/home/$SUDOUSER/openshift-ansible/" reset --hard 04b5245"
 
 echo "Executing Ansible playbook"
 
@@ -86,9 +79,11 @@ echo "Modifying sudoers"
 sed -i -e "s/Defaults    requiretty/# Defaults    requiretty/" /etc/sudoers
 sed -i -e '/Defaults    env_keep += "LC_TIME LC_ALL LANGUAGE LINGUAS _XKB_CHARSET XAUTHORITY"/aDefaults    env_keep += "PATH"' /etc/sudoers
 
+# Deploy Registry and Router
+
 echo "Deploying Registry"
 
-runuser -l $SUDOUSER -c "sudo oadm registry --config=/etc/origin/master/admin.kubeconfig --credentials=/etc/origin/master/openshift-registry.kubeconfig"
+runuser -l $SUDOUSER -c "sudo oadm registry"
 
 echo "Deploying Router"
 
@@ -97,3 +92,12 @@ runuser -l $SUDOUSER -c "sudo oadm router osrouter --replicas=$NODECOUNT --crede
 echo "Re-enabling requiretty"
 
 sed -i -e "s/# Defaults    requiretty/Defaults    requiretty/" /etc/sudoers
+
+# Create OpenShift User
+
+echo "Creating OpenShift User"
+
+mkdir -p /etc/origin/master
+htpasswd -cb /etc/origin/master/htpasswd ${SUDOUSER} ${PASSWORD}
+
+echo "Script complete"
