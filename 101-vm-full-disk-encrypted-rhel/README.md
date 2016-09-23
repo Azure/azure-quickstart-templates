@@ -18,10 +18,6 @@ Azure Disk Encryption securely stores the encryption secrets in a specified Azur
 
 The [AzureDiskEncryptionPreRequisiteSetup.ps1](https://github.com/Azure/azure-powershell/blob/dev/src/ResourceManager/Compute/Commands.Compute/Extension/AzureDiskEncryption/Scripts/AzureDiskEncryptionPreRequisiteSetup.ps1) script can be used to create the Key Vault and assign appropriate access policies.
 
-Use the below PS cmdlet for getting the "keyVaultSecretUrl" and "keyVaultResourceId"
-
-    Get-AzureRmKeyVault -VaultName $KeyVaultName -ResourceGroupName $rgname
-
 ## Monitoring progress
 
 It will take roughly one hour to encrypt the OS drive. You can monitor the encryption progress by calling `Get-AzureRmVmDiskEncryptionStatus` PowerShell cmdlet as shown below.
