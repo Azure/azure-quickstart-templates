@@ -15,7 +15,7 @@ nfsIP[1]=10.10.200.5
 nfsIP[2]=10.12.200.4
 nfsIP[3]=10.12.200.5
 
-FIRST=nfsIP[0]
+FIRST=${nfsIP[0]}
 
 if [ ! $NFSROOTUSER ]
 then

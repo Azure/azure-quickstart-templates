@@ -10,7 +10,6 @@ resource r0 {
   }
   syncer {
     rate 10M;
-    group 1;
     al-extents 257;
   }
   on nfsPrimaryNode01 {                   
