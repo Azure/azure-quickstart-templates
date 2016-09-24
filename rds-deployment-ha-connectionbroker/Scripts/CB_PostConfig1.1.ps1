@@ -9,7 +9,8 @@ param
      [string]$downloadClientURL,
      [string]$DomainNetbios,
      [string]$DNSServer,
-     [string]$adDomainName
+     [string]$adDomainName,
+     [string]$sqlServer
     ) 
 
 $localhost = [System.Net.Dns]::GetHostByName((hostname)).HostName
@@ -30,7 +31,7 @@ $Logfile = ".\CB_PostConfig1.1_{0}.log" -f (get-date -Format "yyyyMMddhhmmss")
 function GetServersByRole($roleName)
 {
     $RemoteSqlOdbcconn = new-object System.Data.Odbc.OdbcConnection	
-    $RemoteSqlOdbcconn.ConnectionString = $connStringToNewDbRdcms 
+    $RemoteSqlOdbcconn.ConnectionString = $PrimaryDBConString
     $RemoteSqlOdbcconn.Open()
     
     $OdbcCmdStr = "SELECT s.Name FROM rds.Server s INNER JOIN rds." + $roleName + " cb ON s.Id = cb.ServerId"
@@ -88,7 +89,7 @@ function AddDomainComputersToRDSMgmtServerGroup()
     $membershipExists = $objGroup.psbase.invoke("Members") | %{$_.GetType().InvokeMember("Name",'GetProperty',$null,$_,$null)} | where {$_ -eq $machineAcc}
     if ( !($membershipExists.length -gt 1) ) 
     {
-        $objGroup.Add("WinNT://" + $domainName + "/" + $machineAcc)
+        $objGroup.Add("WinNT://" + $adDomainName + "/" + $machineAcc)
     }   
 }
 function SetupVMHA($compName)
@@ -132,12 +133,39 @@ function SetupRDWA($compName)
     Write-Host "Successfully configured RDWeb's Broker name"
 }
 
-function SetupCB($compName, $activeBroker)
+function SetupGroups($sqlServer, $computerName, $domain)
 {
-	WriteLog("Starting Install of client on broker: $($compName)")
+$computerName = $computerName.ToLower() -replace "." + $domain.ToLower()
+
+Invoke-Command -ComputerName $sqlServer -ScriptBlock {
+param( $computerName )
+  $grMembers = net localgroup "RDS Management Servers"
+  $fnd = $false
+  foreach ($gr in $grMembers)
+  {
+    if ( $gr -Like "*$computerName$" ) { $fnd = $true; break }
+  }
+  if ( $fnd -eq $false ) 
+  {
+     Write-Output ("Adding $($computerName) to the local RDS Management Servers group")
+     net localgroup "RDS Management Servers" /add "$computerName`$"
+  }
+  else
+  {
+     Write-Output("Computer $($computerName) is already a member of the group")
+  } 
+} -ArgumentList $computerName
+}
+
+function SetupCB($compName, $clientURL)
+{
+	Write-Output("Starting Install of client on broker machine: $compName [end]")
+        Write-Output("Active broker: $activeBroker")
+        Write-Output("Client URL: $clientURL")
 	try
 	{
-		Invoke-Command -ComputerName $compName -ScriptBlock {
+		Invoke-Command -ComputerName $compName -ScriptBlock { param($clientURL, $installPath, $DomainNetbios)
+                        Write-Output("Running Invoke Command")
 			$installPath = "$env:temp\Install-$(Get-Date -format 'yyyy-dd hh-mm-ss').msi"
 
 			if(!(Split-Path -parent $installPath) -or !(Test-Path -PathType Container (Split-Path -parent $installPath))) {
@@ -145,37 +173,36 @@ function SetupCB($compName, $activeBroker)
 			}
 
 			Write-Output("Downloading new client from: $($installPath)")
-			Invoke-WebRequest -Uri $downloadClientURL -OutFile $installPath -UserAgent [Microsoft.PowerShell.Commands.PSUserAgent]::InternetExplorer
+			Invoke-WebRequest -Uri $clientURL -OutFile $installPath -UserAgent [Microsoft.PowerShell.Commands.PSUserAgent]::InternetExplorer
 			Write-Output("FinishedDownloading Client and starting install")
-			$result = (Start-Process -FilePath "msiexec.exe" -ArgumentList "/i ""$installPath"" /passive IACCEPTSQLINCLILICENSETERMS=YES" -Wait -PassThru).ExitCode
+			$result = (Start-Process -FilePath "msiexec.exe" -ArgumentList "/i ""$installPath"" /passive ADDLOCAL=ALL APPGUID={0CC618CE-F36A-415E-84B4-FB1BFF6967E1} IACCEPTSQLNCLILICENSETERMS=YES" -Wait -PassThru).ExitCode
 			Write-Output("Result from installing client: $($result)")
-
-			if ( $activeBroker )
-			{
-				    #
-					# Make CMS aware of all active brokers, by setting the DNS RR Name
-					$rdmsenv = gwmi -namesp root\cimv2\rdms -class win32_rdmsenvironment -list
-					$rdmsenv.SetActiveServer()
-					$rdmsenv.SetClientAccessName( $cbDNSName )
-			}
 
 			#
 			# Add Domain Computers to RDS Endpoint Servers group
+                        Write-Output("Checking Domain computer registration")
 			$rdsServersGroupName = "RDS Endpoint Servers"
 			$objOU = [ADSI]("WinNT://" + $env:computername)
 			$objGroup = $objOU.psbase.children.find($rdsServersGroupName)
 			$machineAcc = "Domain Computers"
+                        Write-Output("Checking Membership")
+
 			$membershipExists = $objGroup.psbase.invoke("Members") | %{$_.GetType().InvokeMember("Name",'GetProperty',$null,$_,$null)} | where {$_ -eq $machineAcc}
 			if ( !($membershipExists.length -gt 1) ) 
 			{
-				$objGroup.Add("WinNT://" + $domainName + "/" + $machineAcc)
+                                Write-Output("Attempting to add domain: $DomainNetbios and Account: $machineAcc")
+				$objGroup.Add("WinNT://" + $DomainNetbios + "/" + $machineAcc)
+                                Write-Output("Account added")
 			}    
-		} | Out-File -Append $Logfile
-	}
+                        Write-Output("Completed setup for broker")
+		} -ArgumentList $clientURL, $installPath, $DomainNetbios | Out-File -Append $Logfile
+	} 
 	catch [Exception] {
     WriteLog("Exception installing the client on the localhost: $($_.Exception.Message)")
     throw
  } 
+ Write-Output "Setting up Group membership for $compName on SQL"
+ SetupGroups $sqlServer $compName $DomainNetbios
 }
 
 Function WriteLog
@@ -186,10 +213,19 @@ Function WriteLog
    Write-Host $logstring
 }
 
-WriteLog("Starting PostConfig")
+WriteLog("Starting PostConfig on machine $($localhost)")
+if ($BrokerServer.ToLower().EndsWith($adDomainName) -eq $false)
+{
+  $BrokerServer = $BrokerServer + "." + $adDomainName
+}
 
-SetupCB($localhost, $false);
-Setup($BrokerServer, $true);
+if ($cbDNSName.ToLower().EndsWith($adDomainName) -eq $false)
+{
+  $cbDNSName = $cbDNSName + "." + $adDomainName
+}
+
+SetupCB $localhost $downloadClientURL
+SetupCB $BrokerServer $downloadClientURL
 
 WriteLog("Getting Connection broker high availability")
 $res = Get-RDConnectionBrokerHighAvailability $BrokerServer
@@ -223,24 +259,29 @@ else
 $cb1IP = (Resolve-DnsName -Name $BrokerServer -Type A).IPAddress
 $cb2IP = (Resolve-DnsName -Name $localhost -Type A).IPAddress
 
+Write-Output("Creating DNS Records")
 Invoke-Command -ComputerName $DNSServer  -ScriptBlock {
-	Write-Output("Adding DNS for IP $($cb1IP)")
-	$rec = Add-DnsServerResourceRecordA -ZoneNmae ""$($adDomainName)"" -AllowUpdateAny -Ipv4Address ""$($cb1IP)"" -PassThru -TimeToLive 00:00:30
-	if ($rec -eq $null) 
-	{
-		throw "Unable to add Dns record for ip address $($cb1IP)"
-	}
-	Write-Output("Successfully added ip address")
-    Write-Output("Adding DNS for IP $($cb2IP)")
-	$rec = Add-DnsServerResourceRecordA -ZoneName ""$($adDomainName)"" -AllowUpdateAny -Ipv4Address ""$($cb2IP)"" -PassThru -TimeToLive 00:00:30
-	if ($rec -eq $null) 
-	{
-		throw "Unable to add Dns record for ip address $($cb2IP)"
-	}
-	Write-Output("Succesfully added ip address")
-	} | Out-File -Append $Logfile
-    
+        param($adDomainName, $cb1IP, $cb2IP, $cbDNSName)
+            $zone = "$adDomainName"
+       $name = "$cbDNSName"
+$res= Get-DnsServerResourceRecord -ZoneName $zone -Name $name -EA SilentlyContinue
+if ( $res -ne $null ) { 
+          Remove-DnsServerResourceRecord -ZoneName $zone -Name $name -RRType "A" -force
+      }
 
+	      Write-Output("Adding DNS for IP $($cb1IP)")
+              $cmd = "Add-DnsServerResourceRecordA -ZoneName $zone -Name $name -AllowUpdateAny -Ipv4Address ""$cb1IP"",""$cb2IP"" -PassThru -TimeToLive 00:00:30"
+              Write-Output($cmd)
+              $rec = Invoke-Expression $cmd
+
+	      if ($rec -eq $null) 
+	      {
+		throw "Unable to add Dns record for ip address $($cb1IP) and $($cb2IP)"
+	      }
+	      Write-Output("Successfully added ip address")
+	} -ArgumentList $adDomainName, $cb1IP, $cb2IP, $cbDNSName  | Out-File -Append $Logfile
+    
+Write-Output("Completed writing DNS Records")
 $brokerMachines = GetServersByRole "RoleRdcb"
 $rdwaMachines = GetServersByRole "RoleRdwa"
 $rdshMachines = GetServersByRole "RoleRdsh"
