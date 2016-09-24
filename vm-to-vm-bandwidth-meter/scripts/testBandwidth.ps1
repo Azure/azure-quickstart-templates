@@ -22,4 +22,4 @@ if (!(Test-Path $AppPath)){
 
 
 cd $AppPath
-.\psping.exe -b -q -accepteula -l $PacketSize -n $TestNumber $TestIPPort | Select-String -Pattern "Minimum = *"
+.\psping.exe -b -q -accepteula -l $PacketSize -n $TestNumber $TestIPPort | Select-String "Minimum = (.*)" | % { $_.Matches.Value }
