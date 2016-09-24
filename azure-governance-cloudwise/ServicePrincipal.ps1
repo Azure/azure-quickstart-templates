@@ -18,15 +18,14 @@ Set-Location ".\"
 
 $subscriptionName =     ""
 $cloudwiseAppServiceURL=""          # this is the Unique URL of the Cloudwise App Service deployed by the ARM script
-$suffix =               "Avyan"     #-- Name of the company/deployment. This is used to create a unique website name in your organization
+$suffix =               $subscriptionName     #-- Name of the company/deployment. This is used to create a unique website name in your organization
+$tenantID=              ""
 
-$appIdentifier =        ($cloudwiseAppServiceURL + "/avyanxx")
 $passwordADApp =        "Password@123" 
 
 $Web1SiteName =         ("cloudwise" + $suffix)
-$displayName1 =         ("CloudWise - Azure Governance and Billing Portal (ver." + $suffix + ")")
+$displayName1 =         ("CloudWise - Governance Advisory Portal (ver." + $suffix + ")")
 $servicePrincipalPath=  (".\" + $subscriptionName + ".json" )
-
 
 
 ### 0. Validate Parameters.
@@ -34,19 +33,20 @@ $servicePrincipalPath=  (".\" + $subscriptionName + ".json" )
 if (($subscriptionName -eq "") -or ($cloudwiseAppServiceURL -eq ""))
 {
     Write-Host "Please ensure parameters SubscriptionName and cloudwiseAppServiceURL are not empty" -foreground Red
-    return
+    return 
 }
 
 
 ### 1. Login to Azure Resource Manager and save the profile locally to avoid relogins (used primarily for debugging purposes)
 #############################################################################################
-
+Write-Host ("Step 1: Logging in to Azure Subscription"+ $subscriptionName) -ForegroundColor Gray
 
 # To login to Azure Resource Manager
 if(![System.IO.File]::Exists($servicePrincipalPath)){
     # file with path $path doesn't exist
 
-    Add-AzureRmAccount
+    #Add-AzureRmAccount 
+    Login-AzureRmAccount -SubscriptionName $subscriptionName
     
     Save-AzureRmProfile -Path $servicePrincipalPath
 }
@@ -54,44 +54,51 @@ if(![System.IO.File]::Exists($servicePrincipalPath)){
 Select-AzureRmProfile -Path $servicePrincipalPath
 
 
+
+
 # To select a default subscription for your current session
 #Get-AzureRmSubscription –SubscriptionName “Cloudly Dev (Visual Studio Ultimate)” | Select-AzureRmSubscription
 
-$sub = Get-AzureRmSubscription –SubscriptionName $subscriptionName | Select-AzureRmSubscription
-
+$sub = Get-AzureRmSubscription –SubscriptionName $subscriptionName | Select-AzureRmSubscription 
 
 
 ### 2. Create Azure Active Directory apps in default directory
 #############################################################################################
+Write-Host ("Step 2: Create Azure Active Directory apps in default directory") -ForegroundColor Gray
+
     $u = (Get-AzureRmContext).Account
     $u1 = ($u -split '@')[0]
     $u2 = ($u -split '@')[1]
     $u3 = ($u2 -split '\.')[0]
     $defaultPrincipal = ($u1 + $u3 + ".onmicrosoft.com")
-    #$defaultPrincipal = ("gururajAD" + ".onmicrosoft.com")
-
+    
     # Get tenant ID
     $tenantID = (Get-AzureRmContext).Tenant.TenantId
+
+    $homePageURL = ("http://" + $defaultPrincipal + "azurewebsites.net" + "/" + $Web1SiteName)
    
-    $replyURLs = @($cloudwiseAppServiceURL, "http://localhost:62080")
+    $replyURLs = @( $cloudwiseAppServiceURL, "http://*.azurewebsites.net","http://localhost:62080")
 
     # Create Active Directory Application
-    
-    $identifierURI1 = $cloudwiseAppServiceURL
-$azureAdApplication1 = New-AzureRmADApplication -DisplayName $displayName1 -HomePage $cloudwiseAppServiceURL -IdentifierUris $identifierURI1 -Password $passwordADApp -ReplyUrls $replyURLs
+    $azureAdApplication1 = New-AzureRmADApplication -DisplayName $displayName1 -HomePage $cloudwiseAppServiceURL -IdentifierUris $cloudwiseAppServiceURL -Password $passwordADApp -ReplyUrls $replyURLs
 
+    Write-Host ("Step 2.1: Azure Active Directory apps creation successful. AppID is " + $azureAdApplication1.ApplicationId) -ForegroundColor Gray
 ### 3. Create a service principal for the AD Application and add a Reader role to the principal
 #############################################################################################
 
-$principal = New-AzureRmADServicePrincipal -ApplicationId $azureAdApplication1.ApplicationId
-Start-Sleep -s 30 # Wait till the ServicePrincipal is completely created. Usually takes 20+secs. Needed as Role assignment needs a fully deployed servicePrincipal
+    Write-Host ("Step 3: Attempting to create Service Principal") -ForegroundColor Gray
+    $principal = New-AzureRmADServicePrincipal -ApplicationId $azureAdApplication1.ApplicationId
+    Start-Sleep -s 30 # Wait till the ServicePrincipal is completely created. Usually takes 20+secs. Needed as Role assignment needs a fully deployed servicePrincipal
 
+    Write-Host ("Step 3.1: Service Principal creation successful - " + $principal.DisplayName) -ForegroundColor Gray
 
-    Select-AzureRmSubscription -SubscriptionName $subscriptionName
     $scopedSubs = ("/subscriptions/" + $sub.Subscription)
 
-New-AzureRmRoleAssignment -RoleDefinitionName Reader -ServicePrincipalName $azureAdApplication1.ApplicationId.Guid -Scope $scopedSubs
+    Write-Host ("Step 3.2: Attempting Reader Role assignment" ) -ForegroundColor Gray
 
+    New-AzureRmRoleAssignment -RoleDefinitionName Reader -ServicePrincipalName $azureAdApplication1.ApplicationId.Guid -Scope $scopedSubs
+
+    Write-Host ("Step 3.2: Reader Role assignment successful" ) -ForegroundColor Gray
 
 ### 4. Print out the required project settings parameters
 #############################################################################################
