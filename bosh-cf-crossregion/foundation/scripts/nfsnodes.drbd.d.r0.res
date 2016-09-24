@@ -18,22 +18,10 @@ resource r0 {
    address    10.10.200.4:7789;        
    meta-disk  internal;              
   }
-  on servenfsPrimaryNode02r2 {            
+  on nfsSecondaryNode01 {            
    device    /dev/drbd1;                 
    disk      /dev/sdc;                  
-   address   10.10.200.5:7789;         
-   meta-disk internal;               
-  }
-  on nfsSecondaryNode01 {                 
-   device     /dev/drbd1;                
-   disk       /dev/sdc;               
-   address    10.12.200.4:7789;        
-   meta-disk  internal;              
-  }
-  on nfsSecondaryNode02 {                 
-   device    /dev/drbd1;                 
-   disk      /dev/sdc;                  
-   address   10.12.200.5:7789;         
+   address   10.12.200.4:7789;         
    meta-disk internal;               
   }
 }
