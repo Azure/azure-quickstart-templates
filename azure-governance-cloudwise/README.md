@@ -94,7 +94,7 @@ In its current state, solution templates come with licenses built-in – there m
 
 ### PowerBI Dashboard (for IT Managers and Business Decision makers)
 Please download the link to the PowerBI dashboard
-[CloudWise-Azure_Governance_PowerBI_Dashboard.zip](images/CloudWise_Azure_Governance_PowerBI_Dashboard.zip)
+[HOL_CloudWise_PowerBI.zip](images/HOL_CloudWise_PowerBI.zip)
 
 <br/> &nbsp;&nbsp;&nbsp;&nbsp; ![](images/CloudWise_PowerBI_Dashboard.png)
 
