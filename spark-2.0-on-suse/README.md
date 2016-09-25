@@ -1,9 +1,11 @@
 
 
 
-# Provision an Apache Spark 2.0 cluster on Suse Linux Enterprise Server 12
+# Provision an Apache Spark 2.0 Cluster on Suse Linux Enterprise Server R12 SP1
 
 In Memory Cluster Computing to solve query optimization, slow Machine Learning and many other BI problems
+
+To master this template and Spark 2.0 on SLES you can leverage hands on workshop from [Value Amplify](http://www.valueamplify.com) 
 
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fspark-2.0-on-suse%2Fazuredeploy.json" target="_blank">
@@ -29,8 +31,9 @@ Details about installation are available on all the nodes under /tmp/ director
 
 ## Solution overview and deployed resources
 
-This template deploys a **spark-2.0-on-suse** infrastructure. The **spark-2.0-on-suse** is a Spark 2.0 environment based on Spark Standalone Cluster Manager; the templte setup 1 master node and N worker nodes installing and configuring spark.
-Details about installation are available on all the nodes under /tmp/ director
+This template deploys a **spark-2.0-on-suse** infrastructure. The **spark-2.0-on-suse** is a Spark 2.0 environment based on Spark Standalone Cluster Manager; the template setup 1 master node and N worker nodes installing and configuring spark.
+Spark Master is accessible using a dedicated public IP (resource **sparkMasterPublicIP**): from here you can connect via **spark-shell** or **spark-submit**
+Details about installation are available on all the nodes under /tmp/ directory.
 
 The following resources are deployed as part of the solution
 
