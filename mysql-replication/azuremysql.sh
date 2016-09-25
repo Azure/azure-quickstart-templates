@@ -193,8 +193,9 @@ install_mysql_ubuntu() {
     echo "installing mysql"
     apt-get update
     export DEBIAN_FRONTEND=noninteractive
-    wget -O mysql-5.6.deb https://dev.mysql.com/get/Downloads/MySQL-5.6/mysql-server_5.6.26-1ubuntu15.04_amd64.deb
-    dpkg -i mysql-5.6.deb
+	apt-get install -y mysql-server-5.6
+	chown -R mysql:mysql "${MOUNTPOINT}/mysql/mysql"
+	apt-get install -y mysql-server-5.6
     apt-get -y install xinetd
 }
 
