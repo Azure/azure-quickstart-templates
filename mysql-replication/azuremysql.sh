@@ -158,8 +158,10 @@ open_ports() {
 }
 
 disable_apparmor_ubuntu() {
+    /etc/init.d/apparmor stop
     /etc/init.d/apparmor teardown
     update-rc.d -f apparmor remove
+    apt-get remove apparmor apparmor-utils -y
 }
 
 disable_selinux_centos() {
