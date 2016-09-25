@@ -79,12 +79,10 @@ In its current state, solution templates come with licenses built-in – there m
 * Azure user account with <span style="color:red;"> **Service Admin Role** </span>. This is required for creating an AD applicaition as well as a RunAs Service Role.
 * Azure Marketplace Deployment Agreements - VM Images from Azure marketplace need a registered Azure credit card for deployments to be successful. We understand that some customers (especially EA and internal MS customers) may not have this configured leading to failed deployments.   
 * Operations Management Suite Account (Free Sign Up – No credit card required. Sign up for your free OMS account [here](https://www.microsoft.com/en-us/cloud-platform/operations-management-suite))
-<br/> &nbsp;&nbsp;&nbsp;&nbsp; ![](images/CreateOMSWorkspace.png)
 * Create an Automation account with RunAs Service principal. Unfortunately ARM templates don't allow for creating AD service principals as yet, so this step is currently a manual.
     * Refer the blog https://azure.microsoft.com/en-us/documentation/articles/automation-sec-configure-azure-runas-account/ for the steps.
     * Creation of ServicePrincipal has a propensity to fail randomly. A basic verification whether it was successfully created is <span style="color:red;"> **mandatory** </span>
-* Capture your OMS Workspace details 
-<br/> &nbsp;&nbsp;&nbsp;&nbsp; ![](images/CaptureWorkspaceInformation.png)
+* Capture the AutomationAccount name and the resourcegroup. You will need them as parameters when you 'Deploy to Azure'
  
 
 ## Reference Architecture Diagram
@@ -111,13 +109,18 @@ Please download the link to the PowerBI dashboard
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
 
 ## Post Deployment Steps
-* Currently, one has to manually start the scheduleIngestion Runbook. 
-** Please navigate to your automation account. Click on Runbooks
-** Click open the scheduleIngestion runbook and click start to run the runbook. This step will kickstart the data ingestion to the OMS workspace specified.
-<br/> &nbsp;&nbsp;&nbsp;&nbsp; ![](images/StartIngestionRunbook.png)
+Congratulations ! <br />
+You have now successfully deployed the application. You will have to do a few additional steps to have the application configured <br />
+
+* Create the AD application by running the ServicePrincipal.ps1. You will need to supply subscriptionName and the deployed URL of the CloudWise App Service. <br />
+    ***Please refer to parameter descriptions if you need more information on what needs to be provided as an input.***
+    ![](images/CreateADApp.png)
+* Currently, one has to manually start the scheduleIngestion Runbook. This is a dependency on ARM template as one cannot curently schedule a run of the runbook  
+    * Please navigate to your automation account. Click on Runbooks
+    * Click open the scheduleIngestion runbook and click start to run the runbook. This step will kickstart the data ingestion to the OMS workspace specified.
+    <br/> &nbsp;&nbsp;&nbsp;&nbsp; ![](images/StartIngestionRunbook.png)
 
 
-***Please refer to parameter descriptions if you need more information on what needs to be provided as an input.***
 
 
 ## Usage

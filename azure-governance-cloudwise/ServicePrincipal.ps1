@@ -15,9 +15,11 @@ Set-Location ".\"
 
 
 
-
-$subscriptionName =     ""
+# --MANDATORY PARAMETERS. WILL BE VERIFIED LATER IN THE SCRIPT AND WILL FAIL GRACIOUSLY IF NOT SUPPLIED
+$subscriptionName =     ""          # name of the Azure subscription
 $cloudwiseAppServiceURL=""          # this is the Unique URL of the Cloudwise App Service deployed by the ARM script
+# --END MANDATORY PARAMETERS
+
 $suffix =               $subscriptionName     #-- Name of the company/deployment. This is used to create a unique website name in your organization
 $tenantID=              ""
 
