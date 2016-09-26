@@ -12,11 +12,7 @@ DSHGROUP=nfsall
 # Change these IP addresses as per your networking configuration
 # We start with a 2-node setup first since more nodes need DRBD stacking
 nfsIP[0]=10.10.200.4
-#nfsIP[1]=10.10.200.5
 nfsIP[2]=10.12.200.4
-#nfsIP[3]=10.12.200.5
-
-FIRST=${nfsIP[0]}
 
 if [ ! $NFSROOTUSER ]
 then
@@ -53,43 +49,31 @@ done
 #
 for n in "${nfsIP[@]}"
 do :
-  scp nfsnodes-prep-datadrives.sh $NFSROOTUSER@$n:~/prep-datadrive.sh
+  scp nfsnodes-drbd-setup.sh $NFSROOTUSER@$n:~/nfsnodes-drbd-setup.sh
+  scp nfsnodes-prep-datadrives.sh $NFSROOTUSER@$n:~/nfsnodes-prep-datadrive.sh
   scp nfsnodes.drbd.d.r0.res $NFSROOTUSER@$n:~/nfsnodes.drbd.d.r0.res
 done
-# Now make all shell-scripts executable
-dsh -M -g $DSHGROUP -c -- "chmod +x ~/prep-datadrive.sh"
 
 #
-# Install all needed pre-requisites
+# Install basics and make scripts executable
 #
-dsh -M -g $DSHGROUP -c -- "sudo apt-get -y install nfs-kernel-server"
-dsh -M -g $DSHGROUP -c -- "sudo apt-get -y install corosync pacemaker drbd8-utils"
+dsh -M -g $DSHGROUP -c -- "chmod +x ~/*.sh"
+dsh -M -g $DSHGROUP -c -- "sudo apt-get -y install nfs-kernel-server corosync pacemaker drbd8-utils"
 
 #
-# Configure the DRBD setup for a primary/master node across the regions
+# Configure the DRBD setup on the nodes
 #
-dsh -M -g $DSHGROUP -c -- "sudo cp ~/nfsnodes.drbd.d.r0.res /etc/drbd.d/r0.res"
-dsh -M -g $DSHGROUP -c -- "sudo drbdadm -c /etc/drbd.conf role r0"
-dsh -M -g $DSHGROUP -c -- "sudo drbdadm create-md r0"
-dsh -M -g $DSHGROUP -c -- "sudo drbdadm attach r0"
-dsh -M -g $DSHGROUP -c -- "sudo drbdadm up r0"
 
-# Now on Server 1 make sure to promote it to become the primary
-ssh $NFSROOTUSER@$FIRST "sudo drbdadm primary --force r0"
-ssh $NFSROOTUSER@$FIRST "sudo drbdadm connect all"
+# Basic DRBD Setup
+ssh $NFSROOTUSER@${nfsIP[0]} "sudo ~/nfsnodes-drbd-setup.sh primary"
+ssh $NFSROOTUSER@${nfsIP[1]} "sudo ~/nfsnodes-drbd-setup.sh secondary"
 
 # Mount the DRDB file system used for the NFS replication
-for n in "${nfsIP[@]}"
-do :
-  if [ $n = $FIRST ]
-  then
-    ssh $NFSROOTUSER@$n "sudo ~/prep-datadrive.sh primary"
-    # Wait for the first synchronization to complete
-    sleep 30
-  else
-    ssh $NFSROOTUSER@$n "sudo ~/prep-datadrive.sh"  
-  fi
-done
+ssh $NFSROOTUSER@${nfsIP[0]} "sudo ~/nfsnodes-prep-datadrive.sh primary"
+ssh $NFSROOTUSER@${nfsIP[1]} "sudo ~/nfsnodes-prep-datadrive.sh secondary"
+
+# Now on Server 1 start the inital sync process
+ssh $NFSROOTUSER@${nfsIP[0]} "drbdadm -- --overwrite-data-of-peer primary r0"
 
 #
 # Final NFS Server Configurations

@@ -24,6 +24,7 @@ wget https://raw.githubusercontent.com/mszcool/azure-quickstart-templates/master
 # Get all NFS related scripts from GitHub
 wget https://raw.githubusercontent.com/mszcool/azure-quickstart-templates/master/bosh-cf-crossregion/foundation/scripts/jumpbox-install-nfs-cluster.sh
 wget https://raw.githubusercontent.com/mszcool/azure-quickstart-templates/master/bosh-cf-crossregion/foundation/scripts/nfsnodes-prep-datadrives.sh
+wget https://raw.githubusercontent.com/mszcool/azure-quickstart-templates/master/bosh-cf-crossregion/foundation/scripts/nfsnodes-drbd-setup.sh
 wget https://raw.githubusercontent.com/mszcool/azure-quickstart-templates/master/bosh-cf-crossregion/foundation/scripts/nfsnodes.drbd.d.r0.res
 
 # Start a Bash with ssh-agent and touch the private key to cache credentials
