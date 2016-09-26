@@ -12,7 +12,7 @@ DSHGROUP=nfsall
 # Change these IP addresses as per your networking configuration
 # We start with a 2-node setup first since more nodes need DRBD stacking
 nfsIP[0]=10.10.200.4
-nfsIP[2]=10.12.200.4
+nfsIP[1]=10.12.200.4
 
 if [ ! $NFSROOTUSER ]
 then
@@ -25,10 +25,14 @@ fi
 #
 # Prepare DSH for the NFS servers
 #
+echo ""
+echo "###################################"
+echo "########## Preparing dsh ##########"
+echo "###################################"
 isDSHAvailable=$(type -P dsh)
 if [ ! $isDSHAvailable ]
 then
-    sudo apt-get -y install dsh 
+    sudo apt-get -qq -y install dsh 
 fi
 
 mkdir -p ~/.dsh/group
@@ -47,6 +51,10 @@ done
 #
 # Get all needed shell scripts to the target nodes and install/configure the basics
 #
+echo ""
+echo "###############################################"
+echo "########## Preparing nodes for setup ##########"
+echo "###############################################"
 for n in "${nfsIP[@]}"
 do :
   scp nfsnodes-drbd-setup.sh $NFSROOTUSER@$n:~/nfsnodes-drbd-setup.sh
@@ -60,6 +68,10 @@ dsh -M -g $DSHGROUP -c -- "sudo apt-get -qq -y install nfs-kernel-server corosyn
 #
 # Configure the DRBD setup on the nodes
 #
+echo ""
+echo "#########################################"
+echo "########## drbd setup on nodes ##########"
+echo "#########################################"
 
 # Basic DRBD Setup
 ssh $NFSROOTUSER@${nfsIP[0]} "sudo ~/nfsnodes-drbd-setup.sh primary"
@@ -70,10 +82,14 @@ ssh $NFSROOTUSER@${nfsIP[0]} "sudo ~/nfsnodes-prep-datadrive.sh primary"
 ssh $NFSROOTUSER@${nfsIP[1]} "sudo ~/nfsnodes-prep-datadrive.sh secondary"
 
 # Now on Server 1 start the inital sync process
-ssh $NFSROOTUSER@${nfsIP[0]} "drbdadm -- --overwrite-data-of-peer primary r0"
+ssh $NFSROOTUSER@${nfsIP[0]} "sudo drbdadm -- --overwrite-data-of-peer primary r0"
 
 #
 # Final NFS Server Configurations
 #
+echo ""
+echo "########################################"
+echo "########## nfs setup on nodes ##########"
+echo "########################################"
 dsh -M -g $DSHGROUP -c -- "echo '/datadrive/exports/ 10.0.0.0/8(rw,no_root_squash,no_all_squash,sync)' | sudo tee -a /etc/exports"
-dsh -M -g $DSHGROUP -c -- "service nfs-kernel-server restart"
+dsh -M -g $DSHGROUP -c -- "sudo service nfs-kernel-server restart"

@@ -27,13 +27,18 @@ wget https://raw.githubusercontent.com/mszcool/azure-quickstart-templates/master
 wget https://raw.githubusercontent.com/mszcool/azure-quickstart-templates/master/bosh-cf-crossregion/foundation/scripts/nfsnodes-drbd-setup.sh
 wget https://raw.githubusercontent.com/mszcool/azure-quickstart-templates/master/bosh-cf-crossregion/foundation/scripts/nfsnodes.drbd.d.r0.res
 
+# Enable all scripts for execution
+chmod +x *.sh
+
 # Start a Bash with ssh-agent and touch the private key to cache credentials
-ssh-agent bash
-ssh-add ~/.ssh/id_rsa
+# ssh-agent bash
+# ssh-add ~/.ssh/id_rsa
 
 # Now start the main script
 echo "#################"
 echo "## Next steps: ##"
 echo "#################"
-echo "- Run this script to setup the Galera cluster: ./jumpbox-install-mariadb-cluster.sh"
-echo "- Run this script to setup the NFS cluster: ./jumpbox-install-nfs-cluster.sh"
+echo -e "- Enable ssh-agent for private key caching:\tssh-agent bash"
+echo -e "- Cache SSH Private Key Passphrase:\t\tssh-add ~/.ssh/id_rsa"
+echo -e "- Install Galera Cluster:\t\t\t./jumpbox-install-mariadb-cluster.sh"
+echo -e "- Install Cross-Region NFS cluster:\t\t./jumpbox-install-nfs-cluster.sh"
