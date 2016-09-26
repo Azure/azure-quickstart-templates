@@ -69,29 +69,6 @@
         "description": "full Key Vault Id to the secret that stores the CA cert"
       }
     },
-    "location": {
-      "type": "string",
-      "metadata": {
-        "description": "location of the deployment"
-        },
-        "allowedValues" : [
-          "eastus",
-          "eastus2",
-          "westus",
-          "northcentralus",
-          "southcentralus",
-          "northeurope",
-          "westeurope",
-          "westcentralus",
-          "westus2"
-        ]
-      },
-    "scriptUrlBase": {
-      "type": "string",
-      "metadata": {
-        "description": "URL to the blob container where the configuration script is stored"
-      }
-    },
     "scriptFileName": {
       "type": "string",
       "metadata": {
@@ -110,17 +87,20 @@
         "description": "fingerprint of the CA cert"
       }
     },
-    "scriptStorageResourceGroup": {
+
+    "_artifactsLocation": {
       "type": "string",
       "metadata": {
-        "description": "resource group for the script's storage account"
-      }
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "https://raw.githubusercontent.com/xtophs/azure-quickstart-templates/master/201-vmss-ubuntu-web-ssl/configuressl.sh"
     },
-    "scriptStorageAccount": {
-      "type": "string",
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
       "metadata": {
-        "description": "storage account where the scrpit is stored"
-      }
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
     }
   },
   "variables": {
@@ -148,10 +128,9 @@
     "bepoolID": "[concat(variables('lbID'),'/backendAddressPools/', variables('bepoolName'))]",
     "feIpConfigName": "[concat(variables('fepoolName'), 'IpConfig')]",
     "feIpConfigId": "[concat(variables('lbID'),'/frontendIPConfigurations/', variables('feIpConfigName'))]",
-    "scriptStorageAccountId": "[resourceId( parameters('scriptStorageResourceGroup'), 'Microsoft.Storage/storageAccounts', parameters('scriptStorageAccount'))]",
     "pipName": "[concat(variables('namingInfix'), 'pip')]",
     "nicName": "[concat(variables('namingInfix'), 'nic')]",
-    "natPoolName" : "[concat(variables('lbName'), 'natpool')]",
+    "natPoolName": "[concat(variables('lbName'), 'natpool')]",
     "ipConfigName": "[concat(variables('namingInfix'), 'ipconfig')]",
     "httpProbeName": "httpProbe",
     "httpsProbeName": "httpsProbe",
@@ -161,17 +140,14 @@
       "sku": "[parameters('ubuntuOSVersion')]",
       "version": "latest"
     },
-    "imageReference": "[variables('osType')]",
-    "computeApiVersion": "2016-03-30",
-    "networkApiVersion": "2016-03-30",
-    "storageApiVersion": "2015-06-15"
+    "imageReference": "[variables('osType')]"
   },
   "resources": [
     {
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[resourceGroup().location]",
-      "apiVersion": "[variables('networkApiVersion')]",
+      "apiVersion": "2016-03-30",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -192,7 +168,7 @@
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[concat(variables('vmssStringArray')[copyIndex()], variables('newStorageAccountSuffix'))]",
       "location": "[resourceGroup().location]",
-      "apiVersion": "[variables('storageApiVersion')]",
+      "apiVersion": "2015-06-15",
       "copy": {
         "name": "storageLoop",
         "count": "[variables('saCount')]"
@@ -205,7 +181,7 @@
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('pipName')]",
       "location": "[resourceGroup().location]",
-      "apiVersion": "[variables('networkApiVersion')]",
+      "apiVersion": "2016-03-30",
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
@@ -216,8 +192,8 @@
     {
       "type": "Microsoft.Network/loadBalancers",
       "name": "[variables('lbName')]",
-      "location": "[parameters('location')]",
-      "apiVersion": "[variables('networkApiVersion')]",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', variables('pipName'))]"
       ],
@@ -240,7 +216,7 @@
             "name": "[variables('bepoolName')]"
           }
         ],
-          "inboundNatPools": [
+        "inboundNatPools": [
           {
             "name": "[variables('natPoolName')]",
             "properties": {
@@ -322,7 +298,7 @@
       "type": "Microsoft.Compute/virtualMachineScaleSets",
       "name": "[variables('namingInfix')]",
       "location": "[resourceGroup().location]",
-      "apiVersion": "[variables('computeApiVersion')]",
+      "apiVersion": "2016-03-30",
       "dependsOn": [
         "storageLoop",
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
@@ -384,16 +360,16 @@
                       "name": "[variables('ipConfigName')]",
                       "properties": {
                         "subnet": {
-                          "id": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'), '/subnets/', variables('subnetName'))]"
+                          "id": "[resourceId( 'Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"                           
                         },
                         "loadBalancerBackendAddressPools": [
                           {
-                            "id": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('lbName'), '/backendAddressPools/', variables('bePoolName'))]"
+                            "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', variables('lbName'), variables('bePoolName'))]"
                           }
                         ],
                         "loadBalancerInboundNatPools": [
                           {
-                            "id": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('lbName'), '/inboundNatPools/', variables('natPoolName'))]"
+                            "id": "[resourceId( 'Microsoft.Network/loadBalancers/inboundNatPools', variables('lbName'), variables('natPoolName'))]"
                           }
                         ]
                       }
@@ -415,14 +391,11 @@
                   "autoUpgradeMinorVersion": false,
                   "settings": {
                     "fileUris": [
-                      "[concat(parameters('scriptUrlBase'), '/', parameters('scriptFileName'))]"
-                    ],
-                    "commandToExecute": "[concat('bash ', parameters('scriptFileName'), ' ', parameters('certThumbPrint'), ' ', parameters('caCertThumbPrint'))]"
+                      "[concat(parameters('_artifactsLocation'), '/', parameters('scriptFileName'), parameters('_artifactsLocationSasToken'))]"
+                    ]
                   },
                   "protectedSettings": {
-                    "storageAccountName": "[parameters('scriptStorageAccount')]",
-                    "storageAccountKey": "[listkeys(variables('scriptStorageAccountId'), variables('storageApiVersion')).key1]",
-                    "storageAccountEndPoint": "https://core.windows.net"
+                    "commandToExecute": "[concat('bash ', parameters('scriptFileName'), ' ', parameters('certThumbPrint'), ' ', parameters('caCertThumbPrint'))]"
                   }
                 }
               }
@@ -431,5 +404,11 @@
         }
       }
     }
-  ]
+  ],
+  "outputs": {
+    "fqdn" : {
+      "type": "string",
+      "value": "[reference( variables('pipName') ).dnsSettings.fqdn]"
+    }
+  }
 }

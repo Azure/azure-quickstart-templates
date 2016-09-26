@@ -1,5 +1,12 @@
 # Create an SSL enabled Web server farm with VM Scale Sets
 
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F100-STARTER-TEMPLATE-with-VALIDATION%2Fazuredeploy.json" target="_blank">
+<img src="http://azuredeploy.net/deploybutton.png"/>
+</a>
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F100-STARTER-TEMPLATE-with-VALIDATION%2Fazuredeploy.json" target="_blank">
+<img src="http://armviz.io/visualizebutton.png"/>
+</a>
+
 This template illustrates secure deployment of SSL certificates to a VM Scale Set
 running apache web servers. The SSL certificates are pulled securely from [Azure 
 Key Vault](https://azure.microsoft.com/en-us/services/key-vault/) and pushed to the [VM using secure ARM deployment](https://azure.microsoft.com/en-us/documentation/articles/resource-manager-keyvault-parameter/)
