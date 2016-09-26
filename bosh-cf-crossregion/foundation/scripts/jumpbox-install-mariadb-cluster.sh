@@ -49,7 +49,7 @@ then
  exit -1
 fi
 
-if [ ! $MYSQLPASSWORD ] || [ ! $DEBIANSYSMAINTPW ] 
+if [ ! $MYSQLPASSWORD ] 
 then
  echo "######################################################################################"
  echo "## MYSQL ROOT PASSWORD OR DEBIAN SYSMAINT PASSWORD IS EMPTY. PLEASE ADD A PASSWORD! ##"

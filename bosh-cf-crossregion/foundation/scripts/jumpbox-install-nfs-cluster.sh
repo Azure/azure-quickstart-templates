@@ -72,20 +72,24 @@ echo ""
 echo "#########################################"
 echo "########## drbd setup on nodes ##########"
 echo "#########################################"
-
-# Basic DRBD Setup
 ssh $NFSROOTUSER@${nfsIP[0]} "sudo ~/nfsnodes-drbd-setup.sh primary"
 ssh $NFSROOTUSER@${nfsIP[1]} "sudo ~/nfsnodes-drbd-setup.sh secondary"
 
-# Mount the DRDB file system used for the NFS replication
-ssh $NFSROOTUSER@${nfsIP[0]} "sudo ~/nfsnodes-prep-datadrive.sh primary"
-ssh $NFSROOTUSER@${nfsIP[1]} "sudo ~/nfsnodes-prep-datadrive.sh secondary"
-
-# Now on Server 1 start the inital sync process
+echo ""
+echo "#######################################"
+echo "########## drbd initial sync ##########"
+echo "#######################################"
 ssh $NFSROOTUSER@${nfsIP[0]} "sudo drbdadm -- --overwrite-data-of-peer primary r0"
 echo "Waiting for sync to complete..."
 echo "Execute 'sudo drbdsetup wait-sync /dev/drbd1' in another terminal to watch progress..."
 ssh $NFSROOTUSER@${nfsIP[0]} "sudo drbdsetup wait-sync /dev/drbd1"
+
+echo ""
+echo "#####################################################"
+echo "########## drbd file system setup on nodes ##########"
+echo "#####################################################"
+ssh $NFSROOTUSER@${nfsIP[0]} "sudo ~/nfsnodes-prep-datadrive.sh primary"
+ssh $NFSROOTUSER@${nfsIP[1]} "sudo ~/nfsnodes-prep-datadrive.sh secondary"
 
 #
 # Final NFS Server Configurations

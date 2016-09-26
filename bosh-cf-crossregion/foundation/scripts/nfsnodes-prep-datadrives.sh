@@ -11,12 +11,14 @@ fi
 # Next make sure the NFS metadata is included in the DRBD sync
 if [ "$1" = "primary" ]
 then
+  # First, create the file system on the primary
+  mkfs -t ext3 /dev/drbd1
   # On the primary server, copy the original NFS config data
   mount -t ext3 /dev/drbd1 /datadrive
   mv /var/lib/nfs /datadrive/
   ln -s /datadrive/nfs/ /var/lib/nfs
   mkdir /datadrive/exports
-  unmount /datadrive
+  #unmount /datadrive
 else
   # On all secondary servers, link the NFS config to the synced NFS config
   rm -fr /var/lib/nfs/
