@@ -1,8 +1,14 @@
 #
 # Create a mount-directory for the NFS share
 #
-mkdir /datadrive
 
+# The datadrive mount point needs to exist on all nodes
+if [ ! -d /datadrive ]
+then
+    mkdir /datadrive
+fi 
+
+# Next make sure the NFS metadata is included in the DRBD sync
 if [ "$1" = "primary" ]
 then
 
