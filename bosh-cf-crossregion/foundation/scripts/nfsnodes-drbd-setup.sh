@@ -13,6 +13,7 @@ then
   drbdadm up r0
   drbdadm primary --force r0
 else
+  drbdadm create-md r0
   drbdadm up r0
   #drbdadm secondary r0
 fi
