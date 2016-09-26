@@ -4,7 +4,6 @@
 
 # Configuration that is equal on all nodes
 cp ~/nfsnodes.drbd.d.r0.res /etc/drbd.d/r0.res
-drbdadm -c /etc/drbd.conf role r0
 drbdadm create-md r0
 drbdadm attach r0
 drbdadm up r0
@@ -19,3 +18,4 @@ fi
 
 # Again configuration needed on all nodes
 drbdadm connect r0
+drbdadm -c /etc/drbd.conf role r0

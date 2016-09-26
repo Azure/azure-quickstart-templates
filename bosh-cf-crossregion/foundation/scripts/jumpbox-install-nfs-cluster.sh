@@ -45,7 +45,7 @@ for ip in "${nfsIP[@]}"
 done
 
 #
-# Get all needed shell scripts to the target nodes
+# Get all needed shell scripts to the target nodes and install/configure the basics
 #
 for n in "${nfsIP[@]}"
 do :
@@ -54,11 +54,8 @@ do :
   scp nfsnodes.drbd.d.r0.res $NFSROOTUSER@$n:~/nfsnodes.drbd.d.r0.res
 done
 
-#
-# Install basics and make scripts executable
-#
 dsh -M -g $DSHGROUP -c -- "chmod +x ~/*.sh"
-dsh -M -g $DSHGROUP -c -- "sudo apt-get -y install nfs-kernel-server corosync pacemaker drbd8-utils"
+dsh -M -g $DSHGROUP -c -- "sudo apt-get -qq -y install nfs-kernel-server corosync pacemaker drbd8-utils"
 
 #
 # Configure the DRBD setup on the nodes
