@@ -2,7 +2,7 @@
 
 usage() 
 { 
-    echo "Usage: $0 -p <resourceGroupName> -q <deploymentName> -l <resourceGroupLocation> -s <scriptstorageaccount> " 1>&2; exit 1; 
+    echo "Usage: $0 -g <resourceGroupName> -l <resourceGroupLocation> -s <scriptstorageaccount> " 1>&2; exit 1; 
 }
 
 stagecustomscript()
@@ -29,17 +29,10 @@ stagecustomscript()
 }
 
 # Initialize parameters specified from command line
-while getopts ":p:q:l:s:" o; do
+while getopts ":g:l:s:" o; do
 	case "${o}" in
-		t)
-			echo "in case t"
-			subscriptionId=${OPTARG}
-			;;
-		p)
+		g)
 			resourceGroupName=${OPTARG}
-			;;
-		q)
-			deploymentName=${OPTARG}
 			;;
 		l)
 			resourceGroupLocation=${OPTARG}
@@ -54,11 +47,6 @@ shift $((OPTIND-1))
 if [ -z "$resourceGroupName" ]; then
 	echo "ResourceGroupName:"
 	read resourceGroupName
-fi
-
-if [ -z "$deploymentName" ]; then
-	echo "DeploymentName:"
-	read deploymentName
 fi
 
 if [ -z "$resourceGroupLocation" ]; then
@@ -79,7 +67,7 @@ templateFilePath="azuredeploy.json"
 #parameter file path
 parametersFilePath="azuredeploy.parameters.json"
 
-if  [ -z "$resourceGroupName" ] || [ -z "$deploymentName" ] || [ -z "$scriptstorageaccount" ]; then
+if  [ -z "$resourceGroupName" ] || [ -z "$scriptstorageaccount" ]; then
 	echo "Either one of subscriptionId, resourceGroupName, deploymentName, scriptstorageaccount is empty"
 	usage
 fi
@@ -102,14 +90,15 @@ else
 	azure group create --name $resourceGroupName --location $resourceGroupLocation
 fi
 
-
-
 stagecustomscript
+
+cp ./azuredeploy.parameters.json.template ./azuredeploy.parameters.json
 
 sed -i 's/REPLACE_SCRIPTSTORAGERG/'$resourceGroupName'/g' ./azuredeploy.parameters.json
 sed -i 's/REPLACE_SCRIPTSTORAGE/'$scriptstorageaccount'/g' ./azuredeploy.parameters.json
-sed -i 's/REPLACE_LOCATION/'$resourceGroupLocation'/g' ./azuredeploy.parameters.json
+
+azure config mode arm
 
 #Start deployment
 echo "Starting deployment..."
-azure group deployment create --name $deploymentName --resource-group $resourceGroupName --template-file $templateFilePath --parameters-file $parametersFilePath
+azure group deployment create --resource-group $resourceGroupName --template-file $templateFilePath --parameters-file $parametersFilePath

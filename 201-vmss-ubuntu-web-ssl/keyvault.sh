@@ -112,6 +112,7 @@ certfile=$5
 keyfile=$6
 cacertfile=$7
 
+# TODO Change this to something else
 pwd="blabla"
 
 certpfxfile=${certfile%.*crt}.pfx
