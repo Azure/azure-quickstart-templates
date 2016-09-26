@@ -10,7 +10,10 @@ SOURCE_URI="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/m
 wget http://localhost:8080/jnlpJars/jenkins-cli.jar
 wget -O /var/lib/jenkins/config.xml https://arroycsafestorage.blob.core.windows.net/testsafe/config.xml
  
-echo "hpsr=new hudson.security.HudsonPrivateSecurityRealm(false); hpsr.createAccount('$1', '$2')" | java -jar jenkins-cli.jar -s http://localhost:8080 groovy =
+ echo $1
+ echo $2
+ 
+echo "hpsr=new hudson.security.HudsonPrivateSecurityRealm(false); hpsr.createAccount('$1', '$2')" | sudo java -jar /var/cache/jenkins/war/WEB-INF/jenkins-cli.jar -s http://localhost:8080 groovy =
 
 if [ ! -d "$SETUP_SCRIPTS_LOCATION" ]; then
   sudo mkdir $SETUP_SCRIPTS_LOCATION
