@@ -7,17 +7,6 @@
 <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-To deploy this template using the scripts from the root of this repo:
-
-```PowerShell
-.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactsStagingDirectory 'bigchaindb-on-ubuntu'
-```
-```bash
-azure-group-deploy.sh -a bigchaindb-on-ubuntu -l eastus -u
-```
-
-<hr>
-
 This template provisions a virtual machine running Ubuntu 14.04.4 LTS, plus various other Azure resources. (See the `azuredeploy.json` file for details.) It then runs the script `scripts/init.sh`, which:
 
 1. Installs RethinkDB and runs it (with a default RethinkDB configuration file).
