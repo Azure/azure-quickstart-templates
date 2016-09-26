@@ -83,6 +83,9 @@ ssh $NFSROOTUSER@${nfsIP[1]} "sudo ~/nfsnodes-prep-datadrive.sh secondary"
 
 # Now on Server 1 start the inital sync process
 ssh $NFSROOTUSER@${nfsIP[0]} "sudo drbdadm -- --overwrite-data-of-peer primary r0"
+echo "Waiting for sync to complete..."
+echo "Execute 'sudo drbdsetup wait-sync /dev/drbd1' in another terminal to watch progress..."
+ssh $NFSROOTUSER@${nfsIP[0]} "sudo drbdsetup wait-sync /dev/drbd1"
 
 #
 # Final NFS Server Configurations
