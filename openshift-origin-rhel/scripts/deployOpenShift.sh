@@ -68,7 +68,7 @@ do
   echo "$NODEPREFIX-$c.$DOMAIN" >> /etc/ansible/hosts
 done
 
-runuser -l $SUDOUSER -c "git clone https://github.com/openshift/openshift-ansible /home/$SUDOUSER/openshift-ansible"
+runuser -l $SUDOUSER -c "git clone -b release-1.3 https://github.com/openshift/openshift-ansible /home/$SUDOUSER/openshift-ansible"
 
 echo "Executing Ansible playbook"
 
