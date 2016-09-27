@@ -12,6 +12,7 @@ This template allows you to run a VM-to-VM bandwidth test using PsPing utility.
 Please note that by deploying this template you are automatically accepting [Sysinternals Software License Terms](https://technet.microsoft.com/en-us/sysinternals/bb469936).
 
 The VM sizes selected should be available in chosen regions. Please check availability [here](https://azure.microsoft.com/en-us/regions/services/).
+See VM series/sizes [description](https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-windows-sizes/).
 
 Upon template deployment you will have the bandwidth between the VMs automatically measured. You can see the measurements:
 
