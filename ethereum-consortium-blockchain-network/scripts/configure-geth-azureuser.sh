@@ -14,7 +14,7 @@ if [ $# -lt 7 ]; then echo "Incomplete parameters supplied. Exiting"; exit 1; fi
 
 AZUREUSER=$1;
 PASSWD=$2;
-PRIV_KEY=$3;
+PASSPHRASE=$3;
 ARTIFACTS_URL_PREFIX=$4;
 NETWORK_ID=$5;
 MAX_PEERS=$6;
@@ -69,6 +69,7 @@ sudo apt-get install -y ethereum;
 PASSWD_FILE="$GETH_HOME/passwd.info";
 printf %s $PASSWD > $PASSWD_FILE;
 
+PRIV_KEY=`echo "$PASSPHRASE" | sha256sum | sed s/-// | sed "s/ //"`
 printf "%s" $PRIV_KEY > $HOMEDIR/priv_genesis.key;
 PREFUND_ADDRESS=`geth --datadir $GETH_HOME --password $PASSWD_FILE account import $HOMEDIR/priv_genesis.key | grep -oP '\{\K[^}]+'`;
 rm $HOMEDIR/priv_genesis.key;
@@ -79,7 +80,6 @@ wget -N ${ARTIFACTS_URL_PREFIX}/genesis-template.json;
 # Place our calculated difficulty into genesis file
 sed s/#DIFFICULTY/$DIFFICULTY/ $HOMEDIR/genesis-template.json > $HOMEDIR/genesis-intermediate.json;
 sed s/#PREFUND_ADDRESS/$PREFUND_ADDRESS/ $HOMEDIR/genesis-intermediate.json > $HOMEDIR/genesis.json;
-wget -N https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/go-ethereum-on-ubuntu/GuestBook.sol;
 
 ####################
 # Initialize geth for private network
