@@ -17,8 +17,8 @@ echo $2 > /opt/2.txt
 echo "hpsr=new hudson.security.HudsonPrivateSecurityRealm(false); hpsr.createAccount('$1', '$2')" | sudo java -jar /opt/jenkins-cli.jar -s http://localhost:8080 groovy =
 
 #sudo /var/lib/jenkins/config.xml /var/lib/jenkins/config.xml.back
-sudo mv /var/lib/jenkins/config.xml /var/lib/jenkins/config.xml.back
-sudo cp /opt/config.xml /var/lib/jenkins/config.xml
+#sudo mv /var/lib/jenkins/config.xml /var/lib/jenkins/config.xml.back
+#sudo cp /opt/config.xml /var/lib/jenkins/config.xml
 
 
 if [ ! -d "$SETUP_SCRIPTS_LOCATION" ]; then
