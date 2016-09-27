@@ -25,4 +25,4 @@ cd $AppPath
 $bw = .\psping.exe -b -q -accepteula -l $PacketSize -n $TestNumber $TestIPPort | Select-String "Minimum = (.*)" | % { $_.Matches.Value }
 $latency = .\psping.exe -q -accepteula -l $PacketSize -n $TestNumber $TestIPPort | Select-String "Minimum = (.*)" | % { $_.Matches.Value }
 
-"Bandwidth: $bw, Latency: $latency"
+"Bandwidth: $bw. Latency: $latency"
