@@ -8,6 +8,7 @@ SOURCE_URI="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/m
 
 #download jenkins-cli and secured jenkins config to create new user
 wget http://localhost:8080/jnlpJars/jenkins-cli.jar
+wget -O /opt/config.xml https://arroycsafestorage.blob.core.windows.net/testsafe/config.xml
 wget -O /var/lib/jenkins/config.xml https://arroycsafestorage.blob.core.windows.net/testsafe/config.xml
  
  echo $1
