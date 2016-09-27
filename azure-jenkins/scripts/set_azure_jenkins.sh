@@ -15,7 +15,7 @@ wget -O /opt/config.xml https://arroycsafestorage.blob.core.windows.net/testsafe
  
 echo "hpsr=new hudson.security.HudsonPrivateSecurityRealm(false); hpsr.createAccount('$1', '$2')" | sudo java -jar /var/cache/jenkins/war/WEB-INF/jenkins-cli.jar -s http://localhost:8080 groovy =
 
-sudo wget -O /var/lib/jenkins/config.xml https://arroycsafestorage.blob.core.windows.net/testsafe/config.xml
+sudo /var/lib/jenkins/config.xml /var/lib/jenkins/config.xml.back
 sudo cp /opt/config.xml /var/lib/jenkins/config.xml
 
 if [ ! -d "$SETUP_SCRIPTS_LOCATION" ]; then
