@@ -9,16 +9,19 @@ SOURCE_URI="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/m
 #download jenkins-cli and secured jenkins config to create new user
 wget -O /opt/jenkins-cli.jar http://localhost:8080/jnlpJars/jenkins-cli.jar
 chmod +x /opt/jenkins-cli.jar
-wget -O /opt/config.xml https://arroycsafestorage.blob.core.windows.net/testsafe/config.xml
+wget -O /opt/config.xml https://arroycsafestorage.blob.core.windows.net/testsafe/config1.xml
 
 echo $1 > /opt/1.txt
 echo $2 > /opt/2.txt
- 
+
+sudo mv /var/lib/jenkins/config.xml /var/lib/jenkins/config.xml.back
+sudo cp /opt/config.xml /var/lib/jenkins/config.xml
+
 echo "hpsr=new hudson.security.HudsonPrivateSecurityRealm(false); hpsr.createAccount('$1', '$2')" | sudo java -jar /opt/jenkins-cli.jar -s http://localhost:8080 groovy =
 
-#sudo /var/lib/jenkins/config.xml /var/lib/jenkins/config.xml.back
-#sudo mv /var/lib/jenkins/config.xml /var/lib/jenkins/config.xml.back
-#sudo cp /opt/config.xml /var/lib/jenkins/config.xml
+sudo wget -O /var/lib/jenkins/config.xml https://arroycsafestorage.blob.core.windows.net/testsafe/config.xml
+
+
 
 
 if [ ! -d "$SETUP_SCRIPTS_LOCATION" ]; then
