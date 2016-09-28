@@ -9,18 +9,12 @@ SOURCE_URI="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/m
 #download jenkins-cli and secured jenkins config to create new user
 wget -O /opt/jenkins-cli.jar http://localhost:8080/jnlpJars/jenkins-cli.jar
 chmod +x /opt/jenkins-cli.jar
-#wget -O /opt/config.xml https://arroycsafestorage.blob.core.windows.net/testsafe/config1.xml
 
-echo $1 > /opt/1.txt
-echo $2 > /opt/2.txt
-
-#sudo mv /var/lib/jenkins/config.xml /var/lib/jenkins/config.xml.back
-#sudo cp /opt/config.xml /var/lib/jenkins/config.xml
-
+#create adminuser and password
 echo "hpsr=new hudson.security.HudsonPrivateSecurityRealm(false); hpsr.createAccount('$1', '$2')" | sudo java -jar /opt/jenkins-cli.jar -s http://localhost:8080 groovy =
-
-#sudo wget -O /var/lib/jenkins/config.xml https://arroycsafestorage.blob.core.windows.net/testsafe/config.xml
-
+#enable secure jenkins secure config
+sudo wget -O /var/lib/jenkins/config.xml https://arroycsafestorage.blob.core.windows.net/testsafe/config.xml
+#restart jenkins
 sudo service jenkins restart
 
 if [ ! -d "$SETUP_SCRIPTS_LOCATION" ]; then
@@ -36,11 +30,11 @@ sudo wget -O $SETUP_SCRIPTS_LOCATION$CLEAN_STORAGE_SCRIPT $SOURCE_URI$CLEAN_STOR
 sudo chmod +x $SETUP_SCRIPTS_LOCATION$CLEAN_STORAGE_SCRIPT
 
 #azure-cli
-sudo npm install -y -g azure-cli
+#sudo npm install -y -g azure-cli
 
 #install jq
-sudo apt-get -y update
-sudo apt-get -y install jq
+#sudo apt-get -y update
+#sudo apt-get -y install jq
 
 #delete any existing config script
 old_config_storage_file="/opt/config_storage.sh"
