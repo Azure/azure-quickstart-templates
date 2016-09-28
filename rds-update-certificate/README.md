@@ -34,7 +34,7 @@ Click the button below to deploy:
 	```
 	You will need 1) Azure Key Vault name, and 2) secret name from this step to be supplied as parameters to Template.
 
-2. A Service Principal must be created with permissions to access the key Vault
+2. A Service Principal must be created with permissions to access the Key Vault
 (see https://azure.microsoft.com/en-us/documentation/articles/resource-group-authenticate-service-principal/)
 
 	Sample powershell (alternatively see Scripts\New-ServicePrincipal.ps1):
@@ -49,9 +49,10 @@ Click the button below to deploy:
 	Set-AzureRmKeyVaultAccessPolicy -vaultname $vaultName -serviceprincipalname $sp.ServicePrincipalName -permissionstosecrets list,get
 	```
 
-	You will need 1) application id ($app.ApplicationId), and 2) the password used abouve as parameters to the Template.  You will also need your tenant Id, to get tenant Id run the following powershell:
+	You will need 1) application id ($app.ApplicationId), and 2) the password from above as parameters to the Template.  
+	You will also need your tenant Id, to get tenant Id run the following powershell:
 	```
-	$tenantId = (get-azurermsubscription).TenantId | select -Unique
+	$tenantId = (Get-AzureRmSubscription).TenantId | select -Unique
 	```
 
 ## The Template
