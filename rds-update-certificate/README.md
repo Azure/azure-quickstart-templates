@@ -4,7 +4,7 @@ This template imports a PFX certificate from Azure Key Vault and configures RDS 
 
 ## Pre-Requisites
 
-1. a PFX  certificate must be uploaded to an Azure Key Vault in tenants' subscription  and stored as a secret with content type 'application/x-pkcs12'
+1. A PFX  certificate must be uploaded to an Azure Key Vault in tenants' subscription  and stored as a secret with content type 'application/x-pkcs12'
 (see https://azure.microsoft.com/en-us/documentation/articles/key-vault-get-started and http://stackoverflow.com/questions/33728213/how-to-store-pfx-certificate-in-azure-key-vault)
 
 	Sample powershell (alternatively see Scripts\Upload-Certificate.ps1):
@@ -25,7 +25,7 @@ This template imports a PFX certificate from Azure Key Vault and configures RDS 
 	```
 	You will need 1) Azure Key Vault name, and 2) secret name from this step to be supplied as parameters to Template.
 
-2. a Service Principal must be created with permissions to access the key Vault
+2. A Service Principal must be created with permissions to access the key Vault
 (see https://azure.microsoft.com/en-us/documentation/articles/resource-group-authenticate-service-principal/)
 
 	Sample powershell (alternatively see Scripts\New-ServicePrincipal.ps1):
@@ -54,8 +54,8 @@ This template imports a PFX certificate from Azure Key Vault and configures RDS 
 If "All" is specified, then same certificate will be applied for all four roles.
 
 Template performs the following steps:
-+ imports the certificate from the key vault;
-+ invokes Set-RDCertificate powershell cmdlet to configure the certificate.
++ downloads certificate from the key vault;
++ invokes Set-RDCertificate powershell cmdlet to apply the certificate.
 
 
 Click the button below to deploy:
