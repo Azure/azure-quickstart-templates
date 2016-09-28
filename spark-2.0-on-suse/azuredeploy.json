@@ -42,24 +42,25 @@
     "resourceGroupLocation": "[resourceGroup().location]",
     "vmStorageAccountContainerName": "vhd",
     "storageAccountName": "[concat(uniquestring(resourceGroup().id),'storageac')]",
-    "virtualMachines_spark01_name": "sparkmaster",
-    "sparkSlavesName": "sparkslave",
+    "sparkMasterMachineName": "sparkmaster",
+    "sparkSlaveMachineName": "sparkslave",
     "sparkMasterSize": "Basic_A3",
     "sparkSlavesSize": "Basic_A2",
     "sparkMasterPublicIpName": "sparkMasterPublicIp",
     "sparkNetWorkSecurityGroupName": "nsgroup",
     "sparkVirtualNetworkName": "sparkVirtualNetwork",
+    "virtualNetworkAddressPrefix" : "10.0.0.0/16",
+    "defaultSubnetAddressPrefix" : "10.0.0.0/24",
     "sparkMasterNetworkInterfaceName": "ni_master",
     "sparkSlaveNetworkInterfaceName": "ni_slave",
     "sparkMasterInternalIP": "10.0.0.4",
-    "sparkSlaveInternalIP": "10.0.0.5",
     "ScriptFolder" : "scripts",
     "sparkInstallScriptName": "install_spark_environment.sh"
   },
   "resources": [
     {
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[variables('virtualMachines_spark01_name')]",
+      "name": "[variables('sparkMasterMachineName')]",
       "apiVersion": "2015-06-15",
       "location": "[variables('resourceGroupLocation')]",
       "dependsOn": [
@@ -85,7 +86,7 @@
           "version": "latest"
         },
         "osDisk": {
-          "name": "[variables('virtualMachines_spark01_name')]",
+          "name": "[variables('sparkMasterMachineName')]",
           "createOption": "FromImage",
           "vhd": {
             "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob, variables('vmStorageAccountContainerName'),'/','osdisks', '1' ,'.vhd')]"
@@ -94,7 +95,7 @@
         }
       },
       "osProfile": {
-      	"computerName": "[variables('virtualMachines_spark01_name')]",
+      	"computerName": "[variables('sparkMasterMachineName')]",
       	"adminUsername": "[parameters('adminUserName')]",
       	"adminPassword": "[parameters('adminPassword')]",
       	"linuxConfiguration": {
@@ -109,7 +110,7 @@
         "apiVersion": "2015-06-15",
         "location": "[variables('resourceGroupLocation')]",
         "dependsOn": [
-          "[concat('Microsoft.Compute/virtualMachines/', variables('virtualMachines_spark01_name') )]",
+          "[concat('Microsoft.Compute/virtualMachines/', variables('sparkMasterMachineName') )]",
           "[concat('Microsoft.Network/networkInterfaces/', variables('sparkMasterNetworkInterfaceName') )]"
         ],
         "properties": {
@@ -122,14 +123,14 @@
               "[concat(parameters('_artifactsLocation'), '/', variables('ScriptFolder'), '/', variables('sparkInstallScriptName'), parameters('_artifactsLocationSasToken'))]"
             ],
             "commandToExecute": "[concat('sudo sh install_spark_environment.sh ', '-m 1', ' -i ', reference(variables('sparkMasterNetworkInterfaceName')).ipConfigurations[0].properties.privateIPAddress, ' -k ',  listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value, ' -a ', variables('storageAccountName'), parameters('_artifactsLocationSasToken'))]"
-	  }
-	}
+			}
+		}
       }
     ]
     },
     {
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[concat(variables('sparkSlavesName'), copyindex() )]",
+      "name": "[concat(variables('sparkSlaveMachineName'), copyindex() )]",
       "apiVersion": "2015-06-15",
       "location": "[variables('resourceGroupLocation')]",
       "copy": {
@@ -159,7 +160,7 @@
       	  "version": "latest"
         },
         "osDisk": {
-          "name": "[concat(variables('sparkSlavesName'), copyindex() )]",
+          "name": "[concat(variables('sparkSlaveMachineName'), copyindex() )]",
           "createOption": "FromImage",
           "vhd": {
             "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob, variables('vmStorageAccountContainerName'),'/','osdisks_', 'slave', copyindex() ,'.vhd')]"
@@ -168,7 +169,7 @@
           }
         },
         "osProfile": {
-          "computerName": "[concat(variables('sparkSlavesName'), copyindex() )]",
+          "computerName": "[concat(variables('sparkSlaveMachineName'), copyindex() )]",
           "adminUsername": "[parameters('adminUserName')]",
           "adminPassword": "[parameters('adminPassword')]",
           "linuxConfiguration": {
@@ -184,7 +185,7 @@
       	  "location": "[variables('resourceGroupLocation')]",
       	  "dependsOn": [
       	    "[concat('Microsoft.Network/networkInterfaces/', concat(variables('sparkSlaveNetworkInterfaceName'), copyindex() ) )]",
-      	    "[resourceId('Microsoft.Compute/virtualMachines', concat(variables('sparkSlavesName'), copyindex() ) )]",
+      	    "[resourceId('Microsoft.Compute/virtualMachines', concat(variables('sparkSlaveMachineName'), copyindex() ) )]",
       	    "[concat('Microsoft.Compute/virtualMachines/sparkmaster/extensions/configuresparkonmaster')]"
       	  ],
       	  "properties": {
@@ -246,6 +247,7 @@
         "count": "[parameters('numberOfSlaves')]"
       },
       "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('sparkMasterNetworkInterfaceName'))]",
         "[resourceId('Microsoft.Network/virtualNetworks', variables('sparkVirtualNetworkName'))]",
         "[resourceId('Microsoft.Network/networkSecurityGroups', variables('sparkNetWorkSecurityGroupName'))]"
       ],
@@ -254,8 +256,7 @@
           {
             "name": "ipconfig1",
             "properties": {
-              "privateIPAllocationMethod": "Static",
-              "privateIPAddress": "[concat(variables('sparkSlaveInternalIP'), copyindex() )]",
+              "privateIPAllocationMethod": "Dynamic",
               "subnet": {
                 "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('sparkVirtualNetworkName')), '/subnets/default')]"
               }
@@ -288,14 +289,14 @@
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
-            "10.0.0.0/16"
+            "[variables('virtualNetworkAddressPrefix')]"
           ]
         },
         "subnets": [
           {
             "name": "default",
             "properties": {
-              "addressPrefix": "10.0.0.0/24"
+              "addressPrefix": "[variables('defaultSubnetAddressPrefix')]"
             }
           }
         ]
