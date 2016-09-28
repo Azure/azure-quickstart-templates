@@ -13,8 +13,8 @@ Click the button below to deploy:
 
 ## Pre-Requisites
 
-1. A PFX  certificate must be uploaded to an Azure Key Vault in tenants' subscription  and stored as a secret with content type 'application/x-pkcs12'
-(see https://azure.microsoft.com/en-us/documentation/articles/key-vault-get-started and http://stackoverflow.com/questions/33728213/how-to-store-pfx-certificate-in-azure-key-vault)
+1. A PFX  certificate must be uploaded to an Azure Key Vault in tenant's subscription  and stored as a secret with content type 'application/x-pkcs12'
+	(see https://azure.microsoft.com/en-us/documentation/articles/key-vault-get-started and http://stackoverflow.com/questions/33728213/how-to-store-pfx-certificate-in-azure-key-vault)
 
 	Sample powershell (alternatively see Scripts\Upload-Certificate.ps1):
 	```
