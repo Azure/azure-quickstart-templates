@@ -1,6 +1,7 @@
 # Deployment of Red Hat Enterprise Linux VM (RHEL 7.2 or RHEL 6.7)
 
-Azure global:
+##Azure global:
+
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-vm-simple-rhel%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
@@ -8,8 +9,8 @@ Azure global:
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-Azure Germany:
-https://raw.githubusercontent.com/gitralf/azure-quickstart-templates/master/101-vm-simple-rhel/azuredeploy.json
+##Azure Germany:
+
 <a href="https://portal.microsoftazure.de/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fgitralf%2Fazure-quickstart-templates%2Fmaster%2F101-vm-simple-rhel%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
