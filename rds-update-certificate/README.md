@@ -8,21 +8,21 @@ This template imports a PFX certificate from Azure Key Vault and configures RDS 
 (see https://azure.microsoft.com/en-us/documentation/articles/key-vault-get-started and http://stackoverflow.com/questions/33728213/how-to-store-pfx-certificate-in-azure-key-vault)
 
 Sample powershell (alternatively see Scripts\Upload-Certificate.ps1):
+```
+$pfxFilePath = "c:\certificate.pfx" `
+$certPassword = "B@kedPotat0" `
+$vaultName = "myVault" `
+$secretName = "certificate" `
 
-` $pfxFilePath = "c:\certificate.pfx" `
-` $certPassword = "B@kedPotat0" `
-` $vaultName = "myVault" `
-` $secretName = "certificate" `
-``
-` $exportableFlag = [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::Exportable `
-` $pkcs12ContentType = [System.Security.Cryptography.X509Certificates.X509ContentType]::Pkcs12 `
-` $x509 = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2Collection `
-` $x509.Import($pfxFilePath, $certPassword, $exportableFlag) `
-` $bytes = $x509.Export($pkcs12ContentType, $certPassword) `
-` $secret = [System.Convert]::ToBase64String($bytes) | convertto-securestring -asplaintext -Force `
-` `
-` Set-AzureKeyVaultSecret -VaultName $vaultName -Name $secretName -SecretValue $secret -ContentType 'application/x-pkcs12' `
+$exportableFlag = [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::Exportable `
+$pkcs12ContentType = [System.Security.Cryptography.X509Certificates.X509ContentType]::Pkcs12 `
+$x509 = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2Collection `
+$x509.Import($pfxFilePath, $certPassword, $exportableFlag) `
+$bytes = $x509.Export($pkcs12ContentType, $certPassword) `
+$secret = [System.Convert]::ToBase64String($bytes) | convertto-securestring -asplaintext -Force `
 
+Set-AzureKeyVaultSecret -VaultName $vaultName -Name $secretName -SecretValue $secret -ContentType 'application/x-pkcs12' `
+```
 You will need 1) Azure Key Vault name, and 2) secret name from this step to be supplied as parameters to Template.
 
 2. a Service Principal must be created with permissions to access the key Vault
@@ -30,17 +30,21 @@ You will need 1) Azure Key Vault name, and 2) secret name from this step to be s
 
 Sample powershell (alternatively see Scripts\New-ServicePrincipal.ps1):
 
-``` $appPassword = "St@ffedPotat0" `
-``` $uri = "https://www.contoso.com/script"   #  a valid formatted URL, not validated for single-tenant deployments `
-``` $vaultName = "myVault"   #  same as in step #1 above `
-```
-``` $app = New-AzureRmADApplication -DisplayName "script" -HomePage $uri -IdentifierUris $uri -password $appPassword `
-``` $sp = New-AzureRmADServicePrincipal -ApplicationId $app.ApplicationId `
-```
-``` Set-AzureRmKeyVaultAccessPolicy -vaultname $vaultName -serviceprincipalname $sp.ServicePrincipalName -permissionstosecrets list,get `
+<code></code><code>PowerShell
+$appPassword = "St@ffedPotat0" `
+$uri = "https://www.contoso.com/script"   #  a valid formatted URL, not validated for single-tenant deployments `
+$vaultName = "myVault"   #  same as in step #1 above `
+
+$app = New-AzureRmADApplication -DisplayName "script" -HomePage $uri -IdentifierUris $uri -password $appPassword `
+$sp = New-AzureRmADServicePrincipal -ApplicationId $app.ApplicationId `
+
+Set-AzureRmKeyVaultAccessPolicy -vaultname $vaultName -serviceprincipalname $sp.ServicePrincipalName -permissionstosecrets list,get `
+</code><code></code>
 
 You will need 1) application id ($app.ApplicationId), and 2) the password used abouve as parameters to the Template.  You will also need your tenant Id, to get tenant Id run the following powershell:
-``` $tenantId = (get-azurermsubscription).TenantId | select -Unique `
+```
+$tenantId = (get-azurermsubscription).TenantId | select -Unique
+```
 
 ## The Template
 
