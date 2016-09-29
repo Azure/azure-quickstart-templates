@@ -15,6 +15,8 @@ This template deploys OpenShift Origin with basic username / password for authen
 |Storage Accounts   |2 Storage Accounts                                                                                                                  |
 |Virtual Machines   |Single master<br />User-defined number of nodes<br />All VMs include a single attached data disk for Docker thin pool logical volume|
 
+If you already have a Red Hat subscription and would like to deploy an OpenShift Container Platform (Enterprise) 3.3 cluster, please visit: https://github.com/haroldwongms/openshift-enterprise
+
 ### Generate SSH Keys
 
 You'll need to generate a pair of SSH keys in order to provision this template. Ensure that you do not include a passcode with the private key. <br/>
