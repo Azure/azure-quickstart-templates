@@ -20,5 +20,6 @@ yum -y update
 yum install -y policycoreutils-python
 semanage port -a -t mongod_port_t -p tcp 27017
 
-#Install Mongo DB
+# Install Mongo DB and start service
 yum install -y mongodb-org
+service mongod start
