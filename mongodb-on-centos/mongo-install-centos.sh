@@ -6,11 +6,12 @@
 
 #sudo chmod 777 /etc/yum.repos.d/mongodb.repo
 touch /etc/yum.repos.d/mongodb.repo
-echo "[mongodb-org-3.0]" >> /etc/yum.repos.d/mongodb.repo
+echo "[mongodb-org-3.2]" >> /etc/yum.repos.d/mongodb.repo
 echo "name=MongoDB Repository" >> /etc/yum.repos.d/mongodb.repo
-echo "baseurl=http://repo.mongodb.org/yum/redhat/\$releasever/mongodb-org/3.0/x86_64/" >> /etc/yum.repos.d/mongodb.repo
-echo "gpgcheck=0" >> /etc/yum.repos.d/mongodb.repo
+echo "baseurl=http://repo.mongodb.org/yum/redhat/\$releasever/mongodb-org/3.2/x86_64/" >> /etc/yum.repos.d/mongodb.repo
+echo "gpgcheck=1" >> /etc/yum.repos.d/mongodb.repo
 echo "enabled=1" >> /etc/yum.repos.d/mongodb.repo
+echo "gpgkey=https://www.mongodb.org/static/pgp/server-3.2.asc" >> /etc/yum.repos.d/mongodb.repo
 
 # Install updates
 yum -y update
