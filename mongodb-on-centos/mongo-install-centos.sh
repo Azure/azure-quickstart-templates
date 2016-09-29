@@ -16,5 +16,9 @@ echo "gpgkey=https://www.mongodb.org/static/pgp/server-3.2.asc" >> /etc/yum.repo
 # Install updates
 yum -y update
 
+# Install SELinux management tools and add rule for default port for mongod service
+yum install -y policycoreutils-python
+semanage port -a -t mongod_port_t -p tcp 27017
+
 #Install Mongo DB
 yum install -y mongodb-org
