@@ -83,11 +83,11 @@ sed -i -e '/Defaults    env_keep += "LC_TIME LC_ALL LANGUAGE LINGUAS _XKB_CHARSE
 
 echo "Deploying Registry"
 
-runuser -l $SUDOUSER -c "sudo oadm registry"
+# runuser -l $SUDOUSER -c "sudo oadm registry"
 
 echo "Deploying Router"
 
-runuser -l $SUDOUSER -c "sudo oadm router osrouter --replicas=$NODECOUNT --selector=region=infra"
+# runuser -l $SUDOUSER -c "sudo oadm router osrouter --replicas=$NODECOUNT --selector=region=infra"
 
 echo "Re-enabling requiretty"
 
