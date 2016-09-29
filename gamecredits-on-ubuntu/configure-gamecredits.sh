@@ -8,16 +8,16 @@ ps axjf
 
 if [ $1 = 'From_Source' ]; then
 #################################################################
-# Update Ubuntu and install prerequisites for running Gamecredits   #
+#Update Ubuntu and install prerequisites for running Gamecredits# 
 #################################################################
 sudo apt-get update
 #################################################################
-# Build Gamecredits from source                                     #
+# Build Gamecredits from source                                 #
 #################################################################
 NPROC=$(nproc)
 echo "nproc: $NPROC"
 #################################################################
-# Install all necessary packages for building Gamecredits           #
+# Install all necessary packages for building Gamecredits       #
 #################################################################
 sudo apt-get -y install git unzip wget build-essential libtool autotools-dev autoconf pkg-config libssl-dev libevent-dev bsdmainutils libboost-all-dev libminiupnpc-dev libzmq3-dev
 sudo add-apt-repository -y ppa:bitcoin/bitcoin
@@ -61,7 +61,7 @@ sudo cp gamecredits-cli /usr/bin/gamecredits-cli
 fi
 
 ################################################################
-# Configure to auto start at boot					    #
+# Configure to auto start at boot					           #
 ################################################################
 file=$HOME/.gamecredits 
 if [ ! -e "$file" ]
@@ -77,6 +77,7 @@ then
 	sudo update-rc.d gamecredits defaults	
 fi
 
-/usr/bin/gamecreditsd
-echo "Gamecredits has been setup successfully and is running... Have Fun ..."
+/usr/bin/gamecreditsd & exit 0
+
+echo "Gamecredits Blockchain has been setup successfully and is running... Have Fun ..."
 exit 0
