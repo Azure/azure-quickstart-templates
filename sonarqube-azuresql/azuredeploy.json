@@ -92,8 +92,11 @@
     }
   },
   "variables": {
-    "GitHubRoot": "https://raw.githubusercontent.com/ALM-Rangers/azure-quickstart-templates/master",
-  
+    "GitHubRoot": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master",
+    "SQNestedFolder": "[concat(variables('SQProjectName'), '/', 'nested')]",
+    "SQScriptsFolder": "[concat(variables('SQProjectName'), '/', 'scripts')]",
+
+    "SQProjectName": "sonarqube-azuresql",
     "SQstorageName": "[concat('sqstorage', uniqueString(resourceGroup().id))]",
     "SQvnetPrefix": "10.0.0.0/16",
     "SQvnetExternalSubnetName": "Subnet-External",
@@ -113,10 +116,11 @@
 
     "dscZipFile": "SQdscAppConfiguration.ps1.zip",
     "SQdscAppConfigurationFunction": "SQdscAppConfiguration.ps1\\Main",
-    "SQDSCFileLocation": "[concat(variables('GitHubRoot'), '/', 'scripts')]",
+    "SQDSCFileLocation": "[concat(variables('GitHubRoot'), '/', variables('SQScriptsFolder')) ]",
+
     "AzureSqlServerName": "[concat(parameters('sqDB_ServerName'), uniqueString(resourceGroup().id))]",
     "SQDBTemplate": "azureDBDeploy.json",
-    "SQDBTemplateLocation": "[concat(variables('GitHubRoot'), '/', 'nested', '/', variables('SQDBTemplate'))]"
+    "SQDBTemplateLocation": "[concat(variables('GitHubRoot'), '/', variables('SQNestedFolder'), '/', variables('SQDBTemplate'))]"
   },
   "resources": [
     {
@@ -130,21 +134,11 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "adminLogin": {
-            "value": "[parameters('sqDB_Admin_UserName')]"
-          },
-          "adminPassword": {
-            "value": "[parameters('sqDB_Admin_Password')]"
-          },
-          "sonarSqlName": {
-            "value": "[variables('AzureSqlServerName')]"
-          },
-          "sonarDbName": {
-            "value": "[parameters('sqDB_DBName')]"
-          },
-          "sonarEdition": {
-            "value": "[parameters('sqDB_DBEdition')]"
-          }
+          "adminLogin": { "value": "[parameters('sqDB_Admin_UserName')]" },
+          "adminPassword": { "value": "[parameters('sqDB_Admin_Password')]" },
+          "sonarSqlName": { "value": "[variables('AzureSqlServerName')]" },
+          "sonarDbName": { "value": "[parameters('sqDB_DBName')]" },
+          "sonarEdition": { "value": "[parameters('sqDB_DBEdition')]" }
         }
       }
     },
@@ -284,9 +278,9 @@
               "configurationFunction": "[variables('SQdscAppConfigurationFunction')]",
               "properties": {
                 "nodeName": "[parameters('sqVM_AppName')]",
+                "connectionString": "[reference('deploySQLDB').outputs.jdbcConnString.value]",
                 "sqVM_AppAdmin_UserName": "[parameters('sqVM_AppAdmin_UserName')]",
-                "connectionString":"[replace(reference('deploySQLDB').outputs.jdbcConnString.value,'{your_password_here}',parameters('sqDB_Admin_Password'))]",
-                "sqVmAdminPwd": "[parameters('sqVM_AppAdmin_Password')]" 
+                "sqVmAdminPwd": "[parameters('sqVM_AppAdmin_Password')]"
               }
             },
             "protectedSettings": {
