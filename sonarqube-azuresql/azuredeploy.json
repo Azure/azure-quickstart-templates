@@ -89,14 +89,23 @@
       "metadata": {
         "description": "Type of Azure Storage Acct to create"
       }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "https://raw.githubusercontent.com/ALM-Rangers/azure-quickstart-templates/master/sonarqube-azuresql/"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
     }
   },
   "variables": {
-    "GitHubRoot": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master",
-    "SQNestedFolder": "[concat(variables('SQProjectName'), '/', 'nested')]",
-    "SQScriptsFolder": "[concat(variables('SQProjectName'), '/', 'scripts')]",
-
-    "SQProjectName": "sonarqube-azuresql",
     "SQstorageName": "[concat('sqstorage', uniqueString(resourceGroup().id))]",
     "SQvnetPrefix": "10.0.0.0/16",
     "SQvnetExternalSubnetName": "Subnet-External",
@@ -113,14 +122,12 @@
     "SQvmAppStorageAccountContainerName": "vhds",
     "SQvmAppNicName": "[concat(parameters('sqVM_AppName'), 'NetworkInterface')]",
     "SQpublicIPName": "SQpublicIP",
-
     "dscZipFile": "SQdscAppConfiguration.ps1.zip",
     "SQdscAppConfigurationFunction": "SQdscAppConfiguration.ps1\\Main",
-    "SQDSCFileLocation": "[concat(variables('GitHubRoot'), '/', variables('SQScriptsFolder')) ]",
-
+    "SQDSCFileLocation": "[concat(parameters('_artifactsLocation'), '/', 'scripts')]",
     "AzureSqlServerName": "[concat(parameters('sqDB_ServerName'), uniqueString(resourceGroup().id))]",
     "SQDBTemplate": "azureDBDeploy.json",
-    "SQDBTemplateLocation": "[concat(variables('GitHubRoot'), '/', variables('SQNestedFolder'), '/', variables('SQDBTemplate'))]"
+    "SQDBTemplateLocation": "[concat(parameters('_artifactsLocation'), '/', 'nested', '/', variables('SQDBTemplate'))]"
   },
   "resources": [
     {
@@ -134,11 +141,21 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "adminLogin": { "value": "[parameters('sqDB_Admin_UserName')]" },
-          "adminPassword": { "value": "[parameters('sqDB_Admin_Password')]" },
-          "sonarSqlName": { "value": "[variables('AzureSqlServerName')]" },
-          "sonarDbName": { "value": "[parameters('sqDB_DBName')]" },
-          "sonarEdition": { "value": "[parameters('sqDB_DBEdition')]" }
+          "adminLogin": {
+            "value": "[parameters('sqDB_Admin_UserName')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('sqDB_Admin_Password')]"
+          },
+          "sonarSqlName": {
+            "value": "[variables('AzureSqlServerName')]"
+          },
+          "sonarDbName": {
+            "value": "[parameters('sqDB_DBName')]"
+          },
+          "sonarEdition": {
+            "value": "[parameters('sqDB_DBEdition')]"
+          }
         }
       }
     },
@@ -147,7 +164,7 @@
       "type": "Microsoft.Storage/storageAccounts",
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-15",
-      "dependsOn": [ ],
+      "dependsOn": [],
       "tags": {
         "displayName": "SQstorage"
       },
@@ -278,9 +295,9 @@
               "configurationFunction": "[variables('SQdscAppConfigurationFunction')]",
               "properties": {
                 "nodeName": "[parameters('sqVM_AppName')]",
-                "connectionString": "[reference('deploySQLDB').outputs.jdbcConnString.value]",
                 "sqVM_AppAdmin_UserName": "[parameters('sqVM_AppAdmin_UserName')]",
-                "sqVmAdminPwd": "[parameters('sqVM_AppAdmin_Password')]"
+                "connectionString":"[replace(reference('deploySQLDB').outputs.jdbcConnString.value,'{your_password_here}',parameters('sqDB_Admin_Password'))]",
+                "sqVmAdminPwd": "[parameters('sqVM_AppAdmin_Password')]" 
               }
             },
             "protectedSettings": {
