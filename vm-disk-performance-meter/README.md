@@ -16,7 +16,7 @@ Upon template deployment you will have the disk perfomance automatically measure
 OutputsString           : 
                           Name             Type                       Value     
                           ===============  =========================  ==========
-                          testresult       String                     read: io=65392KB, bw=102980KB/s, iops=25744, runt=635msec; write: io=65680KB, bw=103433KB/s, iops=25858, runt=635msec;
+                          testresult       String                     READ: io=2051.2MB, aggrb=78853KB/s, minb=19713KB/s, maxb=20024KB/s, mint=26222msec, maxt=26636msec; WRITE: io=2044.9MB, aggrb=78613KB/s, minb=19653KB/s, maxb=19963KB/s, mint=26222msec, maxt=26636msec;
 ```
 
 ![alt text](images/diskperformance.png "Disk performance measurement output")
