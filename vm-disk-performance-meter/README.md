@@ -21,7 +21,7 @@ OutputsString           :
 
 ![alt text](images/diskperformance.png "Disk performance measurement output")
 
-Even though automatic test has pre-warmup, subsequent performance measurements can have different results. To re-measure and get full ouput you can login to the test VM with credentials you provided during deployment and use this a command like this:
+Subsequent performance measurements can have different results. To re-measure and get full ouput you can login to the test VM with credentials you provided during deployment and use this a command like this:
 
 ```shell
 sudo echo -e '[io]\nrw=randrw\nsize=128m\ndirectory=/datadisk' | sudo fio -

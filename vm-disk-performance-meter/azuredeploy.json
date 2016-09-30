@@ -5,38 +5,25 @@
     "vmSize": {
       "type": "string",
       "allowedValues": [
-        "Basic_A0",
-        "Basic_A4",
-        "Standard_A1",
         "Standard_A5",
         "Standard_A8",
         "Standard_D4",
         "Standard_D14",
-        "Standard_DS1",
+        "Standard_DS3",
         "Standard_DS14",
-        "Standard_D1_v2",
+        "Standard_D3_v2",
         "Standard_D15_v2",
-        "Standard_DS1_v2",
-        "Standard_DS15_v2",
-        "Standard_F1",
-        "Standard_F16",
-        "Standard_F1s",
-        "Standard_F16s",
-        "Standard_G1",
-        "Standard_G5",
-        "Standard_GS1",
-        "Standard_GS5",
-        "Standard_NV6",
-        "Standard_NC6"
+        "Standard_DS3_v2",
+        "Standard_DS15_v2"
       ],
-      "defaultValue": "Standard_A5",
+      "defaultValue": "Standard_DS15_v2",
       "metadata": {
         "description": "Size of the VM that runs the test."
       }
     },
     "dataDiskStorageAccountType": {
       "type": "string",
-      "defaultValue": "Standard_LRS",
+      "defaultValue": "Premium_LRS",
       "allowedValues": [
         "Standard_LRS",
         "Standard_GRS",
@@ -79,32 +66,39 @@
     "testSize": {
       "type": "string",
       "allowedValues": [
-        "32m",
-        "64m",
         "128m",
         "256m",
         "512m",
         "1g",
-        "2g"
+        "2g",
+        "10g",
+        "30g"
       ],
-      "defaultValue": "128m",
+      "defaultValue": "1g",
       "metadata": {
         "description": "Size of the file to test."
       }
     },
-    "adminUsername": {
-      "type": "string",
+    "secondsToRunTest": {
+      "type": "int",
+      "defaultValue": 30,
       "metadata": {
-        "description": "Username for the test VMs."
+        "description": "Number of seconds for the test to run."
       }
     },
-    "adminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Password for the test VMs."
+      "adminUsername": {
+        "type": "string",
+        "metadata": {
+          "description": "Username for the test VMs."
+        }
+      },
+      "adminPassword": {
+        "type": "securestring",
+        "metadata": {
+          "description": "Password for the test VMs."
+        }
       }
-    }
-  },
+    },
   "variables": {
     "osVersion": "14.04.5-LTS",
     "imagePublisher": "Canonical",
@@ -130,10 +124,12 @@
     "qs": "'",
     "diskCmd": "(echo n; echo p; echo 1; echo; echo; echo w) | fdisk /dev/sdc > /dev/null && mkfs -t ext4 /dev/sdc1 > /dev/null && mkdir /datadisk && mount /dev/sdc1 /datadisk",
     "installCmd": "apt-get update > /dev/null && apt-get -y install fio > /dev/null",
-    "cfgCmd": "[concat('echo [io] > t && echo rw=', parameters('testType'), ' >> t && echo size=', parameters('testSize'), ' >> t && echo directory=/datadisk >> t')]",
-    "warmupCmd": "fio t > /dev/null",
-    "runCmd": "fio t | grep -E \"read :|write:\" | tr \"\n\" \";\" | tr -s [:space:] | sed \"s/ :/:/g\" | sed \"s/= /=/g\" ",
-    "fullCmd": "[concat('sudo bash -c ', variables('qs'), variables('diskCmd'), ' && ', variables('installCmd'), ' && ', variables('cfgCmd'), ' && ', variables('warmupCmd'), ' && ', variables('runCmd'), variables('qs'))]"
+    "globalCmd": "[concat('echo [global] > t && echo size=', parameters('testSize'), ' >> t && echo direct=1 >> t && echo iodepth=256 >> t && echo ioengine=libaio >> t && echo bs=8k >> t')]",
+    "workerCmd": "[concat('echo rw=', parameters('testType'), ' >> t && echo directory=/datadisk >> t')]",
+    "cfgCmd": "[concat(variables('globalCmd'), ' && echo [w1] >> t && ', variables('workerCmd'), ' && echo [w2] >> t && ', variables('workerCmd'), ' && echo [w3] >> t && ', variables('workerCmd'), ' && echo [w4] >> t && ', variables('workerCmd'))]",
+    "warmupCmd": "[concat('fio --runtime ', parameters('secondsToRunTest'),  ' t > /dev/null')]",
+    "runCmd": "[concat('fio --runtime ', parameters('secondsToRunTest'),  ' t | grep -E \"READ:|WRITE:\" | tr \"\n\" \";\" | tr -s [:space:] | sed \"s/ :/:/g\" | sed \"s/= /=/g\" ')]",
+    "fullCmd": "[concat('sudo bash -c ', variables('qs'), variables('diskCmd'), ' && ', variables('installCmd'), ' && ', variables('cfgCmd'), ' && ', variables('runCmd'), variables('qs'))]"
   },
   "resources": [
     {
