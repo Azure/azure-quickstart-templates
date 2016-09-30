@@ -1,0 +1,120 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "numBootNodes": {
+      "type": "int"
+    },
+    "txVMNamePrefix": {
+      "type": "string"
+    },
+    "numTXNodes": {
+      "type": "int"
+    },
+    "mnVMNamePrefix": {
+      "type": "string"
+    },
+    "numMNNodes": {
+      "type": "int"
+    },
+    "artifactsLocationURL": {
+      "type": "string"
+    },
+    "adminUsername": {
+      "type": "string"
+    },
+    "ethereumAccountPsswd": {
+      "type": "securestring"
+    },
+    "ethereumAccountPassphrase": {
+      "type": "securestring"
+    },
+    "ethereumNetworkID": {
+      "type": "int"
+    },
+    "gethIPCPort": {
+      "type": "int"
+    }
+  },
+  "variables": {
+    "apiVersion": "2015-06-15",
+    "bootNode": 0,
+    "mnNode": 1,
+    "txNode": 2,
+    "maxPeers": 25
+  },
+  "resources": [
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('txVMNamePrefix'), copyIndex(), '/newuserscript')]",
+      "copy": {
+        "name": "txNodesConfigLoop",
+        "count": "[parameters('numTXNodes')]"
+      },
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[concat(parameters('artifactsLocationURL'), '/scripts/configure-geth.sh')]"
+          ]
+        },
+        "protectedSettings": {
+          "commandToExecute": "[concat('sh configure-geth.sh \"', parameters('adminUsername'), '\" \"', parameters('ethereumAccountPsswd'), '\" \"', parameters('ethereumAccountPassphrase'), '\" \"', parameters('artifactsLocationURL'), '\" \"', parameters('ethereumNetworkID'), '\" \"', variables('maxPeers'), '\" \"', variables('txNode'), '\" \"', parameters('gethIPCPort'), '\" \"', parameters('numBootNodes'), '\" \"', parameters('numMNNodes'), '\" \"', parameters('mnVMNamePrefix'), '\" \"', parameters('numTXNodes'), '\" \"', parameters('txVMNamePrefix'), '\"')]"
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('mnVMNamePrefix'), copyIndex(), '/newuserscript')]",
+      "copy": {
+        "name": "bootMNNodesConfigLoop",
+        "count": "[parameters('numBootNodes')]"
+      },
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[concat(parameters('artifactsLocationURL'), '/scripts/configure-geth.sh')]"
+          ]
+        },
+        "protectedSettings": {
+          "commandToExecute": "[concat('sh configure-geth.sh \"', parameters('adminUsername'), '\" \"', parameters('ethereumAccountPsswd'), '\" \"', parameters('ethereumAccountPassphrase'), '\" \"', parameters('artifactsLocationURL'), '\" \"', parameters('ethereumNetworkID'), '\" \"', variables('maxPeers'), '\" \"', variables('bootNode'), '\" \"', parameters('gethIPCPort'), '\" \"', parameters('numBootNodes'), '\" \"', parameters('numMNNodes'), '\" \"', parameters('mnVMNamePrefix'), '\" \"', copyIndex(), '\"')]"
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('mnVMNamePrefix'), add(copyIndex(), parameters('numBootNodes')),'/newuserscript')]",
+      "copy": {
+        "name": "regularMNNodesConfigLoop",
+        "count": "[sub(parameters('numMNNodes'), parameters('numBootNodes'))]"
+      },
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[concat(parameters('artifactsLocationURL'), '/scripts/configure-geth.sh')]"
+          ]
+        },
+        "protectedSettings": {
+          "commandToExecute": "[concat('sh configure-geth.sh \"', parameters('adminUsername'), '\" \"', parameters('ethereumAccountPsswd'), '\" \"', parameters('ethereumAccountPassphrase'), '\" \"', parameters('artifactsLocationURL'), '\" \"', parameters('ethereumNetworkID'), '\" \"', variables('maxPeers'), '\" \"', variables('mnNode'), '\" \"', parameters('gethIPCPort'), '\" \"', parameters('numBootNodes'), '\" \"', parameters('numMNNodes'), '\" \"', parameters('mnVMNamePrefix'), '\"')]"
+        }
+      }
+    }
+  ]
+}
