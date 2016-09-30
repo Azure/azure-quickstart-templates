@@ -5,7 +5,7 @@
     "namePrefix" : {
       "type": "string",
       "metadata": {
-        "description": "String used as a base for naming resources (9 characters or less).  A unique hash is prepended to the string for some resources, while resource-specific information is appended."
+        "description": "String used as a base for naming resources (9 characters or less).  A unique hash is prepended to the string for some resources, while resource-specific information is appended.  (alphanumeric characters only, special characters will be removed)"
       },
       "maxLength": 9
     },
@@ -13,25 +13,25 @@
       "type": "string",
       "defaultValue": "gethadmin",
       "metadata": {
-        "description": "Administrator username of each deployed VM"
+        "description": "Administrator username of each deployed VM (alphanumeric characters only, special characters will be removed)"
       }
     },
     "adminPassword": {
       "type": "securestring",
       "metadata": {
-        "description": "Administrator password for each deployed VM"
+        "description": "Administrator password for each deployed VM  (alphanumeric characters only, special characters will be removed)"
       }
     },
     "ethereumAccountPsswd": {
       "type": "securestring",
       "metadata": {
-        "description": "Administrator password used to secure the Ethereum account in geth"
+        "description": "Administrator password used to secure the Ethereum account in geth. (alphanumeric characters only, special characters will be removed)"
       }
     },
     "ethereumAccountPassphrase": {
       "type": "securestring",
       "metadata": {
-        "description": "Used to generate the private key associated with the Ethereum account (supply a strong passphrase min 9 characters)"
+        "description": "Used to generate the private key associated with the Ethereum account (supply a strong alphanumeric passphrase min 9 characters, special characters will be removed)"
       },
       "minLength": 9
     },
@@ -158,17 +158,14 @@
     }
   },
   "variables": {
-    "namingInfix": "[toLower(substring(concat(parameters('namePrefix'), uniqueString(resourceGroup().id)), 0, 9))]",
+    "namePrefixClean": "[replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(parameters('namePrefix'),' ',''),'$',''),'#',''),'[',''),'!',''),'|',''),';',''),'{',''),']',''),'}',''),'(',''),')',''),'~','')]",
+    "adminUsernameClean": "[replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(parameters('adminUsername'),' ',''),'$',''),'#',''),'[',''),'!',''),'|',''),';',''),'{',''),']',''),'}',''),'(',''),')',''),'~','')]",
+    "adminPasswordClean": "[replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(parameters('adminPassword'),' ',''),'$',''),'#',''),'[',''),'!',''),'|',''),';',''),'{',''),']',''),'}',''),'(',''),')',''),'~','')]",
+    "ethereumAccountPsswdClean": "[replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(parameters('ethereumAccountPsswd'),' ',''),'$',''),'#',''),'[',''),'!',''),'|',''),';',''),'{',''),']',''),'}',''),'(',''),')',''),'~','')]",
+    "ethereumAccountPassphraseClean": "[replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(replace(parameters('ethereumAccountPassphrase'),' ',''),'$',''),'#',''),'[',''),'!',''),'|',''),';',''),'{',''),']',''),'}',''),'(',''),')',''),'~','')]",
+    "namingInfix": "[toLower(substring(concat(variables('namePrefixClean'), uniqueString(resourceGroup().id)), 0, 9))]",
     "storageAccountType": "Standard_LRS",
     "availabilitySetName": "[concat(variables('namingInfix'), 'AvSet')]",
-    "lbName": "[concat(variables('namingInfix'), 'LB')]",
-    "lbID": "[resourceId('Microsoft.Network/loadBalancers',variables('lbName'))]",
-    "lbPublicIPAddressName": "[concat(variables('namingInfix'), '-lb-publicip')]",
-    "lbHostname": "[variables('namingInfix')]",
-    "lbFrontEndIpConfigName": "LoadBalancerFrontEnd",
-    "lbFrontEndIPConfigID": "[concat(variables('lbID'),'/frontendIPConfigurations/',variables('lbFrontEndIpConfigName'))]",
-    "lbBackendAddressPoolName": "LoadBalancerBackend",
-    "lbBackendAddressPoolID": "[concat(variables('lbID'), '/backendAddressPools/LoadBalancerBackend')]",
     "httpPort": 80,
     "adminSitePort": 3000,
     "sshPort": 22,
@@ -285,18 +282,6 @@
     {
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[variables('lbPublicIPAddressName')]",
-      "location": "[resourceGroup().location]",
-      "properties": {
-        "publicIPAllocationMethod": "Dynamic",
-        "dnsSettings": {
-          "domainNameLabel": "[variables('lbHostname')]"
-        }
-      }
-    },
-    {
-      "apiVersion": "[variables('apiVersion')]",
-      "type": "Microsoft.Network/publicIPAddresses",
       "name": "[concat(variables('txPublicIPAddressNamePrefix'), copyIndex())]",
       "location": "[resourceGroup().location]",
       "copy": {
@@ -311,77 +296,22 @@
       }
     },
     {
-      "apiVersion": "[variables('apiVersion')]",
-      "name": "[variables('lbName')]",
-      "type": "Microsoft.Network/loadBalancers",
-      "location": "[resourceGroup().location]",
-      "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('lbPublicIPAddressName'))]"
-      ],
+      "apiVersion": "[variables('apiVersionDeployments')]",
+      "name": "loadBalancerLinkedTemplate",
+      "type": "Microsoft.Resources/deployments",
       "properties": {
-        "frontendIPConfigurations": [
-          {
-            "name": "[variables('lbFrontEndIpConfigName')]",
-            "properties": {
-              "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses/', variables('lbPublicIPAddressName'))]"
-              }
-            }
-          }
-        ],
-        "backendAddressPools": [
-          {
-            "name": "[variables('lbBackendAddressPoolName')]"
-          }
-        ],
-        "loadBalancingRules": [
-          {
-            "name": "HTTP-LB-Rule",
-            "properties": {
-              "frontendIPConfiguration": {
-                "id": "[variables('lbFrontEndIPConfigID')]"
-              },
-              "backendAddressPool": {
-                "id": "[variables('lbBackendAddressPoolID')]"
-              },
-              "protocol": "tcp",
-              "frontendPort": "[variables('httpPort')]",
-              "backendPort": "[variables('adminSitePort')]",
-              "enableFloatingIP": false,
-              "idleTimeoutInMinutes": 5,
-              "probe": {
-                "id": "[concat(variables('lbID'),'/probes/lbProbe')]"
-              }
-            }
-          },
-          {
-            "name": "GethRPC-LB-Rule",
-            "properties": {
-              "frontendIPConfiguration": {
-                "id": "[variables('lbFrontEndIPConfigID')]"
-              },
-              "backendAddressPool": {
-                "id": "[variables('lbBackendAddressPoolID')]"
-              },
-              "protocol": "tcp",
-              "frontendPort": "[variables('gethRPCPort')]",
-              "backendPort": "[variables('gethRPCPort')]",
-              "enableFloatingIP": false,
-              "idleTimeoutInMinutes": 5
-            }
-          }
-        ],
-        "probes": [
-          {
-            "name": "lbProbe",
-            "properties": {
-              "protocol": "tcp",
-              "port": "[variables('adminSitePort')]",
-              "intervalInSeconds": 5,
-              "numberOfProbes": 2
-            }
-          }
-        ]
+        "mode": "incremental",
+        "templateLink": {
+          "uri": "[concat(variables('artifactsLocationURL'), '/nested/loadBalancer.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "dnsHostName":{"value": "[variables('namingInfix')]"},
+          "frontendPort1":{"value": "[variables('httpPort')]"},
+          "backendPort1":{"value": "[variables('adminSitePort')]"},
+          "frontendPort2":{"value": "[variables('gethRPCPort')]"},
+          "backendPort2":{"value": "[variables('gethRPCPort')]"}
+        }
       }
     },
     {
@@ -390,7 +320,7 @@
       "name": "[variables('mnNsgName')]",
       "location": "[resourceGroup().location]",
       "tags": {
-        "displayName": "NSG - Ethereum Nodes"
+        "displayName": "NSG - Mining (MN)"
       }
     },
     {
@@ -399,7 +329,7 @@
       "name": "[variables('txNsgName')]",
       "location": "[resourceGroup().location]",
       "tags": {
-        "displayName": "NSG - Jumpbox"
+        "displayName": "NSG - Transaction (TX)"
       },
       "properties": {
         "securityRules": [
@@ -454,6 +384,7 @@
       "name": "[variables('virtualNetworkName')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('txNsgName'))]",
         "[concat('Microsoft.Network/networkSecurityGroups/', variables('mnNsgName'))]"
       ],
       "properties": {
@@ -531,8 +462,8 @@
       },
       "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
-        "[concat('Microsoft.Network/loadBalancers/', variables('lbName'))]",
-        "[concat('Microsoft.Network/publicIPAddresses/', concat(variables('txPublicIPAddressNamePrefix'), copyIndex()))]"
+        "[concat('Microsoft.Network/publicIPAddresses/', concat(variables('txPublicIPAddressNamePrefix'), copyIndex()))]",
+        "loadBalancerLinkedTemplate"
       ],
       "properties": {
         "ipConfigurations": [
@@ -548,7 +479,7 @@
               },
               "loadBalancerBackendAddressPools": [
                 {
-                  "id": "[variables('lbBackendAddressPoolID')]"
+                  "id": "[reference('loadBalancerLinkedTemplate').outputs.backendAddressPoolID.value]"
                 }
               ]
             }
@@ -605,8 +536,8 @@
         },
         "osProfile": {
           "computerName": "[concat(variables('txVMNamePrefix'), copyIndex())]",
-          "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminUsername": "[variables('adminUsernameClean')]",
+          "adminPassword": "[variables('adminPasswordClean')]"
         },
         "storageProfile": {
           "imageReference": "[variables('ubuntuImage')]",
@@ -647,8 +578,8 @@
         },
         "osProfile": {
           "computerName": "[concat(variables('mnVMNamePrefix'), copyIndex())]",
-          "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminUsername": "[variables('adminUsernameClean')]",
+          "adminPassword": "[variables('adminPasswordClean')]"
         },
         "storageProfile": {
           "imageReference": "[variables('ubuntuImage')]",
@@ -694,9 +625,9 @@
           "mnVMNamePrefix":{"value": "[variables('mnVMNamePrefix')]"},
           "numMNNodes":{"value": "[variables('numMNNodes')]"},
           "artifactsLocationURL":{"value": "[variables('artifactsLocationURL')]"},
-          "adminUsername":{"value": "[parameters('adminUsername')]"},
-          "ethereumAccountPsswd":{"value": "[parameters('ethereumAccountPsswd')]"},
-          "ethereumAccountPassphrase": {"value": "[parameters('ethereumAccountPassphrase')]"},
+          "adminUsername":{"value": "[variables('adminUsernameClean')]"},
+          "ethereumAccountPsswd":{"value": "[variables('ethereumAccountPsswdClean')]"},
+          "ethereumAccountPassphrase": {"value": "[variables('ethereumAccountPassphraseClean')]"},
           "ethereumNetworkID":{"value": "[parameters('ethereumNetworkID')]"},
           "maxPeers":{"value": "[variables('maxPeers')]"},
           "nodeIDArray":{"value": "[variables('nodeIDArray')]"},
@@ -729,11 +660,11 @@
   "outputs": {
     "admin-site": {
       "type": "string",
-      "value": "[concat('http://', reference(variables('lbPublicIPAddressName')).dnsSettings.fqdn)]"
+      "value": "[reference('loadBalancerLinkedTemplate').outputs.fqdn.value]"
     },
     "ethereum-rpc-endpoint": {
       "type": "string",
-      "value": "[concat('http://', reference(variables('lbPublicIPAddressName')).dnsSettings.fqdn, ':8545')]"
+      "value": "[concat(reference('loadBalancerLinkedTemplate').outputs.fqdn.value, ':', variables('gethRPCPort'))]"
     }
   }
 }
