@@ -22,7 +22,7 @@ EOF
 
 for i in `seq 1 $4`; do
 		echo "[w$i]" >> t
-		echo rw=$mode >> t
+		echo rw=$2 >> t
 		echo directory=/datadisk >> t
 done
 
