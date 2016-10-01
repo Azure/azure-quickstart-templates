@@ -20,4 +20,4 @@ CONFIG_LOG_FILE_PATH="$HOMEDIR/config.log";
 cd "/home/$AZUREUSER";
 sudo -u $AZUREUSER sh -c "wget -N ${ARTIFACTS_URL_PREFIX}/scripts/configure-geth-azureuser.sh";
 
-sudo -u $AZUREUSER sh /home/$AZUREUSER/configure-geth-azureuser.sh $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 $11 $12 $13 >> CONFIG_LOG_FILE_PATH 2>&1;
+sudo -u $AZUREUSER sh /home/$AZUREUSER/configure-geth-azureuser.sh $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 $11 $12 $13 >> $CONFIG_LOG_FILE_PATH 2>&1;
