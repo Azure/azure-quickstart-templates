@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# print commands and arguments as they are executed
-set -x;
-
 #############
 # Parameters
 #############
