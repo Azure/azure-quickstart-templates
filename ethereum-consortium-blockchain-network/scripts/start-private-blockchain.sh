@@ -3,11 +3,14 @@
 #############
 # Parameters
 #############
-# Validate that all arguments are supplied
-#if [ $# -ne 1 ]; then echo "Incomplete parameters supplied. usage: \"$0 <config file path>\""; exit 1; fi
-
+if [ $# -lt 2 ]; then echo "Incomplete parameters supplied. usage: \"$0 <config file path> <ethereum account passwd>\""; exit 1; fi
 GETH_CFG=$1;
 PASSWD=$2;
+
+###########
+# Constants
+###########
+ETHERADMIN_LOG_FILE_PATH="$HOMEDIR/etheradmin.log";
 
 # Load config variables
 if [ ! -e $GETH_CFG ]; then echo "Config file not found. Exiting"; exit 1; fi
@@ -31,7 +34,7 @@ echo "===== Started geth =====";
 # Startup admin site on TX VMs
 if [ $NODE_TYPE -eq 0 ]; then
 	cd $ETHERADMIN_HOME;
-	nohup nodejs app.js $GETH_HOME/geth.ipc $PREFUND_ADDRESS $PASSWD $MN_NODE_PREFIX $NUM_MN_NODES $TX_NODE_PREFIX $NUM_TX_NODES >> etheradmin.log &
+	nohup nodejs app.js $GETH_HOME/geth.ipc $PREFUND_ADDRESS $PASSWD $MN_NODE_PREFIX $NUM_MN_NODES $TX_NODE_PREFIX $NUM_TX_NODES >> $ETHERADMIN_LOG_FILE_PATH 2>&1 &
 	echo "===== Started admin webserver =====";
 fi
 

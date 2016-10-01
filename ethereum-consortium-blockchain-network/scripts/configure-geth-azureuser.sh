@@ -174,5 +174,5 @@ printf "%s\n" "GETH_LOG_FILE_PATH=$GETH_LOG_FILE_PATH" >> $GETH_CFG_FILE_PATH;
 ############
 # Start geth
 ############
-sh $HOMEDIR/start-private-blockchain.sh $GETH_CFG_FILE_PATH $PASSWD >> $GETH_LOG_FILE_PATH 2>&1 &
+sh $HOMEDIR/start-private-blockchain.sh $GETH_CFG_FILE_PATH $PASSWD
 echo "===== Started geth node =====";
