@@ -25,9 +25,12 @@ fi
 
 VERBOSITY=4;
 
-nohup geth --datadir $GETH_HOME -verbosity $VERBOSITY --bootnodes $BOOTNODE_URLS --maxpeers $MAX_PEERS --nat none --networkid $NETWORK_ID --identity $IDENTITY $MINE_OPTIONS $FAST_SYNC --rpc --rpcaddr "$IPADDR" --rpccorsdomain "*" >> $GETH_LOG_FILE_PATH 2>&1 &
+START_COMMAND='geth --datadir $GETH_HOME -verbosity $VERBOSITY --bootnodes $BOOTNODE_URLS --maxpeers $MAX_PEERS --nat none --networkid $NETWORK_ID --identity $IDENTITY $MINE_OPTIONS $FAST_SYNC --rpc --rpcaddr "$IPADDR" --rpccorsdomain "*"'
+echo "===== Starting geth node with following command =====";
+echo "$START_COMMAND";
+nohup $START_COMMAND >> $GETH_LOG_FILE_PATH 2>&1 &
 if [ $? -ne 0 ]; then echo "Previous command failed. Exiting"; exit $?; fi
-echo "===== Started geth =====";
+echo "===== Started geth node =====";
 
 # Startup admin site on TX VMs
 if [ $NODE_TYPE -eq 0 ]; then
@@ -36,5 +39,4 @@ if [ $NODE_TYPE -eq 0 ]; then
   if [ $? -ne 0 ]; then echo "Previous command failed. Exiting"; exit $?; fi
   echo "===== Started admin webserver =====";
 fi
-
-echo "===== Completed executing start-private-blockchain.sh =====";
+echo "===== Completed $0 =====";

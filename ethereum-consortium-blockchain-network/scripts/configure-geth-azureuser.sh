@@ -176,4 +176,4 @@ printf "%s\n" "GETH_LOG_FILE_PATH=$GETH_LOG_FILE_PATH" >> $GETH_CFG_FILE_PATH;
 ############
 sh $HOMEDIR/start-private-blockchain.sh $GETH_CFG_FILE_PATH $PASSWD
 if [ $? -ne 0 ]; then echo "Previous command failed. Exiting"; exit $?; fi
-echo "===== Started geth node =====";
+echo "===== Completed $0 =====";
