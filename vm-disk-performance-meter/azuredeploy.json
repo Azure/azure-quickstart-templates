@@ -43,7 +43,7 @@
         "ReadWrite"
       ],
       "metadata": {
-        "description": "Storage Account type for the test disk"
+        "description": "Data disk caching type for the test disk"
       }
     },
     "testType": {
@@ -86,19 +86,33 @@
         "description": "Number of seconds for the test to run."
       }
     },
-      "adminUsername": {
-        "type": "string",
-        "metadata": {
-          "description": "Username for the test VMs."
-        }
-      },
-      "adminPassword": {
-        "type": "securestring",
-        "metadata": {
-          "description": "Password for the test VMs."
-        }
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Username for the test VMs."
       }
     },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the test VMs."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/vm-disk-performance-meter"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    }
+  },
   "variables": {
     "osVersion": "14.04.5-LTS",
     "imagePublisher": "Canonical",
@@ -110,26 +124,14 @@
     "subnetPrefix": "10.0.0.0/24",
     "storageAccountType": "Standard_LRS",
     "publicIPAddressName": "publicIP",
-    "publicIPAddressType": "Static",
     "vmStorageAccountContainerName": "vhds",
     "virtualNetworkName": "testVNET",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
     "scriptFolder": "scripts",
-    "scriptFileName": "testBandwidth.ps1",
     "vhdStorageAccountName": "[concat(uniqueString(resourceGroup().id), 'storage')]",
     "dataStorageAccountName": "[concat(uniqueString(resourceGroup().id), 'datastorage')]",
     "frontEndNSGName": "[concat('webtestnsg-', uniqueString(resourceGroup().id))]",
     "vmName": "testVM",
-    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
-    "qs": "'",
-    "diskCmd": "(echo n; echo p; echo 1; echo; echo; echo w) | fdisk /dev/sdc > /dev/null && mkfs -t ext4 /dev/sdc1 > /dev/null && mkdir /datadisk && mount /dev/sdc1 /datadisk",
-    "installCmd": "apt-get update > /dev/null && apt-get -y install fio > /dev/null",
-    "globalCmd": "[concat('echo [global] > t && echo size=', parameters('testSize'), ' >> t && echo direct=1 >> t && echo iodepth=256 >> t && echo ioengine=libaio >> t && echo bs=8k >> t')]",
-    "workerCmd": "[concat('echo rw=', parameters('testType'), ' >> t && echo directory=/datadisk >> t')]",
-    "cfgCmd": "[concat(variables('globalCmd'), ' && echo [w1] >> t && ', variables('workerCmd'), ' && echo [w2] >> t && ', variables('workerCmd'), ' && echo [w3] >> t && ', variables('workerCmd'), ' && echo [w4] >> t && ', variables('workerCmd'))]",
-    "warmupCmd": "[concat('fio --runtime ', parameters('secondsToRunTest'),  ' t > /dev/null')]",
-    "runCmd": "[concat('fio --runtime ', parameters('secondsToRunTest'),  ' t | grep -E \"READ:|WRITE:\" | tr \"\n\" \";\" | tr -s [:space:] | sed \"s/ :/:/g\" | sed \"s/= /=/g\" ')]",
-    "fullCmd": "[concat('sudo bash -c ', variables('qs'), variables('diskCmd'), ' && ', variables('installCmd'), ' && ', variables('cfgCmd'), ' && ', variables('runCmd'), variables('qs'))]"
+    "testScriptFileName": "disktest.sh"
   },
   "resources": [
     {
@@ -158,7 +160,7 @@
       "name": "[variables('publicIPAddressName')]",
       "location": "[resourceGroup().location]",
       "properties": {
-        "publicIPAllocationMethod": "[variables('publicIPAddressType')]"
+        "publicIPAllocationMethod": "Dynamic"
       }
     },
     {
@@ -201,7 +203,7 @@
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
               },
               "subnet": {
-                "id": "[variables('subnetRef')]"
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
               }
             }
           }
@@ -307,7 +309,10 @@
             "typeHandlerVersion": "1.5",
             "autoUpgradeMinorVersion": true,
             "settings": {
-              "commandToExecute": "[variables('fullCmd')]"
+              "fileUris": [
+                "[concat(parameters('_artifactsLocation'), '/', variables('scriptFolder'), '/', variables('testScriptFileName'), parameters('_artifactsLocationSasToken'))]"
+              ],
+              "commandToExecute": "[concat('sudo bash ', variables('testScriptFileName'), ' ', parameters('testSize'), ' ', parameters('testType'), ' ', parameters('secondsToRunTest'))]"
             }
           }
         }
