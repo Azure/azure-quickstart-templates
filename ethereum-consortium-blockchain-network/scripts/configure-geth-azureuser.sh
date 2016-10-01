@@ -15,14 +15,14 @@ PASSPHRASE=$3;
 ARTIFACTS_URL_PREFIX=$4;
 NETWORK_ID=$5;
 MAX_PEERS=$6;
-NODE_TYPE=$7; 		# (0=Transaction node; 1=Mining node )
+NODE_TYPE=$7;       # (0=Transaction node; 1=Mining node )
 GETH_IPC_PORT=$8;
 NUM_BOOT_NODES=$9;
 NUM_MN_NODES=$10;
 MN_NODE_PREFIX=$11;
 MN_NODE_SEQNUM=$12; # Only supplied for NODE_TYPE=1
-NUM_TX_NODES=$12;	# Only supplied for NODE_TYPE=0
-TX_NODE_PREFIX=$13;	# Only supplied for NODE_TYPE=0
+NUM_TX_NODES=$12;   # Only supplied for NODE_TYPE=0
+TX_NODE_PREFIX=$13; # Only supplied for NODE_TYPE=0
 
 ###########
 # Constants
@@ -101,13 +101,13 @@ sed s/#PREFUND_ADDRESS/$PREFUND_ADDRESS/ $HOMEDIR/genesis-intermediate.json > $H
 # Generate node key (boot nodes only)
 #####################################
 if [ $NODE_TYPE -eq 1 ] && [ $MN_NODE_SEQNUM -lt $NUM_BOOT_NODES ]; then #Boot nodes only
-	# Iterating since this version of bash doesn't support arrays
-	COUNTER=0;
-	for NODE_KEY in $NODE_KEY1 $NODE_KEY2 $NODE_KEY3 $NODE_KEY4 $NODE_KEY5; do
-		if [ $COUNTER -eq $MN_NODE_SEQNUM ]; then break; fi
-  		COUNTER=$(($COUNTER + 1));
-	done
-	printf %s $NODE_KEY > $NODEKEY_FILE_PATH;
+  # Iterating since this version of bash doesn't support arrays
+  COUNTER=0;
+  for NODE_KEY in $NODE_KEY1 $NODE_KEY2 $NODE_KEY3 $NODE_KEY4 $NODE_KEY5; do
+    if [ $COUNTER -eq $MN_NODE_SEQNUM ]; then break; fi
+    COUNTER=$(($COUNTER + 1));
+    done
+  printf %s $NODE_KEY > $NODEKEY_FILE_PATH;
 fi
 
 #################
@@ -120,19 +120,19 @@ echo "===== Completed geth initialization =====";
 # Setup admin website
 #####################
 if [ $NODE_TYPE -eq 0 ]; then # TX nodes only
-	mkdir -p $ETHERADMIN_HOME/views/layouts;
-	cd $ETHERADMIN_HOME/views/layouts;
-	wget -N ${ARTIFACTS_URL_PREFIX}/scripts/etheradmin/main.handlebars;
-	cd $ETHERADMIN_HOME/views;
-	wget -N ${ARTIFACTS_URL_PREFIX}/scripts/etheradmin/etheradmin.handlebars;
-	wget -N ${ARTIFACTS_URL_PREFIX}/scripts/etheradmin/etherstartup.handlebars;
-	cd $ETHERADMIN_HOME;
-	wget -N ${ARTIFACTS_URL_PREFIX}/scripts/etheradmin/package.json;
-	npm install;
-	wget -N ${ARTIFACTS_URL_PREFIX}/scripts/etheradmin/app.js;
-	mkdir $ETHERADMIN_HOME/public;
-	cd $ETHERADMIN_HOME/public;
-	wget -N ${ARTIFACTS_URL_PREFIX}/scripts/etheradmin/skeleton.css;
+  mkdir -p $ETHERADMIN_HOME/views/layouts;
+  cd $ETHERADMIN_HOME/views/layouts;
+  wget -N ${ARTIFACTS_URL_PREFIX}/scripts/etheradmin/main.handlebars;
+  cd $ETHERADMIN_HOME/views;
+  wget -N ${ARTIFACTS_URL_PREFIX}/scripts/etheradmin/etheradmin.handlebars;
+  wget -N ${ARTIFACTS_URL_PREFIX}/scripts/etheradmin/etherstartup.handlebars;
+  cd $ETHERADMIN_HOME;
+  wget -N ${ARTIFACTS_URL_PREFIX}/scripts/etheradmin/package.json;
+  npm install;
+  wget -N ${ARTIFACTS_URL_PREFIX}/scripts/etheradmin/app.js;
+  mkdir $ETHERADMIN_HOME/public;
+  cd $ETHERADMIN_HOME/public;
+  wget -N ${ARTIFACTS_URL_PREFIX}/scripts/etheradmin/skeleton.css;
 fi
 
 #########################
@@ -141,13 +141,13 @@ fi
 COUNTER=0;
 BOOTNODE_URLS="";
 for NODE_ID in $NODE_ID1 $NODE_ID2 $NODE_ID3 $NODE_ID4 $NODE_ID5; do
-	if [ $COUNTER -ge $NUM_BOOT_NODES ]; then break; fi
-  	IP_ADDR=`nslookup ${MN_NODE_PREFIX}${COUNTER}| egrep "Address: [0-9]"| cut -d' ' -f2`;
-	BOOTNODE_URLS="${BOOTNODE_URLS}enode://${NODE_ID}@${IP_ADDR}:${GETH_IPC_PORT}";
-    if [ $COUNTER -lt $(($NUM_BOOT_NODES - 1)) ]; then
-    	BOOTNODE_URLS="${BOOTNODE_URLS},";
-  	fi
-    COUNTER=$(($COUNTER + 1));
+  if [ $COUNTER -ge $NUM_BOOT_NODES ]; then break; fi
+  IP_ADDR=`nslookup ${MN_NODE_PREFIX}${COUNTER}| egrep "Address: [0-9]"| cut -d' ' -f2`;
+  BOOTNODE_URLS="${BOOTNODE_URLS}enode://${NODE_ID}@${IP_ADDR}:${GETH_IPC_PORT}";
+  if [ $COUNTER -lt $(($NUM_BOOT_NODES - 1)) ]; then
+      BOOTNODE_URLS="${BOOTNODE_URLS},";
+  fi
+  COUNTER=$(($COUNTER + 1));
 done
 
 ##################
@@ -160,12 +160,12 @@ printf "%s\n" "MAX_PEERS=$MAX_PEERS" >> $GETH_CFG_FILE_PATH;
 printf "%s\n" "NODE_TYPE=$NODE_TYPE" >> $GETH_CFG_FILE_PATH;
 printf "%s\n" "BOOTNODE_URLS=$BOOTNODE_URLS" >> $GETH_CFG_FILE_PATH;
 if [ $NODE_TYPE -eq 0 ]; then #TX node
-	printf "%s\n" "ETHERADMIN_HOME=$ETHERADMIN_HOME" >> $GETH_CFG_FILE_PATH;
-	printf "%s\n" "PREFUND_ADDRESS=$PREFUND_ADDRESS" >> $GETH_CFG_FILE_PATH;
-	printf "%s\n" "MN_NODE_PREFIX=$MN_NODE_PREFIX" >> $GETH_CFG_FILE_PATH;
-	printf "%s\n" "NUM_MN_NODES=$NUM_MN_NODES" >> $GETH_CFG_FILE_PATH;
-	printf "%s\n" "TX_NODE_PREFIX=$TX_NODE_PREFIX" >> $GETH_CFG_FILE_PATH;
-	printf "%s\n" "NUM_TX_NODES=$NUM_TX_NODES" >> $GETH_CFG_FILE_PATH;
+  printf "%s\n" "ETHERADMIN_HOME=$ETHERADMIN_HOME" >> $GETH_CFG_FILE_PATH;
+  printf "%s\n" "PREFUND_ADDRESS=$PREFUND_ADDRESS" >> $GETH_CFG_FILE_PATH;
+  printf "%s\n" "MN_NODE_PREFIX=$MN_NODE_PREFIX" >> $GETH_CFG_FILE_PATH;
+  printf "%s\n" "NUM_MN_NODES=$NUM_MN_NODES" >> $GETH_CFG_FILE_PATH;
+  printf "%s\n" "TX_NODE_PREFIX=$TX_NODE_PREFIX" >> $GETH_CFG_FILE_PATH;
+  printf "%s\n" "NUM_TX_NODES=$NUM_TX_NODES" >> $GETH_CFG_FILE_PATH;
 fi
 printf "%s\n" "MINER_THREADS=$MINER_THREADS" >> $GETH_CFG_FILE_PATH;
 printf "%s\n" "GETH_HOME=$GETH_HOME" >> $GETH_CFG_FILE_PATH;
