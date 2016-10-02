@@ -35,11 +35,9 @@ echo "===== Started geth node =====";
 # Startup admin site on TX VMs
 if [ $NODE_TYPE -eq 0 ]; then
   cd $ETHERADMIN_HOME;
-  echo "===== Starting geth node =====";
-  set -x;
+  echo "===== Starting admin webserver =====";
   nohup nodejs app.js $GETH_HOME/geth.ipc $PREFUND_ADDRESS $PASSWD $MN_NODE_PREFIX $NUM_MN_NODES $TX_NODE_PREFIX $NUM_TX_NODES >> $ETHERADMIN_LOG_FILE_PATH 2>&1 &
   if [ $? -ne 0 ]; then echo "Previous command failed. Exiting"; exit $?; fi
-  set +x;
   echo "===== Started admin webserver =====";
 fi
 echo "===== Completed $0 =====";
