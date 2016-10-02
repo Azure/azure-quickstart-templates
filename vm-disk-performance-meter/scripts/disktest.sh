@@ -1,11 +1,17 @@
 #!/bin/bash
 
 #init and mount data disk
-(echo n; echo p; echo 1; echo; echo; echo w) | fdisk /dev/sdc > /dev/null 
-mkfs -t ext4 /dev/sdc1 > /dev/null 
-mkdir /datadisk 
-mount /dev/sdc1 /datadisk
 
+if [ ! -d "/datadisk" ]; then
+	(echo n; echo p; echo 1; echo; echo; echo w) | fdisk /dev/sdc > /dev/null 
+	mkfs -t ext4 /dev/sdc1 > /dev/null 
+	mkdir /datadisk 
+	mount /dev/sdc1 /datadisk
+
+	echo "UUID=$(blkid | grep -oP '/dev/sdc1: UUID="*"\K[^"]*')   /datadisk   ext4   defaults   1   2" >> /etc/fstab
+	chmod go+w /datadisk
+fi
+ 
 #install fio
 apt-get update > /dev/null 
 apt-get -y install fio > /dev/null
