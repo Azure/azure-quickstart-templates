@@ -69,9 +69,9 @@ sudo apt-get -y update;
 sudo apt-get -y install npm;
 sudo update-alternatives --install /usr/bin/node nodejs /usr/bin/nodejs 100;
 
-##############
-# Setup Geth #
-##############
+############
+# Setup Geth
+############
 sudo apt-get -y install git;
 sudo apt-get -y install software-properties-common;
 #sudo add-apt-repository -y ppa:ethereum/ethereum-dev # We want the stable version
@@ -89,6 +89,7 @@ PRIV_KEY=`echo "$PASSPHRASE" | sha256sum | sed s/-// | sed "s/ //"`;
 printf "%s" $PRIV_KEY > $HOMEDIR/priv_genesis.key;
 PREFUND_ADDRESS=`geth --datadir $GETH_HOME --password $PASSWD_FILE account import $HOMEDIR/priv_genesis.key | grep -oP '\{\K[^}]+'`;
 rm $HOMEDIR/priv_genesis.key;
+rm $PASSWD_FILE;
 
 cd $HOMEDIR
 wget -N ${ARTIFACTS_URL_PREFIX}/scripts/start-private-blockchain.sh;

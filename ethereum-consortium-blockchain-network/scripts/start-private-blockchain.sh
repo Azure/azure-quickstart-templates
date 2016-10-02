@@ -25,18 +25,21 @@ fi
 
 VERBOSITY=4;
 
-START_COMMAND='geth --datadir $GETH_HOME -verbosity $VERBOSITY --bootnodes $BOOTNODE_URLS --maxpeers $MAX_PEERS --nat none --networkid $NETWORK_ID --identity $IDENTITY $MINE_OPTIONS $FAST_SYNC --rpc --rpcaddr "$IPADDR" --rpccorsdomain "*"'
-echo "===== Starting geth node with following command =====";
-echo "$START_COMMAND";
-nohup $START_COMMAND >> $GETH_LOG_FILE_PATH 2>&1 &
+echo "===== Starting geth node =====";
+set -x;
+nohup geth --datadir $GETH_HOME -verbosity $VERBOSITY --bootnodes $BOOTNODE_URLS --maxpeers $MAX_PEERS --nat none --networkid $NETWORK_ID --identity $IDENTITY $MINE_OPTIONS $FAST_SYNC --rpc --rpcaddr "$IPADDR" --rpccorsdomain "*" >> $GETH_LOG_FILE_PATH 2>&1 &
 if [ $? -ne 0 ]; then echo "Previous command failed. Exiting"; exit $?; fi
+set +x;
 echo "===== Started geth node =====";
 
 # Startup admin site on TX VMs
 if [ $NODE_TYPE -eq 0 ]; then
   cd $ETHERADMIN_HOME;
+  echo "===== Starting geth node =====";
+  set -x;
   nohup nodejs app.js $GETH_HOME/geth.ipc $PREFUND_ADDRESS $PASSWD $MN_NODE_PREFIX $NUM_MN_NODES $TX_NODE_PREFIX $NUM_TX_NODES >> $ETHERADMIN_LOG_FILE_PATH 2>&1 &
   if [ $? -ne 0 ]; then echo "Previous command failed. Exiting"; exit $?; fi
+  set +x;
   echo "===== Started admin webserver =====";
 fi
 echo "===== Completed $0 =====";
