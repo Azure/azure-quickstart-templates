@@ -232,6 +232,9 @@ install_mysql_centos() {
     fi
     echo "installing mysql"
     yum -y install http://www.percona.com/downloads/percona-release/redhat/0.1-3/percona-release-0.1-3.noarch.rpm
+	wget --no-cache https://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm
+	rpm -Uvh epel-release-latest-6.noarch.rpm
+	yum -y install libev
     yum -y install Percona-XtraDB-Cluster-56
     yum -y install xinetd
 }
