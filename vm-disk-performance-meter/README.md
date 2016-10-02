@@ -21,7 +21,13 @@ OutputsString           :
 
 ![alt text](images/diskperformance.png "Disk performance measurement output")
 
-Subsequent performance measurements can have different results. To re-measure and get full ouput you can login to the test VM with credentials you provided during deployment and use this a command like this:
+To re-measure and get full ouput you can login to the test VM with credentials you provided during deployment and use this a command like this:
+
+```shell
+sudo fio --runtime 30 /opt/vmdiskperf/t
+```
+
+Or make another test, like this:
 
 ```shell
 sudo echo -e '[io]\nrw=randrw\nsize=128m\ndirectory=/datadisk' | sudo fio -
