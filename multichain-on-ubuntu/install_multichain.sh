@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # If there is a problem initializing, check the log file (root permission required)
-# /var/log/azure/Microsoft.OSTCExtensions.CustomScriptForLinux/1.4.1.0/extension.log 
+# /var/log/azure/Microsoft.Azure.Extensions/<version>/handler.log
+# /var/lib/azure/customscript/download/<n>/(stdout|stderr)
 
 # Debug
 set -x

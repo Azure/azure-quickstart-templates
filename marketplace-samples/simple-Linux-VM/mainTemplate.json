@@ -1,217 +1,206 @@
 {
-    "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json",
-    "contentVersion": "1.0.0.0",
-    "parameters": {
-        "adminUserName": {
-            "type": "string",
-            "metadata": {
-                "description": "User name for the Virtual Machine."
-            }
-        },
-        "password": {
-            "type": "securestring",
-            "defaultValue": "",
-            "metadata": {
-                "descritpion": "Password for SSH"
-            }
-        },
-        "authenticationType": {
-            "type": "string",
-            "metadata": {
-                "descritpion": "Type of authentication "
-            }
-        },
-        "sshKey": {
-            "type": "string",
-            "defaultValue": "",
-            "metadata": {
-                "description": "SSH rsa public key file as a string."
-            }
-        },
-        "location": {
-            "type": "string",
-            "metadata": {
-                "description": "region of resources"
-            }
-        },
-        "clusterVmSize": {
-            "type": "string",
-            "defaultValue": "Standard_A2",
-            "metadata": {
-                "description": "Size of the VM"
-            }
-        },
-
-        "clusterNodeCount": {
-            "type": "int",
-            "defaultValue": 1,
-            "metadata": {
-                "description": "Number of VM to create"
-            }
-        },
-
-
-
-        "clusterName": {
-            "type": "string",
-            "metadata": {
-                "description": "Name of the VM"
-            }
-        },
-        "artifactsBaseUrl": {
-            "type": "string",
-            "metadata": {
-                "artifactsBaseUrl": "Base URL of the Publisher Template gallery package"
-            },
-            "defaultValue": ""
-        },
-        "ubuntuOSVersion": {
-            "type": "string",
-            "defaultValue": "14.04.2-LTS",
-            "allowedValues": [
-                "12.04.5-LTS",
-                "14.04.2-LTS",
-                "15.10"
-            ],
-            "metadata": {
-                "description": "The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version. Allowed values: 12.04.5-LTS, 14.04.2-LTS, 15.10."
-            }
-        }
+  "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminUserName": {
+      "type": "string",
+      "metadata": {
+        "description": "User name for the Virtual Machine."
+      }
     },
-    "variables": {
-
-        "addressPrefix": "10.0.0.0/16",
-        "subnet1Name": "Subnet-1",
-        "subnet1Prefix": "10.0.0.0/24",
-        "publicIPAddressName": "sshIP",
-        "publicIPAddressType": "Dynamic",
-        "vmStorageAccountContainerName": "vhds",
-        "nicName": "sshNIC",
-        "storageAccountType": "Standard_LRS",
-        "virtualNetworkName": "sshVNET",
-        "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
-        "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
-        "subnet1Ref": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]",
-        "templateBaseUrl": "[concat(parameters('artifactsBaseUrl'),'/')]",
-        "clusterNodesTemplateUrl": "[concat(variables('templateBaseUrl'), 'Simple-Linux-VM-',parameters('authenticationType'),'.json')]",
-        "newStorageAccountName": "[concat(parameters('clusterName'),'009')]",
-        "dnsNameForPublicIP": "parameters('clustername')"
+    "password": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "descritpion": "Password for SSH"
+      }
     },
-    "resources": [
-        {
-            "type": "Microsoft.Storage/storageAccounts",
-            "name": "[variables('newStorageAccountName')]",
-            "apiVersion": "2015-05-01-preview",
-            "location": "[parameters('location')]",
-            "properties": {
-                "accountType": "[variables('storageAccountType')]"
-            }
-        },
-        {
-            "apiVersion": "2015-05-01-preview",
-            "type": "Microsoft.Network/publicIPAddresses",
-            "name": "[variables('publicIPAddressName')]",
-            "location": "[parameters('location')]",
-            "properties": {
-                "publicIPAllocationMethod": "[variables('publicIPAddressType')]"
+    "authenticationType": {
+      "type": "string",
+      "metadata": {
+        "descritpion": "Type of authentication "
+      }
+    },
+    "sshKey": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "SSH rsa public key file as a string."
+      }
+    },
+    "clusterVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_A2",
+      "metadata": {
+        "description": "Size of the VM"
+      }
+    },
 
-            }
-        },
-        {
-            "apiVersion": "2015-05-01-preview",
-            "type": "Microsoft.Network/virtualNetworks",
-            "name": "[variables('virtualNetworkName')]",
-            "location": "[parameters('location')]",
-            "properties": {
-                "addressSpace": {
-                    "addressPrefixes": [
-                        "[variables('addressPrefix')]"
-                    ]
-                },
-                "subnets": [
-                    {
-                        "name": "[variables('subnet1Name')]",
-                        "properties": {
-                            "addressPrefix": "[variables('subnet1Prefix')]"
-                        }
-                    }
-                ]
-            }
-        },
-        {
-            "apiVersion": "2015-05-01-preview",
-            "type": "Microsoft.Network/networkInterfaces",
-            "name": "[variables('nicName')]",
-            "location": "[parameters('location')]",
-            "dependsOn": [
-                "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
-                "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
-            ],
-            "properties": {
-                "ipConfigurations": [
-                    {
-                        "name": "ipconfig1",
-                        "properties": {
-                            "privateIPAllocationMethod": "Dynamic",
-                            "publicIPAddress": {
-                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
-                            },
-                            "subnet": {
-                                "id": "[variables('subnet1Ref')]"
-                            }
-                        }
-                    }
-                ]
-            }
-        },
+    "clusterNodeCount": {
+      "type": "int",
+      "defaultValue": 1,
+      "metadata": {
+        "description": "Number of VM to create"
+      }
+    },
 
-        {
-            "name": "cluster-nodes",
-            "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2015-01-01",
-            "dependsOn": [
-                "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
-                "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
-                "[concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]"
-            ],
+
+
+    "clusterName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the VM"
+      }
+    },
+    "artifactsBaseUrl": {
+      "type": "string",
+      "metadata": {
+        "artifactsBaseUrl": "Base URL of the Publisher Template gallery package"
+      },
+      "defaultValue": ""
+    },
+    "ubuntuOSVersion": {
+      "type": "string",
+      "defaultValue": "14.04.2-LTS",
+      "allowedValues": [
+        "12.04.5-LTS",
+        "14.04.2-LTS",
+        "15.10"
+      ],
+      "metadata": {
+        "description": "The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version. Allowed values: 12.04.5-LTS, 14.04.2-LTS, 15.10."
+      }
+    }
+  },
+  "variables": {
+
+    "addressPrefix": "10.0.0.0/16",
+    "subnet1Name": "Subnet-1",
+    "subnet1Prefix": "10.0.0.0/24",
+    "publicIPAddressName": "sshIP",
+    "publicIPAddressType": "Dynamic",
+    "vmStorageAccountContainerName": "vhds",
+    "nicName": "sshNIC",
+    "storageAccountType": "Standard_LRS",
+    "virtualNetworkName": "sshVNET",
+    "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
+    "subnet1Ref": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]",
+    "templateBaseUrl": "[concat(parameters('artifactsBaseUrl'),'/')]",
+    "clusterNodesTemplateUrl": "[concat(variables('templateBaseUrl'), 'Simple-Linux-VM-',parameters('authenticationType'),'.json')]",
+    "newStorageAccountName": "[concat(parameters('clusterName'),'009')]",
+    "dnsNameForPublicIP": "parameters('clustername')"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('newStorageAccountName')]",
+      "apiVersion": "2015-05-01-preview",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "accountType": "[variables('storageAccountType')]"
+      }
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIPAddressName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]"
+
+      }
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnet1Name')]",
             "properties": {
-                "mode": "Incremental",
-                "templateLink": {
-                    "uri": "[variables('clusterNodesTemplateUrl')]",
-                    "contentVersion": "1.0.0.0"
-                },
-                "parameters": {
-                    "newStorageAccountName": {
-                        "value": "[variables('newStorageAccountName')]"
-                    },
-                    "adminUserName": {
-                        "value": "[parameters('adminUserName')]"
-                    },
-                    "sshKey": {
-                        "value": "[parameters('sshKey')]"
-                    },
-                    "sshKeyPath": {
-                        "value": "[variables('sshKeyPath')]"
-                    },
-                    "location": {
-                        "value": "[parameters('location')]"
-                    },
-                    "clusterVmSize": {
-                        "value": "[parameters('clusterVmSize')]"
-                    },
-                    "clusterName": {
-                        "value": "[parameters('clusterName')]"
-                    },
-                    "password": {
-                        "value": "[parameters('password')]"
-                    },
-                    "nicName": {
-                        "value": "[variables('nicName')]"
-                    }
-                }
+              "addressPrefix": "[variables('subnet1Prefix')]"
             }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nicName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
+              },
+              "subnet": {
+                "id": "[variables('subnet1Ref')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+
+    {
+      "name": "cluster-nodes",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('clusterNodesTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "newStorageAccountName": {
+            "value": "[variables('newStorageAccountName')]"
+          },
+          "adminUserName": {
+            "value": "[parameters('adminUserName')]"
+          },
+          "sshKey": {
+            "value": "[parameters('sshKey')]"
+          },
+          "sshKeyPath": {
+            "value": "[variables('sshKeyPath')]"
+          },
+          "clusterVmSize": {
+            "value": "[parameters('clusterVmSize')]"
+          },
+          "clusterName": {
+            "value": "[parameters('clusterName')]"
+          },
+          "password": {
+            "value": "[parameters('password')]"
+          },
+          "nicName": {
+            "value": "[variables('nicName')]"
+          }
         }
-    ]
+      }
+    }
+  ]
 }
-
-

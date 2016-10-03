@@ -35,19 +35,6 @@
         "description": "Image SKU"
       }
     },
-    "storageAccountName": {
-      "type": "string",
-      "metadata": {
-        "description": "Unique namespace for the Storage Account where the Virtual Machine's disks will be placed"
-      }
-    },
-    "region": {
-      "type": "string",
-      "defaultValue": "West US",
-      "metadata": {
-        "description": "Location where resources will be provisioned"
-      }
-    },
     "virtualNetworkName": {
       "type": "string",
       "defaultValue": "myVNETspark",
@@ -132,6 +119,7 @@
     }
   },
   "variables": {
+    "storageAccountName": "[concat(uniquestring(resourceGroup().id),'storage')]",
     "vmStorageAccountContainerName": "vhd",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
     "subnetRef": "[concat(variables('vnetID'),'/subnets/',parameters('subnetName'))]",
@@ -171,11 +159,8 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "region": {
-            "value": "[parameters('region')]"
-          },
           "storageAccountName": {
-            "value": "[parameters('storageAccountName')]"
+            "value": "[variables('storageAccountName')]"
           },
           "virtualNetworkName": {
             "value": "[parameters('virtualNetworkName')]"
@@ -206,9 +191,6 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "region": {
-            "value": "[parameters('region')]"
-          },
           "virtualNetworkName": {
             "value": "[parameters('virtualNetworkName')]"
           },
@@ -216,7 +198,7 @@
             "value": "[parameters('subnetName')]"
           },
           "storageAccountName": {
-            "value": "[parameters('storageAccountName')]"
+            "value": "[variables('storageAccountName')]"
           },
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
@@ -234,7 +216,7 @@
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat('nic', copyindex())]",
-      "location": "[parameters('region')]",
+      "location": "[resourceGroup().location]",
       "copy": {
         "name": "nicLoop",
         "count": "[variables('numberOfMasterInstances')]"
@@ -261,7 +243,7 @@
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat('nicsl', copyindex())]",
-      "location": "[parameters('region')]",
+      "location": "[resourceGroup().location]",
       "copy": {
         "name": "nicslLoop",
         "count": "[variables('numberOfSlavesInstances')]"
@@ -288,7 +270,7 @@
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat('mastervm', copyindex())]",
-      "location": "[parameters('region')]",
+      "location": "[resourceGroup().location]",
       "copy": {
         "name": "virtualMachineLoopMaster",
         "count": "[variables('numberOfMasterInstances')]"
@@ -322,7 +304,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('https://',parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/','osdisk', copyindex() ,'.vhd')]"
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob,variables('vmStorageAccountContainerName'),'/','osdisk', copyindex() ,'.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -341,7 +323,7 @@
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat('slavevm', copyindex())]",
-      "location": "[parameters('region')]",
+      "location": "[resourceGroup().location]",
       "copy": {
         "name": "virtualMachineLoop",
         "count": "[variables('numberOfSlavesInstances')]"
@@ -376,7 +358,7 @@
           "osDisk": {
             "name": "osdisksl",
             "vhd": {
-              "uri": "[concat('https://',parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/','osdisksl', copyindex() ,'.vhd')]"
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob,variables('vmStorageAccountContainerName'),'/','osdisksl', copyindex() ,'.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -395,7 +377,7 @@
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat('mastervm', copyindex(), '/installsparkmaster')]",
       "apiVersion": "2015-05-01-preview",
-      "location": "[parameters('region')]",
+      "location": "[resourceGroup().location]",
       "copy": {
         "name": "virtualMachineExtensionsLoopMaster",
         "count": "[variables('numberOfMasterInstances')]"
@@ -405,9 +387,10 @@
         "[concat('Microsoft.Network/networkInterfaces/', 'nic', copyindex())]"
       ],
       "properties": {
-        "publisher": "Microsoft.OSTCExtensions",
-        "type": "CustomScriptForLinux",
-        "typeHandlerVersion": "1.2",
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
             "[concat(variables('scriptUrl'), 'spark-cluster-install.sh')]"
@@ -420,7 +403,7 @@
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat('slavevm', copyindex(), '/installsparkslave')]",
       "apiVersion": "2015-05-01-preview",
-      "location": "[parameters('region')]",
+      "location": "[resourceGroup().location]",
       "copy": {
         "name": "virtualMachineExtensionsLoopSlave",
         "count": "[variables('numberOfSlavesInstances')]"
@@ -430,9 +413,10 @@
         "[concat('Microsoft.Network/networkInterfaces/', 'nicsl', copyindex())]"
       ],
       "properties": {
-        "publisher": "Microsoft.OSTCExtensions",
-        "type": "CustomScriptForLinux",
-        "typeHandlerVersion": "1.2",
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
             "[concat(variables('scriptUrl'), 'spark-cluster-install.sh')]"

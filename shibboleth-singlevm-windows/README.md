@@ -1,6 +1,9 @@
 # Deploy Shibboleth Identity Provider on Windows on a single VM.
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fshibboleth-singlevm-windows%2Fazuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fshibboleth-singlevm-windows%2Fazuredeploy.json" target="_blank">
+    <img src="http://armviz.io/visualizebutton.png"/>
+</a>
 
 This template deploys Shibboleth Identity Provider on Windows. It creates a single Windows VM, installs JDK and Apache Tomcat, deploys Shibboleth Identity Provider, and then configures everything for SSL access to the Shibboleth IDP.  After the deployment is successful, you can go to https://your-server:8443/idp/profile/status (note port number) to check success. Note that, in case of smaller size VM's, it may take a few minutes for the installation script to complete even after the deployment status is shown as succeeded. For further details, please refer to the Shibboleth IDP documentation at https://wiki.shibboleth.net/confluence/display/SHIB2/IdPInstall.
 
