@@ -2,14 +2,9 @@
 
 This Microsoft Azure template deploys a single Emercoin client which will connect to the public Emercoin network.
 
-[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Femercoin-ubuntu%2Fazuredeploy.json)
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Femercoin-ubuntu%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
-</a>
-
 Once your deployment is complete you will be able to connect to the Emercoin public network.
 
-![Emercoin-Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/emercoin-ubuntu/images/emercoin.png)
+![Emercoin-Azure](https://raw.githubusercontent.com/gatneil/azure-quickstart-templates/blockchainmerger/blockchain/images/emercoin.png)
 
 # Template Parameters
 When you launch the installation of the VM, you need to specify the following parameters:

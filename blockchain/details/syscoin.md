@@ -4,9 +4,6 @@ This template delivers the Syscoin network to your VM in about 15 minutes (PPA i
 You may select to build from source or install from the community provided Personal Package Archive (PPA).  Once installed, 'syscoind' will begin syncing the public blockchain. 
 You may then connect via SSH to the VM and launch 'syscoind' to interface with the blockchain.
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsyscoin-on-ubuntu%2Fazuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsyscoin-on-ubuntu%2Fazuredeploy.json" target="_blank"><img src="http://armviz.io/visualizebutton.png"/></a>
-
 # What is Syscoin?
 
 What is Syscoin?
