@@ -16,6 +16,6 @@ ARTIFACTS_URL_PREFIX=$4
 # Get the script for running as Azure user
 #############
 cd "/home/$AZUREUSER";
-sudo -u $AZUREUSER sh -c "wget -N ${ARTIFACTS_URL_PREFIX}/scripts/configure-geth-azureuser.sh";
+sudo -u $AZUREUSER /bin/bash -c "wget -N ${ARTIFACTS_URL_PREFIX}/scripts/configure-geth-azureuser.sh";
 
-sudo -u $AZUREUSER sh /home/$AZUREUSER/configure-geth-azureuser.sh $1 $2 $3 $4 $5 $6 $7 $8 $9 $10 $11 $12 $13;
+sudo -u $AZUREUSER /bin/bash /home/$AZUREUSER/configure-geth-azureuser.sh $1 $2 $3 $4 $5 $6 $7 $8 $9 ${10} ${11} ${12} ${13};
