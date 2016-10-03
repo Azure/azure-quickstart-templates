@@ -106,6 +106,7 @@ sed s/#PREFUND_ADDRESS/$PREFUND_ADDRESS/ $HOMEDIR/genesis-intermediate.json > $H
 ####################
 if [ $NODE_TYPE -eq 0 ]; then #Boot node logic
 	printf %s ${NODE_KEYS[$BOOT_NODE_SEQNUM]} > $NODEKEY_FILE_PATH;
+fi
 
 #################
 # Initialize geth
