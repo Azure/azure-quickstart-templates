@@ -9,11 +9,11 @@ This Microsoft Azure Resource Manager template deploys a single VM and offers a 
 
 Options for blockchain software include:
 
-- bitswift
-- blocknet
-- emercoin
-- influx
-- jumbucks
-- syscoin
-- viacoin
+- [bitswift](https://github.com/gatneil/azure-quickstart-templates/blob/blockchainmerger/blockchain/details/bitswift.md)
+- [blocknet](https://github.com/gatneil/azure-quickstart-templates/blob/blockchainmerger/blockchain/details/blocknet.md)
+- [emercoin](https://github.com/gatneil/azure-quickstart-templates/blob/blockchainmerger/blockchain/details/emercoin.md)
+- [influx](https://github.com/gatneil/azure-quickstart-templates/blob/blockchainmerger/blockchain/details/influx.md)
+- [jumbucks](https://github.com/gatneil/azure-quickstart-templates/blob/blockchainmerger/blockchain/details/jumbucks.md)
+- [syscoin](https://github.com/gatneil/azure-quickstart-templates/blob/blockchainmerger/blockchain/details/syscoin.md)
+- [viacoin](https://github.com/gatneil/azure-quickstart-templates/blob/blockchainmerger/blockchain/details/viacoin.md)
 
