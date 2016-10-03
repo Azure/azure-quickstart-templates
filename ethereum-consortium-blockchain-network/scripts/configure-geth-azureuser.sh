@@ -133,7 +133,7 @@ if [ $NODE_TYPE -eq 0 ]; then # TX nodes only
   wget -N ${ARTIFACTS_URL_PREFIX}/scripts/etheradmin/skeleton.css;
 fi
 
-####################
+#########################
 # Generate boot node URLs
 ####################
 BOOTNODE_URLS="";
