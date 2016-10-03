@@ -5,9 +5,6 @@ This template delivers the Viacoin network to your VM in about 20 minutes.  Ever
 You may build from source.  Once installed, 'viacoind' will begin syncing the public blockchain. 
 You may then connect via SSH to the VM and launch 'viacoind' to interface with the blockchain.
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fviacoin-blockchain-ubuntu%2Fazuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fviacoin-blockchain-ubuntu%2Fazuredeploy.json" target="_blank"><img src="http://armviz.io/visualizebutton.png"/></a>
-
 # What is Viacoin?
 
 Viacoin is a digital currency similar to Bitcoin that allows the creation of applications on top of the Viacoin blockchain 
