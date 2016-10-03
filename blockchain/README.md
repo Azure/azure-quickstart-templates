@@ -9,4 +9,11 @@ This Microsoft Azure Resource Manager template deploys a single VM and offers a 
 
 Options for blockchain software include:
 
-- Emercoin
+- bitswift
+- blocknet
+- emercoin
+- influx
+- jumbucks
+- syscoin
+- viacoin
+
