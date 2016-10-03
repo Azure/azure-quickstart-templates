@@ -1,0 +1,531 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "trafficManagerProfiles_tmdemo_name": {
+      "defaultValue": "tmdemo",
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Traffice Manager profile name"
+      }
+    },
+    "SubscriptionID": {
+      "defaultValue": "5b3782ca-045c-481b-9b47-c63ad646dbf1",
+      "type": "string",
+      "minLength": 30,
+      "metadata": {
+        "description": "Subscription ID"
+      }
+    },
+    "ResourceGroupName1": {
+      "defaultValue": "UKInternetLB",
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Resource Group name of web site1 hosted"
+      }
+    },
+    "ResourceGroupName2": {
+      "defaultValue": "UKInternetfacingLB-2",
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Resource Group name of web site2 hosted"
+      }
+    },
+
+    "RG1_EndPoint_Name": {
+      "defaultValue": "Region1Endpoint",
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Region1 Endpoint name"
+      }
+    },
+    "RG2_EndPoint_Name": {
+      "defaultValue": "Region2Endpoint",
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Region2 Endpoint name"
+      }
+    },
+    "RG1_Location_Name": {
+      "defaultValue": "SouthIndia",
+      "type": "string"
+    },
+    "RG2_Location_Name": {
+      "defaultvalue": "NorthEurope",
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Azure Region valid name"
+      }
+    },
+    "sites_RG1WebApp_name": {
+      "defaultValue": "SouthIndiaweb",
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Azure Region Valid name"
+      }
+    },
+    "sites_RG2WebApp_name": {
+      "defaultValue": "UKWeb",
+      "type": "string"
+    },
+    "RG1_TargetSite_Name": {
+      "defaultValue": "ukweb01.northeurope.cloudapp.azure.com",
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Web site URL1"
+      }
+    },
+    "RG2_TargetSite_Name": {
+      "defaultValue": "southindiawebapp092316.southindia.cloudapp.azure.com",
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Web site URL2"
+      }
+    },
+    "VMs_admin": {
+      "defaultValue": "admin123",
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Admin username"
+      }
+    },
+    "VMs_adminPassword": {
+      "defaultValue": "TestUser@123",
+      "type": "securestring",
+      "minLength": 1,
+      "metadata": {
+        "description": "Admin Password"
+      }
+    },
+
+    "RG1_VM_PrefixName": {
+      "defaultValue": "rg1vm",
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Test VM prefix name1"
+      }
+    },
+    "RG2_VM_PrefixName": {
+      "defaultValue": "rg2vm",
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Test VM Preix name2"
+      }
+    }
+  },
+  "variables": {
+    "RG2_StorageAccount_Name": "[concat('rg1', uniqueString(resourceGroup().id))]",
+    "RG1_StorageAccount_Name": "[concat('rg2', uniqueString(resourceGroup().id))]",
+    "RG1_VM_Name": "[concat(parameters('RG1_VM_PrefixName'),'tm')]",
+    "RG2_VM_Name": "[concat(parameters('RG2_VM_PrefixName'),'tm')]",
+    "RG1_VM_Vnet_Name": "[concat('Vnet_',variables('RG1_VM_Name'))]",
+    "RG2_VM_Vnet_Name": "[concat('Vnet_',variables('RG2_VM_Name'))]",
+    "RG1_VM_nic_Name": "[concat('nic_',variables('RG1_VM_Name'))]",
+    "RG2_VM_nic_Name": "[concat('nic_',variables('RG2_VM_Name'))]",
+    "RG1_VM_PublicIP_Name": "[concat('PIP_',variables('RG1_VM_Name'))]",
+    "RG2_VM_PublicIP_Name": "[concat('PIP_',variables('RG2_VM_Name'))]",
+    "RG1_VM_nsg_Name": "[concat('nsg_',variables('RG1_VM_Name'))]",
+    "RG2_VM_nsg_Name": "[concat('nsg_',variables('RG2_VM_Name'))]",
+    "trafficManagerProfiles_ramtmdemo_targetResourceId1": "[concat('/subscriptions/',parameters('subscriptionid'), '/resourceGroups/', parameters('ResourceGroupName1'),'/providers/Microsoft.Network/publicIPAddresses/',parameters('sites_RG1WebApp_name'))]",
+    "trafficManagerProfiles_ramtmdemo_targetResourceId2": "[concat('/subscriptions/',parameters('subscriptionid'), '/resourceGroups/', parameters('ResourceGroupName2'),'/providers/Microsoft.Network/publicIPAddresses/',parameters('sites_RG2WebApp_name'))]"
+  },
+  "resources": [
+    {
+      "comments": "Ram Kotti's Traffic Manager Demo.",
+      "type": "Microsoft.Storage/storageAccounts",
+      "sku": {
+        "name": "Standard_LRS",
+        "tier": "Standard"
+      },
+      "kind": "Storage",
+      "name": "[variables('RG1_StorageAccount_Name')]",
+      "apiVersion": "2016-01-01",
+      "location": "[parameters('RG1_Location_Name')]", //"parameters('RG1_Location_Name')",
+      "tags": {},
+      "properties": {},
+      "resources": [],
+      "dependsOn": []
+    },
+    {
+      "comments": "Ram Kotti's Traffic Manager Demo.",
+      "type": "Microsoft.Storage/storageAccounts",
+      "sku": {
+        "name": "Standard_LRS",
+        "tier": "Standard"
+      },
+      "kind": "Storage",
+      "name": "[variables('RG2_StorageAccount_Name')]",
+      "apiVersion": "2016-01-01",
+      "location": "[parameters('RG2_Location_Name')]", //"parameters('RG2_Location_Name')",
+      "tags": {},
+      "properties": {},
+      "resources": [],
+      "dependsOn": []
+    },
+    {
+      "comments": "Ram Kotti's Traffic Manager Demo.",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('RG1_VM_Vnet_Name')]",
+      "apiVersion": "2016-03-30",
+      "location": "[parameters('RG1_Location_Name')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.4.0.0/16"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "default",
+            "properties": {
+              "addressPrefix": "10.4.0.0/24"
+            }
+          }
+        ]
+      },
+      "resources": [],
+      "dependsOn": []
+    },
+    {
+      "comments": "Ram Kotti's Traffic Manager Demo.",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('RG2_VM_Vnet_Name')]",
+      "apiVersion": "2016-03-30",
+      "location": "[parameters('RG2_Location_Name')]", //"parameters('RG2_Location_Name')",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.5.0.0/16"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "default",
+            "properties": {
+              "addressPrefix": "10.5.0.0/24"
+            }
+          }
+        ]
+      },
+      "resources": [],
+      "dependsOn": []
+    },
+    {
+      "comments": "Ram Kotti's Traffic Manager Demo.",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('RG1_VM_Name')]",
+      "apiVersion": "2015-06-15",
+      "location": "[parameters('RG1_Location_Name')]",
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "Standard_DS1_v2"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "MicrosoftWindowsServer",
+            "offer": "WindowsServer",
+            "sku": "2012-R2-Datacenter",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[variables('RG1_VM_Name')]",
+            "createOption": "FromImage",
+            "vhd": {
+              "uri": "[concat('https', '://', variables('RG1_StorageAccount_Name'), '.blob.core.windows.net', concat('/vhds/', variables('RG1_VM_Name'),'.vhd'))]"
+            },
+            "caching": "ReadWrite"
+          },
+          "dataDisks": []
+        },
+        "osProfile": {
+          "computerName": "[variables('RG1_VM_Name')]",
+          "adminUsername": "[parameters('VMs_admin')]",
+          "windowsConfiguration": {
+            "provisionVMAgent": true,
+            "enableAutomaticUpdates": true
+          },
+          "secrets": [],
+          "adminPassword": "[parameters('VMs_adminPassword')]"
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('RG1_VM_nic_Name'))]"
+            }
+          ]
+        }
+      },
+      "resources": [],
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('RG1_StorageAccount_Name'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('RG1_VM_nic_Name'))]"
+      ]
+    },
+    {
+      "comments": "Ram Kotti's Traffic Manager Demo.",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('RG2_VM_Name')]",
+      "apiVersion": "2015-06-15",
+      "location": "[parameters('RG2_Location_Name')]",
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "Standard_DS1_v2"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "MicrosoftWindowsServer",
+            "offer": "WindowsServer",
+            "sku": "2012-R2-Datacenter",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[variables('RG2_VM_Name')]",
+            "createOption": "FromImage",
+            "vhd": {
+              "uri": "[concat('https', '://', variables('RG2_StorageAccount_Name'), '.blob.core.windows.net', concat('/vhds/',variables('RG2_VM_Name'),'.vhd'))]"
+            },
+            "caching": "ReadWrite"
+          },
+          "dataDisks": []
+        },
+        "osProfile": {
+          "computerName": "[variables('RG2_VM_Name')]",
+          "adminUsername": "[parameters('VMs_admin')]",
+          "windowsConfiguration": {
+            "provisionVMAgent": true,
+            "enableAutomaticUpdates": true
+          },
+          "secrets": [],
+          "adminPassword": "[parameters('VMs_adminPassword')]"
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('RG2_VM_nic_Name'))]"
+            }
+          ]
+        }
+      },
+      "resources": [],
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('RG2_StorageAccount_Name'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('RG2_VM_nic_Name'))]"
+      ]
+    },
+    {
+      "comments": "Ram Kotti's Traffic Manager Demo.",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('RG1_VM_nic_Name')]",
+      "apiVersion": "2016-03-30",
+      "location": "[parameters('RG1_Location_Name')]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAddress": "10.5.0.4",
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('RG1_VM_PublicIP_Name'))]"
+              },
+              "subnet": {
+                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('RG1_VM_Vnet_Name')), '/subnets/default')]"
+              }
+            }
+          }
+        ],
+        "dnsSettings": {
+          "dnsServers": []
+        },
+        "enableIPForwarding": false,
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('RG1_VM_nsg_Name'))]"
+        }
+      },
+      "resources": [],
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('RG1_VM_PublicIP_Name'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks',variables('RG1_VM_Vnet_Name'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('RG1_VM_nsg_Name'))]"
+      ]
+    },
+    {
+      "comments": "Ram Kotti's Traffic Manager Demo.",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('RG2_VM_nic_Name')]",
+      "apiVersion": "2016-03-30",
+      "location": "[parameters('RG2_Location_Name')]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAddress": "10.4.0.4",
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('RG2_VM_PublicIP_Name'))]"
+              },
+              "subnet": {
+                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('RG2_VM_Vnet_Name')), '/subnets/default')]"
+              }
+            }
+          }
+        ],
+        "dnsSettings": {
+          "dnsServers": []
+        },
+        "enableIPForwarding": false,
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('RG2_VM_nsg_Name'))]"
+        }
+      },
+      "resources": [],
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses',variables('RG2_VM_PublicIP_Name'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('RG2_VM_Vnet_Name'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups',variables('RG2_VM_nsg_Name'))]"
+      ]
+    },
+    {
+      "comments": "Ram Kotti's Traffic Manager Demo.",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('RG1_VM_nsg_Name')]",
+      "apiVersion": "2016-03-30",
+      "location": "[parameters('RG1_Location_Name')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "default-allow-rdp",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3389",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1000,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      },
+      "resources": [],
+      "dependsOn": []
+    },
+    {
+      "comments": "Ram Kotti's Traffic Manager Demo.",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('RG2_VM_nsg_Name')]",
+      "apiVersion": "2016-03-30",
+      "location": "[parameters('RG2_Location_Name')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "default-allow-rdp",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3389",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1000,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      },
+      "resources": [],
+      "dependsOn": []
+    },
+    {
+      "comments": "Ram Kotti's Traffic Manager Demo.",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('RG1_VM_PublicIP_Name')]",
+      "apiVersion": "2016-03-30",
+      "location": "[parameters('RG1_Location_Name')]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "idleTimeoutInMinutes": 4
+       
+      },
+      "resources": [],
+      "dependsOn": []
+    },
+    {
+      "comments": "Ram Kotti's Traffic Manager Demo.",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('RG2_VM_PublicIP_Name')]",
+      "apiVersion": "2016-03-30",
+      "location": "[parameters('RG2_Location_Name')]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "idleTimeoutInMinutes": 4
+        
+      },
+      "resources": [],
+      "dependsOn": []
+    },
+    {
+      "comments": "Ram Kotti's traffic Manager Profiles/tmdemo'.",
+      "type": "Microsoft.Network/trafficManagerProfiles",
+      "name": "[parameters('trafficManagerProfiles_tmdemo_name')]",
+      "apiVersion": "2015-11-01",
+      "location": "global",
+      "properties": {
+        "profileStatus": "Enabled",
+        "trafficRoutingMethod": "Performance",
+        "dnsConfig": {
+          "relativeName": "[parameters('trafficManagerProfiles_tmdemo_name')]",
+          "fqdn": "[concat(parameters('trafficManagerProfiles_tmdemo_name'),'.trafficmanager.net')]",
+          "ttl": 300
+        },
+        "monitorConfig": {
+          "protocol": "HTTP",
+          "port": 80,
+          "path": "/"
+        },
+        "endpoints": [
+          {
+            "name": "[parameters('RG1_EndPoint_Name')]",
+            "type": "Microsoft.Network/trafficManagerProfiles/azureEndpoints",
+            "properties": {
+              "endpointStatus": "Enabled",
+              "targetResourceId": "[variables('trafficManagerProfiles_ramtmdemo_targetResourceId1')]",
+              "target": "[parameters('RG1_TargetSite_Name')]",
+              "weight": 1,
+              "priority": 1,
+              "endpointLocation": "North Europe"
+            }
+          },
+          {
+            "name": "[parameters('RG2_EndPoint_Name')]",
+            "type": "Microsoft.Network/trafficManagerProfiles/azureEndpoints",
+            "properties": {
+              "endpointStatus": "Enabled",
+              "targetResourceId": "[variables('trafficManagerProfiles_ramtmdemo_targetResourceId2')]",
+              "target": "[parameters('RG2_TargetSite_Name')]",
+              "weight": 1,
+              "priority": 2,
+              "endpointLocation": "North Europe"
+            }
+          }
+        ]
+      },
+      "resources": [],
+      "dependsOn": []
+    }
+  ]
+}
