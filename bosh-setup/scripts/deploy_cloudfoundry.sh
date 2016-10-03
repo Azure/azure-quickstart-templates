@@ -7,10 +7,27 @@ fi
 
 set -e
 
-stemcell_url=`grep azure-hyperv-ubuntu-trusty-go_agent bosh.yml | awk '{print $2}'`
-bosh upload stemcell $stemcell_url
-bosh upload release https://bosh.io/d/github.com/cloudfoundry/cf-release?v=231
-
 manifest=$1
+default_password="c1oudc0w"
+
+while true; do
+  read -p "Enter a password to use in $manifest [$default_password]:" password
+  password=${password:-$default_password}
+  read -p "Please double check your password [$password]. Type yes to continue:" ret
+  if [ "$ret" == "yes" ]; then
+    break
+  fi
+done
+
+password=$(echo $password | sed 's/\//\\\//g')
+password=${password:-$default_password}
+sed -i "s/REPLACE_WITH_PASSWORD/$password/g" $manifest
+
+bosh upload stemcell REPLACE_WITH_STEMCELL_URL --sha1 REPLACE_WITH_STEMCELL_SHA1 --skip-if-exists
+bosh upload release REPLACE_WITH_CF_RELEASE_URL --sha1 REPLACE_WITH_CF_RELEASE_SHA1 --skip-if-exists
+bosh upload release REPLACE_WITH_DIEGO_RELEASE_URL --sha1 REPLACE_WITH_DIEGO_RELEASE_SHA1 --skip-if-exists
+bosh upload release REPLACE_WITH_GARDEN_RELEASE_URL --sha1 REPLACE_WITH_GARDEN_RELEASE_SHA1 --skip-if-exists
+bosh upload release REPLACE_WITH_CFLINUXFS2_RELEASE_URL --sha1 REPLACE_WITH_CFLINUXFS2_RELEASE_SHA1 --skip-if-exists
+
 bosh deployment $manifest
 bosh -n deploy

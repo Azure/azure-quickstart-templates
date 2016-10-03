@@ -32,7 +32,7 @@ if [ ! -e "$file" ]
 then
     rm -rf .git
     git init .
-    git remote add -t \* -f origin https://github.com/john-connor/vanillacoin.git
+    git remote add -t \* -f origin https://github.com/john-connor/vcash.git
     git checkout master
 fi
 

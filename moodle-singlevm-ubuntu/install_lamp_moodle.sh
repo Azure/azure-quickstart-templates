@@ -6,6 +6,8 @@ apt-get -y update
 
 # set up a silent install of MySQL
 dbpass=$1
+moodleVersion=$2
+installOfficePlugins=$3
 
 export DEBIAN_FRONTEND=noninteractive
 echo mysql-server-5.6 mysql-server/root_password password $dbpass | debconf-set-selections
@@ -27,11 +29,21 @@ SQL="${Q1}${Q2}${Q3}"
 
 $MYSQL -uroot -p$dbpass -e "$SQL"
 
+apt-get install unzip
+
 # install Moodle
 cd /var/www/html
-wget https://download.moodle.org/download.php/direct/stable30/moodle-3.0.2.zip -O moodle.zip
-apt-get install unzip
+curl -k --max-redirs 10 https://github.com/moodle/moodle/archive/$moodleVersion.zip -L -o moodle.zip
 unzip moodle.zip
+mv moodle-$moodleVersion moodle
+
+# install Office 365 plugins if asked for
+if [ "$installOfficePlugins" = "True" ]; then
+    curl -k --max-redirs 10 https://github.com/Microsoft/o365-moodle/archive/$moodleVersion.zip -L -o o365.zip
+    unzip o365.zip
+    cp -r o365-moodle-$moodleVersion/* moodle
+    rm -rf o365-moodle-$moodleVersion
+fi
 
 # make the moodle directory writable for owner
 chown -R www-data moodle

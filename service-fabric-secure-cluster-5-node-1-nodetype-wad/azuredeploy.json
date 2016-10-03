@@ -2,15 +2,8 @@
   "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "clusterLocation": {
-      "type": "string",
-      "metadata": {
-        "description": "Location of the Cluster"
-      }
-    },
     "clusterName": {
       "type": "string",
-      "defaultValue": "Cluster",
       "metadata": {
         "description": "Name of your cluster - Between 3 and 23 characters. Letters and numbers only"
       }
@@ -31,7 +24,6 @@
     },
     "adminUserName": {
       "type": "string",
-      "defaultValue": "testadm",
       "metadata": {
         "description": "Remote desktop user Id"
       }
@@ -131,7 +123,6 @@
     }
   },
   "variables": {
-    "computeLocation": "[parameters('clusterLocation')]",
     "dnsName": "[parameters('clusterName')]",
     "vmStorageAccountName": "[toLower(concat(uniqueString(resourceGroup().id), '1' ))]",
     "vmName": "vm",
@@ -176,7 +167,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('vmStorageAccountName')]",
-      "location": "[variables('computeLocation')]",
+      "location": "[resourceGroup().location]",
       "properties": {
         "accountType": "[parameters('storageAccountType')]"
       },
@@ -189,7 +180,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('supportLogStorageAccountName')]",
-      "location": "[variables('computeLocation')]",
+      "location": "[resourceGroup().location]",
       "properties": {
         "accountType": "[parameters('supportLogStorageAccountType')]"
       },
@@ -202,7 +193,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('applicationDiagnosticsStorageAccountName')]",
-      "location": "[variables('computeLocation')]",
+      "location": "[resourceGroup().location]",
       "properties": {
         "accountType": "[parameters('applicationDiagnosticsStorageAccountType')]"
       },
@@ -215,7 +206,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
-      "location": "[variables('computeLocation')]",
+      "location": "[resourceGroup().location]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -240,7 +231,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[concat(variables('lbIPName'),'-','0')]",
-      "location": "[variables('computeLocation')]",
+      "location": "[resourceGroup().location]",
       "properties": {
         "dnsSettings": {
           "domainNameLabel": "[variables('dnsName')]"
@@ -256,7 +247,7 @@
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/loadBalancers",
       "name": "[concat('LB','-', parameters('clusterName'),'-',variables('vmNodeType0Name'))]",
-      "location": "[variables('computeLocation')]",
+      "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/',concat(variables('lbIPName'),'-','0'))]"
       ],
@@ -274,7 +265,7 @@
         "backendAddressPools": [
           {
             "name": "LoadBalancerBEAddressPool",
-            "properties": {}
+            "properties": { }
           }
         ],
         "loadBalancingRules": [
@@ -417,7 +408,7 @@
       "apiVersion": "2016-03-30",
       "type": "Microsoft.Compute/virtualMachineScaleSets",
       "name": "[variables('vmNodeType0Name')]",
-      "location": "[variables('computeLocation')]",
+      "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('vmStorageAccountName'))]",
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
@@ -589,7 +580,7 @@
       "apiVersion": "2016-03-01",
       "type": "Microsoft.ServiceFabric/clusters",
       "name": "[parameters('clusterName')]",
-      "location": "[parameters('clusterLocation')]",
+      "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('supportLogStorageAccountName'))]"
       ],
@@ -598,8 +589,8 @@
           "thumbprint": "[parameters('certificateThumbprint')]",
           "x509StoreName": "[parameters('certificateStoreValue')]"
         },
-        "clientCertificateCommonNames": [],
-        "clientCertificateThumbprints": [],
+        "clientCertificateCommonNames": [ ],
+        "clientCertificateThumbprints": [ ],
         "clusterState": "Default",
         "diagnosticsStorageAccountConfig": {
           "blobEndpoint": "[concat('https://',variables('supportLogStorageAccountName'),'.blob.core.windows.net/')]",
