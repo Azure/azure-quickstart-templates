@@ -11,4 +11,4 @@ This template creates a Visual Studio 2013 or 2015 VM from the base gallery VM i
 
 A valid MSDN subscription user must be authenticated to be able to create the VM images which are not Visual Studio Community Edition on top of Windows Server.
 
-By default, it will deploy Visual Studio 2015 Update 2 Community Edition with Azure SDK 2.9 on Windows 10 with Office 2016 Desktop on top of a new premium storage account.
+By default, it will deploy Visual Studio 2015 Update 2 Community Edition with Azure SDK 2.9 on Windows Server 2012 R2 with Office 2016 Desktop on top of a new premium storage account.
