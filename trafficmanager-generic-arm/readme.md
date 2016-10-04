@@ -7,6 +7,6 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-Create traffic manager profile for given any two regions by using this generic template. 
+Create traffic manager profile for given any two regions by using this generic template with nominal parameters. 
 
 This template includes Virtual Network support, allow you to provision two test VMs on given regions to use them to test this traffic manager.
