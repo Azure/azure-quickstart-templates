@@ -18,6 +18,7 @@ Options for blockchain software include:
 - [influx](https://github.com/gatneil/azure-quickstart-templates/blob/blockchainmerger/blockchain/details/influx.md)
 - [jumbucks](https://github.com/gatneil/azure-quickstart-templates/blob/blockchainmerger/blockchain/details/jumbucks.md)
 - [monero](https://github.com/gatneil/azure-quickstart-templates/blob/blockchainmerger/blockchain/details/monero.md)
+- [multichain](https://github.com/gatneil/azure-quickstart-templates/blob/blockchainmerger/blockchain/details/multichain.md)
 - [syscoin](https://github.com/gatneil/azure-quickstart-templates/blob/blockchainmerger/blockchain/details/syscoin.md)
 - [vcash](https://github.com/gatneil/azure-quickstart-templates/blob/blockchainmerger/blockchain/details/vcash.md)
 - [viacoin](https://github.com/gatneil/azure-quickstart-templates/blob/blockchainmerger/blockchain/details/viacoin.md)
