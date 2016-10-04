@@ -30,19 +30,9 @@ For more information, as well as an immediately useable, binary version of
 the Syscoin client sofware, see http://www.syscoin.org.
 
 
-# Template Parameters
-
-When you click the Deploy to Azure icon above, you need to specify the following template parameters:
-
-* `adminUsername`: This is the account for connecting to your Syscoin host.
-* `adminPassword`: This is your password for the host.  Azure requires passwords to have One upper case, one lower case, a special character, and a number.
-* `dnsLabelPrefix`: This is used as both the VM name and DNS name of your public IP address.  Please ensure an unique name.
-* `installMethod`: This tells Azure how to install the software.  The default is using the community provided PPA.  You may choose to install from source, but be advised this method takes substantially longer to complete.
-* `vmSize`: This is the size of the VM to use.  Recommendations: Use the A series for PPA installs, and D series for installations from source.
-
 # Getting Started Tutorial
 
-* Click the `Deploy to Azure` icon above
+* Click the `Deploy to Azure` icon for this template
 * Complete the template parameters, choose your resource group, accept the terms and click Create
 * Wait about 15 minutes for the VM to spin up and install the software
 * Connect to the VM via SSH using the DNS name assigned to your Public IP
