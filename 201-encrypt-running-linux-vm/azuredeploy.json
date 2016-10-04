@@ -18,7 +18,7 @@
     "diskFormatQuery": {
       "defaultValue": "",
       "metadata": {
-        "description": "the query string used to identify the disks to format and encrypt. This parameter only works when you choose the EncryptionOperation as EnableEncryptionFormat.[{\"scsi\":\"6:0:0:1\",\"name\":\"azuredisk\"},{\"dev_path\":\"/dev/sdx\",\"name\":\"azuredisk2\",\"file_system\":\"ext4\"}], the scsi means the disk scsi number, the name means the mount point name, the file_system is the file system to use."
+        "description": "the query string used to identify the disks to format and encrypt. This parameter only works when you set the EncryptionOperation as EnableEncryptionFormat. For example, passing [{\"dev_path\":\"/dev/md0\",\"name\":\"encryptedraid\",\"file_system\":\"ext4\"}] will format /dev/md0, encrypt it and mount it at /mnt/dataraid. This parameter should only be used for RAID devices. The specified device must not have any existing filesystem on it."
       },
       "type": "string"
     },
@@ -27,6 +27,14 @@
       "defaultValue": "EnableEncryption",
       "metadata": {
         "description": "EnableEncryption would encrypt the disks in place and EnableEncryptionFormat would format the disks directly"
+      },
+      "type": "string"
+    },
+    "volumeType": {
+      "allowedValues": [ "OS", "Data", "All" ],
+      "defaultValue": "Data",
+      "metadata": {
+        "description": "Defines which drives should be encrypted. OS encryption is supported on RHEL 7.2, CentOS 7.2 & Ubuntu 16.04."
       },
       "type": "string"
     },
@@ -63,7 +71,7 @@
       },
       "type": "string"
     },
-    "useExistingKek": {
+    "useKek": {
       "allowedValues": [
         "nokek",
         "kek"
@@ -79,14 +87,27 @@
         "description": "Name of the virtual machine"
       },
       "type": "string"
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      }
     }
   },
   "variables": {
     "extensionName": "AzureDiskEncryptionForLinux",
     "extensionVersion": "0.1",
     "keyEncryptionAlgorithm": "RSA-OAEP",
-    "updateVmUrl": "[concat('https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-encrypt-running-linux-vm/updatevm-',parameters('useExistingKek'),'.json')]",
-    "volumeType": "Data",
+    "updateVmUrl": "[concat(parameters('_artifactsLocation'), '/', '201-encrypt-running-linux-vm', '/', 'updatevm-', parameters('useKek'), '.json', parameters('_artifactsLocationSasToken'))]",
     "keyVaultURL": "[concat('https://', parameters('keyVaultName'), '.vault.azure.net/')]",
     "keyVaultResourceID": "[concat(subscription().id,'/resourceGroups/',parameters('keyVaultResourceGroup'),'/providers/Microsoft.KeyVault/vaults/', parameters('keyVaultName'))]"
   },
@@ -101,7 +122,7 @@
           "AADClientSecret": "[parameters('aadClientSecret')]",
           "Passphrase": "[parameters('passphrase')]"
         },
-        "publisher": "Microsoft.OSTCExtensions",
+        "publisher": "Microsoft.Azure.Security",
         "settings": {
           "AADClientID": "[parameters('aadClientID')]",
           "DiskFormatQuery": "[parameters('diskFormatQuery')]",
@@ -110,7 +131,7 @@
           "KeyEncryptionKeyURL": "[parameters('keyEncryptionKeyURL')]",
           "KeyVaultURL": "[variables('keyVaultURL')]",
           "SequenceVersion": "[parameters('sequenceVersion')]",
-          "VolumeType": "[variables('volumeType')]"
+          "VolumeType": "[parameters('volumeType')]"
         },
         "type": "AzureDiskEncryptionForLinux",
         "typeHandlerVersion": "[variables('extensionVersion')]"
@@ -121,7 +142,7 @@
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines/extensions',  parameters('vmName'), variables('extensionName'))]"
       ],
-      "name": "updatevm",
+      "name": "[concat(parameters('vmName'), 'updateVm')]",
       "type": "Microsoft.Resources/deployments",
       "properties": {
         "mode": "Incremental",

@@ -120,8 +120,6 @@ service ntpd start
 service ntpd status
 chkconfig ntpd on
 
-yum install -y microsoft-hyper-v
-
 echo never | tee -a /sys/kernel/mm/transparent_hugepage/enabled
 echo "echo never | tee -a /sys/kernel/mm/transparent_hugepage/enabled" | tee -a /etc/rc.local
 echo vm.swappiness=1 | tee -a /etc/sysctl.conf
