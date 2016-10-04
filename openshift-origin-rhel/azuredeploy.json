@@ -2,19 +2,27 @@
 	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
 	"contentVersion": "1.0.0.0",
 	"parameters": {
+		"_artifactsLocation": {
+			"type": "string",
+			"metadata": {
+				"description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated.",
+				"artifactsBaseUrl": ""
+			},
+			"defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/openshift-origin-rhel/"
+		},
 		"masterVmSize": {
 			"type": "string",
-			"defaultValue": "Standard_D3",
+			"defaultValue": "Standard_DS2_v2",
 			"allowedValues": [
 				"Standard_A4", "Standard_A5", "Standard_A6", "Standard_A7", "Standard_A8", "Standard_A9", "Standard_A10", "Standard_A11",
-				"Standard_D3", "Standard_D4",
+				"Standard_D2", "Standard_D3", "Standard_D4",
 				"Standard_D11", "Standard_D12", "Standard_D13", "Standard_D14",
-				"Standard_D3_v2", "Standard_D4_v2", "Standard_D5_v2",
+				"Standard_D2_v2", "Standard_D3_v2", "Standard_D4_v2", "Standard_D5_v2",
 				"Standard_D11_v2", "Standard_D12_v2", "Standard_D13_v2", "Standard_D14_v2",
 				"Standard_G1", "Standard_G2", "Standard_G3", "Standard_G4", "Standard_G5",
-				"Standard_DS3", "Standard_DS4",
+				"Standard_DS2", "Standard_DS3", "Standard_DS4",
 				"Standard_DS11", "Standard_DS12", "Standard_DS13", "Standard_DS14",
-				"Standard_DS3_v2", "Standard_DS4_v2", "Standard_DS5_v2",
+				"Standard_DS2_v2", "Standard_DS3_v2", "Standard_DS4_v2", "Standard_DS5_v2",
 				"Standard_DS11_v2", "Standard_DS12_v2", "Standard_DS13_v2", "Standard_DS14_v2",
 				"Standard_GS1", "Standard_GS2", "Standard_GS3", "Standard_GS4", "Standard_GS5"
 			],
@@ -24,22 +32,30 @@
 		},
 		"nodeVmSize": {
 			"type": "string",
-			"defaultValue": "Standard_D3",
+			"defaultValue": "Standard_DS2_v2",
 			"allowedValues": [
 				"Standard_A4", "Standard_A5", "Standard_A6", "Standard_A7", "Standard_A8", "Standard_A9", "Standard_A10", "Standard_A11",
-				"Standard_D3", "Standard_D4",
+				"Standard_D2", "Standard_D3", "Standard_D4",
 				"Standard_D11", "Standard_D12", "Standard_D13", "Standard_D14",
-				"Standard_D3_v2", "Standard_D4_v2", "Standard_D5_v2",
+				"Standard_D2_v2", "Standard_D3_v2", "Standard_D4_v2", "Standard_D5_v2",
 				"Standard_D11_v2", "Standard_D12_v2", "Standard_D13_v2", "Standard_D14_v2",
 				"Standard_G1", "Standard_G2", "Standard_G3", "Standard_G4", "Standard_G5",
-				"Standard_DS3", "Standard_DS4",
+				"Standard_DS2", "Standard_DS3", "Standard_DS4",
 				"Standard_DS11", "Standard_DS12", "Standard_DS13", "Standard_DS14",
-				"Standard_DS3_v2", "Standard_DS4_v2", "Standard_DS5_v2",
+				"Standard_DS2_v2", "Standard_DS3_v2", "Standard_DS4_v2", "Standard_DS5_v2",
 				"Standard_DS11_v2", "Standard_DS12_v2", "Standard_DS13_v2", "Standard_DS14_v2",
 				"Standard_GS1", "Standard_GS2", "Standard_GS3", "Standard_GS4", "Standard_GS5"
 			],
 			"metadata": {
 				"description": "OpenShift Node VM(s) size"
+			}
+		},
+		"osImage": {
+			"type": "string",
+			"allowedValues": ["centos", "rhel"],
+			"defaultValue": "centos",
+			"metadata": {
+				"description": "OS to use for image - CentOS or RHEL"
 			}
 		},
 		"openshiftMasterHostname": {
@@ -98,11 +114,32 @@
 				"description": "SSH public key on all VMs"
 			}
 		},
-		"sshPrivateKey": {
+		"subscriptionId": {
+			"type": "string",
+			"minLength": 1,
+			"metadata": {
+				"description": "Azure Subscription ID"
+			}
+		},
+		"keyVaultResourceGroup": {
+			"type": "string",
+			"minLength": 1,
+			"metadata": {
+				"description": "Resource Group that contains the Key Vault"
+			}
+		},
+		"keyVaultName": {
+			"type": "string",
+			"minLength": 1,
+			"metadata": {
+				"description": "Name of the Key Vault"
+			}
+		},
+		"keyVaultSecret": {
 			"type": "securestring",
 			"minLength": 1,
 			"metadata": {
-				"description": "SSH private key for deploying OpenShift"
+				"description": "Key Vault Secret Name that contains the Private Key"
 			}
 		}
 	},
@@ -116,29 +153,34 @@
 		"masterSubnetPrefix": "10.0.0.0/24",
 		"nodeSubnetPrefix": "10.0.1.0/24",
 		"virtualNetworkName": "osvnet",
-		"nodeLbPublicIpAddressName": "[concat(variables('namingInfix'), 'lbpip')]",
 		"masterSubnetName": "mastersubnet",
 		"nodeSubnetName": "[concat(variables('namingInfix'), 'nodesubnet')]",
 		"nodeLoadBalancerName": "[concat(variables('namingInfix'), 'lb')]",
-		"nodePublicIpAddressId": "[resourceId('Microsoft.Network/publicIPAddresses', variables('nodeLbPublicIpAddressName'))]",
+		"nodePublicIpAddressId": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('nodeLbPublicIpDnsLabelPrefix'))]",
 		"nodeLbId": "[resourceId('Microsoft.Network/loadBalancers', variables('nodeLoadBalancerName'))]",
 		"lbFrontEndConfigId": "[concat(variables('nodeLbId'), '/frontendIPConfigurations/loadBalancerFrontEnd')]",
 		"lbBackendPoolId": "[concat(variables('nodeLbId'),'/backendAddressPools/loadBalancerBackend')]",
 		"lbHttpProbeId": "[concat(variables('nodeLbId'),'/probes/httpProbe')]",
 		"lbHttpsProbeId": "[concat(variables('nodeLbId'),'/probes/httpsProbe')]",
-		"osType": {
+		"centos": { 
+			"publisher": "Openlogic", 
+			"offer": "CentOS", 
+			"sku": "7.2", 
+			"version": "latest" 
+		}, 
+		"rhel": {
 			"publisher": "RedHat",
 			"offer": "RHEL",
 			"sku": "7.2",
 			"version": "latest"
 		},
-		"imageReference": "[variables('osType')]",
+		"imageReference": "[variables(parameters('osImage'))]",
 		"sshKeyPath": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
-		"nodePrepScriptUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/openshift-origin-rhel/scripts/nodePrep.sh",
-		"masterPrepScriptUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/openshift-origin-rhel/scripts/masterPrep.sh",
+		"nodePrepScriptUrl": "[concat(parameters('_artifactsLocation'), 'scripts/nodePrep.sh')]",
+		"masterPrepScriptUrl": "[concat(parameters('_artifactsLocation'), 'scripts/masterPrep.sh')]",
 		"nodePrepScriptFileName": "nodePrep.sh",
 		"masterPrepScriptFileName": "masterPrep.sh",
-		"openshiftDeploymentTemplateUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/openshift-origin-rhel/nested/openshiftdeploy.json",
+		"openshiftDeploymentTemplateUrl": "[concat(parameters('_artifactsLocation'), 'nested/openshiftdeploy.json')]",
 		"vmSizesMap": {
 			"Standard_A4": {
 				"storageAccountType": "Standard_LRS"
@@ -353,14 +395,14 @@
 			}
 		}, {
 			"type": "Microsoft.Network/publicIPAddresses",
-			"name": "[variables('nodeLbPublicIpAddressName')]",
-			"location": "[variables('location')]",
+			"name": "[parameters('nodeLbPublicIpDnsLabelPrefix')]",
+			"location": "[resourceGroup().location]",
 			"apiVersion": "2015-06-15",
 			"tags": {
 				"displayName": "OpenShiftNodeLBPublicIP"
 			},
 			"properties": {
-				"publicIPAllocationMethod": "Dynamic",
+				"publicIPAllocationMethod": "Static",
 				"dnsSettings": {
 					"domainNameLabel": "[parameters('nodeLbPublicIpDnsLabelPrefix')]"
 				}
@@ -380,7 +422,7 @@
 				"displayName": "OpenShiftNodeLB"
 			},
 			"dependsOn": [
-				"[concat('Microsoft.Network/publicIPAddresses/', variables('nodeLbPublicIpAddressName'))]"
+				"[concat('Microsoft.Network/publicIPAddresses/', parameters('nodeLbPublicIpDnsLabelPrefix'))]"
 			],
 			"properties": {
 				"frontendIPConfigurations": [{
@@ -458,7 +500,7 @@
 			"properties": {
 				"publicIPAllocationMethod": "Static",
 				"dnsSettings": {
-					"domainNameLabel": "[concat(parameters('openshiftMasterPublicIpDnsLabelPrefix'), 'pip')]"
+					"domainNameLabel": "[parameters('openshiftMasterPublicIpDnsLabelPrefix')]"
 				}
 			}
 		}, {
@@ -697,6 +739,9 @@
 					"contentVersion": "1.0.0.0"
 				},
 				"parameters": {
+					"_artifactsLocation": {
+						"value": "[parameters('_artifactsLocation')]"
+					},
 					"openshiftMasterHostname": {
 						"value": "[parameters('openshiftMasterHostname')]"
 					},
@@ -718,11 +763,19 @@
 					"adminPassword": {
 						"value": "[parameters('adminPassword')]"
 					},
+					"defaultSubDomain": {
+						"value": "[concat(reference(parameters('nodeLbPublicIpDnsLabelPrefix')).ipAddress, '.xip.io')]"
+					},
 					"sshPublicKey": {
 						"value": "[parameters('sshPublicKey')]"
 					},
 					"sshPrivateKey": {
-						"value": "[parameters('sshPrivateKey')]"
+						"reference": {
+							"keyvault": {
+								"id": "[concat('/subscriptions/', parameters('subscriptionId'), '/resourceGroups/', parameters('keyVaultResourceGroup'), '/providers/Microsoft.KeyVault/vaults/', parameters('keyVaultName'))]"
+							},
+							"secretName": "[parameters('keyVaultSecret')]"
+						}
 					}
 				}
 			}
@@ -739,7 +792,7 @@
 		},
 		"openshiftNodeLoadBalancerFQDN": {
 			"type": "string",
-			"value": "[reference(variables('nodeLbPublicIpAddressName')).dnsSettings.fqdn]"
+			"value": "[reference(parameters('nodeLbPublicIpDnsLabelPrefix')).dnsSettings.fqdn]"
 		}
 	}
 }
