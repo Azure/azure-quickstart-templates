@@ -5,7 +5,7 @@
     "clusterName": {
       "type": "string",
       "metadata": {
-        "description": "The name of the HDInsight cluster to create."
+        "description": "The name of the HDInsight cluster to be created. The cluster name must be globally unique."
       }
     },
     "clusterLoginUserName": {
@@ -34,85 +34,24 @@
         "description": "The password must be at least 10 characters in length and must contain at least one digit, one non-alphanumeric character, and one upper or lower case letter."
       }
     },
-    "location": {
-      "type": "string",
-      "defaultValue": "East US",
-      "allowedValues": [
-        "East US",
-        "East US 2",
-        "North Central US",
-        "South Central US",
-        "West US",
-        "North Europe",
-        "West Europe",
-        "East Asia",
-        "Southeast Asia",
-        "Japan East",
-        "Japan West",
-        "Australia East",
-        "Australia Southeast"
-      ],
-      "metadata": {
-        "description": "The location where all azure resources will be deployed."
-      }
-    },
-    "clusterType": {
-      "type": "string",
-      "defaultValue": "hadoop",
-      "allowedValues": [
-        "hadoop",
-        "hbase",
-        "storm",
-        "spark"
-      ],
-      "metadata": {
-        "description": "The type of the HDInsight cluster to create."
-      }
-    },
-    "clusterWorkerNodeCount": {
-      "type": "int",
-      "defaultValue": 2,
-      "metadata": {
-        "description": "The number of nodes in the HDInsight cluster."
-      }
-    },
-    "edgeNodeSize": {
+    "installScriptAction":{
       "type": "string",
       "metadata": {
-          "description": "Size of the edge node that hosts the application"
+        "description": ""
       },
-      "defaultValue": "Standard_D3",
-      "allowedValues": [
-          "Standard_A1",
-          "Standard_A2",
-          "Standard_A3",
-          "Standard_A4",
-          "Standard_D1",
-          "Standard_D2",
-          "Standard_D3",
-          "Standard_D4"
-      ]
-    },
-    "edgeNodePrefix": {
-        "type": "string",
-        "metadata": {
-            "description": "Edgenode prefix"
-        },
-        "defaultValue": "new"
+      "defaultValue": "https://raw.githubusercontent.com/hdinsight/Iaas-Applications/master/EmptyNode/scripts/EmptyNodeSetup.sh"
     }
   },
   "variables": {
-    "defaultApiVersion": "2015-05-01-preview",
-    "clusterApiVersion": "2015-03-01-preview",
     "clusterStorageAccountName": "[concat(parameters('clusterName'),'store')]",
-    "applicationName": "[concat(parameters('edgeNodePrefix'), '-', 'edgenode')]"
+    "applicationName": "new-edgenode"
   },
   "resources": [
     {
       "name": "[variables('clusterStorageAccountName')]",
       "type": "Microsoft.Storage/storageAccounts",
-      "location": "[parameters('location')]",
-      "apiVersion": "[variables('defaultApiVersion')]",
+      "location": "East US",
+      "apiVersion": "2015-05-01-preview",
       "dependsOn": [ ],
       "tags": {
 
@@ -124,8 +63,8 @@
     {
       "name": "[parameters('clusterName')]",
       "type": "Microsoft.HDInsight/clusters",
-      "location": "[parameters('location')]",
-      "apiVersion": "[variables('clusterApiVersion')]",
+      "location": "East US",
+      "apiVersion": "2015-03-01-preview",
       "dependsOn": [ "[concat('Microsoft.Storage/storageAccounts/',variables('clusterStorageAccountName'))]" ],
       "tags": {
 
@@ -134,7 +73,7 @@
         "clusterVersion": "3.2",
         "osType": "Linux",
         "clusterDefinition": {
-          "kind": "[parameters('clusterType')]",
+          "kind": "hadoop",
           "configurations": {
             "gateway": {
               "restAuthCredential.isEnabled": true,
@@ -146,10 +85,10 @@
         "storageProfile": {
           "storageaccounts": [
             {
-              "name": "[concat(variables('clusterStorageAccountName'),'.blob.core.windows.net')]",
+              "name": "[reference(concat('Microsoft.Storage/storageAccounts/', variables('clusterStorageAccountName')), '2015-06-15').primaryEndpoints.blob]",
               "isDefault": true,
               "container": "[parameters('clusterName')]",
-              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('clusterStorageAccountName')), variables('defaultApiVersion')).key1]"
+              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('clusterStorageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).key1]"
             }
           ]
         },
@@ -170,7 +109,7 @@
             },
             {
               "name": "workernode",
-              "targetInstanceCount": "[parameters('clusterWorkerNodeCount')]",
+              "targetInstanceCount": 2,
               "hardwareProfile": {
                 "vmSize": "Standard_D3"
               },
@@ -190,7 +129,7 @@
     {
         "name": "[concat(parameters('clusterName'),'/', variables('applicationName'))]",
         "type": "Microsoft.HDInsight/clusters/applications",
-        "apiVersion": "[variables('clusterApiVersion')]",
+        "apiVersion": "2015-03-01-preview",
         "dependsOn": [ "[concat('Microsoft.HDInsight/clusters/',parameters('clusterName'))]" ],
         "properties": {
             "marketPlaceIdentifier": "EmptyNode",
@@ -199,13 +138,13 @@
                     "name": "edgenode",
                     "targetInstanceCount": 1,
                     "hardwareProfile": {
-                        "vmSize": "[parameters('edgeNodeSize')]"
+                        "vmSize": "Standard_D3"
                     }
                 }]
             },
             "installScriptActions": [{
                 "name": "[concat('emptynode','-' ,uniquestring(variables('applicationName')))]",
-                "uri": "https://raw.githubusercontent.com/hdinsight/Iaas-Applications/master/EmptyNode/scripts/EmptyNodeSetup.sh",
+                "uri": "[parameters('installScriptAction')]",
                 "roles": ["edgenode"]
             }],
             "uninstallScriptActions": [],
