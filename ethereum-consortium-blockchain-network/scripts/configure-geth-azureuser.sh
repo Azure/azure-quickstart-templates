@@ -20,7 +20,7 @@ GETH_IPC_PORT=$8;
 NUM_BOOT_NODES=$9;
 NUM_MN_NODES=${10};
 MN_NODE_PREFIX=${11};
-BOOT_NODE_SEQNUM=${12}; 	#Only supplied for NODE_TYPE=1
+MN_NODE_SEQNUM=${12}; 	#Only supplied for NODE_TYPE=1
 NUM_TX_NODES=${12};		#Only supplied for NODE_TYPE=0
 TX_NODE_PREFIX=${13};		#Only supplied for NODE_TYPE=0
 
@@ -71,12 +71,12 @@ declare -a NODE_IDS
 for i in `seq 0 $(($NUM_BOOT_NODES - 1))`; do
 	BOOT_NODE_HOSTNAME=$MN_NODE_PREFIX$i
 	NODE_KEYS[$i]=`echo $BOOT_NODE_HOSTNAME | sha256sum | cut -d ' ' -f 1`
-	bootnode -nodekeyhex ${NODE_KEYS[$i]} > tempbootnodeoutput 2>&1 &
+	bootnode -nodekeyhex ${NODE_KEYS[$i]} > $HOMEDIR/tempbootnodeoutput 2>&1 &
 	while sleep 1; do
 		if [ -s tempbootnodeoutput ]; then
-			NODE_IDS[$i]=`grep -Po '(?<=\/\/).*(?=@)' tempbootnodeoutput`
+			NODE_IDS[$i]=`grep -Po '(?<=\/\/).*(?=@)' $HOMEDIR/tempbootnodeoutput`
 			killall bootnode
-			rm tempbootnodeoutput
+			rm $HOMEDIR/tempbootnodeoutput
 			break
 		fi
 	done
@@ -104,8 +104,8 @@ sed s/#PREFUND_ADDRESS/$PREFUND_ADDRESS/ $HOMEDIR/genesis-intermediate.json > $H
 ####################
 # Initialize geth for private network
 ####################
-if [ $NODE_TYPE -eq 0 ]; then #Boot node logic
-	printf %s ${NODE_KEYS[$BOOT_NODE_SEQNUM]} > $NODEKEY_FILE_PATH;
+if [ $NODE_TYPE -eq 1 ] && [ $MN_NODE_SEQNUM -lt $NUM_BOOT_NODES ]; then #Boot node logic
+	printf %s ${NODE_KEYS[$MN_NODE_SEQNUM]} > $NODEKEY_FILE_PATH;
 fi
 
 #################
