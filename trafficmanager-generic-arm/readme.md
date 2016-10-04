@@ -7,6 +7,6 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-Create traffic manager profile for given any two regions by using this generic template. Clustering provides the ability to automatically split your dataset among multiple nodes, the ability to continue operations when a subset of the nodes are experiencing failures or are unable to communicate with the rest of the cluster, more throughput, and more memory size.
+Create traffic manager profile for given any two regions by using this generic template. 
 
 This template includes Virtual Network support, allow you to provision two test VMs on given regions to use them to test this traffic manager.
