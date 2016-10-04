@@ -9,11 +9,16 @@ This Microsoft Azure Resource Manager template deploys a single VM and offers a 
 
 Options for blockchain software include:
 
+- [bitshsares](https://github.com/gatneil/azure-quickstart-templates/blob/blockchainmerger/blockchain/details/bitshares.md)
 - [bitswift](https://github.com/gatneil/azure-quickstart-templates/blob/blockchainmerger/blockchain/details/bitswift.md)
 - [blocknet](https://github.com/gatneil/azure-quickstart-templates/blob/blockchainmerger/blockchain/details/blocknet.md)
+- [bloqenterprise](https://github.com/gatneil/azure-quickstart-templates/blob/blockchainmerger/blockchain/details/bloqenterprise.md)
+- [digibyte](https://github.com/gatneil/azure-quickstart-templates/blob/blockchainmerger/blockchain/details/digibyte.md)
 - [emercoin](https://github.com/gatneil/azure-quickstart-templates/blob/blockchainmerger/blockchain/details/emercoin.md)
 - [influx](https://github.com/gatneil/azure-quickstart-templates/blob/blockchainmerger/blockchain/details/influx.md)
 - [jumbucks](https://github.com/gatneil/azure-quickstart-templates/blob/blockchainmerger/blockchain/details/jumbucks.md)
+- [monero](https://github.com/gatneil/azure-quickstart-templates/blob/blockchainmerger/blockchain/details/monero.md)
 - [syscoin](https://github.com/gatneil/azure-quickstart-templates/blob/blockchainmerger/blockchain/details/syscoin.md)
+- [vcash](https://github.com/gatneil/azure-quickstart-templates/blob/blockchainmerger/blockchain/details/vcash.md)
 - [viacoin](https://github.com/gatneil/azure-quickstart-templates/blob/blockchainmerger/blockchain/details/viacoin.md)
 
