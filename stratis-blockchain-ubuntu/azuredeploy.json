@@ -2,44 +2,41 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "storageAccountNamePrefix": {
-      "type": "string",
-      "maxLength": 11,
-      "metadata": {
-        "description": "Name prefix of the Storage Account"
-      }
-    },
-    "vmDnsPrefix": {
-      "type": "string",
-      "metadata": {
-        "description": "This is the unique DNS name of the for the public IP for your VM"
-      }
-    },
     "adminUsername": {
       "type": "string",
-      "defaultValue": "stratuser",
       "metadata": {
-        "description": "This is the the username you wish to assign to your VMs admin account"
+        "description": "Username for the Virtual Machine."
       }
     },
     "adminPassword": {
       "type": "securestring",
       "metadata": {
-        "description": "This is the the password you wish to assign to your VMs admin account"
+        "description": "Password for the Virtual Machine."
       }
     },
+    "dnsLabelPrefix": {
+       "type": "string",
+       "metadata": {
+          "description": "Hostname assigned to the Public IP, also used as the VM Name. Must be lowercase. It should match with the following regular expression: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$ or it will raise an error."
+       }
+    },
+    "installMethod": {
+      "type": "string",
+      "defaultValue": "From_Source",
+      "metadata": {
+        "description": "Method to install Stratis. From_Source: official Stratis repo on GitHub."
+      }
+    },    
     "vmSize": {
       "type": "string",
-      "defaultValue": "Standard_A1",
+      "defaultValue": "Standard_D1",
       "allowedValues": [
         "Standard_A1",
         "Standard_A2",
         "Standard_A3",
-        "Standard_A4",
         "Standard_D1",
         "Standard_D2",
-        "Standard_D3",
-        "Standard_D4"
+        "Standard_D3"
       ],
       "metadata": {
         "description": "Size of VM"
@@ -47,24 +44,24 @@
     }
   },
   "variables": {
-    "nicName": "VMNic",
-    "addressPrefix": "10.0.0.0/16",
     "imagePublisher": "Canonical",
-    "imageVersion": "latest",
-    "imageSKU": "14.04.2-LTS",
     "imageOffer": "UbuntuServer",
-    "subnetName": "Subnet-1",
+    "OSDiskName": "StratisOSDisk",
+    "imageSKU": "14.04.4-LTS",
+    "nicName": "StratisNic",
+    "addressPrefix": "10.0.0.0/16",
+    "subnetName": "StratisSubnet",
     "subnetPrefix": "10.0.0.0/24",
     "storageAccountType": "Standard_LRS",
-    "publicIPAddressName": "publicIP",
+    "storageAccountName": "[concat(uniquestring(resourceGroup().id, 'stratis'))]",
+    "publicIPAddressName": "StratisPublicIP",
     "publicIPAddressType": "Dynamic",
     "vmStorageAccountContainerName": "vhds",
-    "vmName": "[parameters('vmDnsPrefix')]",
-    "virtualNetworkName": "WPVNET",
-    "apiVersion": "2015-06-15",
+    "vmName": "[parameters('dnsLabelPrefix')]",
+    "virtualNetworkName": "StratVNET",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
     "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
-    "storageAccountName": "[replace(replace(tolower(concat(parameters('storageAccountNamePrefix'), uniquestring(resourceGroup().id))), '-',''),'.','')]"
+    "apiVersion": "2015-06-15"
   },
   "resources": [
     {
@@ -84,7 +81,7 @@
       "properties": {
         "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
         "dnsSettings": {
-          "domainNameLabel": "[parameters('vmDnsPrefix')]"
+          "domainNameLabel": "[parameters('dnsLabelPrefix')]"
         }
       }
     },
@@ -158,12 +155,12 @@
             "publisher": "[variables('imagePublisher')]",
             "offer": "[variables('imageOffer')]",
             "sku": "[variables('imageSKU')]",
-            "version": "[variables('imageVersion')]"
+            "version": "latest"
           },
           "osDisk": {
-            "name": "osdisk1",
+            "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/','osdisk1.vhd')]"
+              "uri": "[concat('https://',variables('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -175,14 +172,20 @@
               "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
             }
           ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": "true",
+            "storageUri": "[concat('https://',variables('storageAccountName'),'.blob.core.windows.net')]"
+          }
         }
       }
-    },
+    },  
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmName'),'/newuserscript')]",
+      "location": "[resourceGroup().location]", 
       "apiVersion": "[variables('apiVersion')]",
-      "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
       ],
@@ -195,7 +198,7 @@
           "fileUris": [
             "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/stratis-blockchain-ubuntu/build_strat.sh"
           ],
-          "commandToExecute": "[concat('sh build_strat.sh ', parameters('adminUsername'))]"
+          "commandToExecute": "[concat('sh build_strat.sh ', parameters('installMethod'))]"
         }
       }
     }
