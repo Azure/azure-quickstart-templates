@@ -4,7 +4,7 @@ This Microsoft Azure template deploys a single Emercoin client which will connec
 
 Once your deployment is complete you will be able to connect to the Emercoin public network.
 
-![Emercoin-Azure](https://raw.githubusercontent.com/gatneil/azure-quickstart-templates/blockchainmerger/blockchain/images/emercoin.png)
+![Emercoin-Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/blockchain/images/emercoin.png)
 
 # Emercoin Deployment Walkthrough
 1. Get your node's IP

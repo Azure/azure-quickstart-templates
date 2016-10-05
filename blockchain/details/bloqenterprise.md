@@ -1,4 +1,4 @@
-![Bloq Enterprise Router on Ubuntu](https://raw.githubusercontent.com/gatneil/azure-quickstart-templates/blockchainmerger/blockchain/images/bloqenterprise.png)
+![Bloq Enterprise Router on Ubuntu](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/blockchain/images/bloqenterprise.png)
 
 # Bloq Enterprise Router on Ubuntu
 
