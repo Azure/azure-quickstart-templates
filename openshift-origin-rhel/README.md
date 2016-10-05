@@ -42,7 +42,7 @@ You will need to create a Key Vault to store your SSH Private Key that will then
   d.  Enable the Keyvvault for Template Deployment: azure keyvault set-policy -u \<vault-name\> --enabled-for-template-deployment true <br/>
          Ex: [azure keyvault set-policy -u KeyVaultName --enabled-for-template-deployment true] <br/>
 
-### azuredeploy.Parameters.json File Explained
+### azuredeploy.parameters.json File Explained
 
 1.  masterVmSize: Select from one of the allowed VM sizes listed in the azuredeploy.json file
 2.  nodeVmSize: Select from one of the allowed VM sizes listed in the azuredeploy.json file
@@ -53,17 +53,14 @@ You will need to create a Key Vault to store your SSH Private Key that will then
 7.  nodePrefix: prefix to be prepended to create host names for the Nodes
 8.  nodeInstanceCount: Number of Nodes to deploy
 9.  adminUsername: Admin username for both OS login and OpenShift login
-10.  adminPassword: Password for OpenShift login
+10. adminPassword: Password for OpenShift login
 11. sshPublicKey: Copy your SSH Public Key here
-12. sshPrivateKey - id: Should adhere to: "/subscriptions/[subscirption GUID]/resourceGroups/[ResourceGroupName]/providers/Microsoft.KeyVault/vaults/[KeyVaultName]"<br/>
-    a. Example: "/subscriptions/111a111b-1234-1abc-aa1a-11df2345ab67/resourceGroups/MyResourceGroup/providers/Microsoft.KeyVault/vaults/MyKeyVault"
-13. sshPrivateKey - SecretName: The Secret Name you used when creating the Secret
-14. subscriptionId: Your Subscription ID<br/>
+12. subscriptionId: Your Subscription ID<br/>
     a. PowerShell: get-AzureAccount
 	b. Azure CLI: azure account show  - Field is ID
-15. keyVaultResourceGroup: The name of the Resource Group that contains the Key Vault
-16. keyVaultName: The name of the Key Vault you created
-17. keyVaultSecret: The Secret Name you used when creating the Secret
+13. keyVaultResourceGroup: The name of the Resource Group that contains the Key Vault
+14. keyVaultName: The name of the Key Vault you created
+15. keyVaultSecret: The Secret Name you used when creating the Secret
 
 ## Deploy Template
 
