@@ -6,6 +6,19 @@
 
 ***
 
+As well as Due to the highly-developed protocol contracts, all the information is reliable even in a computer environment that can not be trusted. This technology can definitely extend your application.
+Provides platform for automating, refining, managing complex processes. Simplification of complex financial derivatives, intelligent and autonomous machines collaboration IoT devices. And You can use the computing power beyond the supercomputer. 
+
+If you specify the right conditions, your requirements will be handled automatically by a Azure connected to the Elementrem BlockChain Node. This is the Highly developed contract code. Validation and calculation, as well as by defining the function was to enable the Turing Complete code development. That's the “smart contract.”
+
+Based on your organization's specific needs, Elementrem can customize your smart contract services by offering both Public node-(Main network) and Private node-based BlockChain tools.
+
+For more Informations, 		
+http://www.elementrem.org/		
+https://github.com/elementrem/		
+
+***
+
 - [T/RX Element Lab](#trx-element-lab--step-by-step)      
 - [Deploying a simple contract Lab](#deploying-a-simple-contract-lab--step-by-step)
 - [Elementrem meteor wallet Lab – Step by Step](#elementrem-meteor-wallet-lab--step-by-step)		
@@ -23,25 +36,11 @@
 ### Template Parameters
 When you launch the installation of the cluster, you need to specify the following parameters:
 * `newStorageAccountNamePrefix`: make sure this is a unique identifier. Azure Storage's accounts are global so make sure you use a prefix that is unique to your account otherwise there is a good change it will clash with names already in use.
-* `vmDnsPrefix`: this is the public DNS name for the VM that you will use interact with your geth console. You just need to specify an unique name.
+* `vmDnsPrefix`: this is the public DNS name for the VM that you will use interact with your gele console. You just need to specify an unique name.
 * `adminUsername`: self-explanatory. This is the account you will use for connecting to the node
 * `adminPassword`: self-explanatory. Be aware that Azure requires passwords to have One upper case, one lower case, a special character, and a number
 * `vmSize`: The type of VM that you want to use for the node. The default size is A1 but you can change that if you expect to run workloads that require more RAM or CPU resources.
-* `location`: The region where the VM should be deployed to
 * `Private Block Extra-data`: This unique string specifies the Private-network of your own. communication between a peer and a peer occurs until after the same `Private Block Extra-data`
-
-***
-
-As well as Due to the highly-developed protocol contracts, all the information is reliable even in a computer environment that can not be trusted. This technology can definitely extend your application.
-Provides platform for automating, refining, managing complex processes. Simplification of complex financial derivatives, intelligent and autonomous machines collaboration IoT devices. And You can use the computing power beyond the supercomputer. 
-
-If you specify the right conditions, your requirements will be handled automatically by a Azure connected to the Elementrem BlockChain Node. This is the Highly developed contract code. Validation and calculation, as well as by defining the function was to enable the Turing Complete code development. That's the “smart contract.”
-
-Based on your organization's specific needs, Elementrem can customize your smart contract services by offering both Public node-(Main network) and Private node-based BlockChain tools.
-
-For more Informations, 		
-http://www.elementrem.org/		
-https://github.com/elementrem/		
 
 ***
 
