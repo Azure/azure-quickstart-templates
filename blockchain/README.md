@@ -9,7 +9,7 @@ This Microsoft Azure Resource Manager template deploys a single VM and offers a 
 
 Options for blockchain software include:
 
-- [bitshsares](https://github.com/gatneil/azure-quickstart-templates/blob/blockchainmerger/blockchain/details/bitshares.md)
+- [bitshares](https://github.com/gatneil/azure-quickstart-templates/blob/blockchainmerger/blockchain/details/bitshares.md)
 - [bitswift](https://github.com/gatneil/azure-quickstart-templates/blob/blockchainmerger/blockchain/details/bitswift.md)
 - [blocknet](https://github.com/gatneil/azure-quickstart-templates/blob/blockchainmerger/blockchain/details/blocknet.md)
 - [bloqenterprise](https://github.com/gatneil/azure-quickstart-templates/blob/blockchainmerger/blockchain/details/bloqenterprise.md)
