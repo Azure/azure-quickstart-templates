@@ -19,6 +19,7 @@ Options for blockchain software include:
 - [jumbucks](https://github.com/gatneil/azure-quickstart-templates/blob/blockchainmerger/blockchain/details/jumbucks.md)
 - [monero](https://github.com/gatneil/azure-quickstart-templates/blob/blockchainmerger/blockchain/details/monero.md)
 - [multichain](https://github.com/gatneil/azure-quickstart-templates/blob/blockchainmerger/blockchain/details/multichain.md)
+- [nxt](https://github.com/gatneil/azure-quickstart-templates/blob/blockchainmerger/blockchain/details/nxt.md)
 - [shadow](https://github.com/gatneil/azure-quickstart-templates/blob/blockchainmerger/blockchain/details/shadow.md)
 - [syscoin](https://github.com/gatneil/azure-quickstart-templates/blob/blockchainmerger/blockchain/details/syscoin.md)
 - [vcash](https://github.com/gatneil/azure-quickstart-templates/blob/blockchainmerger/blockchain/details/vcash.md)
