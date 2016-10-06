@@ -23,12 +23,12 @@ You can deploy the template with Azure Portal, or PowerShell, or Azure cross pla
 * Open Azure Powershell console, and log in by running Add-AzureAccount command.
 * Create a resource group:
 ```sh
-> Switch-AzureMode AzureResourceManager
-> New-AzureResourceGroup -Name "mysqlrg"-Location "East US"
+> Login-AzureRmAccount 
+> New-AzureRMResourceGroup -Name "mysqlrg"-Location "East US"
 ```
 * Create a deployment:
 ```sh
-> New-AzureResourceGroupDeployment -ResourceGroupName mysqlrg -TemplateFile .\azuredeploy.json -TemplateParameterFile .\azuredeploy.parameters.json
+> New-AzureRMResourceGroupDeployment -ResourceGroupName mysqlrg -TemplateFile .\azuredeploy.json -TemplateParameterFile .\azuredeploy.parameters.json
 ```
 **Custom deployment**
 * Take a look at AzureDeploy.json to see if you need to make any customization that's not exposed through the template parameters, for example, disk configurations.  If you do, download the template and make modifications locally.
