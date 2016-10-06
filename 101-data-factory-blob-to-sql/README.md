@@ -10,10 +10,14 @@
 This template creates a very simple Data Factory pipeline that copies data from a file in a Blob Storage into a SQL Database table. Prior to  executing this make sure you have a Storage Account and a SQL Database provisioned. 
 
 ## Prerequisites:
-1. Azure Storage
-2. Source CSV file within a blob container 
-3. Azure SQL Database
-4. Target table in the database
+
+- See [Overview and prerequisites](https://azure.microsoft.com/documentation/articles/data-factory-copy-data-from-azure-blob-storage-to-sql-database/) for the list of prerequisites.
 
 Data Factory result diagram:
-![alt tag](images/adfDiagram.PNG)
+![Diagram view](images/adfDiagram.PNG)
+
+## Deploy using PowerShell
+1. Enter right values for parameters in the **azuredeploy.parameters.json**. 
+2. See [Deploy Data Factory entities](https://azure.microsoft.com/documentation/articles/data-factory-copy-activity-tutorial-using-azure-resource-manager-template/?rnd=1#create-data-factory). Run the following command:
+	
+	New-AzureRmResourceGroupDeployment -Name MyARMDeployment -ResourceGroupName ADFTutorialResourceGroup -TemplateFile C:\ADFGetStarted\azuredeploy.json -TemplateParameterFile C:\ADFGetStarted\azuredeploy.parameters.json
