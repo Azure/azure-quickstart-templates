@@ -1,0 +1,186 @@
+#cloud-config
+coreos:
+  update:
+    reboot-strategy: best-effort
+  units:
+    - name: docker.service
+      command: start
+    - name: docker-guacamole.service
+      command: start
+      content: |
+        [Unit]
+        Description=Guacamole running on Docker
+        
+        Requires=docker.service docker-guacd.service docker-mariadb.service docker-mariadb-waiter.service
+        Wants=network-online.target
+        After=docker.service network-online.target docker-guacd.service docker-mariadb.service docker-mariadb-waiter.service
+        
+        [Service]
+        Restart=always
+        RestartSec=3
+        TimeoutStartSec=0
+        
+        ExecStartPre=-/usr/bin/docker rm -f some-guacamole
+        ExecStartPre=-/usr/bin/docker pull glyptodon/guacamole:latest
+        
+        ExecStart=/usr/bin/docker run \
+          --name some-guacamole \
+          --link some-guacd:guacd \
+          --link some-mariadb:mysql \
+          -e MYSQL_DATABASE=guacamole_db  \
+          -e MYSQL_USER=guacamole_user    \
+          -e MYSQL_PASSWORD=burrito-guacamole-extra-1dollar \
+          -p 80:8080 \
+          glyptodon/guacamole:latest
+        
+        ExecStop=/bin/bash -c " \
+          /usr/bin/docker stop some-guacamole || true \
+          /usr/bin/docker rm some-guacamole || true \
+        "
+        
+        [Install]
+        WantedBy=multi-user.target
+    - name: docker-guacd.service
+      command: start
+      content: |
+        [Unit]
+        Description=guacd running on Docker
+        
+        Requires=docker.service
+        Wants=network-online.target
+        After=docker.service network-online.target
+        
+        [Service]
+        Restart=always
+        RestartSec=3
+        TimeoutStartSec=0
+        
+        ExecStartPre=-/usr/bin/docker rm -f some-guacd
+        ExecStartPre=-/usr/bin/docker pull glyptodon/guacd:latest
+        
+        ExecStart=/usr/bin/docker run \
+          --name some-guacd \
+          glyptodon/guacd:latest
+        
+        ExecStop=/bin/bash -c " \
+          /usr/bin/docker stop some-guacd || true \
+          /usr/bin/docker rm some-guacd || true \
+        "
+        
+        [Install]
+        WantedBy=multi-user.target
+    - name: docker-mariadb.service
+      command: start
+      content: |
+        [Unit]
+        Description=MariaDB running on Docker
+        
+        Requires=docker.service
+        Wants=network-online.target
+        After=docker.service network-online.target
+        
+        [Service]
+        Restart=always
+        RestartSec=3
+        TimeoutStartSec=0
+        
+        ExecStartPre=/usr/bin/chmod +x /opt/bin/docker-mariadb.sh
+        ExecStart=/opt/bin/docker-mariadb.sh
+        
+        ExecStop=/bin/bash -c " \
+          /usr/bin/docker stop some-mariadb || true \
+          /usr/bin/docker rm some-mariadb || true \
+        "
+        
+        [Install]
+        WantedBy=multi-user.target
+    - name: docker-mariadb-waiter.service
+      command: start
+      content: |
+        [Unit]
+        Description=Wait for MariaDB to be initialized
+        
+        Requires=docker.service docker-mariadb.service
+        Wants=network-online.target
+        After=docker.service docker-mariadb.service network-online.target
+        
+        [Service]
+        Type=simple
+        RemainAfterExit=true
+        ExecStartPre=/usr/bin/chmod +x /opt/bin/docker-mariadb-waiter.sh
+        ExecStart=/usr/bin/bash /opt/bin/docker-mariadb-waiter.sh
+        
+        [Install]
+        WantedBy=multi-user.target
+write_files:
+  - path: /opt/bin/docker-mariadb.sh
+    owner: root
+    permissions: '0755'
+    content: |
+        #!/bin/sh
+        
+        # Parameters
+        IMAGE_NAME="mariadb:10.1"
+        CONTAINER_NAME="some-mariadb"
+        GUACAMOLE_IMAGE_NAME="glyptodon/guacamole:latest"
+        MYSQL_ROOT_PASSWORD="my-secret-pw"
+        MYSQL_USER="guacamole_user"
+        MYSQL_DATABASE="guacamole_db"
+        MYSQL_PASSWORD="burrito-guacamole-extra-1dollar"
+        
+        # Remove pre-existing containers
+        docker stop $CONTAINER_NAME || true
+        docker rm $CONTAINER_NAME || true
+        
+        # Pull the latest version of the Docker image
+        docker pull $IMAGE_NAME
+        
+        # Check if the MySQL database has been prepared already
+        if [ ! -e /mnt/data/mysql/mysql ]; then
+            # Initial database contents: generate them from the guacamole image
+            TMP_SQL_FILE=/mnt/resource/initdb.sql
+            rm -rf $TMP_SQL_FILE $TMP_SQL_FILE.tmp
+            docker run --rm $GUACAMOLE_IMAGE_NAME /opt/guacamole/bin/initdb.sh --mysql > $TMP_SQL_FILE
+            
+            # Prepend database name to SQL query
+            echo "USE $MYSQL_DATABASE; " | cat - $TMP_SQL_FILE > $TMP_SQL_FILE.tmp \
+                && mv $TMP_SQL_FILE.tmp $TMP_SQL_FILE
+            
+            docker run \
+                --name $CONTAINER_NAME \
+                -e MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD \
+                -e MYSQL_DATABASE=$MYSQL_DATABASE \
+                -e MYSQL_USER=$MYSQL_USER \
+                -e MYSQL_PASSWORD=$MYSQL_PASSWORD \
+                -v /mnt/data/mysql:/var/lib/mysql \
+                -v $TMP_SQL_FILE:/docker-entrypoint-initdb.d/guacamole.sql \
+                $IMAGE_NAME
+        else
+            # Start Docker container
+            docker run \
+                --name $CONTAINER_NAME \
+                -v /mnt/data/mysql:/var/lib/mysql \
+                $IMAGE_NAME
+        fi
+  - path: /opt/bin/docker-mariadb-waiter.sh
+    owner: root
+    permissions: '0755'
+    content: |
+        #!/bin/sh
+        
+        # This script waits for MariaDB to be ready to accept connections
+        
+        # Parameters
+        IMAGE_NAME="mariadb:10.1"
+        CONTAINER_NAME="some-mariadb"
+        
+        # Wait at least 60 seconds
+        sleep 60
+        
+        # Keep polling database until ready
+        while ! docker run --rm --link $CONTAINER_NAME $IMAGE_NAME mysqladmin ping -h $CONTAINER_NAME --silent; do
+            sleep 5
+        done
+            
+        # Wait 5 more seconds before sending the green light
+        sleep 5

@@ -1,0 +1,179 @@
+{
+  "contentVersion": "1.0.0.0",
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "parameters": {
+    "dataFactoryName": {
+      "type": "string",
+      "metadata": {
+        "description": "Data Factory Account name"
+      }
+    },
+    "existingStorageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Existing Storage Account name"
+      }
+    },    
+    "existingSourceContainer": {
+      "type": "string",
+      "metadata": {
+        "description": "Exsiting source file container name"
+      }
+    },
+    "existingSqlServerName": {
+      "type": "string",
+      "metadata": {
+        "description": "Existing Azure SQL Database Server name"
+      }
+    },
+    "existingSqlServerUserName": {
+      "type": "string",
+      "metadata": {
+        "description": "Existing Azure SQL Database Server user name"
+      }
+    },
+    "existingSqlServerPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Existing Azure SQL Database Server password"
+      }
+    },
+    "existingTargetDatabaseName": {
+      "type": "string",
+      "metadata": {
+        "description": "Existing taget Azure SQL Database name"
+      }
+    },    
+    "existingTargetSQLTable": {
+      "type": "string",
+      "metadata": {
+        "description": "Existing target table in Azure SQL Database"
+      }
+    }
+  },
+  "variables": {
+    "apiVersion": "2014-10-01-preview",
+    "storageApiVersion" :  "2015-05-01-preview",
+    "azureSqlLinkedServiceName": "AzureSqlLinkedService",
+    "storageLinkedServiceName": "StorageLinkedService",
+    "BlobInputTableName": "BlobInputTable",
+    "SQLOutputTableName": "SQLOutputTable",
+    "PipelineName": "Blob2SQLPipeline"    
+  },
+  "resources": [
+    {
+      "name": "[parameters('dataFactoryName')]",
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.DataFactory/datafactories",
+      "location": "[resourceGroup().location]",
+      "resources": [
+        {
+          "dependsOn": [ "[concat('Microsoft.DataFactory/dataFactories/', parameters('dataFactoryName'))]" ],
+          "type": "linkedservices",
+          "name": "[variables('azureSqlLinkedServiceName')]",
+          "apiVersion": "[variables('apiVersion')]",
+          "properties": {
+            "type": "AzureSqlLinkedService",
+            "connectionString": "[concat('Server=tcp:',parameters('existingSqlServerName'),'.database.windows.net,1433;Database=', parameters('existingTargetDatabaseName'), ';User ID=',parameters('existingSqlServerUserName'),';Password=',parameters('existingSqlServerPassword'),';Trusted_Connection=False;Encrypt=True;Connection Timeout=30')]"
+          }
+        },
+        {
+          "dependsOn": [ "[concat('Microsoft.DataFactory/dataFactories/', parameters('dataFactoryName'))]" ],
+          "type": "linkedservices",
+          "name": "[variables('storageLinkedServiceName')]",
+          "apiVersion": "[variables('apiVersion')]",
+          "properties": {
+            "type": "AzureStorageLinkedService",
+            "connectionString": "[concat('DefaultEndpointsProtocol=https;AccountName=',parameters('existingStorageAccountName'),';AccountKey=', listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('existingStorageAccountName')), variables('storageApiVersion')).key1)]"
+          }
+        },
+        {
+          "dependsOn": [
+            "[concat('Microsoft.DataFactory/dataFactories/', parameters('dataFactoryName'))]",
+            "[concat('Microsoft.DataFactory/dataFactories/', parameters('dataFactoryName'), '/linkedServices/', variables('storageLinkedServiceName'))]"
+          ],
+          "type": "tables",
+          "name": "[variables('BlobInputTableName')]",
+          "apiVersion": "[variables('apiVersion')]",
+          "properties": {
+            "location": {
+              "type": "AzureBlobLocation",
+              "folderPath": "[parameters('existingSourceContainer')]",
+              "format": {
+                "type": "TextFormat",
+                "columnDelimiter": ","
+              },
+              "linkedServiceName": "[variables('storageLinkedServiceName')]"
+            },
+            "availability": {
+              "frequency": "Day",
+              "interval": 1
+            }
+          }
+        },
+        {
+          "dependsOn": [
+            "[concat('Microsoft.DataFactory/dataFactories/', parameters('dataFactoryName'))]",
+            "[concat('Microsoft.DataFactory/dataFactories/', parameters('dataFactoryName'), '/linkedServices/', variables('azureSqlLinkedServiceName'))]"
+          ],
+          "type": "tables",
+          "name": "[variables('SQLOutputTableName')]",
+          "apiVersion": "[variables('apiVersion')]",
+          "properties": {
+            "location": {
+              "type": "AzureSqlTableLocation",
+              "tableName": "[parameters('existingTargetSQLTable')]",
+              "linkedServiceName": "[variables('azureSqlLinkedServiceName')]"
+            },
+            "availability": {
+              "frequency": "Day",
+              "interval": 1
+            }
+          }
+        },
+        {
+          "dependsOn": [
+            "[concat('Microsoft.DataFactory/dataFactories/', parameters('dataFactoryName'))]",
+            "[concat('Microsoft.DataFactory/dataFactories/', parameters('dataFactoryName'), '/linkedServices/', variables('storageLinkedServiceName'))]",
+            "[concat('Microsoft.DataFactory/dataFactories/', parameters('dataFactoryName'), '/linkedServices/', variables('azureSqlLinkedServiceName'))]",
+            "[concat('Microsoft.DataFactory/dataFactories/', parameters('dataFactoryName'), '/tables/', variables('SQLOutputTableName'))]",
+            "[concat('Microsoft.DataFactory/dataFactories/', parameters('dataFactoryName'), '/tables/', variables('BlobInputTableName'))]"
+          ],
+          "type": "datapipelines",
+          "name": "[variables('PipelineName')]",
+          "apiVersion": "[variables('apiVersion')]",
+          "properties": {
+            "description": "(v1.0) Join the Regional Campaign data and with Enriched Gamer Fact Data and push to Azure SQLD Database",
+            "activities": [
+              {
+                "name": "EgressDataAzure",
+                "description": "Push data frm blob to Sql Azure",
+                "type": "CopyActivity",
+                "inputs": [ { "name": "[variables('BlobInputTableName')]" } ],
+                "outputs": [ { "name": "[variables('SQLOutputTableName')]" } ],
+                "transformation": {
+                  "source": {
+                    "type": "BlobSource"
+                  },
+                  "sink": {
+                    "type": "SqlSink"
+                  }
+                },
+                "Policy": {
+                  "concurrency": 1,
+                  "executionPriorityOrder": "NewestFirst",
+                  "style": "StartOfInterval",
+                  "retry": 0,
+                  "timeout": "01:00:00"
+                }
+              }
+            ],
+            "start": "2015-12-09T00:00:00Z",
+            "end": "2015-12-12T00:00:00Z"
+          }
+        }
+      ]
+    }
+  ]
+}
+ 

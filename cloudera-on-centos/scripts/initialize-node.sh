@@ -11,12 +11,36 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-IPPREFIX=$1
-NAMEPREFIX=$2
-NAMESUFFIX=$3
-NAMENODES=$4
-DATANODES=$5
-ADMINUSER=$6
+echo "initializing nodes..."
+
+MASTERIP=$1
+WORKERIP=$2
+NAMEPREFIX=$3
+NAMESUFFIX=$4
+MASTERNODES=$5
+DATANODES=$6
+ADMINUSER=$7
+NODETYPE=$8
+
+function atoi
+{
+#Returns the integer representation of an IP arg, passed in ascii dotted-decimal notation (x.x.x.x)
+IP=$1; IPNUM=0
+for (( i=0 ; i<4 ; ++i )); do
+((IPNUM+=${IP%%.*}*$((256**$((3-${i}))))))
+IP=${IP#*.}
+done
+echo $IPNUM
+}
+
+function itoa
+{
+#returns the dotted-decimal ascii form of an IP arg passed in integer format
+echo -n $(($(($(($((${1}/256))/256))/256))%256)).
+echo -n $(($(($((${1}/256))/256))%256)).
+echo -n $(($((${1}/256))%256)).
+echo $((${1}%256))
+}
 
 # Converts a domain like machine.domain.com to domain.com by removing the machine name
 NAMESUFFIX=`echo $NAMESUFFIX | sed 's/^[^.]*\.//'`
@@ -24,18 +48,22 @@ NAMESUFFIX=`echo $NAMESUFFIX | sed 's/^[^.]*\.//'`
 #Generate IP Addresses for the cloudera setup
 NODES=()
 
-let "NAMEEND=NAMENODES-1"
+let "NAMEEND=MASTERNODES-1"
 for i in $(seq 0 $NAMEEND)
 do 
-  let "IP=i+10"
-  NODES+=("$IPPREFIX$IP:${NAMEPREFIX}-nn$i.$NAMESUFFIX:${NAMEPREFIX}-nn$i")
+  IP=`atoi ${MASTERIP}`
+  let "IP=i+IP"
+  HOSTIP=`itoa ${IP}`
+  NODES+=("$HOSTIP:${NAMEPREFIX}-mn$i.$NAMESUFFIX:${NAMEPREFIX}-mn$i")
 done
 
 let "DATAEND=DATANODES-1"
 for i in $(seq 0 $DATAEND)
 do 
-  let "IP=i+20"
-  NODES+=("$IPPREFIX$IP:${NAMEPREFIX}-dn$i.$NAMESUFFIX:${NAMEPREFIX}-dn$i")
+  IP=`atoi ${WORKERIP}`
+  let "IP=i+IP"
+  HOSTIP=`itoa ${IP}`
+  NODES+=("$HOSTIP:${NAMEPREFIX}-dn$i.$NAMESUFFIX:${NAMEPREFIX}-dn$i")
 done
 
 OIFS=$IFS
@@ -53,8 +81,17 @@ IFS=${OIFS}
 sed -i '/Defaults[[:space:]]\+!*requiretty/s/^/#/' /etc/sudoers
 echo "$ADMINUSER ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
-# Mount and format the attached disks
-sh ./prepareDisks.sh
+# Mount and format the attached disks base on node type
+if [ "$NODETYPE" == "masternode" ]
+then
+  bash ./prepare-masternode-disks.sh
+elif [ "$NODETYPE" == "datanode" ]
+then
+  bash ./prepare-datanode-disks.sh
+else
+  echo "#unknown type, default to datanode"
+  bash ./prepare-datanode-disks.sh
+fi
 
 echo "Done preparing disks.  Now ls -la looks like this:"
 ls -la /
@@ -81,8 +118,7 @@ chkconfig iptables off
 yum install -y ntp
 service ntpd start
 service ntpd status
-
-yum install -y microsoft-hyper-v
+chkconfig ntpd on
 
 echo never | tee -a /sys/kernel/mm/transparent_hugepage/enabled
 echo "echo never | tee -a /sys/kernel/mm/transparent_hugepage/enabled" | tee -a /etc/rc.local
@@ -92,16 +128,14 @@ ifconfig -a >> initialIfconfig.out; who -b >> initialRestart.out
 
 echo net.ipv4.tcp_timestamps=0 >> /etc/sysctl.conf
 echo net.ipv4.tcp_sack=1 >> /etc/sysctl.conf
-echo net.core.netdev_max_backlog=25000 >> /etc/sysctl.conf
 echo net.core.rmem_max=4194304 >> /etc/sysctl.conf
 echo net.core.wmem_max=4194304 >> /etc/sysctl.conf
 echo net.core.rmem_default=4194304 >> /etc/sysctl.conf
-echo net.core_wmem_default=4194304 >> /etc/sysctl.conf
+echo net.core.wmem_default=4194304 >> /etc/sysctl.conf
 echo net.core.optmem_max=4194304 >> /etc/sysctl.conf
 echo net.ipv4.tcp_rmem="4096 87380 4194304" >> /etc/sysctl.conf
 echo net.ipv4.tcp_wmem="4096 65536 4194304" >> /etc/sysctl.conf
 echo net.ipv4.tcp_low_latency=1 >> /etc/sysctl.conf
-echo net.ipv4.tcp_adv_win_scale=1 >> /etc/sysctl.conf
 sed -i "s/defaults        1 1/defaults,noatime        0 0/" /etc/fstab
 
 #use the key from the key vault as the SSH authorized key
@@ -112,6 +146,11 @@ chmod 700 /home/$ADMINUSER/.ssh
 ssh-keygen -y -f /var/lib/waagent/*.prv > /home/$ADMINUSER/.ssh/authorized_keys
 chown $ADMINUSER /home/$ADMINUSER/.ssh/authorized_keys
 chmod 600 /home/$ADMINUSER/.ssh/authorized_keys
+
+myhostname=`hostname`
+fqdnstring=`python -c "import socket; print socket.getfqdn('$myhostname')"`
+sed -i "s/.*HOSTNAME.*/HOSTNAME=${fqdnstring}/g" /etc/sysconfig/network
+/etc/init.d/network restart
 
 #disable password authentication in ssh
 #sed -i "s/UsePAM\s*yes/UsePAM no/" /etc/ssh/sshd_config
