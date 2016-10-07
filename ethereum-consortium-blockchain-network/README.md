@@ -7,11 +7,6 @@ The next phase of our support of blockchain on Microsoft Azure is the release of
 
 ## Getting Started
 To begin, you will need an Azure subscription that can support deploying several virtual machines and standard storage accounts.  By default, most subscription types will support a small deployment topology without needing to increase quota.
-During the deployment process, you will be prompted for a set of simple inputs to configure the network properly.  One of the parameters needed is a private key for the prefunded Ethereum account specified in the genesis block.  This private key can be any 32-byte hexadecimal string.  The following powershell can be used to generate such a string - replace the "passphrase" string with a string of your choice: 
-`[System.BitConverter]::ToString([System.Security.Cryptography.HashAlgorithm]::Create("SHA256").ComputeHash([System.Text.Encoding]::UTF8.GetBytes("passphrase"))) -replace '-',''`.  
-In unix, you can run the following command: 
-`echo "passphrase" | sha256sum`
-There are also online tools to generate ethereum private keys. 
 
 Once you have specified all parameters, specify a resource group and region to which to deploy all resources.  We recommend using a new separate resource group for ease of management and deletion.  Finally, acknowledge legal terms and click to ‘Create.’  Depending on the number of VMs being provisioned, deployment time can vary from a few minutes to tens of minutes.
 
