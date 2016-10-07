@@ -1,0 +1,318 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+
+		"deploymentName": {
+			"type": "string",
+			"defaultValue": ""
+		},
+		"storageAccountName": {
+			"type": "string"
+		},
+		"storageAccountKey": {
+			"type": "string"
+		},
+		"containerName": {
+			"type": "string"
+		},
+		"wowzaUsername": {
+			"type": "string"
+		},
+		"wowzaAdminPassword": {
+			"type": "securestring"
+		},
+		"baseUri": {
+			"type": "string",
+			"defaultValue":"https://raw.githubusercontent.com/sysgain/azurequickstarts/master/VOD-Aspera-Wowza-AzureMediaServices/"
+	}
+	},
+	"variables": {
+		"virtualMachineName": "[concat(parameters('deploymentName'), 'wowza')]",
+		"virtualMachineSize": "Standard_DS1",
+		"storageAccountType": "Standard_LRS",
+		"diagnosticsStorageAccountType":"Standard_LRS",
+		"virtualNetworkName": "[concat(parameters('deploymentName'),'wow', 'vnet')]",
+		"networkInterfaceName": "[concat(parameters('deploymentName'),'wow', 'nic')]",
+		"networkSecurityGroupName": "[concat(parameters('deploymentName'), 'wow','nsg')]",
+		"addressPrefix": "10.0.0.0/16",
+		"subnetName": "wowsubnet",
+		"subnetPrefix": "10.0.10.0/24",
+		"publicIpAddressName": "[concat(parameters('deploymentName'),'wow', 'publicIP')]",
+		"virtualMachineExtensionName": "[concat(parameters('deploymentName'), 'wowzascript')]",
+		"publicIPdnsPrefix": "[concat(parameters('deploymentName'), 'wowzadns')]",
+		"scriptFilePath": "[concat(parameters('baseUri'), 'wowza/configwowza.sh')]",
+		"executeCmd": "[concat('sh configwowza.sh', ' ',parameters('wowzaUsername'), ' ',parameters('storageAccountName'),' ',parameters('storageAccountKey'), ' ',parameters('containerName'))]",
+		"vnetId": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
+		"subnetRef": "[concat(variables('vnetId'), '/subnets/', variables('subnetName'))]",
+		"storageAccount": "[concat('sa',uniqueString(resourceGroup().id))]",
+		"diagnosticsStorageAccountName": "[concat('diagsa',uniqueString(resourceGroup().id))]",
+		"publicIPdns": "[concat(parameters('deploymentName'),'wowza')]",
+		"FQDN": "[concat(variables('publicIPdns'),'.',resourceGroup().location,'.cloudapp.azure.com')]",
+
+		"metricsresourceid": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/', 'Microsoft.Compute/virtualMachines/', variables('virtualMachineName'))]",
+		"metricsclosing": "[concat('<Metrics resourceId=\"', variables('metricsresourceid'), '\"><MetricAggregation scheduledTransferPeriod=\"PT1H\"/><MetricAggregation scheduledTransferPeriod=\"PT1M\"/></Metrics></DiagnosticMonitorConfiguration></WadCfg>')]",
+		"metricscounters": "<PerformanceCounters scheduledTransferPeriod=\"PT1M\"><PerformanceCounterConfiguration counterSpecifier=\"\\Memory\\AvailableMemory\" sampleRate=\"PT15S\" unit=\"Bytes\"><annotation displayName=\"Memory available\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Memory\\PercentAvailableMemory\" sampleRate=\"PT15S\" unit=\"Percent\"><annotation displayName=\"Mem. percent available\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Memory\\UsedMemory\" sampleRate=\"PT15S\" unit=\"Bytes\"><annotation displayName=\"Memory used\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Memory\\PercentUsedMemory\" sampleRate=\"PT15S\" unit=\"Percent\"><annotation displayName=\"Memory percentage\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Memory\\PercentUsedByCache\" sampleRate=\"PT15S\" unit=\"Percent\"><annotation displayName=\"Mem. used by cache\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Memory\\PagesPerSec\" sampleRate=\"PT15S\" unit=\"CountPerSecond\"><annotation displayName=\"Pages\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Memory\\PagesReadPerSec\" sampleRate=\"PT15S\" unit=\"CountPerSecond\"><annotation displayName=\"Page reads\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Memory\\PagesWrittenPerSec\" sampleRate=\"PT15S\" unit=\"CountPerSecond\"><annotation displayName=\"Page writes\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Memory\\AvailableSwap\" sampleRate=\"PT15S\" unit=\"Bytes\"><annotation displayName=\"Swap available\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Memory\\PercentAvailableSwap\" sampleRate=\"PT15S\" unit=\"Percent\"><annotation displayName=\"Swap percent available\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Memory\\UsedSwap\" sampleRate=\"PT15S\" unit=\"Bytes\"><annotation displayName=\"Swap used\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Memory\\PercentUsedSwap\" sampleRate=\"PT15S\" unit=\"Percent\"><annotation displayName=\"Swap percent used\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Processor\\PercentIdleTime\" sampleRate=\"PT15S\" unit=\"Percent\"><annotation displayName=\"CPU idle time\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Processor\\PercentUserTime\" sampleRate=\"PT15S\" unit=\"Percent\"><annotation displayName=\"CPU user time\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Processor\\PercentNiceTime\" sampleRate=\"PT15S\" unit=\"Percent\"><annotation displayName=\"CPU nice time\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Processor\\PercentPrivilegedTime\" sampleRate=\"PT15S\" unit=\"Percent\"><annotation displayName=\"CPU privileged time\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Processor\\PercentInterruptTime\" sampleRate=\"PT15S\" unit=\"Percent\"><annotation displayName=\"CPU interrupt time\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Processor\\PercentDPCTime\" sampleRate=\"PT15S\" unit=\"Percent\"><annotation displayName=\"CPU DPC time\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Processor\\PercentProcessorTime\" sampleRate=\"PT15S\" unit=\"Percent\"><annotation displayName=\"CPU percentage guest OS\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\Processor\\PercentIOWaitTime\" sampleRate=\"PT15S\" unit=\"Percent\"><annotation displayName=\"CPU IO wait time\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\PhysicalDisk\\BytesPerSecond\" sampleRate=\"PT15S\" unit=\"BytesPerSecond\"><annotation displayName=\"Disk total bytes\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\PhysicalDisk\\ReadBytesPerSecond\" sampleRate=\"PT15S\" unit=\"BytesPerSecond\"><annotation displayName=\"Disk read guest OS\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\PhysicalDisk\\WriteBytesPerSecond\" sampleRate=\"PT15S\" unit=\"BytesPerSecond\"><annotation displayName=\"Disk write guest OS\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\PhysicalDisk\\TransfersPerSecond\" sampleRate=\"PT15S\" unit=\"CountPerSecond\"><annotation displayName=\"Disk transfers\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\PhysicalDisk\\ReadsPerSecond\" sampleRate=\"PT15S\" unit=\"CountPerSecond\"><annotation displayName=\"Disk reads\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\PhysicalDisk\\WritesPerSecond\" sampleRate=\"PT15S\" unit=\"CountPerSecond\"><annotation displayName=\"Disk writes\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\PhysicalDisk\\AverageReadTime\" sampleRate=\"PT15S\" unit=\"Seconds\"><annotation displayName=\"Disk read time\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\PhysicalDisk\\AverageWriteTime\" sampleRate=\"PT15S\" unit=\"Seconds\"><annotation displayName=\"Disk write time\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\PhysicalDisk\\AverageTransferTime\" sampleRate=\"PT15S\" unit=\"Seconds\"><annotation displayName=\"Disk transfer time\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\PhysicalDisk\\AverageDiskQueueLength\" sampleRate=\"PT15S\" unit=\"Count\"><annotation displayName=\"Disk queue length\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\NetworkInterface\\BytesTransmitted\" sampleRate=\"PT15S\" unit=\"Bytes\"><annotation displayName=\"Network out guest OS\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\NetworkInterface\\BytesReceived\" sampleRate=\"PT15S\" unit=\"Bytes\"><annotation displayName=\"Network in guest OS\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\NetworkInterface\\PacketsTransmitted\" sampleRate=\"PT15S\" unit=\"Count\"><annotation displayName=\"Packets sent\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\NetworkInterface\\PacketsReceived\" sampleRate=\"PT15S\" unit=\"Count\"><annotation displayName=\"Packets received\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\NetworkInterface\\BytesTotal\" sampleRate=\"PT15S\" unit=\"Bytes\"><annotation displayName=\"Network total bytes\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\NetworkInterface\\TotalRxErrors\" sampleRate=\"PT15S\" unit=\"Count\"><annotation displayName=\"Packets received errors\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\NetworkInterface\\TotalTxErrors\" sampleRate=\"PT15S\" unit=\"Count\"><annotation displayName=\"Packets sent errors\" locale=\"en-us\"/></PerformanceCounterConfiguration><PerformanceCounterConfiguration counterSpecifier=\"\\NetworkInterface\\TotalCollisions\" sampleRate=\"PT15S\" unit=\"Count\"><annotation displayName=\"Network collisions\" locale=\"en-us\"/></PerformanceCounterConfiguration></PerformanceCounters>",
+		"metricsstart": "<WadCfg><DiagnosticMonitorConfiguration overallQuotaInMB=\"4096\"><DiagnosticInfrastructureLogs scheduledTransferPeriod=\"PT1M\" scheduledTransferLogLevelFilter=\"Warning\"/>",
+		"wadcfgx": "[concat(variables('metricsstart'), variables('metricscounters'), variables('metricsclosing'))]"
+
+	},
+	"resources": [{
+		"name": "[variables('virtualMachineName')]",
+		"type": "Microsoft.Compute/virtualMachines",
+		"apiVersion": "2015-06-15",
+		"location": "[resourceGroup().location]",
+		"dependsOn": [
+			"[concat('Microsoft.Network/networkInterfaces/', variables('networkInterfaceName'))]",
+			"[concat('Microsoft.Storage/storageAccounts/', variables('storageAccount'))]",
+			"[concat('Microsoft.Storage/storageAccounts/', variables('diagnosticsStorageAccountName'))]"
+		],
+		"properties": {
+			"osProfile": {
+				"computerName": "[variables('virtualMachineName')]",
+				"adminUsername": "[parameters('wowzaUsername')]",
+				"adminPassword": "[parameters('wowzaAdminPassword')]"
+			},
+			"hardwareProfile": {
+				"vmSize": "[variables('virtualMachineSize')]"
+			},
+			"storageProfile": {
+				"imageReference": {
+					"publisher": "wowza",
+					"offer": "wowzastreamingengine",
+					"sku": "std-linux-byol-4-2",
+					"version": "latest"
+				},
+				"osDisk": {
+					"name": "[variables('virtualMachineName')]",
+					"vhd": {
+						"uri": "[concat(concat(reference(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccount')), '2015-06-15').primaryEndpoints['blob'], 'vhds/'), variables('virtualMachineName'), '.vhd')]"
+					},
+					"createOption": "fromImage"
+				},
+				"dataDisks": []
+			},
+			"networkProfile": {
+				"networkInterfaces": [{
+					"id": "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceName'))]"
+				}]
+			},
+			"diagnosticsProfile": {
+				"bootDiagnostics": {
+					"enabled": true,
+					"storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('diagnosticsStorageAccountName')), '2015-06-15').primaryEndpoints['blob']]"
+				}
+			}
+		},
+		"plan": {
+			"name": "std-linux-byol-4-2",
+			"publisher": "wowza",
+			"product": "wowzastreamingengine"
+		}
+	}, {
+		"name": "[concat(variables('virtualMachineName'),'/Microsoft.Insights.VMDiagnosticsSettings')]",
+		"type": "Microsoft.Compute/virtualMachines/extensions",
+		"apiVersion": "2015-06-15",
+		"location": "[resourceGroup().location]",
+		"dependsOn": [
+			"[concat('Microsoft.Compute/virtualMachines/', variables('virtualMachineName'))]"
+		],
+		"properties": {
+			"publisher": "Microsoft.OSTCExtensions",
+			"type": "LinuxDiagnostic",
+			"typeHandlerVersion": "2.3",
+			"autoUpgradeMinorVersion": true,
+			"settings": {
+				"xmlCfg": "[base64(variables('wadcfgx'))]",
+				"StorageAccount": "[variables('diagnosticsStorageAccountName')]"
+			},
+			"protectedSettings": {
+				"storageAccountName": "[variables('diagnosticsStorageAccountName')]",
+				"storageAccountKey": "[listKeys(variables('diagnosticsStorageAccountName'),'2015-06-15').key1]",
+				"storageAccountEndPoint": "https://core.windows.net/"
+			}
+		}
+	}, {
+		"name": "[variables('storageAccount')]",
+		"type": "Microsoft.Storage/storageAccounts",
+		"apiVersion": "2015-06-15",
+		"location": "[resourceGroup().location]",
+		"properties": {
+			"accountType": "[variables('storageAccountType')]"
+		}
+	}, {
+		"name": "[variables('diagnosticsStorageAccountName')]",
+		"type": "Microsoft.Storage/storageAccounts",
+		"apiVersion": "2015-06-15",
+		"location": "[resourceGroup().location]",
+		"properties": {
+			"accountType": "[variables('diagnosticsStorageAccountType')]"
+		}
+	}, {
+		"name": "[variables('virtualNetworkName')]",
+		"type": "Microsoft.Network/virtualNetworks",
+		"apiVersion": "2015-06-15",
+		"location": "[resourceGroup().location]",
+		"properties": {
+			"addressSpace": {
+				"addressPrefixes": [
+					"[variables('addressPrefix')]"
+				]
+			},
+			"subnets": [{
+				"name": "[variables('subnetName')]",
+				"properties": {
+					"addressPrefix": "[variables('subnetPrefix')]"
+				}
+			}]
+		}
+	}, {
+		"name": "[variables('networkInterfaceName')]",
+		"type": "Microsoft.Network/networkInterfaces",
+		"apiVersion": "2015-06-15",
+		"location": "[resourceGroup().location]",
+		"dependsOn": [
+			"[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+			"[concat('Microsoft.Network/publicIpAddresses/', variables('publicIpAddressName'))]",
+			"[concat('Microsoft.Network/networkSecurityGroups/', variables('networkSecurityGroupName'))]"
+		],
+		"properties": {
+			"primary": true,
+			"ipConfigurations": [{
+				"name": "ipconfig1",
+				"properties": {
+					"subnet": {
+						"id": "[variables('subnetRef')]"
+					},
+					"privateIPAllocationMethod": "Dynamic",
+					"publicIpAddress": {
+						"id": "[resourceId('Microsoft.Network/publicIpAddresses', variables('publicIpAddressName'))]"
+					}
+				}
+			}],
+			"networkSecurityGroup": {
+				"id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+			}
+		}
+	}, {
+		"name": "[variables('publicIpAddressName')]",
+		"type": "Microsoft.Network/publicIpAddresses",
+		"apiVersion": "2015-06-15",
+		"location": "[resourceGroup().location]",
+		"properties": {
+			"publicIpAllocationMethod": "Dynamic",
+			"dnsSettings": {
+				"domainNameLabel": "[variables('publicIPdns')]"
+			}
+		}
+
+	}, {
+		"name": "[variables('networkSecurityGroupName')]",
+		"type": "Microsoft.Network/networkSecurityGroups",
+		"apiVersion": "2015-06-15",
+		"location": "[resourceGroup().location]",
+		"properties": {
+			"securityRules": [{
+				"name": "Server",
+				"properties": {
+					"priority": 1010,
+					"sourceAddressPrefix": "*",
+					"protocol": "TCP",
+					"destinationPortRange": "1935",
+					"access": "Allow",
+					"direction": "Inbound",
+					"sourcePortRange": "*",
+					"destinationAddressPrefix": "*"
+				}
+			}, {
+				"name": "HTTP",
+				"properties": {
+					"priority": 1020,
+					"sourceAddressPrefix": "*",
+					"protocol": "TCP",
+					"destinationPortRange": "80",
+					"access": "Allow",
+					"direction": "Inbound",
+					"sourcePortRange": "*",
+					"destinationAddressPrefix": "*"
+				}
+			}, {
+				"name": "HTTPS",
+				"properties": {
+					"priority": 1030,
+					"sourceAddressPrefix": "*",
+					"protocol": "TCP",
+					"destinationPortRange": "443",
+					"access": "Allow",
+					"direction": "Inbound",
+					"sourcePortRange": "*",
+					"destinationAddressPrefix": "*"
+				}
+			}, {
+				"name": "RTSP",
+				"properties": {
+					"priority": 1040,
+					"sourceAddressPrefix": "*",
+					"protocol": "TCP",
+					"destinationPortRange": "554",
+					"access": "Allow",
+					"direction": "Inbound",
+					"sourcePortRange": "*",
+					"destinationAddressPrefix": "*"
+				}
+			}, {
+				"name": "Manger",
+				"properties": {
+					"priority": 1050,
+					"sourceAddressPrefix": "*",
+					"protocol": "TCP",
+					"destinationPortRange": "8088",
+					"access": "Allow",
+					"direction": "Inbound",
+					"sourcePortRange": "*",
+					"destinationAddressPrefix": "*"
+				}
+			}, {
+				"name": "default-allow-ssh",
+				"properties": {
+					"priority": 1060,
+					"sourceAddressPrefix": "*",
+					"protocol": "TCP",
+					"destinationPortRange": "22",
+					"access": "Allow",
+					"direction": "Inbound",
+					"sourcePortRange": "*",
+					"destinationAddressPrefix": "*"
+				}
+			}]
+		}
+	}, {
+		"type": "Microsoft.Compute/virtualMachines/extensions",
+		"name": "[concat(variables('virtualMachineName'),'/',variables('virtualMachineExtensionName'))]",
+		"apiVersion": "2015-06-15",
+		"location": "[resourceGroup().location]",
+		"dependsOn": [
+			"[concat('Microsoft.Compute/virtualMachines/', variables('virtualMachineName'))]"
+		],
+		"properties": {
+			"publisher": "Microsoft.OSTCExtensions",
+			"type": "CustomScriptForLinux",
+			"typeHandlerVersion": "1.5",
+			"autoUpgradeMinorVersion": true,
+			"settings": {
+				"fileUris": [
+					"[variables('scriptFilePath')]"
+				],
+				"commandToExecute": "[variables('executeCmd')]"
+			}
+		}
+	}],
+	"outputs": {
+		"wowzaURL": {
+			"type": "string",
+			"value": "[ variables('FQDN')]"
+
+		}
+	}
+	
+}
