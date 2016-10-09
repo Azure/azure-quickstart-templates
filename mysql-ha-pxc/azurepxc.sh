@@ -231,9 +231,7 @@ install_mysql_centos() {
         return
     fi
     echo "installing mysql"
-    yum -y install http://www.percona.com/downloads/percona-release/percona-release-0.0-1.x86_64.rpm
-    wget --no-cache http://apt.sw.be/redhat/el6/en/x86_64/rpmforge/RPMS/socat-1.7.2.4-1.el6.rf.x86_64.rpm
-    rpm -Uvh socat-1.7.2.4*rpm
+    yum -y install http://www.percona.com/downloads/percona-release/redhat/0.1-3/percona-release-0.1-3.noarch.rpm
 	wget --no-cache https://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm
 	rpm -Uvh epel-release-latest-6.noarch.rpm
 	yum -y install libev

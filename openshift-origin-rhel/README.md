@@ -15,6 +15,8 @@ This template deploys OpenShift Origin with basic username / password for authen
 |Storage Accounts   |2 Storage Accounts                                                                                                                  |
 |Virtual Machines   |Single master<br />User-defined number of nodes<br />All VMs include a single attached data disk for Docker thin pool logical volume|
 
+If you already have a Red Hat subscription and would like to deploy an OpenShift Container Platform (Enterprise) 3.3 cluster, please visit: https://github.com/haroldwongms/openshift-enterprise
+
 ### Generate SSH Keys
 
 You'll need to generate a pair of SSH keys in order to provision this template. Ensure that you do not include a passcode with the private key. <br/>
@@ -38,29 +40,31 @@ You will need to create a Key Vault to store your SSH Private Key that will then
          Ex: [azure keyvault create -u KeyVaultName -g ResourceGroupName -l 'East US'] <br/>
   c.  Create Secret: azure keyvault secret set -u \<vault-name\> -s \<secret-name\> --file \<private-key-file-name\><br/>
          Ex: [azure keyvault secret set -u KeyVaultName -s SecretName --file ~/.ssh/id_rsa <br/>
-  <br/>
   d.  Enable the Keyvvault for Template Deployment: azure keyvault set-policy -u \<vault-name\> --enabled-for-template-deployment true <br/>
          Ex: [azure keyvault set-policy -u KeyVaultName --enabled-for-template-deployment true] <br/>
 
-### azuredeploy.parameters.json File Explained
+### azuredeploy.Parameters.json File Explained
 
-1.  masterVmSize: Select from one of the allowed VM sizes listed in the azuredeploy.json file
-2.  nodeVmSize: Select from one of the allowed VM sizes listed in the azuredeploy.json file
-3.  osImage: Select from CentOS or RHEL for the Operating System
-4.  openshiftMasterHostName: Host name for the Master Node
-5.  openshiftMasterPublicIpDnsLabelPrefix: A unique Public DNS name to reference the Master Node by
-6.  nodeLbPublicIpDnsLabelPrefix: A unique Public DNS name to reference the Node Load Balancer by.  Used to access deployed applications
-7.  nodePrefix: prefix to be prepended to create host names for the Nodes
-8.  nodeInstanceCount: Number of Nodes to deploy
-9.  adminUsername: Admin username for both OS login and OpenShift login
-10. adminPassword: Password for OpenShift login
-11. sshPublicKey: Copy your SSH Public Key here
-12. subscriptionId: Your Subscription ID<br/>
+1.  _artifactsLocation: The base URL where artifacts required by this template are located
+2.  masterVmSize: Select from one of the allowed VM sizes listed in the azuredeploy.json file
+3.  nodeVmSize: Select from one of the allowed VM sizes listed in the azuredeploy.json file
+4.  osImage: Select from CentOS or RHEL for the Operating System
+5.  openshiftMasterHostName: Host name for the Master Node
+6.  openshiftMasterPublicIpDnsLabelPrefix: A unique Public DNS name to reference the Master Node by
+7.  nodeLbPublicIpDnsLabelPrefix: A unique Public DNS name to reference the Node Load Balancer by.  Used to access deployed applications
+8.  nodePrefix: prefix to be prepended to create host names for the Nodes
+9.  nodeInstanceCount: Number of Nodes to deploy
+10. adminUsername: Admin username for both OS login and OpenShift login
+11. adminPassword: Password for OpenShift login
+12. sshPublicKey: Copy your SSH Public Key here
+13. subscriptionId: Your Subscription ID<br/>
     a. PowerShell: get-AzureAccount
-	b. Azure CLI: azure account show  - Field is ID
-13. keyVaultResourceGroup: The name of the Resource Group that contains the Key Vault
-14. keyVaultName: The name of the Key Vault you created
-15. keyVaultSecret: The Secret Name you used when creating the Secret
+	b. Azure CLI: azure account show - Field is ID
+14. keyVaultResourceGroup: The name of the Resource Group that contains the Key Vault
+15. keyVaultName: The name of the Key Vault you created
+16. keyVaultSecret: The Secret Name you used when creating the Secret
+17. defaultSubDomainType: This will either be xipio (if you don't have your own domain) or custom if you have your own domain that you would like to use for routing
+18. defaultSubDomain: The wildcard DNS name you would like to use for routing if you selected custom above.  If you selected xipio above, then this field will be ignored
 
 ## Deploy Template
 

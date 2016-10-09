@@ -71,16 +71,29 @@ setup_spark_env_and_defaults()
 	#echo "export SPARK_EXECUTOR_INSTANCES=\"1\"" >> spark-env.sh
 	
 	# Other Paramters
+	echo 'export SPARK_WORKER_MEMORY="1g"' >> spark-env.sh
+	echo 'export SPARK_DRIVER_MEMORY="1g"' >> spark-env.sh
+	echo 'export SPARK_REPL_MEM="2g"' >> spark-env.sh
+	echo 'export SPARK_WORKER_PORT=9000' >> spark-env.sh
 	echo 'export SPARK_CONF_DIR="/usr/local/spark/conf"' >> spark-env.sh
 	echo 'export SPARK_TMP_DIR="/srv/spark/tmp"' >> spark-env.sh
 	echo 'export SPARK_PID_DIR="/srv/spark/pids"' >> spark-env.sh
 	echo 'export SPARK_LOG_DIR="/srv/spark/logs"' >> spark-env.sh
 	echo 'export SPARK_WORKER_DIR="/srv/spark/work"' >> spark-env.sh
 	echo 'export SPARK_LOCAL_DIRS="/srv/spark/tmp"' >> spark-env.sh
+	echo 'export SPARK_COMMON_OPTS="$SPARK_COMMON_OPTS -Dspark.kryoserializer.buffer.mb=32 "' >> spark-env.sh
+	echo 'LOG4J="-Dlog4j.configuration=file://$SPARK_CONF_DIR/log4j.properties"' >> spark-env.sh
+	echo 'export SPARK_MASTER_OPTS=" $LOG4J -Dspark.log.file=/srv/spark/logs/master.log "' >> spark-env.sh
+	echo 'export SPARK_WORKER_OPTS=" $LOG4J -Dspark.log.file=/srv/spark/logs/worker.log "' >> spark-env.sh
+	echo 'export SPARK_EXECUTOR_OPTS=" $LOG4J -Djava.io.tmpdir=/srv/spark/tmp/executor "' >> spark-env.sh
+	echo 'export SPARK_REPL_OPTS=" -Djava.io.tmpdir=/srv/spark/tmp/repl/\$USER "' >> spark-env.sh
+	echo 'export SPARK_APP_OPTS=" -Djava.io.tmpdir=/srv/spark/tmp/app/\$USER "' >> spark-env.sh
+	echo 'export PYSPARK_PYTHON="/usr/bin/python"' >> spark-env.sh
 	
 	# Hadoop Related Configs
 	echo 'export HADOOP_CONF_DIR="/usr/local/spark/conf"' >> spark-env.sh
 	
+	## Cnofigure Azure Blob storage / Wasb access
 	touch core-site.xml
 	
 	echo '<?xml version="1.0" encoding="UTF-8"?>' >> core-site.xml
@@ -139,16 +152,19 @@ install_spark()
 	sudo chown -R spark:spark /srv/spark
 	sudo chmod 4755 /srv/spark/tmp
 	
-	
 	download_extra_libraries
 	
 	setup_spark_env_and_defaults
 	
-	
 	sudo su spark
 	rm -f ~/.ssh/id_rsa 
 	ssh-keygen -q -t rsa -N '' -f ~/.ssh/id_rsa && cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
+	
+}
 
+launch_spark()
+{
+	sudo su spark
 	# need to say yes to every question
 	ssh localhost
 	
@@ -168,3 +184,4 @@ install_prerequisites > /tmp/install_prerequisites.log
 
 install_spark > /tmp/install_spark.log
 
+launch_spark > /tmp/launch_spark.log
