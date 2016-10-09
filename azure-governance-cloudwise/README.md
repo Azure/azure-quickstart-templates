@@ -80,7 +80,7 @@ In its current state, solution templates come with licenses built-in – there m
 * Azure Marketplace Deployment Agreements - VM Images from Azure marketplace need a registered Azure credit card for deployments to be successful. We understand that some customers (especially EA and internal MS customers) may not have this configured leading to failed deployments.   
 * Operations Management Suite Account (Free Sign Up – No credit card required. Sign up for your free OMS account [here](https://www.microsoft.com/en-us/cloud-platform/operations-management-suite))
 * Create an Automation account with RunAs Service principal. Unfortunately ARM templates don't allow for creating AD service principals as yet, so this step is currently a manual.
-    * Refer the blog https://azure.microsoft.com/en-us/documentation/articles/automation-sec-configure-azure-runas-account/ for the steps.
+    * Refer the blog [here](https://azure.microsoft.com/en-us/documentation/articles/automation-sec-configure-azure-runas-account/) for the steps.
     * Creation of ServicePrincipal has a propensity to fail randomly. A basic verification whether it was successfully created is <span style="color:red;"> **mandatory** </span>
 * Capture the AutomationAccount name and the resourcegroup. You will need them as parameters when you 'Deploy to Azure'
  
@@ -107,6 +107,8 @@ Please download the link to the PowerBI dashboard
 
 ## Deployment and Settings
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
+
+For the detailed deployment guide, please refer [DeploymentGuide_and_Configuration_Guide_CloudWise.pdf](images/DeploymentGuide_and_Configuration_Guide_CloudWise.pdf)
 
 ## Post Deployment Steps
 Congratulations ! <br />
