@@ -26,7 +26,7 @@ This template will deploy a single Azure SQL Server, with a single Azure SQL DB 
 
 ## How do I get started?
 
-1. We leverage the Azure Resource Manager (ARM) templates to configure this solution. You find the SQL Azure ARM Template [here](https://azure.microsoft.com/en-us/documentation/templates/101-sqlazure-oms-monitoring/).
+1. We leverage the Azure Resource Manager (ARM) templates to configure this solution. For more information about the SQL ARM resource, check the MSDN SQL REST API reference [here](https://msdn.microsoft.com/en-us/library/azure/mt163685.aspx).
 2. Click the button that says ‘**Deploy to Azure**’. This will launch the ARM Template you need to configure in the Azure Portal. You need to specify the following parameters:
     + primaryDBResourceGroup - resource group where primary SQL Server is located
     + primarySQLServerName - Name of primary SQL Server Name
