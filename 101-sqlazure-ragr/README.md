@@ -35,6 +35,6 @@ This template will deploy a single Azure SQL Server, with a single Azure SQL DB 
     + copyDBName - Name of new SQL Database copy
     + sqlServerAdminPassword  - password of new SQL server 
  
- ![all text](images/01sqlazure.png "SQL Azure") 
+ ![all text](images/sqlragr01.png "SQL Azure RAGR") 
   
 
