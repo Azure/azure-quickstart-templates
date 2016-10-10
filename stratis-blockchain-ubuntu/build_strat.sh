@@ -26,7 +26,7 @@ cd /usr/local
 file=/usr/local/stratisX
 if [ ! -e "$file" ]
 then
-	sudo git clone https://github.com/stratisproject/stratisX.git
+	sudo git clone https://github.com/sigwo/stratisX.git
 fi
 
 cd /usr/local/stratisX/src
