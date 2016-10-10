@@ -21,8 +21,10 @@ fi
 #create adminuser and password
 echo "hpsr=new hudson.security.HudsonPrivateSecurityRealm(false); hpsr.createAccount('$ADMINUSER', '$ADMINPWD')" | sudo java -jar /opt/jenkins-cli.jar -s http://localhost:8080 groovy =
 #enable secure jenkins secure config
-sudo mv $JENKINSHOME$JENKINS_CONFIG $JENKINS_HOME"config.xml.bak"
-sudo wget -O $JENKINS_HOME$JENKINS_CONFIG https://arroycsafestorage.blob.core.windows.net/testsafe/config.xml
+sudo mv /var/lib/jenkins/config.xml /var/lib/jenkins/config.xml.bak
+sudo mkdir /var/lib/jenkins/test1
+sudo wget -O /var/lib/jenkins/config.xml https://arroycsafestorage.blob.core.windows.net/testsafe/config.xml
+sudo mkdir /var/lib/jenkins/arjun1/test2
 #restart jenkins
 sudo service jenkins restart
 
