@@ -1,0 +1,131 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "primaryDBResourceGroup": {
+      "type": "string",
+      "metadata": {
+        "description": "Provide the source Azure SQL Database Resource Group."
+      }
+    },
+    "primarySQLServerName": {
+      "type": "string",
+      "metadata": {
+        "description": "Provide the name of the source Azure SQL Server"
+      }
+    },
+    "primarySQLDBName": {
+      "type": "string",
+      "metadata": {
+        "description": "Provide the name of the source Azure SQL Database"
+      }
+    },
+    "copyRegion": {
+      "type": "string",
+      "defaultValue": "East US",
+      "allowedValues": [
+        "Japan East",
+        "East US 2",
+        "Southeast Asia",
+        "South Central US",
+        "West Europe"
+      ],
+      "metadata": {
+        "description": "Location of the secondary Azure SQL Read-access online copy"
+      }
+    },
+    "copyServerName":{
+      "type": "string",
+      "defaultValue":"copySQLServer",
+      "metadata": {
+        "description":"Name of the new SQL Server (Copy)"
+      }
+    },
+    "copyDBName":{
+      "type": "string",
+      "defaultValue":"copySQLDB",
+      "metadata": {
+        "description":"Name of the new SQL Server Database (Copy)"
+      }
+    },
+    "sqlServerAdminLogin":{
+      "type": "string",
+      "metadata": {
+        "description":"Username for the SQL Admin Login"
+      }
+    },
+    "sqlServerAdminPassword":{
+      "type": "securestring",
+      "metadata": {
+        "description":"Password for the SQL Admin Login"
+      }
+    },
+    "sqlEdition":{
+      "type": "string",
+      "defaultValue":"Basic",
+      "metadata": {
+        "description":"Edition of the New SQL Server Database (Copy)"
+      }
+    },
+    "sqlRequestedServiceObjectiveName":{
+      "type": "string",
+      "defaultValue":"Basic",
+      "metadata": {
+        "description":"Tier of the New SQL Server Database (Copy)"
+      }
+    }
+  },
+  "variables": {
+    "apiVersion": "2014-04-01-preview",
+    "sourceSQLServerId":"[resourceId(parameters('primaryDBResourceGroup'), 'Microsoft.Sql/servers', parameters('primarySQLServerName'))]",
+    "sourceSQLDBId":"[concat(variables('sourceSQLServerId'),'/databases/', parameters('primarySQLDBName'))]",
+    "sqlCollation":"SQL_Latin1_General_CP1_CI_AS",
+    "sqlMaxSizeBytes":"268435456000"   
+  },
+  "resources": [
+    {
+      "name": "[parameters('copyServerName')]",
+      "type": "Microsoft.Sql/servers",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2014-04-01-preview",
+      "properties": {
+        "administratorLogin": "[parameters('sqlServerAdminLogin')]",
+        "administratorLoginPassword": "[parameters('sqlServerAdminPassword')]",
+        "version": "12.0"
+      },
+      "resources": [
+        {
+          "name": "AllowAllWindowsAzureIps",
+          "type": "firewallrules",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "[variables('apiVersion')]",
+          "dependsOn": [
+            "[concat('Microsoft.Sql/servers/', parameters('copyServerName'))]"
+          ],
+          "properties": {
+            "startIpAddress": "0.0.0.0",
+            "endIpAddress": "0.0.0.0"
+          }
+        }        
+      ]
+    },
+    {
+            "type": "Microsoft.Sql/servers/databases",
+            "name": "[concat(parameters('copyServerName'), '/', parameters('copyDBName'))]",
+            "apiVersion": "[variables('apiVersion')]",
+            "location": "[parameters('copyRegion')]",            
+            "properties": {
+                "edition": "[parameters('sqlEdition')]",
+                "collation": "[variables('sqlCollation')]",
+                "maxSizeBytes": "[variables('sqlMaxSizeBytes')]",
+                "requestedServiceObjectiveName": "[parameters('sqlRequestedServiceObjectiveName')]",
+                "createMode": "OnlineSecondary",
+                "sourceDatabaseId": "[variables('sourceSQLDBId')]"
+            },
+            "dependsOn": [
+              "[resourceId('Microsoft.Sql/servers', parameters('copyServerName'))]"
+            ]
+        }
+
+  ]
+}
