@@ -1,11 +1,25 @@
-#!/bin/sh
-log_dir_path='/tmp/azurejenkinslog/'
+#!/bin/bash
+
+#check if subscription-id has been provided as a parameter
+#if [ $# -eq 0 ]; then
+#    echo "No arguments provided!!! Need atleast subscription-id as parameter to progress ...
+#    Usage:
+#    1 sh config_azure.sh
+#    2 sh config_azure.sh <Subscription ID>
+#    3 sh config_azure.sh <Subscription ID> <Storage Account name>
+#    4 sh config_azure.sh <Subscription ID> <Storage Account name> <Resource Group name>
+#    5 sh config_azure.sh <Subscription ID> <Storage Account name> <Resource Group name> <Source Container name> <Dest Container name>
+#"
+#    exit 1
+#fi
+
+log_dir_path='/opt/azure_jenkins_config/log'
 if [ ! -d $log_dir_path ]
 then
     sudo mkdir $log_dir_path
 fi
 
-log_file_name="config_storage.log"
+log_file_name="config_azure.log"
 log_file_path="$log_dir_path$log_file_name"
 
 if [ ! -f $log_file_path ]
@@ -18,13 +32,6 @@ instruction_goto_dashboard="Please go to Jenkins dashboard by inputting <Your VM
 
 dest_account_file_path='/var/lib/jenkins/com.microsoftopentechnologies.windowsazurestorage.WAStoragePublisher.xml'
 
-echo "Usage:
-  1 sh config_storage.sh
-  2 sh config_storage.sh <Subscription ID>
-  3 sh config_storage.sh <Subscription ID> <Storage Account name>
-  4 sh config_storage.sh <Subscription ID> <Storage Account name> <Resource Group name>
-  5 sh config_storage.sh <Subscription ID> <Storage Account name> <Resource Group name> <Source Container name> <Dest Container name>
-"
 
 SUBSCRIPTION_ID=$1
 STORAGE_ACCOUNT_NAME=$2
@@ -34,8 +41,9 @@ DEST_CONTAINER_NAME=$5
 
 sudo sh -c "echo '$(date): Login to Azure' >> $log_file_path"
 azure login
-if [ ! -z "$SUBSCRIPTION_ID" ]
+if [ $# -eq 1 ]
 then
+    echo "Subscription-Id provided '$SUBSCRIPTION_ID'"
     sudo sh -c "echo '$(date): Set subscription ID' >> $log_file_path"
     azure account set $SUBSCRIPTION_ID
 else
