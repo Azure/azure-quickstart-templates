@@ -1,5 +1,5 @@
 # Azure Data Factory Data Copy Activity
-Update values for the following parameters in the **azuredeploy.parameters.json** file.
+Update values for the following parameters in **azuredeploy.parameters.json** file.
 
 - storageAccountName with name of your Azure storage account.
 - storageAccountKey with key of your Azure storage account. 
