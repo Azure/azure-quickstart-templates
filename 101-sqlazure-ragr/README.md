@@ -28,12 +28,13 @@ This template will deploy a single Azure SQL Server, with a single Azure SQL DB 
 
 1. We leverage the Azure Resource Manager (ARM) templates to configure this solution. You find the SQL Azure ARM Template [here](https://azure.microsoft.com/en-us/documentation/templates/101-sqlazure-oms-monitoring/).
 2. Click the button that says ‘**Deploy to Azure**’. This will launch the ARM Template you need to configure in the Azure Portal. You need to specify the following parameters:
-+ primaryDBResourceGroup - resource group where primary SQL Server is located
-+ primarySQLServerName - Name of primary SQL Server Name
-+ primarySQLDBName  Name of primary SQL Server Database
-+ copyServerName - Name of new SQL Server copy 
-+ copyDBName - Name of new SQL Database copy
-+ sqlServerAdminPassword  - password of new SQL server 
-  ![all text](images/01sqlazure.png "SQL Azure") 
+    + primaryDBResourceGroup - resource group where primary SQL Server is located
+    + primarySQLServerName - Name of primary SQL Server Name
+    + primarySQLDBName  Name of primary SQL Server Database
+    + copyServerName - Name of new SQL Server copy 
+    + copyDBName - Name of new SQL Database copy
+    + sqlServerAdminPassword  - password of new SQL server 
+ 
+ ![all text](images/01sqlazure.png "SQL Azure") 
   
 
