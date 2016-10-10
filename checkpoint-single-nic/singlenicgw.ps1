@@ -126,7 +126,7 @@ for (; $StorageAccount.Length -lt 24; $x++) {
 }
 
 # Login:
-Login-AzureRmAccount
+Add-AzureRmAccount
 
 if ($SubscriptionId) {
     Select-AzureRmSubscription -SubscriptionId $SubscriptionId

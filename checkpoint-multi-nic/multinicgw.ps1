@@ -166,7 +166,7 @@ if ($CreateVNet -eq "false" -and !$ExistingVNetResourceGroup) {
 }
 
 # Login:
-Login-AzureRmAccount
+Add-AzureRmAccount
 
 if ($SubscriptionId) {
     Select-AzureRmSubscription -SubscriptionId $SubscriptionId
