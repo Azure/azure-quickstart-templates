@@ -5,13 +5,19 @@ SETUP_SCRIPTS_LOCATION="/opt/azure_jenkins_config/"
 CONFIG_AZURE_SCRIPT="config_azure.sh"
 CLEAN_STORAGE_SCRIPT="clear_storage_config.sh"
 SOURCE_URI="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/azure-jenkins/setup-scripts/"
-
+JENKINS_USER="/var/lib/jenkins/users"
+ADMINUSER=$1
+ADMINPWD=$2
 #download jenkins-cli and secured jenkins config to create new user
 wget -O /opt/jenkins-cli.jar http://localhost:8080/jnlpJars/jenkins-cli.jar
 chmod +x /opt/jenkins-cli.jar
-
+#delete any previous user if there is any
+if [ ! -d $JENKINS_USER ] 
+then
+    sudo rm -rvf $JENKINS_USER
+fi
 #create adminuser and password
-echo "hpsr=new hudson.security.HudsonPrivateSecurityRealm(false); hpsr.createAccount('$1', '$2')" | sudo java -jar /opt/jenkins-cli.jar -s http://localhost:8080 groovy =
+echo "hpsr=new hudson.security.HudsonPrivateSecurityRealm(false); hpsr.createAccount('$ADMINUSER', '$ADMINPWD')" | sudo java -jar /opt/jenkins-cli.jar -s http://localhost:8080 groovy =
 #enable secure jenkins secure config
 #sudo wget -O /var/lib/jenkins/config.xml https://arroycsafestorage.blob.core.windows.net/testsafe/config.xml
 #restart jenkins
