@@ -79,7 +79,6 @@ wget https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/e
 wget https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/elementrem-smartcontract-blockchain/attach_public.sh
 wget https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/elementrem-smartcontract-blockchain/start_private.sh
 wget https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/elementrem-smartcontract-blockchain/start_public.sh
-wget https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/elementrem-smartcontract-blockchain/private_prerequisites.json
 wget https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/elementrem-smartcontract-blockchain/meteor-wallet-setup.sh
 wget https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/elementrem-smartcontract-blockchain/update-gele.sh
 
