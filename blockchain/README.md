@@ -20,6 +20,7 @@ Options for blockchain software include:
 - [monero](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/monero.md)
 - [multichain](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/multichain.md)
 - [nxt](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/nxt.md)
+- [okcash](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/okcash.md)
 - [shadow](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/shadow.md)
 - [syscoin](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/syscoin.md)
 - [vcash](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/vcash.md)
