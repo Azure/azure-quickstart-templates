@@ -22,6 +22,7 @@ CREATE TYPE [dbo].[empType] AS TABLE(
     [Last] [varchar](256) NOT NULL
 )
 ```
+Cretae a SQL Stored Procedure:
 
 ```
 CREATE PROCEDURE spWriteEmployee @emp [dbo].[empType] READONLY
@@ -47,9 +48,3 @@ END
 		New-AzureRmResourceGroupDeployment -Name MyARMDeployment -ResourceGroupName ADFTutorialResourceGroup -TemplateFile C:\ADFGetStarted\azuredeploy.json -TemplateParameterFile C:\ADFGetStarted\azuredeploy.parameters.json
 
 See [Tutorial: Create a pipeline using Resource Manager Template](https://azure.microsoft.com/documentation/articles/data-factory-copy-activity-tutorial-using-azure-resource-manager-template/?rnd=1#create-data-factory)  article for a detailed walkthrough with step-by-step instructions.
-
-
-
-
-
-
