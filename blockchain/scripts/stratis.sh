@@ -39,7 +39,7 @@ fi
 sudo cp /usr/local/stratisX/src/stratisd /usr/bin/stratisd
 
 ################################################################
-# Configure to auto start at boot		                       #
+# Configure to auto start at boot		               #
 ################################################################
 file=$HOME/.stratis 
 if [ ! -e "$file" ]
