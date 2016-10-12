@@ -1,7 +1,7 @@
 # Stratis Blockchain Node on Ubuntu VM
 
 This template delivers the Stratis network to your VM in 10-15 minutes.  Everything you need to get started using the Stratis blockchain from the command line is included. 
-You may build from source.  Once installed, 'stratisd' will begin syncing the public blockchain. 
+You will be building from source.  Once installed, 'stratisd' will begin syncing the public blockchain. 
 You may then connect via SSH to the VM and launch 'stratisd' to interface with the blockchain.
 
 # What is Stratis?
