@@ -43,13 +43,22 @@ When the file is processed by the pipeline with HDInsight Hive Activity, the act
 
 From the sample lines shown above, the first one (with 2016-01-01) is written to the 000000_0 file in the month=1 folder. Similarly, the second one is written to the file in the month=2 folder and the third one is written to the file in the month=3 folder.
 
-For more information, see [Overview and prerequisites](https://azure.microsoft.com/documentation/articles/data-factory-build-your-first-pipeline/) article. 
+For more information, see [Overview and prerequisites](https://azure.microsoft.com/documentation/articles/data-factory-build-your-first-pipeline/) article.
 
-## Deploy using PowerShell
-1. Save files to C:\ADFGetStarted folder. 
-2. Enter correct values for parameters in **azuredeploy.parameters.json**. 
-2. Run the following command:
-	
-		New-AzureRmResourceGroupDeployment -Name MyARMDeployment -ResourceGroupName ADFTutorialResourceGroup -TemplateFile C:\ADFGetStarted\azuredeploy.json -TemplateParameterFile C:\ADFGetStarted\azuredeploy.parameters.json
+See [Tutorial: Create a pipeline using Resource Manager Template](https://azure.microsoft.com/en-us/documentation/articles/data-factory-build-your-first-pipeline-using-arm/) article for a detailed walkthrough with step-by-step instructions. 
 
-See [Tutorial: Create a pipeline using Resource Manager Template](https://azure.microsoft.com/en-us/documentation/articles/data-factory-build-your-first-pipeline-using-arm/) article for a detailed walkthrough with step-by-step instructions.
+## Deploying sample
+You can deploy this sample directly through the Azure Portal or by using the scripts supplied in the root of the repository.
+
+To deploy a sample using the Azure Portal, click the **Deploy to Azure** button at the top of the article. 
+
+To deploy the sample via the command line (using [Azure PowerShell or the Azure CLI](https://azure.microsoft.com/en-us/downloads/)) you can use the scripts.
+
+Simply execute the script and pass in the folder name of the sample.  For example:
+
+```PowerShell
+.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactStagingDirectory 101-data-factory-hive-transformation
+```
+```bash
+azure-group-deploy.sh -a 101-data-factory-hive-transformation -l eastus -u
+
