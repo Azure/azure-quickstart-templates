@@ -1,6 +1,6 @@
 # Public Okcash Blockchain Node
 
-![OKCash-OK](http://i.imgur.com/rOeEycy.png)
+![Okcash-Azure](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/blockchain/images/okcash.png)
 
 **OKCash** is digital cash tech. **OK** is the official symbol and name of the coins. 
 
