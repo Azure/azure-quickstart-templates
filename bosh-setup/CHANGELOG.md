@@ -1,3 +1,7 @@
+# v2.0.2 (2016-09-29)
+
+- Uses local pip repo for AzureChinaCloud to install pip packages
+
 # v2.0.1 (2016-08-24)
 
 - Expose the VM size of BOSH VM as a parameter
