@@ -13,8 +13,6 @@ This template creates a very simple Data Factory pipeline that copies data from 
 
 - See [Overview and prerequisites](https://azure.microsoft.com/documentation/articles/data-factory-copy-data-from-azure-blob-storage-to-sql-database/) for the list of prerequisites.
 
-Data Factory result diagram:
-![Diagram view](images/adfDiagram.PNG)
 
 ## Deploy using PowerShell
 1. Enter right values for parameters in the **azuredeploy.parameters.json**. 
