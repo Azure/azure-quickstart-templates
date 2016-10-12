@@ -6,8 +6,7 @@ You may then connect via SSH to the VM and launch 'stratisd' to interface with t
 
 # What is Stratis?
 
-----------------
-Stratis is a flexible and powerful Blockchain Development Platform designed for the needs of real-world financial services businesses and other organisations that want to access the benefits of Blockchain technologies without the overheads inherent in running their own network infrastructure. Stratis offers a turnkey solution that enables developers and businesses to develop, test and deploy blockchain-based applications quickly and easily, and without the costs and security concerns that would otherwise arise from an in-house implementation.
+Stratis is a flexible and powerful Blockchain Development Platform designed for the needs of real-world financial services businesses and other organisations that want to access the benefits of Blockchain technologies without the overheads inherent in running their own network infrastructure. Stratis offers a turnkey solution that enables developers and businesses to develop, test and deploy blockchain-based applications quickly and easily, and without the costs and security concerns that would otherwise arise from an in-house implementation. Get more information at http://stratisplatform.com.
 
 # Template Parameters
 
