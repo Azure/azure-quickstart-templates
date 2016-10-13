@@ -19,9 +19,9 @@ Upon template deployment you will have the network throughput between the VMs au
 OutputsString           : 
                           Name             Type                       Value     
                           ===============  =========================  ==========
-                          throughput MB/s  String                     58.984    
-                          throughput mbps  String                     494.796   
-                          throughput buffers/s  String                     471.874   
+                          throughput MB/s  String                     229.453   
+                          throughput mbps  String                     1924.787  
+                          throughput buffers/s  String                     1835.620 
 ```
 
 ![alt text](images/throughput.png "Throughput measurement output")
