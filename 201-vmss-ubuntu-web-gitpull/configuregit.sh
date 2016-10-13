@@ -37,17 +37,17 @@ setup_sshkey()
 
     local keyfile=~/.ssh/${host}.key
 
-    echo "Creating ssh key file.."
-    cat > "/tmp/tmp_key" << EOF
-    $key
-    EOF
+echo "Creating ssh key file.."
+cat > "/tmp/tmp_key" << EOF
+$key
+EOF
 
-    cat >> ~/.ssh/config << EOF
-    Host $host
-        HostName $host
-        User $user
-        IdentityFile $keyfile
-    EOF
+cat >> ~/.ssh/config << EOF
+Host $host
+    HostName $host
+    User $user
+    IdentityFile $keyfile
+EOF
 
     # Generate the final ssh private key from the keyvault and place in root user context
     cp /tmp/tmp_key $keyfile
