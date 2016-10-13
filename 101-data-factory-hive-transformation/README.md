@@ -4,6 +4,7 @@ This sample creates a data factory with a data pipeline that processes data by r
 ## Prerequisites
 1. Complete the prerequisites mentioned in [Overview and prerequisites](https://azure.microsoft.com/documentation/articles/data-factory-build-your-first-pipeline/) article.
 2. Update values for the following parameters in **azuredeploy.parameters.json** file.
+    - storageAccountResourceGroupName with name of the resource group that contains your Azure storage. 
     - storageAccountName with the name of your Azure Storage account.
     - storageAccountKey with the key of your Azure Storage account.
 3. For the sample to work as-it-is, keep the following values:  
