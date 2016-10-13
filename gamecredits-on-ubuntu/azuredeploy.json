@@ -2,6 +2,20 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+  "artifactsLocation": {
+        "type": "string",
+        "metadata": {
+          "description": "The base URI where artifacts required by this template are located."
+        },
+        "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/gamecredits-on-ubuntu"
+      },
+    "storageAccountNamePrefix": {
+      "type": "string",
+      "maxLength": 11,
+      "metadata": {
+        "description": "Name prefix of the Storage Account"
+      }
+    },
     "vmDnsPrefix": {
       "type": "string",
       "metadata": {
@@ -22,135 +36,56 @@
     },
     "installMethod": {
       "type": "string",
-      "defaultValue": "From_Source",
+      "defaultValue": "From_Binaries",
       "allowedValues": [
-        "From_PPA",
+        "From_Binaries",
         "From_Source"
       ],
       "metadata": {
-        "description": "Method to install Gamecredits. From_PPA: unofficial community bianaries.  From_Source: official Gamecredits repo on GitHub."
+        "description": "Method to install Gamecredits. From_Binaries: Official binaries + blockchain.  From_Source: official Gamecredits repo on GitHub."
       }
     },
     "vmSize": {
       "type": "string",
-      "defaultValue": "Standard_D1_v2",
+      "defaultValue": "Standard_D1",
       "allowedValues": [
         "Standard_A1",
         "Standard_A2",
         "Standard_A3",
         "Standard_A4",
-        "Standard_D1_v2",
-        "Standard_D2_v2",
-        "Standard_D3_v2",
-        "Standard_D4_v2"
+        "Standard_D1",
+        "Standard_D2",
+        "Standard_D3",
+        "Standard_D4"
       ],
       "metadata": {
         "description": "Size of VM"
       }
     }
   },
+
   "variables": {
     "nicName": "VMNic",
     "addressPrefix": "10.0.0.0/16",
     "imagePublisher": "Canonical",
     "imageVersion": "latest",
-    "imageSKU": "14.04.4-LTS",
+    "imageSKU": "14.04.2-LTS",
     "imageOffer": "UbuntuServer",
     "subnetName": "Subnet-1",
     "subnetPrefix": "10.0.0.0/24",
+    "ScriptFileName": "configure-gamecredits.sh",
     "storageAccountType": "Standard_LRS",
     "publicIPAddressName": "publicIP",
     "publicIPAddressType": "Dynamic",
     "vmStorageAccountContainerName": "vhds",
     "vmName": "[parameters('vmDnsPrefix')]",
-    "virtualNetworkName": "VNET",
+    "virtualNetworkName": "WPVNET",
     "apiVersion": "2015-06-15",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
     "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
-    "storageAccountName": "[concat(uniquestring(resourceGroup().id, 'gamecredits'))]",
-    "securityGroupName": "[concat(uniquestring(resourceGroup().id, 'gamecredits'))]"
+    "storageAccountName": "[replace(replace(tolower(concat(parameters('storageAccountNamePrefix'), uniquestring(resourceGroup().id))), '-',''),'.','')]"
   },
   "resources": [
-    {
-      "apiVersion": "[variables('apiVersion')]",
-      "type": "Microsoft.Network/networkSecurityGroups",
-      "name": "[variables('securityGroupName')]",
-      "location": "[resourceGroup().location]",
-      "properties": {
-        "securityRules": [
-          {
-            "name": "SSH",
-            "properties": {
-              "description": "Allows SSH traffic",
-              "protocol": "Tcp",
-              "sourcePortRange": "*",
-              "destinationPortRange": "22",
-              "sourceAddressPrefix": "*",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 100,
-              "direction": "Inbound"
-            }
-          },
-          {
-            "name": "HTTP",
-            "properties": {
-              "description": "Allows HTTP traffic",
-              "protocol": "Tcp",
-              "sourcePortRange": "*",
-              "destinationPortRange": "80",
-              "sourceAddressPrefix": "*",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 110,
-              "direction": "Inbound"
-            }
-          },
-          {
-            "name": "HTTPS",
-            "properties": {
-              "description": "Allows HTTPS traffic",
-              "protocol": "Tcp",
-              "sourcePortRange": "*",
-              "destinationPortRange": "443",
-              "sourceAddressPrefix": "*",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 120,
-              "direction": "Inbound"
-            }
-          },
-          {
-            "name": "GAMECREDITS-P2P",
-            "properties": {
-              "description": "Allows Gamecredits P2P traffic",
-              "protocol": "Tcp",
-              "sourcePortRange": "*",
-              "destinationPortRange": "40002",
-              "sourceAddressPrefix": "*",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 200,
-              "direction": "Inbound"
-            }
-          },
-          {
-            "name": "GAMECREDITS-RPC",
-            "properties": {
-              "description": "Allows Gamecredits RPC traffic",
-              "protocol": "Tcp",
-              "sourcePortRange": "*",
-              "destinationPortRange": "40001",
-              "sourceAddressPrefix": "*",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 210,
-              "direction": "Inbound"
-            }
-          }
-        ]
-      }
-    },
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('storageAccountName')]",
@@ -233,7 +168,9 @@
           "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
-          "computername": "[variables('vmName')]"
+          "computername": "[variables('vmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
         },
         "storageProfile": {
           "imageReference": {
@@ -268,18 +205,16 @@
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
       ],
-      "properties": {
-        "publisher": "Microsoft.Azure.Extensions",
-		"type": "CustomScript",
-		"typeHandlerVersion": "2.0",
-		"autoUpgradeMinorVersion": true,
-        "settings": {
-          "fileUris": [
-            "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/gamecredits-on-ubuntu/configure-gamecredits.sh"
-          ]
-        },
-        "protectedSettings": {
-          "commandToExecute": "[concat('configure-gamecredits.sh ', parameters('installMethod'))]"
+	  "properties": {
+      "publisher": "Microsoft.Azure.Extensions",
+            "type": "CustomScript",
+            "typeHandlerVersion": "2.0",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "fileUris": [
+          "[concat(parameters('artifactsLocation'), '/', variables('ScriptFileName'))]"
+        ],
+      "commandToExecute": "[concat('sh ', variables('ScriptFileName'), ' ', parameters('installMethod'), ' ', parameters('adminUsername'))]"
         }
       }
     }
