@@ -13,8 +13,8 @@ yum -y clean all
 # Disable EPEL to prevent unexpected packages from being pulled in during installation.
 yum-config-manager epel --disable
 
-# Install Docker
-yum -y install docker
+# Install Docker 1.10.3
+yum -y install docker-1.10.3
 
 # Create thin pool logical volume for Docker
 echo "DEVS=/dev/sdc" >> /etc/sysconfig/docker-storage-setup
