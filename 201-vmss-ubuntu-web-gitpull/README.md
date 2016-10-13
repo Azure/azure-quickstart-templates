@@ -1,5 +1,12 @@
 # Confgure Git Deployment to VMSS 
 
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vmss-ubuntu-web-gitpull%2Fazuredeploy.json" target="_blank">
+<img src="http://azuredeploy.net/deploybutton.png"/>
+</a>
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vmss-ubuntu-web-gitpull%2Fazuredeploy.json" target="_blank">
+<img src="http://armviz.io/visualizebutton.png"/>
+</a>
+
 My team mate [Scott Semyan](http://github.com//ssemyan) and I worked on the web site for a high profile event recently.
 One of security principles we followed was to have no inbound ports to our web servers. 
 To enable secure continuous deployment Scott and I put together a clever configuration of a continous pull from a private git repo using read-only [SSH deploy keys](https://gist.github.com/zhujunsan/a0becf82ade50ed06115). 
