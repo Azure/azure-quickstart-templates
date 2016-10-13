@@ -44,9 +44,9 @@ EOF
 
 cat >> ~/.ssh/config << EOF
 Host $host
-    HostName $host
-    User $user
-    IdentityFile $keyfile
+HostName $host
+User $user
+IdentityFile $keyfile
 EOF
 
     # Generate the final ssh private key from the keyvault and place in root user context
