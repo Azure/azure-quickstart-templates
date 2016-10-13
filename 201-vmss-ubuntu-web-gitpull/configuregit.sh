@@ -19,8 +19,7 @@ configure_git_cron()
 {
     echo "configurng cron for code updates from git"
     #Configure cronjob to perform git pull every 10 minutes
-    echo '*/10 * * * * echo $(date) >> /var/log/cronjob.log && cd /var/www && git pull >> /var/log/cronjob.log 2>&1' >> /tmp/tmp_gitcron
-    echo "configurng cron for cache invalidtion"
+    echo '*/10 * * * * echo $(date) >> /var/log/cronjob.log && cd /var/www/html && git pull >> /var/log/cronjob.log 2>&1' >> /tmp/tmp_gitcron
 
     echo 'Writing to crontab'
     crontab /tmp/tmp_gitcron
