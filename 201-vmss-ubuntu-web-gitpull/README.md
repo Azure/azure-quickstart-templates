@@ -6,7 +6,8 @@ To enable secure continuous deployment Scott and I put together a clever configu
 
 ## Configure git
 Git access via SSH requires a **private** key to the repo on the web server. We want to treat the key as very sensitive information and deploy securely. See note on deploying from Azure Key Vault below.
-This sample keeps things simple and passes the private key to the ARM template. The template defines the ```commandToExecute``` for the Custom Script Extension inside the ```protectedProperties``` setttings.
+This sample keeps things simple and passes the private key to the ARM template. The key is base64 encoded before deployent to ensure special characters don't get lost in translation between the ARM template and the VM.
+The template defines the ```commandToExecute``` for the Custom Script Extension inside the ```protectedProperties``` setttings.
 This avoids the command line and the parameters to be logged to files on the VM.
 
 ```
