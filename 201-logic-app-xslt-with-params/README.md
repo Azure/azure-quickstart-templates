@@ -1,9 +1,9 @@
 # Azure Logic Apps - XSLT with parameters
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-logic-app-xslt-with-parameters%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-logic-app-xslt-with-params%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-logic-app-with-parameters%2Fazuredeploy.json" target="_blank">
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-logic-app-with-params%2Fazuredeploy.json" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
@@ -24,14 +24,14 @@ Note: The Logic App and the Azure Function App need to be deployed in the same r
 
 Once the deployment is completed, you can perform below steps to test your Logic App:
 - Open the Logic App in the designer to get the HTTP Request endpoint url.
-![Image of HTTP request trigger](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-logic-app-xslt-with-parameters/images/http-request-trigger.png "HTTP request trigger")
+![Image of HTTP request trigger](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-logic-app-xslt-with-params/images/http-request-trigger.png "HTTP request trigger")
 - (Optional) Modify the values for parameters X and Y in the Transform XML action.
-![Image of Transform XML action](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-logic-app-xslt-with-parameters/images/transform-xml-action.png "Transform XML action")
+![Image of Transform XML action](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-logic-app-xslt-with-params/images/transform-xml-action.png "Transform XML action")
 - Perform HTTP POST operation on the http endpoint obtained from #1 using your favorite HTTP client.
     - Set content-type header to application/xml.
     - Set request body to the content of sample-input.xml (it is present under artifacts folder in this template).
 - On successful execution, the logic app will respond with the transformed message in response body.
-![Image of sample request-response](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-logic-app-xslt-with-parameters/images/request-response.png "Sample request-response")
+![Image of sample request-response](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-logic-app-xslt-with-params/images/request-response.png "Sample request-response")
 
 ## Notes
 
