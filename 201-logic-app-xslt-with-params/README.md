@@ -31,7 +31,7 @@ Once the deployment is completed, you can perform below steps to test your Logic
     - Set content-type header to application/xml.
     - Set request body to the content of sample-input.xml (it is present under artifacts folder in this template).
 - On successful execution, the logic app will respond with the transformed message in response body.
-![Image of sample request-response](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-logic-app-veter-pipeline/images/request-response.png "Sample request-response")
+![Image of sample request-response](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-logic-app-xslt-with-parameters/images/request-response.png "Sample request-response")
 
 ## Notes
 
