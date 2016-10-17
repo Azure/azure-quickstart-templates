@@ -1,0 +1,737 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "namePrefix" : {
+      "type": "string",
+      "metadata": {
+        "description": "String used as a base for naming resources (9 characters or less).  A unique hash is prepended to the string for some resources, while resource-specific information is appended."
+      },
+      "maxLength": 9
+    },
+    "adminUsername": {
+      "type": "string",
+      "defaultValue": "gethadmin",
+      "metadata": {
+        "description": "Administrator username of each deployed VM"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Administrator password for each deployed VM"
+      }
+    },
+    "ethereumAccountPsswd": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Administrator password used to secure the generated private key file associated with the created Ethereum account"
+      }
+    },
+    "privateKeyForPrefundedAccount": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Private key used to generate account prefunded with Ether.  Use myetherwallet.com to generate a private key."
+      }
+    },
+    "ethereumNetworkID": {
+      "type": "int",
+      "defaultValue": 10101010,
+      "metadata": {
+        "description": "Private Ethereum network ID to which to connect"
+      }
+    },
+    "numConsortiumMembers": {
+      "type": "int",
+      "defaultValue": 2,
+      "metadata": {
+        "description": "Number of members within the network.  Each member receives a subnet with one mining node."
+      },
+      "minValue": 2,
+      "maxValue": 5
+    },
+    "numAdditionalMiningNodesPerMember": {
+      "type": "int",
+      "defaultValue": 1,
+      "metadata": {
+        "description": "Number of mining nodes to create for each consortium member in addition to the single default mining node. Total mining nodes equals number of consortium members, plus number of consortium members multiplied by additional mining nodes."
+      },
+      "minValue": 1,
+      "maxValue": 19
+    },
+    "mnNodeVMSize": {
+      "type": "string",
+      "defaultValue": "Standard_A1",
+      "allowedValues": [
+        "Standard_A1",
+        "Standard_A2",
+        "Standard_A3",
+        "Standard_A4",
+        "Standard_A5",
+        "Standard_A6",
+        "Standard_A7",
+        "Standard_A8",
+        "Standard_A9",
+        "Standard_A10",
+        "Standard_A11",
+        "Standard_D1",
+        "Standard_D2",
+        "Standard_D3",
+        "Standard_D4",
+        "Standard_D11",
+        "Standard_D12",
+        "Standard_D13",
+        "Standard_D14",
+        "Standard_D1_v2",
+        "Standard_D2_v2",
+        "Standard_D3_v2",
+        "Standard_D4_v2",
+        "Standard_D5_v2",
+        "Standard_D11_v2",
+        "Standard_D12_v2",
+        "Standard_D13_v2",
+        "Standard_D14_v2",
+        "Standard_D15_v2",
+        "Standard_F1",
+        "Standard_F2",
+        "Standard_F4",
+        "Standard_F8",
+        "Standard_F16"
+      ],
+      "metadata": {
+        "description": "Size of the virtual machine used for mining nodes"
+      }
+    },
+    "numTXNodes": {
+      "type": "int",
+      "defaultValue": 1,
+      "metadata": {
+        "description": "Number of load balanced transaction nodes"
+      },
+      "minValue": 1,
+      "maxValue": 5
+    },
+    "txNodeVMSize": {
+      "type": "string",
+      "defaultValue": "Standard_A1",
+      "allowedValues": [
+        "Standard_A1",
+        "Standard_A2",
+        "Standard_A3",
+        "Standard_A4",
+        "Standard_A5",
+        "Standard_A6",
+        "Standard_A7",
+        "Standard_A8",
+        "Standard_A9",
+        "Standard_A10",
+        "Standard_A11",
+        "Standard_D1",
+        "Standard_D2",
+        "Standard_D3",
+        "Standard_D4",
+        "Standard_D11",
+        "Standard_D12",
+        "Standard_D13",
+        "Standard_D14",
+        "Standard_D1_v2",
+        "Standard_D2_v2",
+        "Standard_D3_v2",
+        "Standard_D4_v2",
+        "Standard_D5_v2",
+        "Standard_D11_v2",
+        "Standard_D12_v2",
+        "Standard_D13_v2",
+        "Standard_D14_v2",
+        "Standard_D15_v2",
+        "Standard_F1",
+        "Standard_F2",
+        "Standard_F4",
+        "Standard_F8",
+        "Standard_F16"
+      ],
+      "metadata": {
+        "description": "Size of the virtual machine for transaction nodes"
+      }
+    }
+  },
+  "variables": {
+    "namingInfix": "[toLower(substring(concat(parameters('namePrefix'), uniqueString(resourceGroup().id)), 0, 9))]",
+    "storageAccountType": "Standard_LRS",
+    "availabilitySetName": "[concat(variables('namingInfix'), 'AvSet')]",
+    "lbName": "[concat(variables('namingInfix'), 'LB')]",
+    "lbID": "[resourceId('Microsoft.Network/loadBalancers',variables('lbName'))]",
+    "lbPublicIPAddressName": "[concat(variables('namingInfix'), '-lb-publicip')]",
+    "lbHostname": "[variables('namingInfix')]",
+    "lbFrontEndIpConfigName": "LoadBalancerFrontEnd",
+    "lbFrontEndIPConfigID": "[concat(variables('lbID'),'/frontendIPConfigurations/',variables('lbFrontEndIpConfigName'))]",
+    "lbBackendAddressPoolName": "LoadBalancerBackend",
+    "lbBackendAddressPoolID": "[concat(variables('lbID'), '/backendAddressPools/LoadBalancerBackend')]",
+    "httpPort": 80,
+    "adminSitePort": 3000,
+    "sshPort": 22,
+    "gethRPCPort": 8545,
+    "gethIPCPort": 30303,
+    "numMNNodes": "[add(parameters('numConsortiumMembers'), mul(parameters('numConsortiumMembers'), parameters('numAdditionalMiningNodesPerMember')))]",
+    "maxVMsPerStorageAcct": 20,
+    "mnStorageAcctCount": "[add(div(variables('numMNNodes'), variables('maxVMsPerStorageAcct')), 1)]",
+    "mnStorageAcctSuffix": "[variables('namingInfix')]",
+    "mnStorageAcctNames": [
+      "[concat(uniqueString(resourceGroup().id, variables('mnStorageAcctSuffix')), 'mn0')]",
+      "[concat(uniqueString(resourceGroup().id, variables('mnStorageAcctSuffix')), 'mn1')]",
+      "[concat(uniqueString(resourceGroup().id, variables('mnStorageAcctSuffix')), 'mn2')]",
+      "[concat(uniqueString(resourceGroup().id, variables('mnStorageAcctSuffix')), 'mn3')]",
+      "[concat(uniqueString(resourceGroup().id, variables('mnStorageAcctSuffix')), 'mn4')]"
+    ],
+    "mnVMNamePrefix": "[concat(variables('namingInfix'), '-mn')]",
+    "mnNIPrefix": "nic-mn",
+    "numberToTextArray": [
+      "zero",
+      "one",
+      "two",
+      "three",
+      "four",
+      "five"
+    ],
+    "txStorageAcctName": "[concat(uniqueString(resourceGroup().id, variables('namingInfix')), 'tx')]",
+    "txPublicIPAddressNamePrefix": "[concat(variables('namingInfix'), '-tx-publicip')]",
+    "txVMNamePrefix": "[concat(variables('namingInfix'), '-tx')]",
+    "txSubnetName": "[concat(uniqueString(concat(resourceGroup().id, concat(variables('namingInfix'), 'subnet')), 'tx'))]",
+    "txSubnetPrefix": "10.0.10.0/24",
+    "txSubnetRef": "[concat(variables('vnetID'),'/subnets/', variables('txSubnetName'))]",
+    "txNIPrefix": "nic-tx",
+    "virtualNetworkName": "[concat(variables('namingInfix'), 'vnet')]",
+    "txNsgName": "[concat(variables('namingInfix'), 'TXNsg')]",
+    "mnNsgName": "[concat(variables('namingInfix'), 'MNNsg')]",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
+    "addressPrefix": "10.0.0.0/16",
+    "maxPeers": 25,
+    "mnSubnetNameArray": [
+      "[concat(uniqueString(concat(resourceGroup().id, concat(variables('namingInfix'), 'subnet')), 'mn0'))]",
+      "[concat(uniqueString(concat(resourceGroup().id, concat(variables('namingInfix'), 'subnet')), 'mn1'))]",
+      "[concat(uniqueString(concat(resourceGroup().id, concat(variables('namingInfix'), 'subnet')), 'mn2'))]",
+      "[concat(uniqueString(concat(resourceGroup().id, concat(variables('namingInfix'), 'subnet')), 'mn3'))]",
+      "[concat(uniqueString(concat(resourceGroup().id, concat(variables('namingInfix'), 'subnet')), 'mn4'))]"
+    ],
+    "mnSubnetPrefixArray": [
+      "10.0.0.0/24",
+      "10.0.1.0/24",
+      "10.0.2.0/24",
+      "10.0.3.0/24",
+      "10.0.4.0/24"],
+    "mnSubnetRefArray": [
+      "[concat(variables('vnetID'),'/subnets/', variables('mnSubnetNameArray')[0])]",
+      "[concat(variables('vnetID'),'/subnets/', variables('mnSubnetNameArray')[1])]",
+      "[concat(variables('vnetID'),'/subnets/', variables('mnSubnetNameArray')[2])]",
+      "[concat(variables('vnetID'),'/subnets/', variables('mnSubnetNameArray')[3])]",
+      "[concat(variables('vnetID'),'/subnets/', variables('mnSubnetNameArray')[4])]"],
+    "ubuntuImage": {
+      "publisher": "Canonical",
+      "offer": "UbuntuServer",
+      "sku": "14.04.4-LTS",
+      "version": "latest"
+    },
+    "apiVersion": "2015-06-15",
+    "apiVersionDeployments": "2016-07-01",
+    "bootMNNode": 0,
+    "mnNode": 1,
+    "txNode": 2,
+    "nodeKeyArray": [
+      "42fa516481d64692431fda09114912566a4e9b36bb5aae2ad52ef1bbbb212c59",
+      "40591f6282ace5b586e76abfba5641be515add41d39df7f1c86931ad046e9b60",
+      "66de5a329cbe4b45cf4e305c8920f99a683b70b56921166c5a3357c3b2da00e2",
+      "11b59a95b52ed643a6bfc9b738765fc53e030d7b9c40f524ab8e9b56a6d1953e",
+      "361fbc87dd053f50babc752c56bc1bd80f3a74338d970232800f8f52d82e5374"],
+    "nodeIDArray": [
+      "399fedb4bbedef3fc9077f6a8bd2b96112723c668e7b3072a802f15ca17622e799439470814f9b0bded21edd641eb4f727cd09836c09f38c6688e65b49edddcf",
+      "44ecec4c1c96cdd3ac77a04e9839278fc2db0979559244c38c2fe9494896e7eb574a2f040e401be09ad8ead5adee1915d2ec640016e253aa736a5958c10c476b",
+      "26661f1986f3b9c8bc28fd7aa8abcc5b6967421ccf3069f87d282d2aac040bf3c8b8e07784baf4e7b9b8b07edecf95b1da76e65f7db6612841011dffe154a142",
+      "9409170771c71385e67db347013db8b2820b3610fc00c9d777a66178a6554e7098ee16024148b6063b743c345d591f76962f84d5fd441aefaaaddc9a1d83fbda",
+      "f7460d34915d54aa716d330f64638e446fca843f1c84fbbc7f50b7f6fd67da375658c97b2829274893d21daa4ee5142773be74f57999985f3d83817e497295cd"],
+    "artifactsLocationURL": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/ethereum-consortium-blockchain-network"
+  },
+  "resources": [
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('mnStorageAcctNames')[copyIndex()]]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "mnStorageLoop",
+        "count": "[variables('mnStorageAcctCount')]"
+        },
+        "properties": {
+          "accountType": "[variables('storageAccountType')]"
+        }
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('txStorageAcctName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "accountType": "[variables('storageAccountType')]"
+      }
+    },
+    {
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[variables('availabilitySetName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "properties": {}
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('lbPublicIPAddressName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[variables('lbHostname')]"
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat(variables('txPublicIPAddressNamePrefix'), copyIndex())]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "txpublicIPAddressLoop",
+        "count": "[parameters('numTXNodes')]"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[concat(variables('txVMNamePrefix'), copyIndex())]"
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "name": "[variables('lbName')]",
+      "type": "Microsoft.Network/loadBalancers",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('lbPublicIPAddressName'))]"
+      ],
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "[variables('lbFrontEndIpConfigName')]",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses/', variables('lbPublicIPAddressName'))]"
+              }
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "[variables('lbBackendAddressPoolName')]"
+          }
+        ],
+        "loadBalancingRules": [
+          {
+            "name": "HTTP-LB-Rule",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[variables('lbFrontEndIPConfigID')]"
+              },
+              "backendAddressPool": {
+                "id": "[variables('lbBackendAddressPoolID')]"
+              },
+              "protocol": "tcp",
+              "frontendPort": "[variables('httpPort')]",
+              "backendPort": "[variables('adminSitePort')]",
+              "enableFloatingIP": false,
+              "idleTimeoutInMinutes": 5,
+              "probe": {
+                "id": "[concat(variables('lbID'),'/probes/lbProbe')]"
+              }
+            }
+          },
+          {
+            "name": "GethRPC-LB-Rule",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[variables('lbFrontEndIPConfigID')]"
+              },
+              "backendAddressPool": {
+                "id": "[variables('lbBackendAddressPoolID')]"
+              },
+              "protocol": "tcp",
+              "frontendPort": "[variables('gethRPCPort')]",
+              "backendPort": "[variables('gethRPCPort')]",
+              "enableFloatingIP": false,
+              "idleTimeoutInMinutes": 5
+            }
+          }
+        ],
+        "probes": [
+          {
+            "name": "lbProbe",
+            "properties": {
+              "protocol": "tcp",
+              "port": "[variables('adminSitePort')]",
+              "intervalInSeconds": 5,
+              "numberOfProbes": 2
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('mnNsgName')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "NSG - Ethereum Nodes"
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('txNsgName')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "NSG - Jumpbox"
+      },
+      "properties": {
+        "securityRules": [
+          {
+            "name": "allow-ssh",
+            "properties": {
+              "description": "Allow SSH",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "allow-geth-rpc",
+            "properties": {
+              "description": "Allow geth RPC",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "8545",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 101,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "allow-etheradmin",
+            "properties": {
+              "description": "Allow etheradmin web service",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3000",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 102,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('mnNsgName'))]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('mnSubnetNameArray')[0]]",
+            "properties": {
+              "addressPrefix": "[variables('mnSubnetPrefixArray')[0]]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('mnNsgName'))]"
+              }
+            }
+          },
+          {
+            "name": "[variables('mnSubnetNameArray')[1]]",
+            "properties": {
+              "addressPrefix": "[variables('mnSubnetPrefixArray')[1]]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('mnNsgName'))]"
+              }
+            }
+          },
+          {
+            "name": "[variables('mnSubnetNameArray')[2]]",
+            "properties": {
+              "addressPrefix": "[variables('mnSubnetPrefixArray')[2]]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('mnNsgName'))]"
+              }
+            }
+          },
+          {
+            "name": "[variables('mnSubnetNameArray')[3]]",
+            "properties": {
+              "addressPrefix": "[variables('mnSubnetPrefixArray')[3]]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('mnNsgName'))]"
+              }
+            }
+          },
+          {
+            "name": "[variables('mnSubnetNameArray')[4]]",
+            "properties": {
+              "addressPrefix": "[variables('mnSubnetPrefixArray')[4]]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('mnNsgName'))]"
+              }
+            }
+          },
+          {
+            "name": "[variables('txSubnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('txSubnetPrefix')]",
+              "networkSecurityGroup": {
+                  "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('txNsgName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('txNIPrefix'), copyindex())]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "txNicLoop",
+        "count": "[parameters('numTXNodes')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+        "[concat('Microsoft.Network/loadBalancers/', variables('lbName'))]",
+        "[concat('Microsoft.Network/publicIPAddresses/', concat(variables('txPublicIPAddressNamePrefix'), copyIndex()))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses/', concat(variables('txPublicIPAddressNamePrefix'), copyIndex()))]"
+              },
+              "subnet": {
+                "id": "[variables('txSubnetRef')]"
+              },
+              "loadBalancerBackendAddressPools": [
+                {
+                  "id": "[variables('lbBackendAddressPoolID')]"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('mnNIPrefix'), copyindex())]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "mnNicLoop",
+        "count": "[variables('numMNNodes')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('mnSubnetRefArray')[mod(copyIndex(), parameters('numConsortiumMembers'))]]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(variables('txVMNamePrefix'), copyIndex())]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "txVMLoop",
+        "count": "[parameters('numTXNodes')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', variables('txStorageAcctName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('txNIPrefix'), copyIndex())]",
+        "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
+      ],
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('availabilitySetName'))]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('txNodeVMSize')]"
+        },
+        "osProfile": {
+          "computerName": "[concat(variables('txVMNamePrefix'), copyIndex())]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": "[variables('ubuntuImage')]",
+          "osDisk": {
+            "name": "[concat(variables('namingInfix'), '-osdisk')]",
+            "vhd": {
+              "uri" :"[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('txStorageAcctName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob, 'vhds/osdisk', copyIndex(), '.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('txNIPrefix'), copyindex()))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(variables('mnVMNamePrefix'), copyIndex())]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "mnVMLoop",
+        "count": "[variables('numMNNodes')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', variables('mnStorageAcctNames')[mod(copyIndex(), variables('mnStorageAcctCount'))])]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('mnNIPrefix'), copyindex())]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('mnNodeVMSize')]"
+        },
+        "osProfile": {
+          "computerName": "[concat(variables('mnVMNamePrefix'), copyIndex())]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": "[variables('ubuntuImage')]",
+          "osDisk": {
+            "name": "[concat(variables('namingInfix'), '-osdisk')]",
+            "vhd": {
+              "uri" :"[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('mnStorageAcctNames')[mod(copyIndex(), variables('mnStorageAcctCount'))]), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob, 'vhds/osdisk', copyIndex(), '.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('mnNIPrefix'), copyindex()))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersionDeployments')]",
+      "name": "vmExtensionLinkedTemplate",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "txVMLoop",
+        "mnVMLoop"
+      ],
+      "properties": {
+        "mode": "incremental",
+        "templateLink": {
+          "uri": "[concat(variables('artifactsLocationURL'), '/nested/', variables('numberToTextArray')[parameters('numConsortiumMembers')], 'BootNodeVMExtension.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "apiVersion":{"value": "[variables('apiVersion')]"},
+          "txNode":{"value": "[variables('txNode')]"},
+          "bootMNNode":{"value": "[variables('bootMNNode')]"},
+          "mnNode":{"value": "[variables('mnNode')]"},
+          "txVMNamePrefix":{"value": "[variables('txVMNamePrefix')]"},
+          "numTXNodes":{"value": "[parameters('numTXNodes')]"},
+          "mnVMNamePrefix":{"value": "[variables('mnVMNamePrefix')]"},
+          "numMNNodes":{"value": "[variables('numMNNodes')]"},
+          "artifactsLocationURL":{"value": "[variables('artifactsLocationURL')]"},
+          "adminUsername":{"value": "[parameters('adminUsername')]"},
+          "ethereumAccountPsswd":{"value": "[parameters('ethereumAccountPsswd')]"},
+          "privateKeyForPrefundedAccount": {"value": "[parameters('privateKeyForPrefundedAccount')]"},
+          "ethereumNetworkID":{"value": "[parameters('ethereumNetworkID')]"},
+          "maxPeers":{"value": "[variables('maxPeers')]"},
+          "nodeIDArray":{"value": "[variables('nodeIDArray')]"},
+          "mnNIPrefix":{"value": "[variables('mnNIPrefix')]"},
+          "gethIPCPort":{"value": "[variables('gethIPCPort')]"},
+          "nodeKeyArray":{"value": "[variables('nodeKeyArray')]"}
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersionDeployments')]",
+      "name": "networkSecurityGroupsLinkedTemplate",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "vmExtensionLinkedTemplate"
+      ],
+      "properties": {
+        "mode": "incremental",
+        "templateLink": {
+          "uri": "[concat(variables('artifactsLocationURL'), '/nested/networkSecurityGroups.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "apiVersion":{"value": "[variables('apiVersion')]"},
+          "mnNsgName":{"value": "[variables('mnNsgName')]"}
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "admin-site": {
+      "type": "string",
+      "value": "[concat('http://', reference(variables('lbPublicIPAddressName')).dnsSettings.fqdn)]"
+    },
+    "ethereum-rpc-endpoint": {
+      "type": "string",
+      "value": "[concat('http://', reference(variables('lbPublicIPAddressName')).dnsSettings.fqdn, ':8545')]"
+    }
+  }
+}

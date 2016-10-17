@@ -1,0 +1,121 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01-preview/deploymentTemplate.json",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "VMSSName": {
+      "type": "string"
+    },
+    "instanceCount": {
+      "type": "int",
+      "metadata": {
+        "description": "Number of VM instances"
+      }
+    },
+    "subnetId": {
+      "type": "string"
+    },
+    "adminUsername": {
+      "type": "string"
+    },
+    "adminPassword": {
+      "type": "securestring"
+    }
+  },
+  "variables": {
+    "uniqueStringArray": [
+      "[concat(uniqueString(resourceGroup().id, '0'), '0')]",
+      "[concat(uniqueString(resourceGroup().id, '1'), '1')]",
+      "[concat(uniqueString(resourceGroup().id, '2'), '2')]",
+      "[concat(uniqueString(resourceGroup().id, '3'), '3')]",
+      "[concat(uniqueString(resourceGroup().id, '4'), '4')]"
+    ]
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('uniqueStringArray')[copyIndex()]]",
+      "apiVersion": "2016-01-01",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "storageLoop",
+        "count": "[length(variables('uniqueStringArray'))]"
+      },
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "Storage",
+      "properties": {
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachineScaleSets",
+      "apiVersion": "2016-03-30",
+      "name": "[parameters('vmSSName')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "vmsstag1": "Myriad"
+      },
+      "dependsOn": [
+        "storageLoop"
+      ],
+      "sku": {
+        "name": "Standard_A1",
+        "tier": "Standard",
+        "capacity": "[parameters('instanceCount')]"
+      },
+      "properties": {
+        "upgradePolicy": {
+          "mode": "Manual"
+        },
+        "virtualMachineProfile": {
+          "storageProfile": {
+            "osDisk": {
+              "vhdContainers": [
+                "[concat(reference(resourceId('Microsoft.Storage/storageAccounts/', variables('uniqueStringArray')[0])).primaryEndpoints.blob, 'vhds')]",
+                "[concat(reference(resourceId('Microsoft.Storage/storageAccounts/', variables('uniqueStringArray')[1])).primaryEndpoints.blob, 'vhds')]",
+                "[concat(reference(resourceId('Microsoft.Storage/storageAccounts/', variables('uniqueStringArray')[2])).primaryEndpoints.blob, 'vhds')]",
+                "[concat(reference(resourceId('Microsoft.Storage/storageAccounts/', variables('uniqueStringArray')[3])).primaryEndpoints.blob, 'vhds')]",
+                "[concat(reference(resourceId('Microsoft.Storage/storageAccounts/', variables('uniqueStringArray')[4])).primaryEndpoints.blob, 'vhds')]"
+              ],
+              "name": "vmssosdisk",
+              "caching": "ReadOnly",
+              "createOption": "FromImage"
+            },
+            "imageReference": {
+              "publisher": "Canonical",
+              "offer": "UbuntuServer",
+              "sku": "16.04.0-LTS",
+              "version": "latest"
+            }
+          },
+          "osProfile": {
+            "computerNamePrefix": "[parameters('vmSSName')]",
+            "adminUsername": "[parameters('adminUsername')]",
+            "adminPassword": "[parameters('adminPassword')]"
+          },
+          "networkProfile": {
+            "networkInterfaceConfigurations": [
+              {
+                "name": "[concat('nic', parameters('vmSSName'))]",
+                "properties": {
+                  "primary": "true",
+                  "ipConfigurations": [
+                    {
+                      "name": "[concat('ipconfig', parameters('vmSSName'))]",
+                      "properties": {
+                        "subnet": {
+                          "Id": "[parameters('subnetId')]"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        "overprovision": "true"
+      }
+    }
+  ]
+}
