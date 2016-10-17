@@ -4,6 +4,8 @@ CURRENT_USER=$(whoami)
 SETUP_SCRIPTS_LOCATION="/opt/azure_jenkins_config/"
 CONFIG_AZURE_SCRIPT="config_azure.sh"
 CLEAN_STORAGE_SCRIPT="clear_storage_config.sh"
+CREATE_STORAGE_SCRIPT="config_azure_jenkins_storage.sh"
+CREATE_SERVICE_PRINCIPAL_SCRIPT="create_service_principal.sh"
 SOURCE_URI="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/azure-jenkins/setup-scripts/"
 
 if [ ! -d "$SETUP_SCRIPTS_LOCATION" ]; then
@@ -17,6 +19,14 @@ sudo chmod +x $SETUP_SCRIPTS_LOCATION$CONFIG_AZURE_SCRIPT
 # Download clear_storage_config script
 sudo wget -O $SETUP_SCRIPTS_LOCATION$CLEAN_STORAGE_SCRIPT $SOURCE_URI$CLEAN_STORAGE_SCRIPT
 sudo chmod +x $SETUP_SCRIPTS_LOCATION$CLEAN_STORAGE_SCRIPT
+
+# Download config_azure_jenkins_storage script
+sudo wget -O $SETUP_SCRIPTS_LOCATION$CREATE_STORAGE_SCRIPT $SOURCE_URI$CREATE_STORAGE_SCRIPT
+sudo chmod +x $SETUP_SCRIPTS_LOCATION$CREATE_STORAGE_SCRIPT
+
+# Download create_service_principal script
+sudo wget -O $SETUP_SCRIPTS_LOCATION$CREATE_SERVICE_PRINCIPAL_SCRIPT $SOURCE_URI$CREATE_SERVICE_PRINCIPAL_SCRIPT
+sudo chmod +x $SETUP_SCRIPTS_LOCATION$CREATE_SERVICE_PRINCIPAL_SCRIPT
 
 #azure-cli
 sudo npm install -y -g azure-cli
