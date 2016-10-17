@@ -1,4 +1,4 @@
-# Very simple deployment of a 5 Node Service Fabric Cluster with WAD enabled
+# Very simple deployment of a 5 Node Service Fabric Cluster with Azure Diagnostics enabled
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fservice-fabric-cluster-5-node-1-nodetype-wad%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>

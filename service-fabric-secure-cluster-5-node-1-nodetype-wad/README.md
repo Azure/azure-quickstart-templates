@@ -1,4 +1,4 @@
-# Very simple deployment of a 5 Node secure Service Fabric Cluster with WAD enabled
+# Very simple deployment of a 5 Node secure Service Fabric Cluster with Azure Diagnostics enabled
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fservice-fabric-secure-cluster-5-node-1-nodetype-wad%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
@@ -7,7 +7,7 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template allows you to deploy a secure 5 node, Single Node Type Service fabric Cluster running Windows server 2012 R2 Data center on Standard_A2 Size VMs with Windows Azure diagnostics turned on.
+This template allows you to deploy a secure 5 node, Single Node Type Service fabric Cluster running Windows server 2012 R2 Data center on Standard_A2 Size VMs with Windows Azure diagnostics turned on. This template assumes that you already have certificates uploaded to your keyvault, else I strongly suggest you follow one of the two links below.
 
 ## Creating a custom ARM template
 
@@ -21,9 +21,9 @@ If you are wanting to create a custom ARM template for your cluster, then you ha
  	![DownloadTemplate][DownloadTemplate]
 	1. you can save the downloaded template to your local machine, make any changes you need and deploy to azure.
 
-## Deploying the ARM template to Azure using Azure PS
+## Deploying the ARM template to Azure using resource manager PS 
 
-Refer to [Deploying ARM templates using PS ](https://azure.microsoft.com/en-us/documentation/articles/resource-group-template-deploy/) for detailed guidance on how to.
+Refer to [Deploying ARM templates using ARM PS ](https://azure.microsoft.com/documentation/articles/service-fabric-cluster-creation-via-arm/) for detailed guidance on how to. There is detailed guidance on how to set up your certificates as well. For a successful setup of a secure cluster, make sure to read that document thoroughly. 
 
 <!--Image references-->
 [DownloadTemplate]: ./DownloadTemplate.png
