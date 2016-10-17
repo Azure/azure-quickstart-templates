@@ -43,22 +43,23 @@ To make sure your template is added to Azure.com index, please follow these guid
 9. Name **variables** using this scheme **templateScenarioResourceName** (e.g. simpleLinuxVMVNET, userRoutesNSG, elasticsearchPublicIP etc.) that describe the scenario rather. This ensures when a user browses all the resources in the Portal there aren't a bunch of resources with the same name (e.g. myVNET, myPublicIP, myNSG)
 10. **Storage account names** need to be lower case and can't contain hyphens (-) in addition to other domain name restrictions. These also need to be globally unique.
 11. **Passwords** must be passed into parameters of type `securestring`.
-    * Passwords must also be passed to customScriptExtension using the `commandToExecute` property in `protectedSettings`. This will look like below
+    * Passwords must also be passed to Custom Script Extension using the `commandToExecute` property in `protectedSettings`. This will look like below:
 
     ```
-     "properties": {
-       "publisher": "Microsoft.OSTCExtensions",
-       "type": "CustomScriptForLinux",
-       "typeHandlerVersion": "1.4",
-       "settings": {
-       "fileUris": [
-     	   "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/lamp-app/install_lamp.sh"
-       ]
-     },
-     "protectedSettings": {
-       "commandToExecute": "[concat('sh install_lamp.sh ', parameters('mySqlPassword'))]"
-       }
-     }
+    "properties": {
+      "publisher": "Microsoft.Azure.Extensions",
+      "type": "CustomScript",
+      "typeHandlerVersion": "2.0",
+	  "autoUpgradeMinorVersion": true,
+      "settings": {
+        "fileUris": [
+          "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/lamp-app/install_lamp.sh"
+        ]
+      },
+      "protectedSettings": {
+        "commandToExecute": "[concat('sh install_lamp.sh ', parameters('mySqlPassword'))]"
+      }
+    }
     ```
 
 12. Every parameter in the template must have the **lower-case description** tag specified using the metadata property. This looks like below
