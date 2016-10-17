@@ -86,7 +86,20 @@ function validateMetadata(metadataPath) {
         minLength: 10
       },
       icon: {
-        type: 'string'
+        type: 'string',
+        enum: [
+          'api',
+          'blankTemplate',
+          'cdnStorage',
+          'cdnWebsite',
+          'docker',
+          'documentDB',
+          'logic',
+          'serviceFabric',
+          'ubuntu',
+          'vmss',
+          'windowsVM'
+        ]
       }
     },
     additionalProperties: false
@@ -345,16 +358,22 @@ describe('Template', function () {
   testGroups.forEach(function (tests) {
     parallel('Running ' + tests.length + ' Parallel Template Validation(s)...', function () {
       tests.forEach(function (test) {
-        it(test.args[0] + ' & ' + test.args[1] + ' should be valid', function () {
+        const templatePath = test.args[0];
+        const parametersPath = test.args[1];
+        it(templatePath + ' & ' + parametersPath + ' should be valid', function () {
           // validate template files are in correct place
           test.args.forEach(function (path) {
-            ensureExists.apply(null, [path]);
+            ensureExists(path);
           });
 
-          validateMetadata.apply(null, [test.args[2]]);
-          validateParamtersFile.apply(null, [test.args[1]]);
+          validateMetadata(test.args[2]);
+          validateParamtersFile(parametersPath);
 
           return validateTemplate.apply(null, test.args)
+            // .then(function() {
+            //   debug('template validation successful, checking if template follows best practices...');
+            //   return checkBestPractices.apply(null, test.args);
+            // })
             .then(function () {
               debug('template validation sucessful, deploying template...');
               return deployTemplate.apply(null, test.args);
@@ -366,9 +385,9 @@ describe('Template', function () {
             .catch(function (err) {
               var errorString = 'Template Validiation Failed. Try deploying your template with the commands:\n';
               errorString += 'azure group template validate --resource-group (your_group_name) ';
-              errorString += ' --template-file ' + test.args[0] + ' --parameters-file ' + test.args[1] + '\n';
+              errorString += ' --template-file ' + templatePath + ' --parameters-file ' + parametersPath + '\n';
               errorString += 'azure group deployment create --resource-group (your_group_name) ';
-              errorString += ' --template-file ' + test.args[0] + ' --parameters-file ' + test.args[1];
+              errorString += ' --template-file ' + templatePath + ' --parameters-file ' + parametersPath;
               assert(false, errorString + ' \n\nServer Error:' + JSON.stringify(err, null, 4));
             });
         });
