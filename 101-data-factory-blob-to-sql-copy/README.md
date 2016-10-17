@@ -42,4 +42,4 @@ Simply execute the script and pass in the folder name of the sample.  For exampl
 .\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactStagingDirectory 101-data-factory-blob-to-sql-copy
 ```
 ```bash
-azure-group-deploy.sh -a 101-data-factory-blob-to-sql-copy -l eastus -u
+azure-group-deploy.sh -a 101-data-factory-blob-to-sql-copy -l eastus
