@@ -1,29 +1,29 @@
-# Azure Data Factory Data Copy Activity
+# Azure Data Factory to copy data from Salesforce to Azure Blobs
 Update values for the following parameters in **azuredeploy.parameters.json** file.
 
-- storageAccountName with name of your Azure storage account.
-- storageAccountKey with key of your Azure storage account. 
-- SfUserName with name of the user who has access to Salesforce. 
-- SfPassword with password of the user. 
-- SfSecurityToken with security token for accessing Salesforce. 
-- SfTable with table in Salesforce.
+- storageAccountName with name of your existing Azure storage account.
+- storageAccountKey with key to your existing your Azure storage account. 
+- SfUserName with the username to your Salesforce account. 
+- SfPassword with password corresponding to the Salesforce account. 
+- SfSecurityToken with security token for accessing Salesforce account. 
+- SfTable with object in Salesforce that should be copied over.
  
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-data-factory-blob-to-sql%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-data-factory-salesforce-to-blob-copy%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-data-factory-blob-to-sql%2Fazuredeploy.json" target="_blank">
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-data-factory-salesforce-to-blob-copy%2Fazuredeploy.json" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-When you deploy this Azure Resource Template, a data factory is created with the following entities: 
+When you deploy this Azure Resource Template, an Azure Data Factory instance is created with the following entities: 
 
-- Azure Storage linked service
 - Salesforce linked service
+- Azure Storage linked service
 - Salesforce dataset
 - Azure Blob dataset
 - Pipeline with a copy activity
 
-The copy activity in the pipeline copies data from Salesforce to Azure Blob Storage. 
+The copy activity in the pipeline copies data from the Salesforce object to Azure Blob Storage. 
 
 ## Deploy using PowerShell
 1. Save files to C:\ADFGetStarted folder. 
