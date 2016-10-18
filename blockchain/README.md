@@ -25,4 +25,4 @@ Options for blockchain software include:
 - [syscoin](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/syscoin.md)
 - [vcash](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/vcash.md)
 - [viacoin](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/viacoin.md)
-
+- [bigchaindb](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/bigchaindb.md)
