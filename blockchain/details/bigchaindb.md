@@ -1,12 +1,5 @@
 # Deploy a One-Machine BigchainDB Node on Azure
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F100-STARTER-TEMPLATE-with-VALIDATION%2Fazuredeploy.json" target="_blank">
-<img src="http://azuredeploy.net/deploybutton.png"/>
-</a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F100-STARTER-TEMPLATE-with-VALIDATION%2Fazuredeploy.json" target="_blank">
-<img src="http://armviz.io/visualizebutton.png"/>
-</a>
-
 This template provisions a virtual machine running Ubuntu 14.04.4 LTS, plus various other Azure resources. (See the `azuredeploy.json` file for details.) It then runs the script `scripts/init.sh`, which:
 
 1. Installs RethinkDB and runs it (with a default RethinkDB configuration file).
