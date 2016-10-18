@@ -15,9 +15,9 @@ Secure, inspect, and audit hybrid cloud network traffic: Zone Based Firewall pro
 
 !!!!! Note - Important Update - Please Read !!!!!
 
-Azure now requires that the CSR 1000v be deployed in a new Resource Group. The CSR 1000v can still be attached to an existing network.
-If the CSR 1000v is attached to an existing Virtual Network, the existing network's route tables will not be altered.
+Azure now requires that the CSR 1000v be deployed in a new Resource Group. The CSR 1000v will be attached to an existing network that must have at least 2 subnets.
+The existing network's route tables will not be altered.
 
-This deployment creates a CSR with 2 NICs, plus public and private subnets. User defined routes are created on the subnets to ensure the CSR is used as the default gateway for virtual machines in the private subnet. Finally, the IP Forwarding flag is set on Azure to allow the CSR to properly pass traffic.
+This deployment creates a CSR with 2 NICs, plus public and private subnets.  It requires an existing virtual network with at least 2 subnets.  User defined routes are created on the subnets to ensure the CSR is used as the default gateway for virtual machines in the private subnet. Finally, the IP Forwarding flag is set on Azure to allow the CSR to properly pass traffic.
 
 `Tags: Cisco, CSR, 1000v`
