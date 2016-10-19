@@ -2,7 +2,6 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-
         "existingRdshCollectionName": {
             "type": "string",
             "defaultValue": "Desktop Collection",
@@ -10,7 +9,6 @@
                 "description": "Name of the RDSH collection to update"
             }
         },
-
         "rdshTemplateImageUri": {
             "type": "string",
             "metadata": {
@@ -89,7 +87,6 @@
                 "Standard_GS5"
             ]
         },
-
         "userLogoffTimeoutInMinutes": {
             "type": "int",
             "defaultValue": 60,
@@ -97,7 +94,6 @@
                 "description": "Timeout before forced user logoff from old RDSH instances"
             }
         },
-
         "existingDomainName": {
             "type": "string",
             "metadata": {
@@ -116,7 +112,6 @@
                 "description": "Domain administrator password"
             }
         },
-
         "existingVnetName": {
             "type": "string",
             "defaultValue": "vnet",
@@ -131,7 +126,13 @@
                 "description": "Subnet name"
             }
         },
-
+        "availabilitySet": {
+            "type": "string",
+            "defaultValue": "rdsh-availabilityset",
+            "metadata": {
+                "description": "Availability set for new RDSH instances"
+            }
+        },
         "_artifactsLocation": {
             "type": "string",
             "metadata": {
@@ -150,15 +151,9 @@
     },
 
     "variables": {
-
         "iteration": "[toLower(parameters('rdshUpdateIteration'))]",
-
-        "assetLocation": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/rds-deployment/",
-
         "storageAccountName": "[split( split( parameters('rdshTemplateImageUri'), '/')[2], '.' )[0]]",
-
         "impersonateScript": "https://gallery.technet.microsoft.com/scriptcenter/Impersonate-a-User-9bfeff82/file/127189/1/New-ImpersonateUser.ps1",
-
         "p": {
             "domain": "[concat(' -domain ', parameters('existingDomainName'))]",
             "user": "[concat(' -username ', parameters('existingAdminUsername'))]",
@@ -174,7 +169,6 @@
     },
 
     "resources": [
-
         {
             "apiVersion": "2015-06-15",
             "type": "Microsoft.Network/networkInterfaces",
@@ -191,14 +185,19 @@
                         "properties": {
                             "privateIPAllocationMethod": "Dynamic",
                             "subnet": {
-                                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('existingVnetName')), '/subnets/', parameters('existingSubnetName'))]"
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('existingVnetName'), parameters('existingSubnetName'))]"
                             }
                         }
                     }
                 ]
             }
         },
-
+        {
+            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Compute/availabilitySets",
+            "name": "[parameters('availabilitySet')]",
+            "location": "[resourceGroup().location]"
+        },
         {
             "apiVersion": "2015-06-15",
             "type": "Microsoft.Compute/virtualMachines",
@@ -216,7 +215,7 @@
                     "vmSize": "[parameters('rdshVmSize')]"
                 },
                 "availabilitySet": {
-                    "id": "[resourceId('Microsoft.Compute/availabilitySets', 'rdsh-availabilityset')]"
+                    "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySet'))]"
                 },
                 "osProfile": {
                     "computerName": "[concat('rdsh-', copyindex(),variables('iteration'))]",
@@ -267,7 +266,7 @@
                         "typeHandlerVersion": "2.11",
                         "autoUpgradeMinorVersion": true,
                         "settings": {
-                            "ModulesUrl": "[concat(variables('assetLocation'),'/Configuration.zip')]",
+                            "ModulesUrl": "[concat(parameters('_artifactsLocation'),'/Configuration.zip')]",
                             "ConfigurationFunction": "Configuration.ps1\\SessionHost",
                             "Properties": {
                                 "DomainName": "[parameters('existingDomainName')]",
@@ -286,7 +285,6 @@
                 }
             ]
         },
-
         {
             "apiVersion": "2015-06-15",
             "type": "Microsoft.Compute/virtualMachines/extensions",
