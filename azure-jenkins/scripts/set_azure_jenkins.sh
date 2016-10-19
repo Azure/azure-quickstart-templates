@@ -28,7 +28,7 @@ sudo wget -O $SETUP_SCRIPTS_LOCATION$CREATE_SERVICE_PRINCIPAL_SCRIPT $SOURCE_URI
 sudo chmod +x $SETUP_SCRIPTS_LOCATION$CREATE_SERVICE_PRINCIPAL_SCRIPT
 
 #delete any existing config script
-old_config_storage_file="/opt/config_storage.sh"
+old_config_storage_file="/opt/azure_jenkins_config/config_storage.sh"
 if [ -f $old_config_storage_file ]
 then
   sudo rm -f $old_config_storage_file
