@@ -14,6 +14,11 @@ var unirest = require('unirest');
 // 32 = console code for green
 colors.pass = 32;
 
+function readJSONFile(filePath) {
+  var fileContents = fs.readFileSync(filePath, { encoding: 'utf-8' }).trim();
+  return tryParse(filePath, fileContents);
+}
+
 // Tries to parse a json string and asserts with a friendly
 // message if something is wrong
 function tryParse(fileName, jsonStringData) {
@@ -44,305 +49,258 @@ function timedOutput(onOff, intervalObject) {
   }
 }
 
+function validateMetadata(metadataFilePath) {
+  var metadataObject = readJSONFile(metadataFilePath);
+  var metadataSchemaValidationResult = skeemas.validate(metadataObject, {
+    properties: {
+      itemDisplayName: {
+        type: 'string',
+        required: true,
+        minLength: 10,
+        maxLength: 60
+      },
+      description: {
+        type: 'string',
+        required: true,
+        minLength: 10,
+        maxLength: 1000
+      },
+      summary: {
+        type: 'string',
+        required: true,
+        minLength: 10,
+        maxLength: 200
+      },
+      githubUsername: {
+        type: 'string',
+        required: true,
+        minLength: 2
+      },
+      dateUpdated: {
+        type: 'string',
+        required: true,
+        minLength: 10
+      },
+      icon: {
+        type: 'string',
+        enum: [
+          'api',
+          'blankTemplate',
+          'cdnStorage',
+          'cdnWebsite',
+          'docker',
+          'documentDB',
+          'logic',
+          'serviceFabric',
+          'ubuntu',
+          'vmss',
+          'windowsVM'
+        ]
+      }
+    },
+    additionalProperties: false
+  });
+
+  var metadataSchemaValidationErrorMessages = '';
+  metadataSchemaValidationResult.errors.forEach(function (error) {
+    metadataSchemaValidationErrorMessages += (metadataFilePath + ' - ' + error.context + ':' + error.message + '\n');
+  });
+  assert(metadataSchemaValidationResult.valid, metadataSchemaValidationErrorMessages);
+
+  // validate description has no html
+  assert(!(/<[a-z][\s\S]*>/i).test(metadataObject.description), metadataFilePath + ' - Contains possible HTML elements which are not allowed');
+  // validate date
+  var date = new Date(metadataObject.dateUpdated);
+  var currentTime = new Date(Date.now());
+  assert(!isNaN(date.getTime()), metadataFilePath + ' - dateUpdated field should be a valid date in the format YYYY-MM-DD');
+  // validate date is not in future
+  assert(date < currentTime, metadataFilePath + ' - dateUpdated field should not be in the future');
+}
+
+function validateParameters(parametersFilePath, parametersObject) {
+  assert(isDefined(parametersObject.$schema), parametersFilePath + ' - Expected a \'.$schema\' field within the parameters file');
+
+  assert(parametersObject.parameters, parametersFilePath + ' - Expected a \'.parameters\' field within the parameters file');
+  for (var parameterName in parametersObject.parameters) {
+    if (typeof parameterName === 'string') {
+      var parameterObject = parametersObject.parameters[parameterName];
+      assert(isDefined(parameterObject.value) || isDefined(parameterObject.reference),
+        parametersFilePath + ' - Parameter \"' + parameterName + '\" should have a \"value\" or \"reference\" property.');
+    }
+  }
+}
+
+function validateTemplate(requestBody, templateFilePath) {
+  var validatePromise;
+  if (process.env.VALIDATION_SKIP_VALIDATE) {
+    validatePromise = RSVP.resolve({});
+  }
+  else {
+    // Calls a remote url which will validate the template and parameters
+    if (process.env.TRAVIS_PULL_REQUEST &&
+      process.env.TRAVIS_PULL_REQUEST !== 'false') {
+      requestBody.pull_request = process.env.TRAVIS_PULL_REQUEST;
+    }
+
+    var templateObject = requestBody.template;
+
+    // validate the template paramters, particularly the description field
+    assert(templateObject.parameters, 'Expected a \'.parameters\' field within the deployment template');
+    for (parameterName in templateObject.parameters) {
+      if (typeof parameterName === 'string') {
+        assert(templateObject.parameters[parameterName].metadata,
+          templateFilePath + ' - Parameter \"' + parameterName + '\" is missing its \"metadata\" property');
+        assert(templateObject.parameters[parameterName].metadata.description,
+          templateFilePath + ' - Parameter \"' + parameterName + '\" is missing its \"description\" field within the metadata property');
+      }
+    }
+
+    validatePromise = new RSVP.Promise(function (resolve, reject) {
+      unirest.post(process.env.VALIDATION_HOST + "/validate")
+        .type('json')
+        .send(JSON.stringify(requestBody))
+        .end(function (response) {
+          if (response.status !== 200) {
+            reject(response);
+          }
+          else {
+            resolve(response.body);
+          }
+        });
+    });
+  }
+  return validatePromise;
+}
+
+function deployTemplate(requestBody, templateFilePath) {
+  var deployPromise;
+  if (process.env.VALIDATION_SKIP_DEPLOY) {
+    deployPromise = RSVP.resolve({});
+  }
+  else {
+    if (process.env.TRAVIS_PULL_REQUEST &&
+      process.env.TRAVIS_PULL_REQUEST !== 'false') {
+      requestBody.pull_request = process.env.TRAVIS_PULL_REQUEST;
+    }
+
+    var intervalObj = timedOutput(true);
+    debug('making deploy request');
+
+    // Calls a remote url which will deploy the template
+    deployPromise = new RSVP.Promise(function (resolve, reject) {
+      return unirest.post(process.env.VALIDATION_HOST + '/deploy')
+        .type('json')
+        .timeout(3600 * 1000) // template deploy can take some time
+        .send(JSON.stringify(requestBody))
+        .end(function (response) {
+          timedOutput(false, intervalObj);
+          debug(response.status);
+          debug(response.body);
+
+          // 202 is the long poll response
+          // anything else is really bad
+          if (response.status !== 202) {
+            reject(response.body);
+          }
+
+          if (response.body.result === 'Deployment Successful') {
+            resolve(response.body);
+          }
+          else {
+            reject(response.body);
+          }
+        });
+    });
+  }
+  return deployPromise;
+}
+
 describe('Template', function () {
   this.timeout(7100 * 1000);
 
-  var modifiedPaths;
-
+  var modifiedDirectories = {};
   if (process.env.VALIDATE_MODIFIED_ONLY) {
-
     // we automatically reset to the beginning of the commit range
     // so this includes all file paths that have changed for the CI run
     assert(process.env.TRAVIS_COMMIT_RANGE, 'VALIDATE_MODIFIED_ONLY requires TRAVIS_COMMIT_RANGE to be set to [START_COMMIT_HASH]...[END_COMMIT_HASH]');
 
-    const stdout = childProcess.execSync('git diff --name-only ' + process.env.TRAVIS_COMMIT_RANGE, {
-      encoding: 'utf8'
-    });
-    const lines = stdout.split('\n');
-
-    modifiedPaths = {};
-    for (var i = 0; i < lines.length; i += 1) {
-      modifiedPaths[lines[i]] = lines[i];
-    }
+    const modifiedPaths = childProcess.execSync('git diff --name-only ' + process.env.TRAVIS_COMMIT_RANGE, { encoding: 'utf8' }).split("\n");
     debug(modifiedPaths);
 
-    var count = 0;
-    for (var i in modifiedPaths) {
-      if (typeof i === 'string') {
-        count += 1;
+    assert(modifiedPaths.length !== 0, 'No changes were detected in your commit. Verify you added files and try again.');
+
+    var modifiedDirectories = {};
+    if (modifiedPaths) {
+      for (var i = 0; i < modifiedPaths.length; ++i) {
+        var modifiedDirectoryPath = path.dirname(modifiedPaths[i]);
+        // don't include the top level dir
+        if (modifiedDirectoryPath !== ".") {
+          modifiedDirectories[modifiedDirectoryPath] = true;
+        }
       }
     }
-    assert(count !== 0, 'No changes were detected in your commit. Verify you added files and try again.');
   }
 
-  // Generates the mocha tests based on directories in
-  // the existing repo.
-  const tests = [];
+  // Generates the mocha tests based on directories in the existing repo.
   var srcPath = "./";
-  var directories = fs.readdirSync(srcPath).filter(function (file) {
-    return fs.statSync(path.join(srcPath, file)).isDirectory();
+  var testDirectories = fs.readdirSync(srcPath).filter(function (fileEntry) {
+    var fileEntryPath = path.join(srcPath, fileEntry);
+    return fs.statSync(fileEntryPath).isDirectory() &&
+      fileEntry !== ".git" &&
+      fileEntry !== "node_modules" &&
+      !fs.existsSync(path.join(fileEntryPath, ".ci_skip")) &&
+      // if we are only validating modified templates
+      // only add test if this directory template has been modified
+      (!process.env.VALIDATE_MODIFIED_ONLY || modifiedDirectories[fileEntry]);
   });
-  debug(modifiedPaths);
-  var modifiedDirs = {};
-
-  for (var k in modifiedPaths) {
-    if (typeof k === 'string') {
-      // don't include the top level dir
-      if (path.dirname(k) === '.') {
-        continue;
-      }
-      modifiedDirs[path.dirname(k)] = true;
-    }
-  }
-  debug('modified dirs:');
-  debug(modifiedDirs);
-  directories.forEach(function (dirName) {
-    // exceptions
-    if (dirName === '.git' ||
-      dirName === 'node_modules') {
-      return;
-    }
-
-    if (fs.existsSync(path.join(dirName, '.ci_skip'))) {
-      return;
-    }
-    var templatePath = path.join(dirName, 'azuredeploy.json'),
-      paramsPath = path.join(dirName, 'azuredeploy.parameters.json'),
-      metadataPath = path.join(dirName, 'metadata.json'),
-      readmePath = path.join(dirName, 'README.md');
-
-    // if we are only validating modified templates
-    // only add test if this directory template has been modified
-    if (modifiedPaths && !modifiedDirs[dirName]) {
-      return;
-    }
-
-    tests.push({
-      args: [templatePath, paramsPath, metadataPath, readmePath],
-      expected: true
-    });
-  });
-
-  debug('created tests:');
-  debug(tests);
 
   // Group tests in chunks defined by an environment variable or by the default value.
   // we probably shouldn't deploy a ton of templates at once...
-  const testGroups = [];
-  var groupIndex = 0;
-  var counter = 0;
-  var groupSize = process.env.PARALLEL_DEPLOYMENT_NUMBER || 2;
-  tests.forEach(function (test) {
-    if (!testGroups[groupIndex]) {
-      testGroups[groupIndex] = [];
-    }
+  var groupSizeMaximum = isDefined(process.env.PARALLEL_DEPLOYMENT_NUMBER) ? parseInt(process.env.PARALLEL_DEPLOYMENT_NUMBER) : 2;
+  var testGroupCount = Math.ceil(testDirectories.length / groupSizeMaximum);
+  
+  for (var testGroupIndex = 0; testGroupIndex < testGroupCount; ++testGroupIndex) {
+    var testDirectoryStartIndex = testGroupIndex * groupSizeMaximum;
+    var testsRemaining = testDirectories.length - testDirectoryStartIndex;
+    var testGroupSize = testsRemaining < groupSizeMaximum ? testsRemaining : groupSizeMaximum;
 
-    testGroups[groupIndex].push(test);
-    counter += 1;
+    parallel('Running ' + testGroupSize + ' Parallel Template Validation(s)...', function () {
 
-    if (counter % groupSize === 0) {
-      groupIndex += 1;
-    }
-  });
+      for (var testIndexInGroup = 0; testIndexInGroup < testGroupSize; ++testIndexInGroup) {
+        var testDirectory = testDirectories[testDirectoryStartIndex + testIndexInGroup];
+        
+        it(testDirectory, function () {
+          var templateFilePath = path.join(testDirectory, "azuredeploy.json");
+          var parametersFilePath = path.join(testDirectory, "azuredeploy.parameters.json");
+          var metadataFilePath = path.join(testDirectory, "metadata.json");
+          var readmeFilePath = path.join(testDirectory, "README.md");
 
-  testGroups.forEach(function (tests) {
-    parallel('Running ' + tests.length + ' Parallel Template Validation(s)...', function () {
-      tests.forEach(function (test) {
-        var templateFilePath = test.args[0];
-        var parametersFilePath = test.args[1];
-        var metadataFilePath = test.args[2];
-
-        it(templateFilePath + ' & ' + parametersFilePath + ' should be valid', function () {
-          // validate template files are in correct place
-          test.args.forEach(function (filePath) {
+          [templateFilePath, parametersFilePath, metadataFilePath, readmeFilePath].forEach(function (filePath) {
             // Vaidates that the expected file paths exist
             assert(fs.existsSync(filePath), 'The file ' + filePath + ' is missing.');
           });
 
-          var metadataFileContents = fs.readFileSync(metadataFilePath, { encoding: 'utf-8' }).trim();
-          var metadataObject = tryParse(metadataFilePath, metadataFileContents);
-          var metadataSchemaValidationResult = skeemas.validate(metadataObject, {
-            properties: {
-              itemDisplayName: {
-                type: 'string',
-                required: true,
-                minLength: 10,
-                maxLength: 60
-              },
-              description: {
-                type: 'string',
-                required: true,
-                minLength: 10,
-                maxLength: 1000
-              },
-              summary: {
-                type: 'string',
-                required: true,
-                minLength: 10,
-                maxLength: 200
-              },
-              githubUsername: {
-                type: 'string',
-                required: true,
-                minLength: 2
-              },
-              dateUpdated: {
-                type: 'string',
-                required: true,
-                minLength: 10
-              },
-              icon: {
-                type: 'string',
-                enum: [
-                  'api',
-                  'blankTemplate',
-                  'cdnStorage',
-                  'cdnWebsite',
-                  'docker',
-                  'documentDB',
-                  'logic',
-                  'serviceFabric',
-                  'ubuntu',
-                  'vmss',
-                  'windowsVM'
-                ]
-              }
-            },
-            additionalProperties: false
-          });
+          validateMetadata(metadataFilePath);
 
-          var metadataSchemaValidationErrorMessages = '';
-          metadataSchemaValidationResult.errors.forEach(function (error) {
-            metadataSchemaValidationErrorMessages += (metadataFilePath + ' - ' + error.context + ':' + error.message + '\n');
-          });
-          assert(metadataSchemaValidationResult.valid, metadataSchemaValidationErrorMessages);
-
-          // validate description has no html
-          assert(!(/<[a-z][\s\S]*>/i).test(metadataObject.description), metadataFilePath + ' - Contains possible HTML elements which are not allowed');
-          // validate date
-          var date = new Date(metadataObject.dateUpdated);
-          var currentTime = new Date(Date.now());
-          assert(!isNaN(date.getTime()), metadataFilePath + ' - dateUpdated field should be a valid date in the format YYYY-MM-DD');
-          // validate date is not in future
-          assert(date < currentTime, metadataFilePath + ' - dateUpdated field should not be in the future');
-
-
-          var parametersFileContents = fs.readFileSync(parametersFilePath, { encoding: 'utf-8' }).trim();
-          var parametersObject = tryParse(parametersFilePath, parametersFileContents);
-
-          assert(isDefined(parametersObject.$schema), parametersFilePath + ' - Expected a \'.$schema\' field within the parameters file');
-
-          assert(parametersObject.parameters, parametersFilePath + ' - Expected a \'.parameters\' field within the parameters file');
-          for (var parameterName in parametersObject.parameters) {
-            if (typeof parameterName === 'string') {
-              var parameterObject = parametersObject.parameters[parameterName];
-              assert(isDefined(parameterObject.value) || isDefined(parameterObject.reference),
-                parametersFilePath + ' - Parameter \"' + parameterName + '\" should have a \"value\" or \"reference\" property.');
-            }
-          }
-
-
-          var templateFileContents = fs.readFileSync(templateFilePath, { encoding: 'utf-8' }).trim();
-          var templateObject = tryParse(templateFilePath, templateFileContents);
+          var parametersObject = readJSONFile(parametersFilePath);
+          validateParameters(parametersFilePath, parametersObject);
 
           var requestBody = {
-            template: templateObject,
+            template: readJSONFile(templateFilePath),
             parameters: parametersObject
           };
-
-          var testPromise = RSVP.resolve();
-
-          if (!process.env.VALIDATION_SKIP_VALIDATE) {
-            // Calls a remote url which will validate the template and parameters
-            if (process.env.TRAVIS_PULL_REQUEST &&
-              process.env.TRAVIS_PULL_REQUEST !== 'false') {
-              requestBody.pull_request = process.env.TRAVIS_PULL_REQUEST;
-            }
-
-            // validate the template paramters, particularly the description field
-            assert(templateObject.parameters, 'Expected a \'.parameters\' field within the deployment template');
-            for (parameterName in templateObject.parameters) {
-              if (typeof parameterName === 'string') {
-                assert(templateObject.parameters[parameterName].metadata,
-                  templateFilePath + ' - Parameter \"' + parameterName + '\" is missing its \"metadata\" property');
-                assert(templateObject.parameters[parameterName].metadata.description,
-                  templateFilePath + ' - Parameter \"' + parameterName + '\" is missing its \"description\" field within the metadata property');
-              }
-            }
-
-            testPromise = testPromise.then(function () {
-              console.log("Validating deployment template: " + templateFilePath);
-              return new RSVP.Promise(function (resolve, reject) {
-                console.log("Validating deployment template (2): " + templateFilePath);
-                var validateRequestUrl = process.env.VALIDATION_HOST + "/validate";
-                console.log("Request url: \"" + validateRequestUrl + "\"");
-                unirest.post(validateRequestUrl)
-                  .type('json')
-                  .send(JSON.stringify(requestBody))
-                  .end(function (response) {
-                    console.log("Received response from \"" + validateRequestUrl + "\"");
-                    if (response.status !== 200) {
-                      console.log("Validation failure for deployment template: " + templateFilePath);
-                      return reject(response);
-                    }
-                    else {
-                      console.log("Validation success for deployment template: " + templateFilePath);
-                      return resolve(response.body);
-                    }
-                  });
-              });
+          return validateTemplate(requestBody, templateFilePath)
+            .then(function () { return deployTemplate(requestBody, templateFilePath); })
+            .catch(function (err) {
+              var errorString = 'Template Validiation Failed. Try deploying your template with the commands:\n';
+              errorString += 'azure group template validate --resource-group (your_group_name) ';
+              errorString += ' --template-file ' + templateFilePath + ' --parameters-file ' + parametersFilePath + '\n';
+              errorString += 'azure group deployment create --resource-group (your_group_name) ';
+              errorString += ' --template-file ' + templateFilePath + ' --parameters-file ' + parametersFilePath;
+              assert(false, errorString + ' \n\nServer Error:' + JSON.stringify(err, null, 4));
             });
-          }
-
-
-          // if (!process.env.VALIDATION_SKIP_DEPLOY) {
-          //   if (process.env.TRAVIS_PULL_REQUEST &&
-          //     process.env.TRAVIS_PULL_REQUEST !== 'false') {
-          //     requestBody.pull_request = process.env.TRAVIS_PULL_REQUEST;
-          //   }
-
-          //   var intervalObj = timedOutput(true);
-          //   debug('making deploy request');
-
-          //   // Calls a remote url which will deploy the template
-          //   testPromise = testPromise.then(function (resolve, reject) {
-          //     return unirest.post(process.env.VALIDATION_HOST + '/deploy')
-          //       .type('json')
-          //       .timeout(3600 * 1000) // template deploy can take some time
-          //       .send(JSON.stringify(requestBody))
-          //       .end(function (response) {
-          //         timedOutput(false, intervalObj);
-          //         debug(response.status);
-          //         debug(response.body);
-
-          //         // 202 is the long poll response
-          //         // anything else is really bad
-          //         if (response.status !== 202) {
-          //           reject(response.body);
-          //         }
-
-          //         if (response.body.result === 'Deployment Successful') {
-          //           resolve(response.body);
-          //         }
-          //         else {
-          //           reject(response.body);
-          //         }
-          //       });
-          //   });
-          // }
-
-          testPromise = testPromise.catch(function (err) {
-            var errorString = 'Template Validiation Failed. Try deploying your template with the commands:\n';
-            errorString += 'azure group template validate --resource-group (your_group_name) ';
-            errorString += ' --template-file ' + templateFilePath + ' --parameters-file ' + parametersFilePath + '\n';
-            errorString += 'azure group deployment create --resource-group (your_group_name) ';
-            errorString += ' --template-file ' + templateFilePath + ' --parameters-file ' + parametersFilePath;
-            assert(false, errorString + ' \n\nServer Error:' + JSON.stringify(err, null, 4));
-          });
-
-          return testPromise;
         });
-      });
+      }
     });
-  });
+  }
 });
