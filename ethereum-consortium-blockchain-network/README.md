@@ -173,7 +173,7 @@ We can then check the updated balances to see if our transfer went through:
 This concludes our smart contract sample. For additional information about the Solidity language, click [here](http://solidity.readthedocs.io/en/develop/).
 
 ## Accessing VMs running nodes
-You can access the VMs on which the geth nodes run via ssh using the username and password you supplied.  The VMs are not directly internet accessible for security reasons so you need to ssh to one of the transaction nodes (ending with "-tx") via the load balancer which port maps to the transaction nodes.  The ssh command to run is one of the outputs of the template deployment.  This will get you onto the first transaction node. Increment the port number by one to get onto the second transaction node and so on (e.g. firs transaction node accessible via port 3000, second via port 3001, third via port 3002 and so on).
+You can access the VMs on which the geth nodes run via ssh using the username and password you supplied.  The VMs are not directly internet accessible for security reasons so you need to ssh to one of the transaction nodes (ending with "-tx") via the load balancer which port maps to the transaction nodes.  The ssh command to run is one of the outputs of the template deployment.  This will get you onto the first transaction node. Increment the port number by one to get onto the second transaction node and so on (e.g. firs transaction node accessible via port 3000, second via port 3001, third via port 3002 and so on).  From here you can ssh to any of the other nodes on the network including the mining nodes.
 
 ![consortium network](images/sshoutput.png)
 
