@@ -14,11 +14,6 @@ var unirest = require('unirest');
 // 32 = console code for green
 colors.pass = 32;
 
-function readJSONFile(filePath) {
-  var fileContents = fs.readFileSync(filePath, { encoding: 'utf-8' }).trim();
-  return tryParse(filePath, fileContents);
-}
-
 // Tries to parse a json string and asserts with a friendly
 // message if something is wrong
 function tryParse(fileName, jsonStringData) {
@@ -31,6 +26,13 @@ function tryParse(fileName, jsonStringData) {
   }
 
   return object;
+}
+
+function readJSONFile(filePath) {
+  var fileContents = fs.readFileSync(filePath, {
+    encoding: 'utf-8'
+  }).trim();
+  return tryParse(filePath, fileContents);
 }
 
 function isDefined(value) {
@@ -134,8 +136,7 @@ function validateTemplate(requestBody, templateFilePath) {
   var validatePromise;
   if (process.env.VALIDATION_SKIP_VALIDATE) {
     validatePromise = RSVP.resolve({});
-  }
-  else {
+  } else {
     // Calls a remote url which will validate the template and parameters
     if (process.env.TRAVIS_PULL_REQUEST &&
       process.env.TRAVIS_PULL_REQUEST !== 'false') {
@@ -146,7 +147,7 @@ function validateTemplate(requestBody, templateFilePath) {
 
     // validate the template paramters, particularly the description field
     assert(templateObject.parameters, 'Expected a \'.parameters\' field within the deployment template');
-    for (parameterName in templateObject.parameters) {
+    for (var parameterName in templateObject.parameters) {
       if (typeof parameterName === 'string') {
         assert(templateObject.parameters[parameterName].metadata,
           templateFilePath + ' - Parameter \"' + parameterName + '\" is missing its \"metadata\" property');
@@ -156,14 +157,13 @@ function validateTemplate(requestBody, templateFilePath) {
     }
 
     validatePromise = new RSVP.Promise(function (resolve, reject) {
-      unirest.post(process.env.VALIDATION_HOST + "/validate")
+      unirest.post(process.env.VALIDATION_HOST + '/validate')
         .type('json')
         .send(JSON.stringify(requestBody))
         .end(function (response) {
           if (response.status !== 200) {
             reject(response);
-          }
-          else {
+          } else {
             resolve(response.body);
           }
         });
@@ -172,12 +172,11 @@ function validateTemplate(requestBody, templateFilePath) {
   return validatePromise;
 }
 
-function deployTemplate(requestBody, templateFilePath) {
+function deployTemplate(requestBody) {
   var deployPromise;
   if (process.env.VALIDATION_SKIP_DEPLOY) {
     deployPromise = RSVP.resolve({});
-  }
-  else {
+  } else {
     if (process.env.TRAVIS_PULL_REQUEST &&
       process.env.TRAVIS_PULL_REQUEST !== 'false') {
       requestBody.pull_request = process.env.TRAVIS_PULL_REQUEST;
@@ -205,8 +204,7 @@ function deployTemplate(requestBody, templateFilePath) {
 
           if (response.body.result === 'Deployment Successful') {
             resolve(response.body);
-          }
-          else {
+          } else {
             reject(response.body);
           }
         });
@@ -224,17 +222,18 @@ describe('Template', function () {
     // so this includes all file paths that have changed for the CI run
     assert(process.env.TRAVIS_COMMIT_RANGE, 'VALIDATE_MODIFIED_ONLY requires TRAVIS_COMMIT_RANGE to be set to [START_COMMIT_HASH]...[END_COMMIT_HASH]');
 
-    const modifiedPaths = childProcess.execSync('git diff --name-only ' + process.env.TRAVIS_COMMIT_RANGE, { encoding: 'utf8' }).split("\n");
+    const modifiedPaths = childProcess.execSync('git diff --name-only ' + process.env.TRAVIS_COMMIT_RANGE, {
+      encoding: 'utf8'
+    }).split('\n');
     debug(modifiedPaths);
 
     assert(modifiedPaths.length !== 0, 'No changes were detected in your commit. Verify you added files and try again.');
 
-    var modifiedDirectories = {};
     if (modifiedPaths) {
-      for (var i = 0; i < modifiedPaths.length; ++i) {
+      for (var i = 0; i < modifiedPaths.length; i += 1) {
         var modifiedDirectoryPath = path.dirname(modifiedPaths[i]);
         // don't include the top level dir
-        if (modifiedDirectoryPath !== ".") {
+        if (modifiedDirectoryPath !== '.') {
           modifiedDirectories[modifiedDirectoryPath] = true;
         }
       }
@@ -242,13 +241,13 @@ describe('Template', function () {
   }
 
   // Generates the mocha tests based on directories in the existing repo.
-  var srcPath = "./";
+  var srcPath = './';
   var testDirectories = fs.readdirSync(srcPath).filter(function (fileEntry) {
     var fileEntryPath = path.join(srcPath, fileEntry);
     return fs.statSync(fileEntryPath).isDirectory() &&
-      fileEntry !== ".git" &&
-      fileEntry !== "node_modules" &&
-      !fs.existsSync(path.join(fileEntryPath, ".ci_skip")) &&
+      fileEntry !== '.git' &&
+      fileEntry !== 'node_modules' &&
+      !fs.existsSync(path.join(fileEntryPath, '.ci_skip')) &&
       // if we are only validating modified templates
       // only add test if this directory template has been modified
       (!process.env.VALIDATE_MODIFIED_ONLY || modifiedDirectories[fileEntry]);
@@ -257,50 +256,51 @@ describe('Template', function () {
   // Group tests in chunks defined by an environment variable or by the default value.
   // we probably shouldn't deploy a ton of templates at once...
   var groupSizeMaximum = isDefined(process.env.PARALLEL_DEPLOYMENT_NUMBER) ? parseInt(process.env.PARALLEL_DEPLOYMENT_NUMBER) : 2;
-  var testGroupCount = Math.ceil(testDirectories.length / groupSizeMaximum);
-  
-  for (var testGroupIndex = 0; testGroupIndex < testGroupCount; ++testGroupIndex) {
-    var testDirectoryStartIndex = testGroupIndex * groupSizeMaximum;
-    var testsRemaining = testDirectories.length - testDirectoryStartIndex;
-    var testGroupSize = testsRemaining < groupSizeMaximum ? testsRemaining : groupSizeMaximum;
+  var testIndex = 0;
 
-    parallel('Running ' + testGroupSize + ' Parallel Template Validation(s)...', function () {
+  var testDirectoryGroup = [];
+  testDirectories.forEach(function (testDirectory) {
+    testDirectoryGroup.push(testDirectory);
+    testIndex += 1;
 
-      for (var testIndexInGroup = 0; testIndexInGroup < testGroupSize; ++testIndexInGroup) {
-        var testDirectory = testDirectories[testDirectoryStartIndex + testIndexInGroup];
-        
-        it(testDirectory, function () {
-          var templateFilePath = path.join(testDirectory, "azuredeploy.json");
-          var parametersFilePath = path.join(testDirectory, "azuredeploy.parameters.json");
-          var metadataFilePath = path.join(testDirectory, "metadata.json");
-          var readmeFilePath = path.join(testDirectory, "README.md");
+    if (testIndex === testDirectories.length || testDirectoryGroup.length === groupSizeMaximum) {
+      parallel('Running ' + testDirectoryGroup.length + ' Parallel Template Validation(s)...', function () {
+        testDirectoryGroup.forEach(function (testDirectory) {
+          it(testDirectory, function () {
+            var templateFilePath = path.join(testDirectory, 'azuredeploy.json');
+            var parametersFilePath = path.join(testDirectory, 'azuredeploy.parameters.json');
+            var metadataFilePath = path.join(testDirectory, 'metadata.json');
+            var readmeFilePath = path.join(testDirectory, 'README.md');
 
-          [templateFilePath, parametersFilePath, metadataFilePath, readmeFilePath].forEach(function (filePath) {
-            // Vaidates that the expected file paths exist
-            assert(fs.existsSync(filePath), 'The file ' + filePath + ' is missing.');
-          });
-
-          validateMetadata(metadataFilePath);
-
-          var parametersObject = readJSONFile(parametersFilePath);
-          validateParameters(parametersFilePath, parametersObject);
-
-          var requestBody = {
-            template: readJSONFile(templateFilePath),
-            parameters: parametersObject
-          };
-          return validateTemplate(requestBody, templateFilePath)
-            .then(function () { return deployTemplate(requestBody, templateFilePath); })
-            .catch(function (err) {
-              var errorString = 'Template Validiation Failed. Try deploying your template with the commands:\n';
-              errorString += 'azure group template validate --resource-group (your_group_name) ';
-              errorString += ' --template-file ' + templateFilePath + ' --parameters-file ' + parametersFilePath + '\n';
-              errorString += 'azure group deployment create --resource-group (your_group_name) ';
-              errorString += ' --template-file ' + templateFilePath + ' --parameters-file ' + parametersFilePath;
-              assert(false, errorString + ' \n\nServer Error:' + JSON.stringify(err, null, 4));
+            [templateFilePath, parametersFilePath, metadataFilePath, readmeFilePath].forEach(function (filePath) {
+              // Vaidates that the expected file paths exist
+              assert(fs.existsSync(filePath), 'The file ' + filePath + ' is missing.');
             });
+
+            validateMetadata(metadataFilePath);
+
+            var parametersObject = readJSONFile(parametersFilePath);
+            validateParameters(parametersFilePath, parametersObject);
+
+            var requestBody = {
+              template: readJSONFile(templateFilePath),
+              parameters: parametersObject
+            };
+            return validateTemplate(requestBody, templateFilePath)
+              .then(function () { return deployTemplate(requestBody, templateFilePath); })
+              .catch(function (err) {
+                var errorString = 'Template Validiation Failed. Try deploying your template with the commands:\n';
+                errorString += 'azure group template validate --resource-group (your_group_name) ';
+                errorString += ' --template-file ' + templateFilePath + ' --parameters-file ' + parametersFilePath + '\n';
+                errorString += 'azure group deployment create --resource-group (your_group_name) ';
+                errorString += ' --template-file ' + templateFilePath + ' --parameters-file ' + parametersFilePath;
+                assert(false, errorString + ' \n\nServer Error:' + JSON.stringify(err, null, 4));
+              });
+          });
         });
-      }
-    });
-  }
+      });
+
+      testDirectoryGroup.length = 0;
+    }
+  });
 });
