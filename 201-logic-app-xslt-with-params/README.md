@@ -8,7 +8,6 @@
 </a>
 
 This template creates a request-response Logic App which performs XSLT based transformation. The XSLT map takes primitives (integer, string etc.) as input parameters as uses them during XML transformation.
-`Tags: Logic Apps, Enterprise Integration, XSLT, XML Transform
 
 ## Prerequisites ##
 
@@ -20,7 +19,7 @@ Make a note of the the name of the Azure Function App, you will need it in the n
 
 ## Deployment steps
 
-You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
+You can click the "Deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
 Note: The Logic App and the Azure Function App need to be deployed in the same resource group.
 
 ## Usage
@@ -42,3 +41,5 @@ Learn more about: Azure Logic Apps
 * **Azure Logic Apps** - https://azure.microsoft.com/documentation/articles/app-service-logic-what-are-logic-apps/
 * **Logic Apps Enterprise Integration Pack** - https://blogs.msdn.microsoft.com/logicapps/2016/06/30/public-preview-of-logic-apps-enteprise-integration-pack/
 * **XML Processing capabilities in Logic Apps** - https://azure.microsoft.com/documentation/articles/app-service-logic-enterprise-integration-xml/
+
+`Tags: Logic Apps, Enterprise Integration, XSLT, XML Transform
