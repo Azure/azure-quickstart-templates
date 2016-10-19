@@ -287,7 +287,9 @@ describe('Template', function () {
               parameters: parametersObject
             };
             return validateTemplate(requestBody, templateFilePath)
-              .then(function () { return deployTemplate(requestBody, templateFilePath); })
+              .then(function () {
+                return deployTemplate(requestBody, templateFilePath);
+              })
               .catch(function (err) {
                 var errorString = 'Template Validiation Failed. Try deploying your template with the commands:\n';
                 errorString += 'azure group template validate --resource-group (your_group_name) ';
