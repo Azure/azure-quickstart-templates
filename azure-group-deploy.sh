@@ -1,5 +1,5 @@
 #!/bin/bash -e
-while getopts "a:l:g:s:f:e:u" opt; do
+while getopts "a:l:g:s:f:e:u:v" opt; do
     case $opt in
         a)
             artifactsStagingDirectory=$OPTARG #the folder or sample to deploy
@@ -22,10 +22,13 @@ while getopts "a:l:g:s:f:e:u" opt; do
         e)
             parametersFile=$OPTARG
         ;;
+        v)
+            validateOnly='true'
+        ;;
     esac
 done
     
-[[ $# -eq 0 || -z $artifactsStagingDirectory || -z $location ]] && { echo "Usage: $0 <-a foldername> <-l location> [-e parameters-file] [-g resource-group-name] [-u] [-s storageAccountName]"; exit 1; }
+[[ $# -eq 0 || -z $artifactsStagingDirectory || -z $location ]] && { echo "Usage: $0 <-a foldername> <-l location> [-e parameters-file] [-g resource-group-name] [-u] [-s storageAccountName] [-v]"; exit 1; }
 
 if [[ -z $templateFile ]]
 then
@@ -103,4 +106,9 @@ azure group create "$resourceGroupName" "$location"
 # Remove line endings from parameter JSON so it can be passed in to the CLI as a single line
 parameterJson=$( echo "$parameterJson" | jq -c '.' )
 
-azure group deployment create -g "$resourceGroupName" -n AzureRMSamples -f $templateFile -p "$parameterJson" -v
+if [[ -z $validateOnly ]]
+then
+    azure group template validate -g "$resourceGroupName" -f $templateFile -p "$parameterJson" -v
+else
+    azure group deployment create -g "$resourceGroupName" -n AzureRMSamples -f $templateFile -p "$parameterJson" -v
+fi
