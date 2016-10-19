@@ -56,9 +56,9 @@ then
 
         subscriptionId=$( azure account show --json | jq -r '.[0].id' )
         subscriptionId="${subscriptionId//-/}" 
-        subscriptionId="${subscriptionId:0:20}"
-        artifactsStorageAccountName="temp$subscriptionId"
-        artifactsResourceGroupName="ARMTempStorage"    
+        subscriptionId="${subscriptionId:0:19}"
+        artifactsStorageAccountName="stage$subscriptionId"
+        artifactsResourceGroupName="ARM_Deploy_Staging"    
 
         if [[ -z $( azure storage account list --json | jq -r '.[].name | select(. == '\"$artifactsStorageAccountName\"')' ) ]]
         then
