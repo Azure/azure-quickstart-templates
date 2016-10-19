@@ -29,11 +29,18 @@ END
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-## Deploy using PowerShell
-1. Save files to C:\ADFGetStarted folder. 
-2. Enter correct values for parameters in **azuredeploy.parameters.json**. 
-2. Run the following command:
-	
-		New-AzureRmResourceGroupDeployment -Name MyARMDeployment -ResourceGroupName ADFTutorialResourceGroup -TemplateFile C:\ADFGetStarted\azuredeploy.json -TemplateParameterFile C:\ADFGetStarted\azuredeploy.parameters.json
+## Deploying sample
+You can deploy this sample directly through the Azure Portal or by using the scripts supplied in the root of the repository.
 
-See [Tutorial: Create a pipeline using Resource Manager Template](https://azure.microsoft.com/documentation/articles/data-factory-copy-activity-tutorial-using-azure-resource-manager-template/?rnd=1#create-data-factory)  article for a detailed walkthrough with step-by-step instructions.
+To deploy a sample using the Azure Portal, click the **Deploy to Azure** button at the top of the article. 
+
+To deploy the sample via the command line (using [Azure PowerShell or the Azure CLI](https://azure.microsoft.com/en-us/downloads/)) you can use the scripts.
+
+Simply execute the script from the root folder and pass in the folder name of the sample (101-data-factory-blob-to-sql-copy-stored-proc). For example:
+
+```PowerShell
+.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactStagingDirectory 101-data-factory-blob-to-sql-copy-stored-proc
+```
+```bash
+azure-group-deploy.sh -a 101-data-factory-blob-to-sql-copy-stored-proc -l eastus
+```
