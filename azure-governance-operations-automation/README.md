@@ -1,8 +1,8 @@
-<h1> Enterprise Azure Governance and Operations </h1>
+<h1>Enterprise Azure Governance and Operations </h1>
 <h2>Composite template version 1.0</h2>
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAvyanConsultingCorp%2Fazure-quickstart-templates%2Fmaster%2Fazure-governance-cloudwise%2Fazuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAvyanConsultingCorp%2Fazure-quickstart-templates%2Fmaster%2Fazure-governance-cloudwise%2Fazuredeploy.json" target="_blank"> <img src="http://armviz.io/visualizebutton.png"/></a>
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAvyanConsultingCorp%2Fazure-quickstart-templates%2Fmaster%2Fazure-governance-operations-automation%2Fazuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAvyanConsultingCorp%2Fazure-quickstart-templates%2Fmaster%2Fazure-governance-operations-automation%2Fazuredeploy.json" target="_blank"> <img src="http://armviz.io/visualizebutton.png"/></a>
 
 ----------
 <h2> Table of Contents </h2>
@@ -140,7 +140,7 @@ You can use the following guide to use the solution.
 
 ## Terms of Use and Privacy Policies
 As the solution contains IP owned by Avyan Consulting Corp, please refer to
-This solution will be available in Azure Marketplace - tentatively around MS Ignite 2016 timeframe (End of Sept - Beginning Of Oct 2016)  
+This solution will be available in Azure Marketplace - tentatively around end of 2016 timeframe (End of Sept - Beginning Of Oct 2016)  
 * [Terms of Service](termsofuse/CloudWise_Terms_Of_Service.pdf)
 * [Privacy Policy](termsofuse/CloudWise_Privacy_Policy.pdf)
 
