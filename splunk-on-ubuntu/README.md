@@ -8,7 +8,7 @@
 <br>
 **NOTE regarding deployment to US Government Cloud**
 <br>
-The template system that deploys to US Government Cloud is largely identical to that for the public cloud. If launched using the "Deploy to Azure" button above, the **standalone** deployment type is executed. To deploy using the **cluster** deployment type in US Government cloud, tailor the templates to your needs and use the Azure CLI to launch.
+The template system that deploys to US Government Cloud is largely identical to that for the public cloud. If launched using the "Deploy to Azure" button above, the **standalone** deployment type is executed. To deploy using the **cluster** deployment type in US Government cloud, tailor the templates to your needs and use the Azure CLI to launch. To deploy to the US Government Cloud, your Azure subscription must be whitelisted for that purpose.
 
 **Public Cloud**
 <br>
