@@ -31,13 +31,7 @@
         "description": "Describes plan's instance count"
       }
     },
-    "sqlServerName": {
-      "type": "string",
-      "defaultValue": "cloudwise",
-      "metadata": {
-        "description": "The name of the new database server to create."
-      }
-    },
+    
     "sqlAdministratorLogin": {
       "type": "string",
       "defaultValue": "cloudwiseuser",
@@ -51,41 +45,7 @@
         "description": "The password to use for the database server administrator."
       }
     },
-    "sqlDatabaseName": {
-      "type": "string",
-      "metadata": {
-        "description": "The name of the new database to create."
-      },
-      "defaultValue": "cloudwise"
-    },
-    "sqlCollation": {
-      "type": "string",
-      "defaultValue": "SQL_Latin1_General_CP1_CI_AS",
-      "metadata": {
-        "description": "The database collation for governing the proper use of characters."
-      }
-    },
-    "sqlEdition": {
-      "type": "string",
-      "defaultValue": "Basic",
-      "metadata": {
-        "description": "The type of database to create. The available options are: Web, Business, Basic, Standard, and Premium."
-      }
-    },
-    "sqlMaxSizeBytes": {
-      "type": "string",
-      "defaultValue": "1073741824",
-      "metadata": {
-        "description": "The maximum size, in bytes, for the database. Default is 1GB"
-      }
-    },
-    "sqlRequestedServiceObjectiveName": {
-      "type": "string",
-      "defaultValue": "Basic",
-      "metadata": {
-        "description": "The name corresponding to the performance level for edition. The available options are: Shared, Basic, S0, S1, S2, S3, P1, P2, and P3."
-      }
-    },
+    
     "omsWorkspaceName": {
       "type": "string",
       "defaultValue": "CloudWiseOMSWorkspace",
@@ -131,7 +91,7 @@
       "type": "string",
       "defaultValue": "https://raw.githubusercontent.com/AvyanConsultingCorp/azure-quickstart-templates/master/azure-governance-cloudwise",
       "metadata": {
-        "description": "Location for the artifacts"
+        "description": "Publicly accessible location of all deployment artifacts."
       }
     },
     "_artifactsLocationSasToken": {
@@ -143,14 +103,18 @@
     }
   },
   "variables": {
-    "packageURI": "https://msignite2016stg.blob.core.windows.net/cloudwise/package.zip", 
+    "packageURI": "https://msignite2016stg.blob.core.windows.net/cloudwise/package.zip",
 
     "WebAppDeployPackageFolder": "ISVDemoUsage",
     "WebAppDeployPackageFileName": "package.zip",
     "hostingPlanName": "[concat('CloudWiseHostingplan-', uniqueString(resourceGroup().id))]",
     "webSiteName": "[concat('CloudWise', uniqueString(resourceGroup().id))]",
-    "sqlserverName": "[concat('sql',parameters('sqlserverName'), uniqueString(resourceGroup().id, deployment().name))]",
-
+    "sqlserverName": "[concat('sql','cloudwise', uniqueString(resourceGroup().id, deployment().name))]",
+    "sqlDatabaseName": "cloudwisedb",
+    "sqlCollation": "SQL_Latin1_General_CP1_CI_AS",
+    "sqlMaxSizeBytes": "1073741824",
+    "sqlEdition": "Basic",
+    "sqlRequestedServiceObjectiveName": "Basic",
     "insightsName": "[concat(variables('webSiteName'),'insights')]",
     "omsWorkspaceName": "[concat(parameters('omsWorkspaceName'), uniqueString(resourceGroup().id, deployment().name))]",
 
@@ -175,7 +139,7 @@
       },
       "resources": [
         {
-          "name": "[parameters('sqlDatabaseName')]",
+          "name": "[variables('sqlDatabaseName')]",
           "type": "databases",
           "location": "[resourceGroup().location]",
           "apiVersion": "2014-04-01-preview",
@@ -183,10 +147,10 @@
             "[concat('Microsoft.Sql/servers/', variables('sqlServerName'))]"
           ],
           "properties": {
-            "edition": "[parameters('sqlEdition')]",
-            "collation": "[parameters('sqlCollation')]",
-            "maxSizeBytes": "[parameters('sqlMaxSizeBytes')]",
-            "requestedServiceObjectiveName": "[parameters('sqlRequestedServiceObjectiveName')]"
+            "edition": "[variables('sqlEdition')]",
+            "collation": "[variables('sqlCollation')]",
+            "maxSizeBytes": "[variables('sqlMaxSizeBytes')]",
+            "requestedServiceObjectiveName": "[variables('sqlRequestedServiceObjectiveName')]"
           }
         },
         {
@@ -263,12 +227,12 @@
           ],
           "properties": {
             "DefaultConnection": {
-              "value": "[concat('Data Source=tcp:', reference(concat('Microsoft.Sql/servers/', variables('sqlserverName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', parameters('sqlDatabaseName'), ';User Id=', parameters('sqlAdministratorLogin'), '@', variables('sqlserverName'), ';Password=', parameters('sqlAdministratorLoginPassword'), ';', 'MultipleActiveResultSets=True;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]",
+              "value": "[concat('Data Source=tcp:', reference(concat('Microsoft.Sql/servers/', variables('sqlserverName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', variables('sqlDatabaseName'), ';User Id=', parameters('sqlAdministratorLogin'), '@', variables('sqlserverName'), ';Password=', parameters('sqlAdministratorLoginPassword'), ';', 'MultipleActiveResultSets=True;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]",
               "type": "SQLServer"
             }
             ,
             "SQLCONNSTR_DefaultConnection": {
-              "value": "[concat('Data Source=tcp:', reference(concat('Microsoft.Sql/servers/', variables('sqlserverName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', parameters('sqlDatabaseName'), ';User Id=', parameters('sqlAdministratorLogin'), '@', variables('sqlserverName'), ';Password=', parameters('sqlAdministratorLoginPassword'), ';', 'MultipleActiveResultSets=True;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]",
+              "value": "[concat('Data Source=tcp:', reference(concat('Microsoft.Sql/servers/', variables('sqlserverName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', variables('sqlDatabaseName'), ';User Id=', parameters('sqlAdministratorLogin'), '@', variables('sqlserverName'), ';Password=', parameters('sqlAdministratorLoginPassword'), ';', 'MultipleActiveResultSets=True;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;')]",
               "type": "SQLServer"
             }
           }
@@ -500,7 +464,8 @@
         "[concat('Microsoft.Web/sites/', variables('webSiteName'))]"
       ],
       "tags": {
-        "displayName": "[concat('Component', variables('insightsName'))]"
+        "displayName": "[concat('Component', variables('insightsName'))]",
+        "[concat('hidden-link:', resourceGroup().id, '/providers/Microsoft.Web/sites/', variables('webSiteName'))]": "Resource"
       },
       "properties": {
         "applicationId": "[variables('webSiteName')]"

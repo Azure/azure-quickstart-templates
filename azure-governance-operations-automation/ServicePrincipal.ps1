@@ -26,7 +26,7 @@ $tenantID=              ""
 $passwordADApp =        "Password@123" 
 
 $Web1SiteName =         ("cloudwise" + $suffix)
-$displayName1 =         ("CloudWise - Governance Advisory Portal (ver." + $suffix + ")")
+$displayName1 =         ("CloudWise Governance Advisory Portal (ver." + $suffix + ")")
 $servicePrincipalPath=  (".\" + $subscriptionName + ".json" )
 
 
@@ -35,7 +35,7 @@ $servicePrincipalPath=  (".\" + $subscriptionName + ".json" )
 if (($subscriptionName -eq "") -or ($cloudwiseAppServiceURL -eq ""))
 {
     Write-Host "Please ensure parameters SubscriptionName and cloudwiseAppServiceURL are not empty" -foreground Red
-    return 
+    return
 }
 
 
