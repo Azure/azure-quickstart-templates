@@ -1,4 +1,4 @@
-<h1> CloudWise - Enterprise Azure Governance  </h1>
+<h1> Enterprise Azure Governance and Operations </h1>
 <h2>Composite template version 1.0</h2>
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAvyanConsultingCorp%2Fazure-quickstart-templates%2Fmaster%2Fazure-governance-cloudwise%2Fazuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
@@ -11,6 +11,7 @@
 
 - [Solution Overview](#solution-overview)
 - [Solution Template Overview](#solution-template-overview)
+- [Quick Overview Video](#quick-overview-video)
 - [Target Audience](#target-audience)
 - [Licenses & Costs](#licenses-costs)
 - [Prerequisites](#prerequisites)
@@ -33,7 +34,7 @@
 ## Solution Overview
 Cloud adoption for an Enterprise, small or large, require responsible and efficient governance models to derive value from their cloud deployments.
 
-Cloudwise™, a composite solution available from Azure Quick Starts, is an adoption enabler for Customers, System Integrators and Partners alike, that delivers a self-serviceable, automated governance solution, focused on 
+Cloudwise (a codename for the solution)a composite solution available from Azure Quick Starts, is an adoption enabler for Customers, System Integrators and Partners alike, that delivers a self-serviceable, automated governance solution, focused on 
 
 * Optimizing Your Costs
 * Improve Your Application(s) Reliability 
@@ -61,8 +62,12 @@ This composite solution includes
 Customers benefit greatly from solution templates because of the ease with which they can stand up enterprise-grade, fully integrated stacks on Azure. The extensive automation and testing of these solutions will allow them to spin up pre-production environments with minimal manual steps and customization.  Most importantly, customers now have the confidence to transition the solution into a fully production-ready environment with confidence.
 
 **Cloud Governance Pilot Solution Template 001** 
-*Disclaimer*: These are intended as pilot solutions and not production ready.
+*Disclaimer*: These are intended as **pilot solutions and not production ready**.
 Please [contact us](mailto:azuremarketplace@avyanconsulting.com) if you need further info or support on this solution.
+
+## Quick Overview Video
+You can find a quick (~3.5mins) overview of the solution in the video here
+[Enterprise_Governance_and_Operations_480p.mp4)](images/CloudWise_Enterprise_Governance_and_Operations_480p.mp4)
 
 
 <a name="overview"></a>
