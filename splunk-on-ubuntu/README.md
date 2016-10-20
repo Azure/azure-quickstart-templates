@@ -1,5 +1,17 @@
 # Create Splunk Enterprise standalone or cluster on Azure
 
+**US Government Cloud**
+<br>
+<a href="https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsplunk-on-ubuntu%2Fazuredeploy-gov.json" target="_blank">
+    <img src="http://azuredeploy.net/deploybutton.png"/>
+</a>
+<br>
+**NOTE regarding deployment to US Government Cloud**
+<br>
+The template system that deploys to US Government Cloud is largely identical to that for the public cloud. If launched using the "Deploy to Azure" button above, the **standalone** deployment type is executed. To deploy using the **cluster** deployment type in US Government cloud, tailor the templates to your needs and use the Azure CLI to launch.
+
+**Public Cloud**
+<br>
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsplunk-on-ubuntu%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
