@@ -41,26 +41,18 @@
     "templateAPIVersion": "2015-01-01",
     "resourceAPIVersion": "2015-06-15",
     "singleQuote": "'",
-    "vmCount": "[parameters('machineSettings').vmCount]",
     "vmName": "[concat(parameters('namespace'), '-vm')]",
     "nicName": "[concat(parameters('namespace'), '-nic')]",
     "publicIpName": "[parameters('machineSettings').publicIPName]",
     "clusterMasterIp": "[parameters('machineSettings').clusterMasterIp]",
-    "securityGroupRef": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('securityGroupName'))]",
-    "ipOctet01": "[parameters('machineSettings').staticIps.ipOctet01]",
-    "ipOctet2": "[parameters('machineSettings').staticIps.ipOctet2]",
-    "ipOctet3": "[parameters('machineSettings').staticIps.ipOctet3]"
+    "securityGroupRef": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('securityGroupName'))]"
   },
   "resources": [
     {
       "apiVersion": "[variables('resourceAPIVersion')]",
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[concat(variables('nicName'), copyindex())]",
+      "name": "[variables('nicName')]",
       "location": "[parameters('location')]",
-      "copy": {
-        "name": "nicCopyLoop",
-        "count": "[variables('vmCount')]"
-      },
       "properties": {
         "networkSecurityGroup": {
           "id": "[variables('securityGroupRef')]"
@@ -70,9 +62,9 @@
             "name": "ipconfig1",
             "properties": {
               "privateIPAllocationMethod": "Static",
-              "privateIPAddress": "[concat(variables('ipOctet01'), add(variables('ipOctet2'), div(copyindex(variables('ipOctet3')), 255)), '.', mod(copyindex(variables('ipOctet3')), 255))]",
+              "privateIPAddress": "[parameters('machineSettings').staticIp]",
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('publicIpName'), copyindex()))]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpName'))]"
               },
               "subnet": {
                 "id": "[parameters('subnet')]"
@@ -85,7 +77,7 @@
     {
       "apiVersion": "[variables('resourceAPIVersion')]",
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[concat(variables('vmName'), copyindex())]",
+      "name": "[variables('vmName')]",
       "location": "[parameters('location')]",
       "plan": {
         "name": "[parameters('osSettings').imageReference.sku]",
@@ -93,12 +85,8 @@
         "product": "[parameters('osSettings').imageReference.offer]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyindex())]"
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
       ],
-      "copy": {
-        "name": "vmCopyLoop",
-        "count": "[variables('vmCount')]"
-      },
       "properties": {
         "availabilitySet": {
           "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('machineSettings').availabilitySet)]"
@@ -107,7 +95,7 @@
           "vmSize": "[parameters('machineSettings').vmSize]"
         },
         "osProfile": {
-          "computername": "[concat(variables('vmName'), copyindex())]",
+          "computername": "[variables('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]"
         },
@@ -116,7 +104,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://', parameters('storageSettings').name, parameters('storageSettings').map[copyindex()], '.blob.core.windows.net/vhds/', variables('vmName'), copyindex(), '-osdisk.vhd')]"
+              "uri": "[concat('http://', parameters('storageSettings').name, parameters('storageSettings').map[0], '.blob.core.usgovcloudapi.net/vhds/', variables('vmName'), '-osdisk.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -127,7 +115,7 @@
               "diskSizeGB": "[parameters('machineSettings').diskSize]",
               "lun": 0,
               "vhd": {
-                "Uri": "[concat('http://', parameters('storageSettings').name, parameters('storageSettings').map[copyindex()], '.blob.core.windows.net/vhds/', variables('vmName'), copyindex(), '-datadisk1.vhd')]"
+                "Uri": "[concat('http://', parameters('storageSettings').name, parameters('storageSettings').map[0], '.blob.core.usgovcloudapi.net/vhds/', variables('vmName'), '-datadisk1.vhd')]"
               },
               "caching": "ReadOnly",
               "createOption": "Empty"
@@ -137,7 +125,7 @@
               "diskSizeGB": "[parameters('machineSettings').diskSize]",
               "lun": 1,
               "vhd": {
-                "Uri": "[concat('http://', parameters('storageSettings').name, parameters('storageSettings').map[copyindex()], '.blob.core.windows.net/vhds/', variables('vmName'), copyindex(), '-datadisk2.vhd')]"
+                "Uri": "[concat('http://', parameters('storageSettings').name, parameters('storageSettings').map[0], '.blob.core.usgovcloudapi.net/vhds/', variables('vmName'), '-datadisk2.vhd')]"
               },
               "caching": "ReadOnly",
               "createOption": "Empty"
@@ -147,7 +135,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'), copyindex()))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
             }
           ]
         }
@@ -156,17 +144,12 @@
     {
       "apiVersion": "[variables('resourceAPIVersion')]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "singleQuote": "'",
-      "name": "[concat(variables('vmName'), copyindex(), '/node-setup')]",
+      "name": "[concat(variables('vmName'), '/node-setup')]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'), copyindex())]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyindex())]"
+        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
       ],
-      "copy": {
-        "name": "scriptCopyLoop",
-        "count": "[variables('vmCount')]"
-      },
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
         "type": "CustomScript",
@@ -180,6 +163,5 @@
         }
       }
     }
-  ],
-  "outputs": {}
+  ]
 }
