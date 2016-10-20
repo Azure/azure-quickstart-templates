@@ -2,6 +2,7 @@
 
 # If there is a problem initializing, check the log file (root permission required)
 # /var/log/azure/Microsoft.OSTCExtensions.CustomScriptForLinux/1.4.1.0/extension.log 
+#
 
 # Debug
 set -x
