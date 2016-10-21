@@ -1,26 +1,4 @@
-### Autoscale a LANSA Windows VM Scale Set with Azure SQL Database ###
-
-This template deploys a LANSA Windows VM Scale Set integrated with Azure autoscale and Azure SQL Database
-
-The template deploys a Windows VMSS with a desired count of VMs in the scale set and a LANSA MSI to install into each VM. Once the VM Scale Set is deployed a custom script extension is used to install the LANSA MSI
-
-The Autoscale rules are configured as follows
-- sample for CPU (\\Processor\\PercentProcessorTime) in each VM every 1 Minute
-- if the Percent Processor Time is greater than 60% for 5 Minutes, then the scale out action (add 10% more VM instances) is triggered
-- once the scale out action is completed, the cool down period is 20 Minutes
-- if the Percent Processor Time is less than 30% for 5 Minutes, then the scale in action (remove one VM instance) is triggered
-- once the scale in action is completed, the cool down period is 5 Minutes
-
-#### Prerequisites ####
-
-Before deploying this template you must:
-- Subscribe to the LANSA Scalable License
-- Upload your LANSA Web Application MSI to Azure BLOB storage and obtain the URL of the MSI. Note that the template includes a demonstration application so it is not strictly necessary to create a LANSA MSI in order to use the template.
-- Its also highly recommended to follow the usage instructions below :)
-
-#### Usage Instructions ####
-
-For full instructions for using this template go to [Azure Deployment Tutorial](http://docs.lansa.com/14/en/lansa022/index.htm#lansa/vldtoolct_0250.htm#_Toc461606162%3FTocPath%3DLANSA%2520Application%2520Deployment%2520Tool|Cloud%2520Tutorials|Microsoft%2520Azure%2520Tutorial|_____0)
+# Autoscale a LANSA Windows VM Scale Set with Azure SQL Database
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Frobe070%2Fazure-quickstart-templates%2Ffeature%2Flansastack%2Flansa-vmss-windows-autoscale-sql-database%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
@@ -29,9 +7,47 @@ For full instructions for using this template go to [Azure Deployment Tutorial](
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
+This template deploys a LANSA Windows Virtual Machine Scale Set integrated with Azure autoscale and Azure SQL Database
+
 Tags: 'lansa, vmss, sql, autoscale, windows'
 
-#### Notes ####
+| Endpoint        | Version           | Validated  |
+| ------------- |:-------------:| -----:|
+| Microsoft Azure      | - | yes |
+| Microsoft Azure Stack      | TP2      |  incompatible |
+
+## Solution overview and deployed resources
+
+The template deploys a Windows Virtual Machine Scale Set with a desired count of Virtual Machines in the scale set and a LANSA MSI to install into each Virtual Machine. Once the Virtual Machine Scale Set is deployed a custom script extension is used to install the LANSA MSI.
+
+The Autoscale rules are configured as follows
+- sample for CPU (\\Processor\\PercentProcessorTime) in each VM every 1 Minute
+- if the Percent Processor Time is greater than 60% for 5 Minutes, then the scale out action (add 10% more Virtual Machine instances) is triggered
+- once the scale out action is completed, the cool down period is 20 Minutes
+- if the Percent Processor Time is less than 30% for 5 Minutes, then the scale in action (remove one Virtual Machine instance) is triggered
+- once the scale in action is completed, the cool down period is 5 Minutes
+
+### Resources Used
++	A Virtual Network
++	Six Storage Accounts for deploying up to 100 virtual machines
++	Two public ip addresses, one for each Load Balancer
++	Two external Load Balancers
++	One Virtual Machine Scale Set to contain the single virtual machine which is repsonsible for configuring the database
++	One Virtual Machine Scale Set to contain the number of web servers requested by the deployer
++	One Azure SQL Database server with one database, configured as per settings provided by the deployer
+
+## Prerequisites
+
+Before deploying this template you must:
+- Upload your LANSA Web Application MSI to Azure BLOB storage and obtain the URL of the MSI. Note that the template includes a demonstration application so it is not strictly necessary to create a LANSA MSI in order to use the template.
+- Its also highly recommended to follow the usage instructions below :)
+
+## Usage Instructions
+
+For full instructions for using this template go to [Azure Deployment Tutorial](http://docs.lansa.com/14/en/lansa022/index.htm#lansa/vldtoolct_0250.htm#_Toc461606162%3FTocPath%3DLANSA%2520Application%2520Deployment%2520Tool|Cloud%2520Tutorials|Microsoft%2520Azure%2520Tutorial|_____0)
+
+
+## Notes
 
 1. Two VMSS. One to install the database; 1 to run the web site. OverProvision = false. This is so that extra VMs are not created which would put more load on the database which slows down provisioning. Failure to provision has not been seen. If it occurs, the VMSS will ensure another VM is created to establish the correct InstanceCount. A second reason is that the database installer VMSS MUST NEVER have more than 1 instance installing at a time. Errors occur when publishing the weblets. As well as the database state not being matched to what the VM thinks the state of the database is in terms of table creation, etc.
   1. Database VMSS
