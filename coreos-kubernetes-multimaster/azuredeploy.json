@@ -1,0 +1,832 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "etcdNumberOfNodes": {
+      "allowedValues": [
+        1,
+        3,
+        5
+      ],
+      "defaultValue": 3,
+      "metadata": {
+        "description": "ETCD cluster size"
+      },
+      "type": "int"
+    },
+    "etcdVmSize": {
+      "allowedValues": [
+        "Standard_D1_v2",
+        "Standard_D2_v2",
+        "Standard_D3_v2",
+        "Standard_D4_v2"
+      ],
+      "defaultValue": "Standard_D2_v2",
+      "metadata": {
+        "description": "ETCD vm size"
+      },
+      "type": "string"
+    },
+    "masterNumberOfNodes": {
+      "allowedValues": [
+        1,
+        3,
+        5
+      ],
+      "defaultValue": 3,
+      "metadata": {
+        "description": "Number of kubernetes masters"
+      },
+      "type": "int"
+    },
+    "workerNumberOfNodes": {
+      "minValue": 1,
+      "maxValue": 100,
+      "defaultValue": 3,
+      "metadata": {
+        "description": "Number of kubernetes workers"
+      },
+      "type": "int"
+    },
+    "masterVmSize": {
+      "allowedValues": [
+        "Standard_D1_v2",
+        "Standard_D2_v2",
+        "Standard_D3_v2",
+        "Standard_D4_v2"
+      ],
+      "defaultValue": "Standard_D2_v2",
+      "metadata": {
+        "description": "kubernetes master vm size"
+      },
+      "type": "string"
+    },
+    "workerVmSize": {
+      "allowedValues": [
+        "Standard_D1_v2",
+        "Standard_D2_v2",
+        "Standard_D3_v2",
+        "Standard_D4_v2",
+        "Standard_D5_v2",
+        "Standard_D11_v2",
+        "Standard_D12_v2",
+        "Standard_D13_v2",
+        "Standard_D14_v2",
+        "Standard_D15_v2",
+        "Standard_DS1_v2",
+        "Standard_DS2_v2",
+        "Standard_DS3_v2",
+        "Standard_DS4_v2",
+        "Standard_DS5_v2",
+        "Standard_DS11_v2",
+        "Standard_DS12_v2",
+        "Standard_DS13_v2",
+        "Standard_DS14_v2",
+        "Standard_DS15_v2"
+      ],
+      "defaultValue": "Standard_D2_v2",
+      "metadata": {
+        "description": "kubernetes master vm size"
+      },
+      "type": "string"
+    },
+    "adminUsername": {
+      "defaultValue": "core",
+      "type": "string",
+      "metadata": {
+        "description": "Admin user account"
+      }
+    },
+    "hyperkubeVersion": {
+      "defaultValue": "v1.4.4",
+      "type": "string",
+      "metadata": {
+        "description": "Kubernetes version to install"
+      }
+    },
+    "imageSku": {
+      "allowedValues": [
+        "Alpha",
+        "Beta",
+        "Stable"
+      ],
+      "defaultValue": "Stable",
+      "metadata": {
+        "description": "CoreOS channel"
+      },
+      "type": "string"
+    },
+    "sshKeyData": {
+      "type": "string",
+      "metadata": {
+        "description": "Public key for SSH authentication"
+      }
+    },
+    "vnetAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/8",
+      "metadata": {
+        "description": "VNET address prefix"
+      }
+    },
+    "etcdSubnetPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/24",
+      "metadata": {
+        "description": "ETCD subnet address prefix"
+      }
+    },
+    "masterSubnetPrefix": {
+      "type": "string",
+      "defaultValue": "10.1.0.0/24",
+      "metadata": {
+        "description": "Kubernetes masters subnet address prefix"
+      }
+    },
+    "workerSubnetPrefix": {
+      "type": "string",
+      "defaultValue": "10.254.0.0/16",
+      "metadata": {
+        "description": "Kubernetes workers subnet address prefix"
+      }
+    },
+    "tenantID": {
+      "type": "string",
+      "metadata": {
+        "description": "Kubernetes masters subnet address prefix"
+      }
+    },
+    "aadClientId": {
+      "type": "string",
+      "metadata": {
+        "description": "Kubernetes masters subnet address prefix"
+      }
+    },
+    "aadClientSecret": {
+      "type": "string",
+      "metadata": {
+        "description": "Kubernetes masters subnet address prefix"
+      }
+    }
+  },
+  "variables": {
+    "locations": {
+      "eastus": "us1",
+      "eastus2": "us2",
+      "southcentralus": "us3",
+      "westus": "us4",
+      "westeurope": "eu1",
+      "northeurope": "eu2"
+    },
+    "workersPricingTier": {
+      "Standard_D1_v2": "Standard",
+      "Standard_D2_v2": "Standard",
+      "Standard_D3_v2": "Standard",
+      "Standard_D4_v2": "Standard",
+      "Standard_D5_v2": "Standard",
+      "Standard_D11_v2": "Standard",
+      "Standard_D12_v2": "Standard",
+      "Standard_D13_v2": "Standard",
+      "Standard_D14_v2": "Standard",
+      "Standard_D15_v2": "Standard",
+      "Standard_DS1_v2": "Premium",
+      "Standard_DS2_v2": "Premium",
+      "Standard_DS3_v2": "Premium",
+      "Standard_DS4_v2": "Premium",
+      "Standard_DS5_v2": "Premium",
+      "Standard_DS11_v2": "Premium",
+      "Standard_DS12_v2": "Premium",
+      "Standard_DS13_v2": "Premium",
+      "Standard_DS14_v2": "Premium",
+      "Standard_DS15_v2": "Premium"
+    },
+    "storageAccountTypes": {
+      "Standard": "Standard_LRS",
+      "Premium": "Premium_LRS"
+    },
+    "locationShort": "[variables('locations')[resourceGroup().location]]",
+    "etcdAvailabilitySetName": "[concat('as-', variables('locationShort'), '-etcd')]",
+    "masterAvailabilitySetName": "[concat('as-', variables('locationShort'), '-master')]",
+    "workerAvailabilitySetName": "[concat('as-', variables('locationShort'), '-worker')]",
+    "vnetName": "[concat('vn-', variables('locationShort'), '-kube')]",
+    "etcdSubnetName": "subnet-etcd",
+    "masterSubnetName": "subnet-master",
+    "workerSubnetName": "subnet-worker",
+    "adminStorageAccountType": "Standard_LRS",
+    "adminStorageAccountName": "[concat('sa', variables('locationShort'), 'admin', uniqueString(resourceGroup().id))]",
+    "workerStorageAccountType": "[variables('storageAccountTypes')[variables('workersPricingTier')[parameters('workerVmSize')]]]",
+    "workerStorageAccountName": "[concat('sa', variables('locationShort'), 'worker',uniqueString(resourceGroup().id))]",
+    "etcdVmNamePrefix": "[concat('vm-', variables('locationShort'), '-etcd')]",
+    "masterVmNamePrefix": "[concat('vm-', variables('locationShort'), '-master')]",
+    "workerVmNamePrefix": "[concat('vm-', variables('locationShort'), '-worker')]",
+    "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
+    "etcdConnectionStringsBinary": {
+      "1": "[concat('etcd0=http://',variables('etcdVmNamePrefix'),'0:2380')]",
+      "3": "[concat('etcd0=http://',variables('etcdVmNamePrefix'),'0:2380,','etcd1=http://',variables('etcdVmNamePrefix'),'1:2380,','etcd2=http://',variables('etcdVmNamePrefix'),'2:2380')]",
+      "5": "[concat('etcd0=http://',variables('etcdVmNamePrefix'),'0:2380,','etcd1=http://',variables('etcdVmNamePrefix'),'1:2380,','etcd2=http://',variables('etcdVmNamePrefix'),'2:2380,','etcd3=http://',variables('etcdVmNamePrefix'),'3:2380,','etcd4=http://',variables('etcdVmNamePrefix'),'4:2380')]"
+    },
+    "etcdConnectionStringsHttp": {
+      "1": "[concat('http://',variables('etcdVmNamePrefix'),'0:2379')]",
+      "3": "[concat('http://',variables('etcdVmNamePrefix'),'0:2379,','http://',variables('etcdVmNamePrefix'),'1:2379,','http://',variables('etcdVmNamePrefix'),'2:2379')]",
+      "5": "[concat('http://',variables('etcdVmNamePrefix'),'0:2379,','http://',variables('etcdVmNamePrefix'),'1:2379,','http://',variables('etcdVmNamePrefix'),'2:2379,','http://',variables('etcdVmNamePrefix'),'3:2379,','http://',variables('etcdVmNamePrefix'),'4:2379')]"
+    },
+    "masterConnectionStrings": {
+      "1": "[concat('https://',variables('masterVmNamePrefix'),'0')]",
+      "3": "[concat('https://',variables('masterVmNamePrefix'),'0,','https://',variables('masterVmNamePrefix'),'1,','https://',variables('masterVmNamePrefix'),'2')]",
+      "5": "[concat('https://',variables('masterVmNamePrefix'),'0,','https://',variables('masterVmNamePrefix'),'1,','https://',variables('masterVmNamePrefix'),'2,','https://',variables('masterVmNamePrefix'),'3,','https://',variables('masterVmNamePrefix'),'4')]"
+    },
+    "masterCNList": {
+      "1": "[concat('\"hosts\": [\n          \"',variables('masterVmNamePrefix'),'0\",\n           \"10.240.0.1\",\n           \"10.240.0.10\",\n')]",
+      "3": "[concat('\"hosts\": [\n          \"',variables('masterVmNamePrefix'),'0\",\n          \"',variables('masterVmNamePrefix'),'1\",\n          \"',variables('masterVmNamePrefix'),'2\",\n         \"10.240.0.1\",\n         \"10.240.0.10\",\n')]",
+      "5": "[concat('\"hosts\": [\n          \"',variables('masterVmNamePrefix'),'0\",\n          \"',variables('masterVmNamePrefix'),'1\",\n          \"',variables('masterVmNamePrefix'),'2\",\n            \"',variables('masterVmNamePrefix'),'3\",\n            \"',variables('masterVmNamePrefix'),'4\",\n         \"10.240.0.1\",\n         \"10.240.0.10\",\n')]"
+    },
+    "masterCN": "[variables('masterCNList')[string(parameters('masterNumberOfNodes'))]]",
+    "etcdConnectionStringBinary": "[variables('etcdConnectionStringsBinary')[string(parameters('etcdNumberOfNodes'))]]",
+    "etcdConnectionStringHttp": "[variables('etcdConnectionStringsHttp')[string(parameters('etcdNumberOfNodes'))]]",
+    "masterConnectionString": "[variables('masterConnectionStrings')[string(parameters('masterNumberOfNodes'))]]",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('vnetName'))]",
+    "etcdSubnetRef": "[concat(variables('vnetID'),'/subnets/',variables('etcdSubnetName'))]",
+    "masterSubnetRef": "[concat(variables('vnetID'),'/subnets/',variables('masterSubnetName'))]",
+    "workerSubnetRef": "[concat(variables('vnetID'),'/subnets/',variables('workerSubnetName'))]",
+    "RouteTableName": "[concat('rt-', variables('locationShort'), '-kube')]",
+    "NSGName": "[concat('nsg-', variables('locationShort'), '-kube')]",
+    "publicIPAddressType": "Dynamic",
+    "masterPublicIPAddressName": "[concat('ip-', variables('locationShort'), '-master-public')]",
+    "masterPublicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',variables('masterPublicIPAddressName'))]",
+    "masterLbName": "[concat('lb-', variables('locationShort'), '-master-public')]",
+    "masterLbID": "[resourceId('Microsoft.Network/loadBalancers',variables('masterLbName'))]",
+    "masterLbPoolID": "[concat(variables('masterLbID'),'/backendAddressPools/LoadBalancerBackend')]",
+    "masterlbProbeID": "[concat(variables('masterlbID'),'/probes/tcpProbe')]",
+    "frontEndIPConfigID": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('masterLbName')), '/frontendIPConfigurations/LoadBalancerFrontEnd')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[variables('etcdAvailabilitySetName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "tags": {},
+      "properties": {
+        "platformUpdateDomainCount": 3,
+        "platformFaultDomainCount": 3
+      },
+      "resources": [],
+      "dependsOn": []
+    },
+    {
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[variables('masterAvailabilitySetName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "tags": {},
+      "properties": {
+        "platformUpdateDomainCount": 3,
+        "platformFaultDomainCount": 3
+      },
+      "resources": [],
+      "dependsOn": []
+    },
+    {
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[variables('workerAvailabilitySetName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "platformUpdateDomainCount": 20,
+        "platformFaultDomainCount": 3
+      }
+    },
+    {
+      "type": "Microsoft.Network/routeTables",
+      "name": "[variables('RouteTableName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]"
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('NSGName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "ssh-rule",
+            "properties": {
+              "description": "Allow SSH",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "https-rule",
+            "properties": {
+              "description": "Allow HTTPS",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 110,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('vnetName')]",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-05-01-preview",
+      "dependsOn": [
+        "[concat('Microsoft.Network/routeTables/', variables('RouteTableName'))]",
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('NSGName'))]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('vnetaddressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('etcdSubnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('etcdSubnetPrefix')]"
+            }
+          },
+          {
+            "name": "[variables('masterSubnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('masterSubnetPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('NSGName'))]"
+              },
+              "routeTable": {
+                "id": "[resourceId('Microsoft.Network/routeTables', variables('RouteTableName'))]"
+              }
+            }
+          },
+          {
+            "name": "[variables('workerSubnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('workerSubnetPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('NSGName'))]"
+              },
+              "routeTable": {
+                "id": "[resourceId('Microsoft.Network/routeTables', variables('RouteTableName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('masterPublicIPAddressName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[resourceGroup().name]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat('nic-etcd', copyindex())]",
+      "copy": {
+        "name": "etcdNicLoop",
+        "count": "[parameters('etcdNumberOfNodes')]"
+      },
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
+      ],
+      "apiVersion": "2015-05-01-preview",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('etcdSubnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat('nic-master', copyindex())]",
+      "copy": {
+        "name": "masterNicLoop",
+        "count": "[parameters('masterNumberOfNodes')]"
+      },
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('masterPublicIPAddressName'))]",
+        "[concat('Microsoft.Network/loadBalancers/', variables('masterLbName'))]",
+        "lbNatLoop"
+      ],
+      "apiVersion": "2015-05-01-preview",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('masterSubnetRef')]"
+              },
+              "loadBalancerBackendAddressPools": [
+                {
+                  "id": "[concat(variables('masterLbID'), '/backendAddressPools/LoadBalancerBackend')]"
+                }
+              ],
+              "loadBalancerInboundNatRules": [
+                {
+                  "id": "[concat(variables('masterLbID'),'/inboundNatRules/SSH-VM', copyindex())]"
+                }
+              ]
+            }
+          }
+        ],
+        "enableIPForwarding": true
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat('nic-worker', copyindex())]",
+      "copy": {
+        "name": "workerNicLoop",
+        "count": "[parameters('workerNumberOfNodes')]"
+      },
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
+      ],
+      "apiVersion": "2015-05-01-preview",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('workerSubnetRef')]"
+              }
+            }
+          }
+        ],
+        "enableIPForwarding": true
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "name": "[variables('masterLbName')]",
+      "type": "Microsoft.Network/loadBalancers",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('masterPublicIPAddressName'))]"
+      ],
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "LoadBalancerFrontend",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[variables('masterPublicIPAddressID')]"
+              }
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "LoadBalancerBackend"
+          }
+        ],
+        "loadBalancingRules": [
+          {
+            "name": "masterLBRule",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[variables('frontEndIPConfigID')]"
+              },
+              "backendAddressPool": {
+                "id": "[variables('masterLbPoolID')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 443,
+              "backendPort": 443,
+              "enableFloatingIP": false,
+              "idleTimeoutInMinutes": 5,
+              "probe": {
+                "id": "[variables('masterLbProbeID')]"
+              }
+            }
+          }
+        ],
+        "probes": [
+          {
+            "name": "tcpProbe",
+            "properties": {
+              "protocol": "Tcp",
+              "port": 443,
+              "intervalInSeconds": 5,
+              "numberOfProbes": 2
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/loadBalancers/inboundNatRules",
+      "name": "[concat(variables('masterLbName'), '/', 'SSH-VM', copyIndex())]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "lbNatLoop",
+        "count": "[parameters('masterNumberOfNodes')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/loadBalancers/', variables('masterLbName'))]"
+      ],
+      "properties": {
+        "frontendIPConfiguration": {
+          "id": "[variables('frontEndIPConfigID')]"
+        },
+        "protocol": "tcp",
+        "frontendPort": "[copyIndex(22000)]",
+        "backendPort": 22,
+        "enableFloatingIP": false
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('adminStorageAccountName')]",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-05-01-preview",
+      "properties": {
+        "accountType": "[variables('adminStorageAccountType')]"
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('workerStorageAccountName')]",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "properties": {
+        "accountType": "[variables('workerStorageAccountType')]"
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(variables('etcdVmNamePrefix'), copyindex())]",
+      "copy": {
+        "name": "etcdVmLoop",
+        "count": "[parameters('etcdNumberOfNodes')]"
+      },
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "etcdNicLoop",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('adminStorageAccountName'))]",
+        "[concat('Microsoft.Compute/availabilitySets/', variables('etcdAvailabilitySetName'))]"
+      ],
+      "apiVersion": "2015-06-15",
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('etcdAvailabilitySetName'))]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('etcdVmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[concat(variables('etcdVmNamePrefix'), copyindex())]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "customData": "[base64(concat('#cloud-config\n\ncoreos:\n  update:\n    reboot-strategy: \"etcd-lock\"\n  etcd2:\n    name: ',concat('etcd', copyIndex()),'\n    initial-cluster: ', variables('etcdConnectionStringBinary'),'\n    advertise-client-urls: http://$private_ipv4:2379,http://$private_ipv4:4001\n    initial-advertise-peer-urls: http://$private_ipv4:2380\n    listen-client-urls: http://0.0.0.0:2379,http://0.0.0.0:4001\n    listen-peer-urls: http://0.0.0.0:2380\n    initial-cluster-token: etcd-kube\n    heartbeat-interval: 250\n    election-timeout: 1250\n    initial-cluster-state: new\n  units:\n    - name: etcd2.service\n      command: start\n    - name: fleet.service\n      command: start'))]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": "true",
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[variables('sshKeyPath')]",
+                  "keyData": "[parameters('sshKeyData')]"
+                }
+              ]
+            }
+          }
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "CoreOS",
+            "offer": "CoreOS",
+            "sku": "[parameters('imageSku')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(variables('etcdVmNamePrefix'), copyindex())]",
+            "vhd": {
+              "uri": "[concat('http://',variables('adminStorageAccountName'),'.blob.core.windows.net/vhds/',variables('etcdVmNamePrefix'), copyindex(),'.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat('nic-etcd',copyindex()))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(variables('masterVmNamePrefix'), copyindex())]",
+      "copy": {
+        "name": "masterVmLoop",
+        "count": "[parameters('masterNumberOfNodes')]"
+      },
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "etcdVmLoop",
+        "masterNicLoop",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('adminStorageAccountName'))]",
+        "[concat('Microsoft.Compute/availabilitySets/', variables('masterAvailabilitySetName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/nic-master', copyindex())]"
+      ],
+      "apiVersion": "2015-06-15",
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('masterAvailabilitySetName'))]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('masterVmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[concat(variables('masterVmNamePrefix'), copyindex())]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "customData": "[base64(concat('#cloud-config\nwrite-files:\n  - path: /opt/kubernetes/bin/wupiao\n    permissions: \"0755\"\n    content: |\n      #!/bin/bash\n      # [w]ait [u]ntil [p]ort [i]s [a]ctually [o]pen\n      [ -n \"$1\" ] && [ -n \"$2\" ] && while ! curl --output /dev/null \\\n        --silent --head --fail \\\n        http://${1}:${2}; do sleep 1 && echo -n .; done;\n      exit $?\n  - path: /opt/kubernetes/bin/generate-certs.sh\n    permissions: \"0755\"\n    content: |\n      #!/bin/bash\n\n      WORKDIR=/etc/kubernetes/certs\n      ETCD_ENDPOINT=',variables('etcdConnectionStringHttp'),'\n\n      if [ $(/bin/etcdctl --endpoints $ETCD_ENDPOINT ls /cluster-bootstrap 2>/dev/null) ]\n      then\n        while [ $(/bin/etcdctl --endpoints $ETCD_ENDPOINT get /cluster-bootstrap/kubernetes/certs/lock 2>/dev/null) ]; do echo \"Etcd endpoint locked\" && sleep 10; done\n        echo \"Found existing certificates\"\n        if [ ! -f $WORKDIR/ca.pem ]; then\n          echo \"Downloading ca authority from etcd\"\n          /bin/etcdctl --endpoints $ETCD_ENDPOINT get /cluster-bootstrap/kubernetes/certs/ca.pem | base64 -d > $WORKDIR/ca.pem\n        fi\n        if [ ! -f $WORKDIR/ca-key.pem ]; then\n          echo \"Downloading ca authority key from etcd\"\n           /bin/etcdctl --endpoints $ETCD_ENDPOINT get /cluster-bootstrap/kubernetes/certs/ca-key.pem | base64 -d > $WORKDIR/ca-key.pem\n        fi\n        if [ ! -f $WORKDIR/kubernetes.pem ]; then\n          echo \"Downloading kubernetes cert from etcd\"\n           /bin/etcdctl --endpoints $ETCD_ENDPOINT get /cluster-bootstrap/kubernetes/certs/kubernetes.pem | base64 -d > $WORKDIR/kubernetes.pem\n        fi\n        if [ ! -f $WORKDIR/kubernetes-key.pem ]; then\n          echo \"Downloading kubernetes key from etcd\"\n           /bin/etcdctl --endpoints $ETCD_ENDPOINT get /cluster-bootstrap/kubernetes/certs/kubernetes-key.pem | base64 -d > $WORKDIR/kubernetes-key.pem\n        fi\n        echo \"We are ready to go\"\n        exit 0\n      else\n        /bin/etcdctl --endpoints $ETCD_ENDPOINT set /cluster-bootstrap/kubernetes/certs/lock true\n        cd $WORKDIR\n        /opt/kubernetes/bin/cfssl gencert -initca ca-csr.json | /opt/kubernetes/bin/cfssljson -bare ca\n        /opt/kubernetes/bin/cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=kubernetes kubernetes-csr.json | /opt/kubernetes/bin/cfssljson -bare kubernetes\n        a=$(cat ca.pem | base64 ); echo $a | tr -d \" \" | /bin/etcdctl --endpoints $ETCD_ENDPOINT set /cluster-bootstrap/kubernetes/certs/ca.pem\n        a=$(cat ca-key.pem | base64 ); echo $a | tr -d \" \" | /bin/etcdctl --endpoints $ETCD_ENDPOINT set /cluster-bootstrap/kubernetes/certs/ca-key.pem\n        a=$(cat kubernetes-key.pem | base64 ); echo $a | tr -d \" \" | /bin/etcdctl --endpoints $ETCD_ENDPOINT set /cluster-bootstrap/kubernetes/certs/kubernetes-key.pem\n        a=$(cat kubernetes.pem | base64 ); echo $a | tr -d \" \" | /bin/etcdctl --endpoints $ETCD_ENDPOINT set /cluster-bootstrap/kubernetes/certs/kubernetes.pem\n        /bin/etcdctl --endpoints $ETCD_ENDPOINT rm /cluster-bootstrap/kubernetes/certs/lock\n      fi\n  - path: /etc/kubernetes/certs/ca-csr.json\n    permissions: \"0600\"\n    content: |\n      {\n        \"CN\": \"Kubernetes\",\n        \"key\": {\n        \"algo\": \"rsa\",\n        \"size\": 4096\n      },\n      \"names\": [ {\n        \"C\": \"US\",\n        \"L\": \"Redmond\",\n        \"O\": \"Microsoft\",\n        \"OU\": \"Azure\",\n        \"ST\": \"Washington\"\n       }]\n      }\n  - path: /etc/kubernetes/certs/ca-config.json\n    permissions: \"0600\"\n    content: |\n      {\n        \"signing\": {\n          \"default\": {\n            \"expiry\": \"8760h\"\n          },\n          \"profiles\": {\n            \"kubernetes\": {\n              \"usages\": [\"signing\", \"key encipherment\", \"server auth\", \"client auth\"],\n              \"expiry\": \"8760h\"\n            }\n          }\n        }\n      }\n  - path: /etc/kubernetes/certs/kubernetes-csr.json\n    permissions: \"0600\"\n    content: |\n      {\n        \"CN\": \"kubernetes\",\n        ',variables('masterCN'),'         \"',reference(concat('Microsoft.Network/publicIPAddresses/', variables('masterPublicIPAddressName'))).dnsSettings.fqdn,'\"\n       ],\n       \"key\": {\n         \"algo\": \"rsa\",\n         \"size\": 4096\n      },\n      \"names\": [ {\n         \"C\": \"US\",\n         \"L\": \"Redmond\",\n         \"O\": \"Microsoft\",\n         \"OU\": \"Azure\",\n         \"ST\": \"Washington\"\n        }]\n       }\n  - path: /etc/kubernetes/conf/azure.json\n    permissions: \"0600\"\n    content: |\n      {\n        \"aadClientId\": \"',parameters('aadClientId'),'\",\n        \"aadClientSecret\": \"',parameters('aadClientSecret'),'\",\n        \"location\": \"',resourceGroup().location,'\",\n        \"resourceGroup\": \"',resourceGroup().name,'\",\n        \"routeTableName\": \"',variables('RouteTableName'),'\",\n        \"securityGroupName\": \"',variables('NSGName'),'\",\n        \"subnetName\": \"',variables('workerSubnetName'),'\",\n        \"subscriptionId\": \"',subscription().subscriptionId,'\",\n        \"tenantId\": \"',parameters('tenantId'),'\",\n        \"vnetName\": \"',variables('vnetName'),'\"\n      }\n  - path: /etc/kubernetes/conf/kubeconfig.yaml\n    permissions: \"0600\"\n    content: |\n      apiVersion: v1\n      kind: Config\n      clusters:\n        - name: local\n          cluster:\n            certificate-authority: /etc/kubernetes/certs/ca.pem\n      users:\n      - name: kubelet\n        user:\n          client-certificate: /etc/kubernetes/certs/kubernetes.pem\n          client-key: /etc/kubernetes/certs/kubernetes-key.pem\n      contexts:\n      - context:\n          cluster: local\n          user: kubelet\n        name: kubelet-context\n      current-context: kubelet-context\n  - path: /etc/kubernetes/manifests/apiserver.yaml\n    permissions: \"0600\"\n    content: |\n      apiVersion: v1\n      kind: Pod\n      metadata:\n        name: kube-apiserver\n        namespace: kube-system\n      spec:\n        hostNetwork: true\n        containers:\n        - name: kube-apiserver\n          image: gcr.io/google_containers/hyperkube-amd64:',parameters('hyperkubeVersion'),'\n          command:\n          - /hyperkube\n          - apiserver\n          - --apiserver-count=',parameters('masterNumberOfNodes'),'\n          - --etcd-servers=',variables('etcdConnectionStringHttp'),'\n          - --allow-privileged=true\n          - --service-cluster-ip-range=10.240.0.0/16\n          - --cloud-provider=azure\n          - --bind-address=0.0.0.0\n          - --secure-port=443\n          - --advertise-address=$private_ipv4\n          - --admission-control=NamespaceLifecycle,NamespaceExists,LimitRanger,SecurityContextDeny,ServiceAccount,ResourceQuota\n          - --tls-cert-file=/etc/kubernetes/certs/kubernetes.pem\n          - --tls-private-key-file=/etc/kubernetes/certs/kubernetes-key.pem\n          - --client-ca-file=/etc/kubernetes/certs/ca.pem\n          - --service-account-key-file=/etc/kubernetes/certs/kubernetes-key.pem\n          - --runtime-config=extensions/v1beta1=true,extensions/v1beta1/thirdpartyresources=true\n          - --allow-privileged\n          - --cloud-config=/etc/kubernetes/conf/azure.json\n          - --v=4\n          ports:\n          - containerPort: 443\n            hostPort: 443\n            name: https\n          - containerPort: 8080\n            hostPort: 8080\n            name: local\n          volumeMounts:\n          - mountPath: /etc/kubernetes/certs\n            name: ssl-certs-kubernetes\n            readOnly: true\n          - mountPath: /etc/ssl/certs\n            name: ssl-certs-host\n            readOnly: true\n        volumes:\n        - hostPath:\n            path: /etc/kubernetes/certs\n          name: ssl-certs-kubernetes\n        - hostPath:\n            path: /usr/share/ca-certificates\n          name: ssl-certs-host\n  - path: /etc/kubernetes/manifests/controller.yaml\n    permissions: \"0600\"\n    content: |\n        apiVersion: v1\n        kind: Pod\n        metadata:\n          name: kube-controller-manager\n          namespace: kube-system\n        spec:\n          hostNetwork: true\n          containers:\n          - name: kube-controller-manager\n            image: gcr.io/google_containers/hyperkube-amd64:',parameters('hyperkubeVersion'),'\n            command:\n            - /hyperkube\n            - controller-manager\n            - --master=http://127.0.0.1:8080\n            - --cluster-name=',resourceGroup().name,'\n            - --allocate-node-cidrs=true\n            - --cloud-provider=azure\n            - --cloud-config=/etc/kubernetes/conf/azure.json\n            - --cluster-cidr=10.244.0.0/16\n            - --leader-elect=true\n            - --service-account-private-key-file=/etc/kubernetes/certs/kubernetes-key.pem\n            - --root-ca-file=/etc/kubernetes/certs/ca.pem\n            livenessProbe:\n              httpGet:\n                host: 127.0.0.1\n                path: /healthz\n                port: 10252\n              initialDelaySeconds: 15\n              timeoutSeconds: 1\n            volumeMounts:\n            - mountPath: /etc/kubernetes/certs\n              name: ssl-certs-kubernetes\n              readOnly: true\n            - mountPath: /etc/kubernetes/conf\n              name: kubernetes-conf\n              readOnly: true\n            - mountPath: /etc/ssl/certs\n              name: ssl-certs-host\n              readOnly: true\n          volumes:\n          - hostPath:\n              path: /etc/kubernetes/certs\n            name: ssl-certs-kubernetes\n          - hostPath:\n              path: /etc/kubernetes/conf\n            name: kubernetes-conf\n          - hostPath:\n              path: /usr/share/ca-certificates\n            name: ssl-certs-host\n  - path: /etc/kubernetes/manifests/scheduler.yaml\n    permissions: \"0600\"\n    content: |\n      apiVersion: v1\n      kind: Pod\n      metadata:\n        name: kube-scheduler\n        namespace: kube-system\n      spec:\n        hostNetwork: true\n        containers:\n        - name: kube-scheduler\n          image: gcr.io/google_containers/hyperkube-amd64:',parameters('hyperkubeVersion'),'\n          command:\n          - /hyperkube\n          - scheduler\n          - --master=http://127.0.0.1:8080\n          - --leader-elect=true\n          livenessProbe:\n            httpGet:\n              host: 127.0.0.1\n              path: /healthz\n              port: 10251\n            initialDelaySeconds: 15\n            timeoutSeconds: 1\n  - path: /etc/kubernetes/manifests/proxy.yaml\n    permissions: \"0600\"\n    content: |\n      apiVersion: v1\n      kind: Pod\n      metadata:\n        name: kube-proxy\n        namespace: kube-system\n      spec:\n        hostNetwork: true\n        containers:\n        - name: kube-proxy\n          image: gcr.io/google_containers/hyperkube-amd64:',parameters('hyperkubeVersion'),'\n          command:\n          - /hyperkube\n          - proxy\n          - --master=http://localhost:8080\n          - --proxy-mode=iptables\n          securityContext:\n            privileged: true\n          volumeMounts:\n          - mountPath: /etc/ssl/certs\n            name: ssl-certs-host\n            readOnly: true\n        volumes:\n        - hostPath:\n            path: /usr/share/ca-certificates\n          name: ssl-certs-host\n  - path: /etc/kubernetes/addons/kubedns-svc.yaml\n    permissions: \"0644\"\n    content: |\n      apiVersion: v1\n      kind: Service\n      metadata:\n        name: kube-dns\n        namespace: kube-system\n        labels:\n          k8s-app: kube-dns\n          kubernetes.io/cluster-service: \"true\"\n          kubernetes.io/name: \"KubeDNS\"\n      spec:\n        selector:\n          k8s-app: kube-dns\n        clusterIP: 10.240.0.10\n        ports:\n        - name: dns\n          port: 53\n          protocol: UDP\n        - name: dns-tcp\n          port: 53\n          protocol: TCP\ncoreos:\n  update:\n    reboot-strategy: \"etcd-lock\"\n  units:\n    - name: \"docker.service\"\n      drop-ins:\n        - name: \"50-docker-ops.conf\"\n          content: |\n            [Service]\n            Environment=DOCKER_OPTS=\"--storage-driver=overlay\"\n            MountFlags=shared\n    - name: \"generate-certs.service\"\n      command: \"start\"\n      content: |\n        [Unit]\n        Description=Generate TLS certificates\n        ConditionPathExists=/opt/kubernetes/bin/generate-certs.sh\n        [Service]\n        ExecStartPre=/bin/mkdir -p /opt/kubernetes/bin\n        ExecStartPre=/bin/curl -o /opt/kubernetes/bin/cfssl https://pkg.cfssl.org/R1.2/cfssl_linux-amd64\n        ExecStartPre=/bin/chmod 755 /opt/kubernetes/bin/cfssl\n        ExecStartPre=/bin/curl -o /opt/kubernetes/bin/cfssljson https://pkg.cfssl.org/R1.2/cfssljson_linux-amd64\n        ExecStartPre=/bin/chmod 755 /opt/kubernetes/bin/cfssljson\n        ExecStart=/opt/kubernetes/bin/generate-certs.sh\n        RemainAfterExit=yes\n        Type=oneshot\n    - name: \"kubelet-master.service\"\n      command: \"start\"\n      content: |\n        [Unit]\n        Description=Kubernetes Kubelet Server\n        Documentation=https://github.com/kubernetes/kubernetes\n\n        [Service]\n        ExecStartPre=/bin/mkdir -p /var/lib/kubelet\n        ExecStartPre=/bin/wget -O /opt/kubernetes/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/',parameters('hyperkubeVersion'),'/bin/linux/amd64/kubectl\n        ExecStartPre=/bin/chmod 755 /opt/kubernetes/bin/kubectl\n        ExecStartPre=/bin/mount --bind /var/lib/kubelet /var/lib/kubelet\n        ExecStartPre=/bin/mount --make-shared /var/lib/kubelet\n        ExecStart=/usr/bin/docker run \\\n          --net=host \\\n          --pid=host \\\n          --privileged \\\n          -v /dev:/dev \\\n          -v /sys:/sys:ro \\\n          -v /var/run:/var/run:rw \\\n          -v /var/lib/docker/:/var/lib/docker:rw \\\n          -v /var/lib/kubelet/:/var/lib/kubelet:shared \\\n          -v /etc/kubernetes:/etc/kubernetes:ro \\\n          gcr.io/google_containers/hyperkube-amd64:',parameters('hyperkubeVersion'),' \\\n          /hyperkube kubelet \\\n            --cloud-provider=azure \\\n            --cloud-config=/etc/kubernetes/conf/azure.json \\\n            --address=0.0.0.0 \\\n            --allow-privileged=true \\\n            --enable-server \\\n            --enable-debugging-handlers \\\n            --kubeconfig=/etc/kubernetes/conf/kubeconfig.yaml \\\n            --config=/etc/kubernetes/manifests \\\n            --cluster-dns=10.240.0.10 \\\n            --cluster-domain=cluster.local \\\n            --v=2 \\\n            --api-servers=http://localhost:8080 \\\n            --register-schedulable=false \\\n            --pod-cidr=10.244.0.0/16\n        Restart=always\n        RestartSec=5\n\n        [Install]\n        WantedBy=multi-user.target\n    - name: \"kube-addons.service\"\n      command: \"start\"\n      content: |\n        [Unit]\n        Description=Install kubernetes addons\n        After=kubelet-master.service\n        [Service]\n        ExecStartPre=/opt/kubernetes/bin/wupiao 127.0.0.1 8080\n        ExecStartPre=/bin/bash -c \"while [ $(curl -s -L http://127.0.0.1:8080/healthz) != ok ]; do echo Waiting for cluster readiness ; sleep 5; done\"\n        ExecStart=/opt/kubernetes/bin/kubectl apply -R -f /etc/kubernetes/addons/\n        ExecStart=/opt/kubernetes/bin/kubectl apply -f https://raw.githubusercontent.com/kelseyhightower/kubernetes-the-hard-way/master/deployments/kubedns.yaml\n        ExecStart=/opt/kubernetes/bin/kubectl apply -f https://raw.githubusercontent.com/kubernetes/kubernetes/master/cluster/addons/dashboard/dashboard-controller.yaml\n        ExecStart=/opt/kubernetes/bin/kubectl apply -f https://raw.githubusercontent.com/kubernetes/kubernetes/master/cluster/addons/dashboard/dashboard-service.yaml\n        ExecStart=/opt/kubernetes/bin/kubectl apply -f https://raw.githubusercontent.com/kubernetes/kubernetes/master/cluster/addons/node-problem-detector/node-problem-detector.yaml\n        Type=oneshot\n'))]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": "true",
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[variables('sshKeyPath')]",
+                  "keyData": "[parameters('sshKeyData')]"
+                }
+              ]
+            }
+          }
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "CoreOS",
+            "offer": "CoreOS",
+            "sku": "[parameters('imageSku')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(variables('masterVmNamePrefix'), copyindex())]",
+            "vhd": {
+              "uri": "[concat('http://',variables('adminStorageAccountName'),'.blob.core.windows.net/vhds/',variables('masterVmNamePrefix'), copyindex(),'.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat('nic-master',copyindex()))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": "true",
+            "storageUri": "[concat('http://',variables('adminStorageAccountName'),'.blob.core.windows.net')]"
+          }
+        }
+      }
+    },
+    {
+      "copy": {
+        "name": "masterExtentionLoop",
+        "count": "[parameters('masterNumberOfNodes')]"
+      },
+      "name": "[concat(variables('masterVmNamePrefix'), copyindex(),'/kubeconfigExtention')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [
+        "masterVmLoop"
+      ],
+      "tags": {
+        "displayName": "kubeconfig"
+      },
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/coreos-kubernetes-multimaster/scripts/create_kubeconfig.sh"
+          ],
+          "commandToExecute": "[concat('/bin/bash ./create_kubeconfig.sh ',resourceGroup().name,' ',reference(concat('Microsoft.Network/publicIPAddresses/',variables('masterPublicIPAddressName'))).dnsSettings.fqdn,' ',parameters('adminUsername'))]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(variables('workerVmNamePrefix'), copyindex())]",
+      "copy": {
+        "name": "workerVmLoop",
+        "count": "[parameters('workerNumberOfNodes')]"
+      },
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "masterVmLoop",
+        "workerNicLoop",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('workerStorageAccountName'))]",
+        "[concat('Microsoft.Compute/availabilitySets/', variables('workerAvailabilitySetName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/nic-worker', copyindex())]"
+      ],
+      "apiVersion": "2015-06-15",
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('workerAvailabilitySetName'))]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('workerVmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[concat(variables('workerVmNamePrefix'), copyindex())]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "customData": "[base64(concat('#cloud-config\nwrite-files:\n  - path: /opt/kubernetes/bin/download-worker-certs.sh\n    permissions: \"0755\"\n    content: |\n      #!/bin/bash\n\n      WORKDIR=/etc/kubernetes/certs\n      ETCD_ENDPOINT=',variables('etcdConnectionStringHttp'),'\n\n      while [ ! $(/bin/etcdctl --endpoints $ETCD_ENDPOINT ls /cluster-bootstrap 2>/dev/null) ]\n      do\n        echo \"Waiting for certificates to be available\"\n        sleep 10\n      done\n\n      if [ $(/bin/etcdctl --endpoints $ETCD_ENDPOINT ls /cluster-bootstrap 2>/dev/null) ]\n      then\n        while [ $(/bin/etcdctl --endpoints $ETCD_ENDPOINT get /cluster-bootstrap/kubernetes/certs/lock 2>/dev/null) ]; do echo \"Etcd endpoint locked\" && sleep 5; done\n        echo \"Found existing certificates\"\n        if [ ! -f $WORKDIR/ca.pem ]; then\n          echo \"Downloading ca authority from etcd\"\n          /bin/etcdctl --endpoints $ETCD_ENDPOINT get /cluster-bootstrap/kubernetes/certs/ca.pem | base64 -d > $WORKDIR/ca.pem\n        fi\n        if [ ! -f $WORKDIR/ca-key.pem ]; then\n          echo \"Downloading ca authority key from etcd\"\n           /bin/etcdctl --endpoints $ETCD_ENDPOINT get /cluster-bootstrap/kubernetes/certs/ca-key.pem | base64 -d > $WORKDIR/ca-key.pem\n        fi\n        openssl genrsa -out /etc/kubernetes/certs/worker-key.pem 4096\n        openssl req -new -key /etc/kubernetes/certs/worker-key.pem -out /etc/kubernetes/certs/worker.csr -subj \"/CN=$(hostname)\"\n        openssl x509 -req -in /etc/kubernetes/certs/worker.csr -CA /etc/kubernetes/certs/ca.pem -CAkey /etc/kubernetes/certs/ca-key.pem -CAcreateserial -out /etc/kubernetes/certs/worker.pem -days 365 -extensions v3_req\n        echo \"We are ready to go\"\n        exit 0\n      fi\n  - path: /etc/kubernetes/conf/azure.json\n    permissions: \"0600\"\n    content: |\n      {\n        \"aadClientId\": \"',parameters('aadClientId'),'\",\n        \"aadClientSecret\": \"',parameters('aadClientSecret'),'\",\n        \"location\": \"',resourceGroup().location,'\",\n        \"resourceGroup\": \"',resourceGroup().name,'\",\n        \"routeTableName\": \"',variables('RouteTableName'),'\",\n        \"securityGroupName\": \"',variables('NSGName'),'\",\n        \"subnetName\": \"',variables('workerSubnetName'),'\",\n        \"subscriptionId\": \"',subscription().subscriptionId,'\",\n        \"tenantId\": \"',parameters('tenantId'),'\",\n        \"vnetName\": \"',variables('vnetName'),'\"\n      }\n  - path: /etc/kubernetes/conf/kubeconfig.yaml\n    permissions: \"0600\"\n    content: |\n      apiVersion: v1\n      kind: Config\n      clusters:\n      - name: local\n        cluster:\n          certificate-authority: /etc/kubernetes/certs/ca.pem\n      users:\n      - name: kubelet\n        user:\n          client-certificate: /etc/kubernetes/certs/worker.pem\n          client-key: /etc/kubernetes/certs/worker-key.pem\n      contexts:\n      - context:\n          cluster: local\n          user: kubelet\n        name: kubelet-context\n      current-context: kubelet-context\n  - path: /etc/kubernetes/manifests/kube-proxy.yaml\n    permissions: \"0600\"\n    content: |\n      apiVersion: v1\n      kind: Pod\n      metadata:\n        name: kube-proxy\n        namespace: kube-system\n      spec:\n        hostNetwork: true\n        containers:\n        - name: kube-proxy\n          image: gcr.io/google_containers/hyperkube-amd64:',parameters('hyperkubeVersion'),'\n          command:\n          - /hyperkube\n          - proxy\n          - --master=',variables('masterConnectionStrings')['1'],'\n          - --kubeconfig=/etc/kubernetes/conf/kubeconfig.yaml\n          - --proxy-mode=iptables\n          - --v=4\n          securityContext:\n            privileged: true\n          volumeMounts:\n            - mountPath: /etc/ssl/certs\n              name: \"ssl-certs\"\n            - mountPath: /etc/kubernetes/conf/kubeconfig.yaml\n              name: \"kubeconfig\"\n              readOnly: true\n            - mountPath: /etc/kubernetes/certs\n              name: \"etc-kube-ssl\"\n              readOnly: true\n        volumes:\n          - name: \"ssl-certs\"\n            hostPath:\n              path: \"/usr/share/ca-certificates\"\n          - name: \"kubeconfig\"\n            hostPath:\n              path: \"/etc/kubernetes/conf/kubeconfig.yaml\"\n          - name: \"etc-kube-ssl\"\n            hostPath:\n              path: \"/etc/kubernetes/certs\"\ncoreos:\n  update:\n    reboot-strategy: \"etcd-lock\"\n  units:\n    - name: \"docker.service\"\n      drop-ins:\n        - name: \"50-docker-ops.conf\"\n          content: |\n            [Service]\n            Environment=DOCKER_OPTS=\"--iptables=false --ip-masq=false --storage-driver=overlay\"\n            MountFlags=shared\n            LimitNOFILE=1048576\n            LimitNPROC=1048576\n            LimitCORE=infinity\n            Restart=always\n            RestartSec=2s\n            StartLimitInterval=0\n    - name: \"format-ephemeral.service\"\n      command: \"start\"\n      content: |\n        [Unit]\n        Description=Format Ephemeral Volume\n        Documentation=https://coreos.com/os/docs/latest/mounting-storage.html\n        Before=docker.service var-lib-docker.mount\n        After=dev-sdb.device\n        Requires=dev-sdb.device\n        [Service]\n        Type=oneshot\n        RemainAfterExit=yes\n        ExecStart=/bin/bash -c -x \"umount -f /mnt/resource || /bin/true\"\n        ExecStart=/bin/bash -c -x \"umount -A /dev/sdb1 || /bin/true\"\n        ExecStart=/bin/bash -c -x \"umount -A /dev/sdb || /bin/true\"\n        ExecStart=/bin/bash -c -x \"rm -rf /mnt/resource\"\n        ExecStart=/bin/bash -c -x \"wipefs -f /dev/sdb1 || true\"\n        ExecStart=/bin/bash -c -x \"mkfs.ext4 -F /dev/sdb\"\n        [Install]\n        RequiredBy=var-lib-docker.mount\n    - name: \"var-lib-docker.mount\"\n      command: \"start\"\n      content: |\n        [Unit]\n        Description=Mount /var/lib/docker\n        Documentation=https://coreos.com/os/docs/latest/mounting-storage.html\n        Before=docker.service\n        After=format-ephemeral.service\n        Requires=format-ephemeral.service\n        [Install]\n        RequiredBy=docker.service\n        [Mount]\n        What=/dev/sdb\n        Where=/var/lib/docker\n        Type=ext4\n    - name: \"download-certs.service\"\n      command: \"start\"\n      content: |\n        [Unit]\n        Description=Generate TLS certificates\n        ConditionPathExists=/opt/kubernetes/bin/download-worker-certs.sh\n        [Service]\n        ExecStartPre=/bin/mkdir -p /opt/kubernetes/bin\n        ExecStartPre=/bin/mkdir -p /etc/kubernetes/certs\n        ExecStart=/opt/kubernetes/bin/download-worker-certs.sh\n        RemainAfterExit=yes\n        Type=oneshot\n    - name: \"kubelet.service\"\n      command: \"start\"\n      content: |\n        [Unit]\n        Description=Kubernetes Kubelet Server\n        Documentation=https://github.com/kubernetes/kubernetes\n\n        [Service]\n        ExecStartPre=/bin/mkdir -p /var/lib/kubelet\n        ExecStartPre=/bin/mount --bind /var/lib/kubelet /var/lib/kubelet\n        ExecStartPre=/bin/mount --make-shared /var/lib/kubelet\n        ExecStart=/usr/bin/docker run \\\n          --net=host \\\n          --pid=host \\\n          --privileged \\\n          -v /dev:/dev \\\n          -v /sys:/sys:ro \\\n          -v /var/run:/var/run:rw \\\n          -v /var/lib/docker/:/var/lib/docker:rw \\\n          -v /var/lib/kubelet/:/var/lib/kubelet:shared \\\n          -v /etc/kubernetes:/etc/kubernetes:ro \\\n          gcr.io/google_containers/hyperkube-amd64:',parameters('hyperkubeVersion'),' \\\n          /hyperkube kubelet \\\n            --cloud-provider=azure \\\n            --cloud-config=/etc/kubernetes/conf/azure.json \\\n            --reconcile-cidr=true \\\n            --hairpin-mode=promiscuous-bridge \\\n            --api-servers=',variables('masterConnectionString'),' \\\n            --network-plugin-dir=/etc/kubernetes/cni/net.d \\\n            --network-plugin=kubenet \\\n            --register-node=true \\\n            --allow-privileged=true \\\n            --config=/etc/kubernetes/manifests \\\n            --cluster-dns=10.240.0.10 \\\n            --cluster-domain=cluster.local \\\n            --kubeconfig=/etc/kubernetes/conf/kubeconfig.yaml \\\n            --tls-cert-file=/etc/kubernetes/certs/worker.pem \\\n            --tls-private-key-file=/etc/kubernetes/certs/worker-key.pem\n        Restart=always\n        RestartSec=10\n        [Install]\n        WantedBy=multi-user.target\n'))]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": true,
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[variables('sshKeyPath')]",
+                  "keyData": "[parameters('sshKeyData')]"
+                }
+              ]
+            }
+          }
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "CoreOS",
+            "offer": "CoreOS",
+            "sku": "[parameters('imageSku')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(variables('workerVmNamePrefix'), copyindex())]",
+            "vhd": {
+              "uri": "[concat('http://',variables('workerStorageAccountName'),'.blob.core.windows.net/vhds/',variables('workerVmNamePrefix'), copyindex(),'.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat('nic-worker',copyindex()))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": "true",
+            "storageUri": "[concat('http://',variables('workerStorageAccountName'),'.blob.core.windows.net')]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "downloadKubeconfig": {
+      "type": "string",
+      "value": "[concat('scp -P 22000 ',parameters('adminUsername'),'@',reference(concat('Microsoft.Network/publicIPAddresses/', variables('masterPublicIPAddressName'))).dnsSettings.fqdn,':~/',resourceGroup().name,'-kubeconfig.yaml .')]"
+    }
+  }
+}

@@ -1,0 +1,404 @@
+write-files:
+  - path: /opt/kubernetes/bin/wupiao
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+      # [w]ait [u]ntil [p]ort [i]s [a]ctually [o]pen
+      [ -n "$1" ] && [ -n "$2" ] && while ! curl --output /dev/null \
+        --silent --head --fail \
+        http://${1}:${2}; do sleep 1 && echo -n .; done;
+      exit $?
+  - path: /opt/kubernetes/bin/generate-certs.sh
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+
+      WORKDIR=/etc/kubernetes/certs
+      ETCD_ENDPOINT=REPLACE_ME
+
+      if [ $(/bin/etcdctl --endpoints $ETCD_ENDPOINT ls /cluster-bootstrap 2>/dev/null) ]
+      then
+        while [ $(/bin/etcdctl --endpoints $ETCD_ENDPOINT get /cluster-bootstrap/kubernetes/certs/lock 2>/dev/null) ]; do echo "Etcd endpoint locked" && sleep 10; done
+        echo "Found existing certificates"
+        if [ ! -f $WORKDIR/ca.pem ]; then
+          echo "Downloading ca authority from etcd"
+          /bin/etcdctl --endpoints $ETCD_ENDPOINT get /cluster-bootstrap/kubernetes/certs/ca.pem | base64 -d > $WORKDIR/ca.pem
+        fi
+        if [ ! -f $WORKDIR/ca-key.pem ]; then
+          echo "Downloading ca authority key from etcd"
+           /bin/etcdctl --endpoints $ETCD_ENDPOINT get /cluster-bootstrap/kubernetes/certs/ca-key.pem | base64 -d > $WORKDIR/ca-key.pem
+        fi
+        if [ ! -f $WORKDIR/kubernetes.pem ]; then
+          echo "Downloading kubernetes cert from etcd"
+           /bin/etcdctl --endpoints $ETCD_ENDPOINT get /cluster-bootstrap/kubernetes/certs/kubernetes.pem | base64 -d > $WORKDIR/kubernetes.pem
+        fi
+        if [ ! -f $WORKDIR/kubernetes-key.pem ]; then
+          echo "Downloading kubernetes key from etcd"
+           /bin/etcdctl --endpoints $ETCD_ENDPOINT get /cluster-bootstrap/kubernetes/certs/kubernetes-key.pem | base64 -d > $WORKDIR/kubernetes-key.pem
+        fi
+        echo "We are ready to go"
+        exit 0
+      else
+        /bin/etcdctl --endpoints $ETCD_ENDPOINT set /cluster-bootstrap/kubernetes/certs/lock true
+        cd $WORKDIR
+        /opt/kubernetes/bin/cfssl gencert -initca ca-csr.json | /opt/kubernetes/bin/cfssljson -bare ca
+        /opt/kubernetes/bin/cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=kubernetes kubernetes-csr.json | /opt/kubernetes/bin/cfssljson -bare kubernetes
+        a=$(cat ca.pem | base64 ); echo $a | tr -d " " | /bin/etcdctl --endpoints $ETCD_ENDPOINT set /cluster-bootstrap/kubernetes/certs/ca.pem
+        a=$(cat ca-key.pem | base64 ); echo $a | tr -d " " | /bin/etcdctl --endpoints $ETCD_ENDPOINT set /cluster-bootstrap/kubernetes/certs/ca-key.pem
+        a=$(cat kubernetes-key.pem | base64 ); echo $a | tr -d " " | /bin/etcdctl --endpoints $ETCD_ENDPOINT set /cluster-bootstrap/kubernetes/certs/kubernetes-key.pem
+        a=$(cat kubernetes.pem | base64 ); echo $a | tr -d " " | /bin/etcdctl --endpoints $ETCD_ENDPOINT set /cluster-bootstrap/kubernetes/certs/kubernetes.pem
+        /bin/etcdctl --endpoints $ETCD_ENDPOINT rm /cluster-bootstrap/kubernetes/certs/lock
+      fi
+  - path: /etc/kubernetes/certs/ca-csr.json
+    permissions: "0600"
+    content: |
+      {
+        "CN": "Kubernetes",
+        "key": {
+        "algo": "rsa",
+        "size": 4096
+      },
+      "names": [ {
+        "C": "US",
+        "L": "Redmond",
+        "O": "Microsoft",
+        "OU": "Azure",
+        "ST": "Washington"
+       }]
+      }
+  - path: /etc/kubernetes/certs/ca-config.json
+    permissions: "0600"
+    content: |
+      {
+        "signing": {
+          "default": {
+            "expiry": "8760h"
+          },
+          "profiles": {
+            "kubernetes": {
+              "usages": ["signing", "key encipherment", "server auth", "client auth"],
+              "expiry": "8760h"
+            }
+          }
+        }
+      }
+  - path: /etc/kubernetes/certs/kubernetes-csr.json
+    permissions: "0600"
+    content: |
+      {
+        "CN": "kubernetes",
+        REPLACE_ME
+       "key": {
+         "algo": "rsa",
+         "size": 4096
+      },
+      "names": [ {
+         "C": "US",
+         "L": "Redmond",
+         "O": "Microsoft",
+         "OU": "Azure",
+         "ST": "Washington"
+        }]
+       }
+  - path: /etc/kubernetes/conf/azure.json
+    permissions: "0600"
+    content: |
+      {
+        "aadClientId": "REPLACE_ME",
+        "aadClientSecret": "REPLACE_ME",
+        "location": "REPLACE_ME",
+        "resourceGroup": "REPLACE_ME",
+        "routeTableName": "REPLACE_ME",
+        "securityGroupName": "REPLACE_ME",
+        "subnetName": "REPLACE_ME",
+        "subscriptionId": "REPLACE_ME",
+        "tenantId": "REPLACE_ME",
+        "vnetName": "REPLACE_ME"
+      }
+  - path: /etc/kubernetes/conf/kubeconfig.yaml
+    permissions: "0600"
+    content: |
+      apiVersion: v1
+      kind: Config
+      clusters:
+        - name: local
+          cluster:
+            certificate-authority: /etc/kubernetes/certs/ca.pem
+      users:
+      - name: kubelet
+        user:
+          client-certificate: /etc/kubernetes/certs/kubernetes.pem
+          client-key: /etc/kubernetes/certs/kubernetes-key.pem
+      contexts:
+      - context:
+          cluster: local
+          user: kubelet
+        name: kubelet-context
+      current-context: kubelet-context
+  - path: /etc/kubernetes/manifests/apiserver.yaml
+    permissions: "0600"
+    content: |
+      apiVersion: v1
+      kind: Pod
+      metadata:
+        name: kube-apiserver
+        namespace: kube-system
+      spec:
+        hostNetwork: true
+        containers:
+        - name: kube-apiserver
+          image: gcr.io/google_containers/hyperkube-amd64:REPLACE_ME
+          command:
+          - /hyperkube
+          - apiserver
+          - --apiserver-count=REPLACE_ME
+          - --etcd-servers=REPLACE_ME
+          - --allow-privileged=true
+          - --service-cluster-ip-range=10.240.0.0/16
+          - --cloud-provider=azure
+          - --bind-address=0.0.0.0
+          - --secure-port=443
+          - --advertise-address=$private_ipv4
+          - --admission-control=NamespaceLifecycle,NamespaceExists,LimitRanger,SecurityContextDeny,ServiceAccount,ResourceQuota
+          - --tls-cert-file=/etc/kubernetes/certs/kubernetes.pem
+          - --tls-private-key-file=/etc/kubernetes/certs/kubernetes-key.pem
+          - --client-ca-file=/etc/kubernetes/certs/ca.pem
+          - --service-account-key-file=/etc/kubernetes/certs/kubernetes-key.pem
+          - --runtime-config=extensions/v1beta1=true,extensions/v1beta1/thirdpartyresources=true
+          - --allow-privileged
+          - --cloud-config=/etc/kubernetes/conf/azure.json
+          - --v=4
+          ports:
+          - containerPort: 443
+            hostPort: 443
+            name: https
+          - containerPort: 8080
+            hostPort: 8080
+            name: local
+          volumeMounts:
+          - mountPath: /etc/kubernetes/certs
+            name: ssl-certs-kubernetes
+            readOnly: true
+          - mountPath: /etc/ssl/certs
+            name: ssl-certs-host
+            readOnly: true
+        volumes:
+        - hostPath:
+            path: /etc/kubernetes/certs
+          name: ssl-certs-kubernetes
+        - hostPath:
+            path: /usr/share/ca-certificates
+          name: ssl-certs-host
+  - path: /etc/kubernetes/manifests/controller.yaml
+    permissions: "0600"
+    content: |
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: kube-controller-manager
+          namespace: kube-system
+        spec:
+          hostNetwork: true
+          containers:
+          - name: kube-controller-manager
+            image: gcr.io/google_containers/hyperkube-amd64:REPLACE_ME
+            command:
+            - /hyperkube
+            - controller-manager
+            - --master=http://127.0.0.1:8080
+            - --cluster-name=REPLACE_ME
+            - --allocate-node-cidrs=true
+            - --cloud-provider=azure
+            - --cloud-config=/etc/kubernetes/conf/azure.json
+            - --cluster-cidr=10.244.0.0/16
+            - --leader-elect=true
+            - --service-account-private-key-file=/etc/kubernetes/certs/kubernetes-key.pem
+            - --root-ca-file=/etc/kubernetes/certs/ca.pem
+            livenessProbe:
+              httpGet:
+                host: 127.0.0.1
+                path: /healthz
+                port: 10252
+              initialDelaySeconds: 15
+              timeoutSeconds: 1
+            volumeMounts:
+            - mountPath: /etc/kubernetes/certs
+              name: ssl-certs-kubernetes
+              readOnly: true
+            - mountPath: /etc/kubernetes/conf
+              name: kubernetes-conf
+              readOnly: true
+            - mountPath: /etc/ssl/certs
+              name: ssl-certs-host
+              readOnly: true
+          volumes:
+          - hostPath:
+              path: /etc/kubernetes/certs
+            name: ssl-certs-kubernetes
+          - hostPath:
+              path: /etc/kubernetes/conf
+            name: kubernetes-conf
+          - hostPath:
+              path: /usr/share/ca-certificates
+            name: ssl-certs-host
+  - path: /etc/kubernetes/manifests/scheduler.yaml
+    permissions: "0600"
+    content: |
+      apiVersion: v1
+      kind: Pod
+      metadata:
+        name: kube-scheduler
+        namespace: kube-system
+      spec:
+        hostNetwork: true
+        containers:
+        - name: kube-scheduler
+          image: gcr.io/google_containers/hyperkube-amd64:REPLACE_ME
+          command:
+          - /hyperkube
+          - scheduler
+          - --master=http://127.0.0.1:8080
+          - --leader-elect=true
+          livenessProbe:
+            httpGet:
+              host: 127.0.0.1
+              path: /healthz
+              port: 10251
+            initialDelaySeconds: 15
+            timeoutSeconds: 1
+  - path: /etc/kubernetes/manifests/proxy.yaml
+    permissions: "0600"
+    content: |
+      apiVersion: v1
+      kind: Pod
+      metadata:
+        name: kube-proxy
+        namespace: kube-system
+      spec:
+        hostNetwork: true
+        containers:
+        - name: kube-proxy
+          image: gcr.io/google_containers/hyperkube-amd64:REPLACE_ME
+          command:
+          - /hyperkube
+          - proxy
+          - --master=http://localhost:8080
+          - --proxy-mode=iptables
+          securityContext:
+            privileged: true
+          volumeMounts:
+          - mountPath: /etc/ssl/certs
+            name: ssl-certs-host
+            readOnly: true
+        volumes:
+        - hostPath:
+            path: /usr/share/ca-certificates
+          name: ssl-certs-host
+  - path: /etc/kubernetes/addons/kubedns-svc.yaml
+    permissions: "0644"
+    content: |
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: kube-dns
+        namespace: kube-system
+        labels:
+          k8s-app: kube-dns
+          kubernetes.io/cluster-service: "true"
+          kubernetes.io/name: "KubeDNS"
+      spec:
+        selector:
+          k8s-app: kube-dns
+        clusterIP: 10.240.0.10
+        ports:
+        - name: dns
+          port: 53
+          protocol: UDP
+        - name: dns-tcp
+          port: 53
+          protocol: TCP
+coreos:
+  update:
+    reboot-strategy: "etcd-lock"
+  units:
+    - name: "docker.service"
+      drop-ins:
+        - name: "50-docker-ops.conf"
+          content: |
+            [Service]
+            Environment=DOCKER_OPTS="--storage-driver=overlay"
+            MountFlags=shared
+    - name: "generate-certs.service"
+      command: "start"
+      content: |
+        [Unit]
+        Description=Generate TLS certificates
+        ConditionPathExists=/opt/kubernetes/bin/generate-certs.sh
+        [Service]
+        ExecStartPre=/bin/mkdir -p /opt/kubernetes/bin
+        ExecStartPre=/bin/curl -o /opt/kubernetes/bin/cfssl https://pkg.cfssl.org/R1.2/cfssl_linux-amd64
+        ExecStartPre=/bin/chmod 755 /opt/kubernetes/bin/cfssl
+        ExecStartPre=/bin/curl -o /opt/kubernetes/bin/cfssljson https://pkg.cfssl.org/R1.2/cfssljson_linux-amd64
+        ExecStartPre=/bin/chmod 755 /opt/kubernetes/bin/cfssljson
+        ExecStart=/opt/kubernetes/bin/generate-certs.sh
+        RemainAfterExit=yes
+        Type=oneshot
+    - name: "kubelet-master.service"
+      command: "start"
+      content: |
+        [Unit]
+        Description=Kubernetes Kubelet Server
+        Documentation=https://github.com/kubernetes/kubernetes
+
+        [Service]
+        ExecStartPre=/bin/mkdir -p /var/lib/kubelet
+        ExecStartPre=/bin/wget -O /opt/kubernetes/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/REPLACE_ME/bin/linux/amd64/kubectl
+        ExecStartPre=/bin/chmod 755 /opt/kubernetes/bin/kubectl
+        ExecStartPre=/bin/mount --bind /var/lib/kubelet /var/lib/kubelet
+        ExecStartPre=/bin/mount --make-shared /var/lib/kubelet
+        ExecStart=/usr/bin/docker run \
+          --net=host \
+          --pid=host \
+          --privileged \
+          -v /dev:/dev \
+          -v /sys:/sys:ro \
+          -v /var/run:/var/run:rw \
+          -v /var/lib/docker/:/var/lib/docker:rw \
+          -v /var/lib/kubelet/:/var/lib/kubelet:shared \
+          -v /etc/kubernetes:/etc/kubernetes:ro \
+          gcr.io/google_containers/hyperkube-amd64:REPLACE_ME \
+          /hyperkube kubelet \
+            --cloud-provider=azure \
+            --cloud-config=/etc/kubernetes/conf/azure.json \
+            --address=0.0.0.0 \
+            --allow-privileged=true \
+            --enable-server \
+            --enable-debugging-handlers \
+            --kubeconfig=/etc/kubernetes/conf/kubeconfig.yaml \
+            --config=/etc/kubernetes/manifests \
+            --cluster-dns=10.240.0.10 \
+            --cluster-domain=cluster.local \
+            --v=2 \
+            --api-servers=http://localhost:8080 \
+            --register-schedulable=false \
+            --pod-cidr=10.244.0.0/16
+        Restart=always
+        RestartSec=5
+
+        [Install]
+        WantedBy=multi-user.target
+    - name: "kube-addons.service"
+      command: "start"
+      content: |
+        [Unit]
+        Description=Install kubernetes addons
+        After=kubelet-master.service
+        [Service]
+        ExecStartPre=/opt/kubernetes/bin/wupiao 127.0.0.1 8080
+        ExecStartPre=/bin/bash -c "while [ $(curl -s -L http://127.0.0.1:8080/healthz) != ok ]; do echo Waiting for cluster readiness ; sleep 5; done"
+        ExecStart=/opt/kubernetes/bin/kubectl apply -R -f /etc/kubernetes/addons/
+        ExecStart=/opt/kubernetes/bin/kubectl apply -f https://raw.githubusercontent.com/kelseyhightower/kubernetes-the-hard-way/master/deployments/kubedns.yaml
+        ExecStart=/opt/kubernetes/bin/kubectl apply -f https://raw.githubusercontent.com/kubernetes/kubernetes/master/cluster/addons/dashboard/dashboard-controller.yaml
+        ExecStart=/opt/kubernetes/bin/kubectl apply -f https://raw.githubusercontent.com/kubernetes/kubernetes/master/cluster/addons/dashboard/dashboard-service.yaml
+        ExecStart=/opt/kubernetes/bin/kubectl apply -f https://raw.githubusercontent.com/kubernetes/kubernetes/master/cluster/addons/node-problem-detector/node-problem-detector.yaml
+        Type=oneshot
