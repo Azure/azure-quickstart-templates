@@ -8,7 +8,7 @@
 </a>
 
 CoScale is a full-stack monitoring solution tailored towards production environments running microservices, see https://www.coscale.com/ for more information.
-This template install the CoScale platform on a single VM and should only be used for Proof-Of-Concept environments.
+This template installs the CoScale platform on a single VM and should only be used for Proof-Of-Concept environments.
 
 This template automatically creates all required objects, such as a storage account, virtual network, nic, load balancer, public ip.
 
@@ -16,9 +16,11 @@ The following parameters should be provided by the user:
 * coscaleKey: a CoScale registration key that can be retrieved at https://www.coscale.com/azure/
 * coscaleEmail: email address for the super user on your private CoScale instance
 * coscalePassword: password for the super user on your private CoScale instance
-* publicDnsName: a unique hostname for your private CoScale instance
 
-Once the template finishes, you can get started at http://publicDnsName.location.cloudapp.azure.com/
+Once the template finishes it will output the URL of your private CoScale instance.
+
+##Install agent
+This directory also contains a deploy-agent.sh script to deploy the CoScale agent on all VMs in a resource group.
 
 ##Limitations
 - This single VM deployment should only be used for Proof-Of-Concept environments.

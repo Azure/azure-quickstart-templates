@@ -3,9 +3,9 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "coscaleKey": {
-      "type": "string",
+      "type": "securestring",
       "metadata": {
-        "description": "CoScale registration key."
+        "description": "CoScale registration key. Get it at https://www.coscale.com/azure/"
       }
     },
     "coscaleEmail": {
@@ -20,43 +20,38 @@
         "description": "Password for the CoScale Super User."
       }
     },
-    "publicDnsName": {
+    "_artifactsLocation": {
       "type": "string",
       "metadata": {
-        "description": "DNS Name for the Public IP used to access CoScale."
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/coscale-dev-env/"
+      },
+      "_artifactsLocationSasToken": {
+        "type": "securestring",
+        "metadata": {
+          "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+        },
+        "defaultValue": ""
       }
-    },
-    "vmSize": {
-      "type": "string",
-      "defaultValue": "Standard_DS3_v2",
-      "allowedValues": [
-        "Standard_DS3_v2",
-        "Standard_DS4_v2",
-        "Standard_DS5_v2"
-      ],
-      "metadata": {
-        "description": "CoScale Virtual Machine Size"
-      }
-    }
   },
   "variables": {
-    "scriptsBaseUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/coscale-dev-env/",
     "newStorageAccountName": "[concat(uniquestring(resourceGroup().id), 'stg')]",
-    "OSDiskName": "coscaleDisk",
-    "nicName": "coscaleNic",
+    "vmStorageAccountContainerName": "vdh",
+    "publicDnsName": "[concat('coscale-', uniquestring(resourceGroup().id))]",
+    "vmSize": "Standard_DS4_v2",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet",
     "subnetPrefix": "10.0.0.0/24",
-    "networkSecurityGroupName": "coscaleNSG",
-    "storageAccountType": "Premium_LRS",
-    "publicIPAddressName": "coscalePublicIP",
-    "publicIPAddressType": "Static",
     "vmName": "coscale",
+    "nicName": "coscaleNic",
+    "networkSecurityGroupName": "coscaleNSG",
+    "publicIPAddressName": "coscalePublicIP",
     "vmUser": "cs",
     "vmPublicKey": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCkbtWpHEyZYJ+Eyl+jFVUYOH+YBqGAAvyl9oJRzWieJlDp9PucYhbtlXTm7VhlSZvFi7MtcJoxzlQqk1FoNsUPtPyrCtVz8uEHS4FZiuOhb1UFLMayInfXWUWzBt0EEbELlgipRpqGgsi+pn3P07C+8VcBXhAPpMn7Y3qb3txlr7tCCowk8XbXE+MFwfLMXqHavgzIcI++6zECQoFCjb1ktpiAPcP/HkzNDJ2r3tAWyJWOMs1GH3f67corKaKh54LCmQRJS1FAUEnb9da4Xn+Tgx16f42aBF4gY5CEmg2NZ4tvbgE7hXKxJY0TEBTQ1zjUgv92gXOuGcRgu+XM8fut CoScaleAzure",
     "virtualNetworkName": "coscaleVNET",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
-    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]"
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
   },
   "resources": [
     {
@@ -65,7 +60,7 @@
       "name": "[variables('newStorageAccountName')]",
       "location": "[resourceGroup().location]",
       "properties": {
-        "accountType": "[variables('storageAccountType')]"
+        "accountType": "Premium_LRS"
       }
     },
     {
@@ -74,9 +69,9 @@
       "name": "[variables('publicIPAddressName')]",
       "location": "[resourceGroup().location]",
       "properties": {
-        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+        "publicIPAllocationMethod": "Static",
         "dnsSettings": {
-          "domainNameLabel": "[parameters('publicDnsName')]"
+          "domainNameLabel": "[variables('publicDnsName')]"
         }
       }
     },
@@ -193,7 +188,7 @@
           }
         },
         "hardwareProfile": {
-          "vmSize": "[parameters('vmSize')]"
+          "vmSize": "[variables('vmSize')]"
         },
         "storageProfile": {
           "imageReference": {
@@ -205,7 +200,7 @@
           "osDisk": {
             "name": "[concat(variables('vmName'), '-os')]",
             "vhd": {
-              "uri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/vhd/',variables('OSDiskName'),'-os.vhd')]"
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName')), '2015-06-15').primaryEndpoints.blob, variables('vmStorageAccountContainerName'),'/',variables('vmName'),'-os.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -216,7 +211,7 @@
               "diskSizeGB": "512",
               "lun": 0,
               "vhd": {
-                "uri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/vhd/',variables('OSDiskName'),'-data.vhd')]"
+                "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName')), '2015-06-15').primaryEndpoints.blob, variables('vmStorageAccountContainerName'),'/',variables('vmName'),'-data.vhd')]"
               },
               "caching": "ReadOnly",
               "createOption": "Empty"
@@ -230,28 +225,36 @@
             }
           ]
         }
-      }
-    },
-    {
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('vmName'),'/install')]",
-      "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
-      "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
-      ],
-      "properties": {
-        "publisher": "Microsoft.Azure.Extensions",
-        "type": "CustomScript",
-        "typeHandlerVersion": "2.0",
-        "autoUpgradeMinorVersion": true,
-        "settings": {
-          "fileUris": [
-            "[concat(variables('scriptsBaseUrl'), 'install.sh')]"
+      },
+      "resources": [
+        {
+          "type": "extensions",
+          "name": "[concat(variables('vmName'),'-install')]",
+          "apiVersion": "2015-06-15",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
           ],
-          "commandToExecute": "[concat('bash install.sh ', parameters('coscaleKey'), ' ', parameters('coscaleEmail'), ' ', parameters('coscalePassword'), ' ', parameters('publicDnsName'), '.', resourceGroup().location, '.cloudapp.azure.com')]"
+          "properties": {
+            "publisher": "Microsoft.Azure.Extensions",
+            "type": "CustomScript",
+            "typeHandlerVersion": "2.0",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "fileUris": [
+                "[concat(parameters('_artifactsLocation'), 'install.sh', parameters('_artifactsLocationSasToken'))]"
+              ],
+              "commandToExecute": "[concat('bash install.sh ', parameters('coscaleKey'), ' ', parameters('coscaleEmail'), ' ', parameters('coscalePassword'), ' ', variables('publicDnsName'), '.', resourceGroup().location, '.cloudapp.azure.com')]"
+            }
+          }
         }
-      }
+      ]
     }
-  ]
+  ],
+  "outputs": {
+    "coscaleURL": {
+      "type": "string",
+      "value": "[concat('http://', variables('publicDnsName'), '.', resourceGroup().location, '.cloudapp.azure.com')]"
+    }
+  }
 }
