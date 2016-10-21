@@ -20,7 +20,7 @@ Once the VM has been deployed, note down the IP generated in the Azure portal fo
 - If you are using Linux or Mac use Terminal to login to the VM with the username and password you supplied.
 
 ## C. Configure Sample Jobs and Azure Active Directory configuration
-1. Once you are logged into the VM, run /opt/azure_jenkins_config/config_azure.sh. This script will guide you to set up and configure the Azure Storage plugin to be used in the sample jobs to upload and download to Storage.
+1. Once you are logged into the VM, run /opt/azure_jenkins_config/config_azure.sh and pick option 1 - "All of the below". This script will guide you to set up and configure the Azure Storage plugin to be used in the sample jobs to upload and download to Storage.
 It will also provide a Service Principal to access Azure resources from Jenkins.
 2. Remember the returned subscription ID, client ID, client secret and OAuth 2.0 Token Endpoint.
 
