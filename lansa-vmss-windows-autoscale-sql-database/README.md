@@ -27,18 +27,21 @@ The Autoscale rules are configured as follows
 - if the Percent Processor Time is less than 30% for 5 Minutes, then the scale in action (remove one Virtual Machine instance) is triggered
 - once the scale in action is completed, the cool down period is 5 Minutes
 
-### Resources Used
+### Resources Deployed
 +	A Virtual Network
 +	Six Storage Accounts for deploying up to 100 virtual machines
 +	Two public ip addresses, one for each Load Balancer
 +	Two external Load Balancers
-+	One Virtual Machine Scale Set to contain the single virtual machine which is repsonsible for configuring the database
++	One Virtual Machine Scale Set to contain the single virtual machine which is responsible for configuring the database
 +	One Virtual Machine Scale Set to contain the number of web servers requested by the deployer
++	The Virtual Machines are all instantiated from the Marketplace LANSA SKU lansa-scalable-license. There is a software cost for using this image. [Click here](https://azure.microsoft.com/en-us/marketplace/partners/lansa/lansa-scalable-license/) for details.
 +	One Azure SQL Database server with one database, configured as per settings provided by the deployer
 
 ## Prerequisites
 
 Before deploying this template you must:
+- Construct your LANSA application using [Visual LANSA for Web Development](https://azure.microsoft.com/en-us/marketplace/partners/lansa/visuallansa/) Version 14.1 EPC 141010 with Hot Fix EPC141010HF_161021 applied.
+- Construct a deployment image MSI using the LANSA Deployment Tool provided with [Visual LANSA for Web Development](https://azure.microsoft.com/en-us/marketplace/partners/lansa/visuallansa/).
 - Upload your LANSA Web Application MSI to Azure BLOB storage and obtain the URL of the MSI. Note that the template includes a demonstration application so it is not strictly necessary to create a LANSA MSI in order to use the template.
 - Its also highly recommended to follow the usage instructions below :)
 
