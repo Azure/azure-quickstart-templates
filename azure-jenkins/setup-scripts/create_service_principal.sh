@@ -1,13 +1,13 @@
-#!/bin/sh
+#!/bin/bash
 
 #echo "Usage:
-#  1 sh create_service_principal.sh
-#  2 sh create_service_principal.sh <Subscription ID>
+#  1 bash create_service_principal.sh
+#  2 bash create_service_principal.sh <Subscription ID>
 
 SUBSCRIPTION_ID=$1
 
-echo ""
-echo "  Background article: https://azure.microsoft.com/en-us/documentation/articles/resource-group-authenticate-service-principal"
+#echo ""
+#echo "  Background article: https://azure.microsoft.com/en-us/documentation/articles/resource-group-authenticate-service-principal"
 echo ""
 
 my_app_name_uuid=$(python -c 'import uuid; print str(uuid.uuid4())[:8]')
@@ -28,6 +28,7 @@ fi
 if [ -z "$SUBSCRIPTION_ID" ]
 then
   #prompt for subscription
+  subscription_index=0
   subscriptions_list=$(azure account list --json)
   subscriptions_list_count=$(echo $subscriptions_list | jq '. | length')
   if [ $subscriptions_list_count -eq 0 ]
@@ -38,6 +39,7 @@ then
   then
     echo $subscriptions_list | jq -r 'keys[] as $i | "  \($i+1). \(.[$i] | .name)"'
 
+    while read -r -t 0; do read -r; done #clear stdin
     subscription_idx=0
     until [ $subscription_idx -ge 1 -a $subscription_idx -le $subscriptions_list_count ]
     do
@@ -50,10 +52,10 @@ then
       fi
     done
     subscription_index=$((subscription_idx-1))
-
-    SUBSCRIPTION_ID=`echo $subscriptions_list | jq -r '.['$subscription_index'] | .id'`
-    echo ""
   fi
+
+  SUBSCRIPTION_ID=`echo $subscriptions_list | jq -r '.['$subscription_index'] | .id'`
+  echo ""
 fi
 
 azure account set $SUBSCRIPTION_ID >/dev/null
@@ -118,11 +120,13 @@ fi
 MY_CLIENT_ID=$(azure ad sp show --search $MY_APP_NAME --json | jq -r '.[0].appId')
 
 echo "  "
+echo "  Your access credentials ============================="
+echo "  "
 echo "  Subscription ID:" $MY_SUBSCRIPTION_ID
-echo "  Tenant ID:" $MY_TENANT_ID
 echo "  Client ID:" $MY_CLIENT_ID
 echo "  Client Secret:" $MY_APP_KEY
 echo "  OAuth 2.0 Token Endpoint:" "https://login.microsoftonline.com/${MY_TENANT_ID}/oauth2/token"
+echo "  Tenant ID:" $MY_TENANT_ID
 echo "  "
 echo "  You can verify the service principal was created properly by running:"
 echo "  azure login -u "$MY_CLIENT_ID" --service-principal --tenant $MY_TENANT_ID"
