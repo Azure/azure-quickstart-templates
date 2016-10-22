@@ -183,7 +183,8 @@ install_docker()
     gpasswd -a $userName docker
     systemctl start docker
     systemctl enable docker
-    curl -L https://github.com/docker/compose/releases/download/$dockerComposeVer/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
+    #curl -L https://github.com/docker/compose/releases/download/$dockerComposeVer/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
+     curl -L "https://github.com/docker/compose/releases/download/$dockerComposeVer/docker-compose-$(uname -s)-$(uname -m)" > /usr/local/bin/docker-compose
     curl -L https://github.com/docker/machine/releases/download/v$dockMVer/docker-machine-`uname -s`-`uname -m` >/usr/local/bin/docker-machine
     chmod +x /usr/local/bin/docker-machine
     chmod +x /usr/local/bin/docker-compose
