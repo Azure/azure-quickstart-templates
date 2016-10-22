@@ -43,6 +43,4 @@ mkdir -p /var/opt/opscode/upgrades/
 curl -o /var/opt/opscode/upgrades/migration-level "$1/migration-level$2"
 touch /var/opt/opscode/bootstrapped
 chef-server-ctl reconfigure --accept-license
-sudo chef-server-ctl install chef-manage
-sudo chef-server-ctl reconfigure
 sudo chef-manage-ctl reconfigure --accept-license
