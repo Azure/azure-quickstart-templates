@@ -184,7 +184,7 @@ install_docker()
     systemctl start docker
     systemctl enable docker
     curl -L https://github.com/docker/compose/releases/download/$dockerComposeVer/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
-    curl -L https://github.com/docker/machine/releases/download/v$dockerMachineVer/docker-machine-`uname -s`-`uname -m` >/usr/local/bin/docker-machine && \
+    curl -L https://github.com/docker/machine/releases/download/v$dockerMachineVer/docker-machine-`uname -s`-`uname -m` >/usr/local/bin/docker-machine
     chmod +x /usr/local/bin/docker-machine
     chmod +x /usr/local/bin/docker-compose
     export PATH=$PATH:/usr/local/bin/
@@ -264,7 +264,7 @@ install_docker_ubuntu()
 	update-rc.d -f apparmor remove
 	apt-get -y remove apparmor
     curl -L https://github.com/docker/compose/releases/download/$dockerComposeVer/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
-    curl -L https://github.com/docker/machine/releases/download/v$dockerMachineVer/docker-machine-`uname -s`-`uname -m` >/usr/local/bin/docker-machine && \
+    curl -L https://github.com/docker/machine/releases/download/v$dockerMachineVer/docker-machine-`uname -s`-`uname -m` >/usr/local/bin/docker-machine
     chmod +x /usr/local/bin/docker-machine
     chmod +x /usr/local/bin/docker-compose
     export PATH=$PATH:/usr/local/bin/
