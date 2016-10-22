@@ -264,6 +264,7 @@ install_docker_ubuntu()
 	/etc/init.d/apparmor teardown 
 	update-rc.d -f apparmor remove
 	apt-get -y remove apparmor
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --allow-unauthenticated docker-engine
     curl -L https://github.com/docker/compose/releases/download/$dockerComposeVer/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
     curl -L https://github.com/docker/machine/releases/download/v$dockMVer/docker-machine-`uname -s`-`uname -m` >/usr/local/bin/docker-machine
     chmod +x /usr/local/bin/docker-machine
