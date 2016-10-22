@@ -12,6 +12,19 @@ This template deploys a Chef High-Availability Cluster.
 
 ## Deployment steps
 
+This template has artifacts (Configuration Scripts) which are automatically grabbed from github, or can be staged for deployment. Use the below command with the upload flag to deploy this template or provide a storage account and SAS token when using the deploy button above.
+
+This template also uses blob storage to share secrets and configuration templates between nodes in the cluster. You must create a blob storage container for these and provide an SAS token. If you're creating a storage container for artifacts, you can use the same one for secrets storage.
+
+## Using the command-line
+ ```PowerShell
+ .\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactsStagingDirectory 'chef-ha-cluster' UploadArtifacts
+ ```
+ ```bash
+ azure-group-deploy.sh -a chef-ha-cluster -l eastus -u
+ ```
+
+## Using the "deploy to Azure" button
 1. Provision a Standard (LRS) storage account, or use an existing one (must be Standard)
 2. Provision a blob storage container underneath storage account.  Note the container URL (ie. https://mystandardstorage.blob.core.windows.net/artifactsfolder )
 3. Generate a Shared Acccess Signature (SAS) token with and End date exceeding the life of your cluster.  Note the SAS token.
