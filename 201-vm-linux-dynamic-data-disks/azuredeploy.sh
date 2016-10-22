@@ -184,7 +184,7 @@ install_docker()
     systemctl start docker
     systemctl enable docker
     curl -L https://github.com/docker/compose/releases/download/$dockerComposeVer/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
-    curl -L https://github.com/docker/machine/releases/download/v$dockerMachineVer/docker-machine-`uname -s`-`uname -m` >/usr/local/bin/docker-machine
+    curl -L https://github.com/docker/machine/releases/download/v$dockMVer/docker-machine-`uname -s`-`uname -m` >/usr/local/bin/docker-machine
     chmod +x /usr/local/bin/docker-machine
     chmod +x /usr/local/bin/docker-compose
     export PATH=$PATH:/usr/local/bin/
@@ -253,7 +253,7 @@ install_docker_ubuntu()
          DEBIAN_FRONTEND=noninteractive apt-get -y update
          apt-get install -y apt-transport-https ca-certificates
         curl -s 'https://sks-keyservers.net/pks/lookup?op=get&search=0xee6d536cf7dc86e2d7d56f59a178ac6c6238f52e' | apt-key add --import
-        echo 'deb https://packages.docker.com/$dockerVer/apt/repo ubuntu-trusty main' >> /etc/apt/sources.list.d/docker.list
+        echo "deb https://packages.docker.com/$dockerVer/apt/repo ubuntu-trusty main" >> /etc/apt/sources.list.d/docker.list
         apt-cache policy docker-engine
         DEBIAN_FRONTEND=noninteractive apt-get -y update
         DEBIAN_FRONTEND=noninteractive apt-get -y upgrade
@@ -264,7 +264,7 @@ install_docker_ubuntu()
 	update-rc.d -f apparmor remove
 	apt-get -y remove apparmor
     curl -L https://github.com/docker/compose/releases/download/$dockerComposeVer/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
-    curl -L https://github.com/docker/machine/releases/download/v$dockerMachineVer/docker-machine-`uname -s`-`uname -m` >/usr/local/bin/docker-machine
+    curl -L https://github.com/docker/machine/releases/download/v$dockMVer/docker-machine-`uname -s`-`uname -m` >/usr/local/bin/docker-machine
     chmod +x /usr/local/bin/docker-machine
     chmod +x /usr/local/bin/docker-compose
     export PATH=$PATH:/usr/local/bin/
