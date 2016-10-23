@@ -5,7 +5,7 @@ echo "deb https://packages.chef.io/current-apt trusty main" > /etc/apt/sources.l
 apt-get update
 
 # store data on local ssd
-apt-get install lvm2 xfsprogs -y
+apt-get install lvm2 xfsprogs sysstat atop -y
 umount -f /mnt
 pvcreate -f /dev/sdb1
 vgcreate chef-vg /dev/sdb1
@@ -17,9 +17,10 @@ mount /dev/chef-vg/chef-lv /var/opt/chef-backend
 # Chef server setup
 apt-get install -y chef-backend
 
+# Grab IP address and prepopulate configuration
+IPADRESS=`ifconfig eth0 | awk '/inet addr/{print substr($2,6)}'`
 cat > /etc/chef-backend/chef-backend.rb <<EOF
-publish_address '10.0.0.10'
-
+publish_address '${IPADRESS}'
 etcd.heartbeat_interval = 500
 etcd.election_timeout = 5000
 etcd.snapshot_count = 5000
@@ -28,6 +29,7 @@ elasticsearch.heap_size = 3500
 EOF
 
 chef-backend-ctl create-cluster --accept-license --yes --quiet --verbose
+
 curl --upload-file /etc/chef-backend/chef-backend-secrets.json "$1/chef-backend-secrets.json$2" --header "x-ms-blob-type: BlockBlob"
 chef-backend-ctl gen-server-config fe0 -f chef-server.rb.fe0
 curl --upload-file chef-server.rb.fe0 "$1/chef-server.rb.fe0$2" --header "x-ms-blob-type: BlockBlob"
@@ -35,3 +37,7 @@ chef-backend-ctl gen-server-config fe1 -f chef-server.rb.fe1
 curl --upload-file chef-server.rb.fe1 "$1/chef-server.rb.fe1$2" --header "x-ms-blob-type: BlockBlob"
 chef-backend-ctl gen-server-config fe2 -f chef-server.rb.fe2
 curl --upload-file chef-server.rb.fe2 "$1/chef-server.rb.fe2$2" --header "x-ms-blob-type: BlockBlob"
+
+# enable basic data collection
+echo 'ENABLED="true"' > /etc/default/sysstat
+service sysstat start
