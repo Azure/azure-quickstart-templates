@@ -9,10 +9,14 @@ apt-get install lvm2 xfsprogs sysstat atop -y
 umount -f /mnt
 pvcreate -f /dev/sdb1
 vgcreate chef-vg /dev/sdb1
-lvcreate -n chef-lv -l 80%VG chef-vg
-mkfs.xfs /dev/chef-vg/chef-lv
+lvcreate -n chef-data -l 20%VG chef-vg # data is small, because it's only the cookbook cache
+lvcreate -n chef-logs -l 80%VG chef-vg
+mkfs.xfs /dev/chef-vg/chef-data
+mkfs.xfs /dev/chef-vg/chef-logs
 mkdir -p /var/opt/opscode
-mount /dev/chef-vg/chef-lv /var/opt/opscode
+mkdir -p /var/log/opscode
+mount /dev/chef-vg/chef-data /var/opt/opscode
+mount /dev/chef-vg/chef-logs /var/log/opscode
 
 # Chef server setup
 apt-get install -y chef-server-core chef-manage
