@@ -7,7 +7,7 @@ echo "deb https://packages.chef.io/current-apt trusty main" > /etc/apt/sources.l
 apt-get update
 
 # store data on local ssd
-apt-get install lvm2 xfsprogs -y
+apt-get install lvm2 xfsprogs sysstat atop -y
 umount -f /mnt
 pvcreate -f /dev/sdb1
 vgcreate chef-vg /dev/sdb1
@@ -19,11 +19,10 @@ mount /dev/chef-vg/chef-lv /var/opt/chef-backend
 # Chef server setup
 apt-get install -y chef-backend
 
-chef-backend-ctl join-cluster 10.0.0.10 -p `ip addr | grep "inet 10" | tr -s ' '  ' ' | cut -d " " -f3 | cut -d"/" -f1` -s chef-backend-secrets.json --accept-license --yes --verbose --quiet
-
-sleep 10
-
-cat >> /etc/chef-backend/chef-backend.rb <<EOF
+# Grab IP address and prepopulate configuration
+IPADRESS=`ifconfig eth0 | awk '/inet addr/{print substr($2,6)}'`
+cat > /etc/chef-backend/chef-backend.rb <<EOF
+publish_address '${IPADRESS}'
 etcd.heartbeat_interval = 500
 etcd.election_timeout = 5000
 etcd.snapshot_count = 5000
@@ -31,4 +30,8 @@ postgresql.log_min_duration_statement = 500
 elasticsearch.heap_size = 3500
 EOF
 
-chef-backend-ctl reconfigure
+chef-backend-ctl join-cluster 10.0.0.10 -s chef-backend-secrets.json --accept-license --yes --verbose --quiet
+
+# enable basic data collection
+echo 'ENABLED="true"' > /etc/default/sysstat
+service sysstat start

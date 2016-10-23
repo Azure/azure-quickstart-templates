@@ -5,7 +5,7 @@ echo "deb https://packages.chef.io/stable-apt trusty main" > /etc/apt/sources.li
 apt-get update
 
 # store data on local ssd
-apt-get install lvm2 xfsprogs -y
+apt-get install lvm2 xfsprogs sysstat atop -y
 umount -f /mnt
 pvcreate -f /dev/sdb1
 vgcreate chef-vg /dev/sdb1
@@ -44,3 +44,7 @@ curl -o /var/opt/opscode/upgrades/migration-level "$1/migration-level$2"
 touch /var/opt/opscode/bootstrapped
 chef-server-ctl reconfigure --accept-license
 sudo chef-manage-ctl reconfigure --accept-license
+
+# enable basic data collection
+echo 'ENABLED="true"' > /etc/default/sysstat
+service sysstat start
