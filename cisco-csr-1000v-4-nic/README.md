@@ -1,12 +1,12 @@
 # Cisco Cloud Services Router 1000v
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fcisco-csr-1000v%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fcisco-csr-1000v-4-nic%2Fazuredeploy.json" target="_blank">
 <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
-<a href="https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fcisco-csr-1000v%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fcisco-csr-1000v-4-nic%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazuregov.png"
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fcisco-csr-1000v%2Fazuredeploy.json" target="_blank">
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fcisco-csr-1000v-4-nic%2Fazuredeploy.json" target="_blank">
 <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
@@ -21,6 +21,6 @@ Secure, inspect, and audit hybrid cloud network traffic: Zone Based Firewall pro
 Azure now requires that the CSR 1000v be deployed in a new Resource Group. The CSR 1000v can still be attached to an existing network.
 If the CSR 1000v is attached to an existing Virtual Network, the existing network's route tables will not be altered.
 
-This deployment creates a CSR with 2 NICs, plus public and private subnets. User defined routes are created on the subnets to ensure the CSR is used as the default gateway for virtual machines in the private subnet. Finally, the IP Forwarding flag is set on Azure to allow the CSR to properly pass traffic.
+This deployment creates a CSR with 4 NICs, plus public and private subnets. User defined routes are created on the subnets to ensure the CSR is used as the default gateway for virtual machines in the private subnet. Finally, the IP Forwarding flag is set on Azure to allow the CSR to properly pass traffic.
 
 `Tags: Cisco, CSR, 1000v`
