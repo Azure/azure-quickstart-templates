@@ -17,254 +17,237 @@ Select-AzureRmSubscription -SubscriptionId $Conn.SubscriptionID -TenantId $Conn.
 
 $OMSWorkspaceId = Get-AutomationVariable -Name 'OMSWorkspaceId'
 $OMSWorkspaceKey = Get-AutomationVariable -Name 'OMSWorkspaceKey'
-$OMSWorkspaceName = Get-AutomationVariable -Name 'OMSWorkspaceName'
-$OMSResourceGroupName = Get-AutomationVariable -Name 'OMSResourceGroupName'
+$AzureSubscriptionId = Get-AutomationVariable -Name 'AzureSubscriptionId'
 
-$vaults = Find-AzureRmResource `
-                               -ResourceType microsoft.recoveryservices/vaults
+# Finding all ASR Recovery Vaults within the Azure subscription
 
-foreach ($vault in $vaults)
+$Vaults = Find-AzureRmResource `
+                              -ResourceType Microsoft.RecoveryServices/vaults
+
+Write-Output "Found the following vaults:" $Vaults.name
+
+# Iterate through all Recovery Vaults and ingest data to OMS Log Analytics
+
+foreach ($Vault in $Vaults)
 {
-    $vaultsettings = Get-AzureRmRecoveryServicesVault `
-                    -Name $vault.name -ResourceGroupName $vault.resourcegroupname
-                
+    # Setting Vault context
+    $VaultSettings = Get-AzureRmRecoveryServicesVault `
+                                                     -Name $Vault.Name `
+                                                     -ResourceGroupName $Vault.ResourceGroupName
+    Write-Output $VaultSettings
 
-# Setting vault context
+    $Location = $Vault.Location
 
-$location = $vault.Location
-Set-AzureRmSiteRecoveryVaultSettings `
-                                     -ARSVault $vaultsettings
-                                      
-$con = Get-AzureRmSiteRecoveryProtectionContainer
+    Set-AzureRmSiteRecoveryVaultSettings `
+                                        -ARSVault $VaultSettings
+    # Ingesting ASRJobs into OMS
 
-if ([string]::IsNullOrEmpty($con) -eq $true)
+    $ASRLogs = @()
+    $LogData = New-Object psobject -Property @{}
 
+    $ASRJobs = Get-AzureRmSiteRecoveryJob `
+                                         -StartTime (Get-Date).AddHours(((-1)))
+
+    if ($ASRJobs -eq $null)
+    {
+        Write-output "No new logs to collect"
+    } 
+    else 
+    {
+        if ($ASRJobs.EndTime -eq $null) 
+        {
+            foreach ($job in $ASRJobs) 
+            {
+                Add-Member -InputObject $LogData -MemberType NoteProperty -Name LogType -Value ASRJob
+                Add-Member -InputObject $LogData -MemberType NoteProperty -Name JobType -Value $job.JobType
+                Add-Member -InputObject $LogData -MemberType NoteProperty -Name State -Value $job.State
+                Add-Member -InputObject $LogData -MemberType NoteProperty -Name StateDescription -Value $job.StateDescription                
+                Add-Member -InputObject $LogData -MemberType NoteProperty -Name StartTime -Value $job.StartTime.ToUniversalTime().ToString('yyyy-MM-ddtHH:mm:ss')
+                Add-Member -InputObject $LogData -MemberType NoteProperty -Name TargetObjectType -Value $job.TargetObjectType
+                Add-Member -InputObject $LogData -MemberType NoteProperty -Name TargetObjectName -Value $job.TargetObjectName
+                Add-Member -InputObject $LogData -MemberType NoteProperty -Name ID -Value $job.ID
+                Add-Member -InputObject $LogData -MemberType NoteProperty -Name SubscriptionId -Value $azuresubscriptionid
+            }
+        }
+        else 
+        {
+            foreach ($job in $ASRJobs) 
+            {
+                Add-Member -InputObject $LogData -MemberType NoteProperty -Name LogType -Value ASRJob
+                Add-Member -InputObject $LogData -MemberType NoteProperty -Name JobType -Value $job.JobType
+                Add-Member -InputObject $LogData -MemberType NoteProperty -Name State -Value $job.State
+                Add-Member -InputObject $LogData -MemberType NoteProperty -Name StateDescription -Value $job.StateDescription
+                Add-Member -InputObject $LogData -MemberType NoteProperty -Name StartTime -Value $job.StartTime.ToUniversalTime().ToString('yyyy-MM-ddtHH:mm:ss')                
+                Add-Member -InputObject $LogData -MemberType NoteProperty -Name EndTime -Value $job.EndTime.ToUniversalTime().ToString('yyyy-mm-ddtHH:mm:ss')
+                Add-Member -InputObject $LogData -MemberType NoteProperty -Name TargetObjectType -Value $job.TargetObjectType
+                Add-Member -InputObject $LogData -MemberType NoteProperty -Name TargetObjectName -Value $job.TargetObjectName
+                Add-Member -InputObject $LogData -MemberType NoteProperty -Name ID -Value $job.ID
+                Add-Member -InputObject $LogData -MemberType NoteProperty -Name SubscriptionId -Value $azuresubscriptionid
+            }
+        }
+    $ASRLogs += $LogData
+    Write-output $ASRLogs
+
+    $ASRLogsJson = ConvertTo-Json -InputObject $ASRLogs
+    $LogType = "RecoveryServices"
+
+    Send-OMSAPIIngestionData -customerId $omsworkspaceId -sharedKey $omsworkspaceKey -body $ASRLogsJson -logType $LogType
+
+    }
+
+    # Get all Protection Containers for the Recovery Vault
+
+    $Containers = Get-AzureRmSiteRecoveryProtectionContainer
+
+    If ([string]::IsNullOrEmpty($Containers) -eq $true)
     {
         Write-Output "ASR Recovery Vault isn't completely configured yet. No data to ingest from the specific Recovery Vault at this point"
     }
-else {
+    else
+    {
+        Write-Output $Containers.FriendlyName
 
-$DRServer = Get-AzureRmSiteRecoveryServer
-$heartbeat = ([datetime]$DRServer.LastHeartbeat).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ss')
-	$Table = @()
-foreach ($c in $con) {
-    $protectionEntity = Get-AzureRmSiteRecoveryProtectionEntity -ProtectionContainer $c
-
-    if ($protectionentity.ReplicationProvider -eq "InMageAzureV2") {
-        foreach ($entity in $protectionEntity) {
-            $sx = New-Object PSObject -Property @{
-            VMName = $entity.FriendlyName;
-            ResourceGroup = $ResourceGroup;
-            RecoveryVault = $vault.Name;
-            ProtectionState = $entity.ProtectionStateDescription;
-            ReplicationHealth = $entity.ReplicationHealth;
-            ReplicationProvider = $entity.ReplicationProvider;
-            ActiveLocation = $entity.ActiveLocation;
-            TestFailoverStateDescription = $entity.TestFailoverDescription
-	    }
-	    $table = $table += $sx
- 
-      $jsonTable = ConvertTo-Json -InputObject $table
-	  } 
-	$jsonTable 
-    $logType = "ASRDiscovery"
-    Send-OMSAPIIngestionData -customerId $OMSWorkspaceId -sharedKey $OMSWorkspaceKey -body $jsonTable -logType $logType
- }
- else {
-	foreach($entity in $protectionEntity) { 
-	    $sx = New-Object PSObject -Property @{
-	        ResourceGroup = $ResourceGroup;
-            RecoveryVault = $vault.Name;      
-            VMName = $entity.FriendlyName;
-	        ProtectionStatus = $entity.ProtectionStatus; 
-	        ReplicationProvider = $entity.ReplicationProvider;
-	        ActiveLocation = $entity.ActiveLocation;
-            ReplicationHealth = $entity.ReplicationHealth;
-            Disks = $entity.Disks.name;
-            TestFailoverStateDescription = $entity.TestFailoverStateDescription;
-            ProtectionContainerId = $entity.ProtectionContainerId;
-            SiteRecoveryServerLastHeartbeat = $heartbeat;
-            SiteRecoveyServerConnectionStatus = $drserver.Connected;
-            SiteRecoveryServerProviderVersion = $drserver.ProviderVersion;
-            SiteRecoveryServerServerVersion = $drserver.ServerVersion;
-            SiteRecoveryServer = $DRServer.FriendlyName             
-	    }
-	    $table = $table += $sx
- 
-      $jsonTable = ConvertTo-Json -InputObject $table
-	   }
-    $jsontable
-    $logType = "ASRDiscovery"
-    Send-OMSAPIIngestionData -customerId $OMSWorkspaceId -sharedKey $OMSWorkspaceKey -body $jsonTable -logType $logType
-        }
-     }
-   }
-
-$Table2 = @()
-    foreach ($c in $con) {
-    $recoveryVm = Get-AzureRmSiteRecoveryVM -ProtectionContainer $c | where-object {$_.ProtectionStatus -eq "Protected"}
-	foreach($rVm in $recoveryVm) {        
-       if ($rvm.ReplicationProvider -eq "InMageAzureV2")
-       {
-            $vnetInfo = "None"
-            $vnetRgName = "None"
-            $storageInfo = "None"
-            $storageRgName = "None"
-            $storageName = "None"
-            
-         $sx2 = New-Object PSObject -Property @{
-	        VMName = $rVm.FriendlyName;
-            vNetName = $vnetInfo;
-            vNetResourceGroup = $vnetRgName;
-            StorageResourceGroup = $storageRgName;
-            StorageAccount = $storageName;
-            ReplicationHealth = $rVm.ReplicationHealth;
-            RecoveryAzureVMSize = $rVm.RecoveryAzureVMSize;
-            RecoveryAzureVMName = $rVm.RecoveryAzureVMName;
-            ActiveLocation = $rVm.ActiveLocation;
-            TestFailoverStateDescription = $rVm.TestFailoverStateDescription;
-            ReplicationProvider = $rVm.ReplicationProvider;
-            ProtectionStatus = $rVm.ProtectionStatus             
-	            }      
-	    $table2 = $table2 += $sx2 
- 
-      $jsonTable2 = ConvertTo-Json -InputObject $table2
-      
-     $jsonTable2
-     $logType2 = "ASRProtection"      
-     Send-OMSAPIIngestionData -customerId $OMSWorkspaceId -sharedKey $OMSWorkspaceKey -body $jsonTable2 -logType $logType2
-      }         
-        else {
-        if($rVm.SelectedRecoveryAzureNetworkId -ne $null)
+        # Iterate through all Containers, discover protection entities and send data to OMS
+        foreach ($Container in $Containers)
         {
-        $vnetInfo = $rVm.SelectedRecoveryAzureNetworkId.split("/")
-        $vnetRgName = $vnetInfo[4]
-        $vnetName = $vnetInfo[8]
-        $storageInfo = $rVm.RecoveryAzureStorageAccount.split("/")
-        $storageRgName = $storageInfo[4]
-        $storageName = $storageInfo[8]
+            
+            $VMSize = Get-AzureRmVMSize `
+                                       -Location $Location
 
-	    $sx2 = New-Object PSObject -Property @{
-	        VMName = $rVm.FriendlyName;
-            vNetName = $vnetName;
-            vNetResourceGroup = $vnetRgName;
-            StorageResourceGroup = $storageRgName;
-            StorageAccount = $storageName;
-            ReplicationHealth = $rVm.ReplicationHealth;
-            RecoveryAzureVMSize = $rVm.RecoveryAzureVMSize;
-            RecoveryAzureVMName = $rVm.RecoveryAzureVMName;
-            ActiveLocation = $rVm.ActiveLocation;
-            TestFailoverStateDescription = $rVm.TestFailoverStateDescription;
-            ReplicationProvider = $rVm.ReplicationProvider;
-            ProtectionStatus = $rVm.ProtectionStatus             
-	            }
-	    $table2 = $table2 += $sx2
- 
-      $jsonTable2 = ConvertTo-Json -InputObject $table2
-	        
-	$jsonTable2
-    $logType2 = "ASRProtection"
-    Send-OMSAPIIngestionData -customerId $OMSWorkspaceId -sharedKey $OMSWorkspaceKey -body $jsonTable2 -logType $logType2
-      }
-       else {
-        $vnetInfo = "None"
-        $vnetRgName = "None"
-        $sx2 = New-Object PSObject -Property @{
-	        VMName = $rVm.FriendlyName;
-            vNetName = $vnetInfo;
-            vNetResourceGroup = $vnetRgName;
-            StorageResourceGroup = $storageRgName;
-            StorageAccount = $storageName;
-            ReplicationHealth = $rVm.ReplicationHealth;
-            RecoveryAzureVMSize = $rVm.RecoveryAzureVMSize;
-            RecoveryAzureVMName = $rVm.RecoveryAzureVMName;
-            ActiveLocation = $rVm.ActiveLocation;
-            TestFailoverStateDescription = $rVm.TestFailoverStateDescription;
-            ReplicationProvider = $rVm.ReplicationProvider;
-            ProtectionStatus = $rVm.ProtectionStatus             
-	            }
-	    $table2 = $table2 += $sx2
- 
-      $jsonTable2 = ConvertTo-Json -InputObject $table2
-	        
-	$jsonTable2
-    $logType2 = "ASRProtection"
-    Send-OMSAPIIngestionData -customerId $OMSWorkspaceId -sharedKey $OMSWorkspaceKey -body $jsonTable2 -logType $logType2
-     }
-    }
-   }
- }          
+            $CurrentVMUsage = Get-AzureRmVMUsage `
+                                       -Location $Location
 
-# Fetching information from ASR Jobs
+            $CurrentStorageUsage = Get-AzureRmStorageUsage
 
-$jobs = Get-AzureRmSiteRecoveryJob
+            $AllVms = Get-AzureRmVm
 
-# Format Jobs into a table.
-$Table3 = @()
-	foreach($job in $jobs) { 
-    $starttime = ([datetime]$job.StartTime).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ss')
-    if ($job.EndTime -eq $null)
-    { "Ignore"}
-    else {
-    $endtime = ([datetime]$job.EndTime).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ss')
-    }
-	    $sx3 = New-Object PSObject -Property @{
-	        JobName = $job.DisplayName;
-            JobType = $job.JobType;
-            State = $job.State;
-            StateDescription = $job.StateDescription;
-            TargetObjectName = $job.TargetObjectName;
-            TargetObjectType = $job.TargetObjectType;
-            AllowedActions = $job.AllowedActions;
-            Errors = $job.Errors;
-            Tasks = $job.Tasks;
-            StartTime = $starttime;
-            EndTime = $endtime;
-            ID = $job.ID;             
-	    }
-	    $table3 = $table3 += $sx3
- 
-      $jsonTable3 = ConvertTo-Json -InputObject $table3
-	}
-	$jsonTable3
-    $logType3 = "ASRJobHistory"
-    Send-OMSAPIIngestionData -customerId $OMSWorkspaceId -sharedKey $OMSWorkspaceKey -body $jsonTable3 -logType $logType3
+            $DRServer = Get-AzureRmSiteRecoveryServer
 
-# Capacity planning
+            $RecoveryVms = Get-AzureRmSiteRecoveryVM `
+                                       -ProtectionContainer $Container
+            
+            Write-Output $RecoveryVms.FriendlyName
 
-$vmSize = Get-AzureRmVMSize -Location $location
-$currentUsage = Get-AzureRmVMUsage -Location $location
-$currentStorage = Get-AzureRmStorageUsage 
-$allvms = Get-AzureRmVM | measure
-                                     
-$Table4  = @()
-    foreach ($c in $con) {
-        $recoveryVmSize = Get-AzureRmSiteRecoveryVM -ProtectionContainer $c
-            foreach ($vmSize in $recoveryVmSize) { 
-                $sizeobj = Get-AzureRmVMSize -location $location | where-object {$_.Name -eq $vmSize.RecoveryAzureVmSize }
-                $usage = Get-AzureRmVMUsage -Location $location 
-         $sx4  = New-Object PSObject -Property @{ 
-                         'NumberOfCores'        = $sizeobj.NumberOfCores;
-                         'VMName'             = $vmsize.FriendlyName;
-                         'VMSize'       = $vmsize.RecoveryAzureVMSize;
-                         'AzureSubscriptionVMCoresInUse' = $usage[1].CurrentValue;
-                         'AzureSubscriptionVMCoresTotalLimit' = $usage[1].Limit;
-                         'AzureSubscriptionVMsInUse' = $usage[2].CurrentValue;
-                         'AzureSubscriptionVMsTotalLimit' = $usage[2].Limit;
-                         'AzureSubscriptionStandard_DScoresTotalLimit' = $usage[4].Limit;
-                         'AzureSubscriptionStandard_DcoresTotalLimit' = $usage[5].Limit;
-                         'AzureSubscriptionStandard_AcoresTotalLimit' = $usage[6].Limit;
-                         'RecoveryVaultRegion' = $location;
-                         'CurrentVMsAcrossSubscription' = $allvms.Count;
-                         'CurrentStorageAccountsAcrossSubscription' = $currentStorage.CurrentValue;
-                         'StorageAccountLimit' = $currentStorage.Limit
-                         }
-           $table4 = $table4 += $sx4
+            # Getting VM Details
+            foreach ($RecoveryVm in $RecoveryVms)
+            {
+                $VMSize = Get-AzureRmVMSize `
+                                           -Location $Location | Where-Object {$_.Name -eq $RecoveryVm.RecoveryAzureVMSize}
+                
+                # Detect VMs protected by InMageAzureV2 Replication Provider
+                if ($RecoveryVm.ReplicationProvider -eq "InMageAzureV2")
+                {
+                    $vNetInfo = "None"
+                    $vNetRgName = "None"
+                    $StorageInfo = "None"
+                    $StorageRgName = "None"
+                    $StorageName = "None"
+                    
+                    Write-Output "Found the following VMware protected machines" $RecoveryVm.FriendlyName
+                }
+                # Detect VMs Protected using Hyper-V 2 Azure
+                else
+                {
+                    # Detect VMs that are connected to storage and vNet in Azure
+                    if($RecoveryVm.SelectedRecoveryAzureNetworkId -ne $null -and $RecoveryVm.RecoveryAzureStorageAccount -ne $null -and $RecoveryVm.ReplicationProvider -ne "HyperVReplica2012R2")
+                    {
+                        $vNetInfo = $RecoveryVm.SelectedRecoveryAzureNetworkId.split("/")
+                        $vNetRgName = $vNetInfo[4]
+                        $vNetName = $vNetInfo[8]
+                        $StorageInfo = $RecoveryVm.RecoveryAzureStorageAccount.split("/")
+                        $StorageRgName = $StorageInfo[4]
+                        $StorageName = $StorageInfo[8]
+                        
+                        Write-Output "Found the following Hyper-V protected machines" $RecoveryVm.FriendlyName
+                    }
+                    # Detect VMs that are missing vNet connection in Azure
+                    else
+                    {
+                        if ($RecoveryVm.RecoveryAzureStorageAccount -ne $null -and $RecoveryVm.SelectedRecoveryAzureNetworkId -eq $null -and $RecoveryVm.ReplicationProvider -ne "HyperVReplica2012R2")
+                        {
+                            $vNetRgName = "None"
+                            $vNetName = "None"
+                            $StorageInfo = $RecoveryVm.RecoveryAzureStorageAccount.split("/")
+                            $StorageRgName = $StorageInfo[4]
+                            $StorageName = $StorageInfo[8]
+
+                            Write-Output "Found the following Hyper-V Protected machines missing vNet" $RecoveryVm.FriendlyName
+                        }
+                        # Ignoring On-Prem 2 On-Prem scenario for now
+                        else
+                        {
+                            if ($RecoveryVm.ReplicationProvider -eq "HyperVReplica2012R2")
+                            {
+                                    $vNetRgName = "None"
+                                    $vNetName = "None"
+                                    $StorageRgName = "None"
+                                    $StorageName = "None"
+
+                                Write-Output "These VMs are ignored for OMS for now" $RecoveryVm.FriendlyName
+                            }
+                            # Fetching unprotected VMs with no Azure association
+                            else
+                            {
+                                if($RecoveryVm.ReplicationProvider -eq $null)
+                                {
+                                    $vNetRgName = "None"
+                                    $vNetName = "None"
+                                    $StorageRgName = "None"
+                                    $StorageName = "None"
+                                    
+                                    Write-Output "Found the following unprotected VMs" $RecoveryVm.FriendlyName
+                                }
+                            }
+                        }
+                    }
+            #Constructing the data log for OMS Log Analytics
+
+            $ASRVMs = @()
+                $Data = New-Object psobject -Property @{
+                    LogType = 'VM';
+                    ASRResourceGroupName = $Vault.ResourceGroupName;
+                    ASRVaultName = $vault.Name;
+                    ASRVaultLocation = $Location;
+                    VMName = $RecoveryVm.FriendlyName;
+                    VMId = $RecoveryVm.ID.Split("/")[14];
+                    ProtectionStatus = $RecoveryVm.ProtectionStatus;
+                    ActiveLocation = $RecoveryVm.ActiveLocation;
+                    ReplicationHealth = $RecoveryVm.ReplicationHealth;
+                    TestFailoverDescription = $RecoveryVm.TestFailoverDescription;
+                    AzureFailoverNetwork = $vNetName;
+                    AzureStorageAccount = $StorageName;
+                    AzurevNetResourceGroupName = $vNetRgName;
+                    AzureStorageAccountResourceGroupName = $StorageRgName;
+                    Disk = $RecoveryVm.Disks.Name;
+                    SubscriptionId = $azuresubscriptionid;
+                    ProviderHeartbeat = $DRServer[0].LastHeartbeat.ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ss');
+                    SiteRecoveryServerConnectionStatus = $DRServer[0].Connected;
+                    SiteRecoveryProviderVersion = $DRServer[0].ProviderVersion;
+                    SiteRecoveryServerVersion = $DRServer[0].ServerVersion;
+                    SiteRecoveryServer = $DRServer.FriendlyName;
+                    NumberOfCores = $VMSize.NumberOfCores;
+                    VMSize = $RecoveryVm.RecoveryAzureVMSize;
+                    AzureVMCoresInUse = $CurrentVMUsage[1].CurrentValue;
+                    AzureVMCoresTotalLimit = $CurrentVMUsage[1].Limit;
+                    AzureVMsInUse = $CurrentVMUsage[2].CurrentValue;
+                    AzureVMsTotalLimit = $CurrentVMUsage[2].Limit;
+                    AzureVMsInSubscription = $AllVms.count;
+                    AzureStorageAccountsInUse = $CurrentStorageUsage.CurrentValue;
+                    AzureStorageAccountTotalLimit = $CurrentStorageUsage.Limit;
+                    VMReplicationProvider = $RecoveryVm.ReplicationProvider
+                    }
+                
+         $ASRVMs += $Data
+         write-output $ASRVMs
          
-          $jsonTable4 = ConvertTo-Json -InputObject $Table4
+         $ASRVMsJson = ConvertTo-Json -InputObject $ASRVMs
+
+         $LogType = "RecoveryServices"
+
+         Send-OMSAPIIngestionData -customerId $omsworkspaceId -sharedKey $omsworkspaceKey -body $ASRVMsJson -logType $LogType
+
             }
-        }
-    $jsontable4
-    $logType4 = "ASRCapacityPlanning"
-    Send-OMSAPIIngestionData -customerId $OMSWorkspaceId -sharedKey $OMSWorkspaceKey -body $jsonTable4 -logType $logType4
-}
+         }              
+      }
+   }   
+}                                                                                           

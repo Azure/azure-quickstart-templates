@@ -79,7 +79,7 @@ install_zabbix
 mongod --dbpath /var/lib/mongo/ --logpath /var/log/mongodb/mongod.log --fork
 
 sleep 30
-n=`ps -ef |grep -v grep|grep mongod |wc -l`
+n=`ps -ef |grep "mongod --dbpath /var/lib/mongo/"|grep -v grep | wc -l`
 if [[ $n -eq 1 ]];then
     echo "mongod started successfully"
 else
@@ -100,7 +100,7 @@ fi
 
 #stop mongod
 sleep 15
-MongoPid=`ps -ef |grep -v grep |grep mongod|awk '{print $2}'`
+MongoPid=`ps -ef |grep "mongod --dbpath /var/lib/mongo/"|grep -v grep |awk '{print $2}'`
 kill -2 $MongoPid
 
 
@@ -114,7 +114,7 @@ sed -i '/^security/akeyFile: /etc/mongokeyfile' /etc/mongod.conf
 sed -i 's/^keyFile/  keyFile/' /etc/mongod.conf
 
 sleep 15
-MongoPid1=`ps -ef |grep -v grep |grep mongod|awk '{print $2}'`
+MongoPid1=`ps -ef |grep "mongod --dbpath /var/lib/mongo/"|grep -v grep |awk '{print $2}'`
 if [[ -z $MongoPid1 ]];then
     echo "shutdown mongod successfully"
 else
@@ -133,7 +133,7 @@ mongod --configsvr --replSet crepset --port 27019 --dbpath /var/lib/mongo/ --log
 for((i=1;i<=3;i++))
 do
     sleep 15
-    n=`ps -ef |grep -v grep|grep mongod |wc -l`
+    n=`ps -ef |grep "mongod --configsvr"|grep -v grep |wc -l`
     if [[ $n -eq 1 ]];then
         echo "mongo config replica set started successfully"
         break
@@ -143,7 +143,7 @@ do
     fi
 done
 
-n=`ps -ef |grep -v grep|grep mongod |wc -l`
+n=`ps -ef |grep "mongod --configsvr"|grep -v grep |wc -l`
 if [[ $n -ne 1 ]];then
     echo "mongo config replica set tried to start 3 times but failed!"
 fi
