@@ -22,6 +22,7 @@ Options for blockchain software include:
 - [nxt](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/nxt.md)
 - [okcash](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/okcash.md)
 - [shadow](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/shadow.md)
+- [stratis](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/stratis.md)
 - [syscoin](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/syscoin.md)
 - [vcash](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/vcash.md)
 - [viacoin](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/viacoin.md)
