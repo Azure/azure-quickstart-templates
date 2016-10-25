@@ -1,4 +1,4 @@
-# Create 2 Virtual Machines in an Availability Set and Configure NAT Rules through the Load balancer
+# Create Host Guardian Service in Azure with High Availability using Failover Clustering.
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-2-vms-loadbalancer-natrules%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
