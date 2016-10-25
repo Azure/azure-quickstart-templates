@@ -12,7 +12,7 @@ while getopts :m:i:k:a:d:s:h optname; do
   case $optname in
     m)  #Master 1 Slave 0
       ISMASTER=${OPTARG}
-      ;;
+	  ;;
 	i)
 	  MASTERIP=${OPTARG}
 	  ;;
@@ -44,20 +44,20 @@ download_extra_libraries()
 install_prerequisites()
 {	
 	echo "Working as user $USER"
+	
 	echo "Updating Suse"
 	JAVAC=$(which javac)
 	if [[ -z $JAVAC ]]; then
 		echo "Installing OpenJDK"
-		sudo zypper install -y java-1_8_0-openjdk
+		sudo zypper install -y java-1_8_0-openjdk java-1_8_0-openjdk-devel
 	fi
 	
 	echo "Downloading external libraries"
 	download_extra_libraries
-	
 }
 
 setup_spark_env_and_defaults()
-{
+{	
 	echo "Setting up spark-env.sh and spark-defaults.sh"
 	cd /usr/local/spark/conf/
 	
@@ -110,8 +110,6 @@ setup_spark_env_and_defaults()
 	touch spark-defaults.conf
 	
 	echo "spark.master            spark://$MASTERIP:7077" >> spark-defaults.conf
-	echo 'spark.executor.memory   512m' >> spark-defaults.conf
-	echo 'spark.eventLog.enabled  false' >> spark-defaults.conf
 	echo 'spark.serializer        org.apache.spark.serializer.KryoSerializer' >> spark-defaults.conf
 	
 	echo 'spark.driver.extraClassPath	/srv/spark/lib/*' >> spark-defaults.conf
@@ -126,15 +124,19 @@ install_spark()
 	mkdir /usr/local/sparkforsuse
 	cd /usr/local/sparkforsuse
 	
-	wget http://mirror.nohup.it/apache/spark/spark-2.0.0/spark-2.0.0-bin-hadoop2.7.tgz
+	wget http://mirrors.advancedhosters.com/apache/spark/spark-2.0.1/spark-2.0.1-bin-hadoop2.7.tgz
 	
-	tar xvzf spark-2.0.0-bin-hadoop2.7.tgz > /tmp/spark_unzip.log
-	rm spark-2.0.0-bin-hadoop2.7.tgz
-	mv spark-2.0.0-bin-hadoop2.7 ../
+	tar xvzf spark-2.0.1-bin-hadoop2.7.tgz > /tmp/spark_unzip.log
+	rm spark-2.0.1-bin-hadoop2.7.tgz
+	mv spark-2.0.1-bin-hadoop2.7 ../
 	cd ..
 	cd /usr/local/
 	
-	sudo ln -s spark-2.0.0-bin-hadoop2.7 spark
+	rm -rf sparkforsuse
+	
+	sudo ln -s spark-2.0.1-bin-hadoop2.7 spark
+	
+	# Adding "spark" user for launching master and slave processes
 	
 	sudo groupadd spark
 	sudo useradd -g spark spark
@@ -158,8 +160,7 @@ install_spark()
 	
 	sudo su spark
 	rm -f ~/.ssh/id_rsa 
-	ssh-keygen -q -t rsa -N '' -f ~/.ssh/id_rsa && cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
-	
+	ssh-keygen -q -t rsa -N '' -f ~/.ssh/id_rsa && cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys	
 }
 
 launch_spark()
@@ -178,10 +179,27 @@ launch_spark()
 	fi
 }
 
+setup_environment_for_all_users()
+{
+	echo "Configuring SPARK_HOME, JAVA_HOME and PATH"
+	
+	echo 'export SPARK_HOME="/usr/local/spark"' >> /etc/profile
+	echo 'export SPARK_HOME="/usr/local/spark"' >> /etc/profile.local
+
+	echo 'export JAVA_HOME=/usr/lib64/jvm/java-1.8.0-openjdk-1.8.0/jre' >> /etc/profile.local
+	echo 'export JAVA_HOME=/usr/lib64/jvm/java-1.8.0-openjdk-1.8.0/jre' >> /etc/profile
+	
+	echo 'export PATH=$PATH:$JAVA_HOME/bin:$SPARK_HOME/bin' >> /etc/profile.local
+	echo 'export PATH=$PATH:$JAVA_HOME/bin:$SPARK_HOME/bin' >> /etc/profile
+}
+
+
 show_info > /tmp/install_info.log
 
 install_prerequisites > /tmp/install_prerequisites.log
 
 install_spark > /tmp/install_spark.log
+
+setup_environment_for_all_users > /tmp/setup_environment_for_all_users.log
 
 launch_spark > /tmp/launch_spark.log

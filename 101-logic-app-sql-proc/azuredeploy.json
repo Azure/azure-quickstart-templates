@@ -1,0 +1,136 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "logicAppName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the logic app."
+      }
+    },
+    "sqlConnectionName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the SQL connection being created."
+      }
+    },
+    "sqlServer": {
+      "type": "string",
+      "metadata": {
+        "description": "The URI of the SQL Server"
+      }
+    },
+    "sqlDatabase": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the SQL database."
+      }
+    },
+    "sqlUser": {
+      "type": "string",
+      "metadata": {
+        "description": "The username for the SQL server."
+      }
+    },
+    "sqlPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The password for the SQL server."
+      }
+    },
+    "sqlProcedure": {
+      "type": "string",
+      "metadata": {
+        "description": "The procedure to run."
+      }
+    }
+  },
+  "variables": {
+    "singleQuote": "'"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Web/connections",
+      "apiVersion": "2016-06-01",
+      "location": "[resourceGroup().location]",
+      "name": "[parameters('sqlConnectionName')]",
+      "properties": {
+        "api": {
+          "id": "[concat(subscription().id,'/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/sql')]"
+        },
+        "displayName": "sql_connection",
+        "parameterValues": {
+          "server": "[parameters('sqlServer')]",
+          "database": "[parameters('sqlDatabase')]",
+          "authType": "windows",
+          "username": "[parameters('sqlUser')]",
+          "password": "[parameters('sqlPassword')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Logic/workflows",
+      "apiVersion": "2016-06-01",
+      "name": "[parameters('logicAppName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/connections', parameters('sqlConnectionName'))]"
+      ],
+      "properties": {
+        "definition": {
+          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "$connections": {
+              "defaultValue": { },
+              "type": "Object"
+            }
+          },
+          "triggers": {
+            "Recurrence": {
+              "recurrence": {
+                "frequency": "Hour",
+                "interval": 1
+              },
+              "type": "Recurrence"
+            }
+          },
+          "actions": {
+            "Execute_stored_procedure": {
+              "runAfter": { },
+              "type": "ApiConnection",
+              "inputs": {
+                "body": {
+                },
+                "host": {
+                  "api": {
+                    "runtimeUrl": "[concat('https://logic-apis-', resourceGroup().location, '.azure-apim.net/apim/sql')]"
+                  },
+                  "connection": {
+                    "name": "@parameters('$connections')['sql']['connectionId']"
+                  }
+                },
+                "method": "post",
+                "path": "[concat('/datasets/default/procedures/@{encodeURIComponent(encodeURIComponent(', variables('singleQuote'), parameters('sqlProcedure'), variables('singleQuote'), '))}')]"
+              }
+            }
+          },
+          "outputs": { }
+        },
+        "parameters": {
+          "$connections": {
+            "value": {
+              "sql": {
+                "connectionId": "[resourceId('Microsoft.Web/connections', parameters('sqlConnectionName'))]",
+                "connectionName": "[parameters('sqlConnectionName')]",
+                "id": "[concat(subscription().id,'/providers/Microsoft.Web/locations/', resourceGroup().location, '/managedApis/sql')]"
+              }
+            }
+          }
+        }
+      },
+      "resources": [ ]
+    }
+  ],
+  "outputs": { }
+}

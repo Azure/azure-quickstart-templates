@@ -20,7 +20,7 @@ This sample illustrates how to
 In files that do the work:
 
 * keyvault.sh - creates key vault if needed, converts certificates into pfx, stores them in the key vault and updates azuredeploy.parameters.json with the keyvault location
-* deploy.sh - script to run installation. It stages the script for the CustomScriptExtension in azure storage, fixes up the parameters file and deploys the ARM template
+* deploy.sh - script to run installation. It stages the script for the CustomScript in azure storage, fixes up the parameters file and deploys the ARM template
 * azuredeploy.json - ARM Template to deploy Web Server VMSS
 * azuredeploy.parameters.json.template - template for the parameters file. Fixed up by keyvault.sh and deploy.sh
 * configure.sh - Script called by custom script extension to install apache and configure SSL 
@@ -55,7 +55,7 @@ The certs are pulled from keyvault with the secrests configuration:
 The thumbnails are passed to the script that configures the web server:
 ```
 "properties": {
-    "type": "CustomScriptForLinux",
+    "type": "CustomScript",
     "settings": {
   	  "commandToExecute": "[concat('bash ', parameters('scriptFileName'), ' ', parameters('certThumbPrint'), ' ', parameters('caCertThumbPrint'))]"
 },
@@ -87,7 +87,7 @@ VMSS are great for scalable web workloads. [Setting up an Ubuntu VM with Apache]
 
 But what about enabling SSL? You'll need certificates deployed to the VM in a secure way. You don't want your production certs to fall in the wrong hands. You'll also want to configure the web server for these certificates.
 
-Azure Key Vault enables secure storage and workflows for the SSL certificates. The [CustomScriptForLinux VM extension](https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-linux-classic-lamp-script/) can configure the VM at start up, but there are a few gotchas when you want to put the two together to deploy certificates to a Linux VM.
+Azure Key Vault enables secure storage and workflows for the SSL certificates. The [CustomScript VM extension](https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-linux-classic-lamp-script/) can configure the VM at start up, but there are a few gotchas when you want to put the two together to deploy certificates to a Linux VM.
 
 SSL encryption or its newer, more secure successor TLS, requires a pair of certificates and a private key on web servers to encrypt web traffic. Those certificates and the key are closely guarded because those certificates are linked to your domain and protect against man-in-the-middle attacks. Bad things can happen to your organization when a bad guy get hold of these certs.
 
