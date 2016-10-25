@@ -30,7 +30,7 @@ function tryParse(fileName, jsonStringData) {
   return object;
 }
 
-const filePathExistsMap = {};
+var filePathExistsMap = {};
 
 function fileExists(filePath) {
   if (!(filePath in filePathExistsMap)) {
@@ -39,12 +39,12 @@ function fileExists(filePath) {
   return filePathExistsMap[filePath];
 }
 
-const jsonFileContentsMap = {};
+var jsonFileContentsMap = {};
 
 function readJSONFile(filePath) {
   if (!(filePath in jsonFileContentsMap)) {
     if (fileExists(filePath)) {
-      const fileContents = fs.readFileSync(filePath, {
+      var fileContents = fs.readFileSync(filePath, {
         encoding: 'utf-8'
       });
       jsonFileContentsMap[filePath] = tryParse(filePath, fileContents.trim());
@@ -75,7 +75,7 @@ function getEnvironmentVariableBoolean(variableName, defaultValue) {
   let result = defaultValue;
 
   if (variableName) {
-    const variableValue = process.env[variableName];
+    var variableValue = process.env[variableName];
     if (variableValue) {
       if (typeof variableValue === 'string') {
         result = (variableValue.toLowerCase() === 'true');
@@ -180,9 +180,9 @@ function itExists(filePath) {
 describe('Template', function () {
   this.timeout(7100 * 1000);
 
-  const validateModifiedOnly = getEnvironmentVariableBoolean('VALIDATE_MODIFIED_ONLY', false);
-  const runRemoteValidation = !getEnvironmentVariableBoolean('VALIDATION_SKIP_VALIDATE');
-  const runRemoteDeployment = !getEnvironmentVariableBoolean('VALIDATION_SKIP_DEPLOY');
+  var validateModifiedOnly = getEnvironmentVariableBoolean('VALIDATE_MODIFIED_ONLY', false);
+  var runRemoteValidation = !getEnvironmentVariableBoolean('VALIDATION_SKIP_VALIDATE');
+  var runRemoteDeployment = !getEnvironmentVariableBoolean('VALIDATION_SKIP_DEPLOY');
 
   var modifiedDirectories = {};
   if (validateModifiedOnly) {
@@ -190,7 +190,7 @@ describe('Template', function () {
     // so this includes all file paths that have changed for the CI run
     assert(process.env.TRAVIS_COMMIT_RANGE, 'VALIDATE_MODIFIED_ONLY requires TRAVIS_COMMIT_RANGE to be set to [START_COMMIT_HASH]...[END_COMMIT_HASH]');
 
-    const modifiedPaths = childProcess.execSync('git diff --name-only ' + process.env.TRAVIS_COMMIT_RANGE, {
+    var modifiedPaths = childProcess.execSync('git diff --name-only ' + process.env.TRAVIS_COMMIT_RANGE, {
       encoding: 'utf8'
     }).split('\n');
     debug(modifiedPaths);
@@ -229,15 +229,15 @@ describe('Template', function () {
         });
 
         describe('metadata.json', function () {
-          const metadataFilePath = path.join(testDirectory, 'metadata.json');
+          var metadataFilePath = path.join(testDirectory, 'metadata.json');
 
           itExists(metadataFilePath);
 
           it('matches schema', function () {
-            const schemaFilePath = path.join(__dirname, 'metadata.schema.json');
+            var schemaFilePath = path.join(__dirname, 'metadata.schema.json');
             assertFileExists(schemaFilePath, 'The provided JSON schema file path "' + schemaFilePath + '" doesn\'t exist.');
 
-            const jsonSchemaObject = readJSONFile(schemaFilePath);
+            var jsonSchemaObject = readJSONFile(schemaFilePath);
             var schemaValidationResult = skeemas.validate(readJSONFile(metadataFilePath), jsonSchemaObject);
 
             if (!schemaValidationResult.valid) {
@@ -250,27 +250,27 @@ describe('Template', function () {
           });
 
           it('No HTML in description', function () {
-            const metadataObject = readJSONFile(metadataFilePath);
-            const description = metadataObject.description;
-            const htmlDetectionRegex = /<[a-z][\s\S]*>/i;
+            var metadataObject = readJSONFile(metadataFilePath);
+            var description = metadataObject.description;
+            var htmlDetectionRegex = /<[a-z][\s\S]*>/i;
             assert(!(htmlDetectionRegex).test(description), metadataFilePath + ' - Contains possible HTML elements which are not allowed');
           });
 
           it('dateUpdated not in the future', function () {
-            const metadataObject = readJSONFile(metadataFilePath);
-            const date = new Date(metadataObject.dateUpdated);
-            const currentTime = new Date(Date.now());
+            var metadataObject = readJSONFile(metadataFilePath);
+            var date = new Date(metadataObject.dateUpdated);
+            var currentTime = new Date(Date.now());
             assert(date < currentTime, metadataFilePath + ' - dateUpdated field should not be in the future');
           });
         });
 
         describe('Validate azuredeploy.parameters.json', function () {
-          const parametersFilePath = path.join(testDirectory, 'azuredeploy.parameters.json');
+          var parametersFilePath = path.join(testDirectory, 'azuredeploy.parameters.json');
 
           itExists(parametersFilePath);
 
           it('has a value or reference property for each parameter', function () {
-            const parametersObject = readJSONFile(parametersFilePath);
+            var parametersObject = readJSONFile(parametersFilePath);
             assert(parametersObject, 'Parameters file doesn\'t exist or isn\'t a valid JSON value.');
             assert(parametersObject.parameters, parametersFilePath + ' - Expected a \'.parameters\' field within the parameters file');
             for (var parameterName in parametersObject.parameters) {
@@ -284,7 +284,7 @@ describe('Template', function () {
         });
 
         describe('azuredeploy.json', function () {
-          const templateFilePath = path.join(testDirectory, 'azuredeploy.json');
+          var templateFilePath = path.join(testDirectory, 'azuredeploy.json');
 
           itExists(templateFilePath);
         });
