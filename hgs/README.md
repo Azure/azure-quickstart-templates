@@ -7,9 +7,9 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template allows you to Deploy Host Guardian Service For Shielded VM in Windows Server 2016 in Standalone mode (numberOfInstances=1) or in High Availability mode (numberOfInstances=1+) using Widnows Failover Clustering.
+This template allows you to Deploy Host Guardian Service For Shielded VM in Windows Server 2016 in Standalone mode (numberOfInstances=1) or in High Availability mode (numberOfInstances=1+) using Windows Failover Clustering.
 
-This template creates an Availability Set for SLA of 99.95% when deployed with high availibility (i.e. numberOfInstances=2+ ) and configure NAT rules through the load balancer. 
+This template creates an Availability Set for SLA of 99.95% when deployed with high availability (i.e. numberOfInstances=2+ ) and configure NAT rules through the load balancer. 
 
 The “Host Guardian Service” (HGS) is a new server role introduced in Windows Server 2016. HGS provides Attestation and Key Protection services that enable Hyper-V to run Shielded virtual machines. A Hyper-V host is known as a “guarded host” once the Attestation service affirmatively validates its identity & configuration. Once affirmatively attested, the Key Protection service provides the transport key (TK) needed to unlock & run Shielded VMs.
 
