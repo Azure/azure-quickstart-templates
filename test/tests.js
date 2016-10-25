@@ -72,7 +72,7 @@ function timedOutput(onOff, intervalObject) {
 }
 
 function getEnvironmentVariableBoolean(variableName, defaultValue) {
-  let result = defaultValue;
+  var result = defaultValue;
 
   if (variableName) {
     var variableValue = process.env[variableName];
