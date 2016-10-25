@@ -42,13 +42,18 @@ help()
     echo "  -c    create and mount afs share"
     echo "  -p    persist the mount (default: non persistent)"
     echo "  -s    name of the share (default: esdata00)"
-    echo "  -b    base directory for mount points (default: /datadisks)"
+    echo "  -b    base directory for mount points (default: /sharedfs)"
 }
 
 error()
 {
     echo "$1" >&2
     exit 3
+}
+
+log()
+{
+    echo "$1"
 }
 
 # issue_signed_request 
@@ -113,7 +118,8 @@ list_shares() {
 }
 
 create_share() {
-    share_name="$1"    
+    share_name="$1"
+    log "creating share $share_name"    
     
     # test whether share exists already
     response=$(list_shares)
@@ -132,8 +138,16 @@ mount_share() {
     share_name="$1"
     mount_location="$2"
     persist="$3"
-    mount_options="vers=3.0,username=${STORAGE_ACCOUNT},password=${ACCESS_KEY},dir_mode=0777,file_mode=0777"
+    creds_file="/etc/cifs.${share_name}"
+    mount_options="vers=3.0,dir_mode=0777,file_mode=0777,credentials=${creds_file}"
     mount_share="//${STORAGE_ACCOUNT}.file.core.windows.net/${SHARE_NAME}"
+    
+    log "creating credentials at ${creds_file}"
+    echo "username=${STORAGE_ACCOUNT}" >> ${creds_file}
+    echo "password=${ACCESS_KEY}" >> ${creds_file}
+    chmod 600 ${creds_file}
+    
+    log "mounting share $share_name at $mount_location"
     
     if [ $(cat /etc/mtab | grep -o "${mount_location}") ];
     then
@@ -179,9 +193,10 @@ fi
 STORAGE_ACCOUNT=""
 ACCESS_KEY=""
 SHARE_NAME="esdata00"
-BASE_DIRECTORY="/datadisks"
+BASE_DIRECTORY="/sharedfs"
 
 while getopts :b:a:k:s:pch optname; do
+  log "Option $optname set"
   case ${optname} in
     b) BASE_DIRECTORY=${OPTARG};;
     a) STORAGE_ACCOUNT=${OPTARG};;

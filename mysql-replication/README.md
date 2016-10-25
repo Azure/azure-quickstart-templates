@@ -20,15 +20,17 @@ This template deploys a MySQL replication environment with one master and one sl
 You can deploy the template with Azure Portal, or PowerShell, or Azure cross platform command line tools.  The example here uses PowerShell to deploy.
 
 **Default deployment**
-* Open Azure Powershell console, and log in by running Add-AzureAccount command.
-* Create a resource group:
+* Open Azure Powershell console, and log in by running Login-AzureRmAccount command.
 ```sh
-> Switch-AzureMode AzureResourceManager
-> New-AzureResourceGroup -Name "mysqlrg"-Location "East US"
+> Login-AzureRmAccount 
+```
+* Next, create a resource group:
+```sh
+> New-AzureRMResourceGroup -Name "mysqlrg"-Location "East US"
 ```
 * Create a deployment:
 ```sh
-> New-AzureResourceGroupDeployment -ResourceGroupName mysqlrg -TemplateFile .\azuredeploy.json -TemplateParameterFile .\azuredeploy.parameters.json
+> New-AzureRMResourceGroupDeployment -ResourceGroupName mysqlrg -TemplateFile .\azuredeploy.json -TemplateParameterFile .\azuredeploy.parameters.json
 ```
 **Custom deployment**
 * Take a look at AzureDeploy.json to see if you need to make any customization that's not exposed through the template parameters, for example, disk configurations.  If you do, download the template and make modifications locally.
@@ -116,6 +118,57 @@ on the slave:
 mysql> show slave status\G;
 ```
 
+### How to backup databases to Azure blob storage
+* There are several ways to
+take mysql backups as shown at <a href="https://dev.mysql.com/doc/refman/5.6/en/backup-and-recovery.html" >Mysql Backup and Recovery</a>. The example below shows mysql dump from the slave. 
+```sh
+# Create backups directory if not already created (modify folder as required)
+>mkdir  /home/admin/backups/
+
+# Install npm and azure-cli
+# For latest instructions for installing azure cli see https://azure.microsoft.com/en-in/documentation/articles/xplat-cli-install/. (sample commands below)
+> sudo yum update -y
+> sudo yum upgrade -y
+> sudo yum install epel-release -y
+> sudo yum install nodejs -y
+> sudo yum install npm -y
+> sudo npm install -g azure-cli
+
+# Login to azure account using azure cli 
+> azure login
+
+# Environment settings for your system
+> export AZURE_STORAGE_ACCOUNT=mysqlbkp
+> export AZURE_STORAGE_ACCESS_KEY=<your access key>
+> export image_to_upload=/home/admin/backups/db_bkp.sql.gz
+> export container_name=<your azure container name>
+> export blob_name=db-backup-$(date +%m-%d-%Y-%H%M%S).sql.gz
+> export destination_folder=<your azure destination folder name>
+
+> cd /home/admin/backups/
+
+# Stop replication to slave
+> mysqladmin stop-slave -u admin -p
+
+# Take mysql backup for all databases
+> mysqldump --all-databases > alldbs.sql -u admin -p
+
+# Compress the mysql backup
+> gzip alldbs.sql
+
+# Start slave replication
+> mysqladmin start-slave -u admin -p
+
+# Remove previous backup file
+> rm -Rf $image_to_upload
+
+# Move compressed mysql backup to the to be uploaded file
+> mv alldbs.sql.gz $image_to_upload
+
+# Move the backup to Azure Blob storage
+> azure storage blob upload $image_to_upload $container_name $blob_name
+ 
+```
 
 License
 ----

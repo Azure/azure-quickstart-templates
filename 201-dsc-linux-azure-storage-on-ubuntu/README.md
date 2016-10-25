@@ -14,6 +14,7 @@ With this template, you could:
 1. Push MOF configurations to the Linux VM, the MOF files should be placed in Azure Storage
 2. Distribute MOF configurations to the Linux VM with Pull Servers, the meta MOF files should be placed in Azure Storage
 3. Install custom DSC modules to the Linux VM, the resource module files should be placed in Azure Storage
+4. Register Linux VM to Azure Automation
 
 
 How to deploy

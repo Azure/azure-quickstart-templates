@@ -11,9 +11,9 @@ This template allows you to deploy a simple 5 node, Single Node Type Service fab
 
 ## Creating a custom ARM template
 
-If you are wanting to create a custom ARM template for your cluster, then you have to choices.
+If you are wanting to create a custom ARM template for your cluster, then you have two choices.
 
-1. You can acquire this sample template make changes to it. 
+1. You can acquire this sample template, and make changes to it. 
 2. Log into the azure portal and use the service fabric portal pages to generate the template for you to customize. 
 	3. Log on to the Azure Portal [http://aka.ms/servicefabricportal](http://aka.ms/servicefabricportal).
 	2. Go through the process of creating the cluster as described in [Creating Service Fabric Cluster via portal](https://azure.microsoft.com/documentation/articles/service-fabric-cluster-creation-via-portal) , but do not click on ***create**, instead go to Summary and download the template.

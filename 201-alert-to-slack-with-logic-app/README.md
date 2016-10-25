@@ -7,7 +7,7 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template allows you to create a Logic app that has a webhook to be used from an Azure Alert. When the Alert is triggered, it will post a message to a slack channel that you specify. It uses the go.gl URL shortening service to include a link to the portal to see the resource. You need to have a slack account to use this template.
+This template allows you to create a Logic app that has a webhook to be used from an Azure Alert. When the Alert is triggered, it will post a message to a slack channel that you specify. You need to have a slack account to use this template.
 
 ## Authorizing with Slack
 
@@ -16,8 +16,8 @@ After the template deployment has completed, there is a manual step that you mus
 1. Once the template has completed, navigate to the resource group you deployed it to.
 2. Find the Logic app (represented by a rocket icon) in the resource list, and click it.
 3. Select the **Edit** button in the command bar.
-4. You'll now see the *Logic app designer*, and you'll see a card with **Slack** in the title, and an **Authorize** button.
-5. Click the **Authorize** button, a dialog will pop up, asking you for your credentials.
+4. You'll now see the *Logic app designer*, and you'll see a card with **Slack** in the title, and an **Change Connection** text.
+5. Click it and choose "Create New"
 6. Sign in, and acknowledge that Logic apps can access your account. 
 7. Click the Green checkmark at the bottom fo the **Slack**card.
 8. Click the Save button in the command bar.
