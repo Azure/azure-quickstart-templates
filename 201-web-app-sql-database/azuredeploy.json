@@ -31,73 +31,24 @@
         "description": "Describes plan's instance count"
       }
     },
-    "administratorLogin": {
+    "sqlAdministratorLogin": {
       "type": "string",
       "metadata": {
         "description": "The admin user of the SQL Server"
       }
     },
-    "administratorLoginPassword": {
+    "sqlAdministratorLoginPassword": {
       "type": "securestring",
       "metadata": {
         "description": "The password of the admin user of the SQL Server"
-      }
-
-    },
-    "databaseName": {
-      "type": "string",
-      "defaultValue": "sampledb",
-      "metadata": {
-        "description": "The name of the new database to create."
-      }
-    },
-    "collation": {
-      "type": "string",
-      "defaultValue": "SQL_Latin1_General_CP1_CI_AS",
-      "metadata": {
-        "description": "The database collation for governing the proper use of characters."
-      }
-    },
-    "edition": {
-      "type": "string",
-      "defaultValue": "Basic",
-      "allowedValues": [
-        "Basic",
-        "Standard",
-        "Premium"
-      ],
-      "metadata": {
-        "description": "The type of database to create."
-      }
-    },
-    "maxSizeBytes": {
-      "type": "string",
-      "defaultValue": "1073741824",
-      "metadata": {
-        "description": "The maximum size, in bytes, for the database"
-      }
-    },
-    "requestedServiceObjectiveName": {
-      "type": "string",
-      "defaultValue": "Basic",
-      "allowedValues": [
-        "Basic",
-        "S0",
-        "S1",
-        "S2",
-        "P1",
-        "P2",
-        "P3"
-      ],
-      "metadata": {
-        "description": "Describes the performance level for Edition"
       }
     }
   },
   "variables": {
     "hostingPlanName": "[concat('hostingplan', uniqueString(resourceGroup().id))]",
     "webSiteName": "[concat('webSite', uniqueString(resourceGroup().id))]",
-    "sqlserverName": "[concat('sqlserver', uniqueString(resourceGroup().id))]"
+    "sqlserverName": "[concat('sqlserver', uniqueString(resourceGroup().id))]",
+    "databaseName": "sampledb"
   },
   "resources": [
     {
@@ -107,33 +58,34 @@
       "tags": {
         "displayName": "SqlServer"
       },
-      "apiVersion": "2014-04-01-preview",
+      "apiVersion": "2014-04-01",
       "properties": {
-        "administratorLogin": "[parameters('administratorLogin')]",
-        "administratorLoginPassword": "[parameters('administratorLoginPassword')]"
+        "administratorLogin": "[parameters('sqlAdministratorLogin')]",
+        "administratorLoginPassword": "[parameters('sqlAdministratorLoginPassword')]",
+        "version": "12.0"
       },
       "resources": [
         {
-          "name": "[parameters('databaseName')]",
+          "name": "[variables('databaseName')]",
           "type": "databases",
           "location": "[resourceGroup().location]",
           "tags": {
             "displayName": "Database"
           },
-          "apiVersion": "2014-04-01-preview",
+          "apiVersion": "2015-01-01",
           "dependsOn": [
             "[variables('sqlserverName')]"
           ],
           "properties": {
-            "edition": "[parameters('edition')]",
-            "collation": "[parameters('collation')]",
-            "maxSizeBytes": "[parameters('maxSizeBytes')]",
-            "requestedServiceObjectiveName": "[parameters('requestedServiceObjectiveName')]"
+            "edition": "Basic",
+            "collation": "SQL_Latin1_General_CP1_CI_AS",
+            "maxSizeBytes": "1073741824",
+            "requestedServiceObjectiveName": "Basic"
           }
         },
         {
           "type": "firewallrules",
-          "apiVersion": "2014-04-01-preview",
+          "apiVersion": "2014-04-01",
           "dependsOn": [
             "[variables('sqlserverName')]"
           ],
@@ -147,7 +99,7 @@
       ]
     },
     {
-      "apiVersion": "2015-08-01",
+      "apiVersion": "2016-03-01",
       "name": "[variables('hostingPlanName')]",
       "type": "Microsoft.Web/serverfarms",
       "location": "[resourceGroup().location]",
@@ -163,7 +115,7 @@
       }
     },
     {
-      "apiVersion": "2015-08-01",
+      "apiVersion": "2016-03-01",
       "name": "[variables('webSiteName')]",
       "type": "Microsoft.Web/sites",
       "location": "[resourceGroup().location]",
@@ -180,7 +132,7 @@
       },
       "resources": [
         {
-          "apiVersion": "2015-08-01",
+          "apiVersion": "2016-03-01",
           "type": "config",
           "name": "connectionstrings",
           "dependsOn": [
@@ -188,15 +140,15 @@
           ],
           "properties": {
             "DefaultConnection": {
-              "value": "[concat('Data Source=tcp:', reference(concat('Microsoft.Sql/servers/', variables('sqlserverName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', parameters('databaseName'), ';User Id=', parameters('administratorLogin'), '@', variables('sqlserverName'), ';Password=', parameters('administratorLoginPassword'), ';')]",
-              "type": "SQLServer"
+              "value": "[concat('Data Source=tcp:', reference(concat('Microsoft.Sql/servers/', variables('sqlserverName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', variables('databaseName'), ';User Id=', parameters('sqlAdministratorLogin'), '@', reference(concat('Microsoft.Sql/servers/', variables('sqlserverName'))).fullyQualifiedDomainName, ';Password=', parameters('sqlAdministratorLoginPassword'), ';')]",
+              "type": "SQLAzure"
             }
           }
         }
       ]
     },
     {
-      "apiVersion": "2014-04-01",
+      "apiVersion": "2015-04-01",
       "name": "[concat(variables('hostingPlanName'), '-', resourceGroup().name)]",
       "type": "Microsoft.Insights/autoscalesettings",
       "location": "[resourceGroup().location]",
@@ -262,7 +214,7 @@
       }
     },
     {
-      "apiVersion": "2014-04-01",
+      "apiVersion": "2015-04-01",
       "name": "[concat('ServerErrors ', variables('webSiteName'))]",
       "type": "Microsoft.Insights/alertrules",
       "location": "[resourceGroup().location]",
@@ -296,7 +248,7 @@
       }
     },
     {
-      "apiVersion": "2014-04-01",
+      "apiVersion": "2015-04-01",
       "name": "[concat('ForbiddenRequests ', variables('webSiteName'))]",
       "type": "Microsoft.Insights/alertrules",
       "location": "[resourceGroup().location]",
@@ -330,7 +282,7 @@
       }
     },
     {
-      "apiVersion": "2014-04-01",
+      "apiVersion": "2015-04-01",
       "name": "[concat('CPUHigh ', variables('hostingPlanName'))]",
       "type": "Microsoft.Insights/alertrules",
       "location": "[resourceGroup().location]",
@@ -364,7 +316,7 @@
       }
     },
     {
-      "apiVersion": "2014-04-01",
+      "apiVersion": "2015-04-01",
       "name": "[concat('LongHttpQueue ', variables('hostingPlanName'))]",
       "type": "Microsoft.Insights/alertrules",
       "location": "[resourceGroup().location]",
@@ -398,10 +350,10 @@
       }
     },
     {
-      "apiVersion": "2014-04-01",
+      "apiVersion": "2015-05-01",
       "name": "[concat('AppInsights', variables('webSiteName'))]",
       "type": "Microsoft.Insights/components",
-      "location": "Central US",
+      "location": "centralus",
       "dependsOn": [
         "[variables('webSiteName')]"
       ],
@@ -417,7 +369,7 @@
   "outputs": {
     "siteUri": {
       "type": "string",
-      "value": "[reference(concat('Microsoft.Web/sites/', variables('webSiteName')), '2015-08-01').hostnames[0]]"
+      "value": "[reference(concat('Microsoft.Web/sites/', variables('webSiteName'))).hostnames[0]]"
     },
     "sqlSvrFqdn": {
       "type": "string",
