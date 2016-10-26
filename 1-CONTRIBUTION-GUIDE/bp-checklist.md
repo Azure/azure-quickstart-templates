@@ -1,10 +1,10 @@
-# Azure Resource Manager Best Practice Checklist
+# Azure Resource Manager Templates - Best Practice Checklist
 
 Use this as a quick checklist to ensure your sample meets the minimum set of guidelines for samples in this repository.  For the full set and a detailed explanation see the [**Best Practices Guide**](/1-CONTRIBUTION-GUIDE/best-practices.md#best-practices). 
 
 These practices ensure your sample provides a consistent, reliable experience across all Azure Clouds.
 
-## Best practices
+## Checklist
 
 + All uri's should be compatible with all clouds (Stack, China, Government)
 	+ See #9 in [**Best practices**](/1-CONTRIBUTION-GUIDE/best-practices.md#best-practices) 
