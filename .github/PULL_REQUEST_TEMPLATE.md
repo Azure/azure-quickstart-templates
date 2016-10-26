@@ -1,5 +1,5 @@
 ### Best Practice Checklist
-Check these items before submitting a PR...
+Check these items before submitting a PR... See the Contribution Guide for the full detail: https://github.com/Azure/azure-quickstart-templates/blob/master/1-CONTRIBUTION-GUIDE/README.md 
 
 + uri's compatible with all clouds (Stack, China, Government)
 + Staged artifacts use _artifactsLocation & _artifactsLocationSasToken
