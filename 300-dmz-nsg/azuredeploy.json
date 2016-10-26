@@ -1,33 +1,24 @@
 ﻿{
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-  "contentVersion": "1.0.0.0",
-  "parameters": {
-    "newStorageAccountName": {
-      "type": "string",
-      "minLength": 3,
-      "maxLength": 24,
-      "metadata": {
-        "description": "Unique DNS Name for the Storage Account where the Virtual Machine's disks will be placed."
-      }
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "adminUsername": {
+            "type": "string",
+            "minLength": 1,
+            "metadata": {
+                "description": "Username for the Virtual Machines."
+            }
+        },
+        "adminPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Password for the Virtual Machines."
+            }
+        }
     },
-    "adminUsername": {
-      "type": "string",
-      "minLength": 1,
-      "metadata": {
-        "description": "Username for the Virtual Machines."
-      }
-    },
-    "adminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Password for the Virtual Machines."
-      }
-    }
-  },
   "variables": {
     "NSGName": "myVNetNSG",
 
-    "FWName": "myFirewall",
     "VM01Name": "IIS01",
     "VM02Name": "AppVM01",
     "VM03Name": "AppVM02",
@@ -39,12 +30,12 @@
     "Subnet2Name": "BackEnd",
     "Subnet2Prefix": "10.0.2.0/24",
 
-    "FWSubnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('VNetName')), '/subnets/', variables('Subnet1Name'))]",
     "NIC01SubnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('VNetName')), '/subnets/', variables('Subnet1Name'))]",
     "NIC02SubnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('VNetName')), '/subnets/', variables('Subnet2Name'))]",
     "NIC03SubnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('VNetName')), '/subnets/', variables('Subnet2Name'))]",
     "NIC04SubnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('VNetName')), '/subnets/', variables('Subnet2Name'))]",
 
+    "StorageAccountName": "[concat(uniquestring(resourceGroup().id), 'dmz1')]",
     "storageAccountType": "Standard_LRS",
     "imageOffer": "WindowsServer",
     "imagePublisher": "MicrosoftWindowsServer",
@@ -55,8 +46,8 @@
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[parameters('newStorageAccountName')]",
-      "apiVersion": "2015-05-01-preview",
+      "name": "[variables('StorageAccountName')]",
+      "apiVersion": "2016-01-01",
       "location": "[resourceGroup().location]",
       "tags": {
         "displayName": "StorageAccount"
@@ -66,16 +57,16 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('VNetName')]",
+      "apiVersion": "2016-03-30",
       "location": "[resourceGroup().location]",
       "tags": {
         "displayName": "VNet01"
       },
       "dependsOn": [
         "[concat('Microsoft.Network/networkSecurityGroups/', variables('NSGName'))]",
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('FWName'), '_NIC_PIP')]"
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('VM01Name'), '_NIC_PIP')]"
       ],
       "properties": {
         "addressSpace": {
@@ -107,12 +98,12 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[concat(variables('FWName'), '_NIC_PIP' )]",
+      "name": "[concat(variables('VM01Name'), '_NIC_PIP' )]",
+      "apiVersion": "2016-03-30",
       "location": "[resourceGroup().location]",
       "tags": {
-        "displayName": "FW NIC PIP"
+        "displayName": "IIS01 NIC PIP"
       },
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
@@ -120,9 +111,9 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('VM01Name'), '_NIC')]",
+      "apiVersion": "2016-03-30",
       "location": "[resourceGroup().location]",
       "tags": {
         "displayName": "IIS01 NIC"
@@ -137,6 +128,9 @@
             "properties": {
               "privateIPAllocationMethod": "Static",
               "privateIPAddress": "10.0.1.5",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('VM01Name'), '_NIC_PIP' ))]"
+              },
               "subnet": {
                 "id": "[variables('NIC01SubnetRef')]"
               }
@@ -146,9 +140,9 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('VM02Name'), '_NIC')]",
+      "apiVersion": "2016-03-30",
       "location": "[resourceGroup().location]",
       "tags": {
         "displayName": "AppVM01 NIC"
@@ -172,9 +166,9 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('VM03Name'), '_NIC')]",
+      "apiVersion": "2016-03-30",
       "location": "[resourceGroup().location]",
       "tags": {
         "displayName": "AppVM02 NIC"
@@ -198,9 +192,9 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('VM04Name'), '_NIC')]",
+      "apiVersion": "2016-03-30",
       "location": "[resourceGroup().location]",
       "tags": {
         "displayName": "DNS01 NIC"
@@ -224,44 +218,15 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
-      "type": "Microsoft.Network/networkInterfaces",
-      "name": "[concat(variables('FWName'), '_NIC')]",
-      "location": "[resourceGroup().location]",
-      "tags": {
-        "displayName": "myFirewall NIC"
-      },
-      "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('VNetName'))]"
-      ],
-      "properties": {
-        "ipConfigurations": [
-          {
-            "name": "ipconfig",
-            "properties": {
-              "privateIPAllocationMethod": "Static",
-              "privateIPAddress": "10.0.1.4",
-              "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('FWName'), '_NIC_PIP' ))]"
-              },
-              "subnet": {
-                "id": "[variables('FWSubnetRef')]"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('VM01Name')]",
+      "apiVersion": "2015-06-15",
       "location": "[resourceGroup().location]",
       "tags": {
         "displayName": "IIS01"
       },
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('StorageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('VM01Name'), '_NIC')]"
       ],
       "properties": {
@@ -283,7 +248,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/', variables('VM01Name'),'.vhd')]"
+              "uri": "[concat('http://',variables('StorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/', variables('VM01Name'),'.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -302,15 +267,15 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('VM02Name')]",
+      "apiVersion": "2015-06-15",
       "location": "[resourceGroup().location]",
       "tags": {
         "displayName": "AppVM01"
       },
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('StorageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/',  variables('VM02Name'), '_NIC')]"
       ],
       "properties": {
@@ -332,7 +297,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('VM02Name'),'.vhd')]"
+              "uri": "[concat('http://',variables('StorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('VM02Name'),'.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -351,15 +316,15 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('VM03Name')]",
+      "apiVersion": "2015-06-15",
       "location": "[resourceGroup().location]",
       "tags": {
         "displayName": "AppVM02"
       },
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('StorageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/',  variables('VM03Name'), '_NIC')]"
       ],
       "properties": {
@@ -381,7 +346,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('VM03Name'),'.vhd')]"
+              "uri": "[concat('http://',variables('StorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('VM03Name'),'.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -400,15 +365,15 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('VM04Name')]",
+      "apiVersion": "2015-06-15",
       "location": "[resourceGroup().location]",
       "tags": {
         "displayName": "DNS01"
       },
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('StorageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/',  variables('VM04Name'), '_NIC')]"
       ],
       "properties": {
@@ -430,7 +395,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('VM04Name'),'.vhd')]"
+              "uri": "[concat('http://',variables('StorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('VM04Name'),'.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -449,63 +414,9 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
-      "type": "Microsoft.Compute/virtualMachines",
-      "name": "[variables('FWName')]",
-      "location": "[resourceGroup().location]",
-      "tags": {
-        "displayName": "myFirewall"
-      },
-      "plan": {
-        "name": "fortinet_fg-vm",
-        "publisher": "fortinet",
-        "product": "fortinet_fortigate-vm_v5"
-      },
-      "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/',variables('FWName'),'_NIC')]"
-      ],
-      "properties": {
-        "hardwareProfile": {
-          "vmSize": "[variables('vmSize')]"
-        },
-        "osProfile": {
-          "computerName": "[variables('FWName')]",
-          "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
-        },
-        "storageProfile": {
-          "imageReference": {
-            "publisher": "fortinet",
-            "offer": "fortinet_fortigate-vm_v5",
-            "sku": "fortinet_fg-vm",
-            "version": "latest"
-          },
-          "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('FWName'),'.vhd')]"
-            },
-            "caching": "ReadWrite",
-            "createOption": "FromImage"
-          }
-        },
-        "networkProfile": {
-          "networkInterfaces": [
-            {
-              "properties": {
-                "primary": true
-              },
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('FWName'),'_NIC'))]"
-            }
-          ]
-        }
-      }
-    },
-    {
-      "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('NSGName')]",
+      "apiVersion": "2016-03-30",
       "location": "[resourceGroup().location]",
       "tags": {
         "displayName": "myVNetNSG"
@@ -533,8 +444,8 @@
               "protocol": "Tcp",
               "sourcePortRange": "*",
               "destinationPortRange": "3389",
-              "sourceAddressPrefix": "Internet",
-              "destinationAddressPrefix": "VirtualNetwork",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
               "access": "Allow",
               "priority": 110,
               "direction": "Inbound"
@@ -543,12 +454,12 @@
           {
             "name": "enable_web_rule",
             "properties": {
-              "description": "Enable Internet to [variables('FWName')]",
-              "protocol": "*",
+              "description": "Enable Internet to [variables('VM01Name')]",
+              "protocol": "Tcp",
               "sourcePortRange": "*",
-              "destinationPortRange": "*",
+              "destinationPortRange": "80",
               "sourceAddressPrefix": "Internet",
-              "destinationAddressPrefix": "10.0.1.4",
+              "destinationAddressPrefix": "10.0.1.5",
               "access": "Allow",
               "priority": 120,
               "direction": "Inbound"
