@@ -607,6 +607,8 @@ Configuration xHGS
                                                  -HttpsPort $($using:Node.HttpsPort ) `
                                                  -HttpsCertificateThumbprint $_httpsCertificateThumbprint 
                             
+							#Import cert with keys must happen after initialize
+
                             $_EncryptionCertificatePassword = ConvertTo-SecureString -AsPlainText "$($using:Node.EncryptionCertificatePassword)" –Force 
                             $_SigningCertificatePassword = ConvertTo-SecureString -AsPlainText "$($using:Node.SigningCertificatePassword)" –Force
 							                          
@@ -615,33 +617,6 @@ Configuration xHGS
 							Import-PfxCertificate -CertStoreLocation Cert:\LocalMachine\My -FilePath (([string]::Format('\\{0}\{1}', $($using:Node.HgsServerPrimaryIPAddress), $($using:Node.SigningCertificatePath))).replace(":","$")) -Password $_SigningCertificatePassword 
                      
                       
-							$encryptionCert = (Get-ChildItem  Cert:\LocalMachine\My | where {$_.Subject -eq ('CN=' + "$($using:Node.EncryptionCertificateName)") } | Sort-Object NotAfter | select -Last 1 )
-
-							[System.Security.Cryptography.RSACng] $rsa = [System.Security.Cryptography.X509Certificates.RSACertificateExtensions]::GetRSAPrivateKey($encryptionCert)
-							[System.Security.Cryptography.CngKey] $key = $rsa.Key
-							Write-Verbose "encryptionCert Private key is located at $($key.UniqueName)"
-							$encryptionCertPath = "C:\ProgramData\Microsoft\Crypto\Keys\$($key.UniqueName)"
-
-							$acl= Get-Acl -Path $encryptionCertPath
-							$permission="Authenticated Users","FullControl","Allow"
-							$accessRule=new-object System.Security.AccessControl.FileSystemAccessRule $permission
-							$acl.AddAccessRule($accessRule)
-							Set-Acl $encryptionCertPath $acl
-					                        
-
-							$SigningCert = (Get-ChildItem  Cert:\LocalMachine\My | where {$_.Subject -eq ('CN=' + "$($using:Node.SigningCertificateName)") } | Sort-Object NotAfter | select -Last 1 )
-
-							[System.Security.Cryptography.RSACng] $rsa = [System.Security.Cryptography.X509Certificates.RSACertificateExtensions]::GetRSAPrivateKey($SigningCert)
-							[System.Security.Cryptography.CngKey] $key = $rsa.Key
-							Write-Verbose "SigningCert Private key is located at $($key.UniqueName)"
-							$SigningCertPath = "C:\ProgramData\Microsoft\Crypto\Keys\$($key.UniqueName)"
-
-							$acl= Get-Acl -Path $SigningCertPath
-							$permission="Authenticated Users","FullControl","Allow"
-							$accessRule=new-object System.Security.AccessControl.FileSystemAccessRule $permission
-							$acl.AddAccessRule($accessRule)
-							Set-Acl $SigningCertPath $acl
-
                         }
                         else
                         {
@@ -655,6 +630,34 @@ Configuration xHGS
 
                             
                         }
+
+						#Granting Access to private keys
+						$encryptionCert = (Get-ChildItem  Cert:\LocalMachine\My | where {$_.Subject -eq ('CN=' + "$($using:Node.EncryptionCertificateName)") } | Sort-Object NotAfter | select -Last 1 )
+
+						[System.Security.Cryptography.RSACng] $rsa = [System.Security.Cryptography.X509Certificates.RSACertificateExtensions]::GetRSAPrivateKey($encryptionCert)
+						[System.Security.Cryptography.CngKey] $key = $rsa.Key
+						Write-Verbose "encryptionCert Private key is located at $($key.UniqueName)"
+						$encryptionCertPath = "C:\ProgramData\Microsoft\Crypto\Keys\$($key.UniqueName)"
+
+						$acl= Get-Acl -Path $encryptionCertPath
+						$permission="Authenticated Users","FullControl","Allow"
+						$accessRule=new-object System.Security.AccessControl.FileSystemAccessRule $permission
+						$acl.AddAccessRule($accessRule)
+						Set-Acl $encryptionCertPath $acl
+					                        
+
+						$SigningCert = (Get-ChildItem  Cert:\LocalMachine\My | where {$_.Subject -eq ('CN=' + "$($using:Node.SigningCertificateName)") } | Sort-Object NotAfter | select -Last 1 )
+
+						[System.Security.Cryptography.RSACng] $rsa = [System.Security.Cryptography.X509Certificates.RSACertificateExtensions]::GetRSAPrivateKey($SigningCert)
+						[System.Security.Cryptography.CngKey] $key = $rsa.Key
+						Write-Verbose "SigningCert Private key is located at $($key.UniqueName)"
+						$SigningCertPath = "C:\ProgramData\Microsoft\Crypto\Keys\$($key.UniqueName)"
+
+						$acl= Get-Acl -Path $SigningCertPath
+						$permission="Authenticated Users","FullControl","Allow"
+						$accessRule=new-object System.Security.AccessControl.FileSystemAccessRule $permission
+						$acl.AddAccessRule($accessRule)
+						Set-Acl $SigningCertPath $acl
                                               
                                                                       
                                   
