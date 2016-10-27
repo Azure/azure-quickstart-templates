@@ -40,7 +40,7 @@ The Autoscale rules are configured as follows
 ## Prerequisites
 
 Before deploying this template you must:
-- Construct your LANSA application using [Visual LANSA for Web Development](https://azure.microsoft.com/en-us/marketplace/partners/lansa/visuallansa/) Version 14.1 EPC 141010 with Hot Fix EPC141010HF_161021 applied.
+- Construct your LANSA application using [Visual LANSA for Web Development](https://azure.microsoft.com/en-us/marketplace/partners/lansa/visuallansa/) Version 14.1 with EPCs 141010, 141011 and 141013 applied, or later.
 - Construct a deployment image MSI using the LANSA Deployment Tool provided with [Visual LANSA for Web Development](https://azure.microsoft.com/en-us/marketplace/partners/lansa/visuallansa/).
 - Upload your LANSA Web Application MSI to Azure BLOB storage and obtain the URL of the MSI. Note that the template includes a demonstration application so it is not strictly necessary to create a LANSA MSI in order to use the template.
 - Its also highly recommended to follow the usage instructions below :)
