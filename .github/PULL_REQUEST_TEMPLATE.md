@@ -13,9 +13,9 @@ Check these items before submitting a PR... See the Contribution Guide for the f
 
 For details: https://github.com/Azure/azure-quickstart-templates/blob/master/1-CONTRIBUTION-GUIDE/bp-checkist.md
 
+- [ ] - Please check this box once you've submitted the PR if you've read through the Contribution Guide and best practices checklist.
+
 ### Changelog
 *
 *
 *
-
-### Description of the change
