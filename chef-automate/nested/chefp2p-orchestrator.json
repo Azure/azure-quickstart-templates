@@ -1,0 +1,358 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "publicIPDomainNameLabelOrchServer": {
+      "defaultValue": "",
+      "type": "string"
+    },
+    "networkSecurityGroupNameOrchServer": {
+      "defaultValue": "",
+      "type": "string"
+    },
+    "networkInterfaceNameOrchServer": {
+      "defaultValue": "",
+      "type": "string"
+    },
+    "vmNameOrchServer": {
+      "defaultValue": "",
+      "type": "string"
+    },
+    "vmAdminUsernameOrchServer": {
+      "defaultValue": "",
+      "type": "string"
+    },
+    "vmAdminPasswordOrchServer": {
+      "defaultValue": "",
+      "type": "securestring"
+    },
+    "storageAccountName": {
+      "defaultValue": "",
+      "type": "string"
+    },
+    "vmStorageAccountContainerName": {
+      "defaultValue": "",
+      "type": "string"
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "network-api-version": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "compute-api-version": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "deployment-api-version2": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "tagvalues": {
+      "type": "object",
+      "defaultValue": ""
+    },
+    "imagePublisherLinux": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "imageOfferLinux": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "orcServerubuntuOSVersion": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "vmSizeOrcServer": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "subnet2Ref": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "installOrchTemplateurl": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "componentAdminUsername": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "componentAdminPassword": {
+      "type": "securestring",
+      "defaultValue": ""
+    },
+    "componentBaseUrl": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "email": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "component": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "cckeyName": {
+      "type": "string",
+      "defaultValue": ""
+    }
+  },
+  "variables": {
+    "publicIPAddressNameOrchServer": "publicipOrchestratorServer"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[parameters('vmNameOrchServer')]",
+      "apiVersion": "[parameters('compute-api-version')]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "program": "[parameters('tagvalues').program]",
+        "project": "[parameters('tagvalues').project]"
+      },
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSizeOrcServer')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[parameters('imagePublisherLinux')]",
+            "offer": "[parameters('imageOfferLinux')]",
+            "sku": "[parameters('orcServerubuntuOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(parameters('vmNameOrchServer'),'-osDisk')]",
+            "createOption": "FromImage",
+            "vhd": {
+              "uri": "[concat('https', '://', parameters('storageAccountName'), '.blob.core.windows.net','/', parameters('vmStorageAccountContainerName'),'/', parameters('vmNameOrchServer'),'-osdisk.vhd')]"
+            },
+            "caching": "ReadWrite"
+          },
+          "dataDisks": []
+        },
+        "osProfile": {
+          "computerName": "[parameters('vmNameOrchServer')]",
+          "adminUsername": "[parameters('vmAdminUsernameOrchServer')]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": false
+          },
+          "secrets": [],
+          "adminPassword": "[parameters('vmAdminPasswordOrchServer')]"
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaceNameOrchServer'))]"
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaceNameOrchServer'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmNameOrchServer'),'/','installdockerandcompose')]",
+      "apiVersion": "[parameters('compute-api-version')]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "program": "[parameters('tagvalues').program]",
+        "project": "[parameters('tagvalues').project]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmNameOrchServer'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "DockerExtension",
+        "typeHandlerVersion": "1.1",
+        "autoUpgradeMinorVersion": true,
+        "settings": {}
+      }
+    },
+    {
+      "name": "orchestratorapplication",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "[parameters('deployment-api-version2')]",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmNameOrchServer'),'/extensions/installdockerandcompose')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[parameters('installOrchTemplateurl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "vmName": {
+            "value": "[parameters('vmNameOrchServer')]"
+          },
+          "keyName": {
+            "value": "[parameters('cckeyName')]"
+          },
+          "componentAdminUsername": {
+            "value": "[parameters('componentAdminUsername')]"
+          },
+          "componentAdminPassword": {
+            "value": "[parameters('componentAdminPassword')]"
+          },
+          "componentBaseUrl": {
+            "value": "[parameters('componentBaseUrl')]"
+          },
+          "orchestratorbaseurl": {
+            "value": "[concat(parameters('publicIPDomainNameLabelOrchServer'),'.',parameters('location'),'.cloudapp.azure.com')]"
+          },
+          "email": {
+            "value": "[parameters('email')]"
+          },
+          "component": {
+            "value": "[parameters('component')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIPAddressNameOrchServer')]",
+      "apiVersion": "[parameters('network-api-version')]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "program": "[parameters('tagvalues').program]",
+        "project": "[parameters('tagvalues').project]"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('publicIPDomainNameLabelOrchServer')]"
+        },
+        "idleTimeoutInMinutes": 4
+      },
+      "dependsOn": []
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[parameters('networkInterfaceNameOrchServer')]",
+      "apiVersion": "[parameters('network-api-version')]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "program": "[parameters('tagvalues').program]",
+        "project": "[parameters('tagvalues').project]"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressNameOrchServer'))]"
+              },
+              "subnet": {
+                "id": "[parameters('subnet2Ref')]"
+              }
+            }
+          }
+        ],
+        "dnsSettings": {
+          "dnsServers": []
+        },
+        "enableIPForwarding": false,
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupNameOrchServer'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressNameOrchServer'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupNameOrchServer'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[parameters('networkSecurityGroupNameOrchServer')]",
+      "apiVersion": "[parameters('network-api-version')]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "program": "[parameters('tagvalues').program]",
+        "project": "[parameters('tagvalues').project]"
+      },
+      "properties": {
+        "securityRules": [
+          {
+            "name": "ssh",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1010,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "http",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1020,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "https",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1030,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "https8443",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "8443",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1040,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "http33001",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "33001",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1050,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      },
+      "dependsOn": []
+    }
+  ]
+}
