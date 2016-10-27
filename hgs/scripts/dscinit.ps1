@@ -250,7 +250,7 @@ Configuration xHGS
                      if(!(Get-PSDrive -Name AD -ErrorAction SilentlyContinue)){ New-PSDrive -Name AD -PSProvider ActiveDirectory -Root //RootDSE/ }
 
 
-                     if($using:Node.GenerateSelfSignedCertificate)
+                     if([boolean]::Parse("$($using:Node.GenerateSelfSignedCertificate)"))
                      {
 						                         
                         $_Httpscertname = "$($using:Node.HttpsCertificateName)"
@@ -581,7 +581,7 @@ Configuration xHGS
                             throw "Can't get Impersonate Token from DSC toLogon as User $cred.GetNetworkCredential().UserName."
                         }
 
-                        if($using:Node.GenerateSelfSignedCertificate)
+                        if([boolean]::Parse("$($using:Node.GenerateSelfSignedCertificate)"))
                         {
                              #Copy the self-signed certificate generated on first node
 
