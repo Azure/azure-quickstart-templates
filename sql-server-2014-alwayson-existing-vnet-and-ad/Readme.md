@@ -11,7 +11,7 @@ This template creates the following resources:
 
 A SQL Server always on listener is created using the internal load balancer.
 
-To deploy the required Azure VNET and Active Directory infrastructure, if not already in place, you may use the *DeployADOnly.json* template that is also located in this project. Alternatively, use the *DeployAD+SQL.json* template to deploy both AD and SQL together.
+To deploy the required Azure VNET and Active Directory infrastructure, if not already in place, you may use <a href="https://github.com/Azure/azure-quickstart-templates/tree/master/active-directory-new-domain-ha-2-dc">this template</a> to deploy the prerequisite infrastructure.
 
 ## Notes
 
@@ -27,7 +27,7 @@ To deploy the required Azure VNET and Active Directory infrastructure, if not al
 
 +	To successfully deploy this template, be sure that the subnet to which the SQL VMs are being deployed already exists on the specified Azure virtual network, AND this subnet should be defined in Active Directory Sites and Services for the appropriate AD site in which the closest domain controllers are configured.
 
-+ To deploy the required Azure VNET and Active Directory infrastructure, if not already in place, you may use the *DeployADOnly.json* template that is also located in this project. Alternatively, use the *DeployAD+SQL.json* template to deploy both AD and SQL together.
++ To deploy the required Azure VNET and Active Directory infrastructure, if not already in place, you may use <a href="https://github.com/Azure/azure-quickstart-templates/tree/master/active-directory-new-domain-ha-2-dc">this template</a>.
 
 Click the button below to deploy from the portal
 
@@ -38,16 +38,30 @@ Click the button below to deploy from the portal
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-## Deploying from PowerShell
+## Deploying Sample Templates
 
-For details on how to install and configure Azure Powershell see [here].(https://azure.microsoft.com/en-us/documentation/articles/powershell-install-configure/)
+You can deploy these samples directly through the Azure Portal or by using the scripts supplied in the root of the repo.
 
-Launch a PowerShell console
+To deploy a sammple using the Azure Portal, click the **Deploy to Azure** button found in the README.md of each sample.
 
-Change working folder to the folder containing this template
+To deploy the sample via the command line (using [Azure PowerShell or the Azure CLI](https://azure.microsoft.com/en-us/downloads/)) you can use the scripts.
+
+Simple execute the script and pass in the folder name of the sample you want to deploy.  For example:
 
 ```PowerShell
-
-New-AzureRmResourceGroup -Name "<new resourcegroup name>" -Location "<new resourcegroup location>"  -TemplateParameterFile .\azuredeploy-parameters.json -TemplateFile .\azuredeploy.json
-
+.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactsStagingDirectory '[foldername]'
 ```
+```bash
+azure-group-deploy.sh -a [foldername] -l eastus -u
+```
+If the sample has artifacts that need to be "staged" for deployment (Configuration Scripts, Nested Templates, DSC Packages) then set the upload switch on the command.
+You can optionally specify a storage account to use, if so the storage account must already exist within the subscription.  If you don't want to specify a storage account
+one will be created by the script or reused if it already exists (think of this as "temp" storage for AzureRM).
+
+```PowerShell
+.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactsStagingDirectory '201-vm-custom-script-windows' -UploadArtifacts 
+```
+```bash
+azure-group-deploy.sh -a '201-vm-custom-script-windows' -l eastus -u
+```
+Tags: ``cluster, ha, sql, alwayson``
