@@ -6,12 +6,13 @@ The following information is relevant to get started with contributing to this r
 + [**Contribution guide**](/1-CONTRIBUTION-GUIDE/README.md#contribution-guide). Describes the minimal guidelines for contributing.
 + [**Best practices**](/1-CONTRIBUTION-GUIDE/best-practices.md#best-practices). Best practices for improving the quality of your template design.
 + [**Git tutorial**](/1-CONTRIBUTION-GUIDE/git-tutorial.md#git-tutorial). Step by step to get you started with Git.
++ [**Useful Tools**](/1-CONTRIBUTION-GUIDE/useful-tools.md#useful-tools). Useful resources and tools for Azure development.
 
 ## Deploying Samples
 
 You can deploy these samples directly through the Azure Portal or by using the scripts supplied in the root of the repo.
 
-To deploy a sammple using the Azure Portal, click the **Deploy to Azure** button found in the README.md of each sample.
+To deploy a sample using the Azure Portal, click the **Deploy to Azure** button found in the README.md of each sample.
 
 To deploy the sample via the command line (using [Azure PowerShell or the Azure CLI](https://azure.microsoft.com/en-us/downloads/)) you can use the scripts.
 
@@ -65,7 +66,7 @@ The README.md describes your deployment. A good description helps other communit
 + Deploy to Azure button
 + Visualize button
 + Description of what the template will deploy
-+ Tags, that can be used for seach. Specify the tags comma seperated and enclosed between two back-ticks (e.g Tags: `cluster, ha, sql`)
++ Tags, that can be used for search. Specify the tags comma separated and enclosed between two back-ticks (e.g Tags: `cluster, ha, sql`)
 + *Optional: Prerequisites
 + *Optional: Description on how to use the application
 + *Optional: Notes
@@ -257,4 +258,8 @@ Server Error:{
         }
     }
 }
+```
+
+```
+This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
 ```

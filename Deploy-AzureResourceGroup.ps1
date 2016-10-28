@@ -12,7 +12,8 @@ Param(
     [string] $StorageContainerName = $ResourceGroupName.ToLowerInvariant() + '-stageartifacts',
     [string] $TemplateFile = $ArtifactStagingDirectory + '\azuredeploy.json',
     [string] $TemplateParametersFile = $ArtifactStagingDirectory + '.\azuredeploy.parameters.json',
-    [string] $DSCSourceFolder = $ArtifactStagingDirectory + '.\DSC'
+    [string] $DSCSourceFolder = $ArtifactStagingDirectory + '.\DSC',
+    [switch] $ValidateOnly
 #    [string] $DebugOptions = "None"
 )
 
@@ -56,17 +57,17 @@ if ($UploadArtifacts) {
         $TemplateParameters = $TemplateParametersFileContent
     }
 
-    #if not storage account name was provided, use the temporary storage account
+    # Create a storage account name if none was provided
     if($StorageAccountName -eq "") {
-        $StorageResourceGroupName = "ARMTempStorage"
-        $subscriptionId = ((Get-AzureRmContext).Subscription.SubscriptionId).substring(0,24).Replace('-','')
-        $StorageAccountName = "temp$subscriptionId"
+        $subscriptionId = ((Get-AzureRmContext).Subscription.SubscriptionId).Replace('-', '').substring(0, 19)
+        $StorageAccountName = "stage$subscriptionId"
     }
 
     $StorageAccount = (Get-AzureRmStorageAccount | Where-Object{$_.StorageAccountName -eq $StorageAccountName})
 
-    #if the temporary storage account does not exist, create it
+    # Create the storage account if it doesn't already exist
     if($StorageAccount -eq $null){
+        $StorageResourceGroupName = "ARM_Deploy_Staging"
         New-AzureRmResourceGroup -Location "$ResourceGroupLocation" -Name $StorageResourceGroupName -Force
         $StorageAccount = New-AzureRmStorageAccount -StorageAccountName $StorageAccountName -Type 'Standard_LRS' -ResourceGroupName $StorageResourceGroupName -Location "$ResourceGroupLocation"
     }
@@ -75,7 +76,7 @@ if ($UploadArtifacts) {
     
     if (Get-Member -InputObject $TemplateFileContent.parameters -Name _artifactsLocation) {
         if (Get-Member -InputObject $TemplateParameters -Name _artifactsLocation) {
-            $OptionalParameters.Add($ArtifactsLocationName, $TemplateParameters._artifactsLocation)
+            $OptionalParameters.Add($ArtifactsLocationName, $TemplateParameters._artifactsLocation.value)
         }                
         else {
             $OptionalParameters.Add($ArtifactsLocationName, $StorageAccountContext.BlobEndPoint + $StorageContainerName)
@@ -84,7 +85,7 @@ if ($UploadArtifacts) {
 
     if (Get-Member -InputObject $TemplateFileContent.parameters -Name _artifactsLocationResourceId) {
         if (Get-Member -InputObject $TemplateParameters -Name _artifactsLocationResourceId) {
-            $OptionalParameters.Add($artifactsLocationResourceIdName, $TemplateParameters._artifactsLocationResourceId)
+            $OptionalParameters.Add($artifactsLocationResourceIdName, $TemplateParameters._artifactsLocationResourceId.value)
         }
         else {
             $OptionalParameters.Add($artifactsLocationResourceIdName, $storageAccount.Id)
@@ -112,7 +113,7 @@ if ($UploadArtifacts) {
     # Generate the value for artifacts location SAS token if it is not provided in the parameter file
     if (Get-Member -InputObject $TemplateFileContent.parameters -Name _artifactsLocationSasToken) {
         if (Get-Member -InputObject $TemplateParameters -Name _artifactsLocationSasToken) {
-            $OptionalParameters.Add($ArtifactsLocationSasTokenName, $TemplateParameters._artifactsLocationSasToken)
+            $OptionalParameters.Add($ArtifactsLocationSasTokenName, $TemplateParameters._artifactsLocationSasToken.value)
         }
         else {
             $ArtifactsLocationSasToken = New-AzureStorageContainerSASToken -Container $StorageContainerName -Context $StorageAccountContext -Permission r -ExpiryTime (Get-Date).AddHours(4)
@@ -125,10 +126,18 @@ if ($UploadArtifacts) {
 # Create or update the resource group using the specified template file and template parameters file
 New-AzureRmResourceGroup -Name $ResourceGroupName -Location $ResourceGroupLocation -Verbose -Force -ErrorAction Stop 
 
-New-AzureRmResourceGroupDeployment -Name ((Get-ChildItem $TemplateFile).BaseName + '-' + ((Get-Date).ToUniversalTime()).ToString('MMdd-HHmm')) `
-                                   -ResourceGroupName $ResourceGroupName `
-                                   -TemplateFile $TemplateFile `
-                                   -TemplateParameterFile $TemplateParametersFile `
-                                   @OptionalParameters `
-                                   -Force -Verbose
-                                   
+if ($ValidateOnly) {
+    Test-AzureRmResourceGroupDeployment -ResourceGroupName $ResourceGroupName `
+                                        -TemplateFile $TemplateFile `
+                                        -TemplateParameterFile $TemplateParametersFile `
+                                        @OptionalParameters `
+                                        -Verbose
+}
+else {
+    New-AzureRmResourceGroupDeployment -Name ((Get-ChildItem $TemplateFile).BaseName + '-' + ((Get-Date).ToUniversalTime()).ToString('MMdd-HHmm')) `
+                                       -ResourceGroupName $ResourceGroupName `
+                                       -TemplateFile $TemplateFile `
+                                       -TemplateParameterFile $TemplateParametersFile `
+                                       @OptionalParameters `
+                                       -Force -Verbose 
+}

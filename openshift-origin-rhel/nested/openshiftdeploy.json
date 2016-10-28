@@ -2,6 +2,12 @@
 	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
 	"contentVersion": "1.0.0.0",
 	"parameters": {
+		"_artifactsLocation": {
+			"type": "string",
+			"metadata": {
+				"description": "The base URL where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+			}
+		},
 		"openshiftMasterHostname": {
 			"type": "string",
 			"minLength": 1,
@@ -51,10 +57,22 @@
 				"description": "Administrator password for OpenShift Console"
 			}
 		},
-		"sshPublicKey": {
-			"type": "securestring",
+		"xipioDomain": {
+			"type": "string",
 			"metadata": {
-				"description": "SSH public key on all VMs"
+				"description": "Xip.io Subdomain for application routing"
+			}
+		},
+		"customDomain": {
+			"type": "string",
+			"metadata": {
+				"description": "custom Subdomain for application routing"
+			}
+		},
+		"subDomainChosen": {
+			"type": "string",
+			"metadata": {
+				"description": "Subdomain chosen for application routing"
 			}
 		},
 		"sshPrivateKey": {
@@ -75,7 +93,7 @@
 			"version": "latest"
 		},
 		"imageReference": "[variables('osType')]",
-		"openshiftDeploymentScriptUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/openshift-origin-rhel/scripts/deployOpenShift.sh",
+		"openshiftDeploymentScriptUrl": "[concat(parameters('_artifactsLocation'), 'scripts/deployOpenShift.sh')]",
 		"openshiftDeploymentScriptFileName": "deployOpenShift.sh"
 	},
 	"resources": [{
@@ -87,9 +105,9 @@
 			"displayName": "DeployOpenShift"
 		},
 		"properties": {
-			"publisher": "Microsoft.OSTCExtensions",
-			"type": "CustomScriptForLinux",
-			"typeHandlerVersion": "1.5",
+			"publisher": "Microsoft.Azure.Extensions",
+			"type": "CustomScript",
+			"typeHandlerVersion": "2.0",
 			"autoUpgradeMinorVersion": true,
 			"settings": {
 				"fileUris": [
@@ -97,7 +115,7 @@
 				]
 			},
 			"protectedSettings": {
-				"commandToExecute": "[concat('sh ', variables('openshiftDeploymentScriptFileName'), ' \"', parameters('adminUsername'), '\" \"', parameters('adminPassword'), '\" \"', parameters('sshPublicKey'), '\" \"', parameters('sshPrivateKey'), '\" \"', parameters('openshiftMasterHostname'), '\" \"', parameters('openshiftMasterPublicIpFqdn'), '\" \"', parameters('openshiftMasterPublicIpAddress'), '\" \"', parameters('nodePrefix'), '\" \"', parameters('nodeInstanceCount'), '\"')]"
+				"commandToExecute": "[concat('bash ', variables('openshiftDeploymentScriptFileName'), ' \"', parameters('adminUsername'), '\" \"', parameters('adminPassword'), '\" \"', parameters('sshPrivateKey'), '\" \"', parameters('openshiftMasterHostname'), '\" \"', parameters('openshiftMasterPublicIpFqdn'), '\" \"', parameters('openshiftMasterPublicIpAddress'), '\" \"', parameters('nodePrefix'), '\" \"', parameters('nodeInstanceCount'), '\" \"', parameters(parameters('subDomainChosen')), '\"')]"
 			}
 		}
 	}],
