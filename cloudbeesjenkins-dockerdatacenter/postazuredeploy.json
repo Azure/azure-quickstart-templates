@@ -1,0 +1,71 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "westus",
+      "allowedValues": [
+        "eastus",
+        "northcentralus",
+        "northeurope",
+        "southcentralus",
+        "westeurope",
+        "westus",
+        "centralus",
+        "eastus2"
+      ],
+      "metadata": {
+        "description": "Resources Deployment Location"
+      }
+    },
+    "ucpAdminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for UCP Admin Account"
+      }
+    },
+    "jenkinsAdminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the 'admin' user on jenkins initial security setup."
+      }
+    },
+    "nodeDtrLbFQdn": {
+      "type": "string",
+      "defaultValue": "dtrnodedns",
+      "metadata": {
+        "description": "FQdn of DTR Load Balancer"
+      }
+    },  
+    "baseUrl": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/cloudbeesjenkins-dockerdatacenter",
+      "metadata": {
+        "description": "Base URL for Artifacts"
+      }
+    }
+  },
+  "variables": {
+  "dtrScriptUrl": "[concat(parameters('baseUrl'),'/scripts/dockerjenkins.sh')]",
+  "commandToExecuteDtr": "[concat('bash dockerjenkins.sh admin ',parameters('ucpAdminPassword'),' ',parameters('jenkinsAdminPassword'),' ',parameters('nodeDtrLbFQdn'))]"
+  },
+  "resources": [
+    {
+      "comments": "Extension",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "jenkins-0/startupScript",
+      "apiVersion": "2016-03-30",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "settings": {
+          "fileUris": ["[variables('dtrScriptUrl')]"], 
+          "commandToExecute": "[variables('commandToExecuteDtr')]"
+        }
+      }
+    }
+  ]
+}
