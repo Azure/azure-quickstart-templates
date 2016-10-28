@@ -1,0 +1,507 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "apigeeEdge": {
+			"type": "string"
+		},
+     "managementUI": {
+			"type": "string"
+		},
+     "managementDNSName": {
+			"type": "string"
+
+		},
+     "runtimePublicDNSName": {
+			"type": "string"
+		},
+    "apigeeAdminPassword": {
+      "type": "securestring"
+    },
+    "apigeeAdminEmail":{	
+      "type": "string"
+		},
+    	
+    "storageAccountNamePrefixString": {
+      "type": "string",
+      "metadata": {
+        "description": "Unique DNS Name for the Storage Account prefix where the Virtual Machine's disks will be placed. It can not be more than 10 characters in length and use numbers and lower-case letters only."
+      }
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "defaultValue": "boshvnet-crp",
+      "metadata": {
+        "description": "name of the virtual network"
+      }
+    },
+    "subnetNameForBosh": {
+      "type": "string",
+      "defaultValue": "Bosh",
+      "metadata": {
+        "description": "name of the subnet for Bosh"
+      }
+    },
+    "NSGNameForBosh": {
+      "type": "string",
+      "defaultValue": "BoshSecurityGroup",
+      "metadata": {
+        "description": "name of the security group for Bosh"
+      }
+    },
+    "subnetNameForCloudFoundry": {
+      "type": "string",
+      "defaultValue": "CloudFoundry",
+      "metadata": {
+        "description": "name of the subnet for CloudFoundy"
+      }
+    },
+    "NSGNameForCF": {
+      "type": "string",
+      "defaultValue": "CFSecurityGroup",
+      "metadata": {
+        "description": "name of the security group for CF"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2_v2",
+      "metadata": {
+        "description": "Size of vm"
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "defaultValue": "pivotal",
+      "metadata": {
+        "description": "User name for the Virtual Machine."
+      }
+    },
+    "adminSSHKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Public SSH key to add to admin user."
+      }
+    },
+    "enableDNSOnDevbox": {
+      "type": "bool",
+      "defaultValue": true,
+      "allowedValues": [
+        true,
+        false
+      ],
+      "metadata": {
+        "description": "A default DNS will be setup in the devbox if it is true."
+      }
+    },
+    "tenantID": {
+      "type": "string",
+      "defaultValue": "TENANT-ID",
+      "metadata": {
+        "description": "ID of the tenant. See https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/blob/master/docs/guidance.md"
+      }
+    },
+    "clientID": {
+      "type": "string",
+      "defaultValue": "CLIENT-ID",
+      "metadata": {
+        "description": "ID of the client. See https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/blob/master/docs/guidance.md"
+      }
+    },
+    "clientSecret": {
+      "type": "securestring",
+      "defaultValue": "CLIENT-SECRET",
+      "metadata": {
+        "description": "secret of the client. See https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/blob/master/docs/guidance.md"
+      }
+    },
+    "pivnetAPIToken": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "API Token for Pivotal Network"
+      }
+    },
+    "metabrokerEnvironment": {
+      "type": "string",
+      "defaultValue": "AzureCloud",
+      "metadata": {
+        "description": "AzureCloud or AzureChinaCloud"
+      }
+    },
+    "installSize": {
+      "type": "string",
+      "defaultValue": "Small",
+      "metadata": {
+        "description": "Size of the install"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "westus",
+      "metadata": {
+        "description": "location where you want to deploy resources"
+      }
+    }
+  },
+  "variables": {
+    "api-version": "2015-06-15",
+    "extensionName": "initdevbox",
+    "newStorageAccountName": "[concat(parameters('storageAccountNamePrefixString'),uniquestring(resourceGroup().id, deployment().name))]",
+    "databaseAccountName": "[concat('docdb',uniquestring(resourceGroup().id, deployment().name))]",
+    "sqlServerAdminLogin": "sqladmin",
+    "sqlServerAdminPassword": "[concat(parameters('clientSecret'),uniquestring(resourceGroup().id, deployment().name))]",
+    "sqlServerName": "[concat('sqlserver',uniquestring(resourceGroup().id, deployment().name))]",
+    "sqlDatabaseName": "azuremetabroker",
+    "vmName": "[concat('myjumpbox',uniquestring(resourceGroup().id, deployment().name))]",
+    "location": "[parameters('location')]",
+    "storageAccountType": "Standard_GRS",
+    "vmStorageAccountContainerName": "vhds",
+    "storageid": "[resourceId('Microsoft.Storage/storageAccounts', variables('newStorageAccountName'))]",
+    "virtualNetworkName": "[parameters('virtualNetworkName')]",
+    "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
+    "addressPrefix": "10.0.0.0/16",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
+    "subnet1Name": "[parameters('subnetNameForBosh')]",
+    "subnet1Prefix": "10.0.0.0/24",
+    "subnet1Ref": "[concat(variables('vnetID'),'/subnets/', variables('subnet1Name'))]",
+    "subnet1NSG": "[parameters('NSGNameForBosh')]",
+    "subnet2Name": "[parameters('subnetNameForCloudFoundry')]",
+    "subnet2Prefix": "10.0.16.0/20",
+    "subnet2NSG": "[parameters('NSGNameForCF')]",
+    "nicName": "[variables('vmName')]",
+    "devboxPrivateIPAddress": "10.0.0.100",
+    "devboxPublicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('vmName'),'-devbox'))]",
+    "imagePublisher": "Canonical",
+    "imageOffer": "UbuntuServer",
+    "ubuntuOSVersion": "14.04.2-LTS",
+    "webSessionPassword": "[uniqueString(parameters('adminSSHKey'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('newStorageAccountName')]",
+      "apiVersion": "[variables('api-version')]",
+      "location": "[variables('location')]",
+      "properties": {
+        "accountType": "[variables('storageAccountType')]"
+      }
+    },
+    {
+      "apiVersion": "[variables('api-version')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat(variables('vmName'),'-devbox')]",
+      "location": "[variables('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[variables('vmName')]"
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('api-version')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat(variables('vmName'),'-bosh')]",
+      "location": "[variables('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "static"
+      }
+    },
+    {
+      "apiVersion": "[variables('api-version')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat(variables('vmName'), '-cf')]",
+      "location": "[variables('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "static"
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('subnet1NSG')]",
+      "location": "[variables('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "allow-ssh-to-jumpbox",
+            "properties": {
+              "description": "Allow Inbound SSH To Jumpbox",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "[concat(variables('devboxPrivateIPAddress'), '/32')]",
+              "access": "Allow",
+              "priority": 1000,
+              "direction": "Inbound"
+            }
+          }, {
+            "name": "allow-https-to-jumpbox",
+            "properties": {
+              "description": "Allow Inbound HTTPS To Jumpbox",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "[concat(variables('devboxPrivateIPAddress'), '/32')]",
+              "access": "Allow",
+              "priority": 1100,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('subnet2NSG')]",
+      "location": "[variables('location')]"
+    },
+    {
+      "apiVersion": "[variables('api-version')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[variables('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('subnet1NSG'))]",
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('subnet2NSG'))]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnet1Name')]",
+            "properties": {
+              "addressPrefix": "[variables('subnet1Prefix')]",
+              "networkSecurityGroup":{
+                  "id":"[resourceId('Microsoft.Network/networkSecurityGroups', variables('subnet1NSG'))]"
+              }
+            }
+          },
+          {
+            "name": "[variables('subnet2Name')]",
+            "properties": {
+              "addressPrefix": "[variables('subnet2Prefix')]",
+              "networkSecurityGroup":{
+                  "id":"[resourceId('Microsoft.Network/networkSecurityGroups', variables('subnet2NSG'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "[variables('api-version')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nicName')]",
+      "location": "[variables('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('vmName'), '-devbox')]",
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[variables('devboxPrivateIPAddress')]",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat(variables('vmName'),'-devbox'))]"
+              },
+              "subnet": {
+                "id": "[variables('subnet1Ref')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiversion": "[variables('api-version')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('vmName')]",
+      "location": "[variables('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/',variables('newStorageAccountName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/',variables('nicName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('vmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": "true",
+            "ssh": {
+              "publicKeys": [{
+                "path": "[variables('sshKeyPath')]",
+                "keyData": "[parameters('adminSSHKey')]"
+              }]
+            }
+          }
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[variables('ubuntuOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('vmName'),'-osdisk.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-04-08",
+      "type": "Microsoft.DocumentDB/databaseAccounts",
+      "name": "[variables('databaseAccountName')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "DocumentDB"
+      },
+      "properties": {
+        "name": "[variables('databaseAccountName')]",
+        "databaseAccountOfferType": "Standard"
+      }
+    },
+    {
+      "name": "[variables('sqlServerName')]",
+      "type": "Microsoft.Sql/servers",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2014-04-01-preview",
+      "dependsOn": [ ],
+      "tags": {
+        "displayName": "SQL Server"
+      },
+      "properties": {
+        "administratorLogin": "[variables('sqlServerAdminLogin')]",
+        "administratorLoginPassword": "[variables('sqlServerAdminPassword')]",
+        "version": "12.0"
+      },
+      "resources": [
+        {
+          "name": "AllowAllWindowsAzureIps",
+          "type": "firewallrules",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2014-04-01-preview",
+          "dependsOn": [
+            "[concat('Microsoft.Sql/servers/', variables('sqlServerName'))]"
+          ],
+          "properties": {
+            "startIpAddress": "0.0.0.0",
+            "endIpAddress": "0.0.0.0"
+          }
+        },
+        {
+          "name": "[variables('sqlDatabaseName')]",
+          "type": "databases",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2014-04-01-preview",
+          "dependsOn": [
+            "[variables('sqlServerName')]"
+          ],
+          "tags": {
+            "displayName": "SQL Database"
+          }
+        }
+      ]
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('vmName'),'/initdevbox')]",
+      "apiVersion": "[variables('api-version')]",
+      "location": "[variables('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.OSTCExtensions",
+        "type": "CustomScriptForLinux",
+        "typeHandlerVersion": "1.4",
+        "autoupgradeMinorVersion": false,
+        "settings": {
+          "fileUris": [
+            "https://s3-us-west-2.amazonaws.com/test-epsilon/bootstrap.py"
+          ],
+          "managementUI": "[parameters('managementUI')]",
+	  "apigeeEdge": "[parameters('apigeeEdge')]",
+	  "managementDNSName": "[parameters('managementDNSName')]",
+	  "runtimePublicDNSName": "[parameters('runtimePublicDNSName')]",
+	  "adminUsername":"[parameters('adminUsername')]",
+	  "apigeeAdminPassword": "[parameters('apigeeAdminPassword')]",
+          "apigeeAdminEmail":"[parameters('apigeeAdminEmail')]", 	
+          "adminSSHKey": "[parameters('adminSSHKey')]",
+          "commandToExecute": "[concat('python ./bootstrap.py ', parameters('installSize'), ' ', variables('webSessionPassword'))]",
+          "location": "[variables('location')]",
+          "VNET-NAME": "[variables('virtualNetworkName')]",
+          "SUBNET-NAME": "[variables('subnet1Name')]",
+          "SUBNET-NAME-FOR-CF": "[variables('subnet2Name')]",
+          "NSG-NAME-FOR-CF": "[variables('subnet2NSG')]",
+          "NSG-NAME-FOR-BOSH": "[variables('subnet1NSG')]",
+          "SUBSCRIPTION-ID": "[subscription().subscriptionId]",
+          "STORAGE-ACCOUNT-NAME": "[variables('newStorageAccountName')]",
+          "STORAGE-ACCESS-KEY": "[listKeys(variables('storageid'),variables('api-version')).key1]",
+          "RESOURCE-GROUP-NAME": "[resourceGroup().name]",
+          "TENANT-ID": "[parameters('tenantID')]",
+          "CLIENT-ID": "[parameters('clientID')]",
+          "CLIENT-SECRET": "[parameters('clientSecret')]",
+          "cf-ip": "[reference(concat(variables('vmName'),'-cf')).ipAddress]",
+          "bosh-ip": "[reference(concat(variables('vmName'),'-bosh')).ipAddress]",
+          "username": "[parameters('adminUserName')]",
+          "enable-dns": "[parameters('enableDNSOnDevbox')]",
+          "databaseAccountName": "[variables('databaseAccountName')]",
+          "documentdb-endpoint": "[reference(concat('Microsoft.DocumentDb/databaseAccounts/', variables('databaseAccountName'))).documentEndpoint]",
+          "documentdb-masterkey": "[listKeys(resourceId('Microsoft.DocumentDb/databaseAccounts', variables('databaseAccountName')), '2015-04-08').primaryMasterKey]",
+          "sqlServerAdminLogin": "[variables('sqlServerAdminLogin')]",
+          "sqlServerAdminPassword": "[variables('sqlServerAdminPassword')]",
+          "sqlServerName": "[variables('sqlServerName')]",
+          "sqlDatabaseName": "[variables('sqlDatabaseName')]",
+          "sqlServerFQDN": "[reference(concat('Microsoft.Sql/servers/', variables('sqlServerName'))).fullyQualifiedDomainName]",
+          "metabrokerenvironment": "[parameters('metabrokerEnvironment')]",
+          "pivnet-api-token": "[parameters('pivnetAPIToken')]"
+        },
+        "protectedSettings" : {
+            "CLIENT-SECRET": "[parameters('clientSecret')]"
+        }
+      }
+    }
+  ],
+  "outputs": {
+      "scriptoutput": {
+          "value": "[split(split(reference(resourceId('Microsoft.Compute/virtualMachines/extensions',variables('vmName'),variables('extensionName')),providers('Microsoft.Compute', 'virtualMachines').apiVersions[0]).instanceView.statuses[0].message,'---')[2],'###QUOTACHECK###')[1]]",
+          "type": "string"
+      },
+      "ProgressMonitorURL" : {
+          "type" : "string",
+          "value": "[concat('https://gamma:', variables('webSessionPassword'), '@', reference(concat(variables('vmName'),'-devbox')).dnsSettings.fqdn)]"
+      },
+      "JumpboxFQDN": {
+          "type" : "string",
+          "value": "[reference(concat(variables('vmName'),'-devbox')).dnsSettings.fqdn]"
+      }
+  }
+}
