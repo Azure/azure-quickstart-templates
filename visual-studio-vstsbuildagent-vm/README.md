@@ -9,11 +9,10 @@
 
 This template is based on the <a href="https://github.com/Azure/azure-quickstart-templates/tree/master/visual-studio-dev-vm">Visual Studio Dev VM</a> template created by [dtzar](https://github.com/dtzar).  
 You need to provide in the azuredeploy.parameters.json file the following input:
-* the name of the Vurtual Machine to be created;
+* the name of the Virtual Machine to be created;
 * the user name of password and the administrative account of the VM;
-* the name of an existing virtual network and of its subnet (and of its resource group if it differs from the one the VM is created in);
 * a public DNS name; the VM could be reached then by RDP by using *YOURDNSNAME.GEOLOCATION*.cloudapp.azure.com;
-* the Visual Studio Team Services account name , e.g. microsoft.visualstudio.com;
+* the Visual Studio Team Services account name , e.g. yourvstsaccountname.visualstudio.com;
 * Your VSTS <a href="https://www.visualstudio.com/en-us/get-started/setup/use-personal-access-tokens-to-authenticate">Personal Access Token</a> (PAT); the token must have at least the scope of "Agent Pools (read, manage)";
 * a Agent Pool name;
 
