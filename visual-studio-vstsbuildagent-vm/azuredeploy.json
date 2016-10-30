@@ -64,24 +64,6 @@
         "description": "Which version of Visual Studio you would like to deploy"
       }
     },
-    "vmVnetName": {
-      "type": "string",
-      "metadata": {
-        "description": "The name of the Virtual Network to create the Virtual Machine into. It must already exist."
-      }
-    },
-    "vmVnetSubnetName": {
-      "type": "string",
-      "metadata": {
-        "description": "The name of subnet of the VNet.. It must already exist."
-      }
-    },
-    "vmVnetResourceGroup": {
-      "type": "string",
-      "metadata": {
-        "description": "The name of resource group the VNet belongs to."
-      }
-    },
     "vmIPPublicDnsName": {
       "type": "string",
       "metadata": {
@@ -107,16 +89,19 @@
       }
     }
   },
-
   "variables": {
     "storageAccountName": "[concat(uniquestring(resourceGroup().id),'storage')]",
     "vmImagePublisher": "MicrosoftVisualStudio",
     "vmImageOffer": "VisualStudio",
     "vmOSDiskName": "VMOSDisk",
-    "vmSubnetRef": "[concat(resourceid(parameters('vmVnetResourceGroup'), 'Microsoft.Network/virtualNetworks', parameters('vmVnetName')), '/subnets/', parameters('vmVnetSubnetName'))]",
+    "vnet01Prefix": "10.0.0.0/16",
+    "vnet01Subnet1Name": "Subnet-1",
+    "vnet01Subnet1Prefix": "10.0.0.0/24",
     "vmStorageAccountContainerName": "vhds",
     "vmNicName": "[concat(parameters('vmName'), 'NetworkInterface')]",
-    "vmIP01Name": "VMIP01"
+    "vmIP01Name": "VMIP01",
+    "vmVnetID": "[resourceId('Microsoft.Network/virtualNetworks', 'Vnet01')]",
+    "vmSubnetRef": "[concat(variables('VMVnetID'), '/subnets/', variables('Vnet01Subnet1Name'))]"
   },
   "resources": [
     {
@@ -124,7 +109,7 @@
       "type": "Microsoft.Storage/storageAccounts",
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-05-01-preview",
-      "dependsOn": [ ],
+      "dependsOn": [],
       "tags": {
         "displayName": "Storage01"
       },
@@ -133,11 +118,37 @@
       }
     },
     {
+      "name": "VNet01",
+      "type": "Microsoft.Network/virtualNetworks",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [],
+      "tags": {
+        "displayName": "VNet01"
+      },
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('vnet01Prefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('vnet01Subnet1Name')]",
+            "properties": {
+              "addressPrefix": "[variables('vnet01Subnet1Prefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
       "name": "[variables('vmNicName')]",
       "type": "Microsoft.Network/networkInterfaces",
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-05-01-preview",
       "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', 'Vnet01')]",
         "[concat('Microsoft.Network/publicIPAddresses/', variables('vmIP01Name'))]"
       ],
       "tags": {
@@ -220,7 +231,7 @@
             "typeHandlerVersion": "1.4",
             "settings": {
               "fileUris": [
-                "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/visual-studio-vsobuildagent-vm/InstallVSTSAgent.ps1"
+                "https://raw.githubusercontent.com/lukka/azure-quickstart-templates/master/visual-studio-vstsbuildagent-vm/InstallVSTSAgent.ps1"
               ],
               "commandToExecute": "[concat('powershell.exe -ExecutionPolicy Unrestricted -Command .\\InstallVSTSAgent.ps1 -VSTSAccount ', parameters('vstsAccount'), ' -VSTSPAT ', parameters('vstsPAT'), ' -AgentName \\\"', parameters('vmName'), '\\\" -PoolName \\\"', parameters('poolName'), '\\\" ')]"
             }
@@ -233,7 +244,7 @@
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-05-01-preview",
-      "dependsOn": [ ],
+      "dependsOn": [],
       "tags": {
         "displayName": "VMIP01"
       },
@@ -246,5 +257,13 @@
     }
   ],
   "outputs": {
+    "vm-fqdn": {
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('vmIP01Name')),providers('Microsoft.Network', 'publicIPAddresses').apiVersions[0]).dnsSettings.fqdn]",
+      "type": "string"
+    },
+    "vm-ipaddress": {
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('vmIP01Name')),providers('Microsoft.Network', 'publicIPAddresses').apiVersions[0]).ipAddress]",
+      "type": "string"
+    }
   }
 }
