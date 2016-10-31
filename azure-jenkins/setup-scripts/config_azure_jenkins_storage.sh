@@ -1,11 +1,11 @@
-#!/bin/sh
+#!/bin/bash
 
 #echo "Usage:
-#  1 sh config_azure_jenkins_storage.sh
-#  2 sh config_azure_jenkins_storage.sh <Subscription ID>
-#  3 sh config_azure_jenkins_storage.sh <Subscription ID> <Storage Account name>
-#  4 sh config_azure_jenkins_storage.sh <Subscription ID> <Storage Account name> <Resource Group name>
-#  5 sh config_azure_jenkins_storage.sh <Subscription ID> <Storage Account name> <Resource Group name> <Source Container name> <Dest Container name>
+#  1 bash config_azure_jenkins_storage.sh
+#  2 bash config_azure_jenkins_storage.sh <Subscription ID>
+#  3 bash config_azure_jenkins_storage.sh <Subscription ID> <Storage Account name>
+#  4 bash config_azure_jenkins_storage.sh <Subscription ID> <Storage Account name> <Resource Group name>
+#  5 bash config_azure_jenkins_storage.sh <Subscription ID> <Storage Account name> <Resource Group name> <Source Container name> <Dest Container name>
 #"
 
 #create log file
@@ -26,7 +26,16 @@ fi
 # ip_addr=$(ip route get 8.8.8.8 | awk '/8.8.8.8/ {print $NF}')
 instruction_goto_dashboard="Please go to Jenkins dashboard by inputting <Your VM IP address>:8080 in your preferred browser. You can find the IP address in Azure portal."
 
-dest_account_file_path='/var/lib/jenkins/com.microsoftopentechnologies.windowsazurestorage.WAStoragePublisher.xml'
+azure_storage_config_file="com.microsoftopentechnologies.windowsazurestorage.WAStoragePublisher.xml"
+jenkins_download_job_name="1. Download Dependencies. Invoked by pipeline"
+jenkins_upload_job_name="3. Upload test app. Invoked by pipeline"
+
+jenkins_dir="/var/lib/jenkins"
+jenkins_jobs_dir="${jenkins_dir}/jobs"
+
+dest_account_file_path="${jenkins_dir}/${azure_storage_config_file}"
+dest_download_container_file_path="${jenkins_jobs_dir}/${jenkins_download_job_name}/config.xml"
+dest_upload_container_file_path="${jenkins_jobs_dir}/${jenkins_upload_job_name}/config.xml"
 
 SUBSCRIPTION_ID=$1
 STORAGE_ACCOUNT_NAME=$2
@@ -48,6 +57,7 @@ then
   #prompt for subscription
   subscriptions_list=$(azure account list --json)
   subscriptions_list_count=$(echo $subscriptions_list | jq '. | length')
+  subscription_index=0
   if [ $subscriptions_list_count -eq 0 ]
   then
     echo "  You need to sign up an Azure Subscription here: https://azure.microsoft.com"
@@ -56,6 +66,7 @@ then
   then
     echo $subscriptions_list | jq -r 'keys[] as $i | "  \($i+1). \(.[$i] | .name)"'
 
+    while read -r -t 0; do read -r; done #clear stdin
     subscription_idx=0
     until [ $subscription_idx -ge 1 -a $subscription_idx -le $subscriptions_list_count ]
     do
@@ -68,10 +79,9 @@ then
       fi
     done
     subscription_index=$((subscription_idx-1))
-
-    SUBSCRIPTION_ID=`echo $subscriptions_list | jq -r '.['$subscription_index'] | .id'`
-    echo ""
   fi
+  SUBSCRIPTION_ID=`echo $subscriptions_list | jq -r '.['$subscription_index'] | .id'`
+  echo ""
 fi
 
 azure account set $SUBSCRIPTION_ID >/dev/null
@@ -91,8 +101,66 @@ then
     if [ $storage_account_list_length -eq 0 ]
     then
         sudo sh -c "echo '$(date): No storage accounts found' >> $log_file_path"
-        echo "  Please go to Azure portal and create a storage account."
-        exit 1
+        echo "  You don't have any storage accounts. We'll create one for you."
+
+        location_list=`azure location list --json`
+        location_list_length=`echo $location_list | jq '. | length'`
+        if [ $location_list_length -eq 0 ]
+        then
+          sudo sh -c "echo '$(date): No valid locations in the subscription' >> $log_file_path"
+          echo "  Your subscription doesn't have any valid locations. Please go to Azure portal and update your subscription"
+          exit 1
+        else
+          sudo sh -c "echo '$(date): List locations for selection' >> $log_file_path"
+          echo $location_list | jq -r 'keys[] as $i | "  \($i+1). \(.[$i] | .displayName)"'
+
+          while read -r -t 0; do read -r; done #clear stdin
+          location_idx=0
+          until [ $location_idx -ge 1 -a $location_idx -le $location_list_length ]
+          do
+            read -p "  Select a location by typing an index number from above list and press [Enter]: " location_idx
+            if [ $location_idx -ne 0 -o $location_idx -eq 0 2>/dev/null ]
+            then
+              :
+            else
+              location_idx=0
+            fi
+          done
+          location_index=$((location_idx-1))
+
+          STORAGE_ACCOUNT_LOCATION=`echo $location_list | jq -r '.['$location_index'] | .name'`
+          sudo sh -c "echo '$(date): Picked location for storage account: ${STORAGE_ACCOUNT_LOCATION}' >> $log_file_path"
+        fi
+
+        #generate resource group
+        my_group_uuid=$(python -c 'import uuid; print str(uuid.uuid4())[:8]')
+        MY_GROUP_NAME="jenkins-${my_group_uuid}"
+        sudo sh -c "echo '$(date): Create resource group' >> $log_file_path"
+        azure group create ${MY_GROUP_NAME} -l ${STORAGE_ACCOUNT_LOCATION} >/dev/null
+        if [ $? -ne 0 ]
+        then
+          sudo sh -c "echo '$(date): Resource group creation failed' >> $log_file_path"
+          echo "  Could not auto create a resource group. Please go to Azure portal and create a storage account."
+          exit 1
+        else
+          echo "  Created resource group ${MY_GROUP_NAME}"
+        fi
+
+        my_storage_account_uuid=$(python -c 'import uuid; print str(uuid.uuid4())[:8]')
+        MY_STORAGE_NAME="jnk${my_storage_account_uuid}"
+        echo "  Creating storage account"
+        azure storage account create --sku-name ZRS --kind Storage -l ${STORAGE_ACCOUNT_LOCATION} -g ${MY_GROUP_NAME} ${MY_STORAGE_NAME} >/dev/null
+        if [ $? -ne 0 ]
+        then
+          sudo sh -c "echo '$(date): Storage account creation failed' >> $log_file_path"
+          echo "  Could not auto create a storage account. Please go to Azure portal and create a storage account."
+          exit 1
+        else
+          echo "  Created storage account ${MY_STORAGE_NAME}"
+        fi
+
+        STORAGE_ACCOUNT_NAME=${MY_STORAGE_NAME}
+        RESOURCE_GROUP_NAME=${MY_GROUP_NAME}
     else
         storage_account_index=0
         if [ $storage_account_list_length -gt 1 ]
@@ -100,6 +168,7 @@ then
             sudo sh -c "echo '$(date): List storage accounts for selection' >> $log_file_path"
             echo $storage_account_list | jq -r 'keys[] as $i | "  \($i+1). \(.[$i] | .name)"'
 
+            while read -r -t 0; do read -r; done #clear stdin
             storage_account_idx=0
             until [ $storage_account_idx -ge 1 -a $storage_account_idx -le $storage_account_list_length ]
             do
@@ -129,40 +198,75 @@ keys_result=`azure storage account keys list $STORAGE_ACCOUNT_NAME -g $RESOURCE_
 STORAGE_ACCOUNT_KEY=`echo $keys_result | jq -r '.[0].value'`
 
 # Create config file for adding storage account
-tmp_account_file_path='/tmp/com.microsoftopentechnologies.windowsazurestorage.WAStoragePublisher.xml'
+tmp_account_file_path="/tmp/${azure_storage_config_file}"
 
-sudo sh -c "echo '$(date): Create temp storage account config file' >> $log_file_path"
+should_copy_temp=1
+storage_account_xml_node="    <com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo>\n      <storageAccName>${STORAGE_ACCOUNT_NAME}</storageAccName>\n      <storageAccountKey>${STORAGE_ACCOUNT_KEY}</storageAccountKey>\n      <blobEndPointURL>http://blob.core.windows.net/</blobEndPointURL>\n    </com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo>"
+printable_xml_node=$(printf "${storage_account_xml_node}")
 
-cat <<EOF > $tmp_account_file_path
+if [ -e "$dest_account_file_path" ]
+then
+  #copy original file
+  cp $dest_account_file_path $tmp_account_file_path
+  escaped_storage_key=$(echo ${STORAGE_ACCOUNT_KEY} | sed -e s/+'/\\\+'/g -e s_/'_\\\/'_g)
+  grep -Pz "(?s)<storageAccName>${STORAGE_ACCOUNT_NAME}</storageAccName>.[\n\t\r ]*<storageAccountKey>${escaped_storage_key}</storageAccountKey>" $tmp_account_file_path >/dev/null
+
+  if [ $? -ne 0 ]
+  then
+    #the current storage account doesn't existing, we should add it
+    sudo sh -c "echo '$(date): Append storage account' >> $log_file_path"
+    cat $tmp_account_file_path | sed -zr "s|</com\.microsoftopentechnologies\.windowsazurestorage\.beans\.StorageAccountInfo>([\n\t\r ]*</)|</com\.microsoftopentechnologies\.windowsazurestorage\.beans\.StorageAccountInfo>\n${storage_account_xml_node}\1|" > ${tmp_account_file_path}2
+    #remove empty accounts
+    cat ${tmp_account_file_path}2 | sed -zr "s|<com\.microsoftopentechnologies\.windowsazurestorage\.beans\.StorageAccountInfo>[\n\t\r ]*<storageAccName>[\n\t\t ]*</storageAccName>[\n\t\r ]*<storageAccountKey>[^\n]*</storageAccountKey>[\n\t\r ]*<blobEndPointURL>[^\n]*</blobEndPointURL>[\n\t\r ]*</com\.microsoftopentechnologies\.windowsazurestorage\.beans\.StorageAccountInfo>[\t ]*[\n\r]*([\t ]*<com\.microsoftopentechnologies\.windowsazurestorage\.beans\.StorageAccountInfo>)|\1|" > ${tmp_account_file_path}
+
+    rm ${tmp_account_file_path}2
+
+    #sed -zr "s|<com\.microsoftopentechnologies\.windowsazurestorage\.beans\.StorageAccountInfo>[\n\t\r ]*<storageAccName>[\n\t\t ]*</storageAccName>[\n\t\r ]*<storageAccountKey>.*</storageAccountKey>[\n\t\r ]*<blobEndPointURL>.*</blobEndPointURL>[\n\t\r ]*</com\.microsoftopentechnologies\.windowsazurestorage\.beans\.StorageAccountInfo>[\t ]*[\n\r]*([\t ]*<com\.microsoftopentechnologies\.windowsazurestorage\.beans\.StorageAccountInfo>)|\1|" broken
+  else
+    sudo sh -c "echo '$(date): Storage account is already there' >> $log_file_path"
+    echo "  The storage account is already set for the Jenkins Azure Storage plugin"
+    should_copy_temp=0
+  fi
+else
+  #the original file is not there, we'll create the temporary
+  sudo sh -c "echo '$(date): Create temp storage account config file' >> $log_file_path"
+  printable_xml_node=$(printf "${storage_account_xml_node}")
+
+  cat <<EOF > $tmp_account_file_path
 <?xml version='1.0' encoding='UTF-8'?>
 <com.microsoftopentechnologies.windowsazurestorage.WAStoragePublisher_-WAStorageDescriptor plugin="windows-azure-storage@0.3.1">
   <storageAccounts>
-    <com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo>
-      <storageAccName>${STORAGE_ACCOUNT_NAME}</storageAccName>
-      <storageAccountKey>${STORAGE_ACCOUNT_KEY}</storageAccountKey>
-      <blobEndPointURL>http://blob.core.windows.net/</blobEndPointURL>
-    </com.microsoftopentechnologies.windowsazurestorage.beans.StorageAccountInfo>
+${printable_xml_node}
   </storageAccounts>
 </com.microsoftopentechnologies.windowsazurestorage.WAStoragePublisher_-WAStorageDescriptor>
 EOF
-
-sudo sh -c "echo '$(date): Copy temp config file to Jenkins directory' >> $log_file_path"
-sudo cp $tmp_account_file_path $dest_account_file_path
-if [ $? -ne 0 ]
-then
-  exit 1
-else
-  echo "  Storage account was successfully added to Jenkins Azure Storage plugin."
-  echo ""
 fi
 
-dest_download_container_file_path='/var/lib/jenkins/jobs/1. Download Dependencies. Invoked by pipeline/config.xml'
-dest_upload_container_file_path='/var/lib/jenkins/jobs/3. Upload test app. Invoked by pipeline/config.xml'
+if [ $should_copy_temp -eq 1 ]
+then
+  #copy the temp file back
+  sudo sh -c "echo '$(date): Copy temp config file to Jenkins directory' >> $log_file_path"
+  sudo cp $tmp_account_file_path $dest_account_file_path
+  if [ $? -ne 0 ]
+  then
+    rm ${tmp_account_file_path}
+    exit 1
+  else
+    echo "  The storage account was successfully added to Jenkins Azure Storage plugin."
+    echo ""
+  fi
+fi
+
+rm ${tmp_account_file_path}
+
 if [ -f "$dest_download_container_file_path" ] && [ -f "$dest_upload_container_file_path" ]
 then
-    echo "  Blob containers have been set before."
-    echo "  $instruction_goto_dashboard"
-    exit 0
+  echo "  Blob containers have been set before."
+  echo "  $instruction_goto_dashboard"
+  sudo sh -c "echo '$(date): Restart Jenkins' >> $log_file_path"
+  # Restart Jenkins
+  sudo service jenkins restart
+  exit 0
 fi
 
 sudo sh -c "echo '$(date): Set container config files' >> $log_file_path"
@@ -173,7 +277,24 @@ then
     container_list_length=`echo $container_list | jq '. | length'`
     if [ $container_list_length -eq 0 ]
     then
-        echo "  You don't have any existing containers now. You can go to Azure portal or use Microsoft Azure Storage Explorer to create one."
+        sudo sh -c "echo '$(date): Container missing' >> $log_file_path"
+        echo "  You don't have any existing containers. We'll create one for you"
+
+        my_container_uuid=$(python -c 'import uuid; print str(uuid.uuid4())[:8]')
+        MY_CONTAINER_NAME="jnkst${my_container_uuid}"
+
+        echo "  Creating container"
+        azure storage container create -a ${STORAGE_ACCOUNT_NAME} -k ${STORAGE_ACCOUNT_KEY} ${MY_CONTAINER_NAME} > /dev/null
+        if [ $? -ne 0 ]
+        then
+          sudo sh -c "echo '$(date): Container creation failed' >> $log_file_path"
+          echo "  Could not auto create a container. Please go to Azure portal and create a container."
+          exit 1
+        else
+          echo "  Created container ${MY_CONTAINER_NAME}"
+        fi
+        SOURCE_CONTAINER_NAME=${MY_CONTAINER_NAME}
+        DEST_CONTAINER_NAME=${MY_CONTAINER_NAME}
     elif [ $container_list_length -eq 1 ]
     then
         SOURCE_CONTAINER_NAME=`echo $container_list | jq -r '.['$container_index'] | .name'`
@@ -181,6 +302,7 @@ then
     else
         echo $container_list | jq -r 'keys[] as $i | "  \($i+1). \(.[$i] | .name)"'
 
+        while read -r -t 0; do read -r; done #clear stdin
         container_idx=0
         until [ $container_idx -ge 1 -a $container_idx -le $container_list_length ]
         do
@@ -196,6 +318,7 @@ then
 
         SOURCE_CONTAINER_NAME=`echo $container_list | jq -r '.['$container_index'] | .name'`
 
+        while read -r -t 0; do read -r; done #clear stdin
         container_idx=0
         until [ $container_idx -ge 1 -a $container_idx -le $container_list_length ]
         do
