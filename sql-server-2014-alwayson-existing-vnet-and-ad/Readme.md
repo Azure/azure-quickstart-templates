@@ -7,7 +7,7 @@ This template creates the following resources:
 +	Three Storage Accounts
 +	One internal load balancer
 +	Three VMs in a Windows Server Cluster, two VMs run SQL Server 2014 with an availability group and the third is a File Share Witness for the Cluster
-+	One Availability Set for the SQL and Witness VMs, configured with three Update Domains and three Fault Domains
++	One Availability Set for the SQL and Witness VMs
 
 A SQL Server always on listener is created using the internal load balancer.
 
@@ -23,11 +23,9 @@ To deploy the required Azure VNET and Active Directory infrastructure, if not al
 	+ 	SQL Server - Latest SQL Server 2014 on Windows Server 2012 R2 Image
 	+ 	Witness - Latest Windows Server 2012 R2 Image
 
-+ 	The image configuration is defined in variables - details below - but the scripts that configure this deployment have only been tested with these versions and may not work on other images.
++ 	The image configuration is defined in variables, but the scripts that configure this deployment have only been tested with these versions and may not work on other images.
 
 +	To successfully deploy this template, be sure that the subnet to which the SQL VMs are being deployed already exists on the specified Azure virtual network, AND this subnet should be defined in Active Directory Sites and Services for the appropriate AD site in which the closest domain controllers are configured.
-
-+ To deploy the required Azure VNET and Active Directory infrastructure, if not already in place, you may use <a href="https://github.com/Azure/azure-quickstart-templates/tree/master/active-directory-new-domain-ha-2-dc">this template</a>.
 
 Click the button below to deploy from the portal
 
