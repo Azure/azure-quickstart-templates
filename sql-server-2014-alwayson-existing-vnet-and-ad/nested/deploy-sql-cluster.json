@@ -26,9 +26,6 @@
 		"storageAccountType": {
 			"type": "securestring"
 		},
-		"dnsServerName": {
-			"type": "string"
-		},
 		"nicSubnetUri": {
 			"type": "string"
 		},
@@ -68,10 +65,6 @@
 		}
 	},
 	"variables": {
-		"apiVersion": "2015-01-01",
-		"apiVersionNetworks": "2015-06-15",
-		"apiVersionVirtualMachines": "2015-06-15",
-		"apiVersionVMExtensions": "2015-06-15",
 		"apiVersionStorage": "2015-06-15",
 		"sqlDiskSize": 1000,
 		"sqlWitnessDiskSize": 128,
@@ -86,8 +79,8 @@
 		"sqlLBBEAddressPoolID": "[concat(variables('sqllbID'),'/backendAddressPools/',variables('lbBE'))]",
 		"sqlAOProbe1": "[concat(variables('sqlNamePrefix'),'ilbp1')]",
 		"sqlLBProbeID1": "[concat(variables('sqllbID'),'/probes/',variables('sqlAOProbe1'))]",
-		"sqlStorageAccountPrefix": "[concat(parameters('namePrefix'),'sqlstor')]",
-		"sqlWitnessStorageAccountName": "[concat(parameters('namePrefix'),'sqlstorw')]",
+		"sqlStorageAccountPrefix": "[concat(parameters('namePrefix'),take(uniqueString(resourceGroup().id),8),'sql')]",
+		"sqlWitnessStorageAccountName": "[concat(parameters('namePrefix'),take(uniqueString(resourceGroup().id),8),'wit')]",
 		"vmContainerName": "vhds",
 		"deploySqlWitnessShare": "deploySqlWitnessShare",
 		"deploySqlWitnessShareId": "[concat('Microsoft.Resources/deployments/', variables('deploySqlWitnessShare'))]",
@@ -96,8 +89,7 @@
 		"sqlWitnessVMName": "[concat(variables('sqlNamePrefix'),'w')]",
 		"deploySqlAlwaysOn": "deploySqlAlwaysOn",
 		"deploySqlAlwaysOnTemplateUrl": "[concat(parameters('_artifactsLocation'),'/nested/deploy-sql-alwayson.json',parameters('_artifactsLocationSasToken'))]",
-		"sqlClusterName": "[concat(parameters('namePrefix'),'-sql-c')]",
-		"sqlAOEPName": "[concat(parameters('namePrefix'),'-agep')",
+		"sqlAOEPName": "[concat(parameters('namePrefix'),'-agep')]",
 		"sqlAOAGName1": "[concat(parameters('namePrefix'),'-ag1')]",
 		"sqlAOListener1": "[concat(parameters('namePrefix'),'-agl1')]"
 	},
@@ -105,13 +97,14 @@
 		{
 			"type": "Microsoft.Compute/availabilitySets",
 			"name": "[variables('sqlAvailabilitySetName')]",
-			"apiVersion": "[variables('apiVersionNetworks')]",
-			"location": "[resourceGroup().location]"
+			"apiVersion": "2015-06-15",
+			"location": "[resourceGroup().location]",
+			"properties": {}
 		},
 		{
 			"type": "Microsoft.Storage/storageAccounts",
 			"name": "[concat(variables('sqlStorageAccountPrefix'), copyindex())]",
-			"apiVersion": "[variables('apiVersionStorage')]",
+			"apiVersion": "2015-06-15",
 			"copy": {
 				"name": "storageAccountLoop",
 				"count": 2
@@ -124,14 +117,14 @@
 		{
 			"type": "Microsoft.Storage/storageAccounts",
 			"name": "[variables('sqlWitnessStorageAccountName')]",
-			"apiVersion": "[variables('apiVersionStorage')]",
+			"apiVersion": "2015-06-15",
 			"location": "[resourceGroup().location]",
 			"properties": {
 				"accountType": "[parameters('storageAccountType')]"
 			}
 		},
 		{
-			"apiVersion": "[variables('apiVersionNetworks')]",
+			"apiVersion": "2015-06-15",
 			"name": "[variables('sqlLBName')]",
 			"type": "Microsoft.Network/loadBalancers",
 			"location": "[resourceGroup().location]",
@@ -191,7 +184,7 @@
 			"name": "[concat(variables('sqlNamePrefix'), copyindex(), '-nic')]",
 			"type": "Microsoft.Network/networkInterfaces",
 			"location": "[resourceGroup().location]",
-			"apiVersion": "[variables('apiVersionNetworks')]",
+			"apiVersion": "2015-06-15",
 			"copy": {
 				"name": "nicLoop",
 				"count": 2
@@ -222,7 +215,7 @@
 			"name": "[concat(variables('sqlWitnessVMName'), '-nic')]",
 			"type": "Microsoft.Network/networkInterfaces",
 			"location": "[resourceGroup().location]",
-			"apiVersion": "[variables('apiVersionNetworks')]",
+			"apiVersion": "2015-06-15",
 			"properties": {
 				"ipConfigurations": [
 					{
@@ -238,7 +231,7 @@
 			}
 		},
 		{
-			"apiVersion": "[variables('apiVersionVirtualMachines')]",
+			"apiVersion": "2015-06-15",
 			"type": "Microsoft.Compute/virtualMachines",
 			"name": "[concat(variables('sqlNamePrefix'), copyindex())]",
 			"location": "[resourceGroup().location]",
@@ -311,7 +304,7 @@
 			}
 		},
 		{
-			"apiVersion": "[variables('apiVersionVirtualMachines')]",
+			"apiVersion": "2015-06-15",
 			"type": "Microsoft.Compute/virtualMachines",
 			"name": "[variables('sqlWitnessVMName')]",
 			"location": "[resourceGroup().location]",
@@ -372,7 +365,7 @@
 		{
 			"name": "[variables('deploySqlWitnessShare')]",
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "[variables('apiVersion')]",
+			"apiVersion": "2015-01-01",
 			"dependsOn": [
 				"[resourceId('Microsoft.Compute/virtualMachines',variables('sqlWitnessVMName'))]"
 			],
@@ -410,7 +403,7 @@
 		{
 			"name": "[variables('deploySqlAlwaysOn')]",
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "[variables('apiVersion')]",
+			"apiVersion": "2015-01-01",
 			"dependsOn": [
 				"[resourceId('Microsoft.Compute/virtualMachines',concat(variables('sqlNamePrefix'),'0'))]",
 				"[resourceId('Microsoft.Compute/virtualMachines',concat(variables('sqlNamePrefix'),'1'))]",
