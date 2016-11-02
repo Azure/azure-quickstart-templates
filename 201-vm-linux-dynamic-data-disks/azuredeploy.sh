@@ -175,34 +175,21 @@ install_docker()
     wget -qO- "https://pgp.mit.edu/pks/lookup?op=get&search=0xee6d536cf7dc86e2d7d56f59a178ac6c6238f52e" 
     rpm --import "https://pgp.mit.edu/pks/lookup?op=get&search=0xee6d536cf7dc86e2d7d56f59a178ac6c6238f52e"
     yum install -y yum-utils
-    	if [ "$dockerVer" == "1.12.1-1" ] ; then
-           mkdir -p /opt/docker  &&  curl -L https://yum.dockerproject.org/repo/main/centos/7/Packages/docker-engine-1.12.1-1.el7.centos.x86_64.rpm > /opt/docker/docker-engine-1.12.1-1.el7.centos.x86_64.rpm && curl -L https://yum.dockerproject.org/repo/main/centos/7/Packages/docker-engine-selinux-1.12.1-1.el7.centos.noarch.rpm > /opt/docker/docker-engine-selinux-1.12.1-1.el7.centos.noarch.rpm && curl -L https://yum.dockerproject.org/repo/main/centos/7/Packages/docker-engine-debuginfo-1.12.1-1.el7.centos.x86_64.rpm > /opt/docker/docker-engine-debuginfo-1.12.1-1.el7.centos.x86_64.rpm 
-           chmod -R 755 /opt/docker/*
-           yum install -y /opt/docker/*.rpm
-           rm -rf /opt/docker/
-	elif [ "$dockerVer" == "1.11" ] ; then
-           yum-config-manager --add-repo https://packages.docker.com/$dockerVer/yum/repo/main/centos/7
-           yum install -y docker-engine 
-	fi
+    yum-config-manager --add-repo https://packages.docker.com/$dockerVer/yum/repo/main/centos/7
+    yum install -y docker-engine
     systemctl stop firewalld
     systemctl disable firewalld
     #service docker start
     gpasswd -a $userName docker
     systemctl start docker
     systemctl enable docker
-    curl -L https://github.com/docker/compose/releases/download/$dockerComposeVer/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
-    curl -L https://github.com/docker/machine/releases/download/v0.8.1/docker-machine-`uname -s`-`uname -m` >/usr/local/bin/docker-machine && \
+    #curl -L https://github.com/docker/compose/releases/download/$dockerComposeVer/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
+     curl -L "https://github.com/docker/compose/releases/download/$dockerComposeVer/docker-compose-$(uname -s)-$(uname -m)" > /usr/local/bin/docker-compose
+    curl -L https://github.com/docker/machine/releases/download/v$dockMVer/docker-machine-`uname -s`-`uname -m` >/usr/local/bin/docker-machine
     chmod +x /usr/local/bin/docker-machine
     chmod +x /usr/local/bin/docker-compose
     export PATH=$PATH:/usr/local/bin/
     systemctl restart docker
-}
-
-install_go()
-{
-    wget https://storage.googleapis.com/golang/go1.6.2.linux-amd64.tar.gz
-    tar -C /usr/local -xzf go1.6.2.linux-amd64.tar.gz
-    export PATH=$PATH:/usr/local/go/bin
 }
 
 install_azure_cli()
@@ -221,14 +208,7 @@ install_docker_apps()
     docker run -it -d --restart=always -p 8080:8080 rancher/server
 }
 
-install_ib()
-{
-    yum groupinstall -y "Infiniband Support"
-    yum install -y infiniband-diags perftest qperf opensm
-    chkconfig opensm on
-    chkconfig rdma on
-    #reboot
-}
+
 # Installs individual packages of interest.
 #
 install_packages()
@@ -255,11 +235,6 @@ install_pkgs_all()
 
     		install_docker_apps
 	fi
-
-
-    #install_go
-
-    #install_ib
 }
 install_packages_ubuntu()
 {
@@ -274,20 +249,33 @@ DEBIAN_FRONTEND=noninteractive update-initramfs -u
 }
 install_docker_ubuntu()
 {
-	apt-get install -y apt-transport-https ca-certificates
-	apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D
-	echo 'deb https://apt.dockerproject.org/repo ubuntu-xenial main' >> /etc/apt/sources.list.d/docker.list	
-	apt-get update -y
-	apt-cache -y policy docker-engine
-	DEBIAN_FRONTEND=noninteractiv apt-get install -y linux-image-extra-$(uname -r) linux-image-extra-virtual
-	DEBIAN_FRONTEND=noninteractiv apt-get update -y 
-	DEBIAN_FRONTEND=noninteractive apt-get install -y --allow-unauthenticated docker-engine
-	groupadd docker
-	usermod -aG docker $userName
-	/etc/init.d/apparmor stop 
-	/etc/init.d/apparmor teardown 
-	update-rc.d -f apparmor remove
-	apt-get -y remove apparmor
+	
+        # System Update and docker version update
+         DEBIAN_FRONTEND=noninteractive apt-get -y update
+         apt-get install -y apt-transport-https ca-certificates
+        #curl -s 'https://sks-keyservers.net/pks/lookup?op=get&search=0xee6d536cf7dc86e2d7d56f59a178ac6c6238f52e' | apt-key add --import
+        #echo "deb https://packages.docker.com/$dockerVer/apt/repo ubuntu-trusty main" >> /etc/apt/sources.list.d/docker.list
+         apt-key adv --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D
+	 echo "deb https://packages.docker.com/${dockerVer}/apt/repo ubuntu-xenial main" | sudo tee /etc/apt/sources.list.d/docker.list
+         #echo 'deb https://packages.docker.com/$dockerVer/apt/repo ubuntu-xenial main' > /etc/apt/sources.list.d/docker.list
+	 DEBIAN_FRONTEND=noninteractive apt-get -y update
+         DEBIAN_FRONTEND=noninteractive apt-get -y upgrade
+         apt-cache policy docker-engine
+	 groupadd docker
+	 usermod -aG docker $userName
+         #apt-get install -y docker-engine
+	 apt-get install -y --allow-unauthenticated docker-engine
+	 /etc/init.d/apparmor stop 
+	 /etc/init.d/apparmor teardown 
+	 update-rc.d -f apparmor remove
+	 apt-get -y remove apparmor
+         #DEBIAN_FRONTEND=noninteractive apt-get install -y --allow-unauthenticated docker-engine
+    curl -L https://github.com/docker/compose/releases/download/$dockerComposeVer/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
+    curl -L https://github.com/docker/machine/releases/download/v$dockMVer/docker-machine-`uname -s`-`uname -m` >/usr/local/bin/docker-machine
+    chmod +x /usr/local/bin/docker-machine
+    chmod +x /usr/local/bin/docker-compose
+    export PATH=$PATH:/usr/local/bin/
+    systemctl restart docker
 }
 
 
