@@ -1,0 +1,94 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "newVMName": {
+      "type": "string",
+      "defaultValue": "elmsbake"
+    },
+    "labName": {
+      "type": "string",
+      "defaultValue": "BakeandDeploy"
+    },
+    "size": {
+      "type": "string",
+      "defaultValue": "Standard_A0"
+    },
+    "userName": {
+      "type": "string",
+      "defaultValue": "dmcmurrian"
+    },
+    "password": {
+      "type": "securestring"
+    },
+    "Run_PowerShell.scriptFileUris": {
+      "type": "string",
+      "defaultValue": "[[\"https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vm-winrm-windows/ConfigureWinRM.ps1\",\"https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vm-winrm-windows/makecert.exe\",\"https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vm-winrm-windows/winrmconf.cmd\"]"
+    },
+    "Run_PowerShell.scriptToRun": {
+      "type": "string",
+      "defaultValue": "powershell -ExecutionPolicy Unrestricted -file ConfigureWinRM.ps1"
+    },
+    "Run_PowerShell.scriptArguments": {
+      "type": "string",
+      "defaultValue": "concat('powershell -ExecutionPolicy Unrestricted -file ConfigureWinRM.ps1 ', $env:computername)"
+    }
+  },
+  "variables": {
+    "vmId": "[resourceId ('Microsoft.DevTestLab/labs/virtualMachines', parameters('labName'), parameters('newVMName'))]",
+    "vmName": "[concat(parameters('labName'), '/', parameters('newVMName'))]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2016-05-15",
+      "type": "Microsoft.DevTestLab/labs/virtualMachines",
+      "name": "[variables('vmName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "labVirtualNetworkId": "[resourceId('Microsoft.DevTestLab/labs/virtualnetworks', parameters('labName'), 'dtlbakeanddeploy')]",
+        "notes": "Windows Server 2012 R2 Datacenter",
+        "galleryImageReference": {
+          "offer": "WindowsServer",
+          "publisher": "MicrosoftWindowsServer",
+          "sku": "2012-R2-Datacenter",
+          "osType": "Windows",
+          "version": "latest"
+        },
+        "size": "[parameters('size')]",
+        "userName": "[parameters('userName')]",
+        "password": "[parameters('password')]",
+        "isAuthenticationWithSshKey": false,
+        "artifacts": [
+/*          {
+            "artifactId": "[resourceId('Microsoft.DevTestLab/labs/artifactSources/artifacts', parameters('labName'), 'Public Repo', 'windows-run-powershell')]",
+            "parameters": [
+              {
+                "name": "scriptFileUris",
+                "value": "[parameters('Run_PowerShell.scriptFileUris')]"
+              },
+              {
+                "name": "scriptToRun",
+                "value": "[parameters('Run_PowerShell.scriptToRun')]"
+              },
+              {
+                "name": "scriptArguments",
+                "value": "[parameters('Run_PowerShell.scriptArguments')]"
+              }
+            ]
+          },*/
+          {
+            "artifactId": "[resourceId('Microsoft.DevTestLab/labs/artifactSources/artifacts', parameters('labName'), 'Public Repo', 'windows-dotnet45')]"
+          }
+        ],
+        "labSubnetName": "DtlBakeandDeploySubnet",
+        "disallowPublicIpAddress": false
+      }
+    }
+  ],
+  "outputs": {
+    "labVMId": {
+      "type": "string",
+      "value": "[variables('vmId')]"
+    }
+  }
+}
