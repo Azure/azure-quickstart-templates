@@ -30,8 +30,10 @@ do
 {
   try
   {
-
-    Invoke-WebRequest -Uri https://github.com/Microsoft/vsts-agent/releases/download/v2.105.7/vsts-agent-win7-x64-2.105.7.zip -Method Get -OutFile "$agentTempFolderName\agent.zip"
+    Write-Verbose "Trying to get download URL for latest VSTS agent release..."
+    $latestRelease = Invoke-RestMethod -Uri "https://api.github.com/repos/Microsoft/vsts-agent/releases/latest"
+    $latestReleaseDownloadUrl = ($latestRelease.assets | ? { $_.name -like "*win7-x64*" }).browser_download_url
+    Invoke-WebRequest -Uri $latestReleaseDownloadUrl -Method Get -OutFile "$agentTempFolderName\agent.zip"
     Write-Verbose "Downloaded agent successfully on attempt $retries" -verbose
     break
   }
