@@ -1,0 +1,327 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"deploymentName": {
+			"type": "string",
+			"metadata": {
+				"description": "Deployment Name of the Stack"
+			}
+		},
+		"desktopUsername": {
+			"type": "string",
+			"metadata": {
+				"description": "Desktop Administrator Name"
+			}
+		},
+		"desktopAdminPassword": {
+			"type": "securestring",
+			"metadata": {
+				"description": "Desktop Administrator Password"
+			}
+		},
+		"asperaUsername": {
+			"type": "string",
+			"metadata": {
+				"description": "Aspera Server Administrator Name"
+			}
+		},
+		"asperaAdminPassword": {
+			"type": "securestring",
+			"metadata": {
+				"description": "Aspera Server Administrator Password"
+			}
+		},
+		"wowzaUsername": {
+			"type": "string",
+			"metadata": {
+				"description": "Wowza Streaming Server Administrator Name"
+			}
+		},
+		"wowzaAdminPassword": {
+			"type": "securestring",
+			"metadata": {
+				"description": "Wowza Streaming Server Administrator Password"
+			}
+		},
+		"automationAccountName": {
+			"type": "string",
+			"defaultValue": "auto",
+			"metadata": {
+
+				"description": "The account name must not be empty, and must not exceed 50 characters in length.  The account name must start with a letter or number.  The account name can contain letters, numbers, and dashes.  The final character must be a letter or a number. "
+
+			}
+		},
+		"jobId": {
+
+			"type": "string",
+
+			"defaultValue": "24b18f62-aa2c-4528-ac10-1e3602eb4053",
+
+			"metadata": {
+
+				"description": "Generate a Job ID (GUID) from https://www.guidgenerator.com/online-guid-generator.aspx "
+
+			}
+
+
+		},
+		"baseUri": {
+			"type": "string",
+			"defaultValue":"https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/vod-aspera-wowza-azuremediaservices/",
+"metadata": {
+
+				"description": "base uri for your git repo"
+
+			}
+
+	}
+
+	},
+	"variables": {
+		"uniqueString": "[uniquestring(resourceGroup().id)]",
+		"automationAccountName": "[concat(parameters('automationAccountName'),uniqueString(resourceGroup().id))]"
+	},
+
+	"resources": [{
+			"apiVersion": "2015-01-01",
+			"name": "ams",
+			"type": "Microsoft.Resources/deployments",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('baseUri'), 'ams/ams.json')]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+
+
+
+				}
+
+			}
+
+		},
+
+		{
+			"apiVersion": "2015-01-01",
+			"name": "automationjob",
+			"type": "Microsoft.Resources/deployments",
+			"dependsOn": [
+				"['Microsoft.Resources/deployments/ams']"
+			],
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('baseUri'), 'ams/automationjob.json')]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"automationAccountName": {
+						"value": "[variables('automationAccountName')]"
+
+					},
+					"jobId": {
+						"value": "[parameters('jobId')]"
+					},
+					"MediaServices_Name": {
+						"value": "[reference('ams').outputs.MediaServices_Name.value]"
+					},
+					"MediaServices_Keys": {
+						"value": "[reference('ams').outputs.MediaServices_Keys.value]"
+					},
+					"Input_StorageAccounts_Name": {
+						"value": "[reference('ams').outputs.Input_StorageAccounts_Name.value]"
+					},
+					"Input_StorageAccounts_Keys": {
+						"value": "[reference('ams').outputs.Input_StorageAccounts_Keys.value]"
+					},
+					"Ouput_StorageAccounts_Name": {
+						"value": "[reference('ams').outputs.Ouput_StorageAccounts_Name.value]"
+					},
+					"Output_StorageAccounts_Keys": {
+						"value": "[reference('ams').outputs.Output_StorageAccounts_Keys.value]"
+					},
+					"MediaService_StorageAccounts_Name": {
+						"value": "[reference('ams').outputs.MediaService_StorageAccounts_Name.value]"
+					},
+					"MediaService_StorageAccounts_Keys": {
+						"value": "[reference('ams').outputs.MediaService_StorageAccounts_Keys.value]"
+					},
+					"baseUri": {
+						"value": "[parameters('baseUri')]"
+					}
+
+
+
+				}
+
+			}
+
+		}, {
+			"apiVersion": "2015-01-01",
+			"name": "desktop",
+			"type": "Microsoft.Resources/deployments",
+			"dependsOn": [
+				"['Microsoft.Resources/deployments/ams']"
+			],
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri":"[concat(parameters('baseUri'), 'desktop/desktop.json')]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"deploymentName": {
+						"value": "[parameters('deploymentName')]"
+					},
+					"storageAccountName": {
+						"value": "[reference('ams').outputs.Input_StorageAccounts_Name.value]"
+
+					},
+					"storageAccountKey": {
+						"value": "[reference('ams').outputs.Input_StorageAccounts_Keys.value]"
+					},
+					"containerName": {
+						"value": "videos"
+					},
+					"desktopUsername": {
+						"value": "[parameters('desktopUsername')]"
+					},
+					"desktopAdminPassword": {
+						"value": "[parameters('desktopAdminPassword')]"
+					}
+
+
+
+				}
+
+			}
+		}, {
+			"apiVersion": "2015-01-01",
+			"name": "aspera",
+			"type": "Microsoft.Resources/deployments",
+			"dependsOn": [
+				"['Microsoft.Resources/deployments/ams']"
+			],
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('baseUri'), 'aspera/aspera.json')]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"deploymentName": {
+						"value": "[parameters('deploymentName')]"
+					},
+					"asperaUsername": {
+						"value": "[parameters('asperaUsername')]"
+					},
+					"asperaAdminPassword": {
+						"value": "[parameters('asperaAdminPassword')]"
+					},
+					"baseUri": {
+						"value": "[parameters('baseUri')]"
+					}
+
+				}
+			}
+		}, {
+			"apiVersion": "2015-01-01",
+			"name": "wowza",
+			"type": "Microsoft.Resources/deployments",
+			"dependsOn": [
+				"['Microsoft.Resources/deployments/ams']"
+			],
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('baseUri'), 'wowza/wowza.json')]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"deploymentName": {
+						"value": "[parameters('deploymentName')]"
+					},
+					"storageAccountName": {
+						"value": "[reference('ams').outputs.Ouput_StorageAccounts_Name.value]"
+
+					},
+					"storageAccountKey": {
+						"value": "[reference('ams').outputs.Output_StorageAccounts_Keys.value]"
+					},
+					"containerName": {
+						"value": "videos"
+					},
+					"wowzaUsername": {
+						"value": "[parameters('wowzaUsername')]"
+					},
+					"wowzaAdminPassword": {
+						"value": "[parameters('wowzaadminPassword')]"
+					},
+					"baseUri": {
+						"value": "[parameters('baseUri')]"
+					}
+
+				}
+			}
+		}
+
+
+	],
+	"outputs": {
+		"Input_StorageAccounts_Name": {
+			"type": "String",
+			"value": "[reference('ams').outputs.Input_StorageAccounts_Name.value]"
+		},
+		"Input_StorageAccounts_Keys": {
+			"type": "string",
+			"value": "[reference('ams').outputs.Input_StorageAccounts_Keys.value]"
+		},
+		"Ouput_StorageAccounts_Name":{
+			"type": "string",
+			"value": "[reference('ams').outputs.Ouput_StorageAccounts_Name.value]"
+		},
+		"Output_StorageAccounts_Keys":{
+			"type": "string",
+			"value": "[reference('ams').outputs.Output_StorageAccounts_Keys.value]"
+		},
+		"desktopURL": {
+			"type": "String",
+			"value": "[reference('desktop').outputs.desktopURL.value]"
+		},
+		"desktopUsername": {
+			"type": "String",
+			"value": "[parameters('desktopUsername')]"
+		},
+		"desktopAdminPassword": {
+			"type": "String",
+			"value": "[parameters('desktopAdminPassword')]"
+		},
+		"asperaURL": {
+			"type": "String",
+			"value": "[reference('aspera').outputs.asperaURL.value]"
+		},
+		"asperaUsername": {
+			"type": "String",
+			"value": "[parameters('asperaUsername')]"
+		},
+		"asperaAdminPassword": {
+			"type": "String",
+			"value": "[parameters('asperaAdminPassword')]"
+		},
+		"wowzaURL": {
+			"type": "String",
+			"value": "[reference('wowza').outputs.wowzaURL.value]"
+		},
+		"wowzaUsername": {
+			"type": "String",
+			"value": "[parameters('wowzaUsername')]"
+		},
+		"wowzaAdminPassword": {
+			"type": "String",
+			"value": "[parameters('wowzaAdminPassword')]"
+		}
+	}
+}
