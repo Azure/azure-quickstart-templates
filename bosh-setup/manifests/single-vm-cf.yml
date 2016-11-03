@@ -5,7 +5,10 @@ name: single-vm-cf-on-azure
 director_uuid: REPLACE_WITH_DIRECTOR_ID
 
 releases:
-- {name: cf, version: 231}
+- {name: cf, version: 238}
+- {name: diego, version: 0.1476.0}
+- {name: garden-linux, version: 0.338.0}
+- {name: cflinuxfs2-rootfs, version: 1.16.0}
 
 networks:
 - name: cf_private
@@ -13,9 +16,9 @@ networks:
   subnets:
   - range: REPLACE_WITH_SUBNET_ADDRESS_RANGE_FOR_CLOUD_FOUNDRY
     gateway: REPLACE_WITH_GATEWAY_IP
-    dns: [168.63.129.16]
+    dns: [REPLACE_WITH_DNS]
     reserved: ["REPLACE_WITH_RESERVED_IP_FROM - REPLACE_WITH_RESERVED_IP_TO"]
-    static: REPLACE_WITH_STATIC_IP
+    static: ["REPLACE_WITH_STATIC_IP_FROM - REPLACE_WITH_STATIC_IP_TO"]
     cloud_properties:
       virtual_network_name: REPLACE_WITH_VNET_NAME
       subnet_name: REPLACE_WITH_SUBNET_NAME_FOR_CLOUD_FOUNDRY
@@ -24,13 +27,21 @@ networks:
   type: vip
 
 resource_pools:
+- name: resource_postgres_z1
+  network: cf_private
+  stemcell:
+    name: bosh-azure-hyperv-ubuntu-trusty-go_agent
+    version: latest
+  cloud_properties:
+    instance_type: Standard_A1
+    security_group: REPLACE_WITH_NSG_NAME_FOR_CLOUD_FOUNDRY
 - name: resource_z1
   network: cf_private
   stemcell:
     name: bosh-azure-hyperv-ubuntu-trusty-go_agent
     version: latest
   cloud_properties:
-    instance_type: Standard_D1
+    instance_type: Standard_D2
     security_group: REPLACE_WITH_NSG_NAME_FOR_CLOUD_FOUNDRY
 
 compilation:
@@ -48,6 +59,24 @@ update:
   update_watch_time: 5000-600000
 
 jobs:
+# Workaround for issue https://github.com/cloudfoundry/cf-release/issues/1001:
+#   In cf-release v238, deployments where the Postgres job is colocated with the CC are not supported,
+#   as a result, an additional node for postgres is added for workaround.
+- name: postgres_z1
+  instances: 1
+  persistent_disk: 1024
+  resource_pool: resource_postgres_z1
+  templates:
+  - {name: postgres, release: cf}
+  - {name: metron_agent, release: cf}
+  networks:
+  - name: cf_private
+    static_ips: [REPLACE_WITH_POSTGRES_IP]
+  properties:
+    metron_agent:
+      zone: z1
+  update:
+    serial: true
 - name: cf_z1
   instances: 1
   persistent_disk: 102400
@@ -60,20 +89,31 @@ jobs:
   - {name: etcd, release: cf}
   - {name: etcd_metrics_server, release: cf}
   - {name: debian_nfs_server, release: cf}
-  - {name: postgres, release: cf}
   - {name: cloud_controller_ng, release: cf}
   - {name: cloud_controller_worker, release: cf}
   - {name: cloud_controller_clock, release: cf}
   - {name: nfs_mounter, release: cf}
   - {name: route_registrar, release: cf}
   - {name: haproxy, release: cf}
-  - {name: hm9000, release: cf}
   - {name: doppler, release: cf}
   - {name: loggregator_trafficcontroller, release: cf}
   - {name: uaa, release: cf}
   - {name: gorouter, release: cf}
-  - {name: dea_next, release: cf}
-  - {name: dea_logging_agent, release: cf}
+  - {name: statsd-injector, release: cf}
+  - {name: syslog_drain_binder, release: cf}
+  - {name: bbs, release: diego}
+  - {name: auctioneer, release: diego}
+  - {name: converger, release: diego}
+  - {name: rep, release: diego}
+  - {name: garden, release: garden-linux}
+  - {name: cflinuxfs2-rootfs-setup, release: cflinuxfs2-rootfs}
+  - {name: stager, release: cf}
+  - {name: nsync, release: cf}
+  - {name: tps, release: cf}
+  - {name: cc_uploader, release: cf}
+  - {name: ssh_proxy, release: diego}
+  - {name: file_server, release: diego}
+  - {name: route_emitter, release: diego}
   - {name: go-buildpack, release: cf}
   - {name: binary-buildpack, release: cf}
   - {name: nodejs-buildpack, release: cf}
@@ -81,14 +121,14 @@ jobs:
   - {name: php-buildpack, release: cf}
   - {name: python-buildpack, release: cf}
   - {name: staticfile-buildpack, release: cf}
+  - {name: java-buildpack, release: cf}
+  - {name: java-offline-buildpack, release: cf}
   networks:
   - name: cf_public
     static_ips: REPLACE_WITH_CLOUD_FOUNDRY_PUBLIC_IP
   - name: cf_private
     default: [gateway, dns]
     static_ips: [REPLACE_WITH_CLOUD_FOUNDRY_INTERNAL_IP]
-  update:
-    serial: true
   properties:
     consul:
       agent:
@@ -96,11 +136,12 @@ jobs:
         services:
           uaa: {}
           cloud_controller_ng: {}
-          routing-api: {}
+          gorouter: {}
+          etcd: {}
     etcd_metrics_server:
       nats:
         machines: [REPLACE_WITH_CLOUD_FOUNDRY_INTERNAL_IP]
-        password: c1oudc0w
+        password: REPLACE_WITH_PASSWORD
         username: nats
     nfs_server:
       address: REPLACE_WITH_CLOUD_FOUNDRY_INTERNAL_IP
@@ -110,37 +151,37 @@ jobs:
         REPLACE_WITH_SSL_CERT_AND_KEY
     router:
       servers:
-        z1: [REPLACE_WITH_CLOUD_FOUNDRY_INTERNAL_IP]
+      - REPLACE_WITH_CLOUD_FOUNDRY_INTERNAL_IP
     doppler: {zone: z1}
     doppler_endpoint:
-      shared_secret: c1oudc0w
-    traffic_controller: {zone: z1}
+      shared_secret: REPLACE_WITH_PASSWORD
+    traffic_controller:
+      zone: z1
+      outgoing_port: 8083
     login:
       catalina_opts: -Xmx768m -XX:MaxPermSize=256m
       port: 8082
     uaa:
       admin:
-        client_secret: c1oudc0w
+        client_secret: REPLACE_WITH_PASSWORD
       batch:
-        password: c1oudc0w
+        password: REPLACE_WITH_PASSWORD
         username: batch_user
       cc:
-        client_secret: c1oudc0w
+        client_secret: REPLACE_WITH_PASSWORD
       scim:
         userids_enabled: true
         users:
-        - admin|c1oudc0w|scim.write,scim.read,openid,cloud_controller.admin,doppler.firehose,routing.router_groups.read
+        - admin|REPLACE_WITH_PASSWORD|scim.write,scim.read,openid,cloud_controller.admin,doppler.firehose,routing.router_groups.read
       port: 8082
     uaadb:
-      address: REPLACE_WITH_CLOUD_FOUNDRY_INTERNAL_IP
+      address: REPLACE_WITH_POSTGRES_IP
       databases:
       - {name: uaadb, tag: uaa}
       db_scheme: postgresql
       port: 5524
       roles:
-      - {name: uaaadmin, password: c1oudc0w, tag: admin}
-    dropsonde: {enabled: true}
-    dea_next: {zone: z1}
+      - {name: uaaadmin, password: REPLACE_WITH_PASSWORD, tag: admin}
     route_registrar:
       routes:
       - name: api
@@ -148,18 +189,13 @@ jobs:
         registration_interval: 20s
         uris:
         - "api.REPLACE_WITH_SYSTEM_DOMAIN"
-      - name: hm9000
-        port: 5155
-        registration_interval: 20s
-        uris:
-        - "hm9000.REPLACE_WITH_SYSTEM_DOMAIN"
       - name: doppler
         port: 8081
         registration_interval: 20s
         uris:
         - "doppler.REPLACE_WITH_SYSTEM_DOMAIN"
       - name: loggregator
-        port: 8080
+        port: 8083
         registration_interval: 20s
         uris:
           - "loggregator.REPLACE_WITH_SYSTEM_DOMAIN"
@@ -171,6 +207,9 @@ jobs:
         - "*.uaa.REPLACE_WITH_SYSTEM_DOMAIN"
         - "login.REPLACE_WITH_SYSTEM_DOMAIN"
         - "*.login.REPLACE_WITH_SYSTEM_DOMAIN"
+    diego:
+      rep:
+        zone: z1
 - name: acceptance_tests
   lifecycle: errand
   instances: 1
@@ -181,7 +220,7 @@ jobs:
   - {name: acceptance-tests, release: cf}
   properties:
     acceptance_tests:
-      admin_password: c1oudc0w
+      admin_password: REPLACE_WITH_PASSWORD
       admin_user: admin
       api: api.REPLACE_WITH_SYSTEM_DOMAIN
       apps_domain: REPLACE_WITH_SYSTEM_DOMAIN
@@ -195,7 +234,10 @@ jobs:
       skip_diego_unsupported_tests: true
       skip_regex: lucid64
       skip_ssl_validation: true
-- name: acceptance-tests-internetless
+      cf_push_timeout: 500
+      default_timeout: 300
+      nodes: 1
+- name: acceptance_tests_internetless
   lifecycle: errand
   instances: 1
   networks:
@@ -205,7 +247,7 @@ jobs:
   - {name: acceptance-tests, release: cf}
   properties:
     acceptance_tests:
-      admin_password: c1oudc0w
+      admin_password: REPLACE_WITH_PASSWORD
       admin_user: admin
       api: api.REPLACE_WITH_SYSTEM_DOMAIN
       apps_domain: REPLACE_WITH_SYSTEM_DOMAIN
@@ -219,6 +261,9 @@ jobs:
       skip_diego_unsupported_tests: true
       skip_regex: lucid64
       skip_ssl_validation: true
+      cf_push_timeout: 500
+      default_timeout: 300
+      nodes: 1
 - name: smoke_tests
   lifecycle: errand
   instances: 1
@@ -233,7 +278,7 @@ jobs:
       apps_domain: REPLACE_WITH_SYSTEM_DOMAIN
       ginkgo_opts: null
       org: smoke_test_org
-      password: c1oudc0w
+      password: REPLACE_WITH_PASSWORD
       skip_ssl_validation: true
       space: smoke_test_space
       user: admin
@@ -246,6 +291,7 @@ properties:
     host_key_fingerprint: a6:d1:08:0b:b0:cb:9b:5f:c4:ba:44:2a:97:26:19:8a
     oauth_client_id: ssh-proxy
   cc:
+    default_to_diego_backend: true
     allow_app_ssh_access: true
     allowed_cors_domains: []
     app_events:
@@ -254,10 +300,42 @@ properties:
       cutoff_age_in_days: 31
     audit_events:
       cutoff_age_in_days: 31
-    bulk_api_password: c1oudc0w
-    db_encryption_key: c1oudc0w
+    bulk_api_password: REPLACE_WITH_PASSWORD
+    db_encryption_key: REPLACE_WITH_PASSWORD
     default_running_security_groups: [public_networks, dns]
     default_staging_security_groups: [public_networks, dns]
+    buildpacks:
+      blobstore_type: fog
+      buildpack_directory_key: cc-buildpacks
+      cdn: null
+      fog_connection:
+        provider: Local
+        local_root: /var/vcap/nfs/shared
+    droplets:
+      blobstore_type: fog
+      cdn: null
+      droplet_directory_key: cc-droplets
+      fog_connection:
+        provider: Local
+        local_root: /var/vcap/nfs/shared
+    packages:
+      blobstore_type: fog
+      app_package_directory_key: cc-packages
+      cdn: null
+      fog_connection:
+        provider: Local
+        local_root: /var/vcap/nfs/shared
+      max_package_size: 1073741824
+      max_valid_packages_stored: null
+    resource_pool:
+      blobstore_type: fog
+      cdn: null
+      fog_connection:
+        provider: Local
+        local_root: /var/vcap/nfs/shared
+      resource_directory_key: cc-resources
+    security_event_logging:
+      enabled: true
     install_buildpacks:
     - {name: java_buildpack, package: buildpack_java}
     - {name: ruby_buildpack, package: ruby-buildpack}
@@ -268,7 +346,7 @@ properties:
     - {name: staticfile_buildpack, package: staticfile-buildpack}
     - {name: binary_buildpack, package: binary-buildpack}
     - {name: java_buildpack_offline, package: buildpack_java_offline}
-    internal_api_password: c1oudc0w
+    internal_api_password: REPLACE_WITH_PASSWORD
     quota_definitions:
       default:
         memory_limit: 102400
@@ -288,7 +366,7 @@ properties:
       - {destination: 0.0.0.0/0, ports: '53', protocol: tcp}
       - {destination: 0.0.0.0/0, ports: '53', protocol: udp}
     srv_api_uri: https://api.REPLACE_WITH_SYSTEM_DOMAIN
-    staging_upload_password: c1oudc0w
+    staging_upload_password: REPLACE_WITH_PASSWORD
     staging_upload_user: staging_upload_user
     external_host: api
     external_port: 9022
@@ -297,17 +375,19 @@ properties:
         description: "Cloud Foundry Linux-based filesystem"
       - name: "windows2012R2"
         description: "Windows Server 2012 R2"
+  blobstore: null
   ccdb:
-    address: REPLACE_WITH_CLOUD_FOUNDRY_INTERNAL_IP
+    address: REPLACE_WITH_POSTGRES_IP
     databases:
     - {name: ccdb, tag: cc}
     db_scheme: postgres
     port: 5524
     roles:
-    - {name: ccadmin, password: c1oudc0w, tag: admin}
+    - {name: ccadmin, password: REPLACE_WITH_PASSWORD, tag: admin}
   consul:
     agent:
       log_level: null
+      domain: cf.internal
       servers:
         lan:
         - REPLACE_WITH_CLOUD_FOUNDRY_INTERNAL_IP
@@ -458,12 +538,8 @@ properties:
     - {name: uaadb, tag: uaa, citext: true}
     port: 5524
     roles:
-    - {name: ccadmin, password: c1oudc0w, tag: admin}
-    - {name: uaaadmin, password: c1oudc0w, tag: admin}
-  dea_next:
-    advertise_interval_in_seconds: 5
-    heartbeat_interval_in_seconds: 10
-    memory_mb: 33996
+    - {name: ccadmin, password: REPLACE_WITH_PASSWORD, tag: admin}
+    - {name: uaaadmin, password: REPLACE_WITH_PASSWORD, tag: admin}
   description: Cloud Foundry sponsored by Pivotal
   domain: REPLACE_WITH_SYSTEM_DOMAIN
   doppler:
@@ -478,19 +554,17 @@ properties:
       port: null
     unmarshaller_count: 5
   doppler_endpoint:
-    shared_secret: c1oudc0w
+    shared_secret: REPLACE_WITH_PASSWORD
   etcd:
+    advertise_urls_dns_suffix: etcd.service.cf.internal
     machines: [REPLACE_WITH_CLOUD_FOUNDRY_INTERNAL_IP]
     peer_require_ssl: false
     require_ssl: false
   etcd_metrics_server:
     nats:
       machines: [REPLACE_WITH_CLOUD_FOUNDRY_INTERNAL_IP]
-      password: c1oudc0w
+      password: REPLACE_WITH_PASSWORD
       username: nats
-  hm9000:
-    port: 5155
-    url: https://hm9000.REPLACE_WITH_SYSTEM_DOMAIN
   logger_endpoint:
     port: 4443
   loggregator:
@@ -501,7 +575,7 @@ properties:
     tls:
       ca: null
   loggregator_endpoint:
-    shared_secret: c1oudc0w
+    shared_secret: REPLACE_WITH_PASSWORD
   login:
     analytics:
       code: null
@@ -535,15 +609,15 @@ properties:
   metron_agent:
     zone: z1
     deployment: minimal-azure
-    preferred_protocol: null
+    dropsonde_incoming_port: 3457
     tls_client:
       cert: null
       key: null
   metron_endpoint:
-    shared_secret: c1oudc0w
+    shared_secret: REPLACE_WITH_PASSWORD
   nats:
     machines: [REPLACE_WITH_CLOUD_FOUNDRY_INTERNAL_IP]
-    password: c1oudc0w
+    password: REPLACE_WITH_PASSWORD
     port: 4222
     user: nats
   nfs_server:
@@ -555,14 +629,14 @@ properties:
   system_domain_organization: default_organization
   request_timeout_in_seconds: 900
   router:
-    port: 8888
+    port: 8999
     cipher_suites: null
     debug_addr: 0.0.0.0:17002
     enable_ssl: null
     extra_headers_to_log: null
     logrotate: null
     requested_route_registration_interval_in_seconds: null
-    route_services_secret: c1oudc0w
+    route_services_secret: REPLACE_WITH_PASSWORD
     route_services_secret_decrypt_only: null
     route_services_timeout: null
     secure_cookies: null
@@ -570,44 +644,45 @@ properties:
     ssl_key: null
     ssl_skip_validation: true
     status:
-      password: c1oudc0w
+      password: REPLACE_WITH_PASSWORD
       port: 18888
       user: gorouter
   uaadb:
-    address: REPLACE_WITH_CLOUD_FOUNDRY_INTERNAL_IP
+    address: REPLACE_WITH_POSTGRES_IP
     databases:
     - {name: uaadb, tag: uaa}
     db_scheme: postgresql
     port: 5524
     roles:
-    - {name: uaaadmin, password: c1oudc0w, tag: admin}
+    - {name: uaaadmin, password: REPLACE_WITH_PASSWORD, tag: admin}
   uaa:
     admin:
-      client_secret: c1oudc0w
+      client_secret: REPLACE_WITH_PASSWORD
     authentication:
       policy:
         countFailuresWithinSeconds: null
         lockoutAfterFailures: null
         lockoutPeriodSeconds: null
-    catalina_opts: -Xmx192m -XX:MaxPermSize=128m
+    login:
+      catalina_opts: -Xmx768m -XX:MaxPermSize=256m
     batch:
-      password: c1oudc0w
+      password: REPLACE_WITH_PASSWORD
       username: batch_user
     cc:
-      client_secret: c1oudc0w
+      client_secret: REPLACE_WITH_PASSWORD
     scim:
       userids_enabled: true
       users:
-      - admin|c1oudc0w|scim.write,scim.read,openid,cloud_controller.admin,clients.read,clients.write,doppler.firehose,routing.router_groups.read
+      - admin|REPLACE_WITH_PASSWORD|scim.write,scim.read,openid,cloud_controller.admin,clients.read,clients.write,doppler.firehose,routing.router_groups.read
     clients:
       cc-service-dashboards:
         authorities: clients.read,clients.write,clients.admin
         authorized-grant-types: client_credentials
         scope: openid,cloud_controller_service_permissions.read
-        secret: c1oudc0w
+        secret: REPLACE_WITH_PASSWORD
       cc_routing:
         authorities: routing.router_groups.read
-        secret: c1oudc0w
+        secret: REPLACE_WITH_PASSWORD
         authorized-grant-types: client_credentials
       cf:
         access-token-validity: 600
@@ -620,48 +695,49 @@ properties:
       cloud_controller_username_lookup:
         authorities: scim.userids
         authorized-grant-types: client_credentials
-        secret: c1oudc0w
+        secret: REPLACE_WITH_PASSWORD
       doppler:
         authorities: uaa.resource
         override: true
-        secret: c1oudc0w
+        secret: REPLACE_WITH_PASSWORD
       gorouter:
-        authorities: routing.routes.read
+        authorities: clients.read,clients.write,clients.admin,routing.routes.write,routing.routes.read
         authorized-grant-types: client_credentials,refresh_token
-        secret: c1oudc0w
+        scope: openid,cloud_controller_service_permissions.read
+        secret: REPLACE_WITH_PASSWORD
       login:
         authorities: oauth.login,scim.write,clients.read,notifications.write,critical_notifications.write,emails.write,scim.userids,password.write
         authorized-grant-types: authorization_code,client_credentials,refresh_token
         override: true
         redirect-uri: https://login.REPLACE_WITH_SYSTEM_DOMAIN
         scope: openid,oauth.approvals
-        secret: c1oudc0w
+        secret: REPLACE_WITH_PASSWORD
       servicesmgmt:
         authorities: uaa.resource,oauth.service,clients.read,clients.write,clients.secret
         authorized-grant-types: authorization_code,client_credentials,password,implicit
         autoapprove: true
         redirect-uri: https://servicesmgmt.REPLACE_WITH_SYSTEM_DOMAIN/auth/cloudfoundry/callback
         scope: openid,cloud_controller.read,cloud_controller.write
-        secret: c1oudc0w
+        secret: REPLACE_WITH_PASSWORD
       notifications:
         authorities: cloud_controller.admin,scim.read
         authorized-grant-types: client_credentials
-        secret: c1oudc0w
+        secret: REPLACE_WITH_PASSWORD
       ssh-proxy:
         authorized-grant-types: authorization_code
         autoapprove: true
         override: true
         redirect-uri: /login
         scope: openid,cloud_controller.read,cloud_controller.write
-        secret: c1oudc0w
+        secret: REPLACE_WITH_PASSWORD
       tcp_emitter:
         authorities: routing.routes.write,routing.routes.read
         authorized-grant-types: client_credentials,refresh_token
-        secret: c1oudc0w
+        secret: REPLACE_WITH_PASSWORD
       tcp_router:
         authorities: routing.routes.read
         authorized-grant-types: client_credentials,refresh_token
-        secret: c1oudc0w
+        secret: REPLACE_WITH_PASSWORD
     jwt:
       signing_key: |
         -----BEGIN RSA PRIVATE KEY-----
@@ -694,3 +770,130 @@ properties:
       internal:
         hostnames:
         - uaa.service.cf.internal
+  capi:
+    nsync:
+      bbs:
+        ca_cert: ""
+        client_cert: ""
+        client_key: ""
+        require_ssl: false
+      cc:
+        base_url: https://api.REPLACE_WITH_SYSTEM_DOMAIN
+        basic_auth_password: REPLACE_WITH_PASSWORD
+    tps:
+      bbs:
+        ca_cert: ""
+        client_cert: ""
+        client_key: ""
+        require_ssl: false
+      cc:
+        base_url: https://api.REPLACE_WITH_SYSTEM_DOMAIN
+        basic_auth_password: REPLACE_WITH_PASSWORD
+      traffic_controller_url: wss://doppler.REPLACE_WITH_SYSTEM_DOMAIN:443
+    tps_listener:
+      bbs:
+        ca_cert: ""
+        client_cert: ""
+        client_key: ""
+        require_ssl: false
+      cc:
+        base_url: https://api.REPLACE_WITH_SYSTEM_DOMAIN
+        basic_auth_password: REPLACE_WITH_PASSWORD
+    stager:
+      bbs:
+        ca_cert: ""
+        client_cert: ""
+        client_key: ""
+        require_ssl: false
+      cc:
+        base_url: https://api.REPLACE_WITH_SYSTEM_DOMAIN
+        basic_auth_password: REPLACE_WITH_PASSWORD
+  diego:
+    auctioneer:
+      bbs:
+        ca_cert: ""
+        client_cert: ""
+        client_key: ""
+        require_ssl: false
+    bbs:
+      active_key_label: active
+      encryption_keys:
+      - label: active
+        passphrase: REPLACE_WITH_PASSWORD
+      ca_cert: ""
+      etcd:
+        ca_cert: ""
+        client_cert: ""
+        client_key: ""
+        require_ssl: false
+      require_ssl: false
+      server_cert: ""
+      server_key: ""
+    converger:
+      debug_addr: "0.0.0.0:17003"
+      bbs:
+        ca_cert: ""
+        client_cert: ""
+        client_key: ""
+        require_ssl: false
+    rep:
+      bbs:
+        ca_cert: ""
+        client_cert: ""
+        client_key: ""
+        require_ssl: false
+      preloaded_rootfses: ["cflinuxfs2:/var/vcap/packages/cflinuxfs2/rootfs"]
+    route_emitter:
+      bbs:
+        ca_cert: ""
+        client_cert: ""
+        client_key: ""
+        require_ssl: false
+      nats:
+        machines: [REPLACE_WITH_CLOUD_FOUNDRY_INTERNAL_IP]
+        password: REPLACE_WITH_PASSWORD
+        port: 4222
+        user: nats
+    ssl:
+      skip_cert_verify: true
+    ssh_proxy:
+      listen_addr: "0.0.0.0:2223"
+      bbs:
+        ca_cert: ""
+        client_cert: ""
+        client_key: ""
+        require_ssl: false
+      enable_cf_auth: true
+      enable_diego_auth: false
+      host_key: |
+        -----BEGIN RSA PRIVATE KEY-----
+        MIIEhgIBAAKB/DMF5qOW+fh608KhX7qBLNHHmfzCfOONd176Oaf8rGht5KdnoNge
+        TYSGqBFuYB1r1RbYEVhWAkH/8mW14XRVNmQ4C9eQDFqeWmmaOoSBG5GdP5GUfhI/
+        z5vprQw+rnV4gt4InCA7QaR86pLj5sMiUij5OE/CW0dw29+z5E0p5WnQX5+utRmw
+        ioQJD8jUDvzFrvzKIdE0HVOEl0agbeXq8U2e9E1de4iR+NiDc1zeiQmDNCIhFJb4
+        FL7WqqokL+49SwSWGmOFKAlpj4Dlhx5dDwJWpcDe0XBXCkfcXn8xXNOT+4YBxJUG
+        idNMPpLKpDUphZRj8CNBSMkjehIKVwIDAQABAoH8MiCAAQQYvXfeh36HT/IMmGSi
+        8mIY1G5tclAfSNzCfS5Jz/XNXcYXnjW09LsdjoocJX9NOx30xeawvCA+SU5WS4uM
+        htEscfLVHJ67EubMsPhuNZZPbZpnWuPucPM77ojg+UY4LKpKyVE4G+vvEJKtaTe/
+        jQyDJOLKATL4/p5DtbDH7hVZcJVHU94csiE9a9OtyAvSwZLmNxGIBHshFntjcI+/
+        hmQSFl3d1iduYGx7oeq3wX0sQ1mk/QksUTHRrlLfSQhLi5ZmH9Hnn/Qw2WeXKVdk
+        BvXAUBiHG7Y0qGHXl5FOkB1BSlmk/EOkBk6gWl1a1Kx4A6oyNL4+HsuBAn572PqW
+        IDutj4shf8ysI5fLJnvGCygZmk8LPZIlZZqLpDGo+l4iF3VCsd8CU2jKfWqel8+Q
+        axdmu/BrQ7xyuWpxoHtKICv+CitI1ivzeYQwRCmjIN84jeGP9Pty4AJzhySegf/h
+        n3irIp07wEzdedoj4A3RWWObX+AeubyUqfcCfml3scNb2oBK24RDVGYaUSWkSHBe
+        OEU0QlOaJXZ2kCK2rIK/IVI7cD12WpkWTGY782VBmipEXwtMTprQzMrnK25shS+z
+        AjCDGXtqr0GjxJh73WRurs1dVk6sqslSp1M/R9fmjGU4vdYL2JfMczEH4+57aOpR
+        sW+H0FEYDayKoQJ+Eo8gdjDcYJT7N4jsRfuLesEImVQArV2HbNrMNNh2AWkYnAbw
+        5lD3nIgFMFcJhBapTJzZWP4DYrzVOW3MJrEMd3yiHSiXDxm9BMw7h9/05DrCtpRt
+        fw8b9zOyHrPdCiz9WteGXexE6/hi8ZpOqn3hJ7EiwPWRTK5gappQ3UJfAn4Tr0t2
+        cwZtO4uNPCPcirzqkacTkgJeqEpY4ERtv+NXF1FLdfD6MC3ayuRN/mN0EWx0UbI8
+        gVZb/XoOWzpeBJeOnKKfLIIUG+P9rQPY9IAVFclUnXPy0KDzPjcCLHMejokSOu2p
+        VtXXxY4/huFZHWflcxM56NV9Q5QWDq8+rQECfjQTbNbd4ehbC/Q5EZ1SIzeaSLrn
+        0ICmiRajnISbje5vPntqPXjBkbiVGx31qOaZ+DlGGLOyzW/GP5X4NOUwza2bYh3q
+        nnzwBhoGLZfvoes5Nw06leOdVqcvIjLIDhb+XbiiEeAnONUp+BAKzDYOIp7K+LPe
+        1rHeshh0P/QfCQ==
+        -----END RSA PRIVATE KEY-----
+      uaa_secret: REPLACE_WITH_PASSWORD
+      uaa_token_url: https://uaa.REPLACE_WITH_SYSTEM_DOMAIN/oauth/token
+  hm9000:
+    port: 5525
