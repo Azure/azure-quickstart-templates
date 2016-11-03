@@ -218,7 +218,7 @@ git push -f
 
 Please note the advice further up [about default push behavior in old/outdated versions of Git](#ensure-a-safe-push-behavior).
 
-When we're ready to merge your Pull Request, it is very likely we may ask you to "sqash your commits". To do so, read on below.
+When we're ready to merge your Pull Request, it is very likely we may ask you to "squash your commits". To do so, read on below.
 
 ### Squashing Commits
 You should commit often. It's a great backup and safety net in case you mess up. At the same time, you don't want your pull request to contain all your commits - in practice, a pull request should contain one commit. There are obvious exceptions to this rule (like epic projects - think 'Windows support for Docker'), but your little template should most definitely be just one commit. For that to happen, we need to rewrite history.
@@ -268,7 +268,7 @@ Then, once you're done, update the branch on your own fork in GitHub. Push with 
 git push -f
 ```
 
-If you never pushed the branch before, you can use the normal push command - there's no history that we need to overwrite with the `f` paramter.
+If you never pushed the branch before, you can use the normal push command - there's no history that we need to overwrite with the `f` parameter.
 
 ```
 git push -u origin NAME_OF_YOUR_BRANCH

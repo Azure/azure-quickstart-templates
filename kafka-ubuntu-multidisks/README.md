@@ -20,7 +20,7 @@ The template creates the following deployment resources:
 * Storage accounts to store VM data disks
 * Public IP address for accessing the jumpbox via ssh
 * Network interface card for each VM
-* Multiple remotely-hosted CustomScriptForLinux extensions to strip the data disks and to install and configure Kafka services
+* Multiple remotely-hosted Custom Script Extensions to strip the data disks and to install and configure Kafka services
 
 Assuming your domainName parameter was "kafkajumpbox" and region was "West US"
 * Kafka servers will be deployed at IP address prefix in the subnet: 10.0.2.10,10.0.2.11,10.0.2.12, etc.
