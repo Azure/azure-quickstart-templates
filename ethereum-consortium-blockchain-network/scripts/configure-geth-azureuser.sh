@@ -63,6 +63,7 @@ sudo update-alternatives --install /usr/bin/node nodejs /usr/bin/nodejs 100;
 sudo apt-get -y install git;
 sudo apt-get -y install software-properties-common;
 sudo apt-get install -y ethereum;
+sudp apt-get install -y solc;
 
 #############
 # Build node keys and node IDs
