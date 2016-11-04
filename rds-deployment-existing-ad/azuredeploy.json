@@ -5,9 +5,9 @@
     "dnsLabelPrefix": {
       "type": "string",
       "metadata": {
-          "description": "Unique public DNS prefix for the deployment. The fqdn will look something like '<dnsname>.westus.cloudapp.azure.com'. Up to 62 chars, digits or dashes, lowercase, should start with a letter: must conform to '^[a-z][a-z0-9-]{1,61}[a-z0-9]$'. For example johndns1 will result the final RDWEB access url like https://johndns1.westus.cloudapp.azure.com/RDWeb"
-            }
-        },
+        "description": "Unique public DNS prefix for the deployment. The fqdn will look something like '<dnsname>.westus.cloudapp.azure.com'. Up to 62 chars, digits or dashes, lowercase, should start with a letter: must conform to '^[a-z][a-z0-9-]{1,61}[a-z0-9]$'. For example johndns1 will result the final RDWEB access url like https://johndns1.westus.cloudapp.azure.com/RDWeb"
+      }
+    },
     "adDomainName": {
       "type": "string",
       "metadata": {
@@ -47,12 +47,12 @@
       "type": "string",
       "allowedValues": [
         "2012-R2-Datacenter",
-        "Windows-Server-Technical-Preview"
+        "2016-Datacenter"
       ],
       "metadata": {
         "description": "Windows server SKU"
       },
-      "defaultValue": "Windows-Server-Technical-Preview"
+      "defaultValue": "2016-Datacenter"
     },
     "numberOfRdshInstances": {
       "type": "int",
@@ -79,117 +79,115 @@
         "Standard_D5"
       ],
       "metadata": {
-          "description": "The size of the RDSH VMs"
+        "description": "The size of the RDSH VMs"
       },
       "defaultValue": "Standard_A4"
-  }
+    }
   },
-    "variables": {
-        "gwdnsLabelPrefix": "[concat('gwd', resourceGroup().name)]",
-        "cbdnsLabelPrefix": "[concat('cbd', resourceGroup().name)]",
-        "storageAccountName": "[tolower(concat('rdsa', resourceGroup().name))]",
-        "storageAccountType": "Standard_LRS",
-        "uniqueStorageAccountContainerName": "[concat('sac', resourceGroup().name)]",
-        "imagePublisher": "MicrosoftWindowsServer",
-        "imageOffer": "WindowsServer",
-        "vnetAddressRange": "10.0.0.0/16",
-        "subnetAddressRange": "10.0.0.0/24",
-        "dnsServerPrivateIp": "10.0.0.4",
-        "subnet-id": "[concat(resourceId('Microsoft.Network/virtualNetworks',parameters('adVnetName')),'/subnets/',parameters('adSubnetName'))]",
-        "publicIpRef": "publicIp",
-        "brokerIpRef": "brokerpublicIp",
-        "gatewayIpRef": "gatewaypublicIp",
-        "assetLocation": "https://raw.githubusercontent.com/Azure/azure-QuickStart-Templates/master/rds-deployment/"
-    },
-    "resources": [
-      {
-        "apiVersion": "2015-06-15",
-        "type": "Microsoft.Network/publicIPAddresses",
-        "name": "[variables('publicIpRef')]",
-        "location": "[resourceGroup().location]",
-        "properties": {
-          "publicIPAllocationMethod": "Dynamic",
-          "dnsSettings": {
-            "domainNameLabel": "[parameters('dnsLabelPrefix')]"
-          }
+  "variables": {
+    "gwdnsLabelPrefix": "[concat('gwd', resourceGroup().name)]",
+    "cbdnsLabelPrefix": "[concat('cbd', resourceGroup().name)]",
+    "storageAccountName": "[tolower(concat('rdsa', uniqueString(resourceGroup().id)))]",
+    "storageAccountType": "Standard_LRS",
+    "uniqueStorageAccountContainerName": "[concat('sac', resourceGroup().name)]",
+    "imagePublisher": "MicrosoftWindowsServer",
+    "imageOffer": "WindowsServer",
+    "dnsServerPrivateIp": "10.0.0.4",
+    "subnet-id": "[concat(resourceId('Microsoft.Network/virtualNetworks',parameters('adVnetName')),'/subnets/',parameters('adSubnetName'))]",
+    "publicIpRef": "publicIp",
+    "brokerIpRef": "brokerpublicIp",
+    "gatewayIpRef": "gatewaypublicIp",
+    "assetLocation": "https://raw.githubusercontent.com/Azure/azure-QuickStart-Templates/master/rds-deployment/"
+  },
+  "resources": [
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIpRef')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('dnsLabelPrefix')]"
         }
-      },
-      {
-            "apiVersion": "2015-06-15",
-            "type": "Microsoft.Network/publicIPAddresses",
-            "name": "[variables('gatewayIpRef')]",
-            "location": "[resourceGroup().location]",
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('gatewayIpRef')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[variables('gwdnsLabelPrefix')]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('brokerIpRef')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[variables('cbdnsLabelPrefix')]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('storageAccountName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "accountType": "[variables('storageAccountType')]"
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "gw-availabilityset",
+      "location": "[resourceGroup().location]"
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "cb-availabilityset",
+      "location": "[resourceGroup().location]"
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "rdsh-availabilityset",
+      "location": "[resourceGroup().location]"
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/loadBalancers",
+      "name": "loadBalancer",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/',variables('publicIpRef'))]"
+      ],
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "LBFE",
             "properties": {
-                "publicIPAllocationMethod": "Dynamic",
-                "dnsSettings": {
-                    "domainNameLabel": "[variables('gwdnsLabelPrefix')]"
-                }
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIpRef'))]"
+              }
             }
-        },
-      {
-            "apiVersion": "2015-06-15",
-            "type": "Microsoft.Network/publicIPAddresses",
-            "name": "[variables('brokerIpRef')]",
-            "location": "[resourceGroup().location]",
-            "properties": {
-                "publicIPAllocationMethod": "Dynamic",
-                "dnsSettings": {
-                    "domainNameLabel": "[variables('cbdnsLabelPrefix')]"
-                }
-            }
-        },
-        {
-            "apiVersion": "2015-06-15",
-            "type": "Microsoft.Storage/storageAccounts",
-            "name": "[variables('storageAccountName')]",
-            "location": "[resourceGroup().location]",
-            "properties": {
-                "accountType": "[variables('storageAccountType')]"
-            }
-        },
-        {
-          "apiVersion": "2015-06-15",
-          "type": "Microsoft.Compute/availabilitySets",
-          "name": "gw-availabilityset",
-          "location": "[resourceGroup().location]"
-        },
-        {
-          "apiVersion": "2015-06-15",
-          "type": "Microsoft.Compute/availabilitySets",
-          "name": "cb-availabilityset",
-          "location": "[resourceGroup().location]"
-        },
-        {
-          "apiVersion": "2015-06-15",
-          "type": "Microsoft.Compute/availabilitySets",
-          "name": "rdsh-availabilityset",
-          "location": "[resourceGroup().location]"
-        },
-        {
-            "apiVersion": "2015-06-15",
-            "type": "Microsoft.Network/loadBalancers",
-            "name": "loadBalancer",
-            "location": "[resourceGroup().location]",
-            "dependsOn": [
-                "[concat('Microsoft.Network/publicIPAddresses/',variables('publicIpRef'))]"
-            ],
-            "properties": {
-                "frontendIPConfigurations": [
-                    {
-                        "name": "LBFE",
-                        "properties": {
-                            "publicIPAddress": {
-                                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIpRef'))]"
-                            }
-                        }
-                    }
-                ],
-              "backendAddressPools": [
-                {
-                  "name": "LBBAP"
-                }
-              ],
-              "loadBalancingRules": [
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "LBBAP"
+          }
+        ],
+        "loadBalancingRules": [
           {
             "name": "LBRule01",
             "properties": {
@@ -231,7 +229,7 @@
             }
           }
         ],
-              "probes": [
+        "probes": [
           {
             "name": "tcpProbe",
             "properties": {
@@ -251,7 +249,7 @@
             }
           }
         ],
-              "inboundNatRules": [
+        "inboundNatRules": [
           {
             "name": "rdp",
             "properties": {
@@ -266,110 +264,110 @@
           }
 
         ]
-            }
-        },
-        {
-            "apiVersion": "2015-06-15",
-            "type": "Microsoft.Network/networkInterfaces",
-            "name": "gw-nic",
-            "location": "[resourceGroup().location]",
-            "dependsOn": [
-                "Microsoft.Network/loadBalancers/loadBalancer"
-            ],
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "gw-nic",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "Microsoft.Network/loadBalancers/loadBalancer"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig",
             "properties": {
-              "ipConfigurations": [
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('gatewayIpRef'))]"
+              },
+              "subnet": {
+                "id": "[variables('subnet-id')]"
+              },
+              "loadBalancerBackendAddressPools": [
                 {
-                  "name": "ipconfig",
-                  "properties": {
-                    "privateIPAllocationMethod": "Dynamic",
-                    "publicIPAddress": {
-                                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('gatewayIpRef'))]"
-                            },
-                    "subnet": {
-                      "id": "[variables('subnet-id')]"
-                    },
-                    "loadBalancerBackendAddressPools": [
-                      {
-                        "id": "[concat(resourceId('Microsoft.Network/loadBalancers','loadBalancer'),'/backendAddressPools/LBBAP')]"
-                      }
-                    ],
-                    "loadBalancerInboundNatRules": [
-                      {
-                        "id": "[concat(resourceId('Microsoft.Network/loadBalancers','loadBalancer'),'/inboundNatRules/rdp')]"
-                      }
-                    ]
-                  }
+                  "id": "[concat(resourceId('Microsoft.Network/loadBalancers','loadBalancer'),'/backendAddressPools/LBBAP')]"
                 }
               ],
-              "dnsSettings": {
-              "dnsServers": [
-                "[variables('dnsServerPrivateIp')]"
-              ]
-            }
-            }
-        },
-        {
-            "apiVersion": "2015-06-15",
-            "type": "Microsoft.Network/networkInterfaces",
-            "name": "cb-nic",
-            "location": "[resourceGroup().location]",
-            "dependsOn": [
-                "Microsoft.Network/loadBalancers/loadBalancer"
-            ],
-            "properties": {
-              "ipConfigurations": [
+              "loadBalancerInboundNatRules": [
                 {
-                  "name": "ipconfig",
-                  "properties": {
-                    "privateIPAllocationMethod": "Dynamic",
-                    "publicIPAddress": {
-                                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('brokerIpRef'))]"
-                            },
-                    "subnet": {
-                      "id": "[variables('subnet-id')]"
-                    }
-                  }
+                  "id": "[concat(resourceId('Microsoft.Network/loadBalancers','loadBalancer'),'/inboundNatRules/rdp')]"
                 }
-              ],
-              "dnsSettings": {
-              "dnsServers": [
-                "[variables('dnsServerPrivateIp')]"
               ]
             }
-            }
-        },
-        {
-            "apiVersion": "2015-06-15",
-            "type": "Microsoft.Network/networkInterfaces",
-            "name": "[concat('rdsh-', copyindex(), '-nic')]",
-            "location": "[resourceGroup().location]",
-            "copy": {
-                "name": "rdsh-nic-loop",
-                "count": "[parameters('numberOfRdshInstances')]"
-            },
-            "dependsOn": [
-                "Microsoft.Network/loadBalancers/loadBalancer"
-            ],
+          }
+        ],
+        "dnsSettings": {
+          "dnsServers": [
+            "[variables('dnsServerPrivateIp')]"
+          ]
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "cb-nic",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "Microsoft.Network/loadBalancers/loadBalancer"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig",
             "properties": {
-              "ipConfigurations": [
-                {
-                  "name": "ipconfig",
-                  "properties": {
-                    "privateIPAllocationMethod": "Dynamic",
-                    "subnet": {
-                      "id": "[variables('subnet-id')]"
-                    }
-                  }
-                }
-              ],
-              "dnsSettings": {
-              "dnsServers": [
-                "[variables('dnsServerPrivateIp')]"
-              ]
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('brokerIpRef'))]"
+              },
+              "subnet": {
+                "id": "[variables('subnet-id')]"
+              }
             }
+          }
+        ],
+        "dnsSettings": {
+          "dnsServers": [
+            "[variables('dnsServerPrivateIp')]"
+          ]
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat('rdsh-', copyindex(), '-nic')]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "rdsh-nic-loop",
+        "count": "[parameters('numberOfRdshInstances')]"
+      },
+      "dependsOn": [
+        "Microsoft.Network/loadBalancers/loadBalancer"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('subnet-id')]"
+              }
             }
-        },
-         {
+          }
+        ],
+        "dnsSettings": {
+          "dnsServers": [
+            "[variables('dnsServerPrivateIp')]"
+          ]
+        }
+      }
+    },
+    {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "gw-vm",
@@ -620,5 +618,5 @@
         }
       }
     }
-    ]
+  ]
 }

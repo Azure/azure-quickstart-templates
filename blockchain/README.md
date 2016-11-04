@@ -9,6 +9,7 @@ This Microsoft Azure Resource Manager template deploys a single VM and allows yo
 
 Options for blockchain software include:
 
+- [bigchaindb](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/bigchaindb.md)
 - [bitshares](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/bitshares.md) (note: failed testing on 10/7/2016)
 - [bitswift](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/bitswift.md)
 - [blocknet](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/blocknet.md)
@@ -22,7 +23,7 @@ Options for blockchain software include:
 - [nxt](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/nxt.md)
 - [okcash](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/okcash.md)
 - [shadow](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/shadow.md)
+- [stratis](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/stratis.md)
 - [syscoin](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/syscoin.md)
 - [vcash](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/vcash.md)
 - [viacoin](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/viacoin.md)
-
