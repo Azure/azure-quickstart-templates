@@ -1,4 +1,4 @@
- 
+# Create a standalone Remote Desktop Gateway which can be used as a jump host 
 This template deploys the following resources: 
 
 <ul><li>storage account;</li><li>RD Gateway VM;</li><li>Virtual Network;</li><li>Public IP;</li></ul> 
