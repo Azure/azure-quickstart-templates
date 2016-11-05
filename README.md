@@ -3,11 +3,37 @@
 This repo contains all currently available Azure Resource Manager templates contributed by the community. A searchable template index is maintained at https://azure.microsoft.com/en-us/documentation/templates/.
 The following information is relevant to get started with contributing to this repository.
 
-+ [**Contribution guide**](/1-CONTRIBUTION-GUIDE/README.md). Describes the minimal guidelines for contributing.
-+ [**Best practices**](/1-CONTRIBUTION-GUIDE/best-practices.md). Best practices for improving the quality of your template design.
-+ [**Git tutorial**](/1-CONTRIBUTION-GUIDE/git-tutorial.md). Step by step to get you started with Git.
++ [**Contribution guide**](/1-CONTRIBUTION-GUIDE/README.md#contribution-guide). Describes the minimal guidelines for contributing.
++ [**Best practices**](/1-CONTRIBUTION-GUIDE/best-practices.md#best-practices). Best practices for improving the quality of your template design.
++ [**Git tutorial**](/1-CONTRIBUTION-GUIDE/git-tutorial.md#git-tutorial). Step by step to get you started with Git.
++ [**Useful Tools**](/1-CONTRIBUTION-GUIDE/useful-tools.md#useful-tools). Useful resources and tools for Azure development.
 
-You are currently reading the contribution guide.
+## Deploying Samples
+
+You can deploy these samples directly through the Azure Portal or by using the scripts supplied in the root of the repo.
+
+To deploy a sample using the Azure Portal, click the **Deploy to Azure** button found in the README.md of each sample.
+
+To deploy the sample via the command line (using [Azure PowerShell or the Azure CLI](https://azure.microsoft.com/en-us/downloads/)) you can use the scripts.
+
+Simply execute the script and pass in the folder name of the sample you want to deploy.  For example:
+
+```PowerShell
+.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactStagingDirectory '[foldername]'
+```
+```bash
+azure-group-deploy.sh -a [foldername] -l eastus
+```
+If the sample has artifacts that need to be "staged" for deployment (Configuration Scripts, Nested Templates, DSC Packages) then set the upload switch on the command.
+You can optionally specify a storage account to use, if so the storage account must already exist within the subscription.  If you don't want to specify a storage account
+one will be created by the script or reused if it already exists (think of this as "temp" storage for AzureRM).
+
+```PowerShell
+.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactStagingDirectory '201-vm-custom-script-windows' -UploadArtifacts 
+```
+```bash
+azure-group-deploy.sh -a '201-vm-custom-script-windows' -l eastus -u
+```
 
 ## Contribution guide
 
@@ -16,7 +42,7 @@ To make sure your template is added to Azure.com index, please follow these guid
 ## Files, folders and naming conventions
 
 1. Every deployment template and its associated files must be contained in its own **folder**. Name this folder something that describes what your template does. Usually this naming pattern looks like **appName-osName** or **level-platformCapability** (e.g. 101-vm-user-image) 
- + **Required** – Numbering should start at 101. 100 is reserved for things that need to be at the top.
+ + **Required** - Numbering should start at 101. 100 is reserved for things that need to be at the top.
  + **Protip** - Try to keep the name of your template folder short so that it fits inside the Github folder name column width.
 2. Github uses ASCII for ordering files and folder. For consistent ordering **create all files and folders in lowercase**. The only **exception** to this guideline is the **README.md**, that should be in the format **UPPERCASE.lowercase**.
 3. Include a **README.md** file that explains how the template works. 
@@ -40,7 +66,7 @@ The README.md describes your deployment. A good description helps other communit
 + Deploy to Azure button
 + Visualize button
 + Description of what the template will deploy
-+ Tags, that can be used for seach. Specify the tags comma seperated and enclosed between two back-ticks (e.g Tags: `cluster, ha, sql`)
++ Tags, that can be used for search. Specify the tags comma seperated and enclosed between two back-ticks (e.g Tags: `cluster, ha, sql`)
 + *Optional: Prerequisites
 + *Optional: Description on how to use the application
 + *Optional: Notes
@@ -51,7 +77,7 @@ You can download a [**sample README.md**](/1-CONTRIBUTION-GUIDE/sample-README.md
 
 ## metadata.json
 
-A valid metedata.json must adhere to the following structure
+A valid metadata.json must adhere to the following structure
 
 ```
 {
@@ -107,7 +133,7 @@ acomghbot is a bot designed to enforce the above rules and check the syntactic c
 
 ## Travis CI
 
-We are in the process of activating automated template validation through Travis CI. These builds can be accessed by clicking the 'Details' link at the bottom of the pull-request dialog. This process will ensure that your template conforms to all the rules mentioned above and will also deploy your template to our test azure subscription.
+We have automated template validation through Travis CI. These builds can be accessed by clicking the 'Details' link at the bottom of the pull-request dialog. This process will ensure that your template conforms to all the rules mentioned above and will also deploy your template to our test azure subscription.
 
 ### Parameters File Placeholders
 
@@ -232,4 +258,8 @@ Server Error:{
         }
     }
 }
+```
+
+```
+This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
 ```

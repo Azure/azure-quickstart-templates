@@ -3,9 +3,9 @@
 This repo contains all currently available Azure Resource Manager templates contributed by the community. A searchable template index is maintained at https://azure.microsoft.com/en-us/documentation/templates/.
 The following information is relevant to get started with contributing to this repository.
 
-+ [**Contribution guide**](/1-CONTRIBUTION-GUIDE/README.md). Describes the minimal guidelines for contributing.
-+ [**Best practices**](/1-CONTRIBUTION-GUIDE/best-practices.md). Best practices for improving the quality of your template design.
-+ [**Git tutorial**](/1-CONTRIBUTION-GUIDE/git-tutorial.md). Step by step to get you started with Git.
++ [**Contribution guide**](/1-CONTRIBUTION-GUIDE/README.md#contribution-guide). Describes the minimal guidelines for contributing.
++ [**Best practices**](/1-CONTRIBUTION-GUIDE/best-practices.md#best-practices). Best practices for improving the quality of your template design.
++ [**Git tutorial**](/1-CONTRIBUTION-GUIDE/git-tutorial.md#git-tutorial). Step by step to get you started with Git.
 
 You are currently reading the Git tutorial.
 
@@ -218,7 +218,7 @@ git push -f
 
 Please note the advice further up [about default push behavior in old/outdated versions of Git](#ensure-a-safe-push-behavior).
 
-When we're ready to merge your Pull Request, it is very likely we may ask you to "sqash your commits". To do so, read on below.
+When we're ready to merge your Pull Request, it is very likely we may ask you to "squash your commits". To do so, read on below.
 
 ### Squashing Commits
 You should commit often. It's a great backup and safety net in case you mess up. At the same time, you don't want your pull request to contain all your commits - in practice, a pull request should contain one commit. There are obvious exceptions to this rule (like epic projects - think 'Windows support for Docker'), but your little template should most definitely be just one commit. For that to happen, we need to rewrite history.
@@ -268,7 +268,7 @@ Then, once you're done, update the branch on your own fork in GitHub. Push with 
 git push -f
 ```
 
-If you never pushed the branch before, you can use the normal push command - there's no history that we need to overwrite with the `f` paramter.
+If you never pushed the branch before, you can use the normal push command - there's no history that we need to overwrite with the `f` parameter.
 
 ```
 git push -u origin NAME_OF_YOUR_BRANCH

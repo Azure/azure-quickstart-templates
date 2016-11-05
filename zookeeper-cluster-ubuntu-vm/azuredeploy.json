@@ -2,25 +2,6 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "location": {
-      "type": "string",
-      "allowedValues": [
-        "West US",
-        "East US",
-        "West Europe",
-        "East Asia",
-        "Southeast Asia"
-      ],
-      "metadata": {
-        "description": "Location of resources"
-      }
-    },
-    "newStorageAccountName": {
-      "type": "string",
-      "metadata": {
-        "description": "Storage Account to create for the disks"
-      }
-    },
     "storageAccountType": {
       "type": "string",
       "defaultValue": "Standard_LRS",
@@ -83,6 +64,7 @@
     }
   },
   "variables": {
+    "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'zk')]",
     "availabilitySetName": "zookeeperAvSet",
     "virtualNetworkName": "zookeeperVNET",
     "vnetAddressPrefix": "10.0.0.0/16",
@@ -93,15 +75,15 @@
     "nicName": "zookeeperNIC",
     "subnet1Ref": "[concat(variables('vnetID'),'/subnets/', variables('subnet1Name'))]",
     "customScriptFilePath": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/zookeeper-cluster-ubuntu-vm/zookeeper.sh",
-    "customScriptCommandToExecute": "sh zookeeper.sh ",
+    "customScriptCommandToExecute": "sh zookeeper.sh",
     "vmExtensionName": "zookeeperExtension"
   },
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[parameters('newStorageAccountName')]",
+      "name": "[variables('storageAccountName')]",
       "apiVersion": "2015-05-01-preview",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "properties": {
         "accountType": "[parameters('storageAccountType')]"
       }
@@ -110,14 +92,14 @@
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('availabilitySetName')]",
       "apiVersion": "2015-05-01-preview",
-      "location": "[parameters('location')]",
-      "properties": {}
+      "location": "[resourceGroup().location]",
+      "properties": { }
     },
     {
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[concat('publicIP', copyIndex())]",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "copy": {
         "name": "foo",
         "count": "[parameters('scaleNumber')]"
@@ -130,7 +112,7 @@
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -151,7 +133,7 @@
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('nicName'), copyIndex())]",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "copy": {
         "name": "foo",
         "count": "[parameters('scaleNumber')]"
@@ -182,13 +164,13 @@
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(parameters('vmName'), copyIndex())]",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "copy": {
         "name": "foo",
         "count": "[parameters('scaleNumber')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyIndex())]",
         "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
       ],
@@ -214,7 +196,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/', 'osdisk', copyIndex(), '.vhd')]"
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob, 'vhds/', 'osdisk', copyIndex(), '.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -233,7 +215,7 @@
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('vmName'), copyIndex(),'/', variables('vmExtensionName'))]",
       "apiVersion": "2015-05-01-preview",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "copy": {
         "name": "foo",
         "count": "[parameters('scaleNumber')]"
@@ -242,14 +224,15 @@
         "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'), copyIndex())]"
       ],
       "properties": {
-        "publisher": "Microsoft.OSTCExtensions",
-        "type": "CustomScriptForLinux",
-        "typeHandlerVersion": "1.2",
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
             "[variables('customScriptFilePath')]"
           ],
-          "commandToExecute": "[concat(variables('customScriptCommandToExecute'), copyIndex())]"
+          "commandToExecute": "[concat(variables('customScriptCommandToExecute'), ' ', copyIndex(), ' ', parameters('scaleNumber'))]"
         }
       }
     }

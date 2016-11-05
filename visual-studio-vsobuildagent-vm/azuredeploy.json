@@ -2,12 +2,6 @@
   "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "storageName": {
-      "type": "string",
-      "metadata": {
-        "description": "Globally unique storage account name"
-      }
-    },
     "storageType": {
       "type": "string",
       "defaultValue": "Premium_LRS",
@@ -17,23 +11,6 @@
       ],
       "metadata": {
         "description": "Which type of storage you want to use"
-      }
-    },
-    "deployLocation": {
-      "type": "string",
-      "allowedValues": [
-        "Central US",
-        "East US 2",
-        "West US",
-        "North Europe",
-        "West Europe",
-        "South East Asia",
-        "Japan East",
-        "Japan West",
-        "Australia East"
-      ],
-      "metadata": {
-        "description": "Which datacenter you would like to deploy to? Only locations where premium storage are supported are listed. See azure.microsoft.com/en-us/regions/#services"
       }
     },
     "vmName": {
@@ -63,14 +40,22 @@
     },
     "vmVisualStudioVersion": {
       "type": "string",
-      "defaultValue": "VS-2015-Community-AzureSDK-2.7-WS2012R2",
+      "defaultValue": "VS-2015-Comm-AzureSDK-2.9-WS2012R2",
       "allowedValues": [
-        "VS-2015-Enterprise-AzureSDK-2.7-WS2012R2",
-        "VS-2015-Enterprise-AzureSDK-2.7-Cordova-Win8.1-N-x64",
-        "VS-2015-Professional-AzureSDK-2.7-Cordova-Win8.1-N-x64",
-        "VS-2015-Community-AzureSDK-2.7-WS2012R2",
-        "VS-2013-Ultimate-VSU5-AzureSDK-2.7-WS2012R2",
-        "VS-2013-Community-VSU5-AzureSDK-2.7-WS2012R2"
+        "VS-2013-Comm-VSU5-AzureSDK-295-WS2012R2",
+        "VS-2013-Prem-VSU5-AzureSDK-295-WS2012R2",
+        "VS-2013-Ult-VSU5-AzureSDK-295-WS2012R2",
+        "VS-2015-Comm-AzureSDK-2.9-W10T-Win10-N",
+        "VS-2015-Comm-AzureSDK-2.9-WS2012R2",
+        "VS-2015-Comm-VSU3-AzureSDK-291-Win10-N",
+        "VS-2015-Comm-VSU3-AzureSDK-291-WS2012R2",
+        "VS-2015-Ent-AzureSDK-2.9-WS2012R2",
+        "VS-2015-Ent-AzureSDK-29-W10T-Win10-N",
+        "VS-2015-Ent-VSU3-AzureSDK-291-Win10-N",
+        "VS-2015-Ent-VSU3-AzureSDK-291-WS2012R2",
+        "VS-Dev15-Preview5-Ent-AzureSDK-291-Win10-N",
+        "VS-Dev15-Preview5-Ent-AzureSDK-291-WS2012R2",
+        "VS-Dev15-Preview5-Ent-AzureSDK-295-WS2012R2"
       ],
       "metadata": {
         "description": "Which version of Visual Studio you would like to deploy"
@@ -109,6 +94,7 @@
   },
 
   "variables": {
+    "storageAccountName": "[concat(uniquestring(resourceGroup().id),'storage')]",
     "vnet01Prefix": "10.0.0.0/16",
     "vnet01Subnet1Name": "Subnet-1",
     "vnet01Subnet1Prefix": "10.0.0.0/24",
@@ -123,9 +109,9 @@
   },
   "resources": [
     {
-      "name": "[parameters('storageName')]",
+      "name": "[variables('storageAccountName')]",
       "type": "Microsoft.Storage/storageAccounts",
-      "location": "[parameters('deployLocation')]",
+      "location": "[resourceGroup().location]",
       "apiVersion": "2015-05-01-preview",
       "dependsOn": [ ],
       "tags": {
@@ -138,7 +124,7 @@
     {
       "name": "VNet01",
       "type": "Microsoft.Network/virtualNetworks",
-      "location": "[parameters('deployLocation')]",
+      "location": "[resourceGroup().location]",
       "apiVersion": "2015-05-01-preview",
       "dependsOn": [ ],
       "tags": {
@@ -150,18 +136,20 @@
             "[variables('vnet01Prefix')]"
           ]
         },
-        "subnets": [{
-          "name": "[variables('vnet01Subnet1Name')]",
-          "properties": {
-            "addressPrefix": "[variables('vnet01Subnet1Prefix')]"
+        "subnets": [
+          {
+            "name": "[variables('vnet01Subnet1Name')]",
+            "properties": {
+              "addressPrefix": "[variables('vnet01Subnet1Prefix')]"
+            }
           }
-        }]
+        ]
       }
     },
     {
       "name": "[variables('vmNicName')]",
       "type": "Microsoft.Network/networkInterfaces",
-      "location": "[parameters('deployLocation')]",
+      "location": "[resourceGroup().location]",
       "apiVersion": "2015-05-01-preview",
       "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/', 'Vnet01')]",
@@ -190,10 +178,10 @@
     {
       "name": "[parameters('vmName')]",
       "type": "Microsoft.Compute/virtualMachines",
-      "location": "[parameters('deployLocation')]",
+      "location": "[resourceGroup().location]",
       "apiVersion": "2015-05-01-preview",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('storageName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('vmNicName'))]"
       ],
       "tags": {
@@ -218,7 +206,7 @@
           "osDisk": {
             "name": "VMOSDisk",
             "vhd": {
-              "uri": "[concat('http://', parameters('storageName'), '.blob.core.windows.net/', variables('vmStorageAccountContainerName'), '/', variables('vmOSDiskName'), '.vhd')]"
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob, variables('vmStorageAccountContainerName'), '/', variables('vmOSDiskName'), '.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -236,7 +224,7 @@
         {
           "name": "CustomScript",
           "type": "extensions",
-          "location": "[parameters('deployLocation')]",
+          "location": "[resourceGroup().location]",
           "apiVersion": "2015-05-01-preview",
           "dependsOn": [
             "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
@@ -258,7 +246,7 @@
     {
       "name": "[variables('vmIP01Name')]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "location": "[parameters('deployLocation')]",
+      "location": "[resourceGroup().location]",
       "apiVersion": "2015-05-01-preview",
       "dependsOn": [ ],
       "tags": {

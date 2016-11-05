@@ -52,10 +52,10 @@ function Create-Pool
         Log "Creating Pool";
         $pool = New-StoragePool -FriendlyName $name -StorageSubsystemFriendlyName $subsystem.FriendlyName -PhysicalDisks $disks -ResiliencySettingNameDefault Simple -ProvisioningTypeDefault Fixed;
         Log "Creating disk";
-        $disk = New-VirtualDisk -StoragePoolUniqueId $pool.UniqueId -FriendlyName $name -UseMaximumSize
+        $disk = New-VirtualDisk -StoragePoolUniqueId $pool.UniqueId -FriendlyName $name -UseMaximumSize -Interleave 65536
         Initialize-Disk -PartitionStyle GPT -UniqueId $disk.UniqueId
         $partition = New-Partition -UseMaximumSize -DiskId $disk.UniqueId -DriveLetter $path.Substring(0,1)
-        $partition | Format-Volume -FileSystem NTFS -NewFileSystemLabel $name -Confirm:$false;
+        $partition | Format-Volume -FileSystem NTFS -NewFileSystemLabel $name -Confirm:$false -AllocationUnitSize 65536
     }
     elseif ($luns.Length -eq 1)
     {		
