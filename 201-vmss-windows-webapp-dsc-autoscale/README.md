@@ -1,4 +1,4 @@
-### Autoscale a Windows VM Scale Set ###
+### Create/Upgrade a VM Scale Set Running IIS Configured For Autoscale ###
 
 The following template deploys a Windows VM Scale Set (VMSS) running an IIS .NET MVC application integrated with Azure autoscale.
 
