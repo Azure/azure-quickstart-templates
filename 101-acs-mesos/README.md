@@ -1,1 +1,0 @@
-This template is deprecated and will be removed on or after 9/15/16. Please use [101-acs-dcos](https://github.com/Azure/azure-quickstart-templates/tree/master/101-acs-dcos) instead.
