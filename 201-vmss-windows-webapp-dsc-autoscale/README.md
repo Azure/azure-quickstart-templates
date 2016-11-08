@@ -25,7 +25,7 @@ The Autoscale rules are configured as follows
 |instanceCount| Number of VM instances (100 or less). | 3 |
 |adminUsername| Admin username on all VMs. | vmssadmin |
 |adminPassword|Admin password on all VMs.||
-|powershelldscZip|Full URI of the PowerShell DSC zip file||
+|powershelldscZip|Full URI of the PowerShell DSC zip file|https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vmss-windows-webapp-dsc-autoscale/IISInstall.ps1.zip|
 |webDeployPackage|Full URI of the WebDeploy package zip file||
 |powershelldscUpdateTagVersion|Version number of the DSC deployment. Changing this value on subsequent deployments will trigger the extension to run.|1.0|
 
