@@ -99,7 +99,7 @@ echo "Downloading VSTS Build agent package" >> /home/$5/install.progress.txt
 
 cd /home/$5/downloads
 
-wget https://github.com/Microsoft/vsts-agent/releases/download/v2.109.1/vsts-agent-rhel.7.2-x64-2.109.1.tar.gz > /home/$5/install.out.txt 2>&1
+wget https://github.com/Microsoft/vsts-agent/releases/download/v2.109.1/vsts-agent-rhel.7.2-x64-2.109.1.tar.gz >> /home/$5/install.out.txt 2>&1
 
 /bin/date +%H:%M:%S >> /home/$5/install.progress.txt
 
