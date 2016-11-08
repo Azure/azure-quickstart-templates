@@ -1,9 +1,9 @@
 # VM-Redhat - Team Services Build Agent and Cross-Platform SDKs installation
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Fvsts-fullbuild-redhat-vm%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fpaultbarham%2Fazure-quickstart-templates%2Fazuremerge%2Fvsts-fullbuild-redhat-vm%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Fvsts-fullbuild-redhat-vm%2Fazuredeploy.json" target="_blank">
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fpaultbarham%2Fazure-quickstart-templates%2Fazuremerge%2Fvsts-fullbuild-redhat-vm%2Fazuredeploy.json" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
@@ -32,7 +32,7 @@ To create the VM, you will need to:
 2. Create or obtain a Personal Access Token (PAT) from Team Services which has *"Build (read and execute)"* and *"Agent Pools (read, manage)"* priviledges/capabilities
 (see https://www.visualstudio.com/en-us/docs/setup-admin/team-services/use-personal-access-tokens-to-authenticate).
 
-3. Create or obtain a build agent pool in Team Services
+3. Create or obtain a build agent pool in Team Services (or use "Default")
 (see https://www.visualstudio.com/en-us/docs/release/getting-started/configure-agents)
 
 4. Decide on a name for your build agent (i.e. the name for your agent within the above pool).
@@ -46,6 +46,9 @@ If the colored bar is red, or if the agent name does not appear in the specified
 
 
 ## Debugging Agent Failures
+For general information on administering build agents, visit https://www.visualstudio.com/en-us/docs/build/admin/.
+
+
 If the Azure portal under *Virtual machines* shows that your VM is *Running* (in the Status column) but either the build agent name does not 
 show up under the build Agent Pool in Team Services OR the agent name does show up but has a red colored bar to the left of the name,
 then you can SSH into the VM and check the installation log.  To do this:
