@@ -26,7 +26,7 @@ The Autoscale rules are configured as follows
 |adminUsername| Admin username on all VMs. | vmssadmin |
 |adminPassword|Admin password on all VMs.||
 |powershelldscZip|Full URI of the PowerShell DSC zip file|https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vmss-windows-webapp-dsc-autoscale/IISInstall.ps1.zip|
-|webDeployPackage|Full URI of the WebDeploy package zip file||
+|webDeployPackage|Full URI of the WebDeploy package zip file|https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vmss-windows-webapp-dsc-autoscale/DefaultASPWebApp.v1.0.zip|
 |powershelldscUpdateTagVersion|Version number of the DSC deployment. Changing this value on subsequent deployments will trigger the extension to run.|1.0|
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vmss-windows-webapp-dsc-autoscale%2Fazuredeploy.json" target="_blank">
