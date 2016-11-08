@@ -181,6 +181,7 @@
     //"storageAccountName": "[concat(uniqueString(resourceGroup().id), 'sa')]",
     "availabilitySetName": "[concat(variables('namePrefix'), 'nodes')]",
     "subnetName": "[concat(variables('namePrefix'), 'subnet')]",
+    "nsgName": "[concat(variables('subnetName'), '-NSG')]",
     "publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('publicIPAddressName'))]",
     "lbID": "[resourceId('Microsoft.Network/loadBalancers',parameters('lbName'))]",
     "frontEndIPConfigID": "[concat(variables('lbID'),'/frontendIPConfigurations/LoadBalancerFrontEnd')]",
@@ -210,7 +211,7 @@
   "resources": [
     {
       "apiVersion": "[variables('apiVersionStorage')]",
-      "location": "[resourceGroup().location]",
+      "location": "[variables('location')]",
       "name": "[parameters('storageAccountName')]",
       "properties": {
         "accountType": "Standard_LRS"
@@ -219,14 +220,14 @@
     },
     {
       "apiVersion": "[variables('apiVersionCompute')]",
-      "location": "[resourceGroup().location]",
+      "location": "[variables('location')]",
       "name": "[variables('availabilitySetName')]",
       "properties": {},
       "type": "Microsoft.Compute/availabilitySets"
     },
     {
       "apiVersion": "[variables('apiVersionNetwork')]",
-      "location": "[resourceGroup().location]",
+      "location": "[variables('location')]",
       "name": "[parameters('publicIPAddressName')]",
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
@@ -238,8 +239,49 @@
     },
     {
       "apiVersion": "[variables('apiVersionNetwork')]",
-      "location": "[resourceGroup().location]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('nsgName')]",
+      "location": "[variables('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "ssh-rule",
+            "properties": {
+              "description": "Allow SSH",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "web-rule",
+            "properties": {
+              "description": "Allow WEB",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "8080",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 101,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersionNetwork')]",
+      "location": "[variables('location')]",
       "name": "[parameters('vnetName')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('nsgName'))]"
+      ],
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -250,7 +292,10 @@
           {
             "name": "[variables('subnetName')]",
             "properties": {
-              "addressPrefix": "10.0.0.0/24"
+              "addressPrefix": "10.0.0.0/24",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+              }
             }
           }
         ]
@@ -261,7 +306,7 @@
       "apiVersion": "[variables('apiVersionNetwork')]",
       "name": "[parameters('lbName')]",
       "type": "Microsoft.Network/loadBalancers",
-      "location": "[resourceGroup().location]",
+      "location": "[variables('location')]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', parameters('publicIPAddressName'))]"
       ],
@@ -307,7 +352,7 @@
             "name": "[variables('lbProbeName')]",
             "properties": {
               "intervalInSeconds": 5,
-              "numberOfProbes": "[parameters('numberOfInstances')]",
+              "numberOfProbes": 2,
               "port": 8080,
               "protocol": "tcp"
             }
@@ -319,7 +364,7 @@
       "apiVersion": "[variables('apiVersionNetwork')]",
       "type": "Microsoft.Network/loadBalancers/inboundNatRules",
       "name": "[concat(parameters('lbName'), '/SSH-', variables('namePrefix'), copyIndex())]",
-      "location": "[resourceGroup().location]",
+      "location": "[variables('location')]",
       "copy": {
         "name": "lbSSHNatLoop",
         "count": "[parameters('numberOfInstances')]"
@@ -341,7 +386,7 @@
       "apiVersion": "[variables('apiVersionNetwork')]",
       "type": "Microsoft.Network/loadBalancers/inboundNatRules",
       "name": "[concat(parameters('lbName'), '/Admin-', variables('namePrefix'), copyIndex())]",
-      "location": "[resourceGroup().location]",
+      "location": "[variables('location')]",
       "copy": {
         "name": "lbAdminNatLoop",
         "count": "[parameters('numberOfInstances')]"
@@ -363,7 +408,7 @@
       "apiVersion": "[variables('apiVersionNetwork')]",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(variables('namePrefix'), 'nic-', copyindex())]",
-      "location": "[resourceGroup().location]",
+      "location": "[variables('location')]",
       "copy": {
         "name": "nicLoop",
         "count": "[parameters('numberOfInstances')]"
@@ -409,7 +454,7 @@
         "name": "virtualMachineLoop",
         "count": "[parameters('numberOfInstances')]"
       },
-      "location": "[resourceGroup().location]",
+      "location": "[variables('location')]",
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('namePrefix'), 'nic-', copyindex())]",
@@ -467,7 +512,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('namePrefix'), copyIndex(), '/deployGlassFish')]",
-      "location": "[resourceGroup().location]",
+      "location": "[variables('location')]",
       "apiVersion": "[variables('apiVersionCompute')]",
       "tags": {
         "displayName": "PrepNodes"
@@ -494,17 +539,9 @@
     }
   ],
   "outputs": {
-    "Load Balanced Application Server URL": {
+    "LoadBalancedApplicationServerURL": {
       "type": "string",
-      "value": "[concat('http://', reference(parameters('dnsNameforLBIP')).dnsSettings.fqdn)]"
-    },
-    "VM Admin URLs": {
-      "type": "string",
-      "value": "[concat('http://', reference(parameters('dnsNameforLBIP')).dnsSettings.fqdn, ':', copyIndex(4800))]",
-      "copy": {
-        "name": "adminURLLoop",
-        "count": "[parameters('numberOfInstances')]"
-      }
+      "value": "[concat('http://', reference(parameters('publicIPAddressName')).dnsSettings.fqdn)]"
     }
   }
 }
