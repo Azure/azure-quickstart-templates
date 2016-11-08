@@ -1,27 +1,11 @@
 #!/usr/bin/env bash
 
-function retryop()
-{
-  retry=0
-  max_retries=10
-  interval=30
-  while [ ${retry} -lt ${max_retries} ]; do
-    echo "Operation: $1, Retry #${retry}"
-    eval $1
-    if [ $? -eq 0 ]; then
-      echo "Successfully."
-      break
-    else
-      let retry=retry+1
-      sleep $interval
-    fi
-  done
-}
+source utils.sh
 
 echo "Start to update package lists from repositories..."
 retryop "apt-get update"
 
-retryop "apt-get -y install python-pip jq"
+retryop "apt-get -y install build-essential ruby2.0 ruby2.0-dev libxml2-dev libsqlite3-dev libxslt1-dev libpq-dev libmysqlclient-dev zlibc zlib1g-dev openssl libxslt-dev libssl-dev libreadline6 libreadline6-dev libyaml-dev sqlite3 libffi-dev python-dev python-pip jq"
 
 set -e
 
@@ -35,6 +19,41 @@ function get_setting() {
   key=$1
   local value=$(echo $settings | jq ".$key" -r)
   echo $value
+}
+
+function install_bosh_cli_and_init() {
+  echo "Start to update udpate Ruby 1.9 to 2.0 ..."
+  # Update Ruby 1.9 to 2.0
+  sudo rm /usr/bin/ruby /usr/bin/gem /usr/bin/irb /usr/bin/rdoc /usr/bin/erb
+  sudo ln -s /usr/bin/ruby2.0 /usr/bin/ruby
+  sudo ln -s /usr/bin/gem2.0 /usr/bin/gem
+  sudo ln -s /usr/bin/irb2.0 /usr/bin/irb
+  sudo ln -s /usr/bin/rdoc2.0 /usr/bin/rdoc
+  sudo ln -s /usr/bin/erb2.0 /usr/bin/erb
+
+  set +e
+
+  environment=$1
+  if [ "$environment" == "AzureChinaCloud" ]; then
+    sudo gem sources --remove https://rubygems.org/
+    sudo gem sources --add https://ruby.taobao.org/
+    sudo gem sources --add https://gems.ruby-china.org/
+  fi
+
+  set -e
+
+  gem sources -l
+  sudo gem update --system
+  sudo gem pristine --all
+
+  echo "Start to install bosh_cli..."
+  sudo gem install bosh_cli -v 1.3169.0 --no-ri --no-rdoc
+
+  echo "Start to install bosh-init..."
+  bosh_init_url=$2
+  wget $bosh_init_url
+  chmod +x ./bosh-init-*
+  sudo mv ./bosh-init-* /usr/local/bin/bosh-init
 }
 
 environment=$(get_setting ENVIRONMENT)
@@ -104,16 +123,17 @@ echo $REPLACE_WITH_ADMIN_PASSWORD > "$home_dir/BOSH_DIRECTOR_ADMIN_PASSWORD"
 
 chmod +x deploy_cloudfoundry.sh
 cp deploy_cloudfoundry.sh $home_dir
+cp utils.sh $home_dir
 example_manifests="$home_dir/example_manifests"
 mkdir -p $example_manifests
 cp single-vm-cf.yml $example_manifests 
 cp multiple-vm-cf.yml $example_manifests
+chmod 644 $example_manifests/single-vm-cf.yml
+chmod 644 $example_manifests/multiple-vm-cf.yml
 
 cp cf* $home_dir
 bosh_init_url=$(get_setting BOSH_INIT_URL)
-chmod +x init.sh
-echo "Start to run init.sh..."
-./init.sh $environment $bosh_init_url
+install_bosh_cli_and_init $environment $bosh_init_url
 
 chown -R $username $home_dir
 
