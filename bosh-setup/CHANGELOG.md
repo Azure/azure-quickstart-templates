@@ -1,3 +1,11 @@
+# v2.1.1 (2016-10-20)
+
+- Upgrade CustomScript to 2.0
+- Add a retry logic for uploading stemcell and release
+- Use https for the mirror site
+- Bug fixes
+  - Install prerequisites at the beginning to avoid a silent error when install msrest
+
 # v2.1.0 (2016-10-11)
 
 - Upgrade versions
