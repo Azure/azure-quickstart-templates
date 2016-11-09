@@ -1,3 +1,8 @@
+# v2.2.0 (2016-11-09)
+
+- Support AzureUSGovernment
+- Upgrade Azure CPI version to v19. Please see new features in [bosh-azure-cpi-release v19](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v19).
+
 # v2.1.1 (2016-10-20)
 
 - Upgrade CustomScript to 2.0
