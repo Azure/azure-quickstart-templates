@@ -1,208 +1,227 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-  "contentVersion": "1.0.0.0",
-  "parameters": {
-    "vstsAccountURL": {
-      "type": "string",
-      "metadata": {
-        "description": "Team Services Account URL (e.g. https://myaccount.visualstudio.com)"
-      }
-    },
-    "vstsPAT": {
-      "type": "string",
-      "metadata": {
-        "description": "Team Services PAT for user with Agent Pools (read,manage) permissions"
-      }
-    },
-    "vstsPoolName": {
-      "type": "string",
-      "defaultValue": "Default",
-      "metadata": {
-        "description": "Team Services Agent Pool Name"
-      }
-    },
-    "vstsAgentName": {
-      "type": "string",
-      "defaultValue": "redhat-build-full",
-      "metadata": {
-        "description": "Team Services Agent Name"
-      }
-    },    
-    "adminUserName": {
-      "type": "string",
-      "defaultValue": "vstsbuild",
-      "metadata": {
-        "description": "Linux VM User Account Name"
-      }
-    },
-    "adminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Linux VM User Password"
-      }
-    },
-    "dnsLabelPrefix": {
-      "type": "string",
-      "metadata": {
-        "description": "DNS Label for the Public IP. Must be lowercase. It should match with the following regular expression: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$ or it will raise an error."
-      }
-    }
-  },
-  "variables": {
-    "imagePublisher": "redhat",
-    "imageOffer": "rhel",
-    "imageSKU":"7.2",
-    "baseName": "[uniquestring(parameters('dnsLabelPrefix'),resourceGroup().id,uniquestring(deployment().name))]",
-    "nicName": "[concat('myNicA1',variables('baseName'))]",
-    "addressPrefix": "10.0.0.0/16",
-    "subnet1Name": "Subnet-1",
-    "subnet1Prefix": "10.0.0.0/24",
-    "publicIPAddressName": "[concat('myIPA1',variables('baseName'))]",
-    "publicIPAddressType": "Dynamic",
-    "vmStorageAccountContainerName": "vhds",
-    "vmName": "[parameters('dnsLabelPrefix')]",
-    "vmSize": "Standard_F1",
-    "virtualNetworkName": "MyVNET",
-    "frontEndNSGName": "[concat(parameters('dnsLabelPrefix'),'-nsgA1')]",
-    "storageAccountType": "Standard_LRS",
-    "storageAccountName": "[concat('vstsa1',variables('baseName'))]",
-    "OSDiskName": "osdisk1spec.vhd",
-    "subnet1Ref": "[resourceId('Microsoft.Network/virtualNetworks/subnets/',variables('virtualNetworkName'),variables('subnet1Name'))]"
-  },
-  "resources": [
-    {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('StorageAccountName')]",
-      "apiVersion": "2016-01-01",
-      "location": "[resourceGroup().location]",
-      "sku": {
-        "name": "[variables('storageAccountType')]"
-      },
-      "kind": "Storage",
-      "properties": {
-      }
-    },
-    {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[variables('publicIPAddressName')]",
-      "location": "[resourceGroup().location]",
-      "properties": {
-        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
-        "dnsSettings": {
-          "domainNameLabel": "[parameters('dnsLabelPrefix')]"
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vstsAccountURL": {
+            "type": "string",
+            "metadata": {
+                "description": "Team Services Account URL (e.g. https://myaccount.visualstudio.com)"
+            }
+        },
+        "vstsPAT": {
+            "type": "string",
+            "metadata": {
+                "description": "Team Services PAT for user with Agent Pools (read,manage) permissions"
+            }
+        },
+        "vstsPoolName": {
+            "type": "string",
+            "defaultValue": "Default",
+            "metadata": {
+                "description": "Team Services Agent Pool Name"
+            }
+        },
+        "vstsAgentName": {
+            "type": "string",
+            "defaultValue": "redhat-build-full",
+            "metadata": {
+                "description": "Team Services Agent Name"
+            }
+        },
+        "adminUserName": {
+            "type": "string",
+            "defaultValue": "vstsbuild",
+            "metadata": {
+                "description": "Linux VM User Account Name"
+            }
+        },
+        "adminPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Linux VM User Password"
+            }
+        },
+        "dnsLabelPrefix": {
+            "type": "string",
+            "metadata": {
+                "description": "DNS Label for the Public IP. It must be lowercase and must match the following regular expression: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$."
+            }
+        },
+        "agentCount": {
+            "type": "int",
+            "defaultValue": 2,
+            "metadata": {
+                "description": "The number of build servers to provision in this deployment."
+            }
         }
-      }
     },
+    "variables": {
+        "imagePublisher": "redhat",
+        "imageOffer": "rhel",
+        "imageSKU": "7.2",
+        "nicName": "[concat(parameters('dnsLabelPrefix'), '-nic-')]",
+        "addressPrefix": "10.0.0.0/16",
+        "subnet1Name": "Subnet-1",
+        "subnet1Prefix": "10.0.0.0/24",
+        "publicIPAddressName": "[concat(parameters('dnsLabelPrefix'), '-ip-')]",
+        "vmName": "[concat(parameters('dnsLabelPrefix'), '-')]",
+        "virtualNetworkName": "MyVNET",
+        "storageAccountName": "[concat('vhds', uniqueString(resourceGroup().id))]",
+        "subnet1Ref": "[resourceId('Microsoft.Network/virtualNetworks/subnets/', variables('virtualNetworkName'), variables('subnet1Name'))]"
+    },
+    "resources": [
         {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Network/virtualNetworks",
-      "name": "[variables('virtualNetworkName')]",
-      "location": "[resourceGroup().location]",
-      "properties": {
-        "addressSpace": {
-          "addressPrefixes": [
-            "[variables('addressPrefix')]"
-          ]
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[concat(variables('StorageAccountName'), copyIndex())]",
+            "apiVersion": "2016-01-01",
+            "location": "[resourceGroup().location]",
+            "copy": {
+                "name": "storageLoop",
+                "count": "[parameters('agentCount')]"
+            },
+            "sku": {
+                "name": "Standard_LRS"
+            },
+            "kind": "Storage",
+            "properties": {}
         },
-        "subnets": [
-          {
-            "name": "[variables('subnet1Name')]",
+        {
+            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[concat(variables('publicIPAddressName'), copyIndex())]",
+            "location": "[resourceGroup().location]",
+            "copy": {
+                "name": "publicIpLoop",
+                "count": "[parameters('agentCount')]"
+            },
             "properties": {
-              "addressPrefix": "[variables('subnet1Prefix')]"
+                "publicIPAllocationMethod": "Dynamic",
+                "dnsSettings": {
+                    "domainNameLabel": "[concat(parameters('dnsLabelPrefix'), '-', copyIndex())]"
+                }
             }
-          }
-        ]
-      }
-    },
-    {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Network/networkInterfaces",
-      "name": "[variables('nicName')]",
-      "location": "[resourceGroup().location]",
-      "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
-      ],
-      "properties": {
-        "ipConfigurations": [
-          {
-            "name": "ipconfigA1",
+        },
+        {
+            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[variables('virtualNetworkName')]",
+            "location": "[resourceGroup().location]",
             "properties": {
-              "privateIPAllocationMethod": "Dynamic",
-              "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
-              },
-              "subnet": {
-                "id": "[variables('subnet1Ref')]"
-              }
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('addressPrefix')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[variables('subnet1Name')]",
+                        "properties": {
+                            "addressPrefix": "[variables('subnet1Prefix')]"
+                        }
+                    }
+                ]
             }
-          }
-        ]
-      }
-    },
-    {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Compute/virtualMachines",
-      "name": "[variables('vmName')]",
-      "location": "[resourceGroup().location]",
-      "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('StorageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
-      ],
-      "properties": {
-        "hardwareProfile": {
-          "vmSize": "[variables('vmSize')]"
         },
-        "osProfile": {
-          "computerName": "[variables('vmName')]",
-          "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]",
-          "customData": "[base64(variables('publicIPAddressName'))]"
-        },
-        "storageProfile": {
-          "imageReference": {
-            "publisher": "[variables('imagePublisher')]",
-            "offer": "[variables('imageOffer')]",
-            "sku": "[variables('imageSKU')]",
-            "version": "latest"
-          },
-          "osDisk": {
-            "name": "osdisk1",
-            "vhd": {
-              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/',variables('storageAccountName')),'2015-06-15').primaryEndpoints.blob,variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]"
-              },
-            "caching": "ReadWrite",
-            "createOption": "FromImage"
-          }
-        },
-        "networkProfile": {
-          "networkInterfaces": [
-            {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+        {
+            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[concat(variables('nicName'), copyIndex())]",
+            "location": "[resourceGroup().location]",
+            "copy": {
+                "name": "nicLoop",
+                "count": "[parameters('agentCount')]"
+            },
+            "dependsOn": [
+                "[concat(variables('publicIPAddressName'), copyIndex())]",
+                "[variables('virtualNetworkName')]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('publicIPAddressName'), copyIndex()))]"
+                            },
+                            "subnet": {
+                                "id": "[variables('subnet1Ref')]"
+                            }
+                        }
+                    }
+                ]
             }
-          ]
+        },
+        {
+            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[concat(variables('vmName'), copyIndex())]",
+            "location": "[resourceGroup().location]",
+            "copy": {
+                "name": "vmLoop",
+                "count": "[parameters('agentCount')]"
+            },
+            "dependsOn": [
+                "[concat(variables('StorageAccountName'), copyIndex())]",
+                "[concat(variables('nicName'), copyIndex())]"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "Standard_F1"
+                },
+                "osProfile": {
+                    "computerName": "[concat(variables('vmName'), copyIndex())]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]",
+                    "customData": "[base64(variables('publicIPAddressName'))]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "[variables('imagePublisher')]",
+                        "offer": "[variables('imageOffer')]",
+                        "sku": "[variables('imageSKU')]",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "osdisk1",
+                        "vhd": {
+                            "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts/', concat(variables('storageAccountName'), copyIndex())), '2015-06-15').primaryEndpoints.blob, 'vhds/', parameters('dnsLabelPrefix'), copyIndex(), '.vhd')]"
+                        },
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'), copyIndex()))]"
+                        }
+                    ]
+                }
+            },
+            "resources": [
+                {
+                    "type": "extensions",
+                    "name": "configScript",
+                    "apiVersion": "2015-06-15",
+                    "location": "[resourceGroup().location]",
+                    "dependsOn": [
+                        "[concat(variables('vmName'), copyIndex())]"
+                    ],
+                    "properties": {
+                        "publisher": "Microsoft.Azure.Extensions",
+                        "type": "CustomScript",
+                        "typeHandlerVersion": "2.0",
+                        "autoUpgradeMinorVersion": true,
+                        "settings": {
+                            "fileUris": [
+                                "https://raw.githubusercontent.com/paultbarham/azure-quickstart-templates/azuremerge/vsts-fullbuild-redhat-vm/scripts/full-rh-vstsbuild-install.sh"
+                            ],
+                            "commandToExecute": "[concat('sh full-rh-vstsbuild-install.sh', ' ', parameters('vstsAccountURL'), ' ', parameters('vstsPAT'), ' ', parameters('vstsPoolName'), ' ', concat(parameters('vstsAgentName'),copyIndex()), ' ', parameters('adminUserName'))]"
+                        }
+                    }
+                }
+            ]
         }
-      }
-    },
-    {
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('vmName'),'/newuserscript')]",
-      "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
-      "dependsOn": ["[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"],
-      "properties": {
-        "publisher": "Microsoft.Azure.Extensions",
-        "type": "CustomScript",
-        "typeHandlerVersion": "2.0",
-        "autoUpgradeMinorVersion":true,
-        "settings": {
-          "fileUris": [
-            "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/vsts-fullbuild-redhat-vm/scripts/full-rh-vstsbuild-install.sh"
-          ],
-          "commandToExecute": "[concat('sh full-rh-vstsbuild-install.sh',' ',parameters('vstsAccountURL'),' ',parameters('vstsPAT'),' ',parameters('vstsPoolName'),' ',parameters('vstsAgentName'),' ',parameters('adminUserName'))]"
-        }
-      }
-    }
-  ]
+    ]
 }
