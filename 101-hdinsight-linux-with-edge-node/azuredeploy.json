@@ -34,12 +34,33 @@
         "description": "The password must be at least 10 characters in length and must contain at least one digit, one non-alphanumeric character, and one upper or lower case letter."
       }
     },
+    "_artifactsLocation": {
+          "type": "string",
+          "metadata": {
+              "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+          },
+          "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-hdinsight-linux-with-edge-node/"
+      },
+    "_artifactsLocationSasToken": {
+          "type": "securestring",
+          "metadata": {
+              "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+          },
+          "defaultValue": ""
+      },
+    "installScriptActionFolder":{
+      "type": "string",
+      "metadata": {
+        "description": "A script action you can run on the empty node to install or configure additiona software."
+      },
+      "defaultValue": "scripts"
+    },
     "installScriptAction":{
       "type": "string",
       "metadata": {
         "description": "A script action you can run on the empty node to install or configure additiona software."
       },
-      "defaultValue": "https://raw.githubusercontent.com/hdinsight/Iaas-Applications/master/EmptyNode/scripts/EmptyNodeSetup.sh"
+      "defaultValue": "EmptyNodeSetup.sh"
     }
   },
   "variables": {
@@ -52,7 +73,7 @@
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('clusterStorageAccountName')]",
       "apiVersion": "2016-01-01",
-      "location": "East US 2",
+      "location": "[resourceGroup().location]",
       "sku": {
           "name": "[variables('storageAccountType')]"
       },
@@ -62,7 +83,7 @@
     {
       "name": "[parameters('clusterName')]",
       "type": "Microsoft.HDInsight/clusters",
-      "location": "East US 2",
+      "location": "[resourceGroup().location]",
       "apiVersion": "2015-03-01-preview",
       "dependsOn": [ "[concat('Microsoft.Storage/storageAccounts/',variables('clusterStorageAccountName'))]" ],
       "tags": {
@@ -143,7 +164,7 @@
             },
             "installScriptActions": [{
                 "name": "[concat('emptynode','-' ,uniquestring(variables('applicationName')))]",
-                "uri": "[parameters('installScriptAction')]",
+                "uri": "[concat(parameters('_artifactsLocation'), '/', parameters('installScriptActionFolder'), '/', parameters('installScriptAction'), parameters('_artifactsLocationSasToken'))]",
                 "roles": ["edgenode"]
             }],
             "uninstallScriptActions": [],
