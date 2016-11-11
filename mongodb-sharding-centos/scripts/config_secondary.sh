@@ -88,7 +88,7 @@ mongod --configsvr --replSet crepset --port 27019 --dbpath /var/lib/mongo/ --log
 
 #check if mongod started or not
 sleep 15
-n=`ps -ef |grep -v grep|grep mongod |wc -l`
+n=`ps -ef |grep "mongod --configsvr" |grep -v grep |wc -l`
 if [[ $n -eq 1 ]];then
     echo "mongod config replica set started successfully"
 else
