@@ -27,17 +27,7 @@ The Autoscale rules are configured as follows
 - If the Percentage CPU is greater than 50% for 5 Minutes, then the scale out action (add more VM instances, one at a time) is triggered
 - Once the scale out action is completed, the cool down period is 1 Minute
 
-### Parameters ###
-| Parameter | Definition | Default Value |
-|---|---|---|
-| vmSku | Size of VMs in the VM Scale Set | Standard_A1 |
-| windowsOSVersion | The Windows version for the VM. This will pick a fully patched image of this given Windows version. Allowed values: 2008-R2-SP1, 2012-Datacenter, 2012-R2-Datacenter. | 2012-R2-Datacenter |
-| vmssName | String used as a base for naming resources. Must be 3-61 characters in length and globally unique across Azure. A hash is prepended to this string for some resources, and resource-specific information is appended. ||
-|instanceCount| Number of VM instances (100 or less). | 3 |
-|adminUsername| Admin username on all VMs. | vmssadmin |
-|adminPassword|Admin password on all VMs.||
-|powershelldscZip|Full URI of the PowerShell DSC zip file|https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vmss-windows-webapp-dsc-autoscale/IISInstall.ps1.zip|
-|webDeployPackage|Full URI of the WebDeploy package zip file|https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vmss-windows-webapp-dsc-autoscale/DefaultASPWebApp.v1.0.zip|
-|powershelldscUpdateTagVersion|Version number of the DSC deployment. Changing this value on subsequent deployments will trigger the extension to run.|1.0|
+
+Tags: `VMSS, VM Scale Set, Windows, DSC Extension`
 
 
