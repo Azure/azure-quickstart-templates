@@ -1,0 +1,161 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "numBootNodes": {
+      "type": "int"
+    },
+    "txVMNamePrefix": {
+      "type": "string"
+    },
+    "txStorageAcctName": {
+      "type": "string"
+    },
+    "numTXNodes": {
+      "type": "int"
+    },
+    "mnVMNamePrefix": {
+      "type": "string"
+    },
+    "numMNNodes": {
+      "type": "int"
+    },
+    "artifactsLocationURL": {
+      "type": "string"
+    },
+    "adminUsername": {
+      "type": "string"
+    },
+    "ethereumAccountPsswd": {
+      "type": "securestring"
+    },
+    "ethereumAccountPassphrase": {
+      "type": "securestring"
+    },
+    "ethereumNetworkID": {
+      "type": "int"
+    },
+    "gethIPCPort": {
+      "type": "int"
+    },
+    "adminSitePort": {
+      "type": "int"
+    }
+  },
+  "variables": {
+    "apiVersionVirtualMachinesExtensions": "2016-03-30",
+    "txNode": 0,
+    "mnNode": 1,
+    "maxPeers": 25
+  },
+  "resources": [
+    {
+      "apiVersion": "[variables('apiVersionVirtualMachinesExtensions')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('txVMNamePrefix'), copyIndex(), '/newuserscript')]",
+      "copy": {
+        "name": "txNodesConfigLoop",
+        "count": "[parameters('numTXNodes')]"
+      },
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[concat(parameters('artifactsLocationURL'), '/scripts/configure-geth.sh')]"
+          ]
+        },
+        "protectedSettings": {
+          "commandToExecute": "[concat('/bin/bash configure-geth.sh \"', parameters('adminUsername'), '\" \"', parameters('ethereumAccountPsswd'), '\" \"', parameters('ethereumAccountPassphrase'), '\" \"', parameters('artifactsLocationURL'), '\" \"', parameters('ethereumNetworkID'), '\" \"', variables('maxPeers'), '\" \"', variables('txNode'), '\" \"', parameters('gethIPCPort'), '\" \"', parameters('numBootNodes'), '\" \"', parameters('numMNNodes'), '\" \"', parameters('mnVMNamePrefix'), '\" \"', parameters('numTXNodes'), '\" \"', parameters('txVMNamePrefix'), '\" \"', parameters('adminSitePort'), '\"')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('txVMNamePrefix'), copyIndex(), '/diagscript')]",
+      "apiVersion": "[variables('apiVersionVirtualMachinesExtensions')]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "txNodesDiagLoop",
+        "count": "[parameters('numTXNodes')]"
+      },
+      "properties": {
+        "publisher": "Microsoft.OSTCExtensions",
+        "type": "LinuxDiagnostic",
+        "typeHandlerVersion": "2.3",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+           "perfCfg":[
+              {
+                "query":"SELECT UsedMemory,AvailableMemory FROM SCX_MemoryStatisticalInformation","table":"Memory"
+              },
+              {
+                "query":"SELECT PercentIdleTime,PercentProcessorTime,PercentIOWaitTime FROM SCX_ProcessorStatisticalInformation WHERE IsAggregate = TRUE","table":"CPU"
+              }
+            ]
+        },
+        "protectedSettings": {
+          "storageAccountName": "[parameters('txStorageAcctName')]",
+          "storageAccountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('txStorageAcctName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]"
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersionVirtualMachinesExtensions')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('mnVMNamePrefix'), copyIndex(), '/newuserscript')]",
+      "copy": {
+        "name": "bootMNNodesConfigLoop",
+        "count": "[parameters('numMNNodes')]"
+      },
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[concat(parameters('artifactsLocationURL'), '/scripts/configure-geth.sh')]"
+          ]
+        },
+        "protectedSettings": {
+          "commandToExecute": "[concat('/bin/bash configure-geth.sh \"', parameters('adminUsername'), '\" \"', parameters('ethereumAccountPsswd'), '\" \"', parameters('ethereumAccountPassphrase'), '\" \"', parameters('artifactsLocationURL'), '\" \"', parameters('ethereumNetworkID'), '\" \"', variables('maxPeers'), '\" \"', variables('mnNode'), '\" \"', parameters('gethIPCPort'), '\" \"', parameters('numBootNodes'), '\" \"', parameters('numMNNodes'), '\" \"', parameters('mnVMNamePrefix'), '\" \"', copyIndex(), '\"')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('mnVMNamePrefix'), copyIndex(), '/diagscript')]",
+      "apiVersion": "[variables('apiVersionVirtualMachinesExtensions')]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "mnNodesDiagLoop",
+        "count": "[parameters('numMNNodes')]"
+      },
+      "properties": {
+        "publisher": "Microsoft.OSTCExtensions",
+        "type": "LinuxDiagnostic",
+        "typeHandlerVersion": "2.3",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "perfCfg":[
+             {
+               "query":"SELECT UsedMemory,AvailableMemory FROM SCX_MemoryStatisticalInformation","table":"Memory"
+             },
+             {
+               "query":"SELECT PercentIdleTime,PercentProcessorTime,PercentIOWaitTime FROM SCX_ProcessorStatisticalInformation WHERE IsAggregate = TRUE","table":"CPU"
+             }
+           ]
+        },
+        "protectedSettings": {
+          "storageAccountName": "[parameters('txStorageAcctName')]",
+          "storageAccountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('txStorageAcctName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]"
+        }
+      }
+    }
+  ]
+}
