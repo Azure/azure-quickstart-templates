@@ -41,13 +41,26 @@ curl -k --max-redirs 10 https://github.com/moodle/moodle/archive/$moodleVersion.
 unzip moodle.zip
 mv moodle-$moodleVersion moodle
 
-# install Office 365 plugins if asked for
+# Install Office 365 plugins if asked for
 if [ "$installOfficePlugins" = "True" ]; then
     curl -k --max-redirs 10 https://github.com/Microsoft/o365-moodle/archive/$moodleVersion.zip -L -o o365.zip
     unzip o365.zip
+    
+# The plugins below are not required for new installations
+    rm -rf o365-moodle-$moodleVersion/blocks/onenote
+    rm -rf o365-moodle-$moodleVersion/local/m*
+    rm -rf o365-moodle-$moodleVersion/local/o365docs
+    rm -rf o365-moodle-$moodleVersion/local/office365
+    rm -rf o365-moodle-$moodleVersion/local/onenote
+    rm -rf o365-moodle-$moodleVersion/mod/assign
+    rm -rf o365-moodle-$moodleVersion/user/profile/
+    rm -rf o365-moodle-$moodleVersion/repository/onenote	
+    
+# Copy office plugins folder into moodle  and remove unzipped folder
     cp -r o365-moodle-$moodleVersion/* moodle
     rm -rf o365-moodle-$moodleVersion
 fi
+
 
 # make the moodle directory writable for owner
 chown -R www-data moodle
