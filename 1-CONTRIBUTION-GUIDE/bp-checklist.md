@@ -34,4 +34,4 @@ These practices ensure your sample provides a consistent, reliable experience ac
 ---
 
 ### Final Note
-If you're submitting a developer sample (100/200/300 level template), use the full best practice guide to ensure the full list of practices have been followed.
+If you're submitting a developer sample (101/201/301 level template), use the full best practice guide to ensure the full list of practices have been followed.
