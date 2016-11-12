@@ -7,6 +7,7 @@ import random
 import re
 import requests
 import sys
+import base64
 from azure.storage.blob import AppendBlobService
 from azure.storage.table import TableService
 import azure.mgmt.network
@@ -31,7 +32,7 @@ def prepare_storage(settings):
 
 def render_bosh_manifest(settings):
     with open('bosh.pub', 'r') as tmpfile:
-        ssh_public_key = tmpfile.read()
+        ssh_public_key = tmpfile.read().strip()
 
     ip = netaddr.IPNetwork(settings['SUBNET_ADDRESS_RANGE_FOR_BOSH'])
     gateway_ip = str(ip[1])
@@ -70,7 +71,8 @@ def render_bosh_manifest(settings):
             "BOSH_AZURE_CPI_RELEASE_SHA1",
             "STEMCELL_URL",
             "STEMCELL_SHA1",
-            "ENVIRONMENT"
+            "ENVIRONMENT",
+            "BOSH_VM_SIZE"
         ]
         for k in keys:
             v = settings[k]
@@ -149,6 +151,15 @@ def render_cloud_foundry_manifest(settings, bosh_director_ip):
             with open(cloudfoundry_template, 'w') as tmpfile:
                 tmpfile.write(contents)
 
+def render_bosh_deployment_cmd(bosh_director_ip):
+    bosh_deployment_cmd = "deploy_bosh.sh"
+    if os.path.exists(bosh_deployment_cmd):
+        with open(bosh_deployment_cmd, 'r') as tmpfile:
+            contents = tmpfile.read()
+        contents = re.compile(re.escape("REPLACE_WITH_BOSH_DIRECOT_IP")).sub(bosh_director_ip, contents)
+        with open(bosh_deployment_cmd, 'w') as tmpfile:
+            tmpfile.write(contents)
+
 def render_cloud_foundry_deployment_cmd(settings):
     cloudfoundry_deployment_cmd = "deploy_cloudfoundry.sh"
     if os.path.exists(cloudfoundry_deployment_cmd):
@@ -179,7 +190,11 @@ def get_settings():
         settings = json.load(f)
     settings['TENANT_ID'] = sys.argv[1]
     settings['CLIENT_ID'] = sys.argv[2]
-    settings['CLIENT_SECRET'] = sys.argv[3]
+    settings['CLIENT_SECRET'] = base64.b64decode(sys.argv[3])
+
+    print "tenant_id: {0}xxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx".format(settings['TENANT_ID'][0:4])
+    print "client_id: {0}xxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx".format(settings['CLIENT_ID'][0:4])
+    print "The length of client_secret is {0}".format(len(settings['CLIENT_SECRET']))
 
     return settings
 
@@ -191,7 +206,7 @@ def main():
     prepare_storage(settings)
 
     bosh_director_ip = render_bosh_manifest(settings)
-    print bosh_director_ip
+    render_bosh_deployment_cmd(bosh_director_ip)
 
     render_cloud_foundry_manifest(settings, bosh_director_ip)
     render_cloud_foundry_deployment_cmd(settings)
