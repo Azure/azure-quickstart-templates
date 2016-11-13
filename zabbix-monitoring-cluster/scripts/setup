@@ -1,0 +1,669 @@
+#!/usr/bin/env perl
+package main;
+
+use 5.010;
+use strict;
+use warnings;
+use Getopt::Long;
+use Pod::Usage;
+import util;
+
+our $VERSION    = 0.1.8;
+
+my %config      = (
+    "agent.serverIp"        => undef,
+    "server.mysqlHost"      => undef,
+    "server.mysqlDbName"    => undef,
+    "server.mysqlUser"      => undef,
+    "server.mysqlPassword"  => undef,
+    "server.smtpServer"     => undef,
+    "server.smtpUser"       => undef,
+    "server.smtpPassword"   => undef,
+    "server.smtpTo"         => undef,
+);
+
+{   # Parse options.
+    Getopt::Long::Configure qw(gnu_getopt);
+    my $optVerbose;
+    my $optQuiet;
+    my $optDryrun;
+    my %optConfig;
+
+    GetOptions(
+        'verbose|v'     =>  \$optVerbose,
+        'quiet|q'       =>  \$optQuiet,
+        'dryrun|n'      =>  \$optDryrun,
+        'config|c=s'    =>  \%optConfig,
+    ) || exit(1);
+    $util::verbose  = $optVerbose ? 1 : ($optQuiet ? 3 : 2 );
+    $util::dryrun   = $optDryrun;
+
+    # parse config
+    while (my ($key,$value) = each %optConfig) {
+        if(exists $config{$key}){
+            $config{$key} = $value;
+        }else{
+            pod2usage(
+                -msg => "Invalid config key '$key' specified. Supported keys are:",
+                -sections => "CONFIGKEY",
+                -verbose => 99);
+        }
+    }
+}
+
+my $optType     = shift || "help";
+
+my %flow = (
+    agent   => sub {
+        unless ($config{'agent.serverIp'}){
+            pod2usage(
+                -msg        => "agent.serverIp not set",
+                -sections   => "DESCRIPTION",
+                -verbose    => 99);
+        }
+        
+        my $zabbixServerIp = $config{'agent.serverIp'};
+        require Sys::Hostname;
+        my $host = &Sys::Hostname::hostname;
+
+        my $confAgentDir = "/etc/zabbix/zabbix_agentd.conf.d";
+        my $confAgent = << "EOM";
+Hostname=$host
+PidFile=/var/run/zabbix/zabbix_agentd.pid
+Server=$zabbixServerIp
+ServerActive=$zabbixServerIp
+Include=$confAgentDir
+EOM
+
+        my $confAzureVM = <<"EOM";
+UserParameter=azure.vm.agent.alive,ps aux |grep -c "[w]aagent -daemon"
+EOM
+
+        my $s1 = [];
+        regSteps($s1, "Install Zabbix Agent package.", sub {
+            installPackageSuite("zabbix-agent");
+        });
+        regSteps($s1, "Configure zabbix agent.", sub {
+            installFile('/etc/zabbix/zabbix_agentd.conf', $confAgent)
+            || runCmd("mkdir -p $confAgentDir")
+            || installFile("$confAgentDir/azure_vm.conf", $confAzureVM);
+        });
+        regSteps($s1, "Enable Zabbix Agent service.", sub {
+            enableService('zabbix-agent');
+        });
+        regSteps($s1, "Restart Zabbix Agent service.", sub {
+            runCmd('service zabbix-agent restart');
+        });
+
+        return $s1;
+    },
+    server  => sub {
+        unless ($config{'server.mysqlDbName'} && $config{'server.mysqlUser'} && $config{'server.mysqlPassword'}){
+            pod2usage(
+                -msg        => "server configuration not well set",
+                -sections   => [qw(DESCRIPTION CONFIGKEY/SERVER)],
+                -verbose    => 99);
+        }
+
+        my $dbLocalhost     = 'localhost';
+
+        my $dbServerHost    = $config{'server.mysqlHost'} || $dbLocalhost;
+        my $zabbixDb        = $config{'server.mysqlDbName'};
+        my $zabbixUser      = $config{'server.mysqlUser'};
+        my $zabbixPassword  = $config{'server.mysqlPassword'};
+
+        my $smtpServer      = $config{'server.smtpServer'   };
+        my $smtpUser        = $config{'server.smtpUser'     };
+        my $smtpPassword    = $config{'server.smtpPassword' };
+        my $smtpTo          = $config{'server.smtpTo'       };
+
+        my $s1 = [];
+        regSteps($s1, "Install Zabbix Server package.", sub{
+            installPackageSuite("zabbix-server");
+        });
+        regSteps($s1, "Configure apache.", sub{
+            my $confServerApachePhp = << 'EOM';
+<Directory "/usr/share/zabbix">
+  Require all granted
+</Directory>
+Alias /zab /usr/share/zabbix
+php_value max_execution_time 300
+php_value memory_limit 128M
+php_value post_max_size 16M
+php_value upload_max_filesize 2M
+php_value max_input_time 300
+php_value date.timezone UTC
+EOM
+
+            if (-d '/etc/apache2') {
+                installFile('/etc/apache2/conf-available/zabbix.conf', $confServerApachePhp)
+                || runCmd("a2enconf zabbix");
+            }elsif (-d '/etc/httpd'){
+                installFile('/etc/httpd/conf.d/zabbix.conf', $confServerApachePhp)
+            } else {
+                -1
+            }
+        });
+
+        regSteps($s1, "Create database.", sub {
+            my $dbSetup = << "EOM";
+create database if not exists $zabbixDb character set utf8 collate utf8_bin;
+grant all privileges on $zabbixDb.* to $zabbixUser\@localhost identified by "$zabbixPassword";
+EOM
+            installPackageSuite('mysql-server');
+            runCmd("service mariadb start");
+            enableService("mariadb");
+            runCmd("mysql -e '$dbSetup'");
+        }) if ($dbServerHost eq $dbLocalhost);
+
+        regSteps($s1, "Test db connection.", sub {
+            runCmd("mysql -h \"$dbServerHost\" -u\"$zabbixUser\" -p'$zabbixPassword' \"$zabbixDb\" -e \"\"");
+        });
+
+        regSteps($s1, "Configure initial db.", sub {
+            my $confServerPhp = << "EOM";
+<?php
+global \$DB;
+
+\$DB['TYPE']     = 'MYSQL';
+\$DB['SERVER']   = '$dbServerHost';
+\$DB['PORT']     = '0';
+\$DB['DATABASE'] = '$zabbixDb';
+\$DB['USER']     = '$zabbixUser';
+\$DB['PASSWORD'] = '$zabbixPassword';
+
+\$ZBX_SERVER      = 'localhost';
+\$ZBX_SERVER_PORT = '10051';
+\$ZBX_SERVER_NAME = '';
+\$IMAGE_FORMAT_DEFAULT = IMAGE_FORMAT_PNG;
+?>
+EOM
+
+            my $confServer = << "EOM";
+DBHost=$dbServerHost
+DBName=$zabbixDb
+DBUser=$zabbixUser
+DBPassword=$zabbixPassword
+PidFile=/var/run/zabbix/zabbix_server.pid
+EOM
+
+            my $confDefault = << 'EOM';
+START=yes
+CONFIG_FILE="/etc/zabbix/zabbix_server.conf"
+EOM
+
+            my $catsql;
+            if(-d '/usr/share/zabbix-server-mysql'){
+                $catsql = "zcat /usr/share/zabbix-server-mysql/schema.sql.gz "
+                        ."/usr/share/zabbix-server-mysql/images.sql.gz "
+                        ."/usr/share/zabbix-server-mysql/data.sql.gz";
+            }elsif(-d '/usr/share/doc/zabbix-server-mysql-2.2.15/create'){
+                $catsql = "cat /usr/share/doc/zabbix-server-mysql-2.2.15/create/schema.sql "
+                        ."/usr/share/doc/zabbix-server-mysql-2.2.15/create/images.sql "
+                        ."/usr/share/doc/zabbix-server-mysql-2.2.15/create/data.sql";
+            }
+
+            if(-d '/etc/zabbix/web/') {
+                installFile('/etc/zabbix/web/zabbix.conf.php', $confServerPhp)
+            } else {
+                installFile('/etc/zabbix/zabbix.conf.php', $confServerPhp)
+            }
+
+            runCmd("$catsql |mysql -h \"$dbServerHost\" -u\"$zabbixUser\" -p'$zabbixPassword' \"$zabbixDb\"")
+            || installFile('/etc/zabbix/zabbix_server.conf', $confServer)
+            || installFile('/etc/default/zabbix-server', $confDefault);
+        });
+
+        if (-x '/usr/sbin/semodule'){
+          regSteps($s1, "Configure selinux.", sub{
+            installPackageSuite("selinux-util");
+            my $log = 'type=AVC msg=audit(1477461524.352:480): avc:  denied  { name_connect } for  pid=1852 comm="/usr/sbin/httpd" dest=10051 scontext=system_u:system_r:httpd_t:s0 tcontext=system_u:object_r:zabbix_port_t:s0 tclass=tcp_socket';
+            runCmd("audit2allow -M zabbix-web << EO\n$log\nEO\n")
+            || runCmd("semodule -i zabbix-web.pp");
+          });
+        }
+
+        regSteps($s1, "Enable and restart service.", sub{
+            enableService("httpd");
+            enableService("zabbix-server");
+            runCmd("service apache2 restart || service httpd restart")
+            || runCmd("service zabbix-server restart");
+        });
+
+        regSteps($s1, "Configure azure specific tempalte.", sub {
+            installPackageSuite("perl-jsonrpc");    # for regTemplate
+            require JSON::RPC::Legacy::Client;
+            our $client      = new JSON::RPC::Legacy::Client;
+            my $endpoint    = 'http://127.0.0.1/zab/';
+            our $uri         = $endpoint."api_jsonrpc.php";
+
+            sub callrpc
+            {
+                my $callobj = shift;
+                my $res = $client->call($uri, $callobj);
+
+                if($res) {
+                    if ($res->is_error) {
+                        say "Error : ", $res->error_message;
+                        return 1;
+                    }
+                    else {
+                        return (0, $res->result);
+                    }
+                }
+                else {
+                    say "Error code: ", $client->status_line;
+                    return 2;
+                }
+            }
+
+            my $authRequest = 
+            {
+                "jsonrpc", "2.0",
+                "method", "user.login",
+                "params", {
+                    "user", "Admin",
+                    "password", "zabbix"
+                },
+                "id", 0,
+                "auth", undef
+            };
+            
+            my $ret;
+            my $token;
+            ($ret, $token) = callrpc($authRequest);
+
+            open FL,'<','templateAzureVmLinux.xml';
+            my $xml;
+            {
+                local $/ = undef;
+                $xml = <FL>;
+            }
+            close FL;
+
+            my $importRequest  = 
+            {
+                "jsonrpc", "2.0",
+                "method", "configuration.import",
+                "params", {
+                    "format", "xml",
+                    "rules", {
+                        "templates", {
+                            "createMissing", 1
+                        },
+                        "items", {
+                            "createMissing", 1
+                        },
+                        "triggers",{
+                            "createMissing", 1
+                        },
+                        "templateLinkage",{
+                            "createMissing", 1
+                        },
+                    },
+                    "source", "$xml"
+                },
+                "auth", "$token",
+                "id", 1
+            };
+
+            ($ret, $token) = callrpc($importRequest);
+            return $ret;
+        });
+
+        regSteps($s1, "Configure autoreg.", sub{
+            my $autoRegSetup = <<'EOM';
+INSERT INTO \`actions\` VALUES (7,'autoreg1',2,0,0,0,'Auto registration: {HOST.HOST}','Host name: {HOST.HOST}\r\nHost IP: {HOST.IP}\r\nAgent port: {HOST.PORT}',0,'','');
+INSERT INTO \`operations\` VALUES (7,7,6,0,1,1,0);
+INSERT INTO \`optemplate\` VALUES (2,7,10105);
+EOM
+            runCmd("mysql -h \"$dbServerHost\" -u\"$zabbixUser\" -p'$zabbixPassword' \"$zabbixDb\" -e \"$autoRegSetup\"");
+        });
+
+        regSteps($s1, "Configure mail media.", sub {
+          my $mailBin;
+          if ($smtpServer && $smtpUser && $smtpPassword){
+            $mailBin = << "EOM";
+#!/bin/sh
+sendEmail -f notification\@noreply.org -t "\$1" -u "\$2" -m "\$3" -s $smtpServer -xu $smtpUser -xp $smtpPassword
+EOM
+          } else {
+            $mailBin = << "EOM";
+#!/bin/sh
+sendEmail -f notification\@noreply.org -t "\$1" -u "\$2" -m "\$3"
+EOM
+          }
+            my $alertScriptsPath = '/etc/zabbix/alertscripts';
+            my $mailBinPath = "$alertScriptsPath/zabbixMail";
+
+            my $smtpMailMediaSetup = <<"EOM";
+INSERT INTO \\`media_type\\` VALUES (4,1,'smtpMail','','','','zabbixMail','','','',0);
+INSERT INTO \\`media\\` VALUES (1,1,4,'$smtpTo',0,63,'1-7,00:00-24:00');
+UPDATE \\`actions\\` SET status=0 WHERE actionid=3;
+EOM
+
+            installPackageSuite('sendemail')
+            && runCmd("curl http://caspian.dotconf.net/menu/Software/SendEmail/sendEmail-v1.56.tar.gz| "
+              ."tar zxO sendEmail-v1.56/sendEmail > /usr/local/bin/sendEmail && chmod +x /usr/local/bin/sendEmail");
+            runCmd("mkdir -p $alertScriptsPath");
+            runCmd("ln -s $alertScriptsPath /usr/share/zabbix/");
+
+            installFile($mailBinPath, $mailBin)
+            || runCmd("chmod +x $mailBinPath")
+            || runCmd("mysql -h \"$dbServerHost\" -u\"$zabbixUser\" -p'$zabbixPassword' \"$zabbixDb\" -e \"$smtpMailMediaSetup\"");
+        }) if ($smtpTo);
+
+        return $s1;
+    }
+);
+
+my $getSteps = $flow{$optType};
+pod2usage(1) unless $getSteps;
+runSteps(&$getSteps);
+
+BEGIN{
+package util;
+
+use 5.010;
+use strict;
+use warnings;
+use Exporter qw(import);
+
+our @EXPORT        = qw(installFile installPackageSuite runCmd runSteps regSteps enableService
+    LOGDEBUG LOGINFO LOGWARN LOGERR info);
+our %EXPORT_TAGS    = (logging => [qw(LOGDEBUG LOGINFO LOGWARN LOGERR info)]);
+
+my $rpmRepo = "http://mirror.azure.cn/zabbix/zabbix/2.2/rhel/7/x86_64/zabbix-release-2.2-1.el7.noarch.rpm http://mirror.azure.cn/epel/7/x86_64/e/epel-release-7-8.noarch.rpm";
+
+use constant {
+    LOGDEBUG  => 1,
+    LOGINFO   => 2,
+    LOGWARN   => 3,
+    LOGERR    => 4,
+};
+
+our $verbose        = LOGINFO;
+our $dryrun         = 1;
+our $defaultRetry   = 5;
+our $defaultSleep   = 30;
+
+sub installFile
+{
+    my $path        = shift;
+    my $content     = shift;
+    my $FL;
+
+    return 0 if $dryrun;
+
+    open($FL, '>', $path);
+    print $FL $content;
+    close $FL;
+    return 0;
+}
+
+sub setLogLevel
+{
+    $verbose = shift;
+}
+
+sub info
+{
+    my $msg     = shift;
+    my $level   = shift || LOGINFO;
+
+    return if ($verbose > $level);
+    say "[MONICAKE] $msg";
+}
+
+sub runCmd
+{
+    my $cmd = shift;
+    if ($verbose >= LOGINFO) { $cmd .= " >/dev/null"; }
+
+    info "Run command:\n$cmd", LOGDEBUG;
+    return 0 if $dryrun;
+
+    my $ret = system($cmd);
+    if ($ret){
+        info "Return code is $ret", LOGDEBUG;
+    }
+
+    return $ret;
+}
+
+my %suites = (
+    "zabbix-agent"      => ['zabbix-agent'],
+    "zabbix-server"     => ['zabbix-server-mysql', 'zabbix-frontend-php', 'php5-mysql', 'mysql-client'],
+    "zabbix-server\@centos7"    => ['zabbix-server-mysql', 'zabbix-web-mysql', 'mariadb'],
+    "mysql-server"              => ['mysql-server'],
+    "mysql-server\@centos7"     => ['mariadb-server'],
+    "perl-jsonrpc"      => ['libjson-rpc-perl'],
+    "perl-jsonrpc\@centos7"      => ['perl-JSON-RPC'],
+    "sendemail"         => ['sendemail'],
+    "selinux-util"      => ['policycoreutils-python']
+);
+
+sub installPackageSuite
+{
+    my $packageSuite    = shift;
+    my $packageManager  = getPackageManager();
+    return 1 unless $packageManager;
+
+    my $packageInstall  = $$packageManager{install};
+
+    my $packagesRef;
+    if($$packageManager{distro}){
+       my $psfull = "$packageSuite\@".$$packageManager{distro};
+       if(exists $suites{$psfull}){
+           $packagesRef = $suites{$psfull}
+       }
+    }
+
+    if (!$packagesRef){
+        unless(exists $suites{$packageSuite}){
+            info("Package suite $packageSuite not supported.");
+            exit(4);
+        } else {
+            $packagesRef = $suites{$packageSuite};
+        }
+    }
+
+    return 0 unless @$packagesRef;
+
+    my $packageLine = join(" ", @$packagesRef);
+    my $cmd = "$packageInstall $packageLine";
+    info "Begin install packages:$packageLine", LOGDEBUG;
+    my $ret = runCmd($cmd);
+
+    if (!$ret){
+        my $verify = $$packageManager{verify};
+        if($verify){
+            $ret = runCmd("$verify $packageLine");
+        }
+    }
+
+    if (!$ret){
+        info("Install succeed.", LOGDEBUG);
+    }else{
+        info("Install failed. Try update.", LOGDEBUG);
+        my $packageUpdate = $$packageManager{refresh};
+        runCmd($packageUpdate);
+        $ret = runCmd($cmd);
+        if (!$ret){
+            info("Install succeed.", LOGDEBUG);
+        }else{
+            info("Install failed.", LOGDEBUG);
+        }
+    }
+
+    return $ret;
+}
+
+# Add verification for yum since it does not fail on missing package.
+sub getPackageManager()
+{
+    my %pm  = (
+        aptitude    => {
+            install => "DEBIAN_FRONTEND=noninteractive apt-get -y --no-install-recommends install",
+            refresh => "apt-get update"
+        },
+        yum         => {
+            distro  => "centos7",
+            install => "yum -y install",
+            verify  => "rpm -q",
+            refresh => "rpm -q zabbix-release || rpm -ivh $rpmRepo && sed -i s/repo\.zabbix\.com/mirror.azure.cn\\\\/zabbix/ /etc/yum.repos.d/zabbix.repo"
+        }
+    );
+
+    return $pm{aptitude}    unless runCmd('which apt-get 2> /dev/null');
+    return $pm{yum}         unless runCmd('which yum 2> /dev/null');
+
+    info("Package manager not supported.", LOGERR);
+    exit(3);
+}
+
+sub regSteps
+{
+    my $steps       = shift;
+    my $name        = shift;
+    my $sub         = shift;
+    push @$steps, {
+        name    => $name,
+        run     => $sub,
+    };
+}
+
+sub runSteps
+{
+    my $steps   = shift;
+    my $len     = @$steps;
+    my $index   = 0;
+    foreach my $step (@$steps){
+        ++$index;
+        info "($index/$len) $$step{name}";
+        my $run = $$step{run};
+        my $ret = &$run;
+        my $retry = $defaultRetry;
+        while ($ret && $retry){
+            info "failed with code: $ret, $retry retries remaining. Sleep for $defaultSleep seconds...";
+            sleep($defaultSleep);
+            --$retry;
+            $ret = &$run;
+        }
+
+        if ($ret){
+            info "failed with code: $ret";
+            exit(2);
+        }
+    }
+}
+
+sub enableService
+{
+    my $serviceName     = shift;
+    my $serviceManager  = getServiceManager();
+    return 1 unless $serviceManager;
+    my $cmd = sprintf $$serviceManager{enable}, $serviceName;
+    my $ret = runCmd($cmd);
+
+    return $ret;
+}
+
+sub getServiceManager
+{
+     my %pm  = (
+        systemctl    => {
+            enable => "systemctl enable %s",
+        },
+        upstart      => {
+            enable => "echo %s",
+        }
+    );
+
+    return $pm{systemctl}       unless runCmd('which systemctl 2> /dev/null');
+    return $pm{upstart}         unless runCmd('which status 2> /dev/null');
+
+    info("Service manager not supported.", LOGERR);
+    exit(3);
+}
+
+1;
+}
+
+__END__
+=head1 NAME
+
+run - Install server/agent for monitoring
+
+=head1 SYNOPSIS
+
+run [-nqv] <server|agent> [-c configKey=configValue]
+
+=head1 DESCRIPTION
+
+B<This program> will help setup monitoring agent/server.
+
+For agent setup, the server ip address should be given.
+
+For server setup, the backend database information could be specified.
+
+=head1 OPTIONS
+
+=over 4
+
+=item B<-n>
+
+Dry run.
+
+=item B<-q>
+
+Show less information.
+
+=item B<-v>
+
+Be more verbose.
+
+=item B<-c>
+
+Key configruation.
+
+=back
+
+=head1 CONFIGKEY
+
+=head2 AGENT
+
+=over 4
+
+=item B<agent.serverIp>
+
+Required. Specify server ip address.
+
+=back
+
+=head2 SERVER
+
+=over 4
+
+=item B<server.mysqlHost>
+
+Specify database host.
+If this option is not given or set to localhost, will setup a new MySQL instance on localhost.
+Otherwise an existing mysql will be used.
+
+
+=item B<server.mysqlDbName>
+
+Specify the name for monitoring database.
+
+=item B<server.mysqlUser>
+
+Specify the username for monitoring database.
+
+=item B<server.mysqlPassword>
+
+Specify the password for monitoring database.
+
+=back
+
+=cut

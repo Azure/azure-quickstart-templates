@@ -6,6 +6,7 @@ The following information is relevant to get started with contributing to this r
 + [**Contribution guide**](/1-CONTRIBUTION-GUIDE/README.md#contribution-guide). Describes the minimal guidelines for contributing.
 + [**Best practices**](/1-CONTRIBUTION-GUIDE/best-practices.md#best-practices). Best practices for improving the quality of your template design.
 + [**Git tutorial**](/1-CONTRIBUTION-GUIDE/git-tutorial.md#git-tutorial). Step by step to get you started with Git.
++ [**Useful Tools**](/1-CONTRIBUTION-GUIDE/useful-tools.md#useful-tools). Useful resources and tools for Azure development.
 
 ## Deploying Samples
 
@@ -21,7 +22,7 @@ Simply execute the script and pass in the folder name of the sample you want to 
 .\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactStagingDirectory '[foldername]'
 ```
 ```bash
-azure-group-deploy.sh -a [foldername] -l eastus -u
+azure-group-deploy.sh -a [foldername] -l eastus
 ```
 If the sample has artifacts that need to be "staged" for deployment (Configuration Scripts, Nested Templates, DSC Packages) then set the upload switch on the command.
 You can optionally specify a storage account to use, if so the storage account must already exist within the subscription.  If you don't want to specify a storage account
@@ -65,7 +66,7 @@ The README.md describes your deployment. A good description helps other communit
 + Deploy to Azure button
 + Visualize button
 + Description of what the template will deploy
-+ Tags, that can be used for seach. Specify the tags comma seperated and enclosed between two back-ticks (e.g Tags: `cluster, ha, sql`)
++ Tags, that can be used for search. Specify the tags comma seperated and enclosed between two back-ticks (e.g Tags: `cluster, ha, sql`)
 + *Optional: Prerequisites
 + *Optional: Description on how to use the application
 + *Optional: Notes

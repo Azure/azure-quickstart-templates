@@ -12,6 +12,7 @@ done
 # write some PHP; these scripts are downloaded beforehand as fileUris
 cp index.php /var/www/html/
 cp do_work.php /var/www/html/
+chown www-data:www-data /var/www/html/*
 rm /var/www/html/index.html
 # restart Apache
 apachectl restart

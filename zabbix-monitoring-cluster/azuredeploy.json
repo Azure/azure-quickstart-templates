@@ -1,0 +1,184 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "clusterResourcePrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Prefix for cluster resources. This would become part of the fully qualified domain name for each VM in the cluster, thus it should be globally unique."
+      }
+    },
+    "clusterUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Username for cluster vm."
+      },
+      "defaultValue": "clusteruser"
+    },
+    "clusterPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for cluster vms."
+      }
+    },
+    "clusterVmCount": {
+      "type": "int",
+      "metadata": {
+        "description": "Number of VMs in the cluster."
+      },
+      "defaultValue": 2,
+      "maxValue": 20
+    },
+    "monitorVmName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name for the monitor VM. This would become part of the fully qualified domain name for monitor VM, thus it should be globally unique."
+      }
+    },
+    "monitorVmDistro": {
+      "type": "string",
+      "metadata": {
+        "description": "Distro type for the monitor VM."
+      },
+      "allowedValues": [
+        "Ubuntu",
+        "CentOS"
+      ],
+      "defaultValue": "Ubuntu"
+    },
+    "monitorVmUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Monitor VM user name."
+      },
+      "defaultValue": "monitoruser"
+    },
+    "monitorVmPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Monitor VM password."
+      }
+    },
+    "mysqlHost": {
+      "type": "string",
+      "metadata": {
+        "description": "Monitoring service backend MySQL host. Using 'localhost' here will set up a new MySQL instance on the monitor VM."
+      },
+      "defaultValue": "localhost"
+    },
+    "mysqlDbName": {
+      "type": "string",
+      "metadata": {
+        "description": "Monitoring service backend MySQL database name."
+      },
+      "defaultValue": "zabbixdb"
+    },
+    "mysqlUser": {
+      "type": "string",
+      "metadata": {
+        "description": "Monitoring service backend MySQL user name."
+      },
+      "defaultValue": "zabbixuser"
+    },
+    "mysqlPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Monitoring service backend MySQL password."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/zabbix-monitoring-cluster"
+    }
+  },
+  "variables": {
+    "subnetName": "default"
+  },
+  "resources": [
+    {
+      "apiVersion": "2015-01-01",
+      "name": "deployClusterNodes",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('_artifactsLocation'), '/nested/clusterNodes.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "resourcePrefix": {
+            "value": "[parameters('clusterResourcePrefix')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('clusterUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('clusterPassword')]"
+          },
+          "vmCount": {
+            "value": "[parameters('clusterVmCount')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-01-01",
+      "name": "deployMonitoringSolution",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('_artifactsLocation'), '/nested/monitoringSolution.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "existingStorageAccountName": {
+            "value": "[reference('deployClusterNodes').outputs.storageAccountName.value]"
+          },
+          "existingVirtualNetworkName": {
+            "value": "[reference('deployClusterNodes').outputs.virtualNetworkName.value]"
+          },
+          "existingSubnetName": {
+            "value": "[variables('subnetName')]"
+          },
+          "monitorVmName": {
+            "value": "[parameters('monitorVmName')]"
+          },
+          "monitorVmDistro": {
+            "value": "[parameters('monitorVmDistro')]"
+          },
+          "monitorVmUsername": {
+            "value": "[parameters('monitorVmUsername')]"
+          },
+          "monitorVmPassword": {
+            "value": "[parameters('monitorVmPassword')]"
+          },
+          "mysqlHost": {
+            "value": "[parameters('mysqlHost')]"
+          },
+          "mysqlDbName": {
+            "value": "[parameters('mysqlDbName')]"
+          },
+          "mysqlUser": {
+            "value": "[parameters('mysqlUser')]"
+          },
+          "mysqlPassword": {
+            "value": "[parameters('mysqlPassword')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "serverPublicEndpoint": {
+      "type": "string",
+      "value": "[reference('deployMonitoringSolution').outputs.serverPublicEndpoint.value]"
+    }
+  }
+}

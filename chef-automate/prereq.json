@@ -1,0 +1,239 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "defaultValue": "westus",
+      "allowedValues": [
+        "westus",
+        "eastus",
+        "centralus",
+        "eastus2"
+      ],
+      "type": "string",
+      "metadata": {
+        "description": "Location where all resources are deployed"
+      }
+    },
+    "vm-adminName": {
+      "defaultValue": "",
+      "type": "string",
+      "metadata": {
+        "description": "Chef Complaince Virtual Machine Administrator Name"
+      }
+    },
+    "vm-adminPassword": {
+      "defaultValue": "",
+      "type": "securestring",
+      "metadata": {
+        "description": "Chef Complaince Virtual Machine Administrator Password"
+      }
+    },
+    "vm-size": {
+      "defaultValue": "Standard-D2",
+      "type": "string",
+      "allowedValues": [
+        "Standard_D1",
+        "Standard_D2",
+        "Standard_D3"
+      ],
+      "metadata": {
+        "description": "Chef Compliance Virtual Machine Size"
+      }
+    },
+    "dnsLabelPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Chef Compliance DNS prefix"
+      }
+    },
+    "baseUrl": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/chef-automate",
+      "metadata": {
+        "description": "Base Url for scripts and other deployment templates"
+      }
+    }
+  },
+  "variables": {
+    "vm-name": "chefComplianceServer",
+    "networkInterface-name": "[concat(variables('vm-name'),'-nic')]",
+    "securityGroup-name": "[concat(variables('networkInterface-name'),'-nsg')]",
+    "publicIP-name": "chefcompliancePublicIP",
+    "storageAccount-name": "[concat('chefstorage',variables('uniqueString'))]",
+    "vnetname": "chef-vnet",
+    "vnetPrefix": "10.7.0.0/16",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks/',variables('vnetname'))]",
+    "subnet1Name": "chef-compliance-subnet",
+    "subnet1Prefix": "10.7.1.0/24",
+    "subnet1ID": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]",
+    "subnet2Name": "chef-server-orchestrator-subnet",
+    "subnet2Prefix": "10.7.2.0/24",
+    "subnet2ID": "[concat(variables('vnetID'),'/subnets/',variables('subnet2Name'))]",
+    "subnet3Name": "chef-delivery-subnet",
+    "subnet3Prefix": "10.7.3.0/24",
+    "subnet3ID": "[concat(variables('vnetID'),'/subnets/',variables('subnet3Name'))]",
+    "subnet4Name": "chef-nodes-workstation-subnet",
+    "subnet4Prefix": "10.7.4.0/24",
+    "subnet4ID": "[concat(variables('vnetID'),'/subnets/',variables('subnet4Name'))]",
+    "uniqueString": "[uniquestring(resourceGroup().id)]",
+    "deployment-api-version": "2015-01-01",
+    "compute-api-version": "2015-06-15",
+    "network-api-version": "2015-06-15",
+    "network-api-version2": "2016-03-30",
+    "storage-api-version": "2015-06-15",
+    "storageAccountType": "Standard_LRS",
+    "tagvalues": {
+      "program": "p2p",
+      "project": "Chef"
+    },
+    "complianceimageOffer": {
+      "publisher": "chef-software",
+      "offer": "chef-compliance",
+      "sku": "azure_marketplace_5"
+    },
+    "complianceprivateIPAddress": "10.7.1.99"
+  },
+  "resources": [
+    {
+      "apiVersion": "[variables('deployment-api-version')]",
+      "name": "vnet-subnet-storage",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('baseUrl'),'/nested/chefp2p-vnetstorage.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "vnetPrefix": {
+            "value": "[variables('vnetPrefix')]"
+          },
+          "vnetname": {
+            "value": "[variables('vnetname')]"
+          },
+          "subnet1Name": {
+            "value": "[variables('subnet1Name')]"
+          },
+          "subnet1Prefix": {
+            "value": "[variables('subnet1Prefix')]"
+          },
+          "subnet2Name": {
+            "value": "[variables('subnet2Name')]"
+          },
+          "subnet2Prefix": {
+            "value": "[variables('subnet2Prefix')]"
+          },
+          "subnet3Name": {
+            "value": "[variables('subnet3Name')]"
+          },
+          "subnet3Prefix": {
+            "value": "[variables('subnet3Prefix')]"
+          },
+          "subnet4Name": {
+            "value": "[variables('subnet4Name')]"
+          },
+          "subnet4Prefix": {
+            "value": "[variables('subnet4Prefix')]"
+          },
+          "network-api-version": {
+            "value": "[variables('network-api-version')]"
+          },
+          "storage-api-version": {
+            "value": "[variables('storage-api-version')]"
+          },
+          "storageAccountType": {
+            "value": "[variables('storageAccountType')]"
+          },
+          "storageAccount-name": {
+            "value": "[variables('storageAccount-name')]"
+          },
+          "tagvalues": {
+            "value": "[variables('tagvalues')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('deployment-api-version')]",
+      "name": "chef-compliance-server",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "['Microsoft.Resources/deployments/vnet-subnet-storage']"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('baseUrl'),'/nested/chefp2p-complianceserver.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "compute-api-version": {
+            "value": "[variables('compute-api-version')]"
+          },
+          "vm-name": {
+            "value": "[variables('vm-name')]"
+          },
+          "complianceimageOffer": {
+            "value": "[variables('complianceimageOffer')]"
+          },
+          "vm-size": {
+            "value": "[parameters('vm-size')]"
+          },
+          "vm-adminName": {
+            "value": "[parameters('vm-adminName')]"
+          },
+          "vm-adminPassword": {
+            "value": "[parameters('vm-adminPassword')]"
+          },
+          "storageAccount-name": {
+            "value": "[variables('storageAccount-name')]"
+          },
+          "networkInterface-name": {
+            "value": "[variables('networkInterface-name')]"
+          },
+          "securityGroup-name": {
+            "value": "[variables('networkInterface-name')]"
+          },
+          "network-api-version2": {
+            "value": "[variables('network-api-version2')]"
+          },
+          "publicIP-name": {
+            "value": "[variables('publicIP-name')]"
+          },
+          "dnsLabelPrefix": {
+            "value": "[parameters('dnsLabelPrefix')]"
+          },
+          "complianceprivateIPAddress": {
+            "value": "[variables('complianceprivateIPAddress')]"
+          },
+          "subnet1ID": {
+            "value": "[variables('subnet1ID')]"
+          },
+          "extension-api-version": {
+            "value": "[variables('compute-api-version')]"
+          },
+          "baseUrl": {
+            "value": "[parameters('baseUrl')]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "ComplianceServerUri": {
+      "type": "string",
+      "value": "[concat(parameters('dnsLabelPrefix'),'.',parameters('location'),'.cloudapp.azure.com')]"
+    },
+    "ComplianceVMusername": {
+      "type": "string",
+      "value": "[parameters('vm-adminName')]"
+    }
+  }
+}
