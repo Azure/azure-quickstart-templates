@@ -9,7 +9,7 @@ sudo cp /etc/rethinkdb/default.conf.sample /etc/rethinkdb/instances.d/instance1.
 
 sudo /etc/init.d/rethinkdb restart
 
-sudo apt-get -y install g++ python3-dev
+sudo apt-get -y install g++ python3-dev libffi-dev
 
 sudo apt-get -y install python3-setuptools
 sudo easy_install3 pip
