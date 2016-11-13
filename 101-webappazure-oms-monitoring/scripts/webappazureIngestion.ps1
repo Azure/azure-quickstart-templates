@@ -39,7 +39,7 @@ $logType  = "webappazure"
 "Logtype Name is $logType"
 
 # Get all WebApps w/in an Azure Subscription 
-$WebApps = Find-AzureRmResource -ResourceType Microsoft.Web/sites |where -Property Kind -eq Webapp
+$WebApps = Find-AzureRmResource -ResourceType Microsoft.Web/sites
 # Process each retrieved WebApp in list
 # Do not process if listing is $null  
 if($WebApps -ne $Null)
@@ -58,7 +58,7 @@ if($WebApps -ne $Null)
             foreach($metricValue in $metric.MetricValues)
             {
                 $sx = New-Object PSObject -Property @{
-                    Timestamp = $metricValue.Timestamp.ToString()
+                    Timestamp = $metricValue.Timestamp.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
                     MetricName = $metric.Name; 
                     Average = $metricValue.Average;
                     SubscriptionID = $Conn.SubscriptionID;

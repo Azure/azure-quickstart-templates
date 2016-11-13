@@ -1,3 +1,40 @@
+# v2.2.0 (2016-11-09)
+
+- Support AzureUSGovernment
+- Upgrade Azure CPI version to v19. Please see new features in [bosh-azure-cpi-release v19](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v19).
+
+# v2.1.1 (2016-10-20)
+
+- Upgrade CustomScript to 2.0
+- Add a retry logic for uploading stemcell and release
+- Use https for the mirror site
+- Bug fixes
+  - Install prerequisites at the beginning to avoid a silent error when install msrest
+
+# v2.1.0 (2016-10-11)
+
+- Upgrade versions
+  - Upgrade Azure CPI version to v17. Please see new features in [bosh-azure-cpi-release v17](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v17).
+
+# v2.0.2 (2016-09-29)
+
+- Uses local pip repo for AzureChinaCloud to install pip packages
+
+# v2.0.1 (2016-08-24)
+
+- Expose the VM size of BOSH VM as a parameter
+
+# v2.0.0 (2016-08-16)
+
+- Upgrade versions
+  - Upgrade Azure CPI version to v14. Please see new features in [bosh-azure-cpi-release v14](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v14).
+  - Upgrade bosh version to 257.3
+  - Upgrade bosh stemcell to version 3262.7
+- Bug fixes
+  - Fix bugs when passing client_secret
+- Improvements
+  - Provide version control for the scripts and manifests in AzureChinaCloud
+
 # v1.9.1 (2016-08-08)
 
 - Use CustomData to pass information to CustomScript
@@ -32,7 +69,7 @@
 # v1.7.0 (2016-06-23)
 
 - Upgrade versions
-  - Upgrade Azure CPI version to v13. Please see new features in https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release
+  - Upgrade Azure CPI version to v13. Please see new features in [bosh-azure-cpi-release v13](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v13).
 - Add a secondary DNS server
 
 # v1.6.1 (2016-06-16)
@@ -43,13 +80,13 @@
 # v1.6.0 (2016-06-08)
 
 - Upgrade versions
-  - Upgrade Azure CPI version to v12. Please see new features in https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release
+  - Upgrade Azure CPI version to v12. Please see new features in [bosh-azure-cpi-release v12](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v12).
 - Disable snapshot by default.
 
 # v1.5.0 (2016-05-23)
 
 - Upgrade versions
-  - Upgrade Azure CPI version to v11. Please see new features in https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release
+  - Upgrade Azure CPI version to v11. Please see new features in [bosh-azure-cpi-release v11](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v11).
 - Fix https://github.com/Azure/azure-quickstart-templates/issues/1958.
 
 # v1.4.2 (2016-05-06)
@@ -67,18 +104,18 @@
 
 - Add AzureChinaCloud support
 - Upgrade versions
-  - Upgrade Azure CPI version to v10. Please see new features in https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release
+  - Upgrade Azure CPI version to v10. Please see new features in [bosh-azure-cpi-release v10](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v10).
 
 # v1.3.0 (2016-04-01)
 - Does not bind network security groups to subnets but bind network security groups to VMs.
 - Upgrade versions
-  - Upgrade Azure CPI version to v9. Please see new features in https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release
+  - Upgrade Azure CPI version to v9. Please see new features in [bosh-azure-cpi-release v9](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v9).
 
 # v1.2.0 (2016-03-28)
 - Add a subnet for Diego
 - Create network security groups for all subnets
 - Upgrade versions
-  - Upgrade Azure CPI version to v8. Please see new features in https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release
+  - Upgrade Azure CPI version to v8. Please see new features in [bosh-azure-cpi-release v8](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v8).
 
 # v1.1.3 (2016-03-08)
 - Upgrade versions
