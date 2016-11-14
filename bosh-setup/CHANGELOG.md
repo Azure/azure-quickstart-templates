@@ -1,3 +1,25 @@
+# v2.2.0 (2016-11-09)
+
+- Support AzureUSGovernment
+- Upgrade Azure CPI version to v19. Please see new features in [bosh-azure-cpi-release v19](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v19).
+
+# v2.1.1 (2016-10-20)
+
+- Upgrade CustomScript to 2.0
+- Add a retry logic for uploading stemcell and release
+- Use https for the mirror site
+- Bug fixes
+  - Install prerequisites at the beginning to avoid a silent error when install msrest
+
+# v2.1.0 (2016-10-11)
+
+- Upgrade versions
+  - Upgrade Azure CPI version to v17. Please see new features in [bosh-azure-cpi-release v17](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v17).
+
+# v2.0.2 (2016-09-29)
+
+- Uses local pip repo for AzureChinaCloud to install pip packages
+
 # v2.0.1 (2016-08-24)
 
 - Expose the VM size of BOSH VM as a parameter

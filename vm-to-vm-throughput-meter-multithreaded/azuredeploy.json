@@ -1,0 +1,368 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "probeVmSize": {
+      "type": "string",
+      "allowedValues": [
+        "Basic_A0",
+        "Basic_A4",
+        "Standard_A1",
+        "Standard_A7",
+        "Standard_A11",
+        "Standard_D4",
+        "Standard_D14",
+        "Standard_D1_v2",
+        "Standard_D15_v2",
+        "Standard_F1",
+        "Standard_F16",
+        "Standard_G1",
+        "Standard_G5",
+        "Standard_NV6",
+        "Standard_NC6"
+      ],
+      "defaultValue": "Standard_A7",
+      "metadata": {
+        "description": "Size of the VM that runs the test."
+      }
+    },
+    "targetVmSize": {
+      "type": "string",
+      "allowedValues": [
+        "Basic_A0",
+        "Basic_A4",
+        "Standard_A1",
+        "Standard_A7",
+        "Standard_A11",
+        "Standard_D4",
+        "Standard_D14",
+        "Standard_D1_v2",
+        "Standard_D15_v2",
+        "Standard_F1",
+        "Standard_F16",
+        "Standard_G1",
+        "Standard_G5",
+        "Standard_NV6",
+        "Standard_NC6"
+      ],
+      "defaultValue": "Standard_A7",
+      "metadata": {
+        "description": "Size of the target VM."
+      }
+    },
+    "testDataTransferMode": {
+      "type": "string",
+      "allowedValues": [
+        "Async",
+        "Sync"
+      ],
+      "defaultValue": "Async",
+      "metadata": {
+        "description": "Data transfer mode for NTttcp tool."
+      }
+    },
+    "testSendBufferSize": {
+      "type": "string",
+      "allowedValues": [
+        "8k",
+        "16k",
+        "32k",
+        "64k",
+        "128k",
+        "256k",
+        "512k",
+        "1m"
+      ],
+      "defaultValue": "128k",
+      "metadata": {
+        "description": "Size of the send buffer for NTttcp tool."
+      }
+    },
+    "testReceiveBufferSize": {
+      "type": "string",
+      "allowedValues": [
+        "8k",
+        "16k",
+        "32k",
+        "64k",
+        "128k",
+        "256k",
+        "512k",
+        "1m"
+      ],
+      "defaultValue": "64k",
+      "metadata": {
+        "description": "Size of the receive buffer for NTttcp tool."
+      }
+    },
+    "testSendOverlappedBuffers": {
+      "type": "int",
+      "defaultValue": 2,
+      "metadata": {
+        "description": "Number of posted send overlapped buffers for NTttcp tool."
+      }
+    },
+    "testReceiveOverlappedBuffers": {
+      "type": "int",
+      "defaultValue": 16,
+      "metadata": {
+        "description": "Number of posted receive overlapped buffers for NTttcp tool."
+      }
+    },
+    "testSenderThreadNumber": {
+      "type": "int",
+      "defaultValue": 8,
+      "metadata": {
+        "description": "Number of the sender threads for NTttcp tool."
+      }
+    },
+    "testReceiverThreadNumber": {
+      "type": "int",
+      "defaultValue": 8,
+      "metadata": {
+        "description": "Number of the receiver threads for NTttcp tool."
+      }
+    },
+    "testDurationSeconds": {
+      "type": "int",
+      "defaultValue": 15,
+      "metadata": {
+        "description": "Number of seconds for NTttcp tool test run."
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Username for the probe and target VMs."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the probe and target VMs."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/vm-to-vm-throughput-meter-multithreaded"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    }
+  },
+  "variables": {
+    "OSDiskName": "osdiskforwindowssimple",
+    "nicName": "myVMNic",
+    "addressPrefix": "10.0.0.0/16",
+    "subnetName": "Subnet",
+    "subnetPrefix": "10.0.0.0/24",
+    "storageAccountType": "Standard_LRS",
+    "publicIPAddressName": "publicIP",
+    "publicIPAddressType": "Dynamic",
+    "vmStorageAccountContainerName": "vhds",
+    "virtualNetworkName": "testVNET",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
+    "scriptFolder": "scripts",
+    "scriptFileName": "tptest.ps1",
+    "vhdStorageAccountName": "[concat(uniqueString(resourceGroup().id), 'storage')]",
+    "osVersion": "2012-R2-Datacenter",
+    "imagePublisher": "MicrosoftWindowsServer",
+    "imageOffer": "WindowsServer",
+    "vmName": [
+      "probeVM",
+      "targetVM"
+    ],
+    "testMode": [
+      "Sender",
+      "Receiver"
+    ],
+    "testBufferSize": [
+      "[parameters('testSendBufferSize')]",
+      "[parameters('testReceiveBufferSize')]"
+    ],
+    "testOverlappedBuffers": [
+      "[parameters('testSendOverlappedBuffers')]",
+      "[parameters('testReceiveOverlappedBuffers')]"
+    ],
+    "testThreadNumber": [
+      "[parameters('testSenderThreadNumber')]",
+      "[parameters('testReceiverThreadNumber')]"
+    ],
+    "vmSize": [
+      "[parameters('probeVmSize')]",
+      "[parameters('targetVmSize')]"
+    ],
+    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[concat(variables('vhdStorageAccountName'),copyIndex(1))]",
+      "apiVersion": "2016-01-01",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "storageCopy",
+        "count": 2
+      },
+      "sku": {
+        "name": "[variables('storageAccountType')]"
+      },
+      "kind": "Storage"
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat(variables('publicIPAddressName'), copyIndex(1))]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "publicIPCopy",
+        "count": 2
+      },
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]"
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('nicName'), copyIndex(1))]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "nicCopy",
+        "count": 2
+      },
+      "dependsOn": [
+        "[concat(variables('publicIPAddressName'), copyIndex(1))]",
+        "[variables('virtualNetworkName')]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat(variables('publicIPAddressName'), copyIndex(1)))]"
+              },
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('vmName')[copyIndex(0)]]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "vmCopy",
+        "count": 2
+      },
+      "dependsOn": [
+        "[concat(variables('vhdStorageAccountName'), copyIndex(1))]",
+        "nicCopy"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('vmSize')[copyIndex(0)]]"
+        },
+        "osProfile": {
+          "computerName": "[variables('vmName')[copyIndex(0)]]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[variables('osVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat(reference(concat(variables('vhdStorageAccountName'),copyIndex(1)), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob, variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'), copyIndex(1)))]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "type": "extensions",
+          "name": "[concat('CustomScriptExtension', copyIndex(1))]",
+          "apiVersion": "2015-06-15",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[variables('vmName')[copyIndex(0)]]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Compute",
+            "type": "CustomScriptExtension",
+            "typeHandlerVersion": "1.8",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "fileUris": [
+                "[concat(parameters('_artifactsLocation'), '/', variables('ScriptFolder'), '/', variables('ScriptFileName'), parameters('_artifactsLocationSasToken'))]"
+              ],
+              "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', variables('ScriptFileName'), ' -ReceiverIP ', reference(concat(variables('nicName'), '2')).ipConfigurations[0].properties.privateIPAddress, ' -Mode ', variables('testMode')[copyIndex(0)], ' -BufferSize ', variables('testBufferSize')[copyIndex(0)], ' -OverlappedBuffers ', variables('testOverlappedBuffers')[copyIndex(0)], ' -DataTransferMode ', parameters('testDataTransferMode'), ' -ThreadNumber ', variables('testThreadNumber')[copyIndex(0)], ' -Duration ', parameters('testDurationSeconds'))]"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": {
+    "Throughput MB/s": {
+      "type": "string",
+      "value": "[split(reference('CustomScriptExtension1').instanceView.substatuses[0].message, ' ')[0]]"
+    },
+    "Throughput mbps": {
+      "type": "string",
+      "value": "[split(reference('CustomScriptExtension1').instanceView.substatuses[0].message, ' ')[1]]"
+    },
+    "Throughput buffers/s": {
+      "type": "string",
+      "value": "[split(reference('CustomScriptExtension1').instanceView.substatuses[0].message, ' ')[2]]"
+    }
+  }
+}
