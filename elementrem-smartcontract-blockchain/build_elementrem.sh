@@ -21,7 +21,10 @@ cd $HOMEDIR
 sudo apt-get install -y git curl wget
 
 # Install go-lang
-sudo apt-get install -y build-essential libgmp3-dev golang
+sudo apt-get install -y build-essential libgmp3-dev
+sudo apt -y update
+sudo apt-get -f -y install
+sudo apt install -y golang-go
 
 # Downloads git source 
 git clone https://github.com/elementrem/go-elementrem/
@@ -53,6 +56,7 @@ sudo dpkg -i libjsoncpp1_1.7.2-1_amd64.deb
 sudo dpkg -i libboost-system1.58.0_1.58.0+dfsg-5ubuntu3_amd64.deb
 sudo dpkg -i libboost-filesystem1.58.0_1.58.0+dfsg-5ubuntu3_amd64.deb
 sudo apt-get -y install libboost-filesystem-dev
+sudo apt -y update
 sudo apt-get -f -y install
 sudo dpkg -i libboost-filesystem-dev_1.58.0.1ubuntu1_amd64.deb
 sudo dpkg -i solc_0.3.6-0ubuntu1~xenial_amd64.deb
