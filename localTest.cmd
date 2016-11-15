@@ -1,3 +1,4 @@
+@echo OFF
 setlocal
 
 REM The number of tests to run in parallel

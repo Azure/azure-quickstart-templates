@@ -1,24 +1,17 @@
-# Deploy a One-Machine BigchainDB Node on Azure
+# BigchainDB Node on an Ubuntu VM
 
-This template provisions a virtual machine running Ubuntu 14.04.4 LTS, plus various other Azure resources. (See the `azuredeploy.json` file for details.) It then runs the script `scripts/init.sh`, which:
+This template provisions a single-machine BigchainDB node on an Azure Virtual Machine. For step-by-step instructions, see:
 
-1. Installs RethinkDB and runs it (with a default RethinkDB configuration file).
-2. Installs BigchainDB dependencies and BigchainDB itself (i.e. the latest version on PyPI).
+[https://docs.bigchaindb.com/projects/server/en/latest/cloud-deployment-starter-templates/template-azure.html](https://docs.bigchaindb.com/projects/server/en/latest/cloud-deployment-starter-templates/template-azure.html)
 
-That script does _not_ configure or run BigchainDB. To do that, first SSH in to the virtual machine. (You can find its hostname and IP address online in the Microsoft Azure Management Portal at https://portal.azure.com).
 
-On the virtual machine, generate a default configuration file (in `~/.bigchaindb`) by doing:
-```text
-bigchaindb -y configure
-```
+## What is BigchainDB?
 
-To run BigchainDB, do:
-```text
-bigchaindb start
-```
+BigchainDB has built the core characteristics of blockchains—decentralized control, immutability and the creation and transfer of assets—on top of a mature distributed database that has a rich feature set, monitoring and backup tools.
 
-`Tags: scalable, blockchain, database`
+BigchainDB allows developers and enterprise to deploy blockchain proof-of-concepts, platforms and applications with a scalable blockchain database. BigchainDB supports a wide range of industries and use cases from identity and intellectual property to supply chains, energy, IoT and financial ecosystems. With high throughput, sub-second latency and powerful functionality to automate business processes, BigchainDB looks, acts and feels like a database but has the blockchain characteristics that enterprises want.
 
-## Documentation
 
-Documentation for BigchainDB is at https://bigchaindb.readthedocs.io/en/latest/index.html
+## Licensing
+
+See [https://github.com/bigchaindb/bigchaindb/blob/master/LICENSES.md](https://github.com/bigchaindb/bigchaindb/blob/master/LICENSES.md)
