@@ -74,10 +74,10 @@ cd /opt/setup
 wget https://archive.apache.org/dist/httpd/httpd-2.4.20.tar.gz
 
 #Download APR Apache dependency Source code
-wget https://archive.apache.org/dist/apr/apr-1.5.2.tar.gz
+wget http://mirror.ventraip.net.au/apache/apr/apr-1.5.2.tar.gz
 
 #Download APR-Util Apache dependency Source code
-wget https://archive.apache.org/dist/apr/apr-util-1.5.4.tar.gz
+wget http://mirror.ventraip.net.au/apache//apr/apr-util-1.5.4.tar.gz
 
 #Download PHP Source code
 wget http://au2.php.net/get/php-5.4.40.tar.gz/from/this/mirror
