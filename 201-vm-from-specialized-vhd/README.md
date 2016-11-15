@@ -7,9 +7,13 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
+```
 Prerequisite - VHD file that you want to create a VM from already exists in a storage account.
 
-This template creates a VM from a specialized VHD. The VHD file can be located in a storage account using a tool such as Azure Storage Explorer http://azurestorageexplorer.codeplex.com/
+NOTE - This template will create an additional Standard_GRS storage account for enabling boot diagnostics.
+```
+
+This template creates a VM from a specialized VHD. The VHD file can be located in a storage account using a tool such as Azure Storage Explorer http://storageexplorer.com/
 
 If you are looking to accomplish the above scenario through PowerShell instead of a template, you can use a PowerShell script like below
 
