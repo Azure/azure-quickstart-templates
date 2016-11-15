@@ -7,10 +7,17 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-Prerequisites:
-- URL to the existing VHD file in ether a premium or standard storage account.
+## Prerequisites
+
+- VHD file that you want to create a VM from already exists in a storage account.
 - Name of the existing VNET and subnet you want to connect the new virtual machine to.
-  - Name of the Resource Group that the VNET resides in.
+- Name of the Resource Group that the VNET resides in.
+
+```
+NOTE
+
+This template will create an additional Standard_GRS storage account for enabling boot diagnostics each time you execute this template. To avoid running into storage account limits, it's best to delete the storage account when the VM is deleted.
+```
 
 This template creates a VM from a specialized VHD and let you connect it to an existing VNET that can reside in another Resource Group then the virtual machine.
 
