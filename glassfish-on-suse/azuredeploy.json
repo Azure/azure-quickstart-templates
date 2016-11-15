@@ -32,32 +32,12 @@
         "description": "Version of GlassFish to deploy"
       }
     },
-    "vmPrefix": {
-      "type": "string",
-      "defaultValue": "vm",
-      "metadata": {
-        "description": "Naming Prefix used for all VM instances."
-      }
-    },
     "numberOfInstances": {
       "type": "int",
       "minValue": 1,
       "maxValue": 10,
       "metadata": {
         "description": "Number of VMs"
-      }
-    },
-    "storageAccountName": {
-      "type": "string",
-      "metadata": {
-        "description": "Name of storage account"
-      }
-    },
-    "publicIPAddressName": {
-      "type": "string",
-      "minLength": 1,
-      "metadata": {
-        "description": "Public IP Name"
       }
     },
     "dnsNameforLBIP": {
@@ -67,73 +47,9 @@
         "description": "DNS for Load Balancer IP"
       }
     },
-    "vnetName": {
-      "type": "string",
-      "defaultValue": "vnet",
-      "metadata": {
-        "description": "VNET name"
-      }
-    },
-    "lbName": {
-      "type": "string",
-      "defaultValue": "lb",
-      "metadata": {
-        "description": "Load Balancer name"
-      }
-    },
     "vmSize": {
       "type": "string",
       "defaultValue": "Standard_DS2_v2",
-      "allowedValues": [
-        "Standard_A4",
-        "Standard_A5",
-        "Standard_A6",
-        "Standard_A7",
-        "Standard_A8",
-        "Standard_A9",
-        "Standard_A10",
-        "Standard_A11",
-        "Standard_D2",
-        "Standard_D3",
-        "Standard_D4",
-        "Standard_D11",
-        "Standard_D12",
-        "Standard_D13",
-        "Standard_D14",
-        "Standard_D2_v2",
-        "Standard_D3_v2",
-        "Standard_D4_v2",
-        "Standard_D5_v2",
-        "Standard_D11_v2",
-        "Standard_D12_v2",
-        "Standard_D13_v2",
-        "Standard_D14_v2",
-        "Standard_G1",
-        "Standard_G2",
-        "Standard_G3",
-        "Standard_G4",
-        "Standard_G5",
-        "Standard_DS2",
-        "Standard_DS3",
-        "Standard_DS4",
-        "Standard_DS11",
-        "Standard_DS12",
-        "Standard_DS13",
-        "Standard_DS14",
-        "Standard_DS2_v2",
-        "Standard_DS3_v2",
-        "Standard_DS4_v2",
-        "Standard_DS5_v2",
-        "Standard_DS11_v2",
-        "Standard_DS12_v2",
-        "Standard_DS13_v2",
-        "Standard_DS14_v2",
-        "Standard_GS1",
-        "Standard_GS2",
-        "Standard_GS3",
-        "Standard_GS4",
-        "Standard_GS5"
-      ],
       "metadata": {
         "description": "VM(s) size"
       }
@@ -171,19 +87,23 @@
     "apiVersionCompute": "2015-06-15",
     "apiVersionNetwork": "2015-06-15",
     "apiVersionLinkTemplate": "2015-01-01",
-    "namePrefix": "[concat(toLower(parameters('vmPrefix')), '-')]",
+    "namePrefix": "gf-",
+    "storageAccountName": "[concat(uniqueString(resourceGroup().id), 'sa')]",
     "availabilitySetName": "[concat(variables('namePrefix'), 'nodes')]",
+    "publicIPAddressName": "[concat(variables('namePrefix'), 'ip')]",
+    "vnetName": "[concat(variables('namePrefix'), 'vnet')]",
     "subnetName": "[concat(variables('namePrefix'), 'subnet')]",
-    "nsgName": "[concat(variables('subnetName'), '-NSG')]",
-    "publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('publicIPAddressName'))]",
-    "lbID": "[resourceId('Microsoft.Network/loadBalancers',parameters('lbName'))]",
+    "nsgName": "[concat(variables('subnetName'), '-nsg')]",
+    "lbName": "[concat(variables('namePrefix'), 'lb')]
+    "publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]",
+    "lbID": "[resourceId('Microsoft.Network/loadBalancers', variables('lbName'))]",
     "frontEndIPConfigID": "[concat(variables('lbID'),'/frontendIPConfigurations/LoadBalancerFrontEnd')]",
     "lbPoolName": "lbBackend",
     "lbPoolID": "[concat(variables('lbID'),'/backendAddressPools/', variables('lbPoolName'))]",
-    "lbProbeName": "[concat(variables('namePrefix'), 'tcpProbe')]",
+    "lbProbeName": "[concat(variables('namePrefix'), 'tcp-probe')]",
     "lbProbeID": "[concat(variables('lbID'),'/probes/', variables('lbProbeName'))]",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('vnetName'))]",
-    "subnetRef": "[concat(variables('vnetID'),'/subnets/', variables ('subnetName'))]",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('subnetname')]",
     "opensuse": {
       "publisher": "SUSE",
       "offer": "openSUSE",
@@ -205,7 +125,7 @@
     {
       "apiVersion": "[variables('apiVersionStorage')]",
       "location": "[variables('location')]",
-      "name": "[parameters('storageAccountName')]",
+      "name": "[variables('storageAccountName')]",
       "properties": {
         "accountType": "Standard_LRS"
       },
@@ -221,7 +141,7 @@
     {
       "apiVersion": "[variables('apiVersionNetwork')]",
       "location": "[variables('location')]",
-      "name": "[parameters('publicIPAddressName')]",
+      "name": "[variables('publicIPAddressName')]",
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
@@ -271,7 +191,7 @@
     {
       "apiVersion": "[variables('apiVersionNetwork')]",
       "location": "[variables('location')]",
-      "name": "[parameters('vnetName')]",
+      "name": "[variables('vnetName')]",
       "dependsOn": [
         "[concat('Microsoft.Network/networkSecurityGroups/', variables('nsgName'))]"
       ],
@@ -297,11 +217,11 @@
     },
     {
       "apiVersion": "[variables('apiVersionNetwork')]",
-      "name": "[parameters('lbName')]",
+      "name": "[variables('lbName')]",
       "type": "Microsoft.Network/loadBalancers",
       "location": "[variables('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', parameters('publicIPAddressName'))]"
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
       ],
       "properties": {
         "frontendIPConfigurations": [
@@ -356,14 +276,14 @@
     {
       "apiVersion": "[variables('apiVersionNetwork')]",
       "type": "Microsoft.Network/loadBalancers/inboundNatRules",
-      "name": "[concat(parameters('lbName'), '/SSH-', variables('namePrefix'), copyIndex())]",
+      "name": "[concat(variables('lbName'), '/ssh-', variables('namePrefix'), copyIndex())]",
       "location": "[variables('location')]",
       "copy": {
         "name": "lbSSHNatLoop",
         "count": "[parameters('numberOfInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/loadBalancers/', parameters('lbName'))]"
+        "[concat('Microsoft.Network/loadBalancers/', variables('lbName'))]"
       ],
       "properties": {
         "frontendIPConfiguration": {
@@ -378,14 +298,14 @@
     {
       "apiVersion": "[variables('apiVersionNetwork')]",
       "type": "Microsoft.Network/loadBalancers/inboundNatRules",
-      "name": "[concat(parameters('lbName'), '/Admin-', variables('namePrefix'), copyIndex())]",
+      "name": "[concat(variables('lbName'), '/admin-', variables('namePrefix'), copyIndex())]",
       "location": "[variables('location')]",
       "copy": {
         "name": "lbAdminNatLoop",
         "count": "[parameters('numberOfInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/loadBalancers/', parameters('lbName'))]"
+        "[concat('Microsoft.Network/loadBalancers/', variables('lbName'))]"
       ],
       "properties": {
         "frontendIPConfiguration": {
@@ -407,10 +327,10 @@
         "count": "[parameters('numberOfInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', parameters('vnetName'))]",
-        "[concat('Microsoft.Network/loadBalancers/', parameters('lbName'))]",
-        "[concat('Microsoft.Network/loadBalancers/', parameters('lbName'), '/inboundNatRules/', 'SSH-', variables('namePrefix'), copyIndex())]",
-        "[concat('Microsoft.Network/loadBalancers/', parameters('lbName'), '/inboundNatRules/', 'Admin-', variables('namePrefix'), copyIndex())]"
+        "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
+        "[concat('Microsoft.Network/loadBalancers/', variables('lbName'))]",
+        "[concat('Microsoft.Network/loadBalancers/', variables('lbName'), '/inboundNatRules/', 'ssh-', variables('namePrefix'), copyIndex())]",
+        "[concat('Microsoft.Network/loadBalancers/', variables('lbName'), '/inboundNatRules/', 'admin-', variables('namePrefix'), copyIndex())]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -428,10 +348,10 @@
               ],
               "loadBalancerInboundNatRules": [
                 {
-                  "id": "[concat(variables('lbID'),'/inboundNatRules/SSH-', variables('namePrefix'), copyindex())]"
+                  "id": "[concat(variables('lbID'),'/inboundNatRules/ssh-', variables('namePrefix'), copyindex())]"
                 },
                 {
-                  "id": "[concat(variables('lbID'),'/inboundNatRules/Admin-', variables('namePrefix'), copyindex())]"
+                  "id": "[concat(variables('lbID'),'/inboundNatRules/admin-', variables('namePrefix'), copyindex())]"
                 }
               ]
             }
@@ -449,7 +369,7 @@
       },
       "location": "[variables('location')]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('namePrefix'), 'nic-', copyindex())]",
         "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
       ],
@@ -480,7 +400,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/','osdisk', copyindex(), '.vhd')]"
+              "uri": "[concat('http://', variables('storageAccountName'), '.blob.core.windows.net/vhds/','osdisk', copyindex(), '.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -496,7 +416,7 @@
         "diagnosticsProfile": {
           "bootDiagnostics": {
             "enabled": "true",
-            "storageUri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net')]"
+            "storageUri": "[concat('http://', variables('storageAccountName'), '.blob.core.windows.net')]"
           }
         }
       }
@@ -533,7 +453,7 @@
   "outputs": {
     "LoadBalancedApplicationServerURL": {
       "type": "string",
-      "value": "[concat('http://', reference(parameters('publicIPAddressName')).dnsSettings.fqdn)]"
+      "value": "[concat('http://', reference(variables('publicIPAddressName')).dnsSettings.fqdn)]"
     }
   }
 }
