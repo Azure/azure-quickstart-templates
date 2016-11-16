@@ -34,20 +34,6 @@
         "description": "Location of the secondary Azure SQL Read-access online copy"
       }
     },
-    "copyServerName":{
-      "type": "string",
-      "defaultValue":"copySQLServer",
-      "metadata": {
-        "description":"Name of the new SQL Server (Copy)"
-      }
-    },
-    "copyDBName":{
-      "type": "string",
-      "defaultValue":"copySQLDB",
-      "metadata": {
-        "description":"Name of the new SQL Server Database (Copy)"
-      }
-    },
     "sqlServerAdminLogin":{
       "type": "string",
       "metadata": {
@@ -76,18 +62,17 @@
     }
   },
   "variables": {
-    "apiVersion": "2014-04-01-preview",
-    "sourceSQLServerId":"[resourceId(parameters('primaryDBResourceGroup'), 'Microsoft.Sql/servers', parameters('primarySQLServerName'))]",
-    "sourceSQLDBId":"[concat(variables('sourceSQLServerId'),'/databases/', parameters('primarySQLDBName'))]",
+    "primarySQLServerId":"[resourceId(parameters('primaryDBResourceGroup'), 'Microsoft.Sql/servers', parameters('primarySQLServerName'))]",
+    "primarySQLDBId":"[concat(variables('primarySQLServerId'),'/databases/', parameters('primarySQLDBName'))]",
     "sqlCollation":"SQL_Latin1_General_CP1_CI_AS",
     "sqlMaxSizeBytes":"268435456000"   
   },
   "resources": [
     {
-      "name": "[parameters('copyServerName')]",
+      "name": "[parameters('primarySQLServerName')]",
       "type": "Microsoft.Sql/servers",
       "location": "[resourceGroup().location]",
-      "apiVersion": "2014-04-01-preview",
+      "apiVersion": "2014-04-01",
       "properties": {
         "administratorLogin": "[parameters('sqlServerAdminLogin')]",
         "administratorLoginPassword": "[parameters('sqlServerAdminPassword')]",
@@ -95,24 +80,9 @@
       },
       "resources": [
         {
-          "name": "AllowAllWindowsAzureIps",
-          "type": "firewallrules",
-          "location": "[resourceGroup().location]",
-          "apiVersion": "[variables('apiVersion')]",
-          "dependsOn": [
-            "[concat('Microsoft.Sql/servers/', parameters('copyServerName'))]"
-          ],
-          "properties": {
-            "startIpAddress": "0.0.0.0",
-            "endIpAddress": "0.0.0.0"
-          }
-        }        
-      ]
-    },
-    {
             "type": "Microsoft.Sql/servers/databases",
-            "name": "[concat(parameters('copyServerName'), '/', parameters('copyDBName'))]",
-            "apiVersion": "[variables('apiVersion')]",
+            "name": "[concat(parameters('primarySQLServerName'), '/', parameters('primarySQLDBName'))]",
+            "apiVersion": "2014-04-01",
             "location": "[parameters('copyRegion')]",            
             "properties": {
                 "edition": "[parameters('sqlEdition')]",
@@ -120,12 +90,25 @@
                 "maxSizeBytes": "[variables('sqlMaxSizeBytes')]",
                 "requestedServiceObjectiveName": "[parameters('sqlRequestedServiceObjectiveName')]",
                 "createMode": "OnlineSecondary",
-                "sourceDatabaseId": "[variables('sourceSQLDBId')]"
-            },
-            "dependsOn": [
-              "[resourceId('Microsoft.Sql/servers', parameters('copyServerName'))]"
-            ]
-        }
+                "sourceDatabaseId": "[variables('primarySQLDBId')]"
+            }
+        },
+        {
+          "name": "AllowAllWindowsAzureIps",
+          "type": "firewallrules",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2014-04-01",
+          "dependsOn": [
+            "[concat('Microsoft.Sql/servers/', parameters('primarySQLServerName'))]"
+          ],
+          "properties": {
+            "startIpAddress": "0.0.0.0",
+            "endIpAddress": "0.0.0.0"
+          }
+        }        
+      ]
+    }
+    
 
   ]
 }
