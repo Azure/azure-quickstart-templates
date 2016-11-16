@@ -2,11 +2,10 @@
   "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "artifactsLocation": {
+    "_artifactsLocation": {
       "type": "string",
       "metadata": {
-        "description": "The base URL where the artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated.",
-        "artifactsBaseUrl": ""
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated.",
       },
       "defaultValue": "https://raw.githubusercontent.com/CalCof/azure-quickstart-templates/master/glassfish-on-suse/"
     },
@@ -118,8 +117,8 @@
     },
     "imageReference": "[variables(parameters('osImage'))]",
     "sshKeyPath": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
-    "vmScriptUrl": "[concat(parameters('artifactsLocation'), 'scripts/', variables('vmScriptFileName'))]",
-    "vmScriptFileName": "deployGlassFish.sh"
+    "nestedTemplateFolder": "nestedtemplates/",
+    "nestedTemplateFileName": "azuredeploy.json",
   },
   "resources": [
     {
@@ -422,30 +421,37 @@
       }
     },
     {
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('namePrefix'), copyIndex(), '/deployGlassFish')]",
-      "location": "[variables('location')]",
+      "name": "GlassFishDeployment",
+      "type": "Microsoft.Resources/deployments",
       "apiVersion": "[variables('apiVersionCompute')]",
-      "tags": {
-        "displayName": "PrepNodes"
-      },
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('namePrefix'), copyIndex())]"
-      ],
-      "copy": {
-        "name": "vmScriptLoop",
-        "count": "[parameters('numberOfInstances')]"
-      },
+			  "[concat('Microsoft.Compute/virtualMachines/', variables('namePrefix'), copyIndex())]"
+			],
       "properties": {
-        "publisher": "Microsoft.Azure.Extensions",
-        "type": "CustomScript",
-        "typeHandlerVersion": "2.0",
-        "autoUpgradeMinorVersion": true,
-        "settings": {
-          "fileUris": [
-            "[variables('vmScriptUrl')]"
-          ],
-          "commandToExecute": "[concat('sudo bash ', variables('vmScriptFileName'), ' ', parameters('glassfishVersion'), ' ', parameters('glassfishRelease'), ' ', parameters('glassfishAdminPassword'))]"
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('_artifactsLocation'), variables('nestedTemplateFolder'), variables('nestedTemplateFileName'))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+					"_artifactsLocation": {
+						"value": "[parameters('_artifactsLocation')]"
+					},
+          "namePrefix": {
+						"value": "[variables('namePrefix')]"
+					},
+          "numberOfInstances": {
+						"value": "[variables('numberOfInstances')]"
+					},
+          "glassfishVersion": {
+						"value": "[parameters('glassfishVersion')]"
+					},
+           "glassfishRelease": {
+						"value": "[parameters('glassfishRelease')]"
+					},
+           "glassfishAdminPassword": {
+						"value": "[parameters('glassfishAdminPassword')]"
+					}          
         }
       }
     }
