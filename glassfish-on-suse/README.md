@@ -25,21 +25,19 @@ If you are using a Windows computer, then you can download puttygen.exe to creat
 
 ### azuredeploy.Parameters.json File Explained
 
-1.  artifactsLocation: The base URL where artifacts required by this template are located
+1.  _artifactsLocation: The base URL where artifacts required by this template are located
 2.  glassfishVersion: The version of GlassFish that will be deployed
 3.  glassfishRelease: The release package that will be deployed to all servers
 4.  vmPrefix: Prefix used to create host names for all of the VMs
 5.  numberOfInstances: Number of VMs to deploy
-6.  storageAccountName: The name of the storage account used to store VHDs for the VMs
-7.  publicIPAddressName: The name given to the public IP
-8.  dnsNameforLBIP: A distinct Public DNS name used to reference the VM Load Balancer, for access to deployed applications
-9.  vnetName: The name given to the virtual network
-10. lbName: The name given to the load balancer 
-11. vmSize:  Select from one of the allowed VM sizes listed in the azuredeploy.json file
-12. osImage: Select from OpenSUSE or SLES for the Operating System
-13. adminUsername: Admin username for OS login
-14. glassfishAdminPassword: The password given to the default GlassFish 'admin' user
-15. sshPublicKey: The public key used to secure SSH access with each VM 
+6.  dnsNameforLBIP: A distinct Public DNS name used to reference the VM Load Balancer, for access to deployed applications
+7.  vnetName: The name given to the virtual network
+8. lbName: The name given to the load balancer 
+9. vmSize:  Select from one of the allowed VM sizes listed in the azuredeploy.json file
+10. osImage: Select from OpenSUSE or SLES for the Operating System
+11. adminUsername: Admin username for OS login
+12. glassfishAdminPassword: The password given to the default GlassFish 'admin' user
+13. sshPublicKey: The public key used to secure SSH access with each VM 
 
 
 ## Deploy Template
