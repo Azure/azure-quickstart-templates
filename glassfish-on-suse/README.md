@@ -47,14 +47,14 @@ CLI
   ```
    azure group create -n <ResourceGroupName> -l <Location>
 
-   azure group deployment create -f https://raw.githubusercontent.com/CalCof/azure-quickstart-templates/master/glassfish-on-suse/azuredeploy.json -e <PathToParamtersFile> -g <ResourceGroupName> -n <DeploymentName>
+   azure group deployment create -f https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/glassfish-on-suse/azuredeploy.json -e <PathToParamtersFile> -g <ResourceGroupName> -n <DeploymentName>
   ```
   
 PowerShell
   ```
     New-AzureRMResourceGroup -Name <ResourceGroupName> -Location <Location>
 
-    New-AzureRmResourceGroupDeployment -Name <DeploymentName> -DeploymentDebugLogLevel All -ResourceGroupName <ResourceGroupName> - TemplateFile https://raw.githubusercontent.com/CalCof/azure-quickstart-templates/master/glassfish-on-suse/azuredeploy.json -TemplateParameterFile <PathToParamtersFile>
+    New-AzureRmResourceGroupDeployment -Name <DeploymentName> -DeploymentDebugLogLevel All -ResourceGroupName <ResourceGroupName> - TemplateFile https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/glassfish-on-suse/azuredeploy.json -TemplateParameterFile <PathToParamtersFile>
   ```
 
 ## Post-Deployment Operations
