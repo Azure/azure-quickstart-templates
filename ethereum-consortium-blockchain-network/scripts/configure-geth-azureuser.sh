@@ -70,12 +70,12 @@ for i in `seq 0 $(($NUM_BOOT_NODES - 1))`; do
 	setsid geth -nodekeyhex ${NODE_KEYS[$i]} > $HOMEDIR/tempbootnodeoutput 2>&1 &
 	while sleep 10; do
 		if [ -s $HOMEDIR/tempbootnodeoutput ]; then
+			killall geth;
 			NODE_IDS[$i]=`grep -Po '(?<=\/\/).*(?=@)' $HOMEDIR/tempbootnodeoutput`;
+			rm $HOMEDIR/tempbootnodeoutput;
 			if [ $? -ne 0 ]; then
 				exit 1;
 			fi
-			killall geth;
-			rm $HOMEDIR/tempbootnodeoutput;
 			break;
 		fi
 	done
