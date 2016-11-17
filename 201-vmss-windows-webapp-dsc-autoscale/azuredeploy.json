@@ -50,18 +50,32 @@
         "description": "Admin password on all VMs."
       }
     },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. For example, if stored on a public GitHub repo, you'd use the following URI: https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vmss-windows-webapp-dsc-autoscale."
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vmss-windows-webapp-dsc-autoscale"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  If your artifacts are stored on a public repo or public storage account you can leave this blank."
+      }
+    },
     "powershelldscZip": {
       "type": "string",
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vmss-windows-webapp-dsc-autoscale/IISInstall.ps1.zip",
+      "defaultValue": "/DSC/IISInstall.ps1.zip",
       "metadata": {
-        "description": "Full URI of the PowerShell DSC zip file"
+        "description": "Location of the PowerShell DSC zip file relative to the URI specified in the _artifactsLocation, i.e. /DSC/IISInstall.ps1.zip"
       }
     },
     "webDeployPackage": {
       "type": "string",
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vmss-windows-webapp-dsc-autoscale/DefaultASPWebApp.v1.0.zip",
+      "defaultValue": "/WebDeploy/DefaultASPWebApp.v1.0.zip",
       "metadata": {
-        "description": "Full URI of the WebDeploy package zip file"
+        "description": "Location of the  of the WebDeploy package zip file relative to the URI specified in _artifactsLocation, i.e. /WebDeploy/DefaultASPWebApp.v1.0.zip"
       }
     },
     "powershelldscUpdateTagVersion": {
@@ -119,6 +133,8 @@
     "networkApiVersion": "2016-03-30",
     "storageApiVersion": "2015-06-15",
     "insightsApiVersion": "2015-04-01",
+    "webDeployPackageFullPath": "[concat(parameters('_artifactsLocation'), parameters('webDeployPackage'))]",
+    "powershelldscZipFullPath": "[concat(parameters('_artifactsLocation'), parameters('powershelldscZip'))]",
     "powershelldscArchiveFolder": "DSC",
     "powershelldscArchiveFileName": "IISInstall.ps1.zip"
   },
@@ -334,13 +350,13 @@
                   "forceUpdateTag": "[parameters('powershelldscUpdateTagVersion')]",
                   "settings": {
                     "configuration": {
-                      "url": "[parameters('powershelldscZip')]",
+                      "url": "[variables('powershelldscZipFullPath')]",
                       "script": "IISInstall.ps1",
                       "function": "InstallIIS"
                     },
                     "configurationArguments": {
                       "nodeName": "localhost",
-                      "WebDeployPackagePath": "[parameters('webDeployPackage')]"
+                      "WebDeployPackagePath": "[variables('webDeployPackageFullPath')]"
                     }
                   }
                 }
@@ -353,13 +369,13 @@
     {
       "type": "Microsoft.Insights/autoscaleSettings",
       "apiVersion": "[variables('insightsApiVersion')]",
-      "name": "autoscalehost",
+      "name": "autoscalewad",
       "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachineScaleSets/', variables('namingInfix'))]"
       ],
       "properties": {
-        "name": "autoscalehost",
+        "name": "autoscalewad",
         "targetResourceUri": "[concat('/subscriptions/',subscription().subscriptionId, '/resourceGroups/',  resourceGroup().name, '/providers/Microsoft.Compute/virtualMachineScaleSets/', variables('namingInfix'))]",
         "enabled": true,
         "profiles": [
