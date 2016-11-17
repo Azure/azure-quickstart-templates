@@ -70,19 +70,23 @@
     }
   },
   "variables": {
-    "defaultStorageAccountName": "[concat(parameters('clusterName'),'store')]",
-    "storageAccountType": "Standard_LRS",
-    "sqlDatabaseServerName": "[concat(parameters('clusterName'),'dbserver')]",
-    "sqlDatabaseName": "[concat(parameters('clusterName'),'db')]"
+    "defaultStorageAccount":{
+      "name": "[uniqueString(resourceGroup().id)]",
+      "type": "Standard_LRS"
+    },
+    "sqlDatabase":{
+      "serverName": "[concat(parameters('clusterName'),'dbserver')]",
+      "databaseName": "[concat(parameters('clusterName'),'db')]"
+    }
   },
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('defaultStorageAccountName')]",
+      "name": "[variables('defaultStorageAccount').name]",
       "location": "[resourceGroup().location]",
       "apiVersion": "2016-01-01",
       "sku": {
-          "name": "[variables('storageAccountType')]"
+          "name": "[variables('defaultStorageAccount').type]"
       },
       "kind": "Storage", 
       "properties": {}
@@ -92,7 +96,7 @@
       "type": "Microsoft.HDInsight/clusters",
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-03-01-preview",
-      "dependsOn": [ "[concat('Microsoft.Storage/storageAccounts/',variables('defaultStorageAccountName'))]" ],
+      "dependsOn": [ "[concat('Microsoft.Storage/storageAccounts/',variables('defaultStorageAccount').name)]" ],
       "tags": {
 
       },
@@ -112,10 +116,10 @@
         "storageProfile": {
           "storageaccounts": [
             {
-              "name": "[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccountName')), '2016-01-01').primaryEndpoints.blob,'https://',''),'/','')]",
+              "name": "[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name), '2016-01-01').primaryEndpoints.blob,'https://',''),'/','')]",
               "isDefault": true,
               "container": "[parameters('clusterName')]",
-              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccountName')), '2016-01-01').keys[0].value]"
+              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name), '2016-01-01').keys[0].value]"
             }
           ]
         },
@@ -152,7 +156,7 @@
       }
     },
     {
-      "name": "[variables('sqlDatabaseServerName')]",
+      "name": "[variables('sqlDatabase').serverName]",
       "type": "Microsoft.Sql/servers",
       "location": "[resourceGroup().location]",
       "tags": {
@@ -167,7 +171,7 @@
       },
       "resources": [
         {
-          "name": "[variables('sqlDatabaseName')]",
+          "name": "[variables('sqlDatabase').databaseName]",
           "type": "databases",
           "location": "[resourceGroup().location]",
           "tags": {
@@ -175,7 +179,7 @@
           },
           "apiVersion": "2015-01-01",
           "dependsOn": [
-            "[variables('sqlDatabaseServerName')]"
+            "[variables('sqlDatabase').serverName]"
           ],
           "properties": {
             "edition": "Basic",
@@ -189,7 +193,7 @@
               "type": "extensions",
               "apiVersion": "2014-04-01",
               "dependsOn": [
-                "[resourceId('Microsoft.Sql/servers/databases', variables('sqlDatabaseServerName'), variables('sqlDatabaseName'))]"
+                "[resourceId('Microsoft.Sql/servers/databases', variables('sqlDatabase').serverName, variables('sqlDatabase').databaseName)]"
               ],
               "properties": {
                 "operationMode": "Import",
@@ -203,12 +207,12 @@
           ]
         },
         {
-          "name": "AllowAllWindowsAzureIps",
+          "name": "AllowAllAzureIps",
           "type": "firewallrules",
           "location": "[resourceGroup().location]",
           "apiVersion": "2014-04-01",
           "dependsOn": [
-            "[variables('sqlDatabaseServerName')]"
+            "[variables('sqlDatabase').serverName]"
           ],
           "properties": {
             "startIpAddress": "0.0.0.0",
@@ -221,7 +225,7 @@
   "outputs": {
     "storage": {
       "type": "object",
-      "value": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccountName')))]"
+      "value": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name))]"
     },
     "cluster": {
       "type": "object",
@@ -229,7 +233,7 @@
     },    
     "sqlSvrFqdn": {
       "type": "string",
-      "value": "[reference(concat('Microsoft.Sql/servers/', variables('sqlDatabaseServerName'))).fullyQualifiedDomainName]"
+      "value": "[reference(concat('Microsoft.Sql/servers/', variables('sqlDatabase').serverName)).fullyQualifiedDomainName]"
     }
   }
 }
