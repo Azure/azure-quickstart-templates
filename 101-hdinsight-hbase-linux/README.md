@@ -7,4 +7,4 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template allows you to create a Linux-based HBase cluster in HDInsight. For more information, see <a href="https://docs.microsoft.com/azure/hdinsight/hdinsight-hbase-tutorial-get-started-linux">HBase tutorial: Get started using Apache HBase with Linux-based Hadoop in HDInsight</a>
+This template allows you to create a Linux-based HBase cluster in HDInsight. For more information, see <a href="https://docs.microsoft.com/azure/hdinsight/hdinsight-hbase-tutorial-get-started-linux">HBase tutorial: Get started using Apache HBase with Linux-based Hadoop in HDInsight</a>.
