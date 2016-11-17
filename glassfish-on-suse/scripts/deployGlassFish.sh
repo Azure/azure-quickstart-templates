@@ -20,7 +20,7 @@ rm /tmp/glassfish-$RELEASE.zip
 # Start GlassFish Server 
 echo "Starting GlassFish server"
 
-sudo /opt/glassfish$VERSION/bin/asadmin start-domain
+/opt/glassfish$VERSION/bin/asadmin start-domain
 
 # Enable admin access 
 echo "Enabling admin Access"
