@@ -42,7 +42,8 @@ sed -i "s/sp\.example\.org/$SITENAME/" /etc/shibboleth/shibboleth2.xml
 sed  -i "7i <RequestMapper type=\"Native\">\n<RequestMap applicationId=\"default\"> \n <Host name=\"$SITENAME\">\n  	<Path name=\"secure\" authType=\"shibboleth\" requireSession=\"true\"\/>\n <\/Host>\n <\/RequestMap>\n<\/RequestMapper>" /etc/shibboleth/shibboleth2.xml
 sed -i "s/handlerSSL=\"false\"/handlerSSL=\"true\"/" /etc/shibboleth/shibboleth2.xml
 sed -i "s/cookieProps=\"http\"/cookieProps=\"https\"/" /etc/shibboleth/shibboleth2.xml
-sed -i  "s/discoveryProtocol=\"SAMLDS.*//" /etc/shibboleth/shibboleth2.xml
+sed -i  "s/discoveryProtocol=\"SAMLDS.*/>/" /etc/shibboleth/shibboleth2.xml
+#Below config entry for idp provider 
 #sed -i  "s/<SSO entityID.*/ <SSO entityID=\"urn:mace:incommon:washington.edu\">/" /etc/shibboleth/shibboleth2.xml
 
 #Restart Shibboleth and apache server
