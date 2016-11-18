@@ -15,26 +15,66 @@ Pipeline: Copy Activity -> HDInsight Activity -> Copy Activity
 3. Use the **createemployeestable.sql** from the script folder to create a table named **Employees** in your Azure SQL database. 
 3. [Create an Azure Virtual Machine](https://docs.microsoft.com/azure/virtual-machines/virtual-machines-windows-hero-tutorial) and configure it to be an FTP server. See [this article](http://itq.nl/walkthrough-hosting-ftp-on-iis-7-5-a-windows-azure-vm-2/) for details. You can use your FTP server instead.
 4. Upload **input.txt** file from the script folder to a folder named **incomingfiles** on the FTP server.    
-2. Update values for the following parameters in **azuredeploy.parameters.json** file.
-    - ftpHost with the name or IP address of the FTP server. 
-    - ftpUser with the name of the user who has access to the FTP server. 
-    - ftpPassword with the password of the user. 
-    - ftpFolderName with the name of the folder (incomingfiles) that contains the input file. 
-    - ftpFileName with the name of the input file (input.txt). 
-    - storageAccountResourceGroupName with name of the resource group that contains your Azure storage. 
-    - storageAccountName with the name of your Azure Storage account.
-    - storageAccountKey with the key of your Azure Storage account.
-    - blobContainer with the name of the blob container that you will use for this sample. 
-    - inputBlobFolder with the name of the folder that will hold the input file copied from the FTP server. 
-    - inputBlobNanme with the name of the file that contains input data (input.txt). 
-    - outputBlobFolder with the name of the folder that will hold the output file from Hive processing on HDInsight cluster.
-    - hiveScriptFolder with the name of the folder (script) that contains the HQL file. 
-    - haveScriptFile with the name of the file (combinefirstandlast.hql) that combines first names and last names from the input file and create an output file with full names.
-    - sqlServerName with the name of your Azure SQL server. 
-    - sqlDatabaseName with the name of your Azure SQL database. 
-    - sqlServerUserName with the name of the user who has access to the SQL server. 
-    - sqlServerPassword with the password of the user. 
-    - targetSQLTable with the name of the SQL table that will hold the output data from Hive processing.     
+2. Add parameters to the azuredeploy.parameters.json** file and specify values for them.  
+      	
+			"ftpHost": {
+	      		"value": "<your FTP server name or IP address>"
+    		},
+	    	"ftpUser": {
+	      		"value": "<FTP user name>"
+    		},
+	    	"ftpPassword": {
+	      		"value": "<FTP password>"
+	    	},
+	    	"ftpFolderName": {
+	      		"value": "incomingfiles"
+	    	},
+	    	"ftpFileName": {
+	      		"value": "input.txt"
+    		},    
+	    	"storageAccountResourceGroupName": {
+	      		"value": "<Resource group of your Azure Storae account>"
+	    	},
+	    	"storageAccountName": {
+	      		"<Azure Storage account name>": ""
+	    	},
+	    	"storageAccountKey": {
+	      		"value": "<Azure Storage access key>"
+	    	},
+	    	"blobContainer": {
+	      		"value": "adftutorial"
+	    	},
+	    	"inputBlobFolder": {
+	      		"value": "inputdata"
+	    	},
+	    	"inputBlobName": {
+	    	  	"value": "input.txt"
+		    },
+	    	"outputBlobFolder": {
+	      		"value": "outputdata"
+	    	},
+	    	"hiveScriptFolder": {
+	      		"value": "script"
+	    	},
+	    	"hiveScriptFile": {
+	      		"value": "combinefirstandlast.hql"
+	    	},
+    		"sqlServerName": {
+	      		"value": "<Name of Azure SQL server>"
+	    	},
+	    	"sqlDatabaseName": {
+	      		"value": "<Name of Azure SQL database>"
+	    	},
+	    	"sqlServerUserName": {
+	      		"value": "<Name of user who has access to the SQL server>"
+	    	},
+	    	"sqlServerPassword": {
+	      		"value": "<Password for Azuer SQL user>"
+	    	},
+	    	"targetSQLTable": {
+	      		"value": "Employees"
+	    	}
+	  
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-data-factory-ftp-hive-blob%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
