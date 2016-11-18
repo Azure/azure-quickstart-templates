@@ -28,20 +28,33 @@ If you are using a Windows computer, then you can download puttygen.exe to creat
 1.  _artifactsLocation: The base URL where artifacts required by this template are located
 2.  glassfishVersion: The version of GlassFish that will be deployed
 3.  glassfishRelease: The release package that will be deployed to all servers
-4.  vmPrefix: Prefix used to create host names for all of the VMs
-5.  numberOfInstances: Number of VMs to deploy
-6.  dnsNameforLBIP: A distinct Public DNS name used to reference the VM Load Balancer, for access to deployed applications
-7. lbName: The name given to the load balancer 
-8. vmSize:  Select from one of the allowed VM sizes listed in the azuredeploy.json file
-9. osImage: Select from OpenSUSE or SLES for the Operating System
-10. adminUsername: Admin username for OS login
-11. glassfishAdminPassword: The password given to the default GlassFish 'admin' user
-12. sshPublicKey: The public key used to secure SSH access with each VM 
+4.  numberOfInstances: Number of VMs to deploy
+5.  dnsNameforLBIP: A distinct Public DNS name used to reference the VM Load Balancer, for access to deployed applications
+6.  vmSize:  Select from one of the allowed VM sizes listed in the azuredeploy.json file
+7.  osImage: Select from OpenSUSE or SLES for the Operating System
+8.  adminUsername: Admin username for OS login
+9.  glassfishAdminPassword: The password given to the default GlassFish 'admin' user
+10. sshPublicKey: The public key used to secure SSH access with each VM 
 
 
 ## Deploy Template
 
-Once you have collected all of the prerequisites for the template, you can deploy the template by populating the *azuredeploy.parameters.json* file and executing Resource Manager deployment commands with PowerShell or the xplat CLI.
+There are several ways in which you can deploy this template:
+
+ - This template can be deployed directly through the Azure Portal, by clicking the 'Deploy to Azure' button found at the top of this README.md file.
+  - This template can be deployed via the command line (using Azure PowerShell or the Azure CLI) using the scripts located in the root folder of the azure-quickstart-templates repository. To achieve this, simply execute the script and pass in the folder name of this quickstart (glassfish-on-suse), as indicated by the following commands.
+
+PowerShell
+  ```
+.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation <Location> -ArtifactStagingDirectory 'glassfish-on-suse' 
+  ```
+  
+CLI
+  ```
+azure-group-deploy.sh -a 'glassfish-on-suse' -l <Location>
+  ```
+ 
+ - It is also possible to deploy this template by populating a local copy of the *azuredeploy.parameters.json* file and executing the following Resource Manager deployment commands with PowerShell or the xplat CLI.
 
 CLI
   ```
