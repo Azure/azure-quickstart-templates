@@ -43,7 +43,7 @@ There are several ways in which you can deploy this template:
 
 - This template can be deployed directly through the Azure Portal, by clicking the 'Deploy to Azure' button found at the top of this README.md file.
 
-- This template can be deployed via the command line (using Azure PowerShell or the Azure CLI) using the scripts located in the root folder of the azure-quickstart-templates repository. To achieve this, simply execute the script and pass in the folder name of this quickstart (glassfish-on-suse), as indicated by the following commands.
+- You can also deploy this template via command line (using Azure PowerShell or the Azure CLI) using the scripts located in the root folder of the 'azure-quickstart-templates' repository. To achieve this, simply execute the script and pass in the folder name of this quickstart (glassfish-on-suse), as indicated by the following commands.
 
 PowerShell
   ```
