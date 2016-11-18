@@ -8,9 +8,6 @@
     "txVMNamePrefix": {
       "type": "string"
     },
-    "txStorageAcctName": {
-      "type": "string"
-    },
     "numTXNodes": {
       "type": "int"
     },
@@ -40,6 +37,15 @@
     },
     "adminSitePort": {
       "type": "int"
+    },
+    "metricsStorageAcctName": {
+      "type": "string"
+    },
+    "apiVersionStorageAccounts": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
     }
   },
   "variables": {
@@ -50,6 +56,17 @@
   },
   "resources": [
     {
+      "apiVersion": "[parameters('apiVersionStorageAccounts')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[parameters('metricsStorageAcctName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "Storage",
+      "properties": {}
+    },
+    {
       "apiVersion": "[variables('apiVersionVirtualMachinesExtensions')]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('txVMNamePrefix'), copyIndex(), '/newuserscript')]",
@@ -57,7 +74,7 @@
         "name": "txNodesConfigLoop",
         "count": "[parameters('numTXNodes')]"
       },
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
         "type": "CustomScript",
@@ -77,7 +94,7 @@
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('txVMNamePrefix'), copyIndex(), '/diagscript')]",
       "apiVersion": "[variables('apiVersionVirtualMachinesExtensions')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "txNodesDiagLoop",
         "count": "[parameters('numTXNodes')]"
@@ -98,8 +115,8 @@
             ]
         },
         "protectedSettings": {
-          "storageAccountName": "[parameters('txStorageAcctName')]",
-          "storageAccountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('txStorageAcctName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]"
+          "storageAccountName": "[parameters('metricsStorageAcctName')]",
+          "storageAccountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('metricsStorageAcctName')), parameters('apiVersionStorageAccounts')).keys[0].value]"
         }
       }
     },
@@ -111,7 +128,7 @@
         "name": "bootMNNodesConfigLoop",
         "count": "[parameters('numMNNodes')]"
       },
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
         "type": "CustomScript",
@@ -131,7 +148,7 @@
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('mnVMNamePrefix'), copyIndex(), '/diagscript')]",
       "apiVersion": "[variables('apiVersionVirtualMachinesExtensions')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "mnNodesDiagLoop",
         "count": "[parameters('numMNNodes')]"
@@ -152,8 +169,8 @@
            ]
         },
         "protectedSettings": {
-          "storageAccountName": "[parameters('txStorageAcctName')]",
-          "storageAccountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('txStorageAcctName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]"
+          "storageAccountName": "[parameters('metricsStorageAcctName')]",
+          "storageAccountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('metricsStorageAcctName')), parameters('apiVersionStorageAccounts')).keys[0].value]"
         }
       }
     }
