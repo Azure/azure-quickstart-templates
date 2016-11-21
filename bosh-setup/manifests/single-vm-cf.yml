@@ -1,8 +1,10 @@
+# This manifest will not be updated, it will use cf-release v238 for a long time.
+#
 # All certs which are used in this file are for testing.
 # You should use your certs to replace them for production.
 ---
 name: single-vm-cf-on-azure
-director_uuid: REPLACE_WITH_DIRECTOR_ID
+director_uuid: REPLACE_WITH_DIRECTOR_UUID
 
 releases:
 - {name: cf, version: 238}
@@ -14,11 +16,12 @@ networks:
 - name: cf_private
   type: manual
   subnets:
-  - range: REPLACE_WITH_SUBNET_ADDRESS_RANGE_FOR_CLOUD_FOUNDRY
-    gateway: REPLACE_WITH_GATEWAY_IP
-    dns: [REPLACE_WITH_DNS]
-    reserved: ["REPLACE_WITH_RESERVED_IP_FROM - REPLACE_WITH_RESERVED_IP_TO"]
-    static: ["REPLACE_WITH_STATIC_IP_FROM - REPLACE_WITH_STATIC_IP_TO"]
+  - range: 10.0.16.0/24
+    gateway: 10.0.16.1
+    dns:
+    - REPLACE_WITH_DNS
+    reserved: [10.0.16.2 - 10.0.16.3]
+    static: [10.0.16.4 - 10.0.16.100]
     cloud_properties:
       virtual_network_name: REPLACE_WITH_VNET_NAME
       subnet_name: REPLACE_WITH_SUBNET_NAME_FOR_CLOUD_FOUNDRY
@@ -31,7 +34,7 @@ resource_pools:
   network: cf_private
   stemcell:
     name: bosh-azure-hyperv-ubuntu-trusty-go_agent
-    version: latest
+    version: 3262.7
   cloud_properties:
     instance_type: Standard_A1
     security_group: REPLACE_WITH_NSG_NAME_FOR_CLOUD_FOUNDRY
@@ -39,7 +42,7 @@ resource_pools:
   network: cf_private
   stemcell:
     name: bosh-azure-hyperv-ubuntu-trusty-go_agent
-    version: latest
+    version: 3262.7
   cloud_properties:
     instance_type: Standard_D2
     security_group: REPLACE_WITH_NSG_NAME_FOR_CLOUD_FOUNDRY
@@ -71,7 +74,7 @@ jobs:
   - {name: metron_agent, release: cf}
   networks:
   - name: cf_private
-    static_ips: [REPLACE_WITH_POSTGRES_IP]
+    static_ips: [10.0.16.5]
   properties:
     metron_agent:
       zone: z1
@@ -128,7 +131,7 @@ jobs:
     static_ips: REPLACE_WITH_CLOUD_FOUNDRY_PUBLIC_IP
   - name: cf_private
     default: [gateway, dns]
-    static_ips: [REPLACE_WITH_CLOUD_FOUNDRY_INTERNAL_IP]
+    static_ips: [10.0.16.4]
   properties:
     consul:
       agent:
@@ -140,18 +143,67 @@ jobs:
           etcd: {}
     etcd_metrics_server:
       nats:
-        machines: [REPLACE_WITH_CLOUD_FOUNDRY_INTERNAL_IP]
+        machines: [10.0.16.4]
         password: REPLACE_WITH_PASSWORD
         username: nats
     nfs_server:
-      address: REPLACE_WITH_CLOUD_FOUNDRY_INTERNAL_IP
-      allow_from_entries: [REPLACE_WITH_SUBNET_ADDRESS_RANGE_FOR_CLOUD_FOUNDRY]
+      address: 10.0.16.4
+      allow_from_entries: [10.0.16.0/24]
     ha_proxy:
       ssl_pem: |
-        REPLACE_WITH_SSL_CERT_AND_KEY
+        -----BEGIN CERTIFICATE-----
+        MIIDwTCCAqmgAwIBAgIJAIKIaJ9m2A1xMA0GCSqGSIb3DQEBCwUAMHcxCzAJBgNV
+        BAYTAkFVMQwwCgYDVQQIDANaSlUxDTALBgNVBAcMBFpIQ04xDjAMBgNVBAoMBUxp
+        bnV4MQ0wCwYDVQQLDARTb2Z0MQ8wDQYDVQQDDAZTU2hLZXkxGzAZBgkqhkiG9w0B
+        CQEWDHRlc3RAYWJjLmNvbTAeFw0xNjA5MjcwNDQyMzBaFw0xNzA5MjcwNDQyMzBa
+        MHcxCzAJBgNVBAYTAkFVMQwwCgYDVQQIDANaSlUxDTALBgNVBAcMBFpIQ04xDjAM
+        BgNVBAoMBUxpbnV4MQ0wCwYDVQQLDARTb2Z0MQ8wDQYDVQQDDAZTU2hLZXkxGzAZ
+        BgkqhkiG9w0BCQEWDHRlc3RAYWJjLmNvbTCCASIwDQYJKoZIhvcNAQEBBQADggEP
+        ADCCAQoCggEBAMkbbJ+HDatNKZI6GNX0kvVOcidFmXfUT0tL0XWveYy73DOgiMZx
+        f7gPOqLevqJPLaZ8yAcaHPTIQmZ+9m3bMj8y3kCP8N7GglFfj4oC1lUtPs1KnByJ
+        nAOD/XIuhO/JxuokxKF9E6JdRpvFLduuaiDKwlgFZsf6qwhc/kmCIdUnieZfqhYu
+        YuTKtVNudqGRrLtDLNzcmoypum0MovwGrWD+f+KC9cGnnGRe45IiEmur9+V2S5p3
+        gACI3PAFdXmFmC1F02UN9G4tTJXIhtv7+tIBmpXz7wuIzBv1Ho7qXIjEyqxzHEUr
+        Pr/BUPTzfSc0ljtvydxqGHRoMzW6/MgLbt8CAwEAAaNQME4wHQYDVR0OBBYEFE/3
+        zGyOeFtI03P97bTHrF8e2S/bMB8GA1UdIwQYMBaAFE/3zGyOeFtI03P97bTHrF8e
+        2S/bMAwGA1UdEwQFMAMBAf8wDQYJKoZIhvcNAQELBQADggEBAKguWEcm4qDtLHEu
+        yRgjPCAbb1S/OohFsiWHi6MPcQFMHfFsOSW2k7Eip7J8Wir7FQ5TmQEnPLh6E+7j
+        uAlMwPvTM67K7naHrLkIdRyBxzIeCfLbixyoyWDxYa5oqO3WfkHyPT23iRap3HWF
+        IdxASv28aXT1hjGP3Bpj8TrT3EtRX5giKZxdu22eP5n809Gdc5xj1XzbGLoTB8RT
+        R0sZvY2hzMuuKPGDrAMpBYYb0S7d9QSlsqsKZO7goL3/2/kFyUp8IZYdSwPQ8oc/
+        GGGRp1VbvAeHmX/Z7+iaJVUcuo4hEcO6nJlBZBiCR7gSpzG/E2fxBYLHbrA/GlJ3
+        AU+AWMI=
+        -----END CERTIFICATE-----
+        -----BEGIN RSA PRIVATE KEY-----
+        MIIEpQIBAAKCAQEAyRtsn4cNq00pkjoY1fSS9U5yJ0WZd9RPS0vRda95jLvcM6CI
+        xnF/uA86ot6+ok8tpnzIBxoc9MhCZn72bdsyPzLeQI/w3saCUV+PigLWVS0+zUqc
+        HImcA4P9ci6E78nG6iTEoX0Tol1Gm8Ut265qIMrCWAVmx/qrCFz+SYIh1SeJ5l+q
+        Fi5i5Mq1U252oZGsu0Ms3NyajKm6bQyi/AatYP5/4oL1waecZF7jkiISa6v35XZL
+        mneAAIjc8AV1eYWYLUXTZQ30bi1MlciG2/v60gGalfPvC4jMG/UejupciMTKrHMc
+        RSs+v8FQ9PN9JzSWO2/J3GoYdGgzNbr8yAtu3wIDAQABAoIBAQCA6LRbGb3YVVDV
+        a6op02k0FwGzTLjQB+aAFGyCbGWUoYLIERo7YduFhzWF2xQFhI11j7zEWKfA/HEb
+        tDyQNJZjzl6KsfmrQ0GbmY6v35u145fDDhU9cbPwyPV38HvEHOoFgmYMQdmJFRNC
+        nEUF8SoUNQQYWfYFMBfb94gEZIb9UwT9mPX/9DyNWSieO9gAkK41pJ9QS7AC47pa
+        UrTw6fG6pXAr+NjDz1owIB7ONCXNrDjsgA6L7SBAwrDb3jTy4NDEc+MnGm7a7eH+
+        e+SZi7OLcBp9g95GjySjj39HNfTgbWYXAO/+k6hG6Aip4UvfAt7dV0iXwWyHq2mC
+        Jqyj3TnhAoGBAOMqMoVSuAIwztQJBYXO/VOZAB2jV0R0K/ektPhs+Wx2SFE7t0o9
+        M0ygZKeUwaoEOJjurjryjwggevXjah91ZKVqA8GDbuYotZDTJlVHfFbFHRSgGnxO
+        BFVAwhCtRsAPU9k/BjFHYMX4LgyZva/bmwWNYbjZ0r+Hd4jcHE90a90RAoGBAOKi
+        ePFAhUlY+QjNI+avlX7GKlYu1QM6E5W2KGTdY9UOhlDE21nthnQHEd31WeZDX9rD
+        j+cxYIL0ZW0IexT5njxQmlSnETawsSnCdrBGvokmoSYyT6v4zxCjcGo+KW72afM/
+        QGbafzmNNjcdXPNsVPqMamCzQqJFhAiuQ3CiR0zvAoGBANiVHt3mY/ISvt+CSnWt
+        R/Iwad/YIBfv+wt9Sd2haJ10mLZ6jOKHPyXLtqvgNFT4+U02I3+oS56f+Rv+2utr
+        ba4YScRyn4VpQtL1vhKIuY+xF2zWyOnDKHZv65ci3dW3x2XVpP3O5AFcAeuZmTTV
+        2BOPHKC1bS2W5uzhj0xh34VBAoGBAK0V8NAvupvd+7QhF/4is0XzCnpvofeo7zQz
+        vn3qJ0icozAkaHIx2bHbhGXD8DjP0/E70jd7mn3pMV0oUPgf/B2MYZGtVpQyNdvy
+        zLqsDPCqNAD8A6UPjPTkHgLGHtbEEv7Xm9Pxo6DMnE9TeZ3farc/bi8UORu9g60t
+        igwHo/S5AoGASBFjcfBenNFbBJXEuIkVC+RKdBqK7rdrTXQ0/gK5sWQfS7sjcKn/
+        YNPxhH0iK1SAdZnjy22PKi/g1C/xOSXEY3szTiYD4tfyrXUfgyk/vrGsjgj27EyL
+        oacTI1Oh6rATXiqMSXG9gfP8SFmA3PoWmnkox8fP7wOMOOQR1TokNtE=
+        -----END RSA PRIVATE KEY-----
     router:
       servers:
-      - REPLACE_WITH_CLOUD_FOUNDRY_INTERNAL_IP
+      - 10.0.16.4
     doppler: {zone: z1}
     doppler_endpoint:
       shared_secret: REPLACE_WITH_PASSWORD
@@ -175,7 +227,7 @@ jobs:
         - admin|REPLACE_WITH_PASSWORD|scim.write,scim.read,openid,cloud_controller.admin,doppler.firehose,routing.router_groups.read
       port: 8082
     uaadb:
-      address: REPLACE_WITH_POSTGRES_IP
+      address: 10.0.16.5
       databases:
       - {name: uaadb, tag: uaa}
       db_scheme: postgresql
@@ -377,7 +429,7 @@ properties:
         description: "Windows Server 2012 R2"
   blobstore: null
   ccdb:
-    address: REPLACE_WITH_POSTGRES_IP
+    address: 10.0.16.5
     databases:
     - {name: ccdb, tag: cc}
     db_scheme: postgres
@@ -390,7 +442,7 @@ properties:
       domain: cf.internal
       servers:
         lan:
-        - REPLACE_WITH_CLOUD_FOUNDRY_INTERNAL_IP
+        - 10.0.16.4
     agent_cert: |+
       -----BEGIN CERTIFICATE-----
       MIIEITCCAgugAwIBAgIQTDMCJHBiQrY8hlM78doHTzALBgkqhkiG9w0BAQswEzER
@@ -557,12 +609,12 @@ properties:
     shared_secret: REPLACE_WITH_PASSWORD
   etcd:
     advertise_urls_dns_suffix: etcd.service.cf.internal
-    machines: [REPLACE_WITH_CLOUD_FOUNDRY_INTERNAL_IP]
+    machines: [10.0.16.4]
     peer_require_ssl: false
     require_ssl: false
   etcd_metrics_server:
     nats:
-      machines: [REPLACE_WITH_CLOUD_FOUNDRY_INTERNAL_IP]
+      machines: [10.0.16.4]
       password: REPLACE_WITH_PASSWORD
       username: nats
   logger_endpoint:
@@ -571,7 +623,7 @@ properties:
     outgoing_dropsonde_port: 18081
     doppler_port: 8081
     etcd:
-      machines: [REPLACE_WITH_CLOUD_FOUNDRY_INTERNAL_IP]
+      machines: [10.0.16.4]
     tls:
       ca: null
   loggregator_endpoint:
@@ -616,13 +668,13 @@ properties:
   metron_endpoint:
     shared_secret: REPLACE_WITH_PASSWORD
   nats:
-    machines: [REPLACE_WITH_CLOUD_FOUNDRY_INTERNAL_IP]
+    machines: [10.0.16.4]
     password: REPLACE_WITH_PASSWORD
     port: 4222
     user: nats
   nfs_server:
-    address: REPLACE_WITH_CLOUD_FOUNDRY_INTERNAL_IP
-    allow_from_entries: [REPLACE_WITH_SUBNET_ADDRESS_RANGE_FOR_CLOUD_FOUNDRY]
+    address: 10.0.16.4
+    allow_from_entries: [10.0.16.0/24]
   ssl:
     skip_cert_verify: true
   system_domain: REPLACE_WITH_SYSTEM_DOMAIN
@@ -648,7 +700,7 @@ properties:
       port: 18888
       user: gorouter
   uaadb:
-    address: REPLACE_WITH_POSTGRES_IP
+    address: 10.0.16.5
     databases:
     - {name: uaadb, tag: uaa}
     db_scheme: postgresql
@@ -850,7 +902,7 @@ properties:
         client_key: ""
         require_ssl: false
       nats:
-        machines: [REPLACE_WITH_CLOUD_FOUNDRY_INTERNAL_IP]
+        machines: [10.0.16.4]
         password: REPLACE_WITH_PASSWORD
         port: 4222
         user: nats
