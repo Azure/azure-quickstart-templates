@@ -5,9 +5,7 @@ wget -qO- https://download.rethinkdb.com/apt/pubkey.gpg | sudo apt-key add -
 sudo apt-get -y update
 sudo apt-get -y install rethinkdb
 
-sudo cp /etc/rethinkdb/default.conf.sample /etc/rethinkdb/instances.d/instance1.conf
-
-sudo /etc/init.d/rethinkdb restart
+rethinkdb --bind all
 
 sudo apt-get -y install make
 sudo apt-get -y install g++ python3-dev libffi-dev
