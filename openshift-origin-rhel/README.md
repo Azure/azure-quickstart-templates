@@ -50,10 +50,10 @@ You will need to create a Key Vault to store your SSH Private Key that will then
 2.  masterVmSize: Select from one of the allowed VM sizes listed in the azuredeploy.json file
 3.  nodeVmSize: Select from one of the allowed VM sizes listed in the azuredeploy.json file
 4.  osImage: Select from CentOS or RHEL for the Operating System
-5.  openshiftMasterHostName: Host name for the Master Node
+5.  openshiftMasterHostName: Host name for the Master Node. Unique within your azure account
 6.  openshiftMasterPublicIpDnsLabelPrefix: A unique Public DNS name to reference the Master Node by
 7.  nodeLbPublicIpDnsLabelPrefix: A unique Public DNS name to reference the Node Load Balancer by.  Used to access deployed applications
-8.  nodePrefix: prefix to be prepended to create host names for the Nodes
+8.  nodePrefix: prefix to be prepended to create host names for the Nodes. Unique within your azure account
 9.  nodeInstanceCount: Number of Nodes to deploy
 10. adminUsername: Admin username for both OS login and OpenShift login
 11. adminPassword: Password for OpenShift login
@@ -90,3 +90,23 @@ This template creates an OpenShift user but does not make it a full OpenShift us
 ### Additional OpenShift Configuration Options
  
 You can configure additional settings per the official [OpenShift Origin Documentation](https://docs.openshift.org/latest/welcome/index.html).
+
+Few options you have
+
+1. Deployment Output
+
+  a. openshiftConsoleUrl the openshift console url<br/>
+  b. openshiftMasterSsh  ssh command for master node<br/>
+  c. openshiftNodeLoadBalancerFQDN node load balancer<br/>
+
+  get the deployment output data
+
+  a. portal.azure.com -> choose 'Resource groups' select your group select 'Deployments' and there the deployment 'Microsoft.Template'. As output from the deployment it contains information about the openshift console url, ssh command and load balancer url.<br/>
+  b. With the Azure CLI : azure group deployment list &lt;resource group name> 
+
+2. add additional users. you can find much detail about this in the openshift.org documentation under 'Cluster Administration' and 'Managing Users'. This installation uses htpasswd as the identity provider. To add more user ssh in to master node and execute following command:
+
+   ```sh
+   sudo htpasswd /etc/origin/master/htpasswd user1
+   ```
+  now this user can login with the 'oc' CLI tool or the openshift console url
