@@ -1,3 +1,5 @@
+'use strict';
+
 /*global describe, it*/
 var assert = require('assert');
 var colors = require('mocha/lib/reporters/base').colors;
@@ -28,11 +30,29 @@ function tryParse(fileName, jsonStringData) {
   return object;
 }
 
+var filePathExistsMap = {};
+
+function fileExists(filePath) {
+  if (!(filePath in filePathExistsMap)) {
+    filePathExistsMap[filePath] = fs.existsSync(filePath);
+  }
+  return filePathExistsMap[filePath];
+}
+
+var jsonFileContentsMap = {};
+
 function readJSONFile(filePath) {
-  var fileContents = fs.readFileSync(filePath, {
-    encoding: 'utf-8'
-  }).trim();
-  return tryParse(filePath, fileContents);
+  if (!(filePath in jsonFileContentsMap)) {
+    if (fileExists(filePath)) {
+      var fileContents = fs.readFileSync(filePath, {
+        encoding: 'utf-8'
+      });
+      jsonFileContentsMap[filePath] = tryParse(filePath, fileContents.trim());
+    } else {
+      jsonFileContentsMap[filePath] = null;
+    }
+  }
+  return jsonFileContentsMap[filePath];
 }
 
 function isDefined(value) {
@@ -51,90 +71,24 @@ function timedOutput(onOff, intervalObject) {
   }
 }
 
-function validateMetadata(metadataFilePath) {
-  var metadataObject = readJSONFile(metadataFilePath);
-  var metadataSchemaValidationResult = skeemas.validate(metadataObject, {
-    properties: {
-      itemDisplayName: {
-        type: 'string',
-        required: true,
-        minLength: 10,
-        maxLength: 60
-      },
-      description: {
-        type: 'string',
-        required: true,
-        minLength: 10,
-        maxLength: 1000
-      },
-      summary: {
-        type: 'string',
-        required: true,
-        minLength: 10,
-        maxLength: 200
-      },
-      githubUsername: {
-        type: 'string',
-        required: true,
-        minLength: 2
-      },
-      dateUpdated: {
-        type: 'string',
-        required: true,
-        minLength: 10
-      },
-      icon: {
-        type: 'string',
-        enum: [
-          'api',
-          'blankTemplate',
-          'cdnStorage',
-          'cdnWebsite',
-          'docker',
-          'documentDB',
-          'logic',
-          'serviceFabric',
-          'ubuntu',
-          'vmss',
-          'windowsVM'
-        ]
+function getEnvironmentVariableBoolean(variableName, defaultValue) {
+  var result = defaultValue;
+
+  if (variableName) {
+    var variableValue = process.env[variableName];
+    if (variableValue) {
+      if (typeof variableValue === 'string') {
+        result = (variableValue.toLowerCase() === 'true');
       }
-    },
-    additionalProperties: false
-  });
-
-  var metadataSchemaValidationErrorMessages = '';
-  metadataSchemaValidationResult.errors.forEach(function (error) {
-    metadataSchemaValidationErrorMessages += (metadataFilePath + ' - ' + error.context + ':' + error.message + '\n');
-  });
-  assert(metadataSchemaValidationResult.valid, metadataSchemaValidationErrorMessages);
-
-  // validate description has no html
-  assert(!(/<[a-z][\s\S]*>/i).test(metadataObject.description), metadataFilePath + ' - Contains possible HTML elements which are not allowed');
-  // validate date
-  var date = new Date(metadataObject.dateUpdated);
-  var currentTime = new Date(Date.now());
-  assert(!isNaN(date.getTime()), metadataFilePath + ' - dateUpdated field should be a valid date in the format YYYY-MM-DD');
-  // validate date is not in future
-  assert(date < currentTime, metadataFilePath + ' - dateUpdated field should not be in the future');
-}
-
-function validateParameters(parametersFilePath, parametersObject) {
-  assert(isDefined(parametersObject.$schema), parametersFilePath + ' - Expected a \'.$schema\' field within the parameters file');
-
-  assert(parametersObject.parameters, parametersFilePath + ' - Expected a \'.parameters\' field within the parameters file');
-  for (var parameterName in parametersObject.parameters) {
-    if (typeof parameterName === 'string') {
-      var parameterObject = parametersObject.parameters[parameterName];
-      assert(isDefined(parameterObject.value) || isDefined(parameterObject.reference),
-        parametersFilePath + ' - Parameter \"' + parameterName + '\" should have a \"value\" or \"reference\" property.');
     }
   }
+
+  return result;
 }
 
 function validateTemplate(requestBody, templateFilePath) {
   var validatePromise;
-  if (process.env.VALIDATION_SKIP_VALIDATE) {
+  if (getEnvironmentVariableBoolean('VALIDATION_SKIP_VALIDATE')) {
     validatePromise = RSVP.resolve({});
   } else {
     // Calls a remote url which will validate the template and parameters
@@ -174,7 +128,7 @@ function validateTemplate(requestBody, templateFilePath) {
 
 function deployTemplate(requestBody) {
   var deployPromise;
-  if (process.env.VALIDATION_SKIP_DEPLOY) {
+  if (getEnvironmentVariableBoolean('VALIDATION_SKIP_DEPLOY')) {
     deployPromise = RSVP.resolve({});
   } else {
     if (process.env.TRAVIS_PULL_REQUEST &&
@@ -213,16 +167,30 @@ function deployTemplate(requestBody) {
   return deployPromise;
 }
 
+function assertFileExists(filePath) {
+  assert(fileExists(filePath), filePath + ' should exist.');
+}
+
+function itExists(filePath) {
+  it('exists', function () {
+    assertFileExists(filePath);
+  });
+}
+
 describe('Template', function () {
   this.timeout(7100 * 1000);
 
+  var validateModifiedOnly = getEnvironmentVariableBoolean('VALIDATE_MODIFIED_ONLY', false);
+  var runRemoteValidation = !getEnvironmentVariableBoolean('VALIDATION_SKIP_VALIDATE');
+  var runRemoteDeployment = !getEnvironmentVariableBoolean('VALIDATION_SKIP_DEPLOY');
+
   var modifiedDirectories = {};
-  if (process.env.VALIDATE_MODIFIED_ONLY) {
+  if (validateModifiedOnly) {
     // we automatically reset to the beginning of the commit range
     // so this includes all file paths that have changed for the CI run
     assert(process.env.TRAVIS_COMMIT_RANGE, 'VALIDATE_MODIFIED_ONLY requires TRAVIS_COMMIT_RANGE to be set to [START_COMMIT_HASH]...[END_COMMIT_HASH]');
 
-    const modifiedPaths = childProcess.execSync('git diff --name-only ' + process.env.TRAVIS_COMMIT_RANGE, {
+    var modifiedPaths = childProcess.execSync('git diff --name-only ' + process.env.TRAVIS_COMMIT_RANGE, {
       encoding: 'utf8'
     }).split('\n');
     debug(modifiedPaths);
@@ -247,62 +215,124 @@ describe('Template', function () {
     return fs.statSync(fileEntryPath).isDirectory() &&
       fileEntry !== '.git' &&
       fileEntry !== 'node_modules' &&
-      !fs.existsSync(path.join(fileEntryPath, '.ci_skip')) &&
+      !fileExists(path.join(fileEntryPath, '.ci_skip')) &&
       // if we are only validating modified templates
       // only add test if this directory template has been modified
-      (!process.env.VALIDATE_MODIFIED_ONLY || modifiedDirectories[fileEntry]);
+      (!validateModifiedOnly || modifiedDirectories[fileEntry]);
   });
 
-  // Group tests in chunks defined by an environment variable or by the default value.
-  // we probably shouldn't deploy a ton of templates at once...
-  var groupSizeMaximum = isDefined(process.env.PARALLEL_DEPLOYMENT_NUMBER) ? parseInt(process.env.PARALLEL_DEPLOYMENT_NUMBER) : 2;
-  var testIndex = 0;
+  describe('Local Validation', function () {
+    testDirectories.forEach(function (testDirectory) {
+      describe(testDirectory, function () {
+        describe('README.md', function () {
+          itExists(path.join(testDirectory, 'README.md'));
+        });
 
-  var testDirectoryGroup = [];
-  testDirectories.forEach(function (testDirectory) {
-    testDirectoryGroup.push(testDirectory);
-    testIndex += 1;
+        describe('metadata.json', function () {
+          var metadataFilePath = path.join(testDirectory, 'metadata.json');
 
-    if (testIndex === testDirectories.length || testDirectoryGroup.length === groupSizeMaximum) {
-      parallel('Running ' + testDirectoryGroup.length + ' Parallel Template Validation(s)...', function () {
-        testDirectoryGroup.forEach(function (testDirectory) {
-          it(testDirectory, function () {
-            var templateFilePath = path.join(testDirectory, 'azuredeploy.json');
-            var parametersFilePath = path.join(testDirectory, 'azuredeploy.parameters.json');
-            var metadataFilePath = path.join(testDirectory, 'metadata.json');
-            var readmeFilePath = path.join(testDirectory, 'README.md');
+          itExists(metadataFilePath);
 
-            [templateFilePath, parametersFilePath, metadataFilePath, readmeFilePath].forEach(function (filePath) {
-              // Vaidates that the expected file paths exist
-              assert(fs.existsSync(filePath), 'The file ' + filePath + ' is missing.');
-            });
+          it('matches schema', function () {
+            var schemaFilePath = path.join(__dirname, 'metadata.schema.json');
+            assertFileExists(schemaFilePath, 'The provided JSON schema file path "' + schemaFilePath + '" doesn\'t exist.');
 
-            validateMetadata(metadataFilePath);
+            var jsonSchemaObject = readJSONFile(schemaFilePath);
+            var schemaValidationResult = skeemas.validate(readJSONFile(metadataFilePath), jsonSchemaObject);
 
-            var parametersObject = readJSONFile(parametersFilePath);
-            validateParameters(parametersFilePath, parametersObject);
-
-            var requestBody = {
-              template: readJSONFile(templateFilePath),
-              parameters: parametersObject
-            };
-            return validateTemplate(requestBody, templateFilePath)
-              .then(function () {
-                return deployTemplate(requestBody, templateFilePath);
-              })
-              .catch(function (err) {
-                var errorString = 'Template Validiation Failed. Try deploying your template with the commands:\n';
-                errorString += 'azure group template validate --resource-group (your_group_name) ';
-                errorString += ' --template-file ' + templateFilePath + ' --parameters-file ' + parametersFilePath + '\n';
-                errorString += 'azure group deployment create --resource-group (your_group_name) ';
-                errorString += ' --template-file ' + templateFilePath + ' --parameters-file ' + parametersFilePath;
-                assert(false, errorString + ' \n\nServer Error:' + JSON.stringify(err, null, 4));
+            if (!schemaValidationResult.valid) {
+              var schemaValidationErrorMessages = '';
+              schemaValidationResult.errors.forEach(function (error) {
+                schemaValidationErrorMessages += (error.context + ':' + error.message + '\n');
               });
+              assert(false, schemaValidationErrorMessages);
+            }
+          });
+
+          it('No HTML in description', function () {
+            var metadataObject = readJSONFile(metadataFilePath);
+            var description = metadataObject.description;
+            var htmlDetectionRegex = /<[a-z][\s\S]*>/i;
+            assert(!(htmlDetectionRegex).test(description), metadataFilePath + ' - Contains possible HTML elements which are not allowed');
+          });
+
+          it('dateUpdated not in the future', function () {
+            var metadataObject = readJSONFile(metadataFilePath);
+            var date = new Date(metadataObject.dateUpdated);
+            var currentTime = new Date(Date.now());
+            assert(date < currentTime, metadataFilePath + ' - dateUpdated field should not be in the future');
           });
         });
-      });
 
-      testDirectoryGroup.length = 0;
-    }
+        describe('Validate azuredeploy.parameters.json', function () {
+          var parametersFilePath = path.join(testDirectory, 'azuredeploy.parameters.json');
+
+          itExists(parametersFilePath);
+
+          it('has a value or reference property for each parameter', function () {
+            var parametersObject = readJSONFile(parametersFilePath);
+            assert(parametersObject, 'Parameters file doesn\'t exist or isn\'t a valid JSON value.');
+            assert(parametersObject.parameters, parametersFilePath + ' - Expected a \'.parameters\' field within the parameters file');
+            for (var parameterName in parametersObject.parameters) {
+              if (typeof parameterName === 'string') {
+                var parameterObject = parametersObject.parameters[parameterName];
+                assert(isDefined(parameterObject.value) || isDefined(parameterObject.reference),
+                  parametersFilePath + ' - Parameter \"' + parameterName + '\" should have a \"value\" or \"reference\" property.');
+              }
+            }
+          });
+        });
+
+        describe('azuredeploy.json', function () {
+          var templateFilePath = path.join(testDirectory, 'azuredeploy.json');
+
+          itExists(templateFilePath);
+        });
+      });
+    });
   });
+
+  if (runRemoteValidation || runRemoteDeployment) {
+    // Group tests in chunks defined by an environment variable or by the default value.
+    // we probably shouldn't deploy a ton of templates at once...
+    var groupSizeMaximum = isDefined(process.env.PARALLEL_DEPLOYMENT_NUMBER) ? parseInt(process.env.PARALLEL_DEPLOYMENT_NUMBER) : 2;
+    var testIndex = 0;
+
+    var testDirectoryGroup = [];
+    testDirectories.forEach(function (testDirectory) {
+      testDirectoryGroup.push(testDirectory);
+      testIndex += 1;
+
+      if (testIndex === testDirectories.length || testDirectoryGroup.length === groupSizeMaximum) {
+        parallel('Running ' + testDirectoryGroup.length + ' Parallel Template Validation(s)...', function () {
+          testDirectoryGroup.forEach(function (testDirectory) {
+            it(testDirectory, function () {
+              var templateFilePath = path.join(testDirectory, 'azuredeploy.json');
+              var parametersFilePath = path.join(testDirectory, 'azuredeploy.parameters.json');
+
+              var requestBody = {
+                template: readJSONFile(templateFilePath),
+                parameters: readJSONFile(parametersFilePath)
+              };
+
+              return validateTemplate(requestBody, templateFilePath)
+                .then(function () {
+                  return deployTemplate(requestBody, templateFilePath);
+                })
+                .catch(function (err) {
+                  var errorString = 'Template Validiation Failed. Try deploying your template with the commands:\n';
+                  errorString += 'azure group template validate --resource-group (your_group_name) ';
+                  errorString += ' --template-file ' + templateFilePath + ' --parameters-file ' + parametersFilePath + '\n';
+                  errorString += 'azure group deployment create --resource-group (your_group_name) ';
+                  errorString += ' --template-file ' + templateFilePath + ' --parameters-file ' + parametersFilePath;
+                  assert(false, errorString + ' \n\nServer Error:' + JSON.stringify(err, null, 4));
+                });
+            });
+          });
+        });
+
+        testDirectoryGroup.length = 0;
+      }
+    });
+  }
 });
