@@ -44,41 +44,6 @@
         "description": "Name of the public IP address."
       }
     },
-    "vnetName": {
-      "type": "string",
-      "minLength": 1,
-      "metadata": {
-        "description": "Name of the virtual network."
-      }
-    },
-    "nsgName": {
-      "type": "string",
-      "minLength": 1,
-      "metadata": {
-        "description": "Name of the Network Security Group."
-      }
-    },
-    "subnetName": {
-      "type": "string",
-      "minLength": 1,
-      "metadata": {
-        "description": "Name of the subnet."
-      }
-    },
-    "nicName": {
-      "type": "string",
-      "minLength": 1,
-      "metadata": {
-        "description": "Name of the network interface."
-      }
-    },
-    "vmName": {
-      "type": "string",
-      "minLength": 1,
-      "metadata": {
-        "description": "Name of the virtual machine."
-      }
-    },
     "vmSize": {
       "type": "string",
       "minLength": 1,
@@ -86,19 +51,6 @@
         "description": "Size of the virtual machine."
       },
       "defaultValue": "Standard_DS1_v2"
-    },
-    "dataDiskSizeGB": {
-      "type": "string",
-      "metadata": {
-        "description": "Size of data disk in GB."
-      },
-      "defaultValue": "120"
-    },
-    "sqlServerName": {
-      "type": "string",
-      "metadata": {
-        "description": "Name of SQL Server."
-      }
     },
     "sqlAdminPassword": {
       "type": "securestring",
@@ -115,6 +67,13 @@
     }
   },
   "variables": {
+    "vnetName": "[concat(parameters('publicIpName'), '-vnet')]",
+    "nsgName": "[concat(parameters('publicIpName'), '-nsg')]",
+    "subnetName": "[concat(parameters('publicIpName'), '-subnet')]",
+    "nicName": "[concat(parameters('publicIpName'), '-nic')]",
+    "vmName": "[concat(parameters('publicIpName'), '-vm')]",
+    "sqlServerName": "[concat(parameters('publicIpName'), '-sql')]",
+    "dataDiskSizeGB": "120",
     "imagePublisher": "Canonical",
     "imageOffer": "UbuntuServer",
     "OSDiskName": "[concat(parameters('publicIpName'), '-osdisk1')]",
@@ -124,8 +83,8 @@
     "subnetPrefix": "10.0.0.0/24",
     "vhdStorageContainerName": "vhds",
     "dockerHubImage": "sonarqube",
-    "vnetId": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]",
-    "subnetRef": "[concat(variables('vnetId'), '/subnets/', parameters('subnetName'))]",
+    "vnetId": "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+    "subnetRef": "[concat(variables('vnetId'), '/subnets/', variables('subnetName'))]",
     "scriptUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/shared_scripts/ubuntu/vm-disk-utils-0.1.sh"
   },
   "resources": [
@@ -157,7 +116,7 @@
       }
     },
     {
-      "name": "[parameters('nsgName')]",
+      "name": "[variables('nsgName')]",
       "type": "Microsoft.Network/networkSecurityGroups",
       "apiVersion": "2016-09-01",
       "location": "[resourceGroup().location]",
@@ -208,7 +167,7 @@
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/virtualNetworks",
-      "name": "[parameters('vnetName')]",
+      "name": "[variables('vnetName')]",
       "tags": {
         "Purpose": "Docker"
       },
@@ -221,7 +180,7 @@
         },
         "subnets": [
           {
-            "name": "[parameters('subnetName')]",
+            "name": "[variables('subnetName')]",
             "properties": {
               "addressPrefix": "[variables('subnetPrefix')]"
             }
@@ -232,15 +191,15 @@
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[parameters('nicName')]",
+      "name": "[variables('nicName')]",
       "tags": {
         "Purpose": "Docker"
       },
       "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', parameters('publicIpName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', parameters('vnetName'))]",
-        "[concat('Microsoft.Network/networkSecurityGroups/', parameters('nsgName'))]"
+        "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('nsgName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -258,7 +217,7 @@
           }
         ],
         "networkSecurityGroup": {
-          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('nsgName'))]"
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
         }
       }
     },
@@ -270,16 +229,16 @@
       },
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', parameters('nicName'))]"
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
       ],
       "location": "[resourceGroup().location]",
-      "name": "[parameters('vmName')]",
+      "name": "[variables('vmName')]",
       "properties": {
         "hardwareProfile": {
           "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
-          "computerName": "[parameters('vmName')]",
+          "computerName": "[variables('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
           "linuxConfiguration": {
             "disablePasswordAuthentication": "true",
@@ -311,7 +270,7 @@
           "dataDisks": [
             {
               "name": "datadisk1",
-              "diskSizeGB": "[parameters('dataDiskSizeGB')]",
+              "diskSizeGB": "[variables('dataDiskSizeGB')]",
               "lun": 0,
               "caching": "None",
               "vhd": {
@@ -324,7 +283,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('nicName'))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
             }
           ]
         }
@@ -332,14 +291,14 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(parameters('vmName'), '/azureVmUtils')]",
+      "name": "[concat(variables('vmName'), '/azureVmUtils')]",
       "apiVersion": "2015-06-15",
       "tags": {
         "Purpose": "Docker"
       },
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
+        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
@@ -357,13 +316,13 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "apiVersion": "2015-06-15",
-      "name": "[concat(parameters('vmName'), '/DockerExtension')]",
+      "name": "[concat(variables('vmName'), '/DockerExtension')]",
       "tags": {
         "Purpose": "Docker"
       },
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
+        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
@@ -383,7 +342,7 @@
               "environment": {
                 "SONARQUBE_JDBC_USERNAME": "[parameters('adminUsername')]",
                 "SONARQUBE_JDBC_PASSWORD": "[parameters('sqlAdminPassword')]",
-                "SONARQUBE_JDBC_URL": "[concat('jdbc:sqlserver://', parameters('sqlServerName'), '.database.windows.net:1433;database=', parameters('sqlDbName'), ';encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;')]"
+                "SONARQUBE_JDBC_URL": "[concat('jdbc:sqlserver://', variables('sqlServerName'), '.database.windows.net:1433;database=', parameters('sqlDbName'), ';encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;')]"
               }
             }
           },
@@ -392,7 +351,7 @@
       }
     },
     {
-      "name": "[parameters('sqlServerName')]",
+      "name": "[variables('sqlServerName')]",
       "type": "Microsoft.Sql/servers",
       "location": "[resourceGroup().location]",
       "tags": {
@@ -414,7 +373,7 @@
           },
           "apiVersion": "2015-01-01",
           "dependsOn": [
-            "[parameters('sqlserverName')]"
+            "[variables('sqlserverName')]"
           ],
           "properties": {
             "collation": "SQL_Latin1_General_CP1_CS_AS"
@@ -424,7 +383,7 @@
           "type": "firewallrules",
           "apiVersion": "2014-04-01",
           "dependsOn": [
-            "[parameters('sqlserverName')]"
+            "[variables('sqlserverName')]"
           ],
           "location": "[resourceGroup().location]",
           "name": "All",
@@ -437,7 +396,7 @@
           "type": "firewallrules",
           "apiVersion": "2014-04-01",
           "dependsOn": [
-            "[parameters('sqlserverName')]"
+            "[variables('sqlserverName')]"
           ],
           "location": "[resourceGroup().location]",
           "name": "AllowAllWindowsAzureIps",
