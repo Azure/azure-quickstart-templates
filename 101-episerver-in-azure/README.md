@@ -1,4 +1,4 @@
-# Creates Resources required to Provision EPiserverCMS in Azure
+# Create Resources required to Provision EPiserverCMS in Azure
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2F101-episerver-in-azure%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
@@ -7,7 +7,7 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template allows you to create resources required for EpiServerCMS deployment in Azure. The template can support all tiers of service, details for each service can be found here:
+This template allows you to create resources required for EpiServerCMS deployment in Azure. The resources created as part of the template include a WebApp Embedded with ConnectionStrings, AppSettings and General Settings for properties like Websockets and AlwaysON. It further creates SQLServer and a database, a Storage Account and a ServiceBus. In Priniciple you can WebDeploy your Episerver Package and see your Application in action With Zero Effort on Creating Azure Resources. The template can support all tiers of service, details for each service can be found here:
 
 [App Service Pricing](https://azure.microsoft.com/en-us/pricing/details/app-service/)
 
