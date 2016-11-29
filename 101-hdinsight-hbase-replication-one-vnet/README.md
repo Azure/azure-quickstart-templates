@@ -7,4 +7,4 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template allows you to create an Azure VNet and two HBase cluster within the VNet. 
+This template allows you to create an Azure VNet and two HBase clusters within the VNet. Then you can call a script action to replicate the data between the clusters.
