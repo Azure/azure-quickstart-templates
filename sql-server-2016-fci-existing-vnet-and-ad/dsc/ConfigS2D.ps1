@@ -129,8 +129,8 @@ configuration ConfigS2D
         Script EnableS2D
         {
             SetScript = "Enable-ClusterS2D -Confirm:0; New-Volume -StoragePoolFriendlyName S2D* -FriendlyName VDisk01 -FileSystem NTFS -DriveLetter ${driveLetter} -UseMaximumSize"
-            TestScript = "(test-path ([string]::Format('{0}:',${driveLetter}))) -eq 'True'"
-            GetScript = "@{Ensure = if ((test-path ([string]::Format('{0}:',${driveLetter}))) -eq 'True') {'Present'} Else {'Absent'}}"
+            TestScript = "(test-path ([string]::Format('{0}:','${driveLetter}'))) -eq 'True'"
+            GetScript = "@{Ensure = if ((test-path ([string]::Format('{0}:','${driveLetter}'))) -eq 'True') {'Present'} Else {'Absent'}}"
             DependsOn = "[Script]IncreaseClusterTimeouts"
         }
 
