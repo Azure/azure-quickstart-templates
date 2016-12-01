@@ -244,10 +244,6 @@
     "region1-web-vm-nic": "[concat(parameters('App-prefix'), '-web-vm-nic-rg1-')]",
     "region1-web-vm-pip": "[concat(parameters('App-prefix'), '-web-vm-pip-rg1-')]",
     "region1-web-vmsprefix": "[concat(parameters('App-prefix'),'webvmrg1')]",
-    "region-web-vm-dns": [
-      "[reference(concat('Microsoft.Network/publicIPAddresses/',variables('region1-web-vm-pip'), '0')).dnsSettings.fqdn]",
-      "[reference(concat('Microsoft.Network/publicIPAddresses/',variables('region2-web-vm-pip'), '0')).dnsSettings.fqdn]"
-    ],
 
     "region2-web-vm-nic": "[concat(parameters('App-prefix'), '-web-vm-nic-rg2-')]",
     "region2-web-vm-pip": "[concat(parameters('App-prefix'), '-web-vm-pip-rg2-')]",
@@ -271,6 +267,16 @@
     "IISInstallationArchiveFileName": "IISInstallation.zip",
     "createwebpageScriptFolder": "CustomScripts",
     "createwebpageScriptFileName": "createwebpage.ps1"
+  },
+  "outputs": {
+    "region1-web-vm-dns": {
+      "type": "string",
+      "value": "[reference(concat('Microsoft.Network/publicIPAddresses/',variables('region1-web-vm-pip'), '0')).dnsSettings.fqdn]"
+    },
+    "region2-web-vm-dns": {
+      "type": "string",
+      "value": "[reference(concat('Microsoft.Network/publicIPAddresses/',variables('region2-web-vm-pip'), '0')).dnsSettings.fqdn]"
+    }
   },
   "resources": [
     {
@@ -892,8 +898,8 @@
             "properties": {
               "backendAddresses": [
                 {
-                  "fqdn": "[reference(concat('Microsoft.Network/publicIPAddresses/',variables('region-web-ilb-pip'),copyIndex())).dnsSettings.fqdn]"
-                }
+                   "fqdn": "[reference(concat('Microsoft.Network/publicIPAddresses/',variables('region-web-ilb-pip'),copyIndex())).dnsSettings.fqdn]"
+                 }
               ],
               "requestRoutingRules": [
                 {
@@ -907,7 +913,8 @@
             "properties": {
               "backendAddresses": [
                 {
-                  "ipAddress": "[variables('region-web-vm-dns')[copyIndex()]]"
+                  "fqdn": "[reference(concat('Microsoft.Network/publicIPAddresses/',variables('region1-web-vm-pip'), '0')).dnsSettings.fqdn]"
+
                 }
               ],
               "requestRoutingRules": [
@@ -921,9 +928,7 @@
             "name": "appGatewayBackendPool2",
             "properties": {
               "backendAddresses": [
-                {
-                  "ipAddress": "[variables('region-web-vm-dns')[copyIndex()]]"
-                }
+
               ],
               "requestRoutingRules": [
                 {
@@ -1061,21 +1066,21 @@
               "endpointLocation": "[variables('region')[0]]"
             }
           },
-          {
-            "name": "region2-endpoint",
-            "type": "Microsoft.Network/trafficManagerProfiles/azureEndpoints",
-            "properties": {
-              "endpointStatus": "Enabled",
-              "targetResourceId": "[resourceId('Microsoft.Network/publicIPAddresses',concat(variables('region-appgw-pip'),'1'))]",
-              "target": "[concat(variables('region-appgw-pip'),'1')]",
-              "weight": 1,
-              "priority": 2,
-              "endpointLocation": "[variables('region')[1]]"
-            }
-          }
-        ]
-      },
-      "resources": []
+      {
+        "name": "region2-endpoint",
+        "type": "Microsoft.Network/trafficManagerProfiles/azureEndpoints",
+        "properties": {
+          "endpointStatus": "Enabled",
+          "targetResourceId": "[resourceId('Microsoft.Network/publicIPAddresses',concat(variables('region-appgw-pip'),'1'))]",
+          "target": "[concat(variables('region-appgw-pip'),'1')]",
+          "weight": 1,
+          "priority": 2,
+          "endpointLocation": "[variables('region')[1]]"
+        }
+      }
+      ]
+    },
+    "resources": []
+      }
+      ]
     }
-  ]
-}
