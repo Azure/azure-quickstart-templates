@@ -36,7 +36,8 @@ configuration ConfigS2D
         [String]$DomainNetbiosName=(Get-NetBIOSName -DomainName $DomainName),
 
         [Int]$RetryCount=20,
-        [Int]$RetryIntervalSec=30
+        [Int]$RetryIntervalSec=30,
+        [string]$driveLetter = 'S'
 
     )
 
@@ -127,9 +128,9 @@ configuration ConfigS2D
 
         Script EnableS2D
         {
-            SetScript = "Enable-ClusterS2D -Confirm:0; New-Volume -StoragePoolFriendlyName S2D* -FriendlyName VDisk01 -FileSystem NTFS -DriveLetter S -UseMaximumSize"
-            TestScript = "(Get-Volume -DriveLetter S -ErrorAction SilentlyContinue) -ne $null"
-            GetScript = "@{Ensure = if ((Get-Volume -DriveLetter S -ErrorAction SilentlyContinue) -ne $null) {'Present'} Else {'Absent'}}"
+            SetScript = "Enable-ClusterS2D -Confirm:0; New-Volume -StoragePoolFriendlyName S2D* -FriendlyName VDisk01 -FileSystem NTFS -DriveLetter ${driveLetter} -UseMaximumSize"
+            TestScript = "(test-path ([string]::Format('{0}:',${driveLetter}))) -eq 'True'"
+            GetScript = "@{Ensure = if ((test-path ([string]::Format('{0}:',${driveLetter}))) -eq 'True') {'Present'} Else {'Absent'}}"
             DependsOn = "[Script]IncreaseClusterTimeouts"
         }
 
