@@ -2,11 +2,18 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "dnsLabelPrefix": {
+    "gwdnsLabelPrefix": {
       "type": "string",
       "metadata": {
-        "description": "Unique public DNS prefix for the deployment. The fqdn will look something like '<dnsname>.westus.cloudapp.azure.com'. Up to 62 chars, digits or dashes, lowercase, should start with a letter: must conform to '^[a-z][a-z0-9-]{1,61}[a-z0-9]$'. For example johndns1 will result the final RDWEB access url like https://johndns1.westus.cloudapp.azure.com/RDWeb"
+        "description": "Unique gateway public DNS prefix for the deployment. The fqdn will look something like '<dnsname>.westus.cloudapp.azure.com'. Up to 62 chars, digits or dashes, lowercase, should start with a letter: must conform to '^[a-z][a-z0-9-]{1,61}[a-z0-9]$'. For example johndns1 will result the final RDWEB access url like https://johndns1.westus.cloudapp.azure.com/RDWeb"
       }
+    },
+    "gwpublicIPAddressName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of gateway PublicIPAddress object"
+      },
+      "defaultValue": "gwpip"
     },
     "adDomainName": {
       "type": "string",
@@ -90,7 +97,6 @@
     "updateVNetDNS1ID": "[concat('Microsoft.Resources/deployments/', variables('updateVNetDNS1'))]",
     "nicTemplateURL": "[concat(variables('adAssetLocation'),'/nic.json')]",
     "publicLBName": "[concat('ADPLB',resourceGroup().name)]",
-    "publicIPAddressName": "[concat('ADPIP',resourceGroup().name)]",
     "publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]",
     "lbFE": "ADLBFE",
     "rdpNAT": "ADRDPNAT",
@@ -102,24 +108,23 @@
     "lbBE": "ADLBBE",
     "publicBEAddressPoolID": "[concat(variables('publiclbID'),'/backendAddressPools/',variables('lbBE'))]",
     "gwLBName": "[concat('GWPLB',resourceGroup().name)]",
-    "gwIPAddressName": "[concat('GWPIP',resourceGroup().name)]",
-    "gwIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',variables('gwIPAddressName'))]",
+    "publicIPAddressName": "[tolower(concat('adpip',uniqueString(resourceGroup().Id)))]",
+    "gwIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('gwpublicIPAddressName'))]",
     "gwlbFE": "GWLBFE",
     "gwlbID": "[resourceId('Microsoft.Network/loadBalancers',variables('gwLBName'))]",
     "gwlbFEConfigID": "[concat(variables('gwlbID'),'/frontendIPConfigurations/',variables('gwlbFE'))]",
     "gwlbBE": "GWLBBE",
     "gwBEAddressPoolID": "[concat(variables('gwlbID'),'/backendAddressPools/',variables('gwlbBE'))]",
-    "gwdnsLabelPrefix": "[concat('gwd', resourceGroup().name)]",
+    "dnsLabelPrefix": "[tolower(concat('adns', resourceGroup().name))]",
     "storageAccountName": "[tolower(concat('rdsa',uniqueString(resourceGroup().id)))]",
     "storageAccountType": "Standard_LRS",
-    "uniqueStorageAccountContainerName": "[concat('sc', resourceGroup().name)]",
+    "uniqueStorageAccountContainerName": "[tolower(concat('sc', uniqueString(resourceGroup().id)))]",
     "imagePublisher": "MicrosoftWindowsServer",
     "imageOffer": "WindowsServer",
     "vnetAddressRange": "10.0.0.0/16",
     "subnetAddressRange": "10.0.0.0/24",
     "dnsServerPrivateIp": "10.0.0.4",
     "subnet-id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('adVnetName')),'/subnets/', variables('adSubnetName'))]",
-    "publicIpRef": "publicIp",
     "assetLocation": "https://raw.githubusercontent.com/Azure/azure-QuickStart-Templates/master/rds-deployment/",
     "nsgName": "RDSNsg",
     "nsgID": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('nsgName'))]",
@@ -198,12 +203,12 @@
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
-          "domainNameLabel": "[parameters('dnsLabelPrefix')]"
+          "domainNameLabel": "[variables('dnsLabelPrefix')]"
         }
       }
     },
     {
-      "name": "[variables('gwIPAddressName')]",
+      "name": "[parameters('gwpublicIPAddressName')]",
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-15",
@@ -213,7 +218,7 @@
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
-          "domainNameLabel": "[variables('gwdnsLabelPrefix')]"
+          "domainNameLabel": "[parameters('gwdnsLabelPrefix')]"
         }
       }
     },
@@ -656,8 +661,8 @@
             "typeHandlerVersion": "2.11",
             "autoUpgradeMinorVersion": true,
             "settings": {
-              "ModulesUrl": "[concat(variables('assetLocation'),'/Configuration.zip')]",
-              "ConfigurationFunction": "Configuration.ps1\\Gateway",
+              "modulesUrl": "[concat(variables('assetLocation'),'/Configuration.zip')]",
+              "configurationFunction": "Configuration.ps1\\Gateway",
               "Properties": {
                 "DomainName": "[parameters('adDomainName')]",
                 "AdminCreds": {
@@ -819,13 +824,16 @@
         "rdsh-vm-loop"
       ],
       "properties": {
-        "publisher": "Microsoft.Powershell",
-        "type": "DSC",
-        "typeHandlerVersion": "2.11",
         "autoUpgradeMinorVersion": true,
+        "protectedSettings": {
+          "Items": {
+            "adminPassword": "[parameters('adminPassword')]"
+          }
+        },
+        "publisher": "Microsoft.Powershell",
         "settings": {
-          "ModulesUrl": "[concat(variables('assetLocation'),'/Configuration.zip')]",
-          "ConfigurationFunction": "Configuration.ps1\\RDSDeployment",
+          "modulesUrl": "[concat(variables('assetLocation'),'/Configuration.zip')]",
+          "configurationFunction": "Configuration.ps1\\RDSDeployment",
           "Properties": {
             "adminCreds": {
               "UserName": "[parameters('adminUsername')]",
@@ -833,17 +841,14 @@
             },
             "connectionBroker": "[concat('broker.',parameters('adDomainName'))]",
             "domainName": "[parameters('adDomainName')]",
-            "externalfqdn": "[concat('gateway.',parameters('adDomainName'))]",
+            "externalfqdn": "[reference(parameters('gwpublicIPAddressName')).dnsSettings.fqdn]",
             "numberOfRdshInstances": "[parameters('numberOfRdshInstances')]",
             "sessionHostNamingPrefix": "rdsh-",
             "webAccessServer": "[concat('gateway.',parameters('adDomainName'))]"
           }
         },
-        "protectedSettings": {
-          "Items": {
-            "adminPassword": "[parameters('adminPassword')]"
-          }
-        }
+        "type": "DSC",
+        "typeHandlerVersion": "2.11"
       }
     }
   ]
