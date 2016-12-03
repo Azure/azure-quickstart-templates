@@ -7,7 +7,9 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template allows you to deploy a VM Scale Set into an existing vnet.
+This template deploys a Linux-based VM Scale Set into an existing vnet. To connect from the load balancer to a VM in the scale set, you would go to the Azure Portal, find the load balancer of your scale set, examine the NAT rules, then connect using the NAT rule you want. For example, if there is a NAT rule on port 50000, you could use the following command to connect to that VM:
+
+ssh -p 50000 {username}@{public-ip-address}
 
 PARAMETER RESTRICTIONS
 ======================
