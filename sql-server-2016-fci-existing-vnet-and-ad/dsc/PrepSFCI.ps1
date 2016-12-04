@@ -68,6 +68,14 @@ configuration PrepSFCI
             DependsOn = "[xWaitForADDomain]DscForestWait"
         }
 
+        Script CleanSQL
+        {
+            SetScript = "C:\SQLServer_13.0_Full\Setup.exe /Action=Uninstall /FEATURES=SQL,AS,IS,RS /INSTANCENAME=MSSQLSERVER /Q"
+            TestScript = "(test-path 'C:\Program Files\Microsoft SQL Server\MSSQL13.MSSQLSERVER\MSSQL\DATA\master.mdf') -eq 'False'"
+            GetScript = "@{Ensure = if ((test-path 'C:\Program Files\Microsoft SQL Server\MSSQL13.MSSQLSERVER\MSSQL\DATA\master.mdf') -eq 'False') {'Present'} Else {'Absent'}}"
+            DependsOn = "[Script]DomainJoin"
+        }
+
         LocalConfigurationManager 
         {
             RebootNodeIfNeeded = $True
