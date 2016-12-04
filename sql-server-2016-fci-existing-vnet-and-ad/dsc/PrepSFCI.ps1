@@ -84,7 +84,7 @@ configuration PrepSFCI
 
         xPendingReboot Reboot1
         { 
-            Name = 'BeforeSoftwareInstall'
+            Name = 'Reboot1'
             DependsOn = "[Script]CleanSQL"
         }
 
@@ -113,7 +113,7 @@ configuration PrepSFCI
 
         xPendingReboot Reboot2
         { 
-            Name = 'BeforeSoftwareInstall'
+            Name = 'Reboot2'
             DependsOn = "[xSqlServerFirewall]FirewallMSSQLSERVER"
         }
 
