@@ -2,7 +2,7 @@
 # CopyrightMicrosoft Corporation. All rights reserved."
 #
 
-configuration PrepS2DFCI
+configuration PrepSFCI
 {
     param
     (
