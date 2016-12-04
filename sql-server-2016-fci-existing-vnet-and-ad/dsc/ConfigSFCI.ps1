@@ -155,6 +155,7 @@ configuration ConfigSFCI
             Action = "Prepare"
             SourcePath = "C:\"
             SourceFolder = "SQLServer_13.0_Full"
+            UpdateSource = ""
             SetupCredential = $DomainCreds
             Features = "SQLENGINE,AS"
             InstanceName = "MSSQLSERVER"
