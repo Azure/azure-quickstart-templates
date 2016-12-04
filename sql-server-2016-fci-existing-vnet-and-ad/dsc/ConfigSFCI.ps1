@@ -141,7 +141,6 @@ configuration ConfigSFCI
             DependsOn = "[Script]IncreaseClusterTimeouts"
         }
 
-<#
         Script CleanSQL
         {
             SetScript = 'C:\SQLServer_13.0_Full\Setup.exe /Action=Uninstall /FEATURES=SQL,AS,IS,RS /INSTANCENAME=MSSQLSERVER /Q'
@@ -149,23 +148,13 @@ configuration ConfigSFCI
             GetScript = '@{Ensure = if ((test-path -Path "C:\Program Files\Microsoft SQL Server\MSSQL13.MSSQLSERVER\MSSQL\DATA\master.mdf") -eq $false) {"Present"} Else {"Absent"}}'
             DependsOn = "[Script]EnableS2D"
         }
-#>
-        Script CleanSQL
-        {
-            SetScript = 
-            { 
-                invoke-command -scriptblock {C:\SQLServer_13.0_Full\Setup.exe /Action=Uninstall /FEATURES=SQL,AS,IS,RS /INSTANCENAME=MSSQLSERVER /Q} -RunAsAdministrator
-            }
-            TestScript = { Test-Path "C:\Program Files\Microsoft SQL Server\MSSQL13.MSSQLSERVER\MSSQL\DATA\master.mdf" }
-            GetScript = { @{ Result = ('Installed = ' + (Test-Path "C:\Program Files\Microsoft SQL Server\MSSQL13.MSSQLSERVER\MSSQL\DATA\master.mdf")) } }  
-            DependsOn = "[Script]EnableS2D"        
-        }
 
         xSQLServerFailoverClusterSetup "PrepareMSSQLSERVER"
         {
             DependsOn = "[Script]CleanSQL"
             Action = "Prepare"
-            SourcePath = "C:\SQLServer_13.0_Full"
+            SourcePath = "C:\"
+            SourceFolder = "SQLServer_13.0_Full"
             SetupCredential = $DomainCreds
             Features = "SQLENGINE,AS,IS"
             InstanceName = "MSSQLSERVER"
@@ -176,7 +165,8 @@ configuration ConfigSFCI
         xSqlServerFirewall "FirewallMSSQLSERVER"
         {
             DependsOn = "[xSQLServerFailoverClusterSetup]PrepareMSSQLSERVER"
-            SourcePath = "C:\SQLServer_13.0_Full"
+            SourcePath = "C:\"
+            SourceFolder = "SQLServer_13.0_Full"
             InstanceName = "MSSQLSERVER"
             Features = "SQLENGINE,AS,IS"
         }
@@ -185,7 +175,8 @@ configuration ConfigSFCI
         {
             DependsOn = "[xSqlServerFirewall]FirewallMSSQLSERVER"
             Action = "Complete"
-            SourcePath = "C:\SQLServer_13.0_Full"
+            SourcePath = "C:\"
+            SourceFolder = "SQLServer_13.0_Full"
             SetupCredential = $DomainCreds
             Features = "SQLENGINE,AS,IS"
             InstanceName = "MSSQLSERVER"

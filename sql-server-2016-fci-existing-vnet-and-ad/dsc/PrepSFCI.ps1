@@ -86,7 +86,8 @@ configuration PrepSFCI
         {
             DependsOn = "[Script]CleanSQL"
             Action = "Prepare"
-            SourcePath = "C:\SQLServer_13.0_Full"
+            SourcePath = "C:\"
+            SourceFolder = "SQLServer_13.0_Full"
             SetupCredential = $DomainCreds
             Features = "SQLENGINE,AS,IS"
             InstanceName = "MSSQLSERVER"
@@ -98,7 +99,8 @@ configuration PrepSFCI
         xSqlServerFirewall "FirewallMSSQLSERVER"
         {
             DependsOn = "[xSQLServerFailoverClusterSetup]PrepareMSSQLSERVER"
-            SourcePath = "C:\SQLServer_13.0_Full"
+            SourcePath = "C:\"
+            SourceFolder = "SQLServer_13.0_Full"
             InstanceName = "MSSQLSERVER"
             Features = "SQLENGINE,AS,IS"
         }
