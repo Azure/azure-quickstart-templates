@@ -26,6 +26,12 @@ configuration PrepSFCI
 
     Node localhost
     {
+        # Set LCM to reboot if needed
+        LocalConfigurationManager
+        {
+            DebugMode = "ForceModuleImport"
+            RebootNodeIfNeeded = $true
+        }
 
         WindowsFeature FC
         {
@@ -70,17 +76,32 @@ configuration PrepSFCI
 
         Script CleanSQL
         {
-            SetScript = "C:\SQLServer_13.0_Full\Setup.exe /Action=Uninstall /FEATURES=SQL,AS,IS,RS /INSTANCENAME=MSSQLSERVER /Q"
-            TestScript = "(test-path 'C:\Program Files\Microsoft SQL Server\MSSQL13.MSSQLSERVER\MSSQL\DATA\master.mdf') -eq 'False'"
-            GetScript = "@{Ensure = if ((test-path 'C:\Program Files\Microsoft SQL Server\MSSQL13.MSSQLSERVER\MSSQL\DATA\master.mdf') -eq 'False') {'Present'} Else {'Absent'}}"
+            SetScript = 'C:\SQLServer_13.0_Full\Setup.exe /Action=Uninstall /FEATURES=SQL,AS,IS,RS /INSTANCENAME=MSSQLSERVER /Q'
+            TestScript = '(test-path -Path "C:\Program Files\Microsoft SQL Server\MSSQL13.MSSQLSERVER\MSSQL\DATA\master.mdf") -eq $false'
+            GetScript = '@{Ensure = if ((test-path -Path "C:\Program Files\Microsoft SQL Server\MSSQL13.MSSQLSERVER\MSSQL\DATA\master.mdf") -eq $false) {"Present"} Else {"Absent"}}'
             DependsOn = "[xComputer]DomainJoin"
         }
 
-        LocalConfigurationManager 
+        xSQLServerFailoverClusterSetup "PrepareMSSQLSERVER"
         {
-            RebootNodeIfNeeded = $True
+            DependsOn = "[Script]CleanSQL"
+            Action = "Prepare"
+            SourcePath = "C:\SQLServer_13.0_Full"
+            SetupCredential = $DomainCreds
+            Features = "SQLENGINE,AS,IS"
+            InstanceName = "MSSQLSERVER"
+            FailoverClusterNetworkName = "SQLFCI"
+            SQLSvcAccount = $DomainCreds
+            
         }
 
+        xSqlServerFirewall "FirewallMSSQLSERVER"
+        {
+            DependsOn = "[xSQLServerFailoverClusterSetup]PrepareMSSQLSERVER"
+            SourcePath = "C:\SQLServer_13.0_Full"
+            InstanceName = "MSSQLSERVER"
+            Features = "SQLENGINE,AS,IS"
+        }
     }
 }
 
