@@ -88,12 +88,12 @@ configuration PrepSFCI
             Action = "Prepare"
             SourcePath = "C:\"
             SourceFolder = "SQLServer_13.0_Full"
+            UpdateSource = ""
             SetupCredential = $DomainCreds
             Features = "SQLENGINE,AS"
             InstanceName = "MSSQLSERVER"
             FailoverClusterNetworkName = "SQLFCI"
-            SQLSvcAccount = $DomainCreds
-            
+            SQLSvcAccount = $DomainCreds 
         }
 
         xSqlServerFirewall "FirewallMSSQLSERVER"
