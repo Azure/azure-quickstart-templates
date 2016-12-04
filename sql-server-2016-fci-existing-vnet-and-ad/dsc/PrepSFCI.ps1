@@ -89,7 +89,7 @@ configuration PrepSFCI
             SourcePath = "C:\"
             SourceFolder = "SQLServer_13.0_Full"
             SetupCredential = $DomainCreds
-            Features = "SQLENGINE,AS,IS"
+            Features = "SQLENGINE,AS"
             InstanceName = "MSSQLSERVER"
             FailoverClusterNetworkName = "SQLFCI"
             SQLSvcAccount = $DomainCreds
@@ -102,7 +102,7 @@ configuration PrepSFCI
             SourcePath = "C:\"
             SourceFolder = "SQLServer_13.0_Full"
             InstanceName = "MSSQLSERVER"
-            Features = "SQLENGINE,AS,IS"
+            Features = "SQLENGINE,AS"
         }
     }
 }

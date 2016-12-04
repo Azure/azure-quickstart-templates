@@ -143,7 +143,7 @@ configuration ConfigSFCI
 
         Script CleanSQL
         {
-            SetScript = 'C:\SQLServer_13.0_Full\Setup.exe /Action=Uninstall /FEATURES=SQL,AS,IS,RS /INSTANCENAME=MSSQLSERVER /Q'
+            SetScript = 'C:\SQLServer_13.0_Full\Setup.exe /Action=Uninstall /FEATURES=SQL,AS,RS,IS /INSTANCENAME=MSSQLSERVER /Q'
             TestScript = '(test-path -Path "C:\Program Files\Microsoft SQL Server\MSSQL13.MSSQLSERVER\MSSQL\DATA\master.mdf") -eq $false'
             GetScript = '@{Ensure = if ((test-path -Path "C:\Program Files\Microsoft SQL Server\MSSQL13.MSSQLSERVER\MSSQL\DATA\master.mdf") -eq $false) {"Present"} Else {"Absent"}}'
             DependsOn = "[Script]EnableS2D"
@@ -156,7 +156,7 @@ configuration ConfigSFCI
             SourcePath = "C:\"
             SourceFolder = "SQLServer_13.0_Full"
             SetupCredential = $DomainCreds
-            Features = "SQLENGINE,AS,IS"
+            Features = "SQLENGINE,AS"
             InstanceName = "MSSQLSERVER"
             FailoverClusterNetworkName = "SQLFCI"
             SQLSvcAccount = $DomainCreds
@@ -168,7 +168,7 @@ configuration ConfigSFCI
             SourcePath = "C:\"
             SourceFolder = "SQLServer_13.0_Full"
             InstanceName = "MSSQLSERVER"
-            Features = "SQLENGINE,AS,IS"
+            Features = "SQLENGINE,AS"
         }
 
         xSQLServerFailoverClusterSetup "CompleteMSSQLSERVER"
@@ -178,7 +178,7 @@ configuration ConfigSFCI
             SourcePath = "C:\"
             SourceFolder = "SQLServer_13.0_Full"
             SetupCredential = $DomainCreds
-            Features = "SQLENGINE,AS,IS"
+            Features = "SQLENGINE,AS"
             InstanceName = "MSSQLSERVER"
             FailoverClusterNetworkName = "SQLFCI"
             InstallSQLDataDir = "S:\SQLDB"
@@ -187,7 +187,6 @@ configuration ConfigSFCI
             ASBackupDir = "S:\OLAP\Backup"
             ASTempDir = "S:\OLAP\Temp"
             ASConfigDir = "S:\OLAP\Config"
-            ISFileSystemFolder = "S:\Pacakges"
             FailoverClusterIPAddress = "192.168.1.250"
             SQLSvcAccount = $DomainCreds
             SQLSysAdminAccounts = $DomainCreds
