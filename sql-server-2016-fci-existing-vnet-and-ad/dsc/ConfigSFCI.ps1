@@ -45,6 +45,7 @@ configuration ConfigSFCI
  
     [System.Management.Automation.PSCredential]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
     [System.Management.Automation.PSCredential]$DomainFQDNCreds = New-Object System.Management.Automation.PSCredential ("${DomainName}\$($Admincreds.UserName)", $Admincreds.Password)
+    [string]$AdminUserName = "${DomainNetbiosName}\$($Admincreds.UserName)"
 
     [System.Collections.ArrayList]$Nodes=@()
     For ($count=0; $count -lt $vmCount; $count++) {
@@ -191,8 +192,8 @@ configuration ConfigSFCI
             ASConfigDir = "S:\OLAP\Config"
             FailoverClusterIPAddress = "192.168.1.250"
             SQLSvcAccount = $DomainCreds
-            SQLSysAdminAccounts = $DomainCreds
-            ASSysAdminAccounts = $DomainCreds
+            SQLSysAdminAccounts = $AdminUserName
+            ASSysAdminAccounts = $AdminUserName
         }
     }
 
