@@ -1,5 +1,5 @@
 
-configuration ConfigS2D
+configuration ConfigSFCI
 {
     param
     (
