@@ -141,12 +141,24 @@ configuration ConfigSFCI
             DependsOn = "[Script]IncreaseClusterTimeouts"
         }
 
+<#
         Script CleanSQL
         {
             SetScript = 'C:\SQLServer_13.0_Full\Setup.exe /Action=Uninstall /FEATURES=SQL,AS,IS,RS /INSTANCENAME=MSSQLSERVER /Q'
             TestScript = '(test-path -Path "C:\Program Files\Microsoft SQL Server\MSSQL13.MSSQLSERVER\MSSQL\DATA\master.mdf") -eq $false'
             GetScript = '@{Ensure = if ((test-path -Path "C:\Program Files\Microsoft SQL Server\MSSQL13.MSSQLSERVER\MSSQL\DATA\master.mdf") -eq $false) {"Present"} Else {"Absent"}}'
             DependsOn = "[Script]EnableS2D"
+        }
+#>
+        Script CleanSQL
+        {
+            SetScript = 
+            { 
+                invoke-command -scriptblock {C:\SQLServer_13.0_Full\Setup.exe /Action=Uninstall /FEATURES=SQL,AS,IS,RS /INSTANCENAME=MSSQLSERVER /Q} -RunAsAdministrator
+            }
+            TestScript = { Test-Path "C:\Program Files\Microsoft SQL Server\MSSQL13.MSSQLSERVER\MSSQL\DATA\master.mdf" }
+            GetScript = { @{ Result = ('Installed = ' + (Test-Path "C:\Program Files\Microsoft SQL Server\MSSQL13.MSSQLSERVER\MSSQL\DATA\master.mdf")) } }  
+            DependsOn = "[Script]EnableS2D"        
         }
 
         xSQLServerFailoverClusterSetup "PrepareMSSQLSERVER"
