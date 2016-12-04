@@ -19,7 +19,7 @@ configuration PrepSFCI
         [Int]$RetryIntervalSec=30
     )
 
-    Import-DscResource -ModuleName xComputerManagement,xActiveDirectory,xSQLServer
+    Import-DscResource -ModuleName xComputerManagement,xActiveDirectory,xSQLServer,xPendingReboot
 
     [System.Management.Automation.PSCredential]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
     [System.Management.Automation.PSCredential]$DomainFQDNCreds = New-Object System.Management.Automation.PSCredential ("${DomainName}\$($Admincreds.UserName)", $Admincreds.Password)
@@ -82,9 +82,15 @@ configuration PrepSFCI
             DependsOn = "[xComputer]DomainJoin"
         }
 
+        xPendingReboot Reboot1
+        { 
+            Name = 'BeforeSoftwareInstall'
+            DependsOn = "[Script]CleanSQL"
+        }
+
         xSQLServerFailoverClusterSetup "PrepareMSSQLSERVER"
         {
-            DependsOn = "[Script]CleanSQL"
+            DependsOn = "[xPendingReboot]Reboot1"
             Action = "Prepare"
             SourcePath = "C:\"
             SourceFolder = "SQLServer_13.0_Full"
@@ -104,6 +110,13 @@ configuration PrepSFCI
             InstanceName = "MSSQLSERVER"
             Features = "SQLENGINE,AS"
         }
+
+        xPendingReboot Reboot2
+        { 
+            Name = 'BeforeSoftwareInstall'
+            DependsOn = "[xSqlServerFirewall]FirewallMSSQLSERVER"
+        }
+
     }
 }
 

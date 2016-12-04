@@ -41,7 +41,7 @@ configuration ConfigSFCI
 
     )
 
-    Import-DscResource -ModuleName xComputerManagement, xFailOverCluster, xActiveDirectory, xSOFS, xSQLServer
+    Import-DscResource -ModuleName xComputerManagement, xFailOverCluster, xActiveDirectory, xSOFS, xSQLServer, xPendingReboot
  
     [System.Management.Automation.PSCredential]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
     [System.Management.Automation.PSCredential]$DomainFQDNCreds = New-Object System.Management.Automation.PSCredential ("${DomainName}\$($Admincreds.UserName)", $Admincreds.Password)
@@ -150,9 +150,15 @@ configuration ConfigSFCI
             DependsOn = "[Script]EnableS2D"
         }
 
+        xPendingReboot Reboot1
+        { 
+            Name = 'BeforeSoftwareInstall'
+            DependsOn = "[Script]CleanSQL"
+        }
+
         xSQLServerFailoverClusterSetup "PrepareMSSQLSERVER"
         {
-            DependsOn = "[Script]CleanSQL"
+            DependsOn = "[xPendingReboot]Reboot1"
             Action = "Prepare"
             SourcePath = "C:\"
             SourceFolder = "SQLServer_13.0_Full"
@@ -173,9 +179,15 @@ configuration ConfigSFCI
             Features = "SQLENGINE,AS"
         }
 
+        xPendingReboot Reboot2
+        { 
+            Name = 'BeforeSoftwareInstall'
+            DependsOn = "[xSqlServerFirewall]FirewallMSSQLSERVER"
+        }
+
         xSQLServerFailoverClusterSetup "CompleteMSSQLSERVER"
         {
-            DependsOn = "[xSqlServerFirewall]FirewallMSSQLSERVER"
+            DependsOn = "[xPendingReboot]Reboot2"
             Action = "Complete"
             SourcePath = "C:\"
             SourceFolder = "SQLServer_13.0_Full"
