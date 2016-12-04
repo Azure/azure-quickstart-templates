@@ -156,9 +156,17 @@ configuration ConfigSFCI
             DependsOn = "[Script]CleanSQL"
         }
 
+        Script MoveClusterGroups1
+        {
+            SetScript = 'Get-ClusterGroup | Move-ClusterGroup -Node $env:COMPUTERNAME'
+            TestScript = 'return $false'
+            GetScript = '@{Result = "Moved Cluster Group"}'
+            DependsOn = "[xPendingReboot]Reboot1"
+        }
+
         xSQLServerFailoverClusterSetup "PrepareMSSQLSERVER"
         {
-            DependsOn = "[xPendingReboot]Reboot1"
+            DependsOn = "[Script]MoveClusterGroups1"
             Action = "Prepare"
             SourcePath = "C:\"
             SourceFolder = "SQLServer_13.0_Full"
@@ -185,9 +193,17 @@ configuration ConfigSFCI
             DependsOn = "[xSqlServerFirewall]FirewallMSSQLSERVER"
         }
 
+        Script MoveClusterGroups2
+        {
+            SetScript = 'Get-ClusterGroup | Move-ClusterGroup -Node $env:COMPUTERNAME'
+            TestScript = 'return $false'
+            GetScript = '@{Result = "Moved Cluster Group"}'
+            DependsOn = "[xPendingReboot]Reboot2"
+        }
+
         xSQLServerFailoverClusterSetup "CompleteMSSQLSERVER"
         {
-            DependsOn = "[xPendingReboot]Reboot2"
+            DependsOn = "[Script]MoveClusterGroups2"
             Action = "Complete"
             SourcePath = "C:\"
             SourceFolder = "SQLServer_13.0_Full"
