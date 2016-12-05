@@ -35,7 +35,7 @@ configuration ConfigSFCI
         [Int]$RetryCount=20,
         [Int]$RetryIntervalSec=30,
         [string]$driveLetter = 'S',
-        $probePort=37000
+        [Int]$probePort=37000
 
     )
 
