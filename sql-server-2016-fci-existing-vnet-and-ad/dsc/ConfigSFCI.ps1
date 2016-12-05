@@ -42,7 +42,7 @@ configuration ConfigSFCI
  
     [System.Management.Automation.PSCredential]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
     [System.Management.Automation.PSCredential]$DomainFQDNCreds = New-Object System.Management.Automation.PSCredential ("${DomainName}\$($Admincreds.UserName)", $Admincreds.Password)
-    [string]$AdminUserName = "${DomainNetbiosName}\$($Admincreds.UserName)"
+    [string]$AdminUserNames = "${DomainNetbiosName}\Domain Admins"
     Write-Verbose ("Cluster IP = $clusterIP" )
     [System.Collections.ArrayList]$Nodes=@()
     For ($count=0; $count -lt $vmCount; $count++) {
@@ -107,12 +107,20 @@ configuration ConfigSFCI
 	        DependsOn = "[xWaitForADDomain]DscForestWait"
         }
 
+        Script MoveClusterGroups0
+        {
+            SetScript = 'try {Get-ClusterGroup | Move-ClusterGroup -Node $env:COMPUTERNAME } catch {}'
+            TestScript = 'return $false'
+            GetScript = '@{Result = "Moved Cluster Group"}'
+            DependsOn = "[xComputer]DomainJoin"
+        }
+
         xCluster FailoverCluster
         {
             Name = $ClusterName
             DomainAdministratorCredential = $DomainCreds
             Nodes = $Nodes
-	        DependsOn = "[xComputer]DomainJoin"
+	        DependsOn = "[Script]MoveClusterGroups0"
         }
 
         Script CloudWitness
@@ -217,8 +225,8 @@ configuration ConfigSFCI
             ASConfigDir = "S:\OLAP\Config"
             FailoverClusterIPAddress = $clusterIP
             SQLSvcAccount = $DomainCreds
-            SQLSysAdminAccounts = $AdminUserName
-            ASSysAdminAccounts = $AdminUserName
+            SQLSysAdminAccounts = $AdminUserNames
+            ASSysAdminAccounts = $AdminUserNames
         }
     }
 
