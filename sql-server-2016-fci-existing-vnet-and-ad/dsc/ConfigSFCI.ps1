@@ -13,12 +13,6 @@ configuration ConfigSFCI
         [String]$ClusterName,
 
         [Parameter(Mandatory)]
-        [String]$SOFSName,
-
-        [Parameter(Mandatory)]
-        [String]$ShareName,
-
-        [Parameter(Mandatory)]
         [String]$vmNamePrefix,
 
         [Parameter(Mandatory)]
@@ -32,6 +26,9 @@ configuration ConfigSFCI
 
         [Parameter(Mandatory)]
         [System.Management.Automation.PSCredential]$witnessStorageKey,
+
+        [Parameter(Mandatory)]
+        [String]$clusterIP,
 
         [String]$DomainNetbiosName=(Get-NetBIOSName -DomainName $DomainName),
 
@@ -218,7 +215,7 @@ configuration ConfigSFCI
             ASBackupDir = "S:\OLAP\Backup"
             ASTempDir = "S:\OLAP\Temp"
             ASConfigDir = "S:\OLAP\Config"
-            FailoverClusterIPAddress = "192.168.1.250"
+            FailoverClusterIPAddress = $clusterIP
             SQLSvcAccount = $DomainCreds
             SQLSysAdminAccounts = $AdminUserName
             ASSysAdminAccounts = $AdminUserName
