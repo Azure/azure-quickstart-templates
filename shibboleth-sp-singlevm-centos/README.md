@@ -24,5 +24,5 @@ Create a deployment of Shibboleth SP using this template and SSH into the VM dep
 4. Overrite generated configuration with **/etc/shibboleth/shibboleth2.xml**
 
 ## Restart apache and shibd service 
-systemctl restart shibd
-systemctl restart httpd
+- systemctl restart shibd
+- systemctl restart httpd
