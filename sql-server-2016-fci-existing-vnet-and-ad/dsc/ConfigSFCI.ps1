@@ -142,7 +142,7 @@ configuration ConfigSFCI
         # Likelely redundant
         Script MoveClusterGroups1
         {
-            SetScript = 'Get-ClusterGroup | Move-ClusterGroup -Node $env:COMPUTERNAME'
+            SetScript = 'Get-ClusterGroup | Move-ClusterGroup -Node $env:COMPUTERNAME;sleep -Seconds 30'
             TestScript = 'return $false'
             GetScript = '@{Result = "Moved Cluster Group"}'
             DependsOn = "[Script]IncreaseClusterTimeouts"
@@ -172,7 +172,7 @@ configuration ConfigSFCI
 
         Script MoveClusterGroups2
         {
-            SetScript = 'Get-ClusterGroup | Move-ClusterGroup -Node $env:COMPUTERNAME'
+            SetScript = 'Get-ClusterGroup | Move-ClusterGroup -Node $env:COMPUTERNAME;sleep -Seconds 30'
             TestScript = 'return $false'
             GetScript = '@{Result = "Moved Cluster Group"}'
             DependsOn = "[xPendingReboot]Reboot1"
@@ -209,7 +209,7 @@ configuration ConfigSFCI
 
         Script MoveClusterGroups3
         {
-            SetScript = 'Get-ClusterGroup | Move-ClusterGroup -Node $env:COMPUTERNAME'
+            SetScript = 'Get-ClusterGroup | Move-ClusterGroup -Node $env:COMPUTERNAME;sleep -Seconds 30'
             TestScript = 'return $false'
             GetScript = '@{Result = "Moved Cluster Group"}'
             DependsOn = "[xPendingReboot]Reboot2"
