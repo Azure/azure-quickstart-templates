@@ -18,7 +18,7 @@ Here are the steps you can follow to create a testing setup including Shibboleth
 Create a deployment of Shibboleth SP using this template and SSH into the VM deployed.
 
 ## TestShibboleth using <a href="http://www.testshib.org/">TestShib</a> 
-1. To test shibboleth SP download metadata file from https://your-domain/idp/Shibboleth.sso/Metadata and rename metadata file with unique identifier.
+1. To test shibboleth SP download metadata file https://your-domain/Shibboleth.sso/Metadata and rename metadata file with unique identifier.
 2. Upload metadata file here: http://www.testshib.org/register.html 
 3. Back up the existing configuration file then Generate and save the right shibboleth2.xml for your installation
 4. Overrite generated configuration with **/etc/shibboleth/shibboleth2.xml**
