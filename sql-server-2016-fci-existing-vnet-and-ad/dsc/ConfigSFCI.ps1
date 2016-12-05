@@ -13,6 +13,9 @@ configuration ConfigSFCI
         [String]$ClusterName,
 
         [Parameter(Mandatory)]
+        [String]$SQLClusterName,
+
+        [Parameter(Mandatory)]
         [String]$vmNamePrefix,
 
         [Parameter(Mandatory)]
@@ -226,7 +229,7 @@ configuration ConfigSFCI
             SetupCredential = $DomainCreds
             Features = "SQLENGINE,AS"
             InstanceName = "MSSQLSERVER"
-            FailoverClusterNetworkName = "SQLFCI"
+            FailoverClusterNetworkName = $SQLClusterName
             InstallSQLDataDir = "S:\SQLDB"
             ASDataDir = "S:\OLAP\Data"
             ASLogDir = "S:\OLAP\Log"
