@@ -142,4 +142,4 @@ function Get-NetBIOSName
             return $DomainName
         }
     }
-}
+} 
