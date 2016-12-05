@@ -109,7 +109,7 @@ configuration ConfigSFCI
 
         Script MoveClusterGroups0
         {
-            SetScript = 'try {Get-ClusterGroup -ErrorAction SilentlyContinue | Move-ClusterGroup -Node $env:COMPUTERNAME -ErrorAction SilentlyContinue;sleep -Seconds 30} catch {}'
+            SetScript = 'try {Get-ClusterGroup -ErrorAction SilentlyContinue | Move-ClusterGroup -Node $env:COMPUTERNAME -ErrorAction SilentlyContinue} catch {}'
             TestScript = 'return $false'
             GetScript = '@{Result = "Moved Cluster Group"}'
             DependsOn = "[xComputer]DomainJoin"
@@ -142,7 +142,7 @@ configuration ConfigSFCI
         # Likelely redundant
         Script MoveClusterGroups1
         {
-            SetScript = 'Get-ClusterGroup | Move-ClusterGroup -Node $env:COMPUTERNAME;sleep -Seconds 30'
+            SetScript = 'try {Get-ClusterGroup -ErrorAction SilentlyContinue | Move-ClusterGroup -Node $env:COMPUTERNAME -ErrorAction SilentlyContinue} catch {}'
             TestScript = 'return $false'
             GetScript = '@{Result = "Moved Cluster Group"}'
             DependsOn = "[Script]IncreaseClusterTimeouts"
@@ -172,7 +172,7 @@ configuration ConfigSFCI
 
         Script MoveClusterGroups2
         {
-            SetScript = 'Get-ClusterGroup | Move-ClusterGroup -Node $env:COMPUTERNAME;sleep -Seconds 30'
+            SetScript = 'try {Get-ClusterGroup -ErrorAction SilentlyContinue | Move-ClusterGroup -Node $env:COMPUTERNAME -ErrorAction SilentlyContinue} catch {}'
             TestScript = 'return $false'
             GetScript = '@{Result = "Moved Cluster Group"}'
             DependsOn = "[xPendingReboot]Reboot1"
@@ -209,7 +209,7 @@ configuration ConfigSFCI
 
         Script MoveClusterGroups3
         {
-            SetScript = 'Get-ClusterGroup | Move-ClusterGroup -Node $env:COMPUTERNAME;sleep -Seconds 30'
+            SetScript = 'try {Get-ClusterGroup -ErrorAction SilentlyContinue | Move-ClusterGroup -Node $env:COMPUTERNAME -ErrorAction SilentlyContinue} catch {}'
             TestScript = 'return $false'
             GetScript = '@{Result = "Moved Cluster Group"}'
             DependsOn = "[xPendingReboot]Reboot2"
@@ -236,6 +236,7 @@ configuration ConfigSFCI
             SQLSvcAccount = $DomainCreds
             SQLSysAdminAccounts = $AdminUserNames
             ASSysAdminAccounts = $AdminUserNames
+            PsDscRunAsCredential = $DomainCreds
         }
     }
 
