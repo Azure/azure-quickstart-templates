@@ -39,4 +39,11 @@ Click the button below to deploy from the portal:
 
 To deploy the sammple using the Azure Portal, click the **Deploy to Azure** button found above.
 
+## TODO
+ + Modify cluster failover bits in DSC resources so they don't always revert to node0.
+ + Add second drive for DTC
+ + Add DTC resource before installing SQL
+ + Add DSC diagnostics
+ + Refactor variables
+
 Tags: ``cluster, ha, storage spaces, storage spaces direct, S2D, windows server 2016, ws2016, sql server 2016, sql2016``
