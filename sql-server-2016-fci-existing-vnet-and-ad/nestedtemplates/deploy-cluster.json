@@ -106,217 +106,306 @@
       "type": "string"
     }
   },
-    "variables": {
-        "apiVersionStorage": "2016-01-01",
-        "storageNamePrefix": "[concat(parameters('namePrefix'),uniqueString(resourceGroup().id),'vm')]",
-        "witnessStorageName": "[concat(parameters('namePrefix'),uniqueString(resourceGroup().id),'cw')]",
-        "witnessStorageType": "Standard_LRS",
-        "vmNamePrefix": "[concat(parameters('namePrefix'),'-fci-')]",
-        "vmAvailabilitySetName": "[concat(variables('vmNamePrefix'),'as')]",
-        "clusterName": "[concat(variables('vmNamePrefix'),'c')]",
-        "vmLoopTemplateURL": "[concat(parameters('_artifactsLocation'),'/nestedtemplates/newVM.json',parameters('_artifactsLocationSasToken'))]",
-        "sfciPrepModulesURL": "[concat(parameters('_artifactsLocation'),'/dsc/prep-sfci.ps1.zip',parameters('_artifactsLocationSasToken'))]",
-        "sfciPrepFunction": "PrepSFCI.ps1\\PrepSFCI",
-        "sfciConfigModulesURL": "[concat(parameters('_artifactsLocation'),'/dsc/config-sfci.ps1.zip',parameters('_artifactsLocationSasToken'))]",
-        "sfciConfigFunction": "ConfigSFCI.ps1\\ConfigSFCI"
+  "variables": {
+    "apiVersionStorage": "2016-01-01",
+    "storageNamePrefix": "[concat(parameters('namePrefix'),uniqueString(resourceGroup().id),'vm')]",
+    "witnessStorageName": "[concat(parameters('namePrefix'),uniqueString(resourceGroup().id),'cw')]",
+    "witnessStorageType": "Standard_LRS",
+    "vmNamePrefix": "[concat(parameters('namePrefix'),'-fci-')]",
+    "vmAvailabilitySetName": "[concat(variables('vmNamePrefix'),'as')]",
+    "clusterName": "[concat(variables('vmNamePrefix'),'c')]",
+    "vmLoopTemplateURL": "[concat(parameters('_artifactsLocation'),'/nestedtemplates/newVM.json',parameters('_artifactsLocationSasToken'))]",
+    "sfciPrepModulesURL": "[concat(parameters('_artifactsLocation'),'/dsc/prep-sfci.ps1.zip',parameters('_artifactsLocationSasToken'))]",
+    "sfciPrepFunction": "PrepSFCI.ps1\\PrepSFCI",
+    "sfciConfigModulesURL": "[concat(parameters('_artifactsLocation'),'/dsc/config-sfci.ps1.zip',parameters('_artifactsLocationSasToken'))]",
+    "sfciConfigFunction": "ConfigSFCI.ps1\\ConfigSFCI",
+    "ilbName": "[concat(parameters('namePrefix'),'-ilb')]",
+    "ilbID": "[resourceId('Microsoft.Network/loadBalancers',variables('ilbName'))]",
+    "ilbFE": "[concat(parameters('namePrefix'),'-ilb-fe')]",
+    "ilbBE": "[concat(parameters('namePrefix'),'-ilb-be')]",
+    "ilbFEConfigID1": "[concat(variables('ilbID'),'/frontendIPConfigurations/',variables('ilbFE'))]",
+    "ilbBEAddressPoolID": "[concat(variables('ilbID'),'/backendAddressPools/',variables('ilbBE'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[variables('vmAvailabilitySetName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "properties": {}
     },
-    "resources": [
-        {
-            "type": "Microsoft.Compute/availabilitySets",
-            "name": "[variables('vmAvailabilitySetName')]",
-            "apiVersion": "2015-06-15",
-            "location": "[resourceGroup().location]",
-            "properties": {}
-        },
-        {
-            "type": "Microsoft.Storage/storageAccounts",
-            "name": "[variables('witnessStorageName')]",
-            "apiVersion": "2016-01-01",
-            "location": "[resourceGroup().location]",
-            "sku": {
-                "name": "[variables('witnessStorageType')]"
-            },
-            "kind": "Storage"
-        },
-        {
-            "type": "Microsoft.Storage/storageAccounts",
-            "name": "[concat(variables('storageNamePrefix'),copyindex())]",
-            "apiVersion": "2016-01-01",
-            "copy": {
-                "name": "storageAccountLoop",
-                "count": "[parameters('vmCount')]"
-            },
-            "location": "[resourceGroup().location]",
-            "sku": {
-                "name": "[parameters('storageAccountType')]"
-            },
-            "kind": "Storage"
-        },
-        {
-            "name": "[concat(variables('vmNamePrefix'), copyindex(), '-nic')]",
-            "type": "Microsoft.Network/networkInterfaces",
-            "location": "[resourceGroup().location]",
-            "apiVersion": "2015-06-15",
-            "copy": {
-                "name": "nicLoop",
-                "count": "[parameters('vmCount')]"
-            },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('witnessStorageName')]",
+      "apiVersion": "2016-01-01",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "[variables('witnessStorageType')]"
+      },
+      "kind": "Storage"
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[concat(variables('storageNamePrefix'),copyindex())]",
+      "apiVersion": "2016-01-01",
+      "copy": {
+        "name": "storageAccountLoop",
+        "count": "[parameters('vmCount')]"
+      },
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "[parameters('storageAccountType')]"
+      },
+      "kind": "Storage"
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "name": "[variables('ilbName')]",
+      "type": "Microsoft.Network/loadBalancers",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [],
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "[variables('ilbFE')]",
             "properties": {
-                "ipConfigurations": [
-                    {
-                        "name": "ipconfig1",
-                        "properties": {
-                            "privateIPAllocationMethod": "Dynamic",
-                            "subnet": {
-                                "id": "[parameters('nicSubnetUri')]"
-                            }
-                        }
-                    }
-                ]
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[parameters('clusterIP')]",
+              "subnet": {
+                "id": "[parameters('nicSubnetUri')]"
+              }
             }
-        },
-        {
-            "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2015-01-01",
-            "copy": {
-                "name": "virtualMachineLoop",
-                "count": "[parameters('vmCount')]"
-            },
-            "name": "[concat(variables('vmNamePrefix'),copyindex(),'-newVM')]",
-            "dependsOn": [
-                "storageAccountLoop",
-                "nicLoop",
-                "[resourceId('Microsoft.Compute/availabilitySets', variables('vmAvailabilitySetName'))]"
-            ],
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "[variables('ilbBE')]"
+          }
+        ],
+        "loadBalancingRules": [
+          {
+            "name": "sql-1433",
             "properties": {
-                "mode": "Incremental",
-                "templateLink": {
-                    "uri": "[variables('vmLoopTemplateURL')]"
-                },
-                "parameters": {
-                    "vmName": {
-                        "value": "[concat(variables('vmNamePrefix'), copyindex())]"
-                    },
-                    "storageAccountUri": {
-                        "value": "[reference(concat('Microsoft.Storage/storageAccounts/',variables('StorageNamePrefix'),copyIndex()),variables('apiVersionStorage')).primaryEndpoints.blob]"
-                    },
-                    "vmAvailabilitySetName": {
-                        "value": "[variables('vmAvailabilitySetName')]"
-                    },
-                    "vmSize": {
-                        "value": "[parameters('vmSize')]"
-                    },
-                    "vmDiskCount": {
-                        "value": "[parameters('vmDiskCount')]"
-                    },
-                    "vmDiskSize": {
-                        "value": "[parameters('vmDiskSize')]"
-                    },
-                    "adminUsername": {
-                        "value": "[parameters('adminUsername')]"
-                    },
-                    "adminPassword": {
-                        "value": "[parameters('adminPassword')]"
-                    },
-                    "_artifactsLocation": {
-                        "value": "[parameters('_artifactsLocation')]"
-                    },
-                    "_artifactsLocationSasToken": {
-                        "value": "[parameters('_artifactsLocationSasToken')]"
-                    },
-                    "imagePublisher": {
-                        "value": "[parameters('imagePublisher')]"
-                    },
-                    "imageOffer": {
-                        "value": "[parameters('imageOffer')]"
-                    },
-                    "imageSKU": {
-                        "value": "[parameters('imageSKU')]"
-                    },
-                    "imageVersion": {
-                        "value": "[parameters('imageVersion')]"
-                    }
+              "frontendIPConfiguration": {
+                "id": "[variables('ilbFEConfigID1')]"
+              },
+              "backendAddressPool": {
+                "id": "[variables('ilbBEAddressPoolID')]"
+              },
+              "probe": {
+                "id": "37000"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 1433,
+              "backendPort": 1433,
+              "enableFloatingIP": true
+            }
+          },
+          {
+            "name": "sql-445",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[variables('ilbFEConfigID1')]"
+              },
+              "backendAddressPool": {
+                "id": "[variables('ilbBEAddressPoolID')]"
+              },
+              "probe": {
+                "id": "37000"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 445,
+              "backendPort": 445,
+              "enableFloatingIP": true
+            }
+          }
+        ],
+        "probes": [
+          {
+            "name": "37000",
+            "properties": {
+              "protocol": "Tcp",
+              "port": 37000,
+              "intervalInSeconds": 5,
+              "numberOfProbes": 2
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[concat(variables('vmNamePrefix'), copyindex(), '-nic')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "copy": {
+        "name": "nicLoop",
+        "count": "[parameters('vmCount')]"
+      },
+      "dependsOn": [
+        "[variables('ilbID')]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[parameters('nicSubnetUri')]"
+              },
+              "loadBalancerBackendAddressPools": [
+                {
+                  "id": "[variables('ilbBEAddressPoolID')]"
                 }
+              ]
             }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "copy": {
+        "name": "virtualMachineLoop",
+        "count": "[parameters('vmCount')]"
+      },
+      "name": "[concat(variables('vmNamePrefix'),copyindex(),'-newVM')]",
+      "dependsOn": [
+        "storageAccountLoop",
+        "nicLoop",
+        "[resourceId('Microsoft.Compute/availabilitySets', variables('vmAvailabilitySetName'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('vmLoopTemplateURL')]"
         },
-        {
-            "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "[concat(variables('vmNamePrefix'),copyindex(1),'/sfciPrep')]",
-            "apiVersion": "2015-06-15",
-            "location": "[resourceGroup().location]",
-            "dependsOn": [
-                "virtualMachineLoop"
-            ],
-            "copy": {
-                "name": "virtualMachineExtensionLoop",
-                "count": "[sub(parameters('vmCount'),1)]"
-            },
-            "properties": {
-                "publisher": "Microsoft.Powershell",
-                "type": "DSC",
-                "typeHandlerVersion": "2.20",
-                "autoUpgradeMinorVersion": true,
-                "settings": {
-                    "modulesUrl": "[variables('sfciPrepModulesURL')]",
-                    "configurationFunction": "[variables('sfciPrepFunction')]",
-                    "properties": {
-                        "domainName": "[parameters('domainName')]",
-                        "adminCreds": {
-                            "userName": "[parameters('adminUserName')]",
-                            "password": "PrivateSettingsRef:adminPassword"
-                        }
-                    }
-                },
-                "protectedSettings": {
-                    "items": {
-                        "adminPassword": "[parameters('adminPassword')]"
-                    }
-                }
-            }
-        },
-        {
-            "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "[concat(variables('vmNamePrefix'),'0/sfciConfig')]",
-            "apiVersion": "2015-06-15",
-            "location": "[resourceGroup().location]",
-            "dependsOn": [
-                "virtualMachineLoop",
-                "virtualMachineExtensionLoop",
-                "[resourceId('Microsoft.Storage/storageAccounts', variables('witnessStorageName'))]"
-            ],
-            "properties": {
-                "publisher": "Microsoft.Powershell",
-                "type": "DSC",
-                "typeHandlerVersion": "2.20",
-                "autoUpgradeMinorVersion": true,
-                "settings": {
-                    "modulesUrl": "[variables('sfciConfigModulesURL')]",
-                    "configurationFunction": "[variables('sfciConfigFunction')]",
-                    "properties": {
-                        "domainName": "[parameters('domainName')]",
-                        "clusterName": "[variables('clusterName')]",
-                        "clusterIP": "[parameters('clusterIP')]",
-                        "vmNamePrefix": "[variables('vmNamePrefix')]",
-                        "vmCount": "[parameters('vmCount')]",
-                        "vmDiskSize": "[parameters('vmDiskSize')]",
-                        "witnessStorageName": "[variables('witnessStorageName')]",
-                        "witnessStorageKey": {
-                            "userName": "PLACEHOLDER-DO-NOT-USE",
-                            "password": "PrivateSettingsRef:witnessStorageKey"
-                        },
-                        "adminCreds": {
-                            "userName": "[parameters('adminUserName')]",
-                            "password": "PrivateSettingsRef:adminPassword"
-                        }
-                    }
-                },
-                "protectedSettings": {
-                    "items": {
-                        "adminPassword": "[parameters('adminPassword')]",
-                        "witnessStorageKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts',variables('witnessStorageName')),variables('apiVersionStorage')).keys[0].value]"
-                    }
-                }
-            }
+        "parameters": {
+          "vmName": {
+            "value": "[concat(variables('vmNamePrefix'), copyindex())]"
+          },
+          "storageAccountUri": {
+            "value": "[reference(concat('Microsoft.Storage/storageAccounts/',variables('StorageNamePrefix'),copyIndex()),variables('apiVersionStorage')).primaryEndpoints.blob]"
+          },
+          "vmAvailabilitySetName": {
+            "value": "[variables('vmAvailabilitySetName')]"
+          },
+          "vmSize": {
+            "value": "[parameters('vmSize')]"
+          },
+          "vmDiskCount": {
+            "value": "[parameters('vmDiskCount')]"
+          },
+          "vmDiskSize": {
+            "value": "[parameters('vmDiskSize')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          },
+          "imagePublisher": {
+            "value": "[parameters('imagePublisher')]"
+          },
+          "imageOffer": {
+            "value": "[parameters('imageOffer')]"
+          },
+          "imageSKU": {
+            "value": "[parameters('imageSKU')]"
+          },
+          "imageVersion": {
+            "value": "[parameters('imageVersion')]"
+          }
         }
-    ]
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('vmNamePrefix'),copyindex(1),'/sfciPrep')]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "virtualMachineLoop"
+      ],
+      "copy": {
+        "name": "virtualMachineExtensionLoop",
+        "count": "[sub(parameters('vmCount'),1)]"
+      },
+      "properties": {
+        "publisher": "Microsoft.Powershell",
+        "type": "DSC",
+        "typeHandlerVersion": "2.20",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "modulesUrl": "[variables('sfciPrepModulesURL')]",
+          "configurationFunction": "[variables('sfciPrepFunction')]",
+          "properties": {
+            "domainName": "[parameters('domainName')]",
+            "adminCreds": {
+              "userName": "[parameters('adminUserName')]",
+              "password": "PrivateSettingsRef:adminPassword"
+            }
+          }
+        },
+        "protectedSettings": {
+          "items": {
+            "adminPassword": "[parameters('adminPassword')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('vmNamePrefix'),'0/sfciConfig')]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "virtualMachineLoop",
+        "virtualMachineExtensionLoop",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('witnessStorageName'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Powershell",
+        "type": "DSC",
+        "typeHandlerVersion": "2.20",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "modulesUrl": "[variables('sfciConfigModulesURL')]",
+          "configurationFunction": "[variables('sfciConfigFunction')]",
+          "properties": {
+            "domainName": "[parameters('domainName')]",
+            "clusterName": "[variables('clusterName')]",
+            "clusterIP": "[parameters('clusterIP')]",
+            "vmNamePrefix": "[variables('vmNamePrefix')]",
+            "vmCount": "[parameters('vmCount')]",
+            "vmDiskSize": "[parameters('vmDiskSize')]",
+            "witnessStorageName": "[variables('witnessStorageName')]",
+            "witnessStorageKey": {
+              "userName": "PLACEHOLDER-DO-NOT-USE",
+              "password": "PrivateSettingsRef:witnessStorageKey"
+            },
+            "adminCreds": {
+              "userName": "[parameters('adminUserName')]",
+              "password": "PrivateSettingsRef:adminPassword"
+            }
+          }
+        },
+        "protectedSettings": {
+          "items": {
+            "adminPassword": "[parameters('adminPassword')]",
+            "witnessStorageKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts',variables('witnessStorageName')),variables('apiVersionStorage')).keys[0].value]"
+          }
+        }
+      }
+    }
+  ]
 }
