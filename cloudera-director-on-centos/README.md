@@ -1,16 +1,13 @@
-# Deploy a Cloudera Express cluster with the option to unlock Cloudera Enterprise features for a free 60-day trial
-Once the trial has concluded, the Cloudera Enterprise features will be disabled until you obtain and upload a license.
+# Deploy and Manage Cloudera Clusters on Azure with Cloudera Director
+Cloudera Director provides a simple way to deploy and manage the lifecycle of Cloudera Enterprise on Azure. Use Director to grow, shrink, monitor, and manage your transient clusters or, in conjunction with Cloudera Manager, persistent clusters.
+
+For more details regarding this template, please see the [Overview](#overview) section below.
 
 # By clicking "Deploy to Azure" you agree to the Terms and Conditions below.
-# DS14 Deployment(use this if you are not sure)
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fcloudera-on-centos%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fcloudera-director-on-centos%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png" />
 </a>
 
-# DS13 Deployment(smaller size machine for batch and poc)
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fcloudera-on-centos%2Fds13.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png" />
-</a>
 
 Version 2016-05-26
 
@@ -76,72 +73,57 @@ THE “EFFECTIVE DATE” OF THIS AGREEMENT IS THE DATE YOU FIRST DOWNLOAD ANY OF
 
 http://www.cloudera.com/content/www/en-us/legal/terms-and-conditions/cloudera-standard-license-v4-2016-05-26.html
 
+# Overview
 
-# Readme
-This template creates a multi-server Cloudera CDH 5.4.x Apache Hadoop deployment on CentOS virtual machines, and configures the CDH installation for either POC or high availability production cluster.
+This template deploys a Cloudera Director server VM with premium storage, along with the following required resources and services:
 
-The template also provisions storage accounts, virtual network, availability set, network interfaces, VMs, disks and other infrastructure and runtime resources required by the installation.
+- A new Virtual Network and subnet
+- New Availability Sets
+- A MySQL database server for Cloudera Manager (CM) and Cloudera Distribution of Hadoop (CDH)
+- A DNS server in a reference implementation to provide forward and reverse DNS resolution of private IP addresses in the Virtual Network
+
+After the deployment is complete, the Director server will be configured with a sample environment. You can then start deploying clusters with CentOS and RHEL VM images. Note that this is a reference implementation and should be modified to support your production environment.
 
 The template expects the following parameters:
 
 | Name   | Description | Default Value |
 |:--- |:---|:---|
-| adminUsername  | Administrator user name used when provisioning virtual machines | testuser |
-| adminPassword  | Administrator password used when provisioning virtual machines | Eur32#1e |
-| cmUsername | Cloudera Manager username | cmadmin |
-| cmPassword | Cloudera Manager password | cmpassword |
-| storageAccountPrefix | Unique namespace for the Storage Account where the Virtual Machine's disks will be placed | defaultStorageAccountPrefix |
-| numberOfDataNodes | Number of data nodes to provision in the cluster | 3 |
-| dnsNamePrefix | Unique public dns name where the Virtual Machines will be exposed | defaultDnsNamePrefix |
-| region | Azure data center location where resources will be provisioned |  |
-| storageAccountType | The type of the Storage Account to be created | Premium_LRS |
-| virtualNetworkName | The name of the virtual network provisioned for the deployment | clouderaVnet |
-| subnetName | Subnet name for the virtual network where resources will be provisioned | clouderaSubnet |
-| tshirtSize | T-shirt size of the Cloudera cluster (Eval, Prod) | Eval |
-| vmSize | The size of the VMs deployed in the cluster (Defaults to Standard_DS14) | Standard_DS14 |
+| adminUsername  | Administrator user name used when provisioning virtual machines | azureuser |
+| adminPassword  | Administrator password used when provisioning virtual machines | |
+| dbUsername | MySQL database admin username | dbadmin |
+| dbPassword | MySQL database admin password | |
+| subscriptionId | Subscription ID Cloudera Director server should use for creating Azure environment | |
+| tenantId | Azure Active Directory (AAD) ID | |
+| clientId | AAD client ID | |
+| clientSecret | AAD client secret| |
+| directorSize | The size of the VM for Director server | Standard_DS12_v2 |
+| masterType | Master instance template VM size | Standard_DS14 |
+| workerType | Worker instance template VM size | Standard_DS14 |
+| edgeType | Edge instance template VM size | Standard_DS14 |
+| directorEnvironmentName | Environment name use by Cloudera Director | Director_Azure_Deployment |
+| dnsNamePrefix | Unique DNS name prefix where the director VM will be exposed | |
+| dnsNameSuffix | Unique DNS suffix where the VMs will be exposed | |
+| virtualNetworkName | The name of the virtual network provisioned for the deployment | clouderavnet |
+| vnetNewOrExisting | Indicator for new or exiting Virtual Network (can only deploy into new Virtual Network) | new |
+| subnetName | Subnet name for the virtual network where resources will be provisioned | clouderasubnet |
+| addressPrefix | Virtual Network address CIDR | 10.3.0.0/16 |
+| subnetPrefix | CIDR for the subnet where VMs will be placed | 10.3.0.0/16 |
+| directorServerIPAddress | IP address for the director server | 10.3.0.4 |
+| company | Your company | |
+| emailAddress | Your email address | |
+| businessPhone | Your business phone number | |
+| firstName | Your first name | |
+| lastName | Your last name | |
+| jobRole | Your job role | |
 
+## Prerequisites
 
-Topology
---------
+Before you can deploy this template, you must create a Service Principal in AAD. The [Director Documentation for Azure](http://www.cloudera.com/documentation/director/latest/topics/director_get_started_azure_obtain_credentials.html) has details on how to obtain the service principal.
 
-The deployment topology is comprised of a predefined number (as per t-shirt sizing) Cloudera member nodes configured as a cluster, configured using a set number of manager,
-name and data nodes. Typical setup for Cloudera uses 3 master nodes with as many data nodes are needed for the size that has been choosen ranging from as
-few as 3 to thousands of data nodes.  The current template will scale at the highest end to 200 data nodes when using the large t-shirt size.
+## How to create clusters with Cloudera Director
 
-The following table outlines the deployment topology characteristics for each supported t-shirt size:
+Please follow the [Cloudera Director documentation](http://www.cloudera.com/documentation/director/latest/topics/director_get_started_azure_creating_cluster.html) to create clusters. This template will pre-create a Database template and a set of master, worker and edge instance templates in Cloudera Director. You can use those pre-created templates to create clusters.
 
-| T-Shirt Size | Member Node VM Size | CPU Cores | Memory | Data Disks | # of Master Node VMs | Services Placement of Master Node |
-|:--- |:---|:---|:---|:---|:---|:---|:---|
-| Eval | Standard_DS14 | 10 | 112 GB | 10x1000 GB | 1 | 1 (primary, secondary, cloudera manager) |
-| Prod | Standard_DS14 | 10 | 112 GB | 10x1000 GB | 3 | 1 primary, 1 standby (HA), 1 cloudera manager |
+## Notes
 
-##Connecting to the cluster
-The machines are named according to a specific pattern.  The master node is named based on parameters and using the.
-
-	[dnsNamePrefix]-mn0.[region].cloudapp.azure.com
-
-If the dnsNamePrefix was clouderatest in the West US region, the machine will be located at:
-
-	clouderatest-mn0.westus.cloudapp.azure.com
-
-The rest of the master nodes and data nodes of the cluster use the same pattern, with -mn and -dn extensions followed by their number.  For example:
-
-    clouderatest-mn0.westus.cloudapp.azure.com
-	clouderatest-mn1.westus.cloudapp.azure.com
-	clouderatest-mn2.westus.cloudapp.azure.com
-	clouderatest-dn0.westus.cloudapp.azure.com
-	clouderatest-dn1.westus.cloudapp.azure.com
-	clouderatest-dn2.westus.cloudapp.azure.com
-
-To connect to the master node via SSH, use the username and password used for deployment
-
-	ssh testuser@[dnsNamePrefix]-mn0.[region].cloudapp.azure.com
-
-Once the deployment is complete, you can navigate to the Cloudera portal to watch the operation and track it's status. Be aware that the portal dashboard will report alerts since the services are still being installed.
-
-	http://[dnsNamePrefix]-mn0.[region].cloudapp.azure.com:7180
-
-##Notes, Known Issues & Limitations
-- All nodes in the cluster have a public IP address.
-- The deployment script is not yet idempotent and cannot handle updates (although it currently works for initial provisioning only)
-- SSH key is not yet implemented and the template currently takes a password for the admin user
+- Scripts logs can be found at `/var/log/azure-template_initialize-server.log`.
