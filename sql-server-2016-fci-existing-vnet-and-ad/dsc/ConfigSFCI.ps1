@@ -43,7 +43,7 @@ configuration ConfigSFCI
     [System.Management.Automation.PSCredential]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
     [System.Management.Automation.PSCredential]$DomainFQDNCreds = New-Object System.Management.Automation.PSCredential ("${DomainName}\$($Admincreds.UserName)", $Admincreds.Password)
     [string]$AdminUserName = "${DomainNetbiosName}\$($Admincreds.UserName)"
-
+    Write-Verbose ("Cluster IP = $clusterIP" )
     [System.Collections.ArrayList]$Nodes=@()
     For ($count=0; $count -lt $vmCount; $count++) {
         $Nodes.Add($vmNamePrefix + $Count.ToString())
