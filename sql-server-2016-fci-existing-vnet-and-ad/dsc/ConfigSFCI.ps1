@@ -10,6 +10,9 @@ configuration ConfigSFCI
         [System.Management.Automation.PSCredential]$Admincreds,
 
         [Parameter(Mandatory)]
+        [System.Management.Automation.PSCredential]$svcCreds,
+
+        [Parameter(Mandatory)]
         [String]$ClusterName,
 
         [Parameter(Mandatory)]
@@ -47,7 +50,10 @@ configuration ConfigSFCI
     [System.Management.Automation.PSCredential]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
     [System.Management.Automation.PSCredential]$DomainFQDNCreds = New-Object System.Management.Automation.PSCredential ("${DomainName}\$($Admincreds.UserName)", $Admincreds.Password)
     [string]$AdminUserNames = "${DomainNetbiosName}\Domain Admins"
-    Write-Verbose ("Cluster IP = $clusterIP" )
+    
+    [System.Management.Automation.PSCredential]$ServiceCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($svcCreds.UserName)", $svcCreds.Password)
+    [System.Management.Automation.PSCredential]$ServiceFQDNCreds = New-Object System.Management.Automation.PSCredential ("${DomainName}\$($svcCreds.UserName)", $svcCreds.Password)
+    
     [System.Collections.ArrayList]$Nodes=@()
     For ($count=0; $count -lt $vmCount; $count++) {
         $Nodes.Add($vmNamePrefix + $Count.ToString())
@@ -193,7 +199,7 @@ configuration ConfigSFCI
             Features = "SQLENGINE,AS"
             InstanceName = "MSSQLSERVER"
             FailoverClusterNetworkName = "SQLFCI"
-            SQLSvcAccount = $DomainCreds
+            SQLSvcAccount = $ServiceCreds
         }
 
         xSqlServerFirewall "FirewallMSSQLSERVER"
@@ -237,7 +243,7 @@ configuration ConfigSFCI
             ASTempDir = "S:\OLAP\Temp"
             ASConfigDir = "S:\OLAP\Config"
             FailoverClusterIPAddress = $clusterIP
-            SQLSvcAccount = $DomainCreds
+            SQLSvcAccount = $ServiceCreds
             SQLSysAdminAccounts = $AdminUserNames
             ASSysAdminAccounts = $AdminUserNames
             PsDscRunAsCredential = $DomainCreds
