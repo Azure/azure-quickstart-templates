@@ -34,7 +34,8 @@ configuration ConfigSFCI
 
         [Int]$RetryCount=20,
         [Int]$RetryIntervalSec=30,
-        [string]$driveLetter = 'S'
+        [string]$driveLetter = 'S',
+        $probePort=37000
 
     )
 
@@ -237,6 +238,14 @@ configuration ConfigSFCI
             SQLSysAdminAccounts = $AdminUserNames
             ASSysAdminAccounts = $AdminUserNames
             PsDscRunAsCredential = $DomainCreds
+        }
+
+        Script FixProbe
+        {
+            SetScript = "Get-ClusterResource -Name 'SQL IP*' | Set-ClusterParameter -Multiple @{Address=${clusterIP};ProbePort=${ProbePort};SubnetMask='255.255.255.255';Network='Cluster Network 1';EnableDhcp=0};Get-ClusterGroup -Name 'SQL Server*' | Stop-ClusterGroup | Start-ClusterGroup"
+            TestScript = "(Get-ClusterResource -name 'SQL IP*' | Get-ClusterParameter -Name ProbePort).Value -eq  ${probePort}"
+            GetScript = '@{Result = "Moved Cluster Group"}'
+            DependsOn = "[xSQLServerFailoverClusterSetup]CompleteMSSQLSERVER"
         }
     }
 
