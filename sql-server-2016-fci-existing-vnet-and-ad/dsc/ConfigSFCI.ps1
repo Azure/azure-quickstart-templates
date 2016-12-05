@@ -109,7 +109,7 @@ configuration ConfigSFCI
 
         Script MoveClusterGroups0
         {
-            SetScript = 'try {Get-ClusterGroup -ErrorAction SilentlyContinue | Move-ClusterGroup -Node $env:COMPUTERNAME -ErrorAction SilentlyContinue} catch {}'
+            SetScript = 'try {Get-ClusterGroup -ErrorAction SilentlyContinue | Move-ClusterGroup -Node $env:COMPUTERNAME -ErrorAction SilentlyContinue;sleep -Seconds 30} catch {}'
             TestScript = 'return $false'
             GetScript = '@{Result = "Moved Cluster Group"}'
             DependsOn = "[xComputer]DomainJoin"
