@@ -251,7 +251,7 @@ configuration ConfigSFCI
 
         Script FixProbe
         {
-            SetScript = "Get-ClusterResource -Name 'SQL IP*' | Set-ClusterParameter -Multiple @{Address=${clusterIP};ProbePort=${ProbePort};SubnetMask='255.255.255.255';Network='Cluster Network 1';EnableDhcp=0};Get-ClusterGroup -Name 'SQL Server*' | Stop-ClusterGroup | Start-ClusterGroup"
+            SetScript = "Get-ClusterResource -Name 'SQL IP*' | Set-ClusterParameter -Multiple @{Address=${clusterIP};ProbePort=${ProbePort};SubnetMask='255.255.255.255';Network='Cluster Network 1';EnableDhcp=0};Get-ClusterGroup -Name 'SQL Server*' | Move-ClusterGroup"
             TestScript = "(Get-ClusterResource -name 'SQL IP*' | Get-ClusterParameter -Name ProbePort).Value -eq  ${probePort}"
             GetScript = '@{Result = "Moved Cluster Group"}'
             DependsOn = "[xSQLServerFailoverClusterSetup]CompleteMSSQLSERVER"
