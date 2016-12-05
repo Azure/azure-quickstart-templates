@@ -37,7 +37,7 @@ Click the button below to deploy from the portal:
 
 ## Deploying Sample Templates
 
-To deploy the sammple using the Azure Portal, click the **Deploy to Azure** button found above.
+To deploy the sample using the Azure Portal, click the **Deploy to Azure** button found above.
 
 ## TODO
  + Modify cluster failover bits in DSC resources so they don't always revert to node0.

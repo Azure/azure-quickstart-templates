@@ -104,7 +104,7 @@ configuration PrepSFCI
             Features = "SQLENGINE,AS"
             InstanceName = "MSSQLSERVER"
             FailoverClusterNetworkName = "SQLFCI"
-            SQLSvcAccount = $svcCreds
+            SQLSvcAccount = $ServiceCreds
         }
 
         xSqlServerFirewall "FirewallMSSQLSERVER"
