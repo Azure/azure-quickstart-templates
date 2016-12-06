@@ -62,7 +62,7 @@ configuration PrepSFCI
             Ensure = "Present"
         }
 
-        xWaitForADDomain DscForestWait 
+        xWaitForADDomain DscForestWait
         { 
             DomainName = $DomainName 
             DomainUserCredential= $DomainCreds
@@ -89,11 +89,11 @@ configuration PrepSFCI
 
         xPendingReboot Reboot1
         { 
-            Name = 'Reboot1'
+            Name = "Reboot1"
             DependsOn = "[Script]CleanSQL"
         }
 
-        xSQLServerFailoverClusterSetup "PrepareMSSQLSERVER"
+        xSQLServerFailoverClusterSetup PrepareMSSQLSERVER
         {
             DependsOn = "[xPendingReboot]Reboot1"
             Action = "Prepare"
@@ -107,19 +107,26 @@ configuration PrepSFCI
             SQLSvcAccount = $ServiceCreds
         }
 
-        xSqlServerFirewall "FirewallMSSQLSERVER"
+        xFirewall SQLFirewall
         {
+            Name                  = "SQLFirewallRule"
+            DisplayName           = "Firewall Rule for SQL"
+            Group                 = "SQL Firewall Rule Group"
+            Ensure                = "Present"
+            Enabled               = "True"
+            Profile               = ("Domain", "Private", "Public")
+            Direction             = "Inbound"
+            RemotePort            = ("*")
+            LocalPort             = ("445", "1433", "37000","37001")
+            Protocol              = "TCP"
+            Description           = "Firewall Rule for SQL"
             DependsOn = "[xSQLServerFailoverClusterSetup]PrepareMSSQLSERVER"
-            SourcePath = "C:\"
-            SourceFolder = "SQLServer_13.0_Full"
-            InstanceName = "MSSQLSERVER"
-            Features = "SQLENGINE,AS"
         }
 
         xPendingReboot Reboot2
         { 
             Name = 'Reboot2'
-            DependsOn = "[xSqlServerFirewall]FirewallMSSQLSERVER"
+            DependsOn = "[xFirewall]SQLFirewall"
         }
 
     }
