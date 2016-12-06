@@ -1,3 +1,9 @@
+# v2.3.0 (2016-11-22)
+
+- Upgrade cf-release to v244 for template of multiple-vm-cf.yml, keep cf-release v238 as a stable version for single-vm-cf.yml.
+- Use stubs to generate manifest for multiple-vm-cf.yml.
+- Add a scripts to generate certifications and passwords for manifests.
+
 # v2.2.0 (2016-11-09)
 
 - Support AzureUSGovernment
