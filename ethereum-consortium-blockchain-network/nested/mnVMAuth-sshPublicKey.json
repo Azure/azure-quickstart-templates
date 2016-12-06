@@ -44,19 +44,28 @@
     "adminPassword": {
       "type": "securestring"
     },
+    "adminSSHKey": {
+      "type": "string"
+    },
     "ubuntuImage": {
       "type": "object"
     },
     "namingInfix": {
       "type": "string"
+    },
+    "location": {
+      "type": "string"
     }
+  },
+  "variables": {
+    "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]"
   },
   "resources": [
     {
       "apiVersion": "[parameters('apiVersionStorageAccounts')]",
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[parameters('mnStorageAcctNames')[copyIndex()]]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "mnStorageLoop",
         "count": "[parameters('mnStorageAcctCount')]"
@@ -71,7 +80,7 @@
       "apiVersion": "[parameters('apiVersionNetworkInterfaces')]",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(parameters('mnNICPrefix'), copyindex())]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "mnNicLoop",
         "count": "[parameters('numMNNodes')]"
@@ -94,7 +103,7 @@
       "apiVersion": "[parameters('apiVersionVirtualMachines')]",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(parameters('mnVMNamePrefix'), copyIndex())]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "mnVMLoop",
         "count": "[parameters('numMNNodes')]"
@@ -110,7 +119,17 @@
         "osProfile": {
           "computerName": "[concat(parameters('mnVMNamePrefix'), copyIndex())]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": "true",
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[variables('sshKeyPath')]",
+                  "keyData": "[parameters('adminSSHKey')]"
+                }
+              ]
+            }
+          }
         },
         "storageProfile": {
           "imageReference": "[parameters('ubuntuImage')]",
