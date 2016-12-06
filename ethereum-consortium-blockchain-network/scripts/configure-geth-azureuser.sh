@@ -48,22 +48,16 @@ DIFFICULTY=`printf "0x%X" $(($DIFFICULTY_CONSTANT * $NUM_MN_NODES))`;
 ################
 # Update modules
 ################
-sudo add-apt-repository -y ppa:ethereum/ethereum;
-sudo apt-get -y update;
+sudo add-apt-repository -y ppa:ethereum/ethereum || exit 1;
+sudo apt-get -y update || exit 1;
+# To avoid intermittent issues with package DB staying locked when next apt-get runs
+sleep 5;
 
-##############
-# setup Nodejs
-##############
-sudo apt-get -y install npm;
-sudo update-alternatives --install /usr/bin/node nodejs /usr/bin/nodejs 100;
-
-############
-# Setup Geth
-############
-sudo apt-get -y install git;
-sudo apt-get -y install software-properties-common;
-sudo apt-get install -y ethereum;
-sudp apt-get install -y solc;
+##################
+# Install packages
+##################
+sudo apt-get -y install npm=3.5.2-0ubuntu4 git=1:2.7.4-0ubuntu1 software-properties-common=0.96.20.4 ethereum || exit 1;
+sudo update-alternatives --install /usr/bin/node nodejs /usr/bin/nodejs 100 || exit 1;
 
 #############
 # Build node keys and node IDs
@@ -73,15 +67,32 @@ declare -a NODE_IDS
 for i in `seq 0 $(($NUM_BOOT_NODES - 1))`; do
 	BOOT_NODE_HOSTNAME=$MN_NODE_PREFIX$i;
 	NODE_KEYS[$i]=`echo $BOOT_NODE_HOSTNAME | sha256sum | cut -d ' ' -f 1`;
-	bootnode -nodekeyhex ${NODE_KEYS[$i]} > $HOMEDIR/tempbootnodeoutput 2>&1 &
-	while sleep 1; do
+	setsid geth -nodekeyhex ${NODE_KEYS[$i]} > $HOMEDIR/tempbootnodeoutput 2>&1 &
+	while sleep 10; do
 		if [ -s $HOMEDIR/tempbootnodeoutput ]; then
+			killall geth;
 			NODE_IDS[$i]=`grep -Po '(?<=\/\/).*(?=@)' $HOMEDIR/tempbootnodeoutput`;
-			killall bootnode;
 			rm $HOMEDIR/tempbootnodeoutput;
+			if [ $? -ne 0 ]; then
+				exit 1;
+			fi
 			break;
 		fi
 	done
+done
+
+##################################
+# Check for empty node keys or IDs
+##################################
+for nodekey in "${NODE_KEYS[@]}"; do
+	if [ -z $nodekey ]; then
+		exit 1;
+	fi
+done
+for nodeid in "${NODE_IDS[@]}"; do
+	if [ -z $nodeid ]; then
+		exit 1;
+	fi
 done
 
 ##############################################
@@ -97,8 +108,8 @@ rm $HOMEDIR/priv_genesis.key;
 rm $PASSWD_FILE;
 
 cd $HOMEDIR
-wget -N ${ARTIFACTS_URL_PREFIX}/scripts/start-private-blockchain.sh;
-wget -N ${ARTIFACTS_URL_PREFIX}/genesis-template.json;
+wget -N ${ARTIFACTS_URL_PREFIX}/scripts/start-private-blockchain.sh || exit 1;
+wget -N ${ARTIFACTS_URL_PREFIX}/genesis-template.json || exit 1;
 # Place our calculated difficulty into genesis file
 sed s/#DIFFICULTY/$DIFFICULTY/ $HOMEDIR/genesis-template.json > $HOMEDIR/genesis-intermediate.json;
 sed s/#PREFUND_ADDRESS/$PREFUND_ADDRESS/ $HOMEDIR/genesis-intermediate.json > $HOMEDIR/genesis.json;
@@ -114,6 +125,9 @@ fi
 # Initialize geth
 #################
 geth --datadir $GETH_HOME -verbosity 6 init $GENESIS_FILE_PATH >> $GETH_LOG_FILE_PATH 2>&1;
+if [ $? -ne 0 ]; then
+	exit 1;
+fi
 echo "===== Completed geth initialization =====";
 
 #####################
@@ -122,17 +136,18 @@ echo "===== Completed geth initialization =====";
 if [ $NODE_TYPE -eq 0 ]; then # TX nodes only
   mkdir -p $ETHERADMIN_HOME/views/layouts;
   cd $ETHERADMIN_HOME/views/layouts;
-  wget -N ${ARTIFACTS_URL_PREFIX}/scripts/etheradmin/main.handlebars;
+  wget -N ${ARTIFACTS_URL_PREFIX}/scripts/etheradmin/main.handlebars || exit 1;
   cd $ETHERADMIN_HOME/views;
-  wget -N ${ARTIFACTS_URL_PREFIX}/scripts/etheradmin/etheradmin.handlebars;
-  wget -N ${ARTIFACTS_URL_PREFIX}/scripts/etheradmin/etherstartup.handlebars;
+  wget -N ${ARTIFACTS_URL_PREFIX}/scripts/etheradmin/etheradmin.handlebars || exit 1;
+  wget -N ${ARTIFACTS_URL_PREFIX}/scripts/etheradmin/etherstartup.handlebars || exit 1;
   cd $ETHERADMIN_HOME;
-  wget -N ${ARTIFACTS_URL_PREFIX}/scripts/etheradmin/package.json;
-  npm install;
-  wget -N ${ARTIFACTS_URL_PREFIX}/scripts/etheradmin/app.js;
+  wget -N ${ARTIFACTS_URL_PREFIX}/scripts/etheradmin/package.json || exit 1;
+  wget -N ${ARTIFACTS_URL_PREFIX}/scripts/etheradmin/npm-shrinkwrap.json || exit 1;
+  npm install || exit 1;
+  wget -N ${ARTIFACTS_URL_PREFIX}/scripts/etheradmin/app.js || exit 1;
   mkdir $ETHERADMIN_HOME/public;
   cd $ETHERADMIN_HOME/public;
-  wget -N ${ARTIFACTS_URL_PREFIX}/scripts/etheradmin/skeleton.css;
+  wget -N ${ARTIFACTS_URL_PREFIX}/scripts/etheradmin/skeleton.css || exit 1;
 fi
 
 #########################
@@ -143,7 +158,7 @@ for i in `seq 0 $(($NUM_BOOT_NODES - 1))`; do
 	BOOTNODE_URLS="${BOOTNODE_URLS}enode://${NODE_IDS[$i]}@#${MN_NODE_PREFIX}${i}#:${GETH_IPC_PORT}";
   if [ $i -lt $(($NUM_BOOT_NODES - 1)) ]; then
   	BOOTNODE_URLS="${BOOTNODE_URLS},";
-	fi
+  fi
 done
 
 ##################
@@ -174,10 +189,13 @@ fi
 # Setup rc.local for service start on boot
 ##########################################
 echo "sudo -u $AZUREUSER /bin/bash $HOMEDIR/start-private-blockchain.sh $GETH_CFG_FILE_PATH $PASSWD" | sudo tee /etc/rc.local 2>&1 1>/dev/null
+if [ $? -ne 0 ]; then
+	exit 1;
+fi
 
 ############
 # Start geth
 ############
-/bin/bash $HOMEDIR/start-private-blockchain.sh $GETH_CFG_FILE_PATH $PASSWD
-if [ $? -ne 0 ]; then echo "Previous command failed. Exiting"; exit $?; fi
-echo "===== Completed $0 =====";
+/bin/bash $HOMEDIR/start-private-blockchain.sh $GETH_CFG_FILE_PATH $PASSWD || exit 1;
+echo "Commands succeeded. Exiting";
+exit 0;
