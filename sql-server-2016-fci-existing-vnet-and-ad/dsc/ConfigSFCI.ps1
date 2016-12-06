@@ -206,7 +206,6 @@ configuration ConfigSFCI
         {
             Name                  = "SQLFirewallRule"
             DisplayName           = "Firewall Rule for SQL"
-            Group                 = "SQL Firewall Rule Group"
             Ensure                = "Present"
             Enabled               = "True"
             Profile               = ("Domain", "Private", "Public")
