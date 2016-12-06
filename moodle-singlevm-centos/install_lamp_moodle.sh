@@ -48,7 +48,7 @@ cd bkraft-securingc7
 git checkout -b puppet4.0
 git branch --set-upstream-to=remotes/origin/puppet4.0
 git pull
-cd /
+cd ..
 
 cp -r bkraft-securingc7/ /usr/share/puppet/modules/
 
