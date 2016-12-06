@@ -94,7 +94,8 @@ The template expects the following parameters:
 | numberOfDataNodes | Number of data nodes to provision in the cluster | 3 |
 | dnsNamePrefix | Unique public dns name where the Virtual Machines will be exposed | defaultDnsNamePrefix |
 | region | Azure data center location where resources will be provisioned |  |
-| storageAccountType | The type of the Storage Account to be created | Premium_LRS |
+| masterStorageAccountType | The type of the Storage Account to be created for master nodes | Premium_LRS |
+| workerStorageAccountType | The type of the Storage Account to be created for worker nodes | Standard_LRS |
 | virtualNetworkName | The name of the virtual network provisioned for the deployment | clouderaVnet |
 | subnetName | Subnet name for the virtual network where resources will be provisioned | clouderaSubnet |
 | tshirtSize | T-shirt size of the Cloudera cluster (Eval, Prod) | Eval |
