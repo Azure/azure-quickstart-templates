@@ -19,11 +19,11 @@ Tags: 'lansa, vmss, sql, autoscale, windows, sqlserver, mysql'
 ## Solution overview and deployed resources
 
 The Autoscale rules are configured as follows
-- sample for CPU (\\Processor\\PercentProcessorTime) in each VM every 1 Minute
-- if the Percent Processor Time is greater than 60% for 5 Minutes, then the scale out action (add 10% more Virtual Machine instances) is triggered
+- sample for Percentage CPU in each VM every 1 Minute
+- if the Percentage CPU is greater than 60% for 5 Minutes, then the scale out action (add 10% more Virtual Machine instances) is triggered
 - once the scale out action is completed, the cool down period is 20 Minutes
-- if the Percent Processor Time is less than 30% for 5 Minutes, then the scale in action (remove one Virtual Machine instance) is triggered
-- once the scale in action is completed, the cool down period is 5 Minutes
+- if the Percentage CPU is less than 30% for 5 Minutes, then the scale in action (remove one Virtual Machine instance) is triggered
+- once the scale in action is completed, the cool down period is 20 Minutes
 
 ### Resources Deployed
 +	A Virtual Network
