@@ -45,7 +45,7 @@ configuration ConfigSFCI
 
     )
 
-    Import-DscResource -ModuleName xComputerManagement, xFailOverCluster, xActiveDirectory, xSOFS, xSQLServer, xPendingReboot
+    Import-DscResource -ModuleName xComputerManagement, xFailOverCluster, xActiveDirectory, xSOFS, xSQLServer, xPendingReboot,xNetworking
  
     [System.Management.Automation.PSCredential]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
     [System.Management.Automation.PSCredential]$DomainFQDNCreds = New-Object System.Management.Automation.PSCredential ("${DomainName}\$($Admincreds.UserName)", $Admincreds.Password)
@@ -188,7 +188,7 @@ configuration ConfigSFCI
             DependsOn = "[xPendingReboot]Reboot1"
         }
 
-        xSQLServerFailoverClusterSetup "PrepareMSSQLSERVER"
+        xSQLServerFailoverClusterSetup PrepareMSSQLSERVER
         {
             DependsOn = "[Script]MoveClusterGroups2"
             Action = "Prepare"
@@ -202,19 +202,25 @@ configuration ConfigSFCI
             SQLSvcAccount = $ServiceCreds
         }
 
-        xSqlServerFirewall "FirewallMSSQLSERVER"
+        xFirewall SQLFirewall
         {
-            DependsOn = "[xSQLServerFailoverClusterSetup]PrepareMSSQLSERVER"
-            SourcePath = "C:\"
-            SourceFolder = "SQLServer_13.0_Full"
-            InstanceName = "MSSQLSERVER"
-            Features = "SQLENGINE,AS"
+            Name                  = "SQL Firewall Rule"
+            DisplayName           = "SQL Firewall Rule"
+            Ensure                = "Present"
+            Enabled               = "True"
+            Profile               = ("Domain", "Private", "Public")
+            Direction             = "Inbound"
+            RemotePort            = "Any"
+            LocalPort             = ("445", "1433", "37000","37001")
+            Protocol              = "TCP"
+            Description           = "Firewall Rule for SQL"
+            DependsOn             = "[xSQLServerFailoverClusterSetup]PrepareMSSQLSERVER"
         }
 
         xPendingReboot Reboot2
         { 
             Name = 'Reboot2'
-            DependsOn = "[xSqlServerFirewall]FirewallMSSQLSERVER"
+            DependsOn = "[xFirewall]SQLFirewall"
         }
 
         Script MoveClusterGroups3
@@ -225,7 +231,7 @@ configuration ConfigSFCI
             DependsOn = "[xPendingReboot]Reboot2"
         }
 
-        xSQLServerFailoverClusterSetup "CompleteMSSQLSERVER"
+        xSQLServerFailoverClusterSetup CompleteMSSQLSERVER
         {
             DependsOn = "[Script]MoveClusterGroups3"
             Action = "Complete"
@@ -251,7 +257,7 @@ configuration ConfigSFCI
 
         Script FixProbe
         {
-            SetScript = "Get-ClusterResource -Name 'SQL IP*' | Set-ClusterParameter -Multiple @{Address=${clusterIP};ProbePort=${ProbePort};SubnetMask='255.255.255.255';Network='Cluster Network 1';EnableDhcp=0};Get-ClusterGroup -Name 'SQL Server*' | Move-ClusterGroup"
+            SetScript = "Get-ClusterResource -Name 'SQL IP*' | Set-ClusterParameter -Multiple @{Address=${clusterIP};ProbePort=${ProbePort};SubnetMask='255.255.255.255';Network='Cluster Network 1';EnableDhcp=0} -ErrorAction SilentlyContinue | out-null;Get-ClusterGroup -Name 'SQL Server*' -ErrorAction SilentlyContinue | Move-ClusterGroup -ErrorAction SilentlyContinue"
             TestScript = "(Get-ClusterResource -name 'SQL IP*' | Get-ClusterParameter -Name ProbePort).Value -eq  ${probePort}"
             GetScript = '@{Result = "Moved Cluster Group"}'
             DependsOn = "[xSQLServerFailoverClusterSetup]CompleteMSSQLSERVER"
