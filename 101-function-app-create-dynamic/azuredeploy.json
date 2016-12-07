@@ -1,5 +1,5 @@
 {
-    "$schema": "http://schemas.management.azure.com/schemas/2015-01-01-preview/deploymentTemplate.json#",
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
         "appName": {
@@ -25,7 +25,8 @@
     "variables": {
         "functionAppName": "[parameters('appName')]",
         "hostingPlanName": "[parameters('appName')]",
-        "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'azfunctions')]"
+        "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'azfunctions')]",
+        "storageAccountid": "[concat(resourceGroup().id,'/providers/','Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
     },
     "resources": [
         {
@@ -53,31 +54,42 @@
             "type": "Microsoft.Web/sites",
             "name": "[variables('functionAppName')]",
             "location": "[resourceGroup().location]",
-            "kind": "functionapp",
-            "properties": {
-                "name": "[variables('functionAppName')]",
-                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]"
-            },
+            "kind": "functionapp",            
             "dependsOn": [
                 "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
                 "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
             ],
-            "resources": [
-                {
-                    "apiVersion": "2016-03-01",
-                    "name": "appsettings",
-                    "type": "config",
-                    "dependsOn": [
-                        "[resourceId('Microsoft.Web/sites', variables('functionAppName'))]",
-                        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
-                    ],
-                    "properties": {
-                        "AzureWebJobsStorage": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccountName'),';AccountKey=',listkeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2015-05-01-preview').key1,';')]", 
-                        "AzureWebJobsDashboard": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccountName'),';AccountKey=',listkeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2015-05-01-preview').key1,';')]", 
-                        "FUNCTIONS_EXTENSION_VERSION": "latest"
-                    }
+            "properties": {
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
+                "siteConfig": {
+                    "appSettings": [
+                        {
+                            "name": "AzureWebJobsDashboard",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountid'),'2015-05-01-preview').key1)]"
+                        },
+                        {
+                            "name": "AzureWebJobsStorage",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountid'),'2015-05-01-preview').key1)]"
+                        },
+                        {
+                            "name": "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING",
+                            "value": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountid'),'2015-05-01-preview').key1)]"
+                        },
+                        {
+                            "name": "WEBSITE_CONTENTSHARE",
+                            "value": "[toLower(variables('functionAppName'))]"
+                        },
+                        {
+                            "name": "FUNCTIONS_EXTENSION_VERSION",
+                            "value": "~1"
+                        },
+                        {
+                            "name": "WEBSITE_NODE_DEFAULT_VERSION",
+                            "value": "6.5.0"
+                        }
+                    ]
                 }
-			]
+            }          
         }
     ]
 }
