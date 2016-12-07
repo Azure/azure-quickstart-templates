@@ -79,7 +79,7 @@ The Egress Event Hub should serve as an "Output" from Azure Cloud services of yo
 
 10. For the *PubNub Egress Channel*, enter a channel name that the PubNub Publisher should publish back out on.
 
-11. For the *PubNub Announce Channel*, enter a channel name that the PubNub Deployment script will alert on when the deployment has completed.  See below for more information on using the Provisioning Listener and the Announce channel.
+11. For the *PubNub Announce Channel*, enter a channel name that the PubNub Deployment script will alert on when the deployment has completed.  If you don't intend on using this, just set this value to all caps, case-sensitive *DISABLED*.  See below for more information on using the Provisioning Listener and the Announce channel.
 
 12. For the *PubNub Publish Key*, enter the PubNub Publish API Key that the PubNub component should publish against.
 
@@ -103,6 +103,33 @@ The Egress Event Hub should serve as an "Output" from Azure Cloud services of yo
 
 ## Troubleshooting
 
+The following tools can give you a 360-degree view of your traffic as it enters the ingress and egress PubNub Channels and Event Hubs.  Together they are useful for tracing your data through the system.
+
+### Monitoring PubNub Traffic
+The PubNub Debug Console is a handy tool to use to monitor PubNub traffic.  
+
+1. Connect to <a href="https://www.pubnub.com/console">https://www.pubnub.com/console</a>
+2. Enter the PubNub Subscribe and Publish Keys
+3. Enter the PubNub Ingress Channel
+4. Connect
+5. Repeat Steps 1-4, but on step 3, enter the PubNub Egress Channel
+
+You can now monitor all incoming and outgoing PubNub traffic traversing through the PubNub/Azure gateway.  
+
+You can also Publish test traffic on the "Ingress" console to send sample data through the system.
+
+### Monitoring Ingress Event Hub Traffic
+To gain visibility into what is being sent into the ingress and egress Event Hubs, there are two ways to achieve this:
+
+#### Manual Configuration using inputEHMonitor.js and outputEHMonitor.js
+1. Change directory (cd) to the *monitoring* directory
+2. run *npm install*
+3. Edit inputEHMonitor.js and set the connection string to that of the *Azure Ingress SAS Policy* on the Azure Ingress Event Hub (get this value from the Azure Portal after it has completed the Gateway's Event Hub deployment)
+4. Edit outputEHMonitor.js and set the connection string to that of the *Azure Egress SAS Policy* on the Azure Egress Event Hub (get this value from the Azure Portal after it has completed the Gateway's Event Hub deployment)
+5. Run *node inputEHMonitor.js* and *outputEHMonitor.js* to monitor the Gateway's Event Hub traffic.
+
+#### Using the Provisioning Listener
+
 
 
 ## Caveats
@@ -118,6 +145,7 @@ If you are using Stream Analytics as an input to the Egress Event Hub, from with
 ### Provisioning Listener
 If you are using the Provisioning Listener script, and you are using your own PubNub keys (not the default demo keys), be sure to change the *PNSubscribeKey* value located in the provisioningListener.js script (https://github.com/pubnub/azureEventHubBridge/blob/master/monitoring/provisioningListener.js#L8) to the same value you set in the Azure Web GUI deploy script for the *PubNub Subscribe Key*.  
 
-
+### TODO: Disable PubNub Announce
+### TODO: Provisioning Listner takes command line subscribe key
 
 
