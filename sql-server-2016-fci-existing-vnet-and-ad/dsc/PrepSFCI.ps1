@@ -109,13 +109,13 @@ configuration PrepSFCI
 
         xFirewall SQLFirewall
         {
-            Name                  = "SQLFirewallRule"
-            DisplayName           = "Firewall Rule for SQL"
+            Name                  = "SQL Firewall Rule"
+            DisplayName           = "SQL Firewall Rule"
             Ensure                = "Present"
             Enabled               = "True"
             Profile               = ("Domain", "Private", "Public")
             Direction             = "Inbound"
-            RemotePort            = ("*")
+            RemotePort            = "Any"
             LocalPort             = ("445", "1433", "37000","37001")
             Protocol              = "TCP"
             Description           = "Firewall Rule for SQL"
