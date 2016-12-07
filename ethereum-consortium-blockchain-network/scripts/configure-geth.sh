@@ -26,7 +26,7 @@ sudo -u $AZUREUSER /bin/bash -c "wget -N ${ARTIFACTS_URL_PREFIX}/scripts/configu
 # Initiate loop for error checking
 ##################################
 for LOOPCOUNT in `seq 1 5`; do
-	sudo -u $AZUREUSER /bin/bash /home/$AZUREUSER/configure-geth-azureuser.sh $1 $2 $3 $4 $5 $6 $7 $8 $9 ${10} ${11} ${12} ${13} ${14} >> $CONFIG_LOG_FILE_PATH 2>&1;
+	sudo -u $AZUREUSER /bin/bash /home/$AZUREUSER/configure-geth-azureuser.sh "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9" "${10}" "${11}" "${12}" "${13}" "${14}" >> $CONFIG_LOG_FILE_PATH 2>&1;
 	if [ $? -ne 0 ]; then
 		echo "Command failed on try $LOOPCOUNT, retrying..." >> $CONFIG_LOG_FILE_PATH;
 		sleep 5;
