@@ -1,10 +1,123 @@
 #  PubNub Realtime Gateway for Azure
 
-The PubNub Realtime Gateway for Azure provides a Realtime data stream bridge between the PubNub Data Stream Network, and Azure Event Hubs.
+## What does it do?
+The PubNub Realtime Gateway for Azure provides a Realtime data stream bridge between the PubNub Data Stream Network, and Azure Event Hubs. -- consider it a bi-directional bridge between PubNub and Azure Event Hubs!
 
+If you need to:
 
+* Feed realtime PubNub data into Azure via an Event Hub, and then use that Event Hub as an input for other Azure cloud services
+* Feed Azure Event Hub data back out to PubNub
+
+Then this is the ARM template for you!
 
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fpubnub%2FazureEventHubBridge%2Fmaster%2Fdeploy%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
+
+## What does it deploy?
+* PubNub/Azure gateway script writing in Node.js
+* Web Job
+* Two (Ingress and Egress) Event Hubs, each with their own SAS Policies
+* US West Basic App Service Plan
+
+##How Does it Work?
+
+<img src="https://s3.amazonaws.com/pubnub/pubnub-eventhub-bridge/PNAzureDataFlow.png">
+
+When all these pieces are deployed together, we're provided with an end-to-end PubNub/Azure gatway.  Here's more details on how they all work together:
+
+### Web Job
+A Web Job provides the node.js runtime needed to execute the PubNub/Azure gateway script.
+
+### PubNub/Azure Gateway Script
+
+The PubNub/Azure gateway script is written in Node.js, and does the following:
+
+* Instantiates a PubNub subscriber, which receives PubNub data in realtime, and forwards it to the Ingress Event Hub.
+
+* Instantiates a PubNub publisher, which receives Egress Event Hub data and publishes it out via PubNub.
+
+### Event Hubs
+
+The Ingress Event Hub is populated via PubNub subscribe data, and should serve as an "Input" to Azure Cloud services of your choice.
+
+The Egress Event Hub should serve as an "Output" from Azure Cloud services of your choice, and all data sent to it will be published out via PubNub.
+
+
+## How to Deploy
+
+1. Be sure you are logged in to <a href="https://portal.azure.com">https://portal.azure.com</a>
+2. Click one of the conveniently placed "Deploy to Azure" buttons on this page.
+
+	The template will appear with some defaults.
+
+	<img src="https://s3.amazonaws.com/pubnub/pubnub-eventhub-bridge/deploymentGui.png">
+
+	Going down the list...
+
+3. Choose the *Subscription* you wish to associated this deployment with.
+4. Create a new, or use an existing *Resource Group* to deploy this template to.  
+
+	**NOTE:** It's suggested to use a unique Resource Group if it's your first time playing with this template... that way if you need to experiment with different configurations, deleting the entire Resource Group is a quick way to delete all the components so you can start over from the beginning with a clean slate.
+
+5. For *Location*, select West US.
+
+	**NOTE:** Some Azure services rely on all participating Azure components being located in the same region.  The way this template is currently coded, it's required to use West US for all location variables is mandatory.  If this is showstopping for you, please fork the repo, and edit any hardcoded "West US" values in the template to the locations you desire, and then be sure the form values match when deploying.
+	
+6. For the *Event Hub Namespace*, create a unique Namespace.  It's suggested to replace the "pn-" prefix with your own unique prefix, such as your company name, and add a "-suffix" at the end, where the suffix is also unique.  
+	
+	**NOTE:**	For example, if your company was widgets.com: widgetscom-eventhub-1fba54e9-vegaswolfpack.  You don't need to follow this exact pattern, but be sure its completely unique!  Be sure to stick to dashes as seperators, or refer to Azure documentation for the list of legal chars in an Event Hub Namespace string.
+	
+7. For the *Azure Web Job Name*, create a unique Web Job Name.  Follow the same naming conventions as for Event Hub Namespaces to ensure you have a unique, legal string.
+
+8. For the *Azure Datacenter Location*, enter westus.
+
+	**NOTE:** Some Azure services rely on all participating Azure components being located in the same region.  The way this template is currently coded, it's required to use West US for all location variables is mandatory.  If this is showstopping for you, please fork the repo, and edit any hardcoded "West US" values in the template to the locations you desire, and then be sure the form values match when deploying.
+	
+9. For the *PubNub Ingress Channel*, enter a channel name that the PubNub Subscriber should listen on.  If you wish for the subscriber to listen on multiple channels, enter a CSV list of channels, with no spaces.
+
+10. For the *PubNub Egress Channel*, enter a channel name that the PubNub Publisher should publish back out on.
+
+11. For the *PubNub Announce Channel*, enter a channel name that the PubNub Deployment script will alert on when the deployment has completed.  See below for more information on using the Provisioning Listener and the Announce channel.
+
+12. For the *PubNub Publish Key*, enter the PubNub Publish API Key that the PubNub component should publish against.
+
+13. For the *PubNub Subscribe Key*, enter the PubNub Subscribe API Key that the PubNub component should subscribe against.
+
+14. For the *Azure Service Plan*, enter USWestBasic.
+
+	**NOTE:** Some Azure services rely on all participating Azure components being located in the same region.  The way this template is currently coded, it's required to use West US for all location variables is mandatory.  If this is showstopping for you, please fork the repo, and edit any hardcoded "West US" values in the template to the locations you desire, and then be sure the form values match when deploying.
+	
+15. For the *Azure Ingress Event Hub Name*, enter the name you wish to give the Ingress (Input) Event Hub.  You can accept the default, as the Event Hub name needs only to be unique within a unique Event Hub Namespace.
+
+16. For the *Azure Egress Event Hub Name*, enter the name you wish to give the Egress (Output) Event Hub.  You can accept the default, as the Event Hub name needs only to be unique within a unique Event Hub Namespace.
+
+17. For the *Azure Ingress SAS Policy Name*, enter the name you wish to give the Ingress (Input) Event Hub SAS Policy.  You can accept the default, as the Event Hub SAS Policy name needs only to be unique within a unique Event Hub Namespace.
+
+18. For the *Azure Egress SAS Policy Name*, enter the name you wish to give the Egress (Output) Event Hub SAS Policy.  You can accept the default, as the Event Hub SAS Policy name needs only to be unique within a unique Event Hub Namespace.
+
+19. Check the *I agree to the terms and conditions stated above* checkbox.
+
+20. Click *Purchase*.
+
+## Troubleshooting
+
+
+
+## Caveats
+
+### Location
+Some Azure services rely on all participating Azure components being located in the same region.  The way this template is currently coded, it's required to use West US for all location variables is mandatory.  If this is showstopping for you, please fork the repo, and edit any hardcoded "West US" values in the template to the locations you desire, and then be sure the form values match when deploying.
+
+If you have trouble figuring this out for a production deployment, please contact us at support@pubnub.com, we'd be happy to assist.
+
+### Using Stream Analytics as an Egress Event Hub Input
+If you are using Stream Analytics as an input to the Egress Event Hub, from within the Azure Portal, when configuring the Stream Analytics output sink, there is a field for "Format". The default is "Line Separated".  Be sure to change this to "Array", otherwise you may get strange output (what appears to look like byte array output, similar to type":"Buffer","data":[123,34,116,101,120,116...) on the PubNub publisher-side.
+
+### Provisioning Listener
+If you are using the Provisioning Listener script, and you are using your own PubNub keys (not the default demo keys), be sure to change the *PNSubscribeKey* value located in the provisioningListener.js script (https://github.com/pubnub/azureEventHubBridge/blob/master/monitoring/provisioningListener.js#L8) to the same value you set in the Azure Web GUI deploy script for the *PubNub Subscribe Key*.  
+
+
+
+
