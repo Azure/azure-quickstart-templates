@@ -13,32 +13,29 @@ var PNSubscribeKey = process.env['CUSTOMCONNSTR_PNSubscribeKey'];
 
 // Azure Vars
 
-var EHInConnectionString  = process.env['CUSTOMCONNSTR_EHInConnectionString'];
+var EHInConnectionString = process.env['CUSTOMCONNSTR_EHInConnectionString'];
 var EHOutConnectionString = process.env['CUSTOMCONNSTR_EHOutConnectionString'];
 
 if (!PNSubChannel || !PNPubChannel || !PNAnnounceChannel || !PNPublishKey || !PNSubscribeKey) {
 
     console.log("Error: Missing required vars!");
-    console.log(process.env);
-
-    PNSubChannel =   "pnInput";
-    PNPubChannel =   "pnOutput";
-    PNAnnounceChannel = "pnAnnounce";
-    PNPublishKey =   "demo-36";
-    PNSubscribeKey = "demo-36";
-
-    //EHInConnectionString  = "Endpoint=sb://pn-eventhub-1fba54e9.servicebus.windows.net/;SharedAccessKeyName=infromsubscriberhub;SharedAccessKey=czNb0gZMBkSzgZsRgO8CGcicTfaOV3FK4xdH92IaJKU=;EntityPath=infromsubscriberhub";
-    //EHOutConnectionString  = "Endpoint=sb://pn-eventhub-1fba54e9.servicebus.windows.net/;SharedAccessKeyName=infromsubscriberhub;SharedAccessKey=vKj52NwjhvO88U9CoXEbMW0O/TPw8NE5tuP0mZFzIo0=;EntityPath=infromsubscriberhub";
-
+    dumpVars();
+    process.exit();
 }
 
-console.log(PNSubChannel);
-console.log(PNPubChannel);
-console.log(PNPublishKey);
-console.log(PNSubscribeKey);
-console.log(EHInConnectionString);
-console.log(EHOutConnectionString);
-//console.log(process.env);
+function dumpVars() {
+    console.log("PNSubChannel: ", PNSubChannel);
+    console.log("PNPubChannel: ", PNPubChannel);
+    console.log("PNPublishKey: ", PNPublishKey);
+    console.log("PNSubscribeKey: ", PNSubscribeKey);
+    console.log("EHInConnectionString: ", EHInConnectionString);
+    console.log("EHOutConnectionString: ", EHOutConnectionString);
+    console.log();
+    console.log("Env Process Dump:");
+    console.log();
+    console.log(process.env);
+}
+dumpVars();
 
 var uuid = "webjob-" + (Math.random() * 1000);
 console.log("Setting UUID to " + uuid);
@@ -50,7 +47,7 @@ var pubnub = require("pubnub")({
     uuid: uuid
 });
 
-var PNPublish = function(ehEvent) {
+var PNPublish = function (ehEvent) {
     console.log('Event Received from EHOutClient, Publishing via PubNub: ');
     console.log(JSON.stringify(ehEvent.body));
     console.log("");
@@ -82,7 +79,7 @@ EHInClient.open()
 
 // Create the sender, and then, subscribe via PN, forwarding all messages to this new subscriber to the sender.
 
-EHInClient.createSender().then(function(sender){
+EHInClient.createSender().then(function (sender) {
     pubnub.subscribe({
         channel: PNSubChannel,
         message: function (message) {
@@ -91,16 +88,17 @@ EHInClient.createSender().then(function(sender){
         }
     });
 
-    // In Production, you may wish to either PAM Protect the Sub Channel, or this or remove it completely. Its handy for development and demos.
+    if (PNAnnounceChannel && PNAnnounceChannel != "disabled") {
 
-    pubnub.state({
-        channel: PNAnnounceChannel,
-        state: {
-            EHInConnectionString: EHInConnectionString,
-            EHOutConnectionString: EHOutConnectionString
-        }
-    });
+        pubnub.state({
+            channel: PNAnnounceChannel,
+            state: {
+                EHInConnectionString: EHInConnectionString,
+                EHOutConnectionString: EHOutConnectionString
+            }
+        });
 
+    }
 
 });
 
@@ -112,7 +110,7 @@ EHOutClient.open()
     .then(EHOutClient.getPartitionIds.bind(EHOutClient))
     .then(function (partitionIds) {
         return Promise.map(partitionIds, function (partitionId) {
-            return EHOutClient.createReceiver('$Default', partitionId, { 'startAfterTime' : receiveAfterTime}).then(function (receiver) {
+            return EHOutClient.createReceiver('$Default', partitionId, {'startAfterTime': receiveAfterTime}).then(function (receiver) {
                 receiver.on('errorReceived', printError);
                 receiver.on('message', PNPublish);
             });
