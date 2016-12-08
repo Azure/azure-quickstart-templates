@@ -1,0 +1,345 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    
+    "notificationsServiceName": {
+      "type": "string",
+      "defaultValue": "fn-notify-svc",
+      "metadata": {
+        "description": "The name of the function app that is used to pipe notifications."
+      }
+    },
+    "hostingPlanName": {
+      "type": "string",
+      "defaultValue": "fn-hosting-plan",
+      "metadata": {
+        "description": "The name of the App Service plan to use for hosting the function app."
+      }
+    },
+    "sku": {
+      "type": "string",
+      "allowedValues": [
+        "F1",
+        "D1",
+        "B1",
+        "B2",
+        "B3",
+        "S1",
+        "S2",
+        "S3",
+        "P1",
+        "P2",
+        "P3",
+        "P4"
+      ],
+      "defaultValue": "S1",
+      "metadata": {
+        "description": "The pricing tier for the hosting plan."
+      }
+    },
+
+    "storageAccountName": {
+      "type": "string",
+      "defaultValue": "storm-store",
+      "metadata": {
+        "description": "The name of the storage account which hosts the storm physical storage."
+      }
+    },
+    "storageAccountType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_GRS",
+        "Standard_ZRS",
+        "Premium_LRS"
+      ],
+      "metadata": {
+        "description": "Storage Account type"
+      }
+    },
+
+    "iotHubName": {
+      "type": "string",
+      "defaultValue": "storm-iothub",
+      "minLength": 3,
+      "metadata": {
+        "description": "Name of the IoT Hub instance to provision."
+      }
+    },
+    "iotSKUName": {
+      "type": "string",
+      "allowedValues": [
+        "F1",
+        "S1",
+        "S2"
+      ],
+      "defaultValue": "F1",
+      "metadata": {
+        "description": "One of the supported SKUs: F1, S1 or S2"
+      }
+    },
+    "iotCapacityUnits": {
+      "type": "int",
+      "minValue": 1,
+      "defaultValue": 1,
+      "metadata": {
+        "description": "Number of desired IoT Hub units. Restricted to 1 unit for F1. Can be set up to maximum number allowed for subscription."
+      }
+    },
+    "iotMessageRetentionInDaysPeriod": {
+      "type": "int",
+      "minValue": 1,
+      "maxValue": 7,
+      "defaultValue": 1,
+      "metadata": {
+        "description": "Retention time in days for device-to-cloud messages."
+      }
+    },
+    "iotPartitionCount": {
+      "type": "int",
+      "minValue": 2,
+      "defaultValue": 2,
+      "metadata": {
+        "description": "Number of desired partitions for device-to-cloud event ingestion."
+      }
+    },
+    "iotMessagesTTLAsIso8601": {
+      "type": "string",
+      "defaultValue": "PT1H",
+      "metadata": {
+        "description": "Default TTL in ISO_8601 format for cloud-to-device messages. The value can range from PT1M to PT2D (or any other format as per ISO_8601 standards for duration)."
+      }
+    },
+    "iotMessagesMaxDeliveryCount": {
+      "type": "int",
+      "minValue": 1,
+      "maxValue": 100,
+      "defaultValue": 10,
+      "metadata": {
+        "description": "Maximum delivery count for cloud-to-device messages per-device queues."
+      }
+    },
+    "iotFeebackMessagesTTLAsIso8601": {
+      "type": "string",
+      "defaultValue": "PT1H",
+      "metadata": {
+        "description": "TTL in ISO_8601 format for service-bound feedback messages. The value can range from PT1M to PT2D (or any other format as per ISO_8601 standards for duration)."
+      }
+    },
+    "iotFeedbackMessagesMaxDeliveryCount": {
+      "type": "int",
+      "minValue": 1,
+      "maxValue": 100,
+      "defaultValue": 10,
+      "metadata": {
+        "description": "Maximum delivery count for feedback queue."
+      }
+    },
+    "iotFeedbackMessagesLockDurationAsIso8601": {
+      "type": "string",
+      "defaultValue": "PT60S",
+      "metadata": {
+        "description": "Lock duration in ISO_8601 format for service-bound feedback messages. The value can range from PT5S to PT300S (or any other format as per ISO_8601 standards for duration)."
+      }
+    },
+
+    "stormClusterName": {
+      "type": "string",
+      "defaultValue": {
+        "description": "The name for the storm cluster."
+      }
+    },
+    "stormClusterLoginUserName": {
+      "type": "string",
+      "defaultValue": "admin",
+      "metadata": {
+        "description": "These credentials can be used to submit jobs to the cluster and to log into cluster dashboards."
+      }
+    },
+    "stormClusterLoginPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The password must be at least 10 characters in length and must contain at least one digit, one non-alphanumeric character, and one upper or lower case letter."
+      }
+    },
+    "stormRDPUserName": {
+      "type": "string",
+      "defaultValue": "Amir",
+      "metadata": {
+        "description": "These credentials can be used to submit jobs to the cluster and to log into cluster dashboards."
+      }
+    },
+    "stormRDPPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The password must be at least 10 characters in length and must contain at least one digit, one non-alphanumeric character, and one upper or lower case letter."
+      }
+    }
+  },
+  "variables": {
+    "location": "[resourceGroup().location]",
+    "vNet": {
+      "name": "[concat(parameters('stormClusterName'),'-vnet')]",
+      "addressSpacePrefix": "10.0.0.0/16",
+      "subnetName": "subnet1",
+      "subnetPrefix": "10.0.0.0/24",
+      "id": "[resourceId('Microsoft.Network/virtualNetworks', concat(parameters('stormClusterName'),'-vnet'))]",
+      "subnet": "[concat(resourceId('Microsoft.Network/virtualNetworks', concat(parameters('stormClusterName'),'-vnet')), '/subnets/subnet1')]"
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[parameters('storageAccountName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[variables('location')]",
+      "properties": {
+        "accountType": "[parameters('storageAccountType')]"
+      }
+    },
+
+    {
+      "name": "[parameters('stormClusterName')]",
+      "type": "Microsoft.HDInsight/clusters",
+      "location": "[variables('location')]",
+      "apiVersion": "2015-03-01-preview",
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/',parameters('storageAccountName'))]"
+      ],
+      "tags": { },
+      "properties": {
+        "clusterVersion": "3.3",
+        "osType": "Windows",
+        "clusterDefinition": {
+          "kind": "storm",
+          "configurations": {
+            "gateway": {
+              "restAuthCredential.isEnabled": true,
+              "restAuthCredential.username": "[parameters('stormClusterLoginUserName')]",
+              "restAuthCredential.password": "[parameters('stormClusterLoginPassword')]"
+            }
+          }
+        },
+        "storageProfile": {
+          "storageaccounts": [
+            {
+              "name": "[concat(parameters('storageAccountName'),'.blob.core.windows.net')]",
+              "isDefault": true,
+              "container": "[parameters('stormClusterName')]",
+              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2015-05-01-preview').key1]"
+            }
+          ]
+        },
+        "computeProfile": {
+          "roles": [
+            {
+              "name": "headnode",
+              "targetInstanceCount": "1",
+              "hardwareProfile": {
+                "vmSize": "Large"
+              },
+              "osProfile": {
+                "windowsOperatingSystemProfile": {
+                  "rdpSettings": {
+                    "username": "[parameters('stormRDPUserName')]",
+                    "password": "[parameters('stormRDPPassword')]",
+                    "expiryDate": "2019-02-26T00:00:00"
+                  }
+                }
+              }
+            },
+            {
+              "name": "workernode",
+              "targetInstanceCount": "2",
+              "hardwareProfile": {
+                "vmSize": "Large"
+              },
+              "osProfile": {
+                "windowsOperatingSystemProfile": {
+                  "rdpSettings": {
+                    "username": "[parameters('stormRDPUserName')]",
+                    "password": "[parameters('stormRDPPassword')]",
+                    "expiryDate": "2019-02-26T00:00:00"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "apiVersion": "2016-02-03",
+      "type": "Microsoft.Devices/iotHubs",
+      "location": "[variables('location')]",
+      "name": "[parameters('iotHubName')]",
+      "properties": {
+        "eventHubEndpoints": {
+          "events": {
+            "retentionTimeInDays": "[parameters('iotMessageRetentionInDaysPeriod')]",
+            "partitionCount": "[parameters('iotPartitionCount')]"
+          }
+        },
+        "cloudToDevice": {
+          "defaultTtlAsIso8601": "[parameters('iotMessagesTTLAsIso8601')]",
+          "maxDeliveryCount": "[parameters('iotMessagesMaxDeliveryCount')]",
+          "feedback": {
+            "maxDeliveryCount": "[parameters('iotFeedbackMessagesMaxDeliveryCount')]",
+            "ttlAsIso8601": "[parameters('iotFeebackMessagesTTLAsIso8601')]",
+            "lockDurationAsIso8601": "[parameters('iotFeedbackMessagesLockDurationAsIso8601')]"
+          }
+        },
+        "location": "[variables('location')]"
+      },
+      "sku": {
+        "capacity": "[parameters('iotCapacityUnits')]",
+        "name": "[parameters('iotSKUName')]"
+      }
+    },
+
+    {
+        "type": "Microsoft.Web/serverfarms",
+        "apiVersion": "2015-04-01",
+        "name": "[parameters('hostingPlanName')]",
+        "location": "[resourceGroup().location]",
+        "properties": {
+            "name": "[parameters('hostingPlanName')]",
+            "computeMode": "Dynamic",
+            "sku": "Dynamic"
+        }
+    },
+    {
+      "apiVersion": "2015-08-01",
+      "type": "Microsoft.Web/sites",
+      "name": "[parameters('notificationsServiceName')]",
+      "location": "[resourceGroup().location]",
+      "kind": "functionapp",
+      "properties": {
+          "name": "[parameters('notificationsServiceName')]",
+          "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanName'))]"
+      },
+      "dependsOn": [
+          "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanName'))]",
+          "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+      ],
+      "resources": [
+        {
+            "apiVersion": "2016-03-01",
+            "name": "appsettings",
+            "type": "config",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', parameters('notificationsServiceName'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]"
+            ],
+            "properties": {
+                "AzureWebJobsStorage": "[concat('DefaultEndpointsProtocol=https;AccountName=',parameters('storageAccountName'),';AccountKey=',listkeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2015-05-01-preview').key1,';')]", 
+                "AzureWebJobsDashboard": "[concat('DefaultEndpointsProtocol=https;AccountName=',parameters('storageAccountName'),';AccountKey=',listkeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2015-05-01-preview').key1,';')]", 
+                "FUNCTIONS_EXTENSION_VERSION": "latest"
+            }
+        }
+      ]
+    }
+  ]
+}
