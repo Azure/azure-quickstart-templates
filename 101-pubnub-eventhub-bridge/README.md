@@ -1,7 +1,7 @@
 #  PubNub Realtime Gateway for Azure
 
 ## What does it do?
-The PubNub Realtime Gateway for Azure provides a Realtime data stream bridge between the PubNub Data Stream Network, and Azure Event Hubs. -- consider it a bi-directional bridge between PubNub and Azure Event Hubs!
+The PubNub Realtime Gateway for Azure provides a realtime data stream bridge between the PubNub Data Stream Network, and Azure Event Hubs. -- consider it a bi-directional bridge between PubNub and Azure Event Hubs!
 
 If you need to:
 
@@ -118,34 +118,116 @@ You can now monitor all incoming and outgoing PubNub traffic traversing through 
 
 You can also Publish test traffic on the "Ingress" console to send sample data through the system.
 
-### Monitoring Ingress Event Hub Traffic
-To gain visibility into what is being sent into the ingress and egress Event Hubs, there are two ways to achieve this:
+### Monitoring and Debugging Event Hub Traffic with provisioningListener.js
+To gain visibility into what is being sent into the ingress and egress Event Hubs, use the provisioningListener.js script.
 
-#### Manual Configuration using inputEHMonitor.js and outputEHMonitor.js
-1. Change directory (cd) to the *monitoring* directory
-2. run *npm install*
-3. Edit inputEHMonitor.js and set the connection string to that of the *Azure Ingress SAS Policy* on the Azure Ingress Event Hub (get this value from the Azure Portal after it has completed the Gateway's Event Hub deployment)
-4. Edit outputEHMonitor.js and set the connection string to that of the *Azure Egress SAS Policy* on the Azure Egress Event Hub (get this value from the Azure Portal after it has completed the Gateway's Event Hub deployment)
-5. Run *node inputEHMonitor.js* and *outputEHMonitor.js* to monitor the Gateway's Event Hub traffic.
+Run ```node provisioningListener.js``` to get general usage info:
 
-#### Using the Provisioning Listener
+```
+gcohen@(master):~/azureSubscribeBridge/monitoring$ node provisioningListener.js
+
+Usage: node provisioningListener.js MODE OPTIONS
+
+MODE can be either provision or monitor
+When MODE is provision, OPTIONS are the announcement channel and subscribe key to listen on.
+When MODE is monitor, OPTIONS are the ingress and egress connection strings to listen on.
+
+Examples:
+node provisioningListener.js provision pnAnnounce sub-abc-123
+
+node provisioningListener.js monitor "Endpoint=sb://foo-eventhub.servicebus.windows.net/;SharedAccessKeyName=infromsubscriberhub;SharedAccessKey=FY8E/gU4o=;EntityPath=infromsubscriberhub"  "Endpoint=sb://bar-eventhub.servicebus.windows.net/;SharedAccessKeyName=outtopnpublisherhub;SharedAccessKey=FY8E/gU4o=;EntityPath=outtopnpublisher"
+```
+
+There are three modes of operation: provision, monitor, and disabled.
+
+#### Provision
+When you are first deploying the PubNub/Azure bridge, run the script in *provision* mode.  This will autodetect and autoconfigure listeners to the two Event Hubs (ingress and egress) that the ARM Template creates.  It will leave you with a command line to use later to reconnect to these Event Hubs from the same script (in monitor mode.)
+
+For example, let's say we're about to provisioned with this configuration:
+
+<img src="https://s3.amazonaws.com/pubnub/pubnub-eventhub-bridge/provdemo.png"/>
+
+Based on what we're about to submit, our announce channel is pnAnnounce, and our subscribe key is *demo*.  Based on this information, we'd first run our provisioningListener.js script with these values:
+
+```
+node provisioningListener.js provision pnAnnounce demo
+```
+
+Then, once the provisioningListener,js script is running, begin the deployment by clicking *Purchase* in the web-based ARM Template. 
+
+Once the deployment has completed, it will "announce" itself via the announce channel, and the provisioningListener.js script will autoconfigure based on the values sent in the announcement message:
+
+```
+gcohen@(master):~/clients/azureSubscribeBridge/monitoring$ node provisioningListener.js provision pnAnnounce demo
+
+provision mode detected.
+
+Subscribe Key:  demo
+Announce Channel:  pnAnnounce
+
+Setting UUID to provisioning-712.101484881714
+
+Listening for new PN/Azure Web Job Announce...
+
+Received auto-provisioning payload from webjob-953.5124835092574
+
+In the future, use the below command to monitor these Event Hubs:
+
+node provisioningListener.js monitor "Endpoint=sb://pn-eventhub-1fba54e9545.servicebus.windows.net/;SharedAccessKeyName=infromsubscriberhub;SharedAccessKey=fECC7E0hbfZFcZggrKPasgJbq1odY7LoLB6ll6xlHcA=;EntityPath=infromsubscriberhub" "Endpoint=sb://pn-eventhub-1fba54e9545.servicebus.windows.net/;SharedAccessKeyName=outtopublisherhub;SharedAccessKey=qmQZZYr2xvM+umHX7VFbim7UwCplTM9+naSDW6QHLaA=;EntityPath=outtopnpublisher"
+
+Ingress Event Hub Connection String:  Endpoint=sb://pn-eventhub-1fba54e9545.servicebus.windows.net/;SharedAccessKeyName=infromsubscriberhub;SharedAccessKey=fECC7E0hbfZFcZggrKPasgJbq1odY7LoLB6ll6xlHcA=;EntityPath=infromsubscriberhub
+
+Egress Event Hub Connection String:  Endpoint=sb://pn-eventhub-1fba54e9545.servicebus.windows.net/;SharedAccessKeyName=outtopublisherhub;SharedAccessKey=qmQZZYr2xvM+umHX7VFbim7UwCplTM9+naSDW6QHLaA=;EntityPath=outtopnpublisher
+
+Waiting for messages to arrive via Event Hubs...
+
+Message Received on Ingress Event Hub:   : {"guess what?":"this message arrived via PubNub into the ingress Event Hub!"}
+```
 
 
+In addition, a handy re-usable command line (to copy and paste later) is displayed to use to reconnect to the Event Hubs any time:
+
+#### Monitor
+To connect back to the Event Hubs anytime, just use the command line provided at provision-time:
+
+```
+gcohen@(master):~/azureSubscribeBridge/monitoring$ node provisioningListener.js monitor "Endpoint=sb://pn-eventhub-1fba54e9545.servicebus.windows.net/;SharedAccessKeyName=infromsubscriberhub;SharedAccessKey=fECC7E0hbfZFcZggrKPasgJbq1odY7LoLB6ll6xlHcA=;EntityPath=infromsubscriberhub" "Endpoint=sb://pn-eventhub-1fba54e9545.servicebus.windows.net/;SharedAccessKeyName=outtopublisherhub;SharedAccessKey=qmQZZYr2xvM+umHX7VFbim7UwCplTM9+naSDW6QHLaA=;EntityPath=outtopnpublisher"
+
+monitor mode detected.
+
+Ingress Event Hub Connection String:  Endpoint=sb://pn-eventhub-1fba54e9545.servicebus.windows.net/;SharedAccessKeyName=infromsubscriberhub;SharedAccessKey=fECC7E0hbfZFcZggrKPasgJbq1odY7LoLB6ll6xlHcA=;EntityPath=infromsubscriberhub
+
+Egress Event Hub Connection String:  Endpoint=sb://pn-eventhub-1fba54e9545.servicebus.windows.net/;SharedAccessKeyName=outtopublisherhub;SharedAccessKey=qmQZZYr2xvM+umHX7VFbim7UwCplTM9+naSDW6QHLaA=;EntityPath=outtopnpublisher
+
+Waiting for messages to arrive via Event Hubs...
+
+Message Received on Ingress Event Hub:   : {"oh yeah?":"so did this one!"}
+```
+
+#### Disable Provisioning Announcements
+To be sure the bridge never announces it's configuration, just enter *disabled* for the value of PubNub Announce Channel in the ARM Template web form.  With *disabled* as the value, the bridge will never broadcast it's configuration out to any channel.
 
 ## Caveats
+
+### Provisioning Script
+If you have not explicitly disabled the provisioning script, it will continue to announce it's Event Hub configuration each time the script is restarted.  A script will restart not only manually, but also if for any reason it crashes (Azure Web Jobs automatically will try to restart it.)
+
+##### Security
+For security purposes, the provisioningListener.js script should only be used in development, non-production environments.  
+
+For production environments, set *disabled* for the PubNub Announcement Channel value to disable broadcast of the Event Hub information, and grab the connection string info manually via the Azure Portal's Web Job configuration (either by command line or web gui.)
+
+##### Delays
+Although Azure may state the deployment has completed, there may be a delay in the provisioningListener.js script announcing the configuration information.  This can be due to not only asyncronous Azure deployment processes completing, including the npm install process which must run, and install supporting Node.js libraries.
+
 
 ### Location
 Some Azure services rely on all participating Azure components being located in the same region.  The way this template is currently coded, it's required to use West US for all location variables is mandatory.  If this is showstopping for you, please fork the repo, and edit any hardcoded "West US" values in the template to the locations you desire, and then be sure the form values match when deploying.
 
-If you have trouble figuring this out for a production deployment, please contact us at support@pubnub.com, we'd be happy to assist.
+If you have trouble figuring this out for a project, please contact us at support@pubnub.com, we'd be happy to assist.
 
 ### Using Stream Analytics as an Egress Event Hub Input
 If you are using Stream Analytics as an input to the Egress Event Hub, from within the Azure Portal, when configuring the Stream Analytics output sink, there is a field for "Format". The default is "Line Separated".  Be sure to change this to "Array", otherwise you may get strange output (what appears to look like byte array output, similar to type":"Buffer","data":[123,34,116,101,120,116...) on the PubNub publisher-side.
 
-### Provisioning Listener
-If you are using the Provisioning Listener script, and you are using your own PubNub keys (not the default demo keys), be sure to change the *PNSubscribeKey* value located in the provisioningListener.js script (https://github.com/pubnub/azureEventHubBridge/blob/master/monitoring/provisioningListener.js#L8) to the same value you set in the Azure Web GUI deploy script for the *PubNub Subscribe Key*.  
-
-### TODO: Disable PubNub Announce
-### TODO: Provisioning Listner takes command line subscribe key
 
 
