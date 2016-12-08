@@ -1,7 +1,7 @@
-#  PubNub Realtime Gateway for Azure
+#  PubNub Realtime Gateway for Azure Event Hubs
 
 ## What does it do?
-The PubNub Realtime Gateway for Azure provides a realtime data stream bridge between the PubNub Data Stream Network, and Azure Event Hubs. -- consider it a bi-directional bridge between PubNub and Azure Event Hubs!
+The PubNub Realtime Gateway for Azure provides a realtime data stream bridge between the PubNub Data Stream Network and Azure Event Hubs. -- consider it a bi-directional bridge between PubNub and Azure!
 
 If you need to:
 
@@ -10,10 +10,16 @@ If you need to:
 
 Then this is the ARM template for you!
 
+Tags: ``Event Hubs, Event Hub, Realtime, PubNub, PubSub, Pub/Sub, Publish/Subscribe, Node.js, Web Jobs``
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fpubnub%2FazureEventHubBridge%2Fmaster%2Fdeploy%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fazuredeploy.json" target="_blank">
+    <img src="http://azuredeploy.net/deploybutton.png"/>    
 </a>
+
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fazuredeploy.json">
+    <img src="https://camo.githubusercontent.com/536ab4f9bc823c2e0ce72fb610aafda57d8c6c12/687474703a2f2f61726d76697a2e696f2f76697375616c697a65627574746f6e2e706e67" data-canonical-src="http://armviz.io/visualizebutton.png" style="max-width:100%;">
+</a>
+
 
 ## What does it deploy?
 * PubNub/Azure gateway script writing in Node.js
@@ -46,6 +52,10 @@ The Egress Event Hub should serve as an "Output" from Azure Cloud services of yo
 
 
 ## How to Deploy
+
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fazuredeploy.json" target="_blank">
+    <img src="http://azuredeploy.net/deploybutton.png"/>
+</a>
 
 1. Be sure you are logged in to <a href="https://portal.azure.com">https://portal.azure.com</a>
 2. Click one of the conveniently placed "Deploy to Azure" buttons on this page.
@@ -229,5 +239,7 @@ If you have trouble figuring this out for a project, please contact us at suppor
 ### Using Stream Analytics as an Egress Event Hub Input
 If you are using Stream Analytics as an input to the Egress Event Hub, from within the Azure Portal, when configuring the Stream Analytics output sink, there is a field for "Format". The default is "Line Separated".  Be sure to change this to "Array", otherwise you may get strange output (what appears to look like byte array output, similar to type":"Buffer","data":[123,34,116,101,120,116...) on the PubNub publisher-side.
 
+### Support
+Questions about using this ARM Template?  Contact us at support@pubnub.com!
 
 
