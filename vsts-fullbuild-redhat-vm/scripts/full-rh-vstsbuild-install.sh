@@ -93,13 +93,37 @@ ln -s /usr/local/git/bin/git /usr/bin/git
 
 /bin/date +%H:%M:%S >> /home/$5/install.progress.txt
 
+# Install Docker Engine and Docker Compose
+echo "Installing Docker Engine and Docker Compose" >> /home/$5/install.progress.txt
+yum update -y >> /home/$5/install.out.txt 2>&1
+
+echo [dockerrepo] > /etc/yum.repos.d/docker.repo
+echo name=Docker Repository >> /etc/yum.repos.d/docker.repo
+echo baseurl=https://yum.dockerproject.org/repo/main/centos/7/ >> /etc/yum.repos.d/docker.repo
+echo enabled=1 >> /etc/yum.repos.d/docker.repo
+echo gpgcheck=1 >> /etc/yum.repos.d/docker.repo
+echo gpgkey=https://yum.dockerproject.org/gpg >> /etc/yum.repos.d/docker.repo
+
+yum install -y docker-engine >> /home/$5/install.out.txt 2>&1
+systemctl enable docker.service >> /home/$5/install.out.txt 2>&1
+systemctl start docker >> /home/$5/install.out.txt 2>&1
+systemctl enable docker >> /home/$5/install.out.txt 2>&1
+groupadd docker >> /home/$5/install.out.txt 2>&1
+usermod -aG docker $5 >> /home/$5/install.out.txt 2>&1
+
+curl -L https://github.com/docker/compose/releases/download/1.9.0/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose >> /home/$5/install.out.txt 2>&1
+
+/bin/date +%H:%M:%S >> /home/$5/install.progress.txt
+
+
 # Download VSTS build agent and required security patch
 
 echo "Downloading VSTS Build agent package" >> /home/$5/install.progress.txt
 
 cd /home/$5/downloads
 
-wget https://github.com/Microsoft/vsts-agent/releases/download/v2.109.1/vsts-agent-rhel.7.2-x64-2.109.1.tar.gz >> /home/$5/install.out.txt 2>&1
+wget https://github.com/Microsoft/vsts-agent/releases/download/v2.109.2/vsts-agent-rhel.7.2-x64-2.109.2.tar.gz >> /home/$5/install.out.txt 2>&1
 
 /bin/date +%H:%M:%S >> /home/$5/install.progress.txt
 

@@ -15,7 +15,8 @@ This template allows you to create multiple (1 or more) Red Hat VMs with a full 
 * Gnu C and C++ along with make;
 * Perl, Python, Ruby and Ruby on Rails;
 * .NET;
-* go; and
+* go;
+* Docker Engine and Docker Compose; and
 * the VSTS CoreCLR Linux Build Agent. 
 (Build Agent available here: https://github.com/Microsoft/vsts-agent).
 
