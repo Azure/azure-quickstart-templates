@@ -104,13 +104,13 @@ sudo /bin/date +%H:%M:%S >> /home/$5/install.progress.txt
 sudo -u $5 mkdir /home/$5/downloads
 sudo -u $5 mkdir /home/$5/lib
 
-# Install .NET
+# Install last release of .NET Core
 echo "Installing .NET" >> /home/$5/install.progress.txt
 sudo -u $5 mkdir /home/$5/lib/dotnet
 cd /home/$5/downloads
-sudo -u $5 wget https://dotnetcli.blob.core.windows.net/dotnet/preview/Binaries/1.0.0-preview2-002875/dotnet-dev-ubuntu-x64.1.0.0-preview2-002875.tar.gz
+sudo -u $5 wget https://dotnetcli.blob.core.windows.net/dotnet/preview/Binaries/Latest/dotnet-ubuntu.16.04-x64.latest.tar.gz
 cd /home/$5/lib/dotnet
-sudo -u $5 tar zxfv /home/$5/downloads/dotnet-dev-ubuntu-x64.1.0.0-preview2-002875.tar.gz
+sudo -u $5 tar zxfv /home/$5/downloads/dotnet-ubuntu.16.04-x64.latest.tar.gz
 sudo /bin/date +%H:%M:%S >> /home/$5/install.progress.txt
 
 
