@@ -53,13 +53,15 @@
       "name": "[concat(parameters('clusterNamePrefix'),'-vnet1')]",
       "addressSpacePrefix": "10.1.0.0/16",
       "subnetName": "subnet1",
-      "subnetPrefix": "10.1.0.0/24"
+      "subnetPrefix": "10.1.0.0/24",
+      "peeringName": "vnet1-to-vnet2"
     },
     "vNet2":{
       "name": "[concat(parameters('clusterNamePrefix'),'-vnet2')]",
       "addressSpacePrefix": "10.2.0.0/16",
       "subnetName": "subnet1",
-      "subnetPrefix": "10.2.0.0/24"
+      "subnetPrefix": "10.2.0.0/24",
+      "peeringName": "vnet2-to-vnet1"
     }
   },
   "resources": [
@@ -105,6 +107,45 @@
         ]
       }
     },
+
+    {
+      "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+      "name": "[variables('vNet1').peeringName]",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-06-01",
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/',variables('vNet1').name)]",
+        "[concat('Microsoft.Network/virtualNetworks/',variables('vNet2').name)]"
+      ],
+      "properties": {
+        "allowVirtualNetworkAccess": true,
+        "allowForwardedTraffic": false,
+        "allowGatewayTransit": false,
+        "useRemoteGateways": false,
+        "remoteVirtualNetwork": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('vNet2').name)]"       
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+      "name": "[variables('vNet2').peeringName]",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-06-01",
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/',variables('vNet1').name)]",
+        "[concat('Microsoft.Network/virtualNetworks/',variables('vNet2').name)]"
+      ],
+      "properties": {
+        "allowVirtualNetworkAccess": true,
+        "allowForwardedTraffic": false,
+        "allowGatewayTransit": false,
+        "useRemoteGateways": false,
+        "remoteVirtualNetwork": {
+          "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('vNet1').name)]"       
+        }
+      }
+    },   
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('clusterNode1').defaultStorageAccount.name]",
@@ -317,7 +358,14 @@
       "type": "object",
       "value": "[reference(resourceId('Microsoft.Network/virtualNetworks',variables('vNet2').name))]"
     },
-    "cluster1": {
+    "vnet1Peering": {
+      "type": "object",
+      "value": "[reference(resourceId('Microsoft.Network/virtualNetworks/virtualNetworkPeerings',variables('vNet1').peeringName))]"
+    },
+    "vnet2Peering": {
+      "type": "object",
+      "value": "[reference(resourceId('Microsoft.Network/virtualNetworks/virtualNetworkPeerings',variables('vNet2').peeringName))]"
+    },    "cluster1": {
       "type": "object",
       "value": "[reference(resourceId('Microsoft.HDInsight/clusters',variables('clusterNode1').name))]"
     },
