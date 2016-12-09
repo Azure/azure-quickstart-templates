@@ -2,7 +2,6 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-
         "publicIPAddressNameChefServer": {
             "defaultValue": "",
             "type": "String"
@@ -115,14 +114,16 @@
         "singleQuote": "'",
         "publicIPDomainNameLabelOrchServer": "[concat('http://',parameters('publicIPDomainNameLabelOrchServer'),'.',parameters('location'),'.cloudapp.azure.com:33001/key')]"
     },
-    "resources": [{
+    "resources": [
+        {
             "type": "Microsoft.Compute/virtualMachines",
             "name": "[parameters('vmNameChefServer')]",
             "apiVersion": "[parameters('compute-api-version')]",
             "location": "[parameters('location')]",
             "tags": {
                 "program": "[parameters('tagvalues').program]",
-                "project": "[parameters('tagvalues').project]"
+                "project": "[parameters('tagvalues').project]",
+                "provider": "[parameters('tagvalues').provider]"
             },
             "plan": {
                 "name": "[parameters('offerChoosedChefServer').vmSku]",
@@ -160,26 +161,29 @@
                     "adminPassword": "[parameters('vmAdminPasswordChefServer')]"
                 },
                 "networkProfile": {
-                    "networkInterfaces": [{
-                        "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaceNameChefServer'))]"
-                    }]
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaceNameChefServer'))]"
+                        }
+                    ]
                 }
             },
             "dependsOn": [
                 "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaceNameChefServer'))]"
             ]
-        }, {
+        },
+        {
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "name": "[concat(parameters('vmNameChefServer'),'/', 'chefServerSetup')]",
             "apiVersion": "[parameters('compute-api-version')]",
             "location": "[parameters('location')]",
             "tags": {
                 "program": "[parameters('tagvalues').program]",
-                "project": "[parameters('tagvalues').project]"
+                "project": "[parameters('tagvalues').project]",
+                "provider": "[parameters('tagvalues').provider]"
             },
             "dependsOn": [
                 "[concat('Microsoft.Compute/virtualMachines/', parameters('vmNameChefServer'))]"
-
             ],
             "properties": {
                 "publisher": "Microsoft.Azure.Extensions",
@@ -193,28 +197,32 @@
                     "commandToExecute": "[concat('bash chefserver.sh ', parameters('chefUserName'), ' ',parameters('chefUserFirstName'), ' ', parameters('chefUserLastName'), ' ',  parameters('chefUserEmail'), ' ',variables('singleQuote'), parameters('chefUserPassword'),variables('singleQuote'),' ',parameters('chefOrgShortName'),' ',variables('singleQuote'),parameters('chefOrgFullName'),variables('singleQuote'),' ',variables('publicIPDomainNameLabelOrchServer'))]"
                 }
             }
-        }, {
+        },
+        {
             "type": "Microsoft.Network/networkInterfaces",
             "name": "[parameters('networkInterfaceNameChefServer')]",
             "apiVersion": "[parameters('network-api-version')]",
             "location": "[parameters('location')]",
             "tags": {
                 "program": "[parameters('tagvalues').program]",
-                "project": "[parameters('tagvalues').project]"
+                "project": "[parameters('tagvalues').project]",
+                "provider": "[parameters('tagvalues').provider]"
             },
             "properties": {
-                "ipConfigurations": [{
-                    "name": "ipconfig1",
-                    "properties": {
-                        "privateIPAllocationMethod": "Dynamic",
-                        "publicIPAddress": {
-                            "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddressNameChefServer'))]"
-                        },
-                        "subnet": {
-                            "id": "[parameters('subnet2Ref')]"
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddressNameChefServer'))]"
+                            },
+                            "subnet": {
+                                "id": "[parameters('subnet2Ref')]"
+                            }
                         }
                     }
-                }],
+                ],
                 "dnsSettings": {
                     "dnsServers": []
                 },
@@ -225,78 +233,86 @@
             },
             "dependsOn": [
                 "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPAddressNameChefServer'))]",
-
                 "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupNameChefServer'))]"
             ]
-        }, {
+        },
+        {
             "type": "Microsoft.Network/networkSecurityGroups",
             "name": "[parameters('networkSecurityGroupNameChefServer')]",
             "apiVersion": "[parameters('network-api-version')]",
             "location": "[parameters('location')]",
             "tags": {
                 "program": "[parameters('tagvalues').program]",
-                "project": "[parameters('tagvalues').project]"
+                "project": "[parameters('tagvalues').project]",
+                "provider": "[parameters('tagvalues').provider]"
             },
             "properties": {
-                "securityRules": [{
-                    "name": "ssh",
-                    "properties": {
-                        "protocol": "Tcp",
-                        "sourcePortRange": "*",
-                        "destinationPortRange": "22",
-                        "sourceAddressPrefix": "*",
-                        "destinationAddressPrefix": "*",
-                        "access": "Allow",
-                        "priority": 1010,
-                        "direction": "Inbound"
+                "securityRules": [
+                    {
+                        "name": "ssh",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "22",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1010,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "http",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "80",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1020,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "https",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "443",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1030,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "https8443",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "8443",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1040,
+                            "direction": "Inbound"
+                        }
                     }
-                }, {
-                    "name": "http",
-                    "properties": {
-                        "protocol": "Tcp",
-                        "sourcePortRange": "*",
-                        "destinationPortRange": "80",
-                        "sourceAddressPrefix": "*",
-                        "destinationAddressPrefix": "*",
-                        "access": "Allow",
-                        "priority": 1020,
-                        "direction": "Inbound"
-                    }
-                }, {
-                    "name": "https",
-                    "properties": {
-                        "protocol": "Tcp",
-                        "sourcePortRange": "*",
-                        "destinationPortRange": "443",
-                        "sourceAddressPrefix": "*",
-                        "destinationAddressPrefix": "*",
-                        "access": "Allow",
-                        "priority": 1030,
-                        "direction": "Inbound"
-                    }
-                }, {
-                    "name": "https8443",
-                    "properties": {
-                        "protocol": "Tcp",
-                        "sourcePortRange": "*",
-                        "destinationPortRange": "8443",
-                        "sourceAddressPrefix": "*",
-                        "destinationAddressPrefix": "*",
-                        "access": "Allow",
-                        "priority": 1040,
-                        "direction": "Inbound"
-                    }
-                }]
+                ]
             },
             "dependsOn": []
-        }, {
+        },
+        {
             "type": "Microsoft.Network/publicIPAddresses",
             "name": "[parameters('publicIPAddressNameChefServer')]",
             "apiVersion": "[parameters('network-api-version')]",
             "location": "[parameters('location')]",
             "tags": {
                 "program": "[parameters('tagvalues').program]",
-                "project": "[parameters('tagvalues').project]"
+                "project": "[parameters('tagvalues').project]",
+                "provider": "[parameters('tagvalues').provider]"
             },
             "properties": {
                 "publicIPAllocationMethod": "[parameters('publicIPAddressType')]",
@@ -307,12 +323,11 @@
             },
             "dependsOn": []
         }
-
     ],
-"outputs": {
-  "chefserverUri": {
-      "type": "string",
-      "value": "[concat('https://',reference(resourceId('Microsoft.Network/publicIPAddresses',parameters('publicIPAddressNameChefServer'))).dnsSettings.fqdn)]"
+    "outputs": {
+        "chefserverUri": {
+            "type": "string",
+            "value": "[concat('https://',reference(resourceId('Microsoft.Network/publicIPAddresses',parameters('publicIPAddressNameChefServer'))).dnsSettings.fqdn)]"
+        }
     }
-}
 }
