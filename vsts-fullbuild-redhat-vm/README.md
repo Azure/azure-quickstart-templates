@@ -1,13 +1,13 @@
 # VM-Redhat - Team Services Build Agent and Cross-Platform SDKs installation
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fpaultbarham%2Fazure-quickstart-templates%2Fazuremerge%2Fvsts-fullbuild-redhat-vm%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Fvsts-fullbuild-redhat-vm%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fpaultbarham%2Fazure-quickstart-templates%2Fazuremerge%2Fvsts-fullbuild-redhat-vm%2Fazuredeploy.json" target="_blank">
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Fvsts-fullbuild-redhat-vm%2Fazuredeploy.json" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template allows you to create an Red Hat VM with a full cross-platform development environment to support:
+This template allows you to create multiple (1 or more) Red Hat VMs with a full cross-platform development environment to support:
 * OpenJDK 6, 7 and 8; 
 * Ant, Maven and Gradle;
 * npm and nodeJS;
@@ -15,7 +15,8 @@ This template allows you to create an Red Hat VM with a full cross-platform deve
 * Gnu C and C++ along with make;
 * Perl, Python, Ruby and Ruby on Rails;
 * .NET;
-* go; and
+* go;
+* Docker Engine and Docker Compose; and
 * the VSTS CoreCLR Linux Build Agent. 
 (Build Agent available here: https://github.com/Microsoft/vsts-agent).
 

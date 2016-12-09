@@ -14,8 +14,9 @@ This template allows you to create an Ubuntu VM with a full cross-platform devel
 * groovy and gulp;
 * Gnu C and C++ along with make;
 * Perl, Python, Ruby and Ruby on Rails;
-* .NET;
-* go; and
+* latest .NET Core;
+* go; 
+* Docker Engine and Compose; and
 * the VSTS CoreCLR Linux Build Agent. 
 (Build Agent available here: https://github.com/Microsoft/vsts-agent).
 
