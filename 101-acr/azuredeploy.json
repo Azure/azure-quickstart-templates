@@ -1,0 +1,81 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "acrName": {
+      "type": "string",
+      "minLength": 5,
+      "maxLength": 50,
+      "metadata": {
+        "description": "Name of your Azure Container Registry"
+      }
+    },
+    "acrAdminUserEnabled": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Enable admin user that have push / pull permission to the registry."
+      }
+    },
+    "acrStorageType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_ZRS",
+        "Standard_GRS"
+      ],
+      "metadata": {
+        "description": "Type of the storage account that will store container registry datas."
+      }
+    }
+  },
+  "variables": {
+    "acrStorageName": "[concat('acr', uniqueString(resourceGroup().id))]",
+    "acrStorageId": "[resourceId('Microsoft.Storage/storageAccounts', variables('acrStorageName'))]"
+  },
+  "resources": [
+    {
+      "name": "[variables('acrStorageName')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "comments": "This storage account is used by Container Registry for storing its datas.",
+      "dependsOn": [],
+      "tags": {
+        "displayName": "ACR Image's storage",
+        "container.registry": "[parameters('acrName')]"
+      },
+      "properties": {
+        "accountType": "[parameters('acrStorageType')]"
+      }
+    },
+    {
+      "name": "[parameters('acrName')]",
+      "type": "Microsoft.ContainerRegistry/registries",
+      "apiVersion": "2016-06-27-preview",
+      "location": "[resourceGroup().location]",
+      "comments": "Container registry for storing docker images",
+      "dependsOn": [
+        "[variables('acrStorageId')]"
+      ],
+      "tags": {
+        "displayName": "Container Registry",
+        "container.registry": "[parameters('acrName')]"
+      },
+      "properties": {
+        "adminUserEnabled": "[parameters('acrAdminUserEnabled')]",
+        "storageAccount": {
+          "accessKey": "[listKeys(variables('acrStorageId'),'2015-06-15').key1]",
+          "name": "[variables('acrStorageName')]"
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "acrLoginServer": {
+      "value": "[reference(resourceId('Microsoft.ContainerRegistry/registries',parameters('acrName')),'2016-06-27-preview').loginServer]",
+      "type": "string"
+    }
+  }
+}
