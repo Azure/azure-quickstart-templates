@@ -5,6 +5,7 @@
       "WebApplicationWebAppName":{
          "type":"string",
          "minLength":1,
+         "defaultValue":"[concat('episervercmsapp', uniqueString(resourceGroup().id))]",
          "metadata":{
             "description":"Name of the WebApp Running EPiServer"
          }
@@ -12,6 +13,7 @@
       "WebApplication-HostingPlanNameName":{
          "type":"string",
          "minLength":1,
+         "defaultValue":"[concat('hostingplan', uniqueString(resourceGroup().id))]",
          "metadata":{
             "description":"Name of the App Service Hosting Plan"
          }
@@ -58,12 +60,14 @@
       },
       "StorageAccountName":{
          "type":"string",
+         "defaultValue":"[concat('epistorage', uniqueString(resourceGroup().id))]",
          "metadata":{
             "description":"Name of the Storage Account"
          }
       },
       "sqlserverName":{
          "type":"string",
+         "defaultValue":"[concat('sqlserver', uniqueString(resourceGroup().id))]",
          "metadata":{
             "description":"Name of the Sql Server"
          }
@@ -84,6 +88,7 @@
       "SQL-DatabaseName":{
          "type":"string",
          "minLength":1,
+         "defaultValue":"episerverdb",
          "metadata":{
             "description":"Name of the Sql Database"
          }
@@ -157,9 +162,6 @@
          "type":"Microsoft.Web/serverfarms",
          "location":"[resourceGroup().location]",
          "apiVersion":"2014-06-01",
-         "dependsOn":[
-
-         ],
          "tags":{
             "displayName":"WebApplication-HostingPlanName"
          },
@@ -261,16 +263,9 @@
          }
       },
       {
-         "name":"[parameters('sqlserverName')]",
-         "type":"Microsoft.Sql/servers",
+         "apiVersion":"2014-04-01",
          "location":"[resourceGroup().location]",
-         "apiVersion":"2014-04-01-preview",
-         "dependsOn":[
-
-         ],
-         "tags":{
-            "displayName":"SQL-Server"
-         },
+         "name":"[parameters('sqlserverName')]",
          "properties":{
             "administratorLogin":"[parameters('sqlserverAdminLogin')]",
             "administratorLoginPassword":"[parameters('sqlserverAdminLoginPassword')]",
@@ -281,7 +276,7 @@
                "name":"AllowAllWindowsAzureIps",
                "type":"firewallrules",
                "location":"[resourceGroup().location]",
-               "apiVersion":"2014-04-01-preview",
+               "apiVersion":"2014-04-01",
                "dependsOn":[
                   "[concat('Microsoft.Sql/servers/', parameters('sqlserverName'))]"
                ],
@@ -294,7 +289,7 @@
                "name":"[parameters('SQL-DatabaseName')]",
                "type":"databases",
                "location":"[resourceGroup().location]",
-               "apiVersion":"2014-04-01-preview",
+               "apiVersion":"2014-04-01",
                "dependsOn":[
                   "[parameters('sqlserverName')]"
                ],
@@ -308,7 +303,11 @@
                   "requestedServiceObjectiveName":"[parameters('SQL-DatabaseRequestedServiceObjectiveName')]"
                }
             }
-         ]
+         ],
+         "tags":{
+            "displayName":"SQL-Server"
+         },
+         "type":"Microsoft.Sql/servers"
       },
       {
          "apiVersion":"2015-08-01",
@@ -322,28 +321,7 @@
          "sku":{
             "name":"[parameters('serviceBusSku')]",
             "tier":"[parameters('serviceBusSku')]"
-         },
-         "properties":{
-
          }
       }
-   ],
-   "outputs":{
-      "NamespaceDefaultConnectionString":{
-         "type":"string",
-         "value":"[listkeys(variables('defaultAuthRuleResourceId'), variables('serviceBusApiVersion')).primaryConnectionString]"
-      },
-      "DefaultSharedAccessPolicyPrimaryKey":{
-         "type":"string",
-         "value":"[listkeys(variables('defaultAuthRuleResourceId'), variables('serviceBusApiVersion')).primaryKey]"
-      },
-      "DefaultSqlConnectionString":{
-         "type":"string",
-         "value":"[concat('Server=tcp:', reference(concat('Microsoft.Sql/servers/', parameters('sqlserverName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', parameters('SQL-DatabaseName'), ';User Id=', parameters('sqlserverAdminLogin'), '@', parameters('sqlserverName'), ';Password=', parameters('sqlserverAdminLoginPassword'), ';Trusted_Connection=False;Encrypt=True;Connection Timeout=30;MultipleActiveResultSets=True')]"
-      },
-      "DefaultstorageConnectionString":{
-         "type":"string",
-         "value":"[concat(variables('storageConnectionStringPrefix'), listkeys(variables('storageId'), variables('storageAccountApiVersion')).key1)]"
-      }
-   }
+   ]
 }
