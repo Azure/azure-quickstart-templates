@@ -24,10 +24,11 @@
       "type": "string",
       "allowedValues": [
         "AzureCloud",
-        "AzureChinaCloud"
+        "AzureChinaCloud",
+        "AzureUSGovernment"
       ],
       "metadata": {
-        "description": "Different environments in Azure. Choose AzureCloud for Global Azure, and choose AzureChinaCloud for Mooncake (Azure China Cloud)."
+        "description": "Different environments in Azure. Choose AzureCloud for Global Azure, choose AzureChinaCloud for Azure China Cloud, choose AzureUSGovernment for Azure Government."
       }
     },
     "tenantID": {
@@ -62,11 +63,37 @@
       "metadata": {
         "description": "The flag allowing to deploy Bosh automatically or not"
       }
+    },
+    "boshVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2_v2",
+      "allowedValues": [
+        "Standard_D1_v2",
+        "Standard_D2_v2",
+        "Standard_D3_v2",
+        "Standard_D4_v2",
+        "Standard_DS1",
+        "Standard_DS2",
+        "Standard_DS3",
+        "Standard_DS4",
+        "Standard_DS1_v2",
+        "Standard_DS2_v2",
+        "Standard_DS3_v2",
+        "Standard_DS4_v2"
+      ],
+      "metadata": {
+        "description": "Please check if the region support this VM size https://azure.microsoft.com/en-us/regions/#services. For more information about virtual machine sizes, see https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-linux-sizes/"
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/bosh-setup/",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      }
     }
   },
   "variables": {
-    "apiVersion": "2015-06-15",
-
     "defaultStorageAccountName": "[concat(uniqueString(resourceGroup().id), 'cfdefaultsa')]",
     "storageAccountType": "Standard_RAGRS",
     "vmStorageAccountContainerName": "vhds",
@@ -77,73 +104,126 @@
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
     "subnetNameForBosh": "Bosh",
     "subnetAddressRangeForBosh": "10.0.0.0/24",
-    "subnetRefForBosh": "[concat(variables('vnetID'),'/subnets/', variables('subnetNameForBosh'))]",
+    "subnetRefForBosh": "[concat(variables('vnetID'), '/subnets/', variables('subnetNameForBosh'))]",
     "subnetNameForCloudFoundry": "CloudFoundry",
     "subnetAddressRangeForCloudFoundry": "10.0.16.0/20",
-    "subnetNameForDiego": "Diego",
-    "subnetAddressRangeForDiego": "10.0.32.0/20",
     "devboxNetworkSecurityGroup": "nsg-devbox",
     "boshNetworkSecurityGroup": "nsg-bosh",
     "cfNetworkSecurityGroup": "nsg-cf",
 
-    "vmSize": "Standard_D1",
+    "vmSize": "Standard_D1_v2",
     "nicName": "[parameters('vmName')]",
     "devboxPrivateIPAddress": "10.0.0.100",
     "imagePublisher": "Canonical",
     "imageOffer": "UbuntuServer",
-    "ubuntuOSVersion": "14.04.3-LTS",
-    "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
+    "ubuntuOSVersion": "14.04.5-LTS",
+    "sshKeyPath": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
 
-    "baseUriAzureCloud": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/bosh-setup/",
-    "baseUriAzureChinaCloud": "https://cloudfoundry.blob.core.chinacloudapi.cn/",
-
-    "filesToDownloadAzureCloud": [
-      "[uri(variables('baseUriAzureCloud'), 'scripts/setup_env')]",
+    "baseUriAzureCloud": "[parameters('_artifactsLocation')]",
+    "filesToDownloadAzure": [
+      "[uri(variables('baseUriAzureCloud'), 'scripts/setup_env.sh')]",
       "[uri(variables('baseUriAzureCloud'), 'scripts/setup_env.py')]",
-      "[uri(variables('baseUriAzureCloud'), 'scripts/create_cert.sh')]",
-      "[uri(variables('baseUriAzureCloud'), 'scripts/init.sh')]",
+      "[uri(variables('baseUriAzureCloud'), 'scripts/utils.sh')]",
+      "[uri(variables('baseUriAzureCloud'), 'scripts/replace_certs.sh')]",
       "[uri(variables('baseUriAzureCloud'), 'scripts/deploy_bosh.sh')]",
       "[uri(variables('baseUriAzureCloud'), 'scripts/deploy_cloudfoundry.sh')]",
       "[uri(variables('baseUriAzureCloud'), 'manifests/bosh.yml')]",
       "[uri(variables('baseUriAzureCloud'), 'manifests/single-vm-cf.yml')]",
       "[uri(variables('baseUriAzureCloud'), 'manifests/multiple-vm-cf.yml')]",
-      "http://go-cli.s3-website-us-east-1.amazonaws.com/releases/v6.14.1/cf-cli-installer_6.14.1_x86-64.deb"
+      "http://go-cli.s3-website-us-east-1.amazonaws.com/releases/v6.14.1/cf-cli-installer_6.14.1_x86-64.deb",
+      "https://storage.googleapis.com/golang/go1.7.3.linux-amd64.tar.gz",
+      "https://github.com/square/certstrap/archive/v1.0.1.tar.gz"
     ],
+    "filesToDownloadAzureCloud": "[variables('filesToDownloadAzure')]",
+    "filesToDownloadAzureUSGovernment": "[variables('filesToDownloadAzure')]",
+
+    "baseUriAzureChinaCloud": "https://cloudfoundry.blob.core.chinacloudapi.cn/bosh-setup/",
+    "templateVersion": "v2-3-0",
+    "baseUriAzureChinaCloudWithVersion": "[concat(variables('baseUriAzureChinaCloud'), variables('templateVersion'), '/')]",
     "filesToDownloadAzureChinaCloud": [
-      "[uri(variables('baseUriAzureChinaCloud'), 'scripts/setup_env')]",
-      "[uri(variables('baseUriAzureChinaCloud'), 'scripts/setup_env.py')]",
-      "[uri(variables('baseUriAzureChinaCloud'), 'scripts/create_cert.sh')]",
-      "[uri(variables('baseUriAzureChinaCloud'), 'scripts/init.sh')]",
-      "[uri(variables('baseUriAzureChinaCloud'), 'scripts/deploy_bosh.sh')]",
-      "[uri(variables('baseUriAzureChinaCloud'), 'scripts/deploy_cloudfoundry.sh')]",
-      "[uri(variables('baseUriAzureChinaCloud'), 'manifests/bosh.yml')]",
-      "[uri(variables('baseUriAzureChinaCloud'), 'manifests/single-vm-cf.yml')]",
-      "[uri(variables('baseUriAzureChinaCloud'), 'manifests/multiple-vm-cf.yml')]",
-      "[uri(variables('baseUriAzureChinaCloud'), 'cf-cli/cf.deb')]"
+      "[uri(variables('baseUriAzureChinaCloudWithVersion'), 'scripts/setup_env.sh')]",
+      "[uri(variables('baseUriAzureChinaCloudWithVersion'), 'scripts/setup_env.py')]",
+      "[uri(variables('baseUriAzureChinaCloudWithVersion'), 'scripts/utils.sh')]",
+      "[uri(variables('baseUriAzureChinaCloudWithVersion'), 'scripts/replace_certs.sh')]",
+      "[uri(variables('baseUriAzureChinaCloudWithVersion'), 'scripts/deploy_bosh.sh')]",
+      "[uri(variables('baseUriAzureChinaCloudWithVersion'), 'scripts/deploy_cloudfoundry.sh')]",
+      "[uri(variables('baseUriAzureChinaCloudWithVersion'), 'manifests/bosh.yml')]",
+      "[uri(variables('baseUriAzureChinaCloudWithVersion'), 'manifests/single-vm-cf.yml')]",
+      "[uri(variables('baseUriAzureChinaCloudWithVersion'), 'manifests/multiple-vm-cf.yml')]",
+      "[uri(variables('baseUriAzureChinaCloud'), 'cf-cli/cf-cli-installer_6.14.1_x86-64.deb')]",
+      "https://mirror.azure.cn/go/go1.7.3.linux-amd64.tar.gz",
+      "https://mirror.azure.cn/square/certstrap/v1.0.1/v1.0.1.tar.gz"
     ],
+
     "filesToDownload": "[variables(concat('filesToDownload', parameters('environment')))]",
 
-    "environmentAzureCloud": {
-      "serviceHostBase": "core.windows.net",
-      "boshReleaseUrl": "https://bosh.io/d/github.com/cloudfoundry/bosh?v=256.2",
-      "boshReleaseSha1": "ff2f4e16e02f66b31c595196052a809100cfd5a8",
-      "boshAzureCPIReleaseUrl": "https://bosh.io/d/github.com/cloudfoundry-incubator/bosh-azure-cpi-release?v=12",
-      "boshAzureCPIReleaseSha1": "180e44f14812f7dd365c9a13928ca97a192f5d74",
-      "stemcellUrl": "https://bosh.io/d/stemcells/bosh-azure-hyperv-ubuntu-trusty-go_agent?v=3232.5",
-      "stemcellSha1": "d71b1092f0edc68544f0e1796e75491d0d3678ce",
-      "boshInitUrl": "https://s3.amazonaws.com/bosh-init-artifacts/bosh-init-0.0.81-linux-amd64",
-      "cfReleaseUrl": "https://bosh.io/d/github.com/cloudfoundry/cf-release?v=231"
+    "coreUriAzureCloud": "core.windows.net",
+    "coreUriAzureChinaCloud": "core.chinacloudapi.cn",
+    "coreUriAzureUSGovernment": "core.usgovcloudapi.net",
+    "coreUri": "[variables(concat('coreUri', parameters('environment')))]",
+
+    "environmentAzure": {
+      "serviceHostBase": "[variables('coreUri')]",
+      "secondaryDNS": "8.8.8.8",
+      "dnsRecursor": "168.63.129.16",
+      "boshReleaseUrl": "https://bosh.io/d/github.com/cloudfoundry/bosh?v=257.3",
+      "boshReleaseSha1": "e4442afcc64123e11f2b33cc2be799a0b59207d0",
+      "boshAzureCPIReleaseUrl": "https://bosh.io/d/github.com/cloudfoundry-incubator/bosh-azure-cpi-release?v=19",
+      "boshAzureCPIReleaseSha1": "1fe2dff904d15cf270cf0b9ab4f93a9f0d8e9f8b",
+      "boshInitUrl": "https://s3.amazonaws.com/bosh-init-artifacts/bosh-init-0.0.95-linux-amd64",
+      "staticStemcellUrl": "https://bosh.io/d/stemcells/bosh-azure-hyperv-ubuntu-trusty-go_agent?v=3262.7",
+      "staticStemcellSha1": "829a87d8ce24613e934a706cf10d6f2017fea1da",
+      "staticCfReleaseUrl": "https://bosh.io/d/github.com/cloudfoundry/cf-release?v=238",
+      "staticCfReleaseSha1": "fa6d35300f4fcd74a75fd8c7138f592acfcb32b0",
+      "staticDiegoReleaseUrl": "https://bosh.io/d/github.com/cloudfoundry-incubator/diego-release?v=0.1476.0",
+      "staticDiegoReleaseSha1": "4b66fde250472e47eb2a0151bb676fc1be840f47",
+      "staticGardenReleaseUrl": "https://bosh.io/d/github.com/cloudfoundry-incubator/garden-linux-release?v=0.338.0",
+      "staticGardenReleaseSha1": "432225d88edc9731be4453cb61eba33fa829ebdc",
+      "staticCflinuxfs2ReleaseUrl": "https://bosh.io/d/github.com/cloudfoundry/cflinuxfs2-rootfs-release?v=1.16.0",
+      "staticCflinuxfs2ReleaseSha1": "acfa1c4aad1fa9ef4623bf189cbab788a53f678e",
+      "dynamicStemcellUrl": "https://bosh.io/d/stemcells/bosh-azure-hyperv-ubuntu-trusty-go_agent?v=3263.8",
+      "dynamicStemcellSha1": "4c7788b70be83ac816c9d962e35d6ba5c7d04a94",
+      "dynamicCfReleaseUrl": "https://bosh.io/d/github.com/cloudfoundry/cf-release?v=244",
+      "dynamicCfReleaseSha1": "e1666f711ef806399caa87f2fd72c669324c151e",
+      "dynamicDiegoReleaseUrl": "https://bosh.io/d/github.com/cloudfoundry/diego-release?v=0.1487.0",
+      "dynamicDiegoReleaseSha1": "f173af7117baa34cff97cf4355f958ea536a45d0",
+      "dynamicGardenReleaseUrl": "https://bosh.io/d/github.com/cloudfoundry-incubator/garden-linux-release?v=0.342.0",
+      "dynamicGardenReleaseSha1": "dbfd8e7e3560286b6d8c02ba9065a50289e8e0f3",
+      "dynamicCflinuxfs2ReleaseUrl": "https://bosh.io/d/github.com/cloudfoundry/cflinuxfs2-rootfs-release?v=1.34.0",
+      "dynamicCflinuxfs2ReleaseSha1": "b1e367e228f5400439d4031a63df2600a9e213c4"
     },
+    "environmentAzureCloud": "[variables('environmentAzure')]",
+    "environmentAzureUSGovernment": "[variables('environmentAzure')]",
+
     "environmentAzureChinaCloud": {
-      "serviceHostBase": "core.chinacloudapi.cn",
-      "boshReleaseUrl": "[uri(variables('baseUriAzureChinaCloud'), 'releases/bosh-256.2.tgz')]",
-      "boshReleaseSha1": "ff2f4e16e02f66b31c595196052a809100cfd5a8",
-      "boshAzureCPIReleaseUrl": "[uri(variables('baseUriAzureChinaCloud'), 'releases/bosh-azure-cpi-release-12.tgz')]",
-      "boshAzureCPIReleaseSha1": "180e44f14812f7dd365c9a13928ca97a192f5d74",
-      "stemcellUrl": "[uri(variables('baseUriAzureChinaCloud'), 'stemcells/bosh-stemcell-3232.5-azure-hyperv-ubuntu-trusty-go_agent.tgz')]",
-      "stemcellSha1": "d71b1092f0edc68544f0e1796e75491d0d3678ce",
-      "boshInitUrl": "[uri(variables('baseUriAzureChinaCloud'), 'bosh-init/bosh-init-0.0.81-linux-amd64')]",
-      "cfReleaseUrl": "[uri(variables('baseUriAzureChinaCloud'), 'releases/cf-release-231.tgz')]"
+      "serviceHostBase": "[variables('coreUri')]",
+      "secondaryDNS": "1.2.4.8",
+      "dnsRecursor": "1.2.4.8",
+      "boshReleaseUrl": "https://mirror.azure.cn/bosh/release/bosh-257.3.tgz",
+      "boshReleaseSha1": "e4442afcc64123e11f2b33cc2be799a0b59207d0",
+      "boshAzureCPIReleaseUrl": "https://mirror.azure.cn/bosh/bosh-azure-cpi-release/bosh-azure-cpi-release-19.tgz",
+      "boshAzureCPIReleaseSha1": "1fe2dff904d15cf270cf0b9ab4f93a9f0d8e9f8b",
+      "boshInitUrl": "https://mirror.azure.cn/bosh/bosh-init/bosh-init-0.0.95-linux-amd64",
+      "staticStemcellUrl": "https://mirror.azure.cn/bosh/bosh-azure-stemcells/bosh-stemcell-3262.7-azure-hyperv-ubuntu-trusty-go_agent.tgz",
+      "staticStemcellSha1": "829a87d8ce24613e934a706cf10d6f2017fea1da",
+      "staticCfReleaseUrl": "https://mirror.azure.cn/bosh/cf/cf-release-238.tgz",
+      "staticCfReleaseSha1": "fa6d35300f4fcd74a75fd8c7138f592acfcb32b0",
+      "staticDiegoReleaseUrl": "https://mirror.azure.cn/bosh/diego/v0.1476.0/diego-0.1476.0.tgz",
+      "staticDiegoReleaseSha1": "fd9db50053423cb15aa994b2a1e4d2c0aa89e695",
+      "staticGardenReleaseUrl": "https://mirror.azure.cn/bosh/diego/v0.1476.0/garden-linux-0.338.0.tgz",
+      "staticGardenReleaseSha1": "432225d88edc9731be4453cb61eba33fa829ebdc",
+      "staticCflinuxfs2ReleaseUrl": "https://mirror.azure.cn/bosh/diego/v0.1477.0/cflinuxfs2-rootfs-1.16.0.tgz",
+      "staticCflinuxfs2ReleaseSha1": "acfa1c4aad1fa9ef4623bf189cbab788a53f678e",
+      "dynamicStemcellUrl": "https://mirror.azure.cn/bosh/bosh-azure-stemcells/bosh-stemcell-3263.8-azure-hyperv-ubuntu-trusty-go_agent.tgz",
+      "dynamicStemcellSha1": "4c7788b70be83ac816c9d962e35d6ba5c7d04a94",
+      "dynamicCfReleaseUrl": "https://mirror.azure.cn/bosh/cf/cf-release-244.tgz",
+      "dynamicCfReleaseSha1": "e1666f711ef806399caa87f2fd72c669324c151e",
+      "dynamicDiegoReleaseUrl": "https://mirror.azure.cn/bosh/diego/v0.1487.0/diego-0.1487.0.tgz",
+      "dynamicDiegoReleaseSha1": "3ba7b17c37cea3ea677643db7881c3d8c5ff58bc",
+      "dynamicGardenReleaseUrl": "https://mirror.azure.cn/bosh/diego/v0.1487.0/garden-linux-0.342.0.tgz",
+      "dynamicGardenReleaseSha1": "dbfd8e7e3560286b6d8c02ba9065a50289e8e0f3",
+      "dynamicCflinuxfs2ReleaseUrl": "https://mirror.azure.cn/bosh/diego/v0.1487.0/cflinuxfs2-rootfs-1.34.0.tgz",
+      "dynamicCflinuxfs2ReleaseSha1": "b1e367e228f5400439d4031a63df2600a9e213c4"
     },
     "environment": "[variables(concat('environment', parameters('environment')))]",
 
@@ -151,7 +231,7 @@
   },
   "resources": [
     {
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('boshNetworkSecurityGroup')]",
       "location": "[resourceGroup().location]",
@@ -217,7 +297,7 @@
       }
     },
     {
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('devboxNetworkSecurityGroup')]",
       "location": "[resourceGroup().location]",
@@ -241,7 +321,7 @@
       }
     },
     {
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('cfNetworkSecurityGroup')]",
       "location": "[resourceGroup().location]",
@@ -288,6 +368,20 @@
               "priority": 202,
               "direction": "Inbound"
             }
+          },
+          {
+            "name": "cf-ssh",
+            "properties": {
+              "description": "Allow cf-ssh",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "2222",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 203,
+              "direction": "Inbound"
+            }
           }
         ]
       }
@@ -295,16 +389,16 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('defaultStorageAccountName')]",
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2015-06-15",
       "location": "[resourceGroup().location]",
       "properties": {
         "accountType": "[variables('storageAccountType')]"
       }
     },
     {
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[concat(parameters('vmName'),'-devbox')]",
+      "name": "[concat(parameters('vmName'), '-devbox')]",
       "location": "[resourceGroup().location]",
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
@@ -314,16 +408,16 @@
       }
     },
     {
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[concat(parameters('vmName'),'-bosh')]",
+      "name": "[concat(parameters('vmName'), '-bosh')]",
       "location": "[resourceGroup().location]",
       "properties": {
         "publicIPAllocationMethod": "static"
       }
     },
     {
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[concat(parameters('vmName'), '-cf')]",
       "location": "[resourceGroup().location]",
@@ -332,7 +426,7 @@
       }
     },
     {
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[resourceGroup().location]",
@@ -354,18 +448,12 @@
             "properties": {
               "addressPrefix": "[variables('subnetAddressRangeForCloudFoundry')]"
             }
-          },
-          {
-            "name": "[variables('subnetNameForDiego')]",
-            "properties": {
-              "addressPrefix": "[variables('subnetAddressRangeForDiego')]"
-            }
           }
         ]
       }
     },
     {
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
       "location": "[resourceGroup().location]",
@@ -396,13 +484,80 @@
       }
     },
     {
-      "apiversion": "[variables('apiVersion')]",
+      "name": "generate-customdata",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', variables('defaultStorageAccountName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('baseUriAzureCloud'), 'generate-customdata.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "customData": {
+            "value": {
+              "VNET_NAME": "[variables('virtualNetworkName')]",
+              "SUBNET_NAME_FOR_BOSH": "[variables('subnetNameForBosh')]",
+              "SUBNET_ADDRESS_RANGE_FOR_BOSH": "[variables('subnetAddressRangeForBosh')]",
+              "SUBNET_NAME_FOR_CLOUD_FOUNDRY": "[variables('subnetNameForCloudFoundry')]",
+              "SUBNET_ADDRESS_RANGE_FOR_CLOUD_FOUNDRY": "[variables('subnetAddressRangeForCloudFoundry')]",
+              "CLOUD_FOUNDRY_PUBLIC_IP": "[reference(concat(parameters('vmName'), '-cf')).ipAddress]",
+              "BOSH_PUBLIC_IP": "[reference(concat(parameters('vmName'), '-bosh')).ipAddress]",
+              "NSG_NAME_FOR_BOSH": "[variables('boshNetworkSecurityGroup')]",
+              "NSG_NAME_FOR_CLOUD_FOUNDRY": "[variables('cfNetworkSecurityGroup')]",
+              "DNS_RECURSOR": "[variables('environment').dnsRecursor]",
+              "SUBSCRIPTION_ID": "[subscription().subscriptionId]",
+              "RESOURCE_GROUP_NAME": "[resourceGroup().name]",
+              "DEFAULT_STORAGE_ACCOUNT_NAME": "[variables('defaultStorageAccountName')]",
+              "STORAGE_ACCESS_KEY": "[listKeys(variables('storageid'), '2015-06-15').key1]",
+              "ADMIN_USER_NAME": "[parameters('adminUsername')]",
+              "ENVIRONMENT": "[parameters('environment')]",
+              "SERVICE_HOST_BASE": "[variables('environment').serviceHostBase]",
+              "SECONDARY_DNS": "[variables('environment').secondaryDNS]",
+              "BOSH_RELEASE_URL": "[variables('environment').boshReleaseUrl]",
+              "BOSH_RELEASE_SHA1": "[variables('environment').boshReleaseSha1]",
+              "BOSH_AZURE_CPI_RELEASE_URL": "[variables('environment').boshAzureCPIReleaseUrl]",
+              "BOSH_AZURE_CPI_RELEASE_SHA1": "[variables('environment').boshAzureCPIReleaseSha1]",
+              "STATIC_STEMCELL_URL": "[variables('environment').staticStemcellUrl]",
+              "STATIC_STEMCELL_SHA1": "[variables('environment').staticStemcellSha1]",
+              "STATIC_CF_RELEASE_URL": "[variables('environment').staticCfReleaseUrl]",
+              "STATIC_CF_RELEASE_SHA1": "[variables('environment').staticCfReleaseSha1]",
+              "STATIC_DIEGO_RELEASE_URL": "[variables('environment').staticDiegoReleaseUrl]",
+              "STATIC_DIEGO_RELEASE_SHA1": "[variables('environment').staticDiegoReleaseSha1]",
+              "STATIC_GARDEN_RELEASE_URL": "[variables('environment').staticGardenReleaseUrl]",
+              "STATIC_GARDEN_RELEASE_SHA1": "[variables('environment').staticGardenReleaseSha1]",
+              "STATIC_CFLINUXFS2_RELEASE_URL": "[variables('environment').staticCflinuxfs2ReleaseUrl]",
+              "STATIC_CFLINUXFS2_RELEASE_SHA1": "[variables('environment').staticCflinuxfs2ReleaseSha1]",
+              "DYNAMIC_STEMCELL_URL": "[variables('environment').dynamicStemcellUrl]",
+              "DYNAMIC_STEMCELL_SHA1": "[variables('environment').dynamicStemcellSha1]",
+              "DYNAMIC_CF_RELEASE_URL": "[variables('environment').dynamicCfReleaseUrl]",
+              "DYNAMIC_CF_RELEASE_SHA1": "[variables('environment').dynamicCfReleaseSha1]",
+              "DYNAMIC_DIEGO_RELEASE_URL": "[variables('environment').dynamicDiegoReleaseUrl]",
+              "DYNAMIC_DIEGO_RELEASE_SHA1": "[variables('environment').dynamicDiegoReleaseSha1]",
+              "DYNAMIC_GARDEN_RELEASE_URL": "[variables('environment').dynamicGardenReleaseUrl]",
+              "DYNAMIC_GARDEN_RELEASE_SHA1": "[variables('environment').dynamicGardenReleaseSha1]",
+              "DYNAMIC_CFLINUXFS2_RELEASE_URL": "[variables('environment').dynamicCflinuxfs2ReleaseUrl]",
+              "DYNAMIC_CFLINUXFS2_RELEASE_SHA1": "[variables('environment').dynamicCflinuxfs2ReleaseSha1]",
+              "BOSH_INIT_URL": "[variables('environment').boshInitUrl]",
+              "KEEP_UNREACHABLE_VMS": "[variables('keepUnreachableVMs')]",
+              "AUTO_DEPLOY_BOSH": "[parameters('autoDeployBosh')]",
+              "BOSH_VM_SIZE": "[parameters('boshVmSize')]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "apiversion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('vmName')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/',variables('defaultStorageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/',variables('nicName'))]"
+        "Microsoft.Resources/deployments/generate-customdata"
       ],
       "properties": {
         "hardwareProfile": {
@@ -421,7 +576,8 @@
                 }
               ]
             }
-          }
+          },
+          "customData": "[reference('Microsoft.Resources/deployments/generate-customdata', '2015-01-01').outputs.customData.value]"
         },
         "storageProfile": {
           "imageReference": {
@@ -433,7 +589,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://',variables('defaultStorageAccountName'),'.blob.',variables('environment').serviceHostBase,'/',variables('vmStorageAccountContainerName'),'/',parameters('vmName'),'-osdisk.vhd')]"
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('defaultStorageAccountName')), '2015-06-15').primaryEndpoints.blob, variables('vmStorageAccountContainerName'), '/', parameters('vmName'), '-osdisk.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -442,7 +598,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
             }
           ]
         }
@@ -450,48 +606,21 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(parameters('vmName'),'/initdevbox')]",
-      "apiVersion": "[variables('apiVersion')]",
+      "name": "[concat(parameters('vmName'), '/CustomScript')]",
+      "apiVersion": "2015-06-15",
       "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
       ],
       "properties": {
-        "publisher": "Microsoft.OSTCExtensions",
-        "type": "CustomScriptForLinux",
-        "typeHandlerVersion": "1.4",
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
         "settings": {
-          "fileUris": "[variables('filesToDownload')]",
-          "enableInternalDNSCheck": false,
-          "VNET_NAME": "[variables('virtualNetworkName')]",
-          "SUBNET_NAME_FOR_BOSH": "[variables('subnetNameForBosh')]",
-          "SUBNET_ADDRESS_RANGE_FOR_BOSH": "[variables('subnetAddressRangeForBosh')]",
-          "SUBNET_NAME_FOR_CLOUD_FOUNDRY": "[variables('subnetNameForCloudFoundry')]",
-          "SUBNET_ADDRESS_RANGE_FOR_CLOUD_FOUNDRY": "[variables('subnetAddressRangeForCloudFoundry')]",
-          "CLOUD_FOUNDRY_PUBLIC_IP": "[reference(concat(parameters('vmName'),'-cf')).ipAddress]",
-          "BOSH_PUBLIC_IP": "[reference(concat(parameters('vmName'),'-bosh')).ipAddress]",
-          "NSG_NAME_FOR_BOSH": "[variables('boshNetworkSecurityGroup')]",
-          "NSG_NAME_FOR_CLOUD_FOUNDRY": "[variables('cfNetworkSecurityGroup')]",
-          "SUBSCRIPTION_ID": "[subscription().subscriptionId]",
-          "RESOURCE_GROUP_NAME": "[resourceGroup().name]",
-          "DEFAULT_STORAGE_ACCOUNT_NAME": "[variables('defaultStorageAccountName')]",
-          "STORAGE_ACCESS_KEY": "[listKeys(variables('storageid'), variables('apiVersion')).key1]",
-          "ADMIN_USER_NAME": "[parameters('adminUserName')]",
-          "ENVIRONMENT": "[parameters('environment')]",
-          "SERVICE_HOST_BASE": "[variables('environment').serviceHostBase]",
-          "BOSH_RELEASE_URL": "[variables('environment').boshReleaseUrl]",
-          "BOSH_RELEASE_SHA1": "[variables('environment').boshReleaseSha1]",
-          "BOSH_AZURE_CPI_RELEASE_URL": "[variables('environment').boshAzureCPIReleaseUrl]",
-          "BOSH_AZURE_CPI_RELEASE_SHA1": "[variables('environment').boshAzureCPIReleaseSha1]",
-          "STEMCELL_URL": "[variables('environment').stemcellUrl]",
-          "STEMCELL_SHA1": "[variables('environment').stemcellSha1]",
-          "CF_RELEASE_URL": "[variables('environment').cfReleaseUrl]",
-          "BOSH_INIT_URL": "[variables('environment').boshInitUrl]",
-          "KEEP_UNREACHABLE_VMS": "[variables('keepUnreachableVMs')]",
-          "AUTO_DEPLOY_BOSH": "[parameters('autoDeployBosh')]"
+          "fileUris": "[variables('filesToDownload')]"
         },
         "protectedSettings": {
-          "commandToExecute": "[concat('./setup_env', ' ', parameters('tenantID'), ' ', parameters('clientID'), ' \"', parameters('clientSecret'), '\"')]"
+          "commandToExecute": "[concat('bash -l -c \"./setup_env.sh', ' ', parameters('tenantID'), ' ', parameters('clientID'), ' ', base64(parameters('clientSecret')), ' >/home/', parameters('adminUsername'), '/install.log 2>&1\"')]"
         }
       }
     }
@@ -503,7 +632,7 @@
     },
     "cloudFoundryIP": {
       "type": "string",
-      "value": "[reference(concat(parameters('vmName'),'-cf')).ipAddress]"
+      "value": "[reference(concat(parameters('vmName'), '-cf')).ipAddress]"
     }
   }
 }
