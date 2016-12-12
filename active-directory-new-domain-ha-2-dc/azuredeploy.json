@@ -248,12 +248,12 @@
     "vnetTemplateUri": "[concat(parameters('assetLocation'),'/nestedtemplates/vnet.json')]",
     "nicTemplateUri": "[concat(parameters('assetLocation'),'/nestedtemplates/nic.json')]",
     "vnetwithDNSTemplateUri": "[concat(parameters('assetLocation'),'/nestedtemplates/vnet-with-dns-server.json')]",
-    "adPDCModulesURL":"[concat(variables('assetLocation'),'/DSC/CreateADPDC.ps1.zip')]",
-    "adPDCConfigurationFunction":"CreateADPDC.ps1\\CreateADPDC",
-    "adBDCPreparationModulesURL":"[concat(variables('assetLocation'),'/DSC/PrepareADBDC.ps1.zip')]",
-    "adBDCPreparationFunction":"PrepareADBDC.ps1\\PrepareADBDC",
-    "adBDCConfigurationModulesURL":"[concat(variables('assetLocation'),'/DSC/ConfigureADBDC.ps1.zip')]",
-    "adBDCConfigurationFunction":"ConfigureADBDC.ps1\\ConfigureADBDC"
+    "adPDCModulesURL": "[concat(variables('assetLocation'),'/DSC/CreateADPDC.ps1.zip')]",
+    "adPDCConfigurationFunction": "CreateADPDC.ps1\\CreateADPDC",
+    "adBDCPreparationModulesURL": "[concat(variables('assetLocation'),'/DSC/PrepareADBDC.ps1.zip')]",
+    "adBDCPreparationFunction": "PrepareADBDC.ps1\\PrepareADBDC",
+    "adBDCConfigurationModulesURL": "[concat(variables('assetLocation'),'/DSC/ConfigureADBDC.ps1.zip')]",
+    "adBDCConfigurationFunction": "ConfigureADBDC.ps1\\ConfigureADBDC"
   },
   "resources": [
     {
@@ -286,7 +286,7 @@
     {
       "name": "VNet",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2016-09-01",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -500,7 +500,7 @@
           "properties": {
             "publisher": "Microsoft.Powershell",
             "type": "DSC",
-            "typeHandlerVersion": "2.19",
+            "typeHandlerVersion": "2.21",
             "autoUpgradeMinorVersion": true,
             "settings": {
               "ModulesUrl": "[variables('adPDCModulesURL')]",
@@ -525,7 +525,7 @@
     {
       "name": "UpdateVNetDNS1",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2016-09-01",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', parameters('adPDCVMName'),'/extensions/CreateADForest')]"
       ],
@@ -667,20 +667,42 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(parameters('adBDCVMName'),'/CreateBDC')]",
+      "name": "[concat(parameters('adBDCVMName'),'/PrepareBDC')]",
       "apiVersion": "2016-03-30",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('adBDCVMName'))]",
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('adBDCVMName'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Powershell",
+        "type": "DSC",
+        "typeHandlerVersion": "2.21",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "ModulesUrl": "[variables('adBDCPreparationModulesURL')]",
+          "ConfigurationFunction": "[variables('adBDCPreparationFunction')]",
+          "Properties": {
+            "DNSServer": "[parameters('adPDCNicIPAddress')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('adBDCVMName'),'/ConfigureBDC')]",
+      "apiVersion": "2016-03-30",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/',parameters('adBDCVMName'),'/extensions/ConfigureBDC')]",
         "Microsoft.Resources/deployments/UpdateBDCNIC"
       ],
       "properties": {
         "publisher": "Microsoft.Powershell",
         "type": "DSC",
-        "typeHandlerVersion": "2.19",
+        "typeHandlerVersion": "2.21",
         "autoUpgradeMinorVersion": true,
         "settings": {
-          "ModulesUrl": "[variables('adBDCModulesURL')]",
+          "ModulesUrl": "[variables('adBDCConfigurationModulesURL')]",
           "ConfigurationFunction": "[variables('adBDCConfigurationFunction')]",
           "Properties": {
             "DomainName": "[parameters('domainName')]",
@@ -700,9 +722,9 @@
     {
       "name": "UpdateVNetDNS2",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2016-09-01",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/',parameters('adBDCVMName'),'/extensions/CreateBDC')]"
+        "[concat('Microsoft.Compute/virtualMachines/',parameters('adBDCVMName'),'/extensions/ConfigureBDC')]"
       ],
       "properties": {
         "mode": "Incremental",
