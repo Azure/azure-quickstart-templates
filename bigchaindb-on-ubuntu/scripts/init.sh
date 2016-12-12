@@ -14,4 +14,4 @@ sudo apt-get -y install python3-setuptools
 sudo easy_install3 pip
 sudo pip3 install --upgrade pip wheel setuptools
 
-sudo pip install bigchaindb
+sudo pip3 install bigchaindb
