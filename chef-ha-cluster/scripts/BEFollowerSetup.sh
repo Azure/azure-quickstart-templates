@@ -1,9 +1,9 @@
 # BE Secondary
-curl -o chef-backend-secrets.json "$1/chef-backend-secrets.json$2"
+curl --retry 3 --silent --show-error -o chef-backend-secrets.json "$1/chef-backend-secrets.json$2"
 
 apt-get install -y apt-transport-https
 wget -qO - https://downloads.chef.io/packages-chef-io-public.key | sudo apt-key add -
-echo "deb https://packages.chef.io/current-apt trusty main" > /etc/apt/sources.list.d/chef-current.list
+echo "deb https://packages.chef.io/stable-apt trusty main" > /etc/apt/sources.list.d/chef-stable.list
 apt-get update
 
 # store data on local ssd
@@ -23,9 +23,6 @@ apt-get install -y chef-backend
 IPADRESS=`ifconfig eth0 | awk '/inet addr/{print substr($2,6)}'`
 cat > /etc/chef-backend/chef-backend.rb <<EOF
 publish_address '${IPADRESS}'
-etcd.heartbeat_interval = 500
-etcd.election_timeout = 5000
-etcd.snapshot_count = 5000
 postgresql.log_min_duration_statement = 500
 elasticsearch.heap_size = 3500
 EOF
