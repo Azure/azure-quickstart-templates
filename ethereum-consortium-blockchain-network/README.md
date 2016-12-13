@@ -1,6 +1,6 @@
 # Ethereum Consortium Network Deployments Made Easy
 
-[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fethereum-consortium-blockchain-network%2Fazuredeploy.json)  [![Visualize](http://armviz.io/visualizebutton.png)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fethereum-consortium-blockchain-network%2Fazuredeploy.json)
+[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fethereum-consortium-blockchain-network%2Fazuredeploy.json)  [![Deploy to Azure Gov](http://azuredeploy.net/AzureGov.png)](https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fethereum-consortium-blockchain-network%2Fazuredeploy.json)  [![Visualize](http://armviz.io/visualizebutton.png)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fethereum-consortium-blockchain-network%2Fazuredeploy.json)
 
 ## Overview
 The next phase of our support of blockchain on Microsoft Azure is the release of the Ethereum Consortium Blockchain Network solution template in the Azure Quick Start Templates that simplifies the infrastructure and protocol substantially.  This template deploys and configures a private Ethereum network from the Azure Portal or cmdline with a single click.  While there are many valuable scenarios for the public Ethereum network, we expect in many enterprise scenarios, you will want to configure Ethereum to build out and deploy your own consortium network.
@@ -10,48 +10,53 @@ After reading this article, you will
 * Learn how to deploy and configure a multi-node Ethereum consortium network with the published ARM template
 
 ## About blockchain
-For those of you new to the blockchain community, this is a great opportunity to learn about the technology in an easy and configurable manner on Azure.  Blockchain is the underlying technology behind Bitcoin; however, it is much more than just a virtual currency.  It is a composite of existing database, distributed system, and cryptographic technologies that enables secure multi-party computation with guarantees around immutability, verifiability, auditability, and resiliency to attack.  Different implementations employ different mechanisms to provide these attributes.  Ethereum is one such protocol, with several different implementations.
+For those of you new to the blockchain community, this is a great opportunity to learn about the technology in an easy and configurable manner on Azure. Blockchain is the underlying technology behind Bitcoin; however, it is much more than just a virtual currency. It is a composite of existing database, distributed system, and cryptographic technologies that enables secure multi-party computation with guarantees around immutability, verifiability, auditability, and resiliency to attack. Different implementations employ different mechanisms to provide these attributes. Ethereum is one such protocol, with several different implementations.
 
-While this article will not go into the details of the [Ethereum](https://www.ethereum.org/) protocol, implementations, architecture, or public network, it is still important to briefly describe a simplified application and network architecture better understand the different deployment topology options now available.  Ultimately, there is no single canonical network layout; it all depends on the use cases and stage within the development lifecycle.
+While this article will not go into the details of the [Ethereum](https://www.ethereum.org/) protocol, implementations, architecture, or public network, it is still important to briefly describe a simplified application and network architecture to better understand the different deployment topology options now available. Ultimately, there is no single canonical network layout; it all depends on the use cases and stage within the development lifecycle.
 
-Similar to applications interacting with databases today, decentralized applications will communicate and execute logic against the Ethereum blockchain.  A private Ethereum network consists of a peer-to-peer decentralized network of nodes.  These nodes maintain a copy of the data store (i.e. distributed ledger) and run a virtual machine to support arbitrary computation against the ledger, while maintaining consensus. Smart contracts are the mechanism that allows for this complicated computation on the network, similar to stored procedures on traditional databases.
+Similar to applications interacting with databases today, decentralized applications will communicate and execute logic against the Ethereum blockchain. A private Ethereum network consists of a peer-to-peer decentralized network of nodes. These nodes maintain a copy of the data store (i.e. distributed ledger) and run a virtual machine to support arbitrary computation against the ledger, while maintaining consensus. Smart contracts are the mechanism that allows for this complicated computation on the network, similar to stored procedures on traditional databases.
 
-Nodes are divided into mining and transaction nodes (non-mining nodes).  Transaction nodes maintain a copy of the distributed ledger, but are used to submit or look up transactions from the network.  Applications interact with these nodes using Ethereum’s web3 JavaScript object to execute and store important transactions within their application.  A wallet is usually backed by a transaction node on the public network.  Mining nodes process and commit transactions to the underlying distributed database (i.e. ledger) through a consensus process.
+Nodes are divided into mining and transaction nodes (non-mining nodes). Transaction nodes maintain a copy of the distributed ledger, but are used to submit or look up transactions from the network. Applications interact with these nodes using Ethereum’s web3 JavaScript object to execute and store important transactions within their application. A wallet is usually backed by a transaction node on the public network. Mining nodes process and commit transactions to the underlying distributed database (i.e. ledger) through a consensus process.
 
 ## Getting Started
-To begin, you will need an Azure subscription that can support deploying several virtual machines and standard storage accounts.  By default, most subscription types will support a small deployment topology without needing to increase quota.
+To begin, you will need an Azure subscription that can support deploying several virtual machines and standard storage accounts. By default, most subscription types will support a small deployment topology without needing to increase quota.
 
 Once you have a subscription, click the ‘Deploy to Azure’ button above to take you to the Template deployment wizard in the Azure Portal.  Note, you will be prompted to sign into your account and Azure subscription in the process if you are not already logged in.  
 
-Once signed in, you land within the Template deployment wizard as shown below.  The template section is filled out with the main azuredeploy.json ARM template file.
+Once signed in, you land within the Template deployment wizard as shown below.
 
 ![consortium network](images/azure2.png)
 
-If you are interested in understanding or modifying the ARM template itself, select the template tab to open the editor in the Azure portal.  For a more detailed inspection, you can also select the ‘Browse on Github’, instead of ‘Deploy To Azure’ button to take you to the Azure Github repository that contains the Ethereum Consortium Blockchain Network template.
+The template is pre-populated with the main azuredeploy.json ARM template file and can be displayed. If you are interested in understanding or modifying the ARM template itself, select Edit to open the editor in the Azure portal. For a more detailed inspection, you can also select the ‘Browse on Github’, instead of ‘Deploy To Azure’ button to take you to the Azure Github repository that contains the Ethereum Consortium Blockchain Network template.
 
-Under the Parameters section, the wizard will prompt you for a set of simple inputs to configure the deployment properly. Once you have specified all parameters, specify a resource group and region to which to deploy all resources.  We recommend using a new separate resource group for ease of management and deletion.  Finally, acknowledge legal terms and click to ‘Create.’  Depending on the number of VMs being provisioned, deployment time can vary from a few minutes to tens of minutes.
+The Template Deployment will prompt you for a set of simple inputs to configure the deployment properly. Under the Basics section, you will provide values for standard parameters for any deployment, while under the Settings section, you will provide values for parameters specific to this blockchain consortium template. The standard parameters include the subscription, resource group, and location to which to deploy resources. We recommend using a new separate resource group to avoid resource conflicts and for ease of management and deletion.
+
+<TODO: ADD IMAGE FROM pdf>
+
+Finally, acknowledge legal terms and click ‘Purchase’ to deploy. Depending on the number of VMs being provisioned, deployment time can vary from a few minutes to tens of minutes.
 
 ## Ethereum consortium network architecture on Azure
-While there is no single canonical architecture for a consortium network, this template provides a sample architecture to use to get started quickly.  Fundamentally, the network consists of a set of shared transaction nodes with which an application can interact to submit transactions and a set of mining nodes per consortium member to record transactions.  All nodes are within the same virtual network, though each consortium member’s subnet can be easily pulled into individual VNets communicating through application gateways.  The network is illustrated in the figure below:
+While there is no single canonical architecture for a consortium network, this template provides a sample architecture to use to get started quickly. Fundamentally, the network consists of a set of shared transaction nodes with which an application can interact to submit transactions and a set of mining nodes per consortium member to record transactions. All nodes are within the same virtual network, though each consortium member’s subnet can be easily pulled into individual VNets communicating through application gateways. The network is illustrated in the figure below.
 
 ![consortium network](images/eth-network.png)
 
 ## Mining Nodes
-Each consortium member is given a separate, identical subnet containing one or more mining nodes, backed by a storage account.  The first default VM in the subnet is configured as a boot node to support dynamic discoverability of the nodes in the network.  Mining nodes communicate with other mining nodes to come to consensus on the state of the underlying distributed ledger.  There is no need for your application to be aware of or communicate with these nodes.  Since we are focused on private networks, these nodes are isolated from the public internet adding a secondary level of protection.  While each member’s VMs are in a separate subnet, the individual nodes are still connected and communicating with one another via Ethereum’s discovery protocol.
+Each consortium member is given a separate, identical subnet containing one or more mining nodes, backed by a storage account. The first default VM in the subnet is configured as a boot node to support dynamic discoverability of the nodes in the network. Mining nodes communicate with other mining nodes to come to consensus on the state of the underlying distributed ledger. There is no need for your application to be aware of or communicate with these nodes. Since we are focused on private networks, these nodes are isolated from inbound public internet traffic adding a secondary level of protection. Outbound traffic is allowed, but not to the Ethereum discovery port. While each member’s VMs are in a separate subnet, the individual nodes are still connected and communicating with one another via Ethereum’s discovery protocol.
 
-All nodes have the latest stable Go Ethereum (Geth) client software and are configured to be mining nodes.  All nodes have an Ethereum account (Ethereum address and key pair) that is protected by the Ethereum account password.  The public private key pair is stored on each of the Geth nodes.  As mining nodes mine, they collect fees that are added to this account.
+All nodes have the latest stable Go Ethereum (Geth) client software and are configured to be mining nodes. All nodes use the same Ethereum account (Ethereum address and key pair) that is protected by the Ethereum account password. The public private key pair generated from the Ethereum passphrase provided is stored on each of the Geth nodes. As mining nodes mine, they collect fees that are added to this account.
 
 ## Transaction Nodes
-All consortium members share a set of load-balanced transaction nodes.  These nodes are reachable from outside the virtual network so that applications can use these nodes to submit transactions or execute smart contracts within the blockchain networks.  All nodes have the latest stable Go Ethereum (Geth) client software and are configured to maintain a complete copy of the distributed ledger.  
+All consortium members share a set of load-balanced transaction nodes. These nodes are reachable from outside the virtual network so that applications can use these nodes to submit transactions or execute smart contracts within the blockchain networks. All nodes have the latest stable Go Ethereum (Geth) client software and are configured to maintain a complete copy of the distributed ledger. These nodes use the same Ethereum account, protected by the Ethereum account password provided.
 
-We have explicitly separated the nodes that accept transactions from the nodes that mine transactions to ensure that the two actions are not competing for the same resources.  We have also load-balanced the transaction nodes to maintain high availability.
+We have explicitly separated the nodes that accept transactions from the nodes that mine transactions to ensure that the two actions are not competing for the same resources. We have also load-balanced the transaction nodes within an availability set to maintain high availability.
 
 ## Ethereum configuration
-Besides the infrastructural footprint and configuration of nodes, the blockchain network itself is created.  The genesis block is configured with the desired Ethereum network id, an appropriate mining difficulty, and a pre-configured account.  The mining difficult varies depending on the number of mining nodes deployed to ensure mining time remains short even in the beginning.  The pre-configured account contains 1 trillion Ether to seed the consortium network with enough gas (Ethereum’s fuel) to handle millions of transactions.  Since the mining nodes use this account, their collected fees feed back into the account ensure continual funds.  
+Besides the infrastructural footprint and configuration of nodes, the blockchain network itself is created. The genesis block is configured with the desired Ethereum network id, an appropriate mining difficulty, and a pre-configured account. The mining difficult varies depending on the number of mining nodes deployed to ensure mining time remains short even in the beginning. The pre-configured account contains 1 trillion Ether to seed the consortium network with enough gas (Ethereum’s fuel) to handle millions of transactions. Since the mining nodes use this account, their collected fees feed back into the account to ensure continual funds.  
 
 ## Administrator page
-Once the deployment has completed successfully and all resources have been provisioned, you can go to the administrator page to get a simple view of your blockchain network.  
-The admin site URL is the DNS name of the load balancer; it is also the first output of the template deployment.  To find the template output, select the resource group just deployed.  Select the Overview tab, then Last Deployment.  
+Once the deployment has completed successfully and all resources have been provisioned, you can go to the administrator page to get a simple view of your blockchain network.
+
+The admin site URL is the DNS name of the load balancer; it is also the first output of the template deployment. To find the template output, select the resource group just deployed. Select the Overview tab, then Last Deployment. 
 
 ![consortium network](images/deployment.png)
 
@@ -59,9 +64,11 @@ Finally, select Microsoft.Template and look for the outputs section.
 
 ![consortium network](images/output.png)
 
-You can get a high level overview of the topology you just deployed by reviewing the Ethereum Node Status section.  This section includes all node hostnames and the participant to which the node belongs.  It also displays node connectivity with the peer count.  Peer count is the minimum of the number of mining nodes in the network and twenty-five where twenty-five is the configured maximum peer count, as in the public Ethereum network.  Note, that peer count does not restrict the number of nodes that can be deployed within the network.  Occasionally, you will see peer count fluctuate and be less for certain nodes.  This is not always a sign that the nodes are unhealthy, since forks in the ledger can cause minor changes in peer count.  Finally, you can inspect the latest block seen by each node in the network to determine forks or lags in the system.
+You can get a high level overview of the topology you just deployed by reviewing the Ethereum Node Status section. This section includes all node hostnames and the participant to which the node belongs. It also displays node connectivity with the peer count. Peer count is the minimum of the number of mining nodes in the network and twenty-five where twenty-five is the configured maximum peer count, as in the public Ethereum network. Note, that peer count does not restrict the number of nodes that can be deployed within the network. Occasionally, you will see peer count fluctuate and be less for certain nodes. This is not always a sign that the nodes are unhealthy, since forks in the ledger can cause minor changes in peer count. Finally, you can inspect the latest block seen by each node in the network to determine forks or lags in the system.
 
 ![consortium network](images/admin-site.png)
+
+The node status is refreshed every 10 seconds. Reload the page via the browser or "Reload" button to update the view.
 
 ## Create Ethereum Account
 To create an additional account, you can use a variety of solutions.  One such solution is [MetaMask](https://metamask.io/), a Chrome extension that provides an “identity vault” and connection to an Ethereum network, public, test or custom.  MetaMask formulates a transaction to register the account in the network.  This transaction, like any other transaction, will go to one of the transaction nodes, and eventually be mined into a block as illustrated below.
@@ -72,20 +79,20 @@ To install the extension in Chrome, go to Customize and control Google Chrome (O
 
 ![consortium network](images/azure4.png)
 
-Once installed, open MetaMask and create a new vault.  By default, the vault will be connected to the Morden Test Network.  You will need to change this to connect to the deployed private consortium network, specifically to the load balancer in front of the transaction nodes.  From the template output, retrieve the exposed Ethereum RPC endpoint at port 8545, the second template output, and enter it in custom RPC as shown below.
+Once installed, open MetaMask and create a new vault. By default, the vault will be connected to the Morden Test Network. You will need to change this to connect to the deployed private consortium network, specifically to the load balancer in front of the transaction nodes. From the template output, retrieve the exposed Ethereum RPC endpoint at port 8545, the second template output, and enter it in custom RPC as shown below.
 
 ![consortium network](images/azure5.png)
 
-By creating the vault, you create a wallet containing an account.  To create additional accounts, select Switch Accounts and then the ‘+’ button as shown below.
+By creating the vault, you create a wallet containing an account. To create additional accounts, select Switch Accounts and then the ‘+’ button as shown below.
 
 ![consortium network](images/azure6.png)
 
 ## Initiate Ether Allocation
-Through the administrator page, you can formulate a transaction to transfer Ether from the pre-allocated account to another Ethereum account.  This Ether transfer is a transaction that is sent to the transaction node and mined into a block as illustrated below.
+Through the administrator page, you can formulate a transaction to transfer Ether from the pre-allocated account to another Ethereum account. This Ether transfer is a transaction that is sent to the transaction node and mined into a block as illustrated below.
 
 ![consortium network](images/azure7.png)
 
-Via the clipboard icon in the MetaMask wallet, copy the address of the Ethereum account to which you want to transfer ether and go back to the administrator page.  Paste the copied account into the input field to transfer 1000 ether from the pre-allocated Ethereum account to your newly created account.  Click submit and wait for the transaction to be mined into a block.
+Via the clipboard icon in the MetaMask wallet, copy the address of the Ethereum account to which you want to transfer ether and go back to the administrator page. Paste the copied account into the input field to transfer 1000 ether from the pre-allocated Ethereum account to your newly created account. Click submit and wait for the transaction to be mined into a block.
 
 ![consortium network](images/azure8.png)
 
@@ -94,13 +101,13 @@ Once the transaction is committed into a mined block, the account balance in Met
 ![consortium network](images/azure9.png)
 
 ## Transfer of Ether Between Accounts
-At this point, you are ready to execute transactions within your private consortium network.  The simplest transaction is to transfer Ether from one account to another.  To formulate such a transaction, you can use MetaMask once again, transferring money from the first account used above to a second account.
+At this point, you are ready to execute transactions within your private consortium network. The simplest transaction is to transfer Ether from one account to another. To formulate such a transaction, you can use MetaMask once again, transferring money from the first account used above to a second account.
 
-From Wallet 1 in MetaMask, click on send.  Copy the address of the second wallet created into Recipient Address input field and amount of Ether to transfer in the Amount input field.  Click send and accept the transaction.  
+From Wallet 1 in MetaMask, click on send. Copy the address of the second wallet created into Recipient Address input field and amount of Ether to transfer in the Amount input field. Click send and accept the transaction.  
 
 ![consortium network](images/azure10.png)
 
-Once again, when the transaction is mined and committed into a block, the account balances will be reflected accordingly.  Note, wallet 1’s balance is deducted a bit more than 15 Ether, since you had to pay a mining fee to process the transaction.
+Once again, when the transaction is mined and committed into a block, the account balances will be reflected accordingly. Note, wallet 1’s balance is deducted a bit more than 15 Ether, since you had to pay a mining fee to process the transaction.
 
 ![consortium network](images/azure11.png) ![consortium network](images/azure12.png)
 
@@ -173,9 +180,9 @@ We can then check the updated balances to see if our transfer went through:
 This concludes our smart contract sample. For additional information about the Solidity language, click [here](http://solidity.readthedocs.io/en/develop/).
 
 ## Accessing VMs running nodes
-You can access the VMs on which the geth nodes run via ssh using the username and password you supplied.  The VMs are not directly internet accessible for security reasons so you need to ssh to one of the transaction nodes (ending with "-tx") via the load balancer which port maps to the transaction nodes.  The ssh command to run is one of the outputs of the template deployment.  This will get you onto the first transaction node. Increment the port number by one to get onto the second transaction node and so on (e.g. firs transaction node accessible via port 3000, second via port 3001, third via port 3002 and so on).  From here you can ssh to any of the other nodes on the network including the mining nodes.
+You can remotely connect to the virtual machines on which the transaction nodes run via SSH with your provided admin username and password. Since the transaction node VMs do not have their own public IP addresses, you will need to go through the load balancer and specify the port number. The SSH command to run to access the first transaction node is the third template output (e.g. for the sample deployment it is: ssh -p 3000 gethadmin@ethnet7tl.southeastasia.cloudapp.azure.com). To get to additional transaction nodes, increment the port number by one (e.g. the first transaction node is on port 3000, second, is 3001, third is 3002, etc.).
 
-![consortium network](images/sshoutput.png)
+Since the virtual machines on which the mining nodes run are not publicly accessible, you will need to go through one of the transaction nodes. Once you have SSH’ed into a transaction node, you can SSH into any of the mining nodes.
 
 ## Next Steps
 You are now ready to focus on application and smart contract development against your private consortium blockchain network.  Happy coding!
