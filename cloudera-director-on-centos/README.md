@@ -126,4 +126,4 @@ Please follow the [Cloudera Director documentation](http://www.cloudera.com/docu
 
 ## Notes
 
-- Scripts logs can be found at `/var/log/azure-template_initialize-server.log`.
+- Scripts logs can be found at `/var/log/cloudera-azure-initialize.log`.
