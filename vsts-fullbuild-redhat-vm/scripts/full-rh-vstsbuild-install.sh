@@ -82,8 +82,8 @@ ln -s /usr/local/git/bin/git /usr/bin/git
 
 # Install Docker Engine and Docker Compose
 echo "Installing Docker Engine and Docker Compose" >> /home/$5/install.progress.txt
-# yum update -y --exclude=WALinuxAgent >> /home/$5/install.out.txt 2>&1
-yum update -y >> /home/$5/install.out.txt 2>&1
+yum update -y --exclude=WALinuxAgent >> /home/$5/install.out.txt 2>&1
+# yum update -y >> /home/$5/install.out.txt 2>&1
 
 echo [dockerrepo] > /etc/yum.repos.d/docker.repo
 echo name=Docker Repository >> /etc/yum.repos.d/docker.repo
