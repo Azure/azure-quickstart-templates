@@ -30,7 +30,6 @@ time sudo update-alternatives --install /usr/bin/node nodejs /usr/bin/nodejs 100
 time sudo apt-get -y git
 time sudo apt-get install -y software-properties-common
 time sudo add-apt-repository -y ppa:ethereum/ethereum
-time sudo add-apt-repository -y ppa:ethereum/ethereum-dev
 time sudo apt-get update
 time sudo apt-get install -y ethereum
 

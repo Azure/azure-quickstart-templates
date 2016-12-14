@@ -2,6 +2,24 @@
   "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.2",
   "parameters": {
+    "storageType": {
+      "type": "string",
+      "defaultValue": "Premium_LRS",
+      "allowedValues": [
+        "Premium_LRS",
+        "Standard_LRS"
+      ],
+      "metadata": {
+        "description": "Which type of storage you want to use"
+      }
+    },
+    "vmName": {
+      "type": "string",
+      "defaultValue": "O365VM",
+      "metadata": {
+        "description": "Local name for the VM can be whatever you want"
+      }
+    },
     "vmAdminUserName": {
       "type": "string",
       "metadata": {
@@ -14,30 +32,28 @@
         "description": "VM admin password. The supplied password must be between 8-123 characters long and must satisfy at least 3 of password complexity requirements from the following: 1) Contains an uppercase character 2) Contains a lowercase character 3) Contains a numeric digit 4) Contains a special character."
       }
     },
+    "vmSize": {
+      "type": "string",
+      "metadata": {
+        "description": "Desired Size of the VM."
+      },
+      "defaultValue": "Standard_DS2"
+    },
     "vmVisualStudioVersion": {
       "type": "string",
-      "defaultValue": "VS-2015-Ent-VSU3-AzureSDK-291-Win10-N",
+      "defaultValue": "VS-2015-Comm-VSU3-AzureSDK-291-WS2012R2",
       "allowedValues": [
-          "VS-2015-Comm-AzureSDK-2.9-W10T-Win10-N",
-          "VS-2015-Comm-AzureSDK-2.9-WS2012R2",	
-          "VS-2015-Comm-VSU3-AzureSDK-291-Win10-N",	
-          "VS-2015-Comm-VSU3-AzureSDK-291-WS2012R2",	
-          "VS-2015-Community-AzureSDK-2.7-Cordova-Win8.1-N-x64",	
-          "VS-2015-Community-AzureSDK-2.7-W10T-Win10-N",
-          "VS-2015-Community-AzureSDK-2.7-WS2012R2",
-          "VS-2015-Ent-AzureSDK-2.9-WS2012R2",
-          "VS-2015-Ent-AzureSDK-29-W10T-Win10-N",
-          "VS-2015-Ent-VSU3-AzureSDK-291-Win10-N",	
-          "VS-2015-Ent-VSU3-AzureSDK-291-WS2012R2",
-          "VS-2015-Enterprise-AzureSDK-2.7-Cordova-Win8.1-N-x64",
-          "VS-2015-Enterprise-AzureSDK-2.7-W10T-Win10-N",
-          "VS-2015-Enterprise-AzureSDK-2.7-WS2012R2",
-          "VS-2015-Pro-AzureSDK-2.8-Cordova-Win8.1-N-x64",	
-          "VS-2015-Professional-AzureSDK-2.7-Cordova-Win8.1-N-x64",	
-          "VS-2015-Professional-AzureSDK-2.7-W10T-Win10-N"
+        "VS-2015-Comm-AzureSDK-2.9-W10T-Win10-N",
+        "VS-2015-Comm-AzureSDK-2.9-WS2012R2",
+        "VS-2015-Comm-VSU3-AzureSDK-291-Win10-N",
+        "VS-2015-Comm-VSU3-AzureSDK-291-WS2012R2",
+        "VS-2015-Ent-AzureSDK-2.9-WS2012R2",
+        "VS-2015-Ent-AzureSDK-29-W10T-Win10-N",
+        "VS-2015-Ent-VSU3-AzureSDK-291-Win10-N",
+        "VS-2015-Ent-VSU3-AzureSDK-291-WS2012R2"
       ],
       "metadata": {
-        "description": "Which version of Visual Studio (MSDN Subscription required) you would like to deploy"
+        "description": "Which version of Visual Studio you would like to deploy"
       }
     },
     "dnsLabelPrefix": {
@@ -56,7 +72,21 @@
        "metadata": {
         "description": "Which version of Office would you would like to deploy"
       }
-    }    
+    },    
+    "setupOfficeScriptFileName": {
+      "type": "string",
+      "defaultValue": "DeployO365SilentWithVersion.ps1",
+      "metadata": {
+        "description": "PowerShell script name to execute"
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/visual-studio-dev-vm-O365/scripts/",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      } 
+    }
   },
   "variables": {
     "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'visstudiovm')]",
@@ -69,33 +99,29 @@
     "vmVnetID": "[resourceId('Microsoft.Network/virtualNetworks', 'Vnet01')]",
     "vmSubnetRef": "[concat(variables('VMVnetID'), '/subnets/', variables('Vnet01Subnet1Name'))]",
     "vmStorageAccountContainerName": "vhds",
-    "vmNicName": "[concat(variables('vmName'), 'NetworkInterface')]",
-    "vmIP01Name": "VMIP01",
-    "storageType": "Premium_LRS",
-    "vmSize": "Standard_DS2",
-    "setupOfficeScriptUri": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/windows-devvm-O365/scripts/",
-    "setupOfficeScriptFileName": "DeployO365SilentWithVersion.ps1",
-    "location" : "[resourceGroup().location]",
-    "vmName" : "O365DevVM"
+    "vmNicName": "[concat(parameters('vmName'), 'NetworkInterface')]",
+    "vmIP01Name": "VMIP01"
   },
   "resources": [
     {
       "name": "[variables('storageAccountName')]",
       "type": "Microsoft.Storage/storageAccounts",
-      "location": "[variables('location')]",
+      "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-15",
+      "dependsOn": [ ],
       "tags": {
         "displayName": "Storage01"
       },
       "properties": {
-        "accountType": "[variables('storageType')]"
+        "accountType": "[parameters('storageType')]"
       }
     },
     {
       "name": "VNet01",
       "type": "Microsoft.Network/virtualNetworks",
-      "location": "[variables('location')]",
+      "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-15",
+      "dependsOn": [ ],
       "tags": {
         "displayName": "VNet01"
       },
@@ -118,7 +144,7 @@
     {
       "name": "[variables('vmNicName')]",
       "type": "Microsoft.Network/networkInterfaces",
-      "location": "[variables('location')]",
+      "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-15",
       "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/', 'Vnet01')]",
@@ -145,9 +171,9 @@
       }
     },
     {
-      "name": "[variables('vmName')]",
+      "name": "[parameters('vmName')]",
       "type": "Microsoft.Compute/virtualMachines",
-      "location": "[variables('location')]",
+      "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-15",
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
@@ -158,10 +184,10 @@
       },
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[variables('vmSize')]"
+          "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
-          "computername": "[variables('vmName')]",
+          "computerName": "[parameters('vmName')]",
           "adminUsername": "[parameters('vmAdminUsername')]",
           "adminPassword": "[parameters('vmAdminPassword')]"
         },
@@ -175,7 +201,7 @@
           "osDisk": {
             "name": "VMOSDisk",
             "vhd": {
-              "uri": "[concat('http://', variables('storageAccountName'), '.blob.core.windows.net/', variables('vmStorageAccountContainerName'), '/', variables('vmOSDiskName'), '.vhd')]"
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2015-06-15').primaryEndpoints.blob, variables('vmStorageAccountContainerName'), '/', variables('vmOSDiskName'), '.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -193,10 +219,10 @@
           {
             "name": "SetupOffice",
             "type": "extensions",
-            "location": "[variables('location')]",
+            "location": "[resourceGroup().location]",
             "apiVersion": "2015-06-15",
             "dependsOn": [
-              "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+              "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
             ],
             "tags": {
               "displayName": "SetupOffice"
@@ -204,11 +230,11 @@
             "properties": {
               "publisher": "Microsoft.Compute",
               "type": "CustomScriptExtension",
-              "typeHandlerVersion": "1.4",
+              "typeHandlerVersion": "1.8",
               "autoUpgradeMinorVersion": true,
               "settings": {
                 "fileUris": [
-                  "[concat(variables('setupOfficeScriptUri'), variables('setupOfficeScriptFileName'))]",
+                  "[concat(parameters('_artifactsLocation'), parameters('setupOfficeScriptFileName'))]",
                   "https://raw.githubusercontent.com/officedev/Office-IT-Pro-Deployment-Scripts/master/Office-ProPlus-Deployment/Deploy-OfficeClickToRun/DefaultConfiguration.xml",
                   "https://raw.githubusercontent.com/officedev/Office-IT-Pro-Deployment-Scripts/master/Office-ProPlus-Deployment/Deploy-OfficeClickToRun/Office2013Setup.exe",
                   "https://raw.githubusercontent.com/officedev/Office-IT-Pro-Deployment-Scripts/master/Office-ProPlus-Deployment/Deploy-OfficeClickToRun/Office2016Setup.exe",
@@ -216,7 +242,7 @@
                   "https://raw.githubusercontent.com/officedev/Office-IT-Pro-Deployment-Scripts/master/Office-ProPlus-Deployment/Deploy-OfficeClickToRun/Generate-ODTConfigurationXML.ps1",
                   "https://raw.githubusercontent.com/officedev/Office-IT-Pro-Deployment-Scripts/master/Office-ProPlus-Deployment/Deploy-OfficeClickToRun/Install-OfficeClickToRun.ps1"
                 ],
-                "commandToExecute": "[concat('powershell -ExecutionPolicy bypass -File ', variables('setupOfficeScriptFileName'),' -OfficeVersion ', parameters('officeVersion'))]"
+                "commandToExecute": "[concat('powershell -ExecutionPolicy bypass -File ', parameters('setupOfficeScriptFileName'),' -OfficeVersion ', parameters('officeVersion'))]"
               }
             }
           }
@@ -225,8 +251,9 @@
     {
       "name": "[variables('vmIP01Name')]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "location": "[variables('location')]",
+      "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-15",
+      "dependsOn": [ ],
       "tags": {
         "displayName": "VMIP01"
       },
@@ -240,3 +267,4 @@
   ],
   "outputs": {}
 }
+
