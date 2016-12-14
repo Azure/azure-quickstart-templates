@@ -1,0 +1,198 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "DNSzoneName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the DNS Zone"
+            }
+        },
+        "TTL": {
+            "type": "int",
+            "defaultValue": "3600",
+            "metadata": {
+                "description": "Time to live value in seconds"
+            }
+        }
+    },
+    "variables": {
+        "mx": "[concat(replace(parameters('DNSzoneName'),'.','-'),'.mail.protection.outlook.com')]",
+        "apiVersion": "2016-04-01"
+    },
+    "resources": [
+        {
+            "apiVersion": "[variables('apiVersion')]",
+            "type": "Microsoft.Network/dnszones",
+            "name": "[parameters('DNSzoneName')]",
+            "location": "global",
+            "resources": [
+                {
+                    "comments": "CNAME record needed for autodiscover endpoint for making it easier to configure Outlook.",
+                    "type": "CNAME",
+                    "name": "autodiscover",
+                    "apiVersion": "[variables('apiVersion')]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Network/dnszones', parameters('DNSzoneName'))]"
+                    ],
+                    "properties": {
+                        "TTL": 3600,
+                        "CNAMERecord": {
+                            "cname": "autodiscover.outlook.com"
+                        }
+                    }
+                },
+                {
+                    "comments": "CNAME record needed for autodiscover endpoint for making it easier to configure Skype for Business.",
+                    "type": "CNAME",
+                    "name": "lyncdiscover",
+                    "apiVersion": "[variables('apiVersion')]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Network/dnszones', parameters('DNSzoneName'))]"
+                    ],
+                    "properties": {
+                        "TTL": 3600,
+                        "CNAMERecord": {
+                            "cname": "webdir.online.lync.com"
+                        }
+                    }
+                },
+                {
+                    "type": "CNAME",
+                    "name": "msoid",
+                    "apiVersion": "[variables('apiVersion')]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Network/dnszones', parameters('DNSzoneName'))]"
+                    ],
+                    "properties": {
+                        "TTL": 3600,
+                        "CNAMERecord": {
+                            "cname": "clientconfig.microsoftonline-p.net"
+                        }
+                    }
+                },
+                {
+                    "type": "CNAME",
+                    "name": "sip",
+                    "apiVersion": "[variables('apiVersion')]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Network/dnszones', parameters('DNSzoneName'))]"
+                    ],
+                    "properties": {
+                        "TTL": 3600,
+                        "CNAMERecord": {
+                            "cname": "sipdir.online.lync.com"
+                        }
+                    }
+                },
+                {
+                    "comments": "CNAME record needed for Mobile Device Management (MDM) with Office 365.",
+                    "type": "CNAME",
+                    "name": "enterpriseregistration",
+                    "apiVersion": "[variables('apiVersion')]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Network/dnszones', parameters('DNSzoneName'))]"
+                    ],
+                    "properties": {
+                        "TTL": 3600,
+                        "CNAMERecord": {
+                            "cname": "enterpriseregistration.windows.net"
+                        }
+                    }
+                },
+                {
+                    "comments": "CNAME record needed for Mobile Device Management (MDM) with Office 365.",
+                    "type": "CNAME",
+                    "name": "enterpriseenrollment",
+                    "apiVersion": "[variables('apiVersion')]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Network/dnszones', parameters('DNSzoneName'))]"
+                    ],
+                    "properties": {
+                        "TTL": 3600,
+                        "CNAMERecord": {
+                            "cname": "enterpriseenrollment.manage.microsoft.com"
+                        }
+                    }
+                },
+                {
+                    "comments": "MX record so email for your domain will be routed to Office 365",
+                    "type": "MX",
+                    "name": "@",
+                    "apiVersion": "[variables('apiVersion')]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Network/dnszones', parameters('DNSzoneName'))]"
+                    ],
+                    "properties": {
+                        "TTL": 3600,
+                        "MXRecords": [
+                            {
+                                "exchange": "[variables('mx')]",
+                                "preference": 0
+                            }
+                        ]
+                    }
+                },
+                {
+                    "comments": "SRV record to specify sip federation location for Skype for Business.",
+                    "type": "SRV",
+                    "name": "_sipfederationtls._tcp",
+                    "apiVersion": "[variables('apiVersion')]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Network/dnszones', parameters('DNSzoneName'))]"
+                    ],
+                    "properties": {
+                        "TTL": 3600,
+                        "SRVRecords": [
+                            {
+                                "port": 5061,
+                                "priority": 100,
+                                "target": "sipfed.online.lync.com",
+                                "weight": 1
+                            }
+                        ]
+                    }
+                },
+                {
+                    "comments": "SRV record to specify sip location for Skype for Business.",
+                    "type": "SRV",
+                    "name": "_sip._tls",
+                    "apiVersion": "[variables('apiVersion')]",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Network/dnszones', parameters('DNSzoneName'))]"
+                    ],
+                    "properties": {
+                        "TTL": 3600,
+                        "SRVRecords": [
+                            {
+                                "port": 443,
+                                "priority": 100,
+                                "target": "sipdir.online.lync.com",
+                                "weight": 1
+                            }
+                        ]
+                    }
+                },
+                {
+                    "comments": "TXT record for Sender policy framework (SPF) records, which are used to prevent spam.",
+                    "type": "TXT",
+                    "name": "@",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Network/dnszones', parameters('DNSzoneName'))]"
+                    ],
+                    "apiVersion": "[variables('apiVersion')]",
+                    "properties": {
+                        "TTL": 3600,
+                        "TXTRecords": [
+                            {
+                                "value": [
+                                    "v=spf1 include:spf.protection.outlook.com -all"
+                                ]
+                            }
+                        ]
+                    }
+                }
+            ]
+        }
+    ]
+}
