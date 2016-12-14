@@ -4,10 +4,11 @@
     "parameters": {
 	    "DNSRecordstoCreate": {
       "type": "string",
-      "defaultValue": "Both",
+      "defaultValue": "both",
       "allowedValues": [
-        "Mail",
-        "SfB"
+        "mail",
+        "skype",
+        "both"
       ],
       "metadata": {
         "description": "Identifies whether to use new or existing Storage Account"
@@ -28,28 +29,42 @@
         },
         "artifactsBaseUrl": {
             "type": "string",
-            "defaultValue": "https://raw.githubusercontent.com/georgewallace/azure-quickstart-templates/master/dns-recods-office365",
+            "defaultValue": "https://raw.githubusercontent.com/georgewallace/azure-quickstart-templates/master/dns-records-office365",
             "metadata": {
                 "description": "base url"
             }
-        }
-
+        },
+	    "Types": {
+      "type": "array",
+      "defaultValue": [
+        "mail",
+        "mdm",
+        "sfb"
+      ],
+      "metadata": {
+        "description": "Identifies whether to use new or existing Storage Account"
+      }
+    }
     },
     "variables": {
         "mx": "[concat(replace(parameters('DNSzoneName'),'.','-'),'.mail.protection.outlook.com')]",
         "apiVersion": "2016-04-01",
-		"DNSRerecordsSetupURL": "[concat(parameters('artifactsBaseUrl'),'/',parameters('DNSRecordstoCreate'),'.json')]"
-    
+		"DNSRerecordsSetupURL": "[concat(parameters('artifactsBaseUrl'),'/',parameters('DNSRecordstoCreate'),'.json')]"   
     },
 	  "resources": [
     {
-      "name": "SettingUpDNSRecods",
+      "name": "[concat('SettingUpDNSRecods','-',parameters('Types')[copyIndex()])]",
       "type": "Microsoft.Resources/deployments",
+            "copy": {
+      "name": "recordcopys",
+
+"count": "[length(parameters('Types'))]"
+      },
       "apiVersion": "2015-01-01",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[variables('DNSRerecordsSetupURL')]",
+          "uri": "[concat(parameters('artifactsBaseUrl'),'/',parameters('Types')[copyIndex()],'.json')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -62,5 +77,11 @@
         }
       }
     }
-         ]
+         ],
+         "outputs": {
+           "return": {
+           "type": "int",
+           "value": "[length(parameters('Types'))]"
+         }
+}
 }
