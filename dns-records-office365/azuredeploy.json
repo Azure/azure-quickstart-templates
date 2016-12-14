@@ -1,8 +1,8 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-    "contentVersion": "1.0.0.0",
-    "parameters": {
-	    "DNSRecordstoCreate": {
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "DNSRecordstoCreate": {
       "type": "string",
       "defaultValue": "both",
       "allowedValues": [
@@ -14,27 +14,27 @@
         "description": "Identifies whether to use new or existing Storage Account"
       }
     },
-        "DNSzoneName": {
-            "type": "string",
-            "metadata": {
-                "description": "Name of the DNS Zone"
-            }
-        },
-        "TTL": {
-            "type": "int",
-            "defaultValue": "3600",
-            "metadata": {
-                "description": "Time to live value in seconds"
-            }
-        },
-        "artifactsBaseUrl": {
-            "type": "string",
-            "defaultValue": "https://raw.githubusercontent.com/georgewallace/azure-quickstart-templates/master/dns-records-office365",
-            "metadata": {
-                "description": "base url"
-            }
-        },
-	    "Types": {
+    "DNSzoneName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the DNS Zone"
+      }
+    },
+    "TTL": {
+      "type": "int",
+      "defaultValue": "3600",
+      "metadata": {
+        "description": "Time to live value in seconds"
+      }
+    },
+    "artifactsBaseUrl": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/georgewallace/azure-quickstart-templates/master/dns-records-office365",
+      "metadata": {
+        "description": "base url"
+      }
+    },
+    "Types": {
       "type": "array",
       "defaultValue": [
         "mail",
@@ -45,28 +45,30 @@
         "description": "Identifies whether to use new or existing Storage Account"
       }
     }
+  },
+  "variables": {
+    "mx": "[concat(replace(parameters('DNSzoneName'),'.','-'),'.mail.protection.outlook.com')]",
+    "apiVersion": "2016-04-01",
+    "DNSRerecordsSetupURL": "[concat(parameters('artifactsBaseUrl'),'/',parameters('DNSRecordstoCreate'),'.json')]"
+  },
+  "resources": [
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/dnszones",
+      "name": "[parameters('DNSzoneName')]",
+      "location": "global"
     },
-    "variables": {
-        "mx": "[concat(replace(parameters('DNSzoneName'),'.','-'),'.mail.protection.outlook.com')]",
-        "apiVersion": "2016-04-01",
-		"DNSRerecordsSetupURL": "[concat(parameters('artifactsBaseUrl'),'/',parameters('DNSRecordstoCreate'),'.json')]"   
-    },
-	  "resources": [
-      {
-                  "apiVersion": "[variables('apiVersion')]",
-            "type": "Microsoft.Network/dnszones",
-            "name": "[parameters('DNSzoneName')]",
-            "location": "global"
-},
     {
       "name": "[concat('SettingUpDNSRecods','-',parameters('Types')[copyIndex()])]",
       "type": "Microsoft.Resources/deployments",
-            "copy": {
-      "name": "recordcopys",
-
-"count": "[length(parameters('Types'))]"
+      "copy": {
+        "name": "recordcopys",
+        "count": "[length(parameters('Types'))]"
       },
       "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/dnszones', parameters('DNSzoneName'))]"
+      ],
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -83,11 +85,11 @@
         }
       }
     }
-         ],
-         "outputs": {
-           "return": {
-           "type": "int",
-           "value": "[length(parameters('Types'))]"
-         }
-}
+  ],
+  "outputs": {
+    "return": {
+      "type": "int",
+      "value": "[length(parameters('Types'))]"
+    }
+  }
 }
