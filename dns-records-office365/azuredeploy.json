@@ -2,25 +2,13 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "DNSRecordstoCreate": {
-      "type": "string",
-      "defaultValue": "both",
-      "allowedValues": [
-        "mail",
-        "skype",
-        "both"
-      ],
-      "metadata": {
-        "description": "Identifies whether to use new or existing Storage Account"
-      }
-    },
-    "DNSzoneName": {
+    "dnsZoneName": {
       "type": "string",
       "metadata": {
         "description": "Name of the DNS Zone"
       }
     },
-    "TTL": {
+    "ttl": {
       "type": "int",
       "defaultValue": "3600",
       "metadata": {
@@ -31,10 +19,10 @@
       "type": "string",
       "defaultValue": "https://raw.githubusercontent.com/georgewallace/azure-quickstart-templates/master/dns-records-office365",
       "metadata": {
-        "description": "base url"
+        "description": "Base URL for the child template files"
       }
     },
-    "Types": {
+    "recordTypes": {
       "type": "array",
       "defaultValue": [
         "mail",
@@ -42,14 +30,13 @@
         "sfb"
       ],
       "metadata": {
-        "description": "Identifies whether to use new or existing Storage Account"
+        "description": "An array that defines the resources to create, acceptable values are (mail,mdm,sfb)."
       }
     }
   },
   "variables": {
     "mx": "[concat(replace(parameters('DNSzoneName'),'.','-'),'.mail.protection.outlook.com')]",
-    "apiVersion": "2016-04-01",
-    "DNSRerecordsSetupURL": "[concat(parameters('artifactsBaseUrl'),'/',parameters('DNSRecordstoCreate'),'.json')]"
+    "apiVersion": "2016-04-01"
   },
   "resources": [
     {
@@ -59,11 +46,11 @@
       "location": "global"
     },
     {
-      "name": "[concat('SettingUpDNSRecods','-',parameters('Types')[copyIndex()])]",
+      "name": "[concat('SettingUpDNSRecods','-',parameters('recordTypes')[copyIndex()])]",
       "type": "Microsoft.Resources/deployments",
       "copy": {
-        "name": "recordcopys",
-        "count": "[length(parameters('Types'))]"
+        "name": "recordcopies",
+        "count": "[length(parameters('recordTypes'))]"
       },
       "apiVersion": "2015-01-01",
       "dependsOn": [
@@ -72,24 +59,18 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('artifactsBaseUrl'),'/',parameters('Types')[copyIndex()],'.json')]",
+          "uri": "[concat(parameters('artifactsBaseUrl'),'/',parameters('recordTypes')[copyIndex()],'.json')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
           "DNSzoneName": {
             "value": "[parameters('DNSzoneName')]"
           },
-          "TTL": {
-            "value": "[parameters('TTL')]"
+          "ttl": {
+            "value": "[parameters('ttl')]"
           }
         }
       }
     }
-  ],
-  "outputs": {
-    "return": {
-      "type": "int",
-      "value": "[length(parameters('Types'))]"
-    }
-  }
+  ]
 }
