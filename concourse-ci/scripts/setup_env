@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+
+function retryop()
+{
+  retry=0
+  max_retries=10
+  interval=30
+  while [ ${retry} -lt ${max_retries} ]; do
+    echo "Operation: $1, Retry #${retry}"
+    eval $1
+    if [ $? -eq 0 ]; then
+      echo "Successfully."
+      break
+    else
+      let retry=retry+1
+      sleep $interval
+    fi
+  done
+}
+
+echo "Start to update package lists from repositories..."
+retryop "apt-get update"
+
+retryop "apt-get -y install python-pip jq"
+
+set -e
+
+custom_data_file="/var/lib/cloud/instance/user-data.txt"
+settings=$(cat ${custom_data_file})
+tenant_id=$1
+client_id=$2
+client_secret=$3
+
+function get_setting() {
+  key=$1
+  local value=$(echo $settings | jq ".$key" -r)
+  echo $value
+}
+
+environment=$(get_setting ENVIRONMENT)
+
+set +e
+
+echo "Start to install python packages..."
+pkg_list="msrest msrestazure azure==2.0.0rc1 azure-storage netaddr"
+if [ "$environment" = "AzureChinaCloud" ]; then
+  for pkg in $pkg_list; do
+    retryop "pip install $pkg --index-url https://pypi.mirrors.ustc.edu.cn/simple/ --default-timeout=60"
+  done
+else
+  for pkg in $pkg_list; do
+    retryop "pip install $pkg"
+  done
+fi
+
+set -e
+
+username=$(get_setting ADMIN_USER_NAME)
+home_dir="/home/$username"
+
+# Generate SSH key pair for BOSH
+bosh_key="bosh"
+ssh-keygen -t rsa -f $bosh_key -P "" -C ""
+chmod 400 $bosh_key
+cp $bosh_key $home_dir
+cp "$bosh_key.pub" $home_dir
+
+bosh_director_ip=$(python setup_env.py ${tenant_id} ${client_id} ${client_secret} ${custom_data_file})
+
+# Prepare Bosh deployment script and manifest
+sed -i "s/REPLACE_WITH_BOSH_DIRECOT_IP/$bosh_director_ip/g" deploy_bosh.sh
+chmod +x deploy_bosh.sh
+cp deploy_bosh.sh $home_dir
+cp bosh.yml $home_dir
+
+# Prepare Concousr deployment script and manifests
+chmod +x deploy_concourse.sh
+cp deploy_concourse.sh $home_dir
+cp cloud.yml $home_dir
+cp concourse.yml $home_dir
+
+# Install bosh-init
+bosh_init_url=$(get_setting BOSH_INIT_URL)
+install_log="$home_dir/install.log"
+chmod +x init.sh
+./init.sh $environment $bosh_init_url >$install_log 2>&1
+
+chown -R $username $home_dir
+
+# Deploy bosh if autoDeployBosh was enabled
+auto_deploy_bosh=$(get_setting AUTO_DEPLOY_BOSH)
+if [ "$auto_deploy_bosh" != "enabled" ]; then
+  exit 0
+fi
+
+su -c "./deploy_bosh.sh" - $username

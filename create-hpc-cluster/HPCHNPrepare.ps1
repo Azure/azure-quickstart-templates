@@ -1,26 +1,56 @@
-﻿Param
+﻿<#
+.Synopsis
+    Prepare the HPC Pack head node.
+
+.DESCRIPTION
+    This script promotes the virtual machine created from HPC Image to a HPC head node.
+
+.NOTES
+    This cmdlet requires:
+    1. The current computer is a virtual machine created from HPC Image.
+    2. The current computer is domain joined.
+    3. The current user is a domain user as well as local administrator.
+    4. The current user is the sysadmin of the DB server instance
+
+.EXAMPLE
+    PS > HPCHNPrepare.ps1 -DBServerInstance ".\ComputeCluster"
+    Prepare the HPC head node with local DB server instance ".\ComputeCluster"
+
+.EXAMPLE
+    PS > HPCHNPrepare.ps1 -DBServerInstance "MyRemoteDB\ComputeCluster" -RemoteDB
+    Prepare the HPC head node with remote DB server instance "MyRemoteDB\ComputeCluster"
+#>
+Param
 (
+    # Specifies the database server instance
     [Parameter(Mandatory=$true)]
     [String] $DBServerInstance, 
-    		
+    
+    # (Optional) specifies the database name for HPC Management DB. If not specified, the default value is "HPCManagement"
     [Parameter(Mandatory=$false)]
     [String] $ManagementDB = "HPCManagement",
 
+    # (Optional) specifies the database name for HPC Scheduler DB. If not specified, the default value is "HPCScheduler"
     [Parameter(Mandatory=$false)]
     [String] $SchedulerDB = "HPCScheduler",
 
+    # (Optional) specifies the database name for HPC Monitoring DB. If not specified, the default value is "HPCMonitoring"
     [Parameter(Mandatory=$false)]
     [String] $MonitoringDB = "HPCMonitoring",
 
+    # (Optional) specifies the database name for HPC Reporting DB. If not specified, the default value is "HPCReporting"
     [Parameter(Mandatory=$false)]
     [String] $ReportingDB = "HPCReporting",
 
+    # (Optional) specifies the database name for HPC Diagnostics DB. If not specified, the default value is "HPCDiagnostics"
     [Parameter(Mandatory=$false)]
     [String] $DiagnosticsDB = "HPCDiagnostics",
 
+    # (Optional) specifies this parameter if the database server is a remote server.
     [Parameter(Mandatory=$false)]
     [Switch] $RemoteDB,
 
+    # (Optional) specifies the path of the log file. If not specified, the default value is "$env:windir\Temp\HPCHeadNodePrepare.log"
     [Parameter(Mandatory=$false)]
     [String] $LogFile = ""
 )
@@ -74,7 +104,8 @@ function WriteLog
 try
 {
     # 0 for Standalone Workstation, 1 for Member Workstation, 2 for Standalone Server, 3 for Member Server, 4 for Backup Domain Controller, 5 for Primary Domain Controller
-    $domainRole = (Get-WmiObject Win32_ComputerSystem).DomainRole
+    $computeInfo = Get-WmiObject Win32_ComputerSystem
+    $domainRole = $computeInfo.DomainRole
     if($domainRole -lt 3)
     {
         throw "$env:COMPUTERNAME is not domain joined"
@@ -108,6 +139,8 @@ try
 
     if($RemoteDB.IsPresent)
     {
+        $domainNetbiosName = $computeInfo.Domain.Split(".")[0].ToUpper()
+        $machineAccount = "$domainNetbiosName\$env:COMPUTERNAME$"
         Import-Module "sqlps" -DisableNameChecking -Force
         foreach($db in $DBDic.Keys)
         {
@@ -116,6 +149,7 @@ try
             $sqlfilename = $db + "DB.sql"
             Get-Content "$HPCBinPath\$sqlfilename" | %{$_.Replace("`$($dbNameVar)", $DBDic[$db])} | Set-Content "$env:temp\$sqlfilename" -Force
             Invoke-Sqlcmd -ServerInstance $DBServerInstance -Database $DBDic[$db] -InputFile "$env:temp\$sqlfilename" -QueryTimeout 300 -ErrorAction SilentlyContinue
+            Invoke-Sqlcmd -ServerInstance $DBServerInstance -Database $DBDic[$db] -InputFile "$HPCBinPath\AddDbUserForHpcService.sql" -Variable "TargetAccount=$machineAccount" -QueryTimeout 300
         }
 
         WriteLog "Inserting SDM Documents to HpcManagment database"
@@ -322,6 +356,6 @@ try
 }
 catch
 {
-    WriteLog "Failed to Prepare HPC head node: $_" -LogLevel Error
+    WriteLog ("Failed to Prepare HPC head node: " + ($_ | Out-String)) -LogLevel Error
     throw
 }

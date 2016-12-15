@@ -1,0 +1,443 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "dnsLabelPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Unique public dns prefix where the  node will be exposed"
+      }
+    },
+    "adminUserName": {
+      "type": "string",
+      "defaultValue": "azureuser",
+      "metadata": {
+        "description": "User name for the Virtual Machine. Pick a valid username otherwise there will be a BadRequest error."
+      }
+    },
+    "imagePublisher": {
+      "type": "string",
+      "defaultValue": "openlogic",
+      "allowedValues": [
+        "Canonical",
+        "openlogic"
+      ],
+      "metadata": {
+        "description": "openlogic/Canonical are the respective CentOS/Ubuntu Distributor in Azure Market Place"
+      }
+    },
+    "imageOffer": {
+      "type": "string",
+      "defaultValue": "CentOS",
+      "allowedValues": [
+        "CentOS",
+        "UbuntuServer"
+      ],
+      "metadata": {
+        "description": "New CentOS/UbuntuServer Image Offer"
+      }
+    },
+    "imageSku": {
+      "type": "string",
+      "defaultValue": "7.2",
+      "allowedValues": [
+        "16.04.0-LTS",
+        "6.5",
+        "6.6",
+        "7.1",
+        "7.2"
+      ],
+      "metadata": {
+        "description": "P.S: OpenLogic CentOS version to use **docker usage Only for 7.1/7.2 kernels 3.10 and above **"
+      }
+    },
+    "sshPublicKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "This field must be a valid SSH public key. ssh with this RSA public key"
+      }
+    },
+    "mountFolder": {
+      "type": "string",
+      "defaultValue": "/data",
+      "metadata": {
+        "description": "The Folder system to be auto-mounted."
+      }
+    },
+    "nodeSize": {
+      "type": "string",
+      "allowedValues": [
+        "Standard_DS1",
+        "Basic_A0",
+        "Basic_A1",
+        "Basic_A2",
+        "Basic_A3",
+        "Basic_A4",
+        "Standard_A0",
+        "Standard_A1",
+        "Standard_A10",
+        "Standard_A11",
+        "Standard_A2",
+        "Standard_A3",
+        "Standard_A4",
+        "Standard_A5",
+        "Standard_A6",
+        "Standard_A7",
+        "Standard_A8",
+        "Standard_A9",
+        "Standard_D1",
+        "Standard_D11",
+        "Standard_D11_v2",
+        "Standard_D12",
+        "Standard_D12_v2",
+        "Standard_D13",
+        "Standard_D13_v2",
+        "Standard_D14",
+        "Standard_D14_v2",
+        "Standard_D15_v2",
+        "Standard_D1_v2",
+        "Standard_D2",
+        "Standard_D2_v2",
+        "Standard_D3",
+        "Standard_D3_v2",
+        "Standard_D4",
+        "Standard_D4_v2",
+        "Standard_D5_v2",
+        "Standard_DS1",
+        "Standard_DS11",
+        "Standard_DS11_v2",
+        "Standard_DS12",
+        "Standard_DS12_V2",
+        "Standard_DS12_v2",
+        "Standard_DS13",
+        "Standard_DS13_v2",
+        "Standard_DS14",
+        "Standard_DS14_v2",
+        "Standard_DS15_v2",
+        "Standard_DS1_v2",
+        "Standard_DS2",
+        "Standard_DS2_v2",
+        "Standard_DS3",
+        "Standard_DS3_v2",
+        "Standard_DS4",
+        "Standard_DS4_v2",
+        "Standard_DS5_v2",
+        "Standard_G1",
+        "Standard_G2",
+        "Standard_G3",
+        "Standard_G4",
+        "Standard_G5",
+        "Standard_GS1",
+        "Standard_GS2",
+        "Standard_GS3",
+        "Standard_GS4",
+        "Standard_GS5"
+      ],
+      "defaultValue": "Standard_DS2_v2",
+      "metadata": {
+        "description": "Size of the  node."
+      }
+    },
+    "storageType": {
+      "type": "string",
+      "allowedValues": [
+        "Standard_LRS",
+        "Premium_LRS",
+        "Standard_GRS",
+        "Standard_RAGRS",
+        "Standard_ZRS"
+      ],
+      "defaultValue": "Standard_LRS",
+      "metadata": {
+        "description": "Storage Account Type : Standard-LRS, Standard-GRS, Standard-RAGRS, Standard-ZRS"
+      }
+    },
+    "dockerVer": {
+      "type": "string",
+      "defaultValue": "1.12",
+      "metadata": {
+        "description": "The docker version **Only for 7.1/7.2 kernels 3.10 and above **"
+      }
+    },
+    "dockerComposeVer": {
+      "type": "string",
+      "defaultValue": "1.9.0-rc2",
+      "metadata": {
+        "description": "The Docker Compose Version **Only for 7.1/7.2 kernels 3.10 and above **"
+      }
+    },
+    "dockerMachineVer": {
+      "type": "string",
+      "defaultValue": "0.8.2",
+      "metadata": {
+        "description": "The docker-machine version **Only for 7.1/7.2 kernels 3.10 and above **"
+      }
+    },
+    "dataDiskSize": {
+      "type": "int",
+      "defaultValue": 10,
+      "metadata": {
+        "description": "The size in GB of each data disk that is attached to the VM.  A MDADM RAID0  is created with all data disks auto-mounted,  that is dataDiskSize * dataDiskCount in size n the Storage ."
+      }
+    },
+    "masterVMName": {
+      "type": "string",
+      "defaultValue": "centos",
+      "allowedValues": [
+        "centos",
+        "ubuntuserver"
+      ],
+      "metadata": {
+        "description": "The Name of the VM."
+      }
+    },
+    "numDataDisks": {
+      "type": "string",
+      "defaultValue": "4",
+      "allowedValues": [
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15",
+        "16"
+      ],
+      "metadata": {
+        "description": "This parameter allows the user to select the number of disks wanted"
+      }
+    }
+  },
+  "variables": {
+    "armApiVersion": "2015-06-15",
+    "artifactsLocation": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vm-linux-dynamic-data-disks/",
+    "avSetName": "avSet",
+    "diskCaching": "ReadWrite",
+    "networkSettings": {
+      "virtualNetworkName": "virtualnetwork",
+      "addressPrefix": "10.0.0.0/16",
+      "subnet": {
+        "dse": {
+          "name": "dse",
+          "prefix": "10.0.0.0/24",
+          "vnet": "virtualnetwork"
+        }
+      },
+      "statics": {
+        "master": "10.0.0.254"
+      }
+    },
+    "newStorageAccountName": "[concat(uniqueString(resourceGroup().id), 'dynamicdisk')]",
+    "nicName": "nic",
+    "OSDiskName": "osdisk",
+    "publicIPAddressName": "publicips",
+    "publicIPAddressType": "Dynamic",
+    "vmStorageAccountContainerName": "vhd",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('networkSettings').virtualNetworkName)]",
+    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('networkSettings').subnet.dse.name)]",
+    "installationCLI": "[concat('bash azuredeploy.sh ', parameters('masterVMName'), ' ', parameters('mountFolder'), ' ', parameters('numDataDisks'), ' ', parameters('dockerVer'), ' ', parameters('dockerComposeVer'), ' ', parameters('adminUserName'), ' ', parameters('imageSku'), ' ', parameters('dockerMachineVer'))]",
+    "storageAccountType": "[parameters('storageType')]",
+    "sshKeyPath": "[concat('/home/',parameters('adminUserName'),'/.ssh/authorized_keys')]"
+  },
+
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('newStorageAccountName')]",
+      "apiVersion": "[variables('armApiVersion')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "accountType": "[variables('storageAccountType')]"
+      }
+    },
+    {
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[variables('avSetName')]",
+      "apiVersion": "[variables('armApiVersion')]",
+      "location": "[resourceGroup().location]",
+      "properties": { }
+    },
+    {
+      "apiVersion": "[variables('armApiVersion')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('networkSettings').virtualNetworkName]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('networkSettings').addressPrefix]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('networkSettings').subnet.dse.name]",
+            "properties": {
+              "addressPrefix": "[variables('networkSettings').subnet.dse.prefix]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "[variables('armApiVersion')]",
+      "name": "[variables('publicIPAddressName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('dnsLabelPrefix')]"
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('armApiVersion')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nicName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+        "[concat('Microsoft.Network/virtualNetworks/', variables('networkSettings').virtualNetworkName)]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[variables('networkSettings').statics.master]",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+              },
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "[variables('armApiVersion')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[parameters('masterVMName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]",
+        "[concat('Microsoft.Compute/availabilitySets/', variables('avSetName'))]",
+        "[concat('Microsoft.Resources/deployments/', 'diskSelection')]"
+      ],
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('avSetName'))]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('nodeSize')]"
+        },
+        "osProfile": {
+          "computername": "[parameters('masterVMName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": "true",
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[variables('sshKeyPath')]",
+                  "keyData": "[parameters('sshPublicKey')]"
+                }
+              ]
+            }
+          }
+        },
+        "storageProfile": {
+          "dataDisks": "[reference('diskSelection').outputs.dataDiskArray.value]",
+          "imageReference": {
+            "publisher": "[parameters('imagePublisher')]",
+            "offer": "[parameters('imageOffer')]",
+            "sku": "[parameters('imageSku')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),parameters('masterVMName'),'.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('armApiVersion')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('masterVMName'), '/Installation')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('masterVMName'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[concat(variables('artifactsLocation'), 'azuredeploy.sh')]"
+          ],
+          "commandToExecute": "[variables('installationCLI')]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-01-01",
+      "name": "diskSelection",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('artifactsLocation'), 'diskSelection', '.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "numDataDisks": {
+            "value": "[parameters('numDataDisks')]"
+          },
+          "diskStorageAccountName": {
+            "value": "[variables('newStorageAccountName')]"
+          },
+          "diskCaching": {
+            "value": "[variables('diskCaching')]"
+          },
+          "diskSizeGB": {
+            "value": "[parameters('dataDiskSize')]"
+          },
+          "vmStAccountContainerName": {
+            "value": "[variables('vmStorageAccountContainerName')]"
+          },
+          "masterName": {
+            "value": "[parameters('masterVMName')]"
+          }
+        }
+      }
+    }
+  ]
+}

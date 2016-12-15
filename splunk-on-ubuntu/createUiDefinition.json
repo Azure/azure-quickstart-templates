@@ -1,0 +1,547 @@
+{
+    "handler": "Microsoft.Compute.MultiVm",
+    "version": "0.0.1-preview",
+    "parameters": {
+        "basics": [
+            {
+                "name": "vmUsername",
+                "type": "Microsoft.Compute.UserNameTextBox",
+                "label": "VM user name",
+                "defaultValue": "",
+                "toolTip": "",
+                "constraints": {
+                    "required": true
+                },
+                "osPlatform": "Linux"
+            },
+            {
+                "name": "vmPassword",
+                "type": "Microsoft.Common.PasswordBox",
+                "label": {
+                    "password": "VM user password",
+                    "confirmPassword": "Confirm password"
+                },
+                "toolTip": "",
+                "constraints": {
+                    "required": true,
+                    "regex": "^((?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])|(?=.*[0-9])(?=.*[a-z])(?=.*[!@#$%^&*])|(?=.*[0-9])(?=.*[A-Z])(?=.*[!@#$%^&*])|(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*])).{6,72}$",
+                    "validationMessage": "Password must be at least 6 characters long and have 3 out of the following: one number, one lower case, one upper case, or one special character"
+                },
+                "options": {
+                    "hideConfirmation": false
+                }
+            }
+        ],
+        "steps": [
+            {
+                "name": "networkSettings",
+                "label": "Network Settings",
+                "subLabel": {
+                    "preValidation": "Required",
+                    "postValidation": "Done"
+                },
+                "bladeTitle": "Network Settings",
+                "elements": [
+                    {
+                        "name": "vnetSpec",
+                        "type": "Microsoft.Network.VirtualNetworkCombo",
+                        "label": {
+                            "virtualNetwork": "Virtual network",
+                            "subnets": "Subnets"
+                        },
+                        "toolTip": {
+                            "virtualNetwork": "",
+                            "subnets": ""
+                        },
+                        "defaultValue": {
+                            "name": "splunkVnet",
+                            "addressPrefixSize": "/16"
+                        },
+                        "constraints": {
+                            "minAddressPrefixSize": "/29"
+                        },
+                        "subnets": {
+                            "subnet1": {
+                                "label": "Search head subnet",
+                                "defaultValue": {
+                                    "name": "shsubnet",
+                                    "addressPrefixSize": "/24"
+                                },
+                                "constraints": {
+                                    "minAddressPrefixSize": "/29",
+                                    "minAddressCount": 1,
+                                    "requireContiguousAddresses": true
+                                }
+                            },
+                            "subnet2": {
+                                "label": "Index subnet",
+                                "defaultValue": {
+                                    "name": "idxsubnet",
+                                    "addressPrefixSize": "/24"
+                                },
+                                "constraints": {
+                                    "minAddressPrefixSize": "/29",
+                                    "minAddressCount": 4,
+                                    "requireContiguousAddresses": true
+                                }
+                            }
+                        }
+                    }
+                ]
+            },
+            {
+                "name": "nodesSettings",
+                "label": "Nodes Settings",
+                "subLabel": {
+                    "preValidation": "Required",
+                    "postValidation": "Done"
+                },
+                "bladeTitle": "Nodes Settings",
+                "elements": [
+                    {
+                        "name": "deploymentType",
+                        "type": "Microsoft.Common.DropDown",
+                        "label": "Splunk deployment type",
+                        "defaultValue": "Single node",
+                        "toolTip": "Single node deployment will deploy all Splunk components on a single VM, suitable for dev and test. Cluster mode deployment will deploy 1 Cluster Master VM, 3 Indexer VMs and 1 Search Head VM",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "Single node",
+                                    "value": "Standalone"
+                                },
+                                {
+                                    "label": "Cluster",
+                                    "value": "Cluster"
+                                }
+                            ],
+                            "required": true
+                        }
+                    },
+                    {
+                        "name": "clusterMasterVmSize",
+                        "type": "Microsoft.Compute.SizeSelector",
+                        "label": "Cluster Master VM size",
+                        "toolTip": "Select VM Size (will use 2 data disks)",
+                        "recommendedSizes": [
+                            "Standard_F4"
+                        ],
+                        "constraints": {
+                            "required": "[equals(steps('nodesSettings').deploymentType, 'Cluster')]",
+                            "allowedSizes": [
+                                "Standard_A3",
+                                "Standard_A4",
+                                "Standard_A6",
+                                "Standard_A7",
+                                "Standard_A8",
+                                "Standard_A9",
+                                "Standard_A10",
+                                "Standard_A11",
+                                "Standard_D3",
+                                "Standard_D4",
+                                "Standard_D12",
+                                "Standard_D13",
+                                "Standard_D14",
+                                "Standard_D3_v2",
+                                "Standard_D4_v2",
+                                "Standard_D5_v2",
+                                "Standard_D12_v2",
+                                "Standard_D13_v2",
+                                "Standard_D14_v2",
+                                "Standard_D15_v2",
+                                "Standard_DS3",
+                                "Standard_DS4",
+                                "Standard_DS12",
+                                "Standard_DS13",
+                                "Standard_DS14",
+                                "Standard_DS3_v2",
+                                "Standard_DS4_v2",
+                                "Standard_DS5_v2",
+                                "Standard_DS12_v2",
+                                "Standard_DS13_v2",
+                                "Standard_DS14_v2",
+                                "Standard_DS15_v2",
+                                "Standard_F4",
+                                "Standard_F8",
+                                "Standard_F16",
+                                "Standard_F4s",
+                                "Standard_F8s",
+                                "Standard_F16s",
+                                "Standard_G2",
+                                "Standard_G3",
+                                "Standard_G4",
+                                "Standard_G5",
+                                "Standard_GS2",
+                                "Standard_GS3",
+                                "Standard_GS4",
+                                "Standard_GS5"
+                            ]
+                        },
+                        "osPlatform": "Linux",
+                        "count": 1,
+                        "visible": "[equals(steps('nodesSettings').deploymentType, 'Cluster')]"
+                    },
+                    {
+                        "name": "clusterSearchheadVmSize",
+                        "type": "Microsoft.Compute.SizeSelector",
+                        "label": "Search Head VM size",
+                        "toolTip": "Select VM Size (will use 2 data disks)",
+                        "recommendedSizes": [
+                            "Standard_D4_v2",
+                            "Standard_F16"
+                        ],
+                        "constraints": {
+                            "required": "[equals(steps('nodesSettings').deploymentType, 'Cluster')]",
+                            "allowedSizes": [
+                                "Standard_A3",
+                                "Standard_A4",
+                                "Standard_A6",
+                                "Standard_A7",
+                                "Standard_A8",
+                                "Standard_A9",
+                                "Standard_A10",
+                                "Standard_A11",
+                                "Standard_D3",
+                                "Standard_D4",
+                                "Standard_D12",
+                                "Standard_D13",
+                                "Standard_D14",
+                                "Standard_D3_v2",
+                                "Standard_D4_v2",
+                                "Standard_D5_v2",
+                                "Standard_D12_v2",
+                                "Standard_D13_v2",
+                                "Standard_D14_v2",
+                                "Standard_D15_v2",
+                                "Standard_DS3",
+                                "Standard_DS4",
+                                "Standard_DS12",
+                                "Standard_DS13",
+                                "Standard_DS14",
+                                "Standard_DS3_v2",
+                                "Standard_DS4_v2",
+                                "Standard_DS5_v2",
+                                "Standard_DS12_v2",
+                                "Standard_DS13_v2",
+                                "Standard_DS14_v2",
+                                "Standard_DS15_v2",
+                                "Standard_F4",
+                                "Standard_F8",
+                                "Standard_F16",
+                                "Standard_F4s",
+                                "Standard_F8s",
+                                "Standard_F16s",
+                                "Standard_G2",
+                                "Standard_G3",
+                                "Standard_G4",
+                                "Standard_G5",
+                                "Standard_GS2",
+                                "Standard_GS3",
+                                "Standard_GS4",
+                                "Standard_GS5"
+                            ]
+                        },
+                        "osPlatform": "Linux",
+                        "count": 1,
+                        "visible": "[equals(steps('nodesSettings').deploymentType, 'Cluster')]"
+                    },
+                    {
+                      "name": "clusterIndexerVmCount",
+                      "type": "Microsoft.Common.DropDown",
+                      "label": "Number of cluster indexers",
+                      "defaultValue": "3",
+                      "toolTip": "Number of peer nodes in the indexer cluster",
+                      "constraints": {
+                        "allowedValues": [
+                            {
+                              "label": "3",
+                              "value": 3
+                            },
+                            {
+                              "label": "4",
+                              "value": 4
+                            },
+                            {
+                              "label": "5",
+                              "value": 5
+                            },
+                            {
+                              "label": "6",
+                              "value": 6
+                            },
+                            {
+                              "label": "7",
+                              "value": 7
+                            },
+                            {
+                              "label": "8",
+                              "value": 8
+                            },
+                            {
+                              "label": "9",
+                              "value": 9
+                            },
+                            {
+                              "label": "10",
+                              "value": 10
+                            },
+                            {
+                              "label": "11",
+                              "value": 11
+                            },
+                            {
+                              "label": "12",
+                              "value": 12
+                            },
+                            {
+                              "label": "15",
+                              "value": 15
+                            },
+                            {
+                              "label": "18",
+                              "value": 18
+                            },
+                            {
+                              "label": "20",
+                              "value": 20
+                            }
+                          ]
+                      },
+                      "visible": "[equals(steps('nodesSettings').deploymentType, 'Cluster')]"
+                    },
+                    {
+                        "name": "clusterIndexerVmSize",
+                        "type": "Microsoft.Compute.SizeSelector",
+                        "label": "Indexer VM size",
+                        "toolTip": "Select VM Size (will use 8 data disks)",
+                        "recommendedSizes": [
+                            "Standard_F8",
+                            "Standard_F16"
+                        ],
+                        "constraints": {
+                            "required": "[equals(steps('nodesSettings').deploymentType, 'Cluster')]",
+                            "allowedSizes": [
+                                "Standard_A3",
+                                "Standard_A4",
+                                "Standard_A6",
+                                "Standard_A7",
+                                "Standard_A8",
+                                "Standard_A9",
+                                "Standard_A10",
+                                "Standard_A11",
+                                "Standard_D3",
+                                "Standard_D4",
+                                "Standard_D12",
+                                "Standard_D13",
+                                "Standard_D14",
+                                "Standard_D3_v2",
+                                "Standard_D4_v2",
+                                "Standard_D5_v2",
+                                "Standard_D12_v2",
+                                "Standard_D13_v2",
+                                "Standard_D14_v2",
+                                "Standard_D15_v2",
+                                "Standard_DS3",
+                                "Standard_DS4",
+                                "Standard_DS12",
+                                "Standard_DS13",
+                                "Standard_DS14",
+                                "Standard_DS3_v2",
+                                "Standard_DS4_v2",
+                                "Standard_DS5_v2",
+                                "Standard_DS12_v2",
+                                "Standard_DS13_v2",
+                                "Standard_DS14_v2",
+                                "Standard_DS15_v2",
+                                "Standard_F4",
+                                "Standard_F8",
+                                "Standard_F16",
+                                "Standard_F4s",
+                                "Standard_F8s",
+                                "Standard_F16s",
+                                "Standard_G2",
+                                "Standard_G3",
+                                "Standard_G4",
+                                "Standard_G5",
+                                "Standard_GS2",
+                                "Standard_GS3",
+                                "Standard_GS4",
+                                "Standard_GS5"
+                            ]
+                        },
+                        "osPlatform": "Linux",
+                        "count": "[steps('nodesSettings').clusterIndexerVmCount]",
+                        "visible": "[equals(steps('nodesSettings').deploymentType, 'Cluster')]"
+                    },
+                    {
+                        "name": "standaloneVmSize",
+                        "type": "Microsoft.Compute.SizeSelector",
+                        "label": "VM size",
+                        "toolTip": "Select VM Size (will use 8 data disks)",
+                        "recommendedSizes": [
+                            "Standard_F8",
+                            "Standard_F16"
+                        ],
+                        "constraints": {
+                            "required": "[equals(steps('nodesSettings').deploymentType, 'Standalone')]",
+                            "allowedSizes": [
+                                "Standard_A3",
+                                "Standard_A4",
+                                "Standard_A6",
+                                "Standard_A7",
+                                "Standard_A8",
+                                "Standard_A9",
+                                "Standard_A10",
+                                "Standard_A11",
+                                "Standard_D3",
+                                "Standard_D4",
+                                "Standard_D12",
+                                "Standard_D13",
+                                "Standard_D14",
+                                "Standard_D3_v2",
+                                "Standard_D4_v2",
+                                "Standard_D5_v2",
+                                "Standard_D12_v2",
+                                "Standard_D13_v2",
+                                "Standard_D14_v2",
+                                "Standard_D15_v2",
+                                "Standard_DS3",
+                                "Standard_DS4",
+                                "Standard_DS12",
+                                "Standard_DS13",
+                                "Standard_DS14",
+                                "Standard_DS3_v2",
+                                "Standard_DS4_v2",
+                                "Standard_DS5_v2",
+                                "Standard_DS12_v2",
+                                "Standard_DS13_v2",
+                                "Standard_DS14_v2",
+                                "Standard_DS15_v2",
+                                "Standard_F4",
+                                "Standard_F8",
+                                "Standard_F16",
+                                "Standard_F4s",
+                                "Standard_F8s",
+                                "Standard_F16s",
+                                "Standard_G2",
+                                "Standard_G3",
+                                "Standard_G4",
+                                "Standard_G5",
+                                "Standard_GS2",
+                                "Standard_GS3",
+                                "Standard_GS4",
+                                "Standard_GS5"
+                            ]
+                        },
+                        "osPlatform": "Linux",
+                        "count": 1,
+                        "visible": "[equals(steps('nodesSettings').deploymentType, 'Standalone')]"
+                    }
+                ]
+            },
+            {
+                "name": "solutionAccess",
+                "label": "Solution Access",
+                "subLabel": {
+                    "preValidation": "Required",
+                    "postValidation": "Done"
+                },
+                "bladeTitle": "Solution Access",
+                "elements": [
+                    {
+                        "name": "splunkDomainName",
+                        "type": "Microsoft.Network.PublicIpAddressCombo",
+                        "label": {
+                            "publicIpAddress": "New public IP name",
+                            "domainNameLabel": "Domain name for Splunk"
+                        },
+                        "toolTip": {
+                            "publicIpAddress": "Only new public IP is currently supported. Name must be unique across a resource group",
+                            "domainNameLabel": "Splunk will be accessible from this domain"
+                        },
+                        "defaultValue": {
+                            "publicIpAddressName": "splunkIP",
+                            "domainNameLabel": "change_me_to_be_unique"
+                        },
+                        "constraints": {
+                            "required": {
+                                "domainNameLabel": true
+                            }
+                        },
+                        "options": {
+                            "hideNone": true,
+                            "hideDomainNameLabel": false
+                        }
+                    },
+                    {
+                        "name": "splunkAdminPassword",
+                        "type": "Microsoft.Common.PasswordBox",
+                        "label": {
+                            "password": "Splunk admin password",
+                            "confirmPassword": "Confirm password"
+                        },
+                        "toolTip": "",
+                        "constraints": {
+                            "required": true,
+                            "regex": "^((?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])|(?=.*[0-9])(?=.*[a-z])(?=.*[!@#$%^&*])|(?=.*[0-9])(?=.*[A-Z])(?=.*[!@#$%^&*])|(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*])).{6,72}$",
+                            "validationMessage": "Password must be at least 6 characters long and have 3 out of the following: one number, one lower case, one upper case, or one special character"
+                        },
+                        "options": {
+                            "hideConfirmation": false
+                        }
+                    },
+                    {
+                        "name": "ipRangeToSSHFrom",
+                        "type": "Microsoft.Common.TextBox",
+                        "label": "IP range to SSH from",
+                        "defaultValue": "0.0.0.0/0",
+                        "toolTip": "CIDR block to restrict SSH access to (Recommended). By default, SSH access is available from anywhere",
+                        "constraints": {
+                            "required": true,
+                            "regex": "^(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\/(\\d|[1-2]\\d|3[0-2])$",
+                            "validationMessage": "IP range must be a valid CIDR range of the form x.x.x.x/x"
+                        }
+                    },
+                    {
+                        "name": "ipRangeToReceiveDataFrom",
+                        "type": "Microsoft.Common.TextBox",
+                        "label": "IP range to receive data from",
+                        "defaultValue": "0.0.0.0/0",
+                        "toolTip": "CIDR block to restrict where data is forwarded from (Recommended). By default, data can be forwarded from anywhere",
+                        "constraints": {
+                            "required": true,
+                            "regex": "^(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\/(\\d|[1-2]\\d|3[0-2])$",
+                            "validationMessage": "IP range must be a valid CIDR range of the form x.x.x.x/x"
+                        }
+                    }
+                ]
+            }
+        ],
+        "outputs": {
+            "location": "[location()]",
+            "adminUsername": "[basics('vmUsername')]",
+            "adminPassword": "[basics('vmPassword')]",
+            "deploymentType": "[steps('nodesSettings').deploymentType]",
+            "standaloneVmSize": "[steps('nodesSettings').standaloneVmSize]",
+            "clusterMasterVmSize": "[steps('nodesSettings').clusterMasterVmSize]",
+            "clusterSearchheadVmSize": "[steps('nodesSettings').clusterSearchheadVmSize]",
+            "clusterIndexerVmSize": "[steps('nodesSettings').clusterIndexerVmSize]",
+            "clusterIndexerVmCount": "[steps('nodesSettings').clusterIndexerVmCount]",
+            "domainNamePrefix": "[steps('solutionAccess').splunkDomainName.domainNameLabel]",
+            "publicIPName": "[steps('solutionAccess').splunkDomainName.name]",
+            "splunkAdminPassword": "[steps('solutionAccess').splunkAdminPassword]",
+            "sshFrom": "[steps('solutionAccess').ipRangeToSSHFrom]",
+            "forwardedDataFrom": "[steps('solutionAccess').ipRangeToReceiveDataFrom]",
+            "virtualNetworkName": "[steps('networkSettings').vnetSpec.name]",
+            "virtualNetworkNewOrExisting": "[steps('networkSettings').vnetSpec.newOrExisting]",
+            "virtualNetworkExistingRGName": "[steps('networkSettings').vnetSpec.resourceGroup]",
+            "virtualNetworkAddressPrefix": "[steps('networkSettings').vnetSpec.addressPrefix]",
+            "subnet1Name": "[steps('networkSettings').vnetSpec.subnets.subnet1.name]",
+            "subnet2Name": "[steps('networkSettings').vnetSpec.subnets.subnet2.name]",
+            "subnet1Prefix": "[steps('networkSettings').vnetSpec.subnets.subnet1.addressPrefix]",
+            "subnet2Prefix": "[steps('networkSettings').vnetSpec.subnets.subnet2.addressPrefix]",
+            "subnet1StartAddress": "[steps('networkSettings').vnetSpec.subnets.subnet1.startAddress]",
+            "subnet2StartAddress": "[steps('networkSettings').vnetSpec.subnets.subnet2.startAddress]"
+        }
+    }
+}
