@@ -1,0 +1,440 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "network-api-version": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "compute-api-version": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "deployment-api-version2": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "adminUsernameChefWorkstation": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "adminPasswordChefWorkstation": {
+      "type": "securestring",
+      "defaultValue": ""
+    },
+    "publicIPDomainNameLabelChefWorkstation": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "windowsOSVersion": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "adminUsernameChefEnvironments": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "adminPasswordChefEnvironments": {
+      "type": "securestring",
+      "defaultValue": ""
+    },
+    "publicIPDomainNameLabelChefEnvironments": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "ubuntuOSVersion": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "linuxvmcount": {
+      "type": "int",
+      "defaultValue": ""
+    },
+    "subnet4Ref": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "vmNameChefWorkstation": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "vmSizeChefWorkstation": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "vmNameChefEnvironment": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "vmSizeChefEnvironments": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "imagePublisherWindows": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "imageOfferWindows": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "imagePublisherLinux": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "imageOfferLinux": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "storageAccountName": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "vmStorageAccountContainerName": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "tagvalues": {
+      "type": "object",
+      "defaultValue": ""
+    },
+    "chefprefix": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "keyName": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "kmServerUrl": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "chef_node_name": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "chef_server_url": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "validation_client_name": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "validation_key_format": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "runlist": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "resourcegroupName": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "chefnodeCustomScripturl": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "cckeyName": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "complianceServerUri": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "complianceServerAdmin": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "component": {
+      "type": "string",
+      "defaultValue": ""
+    }
+  },
+  "variables": {
+    "publicIPAddressNameChefWorkstation": "publicIPChefWorkstation",
+    "networkInterfaceNameChefWorkstation": "[concat(parameters('vmNameChefWorkstation'),'-nic')]",
+    "securityGroupNameChefWorkstation": "[concat(variables('networkInterfaceNameChefWorkstation'),'-nsg')]",
+    "publicIPAddressNameDSAgent": "publicipdsalinux",
+    "networkInterfaceNameDSAgent": "[concat(parameters('vmNameChefEnvironment'),'-nic')]",
+    "securityGroupNameDSAgent": "[concat(variables('networkInterfaceNameDSAgent'),'-nsg')]",
+    "vmExtensionName": "ChefnodeExtension",
+    "vmExtensionName2": "ChefCustomScript",
+    "Environment": [
+      "Acceptance",
+      "Union",
+      "Reharsal",
+      "Delivered"
+    ]
+  },
+  "resources": [
+    {
+      "apiVersion": "[parameters('network-api-version')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat(parameters('chefprefix'),variables('publicIPAddressNameChefWorkstation'))]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "program": "[parameters('tagvalues').program]",
+        "project": "[parameters('tagvalues').project]"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[concat(parameters('chefprefix'),parameters('publicIPDomainNameLabelChefWorkstation'))]"
+        }
+      }
+    },
+    {
+      "apiVersion": "[parameters('network-api-version')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(parameters('chefprefix'),variables('networkInterfaceNameChefWorkstation'))]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "program": "[parameters('tagvalues').program]",
+        "project": "[parameters('tagvalues').project]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/',parameters('chefprefix'),variables('publicIPAddressNameChefWorkstation'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat(parameters('chefprefix'),variables('publicIPAddressNameChefWorkstation')))]"
+              },
+              "subnet": {
+                "id": "[parameters('subnet4Ref')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "[parameters('compute-api-version')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(parameters('chefprefix'),parameters('vmNameChefWorkstation'))]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "program": "[parameters('tagvalues').program]",
+        "project": "[parameters('tagvalues').project]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', parameters('chefprefix'),variables('networkInterfaceNameChefWorkstation'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSizeChefWorkstation')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('vmNameChefWorkstation')]",
+          "adminUsername": "[parameters('adminUsernameChefWorkstation')]",
+          "adminPassword": "[parameters('adminPasswordChefWorkstation')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[parameters('imagePublisherWindows')]",
+            "offer": "[parameters('imageOfferWindows')]",
+            "sku": "[parameters('windowsOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(parameters('chefprefix'),parameters('vmNameChefWorkstation'),'-osDisk')]",
+            "vhd": {
+              "uri": "[concat('https://',parameters('storageAccountName'),'.blob.core.windows.net/',parameters('vmStorageAccountContainerName'),'/',parameters('chefprefix'),parameters('vmNameChefWorkstation'),'-osdisk.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('chefprefix'),variables('networkInterfaceNameChefWorkstation')))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "apiVersion": "[parameters('network-api-version')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat(parameters('chefprefix'),variables('publicIPAddressNameDSAgent'),copyindex())]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "program": "[parameters('tagvalues').program]",
+        "project": "[parameters('tagvalues').project]"
+      },
+      "copy": {
+        "name": "foo",
+        "count": "[parameters('linuxvmcount')]"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[concat(parameters('chefprefix'),parameters('publicIPDomainNameLabelChefEnvironments'),copyindex())]"
+        }
+      }
+    },
+    {
+      "apiVersion": "[parameters('network-api-version')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(parameters('chefprefix'),variables('networkInterfaceNameDSAgent'),copyindex())]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "program": "[parameters('tagvalues').program]",
+        "project": "[parameters('tagvalues').project]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', parameters('chefprefix'),variables('publicIPAddressNameDSAgent'),copyindex())]"
+      ],
+      "copy": {
+        "name": "foo",
+        "count": "[parameters('linuxvmcount')]"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('chefprefix'),variables('publicIPAddressNameDSAgent'),copyindex()))]"
+              },
+              "subnet": {
+                "id": "[parameters('subnet4Ref')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "[parameters('compute-api-version')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(parameters('chefprefix'),parameters('vmNameChefEnvironment'),copyindex())]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "program": "[parameters('tagvalues').program]",
+        "project": "[parameters('tagvalues').project]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', parameters('chefprefix'),variables('networkInterfaceNameDSAgent'),copyindex())]"
+      ],
+      "copy": {
+        "name": "foo",
+        "count": "[parameters('linuxvmcount')]"
+      },
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSizeChefEnvironments')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('vmNameChefEnvironment')]",
+          "adminUsername": "[parameters('adminUsernameChefEnvironments')]",
+          "adminPassword": "[parameters('adminPasswordChefEnvironments')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[parameters('imagePublisherLinux')]",
+            "offer": "[parameters('imageOfferLinux')]",
+            "sku": "[parameters('ubuntuOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(parameters('chefprefix'),parameters('vmNameChefEnvironment'),copyindex(),'-osDisk')]",
+            "vhd": {
+              "uri": "[concat('https://',parameters('storageAccountName'),'.blob.core.windows.net/',parameters('vmStorageAccountContainerName'),'/',parameters('chefprefix'),parameters('vmNameChefEnvironment'),copyindex(),'-osdisk.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('chefprefix'),variables('networkInterfaceNameDSAgent'),copyindex()))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('chefprefix'),parameters('vmNameChefEnvironment'),copyIndex(),'/', variables('vmExtensionName'))]",
+      "apiVersion": "[parameters('compute-api-version')]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "program": "[parameters('tagvalues').program]",
+        "project": "[parameters('tagvalues').project]"
+      },
+      "copy": {
+        "name": "foo",
+        "count": "[parameters('linuxvmcount')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('chefprefix'),parameters('vmNameChefEnvironment'),copyindex())]"
+      ],
+      "properties": {
+        "publisher": "Chef.Bootstrap.WindowsAzure",
+        "type": "LinuxChefClient",
+        "typeHandlerVersion": "1210.12",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "bootstrap_options": {
+            "chef_node_name": "[concat(parameters('chef_node_name'),copyIndex())]",
+            "chef_server_url": "[parameters('chef_server_url')]",
+            "validation_client_name": "[parameters('validation_client_name')]"
+          },
+          "validation_key_format": "[parameters('validation_key_format')]",
+          "runlist": "[parameters('runlist')]",
+          "client_rb": "ssl_verify_mode    :verify_none"
+        },
+        "protectedSettings": {
+          "validation_key": "LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpNSUlFcEFJQkFBS0NBUUVBMnpwOTRCd0FvanRzbzF0R3hVekJySUNPWHd1Y09RWUhKWm54QnFBRnlGWTVNZ3hPClEvZWZPOGtFd2ZMNmVVaWYyQVJpd1FNb0xwSHQyd1Rsanp1SG9NZFduREpqanFuRWVHN2lFT2pSOExPOUxMWUUKVW1DVWthVFN0aDVCbUs3SEFOZExhUnRhWE1FU3ljem9QNFA2WEpaRXArVzZZOWkrRTRrcjcxajVOOXVCSVZzbwpGVTc3RDMrZnQ3THdFVHU3blBXWkl1OUMyUlZMb2d4b2lnSWdlUmNsSmlKaFdWaWR5OHNaaHMwMkJkY3pKUlJFClpQSmJIUld6dCtGN2RJdWVQSW81aW5LdEhNeE5Vay90bnY0U3RnS0l5RzBuc01IUWNJNmNPbDE0Lzh4Mjl1OTgKdTA1a1FwRHljWWxodWRBVXBZOGF6blNhZTV2Z2lxUGxQNU0rWFFJREFRQUJBb0lCQUg2QllFWEVvdkQ3RFpPdQpoa1l3SnNxZVhJbW9MM3dRYUd0Z1M5K2cwL1ZwSEJRdldiS0szODRtRDZMRHpablRPTG4wdmUvWEhJYlRHc2g2CktPWGdXa0dEQmcyWVhpN2k5RWJ5NVcwUWpLVXpjd1NyL0E1MVFRWlNjRzA3UkdzUTRERXlDNGdaaXFsZm1MSHUKbGs2Z29BWnhpQ2pDdmk0RDBwdC9XbVVCbUw2TDBLTXlwbThiM0ZkVFdPeENFWE1KZTZXeHdxSUZxejRyWFpxSwpyWkxmdDc5c3Y2ZzdQMUsraVFVcGxaaHd6SEJtUjVQS283enZBS29UQ0hBeUVpRHZyM0ZySTNhVThLRktaalg0CjBvdFlKVERpNHh6TWJMcWVoT2V5SFZNNEJlRnFTOHZGYjF2ZkVVSU44emRLdS9WNGJveWI3VDRjY3AzQmVlOWEKUGQ1TXVKa0NnWUVBOE5uc3dPVVFuR0t4WUN3YlgwWGUydHByNkFKK2djYmNJempJaHIxM1UrKzlGbXc2c01nZgpNMk9IekFZOTMveU8yMi84Z0l4TFA3TVpGbHRFNzdhQkpSL0xCZTBMRXVOYU50Ri94cENoRktkTHlWSHdkUGtBCmpMY0pmRmQ3TXhpejk4d3Y2cnhSZDRMOU5WaXZVakwwYytOYmpUNVVpQWNsNmxGeFRrSUhZaU1DZ1lFQTZRUm8KSnBrSG95VVZnMnFsWjJuRlVyU3FOWS9qTnIvSWR2WmNuYnIxM3ZmZ2dGVzZOQW83aXZTNGxQVlhMNVFuNndHTwpsUkxXR2g3ZEVRTlpPdWtZUFR6SjVCNVh4LzhnMVVJdFI5VHRtM242cE1SWnJWbDIxVHc5dXA5aW5HQ0krdXdWCmJJb2x5anNtQ25tU1JWckdHZ0NxT0J1SW1SOExyRVUzK0VuRHBYOENnWUFPN1pMdENjV1R5OUl1b2MwNGhINGgKbG5RbHR6SGNIVlU3b2FOY0pwWWt6N0VxbUo2eW9sUzh2S2lJRHNMN0JRNWRyMzA1QW5rUGc2eEVaSGZMVzhaNQpaSlVTMHZSaXdWQ3dJU0FJVUtLTFF5dEJXU0RNUHpxM2ZnaktlaW1hcXlkTWJvMXh3U1pUZi96dHQ0ZDJVczR2CitLR09DWlQzc1dtNk1qNFJtYW9YZlFLQmdRQ2VTM0VaYjNJQndZcUkyU1QrU0p0VTRRaVVGR2h0WkFHaDF5RDUKd2UyUGgrTEtLL0t2c1pmYmdQMzNxMmVNR2VDNFJEbUJTZWVLblJiZW5PQzhKV2RqQ20yNGUyaDBvL3ZCQkJEUQpzSFN0MzBLSE5pQVpwQ0lYSDdKcm1pVWFTSFlseDhXU0U1TXllOVlPM2FHaFhkWWdDZjJZMmhPRXVkTnJOeWFiCmxEakZyd0tCZ1FDRDh5TTZiTCswMU5CekkzT2JPZXROYU5BeGVkeC96TElVTGNnRW1tK0JZR2QrTFNCVnNDVEUKanIxN0ZxZEVhVXNOL1E1ZEVsQ0pHbVowUVR5MkFWQThodUk0YmtEQ21LRGM1VnMyTCs5RXpyUkdqOU1xbGs4SQoxeFhwWGVUdHAybFZ2YkRsN0VZYklkazREa3NJZVRYeXhKS0dNWkRjQ1UxekJRMTNpMmNTUWc9PQotLS0tLUVORCBSU0EgUFJJVkFURSBLRVktLS0tLQ=="
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('chefprefix'),parameters('vmNameChefEnvironment'),copyIndex(),'/', variables('vmExtensionName2'))]",
+      "apiVersion": "[parameters('compute-api-version')]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "program": "[parameters('tagvalues').program]",
+        "project": "[parameters('tagvalues').project]"
+      },
+      "copy": {
+        "name": "foo",
+        "count": "[parameters('linuxvmcount')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('chefprefix'),parameters('vmNameChefEnvironment'),copyindex())]",
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('chefprefix'),parameters('vmNameChefEnvironment'),copyindex(),'/extensions/',variables('vmExtensionName'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[parameters('chefnodeCustomScripturl')]"
+          ],
+          "commandToExecute": "[concat('sh p2pchefnodebootstrap.sh',' ',parameters('keyName'),' ',parameters('kmServerUrl'),' ',parameters('cckeyName'),' ', parameters('complianceServerUri'),' ', parameters('chefprefix'),parameters('vmNameChefEnvironment'),copyIndex(),' ',parameters('chefprefix'),parameters('publicIPDomainNameLabelChefEnvironments'),copyIndex(),'.',parameters('location'),'.cloudapp.azure.com',' ',parameters('adminUsernameChefEnvironments'),' ', parameters('complianceServerAdmin'),' ',variables('Environment')[copyIndex()],' ',parameters('component'))]"
+        }
+      }
+    }
+  ]
+}

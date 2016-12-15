@@ -1,0 +1,173 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "apiVersion": {
+      "type": "string",
+      "metadata": {
+        "description": "The API version"
+      }
+    },
+    "vmName": {
+      "type": "string",
+      "metadata": {
+        "description": "The VM name"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "metadata": {
+        "description": "The VM role size"
+      }
+    },
+    "storageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "The storage account name to store the VHD of the VM"
+      }
+    },
+    "nicName": {
+      "type": "string",
+      "metadata": {
+        "description": "The network interface name"
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "The user name of the administrator"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The password of the administrator"
+      }
+    },
+    "availabilitySetName": {
+      "type": "string",
+      "metadata": {
+        "description": "The availability set name"
+      }
+    },
+    "scriptBaseUri": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI of the script"
+      }
+    },
+    "privateDomainName": {
+      "type": "string",
+      "metadata": {
+        "description": "The fully qualified domain name (FQDN) for the private domain forest which will be created by this template, for example 'hpc.local'."
+      }
+    }
+  },
+  "resources": [
+    {
+      "apiVersion": "[parameters('apiVersion')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[parameters('vmName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySetName'))]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('vmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "MicrosoftWindowsServerHPCPack",
+            "offer": "WindowsServerHPCPack",
+            "sku": "2012R2",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/', toLower(parameters('vmName')), '-osdisk.vhd')]"
+            },
+            "caching": "ReadOnly",
+            "createOption": "FromImage"
+          },
+          "dataDisks": [
+            {
+              "name": "datadisk",
+              "vhd": {
+                "Uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/', toLower(parameters('vmName')), '-datadisk.vhd')]"
+              },
+              "caching": "None",
+              "createOption": "Empty",
+              "diskSizeGB": "200",
+              "lun": 0
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('nicName'))]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "name": "[concat(parameters('vmName'),'/installRDMADriver')]",
+          "apiVersion": "[parameters('apiVersion')]",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.HpcCompute",
+            "type": "HpcVmDrivers",
+            "typeHandlerVersion": "1.1"
+          }
+        },
+        {
+          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "name": "[concat(parameters('vmName'),'/promoteDomainController')]",
+          "apiVersion": "[parameters('apiVersion')]",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]",
+            "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'),'/extensions/installRDMADriver')]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Powershell",
+            "type": "DSC",
+            "typeHandlerVersion": "2.19",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "wmfVersion": "4.0",
+              "configuration": {
+                "url": "[concat(parameters('scriptBaseUri'),'/CreateADPDC.ps1.zip')]",
+                "script": "CreateADPDC.ps1",
+                "function": "CreateADPDC"
+              },
+              "configurationArguments": {
+                "DomainName": "[parameters('privateDomainName')]"
+              }
+            },
+            "protectedSettings": {
+              "configurationArguments": {
+                "AdminCreds": {
+                  "UserName": "[parameters('adminUsername')]",
+                  "Password": "[parameters('adminPassword')]"
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
