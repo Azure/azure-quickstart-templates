@@ -12,6 +12,10 @@ yum install -y libyaml-devel libffi-devel openssl-devel make >> /home/$5/install
 yum install -y bzip2 autoconf automake libtool bison iconv-devel >> /home/$5/install.out.txt 2>&1
 /bin/date +%H:%M:%S >> /home/$5/install.progress.txt
 
+echo "Install X11 Packages" >> /home/$5/install.progress.txt
+yum install -y xorg-x11-server-Xorg xorg-x11-xauth xorg-x11-apps
+/bin/date +%H:%M:%S >> /home/$5/install.progress.txt
+
 echo "Install OpenJDK Java packages" >> /home/$5/install.progress.txt
 yum install -y java-1.6.0-openjdk-devel >> /home/$5/install.out.txt 2>&1
 yum install -y java-1.7.0-openjdk-devel >> /home/$5/install.out.txt 2>&1
