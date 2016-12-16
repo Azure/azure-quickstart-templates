@@ -1,0 +1,199 @@
+{
+   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+   "contentVersion": "1.0.0.0",
+   "parameters": {
+      "scriptsBaseUrl": {
+         "type": "string",
+         "metadata": {
+            "description": "URL to root directory of DSC scripts."
+         }
+      },
+      "domain-accountName": {
+         "type": "string"
+      },
+      "domain-accountPassword": {
+         "type": "securestring"
+      },
+      "domain-name": {
+         "type": "string"
+      },
+      "fsw-sharename": {
+         "type": "string"
+      },
+      "fsw-vm-name": {
+         "type": "string"
+      },
+      "sql-numberOfDisks": {
+         "type": "string"
+      },
+      "sql-patching-day": {
+         "type": "string"
+      },
+      "sql-patching-enable": {
+         "type": "bool"
+      },
+      "sql-patching-hour": {
+         "type": "int"
+      },
+      "sql-serviceAccountName": {
+         "type": "string"
+      },
+      "sql-serviceAccountPassword": {
+         "type": "securestring"
+      },
+      "sql-vm-names": {
+         "type": "array",
+         "minLength": 2,
+         "maxLength": 2,
+         "metadata": {
+            "description": "Names of the two SQL VMs."
+         }
+      },
+      "sql-workloadType": {
+         "type": "string"
+      }
+   },
+   "variables": {
+      "TemplateSynopsis": "Prepares a fileshare witness plus two SQL VMs to be configured with Always-On Availability Groups.",
+      "Monday":"[mod(div(add(add(24,parameters('sql-patching-hour')),2),24),7)]",
+      "Tuesday":"[mod(div(add(add(48,parameters('sql-patching-hour')),2),24),7)]",
+      "Wednesday":"[mod(div(add(add(72,parameters('sql-patching-hour')),2),24),7)]",
+      "Thursday":"[mod(div(add(add(96,parameters('sql-patching-hour')),2),24),7)]",
+      "Friday":"[mod(div(add(add(120,parameters('sql-patching-hour')),2),24),7)]",
+      "Saturday":"[mod(div(add(add(144,parameters('sql-patching-hour')),2),24),7)]",
+      "Sunday":"[mod(div(add(add(168,parameters('sql-patching-hour')),2),24),7)]",
+      "Never":"8",
+      "Everyday":"0",
+      "1":"Monday",
+      "2":"Tuesday",
+      "3":"Wednesday",
+      "4":"Thursday",
+      "5":"Friday",
+      "6":"Saturday",
+      "7":"Sunday",
+      "8":"Monday",
+      "0":"Everyday",
+      "autoPatchingTimes": [
+         {
+            "DayOfWeek": "[parameters('sql-patching-day')]",
+            "StartingHour": "[parameters('sql-patching-hour')]"
+         },
+         {
+            "DayOfWeek": "[variables(string(variables(parameters('sql-patching-day'))))]",
+            "StartingHour": "[mod(add(parameters('sql-patching-hour'),2),24)]"
+         }
+      ]
+   },
+   "resources": [
+      {
+         "type":"Microsoft.Compute/virtualMachines/extensions",
+         "name":"[concat(parameters('fsw-vm-name'),'/CreateFileShareWitness')]",
+         "apiVersion":"2015-06-15",
+         "location": "[resourceGroup().location]",
+         "properties":{
+            "publisher":"Microsoft.Powershell",
+            "type":"DSC",
+            "typeHandlerVersion": "2.20",
+            "autoUpgradeMinorVersion": true,
+            "settings":{
+               "modulesURL": "[concat(parameters('scriptsBaseUrl'), '/CreateFileShareWitness.ps1.zip')]",
+               "configurationFunction": "CreateFileShareWitness.ps1\\CreateFileShareWitness",
+               "properties":{
+                  "domainName":"[parameters('domain-name')]",
+                  "SharePath":"[parameters('fsw-sharename')]",
+                  "adminCreds":{
+                     "userName":"[parameters('domain-accountName')]",
+                     "password":"privateSettingsRef:domain-accountPassword"
+                  }
+               }
+            },
+            "protectedSettings":{
+               "items":{
+                  "domain-accountPassword":"[parameters('domain-accountPassword')]"
+               }
+            }
+         }
+      },
+      {
+         "type":"Microsoft.Compute/virtualMachines/extensions",
+         "name": "[concat(parameters('sql-vm-names')[copyIndex()], '/SqlVmIaasExtension')]",
+         "apiVersion":"2015-06-15",
+         "location":"[resourceGroup().location]",
+         "copy": {
+            "name": "IaasExtensionForEachSqlVm",
+            "count": "[length(parameters('sql-vm-names'))]"
+         },
+         "properties":{
+            "type":"SqlIaaSAgent",
+            "publisher":"Microsoft.SqlServer.Management",
+            "typeHandlerVersion":"1.2",
+            "autoUpgradeMinorVersion":"true",
+            "settings":{
+               "AutoTelemetrySettings":{
+                  "Region":"[resourceGroup().location]"
+               },
+               "AutoPatchingSettings":{
+                  "PatchCategory":"WindowsMandatoryUpdates",
+                  "Enable":"[parameters('sql-patching-enable')]",
+                  "DayOfWeek":"[variables('autoPatchingTimes')[copyIndex()].DayOfWeek]",
+                  "MaintenanceWindowStartingHour":"[variables('autoPatchingTimes')[copyIndex()].StartingHour]",
+                  "MaintenanceWindowDuration":"60"
+               },
+               "AutoBackupSettings":{
+                  "Enable":false,
+                  "RetentionPeriod":"30",
+                  "EnableEncryption":false
+               }
+            }
+         }
+      },
+      {
+         "type": "Microsoft.Compute/virtualMachines/extensions",
+         "name": "[concat(parameters('sql-vm-names')[copyIndex()], '/PrepareSqlVm')]",
+         "apiVersion": "2015-06-15",
+         "location": "[resourceGroup().location]",
+         "copy": {
+            "name": "PrepareEachSqlVm",
+            "count": "[length(parameters('sql-vm-names'))]"
+         },
+         "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', parameters('sql-vm-names')[copyIndex()])]"
+         ],
+         "properties": {
+            "publisher": "Microsoft.Powershell",
+            "type": "DSC",
+            "typeHandlerVersion": "2.20",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+               "configuration": {
+                  "url": "[concat(parameters('scriptsBaseUrl'), '/PrepareSqlVm.ps1.zip')]",
+                  "script": "PrepareSqlVm.ps1",
+                  "function": "PrepareSqlVm"
+               },
+               "configurationArguments": {
+                  "DomainName": "[parameters('domain-name')]",
+                  "AdminCreds": {
+                     "UserName": "[parameters('domain-accountName')]",
+                     "Password": "privateSettingsRef:domain-accountPassword"
+                  },
+                  "SqlServiceCreds": {
+                     "UserName": "[parameters('sql-serviceAccountName')]",
+                     "Password": "privateSettingsRef:sql-serviceAccountPassword"
+                  },
+                  "DatabaseEnginePort": 1433,
+                  "NumberOfDisks": "[parameters('sql-numberOfDisks')]",
+                  "WorkloadType": "[parameters('sql-workloadType')]"
+               }
+            },
+            "protectedSettings": {
+               "configurationArguments": {
+                  "domain-accountPassword": "[parameters('domain-accountPassword')]",
+                  "sql-serviceAccountPassword": "[parameters('sql-serviceAccountPassword')]"
+               }
+            }
+         }
+      }
+   ],
+   "outputs": {
+   }
+}
