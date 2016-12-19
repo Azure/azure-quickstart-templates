@@ -7,8 +7,6 @@ param
       [string]$serverName = $null,
       [string]$websiteName = $null
 )
-#Generate certificate
-$certificateThumbprint = New-SelfSignedCertificate -DnsName "sonarqube" -CertStoreLocation "cert:\LocalMachine\My"	
 #Install ARR
 Invoke-Expression ((new-object net.webclient).DownloadString("https://chocolatey.org/install.ps1"))
 cinst urlrewrite -y --force
@@ -17,7 +15,7 @@ cinst iis-arr -y --force
 Import-Module WebAdministration
 Set-Location IIS:\SslBindings
 New-WebBinding -Name $websiteName -IP "*" -Port 443 -Protocol https
-$c = New-SelfSignedCertificate -DnsName "myexample.com" -CertStoreLocation cert:\LocalMachine\My
+$c = New-SelfSignedCertificate -DnsName "sonarqube" -CertStoreLocation "cert:\LocalMachine\My"
 $c | New-Item 0.0.0.0!443
 #Enable ARR Porxy
 Set-WebConfigurationProperty -pspath 'MACHINE/WEBROOT/APPHOST'  -filter "system.webServer/proxy" -name "enabled" -value "True"
