@@ -6,12 +6,19 @@ param
 (
       [string]$serverName,
       [string]$websiteName,
-      [string]$installationType
+      [string]$installationType,
+      [string]$reverseProxyType
 )
 if($installationType -eq 'Secure (HTTPs)')
 {
-#$websiteName = "SonarQubeProxy"
-#Install ARR
+    if($reverseProxyType -eq 'Nginx'){
+        #Nginx
+Invoke-Expression ((new-object net.webclient).DownloadString("https://chocolatey.org/install.ps1"))
+cinst nginx-service -y --force
+    }
+    else {
+        #IIS
+        #Install ARR
 Invoke-Expression ((new-object net.webclient).DownloadString("https://chocolatey.org/install.ps1"))
 cinst urlrewrite -y --force
 cinst iis-arr -y --force
@@ -23,6 +30,8 @@ $c = New-SelfSignedCertificate -DnsName "sonarqube" -CertStoreLocation "cert:\Lo
 $c | New-Item 0.0.0.0!443
 #Remove HTTP binding 
 Get-WebBinding -Port 8080 -Name $websiteName | Remove-WebBinding
+#Remove HTTP firewall
+netsh advfirewall firewall delete rule name="SonarQube"
 #Enable ARR Porxy
 Set-WebConfigurationProperty -pspath 'MACHINE/WEBROOT/APPHOST'  -filter "system.webServer/proxy" -name "enabled" -value "True"
 #Disable reverse rewrite host 
@@ -54,4 +63,5 @@ Add-WebConfigurationProperty -pspath $site -filter '/system.webserver/rewrite/ou
 Add-WebConfigurationProperty -pspath $site -filter '/system.webserver/rewrite/outboundRules/preConditions' -name "." -value @{name='ResponseIsHtml1'}
 Add-WebConfigurationProperty -pspath $site -filter "system.webServer/rewrite/outboundRules/preConditions/preCondition[@name='IsRedirection']" -name "." -value @{input='{RESPONSE_STATUS}';pattern='3\d\d'}
 Add-WebConfigurationProperty -pspath $site -filter "system.webServer/rewrite/outboundRules/preConditions/preCondition[@name='ResponseIsHtml1']" -name "." -value @{input='{RESPONSE_CONTENT_TYPE}';pattern='^text/html'}
+}
 }
