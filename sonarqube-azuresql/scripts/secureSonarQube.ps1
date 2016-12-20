@@ -7,6 +7,7 @@ param
       [string]$serverName,
       [string]$websiteName
 )
+$websiteName = "SonarQubeProxy"
 #Install ARR
 Invoke-Expression ((new-object net.webclient).DownloadString("https://chocolatey.org/install.ps1"))
 cinst urlrewrite -y --force
@@ -14,7 +15,7 @@ cinst iis-arr -y --force
 #Update web site binding 
 Import-Module WebAdministration
 Set-Location IIS:\SslBindings
-New-WebBinding -Name "sonarqube" -IP "*" -Port 443 -Protocol https
+New-WebBinding -Name $websiteName -IP "*" -Port 443 -Protocol https
 $c = New-SelfSignedCertificate -DnsName "sonarqube" -CertStoreLocation "cert:\LocalMachine\My"
 $c | New-Item 0.0.0.0!443
 #Enable ARR Porxy
@@ -26,7 +27,7 @@ Set-WebConfigurationProperty -pspath 'MACHINE/WEBROOT/APPHOST'  -filter "system.
 Add-WebConfiguration  -pspath 'MACHINE/WEBROOT/APPHOST' -filter '/system.webServer/rewrite/allowedServerVariables' -atIndex 0 -value @{name="X_FORWARDED_PROTO";value="https"}
 Add-WebConfiguration  -pspath 'MACHINE/WEBROOT/APPHOST' -filter '/system.webServer/rewrite/allowedServerVariables' -atIndex 0 -value @{name="ORIGINAL_URL";value="{HTTP_HOST}"}
 #Create rewrite rules
-$site = "IIS:\Sites\Default Web Site\$websiteName"
+$site = "IIS:\Sites\$websiteName"
 #Add inbound rule
 filterRoot = "/system.webserver/rewrite/rules/rule[@name='ReverseProxyInboundRule1']"
 Add-WebConfigurationProperty -pspath $site -filter '/system.webserver/rewrite/rules' -name "." -value @{name='ReverseProxyInboundRule1'; patternSyntax='Regular Expresessions'; stopProcessing='True'} 
