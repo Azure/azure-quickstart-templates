@@ -5,8 +5,11 @@
 param
 (
       [string]$serverName,
-      [string]$websiteName
+      [string]$websiteName,
+      [string]$installationType
 )
+if($installationType -eq 'Secure (HTTPs)')
+{
 #$websiteName = "SonarQubeProxy"
 #Install ARR
 Invoke-Expression ((new-object net.webclient).DownloadString("https://chocolatey.org/install.ps1"))
@@ -51,4 +54,4 @@ Add-WebConfigurationProperty -pspath $site -filter '/system.webserver/rewrite/ou
 Add-WebConfigurationProperty -pspath $site -filter '/system.webserver/rewrite/outboundRules/preConditions' -name "." -value @{name='ResponseIsHtml1'}
 Add-WebConfigurationProperty -pspath $site -filter "system.webServer/rewrite/outboundRules/preConditions/preCondition[@name='IsRedirection']" -name "." -value @{input='{RESPONSE_STATUS}';pattern='3\d\d'}
 Add-WebConfigurationProperty -pspath $site -filter "system.webServer/rewrite/outboundRules/preConditions/preCondition[@name='ResponseIsHtml1']" -name "." -value @{input='{RESPONSE_CONTENT_TYPE}';pattern='^text/html'}
-
+}
