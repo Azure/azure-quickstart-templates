@@ -36,7 +36,9 @@ forum_version: \"$EDX_VERSION\"
 xqueue_version: \"$EDX_VERSION\"
 COMMON_SSH_PASSWORD_AUTH: \"yes\"
 EOF"
-sudo -u edx-ansible cp *.{ini,yml} $ANSIBLE_ROOT
+cp *.{ini,yml} $ANSIBLE_ROOT
+chown edx-ansible:edx-ansible $ANSIBLE_ROOT/*.{ini,yml}
+
 
 # Setup SSH for remote installation
 apt-get -y install sshpass

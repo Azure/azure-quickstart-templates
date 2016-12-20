@@ -15,7 +15,7 @@ yum install -y gcc >> /home/$1/install.out.txt 2>&1
 yum install -y gcc-c++ >> /home/$1/install.out.txt 2>&1
 yum install -y httpd-devel >> /home/$1/install.out.txt 2>&1
 cd /home/$1
-wget http://www-us.apache.org/dist/tomcat/tomcat-connectors/jk/tomcat-connectors-1.2.41-src.tar.gz >> /home/$1/install.out.txt 2>&1
+wget http://archive.apache.org/dist/tomcat/tomcat-connectors/jk/tomcat-connectors-1.2.41-src.tar.gz >> /home/$1/install.out.txt 2>&1
 tar xvfz tomcat-connectors-1.2.41-src.tar.gz >> /home/$1/install.out.txt 2>&1
 cd /home/$1/tomcat-connectors-1.2.41-src/native/
 ./configure --with-apxs=/usr/bin/apxs >> /home/$1/install.out.txt 2>&1

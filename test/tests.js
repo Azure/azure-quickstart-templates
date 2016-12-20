@@ -84,6 +84,9 @@ function validateMetadata(metadataPath) {
         type: 'string',
         required: true,
         minLength: 10
+      },
+      icon: {
+        type: 'string'
       }
     },
     additionalProperties: false
