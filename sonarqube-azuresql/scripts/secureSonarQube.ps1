@@ -25,7 +25,7 @@ if($installationType -eq 'Secure')
     #Remove HTTP binding 
     Get-WebBinding -Port 8080 -Name $websiteName | Remove-WebBinding
     #Remove HTTP firewall
-    netsh advfirewall firewall delete rule name="SonarQube"
+    netsh advfirewall firewall delete rule name="SonarQube (TCP-In)"
     #Enable ARR Porxy
     Set-WebConfigurationProperty -pspath 'MACHINE/WEBROOT/APPHOST'  -filter "system.webServer/proxy" -name "enabled" -value "True"
     #Disable reverse rewrite host 
