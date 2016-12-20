@@ -21,7 +21,7 @@ When deployed the solution is viewable in both OMS portal and Azure.
 ## Prerequisites
 
 - **S2D Cluster**
-- **OMS Log ANalytics Workspace**
+- **OMS Log Analytics Workspace**
 - **OMSIngestionAPI module installed on S2D Nodes**
 - **S2DMon service installed on S2D Nodes**
 
