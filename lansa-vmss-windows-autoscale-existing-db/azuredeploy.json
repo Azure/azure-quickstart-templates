@@ -2,136 +2,111 @@
    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
    "contentVersion": "1.0.0.0",
    "parameters": {
-      "msiUri": {
+      "msiURL": {
          "type": "string",
          "defaultValue": "https://lansalpcmsdn.blob.core.windows.net/app/test/AWAMAPP_v14.1.2_en-us.msi",
          "metadata": {
-            "description": "URL of the LANSA MSI to install on each VM."
+            "description": "URL of the LANSA MSI which will be installed on each virtual machine."
          }
       },
-      "vmSku": {
+      "virtualMachineSize": {
          "type": "string",
          "defaultValue": "Standard_A2",
          "metadata": {
-            "description": "Size of VMs in the VM Scale Set."
+            "description": "Size of Virtual Machines in the Virtual Machine Scale Set."
          }
       },
-      "vmssName": {
+      "stackName": {
          "type": "string",
          "metadata": {
-            "description": "String used as a base for naming resources. Must be 3-61 characters in length and globally unique across Azure. A hash is prepended to this string for some resources, and resource-specific information is appended."
+            "description": "String used as a base for naming resources. Must be 3-61 characters in length and globally unique across Azure. A hash is prepended to this string for some resources, and resource-specific information is appended. Some identifiers use precisely 9 characters from this name and so it can be useful to use exactly 9. The template pads it out or truncates it as necessary to make it 9 characters long where required."
          },
+         "minLength": 3,
          "maxLength": 61
       },
-      "minInstanceCount": {
+      "minimumInstanceCount": {
          "type": "int",
          "defaultValue": 1,
          "metadata": {
-            "description": "Minimum number of VM instances (1 or more)."
+            "description": "Minimum number of Virtual Machine instances (1 or more)."
          },
          "minValue": 1
       },
-      "maxInstanceCount": {
+      "maximumInstanceCount": {
          "type": "int",
          "defaultValue": 100,
          "metadata": {
-            "description": "Maximum number of VM instances (100 or less)."
+            "description": "Maximum number of Virtual Machine instances (100 or less)."
          },
          "maxValue": 100
+      },
+      "databaseType": {
+         "type": "string",
+         "defaultValue": "MSSQLS",
+         "allowedValues": [
+            "MSSQLS",
+            "SQLAZURE",
+            "MYSQL"
+         ],
+         "metadata": {
+            "description": "Refer to LANSA documentation for an explanation of each Database Type and the supported versions of the database servers"
+         }
+      },
+      "databaseServerName": {
+         "type": "string",
+         "defaultValue": "lansa",
+         "metadata": {
+            "description": "The name of the existing Database Server to connect to. If the name has /MSSQLSERVER appended, omit it."
+         }
       },
       "databaseName": {
          "type": "string",
          "defaultValue": "lansa",
          "metadata": {
-            "description": "The name of the new database to create."
-         }
-      },
-      "collation": {
-         "type": "string",
-         "defaultValue": "SQL_Latin1_General_CP1_CI_AS",
-         "metadata": {
-            "description": "The database collation for governing the proper use of characters."
-         }
-      },
-      "edition": {
-         "type": "string",
-         "defaultValue": "Standard",
-         "allowedValues": [
-            "Basic",
-            "Standard",
-            "Premium"
-         ],
-         "metadata": {
-            "description": "The type of database to create."
-         }
-      },
-      "requestedServiceObjectiveName": {
-         "type": "string",
-         "defaultValue": "S2",
-         "allowedValues": [
-            "Basic",
-            "S0",
-            "S1",
-            "S2",
-            "S3",
-            "P1",
-            "P2",
-            "P4",
-            "P6",
-            "P11",
-            "P15"
-         ],
-         "metadata": {
-            "description": "Describes the performance level for Edition"
-         }
-      },
-      "maxSizeBytes": {
-         "type": "string",
-         "defaultValue": "1073741824",
-         "metadata": {
-            "description": "The maximum size, in bytes, for the database"
-         }
-      },
-      "adminUsername": {
-         "type": "string",
-         "defaultValue": "lansa",
-         "metadata": {
-            "description": "Admin username on all VMs."
-         }
-      },
-      "adminPassword": {
-         "type": "securestring",
-         "metadata": {
-            "description": "Admin password on all VMs."
-         }
-      },
-      "webUsername": {
-         "type": "string",
-         "defaultValue": "Pcxuser2",
-         "metadata": {
-            "description": "Web Server username on all VMs."
-         }
-      },
-      "webPassword": {
-         "type": "securestring",
-         "metadata": {
-            "description": "Web Server password on all VMs."
+            "description": "The name of the existing database to connect to."
          }
       },
       "databaseLogin": {
          "type": "string",
          "defaultValue": "lansa",
          "metadata": {
-            "description": "The admin user of the Azure SQL Database"
+            "description": "The admin user of the Database"
          }
       },
       "databaseLoginPassword": {
          "type": "securestring",
          "metadata": {
-            "description": "The password of the admin user of the Azure SQL Database"
+            "description": "The password of the admin user of the Database"
          }
 
       },
+      "adminUsername": {
+         "type": "string",
+         "defaultValue": "lansa",
+         "metadata": {
+            "description": "Admin username on all Virtual Machines."
+         }
+      },
+      "adminPassword": {
+         "type": "securestring",
+         "metadata": {
+            "description": "Admin password on all Virtual Machines."
+         }
+      },
+      "webUsername": {
+         "type": "string",
+         "defaultValue": "Pcxuser2",
+         "metadata": {
+            "description": "Web Server username on all Virtual Machines."
+         }
+      },
+      "webPassword": {
+         "type": "securestring",
+         "metadata": {
+            "description": "Web Server password on all Virtual Machines."
+         }
+      },
+
       "webServerMaxConnect": {
          "type": "string",
          "defaultValue": "20",
@@ -150,7 +125,7 @@
          "type": "string",
          "defaultValue": "0",
          "metadata": {
-            "description": "Update Stack: Set this to 1 to execute an MSI Upgrade. Obtains the specified MSI and installs it. Ensure the LansaMSI parameter is set correctly. If the LansaMSI parameter is not different a repair will be performed"
+            "description": "Update Stack: Set this to 1 to execute an MSI Upgrade. Obtains the specified MSI and installs it. Ensure the LansaMSI parameter is set correctly."
          }
       },
       "uninstallMSI": {
@@ -164,23 +139,8 @@
          "type": "string",
          "defaultValue": "0",
          "metadata": {
-            "description": "Update Stack: Set this to 1  to update the web configuration"
+            "description": "Update Stack: Set this to 1 to update the web configuration."
          }
-      },
-      "imageOffer": {
-         "type": "string",
-         "defaultValue": "lansa-scalable-license",
-         "allowedValues": [
-            "lansa-scalable-license",
-            "lansa-scalable-license-preview"
-         ],
-         "metadata": {
-            "description": "The offer of the image. Allowed values: lansa-scalable-license, lansa-scalable-license-preview"
-         }
-      },
-      "gitBranch": {
-         "type": "string",
-         "defaultValue": "support/L4W14000_scalable_azure"
       },
       "trace": {
          "type": "string",
@@ -197,67 +157,68 @@
          "type": "string",
          "defaultValue": "0",
          "metadata": {
-            "description": "Re-run licensing"
+            "description": "Re-run licensing. It is unlikely that this parameter needs to be used."
          }
       }
    },
-  "variables": {
-    "storageAccountType": "Standard_LRS",
-    "namingInfix": "[toLower(substring(concat(parameters('vmssName'), uniqueString(resourceGroup().id)), 0, 9))]",
-    "longNamingInfix": "[toLower(parameters('vmssName'))]",
-    "dblongNamingInfix": "[toLower(concat('db',parameters('vmssName')))]",
-    "dbvmssName": "[toLower(substring(concat('db',parameters('vmssName'), uniqueString(resourceGroup().id)), 0, 9))]",
-    "newStorageAccountSuffix": "[concat(variables('namingInfix'), 'sa')]",
-    "uniqueStringArray": [
-      "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'), '0')))]",
-      "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'), '1')))]",
-      "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'), '2')))]",
-      "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'), '3')))]",
-      "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'), '4')))]"
-    ],
-    "saCount": "[length(variables('uniqueStringArray'))]",
-    "vhdContainerName": "[concat(variables('namingInfix'), 'vhd')]",
-    "osDiskName": "[concat(variables('namingInfix'), 'osdisk')]",
-    "addressPrefix": "10.0.0.0/16",
-    "subnetPrefix": "10.0.0.0/24",
-    "virtualNetworkName": "[concat(variables('namingInfix'), 'vnet')]",
-    "publicIPAddressName": "[concat(variables('namingInfix'), 'pip')]",
-    "dbpublicIPAddressName": "[concat(variables('namingInfix'), 'dbpip')]",
-    "subnetName": "[concat(variables('namingInfix'), 'subnet')]",
-    "loadBalancerName": "[concat(variables('namingInfix'), 'lb')]",
-    "dbloadBalancerName": "[concat(variables('namingInfix'), 'dblb')]",
-    "publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]",
-    "dbpublicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',variables('dbpublicIPAddressName'))]",
-    "lbID": "[resourceId('Microsoft.Network/loadBalancers',variables('loadBalancerName'))]",
-    "dblbID": "[resourceId('Microsoft.Network/loadBalancers',variables('dbloadBalancerName'))]",
-    "natPoolName": "[concat(variables('namingInfix'), 'natpool')]",
-    "dbnatPoolName": "[concat(variables('namingInfix'), 'dbnatpool')]",
-    "bePoolName": "[concat(variables('namingInfix'), 'bepool')]",
-    "dbbePoolName": "[concat(variables('namingInfix'), 'dbbepool')]",
-    "dbvmSku": "Standard_A1",
-    "natStartPort": 50000,
-    "natEndPort": 50119,
-    "natBackendPort": 3389,
-    "nicName": "[concat(variables('namingInfix'), 'nic')]",
-    "ipConfigName": "[concat(variables('namingInfix'), 'ipconfig')]",
-    "frontEndIPConfigID": "[concat(variables('lbID'),'/frontendIPConfigurations/loadBalancerFrontEnd')]",
-    "imagePublisher": "lansa",
-    "imageSku": "lansa-scalable-license-14-1",
-    "osType": {
-      "publisher": "[variables('imagePublisher')]",
-      "offer": "[parameters('imageOffer')]",
-      "sku": "[variables('imageSku')]",
-      "version": "latest"
-    },
-    "imageReference": "[variables('osType')]",
-    "diagnosticsStorageAccountName": "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'))), variables('newStorageAccountSuffix') )]",
-    "diagnosticsStorageAccountResourceGroup": "[resourceGroup().name]",
-    "accountid": "[concat('/subscriptions/',subscription().subscriptionId,'/resourceGroups/',variables('diagnosticsStorageAccountResourceGroup'),'/providers/','Microsoft.Storage/storageAccounts/', variables('diagnosticsStorageAccountName'))]",
-    "sqlserverName": "[concat(variables('namingInfix'), 'sqlserver')]",
-    "gitRepo": "https://raw.githubusercontent.com/robe070/cookbooks/",
-    "gitRefreshName": "git-pull.ps1",
-    "gitRefreshUri": "[concat(variables('gitRepo'), parameters('gitBranch'), '/scripts/', variables('gitRefreshName'))]"
-  },
+   "variables": {
+      "storageAccountType": "Standard_LRS",
+      "namingInfix": "[toLower(substring(concat(parameters('stackName'), uniqueString(resourceGroup().id)), 0, 9))]",
+      "longNamingInfix": "[toLower(parameters('stackName'))]",
+      "dblongNamingInfix": "[toLower(concat('db',parameters('stackName')))]",
+      "dbstackName": "[toLower(substring(concat('db',parameters('stackName'), uniqueString(resourceGroup().id)), 0, 9))]",
+      "newStorageAccountSuffix": "[concat(variables('namingInfix'), 'sa')]",
+      "uniqueStringArray": [
+         "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'), '0')))]",
+         "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'), '1')))]",
+         "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'), '2')))]",
+         "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'), '3')))]",
+         "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'), '4')))]"
+      ],
+      "saCount": "[length(variables('uniqueStringArray'))]",
+      "vhdContainerName": "[concat(variables('namingInfix'), 'vhd')]",
+      "osDiskName": "[concat(variables('namingInfix'), 'osdisk')]",
+      "addressPrefix": "10.0.0.0/16",
+      "subnetPrefix": "10.0.0.0/24",
+      "virtualNetworkName": "[concat(variables('namingInfix'), 'vnet')]",
+      "publicIPAddressName": "[concat(variables('namingInfix'), 'pip')]",
+      "dbpublicIPAddressName": "[concat(variables('namingInfix'), 'dbpip')]",
+      "subnetName": "[concat(variables('namingInfix'), 'subnet')]",
+      "loadBalancerName": "[concat(variables('namingInfix'), 'lb')]",
+      "dbloadBalancerName": "[concat(variables('namingInfix'), 'dblb')]",
+      "publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]",
+      "dbpublicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',variables('dbpublicIPAddressName'))]",
+      "lbID": "[resourceId('Microsoft.Network/loadBalancers',variables('loadBalancerName'))]",
+      "dblbID": "[resourceId('Microsoft.Network/loadBalancers',variables('dbloadBalancerName'))]",
+      "natPoolName": "[concat(variables('namingInfix'), 'natpool')]",
+      "dbnatPoolName": "[concat(variables('namingInfix'), 'dbnatpool')]",
+      "bePoolName": "[concat(variables('namingInfix'), 'bepool')]",
+      "dbbePoolName": "[concat(variables('namingInfix'), 'dbbepool')]",
+      "dbvmSize": "Standard_A1",
+      "natStartPort": 50000,
+      "natEndPort": 50119,
+      "natBackendPort": 3389,
+      "nicName": "[concat(variables('namingInfix'), 'nic')]",
+      "ipConfigName": "[concat(variables('namingInfix'), 'ipconfig')]",
+      "frontEndIPConfigID": "[concat(variables('lbID'),'/frontendIPConfigurations/loadBalancerFrontEnd')]",
+      "imagePublisher": "lansa",
+      "imageSku": "lansa-scalable-license-14-1",
+      "imageOffer": "lansa-scalable-license",
+      "osType": {
+         "publisher": "[variables('imagePublisher')]",
+         "offer": "[variables('imageOffer')]",
+         "sku": "[variables('imageSku')]",
+         "version": "latest"
+      },
+      "imageReference": "[variables('osType')]",
+      "diagnosticsStorageAccountName": "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'))), variables('newStorageAccountSuffix') )]",
+      "diagnosticsStorageAccountResourceGroup": "[resourceGroup().name]",
+      "accountid": "[concat('/subscriptions/',subscription().subscriptionId,'/resourceGroups/',variables('diagnosticsStorageAccountResourceGroup'),'/providers/','Microsoft.Storage/storageAccounts/', variables('diagnosticsStorageAccountName'))]",
+      "gitRepo": "https://raw.githubusercontent.com/robe070/cookbooks/",
+      "gitBranch": "patch/autoupdate",
+      "gitRefreshName": "git-pull.ps1",
+      "gitRefreshUri": "[concat(variables('gitRepo'), variables('gitBranch'), '/scripts/', variables('gitRefreshName'))]"
+   },
    "resources": [
       {
          "type": "Microsoft.Network/virtualNetworks",
@@ -280,19 +241,19 @@
             ]
          }
       },
-    {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[concat(variables('uniqueStringArray')[copyIndex()], variables('newStorageAccountSuffix'))]",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2015-06-15",
-      "copy": {
-        "name": "storageLoop",
-        "count": "[variables('saCount')]"
+      {
+         "type": "Microsoft.Storage/storageAccounts",
+         "name": "[concat(variables('uniqueStringArray')[copyIndex()], variables('newStorageAccountSuffix'))]",
+         "location": "[resourceGroup().location]",
+         "apiVersion": "2015-06-15",
+         "copy": {
+            "name": "storageLoop",
+            "count": "[variables('saCount')]"
+         },
+         "properties": {
+            "accountType": "[variables('storageAccountType')]"
+         }
       },
-      "properties": {
-        "accountType": "[variables('storageAccountType')]"
-      }
-    },
       {
          "type": "Microsoft.Storage/storageAccounts",
          "name": "[variables('diagnosticsStorageAccountName')]",
@@ -461,25 +422,23 @@
       },
       {
          "type": "Microsoft.Compute/virtualMachineScaleSets",
-         "name": "[variables('dbvmssName')]",
+         "name": "[variables('dbstackName')]",
          "location": "[resourceGroup().location]",
          "apiVersion": "2016-03-30",
          "dependsOn": [
             "storageLoop",
             "[concat('Microsoft.Storage/storageAccounts/', variables('diagnosticsStorageAccountName'))]",
             "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]",
-            "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
-            "[concat('Microsoft.Sql/servers/', variables('sqlserverName'))]",
-            "[concat('Microsoft.Sql/servers/', variables('sqlserverName'), '/databases/', parameters('databaseName'))]"
+            "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
          ],
          "sku": {
-            "name": "[variables('dbvmSku')]",
+            "name": "[variables('dbvmSize')]",
             "tier": "Standard",
             "capacity": "1"
          },
          "plan": {
             "name": "[variables('imageSKU')]",
-            "product": "[parameters('imageOffer')]",
+            "product": "[variables('imageOffer')]",
             "publisher": "[variables('imagePublisher')]"
          },
          "properties": {
@@ -504,7 +463,7 @@
                   "imageReference": "[variables('imageReference')]"
                },
                "osProfile": {
-                  "computerNamePrefix": "[variables('dbvmssName')]",
+                  "computerNamePrefix": "[variables('dbstackName')]",
                   "adminUsername": "[parameters('adminUsername')]",
                   "adminPassword": "[parameters('adminPassword')]",
                   "windowsConfiguration": {
@@ -546,11 +505,11 @@
                            "typeHandlerVersion": "1.8",
                            "autoUpgradeMinorVersion": "true",
                            "forceUpdateTag": "[concat( parameters('installMSI'),parameters('updateMSI'),parameters('triggerWebConfig'),parameters('UninstallMSI'),parameters('fixLicense'))]",
-                           "settings": { 
+                           "settings": {
                               "fileUris": [ "[variables('gitRefreshUri')]" ]
                            },
                            "protectedSettings": {
-                              "commandToExecute": "[concat('powershell -NoProfile -ExecutionPolicy unrestricted -command \"& {pushd;./',variables('gitRefreshName'), ' ', parameters('gitBranch'), ';popd;', 'pushd;c:\\lansa\\scripts\\azure-custom-script.ps1 ', '-server_name \"', reference(variables('sqlserverName')).fullyQualifiedDomainName, '\"', ' -DBUT \"SQLAZURE\"',  ' -dbname \"', parameters('databaseName'), '\"', ' -dbuser \"', parameters('databaseLogin'), '\"', ' -dbpassword \"', parameters('databaseLoginPassword'), '\"', ' -webuser \"', parameters('webUsername'), '\"', ' -webpassword \"', parameters('webPassword'), '\"', ' -MSIuri \"', parameters('msiUri'), '\"',  ' -maxconnections \"', parameters('webServerMaxConnect'), '\"', ' -trace \"', parameters('trace'), '\"', ' -installMSI \"', parameters('installMSI'), '\"', ' -updateMSI \"', parameters('updateMSI'), '\"',' -triggerWebConfig \"', parameters('triggerWebConfig'), '\"',' -UninstallMSI \"', parameters('UninstallMSI'), '\"', ' -fixLicense \"', parameters('fixLicense'), '\"', ';if ($LASTEXITCODE -ne 0) {Write-Error (\"MSI Install failed\");exit $LASTEXITCODE}; exit 0;popd;}\"')]"
+                              "commandToExecute": "[concat('powershell -NoProfile -ExecutionPolicy unrestricted -command \"& {pushd;./',variables('gitRefreshName'), ' ', variables('gitBranch'), ';popd;', 'pushd;c:\\lansa\\scripts\\azure-custom-script.ps1 ', '-server_name \"', parameters('databaseServerName'), '\"', ' -DBUT \"', parameters('databaseType'), '\"  -dbname \"', parameters('databaseName'), '\" -dbuser \"', parameters('databaseLogin'), '\"', ' -dbpassword \"', parameters('databaseLoginPassword'), '\"', ' -webuser \"', parameters('webUsername'), '\"', ' -webpassword \"', parameters('webPassword'), '\"', ' -MSIuri \"', parameters('MsiURL'), '\"',  ' -maxconnections \"', parameters('webServerMaxConnect'), '\"', ' -trace \"', parameters('trace'), '\"', ' -installMSI \"', parameters('installMSI'), '\"', ' -updateMSI \"', parameters('updateMSI'), '\"',' -triggerWebConfig \"', parameters('triggerWebConfig'), '\"',' -UninstallMSI \"', parameters('UninstallMSI'), '\"', ' -fixLicense \"', parameters('fixLicense'), '\"', ';if ($LASTEXITCODE -ne 0) {Write-Error (\"\"\"MSI Install failed. LASTEXITCODE=$LASTEXITCODE\"\"\");exit $LASTEXITCODE}; exit 0;popd;}\"')]"
                            }
                         }
                      }
@@ -569,18 +528,16 @@
             "[concat('Microsoft.Storage/storageAccounts/', variables('diagnosticsStorageAccountName'))]",
             "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]",
             "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
-            "[concat('Microsoft.Sql/servers/', variables('sqlserverName'))]",
-            "[concat('Microsoft.Sql/servers/', variables('sqlserverName'), '/databases/', parameters('databaseName'))]",
-            "[concat('Microsoft.Compute/virtualMachineScaleSets/', variables('dbvmssName'))]"
+            "[concat('Microsoft.Compute/virtualMachineScaleSets/', variables('dbstackName'))]"
          ],
          "sku": {
-            "name": "[parameters('vmSku')]",
+            "name": "[parameters('virtualMachineSize')]",
             "tier": "Standard",
-            "capacity": "[parameters('minInstanceCount')]"
+            "capacity": "[parameters('minimumInstanceCount')]"
          },
          "plan": {
             "name": "[variables('imageSKU')]",
-            "product": "[parameters('imageOffer')]",
+            "product": "[variables('imageOffer')]",
             "publisher": "[variables('imagePublisher')]"
          },
          "properties": {
@@ -652,11 +609,11 @@
                            "typeHandlerVersion": "1.8",
                            "autoUpgradeMinorVersion": "true",
                            "forceUpdateTag": "[concat( parameters('installMSI'),parameters('updateMSI'),parameters('triggerWebConfig'),parameters('UninstallMSI'),parameters('fixLicense'))]",
-                           "settings": { 
+                           "settings": {
                               "fileUris": [ "[variables('gitRefreshUri')]" ]
                            },
                            "protectedSettings": {
-                              "commandToExecute": "[concat('powershell -NoProfile -ExecutionPolicy unrestricted -command \"& {pushd;./',variables('gitRefreshName'), ' ', parameters('gitBranch'), ';popd;', 'pushd;c:\\lansa\\scripts\\azure-custom-script.ps1 ', '-SUDB \"0\" -server_name \"', reference(variables('sqlserverName')).fullyQualifiedDomainName, '\"', ' -DBUT \"SQLAZURE\"',  ' -dbname \"', parameters('databaseName'), '\"', ' -dbuser \"', parameters('databaseLogin'), '\"', ' -dbpassword \"', parameters('databaseLoginPassword'), '\"', ' -webuser \"', parameters('webUsername'), '\"', ' -webpassword \"', parameters('webPassword'), '\"', ' -MSIuri \"', parameters('msiUri'), '\"',  ' -maxconnections \"', parameters('webServerMaxConnect'), '\"', ' -trace \"', parameters('trace'), '\"', ' -installMSI \"', parameters('installMSI'), '\"', ' -updateMSI \"', parameters('updateMSI'), '\"',' -triggerWebConfig \"', parameters('triggerWebConfig'), '\"', ' -UninstallMSI \"', parameters('UninstallMSI'), '\"', ' -fixLicense \"', parameters('fixLicense'), '\"',  ';if ($LASTEXITCODE -ne 0) {Write-Error (\"MSI Install failed\");exit $LASTEXITCODE}; exit 0;popd;}\"')]"
+                              "commandToExecute": "[concat('powershell -NoProfile -ExecutionPolicy unrestricted -command \"& {pushd;./',variables('gitRefreshName'), ' ', variables('gitBranch'), ';popd;', 'pushd;c:\\lansa\\scripts\\azure-custom-script.ps1 ', '-SUDB \"0\" -server_name \"', parameters('databaseServerName'), '\"', ' -DBUT \"', parameters('databaseType'), '\"',  ' -dbname \"', parameters('databaseName'), '\"', ' -dbuser \"', parameters('databaseLogin'), '\"', ' -dbpassword \"', parameters('databaseLoginPassword'), '\"', ' -webuser \"', parameters('webUsername'), '\"', ' -webpassword \"', parameters('webPassword'), '\"', ' -MSIuri \"', parameters('MsiURL'), '\"',  ' -maxconnections \"', parameters('webServerMaxConnect'), '\"', ' -trace \"', parameters('trace'), '\"', ' -installMSI \"', parameters('installMSI'), '\"', ' -updateMSI \"', parameters('updateMSI'), '\"',' -triggerWebConfig \"', parameters('triggerWebConfig'), '\"', ' -UninstallMSI \"', parameters('UninstallMSI'), '\"', ' -fixLicense \"', parameters('fixLicense'), '\"',  ';if ($LASTEXITCODE -ne 0) {Write-Error (\"\"\"MSI Install failed. LASTEXITCODE=$LASTEXITCODE\"\"\");exit $LASTEXITCODE}; exit 0;popd;}\"')]"
                            }
                         }
                      }
@@ -681,9 +638,9 @@
                {
                   "name": "Profile1",
                   "capacity": {
-                     "minimum": "[parameters('minInstanceCount')]",
-                     "maximum": "[parameters('maxInstanceCount')]",
-                     "default": "[parameters('minInstanceCount')]"
+                     "minimum": "[parameters('minimumInstanceCount')]",
+                     "maximum": "[parameters('maximumInstanceCount')]",
+                     "default": "[parameters('minimumInstanceCount')]"
                   },
                   "rules": [
                      {
@@ -728,71 +685,9 @@
                }
             ]
          }
-      },
-      {
-         "name": "[variables('sqlserverName')]",
-         "type": "Microsoft.Sql/servers",
-         "location": "[resourceGroup().location]",
-         "dependsOn": [
-            "storageLoop",
-            "[concat('Microsoft.Storage/storageAccounts/', variables('diagnosticsStorageAccountName'))]",
-            "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]",
-            "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
-         ],
-         "tags": {
-            "displayName": "SqlServer"
-         },
-         "apiVersion": "2014-04-01",
-         "properties": {
-            "administratorLogin": "[parameters('databaseLogin')]",
-            "administratorLoginPassword": "[parameters('databaseLoginPassword')]",
-            "version": "12.0"
-         },
-         "resources": [
-            {
-               "name": "[parameters('databaseName')]",
-               "type": "databases",
-               "location": "[resourceGroup().location]",
-               "tags": {
-                  "displayName": "Database"
-               },
-               "apiVersion": "2014-04-01",
-               "dependsOn": [
-                  "[variables('sqlserverName')]"
-               ],
-               "properties": {
-                  "edition": "[parameters('edition')]",
-                  "collation": "[parameters('collation')]",
-                  "maxSizeBytes": "[parameters('maxSizeBytes')]",
-                  "requestedServiceObjectiveName": "[parameters('requestedServiceObjectiveName')]"
-               }
-            },
-            {
-               "type": "firewallrules",
-               "apiVersion": "2014-04-01",
-               "dependsOn": [
-                  "[variables('sqlserverName')]"
-               ],
-               "location": "[resourceGroup().location]",
-               "name": "AllowAllIps",
-               "properties": {
-                  "endIpAddress": "0.0.0.0",
-                  "startIpAddress": "0.0.0.0"
-               }
-            }
-         ]
       }
-
    ],
    "outputs": {
-      "dbServerName": {
-         "type": "string",
-         "value": "[reference(variables('sqlserverName')).fullyQualifiedDomainName]"
-      },
-      "dbName": {
-         "type": "string",
-         "value": "[parameters('databaseName')]"
-      },
       "lbFqdn": {
          "type": "string",
          "value": "[reference(variables('publicIPAddressName')).dnsSettings.fqdn]"

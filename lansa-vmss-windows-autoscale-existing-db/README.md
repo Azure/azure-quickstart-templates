@@ -1,15 +1,15 @@
-# Autoscale a LANSA Windows VM Scale Set with Azure SQL Database
+# Autoscale a LANSA Windows VM Scale Set using an existing database server
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Flansa-vmss-windows-autoscale-sql-database%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Flansa-vmss-windows-autoscale-existing-db%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Flansa-vmss-windows-autoscale-sql-database%2Fazuredeploy.json" target="_blank">
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Flansa-vmss-windows-autoscale-existing-db%2Fazuredeploy.json" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template deploys a LANSA Windows Virtual Machine Scale Set integrated with Azure autoscale and Azure SQL Database
+This template deploys a Windows Virtual Machine Scale Set with a desired count of Virtual Machines in the scale set and a LANSA MSI to install into each Virtual Machine. Once the Virtual Machine Scale Set is deployed a custom script extension is used to install the LANSA MSI. The database server must already exist. The database within the database server must already exist too, unless its SQL Server, in which case it will be created. If the database does exist it must either not have any LANSA tables or already have had the same MSI installed. This is not checked by the template. Once this template has been run, it must be the only way that an upgrade to the MSI is applied. Two different MSI installs should not attempt to upgrade a LANSA install. This is very important in order that the SQL tables are upgraded correctly. Current databases supported are Azure SQL Database, Microsoft SQL Server and MySql
 
-Tags: 'lansa, vmss, sql, autoscale, windows'
+Tags: 'lansa, vmss, sql, autoscale, windows, sqlserver, mysql'
 
 | Endpoint        | Version           | Validated  |
 | ------------- |:-------------:| -----:|
@@ -18,14 +18,12 @@ Tags: 'lansa, vmss, sql, autoscale, windows'
 
 ## Solution overview and deployed resources
 
-The template deploys a Windows Virtual Machine Scale Set with a desired count of Virtual Machines in the scale set and a LANSA MSI to install into each Virtual Machine. Once the Virtual Machine Scale Set is deployed a custom script extension is used to install the LANSA MSI.
-
 The Autoscale rules are configured as follows
-- sample for CPU (\\Processor\\PercentProcessorTime) in each VM every 1 Minute
-- if the Percent Processor Time is greater than 60% for 5 Minutes, then the scale out action (add 10% more Virtual Machine instances) is triggered
+- sample for Percentage CPU in each VM every 1 Minute
+- if the Percentage CPU is greater than 60% for 5 Minutes, then the scale out action (add 10% more Virtual Machine instances) is triggered
 - once the scale out action is completed, the cool down period is 20 Minutes
-- if the Percent Processor Time is less than 30% for 5 Minutes, then the scale in action (remove one Virtual Machine instance) is triggered
-- once the scale in action is completed, the cool down period is 5 Minutes
+- if the Percentage CPU is less than 30% for 5 Minutes, then the scale in action (remove one Virtual Machine instance) is triggered
+- once the scale in action is completed, the cool down period is 20 Minutes
 
 ### Resources Deployed
 +	A Virtual Network
@@ -35,11 +33,11 @@ The Autoscale rules are configured as follows
 +	One Virtual Machine Scale Set to contain the single virtual machine which is responsible for configuring the database
 +	One Virtual Machine Scale Set to contain the number of web servers requested by the deployer
 +	The Virtual Machines are all instantiated from the Marketplace LANSA SKU lansa-scalable-license. There is a software cost for using this image. [Click here](https://azure.microsoft.com/en-us/marketplace/partners/lansa/lansa-scalable-license/) for details.
-+	One Azure SQL Database server with one database, configured as per settings provided by the deployer
 
 ## Prerequisites
 
 Before deploying this template you must:
+- Create a [LANSA supported database server](http://www.lansa.com/support/supportedversions.htm#platforms). Basic instructions are provided [here](http://docs.lansa.com/14/EN/lansa041/Content/lansa/L4WInsb4_0230.htm).
 - Construct your LANSA application using [Visual LANSA for Web Development](https://azure.microsoft.com/en-us/marketplace/partners/lansa/visuallansa/) Version 14.1 with EPCs 141010, 141011 and 141013 applied, or later.
 - Construct a deployment image MSI using the LANSA Deployment Tool provided with [Visual LANSA for Web Development](https://azure.microsoft.com/en-us/marketplace/partners/lansa/visuallansa/).
 - Upload your LANSA Web Application MSI to Azure BLOB storage and obtain the URL of the MSI. Note that the template includes a demonstration application so it is not strictly necessary to create a LANSA MSI in order to use the template.
@@ -64,5 +62,5 @@ For full instructions for using this template go to [Azure Deployment Tutorial](
 
 2. Scale Out fast. Scale Out action is 10% of current instances. It scales out after 5 mins of avg CPU > 60%. Another scaling event will not occur for 20 minutes. This allows time for the VM to be installed.
 
-3. Scale in slowly. Scale in action is 1 VM at a time after 5 mins of avg CPU < 30%. Another scaling event will not occur for 5 mins. Deletion does not take very long. Allows more VMs to be deleted or another to be created.
+3. Scale in slowly. Scale in action is 1 VM at a time after 5 mins of avg CPU < 30%. Another scaling event will not occur for 20 mins. Deletion does not take very long. Allows more VMs to be deleted or another to be created.
 
