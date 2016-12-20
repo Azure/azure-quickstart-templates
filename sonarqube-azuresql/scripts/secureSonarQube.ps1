@@ -18,6 +18,8 @@ Set-Location IIS:\SslBindings
 New-WebBinding -Name $websiteName -IP "*" -Port 443 -Protocol https
 $c = New-SelfSignedCertificate -DnsName "sonarqube" -CertStoreLocation "cert:\LocalMachine\My"
 $c | New-Item 0.0.0.0!443
+#Remove HTTP binding 
+Get-WebBinding -Port 8080 -Name $websiteName | Remove-WebBinding
 #Enable ARR Porxy
 Set-WebConfigurationProperty -pspath 'MACHINE/WEBROOT/APPHOST'  -filter "system.webServer/proxy" -name "enabled" -value "True"
 #Disable reverse rewrite host 
@@ -29,7 +31,7 @@ Add-WebConfiguration  -pspath 'MACHINE/WEBROOT/APPHOST' -filter '/system.webServ
 #Create rewrite rules
 $site = "IIS:\Sites\$websiteName"
 #Add inbound rule
-filterRoot = "/system.webserver/rewrite/rules/rule[@name='ReverseProxyInboundRule1']"
+$filterRoot = "/system.webserver/rewrite/rules/rule[@name='ReverseProxyInboundRule1']"
 Add-WebConfigurationProperty -pspath $site -filter '/system.webserver/rewrite/rules' -name "." -value @{name='ReverseProxyInboundRule1'; patternSyntax='Regular Expresessions'; stopProcessing='True'} 
 Set-WebConfigurationProperty -pspath $site -filter "$filterRoot/match" -name "url" -value "(.*)" 
 Set-WebConfigurationProperty -pspath $site -filter "$filterRoot/action" -name "type" -value "Rewrite"
