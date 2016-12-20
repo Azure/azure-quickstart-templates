@@ -8,10 +8,3 @@
 </a>
 
 This template allows you to deploy multiple VM Scale Sets of Windows VMs.
-
-PARAMETER RESTRICTIONS
-======================
-
-vmssPrefix must be 8 characters in length or shorter. It should also be globally unique across all of Azure. If it isn't globally unique, it is possible that this template will still deploy properly, but we don't recommend relying on this pseudo-probabilistic behavior.
-numberOfVMSS must be 5 or less.
-instanceCountPerVMSS must be 100 or less.
