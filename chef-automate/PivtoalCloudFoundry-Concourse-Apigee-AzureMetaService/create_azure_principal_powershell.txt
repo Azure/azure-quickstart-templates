@@ -1,0 +1,102 @@
+param
+(
+    # Azure Subscription name
+    [Parameter(Mandatory = $true)]
+    [String]$SubscriptionName,
+
+    # Azure Application homepage
+    [Parameter(Mandatory = $false)]
+    [String]$ApplicationHomePage,
+
+    # Azure application uir
+    [Parameter(Mandatory = $false)]
+    [String]$ApplicationURI,
+
+    # Azure application password
+    [Parameter(Mandatory = $false)]
+    [String]$ApplicationPwd,
+
+    # Application name
+    [Parameter(Mandatory = $false)]
+    [String]$ApplicationName,
+
+    # VMName
+    [Parameter(Mandatory = $false)]
+    [String]$VMName
+
+)
+
+Login-AzureRmAccount
+
+$SubscriptionName = $SubscriptionName.Replace('"', '')
+
+# Get list of available scription
+$TenantId = (Get-AzureRmSubscription -SubscriptionName $SubscriptionName).TenantId
+
+# Select subscription
+$Subscription = Select-AzureRmSubscription -SubscriptionName $SubscriptionName
+
+$Guid = [guid]::NewGuid()
+
+# Create Azure AD Application name if not provided
+If (!$PSBoundParameters.ContainsKey('ApplicationName'))
+       {
+            $ApplicationName = "PCF-" + $Guid
+       }
+
+# Create Azure AD Application home page if not provided
+If (!$PSBoundParameters.ContainsKey('ApplicationHomePage'))
+       {
+              $ApplicationHomePage = "http://PCF-" + $Guid
+       }
+
+# Create Azure AD Application URI if not provided
+If (!$PSBoundParameters.ContainsKey('ApplicationURI'))
+       {
+              $ApplicationURI = "http://PCF-" + $Guid
+       }
+
+# Create Azure AD Application password if not provided
+If (!$PSBoundParameters.ContainsKey('ApplicationPwd'))
+       {
+              $ApplicationPwd = "Pwd" + $Guid
+			  $ApplicationPwd = $ApplicationPwd.SubString(0, 11)
+       }
+
+If (!$PSBoundParameters.ContainsKey('VMName'))
+       {
+              $VMName = "PCF" + $Guid
+			  $VMName = $VMName.SubString(0, 8)
+       }
+
+$ADApplication = New-AzureRmADApplication -DisplayName $ApplicationName -HomePage $ApplicationHomePage -IdentifierUris $ApplicationURI -Password $ApplicationPwd
+
+Start-Sleep -s 2
+
+$AzureServicePrincipal = New-AzureRmADServicePrincipal -ApplicationId $ADApplication.ApplicationId
+
+Start-Sleep -s 10
+
+$RoleAssignment = New-AzureRmRoleAssignment -RoleDefinitionName Contributor -ServicePrincipalName $ADApplication.ApplicationId
+
+Start-Sleep -s 4
+
+$obj = [PSCustomObject]@{
+
+	SUBSCRIPTION_ID = $Subscription.Subscription.SubscriptionId
+	CLIENT_ID = $ADApplication.ApplicationId
+	TENNANT_ID = $Subscription.Tenant.TenantId
+	CLIENT_SECRET = $ApplicationPwd
+	VM_NAME = $VMName
+
+}
+
+ConvertTo-Json -InputObject $obj | Out-File ".\CFVariables.json"
+
+Write-Host "SUBSCRIPTION_ID:" $Subscription.Subscription.SubscriptionId
+Write-Host "CLIENT_ID:" $ADApplication.ApplicationId
+Write-Host "TENNANT_ID:" $Subscription.Tenant.TenantId
+Write-Host "CLIENT_SECRET:" $ApplicationPwd
+Write-Host ""
+Write-Host "The output file PCFVariables.json has been written."
+Write-Host ""

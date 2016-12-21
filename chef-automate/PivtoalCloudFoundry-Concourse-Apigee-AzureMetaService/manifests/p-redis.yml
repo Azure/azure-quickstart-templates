@@ -1,0 +1,226 @@
+{% set root_domain=cf_ip+".cf.pcfazure.com" %}
+{% set system_domain="system."+root_domain %}
+{% set apps_domain="app."+root_domain %}
+
+{% set nats_ip="10.0.16.5" %}
+
+{% set redis_broker_1="10.0.16.91" %}
+{% set redis_partition_1="10.0.16.92" %}
+{% set redis_partition_2="10.0.16.93" %}
+{% set redis_partition_3="10.0.16.94" %}
+{% set redis_partition_4="10.0.16.95" %}
+{% set redis_partition_5="10.0.16.96" %}
+{% set deployment_name="p-redis" %}
+
+---
+name: {{ deployment_name }}
+director_uuid: {{ DIRECTOR_UUID }}
+releases:
+- name: cf-redis
+  version: 424.27.0
+networks:
+- name: default
+  subnets:
+  - range: 10.0.16.0/20
+    gateway: 10.0.16.1
+    dns:
+    - 10.0.0.100
+    static:
+    - {{ redis_broker_1 }}
+    - {{ redis_partition_1 }}
+    - {{ redis_partition_2 }}
+    - {{ redis_partition_3 }}
+    - {{ redis_partition_4 }}
+    - {{ redis_partition_5 }}
+    reserved:
+    - 10.0.16.2-10.0.16.90
+    - 10.0.16.108-10.0.31.254
+    cloud_properties:
+      virtual_network_name: {{ VNET_NAME }}  # <--- Replace with virtual network name
+      subnet_name: {{ SUBNET_NAME_FOR_CF }} # <--- Replace with subnet name for cloud foundry VMs
+
+resource_pools:
+- name: common
+  network: default
+  stemcell:
+    name: bosh-azure-hyperv-ubuntu-trusty-go_agent
+    version: latest
+  cloud_properties:
+    instance_type: Standard_D1_v2
+    security_group: {{ NSG_NAME_FOR_CF }}
+
+disk_pools:
+- name: redis-partition
+  disk_size: 10000
+
+compilation:
+  workers: 2
+  network: default
+  reuse_compilation_vms: true
+  cloud_properties:
+    instance_type: Standard_D4_v2
+
+update:
+  canaries: 1
+  canary_watch_time: 30000-300000
+  update_watch_time: 30000-300000
+  max_in_flight: 1
+  max_errors: 2
+  serial: true
+
+jobs:
+- name: cf-redis-broker
+  templates:
+  - name: cf-redis-broker
+    release: cf-redis
+  - name: syslog-configurator
+    release: cf-redis
+  lifecycle: service
+  instances: 1
+  resource_pool: common
+  networks:
+  - name: default
+    default:
+    - dns
+    - gateway
+    static_ips:
+    - {{ redis_broker_1 }}
+  properties:
+    cf:
+      apps_domain: {{ apps_domain }}
+      nats:
+        host: {{ nats_ip }}
+        port: 4222
+        username: nats
+        password: "{{ 'nats' | password }}"
+    redis:
+      host: {{ redis_broker_1 }}
+      config_command: bebfab411a1778676a93
+      save_command: a0f45c8726c8cb91e059
+      bg_save_command: cac11b9f8385ca8331c1
+      broker:
+        network: default
+        dedicated_nodes:
+        - {{ redis_partition_1 }}
+        - {{ redis_partition_2 }}
+        - {{ redis_partition_3 }}
+        - {{ redis_partition_4 }}
+        - {{ redis_partition_5 }}
+        service_instance_limit: 5
+        auth:
+          username: "{{ 'redis_broker_user' | password(True) }}"
+          password: "{{ 'redis_broker_password' | password(True) }}"
+        backups:
+      maxmemory: 512MB
+  update:
+    max_in_flight: 1
+  persistent_disk_pool: redis-partition
+- name: dedicated-node-partition
+  templates:
+  - name: dedicated-node
+    release: cf-redis
+  - name: syslog-configurator
+    release: cf-redis
+  lifecycle: service
+  instances: 5
+  resource_pool: common
+  networks:
+  - name: default
+    default:
+    - dns
+    - gateway
+    static_ips:
+    - {{ redis_partition_1 }}
+    - {{ redis_partition_2 }}
+    - {{ redis_partition_3 }}
+    - {{ redis_partition_4 }}
+    - {{ redis_partition_5 }}
+  properties:
+    redis:
+      config_command: bebfab411a1778676a93
+      broker:
+        backend_host: {{ redis_broker_1 }}
+        auth:
+          username: "{{ 'dedicated_node_user' | password(True) }}"
+          password: "{{ 'dedicated_node_password' | password(True) }}"
+        backups:
+  update:
+    max_in_flight: 5
+  persistent_disk_pool: redis-partition
+- name: broker-registrar
+  templates:
+  - name: broker-registrar
+    release: cf-redis
+  lifecycle: errand
+  instances: 1
+  resource_pool: common
+  networks:
+  - name: default
+    default:
+    - dns
+    - gateway
+  properties: {}
+  update:
+    max_in_flight: 1
+- name: broker-deregistrar
+  templates:
+  - name: broker-deregistrar
+    release: cf-redis
+  lifecycle: errand
+  instances: 1
+  resource_pool: common
+  networks:
+  - name: default
+    default:
+    - dns
+    - gateway
+  properties: {}
+  update:
+    max_in_flight: 1
+- name: smoke-tests
+  templates:
+  - name: smoke-tests
+    release: cf-redis
+  lifecycle: errand
+  instances: 1
+  resource_pool: common
+  networks:
+  - name: default
+    default:
+    - dns
+    - gateway
+  properties:
+    redis:
+      broker:
+        service_instance_limit: 5
+        dedicated_nodes:
+        - {{ redis_partition_1 }}
+        - {{ redis_partition_2 }}
+        - {{ redis_partition_3 }}
+        - {{ redis_partition_4 }}
+        - {{ redis_partition_5 }}
+  update:
+    max_in_flight: 1
+
+properties:
+  cf:
+    api_url: https://api.{{ system_domain }}
+    admin_username: system_verification
+    admin_password: "{{ 'system_verification' | password }}"
+    apps_domain: {{ apps_domain }}
+    skip_ssl_validation: true
+  broker:
+    name: p-redis
+    host: redis-broker.{{ apps_domain }}
+    username: {{ 'redis_broker_user' | password(True) }}
+    password: "{{ 'redis_broker_password' | password(True) }}"
+  nats:
+    user: nats
+    password: "{{ 'nats' | password }}"
+    port: 4222
+    machines:
+    - {{ nats_ip }}
+  syslog_aggregator:
+    address:
+    port:
+    transport:

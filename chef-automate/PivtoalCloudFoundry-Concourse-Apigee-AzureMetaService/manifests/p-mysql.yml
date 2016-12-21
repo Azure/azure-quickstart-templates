@@ -1,0 +1,329 @@
+{% set root_domain=cf_ip+".cf.pcfazure.com" %}
+{% set system_domain="system."+root_domain %}
+{% set apps_domain="app."+root_domain %}
+
+{% set nats_ip="10.0.16.5" %}
+
+{% set mysql_partition_1="10.0.16.61" %}
+{% set mysql_partition_2="10.0.16.62" %}
+{% set mysql_partition_3="10.0.16.63" %}
+{% set mysql_proxy_1="10.0.16.64" %}
+{% set mysql_proxy_2="10.0.16.65" %}
+{% set mysql_broker_1="10.0.16.66" %}
+{% set mysql_broker_2="10.0.16.67" %}
+{% set deployment_name="p-mysql" %}
+
+---
+name: {{ deployment_name }}
+director_uuid: {{ DIRECTOR_UUID }}
+releases:
+- name: cf-mysql
+  version: '24.2'
+- name: mysql-backup
+  version: '1.1'
+- name: service-backup
+  version: '1'
+networks:
+- name: default
+  subnets:
+  - range: 10.0.16.0/20
+    gateway: 10.0.16.1
+    dns:
+    - 10.0.0.100
+    static:
+    - {{ mysql_partition_1 }}
+    - {{ mysql_partition_2 }}
+    - {{ mysql_partition_3 }}
+    - {{ mysql_proxy_1 }}
+    - {{ mysql_proxy_2 }}
+    - {{ mysql_broker_1 }}
+    - {{ mysql_broker_2 }}
+    reserved:
+    - 10.0.16.2-10.0.16.60
+    - 10.0.16.79-10.0.31.254
+    cloud_properties:
+      virtual_network_name: {{ VNET_NAME }}  # <--- Replace with virtual network name
+      subnet_name: {{ SUBNET_NAME_FOR_CF }} # <--- Replace with subnet name for cloud foundry VMs
+
+resource_pools:
+- name: common
+  network: default
+  stemcell:
+    name: bosh-azure-hyperv-ubuntu-trusty-go_agent
+    version: latest
+  cloud_properties:
+    instance_type: Standard_D1_v2
+    security_group: {{ NSG_NAME_FOR_CF }}
+
+- name: mysql-partition
+  network: default
+  stemcell:
+    name: bosh-azure-hyperv-ubuntu-trusty-go_agent
+    version: latest
+  cloud_properties:
+    instance_type: Standard_D2_v2
+    security_group: {{ NSG_NAME_FOR_CF }}
+
+disk_pools:
+- name: mysql-partition
+  disk_size: 100000
+
+compilation:
+  workers: 2
+  network: default
+  reuse_compilation_vms: true
+  cloud_properties:
+    instance_type: Standard_D4_v2
+
+update:
+  canaries: 1
+  canary_watch_time: 30000-300000
+  update_watch_time: 30000-300000
+  max_in_flight: 1
+  max_errors: 2
+  serial: true
+
+jobs:
+- name: mysql-partition
+  templates:
+  - name: mysql
+    release: cf-mysql
+  - name: streaming-mysql-backup-tool
+    release: mysql-backup
+  lifecycle: service
+  instances: 3
+  resource_pool: mysql-partition
+  networks:
+  - name: default
+    default:
+    - dns
+    - gateway
+    static_ips:
+    - {{ mysql_partition_1 }}
+    - {{ mysql_partition_2 }}
+    - {{ mysql_partition_3 }}
+  properties:
+    admin_password: "{{ 'mysql_admin' | password(True) }}"
+    max_connections: 1500
+    max_user_connections: 40
+    innodb_buffer_pool_size: 2147483648
+    database_startup_timeout: 600
+    network_name: default
+    mysql-backup:
+      command: innobackupex --user=root --password={{ 'mysql_admin' | password(True) }} --stream=tar
+        tmp/
+      port: 8081
+      credentials:
+        username: mysql_backup
+        password: {{ 'mysql_backup' | password(True) }}
+  update:
+    max_in_flight: 1
+
+  persistent_disk_pool: mysql-partition
+- name: backup-prepare # TODO: Configure backup with Azure Storage Accounts
+  templates:
+  - name: streaming-mysql-backup-client
+    release: mysql-backup
+  - name: service-backup
+    release: service-backup
+  lifecycle: service
+  instances: 0
+  resource_pool: common
+  networks:
+  - name: default
+    default:
+    - dns
+    - gateway
+  properties: {}
+  update:
+    max_in_flight: 1
+- name: proxy
+  templates:
+  - name: proxy
+    release: cf-mysql
+  lifecycle: service
+  instances: 2
+  resource_pool: common
+  networks:
+  - name: default
+    default:
+    - dns
+    - gateway
+    static_ips:
+    - {{ mysql_proxy_1 }}
+    - {{ mysql_proxy_2 }}
+  properties:
+    external_host: p-mysql.{{ system_domain }}
+    network_name: default
+  update:
+    max_in_flight: 1
+- name: cf-mysql-broker
+  templates:
+  - name: cf-mysql-broker
+    release: cf-mysql
+  lifecycle: service
+  instances: 2
+  resource_pool: common
+  networks:
+  - name: default
+    default:
+    - dns
+    - gateway
+    static_ips:
+    - {{ mysql_broker_1 }}
+    - {{ mysql_broker_2 }}
+  properties:
+    network_name: default
+    networks:
+      broker_network: default
+    ssl_enabled: true
+    skip_ssl_validation: true
+    external_host: p-mysql.{{ system_domain }}
+    cc_api_uri: https://api.{{ system_domain }}
+    cookie_secret: {{ 'cookie_secret' | password }}
+    auth_username: {{ 'mysql_broker_user' | password(True) }}
+    auth_password: {{ 'mysql_broker_password' | password(True) }}
+    mysql_node:
+      host: {{ mysql_proxy_1 }}
+      admin_password: "{{ 'mysql_admin' | password(True) }}"
+      persistent_disk: 100000
+    services:
+    - name: p-mysql
+      id: {{ '' | uuid }}
+      description: MySQL service for application development and testing
+      tags:
+      - mysql
+      - relational
+      dashboard_client:
+        id: p-mysql
+        secret: "{{ 'dashboard_client' | password }}"
+        redirect_uri: https://p-mysql.{{ system_domain }}
+      metadata:
+        displayName: MySQL for Pivotal Cloud Foundry
+        imageUrl: data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAYAAABccqhmAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAJo5JREFUeNrsXQtsVNeZvvPwzBiD3zyNwxgWhEKqmEibR9skdhQtaao2Rqtks4+qthKp1e5KxKhVCg3BbrKOst3lIW2rrUQVR5W2adgKp92ikG1ik2RbkpWCs4WWQomHVyAY8NhgPDOex97v+F4zHs97zrlz7z3/Jw1j/Ji5c+/9vv9x/v8/DoVgK9Rt7/arT37tv7XqozXT7zorK1clotFgYnp6PMtLDquPoPZ1YKxvd4DOsn3goFNgOYK3asRuUx81SQRvM/hQhpIEYlz7f1AViGG6SiQABH6WHMS+U/u61SKHDxGAp/CxJgzDqjAE6aqSABAyE75NI/iD2rPfZh8xoAnDYdfCquEr218coqtOAiC7K9+hEb5N0tMw5PBUHE5EpgcodCABsDvha5MI36HF8YRbQIgw4PR5D8dD4QEKGUgA7BLHg+yPSWzli7sx3e4hxeV8w11bO3B5y7YAnRESAKtZ+i2KdZJ2pobT6x2Oh8N74SGQZ0ACYFbig/Rf18hPEHGzulzqP44BR0XFq1d39A3QGSEBMIOLD0vfSTG94WIQdHi9/a5FC/dSiEACYCgaXtjeEZ+aImtvnnzBQCIa3auGB0N0NkgARFp8WPqdiv3W6O1xM3s9gUQ40qsKQT+dDRIAXqSHa/+M5uqTm2+R8MBZ6dvrXe3fc+HJpylpSAJAxCchICEgASDikxCQEJAAZCF/DxHf/kJwZfuLPXQ2SACSid+pUHJPnpve6wk4fb7eK8/29pMAyE38No34bUQLCW9+t3vI3VDfe3nLtiESAPni/N3KTAEPQe6wQHF4PP2+tau7ZcwPOCQkf6dGforzCXPzAwurumULCxwSER/x/Ssyufuwbs5K35zvOauqsv5NfHJy7v+nQkoiFpOGEE6fd8hVU9MlS3mxQxLy9yg2zO67Fqpkdjox3FMlu3OG7M75pOcFXRxmRCGuPk8pielp9n+bIeiuq907+u2dPSQA1rf6BxSLt+UyS161gBEd5Hb6fGrcWmGqY2SioIkBhMIOnoOWJLS1N+CwMflRzLPTilYf5Haprroak7Jns5G9EFGIh9THjUklpopCIjJtydyAq66md3Trjj0kANYgfq0W63dY6CZTXNWLLE/4XIAAxCYmlBgEYeK6xXIDvgHfujVddlspcNiM/G2ay296q8+sfHW14q5ZlDMxZ1dABGLjE+zZCuGCw+NBbmCzneoGHDYif4/m8pvb0tfVKupNJCxRR2JgiLfWa5cEocMGxDe9yw/33l1fx54JuREdC86KgWmv6aKFA96WVZYPCRwWJ3+rRn7TZfnh4rvr6hR3Y/3MLDtCUTkDiEF0bMyUCUSH2zXsaVrRdekbW4dJAIwnf4dGflPF+1ib1918Al+vIHrlqulqDpAXUK951+i3nh8gATCO/Fji222mYwLh3fW10ib0jAJqDKY/G2UrCabKC9TVdFtxqdBhQfLD6neaifgVS5fYdunOzOHB9GeXmWdgmnuhvq5f9QS6SADEEN9UyT4ivnmEIHL+gmk8AqvVCzgsRP5BxQTJPsT4FUsXk6tPoUFmEahaMOxb09JuBRFwEPnzPFGqpfc2NxHxTQ4sHUY+vVj2VQOIQHzyZrvZtzJzmJz8ID0q+/xlO0Eul+JubGBWn2AdwBvAqkE5i4rUeyfgWblis5mXCR0mJz8sf9nW01C441mxnOJ8K+cHVG+gnAVFWCb0LF/ablYRcBD507v7ID5V7tkoLDh3oWzegJlFwEHknwvd3afqPZt5Ayr59bCARMCkAlBO8oPwnuYmsvrkDUglAg4TkR+kP6qUIeHHYn2V/GT15fEGIAJlyg2A/KZZHXCaiPyD5SC/Z8Uyxeu/jcgvEXCtcc1x7cuAVmfVgsGm1/aZolnEYSLyG7rOz9b1V91GffmSA81F4TNnDa8bMEuxkBk8AMPbeVHN51u7hshPYPcA7gWjcz/xyZutoZOnXyn35y+r36s19jxp5Hsiy++9baXicDrp7ifMeIPqveCurWEOceq+CEJzEdHo+kWPPeq/+dbgG9IJgNbS+x1D4/3mJqViSSPd8YSMnqHD44F1VtmZMCoEaV20+cvjNw8NHpEmB6AN8zhg2IdE0me1n1x+Qv55gU8Chi0VsnkCNdWbyzFUxFEG8hu61g/Se1Y2EfkJhbnnkWmWHDRqAlG5agScBpNf7+k3jPxk+QnFEbLC0HsnEYnURi58+orRy4NGZ8IMy/jr5Kf1fUKpoSPbg9EIEYjGWsMjZwxdGTCMHdrc/m8a8V6Y1uNBpp/ITyhVBLBCoN5PCAmwzZkBnsD6RV/9kuPmfw8N2SYHoO3YM2gY+Zub6M4lcAfKh42YQajNoGg3YgcihwHkR0wzYkTcT+Qn2EYEPJ5g5fq1LaIrBY3IARiS9NMbeggEkcA9ZsSeD0gKGlEpKDRI1op9nhH9IVjCDw09VN1HMACummpWLCS6f4BVCgouEnIIJL9fmWnvrRVOfsr2F4zmqoXKyqrs9e8TkYhyPHiVTlY6csZirFhIdJ2Ael8H3Y0NGy9v2RYQEjYLPPYDRH7jUV3hUTbUNcwSfENtPftetUf9fm1DSa99fvKGcm5ypof+t6OXVIEIqwJxTf3+dfX7N6Q6z/oSoWgRUIWmNnr1GkKBdst4AEZs1U3lvTO4b8nymcfiZSrpF6mkX1iW45iYVr2FsatMGNjz5Yvse7b3BNQwIHTqtPCyYXddrZAtyR0CyG+I6y9rOy8s+6amVYz0eDYzED4cunBWOXT+jK1DCYN6B4IVS5dwDwVEhADCs/7IxMpG/ida1iqP+9cy4lsFCDnw2LphIwsf9p08prw+csp2ngHuxYoVy9gSoUDUxsbHuYcCXD0A1fp3agIgzhVqbCjXKKeyEX/rhrvK5tqLCBX2nTyu7PvjMdsJAaYOY8NSkXDVVHddeba333QCYETBD2qyEffL4urvuvsBS1n8QgCPoPvDd1muwE4IB84KHTaKVYHKDeu5FQjxXDjfLZL8bLOOVc1SkB9u86FNm21LfgAezf72R5mHYyew6dICd5LCqkDo1Ce7uYUvnKx/m/rUKfLEYoCnLMt9P/7iw2zpTgbAy2m2SXijWWh2r4pEIhLpXLL3pTYzeQBCl/wQ88uS9INFXGkjQuQD5DjsBDaERmCeCqsN0avXdppCALTEX5uoD4u4H4k/WZCrOs+u4YDdgHtW5KThRDTa1vjyzs6yC4BI68+265Ik7ifYD6J3m4qHQjvLKgBaxZ/fqieQQBCdDxDZoZoIR/yNfc/1lEUAtGW/LcJcf9V9oo06CVYH7mGRIWx8KrSllDmCpXgAaPMVsuwnWjkJBCMhcrt5LAuGPwk8Y6gAiLb+5PoTKBQwxgso1gMQZv2R9ZfZ9UcnnXSfOXhNilBA1H1dihdQsACItP5MKVfK7fofunDGduWx2YB+gF3HPpLis3pWLBfm2RbrBRTjAQiz/kiWiCyjtAqeev/XUkziAfkff+egFHMDmIFT721RCcFivYBiBGCLqJODZAnhFjHQNWdXwMvZdOiAdCPHWEJQkJGDF1BwaFKg+9+pCNrO29u8UnF6vcR+DeF4TBm6dJ5N2EGtfLNNKgTRBdgzfETpOfqBNJZ/ntX1eJRYcFyAG5DwVd5/35nQe0fy3l+w0IEgQqr+ZE/85bKUj6sPiMBT6+5gvQJWbBTaP3JKeT1wSqr8Rsb7HQlB9Z6P3Zjk70l7PeBof96/X4D1F7alt2+NX3FWVRHb84Q+Duy+JctKHvQp0tKD7G9qSU1ZrX1Gd31yUgmdDojxMCorN1/d0ZfXVuOFeABfF2X9ify3AAs/Homw1YBsXoFuSeENQBAwCRiDQfFcDg8Bx4PlvN8HZwaC5jslGAK2aeUqaVYCZkmq3vOivIDE9DS4mpcA5OUBaIM+R4RYf0mHe2bC1jvuYjP0QKJdx48W7TJDFPQR4ez/i5fN+VkhQKIOewTMfH2NWXN9FHixI8ER0qAN+HFV8FiYM3hQumuNicJTJ04Kee2KpUta8hkgmq8HICTzjy2WiPyZCbxffYAc+9XYGcM0C7XIQDZPolyf6wn/WkZ82cGWBVUOiNhrMHb9BjjbzUsAOoUIgER9/qUQBo+ejfey8dqIqc1G6nzcfBD+kaZV0g07ycNSCxGARDjcyUUAtOQf98IfFvuT9c8bcOdBIt1ysjzA6KU5+QAzER4JSl28ZBlvVqwXICIXgMKghhe2d+RKBubjAQhJ/lHRDx/PQNmwcTZOR+YdMTr6CRCnixYGEB1bjuE4mhcsZNbdzoNMxXkBi8uWDHTnsP6w/B28DwyWnzL//MnIMuppdgtKTuLBayhKcEpIIhJy8KFqxhvmvsdgItEBDo/17Q4W6wF0iPjAFPtnBjbcFCEOZiYv1QjMcIL3zkLaVmXgcH9G8cnxGtyz/3rmk5Aedtw6Kxfs3POQtwConBDRI+D0erNy2JnF/ferT638P2gdsTyHNew5ekSaz4sSYSoPFseNeDjcumTvS/5iPAAx7j9Z/7y8ALQE290TQKETtgcjiOVGNBjsKEYAHuN9IGiCoH7//IC1/nt/+TNmIe2GmVbgAenKf/MJj4U0xcXiGbnsyOD+Q4rGeB8H5qKRB1A49LJZ1MxbeU0dooZ4n1z+LNZ6LChqm/G6dKsBbqPcf4xCIvIXh3PaTrrVRz3KI6oIYKkv3XKfGYElSHgxIH8xPQMyhgHTn17SM/jc4PR5064GZBKAB0W4/4T8rH0moiAngPyA3hegFwNhjd4sy3vHWTfgrQrFfPIY2T6zjABXeJcHx0PhBwsRAO4egKummq5sHni8ZR1rloHFz+Uqp5YBY70f1XjoANxQWz/bDSgibNDfF4VFekdgoa49iI/dgdnnlrAbMBtXBPQHgNNdOXMAavyPpb+jvN3/yg3r6crmAb0dWCdZMZ2A6ZDcGjwjFqpAeLx5Ex0otvU3FakdgbK2A2fD1PET3MMAFRvH+nYP5/IA+Ft/cv+LJgoeSACiCxCxdLFDNFN7A4xOxMHaI28B0pt1ipHdwwCHpwLczikA/ON/cv9LAtz6p9dtYA80/Ohjtsw+aksXsE1NtxHpTRAGJCLTD+aTA2jj7f6TByBGDAB4BL8fu8ae0QlYriU21oxUV6/cXjuTf6CGIVN6zW1ZBUCN/9t4v6OzagFdTdHEw8ANZe0cdx8twfAWzt28Mc/l19uFC7HkqbkDllNQv8a4chryIU4EYhPXub5mY99zbVe2vziUyQPgXvtP7r/x0AeFzlWKjXRirCYAGBTCWQBiNybB8VkBcAqP/6nvvyDIWCVX7IwC+3sAQoznHI47RXoAqG2m2v/CBcBqM/9KAcKUfX88RhfeOP60phUArf3XT9a//Oj+4F0pRACJSxm6Hk3GIb/W6zPPA/DzfifnQhKAYgBCgBiYC2BXcqApCBugyrY5qEk41JpOANoo/jcfSfSWYLsIATwbtALbWdy4CoBPyOTsWa4nrwLcyTV+cbko/ufkDSR3Aj61boPlimoQ52Nj0P0jJ6npp1ABqPQxLnEuC74znQD4eR84ga8Q6J2Aelmtmefu6/sWYDMTcvNL5xLnseH+dALAdQWAxn4XB73CL9ugTFhR/Fz/ndQqPKM3CAXZZ/YkKLwaUW8MotFg2bnEWQBa5wiA1gHIXbUIhQNVdugGfHrdHcqu4x/l1Qk4QzxY2VPzyJX8rG/eke530pE61QMBudn7aZWEhVYUpr4vPud92v6HBGO5BM6jM1D3ALiP6hGUvJAGK7VeeXQCFhs/z/bsm4Rg8EqsmscoJxwVQnJptckhQBv3g6YEIDchgKXEw4rjtXTSW2mMmQwegMb5IV0Aani+sovW/4WAxfobG9hOwee1CTy/Hb2ouuLXTJNoQ4LydrY56HK2QShZen4iwHnrsJpkD4BvDsDppCtmgGeQvFuw7urrHYA84vRcMbz+rHcGGp18lC4M4CsArckCwFmtKumKlQHZevB1MZjzfy2pl9GapyQNqfW3nB5AJffOQGE5AIeLPIBigbl7omLxVIEwS0x+noqDysEpxnkhTKUlwOLx5vkz0pXIYpWDUB5OObUuQM6v6qIrViRAfjTJyCICW/MYf04QA3AfHgB3ASAPoDQgo2/3Tjm94/H1EbL+eXFKTGWtn4J1E4sA20Dz+FHbeQOoZUCXo0yDT8wKJAG5VgGic4nAD9hBFxNznmhZy8qDrZqF15uZfnzyGHUElsAtzl2BtRAAvk1A5P4LIY/e/MMmAKti8EjTKtOLAY4b3YDYx4CsPR9u8W4KctNptV5ocPzoVTZQA1V3M5uDLldur6sve9Wd3hE4s2nJJWoDtkgIQLAo4EqfG5m7d2DyBqF6IQ/PAp7k6kIUEhW7MSiBBIAgykNQH5lcbngNK6sK23VmIhIha04CkGecQoNAzO81UBLOmjkA/oNBFFoGJBBkFhU6BQSC3AJAUxoIBDlRQx4AgSC5B0AVGgSCnBgnD4BAkNwDIBAIJAB8EJ+cpLNKIAiACG6RB0AgkAdAIBBkBPUCWAzYOxDbh6UiWzMO1fITsgnAMNc4he/sckISdt/9wJx9AOZgw8aiX5ftJZBlGrG+10A6YGAJwaAcAH9usb0BgzxfkfPEEoIyM9J7/0OPCuv3X1m1sOh2YaO2/27Wjk/mRiYB3ApSCCA5+UsFPBIMKBEJjEPDRqm6N4IJQwh5aMpQ6XBoY8FHeL6ob42f2oIlIL9OyHv/62fCXh/7ICLvkQkQAgxOtftAEiwBhk4HeL9si3Osb3eAqEbkLyV8EHGM+Pw//uLDWckPYCQakpyEwgHuC1kGpERgaQCh3tq02TI76/IeTorPDfHLZ+syWH8ZVjhEcUrPAQwpHPcHTMTixOISb36r7LKLEIBnLA6LDsufz+cH8WVZhRDAqaFkAeCsVlPEZAnID/Dc1y852ZcLGEr69Pu/lubeEFVirwvAMFcPYHqa2CwB+QFsWsIDWWsc0rn+quWXaUlQwBLgcLIAjFMOoHyA5UO220rkZ7P/Ry+VvG1ZMclOvDc2SZEJAjg1npoD2Mn7gGmXIL5ur2hgzz7dpTdiWQ2kR7xfSBIRgoMdhYn8fHMAQd6vzsIAEgDLkJ+RfvSiYevpyPDvvueBgr0e2Vx/gSE14zxbBhzr2z3M+9UpDLAW+QGjiIW1/Xwz/cnAaoNsrr8oLumcd6ckBbhtFDqTtVxMTE+DrXfcpWwtoXlHFHo23qPt73ctZwyeDfrWYeni/d6N9xaU7Et2/bs/eFfK+0XACsCswU8WgABXASAPIC0KzXYbCcTkeOQswCmDeIH8pSYcyQOYw3VlNgTQ8DHXuCUWIxGwEPnNjEMSby8ODglYAvw4nQAMcT/4EAkAkb80yOz6C+TQ0DwBqFi6JMD94G/QgFDEvUR+cv1NxqHheQJwecu2QHJswAMxySYEI7mX2r2G2nYif3FAxl/2nn8BHAqM9e2eXfZ3p1EGP7c8QGSaPRyeCqlcfFis10dOzcavKLAhESgMWI2QfdyYzh9R1j81BwAc5q5gExO2d/EPbeqYQ3Cs7yeXtnZ/+K7tB1Zwd/0/lNv1F8idwxkFwLWwintBUMzGeQC9gSddHXvq9596/9c0mbcA158EUxh3MnsAV7a/OMRfxa7b8uIgts/WxALPYNc9989Wu+ntq7JbNXL9y8sdNf4fyhYCACQCOYAy3v3tuVt3dQ9BB0ptH3/nIIlAFjxFIimSM/O4PU8AHJ4K/nmAcfvkAdC2W0gNP0Rgd9LvIwzoOXqEmJ4Gsoz3KiNnDucUgERkeoA8gPTAEl+uIZXpgARh8t9hhYBEYC5kGu9VRs7M47Yr9Ruh945cqrz/vmfUL/n18iYSirOyUnF6vZa+KH+aGFfalq9UlvgWFPy3+LvzN2812nx0dVRprlqkbKhroLtdxdcOv6WMhmiUnE7+6Bj3Dv2gGv935/QAMikFhQHaMIoP3is6RkX4kLo8SC4vuf4GcSUtp9MOBXX6vIfjoXAnhQHpXVUk8rD2Xyj08VebDh2Y7b3Ha1lh/n+yCKLdt7RzeG2OiJLrbwhX0ub2HOm+Wbe9u1Z9GuN9BJ7mJsVdV2uLi1TKQA9dRHQSFDsQFHmEXL37qTg/eV3q/fXMDrj+kXMXRLx0XXIJcFYBAOqf//ZgIhpt43kErupFitd/m20uVimDPVDo8vjgwdn/QwTy9Sr0DjnaG89+CAfOivAAhlTyt6f19jOz1fmGCNdGQG1z+WJX1XXdP1LcXHwUEqUuD+Yz7BLkZyEIkd92ADcEuf8ZuZxRANy1tQMijkRAdrOsKCWRl255MNvMO7zPvb/8GSXMbOz+C0JGLrsy/WDyzbeDVQ+3dSRisWVcVS4UUiqWNNrqwv3i7CclLQ8ijj99fWZrhqFL59MuD8LiU5WcvRE5c44tmXPGsOr+v1ywBwDEw+G93N2cWMx2XkCpy4MYj528CrCTJfduWXmEGUR++1t/AaO/gKwczrU78IDD5eL/Ya/Yz4UFYZ/Kc686NLwgCXhey8bry4PJjUOI8/Fz5AW6P3yXGGJ3ARDHiayhfFZ2h947Eqps+0KrEo+v5+oFRKNoPVYcHo+tLiIIi2q/bFN12XCQwYPK/sBMvA+yIwzwqkKLZ4QT4XiMPfDzQpf5CNYDxn5PX74ihPyq+/9qKR6A4qioeFXEkU1/NmrLi5ktkQcvIdWaJ/e+s8ahex4gRkgGgVzIyd2cAnB1Rx/CAO5BO4Yd2HVsOAp00i0PHrpwNu3vY5NNHWzLrLtJBKSx/ioHBA3+QO3/QMkCwLwAr7ffYnFP2ZGayNNj/XRI/T6WB5+gGYIU+5eGvDiblwC4Fi3cK+TDI/Npo8KgZCQn8nSA1Kk1/yB/OrKjzBjFQgR7W3+BK2J5cTavFD9qAha03889GQigLsAu/QGpQCLvt5cvKY+tWs2SfHjga7S9Vnu8yudVgv/wvoeUxb7KeX/LtupWH3gNgj0ROXdelAFE8u9H+fyiO99XRDIwEY128D5SlguYnFScVVW2vMgs8ffBu2w3XN3i52oiQmKQBobY3Pqr97zAgbl5e+x5L/JPDb53YsHDD3YqsRh3c439z+3qBQCo8su1PKgD6/4/+MP/EUPsbv3PfyrK+gfSDf4oKQcwS9RwpFfEEUMJ7To9WAfc+WyNQyxnMHhwdkMRgn2Be12g9S+Io45CX71+x7fGEgK8AOweVLl+ne0vPkKBVE8AiULaN0AeTJ04Kcr6Y+mvrpA/cBb6Ds5Kn5AVAZwQuxYHJQP5gGSi4+u/OHSAyC8JcI8LXPkqmJsFC4B3tX+PiMIgAGuidl0WnOPqa9OAEBJsOjRATT6SAPe2wHV/cHJPoX9UcKfP9f/8RajqkYcq1Q/Txv8MJdSTFFHctTW2vhGwtIea/9cDFO/LBIz6ioeEVb++rLr/bwr3AER7ASxBYvOEIEBz+eSC4Pu6KOtftABcePLpoKhcgK6UgnqjCQTjXX/1XhY06HM29k838FOYAIj2Agw4YQSCoa6/QINWtPUvSQBEewGyhAIEcv3LZf0BR6nvXt/77EgiHPGL+GSYRuRbv1YRMZWIQDDC9Q+dOCXS+qPqr6WUF3CWegROn69X5AmkUIBArn9GlMw9B4+jELGJSDI8K5Yp7kbaRJNgHWC9P/LpJZFvkXGzD0M9AMDdUN8r0k3HibTr9CCC/YB7VTD5uVh/bgJwecu2IYfH0y/y04bPnKWlQYIl4n7cq4LRr1r/IdMIAOBbu7pb1LIgO7GR6ZmNEwgEM8f96j0quJwdHOvm9WLcBIAtCy6s6hb5ydFCaYBrRSAUHaoKbPPV0V3Ksl8qHLyPruF73xmMh8JtIs+AnbYZJ9gDArf1TgaXxF8y3LyP0FVT0xUPXT6qfimMoTjRTp8Prcl056UBxk3diknjRSdQMaPBqT5m3UWbjm0r+Xwj6See/LD6Xbxf1CHiSBd/v7dHVcSdIs8GVh28q/3SiQDiy8R0hN10M+SeUu9A9TkSMayVekYYPKoiONXzX6leCye7Do4KD/uZbOQPfxIwIkHdq1r/HksIACC6NoBZJPWmgwjYtVIQlhw3GCP79LQR8SUfLxDbvlVUsOvDHjb1HFjGXyW/AUvU3F1/YSHA7As31HdFr1w9KmJ8WKr62kEEGNFD6gNTkkMhS9c9zArV2FyxZmGbKg52CN8MJL8Q11+4B8BCgV0vPBO9cm236DNkRU8A7npsYkIbi35TuhoHXCtn1QLmLbiqqy0VOhhIfgBZ/z2WFACg4XvbDqgWrUP0+2BVAKsDpraM6AwbV0mvuvZ2H31WTF7BpYYKrppqVRAWmfpYkfATuKNPMrDBx2ahvBH9CXzr1nRNnTjVlohEhK7b6RfETCIASzFLemptzukRRSPB2esIEdDFwEyenYHkF+r6G+YBAEv2vtQWvXJ10Ag3t9yeAJGeP8wiBgaSH2jnVe6b9dwa8Ukm33w7sPArmxxqKNAm+r2QQIM1QbLJ4XQadnMgY4+Rz9MXLiqx4Dg2USHm8hJV9VwyUb02pn4dVhxulxoyeAwVdVxXA8mPJb9+Q0IvIy9k40s7DsSu3+gw4r2MSAwya6/eFNMSjDM3Y86gorFBcaken+hrbGDCz5C4fw5PjLxo3pZVXap6DxtikQUWaMDawx2cOn6C1X8T+cuTM8C5Z9cA47YnJ+1A/mEj4v6yeQDAsh/tao1c/GxQdFIw2RPwrGzisu4MFxAW3yoFOdLlCrCkqHoEPPpEWHnv+QtGkj+oxf3DthYAYPG/fK8jNj5xwKi171LLhkH86c8uk6W3UniwdEnRQmBgeW8yNqvkHzBcNMtxgW6+NXhiYceXxuM3px4xxl9MKNFrYyxxlK8I4OJHR68yKwCrr8TixCyrQL1WSBpGtevG+hTyTAjjb8IjZ9g9YyC6jUr6mcIDSPIEXlGJ2Wnke2K2IGYMZr0Jrlyd2cTRYtV5n1vepNyxfIVyW139vJ/97uIF5djFT5WzY9fk8whUD7Bi6eKccyWRUxC4d18mYLpPV9nOTbkvjlGVgqmxomdV87zssRVdfZD+m59/QHn09juUGl9lzt+HAPzPyGnlpx/9r/L+yJ/m/fyLLX+m/OLpv+dybPXf3WqJ0IBNnz5zrhy5HUMz/mkNYrkvCioFQ6dH/PHJm62GeYjqhQ6dOq14V93G3ENkkMMY4Wwh4sPK9z3awYhf6N/h8dd3/TkTgn/4+U+l8QrYyoF6nSHy3uYm1qXI4n3MmzT+2hue8TelAGCUWNNr+9pVERg0UgRwwSECTAAs1nkHK/2Tv+vKy+JnA8IFGUMCdu1PB8p57UH+dp6jvYqF0wwXBCKgkr9dOzGGwmrkh+WGi14q+YGDvz+myAzZyW8KD0AHTsiyH+3qMrJGwGpAvN/35czpkvHQFCO1nvDT8YXVa5TPLWtiz8nC8e+/eZdOqrFgDT5mIb+pBAC49I2tw6oItJMIpMe//eWTGS0/yPzy24eYCKRCT/bhb5EzePahTez/EIp88dV9P0ybNCQURH7DC30sJQAkAtldf3gA6YBEHrL6uQBxwO/BS8j0WgR5yG+aHEA6EfAsX9ru8HiCdO/MQLfaqdj+q4G8yJ8qBGTNifymFYBkEVDKkBg0Y+yfrrgHy3gUx5saw2Ymv6kFQBcBnEBn1QKpRSDTWv9/fPQhUYzIb18BAJAx9a1pkVoEsO6fDoW6/gTDyW/6ENZthbM5Wyx08vQrRpcNmwHNtXVp3X8jgaKhfHA2eE3K4qIkoKOvywrkt4wA6CKgPm0uRwNRuZEu/h+fmjL0GLLVHyTj5XcOseVISVHWxh5bhgCpGP3W813uxvpuu+4GlC9+d+mCQjAVuq1GfksKABOBrTv2uGqqN8u8TMijFJjABcwzFbl5BwlAek9ggNUKGDRj0GygQh5TQE/2DVj1A7itfPaxTIjkYHjkzCtGTRsui7t/8cI8wqdLDIo+holQ7uYZiRKAlkr22VIAgNnk4Pd7e2IT13facY+9c2Nj8wQAiUF8r5B6/lLw3V+9QdWDGhyeit5rPf/cY4fP4rTLRRn99s4ed2ODLcuHMxEP/QEEw+P9druQ31YCAFzesm2ocv3aFqfPN2Cnz3XwD8cyCkC6JUKCMJe/xYjtukgASgwJrj7/0mZtqdAW3oA+xy8VWAn4yd920YqAeKuPJb7NVo/3pRCA2ZBg6449akiw0eF220KxMxXXIA9Q6IQgeA4jO/6JhCM3cO9stOoSXz6wdTXN5JtvB6cO/+bVRV/9EjYmxbxBn1U/C0psQfa1i5fM+9nSRdVK1z2fV3wVFcq54FjaoSD6INB9f/U15W/uulvxuSuUd079kb1uut9LBfoOUn/X5lb/ZRT2hN47YutaE4csV3TJ3pf8sfHxV+KhcJtVPwMsNqx9rhoAhAwQAh1YMkyXK0hXtptpLLhEE4Fg9bG8F5Dhw7plEYDLW7bhgrY3vryzM35jcnciFrPctCFY9n/8+Wss7s+W/NNHf+cC5gQS5sX6/TJ9aKdsV/nKs739lRvWtzgrK/ut2E+Adf8H/+1fuXQD5tvhJwFA+hbZyC+lAABspWBHXxerG7BgkhCewFf2/aCkTT0gIPAmJAeuPUp5u+yY4accQJ5gYUEotDMRjvitePyI2zE1CLmBL7SsyZgXwKhwxPGoK8gkHFmTgPYp80U42CujxScByCYEfc/1xKdCW6yYH5gX36tigKQhle/Oi/P3qsTvoVNBApAWTa/tqw1/EnjGLkJAuEV89bFHVlefBICEgIhPIAEgISDiE0gAikLd9u5Oh9dj2WShBAgolNwjATBACNocbveWRDTaQWfDFECn3l67deqRAJgcrLz4+o0tiXC4k8KDsrj5/RrxA3Q6SADKioYXtnckpqe/riQSHXacSmQya/+qlefwkQDYOzyAJ9Dh9Hq3xMPhVjojXIDhm0jqDVBSjwTAUiFCNBjsUGLxxxLRaBudkYKAeP4NjfTk4pMAWN8zcPq8HfFQ+EF4COqDcgbzY3q49YfJ0pMAyCAIrQ5PRUciMg1BkNU7GEoi/DDdFSQA0qKx77m22I1J5AwgCHj22+wjBrRYHoQfpiU7EgBCjpBBEwJ4B3dqgmCVpOKwRviPNSs/TC49CQCBU+ig5Q8gDDVJomB0GDGURPZx7f9BcuVJAAjlFQh/UvhQy8FrAKF16x2gjLy98P8CDADMneNqQ66ddAAAAABJRU5ErkJggg==
+        longDescription: Provisioning a service instance creates a MySQL database.
+          Binding applications to the instance creates unique credentials for each
+          application to access the database.
+        providerDisplayName: Pivotal Software
+        documentationUrl: http://docs.pivotal.io/p-mysql
+        supportUrl: http://support.pivotal.io
+      plans:
+      - name: 100mb-dev
+        id: {{ '' | uuid }}
+        description: Shared MySQL Server
+        max_storage_mb: 100
+        max_user_connections: 40
+        metadata:
+          costs:
+          - amount:
+              usd: 0.0
+            unit: MONTHLY
+          bullets:
+          - Not for production use
+          - Shared MySQL server
+          - 100 MB storage
+          - 40 concurrent connections
+          displayName: 100 MB Dev
+  update:
+    max_in_flight: 1
+- name: broker-registrar
+  templates:
+  - name: broker-registrar
+    release: cf-mysql
+  lifecycle: errand
+  instances: 1
+  resource_pool: common
+  networks:
+  - name: default
+    default:
+    - dns
+    - gateway
+  properties: {}
+  update:
+    max_in_flight: 1
+- name: broker-deregistrar
+  templates:
+  - name: broker-deregistrar
+    release: cf-mysql
+  lifecycle: errand
+  instances: 1
+  resource_pool: common
+  networks:
+  - name: default
+    default:
+    - dns
+    - gateway
+  properties: {}
+  update:
+    max_in_flight: 1
+- name: acceptance-tests
+  templates:
+  - name: acceptance-tests
+    release: cf-mysql
+  lifecycle: errand
+  instances: 1
+  resource_pool: common
+  networks:
+  - name: default
+    default:
+    - dns
+    - gateway
+  properties:
+    timeout_scale: 1
+    cf:
+      api_url: https://api.{{ system_domain }}
+      admin_username: system_verification
+      admin_password: "{{ 'system_verification' | password }}"
+      apps_domain: {{ apps_domain }}
+      skip_ssl_validation: true
+    proxy:
+      external_host: p-mysql.{{ system_domain }}
+      api_username: admin
+      api_password: "{{ 'mysql_api' | password(True) }}"
+      proxy_count: 2
+    broker:
+      host: p-mysql.{{ system_domain }}
+    service:
+      name: p-mysql
+      plans:
+      - name: 100mb-dev
+        max_storage_mb: 100
+    mysql:
+      max_user_connections: 40
+  update:
+    max_in_flight: 1
+
+properties:
+  external_host: p-mysql.{{ system_domain }}
+  cluster_ips:
+  - {{ mysql_partition_1 }}
+  - {{ mysql_partition_2 }}
+  - {{ mysql_partition_3 }}
+  cf:
+    api_url: https://api.{{ system_domain }}
+    admin_username: system_verification
+    admin_password: "{{ 'system_verification' | password }}"
+    apps_domain: {{ apps_domain }}
+    skip_ssl_validation: true
+  proxy:
+    proxy_ips:
+    - {{ mysql_broker_1 }}
+    - {{ mysql_broker_2 }}
+    api_username: admin
+    api_password: "{{ 'mysql_api' | password(True) }}"
+    proxy_count: 2
+  broker:
+    name: p-mysql
+    host: p-mysql.{{ system_domain }}
+    username: {{ 'mysql_broker_user' | password(True) }}
+    password: "{{ 'mysql_broker_password' | password(True) }}"
+  nats:
+    user: nats
+    password: "{{ 'nats' | password }}"
+    port: 4222
+    machines:
+    - {{ nats_ip }}
+  syslog_aggregator:
+    address:
+    port:
+    transport:
