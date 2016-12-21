@@ -1,0 +1,131 @@
+{% set root_domain=cf_ip+".cf.pcfazure.com" %}
+{% set system_domain="system."+root_domain %}
+{% set apps_domain="app."+root_domain %}
+{% set ci_domain="ci."+system_domain %}
+
+
+{% set ci_ip="10.0.16.113" %}
+{% set nats_ip="10.0.16.5" %}
+
+{% set deployment_name="concourse" %}
+
+---
+name: {{ deployment_name }}
+director_uuid: {{ DIRECTOR_UUID }}
+
+releases:
+- name: cf
+  version: latest
+- name: concourse
+  version: latest
+- name: garden-runc
+  version: latest
+networks:
+- name: default
+  subnets:
+  - range: 10.0.16.0/20
+    gateway: 10.0.16.1
+    dns:
+    - 10.0.0.100
+    static:
+    - {{ ci_ip }}
+    reserved:
+    - 10.0.16.2-10.0.16.112
+    - 10.0.16.118-10.0.31.254
+    cloud_properties:
+      virtual_network_name: {{ VNET_NAME }}  # <--- Replace with virtual network name
+      subnet_name: {{ SUBNET_NAME_FOR_CF }} # <--- Replace with subnet name for cloud foundry VMs
+
+resource_pools:
+- name: common
+  network: default
+  stemcell:
+    name: bosh-azure-hyperv-ubuntu-trusty-go_agent
+    version: 3232.17
+  cloud_properties:
+    instance_type: Standard_D12_v2
+    security_group: {{ NSG_NAME_FOR_CF }}
+
+disk_pools:
+- name: common
+  disk_size: 204800
+
+compilation:
+  workers: 1
+  network: default
+  reuse_compilation_vms: true
+  cloud_properties:
+    instance_type: Standard_D2_v2
+
+update:
+  canaries: 1
+  canary_watch_time: 30000-300000
+  update_watch_time: 30000-300000
+  max_in_flight: 1
+  max_errors: 2
+  serial: true
+
+jobs:
+- name: web
+  templates:
+    - name: route_registrar
+      release: cf
+      properties:
+        route_registrar:
+          routes:
+          - name: concourse
+            port: 8080
+            registration_interval: 20s
+            uris:
+              - {{ ci_domain }}
+        nats:
+          user: nats
+          password: "{{ 'nats' | password }}"
+          port: 4222
+          machines:
+          - {{ nats_ip }}
+
+
+    - name: atc
+      release: concourse
+      properties:
+        # replace with your CI's externally reachable URL, e.g. https://ci.foo.com
+        external_url: https://{{ ci_domain}}
+
+        # replace with username/password, or configure GitHub auth
+        basic_auth_username: ciadmin
+        basic_auth_password: "{{ 'ciadmin' | password(True) }}"
+        postgresql_database: &atc_db atc
+
+    - name: tsa
+      release: concourse
+    - name: postgresql
+      release: concourse
+      properties:
+        databases:
+        - name: *atc_db
+          # make up a role and password
+          role: dbadmin
+          password: "{{ 'dbadmin' | password(True) }}"
+
+    - name: groundcrew
+      release: concourse
+    - name: baggageclaim
+      release: concourse
+      properties:
+        bind_port: 9127
+    - name: garden
+      release: garden-runc
+      properties:
+        garden:
+          listen_network: tcp
+          listen_address: 0.0.0.0:7777
+
+  instances: 1
+  resource_pool: common
+  persistent_disk_pool: common
+  networks:
+  - name: default
+    default: [dns, gateway]
+    static_ips:
+    - {{ ci_ip }}

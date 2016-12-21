@@ -1,0 +1,137 @@
+{% set root_domain=cf_ip+".cf.pcfazure.com" %}
+{% set system_domain="system."+root_domain %}
+{% set apps_domain="app."+root_domain %}
+{% set deployment_name="p-spring-cloud-services" %}
+
+---
+name: {{ deployment_name }}
+director_uuid: {{ DIRECTOR_UUID }}
+releases:
+- name: spring-cloud-broker
+  version: 1.0.9-build.7
+networks:
+- name: default
+  subnets:
+  - range: 10.0.16.0/20
+    gateway: 10.0.16.1
+    dns:
+    - 10.0.0.100
+    static: []
+    reserved:
+    - 10.0.16.2-10.0.16.107
+    - 10.0.16.112-10.0.31.254
+    cloud_properties:
+      virtual_network_name: {{ VNET_NAME }}  # <--- Replace with virtual network name
+      subnet_name: {{ SUBNET_NAME_FOR_CF }} # <--- Replace with subnet name for cloud foundry VMs
+
+resource_pools:
+- name: common
+  network: default
+  stemcell:
+    name: bosh-azure-hyperv-ubuntu-trusty-go_agent
+    version: latest
+  cloud_properties:
+    instance_type: Standard_D1_v2
+    security_group: {{ NSG_NAME_FOR_CF }}
+
+compilation:
+  workers: 2
+  network: default
+  reuse_compilation_vms: true
+  cloud_properties:
+    instance_type: Standard_D4_v2
+
+update:
+  canaries: 1
+  canary_watch_time: 30000-300000
+  update_watch_time: 30000-300000
+  max_in_flight: 1
+  max_errors: 2
+  serial: true
+
+jobs:
+- name: deploy-service-broker
+  templates:
+  - name: deploy-service-broker
+    release: spring-cloud-broker
+  lifecycle: errand
+  instances: 1
+  resource_pool: common
+  networks:
+  - name: default
+    default:
+    - dns
+    - gateway
+  properties: {}
+  update:
+    max_in_flight: 1
+- name: register-service-broker
+  templates:
+  - name: register-service-broker
+    release: spring-cloud-broker
+  lifecycle: errand
+  instances: 1
+  resource_pool: common
+  networks:
+  - name: default
+    default:
+    - dns
+    - gateway
+  properties: {}
+  update:
+    max_in_flight: 1
+- name: destroy-service-broker
+  templates:
+  - name: destroy-service-broker
+    release: spring-cloud-broker
+  lifecycle: errand
+  instances: 1
+  resource_pool: common
+  networks:
+  - name: default
+    default:
+    - dns
+    - gateway
+  properties: {}
+  update:
+    max_in_flight: 1
+disk_pools: []
+
+properties:
+  domain: {{ system_domain }}
+  app_domains:
+  - {{ apps_domain }}
+  ssl:
+    skip_cert_verify: true
+  spring_cloud_broker:
+    product_name:
+    app_name:
+    app_uri:
+    broker:
+      org_name:
+      space_name:
+      user: spring_cloud_broker_user
+      password: "{{ 'spring_cloud_broker' | password(True) }}"
+      max_instances: 100
+    worker:
+      client_id:
+      client_secret: "{{ 'spring_cloud_client_sercret' | password(True) }}"
+      user: spring_cloud_worker_user
+      password: "{{ 'spring_cloud_worker' | password(True) }}"
+    instances:
+      org_name:
+      space_name:
+      instances_user: p-spring-cloud-services
+      instances_password: "{{ 'spring_cloud_services' | password(True) }}"
+    app_push:
+      timeout: 180
+      memory:
+    broker_dashboard_secret: "{{ 'spring_cloud_dashboard_sercret' | password(True) }}"
+    persistence_store_type:
+    encryption_key: fcd368cfeaf1b401afd6
+    cf:
+      admin_user: admin
+      admin_password: "{{ 'cf_admin' | password(True) }}"
+    uaa:
+      admin_client_id: admin
+      admin_client_secret: "{{ 'admin_client_secret' | password }}"

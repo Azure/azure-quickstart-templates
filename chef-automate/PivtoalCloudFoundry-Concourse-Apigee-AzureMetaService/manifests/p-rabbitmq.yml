@@ -1,0 +1,249 @@
+{% set root_domain=cf_ip+".cf.pcfazure.com" %}
+{% set system_domain="system."+root_domain %}
+{% set apps_domain="app."+root_domain %}
+
+{% set nats_ip="10.0.16.5" %}
+
+{% set rabbitmq_server_1="10.0.16.79" %}
+{% set rabbitmq_server_2="10.0.16.80" %}
+{% set rabbitmq_proxy="10.0.16.81" %}
+{% set rabbitmq_broker="10.0.16.82" %}
+{% set deployment_name="p-rabbitmq" %}
+
+---
+name: {{ deployment_name }}
+director_uuid: {{ DIRECTOR_UUID }}
+releases:
+- name: cf-rabbitmq
+  version: 215.0.0
+networks:
+- name: default
+  subnets:
+  - range: 10.0.16.0/20
+    gateway: 10.0.16.1
+    dns:
+    - 10.0.0.100
+    static:
+    - {{ rabbitmq_server_1 }}
+    - {{ rabbitmq_server_2 }}
+    - {{ rabbitmq_proxy }}
+    - {{ rabbitmq_broker }}
+    reserved:
+    - 10.0.16.2-10.0.16.78
+    - 10.0.16.91-10.0.31.254
+    cloud_properties:
+      virtual_network_name: {{ VNET_NAME }}  # <--- Replace with virtual network name
+      subnet_name: {{ SUBNET_NAME_FOR_CF }} # <--- Replace with subnet name for cloud foundry VMs
+
+resource_pools:
+- name: common
+  network: default
+  stemcell:
+    name: bosh-azure-hyperv-ubuntu-trusty-go_agent
+    version: latest
+  cloud_properties:
+    instance_type: Standard_D1_v2
+    security_group: {{ NSG_NAME_FOR_CF }}
+
+compilation:
+  workers: 2
+  network: default
+  reuse_compilation_vms: true
+  cloud_properties:
+    instance_type: Standard_D4_v2
+update:
+  canaries: 1
+  canary_watch_time: 30000-300000
+  update_watch_time: 30000-300000
+  max_in_flight: 1
+  max_errors: 2
+  serial: true
+jobs:
+- name: rabbitmq-server
+  templates:
+  - name: rabbitmq-server
+    release: cf-rabbitmq
+  lifecycle: service
+  instances: 2
+  resource_pool: common
+  networks:
+  - name: default
+    default:
+    - dns
+    - gateway
+    static_ips:
+    - {{ rabbitmq_server_1 }}
+    - {{ rabbitmq_server_2 }}
+  properties:
+    syslog_aggregator:
+      address:
+      port:
+    rabbitmq-server:
+      networks:
+        apps: default
+      static_ips:
+      - {{ rabbitmq_server_1 }}
+      - {{ rabbitmq_server_2 }}
+      administrators:
+        management:
+          username: rmqadmin
+          password: "{{ 'rmqadmin' | password(True) }}"
+        broker:
+          username: broker
+          password: "{{ 'rmqbroker' | password }}"
+      plugins:
+      - rabbitmq_management
+      ssl:
+        security_options:
+        key:
+        cert:
+        cacert:
+      config:
+      cookie:
+  update:
+    max_in_flight: 2
+    serial: false
+  persistent_disk_pool: rabbitmq-server
+- name: rabbitmq-haproxy
+  templates:
+  - name: rabbitmq-haproxy
+    release: cf-rabbitmq
+  lifecycle: service
+  instances: 1
+  resource_pool: common
+  networks:
+  - name: default
+    default:
+    - dns
+    - gateway
+    static_ips:
+    - {{ rabbitmq_proxy }}
+  properties:
+    rabbitmq-haproxy:
+      stats:
+        username: admin
+        password: "{{ 'rmqproxyadmin' | password }}"
+      networks:
+        apps: default
+      server_ips:
+      - {{ rabbitmq_server_1 }}
+      - {{ rabbitmq_server_2 }}
+      ports: 15672, 5672, 5671, 1883, 8883, 61613, 61614, 15674
+  update:
+    max_in_flight: 1
+    serial: false
+- name: rabbitmq-broker
+  templates:
+  - name: rabbitmq-broker
+    release: cf-rabbitmq
+  lifecycle: service
+  instances: 1
+  resource_pool: common
+  networks:
+  - name: default
+    default:
+    - dns
+    - gateway
+    static_ips:
+    - {{ rabbitmq_broker }}
+  properties:
+    syslog_aggregator:
+      address:
+      port:
+    rabbitmq-broker:
+      route: pivotal-rabbitmq-broker
+      ip: {{ rabbitmq_broker }}
+      networks:
+        apps: default
+      cc_endpoint: https://api.{{ system_domain }}
+      cc_api_version: v2
+      uaa_endpoint: https://uaa.{{ system_domain }}
+      uaa_client:
+        client_id: cf
+        username: system_services
+        password: "{{ 'system_services' | password }}"
+      rabbitmq:
+        operator_set_policy:
+          enabled: true
+          policy_name: operator_set_policy
+          policy_definition: |
+            {"ha-mode": "exactly", "ha-params": 2, "ha-sync-mode": "automatic"}
+          policy_priority: 50
+        management_domain: pivotal-rabbitmq.{{ system_domain }}
+        management_ip: {{ rabbitmq_proxy }}
+        hosts:
+        - {{ rabbitmq_proxy }}
+        dns_host:
+        administrator:
+          username: broker
+          password: "{{ 'rmqbroker' | password }}"
+        ssl:
+      service:
+        url: {{ rabbitmq_broker }}
+        username: admin
+        password: "{{ 'rmqbrokeradmin' | password }}"
+      logging:
+        level: info
+        print_stack_traces: true
+    cf:
+      domain: {{ system_domain }}
+      nats:
+        host: {{ nats_ip }}
+        port: 4222
+        username: nats
+        password: "{{ 'nats' | password }}"
+  update:
+    max_in_flight: 1
+    serial: false
+- name: broker-registrar
+  templates:
+  - name: broker-registrar
+    release: cf-rabbitmq
+  lifecycle: errand
+  instances: 1
+  resource_pool: common
+  networks:
+  - name: default
+    default:
+    - dns
+    - gateway
+  properties:
+    broker:
+      name: p-rabbitmq
+      host: pivotal-rabbitmq-broker.{{ system_domain }}
+      username: admin
+      password: "{{ 'rmqbrokeradmin' | password }}"
+    cf:
+      api_url: https://api.{{ system_domain }}
+      admin_username: system_services
+      admin_password: "{{ 'system_services' | password }}"
+  update:
+    max_in_flight: 1
+- name: broker-deregistrar
+  templates:
+  - name: broker-deregistrar
+    release: cf-rabbitmq
+  lifecycle: errand
+  instances: 1
+  resource_pool: common
+  networks:
+  - name: default
+    default:
+    - dns
+    - gateway
+  properties:
+    broker:
+      name: p-rabbitmq
+      host: pivotal-rabbitmq-broker.{{ system_domain }}
+      username: admin
+      password: "{{ 'rmqbrokeradmin' | password }}"
+    cf:
+      api_url: https://api.{{ system_domain }}
+      admin_username: system_services
+      admin_password: "{{ 'system_services' | password }}"
+  update:
+    max_in_flight: 1
+
+disk_pools:
+- name: rabbitmq-server
+  disk_size: 8192
