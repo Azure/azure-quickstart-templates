@@ -5,7 +5,8 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template deploys GlassFish application server onto multiple load balanced SUSE Linux VMs. It is possible to select either OpenSUSE or SLES for the OS, and any release package associated with version 3 or 4 of GlassFish.
+This template deploys HiveMQ onto multiple load balanced Ubuntu Linux VMs as a cluster. However, before executing this ARM template, you must first obtain an evaluation license for HiveMQ. This can be achieved by completing a simple form at http://www.hivemq.com/downloads/
+Upon successful completion of the form you will be presented with a distinct timeboxed download button which will allow you to download an evaluation version of HiveMQ. This download link must be provided as a parameter when deploying this template. 
 
 This template will deploy the following resources:
 
@@ -26,8 +27,7 @@ If you are using a Windows computer, then you can download puttygen.exe to creat
 ### azuredeploy.Parameters.json File Explained
 
 1.  _artifactsLocation: The base URL where artifacts required by this template are located
-2.  glassfishVersion: The version of GlassFish that will be deployed
-3.  glassfishRelease: The release package that will be deployed to all servers
+2.  hiveMQDownloadURL: The download URL containing the HiveMQ deployment package
 4.  numberOfInstances: Number of VMs to deploy
 5.  dnsNameforLBIP: A distinct Public DNS name used to reference the VM Load Balancer, for access to deployed applications
 6.  vmSize:  Select from one of the allowed VM sizes listed in the azuredeploy.json file
