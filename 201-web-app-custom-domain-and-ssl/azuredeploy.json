@@ -1,0 +1,92 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "webAppName": {
+            "type": "string",
+            "metadata": {
+                "description": "The name of the web app that you wish to create."
+            }
+        },
+        "customHostname": {
+            "type": "string",
+            "metadata": {
+                "description": "The custom hostname that you wish to add."
+            }
+        },
+         "existingKeyVaultId":{
+            "type":"string",
+            "metadata":{
+                "description":"Existing Key Vault resource Id with an access policy to allow Microsoft.Web RP to read Key Vault secrets (Checkout README.md for more information)"
+            }
+        },
+        "existingKeyVaultSecretName":{
+            "type":"string",
+            "metadata":{
+            "description":"Key Vault Secret that contains a PFX certificate"
+            }
+        }
+    },
+    "variables": {        
+        "appServicePlanName": "[concat(parameters('webAppName'),'-asp-', uniquestring(resourceGroup().id))]",
+        "certificateName": "[concat(parameters('webAppName'),'-cert-', uniquestring(resourceGroup().id))]"
+    },
+    "resources": [
+        {
+            "apiVersion": "2016-03-01",
+            "name": "[variables('appServicePlanName')]",
+            "type": "Microsoft.Web/serverfarms",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "name": "[variables('appServicePlanName')]"
+            },
+            "sku": {
+                "name" : "P1",
+                "tier": "Premium",
+                "size": "1",
+                "family": "P",
+                "capacity": "1"
+            }
+        },
+        {
+            "apiVersion": "2016-03-01",
+            "name": "[parameters('webAppName')]",
+            "type": "Microsoft.Web/sites",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "name": "[parameters('webAppName')]",
+                "serverFarmId": "[resourceId('Microsoft.Web/serverFarms',variables('appServicePlanName'))]"
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Web/serverFarms/',variables('appServicePlanName'))]"
+            ]
+        },
+        {
+            "type":"Microsoft.Web/certificates",
+            "name":"[variables('certificateName')]",
+            "apiVersion":"2016-03-01",
+            "location":"[resourceGroup().location]",
+            "properties":{
+                "keyVaultId":"[parameters('existingKeyVaultId')]",
+                "keyVaultSecretName":"[parameters('existingKeyVaultSecretName')]",
+                "serverFarmId": "[resourceId('Microsoft.Web/serverFarms',variables('appServicePlanName'))]"
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Web/sites/',parameters('webAppName'))]"
+            ]
+        },
+        {
+            "type":"Microsoft.Web/sites/hostnameBindings",
+            "name":"[concat(parameters('webAppName'), '/', parameters('customHostname'))]",
+            "apiVersion":"2016-03-01",
+            "location":"[resourceGroup().location]",
+            "properties":{
+                "sslState":"SniEnabled",
+                "thumbprint":"[reference(resourceId('Microsoft.Web/certificates', variables('certificateName'))).Thumbprint]"
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Web/certificates/',variables('certificateName'))]"
+            ]
+        }
+    ]
+}
