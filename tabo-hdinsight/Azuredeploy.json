@@ -1,0 +1,553 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "variables": {
+    "TaboVnetId": "[resourceId('Microsoft.Network/virtualNetworks', variables('TaboVirtualNetworkName'))]",
+    "TaboSubnetRef": "[concat(variables('TaboVnetIdnetId'), '/subnets/', variables('TaboSubnetName'))]",
+    "TaboLocation": "[resourceGroup().location]",
+    "TaboVirtualMachineName": "[concat('v', uniquestring(resourcegroup().id))]",
+    "TaboVirtualmachinesize": "standard_A3",
+    "TaboAdminUsername": "azureuser",
+    "TaboAdminPassword": "Password@123",
+    "TaboVirtualNetworkName": "[concat('vn', uniquestring(resourcegroup().id))]",
+    "TaboStorageAccountName": "[concat('stor', uniquestring(resourcegroup().id))]",
+    "TaboStorageAccountType": "Standard_LRS",
+    "TaboAddressPrefix": "10.2.0.0/24",
+    "TaboSubnetName": "[concat('sub', uniquestring(resourcegroup().id))]",
+    "TaboSubnetPrefix": "10.2.0.0/24",
+    "TaboPublicIpAddressName": "[concat('pip', uniquestring(resourcegroup().id))]",
+    "TaboPublicIpAddressType": "static",
+    "TaboSqlConnectivityType": "Public",
+    "TaboSqlPortNumber": "1433",
+    "TaboSqlStorageDisksCount": 1,
+    "TaboSqlStorageWorkloadType": "General",
+    "TaboSqlStorageDisksConfigurationType": "RAID0",
+    "TaboSqlStorageStartingDeviceId": 1,
+    "TaboSqlAutopatchingDayOfWeek": "Sunday",
+    "TaboSqlAutopatchingStartHour": "02:00",
+    "TaboSqlAutopatchingWindowDuration": "60",
+    "TaboSqlAuthenticationLogin": "azureuser",
+    "TabooSqlAuthenticationPassword": "Password@123",
+    "TaboNetworksecuritygroupname": "[concat('nsg', uniquestring(resourcegroup().id))]",
+    "TaboNetworkinterfacename": "[concat('nic', uniquestring(resourcegroup().id))]",
+    "TaboVmdns": "[concat('tab', uniquestring(resourcegroup().id))]",
+    "TaboScriptfolder": ".",
+    "TaboScriptfilename": "sqlnew.ps1",
+    "TaboServiceBusNamespaceName": "[concat('sb', uniquestring(resourcegroup().id))]",
+    "TaboEhVersion": "2015-08-01",
+    "TaboDefaultSASKeyName": "RootManageSharedAccessKey",
+    "TaboDefaultAuthRuleResourceId": "[resourceId('Microsoft.ServiceBus/namespaces/authorizationRules', variables('TaboServiceBusNamespaceName'), variables('TaboDefaultSASKeyName'))]",
+    "TaboEventhubin": "IotInputxx",
+    "TaboEventhubout": "Iotoutputxx",
+    "TaboInKeyP": "DG4TcCs+XnDN83VZcT2e5NfVeSFvTuiYUiWtXhxnJ2s=",
+    "TaboInKeyS": "IAvcmGyxkAHoOvVRLrbuPRgGw+RqAa/KedmOaQYxTt8=",
+    "TaboOutKeyP": "Xo5cCWHgJh3Sag00I5BiG6PlfTHBuSsCWQOyj8wFdhU=",
+    "TaboOutKeyS": "ANYLcW/XZBhuuXfzaqwyUfxIa1HngNTGvgMyyjvnpj4=",
+    "taboServicebusSku": "standard",
+    "taboServiceBusApiVersion": "2015-08-01",
+    "TaboInpolicy": "iotinput",
+    "TaboOutpolicy": "iotoutput",
+    "TaboStorageAccountNamex": "[concat('sto',uniquestring(resourceGroup().id))]",
+    "TaboDefaultApiVersion": "2015-05-01-preview",
+    "TaboClusterApiVersion": "2015-03-01-preview",
+    "TaboClustertype": "Spark",
+    "TaboClustername": "[concat('hd', uniquestring(resourcegroup().id))]",
+    "TaboClusterLoginUserName": "admin",
+    "TaboClusterLoginPassword": "Password@123",
+    "TaboSshUserName": "azureuser",
+    "TaboSshPassword": "Password@123",
+    "TaboScriptActionUri": "https://sapiotmlblob.blob.core.windows.net/hdinsightscript/newScript.sh",
+    "TaboClusterWorkerNodeCount": 2,
+    "TaboSingleq": "'",
+    "TaboSpace": " ",
+    "TaboDbdns": "[concat('jdbc:sqlserver://',variables('TaboVmdns'),'.',variables('TaboLocation'),'.cloudapp.azure.com;database=IOT_Stream;user=sa;password=Dynapt@123')]",
+    "TaboDbtable": "IOT_TABLE",
+    "TaboStreamanalyticsname": "[concat('sa', uniquestring(resourcegroup().id))]",
+    "TaboIotHub":"[concat('iot', uniquestring(resourcegroup().id))]",
+    "TaboDevices_provider_apiversion": "2016-02-03",
+    "TaboDelimiters": [ ".", "//" ]
+  },
+  "resources": [
+    {
+      "name": "[variables('TaboVirtualMachineName')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2015-06-15",
+      "location": "[variables('TaboLocation')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/',variables('TaboNetworkInterfaceName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/',variables('TaboStorageAccountName'))]"
+      ],
+      "properties": {
+        "osProfile": {
+          "computerName": "[variables('TaboVirtualMachineName')]",
+          "adminUsername": "[variables('TaboAdminUsername')]",
+          "adminPassword": "[variables('TaboAdminPassword')]",
+          "windowsConfiguration": {
+            "provisionVmAgent": "true"
+          }
+
+        },
+        "hardwareProfile": {
+          "vmSize": "[variables('TaboVirtualMachineSize')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "MicrosoftSQLServer",
+            "offer": "SQL2016-WS2012R2",
+            "sku": "Enterprise",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[variables('TaboVirtualMachineName')]",
+            "vhd": {
+              "uri": "[concat(concat(reference(resourceId('Microsoft.Storage/storageAccounts', variables('TaboStorageAccountName')), '2015-06-15').primaryEndpoints['blob'], 'vhds/'), variables('TaboVirtualMachineName'), '20168117238.vhd')]"
+            },
+            "createOption": "fromImage"
+          },
+          "dataDisks": [
+            {
+              "name": "[concat(variables('TaboVirtualMachineName'), '-disk-1')]",
+              "vhd": {
+                "uri": "[concat(concat(reference(resourceId('Microsoft.Storage/storageAccounts', variables('TaboStorageAccountName')), '2015-06-15').primaryEndpoints['blob'], 'vhds/'), variables('TaboVirtualMachineName'), '-disk-1-20168117238', '.vhd')]"
+              },
+              "createOption": "empty",
+              "lun": 0,
+              "diskSizeGB": "1023",
+              "caching": "ReadOnly"
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('TaboNetworkInterfaceName'))]"
+            }
+          ]
+        }
+
+      },
+      "resources": [
+        {
+          "name": "cse",
+          "type": "extensions",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2015-06-15",
+          "dependsOn": [
+            "[variables('TaboVirtualMachineName')]"
+          ],
+          "tags": {
+            "displayName": "cse"
+          },
+          "properties": {
+            "publisher": "Microsoft.Compute",
+            "type": "CustomScriptExtension",
+            "typeHandlerVersion": "1.8",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "fileUris": [ "https://sapiotmlblob.blob.core.windows.net/hdinsightscript/sqlnew.ps1" ],
+              "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', variables('TaboScriptFolder'), '/', variables('TaboScriptFileName'))]"
+            }
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "[variables('TaboStorageAccountName')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2015-06-15",
+      "location": "[variables('TaboLocation')]",
+      "properties": {
+        "accountType": "[variables('TaboStorageAccountType')]"
+      }
+    },
+    {
+      "name": "[variables('TaboVirtualNetworkName')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2015-06-15",
+      "location": "[variables('TaboLocation')]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('TaboAddressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('TaboSubnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('TaboSubnetPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[variables('TaboNetworkInterfaceName')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2015-06-15",
+      "location": "[variables('TaboLocation')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', variables('TaboVirtualNetworkName'))]",
+        "[concat('Microsoft.Network/publicIpAddresses/', variables('TaboPublicIpAddressName'))]",
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('TaboNetworkSecurityGroupName'))]"
+      ],
+      "properties": {
+        "primary": true,
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "subnet": {
+                "id": "[variables('TaboSubnetRef')]"
+              },
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIpAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIpAddresses', variables('TaboPublicIpAddressName'))]"
+              }
+            }
+          }
+        ],
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('TaboNetworkSecurityGroupName'))]"
+        }
+      }
+    },
+    {
+      "name": "[variables('TaboPublicIpAddressName')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2015-06-15",
+      "location": "[variables('TaboLocation')]",
+      "properties": {
+        "publicIPAllocationMethod": "[variables('TaboPublicIpAddressType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[variables('TaboVmdns')]"
+        }
+      }
+    },
+    {
+      "name": "[variables('TaboNetworkSecurityGroupName')]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2015-06-15",
+      "location": "[variables('TaboLocation')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "default-allow-rdp",
+            "properties": {
+              "priority": 1000,
+              "sourceAddressPrefix": "*",
+              "protocol": "TCP",
+              "destinationPortRange": "3389",
+              "access": "Allow",
+              "direction": "Inbound",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*"
+            }
+          },
+          {
+            "name": "default-allow-sql",
+            "properties": {
+              "priority": 1500,
+              "sourceAddressPrefix": "*",
+              "protocol": "Tcp",
+              "destinationPortRange": "1433",
+              "access": "Allow",
+              "direction": "Inbound",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "[variables('TaboEhVersion')]",
+      "name": "[variables('TaboServiceBusNamespaceName')]",
+      "type": "Microsoft.EventHub/Namespaces",
+      "location": "[variables('TaboLocation')]",
+
+      "sku": {
+        "name": "[variables('taboServicebusSku')]",
+        "tier": "[variables('taboServicebusSku')]"
+      },
+      "resources": [
+        {
+          "apiVersion": "[variables('TaboEhVersion')]",
+          "name": "[variables('TaboEventhubin')]",
+          "type": "eventHubs",
+          "dependsOn": [
+            "[concat('Microsoft.EventHub/namespaces/', variables('TaboServiceBusNamespaceName'))]"
+          ],
+          "properties": {
+            "path": "[variables('TaboEventhubin')]"
+          },
+          "resources": [
+            {
+              "apiVersion": "2014-09-01",
+              "name": "[variables('TaboInPolicy')]",
+              "type": "authorizationRules",
+              "dependsOn": [
+                "[concat('Microsoft.EventHub/namespaces/',variables('TaboServiceBusNamespaceName'), '/eventhubs/', variables('TaboEventhubin'))]"
+              ],
+              "properties": {
+                "Keyname": "iotinput",
+                "ClaimType": "SharedAccessKey",
+                "ClaimValue": "None",
+                "PrimaryKey": "[variables('TaboInKeyP')]",
+                "secondaryKey": "[variables('TaboInKeyS')]",
+                "Rights": [
+                  "Listen",
+                  "Manage",
+                  "Send"
+                ],
+                "revision": -1
+              }
+            }
+          ]
+        },
+        {
+          "apiVersion": "[variables('TaboEhVersion')]",
+          "name": "[variables('TaboEventhubout')]",
+          "type": "EventHubs",
+          "dependsOn": [
+            "[concat('Microsoft.Eventhub/namespaces/', variables('TaboServiceBusNamespaceName'))]"
+          ],
+          "properties": {
+            "path": "[variables('TaboEventhubout')]"
+          },
+          "resources": [
+            {
+              "apiVersion": "2014-09-01",
+              "name": "[variables('TaboOutpolicy')]",
+              "type": "authorizationRules",
+              "dependsOn": [
+                "[concat('Microsoft.EventHub/namespaces/',variables('TaboServiceBusNamespaceName'), '/eventhubs/', variables('TaboEventhubout'))]"
+              ],
+              "properties": {
+                "Keyname": "iotoutput",
+                "ClaimType": "SharedAccessKey",
+                "ClaimValue": "None",
+                "PrimaryKey": "[variables('TaboOutKeyP')]",
+                "secondaryKey": "[variables('TaboOutKeyS')]",
+                "Rights": [
+                  "Listen",
+                  "Manage",
+                  "Send"
+                ],
+                "revision": -1
+              }
+            }
+          ]
+
+        }
+
+      ]
+    },
+    {
+      "apiVersion": "2015-09-01",
+      "location": "[resourceGroup().location]",
+      "type": "Microsoft.StreamAnalytics/StreamingJobs",
+      "name": "[variables('TaboStreamanalyticsname')]",
+      "properties": {
+        "sku": {
+          "name": "standard"
+        },
+        "eventsOutOfOrderPolicy": "drop",
+        "eventsOutOfOrderMaxDelayInSeconds": 10,
+        "inputs": [
+          {
+            "name": "iotin",
+            "properties": {
+              "type": "stream",
+              "serialization": {
+                "type": "JSON",
+                "properties": {
+                  "encoding": "UTF8"
+                }
+              },
+              "datasource": {
+                "type": "Microsoft.ServiceBus/EventHub",
+                "properties": {
+                  
+                  "serviceBusNamespace": "[variables('TaboServiceBusNamespaceName')]",
+                  "sharedAccessPolicyName": "[variables('TaboOutpolicy')]",
+                  "sharedAccessPolicyKey": "[variables('TaboOutKeyP')]",
+                  "eventHubName": "[variables('TaboEventhubout')]"
+                  
+                  
+                }
+              }
+            }
+          }
+        ],
+        "transformation": {
+          "name": "ProcessSampleData",
+          "properties": {
+            "streamingUnits": 6,
+            "query": "SELECT * INTO iotout FROM iotin"
+          }
+        },
+        "outputs": [      
+          
+        ]
+      }
+    },
+    {
+      "name": "[variables('TaboStorageAccountNamex')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "[variables('TaboDefaultApiVersion')]",
+      "dependsOn": [ ],
+      "tags": {
+
+      },
+      "properties": {
+        "accountType": "Standard_LRS"
+      }
+    },
+    {
+      "name": "[variables('TaboClusterName')]",
+      "type": "Microsoft.HDInsight/clusters",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "[variables('TaboClusterApiVersion')]",
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/',variables('TaboStorageAccountNamex'))]",
+        "[concat('Microsoft.EventHub/namespaces/', variables('TaboServiceBusNamespaceName'))]",
+        "[concat('Microsoft.Compute/virtualmachines/',variables('TaboVirtualMachineName'))]"
+      ],
+      "tags": {
+
+      },
+      "properties": {
+        "clusterVersion": "3.4",
+        "osType": "Linux",
+        "clusterDefinition": {
+          "kind": "[variables('TaboClusterType')]",
+          "configurations": {
+            "gateway": {
+              "restAuthCredential.isEnabled": true,
+              "restAuthCredential.username": "[variables('TaboClusterLoginUserName')]",
+              "restAuthCredential.password": "[variables('TaboClusterLoginPassword')]"
+            }
+          }
+        },
+        "storageProfile": {
+          "storageaccounts": [
+            {
+              "name": "[replace(replace(concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('TaboStorageAccountNamex')), variables('TaboDefaultApiVersion')).primaryEndpoints.blob),'https:',''),'/','')]",
+              "isDefault": true,
+              "container": "[variables('TaboClusterName')]",
+              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('TaboStorageAccountNamex')), variables('TaboDefaultApiVersion')).key1]"
+            }
+          ]
+        },
+        "computeProfile": {
+          "roles": [
+            {
+              "name": "headnode",
+              "targetInstanceCount": "1",
+              "hardwareProfile": {
+                "vmSize": "Standard_D3"
+              },
+              "osProfile": {
+                "linuxOperatingSystemProfile": {
+                  "username": "[variables('TaboSshUserName')]",
+                  "password": "[variables('TaboSshpassword')]"
+                }
+              },
+              "scriptActions": [
+                {
+                  "name": "setenvironmentvariable",
+                  "parameters": "[concat(variables('TaboSingleq'),split(reference(concat('Microsoft.Devices/IoTHubs/',variables('TaboIotHub')),'2016-02-03').eventHubEndpoints.events.endpoint, variables('TaboDelimiters'))[1],variables('TaboSingleq'),' ',variables('TaboSingleq'),variables('TaboIothub'),variables('TaboSingleq'),' ',variables('TaboSingleq'),'iothubowner',variables('TaboSingleq'),' ',variables('TaboSingleq'),listKeys(resourceId('Microsoft.Devices/IotHubs',variables('TaboIotHub')),variables('TaboDevices_provider_apiversion')).value[0].primaryKey,variables('TaboSingleq'),' ',variables('TaboSingleq'),'$default',variables('TaboSingleq'),' ',variables('TaboSingleq'),variables('TaboEventhubout'),variables('TaboSingleq'),' ',variables('TaboSingleq'),variables('TaboOutpolicy'),variables('TaboSingleq'),' ',variables('TaboSingleq'),variables('TaboOutKeyP'),variables('TaboSingleq'),' ',variables('TaboSingleq'),variables('TaboServiceBusNamespaceName'),variables('TaboSingleq'),' ',variables('TaboSingleq'),variables('TaboDbdns'),variables('TaboSingleq'),' ',variables('TaboSingleq'),variables('TaboDbtable'),variables('TaboSingleq'),' ','\"',variables('TaboSingleq'), concat('HostName=',reference(resourceId('Microsoft.Devices/IoTHubs',variables('TaboIotHub'))).hostName, ';SharedAccessKeyName=iothubowner', ';SharedAccessKey=', listKeys(resourceId('Microsoft.Devices/IotHubs',variables('TaboIotHub')),variables('TaboDevices_provider_apiversion')).value[0].primaryKey),variables('TaboSingleq'),'\"')]",
+                  "uri": "[variables('TaboScriptActionUri')]"
+
+                }
+              ]
+            },
+            {
+              "name": "workernode",
+              "targetInstanceCount": "[variables('TaboClusterWorkerNodeCount')]",
+              "hardwareProfile": {
+                "vmSize": "Standard_D3"
+              },
+              "osProfile": {
+                "linuxOperatingSystemProfile": {
+                  "username": "[variables('TaboSshUserName')]",
+                  "password": "[variables('TaboSshpassword')]"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    {            
+            "type": "Microsoft.Devices/IotHubs",
+            "sku": {
+                "name": "S1",
+                "tier": "Standard",
+                "capacity": 1
+            },
+            "name": "[variables('TaboIotHub')]",
+            "apiVersion": "2016-02-03",
+            "location": "[variables('TaboLocation')]",
+            "tags": {},
+            "properties": {
+                "ipFilterRules": [],
+                "eventHubEndpoints": {
+                    "events": {
+                        "retentionTimeInDays": 1,
+                        "partitionCount": 4,
+                        "partitionIds": [
+                            "0",
+                            "1",
+                            "2",
+                            "3"
+                        ],
+                        "path": "[variables('TaboIotHub')]",
+                        "endpoint": "[concat('sb://',variables('TaboIotHub'),'.servicebus.windows.net/')]"
+                    }                 
+                },
+                "storageEndpoints": {
+                    "$default": {
+                        "sasTtlAsIso8601": "PT1H",
+                        "connectionString": "",
+                        "containerName": ""
+                    }
+                },
+                "enableFileUploadNotifications": false,
+                "cloudToDevice": {
+                    "maxDeliveryCount": 10,
+                    "defaultTtlAsIso8601": "PT1H",
+                    "feedback": {
+                        "lockDurationAsIso8601": "PT1M",
+                        "ttlAsIso8601": "PT1H",
+                        "maxDeliveryCount": 10
+                    }
+                },
+                "operationsMonitoringProperties": {
+                    "events": {
+                        "None": "None",
+                        "Connections": "None",
+                        "DeviceTelemetry": "None",
+                        "C2DCommands": "None",
+                        "DeviceIdentityOperations": "None",
+                        "FileUploadOperations": "None"
+                    }
+                },
+                "features": "None"
+            },
+            "resources": [],
+            "dependsOn": []
+        }
+  ],
+  "outputs": {
+    "iotHub": {
+        "value": "[concat(variables('TaboSingleq'),split(reference(concat('Microsoft.Devices/IoTHubs/',variables('TaboIotHub')),'2016-02-03').eventHubEndpoints.events.endpoint, variables('TaboDelimiters'))[1],variables('TaboSingleq'),' ',variables('TaboSingleq'),variables('TaboIothub'),variables('TaboSingleq'),' ',variables('TaboSingleq'),'iothubowner',variables('TaboSingleq'),' ',variables('TaboSingleq'),listKeys(resourceId('Microsoft.Devices/IotHubs',variables('TaboIotHub')),variables('TaboDevices_provider_apiversion')).value[0].primaryKey,variables('TaboSingleq'),' ',variables('TaboSingleq'),'$default',variables('TaboSingleq'),' ',variables('TaboSingleq'),variables('TaboEventhubout'),variables('TaboSingleq'),' ',variables('TaboSingleq'),variables('TaboOutpolicy'),variables('TaboSingleq'),' ',variables('TaboSingleq'),variables('TaboOutKeyP'),variables('TaboSingleq'),' ',variables('TaboSingleq'),variables('TaboServiceBusNamespaceName'),variables('TaboSingleq'),' ',variables('TaboSingleq'),variables('TaboDbdns'),variables('TaboSingleq'),' ',variables('TaboSingleq'),variables('TaboDbtable'),variables('TaboSingleq'),' ','\"',variables('TaboSingleq'), concat('HostName=',reference(resourceId('Microsoft.Devices/IoTHubs',variables('TaboIotHub'))).hostName, ';SharedAccessKeyName=iothubowner', ';SharedAccessKey=', listKeys(resourceId('Microsoft.Devices/IotHubs',variables('TaboIotHub')),variables('TaboDevices_provider_apiversion')).value[0].primaryKey),variables('TaboSingleq'),'\"')]",
+        "type": "string"
+    }
+}
+
+}
