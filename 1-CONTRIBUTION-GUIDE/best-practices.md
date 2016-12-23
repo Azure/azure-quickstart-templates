@@ -13,7 +13,6 @@ You are currently reading the best practices.
 
 + It is a good practice to pass your template through a JSON linter to remove extraneous commas, parenthesis, brackets that may break the "Deploy to Azure" experience. Try http://jsonlint.com/ or a linter package for your favorite editing environment (Visual Studio Code, Atom, Sublime Text, Visual Studio etc.)
 + It's also a good idea to format your JSON for better readability. You can use a JSON formatter package for your local editor or [format online using this link](https://www.bing.com/search?q=json+formatter).
-+ A starter template is provided [here](/100-STARTER-TEMPLATE-with-VALIDATION) for you to follow.
 
 The following guidelines are relevant to the main deployment template and nested templates (if used).
 
@@ -196,11 +195,11 @@ The following guidelines are relevant to the main deployment template and nested
  ```
  "outputs": {
  "fqdn": {
- 	"value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',parameters('publicIPAddressName')),providers('Microsoft.Network', 'publicIPAddresses').apiVersions[0]).dnsSettings.fqdn]",
+ 	"value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',parameters('publicIPAddressName')),'2016-10-01').dnsSettings.fqdn]",
  	"type": "string"
  },
  "ipaddress": {
- 	"value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',parameters('publicIPAddressName')),providers('Microsoft.Network', 'publicIPAddresses').apiVersions[0]).ipAddress]",
+ 	"value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',parameters('publicIPAddressName')),'2016-10-01').dnsSettings.fqdn]",
   	"type": "string"
  }
 }

@@ -5,18 +5,30 @@ var bodyParser = require('body-parser');
 var fs = require('fs');
 var dns = require('dns');
 var Web3 = require('web3');
+var moment = require('moment');
+var Promise = require('promise');
 
-var gethIPCPath = process.argv[2];
-var coinbase = process.argv[3];
-var coinbasePw = process.argv[4];
-var mnNodePrefix = process.argv[5];
-var numMNNodes = process.argv[6];
-var txNodePrefix = process.argv[7];
-var numTXNodes = process.argv[8];
+/*
+ * Parameters
+ */
+var listenPort = process.argv[2]
+var gethIPCPath = process.argv[3];
+var coinbase = process.argv[4];
+var coinbasePw = process.argv[5];
+var mnNodePrefix = process.argv[6];
+var numMNNodes = process.argv[7];
+var txNodePrefix = process.argv[8];
+var numTXNodes = process.argv[9];
+var numConsortiumMembers = process.argv[10];
+
+/*
+ * Constants
+ */
+var gethRPCPort = "8545";
+var refreshInterval = 10000;
 
 var app = express();
-var web3 = new Web3(new Web3.providers.IpcProvider(gethIPCPath, require('net')));
-
+var web3IPC = new Web3(new Web3.providers.IpcProvider(gethIPCPath, require('net')));
 
 app.engine('handlebars', exphbs({defaultLayout: 'main'}));
 app.set('view engine', 'handlebars');
@@ -29,52 +41,98 @@ app.use(session({
 }))
 
 var nodeInfoArray = [];
+var timeStamp;
 
 function getNodeInfo(hostName) {
-  // We perform a lookup to get the consortium ID by subnet IP
-  dns.lookup(hostName, function(err, address, family) {
-    var peerCount;
-    var blockNumber;
-    var consortiumId = address.split('.')[2];
+  return new Promise(function (resolve, reject){
+    var consortiumId;
 
-    // Transaction nodes - in subnet 10 - do not belong to any consortiumId
-    if (consortiumId === '10')
+    if(hostName.indexOf("-tx") !== -1) {
       consortiumId = 'N/A';
+    }
+    else {
+      consortiumId = hostName.split('-mn')[1] % numConsortiumMembers;
+    }
 
     try {
-      var web3nodeInfo = new Web3(new Web3.providers.HttpProvider("http://" + hostName + ":8545"));
-      peerCount = web3nodeInfo.net.peerCount;
-      blockNumber = web3nodeInfo.eth.blockNumber;
-
+      var web3RPC = new Web3(new Web3.providers.HttpProvider("http://" + hostName + ":" + gethRPCPort));
     }
     catch(err) {
       console.log(err);
-      peerCount = "Not running";
-      blockNumber = "Not running";
     }
+    var web3PromiseArray = [];
+    web3PromiseArray.push(new Promise(function(resolve, reject) {
+      web3RPC.net.getPeerCount(function(error, result) {
+        if(!error)
+        {
+          resolve(result);
+        }
+        else {
+          resolve("Not running");
+        }
+      });
+    }));
+    web3PromiseArray.push(new Promise(function(resolve, reject) {
+      web3RPC.eth.getBlockNumber(function(error, result) {
+        if(!error)
+        {
+          resolve(result);
+        }
+        else {
+          resolve("Not running");
+        }
+      });
+    }));
 
-    var nodeInfo = {hostname: hostName, peercount: peerCount, blocknumber: blockNumber, consortiumid: consortiumId};
-    nodeInfoArray.push(nodeInfo);
+    Promise.all(web3PromiseArray).then(function(values){
+      var peerCount = values[0];
+      var blockNumber = values[1];
+      var nodeInfo = {hostname: hostName, peercount: peerCount, blocknumber: blockNumber, consortiumid: consortiumId};
+      resolve(nodeInfo);
+    });
   });
 }
 
-
 function getNodesInfo() {
-  nodeInfoArray = [];
+  console.time("getNodesInfo");
+  var promiseArray = [];
 
   for(var i = 0; i < numTXNodes; i++) {
-    getNodeInfo(txNodePrefix.concat(i));
+    promiseArray.push(getNodeInfo(txNodePrefix.concat(i)));
   }
-
   for(var i = 0; i < numMNNodes; i++) {
-    getNodeInfo(mnNodePrefix.concat(i));
+    promiseArray.push(getNodeInfo(mnNodePrefix.concat(i)));
   }
 
-  // Sort the final result by consortium ID
-  nodeInfoArray;
+  Promise.all(promiseArray).then(function(values) {
+    nodeInfoArray = [];
+    var arrLen = values.length;
+    for(var i = 0; i< arrLen; ++i) {
+      nodeInfoArray.push(values[i]);
+    }
+    // Sort the final result by consortium ID
+    nodeInfoArray = nodeInfoArray.sort(function(a,b) {
+      var aIsTx = a.consortiumid === 'N/A';
+      var bIsTx = b.consortiumid === 'N/A';
+
+      if (aIsTx && bIsTx)
+        return 0;
+      if (aIsTx)
+        return -1;
+      if (bIsTx)
+        return 1;
+      return (a.consortiumid - b.consortiumid);
+    });
+
+    timeStamp = moment().format('h:mm:ss A UTC,  MMM Do YYYY');
+    console.timeEnd("getNodesInfo");
+    // Schedule next refresh
+    setTimeout(getNodesInfo, refreshInterval);
+  });
 }
 
-setInterval(getNodesInfo, 30000);
+// Kick-off refresh cycle
+getNodesInfo();
 
 // Check if we've mined a block yet
 function minedABlock () {
@@ -89,19 +147,7 @@ app.get('/', function (req, res) {
   // Check if the IPC endpoint is up and running
   if(fs.existsSync(gethIPCPath)) {
     var hasNodeRows = nodeInfoArray.length > 0;
-    var sortedNodeArray = nodeInfoArray.sort(function(a,b) {
-      var aIsTx = a.consortiumid === 'N/A';
-      var bIsTx = b.consortiumid === 'N/A';
-
-      if (aIsTx && bIsTx)
-        return 0;
-      if (aIsTx)
-        return -1;
-      if (bIsTx)
-        return 1;
-      return a.consortiumid - b.consortiumid
-    });
-    var data = { isSent: req.session.isSent, error: req.session.error, hasNodeRows: hasNodeRows, nodeRows: sortedNodeArray, minedABlock: minedABlock() };
+    var data = { isSent: req.session.isSent, error: req.session.error, hasNodeRows: hasNodeRows, nodeRows: nodeInfoArray, minedABlock: minedABlock(), timestamp: timeStamp, refreshinterval: (refreshInterval/1000) };
     req.session.isSent = false;
     req.session.error = false;
 
@@ -115,10 +161,10 @@ app.get('/', function (req, res) {
 app.post('/', function(req, res) {
   var address = req.body.etherAddress;
 
-  if(web3.isAddress(address)) {
-    web3.personal.unlockAccount(coinbase, coinbasePw, function(err, res) {
+  if(web3IPC.isAddress(address)) {
+    web3IPC.personal.unlockAccount(coinbase, coinbasePw, function(err, res) {
       console.log(res);
-      web3.eth.sendTransaction({from: coinbase, to: address, value: web3.toWei(1000, 'ether')}, function(err, res){ console.log(address)});
+      web3IPC.eth.sendTransaction({from: coinbase, to: address, value: web3IPC.toWei(1000, 'ether')}, function(err, res){ console.log(address)});
     });
 
     req.session.isSent = true;
@@ -129,6 +175,6 @@ app.post('/', function(req, res) {
   res.redirect('/');
 });
 
-app.listen(3000, function () {
-  console.log('Admin webserver listening on port 3000!');
+app.listen(listenPort, function () {
+  console.log('Admin webserver listening on port ' + listenPort);
 });

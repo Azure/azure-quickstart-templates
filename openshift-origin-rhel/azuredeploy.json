@@ -5,7 +5,7 @@
 		"_artifactsLocation": {
 			"type": "string",
 			"metadata": {
-				"description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated.",
+				"description": "The base URL where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated.",
 				"artifactsBaseUrl": ""
 			},
 			"defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/openshift-origin-rhel/"
@@ -98,14 +98,14 @@
 			"type": "string",
 			"minLength": 1,
 			"metadata": {
-				"description": "Administrator username on all VMs"
+				"description": "Admin username for both OS login and OpenShift login"
 			}
 		},
 		"adminPassword": {
 			"type": "securestring",
 			"minLength": 1,
 			"metadata": {
-				"description": "Administrator password for OpenShift Console"
+				"description": "Password for OpenShift login"
 			}
 		},
 		"sshPublicKey": {
@@ -141,11 +141,31 @@
 			"metadata": {
 				"description": "Key Vault Secret Name that contains the Private Key"
 			}
+		},
+		"defaultSubDomainType": {
+			"type": "string",
+			"defaultValue": "xipio",
+			"allowedValues": [
+				"xipio", "custom"
+			],
+			"metadata": {
+				"description": "Default Subdomain type - xip.io or custom (defined in next parameter)"
+			}
+		},
+		"defaultSubDomain": {
+			"type": "string",
+			"minLength": 1,
+			"metadata": {
+				"description": "Default Subdomain for application routing (Wildcard DNS). Entry is ignored if defaultSubDomainType set to xipio"
+			}
 		}
 	},
 	"variables": {
 		"location": "[resourceGroup().location]",
-		"storageAccountType": "Standard_LRS",
+		"apiVersionCompute": "2015-06-15",
+		"apiVersionNetwork": "2015-06-15",
+		"apiVersionStorage": "2015-06-15",
+		"apiVersionLinkTemplate": "2015-01-01",
 		"namingInfix": "[toLower(parameters('nodePrefix'))]",
 		"newStorageAccountMaster": "[concat(uniqueString(concat(resourceGroup().id, 'msa', '0')), 'msa')]",
 		"newStorageAccountNode": "[concat(uniqueString(concat(resourceGroup().id, 'nsa', '1')), 'nsa')]",
@@ -349,7 +369,7 @@
 			"type": "Microsoft.Network/virtualNetworks",
 			"name": "[variables('virtualNetworkName')]",
 			"location": "[variables('location')]",
-			"apiVersion": "2015-06-15",
+			"apiVersion": "[variables('apiVersionNetwork')]",
 			"tags": {
 				"displayName": "VirtualNetwork"
 			},
@@ -375,7 +395,7 @@
 			"type": "Microsoft.Storage/storageAccounts",
 			"name": "[variables('newStorageAccountMaster')]",
 			"location": "[variables('location')]",
-			"apiVersion": "2015-06-15",
+			"apiVersion": "[variables('apiVersionStorage')]",
 			"tags": {
 				"displayName": "StorageAccounts"
 			},
@@ -386,7 +406,7 @@
 			"type": "Microsoft.Storage/storageAccounts",
 			"name": "[variables('newStorageAccountNode')]",
 			"location": "[variables('location')]",
-			"apiVersion": "2015-06-15",
+			"apiVersion": "[variables('apiVersionStorage')]",
 			"tags": {
 				"displayName": "StorageAccounts"
 			},
@@ -397,7 +417,7 @@
 			"type": "Microsoft.Network/publicIPAddresses",
 			"name": "[parameters('nodeLbPublicIpDnsLabelPrefix')]",
 			"location": "[resourceGroup().location]",
-			"apiVersion": "2015-06-15",
+			"apiVersion": "[variables('apiVersionNetwork')]",
 			"tags": {
 				"displayName": "OpenShiftNodeLBPublicIP"
 			},
@@ -410,14 +430,14 @@
 		}, {
 			"type": "Microsoft.Compute/availabilitySets",
 			"name": "nodes",
-			"apiVersion": "2015-06-15",
+			"apiVersion": "[variables('apiVersionCompute')]",
 			"location": "[resourceGroup().location]",
 			"properties": {}
 		}, {
 			"type": "Microsoft.Network/loadBalancers",
 			"name": "[variables('nodeLoadBalancerName')]",
 			"location": "[variables('location')]",
-			"apiVersion": "2015-06-15",
+			"apiVersion": "[variables('apiVersionNetwork')]",
 			"tags": {
 				"displayName": "OpenShiftNodeLB"
 			},
@@ -493,7 +513,7 @@
 			"type": "Microsoft.Network/publicIPAddresses",
 			"name": "[parameters('openshiftMasterPublicIpDnsLabelPrefix')]",
 			"location": "[resourceGroup().location]",
-			"apiVersion": "2015-06-15",
+			"apiVersion": "[variables('apiVersionNetwork')]",
 			"tags": {
 				"displayName": "OpenShiftMasterPublicIP"
 			},
@@ -507,7 +527,7 @@
 			"type": "Microsoft.Network/networkInterfaces",
 			"name": "[concat(parameters('openshiftMasterHostname'), 'nic')]",
 			"location": "[resourceGroup().location]",
-			"apiVersion": "2015-06-15",
+			"apiVersion": "[variables('apiVersionNetwork')]",
 			"tags": {
 				"displayName": "OpenShiftMasterNetworkInterface"
 			},
@@ -532,7 +552,7 @@
 			"type": "Microsoft.Compute/virtualMachines",
 			"name": "[parameters('openshiftMasterHostname')]",
 			"location": "[resourceGroup().location]",
-			"apiVersion": "2015-06-15",
+			"apiVersion": "[variables('apiVersionCompute')]",
 			"tags": {
 				"displayName": "OpenShiftMasterVirtualMachine"
 			},
@@ -587,7 +607,7 @@
 			"type": "Microsoft.Compute/virtualMachines/extensions",
 			"name": "[concat(parameters('openshiftMasterHostname'), '/deployOpenShift')]",
 			"location": "[resourceGroup().location]",
-			"apiVersion": "2015-06-15",
+			"apiVersion": "[variables('apiVersionCompute')]",
 			"tags": {
 				"displayName": "PrepMaster"
 			},
@@ -610,7 +630,7 @@
 			"type": "Microsoft.Network/networkInterfaces",
 			"name": "[concat(variables('namingInfix'), copyIndex(), 'nic')]",
 			"location": "[resourceGroup().location]",
-			"apiVersion": "2015-06-15",
+			"apiVersion": "[variables('apiVersionNetwork')]",
 			"tags": {
 				"displayName": "OpenShiftNodeNetworkInterfaces"
 			},
@@ -639,7 +659,7 @@
 			"type": "Microsoft.Compute/virtualMachines",
 			"name": "[concat(variables('namingInfix'), '-', copyIndex())]",
 			"location": "[resourceGroup().location]",
-			"apiVersion": "2015-06-15",
+			"apiVersion": "[variables('apiVersionCompute')]",
 			"tags": {
 				"displayName": "OpenShiftNodes"
 			},
@@ -701,7 +721,7 @@
 			"type": "Microsoft.Compute/virtualMachines/extensions",
 			"name": "[concat(variables('namingInfix'), '-', copyIndex(), '/prepNodes')]",
 			"location": "[resourceGroup().location]",
-			"apiVersion": "2015-06-15",
+			"apiVersion": "[variables('apiVersionCompute')]",
 			"tags": {
 				"displayName": "PrepNodes"
 			},
@@ -727,7 +747,7 @@
 		}, {
 			"name": "OpenShiftDeployment",
 			"type": "Microsoft.Resources/deployments",
-			"apiVersion": "2015-01-01",
+			"apiVersion": "[variables('apiVersionLinkTemplate')]",
 			"dependsOn": [
 				"[concat('Microsoft.Compute/virtualMachines/', parameters('openshiftMasterHostname'), '/extensions/deployOpenShift')]",
 				"nodeScriptLoop"
@@ -763,11 +783,14 @@
 					"adminPassword": {
 						"value": "[parameters('adminPassword')]"
 					},
-					"defaultSubDomain": {
+					"xipioDomain": {
 						"value": "[concat(reference(parameters('nodeLbPublicIpDnsLabelPrefix')).ipAddress, '.xip.io')]"
 					},
-					"sshPublicKey": {
-						"value": "[parameters('sshPublicKey')]"
+					"customDomain": {
+						"value": "[parameters('defaultSubDomain')]"
+					},
+					"subDomainChosen": {
+						"value": "[concat(parameters('defaultSubDomainType'), 'Domain')]"
 					},
 					"sshPrivateKey": {
 						"reference": {
