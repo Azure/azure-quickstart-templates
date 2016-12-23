@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DOWNLOADURL=$1
+DOWNLOAD_URL=$1
 
 # Install Java JDK
 echo "Installing Java JDK"
@@ -11,7 +11,7 @@ apt-get install openjdk-7-jdk --assume-yes
 
 # Deploy the HiveMQ package
 
-wget --content-disposition $DOWNLOADURL -P /tmp/
+wget --content-disposition $DOWNLOAD_URL -P /tmp/
 unzip /tmp/hivemq-*.zip -d /opt
 rm /tmp/hivemq-*.zip.zip
 #ln -s /opt/hivemq-* /opt/hivemq
