@@ -5,7 +5,7 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template deploys HiveMQ onto multiple load balanced Ubuntu Linux VMs. Before executing this ARM template, you must first obtain a license and download URL for HiveMQ. However, an evaluation license can be easily obtained by completing a simple online form at http://www.hivemq.com/downloads/
+This template deploys a HiveMQ cluster across multiple load balanced Ubuntu Linux VMs. Before executing this ARM template, you must first obtain a license and download URL for HiveMQ. However, an evaluation license can be easily obtained by completing a simple online form at http://www.hivemq.com/downloads/
 Upon successful completion of the form you will be presented with a distinct time-boxed download button which will allow you to download an evaluation version of HiveMQ. This download link must be provided as a parameter when deploying this template. 
 
 This template will deploy the following resources:
