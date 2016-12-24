@@ -7,7 +7,7 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template allows you to deploy an UbuntuServer 15.10 VM with Ethereum Studio docker in standalone mode.
+This template allows you to deploy an UbuntuServer 16.10 VM with Ethereum Studio docker in standalone mode.
 
 Ethereum Studio is a web-based IDE for Ethereum developers. With the IDE you can write and compile your Solidity contracts, play with them in Sandbox, and then send the contracts to the real net.
 
