@@ -9,6 +9,12 @@
       },
       "defaultValue": "https://raw.githubusercontent.com/CalCof/azure-quickstart-templates/hivemq/hivemq-on-ubuntu/"
     },
+    "hiveMQDownloadURL": {
+      "type": "string",
+      "metadata": {
+        "description": "The download URL containing the HiveMQ deployment package."
+      }
+    },
     "numberOfInstances": {
       "type": "int",
       "minValue": 1,
@@ -73,7 +79,7 @@
     "ubuntu": {
       "publisher": "Canonical",
       "offer": "UbuntuServer",
-      "sku": "16.04 LTS",
+      "sku": "14.04.4-LTS",
       "version": "latest"
     },
     "vmStorageAccountContainerName": "vhd",
@@ -133,6 +139,20 @@
               "priority": 100,
               "direction": "Inbound"
             }
+          },
+          {
+            "name": "mqtt-rule",
+            "properties": {
+              "description": "Allow MQTT",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "1883",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 101,
+              "direction": "Inbound"
+            }
           }
         ]
       }
@@ -190,22 +210,22 @@
         ],
         "loadBalancingRules": [
           {
-            "name": "LBRule",
+            "name": "MQTTLBRule",
             "properties": {
               "backendAddressPool": {
                 "id": "[variables('lbPoolID')]"
               },
-              "backendPort": 80,
+              "backendPort": 1883,
               "enableFloatingIP": false,
               "frontendIPConfiguration": {
                 "id": "[variables('frontEndIPConfigID')]"
               },
-              "frontendPort": 80,
+              "frontendPort": 1883,
               "idleTimeoutInMinutes": 5,
               "probe": {
                 "id": "[variables('lbProbeID')]"
               },
-              "protocol": "tcp"
+              "protocol": "Tcp"
             }
           }
         ],
@@ -215,8 +235,8 @@
             "properties": {
               "intervalInSeconds": 5,
               "numberOfProbes": 2,
-              "port": 80,
-              "protocol": "tcp"
+              "port": 1883,
+              "protocol": "Tcp"
             }
           }
         ]
@@ -238,31 +258,9 @@
         "frontendIPConfiguration": {
           "id": "[variables('frontEndIPConfigID')]"
         },
-        "protocol": "tcp",
-        "frontendPort": "[copyIndex(5000)]",
+        "protocol": "Tcp",
+        "frontendPort": "[copyIndex(2200)]",
         "backendPort": 22,
-        "enableFloatingIP": false
-      }
-    },
-    {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Network/loadBalancers/inboundNatRules",
-      "name": "[concat(variables('lbName'), '/admin-', variables('namePrefix'), copyIndex())]",
-      "location": "[variables('location')]",
-      "copy": {
-        "name": "lbAdminNatLoop",
-        "count": "[parameters('numberOfInstances')]"
-      },
-      "dependsOn": [
-        "[concat('Microsoft.Network/loadBalancers/', variables('lbName'))]"
-      ],
-      "properties": {
-        "frontendIPConfiguration": {
-          "id": "[variables('frontEndIPConfigID')]"
-        },
-        "protocol": "tcp",
-        "frontendPort": "[copyIndex(4800)]",
-        "backendPort": 4848,
         "enableFloatingIP": false
       }
     },
@@ -278,8 +276,7 @@
       "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]",
         "[concat('Microsoft.Network/loadBalancers/', variables('lbName'))]",
-        "[concat('Microsoft.Network/loadBalancers/', variables('lbName'), '/inboundNatRules/', 'ssh-', variables('namePrefix'), copyIndex())]",
-        "[concat('Microsoft.Network/loadBalancers/', variables('lbName'), '/inboundNatRules/', 'admin-', variables('namePrefix'), copyIndex())]"
+        "[concat('Microsoft.Network/loadBalancers/', variables('lbName'), '/inboundNatRules/', 'ssh-', variables('namePrefix'), copyIndex())]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -298,9 +295,6 @@
               "loadBalancerInboundNatRules": [
                 {
                   "id": "[concat(variables('lbID'),'/inboundNatRules/ssh-', variables('namePrefix'), copyindex())]"
-                },
-                {
-                  "id": "[concat(variables('lbID'),'/inboundNatRules/admin-', variables('namePrefix'), copyindex())]"
                 }
               ]
             }
@@ -386,6 +380,9 @@
         "parameters": {
 	        "_artifactsLocation": {
 	          "value": "[parameters('_artifactsLocation')]"
+	        },
+          "hiveMQDownloadURL": {
+	          "value": "[parameters('hiveMQDownloadURL')]"
 	        },
           "vmPrefix": {
 	          "value": "[concat(variables('namePrefix'), 'vm-')]"
