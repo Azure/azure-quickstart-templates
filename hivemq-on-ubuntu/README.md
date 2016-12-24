@@ -1,12 +1,12 @@
 # GlassFish on SUSE
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https://raw.githubusercontent.com/CalCof/azure-quickstart-templates/master/glassfish-on-suse/azuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
-<a href="http://armviz.io/#/?load=https://raw.githubusercontent.com/CalCof/azure-quickstart-templates/master/glassfish-on-suse/azuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https://raw.githubusercontent.com/CalCof/azure-quickstart-templates/hivemq/hivemq-on-ubuntu/azuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
+<a href="http://armviz.io/#/?load=https://raw.githubusercontent.com/CalCof/azure-quickstart-templates/hivemq/hivemq-on-ubuntu/azuredeploy.json" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template deploys HiveMQ onto multiple load balanced Ubuntu Linux VMs as a cluster. However, before executing this ARM template, you must first obtain an evaluation license for HiveMQ. This can be achieved by completing a simple form at http://www.hivemq.com/downloads/
-Upon successful completion of the form you will be presented with a distinct timeboxed download button which will allow you to download an evaluation version of HiveMQ. This download link must be provided as a parameter when deploying this template. 
+This template deploys HiveMQ onto multiple load balanced Ubuntu Linux VMs. Before executing this ARM template, you must first obtain a license and download URL for HiveMQ. However, an evaluation license can be easily obtained by completing a simple online form at http://www.hivemq.com/downloads/
+Upon successful completion of the form you will be presented with a distinct time-boxed download button which will allow you to download an evaluation version of HiveMQ. This download link must be provided as a parameter when deploying this template. 
 
 This template will deploy the following resources:
 
@@ -26,16 +26,11 @@ If you are using a Windows computer, then you can download puttygen.exe to creat
 
 ### azuredeploy.Parameters.json File Explained
 
-1.  _artifactsLocation: The base URL where artifacts required by this template are located
-2.  hiveMQDownloadURL: The download URL containing the HiveMQ deployment package
-4.  numberOfInstances: Number of VMs to deploy
-5.  dnsNameforLBIP: A distinct Public DNS name used to reference the VM Load Balancer, for access to deployed applications
-6.  vmSize:  Select from one of the allowed VM sizes listed in the azuredeploy.json file
-7.  osImage: Select from OpenSUSE or SLES for the Operating System
-8.  adminUsername: Admin username for OS login
-9.  glassfishAdminPassword: The password given to the default GlassFish 'admin' user
-10. sshPublicKey: The public key used to secure SSH access with each VM 
-
+1.  hiveMQDownloadURL: The download URL containing the HiveMQ deployment package
+2.  numberOfInstances: Number of VMs to deploy
+3.  dnsNameforLBIP: A distinct Public DNS name used to reference the VM Load Balancer, for access to deployed applications
+4.  adminUsername: Admin username for OS login
+5.  sshPublicKey: The public key used to secure SSH access with each VM 
 
 ## Deploy Template
 
@@ -47,12 +42,12 @@ There are several ways in which you can deploy this template:
 
 CLI
   ```
-azure-group-deploy.sh -a 'glassfish-on-suse' -l <Location>
+azure-group-deploy.sh -a 'hivemq-on-ubuntu' -l <Location>
   ```
   
 PowerShell
   ```
-.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation <Location> -ArtifactStagingDirectory 'glassfish-on-suse' 
+.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation <Location> -ArtifactStagingDirectory 'hivemq-on-ubuntu' 
   ```
  
 - It is also possible to deploy this template by populating a local copy of the *azuredeploy.parameters.json* file and executing the following Resource Manager deployment commands with PowerShell or the xplat CLI.
@@ -61,24 +56,24 @@ CLI
   ```
    azure group create -n <ResourceGroupName> -l <Location>
 
-   azure group deployment create -f https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/glassfish-on-suse/azuredeploy.json -e <PathToParamtersFile> -g <ResourceGroupName> -n <DeploymentName>
+   azure group deployment create -f https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/hivemq-on-ubuntu/azuredeploy.json -e <PathToParamtersFile> -g <ResourceGroupName> -n <DeploymentName>
   ```
   
 PowerShell
   ```
     New-AzureRMResourceGroup -Name <ResourceGroupName> -Location <Location>
 
-    New-AzureRmResourceGroupDeployment -Name <DeploymentName> -DeploymentDebugLogLevel All -ResourceGroupName <ResourceGroupName> - TemplateFile https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/glassfish-on-suse/azuredeploy.json -TemplateParameterFile <PathToParamtersFile>
+    New-AzureRmResourceGroupDeployment -Name <DeploymentName> -DeploymentDebugLogLevel All -ResourceGroupName <ResourceGroupName> - TemplateFile https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/hivemq-on-ubuntu/azuredeploy.json -TemplateParameterFile <PathToParamtersFile>
   ```
 
 ## Post-Deployment Operations
 
-This template registers remote admin access, so post deployment it is possible to login to the admin area of each VM using the Load balancers DNS name and the 480(VM number) port.<br />
-In addition it is possible to SSH into each VM using the public IP and the 500(VM number) port; a private key associated with the provided public ssh key is also required.
+This template registers all nodes within a HiveMQ cluster using default configuration settings and enables MQTT traffic over port 1883 (default MQTT port). It is obviously possible to modify the configuration of each node post deployment to better suite your individual needs.<br />
+In addition it is possible to SSH into each VM using the public IP and the 220(VM number) port; a private key associated with the provided public ssh key is also required.
 
 ### Additional Configuration Options
  
-You can configure additional settings per the official GlassFish documentation (https://glassfish.java.net/documentation.html).
+You can configure additional settings per the official HiveMQ documentation (http://www.hivemq.com/docs/hivemq/latest/).
 
 ### Important Note
  
