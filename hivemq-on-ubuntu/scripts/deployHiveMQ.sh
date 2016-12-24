@@ -2,7 +2,7 @@
 
 DOWNLOAD_URL=$1
 TOTAL_INSTANCES=$2
-INSTACE_NUMBER=$3
+INSTANCE_NUMBER=$3
 
 
 # Install Java JDK
@@ -36,7 +36,7 @@ chmod +x /etc/init.d/hivemq
 # Edit the HiveMQ configuration
 echo "Configuring HiveMQ"
 
-NODE_IP=$((4+$INSTACE_NUMBER)) # First available ip in the subnet ip range will be 4
+NODE_IP=$((4+$INSTANCE_NUMBER)) # First available ip in the subnet ip range will be 4
 
 cat > /opt/hivemq/conf/config.xml << EOF
 <?xml version="1.0"?>
