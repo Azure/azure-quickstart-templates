@@ -34,10 +34,9 @@ chmod +x /etc/init.d/hivemq
 
 # Edit the HiveMQ configuration
 
-NODE_IP=$((4+$INSTACE_NUMBER))
+NODE_IP=$((4 + $INSTACE_NUMBER)) # First available ip in the subnet ip range will be 4
 
 cat > /opt/hivemq/conf/config.xml << EOF
-
 <?xml version="1.0"?>
 <hivemq xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:noNamespaceSchemaLocation="hivemq-config.xsd">
@@ -62,10 +61,24 @@ cat > /opt/hivemq/conf/config.xml << EOF
         </transport>
         <discovery>
             <static>
-                <node>
-                    <host>10.0.0.5</host>
+EOF
+
+counter = 0
+while [ $counter -lt TOTAL_INSTACES ]
+do
+  CLUSTER_NODE_IP=$((4 + $counter))
+  if [ $CLUSTER_NODE_IP != $NODE_IP ]; then
+    cat >> /opt/hivemq/conf/config.xml << EOF
+		<node>
+                    <host>10.0.0.$CLUSTER_NODE_IP</host>
                     <port>7800</port>
                 </node>
+    EOF
+  fi
+  counter=$(( $counter + 1 ))
+done
+
+cat >> /opt/hivemq/conf/config.xml << EOF
             </static>
         </discovery>
 		    <failure-detection>
@@ -86,7 +99,6 @@ cat > /opt/hivemq/conf/config.xml << EOF
         <update-check-enabled>true</update-check-enabled>
     </general>
 </hivemq>
-
 EOF
 
 # Start HiveMQ on boot
