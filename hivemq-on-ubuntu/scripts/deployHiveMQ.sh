@@ -16,7 +16,7 @@ apt-get install openjdk-7-jdk --assume-yes
 
 wget --content-disposition $DOWNLOAD_URL -P /tmp/
 unzip /tmp/hivemq-*.zip -d /opt
-rm /tmp/hivemq-*.zip.zip
+rm /tmp/hivemq-*.zip
 #ln -s /opt/hivemq-* /opt/hivemq
 mv /opt/hivemq-* /opt/hivemq
 
@@ -34,7 +34,7 @@ chmod +x /etc/init.d/hivemq
 
 # Edit the HiveMQ configuration
 
-NODE_IP=4+$INSTACE_NUMBER
+NODE_IP=$((4+$INSTACE_NUMBER))
 
 cat > /opt/hivemq/conf/config.xml << EOF
 
