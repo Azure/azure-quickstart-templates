@@ -13,6 +13,7 @@ apt-get install unzip --assume-yes
 apt-get install openjdk-7-jdk --assume-yes
 
 # Deploy the HiveMQ package
+echo "Installing HiveMQ"
 
 wget --content-disposition $DOWNLOAD_URL -P /tmp/
 unzip /tmp/hivemq-*.zip -d /opt
@@ -33,8 +34,9 @@ cp /opt/hivemq/bin/init-script/hivemq-debian /etc/init.d/hivemq
 chmod +x /etc/init.d/hivemq
 
 # Edit the HiveMQ configuration
+echo "Configuring HiveMQ"
 
-NODE_IP=$((4 + $INSTACE_NUMBER)) # First available ip in the subnet ip range will be 4
+NODE_IP=$((4+$INSTACE_NUMBER)) # First available ip in the subnet ip range will be 4
 
 cat > /opt/hivemq/conf/config.xml << EOF
 <?xml version="1.0"?>
@@ -63,19 +65,19 @@ cat > /opt/hivemq/conf/config.xml << EOF
             <static>
 EOF
 
-counter = 0
-while [ $counter -lt TOTAL_INSTACES ]
+counter=0
+while [ $counter -lt $TOTAL_INSTANCES ]
 do
-  CLUSTER_NODE_IP=$((4 + $counter))
+  CLUSTER_NODE_IP=$((4+$counter))
   if [ $CLUSTER_NODE_IP != $NODE_IP ]; then
-    cat >> /opt/hivemq/conf/config.xml << EOF
-		<node>
+cat >> /opt/hivemq/conf/config.xml << EOF
+                <node>
                     <host>10.0.0.$CLUSTER_NODE_IP</host>
                     <port>7800</port>
                 </node>
-    EOF
+EOF
   fi
-  counter=$(( $counter + 1 ))
+  counter=$(($counter+1))
 done
 
 cat >> /opt/hivemq/conf/config.xml << EOF
