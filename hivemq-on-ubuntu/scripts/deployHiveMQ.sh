@@ -4,7 +4,6 @@ DOWNLOAD_URL=$1
 TOTAL_INSTANCES=$2
 INSTANCE_NUMBER=$3
 
-
 # Install Java JDK
 echo "Installing Java JDK"
 
