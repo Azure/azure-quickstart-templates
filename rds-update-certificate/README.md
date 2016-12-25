@@ -55,7 +55,7 @@ For information on managing certificates with Azure Key Vault see:  [Get started
 	$app = New-AzureRmADApplication -DisplayName "script" -HomePage $uri -IdentifierUris $uri -password $appPassword
 	$sp = New-AzureRmADServicePrincipal -ApplicationId $app.ApplicationId
 
-	Set-AzureRmKeyVaultAccessPolicy -vaultname $vaultName -serviceprincipalname $sp.ServicePrincipalName -permissionstosecrets get
+	Set-AzureRmKeyVaultAccessPolicy -vaultname $vaultName -serviceprincipalname $sp.ApplicationId -permissionstosecrets get
 	```
 
 	Note: Certificates stored in Key Vault as secrets with content type 'application/x-pkcs12', this is why 
