@@ -1,4 +1,4 @@
-# GlassFish on SUSE
+# HiveMQ on Ubuntu
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https://raw.githubusercontent.com/CalCof/azure-quickstart-templates/hivemq/hivemq-on-ubuntu/azuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
 <a href="http://armviz.io/#/?load=https://raw.githubusercontent.com/CalCof/azure-quickstart-templates/hivemq/hivemq-on-ubuntu/azuredeploy.json" target="_blank">
