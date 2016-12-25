@@ -14,18 +14,13 @@ Once the deployment is complete you can increase the resources provided to Sonar
 [License](https://raw.githubusercontent.com/hkamel/azure-quickstart-templates/master/sonarqube-azuresql/oss/License.txt)  
 [Third Party Notices](https://raw.githubusercontent.com/hkamel/azure-quickstart-templates/master/sonarqube-azuresql/oss/ThirdPartyNotices.txt)
 
-* * *   
-
+* * *
 ####Note:  
-This Beta release deploys a SonarQube installation that **is not secured**.  To secure the installation we need to 
-implement an IIS Reverse Proxy on the SonarQube VM.  This is planned for a future release, hopefully in the 
-full v1.0 version.  This means that your interaction with this SonarQube installation will happen in the clear 
-over HTTP.  **_Be warned that data sent can be intercepted and viewed_**. 
+This Beta release deploys a secure SonarQube installation by default, howevere we invoke a **self-signed** which you will have to replace with a trusted one for production use.
 
-If you wish to manually configure IIS on your deployed SonarQube installation, please see [Running SonarQube behind a reversed proxy](https://blogs.msdn.microsoft.com/visualstudioalmrangers/2016/06/04/running-sonarqube-behind-an-iis-reversed-proxy/).
+The approach we used to secure the installation is document in [Running SonarQube behind a reversed proxy](https://blogs.msdn.microsoft.com/visualstudioalmrangers/2016/06/04/running-sonarqube-behind-an-iis-reversed-proxy/).
 
 * * *
-
 
 ###Workflow
 This template performs the following workflow to create the SonarQube installation.  
@@ -48,8 +43,15 @@ This template performs the following workflow to create the SonarQube installati
   5. Allow SonarQube HTTPS (443) Inbound through the Windows Firewall   
   6. Download SonarQube 5.6.1 and unzip to staging folder
   7. Replace the SonarQube connection string with the connection string of the Azure SQL Server created earlier  
-  8. Install SonarQube as a Windows Service using the Local Admin acct
+  8. Install SonarQube as a Windows Service using the Local Admin acctount
   9. Start the SonarQube Windows Service and let it configure the SonarQube DB
+- In case of secure installtion, run a PowerShell custom extension on the Virtual Machine to:
+  1. Install Application Request Routing on IIS (ARR)
+  2. Generate a self-signed certificate
+  3. Change SonarQube website binding to HTTPs using port 443 and the self-signed certificate.
+  4. Disable HTTP firewall rule.
+  5. Configure AAR proxy settings.
+  6. Add rewrite rules for the website.
 
 * * *
 
@@ -61,7 +63,8 @@ The deployment in Azure can take up to 30 minutes.  At the end of the deployment
 Once the deployment and configuration have finished you will be able to access your SonarQube by entering its public address into a browser.  The address format is:
 
 #####http://[sq\_PublicIP\_DnsPrefix].[AzureRegion].cloudapp.azure.com:9000  
-**Ex:** http://my-sonarqube.eastus.cloudapp.azure.com:9000  
+**Ex:** http://my-sonarqube.eastus.cloudapp.azure.com:9000
+**Ex: Secure** https://my-sonarqube.eastus.cloudapp.azure.com
 
 * * *
 
@@ -69,7 +72,7 @@ Once the deployment and configuration have finished you will be able to access y
 
 | Parameter Name                | Description                                                                                                                                                                                                                                                                                                                                                             | Default value |
 |------------------------|--------------------------------|----------------------------------------------------------------------------|--------------------------------|
-| sqVM\_AppName             | Name of the VM that SonarQube will be installed upon.   | None         |
+| sqVM\_AppName             | Name of the VM that SonarQube will be installed upon.   | sonarqubevm         |
 | sq\_PublicIP\_DnsPrefix     |  The prefix of the public URL for the VM on the Internet (Max 63 chars, lower-case).  It should match with the following regular expression: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$ or it will raise an error. This will be used to buld the fully qualified URL for the SonarQube site in the form of _http://[sq\_PublicIP\_DnsPrefix].[AzureRegion].cloudapp.azure.com_  **Ex:** A value of "my-sonarqube" will result in a URL of http://my-sonarqube.eastus.cloudapp.azure.com if the ARM template is deployed into a storage account hosted in the EASTUS Azure region.  | None          |
 | sqVM\_AppAdmin\_UserName |  Local Admin account name for the SonarQube VM.  | None          |
 | sqVM\_AppAdmin\_Password          | Password for the SonarQube VM Local Admin account. | None         |
@@ -79,6 +82,8 @@ Once the deployment and configuration have finished you will be able to access y
 | sqDB\_DBName          | Name of the SonarQube DB on the Azure SQL Server | sonar   |    
 | sqDB\_DBEdition          | Edition of Azure SQL Server to create, Allowed Values: Basic, Business, Premium, Standard, Web   | Basic   |    
 | sqStorage_AcctType          | Type of Azure Storage Acct to create, Standard\_LRS, Standard\_ZRS, Standard\_GRS, Standard\_RAGRS, Premium\_LRS   | Standard\_LRS   |    
+| sqVM_Installation_Type          | Type of SonarQube installation: Secure (HTTPs) or nonsecure (HTTP)  | Secure   |    
+| sqVM_ReverseProxy_Type          | Type of reverse proxy to be used in case of Secure installation   | IIS   |    
 
 * * *
 
