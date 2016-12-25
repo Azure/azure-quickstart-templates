@@ -18,7 +18,7 @@ $sp = New-AzureRmADServicePrincipal -ApplicationId $app.ApplicationId
 
 if ($vaultName)
 {
-	set-azurermkeyvaultaccesspolicy -vaultname $vaultName -serviceprincipalname $sp.ApplicationId -permissionstosecrets get
+	set-azurermkeyvaultaccesspolicy -vaultname $vaultName -serviceprincipalname $sp.ServicePrincipalName -permissionstosecrets get
 }
 
 $tenantId = (get-azurermsubscription).TenantId | select -Unique
