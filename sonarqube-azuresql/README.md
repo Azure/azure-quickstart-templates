@@ -95,7 +95,7 @@ Once the deployment and configuration have finished you will be able to access y
 ## Contributors
 We thank the following contributors to this project: 
    
-Jean-Marc Prieur,  
+[Jean-Marc Prieur] (https://github.com/jmprieur),
 [Giulio Vian](https://github.com/giuliov),  
 [Brian Randell](https://github.com/brianrandell),   
 [John Spinella](https://github.com/jrspinella),   
