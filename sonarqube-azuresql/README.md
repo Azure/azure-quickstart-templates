@@ -76,8 +76,8 @@ Once the deployment and configuration have finished you will be able to access y
 | sqDB\_Admin\_UserName          | Admin account name for Azure SQL Server. | None         |
 | sqDB\_Admin\_Password          | Password for Azure SQL Server Admin account. | None   |
 | sqDB\_ServerName          | Name of Azure SQL Server (Max: 10 chars)  | sonarsql   |
-| sqDB\_DBName          | Name of the SonarQube DB on the Azure SQL Server | sonar   |    
-| sqDB\_DBEdition          | Edition of Azure SQL Server to create, Allowed Values: Basic, Business, Premium, Standard, Web   | Basic   |    
+| sqDB\_DBName          | Name of the SonarQube DB on the Azure SQL Database Server | sonar   |    
+| sqDB\_DBEdition          | Edition of Azure SQL Database to create, Allowed Values: Basic, Standard, Premium   | Basic   |    
 | sqStorage_AcctType          | Type of Azure Storage Acct to create, Standard\_LRS, Standard\_ZRS, Standard\_GRS, Standard\_RAGRS, Premium\_LRS   | Standard\_LRS   |    
 
 * * *
