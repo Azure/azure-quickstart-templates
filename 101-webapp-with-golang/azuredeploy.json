@@ -1,5 +1,5 @@
 {
-  "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
     "siteName": {
@@ -14,110 +14,107 @@
         "description": "Name of hosting plan"
       }
     },
-    "sku": {
+    "skuTier": {
       "type": "string",
       "allowedValues": [
         "Free",
         "Shared",
         "Basic",
-        "Standard"
+        "Standard",
+        "Premium"
       ],
       "defaultValue": "Free",
       "metadata": {
-        "description": "SKU value"
+        "description": "SKU tier"
       }
     },
-    "workerSize": {
+    "skuName": {
       "type": "string",
       "allowedValues": [
-        "0",
-        "1",
-        "2"
+        "F1",
+        "D1",
+        "B1",
+        "B2",
+        "B3",
+        "S1",
+        "S2",
+        "S3",
+        "P1",
+        "P2",
+        "P3"
       ],
-      "defaultValue": "0",
+      "defaultValue": "F1",
       "metadata": {
-        "description": "Worker Size( 0=Small, 1=Medium, 2=Large )"
-      }
-    },
-    "use32bitWorkerProcess": {
-      "type": "bool",
-      "defaultValue": false,
-      "metadata": {
-        "description": "Enable 32bit worker process or 64bit, 64bit is not available if you choose free hosting plan."
-      }
-    },
-    "enableAlwaysOn": {
-      "type": "bool",
-      "defaultValue": false,
-      "metadata": {
-        "description": "Enable/Disable always on. If you choose free for hosting plan, this should be set to false as always on is not supported for free plan"
+        "description": "SKU Name"
       }
     }
   },
-  "variables": {
-    "goSite": "[parameters('siteName')]"
-  },
   "resources": [
     {
-      "apiVersion": "2015-04-01",
+      "apiVersion": "2015-08-01",
       "name": "[parameters('appServicePlanName')]",
       "type": "Microsoft.Web/serverfarms",
       "location": "[resourceGroup().location]",
       "properties": {
-        "name": "[parameters('appServicePlanName')]",
-        "sku": "[parameters('sku')]",
-        "workerSize": "[parameters('workerSize')]",
-        "numberOfWorkers": 1
+        "name": "[parameters('appServicePlanName')]"
+      },
+      "sku": {
+        "name": "[parameters('skuName')]",
+        "tier": "[parameters('skuTier')]",
+        "capacity": 1
       }
     },
     {
-      "apiVersion": "2015-06-01",
-      "name": "[variables('goSite')]",
+      "apiVersion": "2015-08-01",
+      "name": "[parameters('siteName')]",
       "type": "Microsoft.Web/sites",
       "location": "[resourceGroup().location]",
       "dependsOn": [
         "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]"
       ],
       "properties": {
-        "name": "[variables('goSite')]",
+        "name": "[parameters('siteName')]",
         "serverFarmId": "[parameters('appServicePlanName')]"
       },
       "resources": [
         {
-          "apiVersion": "2015-06-01",
+          "apiVersion": "2015-08-01",
           "name": "web",
           "type": "config",
           "dependsOn": [
-            "[resourceId('Microsoft.Web/Sites', variables('goSite'))]"
+            "[resourceId('Microsoft.Web/Sites', parameters('siteName'))]"
           ],
           "properties": {
             "phpVersion": "off",
             "netFrameworkVersion": "v4.5",
-            "use32BitWorkerProcess": "[parameters('use32bitWorkerProcess')",
             "webSocketsEnabled": true,
-            "alwaysOn": "[parameters('enableAlwaysOn')]",
             "requestTracingEnabled": true,
             "httpLoggingEnabled": true,
             "logsDirectorySizeLimit": 40,
             "detailedErrorLoggingEnabled": true,
-            "scmType": "LocalGit",
-            "appSettings": [
-              {
-                "Name": "SCM_SITEEXTENSIONS_FEED_URL",
-                "Value": "http://www.siteextensions.net/api/v2/"
-              }
-            ]
+            "scmType": "LocalGit"
           }
         },
         {
-          "apiVersion": "2015-06-01",
+          "name": "appsettings",
+          "type": "config",
+          "apiVersion": "2015-08-01",
+          "dependsOn": [
+            "[concat('Microsoft.Web/sites/', parameters('siteName'))]"
+          ],
+          "properties": {
+            "SCM_SITEEXTENSIONS_FEED_URL": "http://www.siteextensions.net/api/v2/"
+          }
+        },
+        {
+          "apiVersion": "2015-08-01",
           "name": "GoLang",
           "type": "siteextensions",
           "dependsOn": [
-            "[resourceId('Microsoft.Web/Sites', variables('goSite'))]",
-            "[resourceId('Microsoft.Web/Sites/config', variables('goSite'), 'web')]"
+            "[resourceId('Microsoft.Web/Sites', parameters('siteName'))]",
+            "[resourceId('Microsoft.Web/Sites/config', parameters('siteName'), 'web')]"
           ],
-          "properties": { }
+          "properties": {}
         }
       ]
     }
