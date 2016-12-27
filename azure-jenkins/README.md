@@ -7,7 +7,7 @@
 <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template allows you to create an instance of Azure Jenkins. Azure Jenkins is a fully functional instance of Jenkins 2.7.2 pre-configured to use Azure resources. The current version of this image lets you use Azure as a package repository to upload and download your application and it's dependencies to Azure as part of a Jenkins continuous deployment v2 pipeline. It also lets you run Jenkins jobs on Azure Slave VMs.
+This template allows you to create an instance of Azure Jenkins. Azure Jenkins is a fully functional instance of Jenkins 2.7+ pre-configured to use Azure resources. The current version of this image lets you use Azure as a package repository to upload and download your application and it's dependencies to Azure as part of a Jenkins continuous deployment v2 pipeline. It also lets you run Jenkins jobs on Azure Slave VMs.
 
 ## A. Deploy Azure Jenkins VM
 1. Click "Deploy to Azure" button. If you haven't got an Azure subscription, it will guide you on how to signup for a free trial.
