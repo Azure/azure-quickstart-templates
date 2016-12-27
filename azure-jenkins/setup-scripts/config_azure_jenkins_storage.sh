@@ -27,8 +27,8 @@ fi
 instruction_goto_dashboard="Please go to Jenkins dashboard by inputting <Your VM IP address>:8080 in your preferred browser. You can find the IP address in Azure portal."
 
 azure_storage_config_file="com.microsoftopentechnologies.windowsazurestorage.WAStoragePublisher.xml"
-jenkins_download_job_name="1. Download Dependencies. Invoked by pipeline"
-jenkins_upload_job_name="3. Upload test app. Invoked by pipeline"
+jenkins_download_job_name="SampleDownload"
+jenkins_upload_job_name="SampleAzureUpload"
 
 jenkins_dir="/var/lib/jenkins"
 jenkins_jobs_dir="${jenkins_dir}/jobs"
