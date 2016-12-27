@@ -44,7 +44,7 @@ Start deployment
                         adminPassword    SecureString
                         imagePublisher   String                     Canonical
                         imageOffer       String                     UbuntuServer
-                        imageSKU         String                     14.04.2-LTS
+                        imageSKU         String                     14.04.4-LTS
                         storageAccountName  String                     spkldeploysparknnuu1
                         region           String                     West US
                         virtualNetworkName  String                     sparkClustVnet
