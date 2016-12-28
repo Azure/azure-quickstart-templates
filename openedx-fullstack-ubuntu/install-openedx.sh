@@ -19,7 +19,8 @@ configuration_version: \"$OPENEDX_RELEASE\"
 edx_ansible_source_repo: \"$CONFIG_REPO\"
 COMMON_SSH_PASSWORD_AUTH: \"yes\"
 EOF"
-sudo -u edx-ansible cp *.yml $ANSIBLE_ROOT
+cp *.yml $ANSIBLE_ROOT
+chown edx-ansible:edx-ansible $ANSIBLE_ROOT/*.yml
 
 cd /tmp
 git clone $CONFIG_REPO

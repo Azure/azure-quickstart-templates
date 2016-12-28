@@ -14,8 +14,8 @@ Select-AzureRmSubscription -SubscriptionId $Conn.SubscriptionID -TenantId $Conn.
 
 $AAResourceGroup = Get-AutomationVariable -name "AzureAutomationResourceGroup"
 $AAAccount = Get-AutomationVariable -name "AzureAutomationAccount"
-$RunbookName = "sqlazureIngestion"
-$ScheduleName = "sqlazure"
+$RunbookName = "webappazureIngestion"
+$ScheduleName = "webapp"
 
 $RunbookStartTime = $Date = $([DateTime]::Now.AddMinutes(10))
 

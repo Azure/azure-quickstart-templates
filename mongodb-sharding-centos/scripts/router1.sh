@@ -90,7 +90,7 @@ mongos --configdb crepset/10.0.0.240:27019,10.0.0.241:27019,10.0.0.242:27019 --p
 for((i=1;i<=3;i++))
 do
 	sleep 30
-	n=`ps -ef |grep -v grep|grep mongos |wc -l`
+	n=`ps -ef |grep "mongos --configdb" |grep -v grep |wc -l`
 	if [[ $n -eq 1 ]];then
 		echo "mongos started successfully"
 		break
@@ -100,7 +100,7 @@ do
 	fi
 done
 
-n=`ps -ef |grep -v grep|grep mongos |wc -l`
+n=`ps -ef |grep "mongos --configdb" |grep -v grep |wc -l`
 if [[ $n -ne 1 ]];then
 echo "mongos tried to start 3 times but failed!"
 fi

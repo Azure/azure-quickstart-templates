@@ -5,11 +5,36 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template will deploy an Azure Service Fabric Cluster together with an OMS Log Analytics workspace, adds the diagnostic storage account into OMS for monitoring and insights and enables the OMS Gallery Solution for Service Fabric.
+This template will deploy an Azure Service Fabric Cluster together with an OMS Log Analytics workspace, adds the diagnostic storage account into OMS for monitoring and insights and enables the OMS Gallery Solution for Service Fabric. 
 
 The OMS Gallery Service Fabric solution uses Azure Diagnostics data from your Service Fabric VMs, by collecting this data from your Azure WAD tables. 
 Log Analytics then reads Service Fabric framework events, including Reliable Service Events, Actor Events, Operational Events, and Custom ETW events. 
 The Service Fabric solution dashboard shows you notable issues and relevant events in your Service Fabric environment.
 
+Once the template has been deployed, you can see the following table logs being ingested to your OMS Workspace
 
-                      
+![all text](images/sflogs.png "OMS storage logs")
+
+To see the Service Fabric solution in OMS, click on 'OMS Portal'
+
+![all text](images/omsportal.png "OMS Portal")
+
+This will take you to the main dashboard showing the following solution enabled:
+
+* Service Fabric
+
+![all text](images/oms.png "OMS")
+
+Click on 'Service Fabric' to see details about your Service Fabric cluster
+
+![all text](images/sf.png "Service Fabric")
+
+
+
+
+
+
+
+
+
+
