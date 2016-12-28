@@ -13,7 +13,6 @@ You are currently reading the best practices.
 
 + It is a good practice to pass your template through a JSON linter to remove extraneous commas, parenthesis, brackets that may break the "Deploy to Azure" experience. Try http://jsonlint.com/ or a linter package for your favorite editing environment (Visual Studio Code, Atom, Sublime Text, Visual Studio etc.)
 + It's also a good idea to format your JSON for better readability. You can use a JSON formatter package for your local editor or [format online using this link](https://www.bing.com/search?q=json+formatter).
-+ A starter template is provided [here](/100-STARTER-TEMPLATE-with-VALIDATION) for you to follow.
 
 The following guidelines are relevant to the main deployment template and nested templates (if used).
 
@@ -129,8 +128,10 @@ The following guidelines are relevant to the main deployment template and nested
 
  ```
  "properties": {
- 	"publisher": "Microsoft.OSTCExtensions",
- 	"type": "CustomScriptForLinux",
+ 	"publisher": "Microsoft.Azure.Extensions",
+ 	"type": "CustomScript",
+	"version": "2.0",
+	"autoUpgradeMinorVersion": true,
  	"settings": {
  		"fileUris": [
  			"[concat(variables('template').assets, '/lamp-app/install_lamp.sh')]"
@@ -172,7 +173,7 @@ The following guidelines are relevant to the main deployment template and nested
 
  Note: A complex object cannot contain an expression that references a value from a complex object. Define a separate variable for this purpose.
 
-13. The **domainNameLabel** property for publicIPAddresses must be **unique**. domainNameLabel is required to be betweeen 3 and 63 characters long and to follow the rules specified by this regular expression ^[a-z][a-z0-9-]{1,61}[a-z0-9]$. As the uniqueString function will generate a string that is 13 characters long in the example below it is presumed that the dnsPrefixString prefix string has been checked to be no more than 50 characters long and to conform to those rules.
+13. The **domainNameLabel** property for publicIPAddresses must be **unique**. domainNameLabel is required to be between 3 and 63 characters long and to follow the rules specified by this regular expression ^[a-z][a-z0-9-]{1,61}[a-z0-9]$. As the uniqueString function will generate a string that is 13 characters long in the example below it is presumed that the dnsPrefixString prefix string has been checked to be no more than 50 characters long and to conform to those rules.
 
  ```
  "parameters": {
@@ -194,11 +195,11 @@ The following guidelines are relevant to the main deployment template and nested
  ```
  "outputs": {
  "fqdn": {
- 	"value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',parameters('publicIPAddressName')),providers('Microsoft.Network', 'publicIPAddresses').apiVersions[0]).dnsSettings.fqdn]",
+ 	"value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',parameters('publicIPAddressName')),'2016-10-01').dnsSettings.fqdn]",
  	"type": "string"
  },
  "ipaddress": {
- 	"value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',parameters('publicIPAddressName')),providers('Microsoft.Network', 'publicIPAddresses').apiVersions[0]).ipAddress]",
+ 	"value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',parameters('publicIPAddressName')),'2016-10-01').dnsSettings.fqdn]",
   	"type": "string"
  }
 }
@@ -211,7 +212,7 @@ The following guidelines are relevant to the main deployment template and nested
 It is obvious to create a single deployment template for deploying a single resource. Nested templates are common for more advanced scenarios. The following section is by no means a hard requirement, but more of a guidance to help you decide between a single template or a decomposed nested template design. 
 
 * Create a single template for a single tier application
-* Create a nested templates deployment for a multitier application
+* Create a nested templates deployment for a multi-tier application
 * Use nested templates for conditional deployment
 
 ### Samples that contain extra artifacts (Custom Scripts, nested templates, etc)
@@ -221,7 +222,7 @@ When samples contain scripts, templates or other artifacts that need to be made 
 First, define two standard parameters:
 
 * _artifactsLocation - this is the base URI where all artifacts for the deployment will be staged.  The default value should be the samples folder so that the sample can be easily deployed in scenarios where a private location is not required.
-* _artifactsocationSasToken - this is the sasToken required to access _artifactsLocation.  The default value should be "" for scenarios where the _artifactsLocation is not secured, for example, the raw GitHub URI.
+* _artifactsLocationSasToken - this is the sasToken required to access _artifactsLocation.  The default value should be "" for scenarios where the _artifactsLocation is not secured, for example, the raw GitHub URI.
 
 ```
   "parameters": {
@@ -310,7 +311,7 @@ When authoring a template that references another sample, define a complex objec
 _**Note:** Using this approach will still require pulling the dependent artifact from the raw GitHub location.  The sample scripts do not privately stage artifacts from adjacent solutions.  In practice, it is expected that this technique would be rarely used because the main template being deployed has a dependency on a shared template that may have a different lifecycle, resulting in unexpected changes in the configuration.  In a real-world scenario, all the templates that make up the deployment should be under the same span of control and could be staged together.  Simply put share the same parent.  This will work for a shared environment of the repository, but a best practice would be to refactor these samples to ensure a proper configuration is maintained._
 
 
-It is possible to deploy a nested template based on parameter input. The parameter input is used to concatenate the relative path to a nested template. Based on the user input a different template is deployed. This enables a conditional nested template deployment. The paramater is used to define the name of the template. Ensure the allowedValues of the input parameter match the names of the nested templates.
+It is possible to deploy a nested template based on parameter input. The parameter input is used to concatenate the relative path to a nested template. Based on the user input a different template is deployed. This enables a conditional nested template deployment. The parameter is used to define the name of the template. Ensure the allowedValues of the input parameter match the names of the nested templates.
 
 ### Nested templates design for more advanced scenarios
 
@@ -318,7 +319,7 @@ When you decide to decompose your template design into multiple nested templates
 For this guidance a deployment of a SharePoint farm is used as an example. The SharePoint farm consists of multiple tiers. Each tier can be created with high availability. The recommended design consists of the following templates.
 
 + **Main template** (azuredeploy.json). Used for the input parameters.
-+ **Shared resouces template**. Deploys the shared resources that all other resources use (e.g. virtual network, availability sets). The expression dependsOn enforces that this template is deployed before the other templates.
++ **Shared resources template**. Deploys the shared resources that all other resources use (e.g. virtual network, availability sets). The expression dependsOn enforces that this template is deployed before the other templates.
 + **Optional resources template**. Conditionally deploys resources based on a parameter (e.g. a jumpbox)
 + **Member resources templates**. Each within an application tier within has its own configuration. Within a tier different instance types can be defined. (e.g. first instance creates a new cluster, additional instances are added to the existing cluster). Each instance type will have its own deployment template.
 + **Scripts**. Widely reusable scripts are applicable for each instance type (e.g. initialize and format additional disks). Custom scripts are created for specific customization purpose are different per instance type.

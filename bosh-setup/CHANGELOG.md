@@ -1,3 +1,40 @@
+# v2.4.0 (2016-12-21)
+
+- Upgrade Azure CPI version to v20. Please see new features in [bosh-azure-cpi-release v20](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v20)
+- Use Azure DNS instead of CNNIC DNS for AzureChinaCloud
+
+# v2.3.0 (2016-11-22)
+
+- Upgrade cf-release to v244 for template of multiple-vm-cf.yml, keep cf-release v238 as a stable version for single-vm-cf.yml.
+- Use stubs to generate manifest for multiple-vm-cf.yml.
+- Add a scripts to generate certifications and passwords for manifests.
+
+# v2.2.0 (2016-11-09)
+
+- Support AzureUSGovernment
+- Upgrade Azure CPI version to v19. Please see new features in [bosh-azure-cpi-release v19](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v19).
+
+# v2.1.1 (2016-10-20)
+
+- Upgrade CustomScript to 2.0
+- Add a retry logic for uploading stemcell and release
+- Use https for the mirror site
+- Bug fixes
+  - Install prerequisites at the beginning to avoid a silent error when install msrest
+
+# v2.1.0 (2016-10-11)
+
+- Upgrade versions
+  - Upgrade Azure CPI version to v17. Please see new features in [bosh-azure-cpi-release v17](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v17).
+
+# v2.0.2 (2016-09-29)
+
+- Uses local pip repo for AzureChinaCloud to install pip packages
+
+# v2.0.1 (2016-08-24)
+
+- Expose the VM size of BOSH VM as a parameter
+
 # v2.0.0 (2016-08-16)
 
 - Upgrade versions
