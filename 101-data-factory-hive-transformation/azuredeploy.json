@@ -1,0 +1,213 @@
+  {
+    "contentVersion": "1.0.0.0",
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "parameters": {
+      "storageAccountResourceGroupName": {
+        "type": "string",
+        "metadata": {
+          "description": "The resource group that contains your Azure storage account that contains the input/output data."
+        }
+      },     
+      "storageAccountName": {
+        "type": "string",
+        "metadata": {
+          "description": "Name of the Azure storage account that contains the input/output data."
+        }
+      },
+      "storageAccountKey": {
+        "type": "securestring",
+        "metadata": {
+          "description": "Key for the Azure storage account."
+        }
+      },
+      "blobContainer": {
+        "type": "string",
+        "metadata": {
+          "description": "Name of the blob container in the Azure Storage account."
+        }
+      },
+      "inputBlobFolder": {
+        "type": "string",
+        "metadata": {
+          "description": "The folder in the blob container that has the input file."
+        }
+      },
+      "inputBlobName": {
+        "type": "string",
+        "metadata": {
+          "description": "Name of the input file/blob."
+        }
+      },
+      "outputBlobFolder": {
+        "type": "string",
+        "metadata": {
+          "description": "The folder in the blob container that will hold the transformed data."
+        }
+      },
+      "hiveScriptFolder": {
+        "type": "string",
+        "metadata": {
+          "description": "The folder in the blob container that contains the Hive query file."
+        }
+      },
+      "hiveScriptFile": {
+        "type": "string",
+        "metadata": {
+          "description": "Name of the hive query (HQL) file."
+        }
+      }
+    },
+    "variables": {
+      "dataFactoryName": "[concat('HiveTransformDF', uniqueString(resourceGroup().id))]",
+      "azureStorageLinkedServiceName": "AzureStorageLinkedService",
+      "hdInsightOnDemandLinkedServiceName": "HDInsightOnDemandLinkedService",
+      "blobInputDatasetName": "AzureBlobInput",
+      "blobOutputDatasetName": "AzureBlobOutput",
+      "pipelineName": "HiveTransformPipeline"
+    },
+    "resources": [
+      {
+        "name": "[variables('dataFactoryName')]",
+        "apiVersion": "2015-10-01",
+        "type": "Microsoft.DataFactory/datafactories",
+        "location": "West US",
+        "resources": [
+          {
+            "type": "linkedservices",
+            "name": "[variables('azureStorageLinkedServiceName')]",
+            "dependsOn": [
+              "[variables('dataFactoryName')]"
+            ],
+            "apiVersion": "2015-10-01",
+            "properties": {
+              "type": "AzureStorage",
+              "description": "Azure Storage linked service",
+              "typeProperties": {
+                "connectionString": "[concat('DefaultEndpointsProtocol=https;AccountName=',parameters('storageAccountName'),';AccountKey=',parameters('storageAccountKey'))]"
+              }
+            }
+          },
+          {
+            "type": "linkedservices",
+            "name": "[variables('hdInsightOnDemandLinkedServiceName')]",
+            "dependsOn": [
+              "[variables('dataFactoryName')]",
+              "[variables('azureStorageLinkedServiceName')]"
+            ],
+            "apiVersion": "2015-10-01",
+            "properties": {
+              "type": "HDInsightOnDemand",
+              "typeProperties": {
+                "clusterSize": 1,
+                "version": "3.2",
+                "timeToLive": "00:05:00",
+                "osType": "windows",
+                "linkedServiceName": "[variables('azureStorageLinkedServiceName')]"
+              }
+            }
+          },
+          {
+            "type": "datasets",
+            "name": "[variables('blobInputDatasetName')]",
+            "dependsOn": [
+              "[variables('dataFactoryName')]",
+              "[variables('azureStorageLinkedServiceName')]"
+            ],
+            "apiVersion": "2015-10-01",
+            "properties": {
+              "type": "AzureBlob",
+              "linkedServiceName": "[variables('azureStorageLinkedServiceName')]",
+              "typeProperties": {
+                "fileName": "[parameters('inputBlobName')]",
+                "folderPath": "[concat(parameters('blobContainer'), '/', parameters('inputBlobFolder'))]",
+                "format": {
+                  "type": "TextFormat",
+                  "columnDelimiter": ","
+                }
+              },
+              "availability": {
+                "frequency": "Month",
+                "interval": 1
+              },
+              "external": true
+            }
+          },
+          {
+            "type": "datasets",
+            "name": "[variables('blobOutputDatasetName')]",
+            "dependsOn": [
+              "[variables('dataFactoryName')]",
+              "[variables('azureStorageLinkedServiceName')]"
+            ],
+            "apiVersion": "2015-10-01",
+            "properties": {
+              "type": "AzureBlob",
+              "linkedServiceName": "[variables('azureStorageLinkedServiceName')]",
+              "typeProperties": {
+                "folderPath": "[concat(parameters('blobContainer'), '/', parameters('outputBlobFolder'))]",
+                "format": {
+                  "type": "TextFormat",
+                  "columnDelimiter": ","
+                }
+              },
+              "availability": {
+                "frequency": "Month",
+                "interval": 1
+              }
+            }
+          },
+          {
+            "type": "datapipelines",
+            "name": "[variables('pipelineName')]",
+            "dependsOn": [
+              "[variables('dataFactoryName')]",
+              "[variables('azureStorageLinkedServiceName')]",
+              "[variables('hdInsightOnDemandLinkedServiceName')]",
+              "[variables('blobInputDatasetName')]",
+              "[variables('blobOutputDatasetName')]"
+            ],
+            "apiVersion": "2015-10-01",
+            "properties": {
+              "description": "Pipeline that transforms data using Hive script.",
+              "activities": [
+                {
+                  "type": "HDInsightHive",
+                  "typeProperties": {
+                    "scriptPath": "[concat(parameters('blobContainer'), '/', parameters('hiveScriptFolder'), '/', parameters('hiveScriptFile'))]",
+                    "scriptLinkedService": "[variables('azureStorageLinkedServiceName')]",
+                    "defines": {
+                        "inputtable": "[concat(replace(reference(resourceId(parameters('storageAccountResourceGroupName'), 'Microsoft.Storage/storageAccounts/', parameters('storageAccountName')), '2016-01-01').primaryEndpoints.blob, 'https://', concat('wasb://', parameters('blobContainer'), '@')), parameters('inputBlobFolder'))]",
+                        "partitionedtable": "[concat(replace(reference(resourceId(parameters('storageAccountResourceGroupName'), 'Microsoft.Storage/storageAccounts/', parameters('storageAccountName')), '2016-01-01').primaryEndpoints.blob, 'https://', concat('wasb://', parameters('blobContainer'), '@')), parameters('outputBlobFolder'))]"                       
+                    }
+                  },
+                  "inputs": [
+                    {
+                      "name": "[variables('blobInputDatasetName')]"
+                    }
+                  ],
+                  "outputs": [
+                    {
+                      "name": "[variables('blobOutputDatasetName')]"
+                    }
+                  ],
+                  "policy": {
+                    "concurrency": 1,
+                    "retry": 2
+                  },
+                  "scheduler": {
+                    "frequency": "Month",
+                    "interval": 1
+                  },
+                  "name": "RunSampleHiveActivity",
+                  "linkedServiceName": "[variables('hdInsightOnDemandLinkedServiceName')]"
+                }
+              ],
+              "start": "2016-09-01T00:00:00Z",
+              "end": "2016-09-02T00:00:00Z",
+              "isPaused": false
+            }
+          }
+        ]
+      }
+    ]
+  }
