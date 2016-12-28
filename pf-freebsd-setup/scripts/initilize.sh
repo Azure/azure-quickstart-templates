@@ -20,6 +20,8 @@ privateSubnet=${17}
 
 invoke_bash()
 {
+	env ASSUME_ALWAYS_YES=YES pkg bootstrap
+	
 	pkg install -y wget
 	pkg install -y unix2dos
 
