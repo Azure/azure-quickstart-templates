@@ -88,7 +88,7 @@ invoke_bash()
 	ip1=$vm1PrivateNicIP
 	/usr/local/bin/azure network nic create --subnet-name $privateSubnet --subnet-vnet-name $vnetName $rgname $nicName1 $location -a $ip1 >> /tmp/install.log 2>&1
 	/usr/local/bin/azure network nic set -g $rgname -n $nicName1 -f true >> /tmp/install.log 2>&1
-	/usr/local/bin/azure vm create --resource-group $rgname --name $vm1 --location $location --os-type linux --nic-name $nicName1 --vnet-subnet-name $privateSubnet --storage-account-name $storageAccount --image-urn MicrosoftOSTC:FreeBSD:10.3:latest --admin-username $username --admin-password $password --vm-size $vmSize --ssh-publickey-file /tmp/sshkey.pub >> /tmp/install.log 2>&1
+	/usr/local/bin/azure vm create --resource-group $rgname --name $vm1 --location $location --os-type linux --nic-name $nicName1 --vnet-subnet-name $privateSubnet --storage-account-name $storageAccount --image-urn MicrosoftOSTC:FreeBSD:11.0:latest --admin-username $username --admin-password $password --vm-size $vmSize --ssh-publickey-file /tmp/sshkey.pub >> /tmp/install.log 2>&1
 	echo "create vm1 end" >> /tmp/install.log 
 
 	echo "create vm2 start" >> /tmp/install.log 
@@ -97,7 +97,7 @@ invoke_bash()
 	ip2=$vm2PrivateNicIP
 	/usr/local/bin/azure network nic create --subnet-name $privateSubnet --subnet-vnet-name $vnetName $rgname $nicName2 $location -a $ip2 >> /tmp/install.log 2>&1
 	/usr/local/bin/azure network nic set -g $rgname -n $nicName2 -f true >> /tmp/install.log 2>&1
-	/usr/local/bin/azure vm create --resource-group $rgname --name $vm2 --location $location --os-type linux --nic-name $nicName2 --vnet-subnet-name $privateSubnet --storage-account-name $storageAccount --image-urn MicrosoftOSTC:FreeBSD:10.3:latest --admin-username $username --admin-password $password --vm-size $vmSize --ssh-publickey-file /tmp/sshkey.pub >> /tmp/install.log 2>&1
+	/usr/local/bin/azure vm create --resource-group $rgname --name $vm2 --location $location --os-type linux --nic-name $nicName2 --vnet-subnet-name $privateSubnet --storage-account-name $storageAccount --image-urn MicrosoftOSTC:FreeBSD:11.0:latest --admin-username $username --admin-password $password --vm-size $vmSize --ssh-publickey-file /tmp/sshkey.pub >> /tmp/install.log 2>&1
 	echo "create vm2 end" >> /tmp/install.log 
     
 	service pf restart
