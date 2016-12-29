@@ -25,14 +25,11 @@ time sudo npm install azure-cli -g
 time sudo update-alternatives --install /usr/bin/node nodejs /usr/bin/nodejs 100
 
 ####################
-# Setup Geth classic
+# Setup Geth classic - using launchpad ppa
 ####################
-time sudo apt-get install -y git
+time sudo add-apt-repository ppa:ethereum-classic/etc-geth
 time sudo apt-get update
-time sudo git clone https://github.com/ethereumproject/go-ethereum.git
-time sudo apt-get install -y build-essential libgmp3-dev golang software-properties-common
-time cd go-ethereum
-time sudo make geth
+time apt-get install -y ethereum-classic-unstable
 
 date
 echo "completed geth Classic Chain install $$"
