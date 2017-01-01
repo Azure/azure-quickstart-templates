@@ -10,3 +10,6 @@
 This template creates an HDInsight cluster based on windows with Storm next to an IotHub with Azure Storage for the HDInsight.
 
 This solution is meant as a base for storm based analytics using IotHub.
+
+# Deploying .Net Code into a HDInsight Cluster
+To learn how to deploy .Net code into an HDInsight cluster, you look inside the [official HDInsight GitHub repository](https://github.com/hdinsight/hdinsight-storm-examples/tree/master/scripts/scpnet)
