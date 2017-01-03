@@ -94,19 +94,33 @@ Once the deployment and configuration have finished you will be able to access y
 
 ## Contributors
 We thank the following contributors to this project: 
-   
-[Jean-Marc Prieur] (https://github.com/jmprieur),
+
+[Jean-Marc Prieur](https://github.com/jmprieur),
+
 [Giulio Vian](https://github.com/giuliov),  
+
 [Brian Randell](https://github.com/brianrandell),   
+
 [John Spinella](https://github.com/jrspinella),   
+
 Cesar Solis,  
+
 Sergio Romero Ortiz,  
+
 [Hosam Kamel](https://github.com/hkamel),  
+
 [Kevin Mack](https://github.com/KevinDMack),  
+
 Pierre Donyegro,  
+
 Rui Miguel Carriho de Melo,  
+
 David Corbin,  
+
 [Gordon Beeming](https://github.com/Gordon-Beeming),  
+
 Vinicius Moura,  
+
 Clementino de Mendonca,  
+
 [Steven St. Jean](https://github.com/sstjean)
