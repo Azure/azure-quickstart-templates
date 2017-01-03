@@ -18,7 +18,7 @@ Once the deployment is complete you can increase the resources provided to Sonar
 ####Note:  
 This Beta release deploys a secure SonarQube installation by default, howevere we invoke a **self-signed** which you will have to replace with a trusted one for production use.
 
-##Production Certificate
+#####Production Certificate
 Because CAs provide the various SSL certificate types at different price points, you should start by deciding what type of SSL certificate to buy. To secure a single domain name (**www.contoso.com**), you just need a basic certificate. To secure multiple domain names (**contoso.com** and **www.contoso.com** and **sonarqube.contoso.com**), you need either a wildcard certificate or a certificate with Subject Alternate Name (subjectAltName).+
 
 Once you know which SSL certificate to buy, you submit a Certificate Signing Request (CSR) to a CA. When you get requested certificate back from the CA, you then generate a .pfx file from the certificate. You can perform these steps using the tool of your choice. Here are instructions for the common tools:
