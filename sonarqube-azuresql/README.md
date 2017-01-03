@@ -18,6 +18,17 @@ Once the deployment is complete you can increase the resources provided to Sonar
 ####Note:  
 This Beta release deploys a secure SonarQube installation by default, howevere we invoke a **self-signed** which you will have to replace with a trusted one for production use.
 
+##Production Certificate
+Because CAs provide the various SSL certificate types at different price points, you should start by deciding what type of SSL certificate to buy. To secure a single domain name (**www.contoso.com**), you just need a basic certificate. To secure multiple domain names (**contoso.com** and **www.contoso.com** and **sonarqube.contoso.com**), you need either a wildcard certificate or a certificate with Subject Alternate Name (subjectAltName).+
+
+Once you know which SSL certificate to buy, you submit a Certificate Signing Request (CSR) to a CA. When you get requested certificate back from the CA, you then generate a .pfx file from the certificate. You can perform these steps using the tool of your choice. Here are instructions for the common tools:
+
+* [Certreq.exe steps](https://docs.microsoft.com/en-us/azure/app-service-web/web-sites-configure-ssl-certificate#bkmk_certreq) - the Windows utility for creating certificate requests. It has been part of Windows since Windows XP/Windows Server 2000.
+* [IIS Manager steps](https://docs.microsoft.com/en-us/azure/app-service-web/web-sites-configure-ssl-certificate#bkmk_iismgr) - The tool of choice if you're already familiar with it.
+* [OpenSSL steps](https://docs.microsoft.com/en-us/azure/app-service-web/web-sites-configure-ssl-certificate#bkmk_openssl) - an [open-source](https://www.openssl.org/), [cross-platform tool](https://www.openssl.org/). Use it to help you get an SSL certificate from any platform.
+* [subjectAltName steps using OpenSSL](https://docs.microsoft.com/en-us/azure/app-service-web/web-sites-configure-ssl-certificate#bkmk_subjectaltname) - steps for getting subjectAltName certificates.
+
+
 The approach we used to secure the installation is document in [Running SonarQube behind a reversed proxy](https://blogs.msdn.microsoft.com/visualstudioalmrangers/2016/06/04/running-sonarqube-behind-an-iis-reversed-proxy/).
 
 * * *
