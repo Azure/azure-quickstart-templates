@@ -1,1 +1,0 @@
-cd \home\site\wwwroot\App_Data\jobs\continuous\pnwebjob
