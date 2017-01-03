@@ -13,4 +13,4 @@ Below are the parameters that the template expects
 | dnsZoneName  | The name of the DNS Zone to use or create. |
 | ttl | Time to live for the DNS Records. |
 | artifactsBaseUrl  | URL for the additional template files.  |
-| recordTypes  | The types of records to create (mail,sfb,mdm)   |
+| recordTypes  | The types of records to create. Acceptable values are (mail,sfb, and mdm) in a semi-colon seperated list. Example "mail;sfb"   |
