@@ -1,3 +1,22 @@
+# v2.3.0 (2016-11-22)
+
+- Upgrade cf-release to v244 for template of multiple-vm-cf.yml, keep cf-release v238 as a stable version for single-vm-cf.yml.
+- Use stubs to generate manifest for multiple-vm-cf.yml.
+- Add a scripts to generate certifications and passwords for manifests.
+
+# v2.2.0 (2016-11-09)
+
+- Support AzureUSGovernment
+- Upgrade Azure CPI version to v19. Please see new features in [bosh-azure-cpi-release v19](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v19).
+
+# v2.1.1 (2016-10-20)
+
+- Upgrade CustomScript to 2.0
+- Add a retry logic for uploading stemcell and release
+- Use https for the mirror site
+- Bug fixes
+  - Install prerequisites at the beginning to avoid a silent error when install msrest
+
 # v2.1.0 (2016-10-11)
 
 - Upgrade versions

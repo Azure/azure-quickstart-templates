@@ -24,10 +24,11 @@
       "type": "string",
       "allowedValues": [
         "AzureCloud",
-        "AzureChinaCloud"
+        "AzureChinaCloud",
+        "AzureUSGovernment"
       ],
       "metadata": {
-        "description": "Different environments in Azure. Choose AzureCloud for Global Azure, and choose AzureChinaCloud for Mooncake (Azure China Cloud)."
+        "description": "Different environments in Azure. Choose AzureCloud for Global Azure, choose AzureChinaCloud for Azure China Cloud, choose AzureUSGovernment for Azure Government."
       }
     },
     "tenantID": {
@@ -83,6 +84,13 @@
       "metadata": {
         "description": "Please check if the region support this VM size https://azure.microsoft.com/en-us/regions/#services. For more information about virtual machine sizes, see https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-linux-sizes/"
       }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/bosh-setup/",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      }
     }
   },
   "variables": {
@@ -103,85 +111,119 @@
     "boshNetworkSecurityGroup": "nsg-bosh",
     "cfNetworkSecurityGroup": "nsg-cf",
 
-    "vmSize": "Standard_D1",
+    "vmSize": "Standard_D1_v2",
     "nicName": "[parameters('vmName')]",
     "devboxPrivateIPAddress": "10.0.0.100",
     "imagePublisher": "Canonical",
     "imageOffer": "UbuntuServer",
-    "ubuntuOSVersion": "14.04.3-LTS",
+    "ubuntuOSVersion": "14.04.5-LTS",
     "sshKeyPath": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
 
-    "baseUriAzureCloud": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/bosh-setup/",
-    "filesToDownloadAzureCloud": [
-      "[uri(variables('baseUriAzureCloud'), 'scripts/setup_env')]",
+    "baseUriAzureCloud": "[parameters('_artifactsLocation')]",
+    "filesToDownloadAzure": [
+      "[uri(variables('baseUriAzureCloud'), 'scripts/setup_env.sh')]",
       "[uri(variables('baseUriAzureCloud'), 'scripts/setup_env.py')]",
-      "[uri(variables('baseUriAzureCloud'), 'scripts/create_cert.sh')]",
-      "[uri(variables('baseUriAzureCloud'), 'scripts/init.sh')]",
+      "[uri(variables('baseUriAzureCloud'), 'scripts/utils.sh')]",
+      "[uri(variables('baseUriAzureCloud'), 'scripts/replace_certs.sh')]",
       "[uri(variables('baseUriAzureCloud'), 'scripts/deploy_bosh.sh')]",
       "[uri(variables('baseUriAzureCloud'), 'scripts/deploy_cloudfoundry.sh')]",
       "[uri(variables('baseUriAzureCloud'), 'manifests/bosh.yml')]",
       "[uri(variables('baseUriAzureCloud'), 'manifests/single-vm-cf.yml')]",
       "[uri(variables('baseUriAzureCloud'), 'manifests/multiple-vm-cf.yml')]",
-      "http://go-cli.s3-website-us-east-1.amazonaws.com/releases/v6.14.1/cf-cli-installer_6.14.1_x86-64.deb"
+      "http://go-cli.s3-website-us-east-1.amazonaws.com/releases/v6.14.1/cf-cli-installer_6.14.1_x86-64.deb",
+      "https://storage.googleapis.com/golang/go1.7.3.linux-amd64.tar.gz",
+      "https://github.com/square/certstrap/archive/v1.0.1.tar.gz"
     ],
+    "filesToDownloadAzureCloud": "[variables('filesToDownloadAzure')]",
+    "filesToDownloadAzureUSGovernment": "[variables('filesToDownloadAzure')]",
 
     "baseUriAzureChinaCloud": "https://cloudfoundry.blob.core.chinacloudapi.cn/bosh-setup/",
-    "templateVersion": "v2-1-0",
+    "templateVersion": "v2-3-0",
     "baseUriAzureChinaCloudWithVersion": "[concat(variables('baseUriAzureChinaCloud'), variables('templateVersion'), '/')]",
     "filesToDownloadAzureChinaCloud": [
-      "[uri(variables('baseUriAzureChinaCloudWithVersion'), 'scripts/setup_env')]",
+      "[uri(variables('baseUriAzureChinaCloudWithVersion'), 'scripts/setup_env.sh')]",
       "[uri(variables('baseUriAzureChinaCloudWithVersion'), 'scripts/setup_env.py')]",
-      "[uri(variables('baseUriAzureChinaCloudWithVersion'), 'scripts/create_cert.sh')]",
-      "[uri(variables('baseUriAzureChinaCloudWithVersion'), 'scripts/init.sh')]",
+      "[uri(variables('baseUriAzureChinaCloudWithVersion'), 'scripts/utils.sh')]",
+      "[uri(variables('baseUriAzureChinaCloudWithVersion'), 'scripts/replace_certs.sh')]",
       "[uri(variables('baseUriAzureChinaCloudWithVersion'), 'scripts/deploy_bosh.sh')]",
       "[uri(variables('baseUriAzureChinaCloudWithVersion'), 'scripts/deploy_cloudfoundry.sh')]",
       "[uri(variables('baseUriAzureChinaCloudWithVersion'), 'manifests/bosh.yml')]",
       "[uri(variables('baseUriAzureChinaCloudWithVersion'), 'manifests/single-vm-cf.yml')]",
       "[uri(variables('baseUriAzureChinaCloudWithVersion'), 'manifests/multiple-vm-cf.yml')]",
-      "[uri(variables('baseUriAzureChinaCloud'), 'cf-cli/cf-cli-installer_6.14.1_x86-64.deb')]"
+      "[uri(variables('baseUriAzureChinaCloud'), 'cf-cli/cf-cli-installer_6.14.1_x86-64.deb')]",
+      "https://mirror.azure.cn/go/go1.7.3.linux-amd64.tar.gz",
+      "https://mirror.azure.cn/square/certstrap/v1.0.1/v1.0.1.tar.gz"
     ],
 
     "filesToDownload": "[variables(concat('filesToDownload', parameters('environment')))]",
 
-    "environmentAzureCloud": {
-      "serviceHostBase": "core.windows.net",
+    "coreUriAzureCloud": "core.windows.net",
+    "coreUriAzureChinaCloud": "core.chinacloudapi.cn",
+    "coreUriAzureUSGovernment": "core.usgovcloudapi.net",
+    "coreUri": "[variables(concat('coreUri', parameters('environment')))]",
+
+    "environmentAzure": {
+      "serviceHostBase": "[variables('coreUri')]",
       "secondaryDNS": "8.8.8.8",
       "dnsRecursor": "168.63.129.16",
       "boshReleaseUrl": "https://bosh.io/d/github.com/cloudfoundry/bosh?v=257.3",
       "boshReleaseSha1": "e4442afcc64123e11f2b33cc2be799a0b59207d0",
-      "boshAzureCPIReleaseUrl": "https://bosh.io/d/github.com/cloudfoundry-incubator/bosh-azure-cpi-release?v=17",
-      "boshAzureCPIReleaseSha1": "b265730fc26ae8dc07958de61c4b7f8c0187d59a",
-      "stemcellUrl": "https://bosh.io/d/stemcells/bosh-azure-hyperv-ubuntu-trusty-go_agent?v=3262.7",
-      "stemcellSha1": "829a87d8ce24613e934a706cf10d6f2017fea1da",
+      "boshAzureCPIReleaseUrl": "https://bosh.io/d/github.com/cloudfoundry-incubator/bosh-azure-cpi-release?v=19",
+      "boshAzureCPIReleaseSha1": "1fe2dff904d15cf270cf0b9ab4f93a9f0d8e9f8b",
       "boshInitUrl": "https://s3.amazonaws.com/bosh-init-artifacts/bosh-init-0.0.95-linux-amd64",
-      "cfReleaseUrl": "https://bosh.io/d/github.com/cloudfoundry/cf-release?v=238",
-      "cfReleaseSha1": "fa6d35300f4fcd74a75fd8c7138f592acfcb32b0",
-      "diegoReleaseUrl": "https://bosh.io/d/github.com/cloudfoundry-incubator/diego-release?v=0.1476.0",
-      "diegoReleaseSha1": "4b66fde250472e47eb2a0151bb676fc1be840f47",
-      "gardenReleaseUrl": "https://bosh.io/d/github.com/cloudfoundry-incubator/garden-linux-release?v=0.338.0",
-      "gardenReleaseSha1": "432225d88edc9731be4453cb61eba33fa829ebdc",
-      "cflinuxfs2ReleaseUrl": "https://bosh.io/d/github.com/cloudfoundry/cflinuxfs2-rootfs-release?v=1.16.0",
-      "cflinuxfs2ReleaseSha1": "acfa1c4aad1fa9ef4623bf189cbab788a53f678e"
+      "staticStemcellUrl": "https://bosh.io/d/stemcells/bosh-azure-hyperv-ubuntu-trusty-go_agent?v=3262.7",
+      "staticStemcellSha1": "829a87d8ce24613e934a706cf10d6f2017fea1da",
+      "staticCfReleaseUrl": "https://bosh.io/d/github.com/cloudfoundry/cf-release?v=238",
+      "staticCfReleaseSha1": "fa6d35300f4fcd74a75fd8c7138f592acfcb32b0",
+      "staticDiegoReleaseUrl": "https://bosh.io/d/github.com/cloudfoundry-incubator/diego-release?v=0.1476.0",
+      "staticDiegoReleaseSha1": "4b66fde250472e47eb2a0151bb676fc1be840f47",
+      "staticGardenReleaseUrl": "https://bosh.io/d/github.com/cloudfoundry-incubator/garden-linux-release?v=0.338.0",
+      "staticGardenReleaseSha1": "432225d88edc9731be4453cb61eba33fa829ebdc",
+      "staticCflinuxfs2ReleaseUrl": "https://bosh.io/d/github.com/cloudfoundry/cflinuxfs2-rootfs-release?v=1.16.0",
+      "staticCflinuxfs2ReleaseSha1": "acfa1c4aad1fa9ef4623bf189cbab788a53f678e",
+      "dynamicStemcellUrl": "https://bosh.io/d/stemcells/bosh-azure-hyperv-ubuntu-trusty-go_agent?v=3263.8",
+      "dynamicStemcellSha1": "4c7788b70be83ac816c9d962e35d6ba5c7d04a94",
+      "dynamicCfReleaseUrl": "https://bosh.io/d/github.com/cloudfoundry/cf-release?v=244",
+      "dynamicCfReleaseSha1": "e1666f711ef806399caa87f2fd72c669324c151e",
+      "dynamicDiegoReleaseUrl": "https://bosh.io/d/github.com/cloudfoundry/diego-release?v=0.1487.0",
+      "dynamicDiegoReleaseSha1": "f173af7117baa34cff97cf4355f958ea536a45d0",
+      "dynamicGardenReleaseUrl": "https://bosh.io/d/github.com/cloudfoundry-incubator/garden-linux-release?v=0.342.0",
+      "dynamicGardenReleaseSha1": "dbfd8e7e3560286b6d8c02ba9065a50289e8e0f3",
+      "dynamicCflinuxfs2ReleaseUrl": "https://bosh.io/d/github.com/cloudfoundry/cflinuxfs2-rootfs-release?v=1.34.0",
+      "dynamicCflinuxfs2ReleaseSha1": "b1e367e228f5400439d4031a63df2600a9e213c4"
     },
+    "environmentAzureCloud": "[variables('environmentAzure')]",
+    "environmentAzureUSGovernment": "[variables('environmentAzure')]",
+
     "environmentAzureChinaCloud": {
-      "serviceHostBase": "core.chinacloudapi.cn",
+      "serviceHostBase": "[variables('coreUri')]",
       "secondaryDNS": "1.2.4.8",
       "dnsRecursor": "1.2.4.8",
-      "boshReleaseUrl": "http://mirror.azure.cn/bosh/release/bosh-257.3.tgz",
+      "boshReleaseUrl": "https://mirror.azure.cn/bosh/release/bosh-257.3.tgz",
       "boshReleaseSha1": "e4442afcc64123e11f2b33cc2be799a0b59207d0",
-      "boshAzureCPIReleaseUrl": "http://mirror.azure.cn/bosh/bosh-azure-cpi-release/bosh-azure-cpi-release-17.tgz",
-      "boshAzureCPIReleaseSha1": "b265730fc26ae8dc07958de61c4b7f8c0187d59a",
-      "stemcellUrl": "http://mirror.azure.cn/bosh/bosh-azure-stemcells/bosh-stemcell-3262.7-azure-hyperv-ubuntu-trusty-go_agent.tgz",
-      "stemcellSha1": "829a87d8ce24613e934a706cf10d6f2017fea1da",
-      "boshInitUrl": "http://mirror.azure.cn/bosh/bosh-init/bosh-init-0.0.95-linux-amd64",
-      "cfReleaseUrl": "http://mirror.azure.cn/bosh/cf/cf-release-238.tgz",
-      "cfReleaseSha1": "fa6d35300f4fcd74a75fd8c7138f592acfcb32b0",
-      "diegoReleaseUrl": "http://mirror.azure.cn/bosh/diego/v0.1476.0/diego-0.1476.0.tgz",
-      "diegoReleaseSha1": "fd9db50053423cb15aa994b2a1e4d2c0aa89e695",
-      "gardenReleaseUrl": "http://mirror.azure.cn/bosh/diego/v0.1476.0/garden-linux-0.338.0.tgz",
-      "gardenReleaseSha1": "432225d88edc9731be4453cb61eba33fa829ebdc",
-      "cflinuxfs2ReleaseUrl": "http://mirror.azure.cn/bosh/diego/v0.1477.0/cflinuxfs2-rootfs-1.16.0.tgz",
-      "cflinuxfs2ReleaseSha1": "acfa1c4aad1fa9ef4623bf189cbab788a53f678e"
+      "boshAzureCPIReleaseUrl": "https://mirror.azure.cn/bosh/bosh-azure-cpi-release/bosh-azure-cpi-release-19.tgz",
+      "boshAzureCPIReleaseSha1": "1fe2dff904d15cf270cf0b9ab4f93a9f0d8e9f8b",
+      "boshInitUrl": "https://mirror.azure.cn/bosh/bosh-init/bosh-init-0.0.95-linux-amd64",
+      "staticStemcellUrl": "https://mirror.azure.cn/bosh/bosh-azure-stemcells/bosh-stemcell-3262.7-azure-hyperv-ubuntu-trusty-go_agent.tgz",
+      "staticStemcellSha1": "829a87d8ce24613e934a706cf10d6f2017fea1da",
+      "staticCfReleaseUrl": "https://mirror.azure.cn/bosh/cf/cf-release-238.tgz",
+      "staticCfReleaseSha1": "fa6d35300f4fcd74a75fd8c7138f592acfcb32b0",
+      "staticDiegoReleaseUrl": "https://mirror.azure.cn/bosh/diego/v0.1476.0/diego-0.1476.0.tgz",
+      "staticDiegoReleaseSha1": "fd9db50053423cb15aa994b2a1e4d2c0aa89e695",
+      "staticGardenReleaseUrl": "https://mirror.azure.cn/bosh/diego/v0.1476.0/garden-linux-0.338.0.tgz",
+      "staticGardenReleaseSha1": "432225d88edc9731be4453cb61eba33fa829ebdc",
+      "staticCflinuxfs2ReleaseUrl": "https://mirror.azure.cn/bosh/diego/v0.1477.0/cflinuxfs2-rootfs-1.16.0.tgz",
+      "staticCflinuxfs2ReleaseSha1": "acfa1c4aad1fa9ef4623bf189cbab788a53f678e",
+      "dynamicStemcellUrl": "https://mirror.azure.cn/bosh/bosh-azure-stemcells/bosh-stemcell-3263.8-azure-hyperv-ubuntu-trusty-go_agent.tgz",
+      "dynamicStemcellSha1": "4c7788b70be83ac816c9d962e35d6ba5c7d04a94",
+      "dynamicCfReleaseUrl": "https://mirror.azure.cn/bosh/cf/cf-release-244.tgz",
+      "dynamicCfReleaseSha1": "e1666f711ef806399caa87f2fd72c669324c151e",
+      "dynamicDiegoReleaseUrl": "https://mirror.azure.cn/bosh/diego/v0.1487.0/diego-0.1487.0.tgz",
+      "dynamicDiegoReleaseSha1": "3ba7b17c37cea3ea677643db7881c3d8c5ff58bc",
+      "dynamicGardenReleaseUrl": "https://mirror.azure.cn/bosh/diego/v0.1487.0/garden-linux-0.342.0.tgz",
+      "dynamicGardenReleaseSha1": "dbfd8e7e3560286b6d8c02ba9065a50289e8e0f3",
+      "dynamicCflinuxfs2ReleaseUrl": "https://mirror.azure.cn/bosh/diego/v0.1487.0/cflinuxfs2-rootfs-1.34.0.tgz",
+      "dynamicCflinuxfs2ReleaseSha1": "b1e367e228f5400439d4031a63df2600a9e213c4"
     },
     "environment": "[variables(concat('environment', parameters('environment')))]",
 
@@ -480,16 +522,26 @@
               "BOSH_RELEASE_SHA1": "[variables('environment').boshReleaseSha1]",
               "BOSH_AZURE_CPI_RELEASE_URL": "[variables('environment').boshAzureCPIReleaseUrl]",
               "BOSH_AZURE_CPI_RELEASE_SHA1": "[variables('environment').boshAzureCPIReleaseSha1]",
-              "STEMCELL_URL": "[variables('environment').stemcellUrl]",
-              "STEMCELL_SHA1": "[variables('environment').stemcellSha1]",
-              "CF_RELEASE_URL": "[variables('environment').cfReleaseUrl]",
-              "CF_RELEASE_SHA1": "[variables('environment').cfReleaseSha1]",
-              "DIEGO_RELEASE_URL": "[variables('environment').diegoReleaseUrl]",
-              "DIEGO_RELEASE_SHA1": "[variables('environment').diegoReleaseSha1]",
-              "GARDEN_RELEASE_URL": "[variables('environment').gardenReleaseUrl]",
-              "GARDEN_RELEASE_SHA1": "[variables('environment').gardenReleaseSha1]",
-              "CFLINUXFS2_RELEASE_URL": "[variables('environment').cflinuxfs2ReleaseUrl]",
-              "CFLINUXFS2_RELEASE_SHA1": "[variables('environment').cflinuxfs2ReleaseSha1]",
+              "STATIC_STEMCELL_URL": "[variables('environment').staticStemcellUrl]",
+              "STATIC_STEMCELL_SHA1": "[variables('environment').staticStemcellSha1]",
+              "STATIC_CF_RELEASE_URL": "[variables('environment').staticCfReleaseUrl]",
+              "STATIC_CF_RELEASE_SHA1": "[variables('environment').staticCfReleaseSha1]",
+              "STATIC_DIEGO_RELEASE_URL": "[variables('environment').staticDiegoReleaseUrl]",
+              "STATIC_DIEGO_RELEASE_SHA1": "[variables('environment').staticDiegoReleaseSha1]",
+              "STATIC_GARDEN_RELEASE_URL": "[variables('environment').staticGardenReleaseUrl]",
+              "STATIC_GARDEN_RELEASE_SHA1": "[variables('environment').staticGardenReleaseSha1]",
+              "STATIC_CFLINUXFS2_RELEASE_URL": "[variables('environment').staticCflinuxfs2ReleaseUrl]",
+              "STATIC_CFLINUXFS2_RELEASE_SHA1": "[variables('environment').staticCflinuxfs2ReleaseSha1]",
+              "DYNAMIC_STEMCELL_URL": "[variables('environment').dynamicStemcellUrl]",
+              "DYNAMIC_STEMCELL_SHA1": "[variables('environment').dynamicStemcellSha1]",
+              "DYNAMIC_CF_RELEASE_URL": "[variables('environment').dynamicCfReleaseUrl]",
+              "DYNAMIC_CF_RELEASE_SHA1": "[variables('environment').dynamicCfReleaseSha1]",
+              "DYNAMIC_DIEGO_RELEASE_URL": "[variables('environment').dynamicDiegoReleaseUrl]",
+              "DYNAMIC_DIEGO_RELEASE_SHA1": "[variables('environment').dynamicDiegoReleaseSha1]",
+              "DYNAMIC_GARDEN_RELEASE_URL": "[variables('environment').dynamicGardenReleaseUrl]",
+              "DYNAMIC_GARDEN_RELEASE_SHA1": "[variables('environment').dynamicGardenReleaseSha1]",
+              "DYNAMIC_CFLINUXFS2_RELEASE_URL": "[variables('environment').dynamicCflinuxfs2ReleaseUrl]",
+              "DYNAMIC_CFLINUXFS2_RELEASE_SHA1": "[variables('environment').dynamicCflinuxfs2ReleaseSha1]",
               "BOSH_INIT_URL": "[variables('environment').boshInitUrl]",
               "KEEP_UNREACHABLE_VMS": "[variables('keepUnreachableVMs')]",
               "AUTO_DEPLOY_BOSH": "[parameters('autoDeployBosh')]",
@@ -561,14 +613,14 @@
         "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
       ],
       "properties": {
-        "publisher": "Microsoft.OSTCExtensions",
-        "type": "CustomScriptForLinux",
-        "typeHandlerVersion": "1.4",
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
         "settings": {
           "fileUris": "[variables('filesToDownload')]"
         },
         "protectedSettings": {
-          "commandToExecute": "[concat('bash -l -c \"./setup_env', ' ', parameters('tenantID'), ' ', parameters('clientID'), ' ', base64(parameters('clientSecret')), ' >/home/', parameters('adminUsername'), '/install.log 2>&1\"')]"
+          "commandToExecute": "[concat('bash -l -c \"./setup_env.sh', ' ', parameters('tenantID'), ' ', parameters('clientID'), ' ', base64(parameters('clientSecret')), ' >/home/', parameters('adminUsername'), '/install.log 2>&1\"')]"
         }
       }
     }

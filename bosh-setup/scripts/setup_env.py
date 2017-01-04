@@ -40,7 +40,8 @@ def render_bosh_manifest(settings):
 
     ntp_servers_maps = {
         "AzureCloud": "0.north-america.pool.ntp.org",
-        "AzureChinaCloud": "1.cn.pool.ntp.org, 1.asia.pool.ntp.org, 0.asia.pool.ntp.org"
+        "AzureChinaCloud": "1.cn.pool.ntp.org, 1.asia.pool.ntp.org, 0.asia.pool.ntp.org",
+        "AzureUSGovernment": "0.north-america.pool.ntp.org"
     }
     environment = settings["ENVIRONMENT"]
     ntp_servers = ntp_servers_maps[environment]
@@ -69,8 +70,8 @@ def render_bosh_manifest(settings):
             "BOSH_RELEASE_SHA1",
             "BOSH_AZURE_CPI_RELEASE_URL",
             "BOSH_AZURE_CPI_RELEASE_SHA1",
-            "STEMCELL_URL",
-            "STEMCELL_SHA1",
+            "DYNAMIC_STEMCELL_URL",
+            "DYNAMIC_STEMCELL_SHA1",
             "ENVIRONMENT",
             "BOSH_VM_SIZE"
         ]
@@ -89,7 +90,6 @@ def render_bosh_manifest(settings):
 def get_cloud_foundry_configuration(scenario, settings, bosh_director_ip):
     config = {}
     keys = [
-        "SUBNET_ADDRESS_RANGE_FOR_CLOUD_FOUNDRY",
         "VNET_NAME",
         "SUBNET_NAME_FOR_CLOUD_FOUNDRY",
         "CLOUD_FOUNDRY_PUBLIC_IP",
@@ -99,42 +99,13 @@ def get_cloud_foundry_configuration(scenario, settings, bosh_director_ip):
         config[key] = settings[key]
 
     dns_maps = {
-        "AzureCloud": "168.63.129.16, {0}".format(settings["SECONDARY_DNS"]),
-        "AzureChinaCloud": bosh_director_ip
+        "AzureCloud": "168.63.129.16\n    - {0}".format(settings["SECONDARY_DNS"]),
+        "AzureChinaCloud": bosh_director_ip,
+        "AzureUSGovernment": "168.63.129.16\n    - {0}".format(settings["SECONDARY_DNS"])
     }
     environment = settings["ENVIRONMENT"]
     config["DNS"] = dns_maps[environment]
-
-    with open('cloudfoundry.cert', 'r') as tmpfile:
-        ssl_cert = tmpfile.read()
-    with open('cloudfoundry.key', 'r') as tmpfile:
-        ssl_key = tmpfile.read()
-    ssl_cert_and_key = "{0}{1}".format(ssl_cert, ssl_key)
-    indentation = " " * 8
-    ssl_cert_and_key = ("\n"+indentation).join([line for line in ssl_cert_and_key.split('\n')])
-    config["SSL_CERT_AND_KEY"] = ssl_cert_and_key
-
-    ip = netaddr.IPNetwork(settings['SUBNET_ADDRESS_RANGE_FOR_CLOUD_FOUNDRY'])
-    config["GATEWAY_IP"] = str(ip[1])
-    config["RESERVED_IP_FROM"] = str(ip[2])
-    config["RESERVED_IP_TO"] = str(ip[3])
-    config["CLOUD_FOUNDRY_INTERNAL_IP"] = str(ip[4])
     config["SYSTEM_DOMAIN"] = "{0}.xip.io".format(settings["CLOUD_FOUNDRY_PUBLIC_IP"])
-
-    if scenario == "single-vm-cf":
-        config["STATIC_IP_FROM"] = str(ip[4])
-        config["STATIC_IP_TO"] = str(ip[100])
-        config["POSTGRES_IP"] = str(ip[11])
-    elif scenario == "multiple-vm-cf":
-        config["STATIC_IP_FROM"] = str(ip[4])
-        config["STATIC_IP_TO"] = str(ip[100])
-        config["HAPROXY_IP"] = str(ip[4])
-        config["POSTGRES_IP"] = str(ip[11])
-        config["ROUTER_IP"] = str(ip[12])
-        config["NATS_IP"] = str(ip[13])
-        config["ETCD_IP"] = str(ip[14])
-        config["NFS_IP"] = str(ip[15])
-        config["CONSUL_IP"] = str(ip[16])
 
     return config
 
@@ -166,16 +137,26 @@ def render_cloud_foundry_deployment_cmd(settings):
         with open(cloudfoundry_deployment_cmd, 'r') as tmpfile:
             contents = tmpfile.read()
         keys = [
-            "STEMCELL_URL",
-            "STEMCELL_SHA1",
-            "CF_RELEASE_URL",
-            "CF_RELEASE_SHA1",
-            "DIEGO_RELEASE_URL",
-            "DIEGO_RELEASE_SHA1",
-            "GARDEN_RELEASE_URL",
-            "GARDEN_RELEASE_SHA1",
-            "CFLINUXFS2_RELEASE_URL",
-            "CFLINUXFS2_RELEASE_SHA1"
+            "STATIC_STEMCELL_URL",
+            "STATIC_STEMCELL_SHA1",
+            "STATIC_CF_RELEASE_URL",
+            "STATIC_CF_RELEASE_SHA1",
+            "STATIC_DIEGO_RELEASE_URL",
+            "STATIC_DIEGO_RELEASE_SHA1",
+            "STATIC_GARDEN_RELEASE_URL",
+            "STATIC_GARDEN_RELEASE_SHA1",
+            "STATIC_CFLINUXFS2_RELEASE_URL",
+            "STATIC_CFLINUXFS2_RELEASE_SHA1",
+            "DYNAMIC_STEMCELL_URL",
+            "DYNAMIC_STEMCELL_SHA1",
+            "DYNAMIC_CF_RELEASE_URL",
+            "DYNAMIC_CF_RELEASE_SHA1",
+            "DYNAMIC_DIEGO_RELEASE_URL",
+            "DYNAMIC_DIEGO_RELEASE_SHA1",
+            "DYNAMIC_GARDEN_RELEASE_URL",
+            "DYNAMIC_GARDEN_RELEASE_SHA1",
+            "DYNAMIC_CFLINUXFS2_RELEASE_URL",
+            "DYNAMIC_CFLINUXFS2_RELEASE_SHA1"
         ]
         for key in keys:
             value = settings[key]
