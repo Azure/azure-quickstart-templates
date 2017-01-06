@@ -8,24 +8,15 @@ This template creates the following resources by default:
 +	A SQL Server 2016 cluster for storage nodes provisioned on Storage Spaces Direct (S2D)
 +	One Availability Set for the cluster nodes
 
-To deploy the required Azure VNET and Active Directory infrastructure, if not already in place, you may use <a href="https://github.com/Azure/azure-quickstart-templates/tree/master/active-directory-new-domain-ha-2-dc">this template</a> to deploy the prerequisite infrastructure. 
+## Requirements
 
-Click the button below to deploy from the portal:
-
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FMSBrett%2Fazure-quickstart-templates%2Fmaster%2Fsql-server-2016-fci-existing-vnet-and-ad%2Fazuredeploy.json" target="_blank">
-    <img src="http://azuredeploy.net/deploybutton.png"/>
-</a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FMSBrett%2Fazure-quickstart-templates%2Fmaster%2Fsql-server-2016-fci-existing-vnet-and-ad%2Fazuredeploy.json" target="_blank">
-    <img src="http://armviz.io/visualizebutton.png"/>
-</a>
-
-## Notes
++ 	The service account used by SQL Server should be created ahead of time in AD by an admin.  Use the standard SQL Server guidance for these accounts.
 
 +	The default settings for storage are to deploy using **premium storage**, which is **strongly** recommended for S2D performance.  When using Premium Storage, be sure to select a VM size (DS-series, GS-series) that supports Premium Storage.
 
 +   The default settings deploy 2 data disks per storage node, but can be increased to up to 32 data disks per node.  When increasing # of data disks, be sure to select a VM size that can support the # of data disks you specify.
 
-+ 	The default settings for compute require that you have at least 2 cores of free quota to deploy.
++ 	The default settings for compute require that you have at least 4 cores of free quota to deploy.
 
 + 	The images used to create this deployment are
 	+ 	SQL Server 2016 SP1 and Windows Server 2016 Datacenter Edition - Latest Image
@@ -37,13 +28,17 @@ Click the button below to deploy from the portal:
 
 ## Deploying Sample Templates
 
-To deploy the sample using the Azure Portal, click the **Deploy to Azure** button found above.
+To deploy the required Azure VNET and Active Directory infrastructure, if not already in place, you may use <a href="https://github.com/Azure/azure-quickstart-templates/tree/master/active-directory-new-domain-ha-2-dc">this template</a> to deploy the prerequisite infrastructure. 
 
-## TODO
- + Modify cluster failover bits in DSC resources so they don't always revert to node0.
- + Add second drive for DTC
- + Add DTC resource before installing SQL
- + Add DSC diagnostics
- + Refactor variables
+Click the button below to deploy from the portal:
+
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FMSBrett%2Fazure-quickstart-templates%2Fmaster%2Fsql-server-2016-fci-existing-vnet-and-ad%2Fazuredeploy.json" target="_blank">
+    <img src="http://azuredeploy.net/deploybutton.png"/>
+</a>
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FMSBrett%2Fazure-quickstart-templates%2Fmaster%2Fsql-server-2016-fci-existing-vnet-and-ad%2Fazuredeploy.json" target="_blank">
+    <img src="http://armviz.io/visualizebutton.png"/>
+</a>
+
+
 
 Tags: ``cluster, ha, storage spaces, storage spaces direct, S2D, windows server 2016, ws2016, sql server 2016, sql2016``
