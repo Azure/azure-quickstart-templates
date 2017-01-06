@@ -2,7 +2,7 @@
 ##Version 1.0 Beta 2
 
 
-[![Deploy Button](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fhkamel%2Fazure-quickstart-templates%2Fmaster%2Fsonarqube-azuresql%2Fazuredeploy.json)
+[![Deploy Button](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Fsonarqube-azuresql%2Fazuredeploy.json)
 [![Visualize button](http://armviz.io/visualizebutton.png)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsonarqube-azuresql%2Fazuredeploy.json)
 
 
@@ -11,8 +11,8 @@ can be deployed to a new resource group (recommended) or to an existing resource
 
 Once the deployment is complete you can increase the resources provided to SonarQube by changing the VM from a Standard DS1 v2 machine to any larger DS_x_ v2 machine without the need to redeploy SonarQube or migrate any data.
 
-[License](https://raw.githubusercontent.com/hkamel/azure-quickstart-templates/master/sonarqube-azuresql/oss/License.txt)  
-[Third Party Notices](https://raw.githubusercontent.com/hkamel/azure-quickstart-templates/master/sonarqube-azuresql/oss/ThirdPartyNotices.txt)
+[License](https://raw.githubusercontent.com/azure/azure-quickstart-templates/master/sonarqube-azuresql/oss/License.txt)  
+[Third Party Notices](https://raw.githubusercontent.com/azure/azure-quickstart-templates/master/sonarqube-azuresql/oss/ThirdPartyNotices.txt)
 
 * * *
 ####Note:  
@@ -118,7 +118,7 @@ Cesar Solis,
 
 Sergio Romero Ortiz,  
 
-[Hosam Kamel](https://github.com/hkamel),  
+[Hosam Kamel](https://github.com/azure),  
 
 [Kevin Mack](https://github.com/KevinDMack),  
 
