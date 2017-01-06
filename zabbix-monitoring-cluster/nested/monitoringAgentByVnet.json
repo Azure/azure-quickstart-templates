@@ -1,0 +1,61 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "existingVirtualNetworkName": {
+      "type": "string",
+      "metadata": {
+        "description": "The existing vnet name the existing VMs connects to."
+      }
+    },
+    "existingSubnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "The existing subnet name the existing VMs connects to, agents will also be installed on those VMs."
+      },
+      "defaultValue": "default"
+    },
+    "serverIp": {
+      "type": "string",
+      "metadata": {
+        "description": "Monitoring server ip."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/zabbix-monitoring-cluster"
+    }
+  },
+  "variables": {
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('existingVirtualNetworkName'))]",
+    "subnetRef": "[concat(variables('vnetID'),'/subnets/',parameters('existingSubnetName'))]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2015-01-01",
+      "name": "configMonitoringAgentByIps",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('_artifactsLocation'), '/nested/monitoringAgentByIps.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "ipConfigurations": {
+            "value": "[reference(concat('Microsoft.Network/virtualnetworks/', parameters('existingVirtualNetworkName'), '/subnets/', parameters('existingSubnetName')), '2016-03-30').ipConfigurations]"
+          },
+          "serverIp": {
+            "value": "[parameters('serverIp')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          }
+        }
+      }
+    }
+  ]
+}

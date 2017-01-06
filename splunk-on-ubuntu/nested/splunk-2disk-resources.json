@@ -45,7 +45,9 @@
     "nicName": "[concat(parameters('namespace'), '-nic')]",
     "publicIpName": "[parameters('machineSettings').publicIPName]",
     "clusterMasterIp": "[parameters('machineSettings').clusterMasterIp]",
-    "securityGroupRef": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('securityGroupName'))]"
+    "securityGroupRef": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('securityGroupName'))]",
+    "storageReferenceName": "[concat('Microsoft.Storage/storageAccounts/', parameters('storageSettings').name, parameters('storageSettings').map[0])]",
+    "storageApiVersion": "[providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]]"
   },
   "resources": [
     {
@@ -104,7 +106,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://', parameters('storageSettings').name, parameters('storageSettings').map[0], '.blob.core.windows.net/vhds/', variables('vmName'), '-osdisk.vhd')]"
+              "uri": "[concat(reference(variables('storageReferenceName'), variables('storageApiVersion')).primaryEndpoints.blob, 'vhds/', variables('vmName'), '-osdisk.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -115,7 +117,7 @@
               "diskSizeGB": "[parameters('machineSettings').diskSize]",
               "lun": 0,
               "vhd": {
-                "Uri": "[concat('http://', parameters('storageSettings').name, parameters('storageSettings').map[0], '.blob.core.windows.net/vhds/', variables('vmName'), '-datadisk1.vhd')]"
+                "uri": "[concat(reference(variables('storageReferenceName'), variables('storageApiVersion')).primaryEndpoints.blob, 'vhds/', variables('vmName'), '-datadisk1.vhd')]"
               },
               "caching": "ReadOnly",
               "createOption": "Empty"
@@ -125,7 +127,7 @@
               "diskSizeGB": "[parameters('machineSettings').diskSize]",
               "lun": 1,
               "vhd": {
-                "Uri": "[concat('http://', parameters('storageSettings').name, parameters('storageSettings').map[0], '.blob.core.windows.net/vhds/', variables('vmName'), '-datadisk2.vhd')]"
+                "uri": "[concat(reference(variables('storageReferenceName'), variables('storageApiVersion')).primaryEndpoints.blob, 'vhds/', variables('vmName'), '-datadisk2.vhd')]"
               },
               "caching": "ReadOnly",
               "createOption": "Empty"
@@ -151,9 +153,9 @@
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
       ],
       "properties": {
-        "publisher": "Microsoft.OSTCExtensions",
-        "type": "CustomScriptForLinux",
-        "typeHandlerVersion": "1.5",
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": "[parameters('osSettings').scripts]"
@@ -163,5 +165,19 @@
         }
       }
     }
-  ]
+  ],
+  "outputs": {
+    "storageReferenceName": {
+      "type": "string",
+      "value": "[variables('storageReferenceName')]"
+    },
+    "storageApiVersion": {
+      "type":"string",
+      "value": "[variables('storageApiVersion')]"
+    },
+    "blobEndpoint": {
+      "type": "string",
+      "value": "[reference(variables('storageReferenceName'), variables('storageApiVersion')).primaryEndpoints.blob]"
+    }
+  }
 }
