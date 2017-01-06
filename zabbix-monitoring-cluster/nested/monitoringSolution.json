@@ -1,0 +1,228 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "existingStorageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "The existing Storage account for storing VM vhd."
+      }
+    },
+    "existingVirtualNetworkName": {
+      "type": "string",
+      "metadata": {
+        "description": "The existing vnet name the monitor VM connects to."
+      }
+    },
+    "existingSubnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "The existing subnet name the monitor VM connects to, also agents will also be installed on those VMs."
+      },
+      "defaultValue": "default"
+    },
+    "monitorVmName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name for the monitor VM. This would become part of the fully qualified domain name for monitor VM, thus it should be globally unique."
+      }
+    },
+    "monitorVmDistro": {
+      "type": "string",
+      "metadata": {
+        "description": "Distro type for VM."
+      },
+      "allowedValues": [
+        "Ubuntu",
+        "CentOS"
+      ],
+      "defaultValue": "Ubuntu"
+    },
+    "monitorVmUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Monitor VM user name."
+      },
+      "defaultValue": "monitoruser"
+    },
+    "monitorVmPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Monitor VM password."
+      }
+    },
+    "mysqlHost": {
+      "type": "string",
+      "metadata": {
+        "description": "Monitoring service backend MySQL host. Using 'localhost' here will set up a new MySQL instance on the monitor VM."
+      },
+      "defaultValue": "localhost"
+    },
+    "mysqlDbName": {
+      "type": "string",
+      "metadata": {
+        "description": "Monitoring service backend MySQL database name."
+      },
+      "defaultValue": "zabbixdb"
+    },
+    "mysqlUser": {
+      "type": "string",
+      "metadata": {
+        "description": "Monitoring service backend MySQL user name."
+      },
+      "defaultValue": "zabbixuser"
+    },
+    "mysqlPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Monitoring service backend MySQL password."
+      }
+    },
+    "smtpServer": {
+      "type": "string",
+      "metadata": {
+        "description": "The smtp server for mail notification, format is server:port."
+      },
+      "defaultValue": ""
+    },
+    "smtpUser": {
+      "type": "string",
+      "metadata": {
+        "description": "The smtp user for mail notification."
+      },
+      "defaultValue": ""
+    },
+    "smtpPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The smtp password for mail notification."
+      },
+      "defaultValue": ""
+    },
+    "notificationReceiver": {
+      "type": "string",
+      "metadata": {
+        "description": "The receiver's email address for mail notification."
+      },
+      "defaultValue": ""
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/zabbix-monitoring-cluster"
+    }
+  },
+  "resources": [
+    {
+      "apiVersion": "2015-01-01",
+      "name": "configMonitoringServerVmDistro",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('_artifactsLocation'), '/nested/monitoringServerDistro', parameters('monitorVmDistro'), '.json')]",
+          "contentVersion": "1.0.0.0"
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-01-01",
+      "name": "configMonitoringServerVM",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('_artifactsLocation'), '/nested/monitoringServer.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "existingStorageAccountName": {
+            "value": "[parameters('existingStorageAccountName')]"
+          },
+          "existingVirtualNetworkName": {
+            "value": "[parameters('existingVirtualNetworkName')]"
+          },
+          "existingSubnetName": {
+            "value": "[parameters('existingSubnetName')]"
+          },
+          "vmName": {
+            "value": "[parameters('monitorVmName')]"
+          },
+          "vmImageReference": {
+            "value": "[reference('configMonitoringServerVmDistro').outputs.imageReference.value]"
+          },
+          "adminUsername": {
+            "value": "[parameters('monitorVmUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('monitorVmPassword')]"
+          },
+          "mysqlHost": {
+            "value": "[parameters('mysqlHost')]"
+          },
+          "mysqlDbName": {
+            "value": "[parameters('mysqlDbName')]"
+          },
+          "mysqlUser": {
+            "value": "[parameters('mysqlUser')]"
+          },
+          "mysqlPassword": {
+            "value": "[parameters('mysqlPassword')]"
+          },
+          "smtpServer": {
+            "value": "[parameters('smtpServer')]"
+          },
+          "smtpUser": {
+            "value": "[parameters('smtpUser')]"
+          },
+          "smtpPassword": {
+            "value": "[parameters('smtpPassword')]"
+          },
+          "notificationReceiver": {
+            "value": "[parameters('notificationReceiver')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-01-01",
+      "name": "configMonitoringAgentByVnet",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "configMonitoringServerVM"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('_artifactsLocation'), '/nested/monitoringAgentByVnet.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "existingVirtualNetworkName": {
+            "value": "[parameters('existingVirtualNetworkName')]"
+          },
+          "existingSubnetName": {
+            "value": "[parameters('existingSubnetName')]"
+          },
+          "serverIp": {
+            "value": "[reference('configMonitoringServerVM').outputs.serverInternalIp.value]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "serverPublicEndpoint": {
+      "type": "string",
+      "value": "[reference('configMonitoringServerVM').outputs.serverPublicEndpoint.value]"
+    }
+  }
+}

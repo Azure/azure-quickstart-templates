@@ -21,7 +21,7 @@ function addtofstab()
 		local uuid=${BASH_REMATCH[1]};
 		local mountCmd=""
 		log "adding fstab entry"
-		mountCmd="/dev/disk/by-uuid/$uuid $mountPath xfs  defaults  0  2"
+		mountCmd="/dev/disk/by-uuid/$uuid $mountPath xfs  defaults,nofail  0  2"
 		echo "$mountCmd" >> /etc/fstab
 		$(mount $mountPath)
 	else

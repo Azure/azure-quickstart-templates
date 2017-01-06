@@ -113,7 +113,7 @@ mongod --dbpath /var/lib/mongo/ --config /etc/mongod.conf --replSet $replSetName
 
 #check if mongod started or not
 sleep 15
-n=`ps -ef |grep -v grep|grep mongod |wc -l`
+n=`ps -ef |grep "mongod --dbpath /var/lib/mongo/" |grep -v grep |wc -l`
 if [[ $n -eq 1 ]];then
 echo "replica set started successfully"
 else

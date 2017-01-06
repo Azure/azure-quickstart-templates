@@ -7,4 +7,4 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template allows you to deploy a simple Windows VM using a few different options for the Windows version, using the latest patched version. This will deploy in West US on a D1 VM Size.
+This template allows you to deploy a simple Windows VM using a few different options for the Windows version, using the latest patched version. This will deploy a D1 size VM in the resource group location and return the fully qualified domain name of the VM.

@@ -15,6 +15,9 @@ This template creates a VETER pipeline using Logic Apps. It creates an integrati
 In order to properly deploy this ARM template, you need to first create an Azure Function app and provide its name in the parameters.
 Create an Azure Function App - https://portal.azure.com/#create/Microsoft.FunctionApp
 
+### Tip: ###
+Make a note of the the name of the Azure Function App, you will need it in the next step.
+
 ## Deployment steps
 
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
@@ -34,6 +37,6 @@ Once the deployment is completed, you can perform below steps to test your Logic
 ## Notes
 
 Learn more about: Azure Logic Apps
-* **Azure Logic Apps** - https://azure.microsoft.com/en-us/documentation/articles/app-service-logic-what-are-logic-apps/
+* **Azure Logic Apps** - https://azure.microsoft.com/documentation/articles/app-service-logic-what-are-logic-apps/
 * **Logic Apps Enterprise Integration Pack** - https://blogs.msdn.microsoft.com/logicapps/2016/06/30/public-preview-of-logic-apps-enteprise-integration-pack/
-* **XML Processing capabilities in Logic Apps** - https://azure.microsoft.com/en-us/documentation/articles/app-service-logic-enterprise-integration-xml/
+* **XML Processing capabilities in Logic Apps** - https://azure.microsoft.com/documentation/articles/app-service-logic-enterprise-integration-xml/
