@@ -23,8 +23,8 @@ passwd = postgres_properties.get('password')
 db = DB(dbname=dbname, host=host, port=port, user=user, passwd=passwd)
 
 domain_id = db.insert('domains', name='xip.io', type='NATIVE')['id']
-db.insert('records', domain_id=domain_id, name='xip.io', content='localhost foo@bar.com 1', type='SOA', ttl=86400, prio=None)
-db.insert('records', domain_id=domain_id, name='xip.io', content='dns-us1.powerdns.net', type='NS', ttl=86400, prio=None)
+db.insert('records', domain_id=domain_id, name='{0}.xip.io'.format(cf_ip), content='localhost foo@bar.com 1', type='SOA', ttl=86400, prio=None)
+db.insert('records', domain_id=domain_id, name='{0}.xip.io'.format(cf_ip), content='dns-us1.powerdns.net', type='NS', ttl=86400, prio=None)
 db.insert('records', domain_id=domain_id, name='*.{0}.xip.io'.format(cf_ip), content=cf_ip, type='A', ttl=120, prio=None)
 
 db.close()
