@@ -46,6 +46,12 @@ def render_bosh_manifest(settings):
     environment = settings["ENVIRONMENT"]
     ntp_servers = ntp_servers_maps[environment]
 
+    postgres_address_maps = {
+        "AzureCloud": "127.0.0.1",
+        "AzureChinaCloud": bosh_director_ip
+    }
+    postgres_address = postgres_address_maps[environment]
+
     # Render the manifest for bosh-init
     bosh_template = 'bosh.yml'
     if os.path.exists(bosh_template):
@@ -82,6 +88,7 @@ def render_bosh_manifest(settings):
         contents = re.compile(re.escape("REPLACE_WITH_GATEWAY_IP")).sub(gateway_ip, contents)
         contents = re.compile(re.escape("REPLACE_WITH_BOSH_DIRECTOR_IP")).sub(bosh_director_ip, contents)
         contents = re.compile(re.escape("REPLACE_WITH_NTP_SERVERS")).sub(ntp_servers, contents)
+        contents = re.compile(re.escape("REPLACE_WITH_POSTGRES_ADDRESS")).sub(postgres_address, contents)
         with open(bosh_template, 'w') as tmpfile:
             tmpfile.write(contents)
 
