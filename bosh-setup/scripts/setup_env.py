@@ -48,7 +48,8 @@ def render_bosh_manifest(settings):
 
     postgres_address_maps = {
         "AzureCloud": "127.0.0.1",
-        "AzureChinaCloud": bosh_director_ip
+        "AzureChinaCloud": bosh_director_ip,
+        "AzureUSGovernment": "127.0.0.1"
     }
     postgres_address = postgres_address_maps[environment]
 
