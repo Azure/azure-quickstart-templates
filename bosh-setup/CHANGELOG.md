@@ -1,3 +1,8 @@
+# v2.4.2 (2017-01-10)
+
+- Upgrade cf-release to v250
+- Upgrade bosh stemcell to v3312.12
+
 # v2.4.0 (2016-12-21)
 
 - Upgrade Azure CPI version to v20. Please see new features in [bosh-azure-cpi-release v20](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v20)
