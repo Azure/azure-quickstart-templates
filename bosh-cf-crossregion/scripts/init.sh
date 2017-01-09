@@ -2,9 +2,6 @@
 
 set -e
 
-echo "Start to install prerequisites..."
-sudo apt-get install -y build-essential ruby2.0 ruby2.0-dev libxml2-dev libsqlite3-dev libxslt1-dev libpq-dev libmysqlclient-dev zlibc zlib1g-dev openssl libxslt-dev libssl-dev libreadline6 libreadline6-dev libyaml-dev sqlite3 libffi-dev
-
 # Update Ruby 1.9 to 2.0
 sudo rm /usr/bin/ruby /usr/bin/gem /usr/bin/irb /usr/bin/rdoc /usr/bin/erb
 sudo ln -s /usr/bin/ruby2.0 /usr/bin/ruby
