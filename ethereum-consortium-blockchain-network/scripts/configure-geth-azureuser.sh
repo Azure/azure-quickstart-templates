@@ -188,7 +188,7 @@ fi
 ##########################################
 # Setup rc.local for service start on boot
 ##########################################
-echo "sudo -u $AZUREUSER /bin/bash $HOMEDIR/start-private-blockchain.sh $GETH_CFG_FILE_PATH $PASSWD" | sudo tee /etc/rc.local 2>&1 1>/dev/null
+echo -e '#!/bin/bash' "\nsudo -u $AZUREUSER /bin/bash $HOMEDIR/start-private-blockchain.sh $GETH_CFG_FILE_PATH $PASSWD" | sudo tee /etc/rc.local 2>&1 1>/dev/null
 if [ $? -ne 0 ]; then
 	exit 1;
 fi
