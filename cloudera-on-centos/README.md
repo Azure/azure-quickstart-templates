@@ -90,7 +90,7 @@ The template expects the following parameters:
 | adminPassword  | Administrator password used when provisioning virtual machines | Eur32#1e |
 | cmUsername | Cloudera Manager username | cmadmin |
 | cmPassword | Cloudera Manager password | cmpassword |
-| storageAccountPrefix | Unique namespace for the Storage Account where the Virtual Machine's disks will be placed | defaultStorageAccountPrefix |
+| storageAccountSuffix | Unique namespace for the Storage Account where the Virtual Machine's disks will be placed | defaultStorageAccountSuffix |
 | numberOfDataNodes | Number of data nodes to provision in the cluster | 3 |
 | dnsNamePrefix | Unique public dns name where the Virtual Machines will be exposed | defaultDnsNamePrefix |
 | region | Azure data center location where resources will be provisioned |  |
@@ -142,7 +142,8 @@ Once the deployment is complete, you can navigate to the Cloudera portal to watc
 
 	http://[dnsNamePrefix]-mn0.[region].cloudapp.azure.com:7180
 
-##Notes, Known Issues & Limitations
+## Notes, Known Issues & Limitations
 - All nodes in the cluster have a public IP address.
 - The deployment script is not yet idempotent and cannot handle updates (although it currently works for initial provisioning only)
 - SSH key is not yet implemented and the template currently takes a password for the admin user
+- Deployment logs can be found at `/var/log/cloudera-azure-initialize.log`.
