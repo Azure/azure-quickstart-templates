@@ -10,18 +10,9 @@
 This template creates a VETER pipeline using Logic Apps. It creates an integration account, adds schema/map into it, creates a logic app and associates it with the integration account. The logic app implements a VETER pipeline using Xml Validation, XPath Extract and Transform Xml operations.
 `Tags: VETER, Logic Apps, Integration Account, Enterprise Integration`
 
-## Prerequisites ##
-
-In order to properly deploy this ARM template, you need to first create an Azure Function app and provide its name in the parameters.
-Create an Azure Function App - https://portal.azure.com/#create/Microsoft.FunctionApp
-
-### Tip: ###
-Make a note of the the name of the Azure Function App, you will need it in the next step.
-
 ## Deployment steps
 
 You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
-Note: The Logic App and the Azure Function App need to be deployed in the same resource group.
 
 ## Usage
 
