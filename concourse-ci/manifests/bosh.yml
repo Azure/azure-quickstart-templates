@@ -23,17 +23,18 @@ disk_pools:
   disk_size: 25_000
 
 networks:
+- name: public
+  type: vip
+
 - name: private
   type: manual
   subnets:
   - range: REPLACE_WITH_SUBNET_ADDRESS_RANGE_FOR_BOSH
     gateway: REPLACE_WITH_GATEWAY_IP
-    dns: [168.63.129.16]
+    dns: [168.63.129.16, 8.8.8.8]
     cloud_properties:
       virtual_network_name: REPLACE_WITH_VNET_NAME
       subnet_name: REPLACE_WITH_SUBNET_NAME_FOR_BOSH
-- name: public
-  type: vip
 
 jobs:
 - name: bosh
@@ -46,7 +47,7 @@ jobs:
   - {name: director, release: bosh}
   - {name: health_monitor, release: bosh}
   - {name: registry, release: bosh}
-  - {name: cpi, release: bosh-azure-cpi}
+  - {name: azure_cpi, release: bosh-azure-cpi}
 
   resource_pool: vms
   persistent_disk_pool: disks
@@ -55,8 +56,8 @@ jobs:
   - name: private
     static_ips: [REPLACE_WITH_BOSH_DIRECTOR_IP]
     default: [dns, gateway]
-  # - name: public
-  #   static_ips: [REPLACE_WITH_BOSH_PUBLIC_IP]
+  - name: public
+    static_ips: [REPLACE_WITH_BOSH_PUBLIC_IP]
 
   properties:
     nats:
@@ -92,7 +93,7 @@ jobs:
       address: 127.0.0.1
       name: bosh
       db: *db
-      cpi_job: cpi
+      cpi_job: azure_cpi
       max_threads: 10
       user_management:
         provider: local
@@ -124,10 +125,10 @@ jobs:
     ntp: &ntp [REPLACE_WITH_NTP_SERVERS]
 
 cloud_provider:
-  template: {name: cpi, release: bosh-azure-cpi}
+  template: {name: azure_cpi, release: bosh-azure-cpi}
 
   ssh_tunnel:
-    host: REPLACE_WITH_BOSH_DIRECTOR_IP
+    host: REPLACE_WITH_BOSH_PUBLIC_IP
     port: 22
     user: vcap
     private_key: ./bosh # Path relative to this manifest file
