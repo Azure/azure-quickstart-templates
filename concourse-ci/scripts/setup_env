@@ -23,6 +23,14 @@ function retryop()
   fi
 }
 
+random_secret() {
+  openssl rand -base64 16 | tr -dc 'a-zA-Z0-9'
+}
+
+replace_value() {
+  sed -i "s/$2/$3/g" $1
+}
+
 echo "Start to update package lists from repositories..."
 retryop "apt-get update"
 
@@ -107,6 +115,25 @@ cp "$bosh_key.pub" $home_dir
 
 echo "Start to run setup_env.py..."
 bosh_director_ip=$(python setup_env.py ${tenant_id} ${client_id} ${client_secret} ${custom_data_file})
+
+BOSH_TEMPLATE="bosh.yml"
+
+# Replace bosh secrets
+replace_bosh_secrets_list="REPLACE_WITH_NATS_PASSWORD \
+                           REPLACE_WITH_POSTGRES_PASSWORD \
+                           REPLACE_WITH_REGISTRY_PASSWORD \
+                           REPLACE_WITH_DIRECTOR_PASSWORD \
+                           REPLACE_WITH_ADMIN_PASSWORD \
+                           REPLACE_WITH_AGENT_PASSWORD \
+                           REPLACE_WITH_HM_PASSWORD \
+                           REPLACE_WITH_MBUS_PASSWORD"
+for secret_name in ${replace_bosh_secrets_list}; do
+  secret_value=$(random_secret)
+  replace_value ${BOSH_TEMPLATE} ${secret_name} ${secret_value}
+  if [ ${secret_name} == "REPLACE_WITH_ADMIN_PASSWORD" ]; then
+    sed -i "s/REPLACE_WITH_ADMIN_PASSWORD/${secret_value}/g" deploy_bosh.sh
+  fi
+done
 
 echo "Prepare Bosh deployment script and manifest"
 chmod +x deploy_bosh.sh
