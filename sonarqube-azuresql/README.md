@@ -95,6 +95,7 @@ Once the deployment and configuration have finished you will be able to access y
 | sqStorage_AcctType          | Type of Azure Storage Acct to create, Standard\_LRS, Standard\_ZRS, Standard\_GRS, Standard\_RAGRS, Premium\_LRS   | Standard\_LRS   |    
 | sqVM_Installation_Type          | Type of SonarQube installation: Secure (HTTPs) or nonsecure (HTTP)  | Secure   |    
 | sqVM_ReverseProxy_Type          | Type of reverse proxy to be used in case of Secure installation   | IIS   |    
+| sqVM_LTS_Version          | SonarQube LTS version, currently support only sonarqube-5.6.4   | sonarqube-5.6.4   |
 
 * * *
 
