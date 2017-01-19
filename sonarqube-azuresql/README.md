@@ -119,7 +119,7 @@ Cesar Solis,
 
 Sergio Romero Ortiz,  
 
-[Hosam Kamel](https://github.com/azure),  
+[Hosam Kamel](https://github.com/hkamel),  
 
 [Kevin Mack](https://github.com/KevinDMack),  
 
