@@ -1,5 +1,5 @@
 # Secure SonarQube VM with Azure SQL DB  
-##Version 1.0 Beta 2
+##Version 1.0
 
 
 [![Deploy Button](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsonarqube-azuresql%2Fazuredeploy.json)
