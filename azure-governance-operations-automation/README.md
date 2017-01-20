@@ -22,7 +22,6 @@
     - [OMS Azure SQL Databases Monitoring dashboard (For Operations Teams)](#oms-azure-sql-databases-monitoring-dashboard-for-operations-teams)
 - [Deployment and Settings](#deployment-and-settings)
 - [Post Deployment Steps](#post-deployment-steps)
-- [Usage](#usage)
 - [Terms of Use and Privacy Policies](#terms-of-use-and-privacy-policies)
 - [Support](#support)
 
@@ -130,19 +129,11 @@ You have now successfully deployed the application. You will have to do a few ad
 
 
 
-## Usage
-
-Usage Guides
-
-You can use the following guide to use the solution.
-
-<guide link goes here>
-
 ## Terms of Use and Privacy Policies
 As the solution contains IP owned by Avyan Consulting Corp, please refer to
-This solution will be available in Azure Marketplace - tentatively around end of 2016 timeframe (End of Sept - Beginning Of Oct 2016)  
 * [Terms of Service](termsofuse/CloudWise_Terms_Of_Service.pdf)
 * [Privacy Policy](termsofuse/CloudWise_Privacy_Policy.pdf)
+This solution is planned to be made available as a product in Azure Marketplace - tentatively around end of 2016 timeframe
 
 ## Support
 For any support-related issues or questions, please contact us for assistance.

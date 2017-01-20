@@ -9,18 +9,9 @@
 
 This template creates a request-response Logic App which performs XSLT based transformation. The XSLT map takes primitives (integer, string etc.) as input parameters as uses them during XML transformation.
 
-## Prerequisites ##
-
-In order to properly deploy this ARM template, you need to first create an Azure Function app and provide its name in the parameters.
-Create an Azure Function App - https://portal.azure.com/#create/Microsoft.FunctionApp
-
-### Tip: ### 
-Make a note of the the name of the Azure Function App, you will need it in the next step. 
-
 ## Deployment steps
 
 You can click the "Deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
-Note: The Logic App and the Azure Function App need to be deployed in the same resource group.
 
 ## Usage
 
