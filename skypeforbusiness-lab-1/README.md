@@ -1,4 +1,4 @@
-# Azure SfB lab
+# Skype for Business lab on Azure
 Azure template for a Skype for Business
 
 # Create a Skype for Business 2015 Standard Edition Lab
