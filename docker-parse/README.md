@@ -7,5 +7,5 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template allows you to deploy an Ubuntu Server 15.10 VM with Docker (using the [Docker Extension](https://github.com/Azure/azure-docker-extension))
+This template allows you to deploy an Ubuntu Server 16.10 VM with Docker (using the [Docker Extension](https://github.com/Azure/azure-docker-extension))
 and starts an open-source Parse server container listening on port 80. For information [regarding the Parse Server image, please see the repository](https://github.com/felixrieseberg/parse-docker).

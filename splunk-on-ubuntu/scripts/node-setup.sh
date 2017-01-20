@@ -36,7 +36,7 @@
 #  4 - i: index of node (optional)
 #  5 - h: Help
 # Note : 
-# This script has only been tested on Ubuntu 12.04 LTS & 14.04.2-LTS and must be root
+# This script has only been tested on Ubuntu 12.04 LTS & 14.04.4-LTS and must be root
 
 set -e
 
