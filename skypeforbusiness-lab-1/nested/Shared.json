@@ -1,0 +1,218 @@
+﻿{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+  "parameters": {
+    "StorageAccountName": {
+      "type": "string",
+      "defaultValue": "[concat('store', uniqueString(resourceGroup().id))]",
+      "metadata": {
+        "description": "The Storage Account Name "
+      }
+    },
+    "StorageAccountType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_ZRS",
+        "Standard_GRS",
+        "Standard_RAGRS",
+        "Premium_LRS"
+      ]
+    },
+    "AvailabilitySet1Name": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "AVailabilitySet1"
+    },
+    "LoadBalancerName": {
+      "type": "string",
+      "metadata": {
+        "description": "The Name of the Load Balancer"
+      }
+    },
+    "LBFEConfig": {
+      "type": "string",
+      "metadata": {
+        "description": "The Front End Config of the Load Balancer"
+      }
+    },
+    "LBBEPoolName": {
+      "type": "string",
+      "metadata": {
+        "description": "The Back End Pool of the Load Balancer"
+      }
+    },
+    "PublicIPName": {
+      "type": "string",
+      "metadata": {
+        "description": "The Front End Config of the Load Balancer"
+      }
+    },
+    "VnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "The Front End Config of the Load Balancer"
+      }
+    },
+    "Vnet1Prefix": {
+      "type": "string",
+      "metadata": {
+        "description": "The address range of the new VNET in CIDR format"
+      },
+      "defaultValue": "10.0.0.0/16"
+    },
+    "Vnet1Subnet1Name": {
+      "type": "string",
+      "metadata": {
+        "description": "The IP address of the new AD VM"
+      }
+    },
+    "Vnet1Subnet2Name": {
+      "type": "string",
+      "metadata": {
+        "description": "The IP address of the new AD VM"
+      }
+    },
+    "Vnet1Subnet1Prefix": {
+      "type": "string",
+      "metadata": {
+        "description": "The address range of the subnet created in the new VNET"
+      },
+      "defaultValue": "10.0.0.0/24"
+    },
+    "Vnet1Subnet2Prefix": {
+      "type": "string",
+      "metadata": {
+        "description": "The address range of the subnet created in the new VNET"
+      },
+      "defaultValue": "10.0.1.0/24"
+    },
+    "publicIPAddressType": {
+      "type": "string",
+      "allowedValues": [
+        "Dynamic",
+        "Static"
+      ],
+      "metadata": {
+        "description": "The type of the public IP address used by the Load Balancer"
+      },
+      "defaultValue": "Dynamic"
+    },
+    "dnsPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "The DNS prefix for the public IP address used by the Load Balancer"
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The location of resources such as templates and DSC modules that the script is dependent"
+      }
+    }
+  },
+  "variables": {
+
+  },
+  "resources": [
+    {
+      "name": "[parameters('StorageAccountName')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [ ],
+      "tags": {
+        "displayName": "StorageAccount"
+      },
+      "properties": {
+        "accountType": "[parameters('StorageAccountType')]"
+      }
+    },
+    {
+      "name": "[parameters('AvailabilitySet1Name')]",
+      "type": "Microsoft.Compute/availabilitySets",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [ ],
+      "tags": {
+        "displayName": "AvailabilitySet1"
+      },
+      "properties": {
+        "platformUpdateDomainCount": 1,
+        "platformFaultDomainCount": 1
+      }
+    },
+    {
+      "name": "[parameters('VnetName')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [ ],
+      "tags": {
+        "displayName": "Vnet1"
+      },
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('Vnet1Prefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[parameters('Vnet1Subnet1Name')]",
+            "properties": {
+              "addressPrefix": "[parameters('Vnet1Subnet1Prefix')]"
+            }
+          },
+          {
+            "name": "[parameters('Vnet1Subnet2Name')]",
+            "properties": {
+              "addressPrefix": "[parameters('Vnet1Subnet2Prefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "name": "[parameters('PublicIPName')]",
+      "properties": {
+        "publicIPAllocationMethod": "[parameters('publicIPAddressType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('dnsPrefix')]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "name": "[parameters('LoadBalancerName')]",
+      "type": "Microsoft.Network/loadBalancers",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses',parameters('publicIPName'))]"
+      ],
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "[parameters('LBFEConfig')]",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('publicIPName'))]"
+              }
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "[parameters('LBBEPoolName')]"
+          }
+        ]
+      }
+    }
+  ],
+    "outputs": {
+    }
+}
