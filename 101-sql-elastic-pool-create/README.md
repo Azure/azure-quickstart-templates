@@ -5,3 +5,5 @@
 </a>
 
 This template allows you to deploy a new SQL Elastic Pool.
+
+To know more about eDTU and storage limits for Elastic Pools, please check out this [link](https://docs.microsoft.com/en-us/azure/sql-database/sql-database-elastic-pool#edtu-and-storage-limits-for-elastic-pools).
