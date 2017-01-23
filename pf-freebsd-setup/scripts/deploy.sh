@@ -16,6 +16,7 @@ vm2PrivateNicIP=${13}
 vmSize=${14}
 storageAccountType=${15}
 privateSubnet=${16}
+publicSubnetAddressPrefix=${17}
 
 invoke_bash()
 {
@@ -60,6 +61,8 @@ invoke_bash()
 	echo "create route table start" >> /tmp/install.log
 	/usr/local/bin/azure network route-table create -g $rgname -n $routeTableName -l $location >> /tmp/install.log 2>&1
 	/usr/local/bin/azure network route-table route create -g $rgname -r $routeTableName -n RouteToInternet -a 0.0.0.0/0 -y VirtualAppliance -p $frontEndVMPrivateIP >> /tmp/install.log 2>&1
+	/usr/local/bin/azure network route-table route create -g $rgname -r $routeTableName -n FrontSubnet -a $publicSubnetAddressPrefix -y VirtualAppliance -p $frontEndVMPrivateIP >> /tmp/install.log 2>&1
+
 	echo "create route table end" >> /tmp/install.log 
 	/usr/local/bin/azure network vnet subnet set -g $rgname -e $vnetName -n $privateSubnet -r $routeTableName >> /tmp/install.log 2>&1
 
