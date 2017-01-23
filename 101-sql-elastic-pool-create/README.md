@@ -4,6 +4,8 @@
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-This template allows you to deploy a new SQL Elastic Pool.
+This template allows you to deploy a new SQL Elastic Pool with its new associated SQL Server and new SQL Databases to assign to it. 
 
-To know more about eDTU and storage limits for Elastic Pools, please check out this [link](https://docs.microsoft.com/en-us/azure/sql-database/sql-database-elastic-pool#edtu-and-storage-limits-for-elastic-pools).
+For more information about Azure SQL Elastic Pools, see [What is an Azure Elastic Pool?](https://docs.microsoft.com/en-us/azure/sql-database/sql-database-elastic-pool). 
+
+To know more about eDTU and storage limits for SQL Elastic Pools, please check out this [link](https://docs.microsoft.com/en-us/azure/sql-database/sql-database-elastic-pool#edtu-and-storage-limits-for-elastic-pools).
