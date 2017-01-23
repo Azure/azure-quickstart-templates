@@ -102,8 +102,8 @@ invoke_bash()
     
 	service pf restart
 	
-	echo "/usr/bin/ssh -o StrictHostKeyChecking=no -i /tmp/sshkey $username@$ip1 'echo $password | sudo -S pkg install -y nginx' >> /tmp/install.log && /usr/bin/ssh -o StrictHostKeyChecking=no -i /tmp/sshkey $username@$ip1 'echo $password | sudo -S service nginx onestart' >> /tmp/install.log "| at now + 1 minute
-	echo "/usr/bin/ssh -o StrictHostKeyChecking=no -i /tmp/sshkey $username@$ip2 'echo $password | sudo -S pkg install -y nginx' >> /tmp/install.log && /usr/bin/ssh -o StrictHostKeyChecking=no -i /tmp/sshkey $username@$ip2 'echo $password | sudo -S service nginx onestart' >> /tmp/install.log "| at now + 1 minute
+	echo "/usr/bin/ssh -o StrictHostKeyChecking=no -i /tmp/sshkey $username@$ip1 'echo $password | sudo -S env ASSUME_ALWAYS_YES=YES pkg bootstrap' >> /tmp/install.log && /usr/bin/ssh -o StrictHostKeyChecking=no -i /tmp/sshkey $username@$ip1 'echo $password | sudo -S pkg install -y nginx' >> /tmp/install.log && /usr/bin/ssh -o StrictHostKeyChecking=no -i /tmp/sshkey $username@$ip1 'echo $password | sudo -S service nginx onestart' >> /tmp/install.log "| at now + 1 minute
+	echo "/usr/bin/ssh -o StrictHostKeyChecking=no -i /tmp/sshkey $username@$ip1 'echo $password | sudo -S env ASSUME_ALWAYS_YES=YES pkg bootstrap' >> /tmp/install.log && /usr/bin/ssh -o StrictHostKeyChecking=no -i /tmp/sshkey $username@$ip2 'echo $password | sudo -S pkg install -y nginx' >> /tmp/install.log && /usr/bin/ssh -o StrictHostKeyChecking=no -i /tmp/sshkey $username@$ip2 'echo $password | sudo -S service nginx onestart' >> /tmp/install.log "| at now + 1 minute
 }
 
 invoke_bash
