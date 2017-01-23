@@ -56,6 +56,19 @@
 			"metadata": {
 				"description": "The Elastic Pool database DTU max."
 			}
+		},
+		"databasesNames": {
+			"type": "array",
+			"metadata": {
+				"description": "The SQL Databases names."
+			}
+		},
+		"databaseCollation": {
+			"type": "string",
+			"defaultValue": "SQL_Latin1_General_CP1_CI_AS",
+			"metadata": {
+				"description": "The SQL Database collation."
+			}
 		}
 	},
 	"variables": {},
@@ -83,7 +96,26 @@
 						"databaseDtuMin": "[parameters('databaseDtuMin')]",
 						"databaseDtuMax": "[parameters('databaseDtuMax')]"
 					},
-					"type": "Microsoft.Sql/servers/elasticpools"
+					"type": "elasticpools"
+				},
+				{
+					"type": "databases",
+					"name": "[parameters('databasesNames')[copyIndex()]]",
+					"location": "[resourceGroup().location]",
+					"apiVersion": "2014-04-01-preview",
+					"dependsOn": [
+						"[resourceId('Microsoft.Sql/servers', parameters('serverName'))]",
+						"[concat('Microsoft.Sql/servers/', parameters('serverName') ,'/elasticpools/', parameters('elasticPoolName'))]"
+					],
+					"properties": {
+						"collation": "[parameters('databaseCollation')]",
+						"requestedServiceObjectiveName": "ElasticPool",
+						"elasticPoolName": "[parameters('elasticPoolName')]"
+					},
+					"copy": {
+						"name": "addDatabasesInElasticPool",
+						"count": "[length(parameters('databasesNames'))]"
+					}
 				},
 				{
 					"apiVersion": "2014-04-01-preview",
