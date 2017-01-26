@@ -1,0 +1,155 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the VM"
+      }
+    },
+    "osType": {
+      "type": "string",
+      "allowedValues": [
+        "Windows",
+        "Linux"
+      ],
+      "metadata": {
+        "description": "Type of OS on the existing vhd"
+      }
+    },
+    "osDiskVhdUri": {
+      "type": "string",
+      "metadata": {
+        "description": "Uri of the existing VHD in ARM standard or premium storage"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "metadata": {
+        "description": "Size of the VM"
+      }
+    },
+    "existingVirtualNetworkName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the existing VNET"
+      }
+    },
+    "existingVirtualNetworkResourceGroup": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the existing VNET resource group"
+      }
+    },
+    "subnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the subnet in the virtual network you want to use"
+      }
+    },
+    "dnsNameForPublicIP": {
+      "type": "string",
+      "metadata": {
+        "description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
+      }
+    }
+  },
+  "variables": {
+    "diagStorageAccountName": "[concat(uniquestring(resourceGroup().id), 'specvm')]",
+    "api-version": "2015-06-15",
+    "publicIPAddressType": "Dynamic",
+    "vnetID": "[resourceId(parameters('existingVirtualNetworkResourceGroup'), 'Microsoft.Network/virtualNetworks', parameters('existingVirtualNetworkName'))]",
+    "subnetRef": "[concat(variables('vnetID'),'/subnets/', parameters('subnetName'))]",
+    "nicName": "[parameters('vmName')]",
+    "publicIPAddressName": "[parameters('vmName')]"
+  },
+  "resources": [{
+    "type": "Microsoft.Storage/storageAccounts",
+    "name": "[variables('diagStorageAccountName')]",
+    "apiVersion": "2016-01-01",
+    "location": "[resourceGroup().location]",
+    "sku": {
+      "name": "Standard_GRS"
+    },
+    "kind": "Storage",
+    "properties": {}
+  }, {
+    "apiVersion": "[variables('api-version')]",
+    "type": "Microsoft.Network/publicIPAddresses",
+    "name": "[variables('publicIPAddressName')]",
+    "location": "[resourceGroup().location]",
+    "tags": {
+      "displayName": "PublicIPAddress"
+    },
+    "properties": {
+      "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+      "dnsSettings": {
+        "domainNameLabel": "[parameters('dnsNameForPublicIP')]"
+      }
+    }
+  }, {
+    "apiVersion": "[variables('api-version')]",
+    "type": "Microsoft.Network/networkInterfaces",
+    "name": "[variables('nicName')]",
+    "location": "[resourceGroup().location]",
+    "dependsOn": [
+      "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
+    ],
+    "tags": {
+      "displayName": "NetworkInterface"
+    },
+    "properties": {
+      "ipConfigurations": [{
+        "name": "ipconfig1",
+        "properties": {
+          "privateIPAllocationMethod": "Dynamic",
+          "publicIPAddress": {
+            "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+          },
+          "subnet": {
+            "id": "[variables('subnetRef')]"
+          }
+        }
+      }]
+    }
+  }, {
+    "apiVersion": "[variables('api-version')]",
+    "type": "Microsoft.Compute/virtualMachines",
+    "name": "[parameters('vmName')]",
+    "location": "[resourceGroup().location]",
+    "tags": {
+      "displayName": "VirtualMachine"
+    },
+    "dependsOn": [
+      "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+    ],
+    "properties": {
+      "hardwareProfile": {
+        "vmSize": "[parameters('vmSize')]"
+      },
+      "storageProfile": {
+        "osDisk": {
+          "name": "[concat(parameters('vmName'))]",
+          "osType": "[parameters('osType')]",
+          "caching": "ReadWrite",
+          "vhd": {
+            "uri": "[parameters('osDiskVhdUri')]"
+          },
+          "createOption": "Attach"
+        }
+      },
+      "networkProfile": {
+        "networkInterfaces": [{
+          "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+        }]
+      },
+      "diagnosticsProfile": {
+        "bootDiagnostics": {
+          "enabled": "true",
+          "storageUri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('diagStorageAccountName')), '2016-01-01').primaryEndpoints.blob)]"
+        }
+      }
+    }
+  }]
+}

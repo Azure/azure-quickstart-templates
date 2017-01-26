@@ -115,7 +115,7 @@ def add_hosts_to_cluster():
 
         if cmd.success != True:
             print "cm_host_install failed: " + cmd.resultMessage
-            exit(0)
+            exit(1)
 
     print "Host install finish, agents installed"
     hosts = []

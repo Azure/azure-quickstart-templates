@@ -61,7 +61,7 @@ environment=$(get_setting ENVIRONMENT)
 set +e
 
 echo "Start to install python packages..."
-pkg_list="msrest msrestazure azure==2.0.0rc1 azure-storage netaddr"
+pkg_list="msrest==0.4.4 msrestazure==0.4.4 requests==2.11.1 azure==2.0.0rc1 netaddr==0.7.18"
 if [ "$environment" = "AzureChinaCloud" ]; then
   for pkg in $pkg_list; do
     retryop "pip install $pkg --index-url https://mirror.azure.cn/pypi/simple/ --default-timeout=60"
@@ -84,11 +84,9 @@ chmod 400 $bosh_key
 cp $bosh_key $home_dir
 cp "$bosh_key.pub" $home_dir
 
-echo "Start to generate SSL certificate for cloud foundry..."
-chmod +x create_cert.sh
-cf_key="cloudfoundry.key"
-cf_cert="cloudfoundry.cert"
-./create_cert.sh $cf_key $cf_cert
+echo "Start to replace cert varialbes for manifests..."
+chmod +x replace_certs.sh
+./replace_certs.sh
 
 echo "Start to run setup_env.py..."
 python setup_env.py ${tenant_id} ${client_id} ${client_secret} ${custom_data_file}
@@ -96,30 +94,10 @@ python setup_env.py ${tenant_id} ${client_id} ${client_secret} ${custom_data_fil
 # For backward compatibility
 sed -i "s/CLOUD_FOUNDRY_PUBLIC_IP/cf-ip/g" settings
 cp settings $home_dir
-
-echo "Start to specify params in bosh.yml..."
-REPLACE_WITH_NATS_PASSWORD=$(openssl rand -base64 16 | tr -dc 'a-zA-Z0-9')
-REPLACE_WITH_POSTGRES_PASSWORD=$(openssl rand -base64 16 | tr -dc 'a-zA-Z0-9')
-REPLACE_WITH_REGISTRY_PASSWORD=$(openssl rand -base64 16 | tr -dc 'a-zA-Z0-9')
-REPLACE_WITH_DIRECTOR_PASSWORD=$(openssl rand -base64 16 | tr -dc 'a-zA-Z0-9')
-REPLACE_WITH_AGENT_PASSWORD=$(openssl rand -base64 16 | tr -dc 'a-zA-Z0-9')
-REPLACE_WITH_ADMIN_PASSWORD=$(openssl rand -base64 16 | tr -dc 'a-zA-Z0-9')
-REPLACE_WITH_HM_PASSWORD=$(openssl rand -base64 16 | tr -dc 'a-zA-Z0-9')
-REPLACE_WITH_MBUS_PASSWORD=$(openssl rand -base64 16 | tr -dc 'a-zA-Z0-9')
-sed -i "s/REPLACE_WITH_NATS_PASSWORD/$REPLACE_WITH_NATS_PASSWORD/g" bosh.yml
-sed -i "s/REPLACE_WITH_POSTGRES_PASSWORD/$REPLACE_WITH_POSTGRES_PASSWORD/g" bosh.yml
-sed -i "s/REPLACE_WITH_REGISTRY_PASSWORD/$REPLACE_WITH_REGISTRY_PASSWORD/g" bosh.yml
-sed -i "s/REPLACE_WITH_DIRECTOR_PASSWORD/$REPLACE_WITH_DIRECTOR_PASSWORD/g" bosh.yml
-sed -i "s/REPLACE_WITH_AGENT_PASSWORD/$REPLACE_WITH_AGENT_PASSWORD/g" bosh.yml
-sed -i "s/REPLACE_WITH_ADMIN_PASSWORD/$REPLACE_WITH_ADMIN_PASSWORD/g" bosh.yml
-sed -i "s/REPLACE_WITH_HM_PASSWORD/$REPLACE_WITH_HM_PASSWORD/g" bosh.yml
-sed -i "s/REPLACE_WITH_MBUS_PASSWORD/$REPLACE_WITH_MBUS_PASSWORD/g" bosh.yml
 cp bosh.yml $home_dir
 
-sed -i "s/REPLACE_WITH_ADMIN_PASSWORD/$REPLACE_WITH_ADMIN_PASSWORD/g" deploy_bosh.sh
 chmod +x deploy_bosh.sh
 cp deploy_bosh.sh $home_dir
-echo $REPLACE_WITH_ADMIN_PASSWORD > "$home_dir/BOSH_DIRECTOR_ADMIN_PASSWORD"
 
 chmod +x deploy_cloudfoundry.sh
 cp deploy_cloudfoundry.sh $home_dir

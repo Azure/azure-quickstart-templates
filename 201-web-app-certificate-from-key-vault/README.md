@@ -12,6 +12,7 @@ In order to deploy this template, you need to have the following resources:  <br
 1. A Key Vault (specified in 'existingKeyVaultId' parameter) <br />
 2. A Key Vault Secret containting a PFX certificate stored in base64 encoded format (PowerShell script is given below)  <br />
 3. A Web App (specified in 'existingWebAppName' parameter)  <br />
+4. The App Service Plan (serverFarm) resource identifier housing the Web App specified in step 3 <br />
 </P>
 
 <P>
