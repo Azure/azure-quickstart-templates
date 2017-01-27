@@ -6,30 +6,30 @@ These practices ensure your sample provides a consistent, reliable experience ac
 
 ## Checklist
 
-+ All uri's should be compatible with all clouds (Stack, China, Government)
+1. All uri's should be compatible with all clouds (Stack, China, Government)
 	+ See #9 in [**Best practices**](/1-CONTRIBUTION-GUIDE/best-practices.md#best-practices) 
 
-+ For staging artifacts (scripts, templates, etc) use paramters named _artifactsLocation & _artifactsLocationSasToken - see:
+2. For staging artifacts (scripts, templates, etc) use paramters named _artifactsLocation & _artifactsLocationSasToken - see:
 	+ [**Samples that contain artifacts**](https://github.com/Azure/azure-quickstart-templates/blob/master/1-CONTRIBUTION-GUIDE/best-practices.md#samples-that-contain-extra-artifacts-custom-scripts-nested-templates-etc)
 	
-+ Use resourceGroup().location for resource locations to be compatible with all clouds
+3. Use resourceGroup().location for resource locations to be compatible with all clouds
 	+ Exceptions for resources that are available on only a few locations (which is not the same as !global)
 	+ If a location param is needed do not use parameters named "location", instead resourceLocation or storageLocation, etc.
 
-+ Folder names for artifacts:
+4. Folder names for artifacts:
 	+ nestedtemplates
 	+ scripts
 	+ DSC
 
-+ Use literal values for apiVersion (do not variables so schema validation can be done)
+5. Use literal values for apiVersion (do not variables so schema validation can be done)
 
-+ Parameter files must not contain values like "changemeplease" - use default values when appropriate in the template file and leave them out of param files
+6. Parameter files must not contain values like "changemeplease" - use default values when appropriate in the template file and leave them out of param files
 
-+ Check whether $schema entries in templates and parameter files are the latest (2015-01-01) and using https
+7. Check whether $schema entries in templates and parameter files are the latest (2015-01-01) and using https
 
-+ Update the metadata.json with the current date
+8. Update the metadata.json with the current date
 
-+ Use uniqueString() whenever possible to generate names for resources.  While this is not required, it's one of the most common failure points in a deployment. 
+9. Use uniqueString() whenever possible to generate names for resources.  While this is not required, it's one of the most common failure points in a deployment. 
 
 ---
 
