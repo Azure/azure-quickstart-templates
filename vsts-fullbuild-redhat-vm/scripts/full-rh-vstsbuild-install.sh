@@ -12,6 +12,10 @@ yum install -y libyaml-devel libffi-devel openssl-devel make >> /home/$5/install
 yum install -y bzip2 autoconf automake libtool bison iconv-devel >> /home/$5/install.out.txt 2>&1
 /bin/date +%H:%M:%S >> /home/$5/install.progress.txt
 
+echo "Install X11 Packages" >> /home/$5/install.progress.txt
+yum install -y xorg-x11-server-Xorg xorg-x11-xauth xorg-x11-apps
+/bin/date +%H:%M:%S >> /home/$5/install.progress.txt
+
 echo "Install OpenJDK Java packages" >> /home/$5/install.progress.txt
 yum install -y java-1.6.0-openjdk-devel >> /home/$5/install.out.txt 2>&1
 yum install -y java-1.7.0-openjdk-devel >> /home/$5/install.out.txt 2>&1
@@ -55,19 +59,6 @@ echo "Go Language" >> /home/$5/install.progress.txt
 yum install -y golang >> /home/$5/install.out.txt 2>&1
 /bin/date +%H:%M:%S >> /home/$5/install.progress.txt
 
-# Install .NET
-echo "Installing .NET" >> /home/$5/install.progress.txt
-mkdir /home/$5/lib
-mkdir /home/$5/lib/dotnet
-
-cd /home/$5/downloads
-wget https://dotnetcli.blob.core.windows.net/dotnet/preview/Binaries/1.0.0-preview2-003131/dotnet-dev-rhel-x64.1.0.0-preview2-003131.tar.gz >> /home/$5/install.out.txt 2>&1
-cd /home/$5/lib/dotnet
-tar zxfv /home/$5/downloads/dotnet-dev-rhel-x64.1.0.0-preview2-003131.tar.gz >> /home/$5/install.out.txt 2>&1
-
-/bin/date +%H:%M:%S >> /home/$5/install.progress.txt
-
-
 # Install VSTS build agent dependencies
 cd /home/$5
 
@@ -95,7 +86,8 @@ ln -s /usr/local/git/bin/git /usr/bin/git
 
 # Install Docker Engine and Docker Compose
 echo "Installing Docker Engine and Docker Compose" >> /home/$5/install.progress.txt
-yum update -y >> /home/$5/install.out.txt 2>&1
+yum update -y --exclude=WALinuxAgent >> /home/$5/install.out.txt 2>&1
+# yum update -y >> /home/$5/install.out.txt 2>&1
 
 echo [dockerrepo] > /etc/yum.repos.d/docker.repo
 echo name=Docker Repository >> /etc/yum.repos.d/docker.repo
@@ -105,14 +97,34 @@ echo gpgcheck=1 >> /etc/yum.repos.d/docker.repo
 echo gpgkey=https://yum.dockerproject.org/gpg >> /etc/yum.repos.d/docker.repo
 
 yum install -y docker-engine >> /home/$5/install.out.txt 2>&1
-systemctl enable docker.service >> /home/$5/install.out.txt 2>&1
-systemctl start docker >> /home/$5/install.out.txt 2>&1
-systemctl enable docker >> /home/$5/install.out.txt 2>&1
-groupadd docker >> /home/$5/install.out.txt 2>&1
-usermod -aG docker $5 >> /home/$5/install.out.txt 2>&1
+systemctl enable docker.service
+systemctl start docker
+systemctl enable docker
+groupadd docker
+usermod -aG docker $5
 
 curl -L https://github.com/docker/compose/releases/download/1.9.0/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
 chmod +x /usr/local/bin/docker-compose >> /home/$5/install.out.txt 2>&1
+
+/bin/date +%H:%M:%S >> /home/$5/install.progress.txt
+
+
+# Install latest .NET Core
+echo "Installing latest .NET Core" >> /home/$5/install.progress.txt
+# mkdir /home/$5/lib
+# mkdir /home/$5/lib/dotnet
+# cd /home/$5/downloads
+# wget https://dotnetcli.blob.core.windows.net/dotnet/preview/Binaries/1.0.0-preview2-003131/dotnet-dev-rhel-x64.1.0.0-preview2-003131.tar.gz >> /home/$5/install.out.txt 2>&1
+# cd /home/$5/lib/dotnet
+# tar zxfv /home/$5/downloads/dotnet-dev-rhel-x64.1.0.0-preview2-003131.tar.gz >> /home/$5/install.out.txt 2>&1
+# yum install -y scl-utils >> /home/$5/install.out.txt 2>&1
+# yum install -y rh-dotnetcore11 >> /home/$5/install.out.txt 2>&1
+# scl enable rh-dotnetcore11 bash
+cd /home/$5/downloads
+curl -sSL -o dotnet.tar.gz https://go.microsoft.com/fwlink/?LinkID=834983 >> /home/$5/install.out.txt 2>&1
+mkdir -p /opt/dotnet
+tar zxf dotnet.tar.gz -C /opt/dotnet >> /home/$5/install.out.txt 2>&1
+ln -s /opt/dotnet/dotnet /usr/local/bin
 
 /bin/date +%H:%M:%S >> /home/$5/install.progress.txt
 
