@@ -61,8 +61,8 @@ else
 fi
 
 #Script Parameters
-CLUSTER_NAME="elasticsearch"
-ES_VERSION="2.4.0"
+CLUSTER_NAME="es-azure"
+ES_VERSION="5.1.2"
 IS_DATA_NODE=1
 
 #Loop through options passed
@@ -90,20 +90,51 @@ done
 # Install Oracle Java
 install_java()
 {
-	log "Installing Java"
-	add-apt-repository -y ppa:webupd8team/java 
-	apt-get -y update
-    echo debconf shared/accepted-oracle-license-v1-1 select true | debconf-set-selections
-    echo debconf shared/accepted-oracle-license-v1-1 seen true | debconf-set-selections
-	apt-get -y install oracle-java8-installer  > /dev/null
+    if [ -f "jdk-8u73-linux-x64.tar.gz" ];
+    then
+        log "Java already downloaded"
+        return
+    fi
+    
+    log "Installing Java"
+    RETRY=0
+    MAX_RETRY=5
+    while [ $RETRY -lt $MAX_RETRY ]; do
+        log "Retry $RETRY: downloading jdk-8u73-linux-x64.tar.gz"
+        wget --no-check-certificate --no-cookies --header "Cookie: oraclelicense=accept-securebackup-cookie" http://download.oracle.com/otn-pub/java/jdk/8u73-b02/jdk-8u73-linux-x64.tar.gz
+        if [ $? -ne 0 ]; then
+            let RETRY=RETRY+1
+        else
+            break
+        fi
+    done
+    if [ $RETRY -eq $MAX_RETRY ]; then
+        log "Failed to download jdk-8u73-linux-x64.tar.gz"
+        exit 1
+    fi
+    
+    tar xzf jdk-8u73-linux-x64.tar.gz -C /var/lib
+    export JAVA_HOME=/var/lib/jdk1.8.0_73
+    export PATH=$PATH:$JAVA_HOME/bin
+    log "JAVA_HOME: $JAVA_HOME"
+    log "PATH: $PATH"
+    
+    java -version
+    if [ $? -ne 0 ]; then
+        log "Java installation failed"
+        exit 1
+    fi
 }
 
 install_es()
 {
-    DOWNLOAD_URL="https://download.elastic.co/elasticsearch/release/org/elasticsearch/distribution/deb/elasticsearch/$ES_VERSION/elasticsearch-$ES_VERSION.deb"
-    log "Installing Elaticsearch $ES_VERSION from $DOWNLOAD_URL"
-    wget -q "$DOWNLOAD_URL" -O elasticsearch.deb
-	dpkg -i elasticsearch.deb
+    wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | apt-key add -
+    apt-get install apt-transport-https
+    echo "deb https://artifacts.elastic.co/packages/5.x/apt stable main" | tee -a /etc/apt/sources.list.d/elastic-5.x.list    
+    apt-get update -y 
+    apt-get install -y elasticsearch
+    /bin/systemctl daemon-reload
+    /bin/systemctl enable elasticsearch.service
 }
 
 configure_es()
@@ -112,10 +143,9 @@ configure_es()
 	mv /etc/elasticsearch/elasticsearch.yml /etc/elasticsearch/elasticsearch.bak
 	echo "cluster.name: $CLUSTER_NAME" >> /etc/elasticsearch/elasticsearch.yml
 	echo "node.name: ${HOSTNAME}" >> /etc/elasticsearch/elasticsearch.yml
-	echo "discovery.zen.ping.multicast.enabled: false" >> /etc/elasticsearch/elasticsearch.yml
 	echo "discovery.zen.minimum_master_nodes: 2" >> /etc/elasticsearch/elasticsearch.yml
 	echo 'discovery.zen.ping.unicast.hosts: ["10.0.0.10", "10.0.0.11", "10.0.0.12"]' >> /etc/elasticsearch/elasticsearch.yml
-	echo "network.host: _non_loopback_" >> /etc/elasticsearch/elasticsearch.yml
+	echo "network.host: _site_" >> /etc/elasticsearch/elasticsearch.yml
 	echo "bootstrap.memory_lock: true" >> /etc/elasticsearch/elasticsearch.yml
 
 	if [ ${IS_DATA_NODE} -eq 1 ]; then
@@ -129,23 +159,27 @@ configure_es()
 
 configure_system()
 {
-	# DNS Retry
 	echo "options timeout:1 attempts:5" >> /etc/resolvconf/resolv.conf.d/head
 	resolvconf -u
-
-	# Increase maximum mmap count
-	echo "vm.max_map_count = 262144" >> /etc/sysctl.conf
-
-	# Heap size
 	ES_HEAP=`free -m |grep Mem | awk '{if ($2/2 >31744)  print 31744;else print $2/2;}'`
-	echo "ES_HEAP_SIZE=${ES_HEAP}m" >> /etc/default/elasticsearch
+	echo 'ES_JAVA_OPTS="-Xms${ES_HEAP}m -Xmx${ES_HEAP}m"' >> /etc/default/elasticsearch
+    echo 'JAVA_HOME=$JAVA_HOME' >> /etc/default/elasticsearch
+    echo 'MAX_OPEN_FILES=65536' >> /etc/default/elasticsearch
+    echo 'MAX_LOCKED_MEMORY=unlimited' >> /etc/default/elasticsearch
+    sed -i 's|#LimitMEMLOCK=infinity|LimitMEMLOCK=infinity|' /usr/lib/systemd/system/elasticsearch.service
 }
 
 start_service()
 {
 	log "Starting Elasticsearch on ${HOSTNAME}"
-	update-rc.d elasticsearch defaults 95 10
-	sudo service elasticsearch start
+    systemctl start elasticsearch.service
+    sleep 10
+    
+    if [ `systemctl is-failed elasticsearch.service` == 'failed' ];
+    then
+        log "Elasticsearch unit failed to start"
+        exit 1
+    fi
 }
 
 log "starting elasticsearch setup"
