@@ -1,14 +1,14 @@
 # Host Spinnaker in an Azure VM
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fspinnaker-vm-simple%2Fazuredeploy.json" target="_blank">
+<a href="https://aka.ms/azspindeployqs" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fspinnaker-vm-simple%2Fazuredeploy.json" target="_blank">
+<a href="https://aka.ms/azspinvizqs" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
 
-This template allows you to deploy an instance of Spinnaker on a Linux Ubuntu 14.04 LTS VM. This will deploy a D2_v2 size VM in the resource group location and return the FQDN of the VM. You will have to manually configure the instance to target a deployment environment.
+This template allows you to deploy an instance of Spinnaker on a Linux Ubuntu 14.04 LTS VM. This will deploy a D3_v2 size VM in the resource group location and return the FQDN of the VM. You will have to manually configure the instance to target a deployment environment.
 
 ## A. Deploy Spinnaker VM
 1. Click the "Deploy to Azure" button. If you don't have an Azure subscription, you can follow instructions to signup for a free trial.
@@ -21,8 +21,8 @@ Once the VM has been deployed, note down the DNS Name generated in the Azure por
 
 ## C. Configure Spinnaker
 In Azure, Spinnaker can target a Kubernetes cluster or VM Scale Sets.
-- To target a Kubernetes cluster, follow instructions [here](https://docs.microsoft.com/azure/container-service/container-service-deployment) to deploy a Kubernetes cluster and [here](http://www.spinnaker.io/v1.0/docs/target-deployment-configuration#section-kubernetes) to configure Spinnaker.
-- To target VM Scale Sets, follow instructions [here](http://www.spinnaker.io/v1.0/docs/creating-a-spinnaker-instance#section-azure) to configure Spinnaker.
+- To target a Kubernetes cluster, follow instructions [here](https://aka.ms/azspinkubecreate) to deploy a Kubernetes cluster and [here](http://www.spinnaker.io/v1.0/docs/target-deployment-configuration#section-kubernetes) to configure Spinnaker.
+- To target VM Scale Sets, follow instructions [here](http://www.spinnaker.io/v1.0/docs/target-deployment-configuration#section-azure) to configure Spinnaker.
 
 ## D. Setup SSH port forwarding
 Once you have configured Spinnaker, you need to setup port forwarding to view the Spinnaker UI on your local machine.
