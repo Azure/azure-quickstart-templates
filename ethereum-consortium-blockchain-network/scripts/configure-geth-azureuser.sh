@@ -157,7 +157,7 @@ BOOTNODE_URLS="";
 for i in `seq 0 $(($NUM_BOOT_NODES - 1))`; do
 	BOOTNODE_URLS="${BOOTNODE_URLS}enode://${NODE_IDS[$i]}@#${MN_NODE_PREFIX}${i}#:${GETH_IPC_PORT}";
   if [ $i -lt $(($NUM_BOOT_NODES - 1)) ]; then
-  	BOOTNODE_URLS="${BOOTNODE_URLS},";
+  	BOOTNODE_URLS="${BOOTNODE_URLS} --bootnodes ";
   fi
 done
 
