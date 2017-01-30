@@ -1,4 +1,4 @@
-# Host Spinnaker in an Azure VM targeting Kubernetes
+# Azure Spinnaker to Kubernetes
 
 <a href="https://aka.ms/azspindeployk8sqs" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
@@ -6,7 +6,6 @@
 <a href="https://aka.ms/azspinvizk8sqs" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
-
 
 This template allows you to deploy an instance of Spinnaker on a Linux Ubuntu 14.04 LTS VM automatically configured to target a Kubernetes cluster. This will deploy a D2_v2 size VM and a Kubernetes cluster in the resource group location and return the FQDN of both.
 
