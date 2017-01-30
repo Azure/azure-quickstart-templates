@@ -207,7 +207,7 @@ def prepareAndImportConf(options):
 
     logging.info('Importing config to Cloudera Director server ...')
 
-    command = "python setup-default.py --admin-username %s --admin-password %s %s" % (
+    command = "python setup-default.py --admin-username '%s' --admin-password '%s' '%s'" % (
         dirUsername, dirPassword, confLocation)
     execAndLog(command)
 
