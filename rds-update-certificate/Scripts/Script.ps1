@@ -7,6 +7,11 @@ param(
     [parameter(mandatory = $true)][ValidateNotNullOrEmpty()] [string]$vaultName,
     [parameter(mandatory = $true)][ValidateNotNullOrEmpty()] [string]$secretName,
 
+    [parameter(mandatory = $true)][ValidateNotNullOrEmpty()] [string]$adminUsername,
+    [parameter(mandatory = $true)][ValidateNotNullOrEmpty()] [string]$adminPassword,
+
+    [parameter(mandatory = $true)][ValidateNotNullOrEmpty()] [string]$adDomainName,
+
     [Parameter(ValueFromRemainingArguments = $true)]
     $extraParameters
     )
@@ -20,16 +25,15 @@ param(
 
 
 	log "script running..."
-
 	whoami
 
-  # $PSBoundParameters
+  #	$PSBoundParameters
 
-    if ($extraParameters) 
-    {
-        log "any extra parameters:"
-        $extraParameters
-    }
+	if ($extraParameters) 
+	{
+		log "any extra parameters:"
+		$extraParameters
+	}
 
 	#  requires WMF 5.0
 
@@ -80,15 +84,30 @@ param(
 	#
 	ipmo remotedesktop -DisableNameChecking  
 
-	$roles = @("RDGateway", "RDWebAccess", "RDRedirector", "RDPublishing") 
+	#  impersonate as admin 
+	#
+	log "impersonating as '$adminUsername'..."
+	$admincreds = New-Object System.Management.Automation.PSCredential (($adminUsername + "@" + $adDomainName), (ConvertTo-SecureString $adminPassword -AsPlainText -Force))
+
+	.\New-ImpersonateUser.ps1 -Credential $admincreds
+	whoami
+
+	#  apply certificate
+	#
+	$roles = @("RDGateway", "RDWebAccess", "RDRedirector", "RDPublishing")
 
 	$roles | % `
 	{
 		log "applying certificate for role: $_..."
 		set-rdcertificate -role $_ -importpath $pfxFilePath -password (convertto-securestring $password -asplaintext -force) -force
 	}
+
+	log "remove impersonation..."
+	Remove-ImpersonateUser
+	whoami
 	
 	#  set client access name
+	#
 	$gatewayConfig = get-rddeploymentgatewayconfiguration
 
 	if ($gatewayConfig -and $gatewayConfig.GatewayExternalFqdn)
@@ -111,4 +130,3 @@ param(
 	}
 
 	log "done."
-	
