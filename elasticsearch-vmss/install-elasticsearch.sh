@@ -133,11 +133,15 @@ install_es()
     echo "deb https://artifacts.elastic.co/packages/5.x/apt stable main" | tee -a /etc/apt/sources.list.d/elastic-5.x.list    
     apt-get update -y 
     apt-get install -y elasticsearch
-    apt-get install -y kibana
     cd /usr/share/elasticsearch/
     bin/elasticsearch-plugin install x-pack --batch
-    cd /usr/share/kibana/
-    bin/kibana-plugin install x-pack
+    
+    if [ ${IS_DATA_NODE} -eq 0 ]; 
+    then
+        apt-get install -y kibana
+        cd /usr/share/kibana/
+        bin/kibana-plugin install x-pack
+    fi
 }
 
 configure_es()
@@ -173,10 +177,13 @@ configure_system()
     sed -i 's|#LimitMEMLOCK=infinity|LimitMEMLOCK=infinity|' /usr/lib/systemd/system/elasticsearch.service
     
     # Kibana
-    IPADDRESS=$(ip route get 8.8.8.8 | awk 'NR==1 {print $NF}')
-    echo "server.host: \"$IPADDRESS\"" >> /etc/kibana/kibana.yml
-    echo "elasticsearch.url: \"http://$IPADDRESS:9200\"" >> /etc/kibana/kibana.yml
-    echo "xpack.security.enable: false" >> /etc/kibana/kibana.yml
+    if [ ${IS_DATA_NODE} -eq 0 ]; 
+    then
+        IPADDRESS=$(ip route get 8.8.8.8 | awk 'NR==1 {print $NF}')
+        echo "server.host: \"$IPADDRESS\"" >> /etc/kibana/kibana.yml
+        echo "elasticsearch.url: \"http://$IPADDRESS:9200\"" >> /etc/kibana/kibana.yml
+        echo "xpack.security.enable: false" >> /etc/kibana/kibana.yml
+    fi
 }
 
 start_service()
@@ -184,15 +191,27 @@ start_service()
 	log "Starting Elasticsearch on ${HOSTNAME}"
     systemctl daemon-reload
     systemctl enable elasticsearch.service
-    systemctl enable kibana.service
     systemctl start elasticsearch.service
-    systemctl start kibana.service
     sleep 60
     
     if [ `systemctl is-failed elasticsearch.service` == 'failed' ];
     then
         log "Elasticsearch unit failed to start"
         exit 1
+    fi
+    
+    if [ ${IS_DATA_NODE} -eq 0 ]; 
+    then
+        log "Starting Kibana on ${HOSTNAME}"
+        systemctl enable kibana.service
+        systemctl start kibana.service
+        sleep 10
+    
+        if [ `systemctl is-failed kibana.service` == 'failed' ];
+        then
+            log "Kibana unit failed to start"
+            exit 1
+        fi    
     fi
 }
 
