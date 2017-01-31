@@ -30,7 +30,6 @@
   "variables": {
     "vmNamePrefix": "myIPv6VM",
     "nicNamePrefix": "IPv6Nic",
-    "storageAccountName": "[concat(uniqueString(resourceGroup().id), 'vhds')]",
     "availabilitySetName": "myIPv6AvSet",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "myIPv4Subnet",
@@ -54,20 +53,15 @@
   },
   "resources": [
     {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('storageAccountName')]",
-      "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
-      "properties": {
-        "accountType": "Standard_RAGRS"
-      }
-    },
-    {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('availabilitySetName')]",
       "apiVersion": "2016-03-30",
       "location": "[resourceGroup().location]",
-      "properties": {}
+      "properties": {
+        "platformFaultDomainCount": "2",
+        "platformUpdateDomainCount": "2",
+        "managed": "true"
+      }
     },
     {
       "apiVersion": "2016-03-30",
@@ -280,7 +274,7 @@
       }
     },
     {
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2016-04-30-preview",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(variables('vmNamePrefix'), copyindex())]",
       "copy": {
@@ -289,7 +283,6 @@
       },
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicNamePrefix'), copyindex())]",
         "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
       ],
@@ -313,11 +306,6 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2015-06-15').primaryEndpoints.blob, 'vhds/osdisk', copyIndex(), '.vhd')]"
-            },
-            "caching": "ReadWrite",
             "createOption": "FromImage"
           }
         },
