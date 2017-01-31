@@ -154,7 +154,7 @@ configure_es()
 	echo 'discovery.zen.ping.unicast.hosts: ["10.0.0.10", "10.0.0.11", "10.0.0.12"]' >> /etc/elasticsearch/elasticsearch.yml
 	echo "network.host: _site_" >> /etc/elasticsearch/elasticsearch.yml
 	echo "bootstrap.memory_lock: true" >> /etc/elasticsearch/elasticsearch.yml
-    echo "xpack.security.enable: false" >> /etc/elasticsearch/elasticsearch.yml
+    echo "xpack.security.enabled: false" >> /etc/elasticsearch/elasticsearch.yml
 
 	if [ ${IS_DATA_NODE} -eq 1 ]; then
 	    echo "node.master: false" >> /etc/elasticsearch/elasticsearch.yml
@@ -182,7 +182,7 @@ configure_system()
         IPADDRESS=$(ip route get 8.8.8.8 | awk 'NR==1 {print $NF}')
         echo "server.host: \"$IPADDRESS\"" >> /etc/kibana/kibana.yml
         echo "elasticsearch.url: \"http://$IPADDRESS:9200\"" >> /etc/kibana/kibana.yml
-        echo "xpack.security.enable: false" >> /etc/kibana/kibana.yml
+        echo "xpack.security.enabled: false" >> /etc/kibana/kibana.yml
     fi
 }
 
