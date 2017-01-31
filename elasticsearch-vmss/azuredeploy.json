@@ -66,27 +66,24 @@
   },
   "variables": {
     "storageAccountType": "Standard_LRS",
-    "namingInfix": "[toLower(substring(concat(parameters('vmssName'), uniqueString(resourceGroup().id)), 0, 9))]",
+    "namingInfix": "[toLower(substring(parameters('vmssName'), 0, 9))]",
     "longNamingInfix": "[resourceGroup().name]",
-    "newStorageAccountSuffix": "[concat(variables('namingInfix'), 'sa')]",
-    "vhdContainerName": "[concat(variables('namingInfix'), 'vhd')]",
-    "osDiskName": "[concat(variables('namingInfix'), 'osdisk')]",
     "addressPrefix": "10.0.0.0/8",
     "subnetPrefix": "10.0.0.0/16",
-    "virtualNetworkName": "[concat(variables('namingInfix'), 'vnet')]",
-    "publicIPAddressName": "[concat(variables('namingInfix'), 'pip')]",
-    "subnetName": "[concat(variables('namingInfix'), 'subnet')]",
-    "loadBalancerName": "[concat(variables('namingInfix'), 'lb')]",
-    "publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]",
-    "lbID": "[resourceId('Microsoft.Network/loadBalancers',variables('loadBalancerName'))]",
-    "bePoolName": "[concat(variables('namingInfix'), 'bepool')]",
-    "nicName": "[concat(variables('namingInfix'), 'nic')]",
-    "masterName": "[concat(variables('namingInfix'), 'master')]",
-    "ipConfigName": "[concat(variables('namingInfix'), 'ipconfig')]",
-    "frontEndIPConfigID": "[concat(variables('lbID'),'/frontendIPConfigurations/loadBalancerFrontEnd')]",
-    "lbPoolID": "[concat(variables('lbID'),'/backendAddressPools/', variables('bePoolName'))]",
-    "lbProbeID": "[concat(variables('lbID'),'/probes/tcpProbe')]",
-    "sshProbeID": "[concat(variables('lbID'),'/probes/sshProbe')]",
+    "virtualNetworkName": "[concat(variables('namingInfix'), '-vnet')]",
+    "publicIpAddressName": "[concat(variables('namingInfix'), '-pip')]",
+    "publicIpAddressId": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpAddressName'))]",
+    "subnetName": "[concat(variables('namingInfix'), '-subnet')]",
+    "loadBalancerName": "[concat(variables('namingInfix'), '-lb')]",
+    "loadBalancerId": "[resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName'))]",
+    "backendPoolName": "[concat(variables('namingInfix'), '-bepool')]",
+    "nicName": "[concat(variables('namingInfix'), '-nic')]",
+    "masterName": "[concat(variables('namingInfix'), '-master')]",
+    "ipConfigName": "[concat(variables('namingInfix'), '-ipconfig')]",
+    "frontendIpConfigId": "[concat(variables('loadBalancerId'),'/frontendIPConfigurations/loadBalancerFrontEnd')]",
+    "loadBalancerPoolId": "[concat(variables('loadBalancerId'),'/backendAddressPools/', variables('backendPoolName'))]",
+    "loadBalancerProbeId": "[concat(variables('loadBalancerId'),'/probes/tcpProbe')]",
+    "sshProbeId": "[concat(variables('loadBalancerId'),'/probes/sshProbe')]",
     "masterStorageAccountName": "[concat(variables('namingInfix'), 'master')]",
     "osType": {
       "publisher": "Canonical",
@@ -173,7 +170,7 @@
     },
     {
       "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[variables('publicIPAddressName')]",
+      "name": "[variables('publicIpAddressName')]",
       "location": "[resourceGroup().location]",
       "apiVersion": "[variables('networkApiVersion')]",
       "properties": {
@@ -189,7 +186,7 @@
       "location": "[resourceGroup().location]",
       "apiVersion": "[variables('networkApiVersion')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIpAddressName'))]"
       ],
       "properties": {
         "frontendIPConfigurations": [
@@ -197,14 +194,14 @@
             "name": "LoadBalancerFrontEnd",
             "properties": {
               "publicIPAddress": {
-                "id": "[variables('publicIPAddressID')]"
+                "id": "[variables('publicIpAddressId')]"
               }
             }
           }
         ],
         "backendAddressPools": [
           {
-            "name": "[variables('bePoolName')]"
+            "name": "[variables('backendPoolName')]"
           }
         ],
         "loadBalancingRules": [
@@ -212,10 +209,10 @@
             "name": "LBRule",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[variables('frontEndIPConfigID')]"
+                "id": "[variables('frontendIpConfigId')]"
               },
               "backendAddressPool": {
-                "id": "[variables('lbPoolID')]"
+                "id": "[variables('loadBalancerPoolId')]"
               },
               "protocol": "Tcp",
               "frontendPort": 5601,
@@ -223,7 +220,7 @@
               "enableFloatingIP": false,
               "idleTimeoutInMinutes": 5,
               "probe": {
-                "id": "[variables('lbProbeID')]"
+                "id": "[variables('loadBalancerProbeId')]"
               }
             }
           },
@@ -231,10 +228,10 @@
             "name": "ssh",
             "properties": {
               "frontendIPConfiguration": {
-                "id": "[variables('frontEndIPConfigID')]"
+                "id": "[variables('frontendIpConfigId')]"
               },
               "backendAddressPool": {
-                "id": "[variables('lbPoolID')]"
+                "id": "[variables('loadBalancerPoolId')]"
               },
               "protocol": "Tcp",
               "frontendPort": 22,
@@ -242,7 +239,7 @@
               "enableFloatingIP": false,
               "idleTimeoutInMinutes": 5,
               "probe": {
-                  "id": "[variables('sshProbeID')]"
+                  "id": "[variables('sshProbeId')]"
               }
             }
           }
@@ -285,7 +282,7 @@
         "name": "[concat(variables('nicName'), copyindex())]",
         "location": "[resourceGroup().location]",
         "dependsOn": [
-          "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]",
+          "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpAddressName'))]",
           "[resourceId('Microsoft.Network/networkSecurityGroups', 'masterNSG')]"
         ],
         "copy": {
@@ -304,7 +301,7 @@
                 },
                 "loadBalancerBackendAddressPools": [
                     {
-                        "id": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('loadBalancerName'), '/backendAddressPools/', variables('bePoolName'))]"
+                        "id": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('loadBalancerName'), '/backendAddressPools/', variables('backendPoolName'))]"
                     }
                 ],
                 "networkSecurityGroup": {
