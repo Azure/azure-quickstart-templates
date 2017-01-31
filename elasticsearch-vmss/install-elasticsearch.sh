@@ -161,9 +161,9 @@ configure_system()
 {
 	echo "options timeout:1 attempts:5" >> /etc/resolvconf/resolv.conf.d/head
 	resolvconf -u
-	ES_HEAP=`free -m |grep Mem | awk '{if ($2/2 >31744)  print 31744;else print $2/2;}'`
-	echo 'ES_JAVA_OPTS="-Xms${ES_HEAP}m -Xmx${ES_HEAP}m"' >> /etc/default/elasticsearch
-    echo 'JAVA_HOME=$JAVA_HOME' >> /etc/default/elasticsearch
+	ES_HEAP=`free -m |grep Mem | awk '{if ($2/2 >31744)  print 31744;else printf "%.0f", $2/2;}'`
+	echo "ES_JAVA_OPTS=\"-Xms${ES_HEAP}m -Xmx${ES_HEAP}m\"" >> /etc/default/elasticsearch
+    echo "JAVA_HOME=$JAVA_HOME" >> /etc/default/elasticsearch
     echo 'MAX_OPEN_FILES=65536' >> /etc/default/elasticsearch
     echo 'MAX_LOCKED_MEMORY=unlimited' >> /etc/default/elasticsearch
     sed -i 's|#LimitMEMLOCK=infinity|LimitMEMLOCK=infinity|' /usr/lib/systemd/system/elasticsearch.service
@@ -173,7 +173,7 @@ start_service()
 {
 	log "Starting Elasticsearch on ${HOSTNAME}"
     systemctl start elasticsearch.service
-    sleep 10
+    sleep 60
     
     if [ `systemctl is-failed elasticsearch.service` == 'failed' ];
     then
