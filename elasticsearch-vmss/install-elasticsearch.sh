@@ -170,6 +170,11 @@ configure_system()
     echo 'MAX_OPEN_FILES=65536' >> /etc/default/elasticsearch
     echo 'MAX_LOCKED_MEMORY=unlimited' >> /etc/default/elasticsearch
     sed -i 's|#LimitMEMLOCK=infinity|LimitMEMLOCK=infinity|' /usr/lib/systemd/system/elasticsearch.service
+    
+    # Kibana
+    IPADDRESS=$(ip route get 8.8.8.8 | awk 'NR==1 {print $NF}')
+    echo "server.host: \"$IPADDRESS\"" >> /etc/kibana/kibana.yml
+    echo "elasticsearch.url: \"http://$IPADDRESS:9200\"" >> /etc/kibana/kibana.yml
 }
 
 start_service()
