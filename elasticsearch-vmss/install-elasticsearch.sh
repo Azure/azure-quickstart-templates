@@ -175,6 +175,7 @@ configure_system()
     echo 'MAX_OPEN_FILES=65536' >> /etc/default/elasticsearch
     echo 'MAX_LOCKED_MEMORY=unlimited' >> /etc/default/elasticsearch
     sed -i 's|#LimitMEMLOCK=infinity|LimitMEMLOCK=infinity|' /usr/lib/systemd/system/elasticsearch.service
+    chown -R elasticsearch:elasticsearch /usr/share/elasticsearch
     
     # Kibana
     if [ ${IS_DATA_NODE} -eq 0 ]; 
@@ -183,6 +184,7 @@ configure_system()
         echo "server.host: \"$IPADDRESS\"" >> /etc/kibana/kibana.yml
         echo "elasticsearch.url: \"http://$IPADDRESS:9200\"" >> /etc/kibana/kibana.yml
         echo "xpack.security.enabled: false" >> /etc/kibana/kibana.yml
+        chown -R kibana:kibana /usr/share/kibana
     fi
 }
 
