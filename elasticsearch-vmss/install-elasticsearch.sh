@@ -133,8 +133,6 @@ install_es()
     echo "deb https://artifacts.elastic.co/packages/5.x/apt stable main" | tee -a /etc/apt/sources.list.d/elastic-5.x.list    
     apt-get update -y 
     apt-get install -y elasticsearch
-    /bin/systemctl daemon-reload
-    /bin/systemctl enable elasticsearch.service
 }
 
 configure_es()
@@ -172,6 +170,8 @@ configure_system()
 start_service()
 {
 	log "Starting Elasticsearch on ${HOSTNAME}"
+    systemctl daemon-reload
+    systemctl enable elasticsearch.service
     systemctl start elasticsearch.service
     sleep 60
     
