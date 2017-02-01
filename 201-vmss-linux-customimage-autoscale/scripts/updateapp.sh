@@ -6,8 +6,10 @@ set -e
 
 # functions
 update_app(){
+    echo "creating folder " $2 "/temp"
     mkdir $2/temp
     cd $2/temp
+    echo "downloading" $1
     wget --content-disposition $1
     #you may need to uncompress it
     tar -xzvf *.tar.gz -C ../
@@ -17,7 +19,7 @@ update_app(){
 
 restart_service(){
     #something like: systemctl restart mainsite.service
-    systemctl restart $3
+    systemctl restart $1
 }
 
 # script start
