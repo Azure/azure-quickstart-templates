@@ -12,7 +12,7 @@ sudo waagent -deprovision+user
 
 inside your Linux machine.
 
-Once it is generalized, you must run this commands at client side from a CLI command line:
+Once it is generalized, you must run this commands at client side from a [CLI](https://docs.microsoft.com/en-us/azure/xplat-cli-install) command line:
 
 ```
 azure login
@@ -28,12 +28,11 @@ This commands will export your machine inside the same storage account where the
 
 And you will find a [templateName].json file in the same folder that will help you to create a new VM based on this VHD.
 
-`Note: this commands will make your VM unusable, and you will need to create a new VM with the created image to be able to run a similar machine.`
-
+>Note: running this commands will prepare your VM to be deployed to a new machine, but your current VM will stop working. You will need to redeploy a new VM with the created image to be able to run a similar machine.`
 
 In addition to the VM Scale Set the template creates a public IP address and load balances HTTP traffic on port 80 to each VM in the scale set. It also includes a script that deploys a custom package to the image each time you call an update of a VM, so you will be able to script an update of your VM Scale Set without the need to reimage the whole VM each time.
 
-**Note: The maximum number of VMs in a storage account is 20, unless you set the "overprovision" property to false, in which case it is 40**
+>Note: The maximum number of VMs in a storage account is 20, unless you set the "overprovision" property to false, in which case it is 40
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vmss-linux-customimage%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
