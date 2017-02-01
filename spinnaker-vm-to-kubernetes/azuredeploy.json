@@ -8,16 +8,34 @@
         "description": "User name for the Virtual Machine."
       }
     },
-    "adminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Password for the Virtual Machine."
-      }
-    },
-    "dnsLabelPrefix": {
+    "sshPublicKey": {
       "type": "string",
       "metadata": {
-        "description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
+        "description": "Configure all linux machines with the SSH public key string.  Your key should include three parts, for example 'ssh-rsa AAAAB...snip...UcyupgH azureuser@linuxvm'"
+      }
+    },
+    "spinnakerDnsLabelPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Unique DNS Name for the Public IP used to access the Spinnaker Virtual Machine."
+      }
+    },
+    "kubernetesDnsLabelPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Unique DNS Name for the Public IP used to access the Kubernetes cluster targeted for deployment."
+      }
+    },
+    "servicePrincipalClientId": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Service Principal Client ID (also called App ID) used by the Kubernetes cluster to dynamically manage resources (e.g. user-defined load balancers)."
+      }
+    },
+    "servicePrincipalClientSecret": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Service Principal secret used by the Kubernetes cluster to dynamically manage resources (e.g. user-defined load balancers)."
       }
     },
     "_artifactsLocation": {
@@ -25,7 +43,7 @@
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/spinnaker-vm-simple/scripts/"
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/spinnaker-vm-to-kubernetes/scripts/"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -37,6 +55,8 @@
   },
   "variables": {
     "resourcePrefix": "spinnaker",
+    "kubernetesName": "[concat('containerservice-', resourceGroup().name)]",
+    "kubernetesMasterCount": 1,
     "storageAccountName": "[concat(variables('resourcePrefix'), uniquestring(resourceGroup().id))]",
     "OSDiskName": "[concat(variables('resourcePrefix'), 'OSDisk')]",
     "nicName": "[concat(variables('resourcePrefix'), 'VMNic')]",
@@ -48,6 +68,43 @@
   },
   "resources": [
     {
+      "apiVersion": "2016-09-30",
+      "type": "Microsoft.ContainerService/containerServices",
+      "location": "[resourceGroup().location]",
+      "name": "[variables('kubernetesName')]",
+      "properties": {
+        "orchestratorProfile": {
+          "orchestratorType": "Kubernetes"
+        },
+        "masterProfile": {
+          "count": "[variables('kubernetesMasterCount')]",
+          "dnsPrefix": "[concat(parameters('kubernetesDnsLabelPrefix'),'mgmt')]"
+        },
+        "agentPoolProfiles": [
+          {
+            "name": "agentpools",
+            "count": 1,
+            "vmSize": "Standard_D2_v2",
+            "dnsPrefix": "[concat(parameters('kubernetesDnsLabelPrefix'),'agents')]"
+          }
+        ],
+        "linuxProfile": {
+          "adminUsername": "[parameters('adminUsername')]",
+          "ssh": {
+            "publicKeys": [
+              {
+                "keyData": "[parameters('sshPublicKey')]"
+              }
+            ]
+          }
+        },
+        "servicePrincipalProfile": {
+          "ClientId": "[parameters('servicePrincipalClientId')]",
+          "Secret": "[parameters('servicePrincipalClientSecret')]"
+        }
+      }
+    },
+    {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('storageAccountName')]",
       "apiVersion": "2016-01-01",
@@ -56,7 +113,7 @@
         "name": "Standard_LRS"
       },
       "kind": "Storage",
-      "properties": { }
+      "properties": {}
     },
     {
       "apiVersion": "2016-09-01",
@@ -66,7 +123,7 @@
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
-          "domainNameLabel": "[parameters('dnsLabelPrefix')]"
+          "domainNameLabel": "[parameters('spinnakerDnsLabelPrefix')]"
         }
       }
     },
@@ -133,7 +190,17 @@
         "osProfile": {
           "computerName": "[variables('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": "true",
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[concat('/home/',parameters('adminUserName'),'/.ssh/authorized_keys')]",
+                  "keyData": "[parameters('sshPublicKey')]"
+                }
+              ]
+            }
+          }
         },
         "storageProfile": {
           "imageReference": {
@@ -172,7 +239,8 @@
       "apiVersion": "2015-06-15",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
+        "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]",
+        "[resourceId('Microsoft.ContainerService/containerServices', variables('kubernetesName'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
@@ -182,20 +250,30 @@
         "settings": {
           "fileUris": [
             "[concat(parameters('_artifactsLocation'), 'set_spinnaker.sh', parameters('_artifactsLocationSasToken'))]"
-          ],
-          "commandToExecute": "[concat('sh set_spinnaker.sh', ' ', parameters('adminUserName'), ' ', parameters('adminPassword'))]"
+          ]
+        },
+        "protectedSettings": {
+          "commandToExecute": "[concat('./set_spinnaker.sh', ' ', parameters('servicePrincipalClientId'), ' ', parameters('servicePrincipalClientSecret'), ' ', subscription().tenantId, ' ', parameters('adminUsername'), ' ', resourceGroup().name, ' ', reference(resourceId('Microsoft.ContainerService/containerServices', variables('kubernetesName'))).masterProfile.fqdn, ' ', variables('kubernetesMasterCount'), ' ', parameters('_artifactsLocation'), ' ', parameters('_artifactsLocationSasToken'))]"
         }
       }
     }
   ],
   "outputs": {
-    "hostname": {
+    "spinnakerFQDN": {
       "type": "string",
       "value": "[reference(variables('publicIPAddressName')).dnsSettings.fqdn]"
     },
-    "sshCommand": {
+    "spinnakerSsh": {
       "type": "string",
       "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(variables('publicIPAddressName')).dnsSettings.fqdn)]"
+    },
+    "kubernetesMasterFQDN": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.ContainerService/containerServices', variables('kubernetesName'))).masterProfile.fqdn]"
+    },
+    "kubernetesMasterSsh": {
+      "type": "string",
+      "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(resourceId('Microsoft.ContainerService/containerServices', variables('kubernetesName'))).masterProfile.fqdn)]"
     }
   }
 }
