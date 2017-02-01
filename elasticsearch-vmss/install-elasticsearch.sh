@@ -186,9 +186,24 @@ configure_system()
         echo "xpack.security.enabled: false" >> /etc/kibana/kibana.yml
         chown -R kibana:kibana /usr/share/kibana
     else
-        # data disk [/datadisks/disk1]
-        bash vm-disk-utils-0.1.sh
-        echo "DATA_DIR=/datadisks/disk1" >> /etc/default/elasticsearch
+        # data disk
+        DATA_DIR="/datadisks/disk1"
+        if ! [ -f "vm-disk-utils-0.1.sh" ]; 
+        then
+            DOWNLOAD_SCRIPT="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/shared_scripts/ubuntu/vm-disk-utils-0.1.sh"
+            log "Disk setup script not found in `pwd`, download from $DOWNLOAD_SCRIPT"
+            wget -q $DOWNLOAD_SCRIPT
+        fi
+        
+        bash ./vm-disk-utils-0.1.sh
+        if [ $? -eq 0 ] && [ -d "$DATA_DIR" ];
+        then
+            log "Disk setup successful, using $DATA_DIR"
+            chown -R elasticsearch:elasticsearch $DATA_DIR
+            echo "DATA_DIR=$DATA_DIR" >> /etc/default/elasticsearch
+        else
+            log "Disk setup failed, using default data storage location"
+        fi
     fi
 }
 
