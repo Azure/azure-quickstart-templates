@@ -177,14 +177,18 @@ configure_system()
     sed -i 's|#LimitMEMLOCK=infinity|LimitMEMLOCK=infinity|' /usr/lib/systemd/system/elasticsearch.service
     chown -R elasticsearch:elasticsearch /usr/share/elasticsearch
     
-    # Kibana
     if [ ${IS_DATA_NODE} -eq 0 ]; 
     then
+        # Kibana    
         IPADDRESS=$(ip route get 8.8.8.8 | awk 'NR==1 {print $NF}')
         echo "server.host: \"$IPADDRESS\"" >> /etc/kibana/kibana.yml
         echo "elasticsearch.url: \"http://$IPADDRESS:9200\"" >> /etc/kibana/kibana.yml
         echo "xpack.security.enabled: false" >> /etc/kibana/kibana.yml
         chown -R kibana:kibana /usr/share/kibana
+    else
+        # data disk [/datadisks/disk1]
+        bash vm-disk-utils-0.1.sh
+        echo "DATA_DIR=/datadisks/disk1" >> /etc/default/elasticsearch
     fi
 }
 
