@@ -96,34 +96,32 @@
     }
   },
   "variables": {
-    "vmss":{
-      "uniqueName": "[toLower(substring(concat(parameters('vmssName'), uniqueString(resourceGroup().id)), 0, 9))]",  
-      "accountType": "Standard_LRS",
-      "newAccountSuffix": "[concat(variables('vmss').uniqueName, 'sa')]",
-      "storageAccounts": [
-      "[concat(uniqueString(concat(variables('vmss').newAccountSuffix, '0')))]",
-      "[concat(uniqueString(concat(variables('vmss').newAccountSuffix, '1')))]",
-      "[concat(uniqueString(concat(variables('vmss').newAccountSuffix, '2')))]",
-      "[concat(uniqueString(concat(variables('vmss').newAccountSuffix, '3')))]",
-      "[concat(uniqueString(concat(variables('vmss').newAccountSuffix, '4')))]"
+      "vmssuniqueName": "[toLower(substring(concat(parameters('vmssName'), uniqueString(resourceGroup().id)), 0, 9))]",  
+      "vmssaccountType": "Standard_LRS",
+      "vmssnewAccountSuffix": "[concat(variables('vmssuniqueName'), 'sa')]",
+      "vmssstorageAccounts": [
+      "[concat(uniqueString(concat(variables('vmssnewAccountSuffix'), '0')))]",
+      "[concat(uniqueString(concat(variables('vmssnewAccountSuffix'), '1')))]",
+      "[concat(uniqueString(concat(variables('vmssnewAccountSuffix'), '2')))]",
+      "[concat(uniqueString(concat(variables('vmssnewAccountSuffix'), '3')))]",
+      "[concat(uniqueString(concat(variables('vmssnewAccountSuffix'), '4')))]"
       ],
-      "saCount": "[length(variables('vmss').storageAccounts)]"
-    },
+      "vmsssaCount": "[length(variables('vmssstorageAccounts'))]",
     "addressPrefix": "10.0.0.0/16",
     "subnetPrefix": "10.0.0.0/24",
-    "virtualNetworkName": "[concat(variables('vmss').uniqueName, 'vnet')]",
-    "subnetName": "[concat(variables('vmss').uniqueName, 'subnet')]",
-    "lbName": "[concat(variables('vmss').uniqueName, 'lb')]",
+    "virtualNetworkName": "[concat(variables('vmssuniqueName'), 'vnet')]",
+    "subnetName": "[concat(variables('vmssuniqueName'), 'subnet')]",
+    "lbName": "[concat(variables('vmssuniqueName'), 'lb')]",
     "bepoolName": "[concat(variables('lbName'), 'bepool')]",
     "fepoolName": "[concat(variables('lbName'), 'fepool')]",
     "lbID": "[resourceId('Microsoft.Network/loadBalancers',variables('lbName'))]",
     "bepoolID": "[concat(variables('lbID'),'/backendAddressPools/', variables('bepoolName'))]",
     "feIpConfigName": "[concat(variables('fepoolName'), 'IpConfig')]",
     "feIpConfigId": "[concat(variables('lbID'),'/frontendIPConfigurations/', variables('feIpConfigName'))]",
-    "pipName": "[concat(variables('vmss').uniqueName, 'pip')]",
-    "nicName": "[concat(variables('vmss').uniqueName, 'nic')]",
+    "pipName": "[concat(variables('vmssuniqueName'), 'pip')]",
+    "nicName": "[concat(variables('vmssuniqueName'), 'nic')]",
     "natPoolName": "[concat(variables('lbName'), 'natpool')]",
-    "ipConfigName": "[concat(variables('vmss').uniqueName, 'ipconfig')]",
+    "ipConfigName": "[concat(variables('vmssuniqueName'), 'ipconfig')]",
     "httpProbeName": "httpProbe",
     "httpsProbeName": "httpsProbe",
     "quote": "'" // escaping quotes in concat was not easy, so we use this variable to concatenate a single quote
@@ -152,15 +150,15 @@
     },
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[concat(variables('vmssStorageAccounts')[copyIndex()], variables('vmss').newAccountSuffix)]",
+      "name": "[concat(variables('vmssStorageAccounts')[copyIndex()], variables('vmssnewAccountSuffix'))]",
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-15",
       "copy": {
         "name": "storageLoop",
-        "count": "[variables('vmss.saCount')]"
+        "count": "[variables('vmsssaCount')]"
       },
       "properties": {
-        "accountType": "[variables('vmss').accountType]"
+        "accountType": "[variables('vmssaccountType')]"
       }
     },
     {
@@ -171,7 +169,7 @@
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
-          "domainNameLabel": "[variables('vmss').uniqueName]"
+          "domainNameLabel": "[variables('vmssuniqueName')]"
         }
       }
     },
@@ -284,7 +282,7 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachineScaleSets",
-      "name": "[variables('vmss').uniqueName]",
+      "name": "[variables('vmssuniqueName')]",
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-15",
       "dependsOn": [
@@ -313,7 +311,7 @@
             }
           },
           "osProfile": {
-            "computerNamePrefix": "[variables('vmss').uniqueName]",
+            "computerNamePrefix": "[variables('vmssuniqueName')]",
             "adminUsername": "[parameters('adminUsername')]",
             "adminPassword": "[parameters('adminPassword')]"
           },
@@ -360,7 +358,7 @@
                     "fileUris": [
                       "[parameters('customScriptPath')]"
                     ],
-                    "commandToExecute": "[concat('bash updateapp.sh ', variables('quote'),parameters('appPackageUri'),parameters('appPackageUriToken'),variables('quote'),' ',variables('destination'),' ',variables('serviceName')]"
+                    "commandToExecute": "[concat('bash updateapp.sh ', variables('quote'),parameters('appPackageUri'),parameters('appPackageUriToken'),variables('quote'),' ',parameters('destination'),' ',parameters('serviceName'))]"
                   }
                 }
               }
@@ -375,11 +373,11 @@
       "name": "autoscalesettings",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[variables('vmss').uniqueName]"
+        "[variables('vmssuniqueName')]"
       ],
       "properties": {
         "name": "autoscalesettings",
-        "targetResourceUri": "[concat('/subscriptions/',subscription().subscriptionId, '/resourceGroups/',  resourceGroup().name, '/providers/Microsoft.Compute/virtualMachineScaleSets/', variables('vmss').uniqueName)]",
+        "targetResourceUri": "[concat('/subscriptions/',subscription().subscriptionId, '/resourceGroups/',  resourceGroup().name, '/providers/Microsoft.Compute/virtualMachineScaleSets/', variables('vmssuniqueName'))]",
         "enabled": true,
         "profiles": [
           {
@@ -394,7 +392,7 @@
                 "metricTrigger": {
                   "metricName": "Percentage CPU",
                   "metricNamespace": "",
-                  "metricResourceUri": "[concat('/subscriptions/',subscription().subscriptionId, '/resourceGroups/',  resourceGroup().name, '/providers/Microsoft.Compute/virtualMachineScaleSets/', variables('vmss').uniqueName)]",
+                  "metricResourceUri": "[concat('/subscriptions/',subscription().subscriptionId, '/resourceGroups/',  resourceGroup().name, '/providers/Microsoft.Compute/virtualMachineScaleSets/', variables('vmssuniqueName'))]",
                   "timeGrain": "PT1M",
                   "statistic": "Average",
                   "timeWindow": "PT5M",
@@ -413,7 +411,7 @@
                 "metricTrigger": {
                   "metricName": "Percentage CPU",
                   "metricNamespace": "",
-                  "metricResourceUri": "[concat('/subscriptions/',subscription().subscriptionId, '/resourceGroups/',  resourceGroup().name, '/providers/Microsoft.Compute/virtualMachineScaleSets/',variables('vmss').uniqueName)]",
+                  "metricResourceUri": "[concat('/subscriptions/',subscription().subscriptionId, '/resourceGroups/',  resourceGroup().name, '/providers/Microsoft.Compute/virtualMachineScaleSets/',variables('vmssuniqueName'))]",
                   "timeGrain": "PT1M",
                   "statistic": "Average",
                   "timeWindow": "PT5M",
