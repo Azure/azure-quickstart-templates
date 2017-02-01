@@ -133,14 +133,16 @@ install_es()
     echo "deb https://artifacts.elastic.co/packages/5.x/apt stable main" | tee -a /etc/apt/sources.list.d/elastic-5.x.list    
     apt-get update -y 
     apt-get install -y elasticsearch
-    cd /usr/share/elasticsearch/
+    pushd /usr/share/elasticsearch/
     bin/elasticsearch-plugin install x-pack --batch
+    popd
     
     if [ ${IS_DATA_NODE} -eq 0 ]; 
     then
         apt-get install -y kibana
-        cd /usr/share/kibana/
+        pushd /usr/share/kibana/
         bin/kibana-plugin install x-pack
+        popd
     fi
 }
 
