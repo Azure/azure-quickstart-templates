@@ -39,6 +39,7 @@
       "metadata": {
         "description": "Number of VM instances (20 or less)."
       },
+      "defaultValue": 2,
       "maxValue": 20
     },
     "adminUsername": {
@@ -95,31 +96,31 @@
     "vmss":{
       "uniqueName": "[toLower(substring(concat(parameters('vmssName'), uniqueString(resourceGroup().id)), 0, 9))]",  
       "accountType": "Standard_LRS",
-      "newAccountSuffix": "[concat(variables('vmss.uniqueName'), 'sa')]",
+      "newAccountSuffix": "[concat(variables('vmss').uniqueName, 'sa')]",
       "storageAccounts": [
-      "[concat(uniqueString(concat(variables('vmss.newAccountSuffix'), '0')))]",
-      "[concat(uniqueString(concat(variables('vmss.newAccountSuffix'), '1')))]",
-      "[concat(uniqueString(concat(variables('vmss.newAccountSuffix'), '2')))]",
-      "[concat(uniqueString(concat(variables('vmss.newAccountSuffix'), '3')))]",
-      "[concat(uniqueString(concat(variables('vmss.newAccountSuffix'), '4')))]"
+      "[concat(uniqueString(concat(variables('vmss').newAccountSuffix, '0')))]",
+      "[concat(uniqueString(concat(variables('vmss').newAccountSuffix, '1')))]",
+      "[concat(uniqueString(concat(variables('vmss').newAccountSuffix, '2')))]",
+      "[concat(uniqueString(concat(variables('vmss').newAccountSuffix, '3')))]",
+      "[concat(uniqueString(concat(variables('vmss').newAccountSuffix, '4')))]"
       ],
-      "saCount": "[length(variables('vmss.storageAccounts'))]"
+      "saCount": "[length(variables('vmss').storageAccounts)]"
     },
     "addressPrefix": "10.0.0.0/16",
     "subnetPrefix": "10.0.0.0/24",
-    "virtualNetworkName": "[concat(variables('vmss.uniqueName'), 'vnet')]",
-    "subnetName": "[concat(variables('vmss.uniqueName'), 'subnet')]",
-    "lbName": "[concat(variables('vmss.uniqueName'), 'lb')]",
+    "virtualNetworkName": "[concat(variables('vmss').uniqueName, 'vnet')]",
+    "subnetName": "[concat(variables('vmss').uniqueName, 'subnet')]",
+    "lbName": "[concat(variables('vmss').uniqueName, 'lb')]",
     "bepoolName": "[concat(variables('lbName'), 'bepool')]",
     "fepoolName": "[concat(variables('lbName'), 'fepool')]",
     "lbID": "[resourceId('Microsoft.Network/loadBalancers',variables('lbName'))]",
     "bepoolID": "[concat(variables('lbID'),'/backendAddressPools/', variables('bepoolName'))]",
     "feIpConfigName": "[concat(variables('fepoolName'), 'IpConfig')]",
     "feIpConfigId": "[concat(variables('lbID'),'/frontendIPConfigurations/', variables('feIpConfigName'))]",
-    "pipName": "[concat(variables('vmss.uniqueName'), 'pip')]",
-    "nicName": "[concat(variables('vmss.uniqueName'), 'nic')]",
+    "pipName": "[concat(variables('vmss').uniqueName, 'pip')]",
+    "nicName": "[concat(variables('vmss').uniqueName, 'nic')]",
     "natPoolName": "[concat(variables('lbName'), 'natpool')]",
-    "ipConfigName": "[concat(variables('vmss.uniqueName'), 'ipconfig')]",
+    "ipConfigName": "[concat(variables('vmss').uniqueName, 'ipconfig')]",
     "httpProbeName": "httpProbe",
     "httpsProbeName": "httpsProbe",
     "quote": "'" // escaping quotes in concat was not easy, so we use this variable to concatenate a single quote
@@ -148,7 +149,7 @@
     },
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[concat(variables('vmssStorageAccounts')[copyIndex()], variables('vmss.newAccountSuffix'))]",
+      "name": "[concat(variables('vmssStorageAccounts')[copyIndex()], variables('vmss').newAccountSuffix)]",
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-15",
       "copy": {
@@ -156,7 +157,7 @@
         "count": "[variables('vmss.saCount')]"
       },
       "properties": {
-        "accountType": "[variables('vmss.accountType')]"
+        "accountType": "[variables('vmss').accountType]"
       }
     },
     {
@@ -167,7 +168,7 @@
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
-          "domainNameLabel": "[variables('vmss.uniqueName')]"
+          "domainNameLabel": "[variables('vmss').uniqueName]"
         }
       }
     },
@@ -280,7 +281,7 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachineScaleSets",
-      "name": "[variables('vmss.uniqueName')]",
+      "name": "[variables('vmss').uniqueName]",
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-15",
       "dependsOn": [
@@ -309,7 +310,7 @@
             }
           },
           "osProfile": {
-            "computerNamePrefix": "[variables('vmss.uniqueName')]",
+            "computerNamePrefix": "[variables('vmss').uniqueName]",
             "adminUsername": "[parameters('adminUsername')]",
             "adminPassword": "[parameters('adminPassword')]"
           },
@@ -371,11 +372,11 @@
       "name": "autoscalesettings",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[variables('vmss.uniqueName')]"
+        "[variables('vmss').uniqueName]"
       ],
       "properties": {
         "name": "autoscalesettings",
-        "targetResourceUri": "[concat('/subscriptions/',subscription().subscriptionId, '/resourceGroups/',  resourceGroup().name, '/providers/Microsoft.Compute/virtualMachineScaleSets/', variables('vmss.uniqueName'))]",
+        "targetResourceUri": "[concat('/subscriptions/',subscription().subscriptionId, '/resourceGroups/',  resourceGroup().name, '/providers/Microsoft.Compute/virtualMachineScaleSets/', variables('vmss').uniqueName)]",
         "enabled": true,
         "profiles": [
           {
@@ -390,7 +391,7 @@
                 "metricTrigger": {
                   "metricName": "Percentage CPU",
                   "metricNamespace": "",
-                  "metricResourceUri": "[concat('/subscriptions/',subscription().subscriptionId, '/resourceGroups/',  resourceGroup().name, '/providers/Microsoft.Compute/virtualMachineScaleSets/', variables('vmss.uniqueName'))]",
+                  "metricResourceUri": "[concat('/subscriptions/',subscription().subscriptionId, '/resourceGroups/',  resourceGroup().name, '/providers/Microsoft.Compute/virtualMachineScaleSets/', variables('vmss').uniqueName)]",
                   "timeGrain": "PT1M",
                   "statistic": "Average",
                   "timeWindow": "PT5M",
@@ -409,7 +410,7 @@
                 "metricTrigger": {
                   "metricName": "Percentage CPU",
                   "metricNamespace": "",
-                  "metricResourceUri": "[concat('/subscriptions/',subscription().subscriptionId, '/resourceGroups/',  resourceGroup().name, '/providers/Microsoft.Compute/virtualMachineScaleSets/',variables('vmss.uniqueName'))]",
+                  "metricResourceUri": "[concat('/subscriptions/',subscription().subscriptionId, '/resourceGroups/',  resourceGroup().name, '/providers/Microsoft.Compute/virtualMachineScaleSets/',variables('vmss').uniqueName)]",
                   "timeGrain": "PT1M",
                   "statistic": "Average",
                   "timeWindow": "PT5M",
