@@ -7,9 +7,12 @@ set -e
 # functions
 update_app(){
     mkdir $2/temp
-    curl -o $2/temp/ $1
+    cd $2/temp
+    wget --content-disposition $1
     #you may need to uncompress it
-    tar -xzvf $2/temp/package.tar.gz -C $2
+    tar -xzvf *.tar.gz -C ../
+    cd -
+    rm -r $2/temp
 }
 
 restart_service(){
@@ -19,7 +22,7 @@ restart_service(){
 
 # script start
 
-echo "Welcome to configuressl.sh"
+echo "Welcome to updateapp.sh"
 echo "Number of parameters was: " $#
 
 if [ $# -ne 3 ]; then
