@@ -6,8 +6,10 @@ set -e
 
 # functions
 update_app(){
-    curl -o $2 $1
+    mkdir $2/temp
+    curl -o $2/temp/ $1
     #you may need to uncompress it
+    tar -xzvf $2/temp/package.tar.gz -C $2
 }
 
 restart_service(){
