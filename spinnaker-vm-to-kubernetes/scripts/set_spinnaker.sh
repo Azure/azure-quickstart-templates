@@ -66,3 +66,9 @@ sudo service spinnaker restart
 
 # Restart cassandra to avoid front50 connection issue
 sudo service cassandra restart
+
+# Install and setup Kubernetes cli for admin user
+sudo curl -L -s -o /usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+sudo chmod +x /usr/local/bin/kubectl
+mkdir /home/${admin_user_name}/.kube
+sudo cp /home/spinnaker/.kube/config /home/${admin_user_name}/.kube/config
