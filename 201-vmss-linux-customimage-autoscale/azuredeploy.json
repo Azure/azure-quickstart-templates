@@ -32,6 +32,7 @@
       "metadata": {
         "description": "String used as a base for naming resources. Must be 3-61 characters in length and globally unique across Azure. A hash is prepended to this string for some resources, and resource-specific information is appended."
       },
+      "minLength": 3,
       "maxLength": 61
     },
     "capacity": {
@@ -51,7 +52,7 @@
     "adminPassword": {
       "type": "securestring",
       "metadata": {
-        "description": "Admin password on all VMs."
+        "description": "Admin password on all VMs. It must be at least 12 characters in length."
       },
       "minLength": 12
     },
@@ -67,7 +68,7 @@
         "description": "The source of the application package to copy using the configuration.sh script."
       }
     },
-    "destination": {
+    "destinationFolder": {
       "type": "string",
       "metadata":{
         "description":"path were the appPackage will be copied inside the Linux machine"
@@ -81,12 +82,26 @@
       },
       "defaultValue": "mainsite.service"
     },
-    "customScriptPath":{
+    "customScriptName":{
       "type":"string",
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vmss-linux-customimage-autoscale/scripts/updateapp.sh",
       "metadata": {
-        "description":"path of the custom script for application deployment. It must be named updateapp.sh. You may use the example as a base script for your deployment: https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vmss-linux-customimage-autoscale/scripts/updateapp.sh"
-      }
+        "description": "name of the custom script to be run by bash"
+      },
+      "defaultValue": "scripts/updateapp.sh"
+    },
+    "_artifactsLocation": {
+        "type": "string",
+        "metadata": {
+            "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+        },
+        "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vmss-linux-customimage-autoscale"
+    },
+    "_artifactsLocationSasToken": {
+        "type": "securestring",
+        "metadata": {
+            "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+        },
+        "defaultValue": ""
     }
   },
   "variables": {
@@ -348,9 +363,9 @@
                   "autoUpgradeMinorVersion": true,
                   "settings": {
                     "fileUris": [
-                      "[parameters('customScriptPath')]"
+                      "[concat(parameters('_artifactsLocation'), '/', parameters('customScriptName'), parameters('_artifactsLocationSasToken'))]"
                     ],
-                    "commandToExecute": "[concat('bash updateapp.sh ', variables('quote'),parameters('appPackageUri'),variables('quote'),' ',parameters('destination'),' ',parameters('serviceName'))]"
+                    "commandToExecute": "[concat('bash ',parameters('customScriptName'), ' ', variables('quote'),parameters('appPackageUri'),variables('quote'),' ',parameters('destinationFolder'),' ',parameters('serviceName'))]"
                   }
                 }
               }
@@ -375,9 +390,9 @@
           {
             "name": "Profile1",
             "capacity": {
-              "minimum": "1",
-              "maximum": "10",
-              "default": "1"
+              "minimum": "2",
+              "maximum": "20",
+              "default": "2"
             },
             "rules": [
               {
