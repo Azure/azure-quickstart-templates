@@ -37,7 +37,7 @@ And you will find a [templateName].json file in the same folder that will help y
 
 >Note: running this commands will prepare your VM to be deployed to a new machine, but your current VM will stop working. You will need to redeploy a new VM with the created image to be able to run a similar machine.
 
-In addition to the VM Scale Set the template creates a public IP address and load balances HTTP traffic on port 80 to each VM in the scale set. It also includes a script that deploys a custom package to the image each time you call an update of a VM, so you will be able to script an update of your VM Scale Set without the need to reimage the whole VM each time.
+In addition to the VM Scale Set the template creates a public IP address and load balances HTTP traffic on port 80 to each VM in the scale set. It also includes a script that deploys a custom package to the image each time you call a reimage of a VM, so you will be able to script an update of your VM Scale Set without the need to create a new VM image each time.
 
 >Note: The maximum number of VMs in a storage account is 20, unless you set the "overprovision" property to false, in which case it is 40
 
