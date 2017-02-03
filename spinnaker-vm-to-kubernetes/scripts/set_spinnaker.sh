@@ -37,7 +37,7 @@ for (( i=0; i<$master_count; i++ ))
 do
   master_vm="k8s-master-${kubernetes_suffix}-$i"
   azure vm extension set $resource_group $master_vm CustomScript Microsoft.Azure.Extensions 2.0 --auto-upgrade-minor-version \
-    --public-config "{\"fileUris\": [\"${artifacts_location}add_temp_user.sh${artifacts_location_sas_token}\"], \"commandToExecute\": \"./add_temp_user.sh $admin_user_name $temp_user_name '$temp_pub_key'\"}"
+    --public-config "{\"fileUris\": [\"${artifacts_location}scripts/add_temp_user.sh${artifacts_location_sas_token}\"], \"commandToExecute\": \"./add_temp_user.sh $admin_user_name $temp_user_name '$temp_pub_key'\"}"
 done
 
 # Copy kube config over from master kubernetes cluster and mark readable
@@ -50,7 +50,7 @@ for (( i=0; i<$master_count; i++ ))
 do
   master_vm="k8s-master-${kubernetes_suffix}-$i"
   azure vm extension set $resource_group $master_vm CustomScript Microsoft.Azure.Extensions 2.0 --auto-upgrade-minor-version \
-    --public-config "{\"fileUris\": [\"${artifacts_location}remove_temp_user.sh${artifacts_location_sas_token}\"], \"commandToExecute\": \"./remove_temp_user.sh $temp_user_name\"}"
+    --public-config "{\"fileUris\": [\"${artifacts_location}scripts/remove_temp_user.sh${artifacts_location_sas_token}\"], \"commandToExecute\": \"./remove_temp_user.sh $temp_user_name\"}"
 done
 
 # Delete temp key on spinnaker vm
@@ -59,10 +59,6 @@ rm ${temp_key_path}.pub
 
 # Configure Spinnaker for Kubernetes
 sudo sed -i 's|SPINNAKER_KUBERNETES_ENABLED:false|SPINNAKER_KUBERNETES_ENABLED:true|' /opt/spinnaker/config/spinnaker-local.yml
-sudo sed -i 's|SPINNAKER_DOCKER_REPOSITORY:|SPINNAKER_DOCKER_REPOSITORY:lwander/spin-kub-demo|' /opt/spinnaker/config/spinnaker-local.yml
-
-# Restart spinnaker so that config changes take effect
-sudo service spinnaker restart
 
 # Restart cassandra to avoid front50 connection issue
 sudo service cassandra restart

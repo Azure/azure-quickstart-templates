@@ -7,7 +7,7 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template allows you to deploy an instance of Spinnaker on a Linux Ubuntu 14.04 LTS VM automatically configured to target a Kubernetes cluster. This will deploy a D3_v2 size VM and a Kubernetes cluster in the resource group location and return the FQDN of both.
+This template allows you to deploy an instance of Spinnaker on a Linux Ubuntu 14.04 LTS VM automatically configured to target a Kubernetes cluster. This will deploy a D3_v2 size VM and a Kubernetes cluster in the resource group location and return the FQDN of both. It will also optionally create an Azure Container Registry and return the full registry name.
 
 ## A. Deploy Spinnaker VM
 1. Click the "Deploy to Azure" button. If you don't have an Azure subscription, you can follow instructions to signup for a free trial.
@@ -74,7 +74,9 @@ You need to setup port forwarding to view the Spinnaker UI on your local machine
 ## C. Connect to Spinnaker
 
 1. After you have started your tunnel, navigate to `http://localhost:9000/` on your local machine.
-1. Follow steps [here](http://www.spinnaker.io/docs/kubernetes-source-to-prod) to deploy a sample pipeline. The kubeconfig file has already been copied over to your Spinnaker instance, and it has been configured to use the [docker repository](https://hub.docker.com/r/lwander/spin-kub-demo/) in the example.
+1. Follow steps [here](http://www.spinnaker.io/docs/kubernetes-source-to-prod) to deploy a sample pipeline. The kubeconfig file has already been copied over to your Spinnaker instance, and a docker registry has been configured.
+  1. If you specified 'DockerHub' as the registry, Spinnaker has been targeted to use the [repository](https://hub.docker.com/r/lwander/spin-kub-demo/) in the sample pipeline. Follow steps [here](http://www.spinnaker.io/v1.0/docs/target-deployment-configuration#section-docker-registry) to target a different repository.
+  1. If you specified 'AzureContainerRegistry' as the registry, follow steps [here](https://docs.microsoft.com/azure/container-registry/container-registry-get-started-docker-cli) to push your first image.
 1. Check the [Troubleshooting Guide](http://www.spinnaker.io/docs/troubleshooting-guide) if you have any issues.
 
 ## Questions/Comments? azdevopspub@microsoft.com
