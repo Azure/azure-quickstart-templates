@@ -1,4 +1,4 @@
-# Red Hat 3-tier IaaS Solution on Azure 
+# Red Hat Linux 3-tier IaaS Solution on Azure 
 ## Solution Overview 
 This Azure Quick Start template deploys a 3 Tier Red Hat Solution on Azure.The Solution includes Web tier Servers, Application tier Servers and Database Tier Servers running Red Hat Enterprise Linux 7.3. Template follows Standard best practices for running a 3 tier Red Hat Linux IaaS workload on Azure. This template will deploy multiple number of VMs in each tier as per requirement. 
 
