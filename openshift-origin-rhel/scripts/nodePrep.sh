@@ -6,8 +6,8 @@ echo $(date) " - Install base packages and update system to latest packages"
 yum -y update --exclude=WALinuxAgent
 yum -y install wget git net-tools bind-utils iptables-services bridge-utils bash-completion pyOpenSSL httpd-tools
 
-# Install the latest epel repo if not already present
-yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+# Install the epel repo if not already present
+yum -y install https://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-8.noarch.rpm
 
 # Clean yum metadata and cache to make sure we see the latest packages available
 yum -y clean all
