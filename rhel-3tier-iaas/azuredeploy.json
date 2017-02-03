@@ -1,0 +1,1097 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminUsername": {
+      "type": "string",
+      "defaultValue": "rheladmin",
+      "metadata": {
+        "description": "Username for the virtual Machines"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "minLength": 12,
+      "metadata": {
+        "description": "Password for all Servers(Min Length: 12)"
+      }
+    },
+    "webTierVmCount": {
+      "type": "int",
+      "defaultValue": 2,
+      "metadata": {
+        "description": "Number of Web servers to be deployed"
+      }
+    },
+    "appTierVmCount": {
+      "type": "int",
+      "defaultValue": 2,
+      "metadata": {
+        "description": "Number of App servers to be deployed"
+      }
+    },
+    "databaseTierVmCount": {
+      "type": "int",
+      "defaultValue": 2,
+      "metadata": {
+        "description": "Number of Database servers to be deployed"
+      }
+    },
+    "webTierVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D1",
+      "allowedValues": [
+        "Standard_A1",
+        "Standard_A2",
+        "Standard_A3",
+        "Standard_A4",
+        "Standard_A5",
+        "Standard_A6",
+        "Standard_A7",
+        "Standard_A8",
+        "Standard_A1_v2",
+        "Standard_A2_v2",
+        "Standard_A4_v2",
+        "Standard_A8_v2",
+        "Standard_D1",
+        "Standard_D2",
+        "Standard_D3",
+        "Standard_D4",
+        "Standard_D1_v2",
+        "Standard_D2_v2",
+        "Standard_D3_v2",
+        "Standard_D4_v2",
+        "Standard_DS1",
+        "Standard_DS2",
+        "Standard_DS3",
+        "Standard_DS4",
+        "Standard_F1",
+        "Standard_F2",
+        "Standard_F4",
+        "Standard_F8",
+        "Standard_G1",
+        "Standard_G2",
+        "Standard_G3",
+        "Standard_G4"
+      ],
+      "metadata": {
+        "description": "Web VM size"
+      }
+    },
+    "appTierVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D1",
+      "allowedValues": [
+        "Standard_A1",
+        "Standard_A2",
+        "Standard_A3",
+        "Standard_A4",
+        "Standard_A5",
+        "Standard_A6",
+        "Standard_A7",
+        "Standard_A8",
+        "Standard_A1_v2",
+        "Standard_A2_v2",
+        "Standard_A4_v2",
+        "Standard_A8_v2",
+        "Standard_D1",
+        "Standard_D2",
+        "Standard_D3",
+        "Standard_D4",
+        "Standard_D1_v2",
+        "Standard_D2_v2",
+        "Standard_D3_v2",
+        "Standard_D4_v2",
+        "Standard_DS1",
+        "Standard_DS2",
+        "Standard_DS3",
+        "Standard_DS4",
+        "Standard_F1",
+        "Standard_F2",
+        "Standard_F4",
+        "Standard_F8",
+        "Standard_G1",
+        "Standard_G2",
+        "Standard_G3",
+        "Standard_G4"
+      ],
+      "metadata": {
+        "description": "Bussiness VM size"
+      }
+    },
+    "databaseTierVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D1",
+      "allowedValues": [
+        "Standard_A1",
+        "Standard_A2",
+        "Standard_A3",
+        "Standard_A4",
+        "Standard_A5",
+        "Standard_A6",
+        "Standard_A7",
+        "Standard_A8",
+        "Standard_A1_v2",
+        "Standard_A2_v2",
+        "Standard_A4_v2",
+        "Standard_A8_v2",
+        "Standard_D1",
+        "Standard_D2",
+        "Standard_D3",
+        "Standard_D4",
+        "Standard_D1_v2",
+        "Standard_D2_v2",
+        "Standard_D3_v2",
+        "Standard_D4_v2",
+        "Standard_DS1",
+        "Standard_DS2",
+        "Standard_DS3",
+        "Standard_DS4",
+        "Standard_F1",
+        "Standard_F2",
+        "Standard_F4",
+        "Standard_F8",
+        "Standard_G1",
+        "Standard_G2",
+        "Standard_G3",
+        "Standard_G4"
+      ],
+      "metadata": {
+        "description": "Database VM size"
+      }
+    },
+    "webTierStorageAccountType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_GRS",
+        "Premium_LRS"
+      ],
+      "metadata": {
+        "description": "Storage Account type for Web VMs"
+      }
+    },
+    "appTierStorageAccountType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_GRS",
+        "Premium_LRS"
+      ],
+      "metadata": {
+        "description": "Storage Account type for App VMs"
+      }
+    },
+    "databaseTierStorageAccountType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_GRS",
+        "Premium_LRS"
+      ],
+      "metadata": {
+        "description": "Storage Account type for Database VMs"
+      }
+    }
+  },
+  "variables": {
+    "webTierStorageAccountName": "[concat('webstorage',uniqueString(resourceGroup().id))]",
+    "appTierStorageAccountName": "[concat('appstorage',uniqueString(resourceGroup().id))]",
+    "databaseTierStorageAccountName": "[concat('dbstorage',uniqueString(resourceGroup().id))]",
+    "jumpVmStorageAccountName": "[concat('jumpstorage',uniqueString(resourceGroup().id))]",
+    "diagStorageAccountName": "[concat('diagstorage',uniqueString(resourceGroup().id))]",
+    "vmStorageAccountContainerName": "vhds",
+    "virtualNetworkName": "RedHat3Tier-vnet",
+    "webTierSubnetName": "web-tier-subnet",
+    "appTierSubnetName": "app-tier-subnet",
+    "databaseTierSubnetName": "database-tier-subnet",
+    "jumpSubnetName": "jump-subnet",
+    "webNSGName": "web-tier-NSG",
+    "appNSGName": "app-tier-NSG",
+    "databaseNSGName": "database-tier-NSG",
+    "jumpNSGName": "jump-NSG",
+    "webLoadBalancerName": "web-lb",
+    "weblbIPAddressName": "web-lb-pip",
+    "weblbDnsLabel": "[concat('weblb',uniqueString(resourceGroup().id))]",
+    "webLoadBalancerID": "[resourceId('Microsoft.Network/loadBalancers',variables('webLoadBalancerName'))]",
+    "webLoadBalancerIPID": "[resourceId('Microsoft.Network/publicIPAddresses',variables('weblbIPAddressName'))]",
+    "webFrontEndIPConfigID": "[concat(variables('webLoadBalancerID'),'/frontendIPConfigurations/loadBalancerFrontEnd')]",
+    "weblbBackendPoolID": "[concat(variables('webLoadBalancerID'),'/backendAddressPools/loadBalancerBackend')]",
+    "weblbProbeHttpID": "[concat(variables('webLoadBalancerID'),'/probes/weblbProbeHttp')]",
+    "weblbProbeHttpsID": "[concat(variables('webLoadBalancerID'),'/probes/weblbProbeHttps')]",
+    "internalLoadBalancerName": "internal-lb",
+    "internalLoadBalancerID": "[resourceId('Microsoft.Network/loadBalancers',variables('internalLoadBalancerName'))]",
+    "internalFrontEndIPConfigID": "[concat(variables('internalLoadBalancerID'),'/frontendIpConfigurations/loadBalancerFrontEnd')]",
+    "internallbBackendPoolID": "[concat(variables('internalLoadBalancerID'),'/backendAddressPools/loadBalancerBackend')]",
+    "internallbProbeSSHID": "[concat(variables('internalLoadBalancerID'),'/probes/internallbProbeSSH')]",
+    "jumpIPAddressName": "jump-pip",
+    "jumpDnsLabel": "[concat('jump',uniqueString(resourceGroup().id))]",
+    "webAvailSetName": "web-tier-as",
+    "appAvailSetName": "app-tier-as",
+    "databaseAvailSetName": "database-tier-as",
+    "webTierVmNicName": "[concat(variables('webTierVmName'), '-nic-')]",
+    "appTierVmNicName": "[concat(variables('appTierVmName'), '-nic-')]",
+    "databaseTierVmNicName": "[concat(variables('databaseTierVmName'), '-nic-')]",
+    "jumpVmNicName": "[concat(variables('jumpVmName'), '-nic')]",
+    "redHatsku": "7.3",
+    "Publisher": "RedHat",
+    "Offer": "RHEL",
+    "webTierVmName": "web-tier-vm",
+    "webTiervmOSDiskName": "webTierOSDisk",
+    "appTierVmName": "app-tier-vm",
+    "appTierOSDiskName": "appTierOSDisk",
+    "databaseTierVmName": "database-tier-vm",
+    "databaseTierOSDiskName": "dbTierOSDisk",
+    "jumpVmName": "jump-vm",
+    "jumpVmSize": "Standard_D1_v2",
+    "jumpOSDiskName": "jumpVmOSDisk"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('webTierStorageAccountName')]",
+      "apiVersion": "2016-01-01",
+      "location": "[resourceGroup().location]",
+      "comments": "Storage account  used to store the Web VM disks",
+      "sku": {
+        "name": "[parameters('webTierStorageAccountType')]"
+      },
+      "kind": "Storage",
+      "properties": {
+
+      },
+      "tags": {
+        "displayName": "Web VM Storage Account"
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('appTierStorageAccountName')]",
+      "apiVersion": "2016-01-01",
+      "location": "[resourceGroup().location]",
+      "comments": "Storage account  used to store the App VM disks",
+      "sku": {
+        "name": "[parameters('appTierStorageAccountType')]"
+      },
+      "kind": "Storage",
+      "properties": {
+
+      },
+      "tags": {
+        "displayName": "App VM Storage Account"
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('databaseTierStorageAccountName')]",
+      "apiVersion": "2016-01-01",
+      "location": "[resourceGroup().location]",
+      "comments": "Storage account  used to store the Database VM disks",
+      "sku": {
+        "name": "[parameters('databaseTierStorageAccountType')]"
+      },
+      "kind": "Storage",
+      "properties": {
+
+      },
+      "tags": {
+        "displayName": "Database VM Storage Account"
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('jumpVmStorageAccountName')]",
+      "apiVersion": "2016-01-01",
+      "location": "[resourceGroup().location]",
+      "comments": "Storage account  used to store the Jump VM disks",
+      "sku": {
+        "name": "[parameters('webTierStorageAccountType')]"
+      },
+      "kind": "Storage",
+      "properties": {
+
+      },
+      "tags": {
+        "displayName": "Jump VM Storage Account"
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('diagStorageAccountName')]",
+      "apiVersion": "2016-01-01",
+      "location": "[resourceGroup().location]",
+      "comments": "Storage account  used to store the diagnostics data",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "Storage",
+      "properties": {
+
+      },
+      "tags": {
+        "displayName": "Diagnostics Storage Account"
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('webNSGName')]",
+      "apiVersion": "2016-03-30",
+      "location": "[resourceGroup().location]",
+      "comments": "NSG for Web Subnet",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "HTTP-allow",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "10.0.1.0/24",
+              "access": "Allow",
+              "priority": 110,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "HTTPS-allow",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "10.0.1.0/24",
+              "access": "Allow",
+              "priority": 120,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      },
+      "tags": {
+        "displayName": "Web NSG"
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('appNSGName')]",
+      "apiVersion": "2016-03-30",
+      "location": "[resourceGroup().location]",
+      "comments": "NSG for App Subnet",
+      "properties": {
+        "securityRules": [
+
+        ]
+      },
+      "tags": {
+        "displayName": "App NSG"
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('databaseNSGName')]",
+      "apiVersion": "2016-03-30",
+      "location": "[resourceGroup().location]",
+      "comments": "NSG for Database Subnet",
+      "properties": {
+        "securityRules": [
+
+        ]
+      },
+      "tags": {
+        "displayName": "Database NSG"
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('jumpNSGName')]",
+      "apiVersion": "2016-03-30",
+      "location": "[resourceGroup().location]",
+      "comments": "NSG for Jump Subnet",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "SSH-allow",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "10.0.0.128/25",
+              "access": "Allow",
+              "priority": 110,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      },
+      "tags": {
+        "displayName": "Jump NSG"
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('jumpIPAddressName')]",
+      "apiVersion": "2016-03-30",
+      "location": "[resourceGroup().location]",
+      "comments": " Public IP used by the Jump VM",
+      "properties": {
+        "publicIPAllocationMethod": "Static",
+        "dnsSettings": {
+          "domainNameLabel": "[variables('jumpDnsLabel')]"
+        },
+        "idleTimeoutInMinutes": 4
+      },
+      "tags": {
+        "displayName": "Jump VM Public IP"
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('weblbIPAddressName')]",
+      "apiVersion": "2016-03-30",
+      "location": "[resourceGroup().location]",
+      "comments": "Public IP used by the Web Server Load Balancer",
+      "properties": {
+        "publicIPAllocationMethod": "Static",
+        "idleTimeoutInMinutes": 4,
+        "dnsSettings": {
+          "domainNameLabel": "[variables('weblbDnsLabel')]"
+        }
+      },
+      "tags": {
+        "displayName": "Web LB Public IP"
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('virtualNetworkName')]",
+      "apiVersion": "2016-03-30",
+      "location": "[resourceGroup().location]",
+      "comments": "Virtual network for overall solution",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('webNSGName'))]",
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('appNSGName'))]",
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('databaseNSGName'))]",
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('jumpNSGName'))]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.0.0/16"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('webTierSubnetName')]",
+            "properties": {
+              "addressPrefix": "10.0.1.0/24",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('webNSGName'))]"
+              }
+            }
+          },
+          {
+            "name": "[variables('appTierSubnetName')]",
+            "properties": {
+              "addressPrefix": "10.0.2.0/24",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('appNSGName'))]"
+              }
+            }
+          },
+          {
+            "name": "[variables('databaseTierSubnetName')]",
+            "properties": {
+              "addressPrefix": "10.0.3.0/24",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('databaseNSGName'))]"
+              }
+            }
+          },
+          {
+            "name": "[variables('jumpSubnetName')]",
+            "properties": {
+              "addressPrefix": "10.0.0.128/25",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('jumpNSGName'))]"
+              }
+            }
+          }
+        ]
+      },
+      "tags": {
+        "displayName": "Virtual Network"
+      }
+    },
+    {
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[variables('webAvailSetName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "comments": "This is the Availability Set for all Web VMs",
+      "tags": {
+        "displayName": "Web Avail Set"
+      }
+    },
+    {
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[variables('appAvailSetName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "comments": "This is the Availability Set for all app VMs",
+      "tags": {
+        "displayName": "App Avail Set"
+      }
+    },
+    {
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[variables('databaseAvailSetName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "comments": "This is the Availability Set for all Database VMs",
+      "tags": {
+        "displayName": "Database Avail Set"
+      }
+    },
+    {
+      "type": "Microsoft.Network/loadBalancers",
+      "name": "[variables('webLoadBalancerName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "comments": "This Load Balancer is used to load balance Web Tier VMs",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('weblbIPAddressName'))]"
+      ],
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "loadBalancerFrontEnd",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[variables('webLoadBalancerIPID')]"
+              }
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "loadBalancerBackend"
+          }
+        ],
+        "loadBalancingRules": [
+          {
+            "name": "LBRuleForlb80IP",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[variables('webFrontEndIPConfigID')]"
+              },
+              "backendAddressPool": {
+                "id": "[variables('weblbBackendPoolID')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 80,
+              "backendPort": 80,
+              "idleTimeoutInMinutes": 5,
+              "enableFloatingIP": false,
+              "probe": {
+                "id": "[variables('weblbProbeHttpID')]"
+              }
+            }
+          },
+          {
+            "name": "LBRuleForlb443IP",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[variables('webFrontEndIPConfigID')]"
+              },
+              "backendAddressPool": {
+                "id": "[variables('weblbBackendPoolID')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 443,
+              "backendPort": 443,
+              "idleTimeoutInMinutes": 5,
+              "enableFloatingIP": false,
+              "probe": {
+                "id": "[variables('weblbProbeHttpsID')]"
+              }
+            }
+          }
+        ],
+        "probes": [
+          {
+            "name": "weblbProbeHttp",
+            "properties": {
+              "protocol": "Tcp",
+              "port": 80,
+              "intervalInSeconds": 5,
+              "numberOfProbes": 2
+            }
+          },
+          {
+            "name": "weblbProbeHttps",
+            "properties": {
+              "protocol": "Tcp",
+              "port": 443,
+              "intervalInSeconds": 5,
+              "numberOfProbes": 2
+            }
+          }
+        ]
+      },
+      "tags": {
+        "displayName": "External Load Balancer"
+      }
+    },
+    {
+      "type": "Microsoft.Network/loadBalancers",
+      "name": "[variables('internalLoadBalancerName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "comments": "This Internal Load Balancer is used to load balance Bussiness Tier VMs",
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+      ],
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "loadBalancerFrontEnd",
+            "properties": {
+              "subnet": {
+                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName')), '/subnets/', variables('webTierSubnetName'))]"
+              }
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "loadBalancerBackEnd"
+          }
+        ],
+        "loadBalancingRules": [
+          {
+            "name": "internallbruleSSH",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[variables('internalFrontEndIPConfigID')]"
+              },
+              "backendAddressPool": {
+                "id": "[variables('internallbBackendPoolID')]"
+              },
+              "probe": {
+                "id": "[variables('internallbProbeSSHID')]"
+              },
+              "protocol": "Tcp",
+              "frontendPort": 22,
+              "backendPort": 22,
+              "idleTimeoutInMinutes": 15
+            }
+          }
+        ],
+        "probes": [
+          {
+            "name": "internallbProbeSSH",
+            "properties": {
+              "protocol": "Tcp",
+              "port": 22,
+              "intervalInSeconds": 15,
+              "numberOfProbes": 2
+            }
+          }
+        ]
+      },
+      "tags": {
+        "displayName": "Internal Load Balancer"
+      }
+    },
+    {
+      "name": "[concat(variables('webTierVmNicName'), copyindex(1))]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2016-03-30",
+      "location": "[resourceGroup().location]",
+      "comments": "NICs for Web Tier Servers",
+      "copy": {
+        "name": "WebTierNicLoop",
+        "count": "[parameters('webTierVmCount')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+        "[concat('Microsoft.Network/loadBalancers/', variables('webLoadBalancerName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName')), '/subnets/', variables('webTierSubnetName'))]"
+              },
+              "loadBalancerBackendAddressPools": [
+                {
+                  "id": "[variables('weblbBackendPoolID')]"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "tags": {
+        "displayName": "Web Tier VM NICs"
+      }
+    },
+    {
+      "name": "[concat(variables('appTierVmNicName'), copyindex(1))]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2016-03-30",
+      "location": "[resourceGroup().location]",
+      "comments": "NICs for App Tier VMs",
+      "copy": {
+        "name": "AppTierNicLoop",
+        "count": "[parameters('appTierVmCount')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+        "[concat('Microsoft.Network/loadBalancers/', variables('internalLoadBalancerName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName')), '/subnets/', variables('appTierSubnetName'))]"
+              },
+              "loadBalancerBackendAddressPools": [
+                {
+                  "id": "[variables('internallbBackendPoolID')]"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "tags": {
+        "displayName": "App Tier VM NICs"
+      }
+    },
+    {
+      "name": "[concat(variables('databaseTierVmNicName'), copyindex(1))]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2016-03-30",
+      "location": "[resourceGroup().location]",
+      "comments": "NICs for Database Tier VMs",
+      "copy": {
+        "name": "DatabaseTierNicLoop",
+        "count": "[parameters('databaseTierVmCount')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName')), '/subnets/', variables('databaseTierSubnetName'))]"
+              }
+            }
+          }
+        ]
+      },
+      "tags": {
+        "displayName": "Database Tier VM NICs"
+      }
+    },
+    {
+      "name": "[variables('jumpVmNicName')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2016-03-30",
+      "location": "[resourceGroup().location]",
+      "comments": "NIC for Jump VM",
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('jumpIPAddressName'))]"
+              },
+              "subnet": {
+                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName')), '/subnets/', variables('jumpSubnetName'))]"
+              }
+            }
+          }
+        ]
+      },
+      "tags": {
+        "displayName": "Jump VM NIC"
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(variables('webTierVmName'),'-', copyindex(1))]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "comments": " Web Tier VMs",
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', variables('webTierStorageAccountName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('webTierVmNicName'), copyindex(1))]",
+        "[concat('Microsoft.Compute/availabilitySets/', variables('webAvailSetName'))]"
+      ],
+      "copy": {
+        "name": "WebTierVMLoop",
+        "count": "[parameters('webTierVmCount')]"
+      },
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('webAvailSetName'))]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('webTierVmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[concat('webserver',copyindex(1))]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('Publisher')]",
+            "offer": "[variables('Offer')]",
+            "sku": "[variables('redHatsku')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[variables('webTierVmName')]",
+            "vhd": {
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('webTierStorageAccountName')),'2016-01-01').primaryEndpoints.blob, variables('vmStorageAccountContainerName'),'/', variables('webTierVmName'),copyIndex(1),'-',variables('webTiervmOSDiskName'),'.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('webTierVmNicName'), copyindex(1)))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": "true",
+            "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts/', variables('diagStorageAccountName'))).primaryEndpoints.blob]"
+          }
+        }
+      },
+      "tags": {
+        "displayName": "Web Tier VMs"
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(variables('appTierVmName'),'-', copyindex(1))]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "comments": " App Tier VMs",
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', variables('appTierStorageAccountName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('appTierVmNicName'), copyindex(1))]",
+        "[concat('Microsoft.Compute/availabilitySets/', variables('appAvailSetName'))]"
+      ],
+      "copy": {
+        "name": "AppTierVMLoop",
+        "count": "[parameters('appTierVmCount')]"
+      },
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('appAvailSetName'))]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('appTierVmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[concat('appserver',copyindex(1))]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('Publisher')]",
+            "offer": "[variables('Offer')]",
+            "sku": "[variables('redHatsku')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[variables('appTierVmName')]",
+            "vhd": {
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('appTierStorageAccountName')),'2016-01-01').primaryEndpoints.blob, variables('vmStorageAccountContainerName'),'/', variables('appTierVmName'),copyIndex(1),'-',variables('appTierOSDiskName'),'.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('appTierVmNicName'), copyindex(1)))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": "true",
+            "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts/', variables('diagStorageAccountName'))).primaryEndpoints.blob]"
+          }
+        }
+      },
+      "tags": {
+        "displayName": "App Tier VMs"
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(variables('databaseTierVmName'),'-', copyindex(1))]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "comments": "Database Tier VMs",
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', variables('databaseTierStorageAccountName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('databaseTierVmNicName'), copyindex(1))]",
+        "[concat('Microsoft.Compute/availabilitySets/', variables('databaseAvailSetName'))]"
+      ],
+      "copy": {
+        "name": "DatabaseTierVMLoop",
+        "count": "[parameters('databaseTierVmCount')]"
+      },
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('databaseAvailSetName'))]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('databaseTierVmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[concat('databaseserver',copyindex(1))]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('Publisher')]",
+            "offer": "[variables('Offer')]",
+            "sku": "[variables('redHatsku')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[variables('databaseTierVmName')]",
+            "vhd": {
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('databaseTierStorageAccountName')),'2016-01-01').primaryEndpoints.blob, variables('vmStorageAccountContainerName'),'/', variables('databaseTierVmName'),copyIndex(1),'-',variables('databaseTierOSDiskName'),'.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('databaseTierVmNicName'), copyindex(1)))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": "true",
+            "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts/', variables('diagStorageAccountName'))).primaryEndpoints.blob]"
+          }
+        }
+      },
+      "tags": {
+        "displayName": "Database Tier VMs"
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('jumpVmName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "comments": "Jump VM",
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', variables('jumpVmStorageAccountName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('jumpVmNicName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('jumpVmSize')]"
+        },
+        "osProfile": {
+          "computerName": "jumpvm",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('Publisher')]",
+            "offer": "[variables('Offer')]",
+            "sku": "[variables('redHatsku')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[variables('jumpVmName')]",
+            "vhd": {
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('jumpVmStorageAccountName')),'2016-01-01').primaryEndpoints.blob, variables('vmStorageAccountContainerName'),'/', variables('jumpVmName'),'-',variables('jumpOSDiskName'),'.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('jumpVmNicName'))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": "true",
+            "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts/', variables('diagStorageAccountName'))).primaryEndpoints.blob]"
+          }
+        }
+      },
+      "tags": {
+        "displayName": "Jump VM"
+      }
+    }
+  ],
+  "outputs": {
+    "webLoadBalancerIP": {
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('weblbIPAddressName'))).ipAddress]",
+      "type": "string"
+    },
+    "webLoadBalancerFqdn": {
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('weblbIPAddressName'))).dnsSettings.fqdn]",
+      "type": "string"
+    },
+    "jumpVMIP": {
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('jumpIPAddressName'))).ipAddress]",
+      "type": "string"
+    },
+    "jumpVMFqdn": {
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('jumpIPAddressName'))).dnsSettings.fqdn]",
+      "type": "string"
+    }
+  }
+}
