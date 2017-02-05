@@ -1,5 +1,5 @@
-# Custom Script for Linux (Ubuntu 16)
 #!/bin/bash
+# Custom Script for Linux (Ubuntu 16)
 
 # exit on any error
 set -e
