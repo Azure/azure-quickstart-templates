@@ -89,7 +89,7 @@ The Egress Event Hub should serve as an "Output" from Azure Cloud services of yo
 
 10. For the *PubNub Egress Channel*, enter a channel name that the PubNub Publisher should publish back out on.
 
-11. For the *PubNub Announce Channel*, enter a channel name that the PubNub Deployment script will alert on when the deployment has completed.  If you don't intend on using this, just set this value to all caps, case-sensitive *DISABLED*.  See below for more information on using the Provisioning Listener and the Announce channel.
+11. For the *PubNub Announce Channel*, enter a channel name that the PubNub Deployment script will alert on when the deployment has completed.  If you don't intend on using this, just set this value to lowercase, case-sensitive *disabled*.  See below for more information on using the Provisioning Listener and the Announce channel.
 
 12. For the *PubNub Publish Key*, enter the PubNub Publish API Key that the PubNub component should publish against.
 
