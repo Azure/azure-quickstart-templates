@@ -7,7 +7,7 @@ export OPENEDX_RELEASE=$1
 CONFIG_REPO=https://github.com/edx/configuration.git
 ANSIBLE_ROOT=/edx/app/edx_ansible
 
-wget https://raw.githubusercontent.com/edx/configuration/master/util/install/ansible-bootstrap.sh -O- | bash
+wget https://raw.githubusercontent.com/edx/configuration/open-release/ficus.master/util/install/ansible-bootstrap.sh -O- | bash
 
 bash -c "cat <<EOF >extra-vars.yml
 ---
