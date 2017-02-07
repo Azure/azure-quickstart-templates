@@ -2,6 +2,7 @@
 
 - Upgrade cf-release to v250
 - Upgrade bosh stemcell to v3312.12
+- Fix issue https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/issues/235
 
 # v2.4.0 (2016-12-21)
 
