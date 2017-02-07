@@ -108,6 +108,9 @@ install_lustre_centos66()
 	# Install wget and dstat
 	yum install -y wget dstat
 
+	# Update certificates to prevent wget download errors
+	yum update -y ca-certificates
+	
 	# Install pdsh since it is convenient for managing multiple client hosts later
 	# RHEL/CentOS 6 64-Bit ##
 	wget http://download.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm
@@ -152,6 +155,9 @@ install_lustre_centos70()
 {
 	# Install wget and dstat
 	yum install -y wget dstat
+	
+	# Update certificates to prevent wget download errors
+	yum update -y ca-certificates
 	
 	# Download stable Lustre client source targeting specific CentOS 7.0 kernel
 	# This code will be used to create the RPM for the currently running kernel
