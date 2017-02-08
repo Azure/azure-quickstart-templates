@@ -23,16 +23,6 @@
         "description": "Size of master VMs."
       }
     },
-    "ubuntuOSVersion": {
-      "type": "string",
-      "defaultValue": "16.04-LTS",
-      "allowedValues": [
-        "16.04-LTS"
-      ],
-      "metadata": {
-        "description": "The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version."
-      }
-    },
     "vmssName": {
       "type": "string",
       "metadata": {
@@ -43,9 +33,10 @@
     "instanceCount": {
       "type": "int",
       "metadata": {
-        "description": "Number of VM instances (1000 or less)."
+        "description": "Number of VM instances (200 or less)."
       },
-      "maxValue": 1000
+      "defaultValue": 5,
+      "maxValue": 200
     },
     "adminUsername": {
       "type": "string",
@@ -59,9 +50,9 @@
         "description": "Public key for ssh access"
       }
     },
-    "templateBase": {
+    "_artifactsLocation": {
       "type": "string",
-      "defaultValue": "https://raw.githubusercontent.com/hglkrijger/azure-quickstart-templates/master",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master",
       "metadata": {
         "description": "Change this value to your repo name if deploying from a fork"
       }
@@ -91,24 +82,19 @@
     "loadBalancerProbeId": "[concat(variables('loadBalancerId'),'/probes/tcpProbe')]",
     "sshProbeId": "[concat(variables('loadBalancerId'),'/probes/sshProbe')]",
     "masterStorageAccountName": "[concat(uniqueString(resourceGroup().id, variables('namingInfix')), 'master')]",
-    "osType": {
+    "keyPath": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+    "imageReference": {
       "publisher": "Canonical",
       "offer": "UbuntuServer",
-      "sku": "[parameters('ubuntuOSVersion')]",
+      "sku": "16.04-LTS",
       "version": "latest"
     },
-    "keyPath": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
-    "imageReference": "[variables('osType')]",
-    "computeApiVersion": "2016-04-30-preview",
-    "networkApiVersion": "2016-03-30",
-    "storageApiVersion": "2015-06-15",
-    "insightsApiVersion": "2015-04-01",
-    "templateBaseUrl": "[concat(parameters('templateBase'), '/elasticsearch-vmss/')]",
-    "diskSetupScriptUrl": "[concat(parameters('templateBase'), '/shared_scripts/ubuntu/vm-disk-utils-0.1.sh')]"
+    "templateBaseUrl": "[concat(parameters('_artifactsLocation'), '/elasticsearch-vmss/')]",
+    "diskSetupScriptUrl": "[concat(parameters('_artifactsLocation'), '/shared_scripts/ubuntu/vm-disk-utils-0.1.sh')]"
   },
   "resources": [
     {
-      "apiVersion": "[variables('networkApiVersion')]",
+      "apiVersion": "2016-03-30",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('nsgName')]",
       "location": "[resourceGroup().location]",
@@ -149,7 +135,7 @@
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[resourceGroup().location]",
-      "apiVersion": "[variables('networkApiVersion')]",
+      "apiVersion": "2016-03-30",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -170,7 +156,7 @@
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('masterStorageAccountName')]",
       "location": "[resourceGroup().location]",
-      "apiVersion": "[variables('storageApiVersion')]",
+      "apiVersion": "2015-06-15",
       "properties": {
         "accountType": "[variables('storageAccountType')]"
       }
@@ -179,7 +165,7 @@
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIpAddressName')]",
       "location": "[resourceGroup().location]",
-      "apiVersion": "[variables('networkApiVersion')]",
+      "apiVersion": "2016-03-30",
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
@@ -191,7 +177,7 @@
       "type": "Microsoft.Network/loadBalancers",
       "name": "[variables('loadBalancerName')]",
       "location": "[resourceGroup().location]",
-      "apiVersion": "[variables('networkApiVersion')]",
+      "apiVersion": "2016-03-30",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIpAddressName'))]"
       ],
@@ -274,7 +260,7 @@
       }
     },
     {
-        "apiVersion": "[variables('computeApiVersion')]",
+        "apiVersion": "2016-04-30-preview",
         "type": "Microsoft.Compute/availabilitySets",
         "name": "[variables('availabilitySetName')]",
         "location": "[resourceGroup().location]",
@@ -284,7 +270,7 @@
         }
     },
     {
-        "apiVersion": "[variables('networkApiVersion')]",
+        "apiVersion": "2016-03-30",
         "type": "Microsoft.Network/networkInterfaces",
         "name": "[concat(variables('nicName'), copyindex())]",
         "location": "[resourceGroup().location]",
@@ -308,7 +294,7 @@
                 },
                 "loadBalancerBackendAddressPools": [
                     {
-                        "id": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('loadBalancerName'), '/backendAddressPools/', variables('backendPoolName'))]"
+                        "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName')), '/backendAddressPools/', variables('backendPoolName'))]"
                     }
                 ],
                 "networkSecurityGroup": {
@@ -320,7 +306,7 @@
         }
     },
     {
-        "apiVersion": "[variables('computeApiVersion')]",        
+        "apiVersion": "2016-04-30-preview",        
         "type": "Microsoft.Compute/virtualMachines",
         "name": "[concat(variables('masterName'), copyindex())]",
         "location": "[resourceGroup().location]",
@@ -378,7 +364,7 @@
           {
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "name": "[concat(variables('masterName'), copyindex(), '/installelasticsearch')]",
-            "apiVersion": "[variables('computeApiVersion')]",
+            "apiVersion": "2016-04-30-preview",
             "location": "[resourceGroup().location]",
             "dependsOn": [
               "[concat('Microsoft.Compute/virtualMachines/', variables('masterName'), copyindex())]"
@@ -402,7 +388,7 @@
       "type": "Microsoft.Compute/virtualMachineScaleSets",
       "name": "[variables('namingInfix')]",
       "location": "[resourceGroup().location]",
-      "apiVersion": "[variables('computeApiVersion')]",
+      "apiVersion": "2016-04-30-preview",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', variables('masterName'), '0')]",
         "[concat('Microsoft.Compute/virtualMachines/', variables('masterName'), '1')]",
@@ -460,7 +446,7 @@
                       "name": "[variables('ipConfigName')]",
                       "properties": {
                         "subnet": {
-                          "id": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'), '/subnets/', variables('subnetName'))]"
+                          "id": "[concat(resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName')), '/subnets/', variables('subnetName'))]"
                         }
                       }
                     }
