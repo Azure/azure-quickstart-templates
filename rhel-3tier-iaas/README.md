@@ -14,7 +14,7 @@ This Azure Quick Start template deploys a 3 Tier Red Hat Solution on Azure.The S
 
 This template will deploy: 
 
-- Four storage account: 3 for storing VM's of each tier, 1 for storing diagnostics data.
+- Four storage accounts: 3 for storing VM's of each tier, 1 for storing diagnostics data.
 -	One Virtual Network with four subnets
 - 4 Network Security Group, one for each subnet
 -	External Load Balancer to load balance Web Traffic(HTTP & HTTPS) to web servers
