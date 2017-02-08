@@ -2,32 +2,8 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "storageAccountType": {
-      "type": "array",
-      "defaultValue": [ "Premium_LRS", "Standard_LRS" ],
-      "metadata": {
-        "description": "This is an array of strings which describe the type of each storage account." 
-      }
-    },
-    "storageAccountNamePrefix": {
-      "type": "array",
-      "defaultValue": [ "premium", "standard" ],
-      "minLength": 1,
-      "metadata": {
-        "description": "This is an array of strings which specifies the string prefix used for each storage account name."
-      }
-    },
-    "vmName": {
-      "type": "string",
-      "defaultValue": "demo-01",
-      "minLength": 1,
-      "metadata": {
-        "description": "The VM resource name and Windows hostname."
-      }
-    },
     "vmAdminUserName": {
       "type": "string",
-      "defaultValue": "vm-admin",
       "minLength": 1,
       "metadata": {
         "description": "The administrative user on the Windows VM."
@@ -37,27 +13,6 @@
       "type": "securestring",
       "metadata": {
         "description": "The administrative user password."
-      }
-    },
-    "vmWindowsOSVersion": {
-      "type": "string",
-      "defaultValue": "2016-Datacenter",
-      "allowedValues": [
-        "2008-R2-SP1",
-        "2012-Datacenter",
-        "2012-R2-Datacenter",
-        "2016-Datacenter"
-      ],
-      "metadata": {
-        "description": "The Windows Server version."
-      }
-    },
-    "dscResourceURL": {
-      "type": "string",
-      "defaultValue": "https://raw.githubusercontent.com/jamesbannan/storage-iops-latency-throughput-demo/master/dsc/vmDemo.zip",
-      "minLength": 1,
-      "metadata": {
-        "description": "The URI of the DSC configuration."
       }
     },
     "vNetName": {
@@ -74,40 +29,58 @@
       "metadata": {
         "description": "The DNS prefix assigned to the public IP address resource."
       }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "https://raw.githubusercontent.com/jamesbannan/storage-iops-latency-throughput-demo/master/"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
     }
-
   },
   "variables": {
     "vNetPrefix": "10.0.0.0/16",
     "vNetSubnet1Name": "subnet-01",
     "vNetSubnet1Prefix": "10.0.0.0/24",
+    "storageAccountType": [ "Premium_LRS", "Standard_LRS" ],
+    "storageAccountNamePrefix": [ "premium", "standard" ],
     "vmImagePublisher": "MicrosoftWindowsServer",
     "vm1ImageOffer": "WindowsServer",
-    "vmOSDiskName": "[concat(parameters('vmName'),'-','OSDisk')]",
+    "vmOSDiskName": "[concat(variables('vmName'),'-','OSDisk')]",
     "vmSize": "Standard_DS3_v2",
-    "vNetID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vNetName'))]",
-    "vmSubnetRef": "[concat(variables('vNetID'), '/subnets/', variables('vNetSubnet1Name'))]",
+    "vmName": "demo-01",
+    "vmWindowsOSVersion": "2016-Datacenter",
+    "vmSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vNetName'), '/subnets/', variables('vNetSubnet1Name'))]",
     "vmContainerName": "vhds",
-    "vmNicName": "[concat(parameters('vmName'),'-nic-','0')]",
-    "vmPIPName": "[concat(parameters('vmName'),'-PIP')]"
+    "vmNicName": "[concat(variables('vmName'),'-nic-','0')]",
+    "vmPIPName": "[concat(variables('vmName'),'-PIP')]",
+    "dscResourceFolder": "dsc" ,
+    "dscResourceConfig": "vmDemo"
 
   },
   "resources": [
     {
-      "name": "[concat(parameters('storageAccountNamePrefix')[copyIndex()],uniqueString(resourceGroup().id))]",
+      "name": "[concat(variables('storageAccountNamePrefix')[copyIndex()],uniqueString(resourceGroup().id))]",
       "type": "Microsoft.Storage/storageAccounts",
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-15",
       "copy": {
-        "count": "[length(parameters('storageAccountType'))]",
+        "count": "[length(variables('storageAccountType'))]",
         "name": "storageAccountCopy"
       },
       "dependsOn": [],
       "tags": {
-        "displayName": "[concat(parameters('storageAccountNamePrefix')[copyIndex()],uniqueString(resourceGroup().id))]"
+        "displayName": "[concat(variables('storageAccountNamePrefix')[copyIndex()],uniqueString(resourceGroup().id))]"
       },
       "properties": {
-        "accountType": "[parameters('storageAccountType')[copyIndex()]]"
+        "accountType": "[variables('storageAccountType')[copyIndex()]]"
       }
     },
     {
@@ -165,7 +138,7 @@
       }
     },
     {
-      "name": "[parameters('vmName')]",
+      "name": "[variables('vmName')]",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-15",
@@ -174,14 +147,14 @@
         "[resourceId('Microsoft.Network/networkInterfaces', variables('vmNicName'))]"
       ],
       "tags": {
-        "displayName": "[parameters('vmName')]"
+        "displayName": "[variables('vmName')]"
       },
       "properties": {
         "hardwareProfile": {
           "vmSize": "[variables('vmSize')]"
         },
         "osProfile": {
-          "computerName": "[parameters('vmName')]",
+          "computerName": "[variables('vmName')]",
           "adminUsername": "[parameters('vmAdminUserName')]",
           "adminPassword": "[parameters('vmAdminPassword')]"
         },
@@ -189,56 +162,56 @@
           "imageReference": {
             "publisher": "[variables('vmImagePublisher')]",
             "offer": "[variables('vm1ImageOffer')]",
-            "sku": "[parameters('vmWindowsOSVersion')]",
+            "sku": "[variables('vmWindowsOSVersion')]",
             "version": "latest"
           },
           "osDisk": {
             "name": "[variables('vmOSDiskName')]",
             "vhd": {
-              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', concat(parameters('storageAccountNamePrefix')[1],uniqueString(resourceGroup().id))), '2016-01-01').primaryEndpoints.blob, variables('vmContainerName'), '/', variables('vmOSDiskName'), '.vhd')]"
+              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', concat(variables('storageAccountNamePrefix')[1],uniqueString(resourceGroup().id))), '2016-01-01').primaryEndpoints.blob, variables('vmContainerName'), '/', variables('vmOSDiskName'), '.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
           },
           "dataDisks": [
             {
-              "name": "[concat(parameters('vmName'),'-standarddata-','1')]",
+              "name": "[concat(variables('vmName'),'-standarddata-','1')]",
               "lun": 0,
               "diskSizeGB": "100",
               "caching": "None",
               "createOption": "Empty",
               "vhd": {
-                "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', concat(parameters('storageAccountNamePrefix')[1],uniqueString(resourceGroup().id))), '2016-01-01').primaryEndpoints.blob, variables('vmContainerName'), '/', parameters('vmName'),'-standarddata-','1', '.vhd')]"
+                "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', concat(variables('storageAccountNamePrefix')[1],uniqueString(resourceGroup().id))), '2016-01-01').primaryEndpoints.blob, variables('vmContainerName'), '/', variables('vmName'),'-standarddata-','1', '.vhd')]"
               }
             },
             {
-              "name": "[concat(parameters('vmName'),'-standarddata-','2')]",
+              "name": "[concat(variables('vmName'),'-standarddata-','2')]",
               "lun": 1,
               "diskSizeGB": "100",
               "caching": "ReadOnly",
               "createOption": "Empty",
               "vhd": {
-                "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', concat(parameters('storageAccountNamePrefix')[1],uniqueString(resourceGroup().id))), '2016-01-01').primaryEndpoints.blob, variables('vmContainerName'), '/', parameters('vmName'),'-standarddata-','2', '.vhd')]"
+                "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', concat(variables('storageAccountNamePrefix')[1],uniqueString(resourceGroup().id))), '2016-01-01').primaryEndpoints.blob, variables('vmContainerName'), '/', variables('vmName'),'-standarddata-','2', '.vhd')]"
               }
             },
             {
-              "name": "[concat(parameters('vmName'),'-standarddata-','3')]",
+              "name": "[concat(variables('vmName'),'-standarddata-','3')]",
               "lun": 2,
               "diskSizeGB": "100",
               "caching": "ReadWrite",
               "createOption": "Empty",
               "vhd": {
-                "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', concat(parameters('storageAccountNamePrefix')[1],uniqueString(resourceGroup().id))), '2016-01-01').primaryEndpoints.blob, variables('vmContainerName'), '/', parameters('vmName'),'-standarddata-','3', '.vhd')]"
+                "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', concat(variables('storageAccountNamePrefix')[1],uniqueString(resourceGroup().id))), '2016-01-01').primaryEndpoints.blob, variables('vmContainerName'), '/', variables('vmName'),'-standarddata-','3', '.vhd')]"
               }
             },
             {
-              "name": "[concat(parameters('vmName'),'-premiumdata-','1')]",
+              "name": "[concat(variables('vmName'),'-premiumdata-','1')]",
               "lun": 3,
               "diskSizeGB": "1023",
               "caching": "None",
               "createOption": "Empty",
               "vhd": {
-                "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', concat(parameters('storageAccountNamePrefix')[0],uniqueString(resourceGroup().id))), '2016-01-01').primaryEndpoints.blob, variables('vmContainerName'), '/', parameters('vmName'),'-premiumdata-','1', '.vhd')]"
+                "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', concat(variables('storageAccountNamePrefix')[0],uniqueString(resourceGroup().id))), '2016-01-01').primaryEndpoints.blob, variables('vmContainerName'), '/', variables('vmName'),'-premiumdata-','1', '.vhd')]"
               }
             }
           ]
@@ -251,38 +224,38 @@
           ]
         }
       },
-        "resources": [
-          {
-            "name": "DSC",
-            "type": "extensions",
-            "location": "[resourceGroup().location]",
-            "apiVersion": "2016-03-30",
-            "dependsOn": [
-              "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
-            ],
-            "tags": {
-              "displayName": "[concat(parameters('vmName'),'/','DSC')]"
-            },
-            "properties": {
-              "publisher": "Microsoft.Powershell",
-              "type": "DSC",
-              "typeHandlerVersion": "2.9",
-              "autoUpgradeMinorVersion": true,
-              "settings": {
-                "configuration": {
-                  "url": "[parameters('dscResourceURL')]",
-                  "script": "vmDemo.ps1",
-                  "function": "vmDemo"
-                },
-                "configurationArguments": {
-                  "nodeName": "[parameters('vmName')]"
-                }
+      "resources": [
+        {
+          "name": "DSC",
+          "type": "extensions",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2016-03-30",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
+          ],
+          "tags": {
+            "displayName": "[concat(variables('vmName'),'/','DSC')]"
+          },
+          "properties": {
+            "publisher": "Microsoft.Powershell",
+            "type": "DSC",
+            "typeHandlerVersion": "2.9",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "configuration": {
+                "url": "[concat(parameters('_artifactsLocation'),'/',variables('dscResourceFolder'),'/',variables('dscResourceConfig'),'.zip')]",
+                "script": "[concat(variables('dscResourceConfig'),'.ps1')]",
+                "function": "[variables('dscResourceConfig')]"
               },
-              "protectedSettings": {
+              "configurationArguments": {
+                "nodeName": "[variables('vmName')]"
               }
+            },
+            "protectedSettings": {
             }
           }
-        ]
+        }
+      ]
     },
     {
       "name": "[variables('vmPIPName')]",
@@ -302,5 +275,10 @@
     }
 
   ],
-  "outputs": {}
+  "outputs": {
+    "vmURI": {
+      "type": "string",
+      "value": "[reference(variables('vmPIPName').dnsSettings.fqdn)]"
+    } 
+  }
 }
