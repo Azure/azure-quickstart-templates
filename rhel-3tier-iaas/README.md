@@ -1,6 +1,6 @@
 # Red Hat Linux 3-tier IaaS Solution on Azure 
 ## Solution Overview 
-This Azure Quick Start template deploys a 3 Tier Red Hat Solution on Azure.The Solution includes Web tier Servers, Application tier Servers and Database Tier Servers running Red Hat Enterprise Linux 7.3. Template follows Standard best practices for running a 3 tier Red Hat Linux IaaS workload on Azure. This template will deploy multiple number of VMs in each tier as per requirement. 
+This Azure Quick Start template deploys a 3 Tier Red Hat Solution on Azure.The Solution includes Web tier Servers, Application tier Servers and Database Tier Servers running Red Hat Enterprise Linux 7.3. Template follows Standard best practices for running a 3 tier Red Hat Linux IaaS workload on Azure. This template will deploy multiple VMs in each tier as per requirement. 
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Frhel-3tier-iaas%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
@@ -16,7 +16,7 @@ This template will deploy:
 
 - Four storage accounts: 3 for storing VM's of each tier, 1 for storing diagnostics data.
 -	One Virtual Network with four subnets
-- 4 Network Security Group, one for each subnet
+- 4 Network Security Groups, one for each subnet
 -	External Load Balancer to load balance Web Traffic(HTTP & HTTPS) to web servers
 - Internal Load Balancer to load balance traffic for app VM's
 -	2 Public IP’s, one for external Load balancer and other for Jump VM. 
@@ -28,7 +28,7 @@ This template will deploy:
 
 ##Licenses and Costs 
 
-The Red Hat Enterprise Linux 7.3 image used in this solution is the PAYG model and doesn't require the user to license it, it will be licensed automatically after the instance is launched first time. Use of this image carries a separate hourly charge that is in addition to Microsoft's Linux VM rates. Total price of the VM consists of the base Linux VM price (shown on the next pages) plus RHEL VM image surcharge.  Click [here](https://azure.microsoft.com/en-us/pricing/details/virtual-machines/red-hat/) for pricing details.
+The Red Hat Enterprise Linux 7.3 image used in this solution is the PAYG model and doesn't require the user to license it, it will be licensed automatically after the instance is launched first time. Use of this image carries a separate hourly charge that is in addition to Microsoft's Linux VM rates. Total price of the VM consists of the base Linux VM price plus RHEL VM image surcharge.  Click [here](https://azure.microsoft.com/en-us/pricing/details/virtual-machines/red-hat/) for pricing details.
 
 ##Prerequisites 
 
@@ -45,7 +45,7 @@ Build your Red Hat 3-Tier IaaS environment on Azure in a two simple steps:
 
 After successful deployment, this template will output the IP address and FQDN of both external load balancer and Jump VM. Make a note of these values.
 
-- To access all VM's via SSH, you need to first ssh into jump VM using its public ip captured from template outputs, from jump VM you can ssh into other VMs through via private IP.
+- To access all VM's via SSH, you need to first ssh into jump VM using its public ip captured from template outputs, from jump VM you can ssh into other VMs through via their private IP.
 - Load balancer is configured for load balancing HTTP(Port 80) and HTTPS(Port 443) to distribute traffic to web servers. 
 
 ##Support 
