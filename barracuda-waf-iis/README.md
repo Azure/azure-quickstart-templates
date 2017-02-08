@@ -17,7 +17,7 @@ Once deployment finishes, you will able to directly access fully configured Barr
 
 This template will deploy: 
 
-- Two storage account 
+- Two storage accounts
 -	One Virtual Network with two subnets
 -	One Load Balancer to facilitate RDP access (via NAT Rules) to backend web servers
 -	2 Public IP’s, one for Barracuda WAF and other for LB 
