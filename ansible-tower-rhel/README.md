@@ -42,7 +42,8 @@ This uses RHEL 7.2 image which is a PAY AS YOU GO image and doesn't require the 
 
 ##Deployment Steps  
 
-Build your Ansible Tower environment on Azure in a few simple steps:  
+Build your Ansible Tower environment on Azure in a few simple steps: 
+
 - Launch the Template by clicking on Deploy to Azure.  
 - Fill in all the required parameter values. Accept the terms and condition on click Purchase. The deployment takes about 20 minutes. 
 - Access the deployment job once it is successful. In deployment job output you will find the Public IP Address of client and tower VMs so you can easily connect to the VMs. Make a note of the public of Tower VM.
