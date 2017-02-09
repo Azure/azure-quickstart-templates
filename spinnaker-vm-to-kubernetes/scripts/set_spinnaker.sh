@@ -2,13 +2,14 @@
 
 client_id=$1
 client_secret=$2
-tenant_id=$3
-admin_user_name=$4
-resource_group=$5
-master_fqdn=$6
-master_count=$7
-artifacts_location=$8
-artifacts_location_sas_token=$9
+subscription_id=$3
+tenant_id=$4
+admin_user_name=$5
+resource_group=$6
+master_fqdn=$7
+master_count=$8
+artifacts_location=$9
+artifacts_location_sas_token=${10}
 
 #Install Spinnaker
 curl --silent https://raw.githubusercontent.com/spinnaker/spinnaker/master/InstallSpinnaker.sh | sudo bash -s -- --quiet
@@ -21,6 +22,7 @@ sudo npm install -g azure-cli
 # Login to azure cli using service principal
 azure telemetry --disable
 azure login --service-principal -u $client_id -p $client_secret --tenant $tenant_id
+azure account set $subscription_id
 
 # Setup temporary credentials to access kubernetes master vms
 temp_user_name=$(uuidgen | sed 's/-//g')
