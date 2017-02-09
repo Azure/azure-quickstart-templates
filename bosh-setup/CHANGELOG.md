@@ -1,3 +1,9 @@
+# v2.4.2 (2017-01-10)
+
+- Upgrade cf-release to v250
+- Upgrade bosh stemcell to v3312.12
+- Fix issue https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/issues/235
+
 # v2.4.1 (2017-01-10)
 
 - On AzureChinaCloud, set PowerDNS server on BOSH VM as DNS server. For *.{cf-ip}.xip.io, PowerDNS server will respond without querying Azure DNS. For the real domains and *.{other-ip-other-than-cf-ip}.xip.io, PowerDNS server will go to Azure DNS at the first time, and cache the resolving result.
