@@ -1,3 +1,9 @@
+# v2.4.3 (2017-02-08)
+
+- Use Azure blob storage as blobstore by default
+- Upgrade bosh to v260.5
+- Upgrade cf-cli to v6.23.1
+
 # v2.4.2 (2017-01-10)
 
 - Upgrade cf-release to v250
