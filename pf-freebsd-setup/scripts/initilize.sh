@@ -17,7 +17,6 @@ baseUriAzureCloud=${14}
 vmSize=${15}
 storageAccountType=${16}
 privateSubnet=${17}
-publicSubnetAddressPrefix=${18}
 
 invoke_bash()
 {
@@ -60,7 +59,7 @@ invoke_bash()
 	service pf start >> /tmp/install.log  
 
 	wget -P /tmp $baseUriAzureCloud/scripts/deploy.sh
-	echo sh /tmp/deploy.sh $servicePrincipalClientID $servicePrincipalTenantID $servicePrincipalkey $environment $rgname $location $frontendPrivateNic $frontEndVMPrivateIP $vnetName $username $password $vm1PrivateNicIP $vm2PrivateNicIP $vmSize $storageAccountType $privateSubnet $publicSubnetAddressPrefix >> /etc/rc.conf
+	echo sh /tmp/deploy.sh $servicePrincipalClientID $servicePrincipalTenantID $servicePrincipalkey $environment $rgname $location $frontendPrivateNic $frontEndVMPrivateIP $vnetName $username $password $vm1PrivateNicIP $vm2PrivateNicIP $vmSize $storageAccountType $privateSubnet >> /etc/rc.conf
 	dos2unix /tmp/deploy.sh
 	
 	echo "/bin/sh /etc/rc.conf" | at now + 2 minutes
