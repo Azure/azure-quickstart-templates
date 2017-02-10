@@ -118,9 +118,26 @@
     "lbBEAddressPoolID": "[concat(variables('lbID'),'/backendAddressPools/',variables('lbBEAddressPool'))]",
     "lbWebProbeID": "[concat(variables('lbID'),'/probes/',variables('lbWebProbeName'))]",
     "networkApi": "2016-03-30",
-    "computeApi": "2016-03-30"
+    "imageName": "myCustomImage"
   },
   "resources": [
+    {
+      "type": "Microsoft.Compute/images",
+      "apiVersion": "2016-04-30-preview",
+      "name": "[variables('imageName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "storageProfile": {
+          "osDisk": {
+            "osType": "Windows",
+            "osState": "Generalized",
+            "blobUri": "[parameters('sourceImageVhdUri')]",
+            "caching": "ReadWrite",
+            "storageAccountType": "Standard_LRS"
+          }
+        }
+      }
+    },
     {
       "apiVersion": "[variables('networkApi')]",
       "type": "Microsoft.Network/virtualNetworks",
@@ -214,7 +231,7 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachineScaleSets",
-      "apiVersion": "[variables('computeApi')]",
+      "apiVersion": "2016-04-30-preview",
       "name": "[parameters('vmSSName')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
@@ -233,14 +250,8 @@
         },
         "virtualMachineProfile": {
           "storageProfile": {
-            "osDisk": {
-              "name": "vmssosdisk",
-              "caching": "ReadOnly",
-              "createOption": "FromImage",
-              "osType": "Windows",
-              "image": {
-                "uri": "[parameters('sourceImageVhdUri')]"
-              }
+            "imageReference": {
+              "id": "[resourceId('Microsoft.Compute/images', variables('imageName'))]"
             }
           },
           "osProfile": {
