@@ -8,11 +8,13 @@ admin_user_name=$5
 resource_group=$6
 master_fqdn=$7
 master_count=$8
-artifacts_location=$9
-artifacts_location_sas_token=${10}
+storage_account_name=$9
+storage_account_key=${10}
+artifacts_location=${11}
+artifacts_location_sas_token=${12}
 
 #Install Spinnaker
-curl --silent https://raw.githubusercontent.com/spinnaker/spinnaker/master/InstallSpinnaker.sh | sudo bash -s -- --quiet
+curl --silent https://raw.githubusercontent.com/spinnaker/spinnaker/master/InstallSpinnaker.sh | sudo bash -s -- --quiet --noinstall_cassandra
 
 # Install Azure cli
 curl -sL https://deb.nodesource.com/setup_4.x | sudo -E bash -
@@ -59,11 +61,13 @@ done
 rm $temp_key_path
 rm ${temp_key_path}.pub
 
+# Enable Azure storage
+sudo /opt/spinnaker/install/change_cassandra.sh --echo=inMemory --front50=azs
+sudo sed -i "s|storageAccountName:|storageAccountName: ${storage_account_name}|" /opt/spinnaker/config/spinnaker-local.yml
+sudo sed -i "s|storageAccountKey:|storageAccountKey: ${storage_account_key}|" /opt/spinnaker/config/spinnaker-local.yml
+
 # Configure Spinnaker for Kubernetes
 sudo sed -i 's|SPINNAKER_KUBERNETES_ENABLED:false|SPINNAKER_KUBERNETES_ENABLED:true|' /opt/spinnaker/config/spinnaker-local.yml
-
-# Restart cassandra to avoid front50 connection issue
-sudo service cassandra restart
 
 # Install and setup Kubernetes cli for admin user
 sudo curl -L -s -o /usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
