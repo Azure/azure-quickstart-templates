@@ -85,7 +85,7 @@ Node $NodeName
 		xRemoteFile DownloadTests
 			{
 				DestinationPath = "C:\iometerTests\iometerTests.zip"
-				Uri = "https://github.com/jamesbannan/storage-iops-latency-throughput-demo/raw/master/files/iometerTests.zip"
+				Uri = "https://github.com/Azure/azure-quickstart-templates/raw/master/storage-iops-latency-throughput-demo/files/iometerTests.zip"
 				DependsOn = "[File]DirectoryCreate"
 			}
 		xArchive ExpandArchive
