@@ -99,13 +99,13 @@ chown $minecraft_user:$minecraft_group $minecraft_server_path/ops.json
 touch $minecraft_server_path/server.properties
 chown $minecraft_user:$minecraft_group $minecraft_server_path/server.properties
 # echo 'max-tick-time=-1' >> $minecraft_server_path/server.properties
-printf 'difficulty=%s\n' $3 >> $minecraft_server_path/server.properties
-printf 'level-name=%s\n' $4 >> $minecraft_server_path/server.properties
-printf 'gamemode=%s\n' $5 >> $minecraft_server_path/server.properties
-printf 'white-list=%s\n' $6 >> $minecraft_server_path/server.properties
-printf 'enable-command-block=%s\n' $7 >> $minecraft_server_path/server.properties
-printf 'spawn-monsters=%s\n' $8 >> $minecraft_server_path/server.properties
-printf 'generate-structures=%s\n' $9 >> $minecraft_server_path/server.properties
-printf 'level-seed=%s\n' ${10} >> $minecraft_server_path/server.properties
+printf 'difficulty=%s\n' $2 >> $minecraft_server_path/server.properties
+printf 'level-name=%s\n' $3 >> $minecraft_server_path/server.properties
+printf 'gamemode=%s\n' $4 >> $minecraft_server_path/server.properties
+printf 'white-list=%s\n' $5 >> $minecraft_server_path/server.properties
+printf 'enable-command-block=%s\n' $6 >> $minecraft_server_path/server.properties
+printf 'spawn-monsters=%s\n' $7 >> $minecraft_server_path/server.properties
+printf 'generate-structures=%s\n' $8 >> $minecraft_server_path/server.properties
+printf 'level-seed=%s\n' $9 >> $minecraft_server_path/server.properties
 
 systemctl start minecraft-server
