@@ -29,5 +29,5 @@ cd configuration
 git checkout $OPENEDX_RELEASE
 pip install -r requirements.txt
 
-cd playbooks
-ansible-playbook -i localhost, -c local vagrant-fullstack.yml -e@$ANSIBLE_ROOT/server-vars.yml -e@$ANSIBLE_ROOT/extra-vars.yml
+#cd playbooks
+#ansible-playbook -i localhost, -c local vagrant-fullstack.yml -e@$ANSIBLE_ROOT/server-vars.yml -e@$ANSIBLE_ROOT/extra-vars.yml
