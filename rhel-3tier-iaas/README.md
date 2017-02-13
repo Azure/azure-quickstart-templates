@@ -33,7 +33,6 @@ The Red Hat Enterprise Linux 7.3 image used in this solution is the PAYG model a
 ##Prerequisites 
 
 - Azure Subscription with specified payment method (Red Hat Enterprise Linux is a market place product and requires payment method to be specified in Azure Subscription
--	User account with admin or contributor access to the given azure subscription
 
 ##Deployment Steps  
 
