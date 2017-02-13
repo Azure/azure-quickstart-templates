@@ -95,6 +95,8 @@ def render_bosh_manifest(settings):
     values["GATEWAY_IP"] = gateway_ip
     values["BOSH_DIRECTOR_IP"] = bosh_director_ip
     values["NTP_SERVERS"] = ntp_servers
+    values["REPLACE_WITH_POSTGRES_ADDRESS"] = postgres_address
+    
     render_file("bosh.yml", keys, values)
 
     return bosh_director_ip
