@@ -78,6 +78,7 @@ printf '[Service]\nWorkingDirectory=%s\n' $minecraft_server_path >> /etc/systemd
 printf 'ExecStart=/usr/bin/java -Xms%s -Xmx%s -jar %s/%s nogui\n' $memoryAlloc $memoryAlloc $minecraft_server_path $server_jar >> /etc/systemd/system/minecraft-server.service
 printf 'ExecReload=/bin/kill -HUP $MAINPID\nKillMode=process\nRestart=on-failure\n' >> /etc/systemd/system/minecraft-server.service
 printf '[Install]\nWantedBy=multi-user.target\nAlias=minecraft-server.service' >> /etc/systemd/system/minecraft-server.service
+chmod +x /etc/systemd/system/minecraft-server.service
 
 # create and set permissions on user access JSON files
 touch $minecraft_server_path/banned-players.json
