@@ -20,7 +20,7 @@ This template will deploy:
 
 -   3 storage accounts
 -	One Virtual Network with two subnets
--	Two Network Security Group, one for each subnet
+-	Two Network Security Groups, one for each subnet
 -	3 Public IP’s, one for tower and 2 for clients 
 -	Virtual Machines Availability set for tower and client vms.
 -	One Ansible Tower Virtual Machine (RHEL 7.2)
@@ -36,18 +36,17 @@ This uses RHEL 7.2 image which is a PAY AS YOU GO image and doesn't require the 
 
 ##Prerequisites 
 
-- Azure Subscription with specified payment method (RHEL 7.2 is a market place product and requires payment method to be specified in Azure Subscription
-- User account with admin or contributor access to the given azure subscription
+- Azure Subscription with specified payment method (RHEL 7.2 is a marketplace product and requires payment method to be specified in Azure Subscription)
 - Ansible Tower License( You can get a free trial license from [here](https://www.ansible.com/license) )
 
 ##Deployment Steps  
 
 Build your Ansible Tower environment on Azure in a few simple steps: 
 
-- Launch the Template by clicking on Deploy to Azure.  
-- Fill in all the required parameter values. Accept the terms and condition on click Purchase. The deployment takes about 20 minutes. 
-- Access the deployment job once it is successful. In deployment job output you will find the Public IP Address of client and tower VMs so you can easily connect to the VMs. Make a note of the public of Tower VM.
-- Access Ansible GUI with the public ip of tower vm noted in above step by accessing http://publicip
+- Launch the Template by clicking on Deploy to Azure button.  
+- Fill in all the required parameter values. Accept the terms and condition and click Purchase. The deployment takes about 20 minutes. 
+- Access the deployment job once it is successful. In deployment job output you will find the Public IP Address of client and tower VMs so you can easily connect to the VMs. Make a note of the public of Tower VM.Alternatively you can get public ip address of VM from Overview Blade in VM settings.
+- Access Ansible GUI with the public ip of tower vm noted in above step by opening http://publicip
 - Login with username as ‘admin’ and password specified in parameters during deployment. 
 - Request a trial Ansible license or provide your existing Ansible license file. You should get license file within 3-5 minutes on email after requesting a trial.
 - You will now have access to working Ansible Tower Server. 
