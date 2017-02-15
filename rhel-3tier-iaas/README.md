@@ -14,15 +14,15 @@ This Azure Quick Start template deploys a 3 Tier Red Hat Solution on Azure.The S
 
 This template will deploy: 
 
-- Four storage accounts: 3 for storing VM's of each tier, 1 for storing diagnostics data.
--	One Virtual Network with four subnets
-- 4 Network Security Groups, one for each subnet
--	External Load Balancer to load balance Web Traffic(HTTP & HTTPS) to web servers
-- Internal Load Balancer to load balance traffic for app VM's
+- Five storage accounts: 3 for storing VM's of each tier, 1 for storing diagnostics data and 1 for storing Jump VM.
+-	One Virtual Network with four subnets.
+- 4 Network Security Groups, one for each subnet.
+-	External Load Balancer to load balance Web Traffic(HTTP & HTTPS) to web servers.
+- Internal Load Balancer to load balance traffic for app VM's.
 -	2 Public IP’s, one for external Load balancer and other for Jump VM. 
 -	3 Virtual Machine Availability sets for Web Tier, Application Tier and Database tier.
--	One Jump VM to faclitate ssh access to all other VMs
--	Multiple Red Hat Enterprise Linux VMs as per parameter value given during deployment for each tier
+-	One Jump VM to faclitate ssh access to all other VMs.
+-	Multiple Red Hat Enterprise Linux VMs as per parameter value given during deployment for each tier.
 
 ![Deployment Solution Architecture](https://github.com/Azure/azure-quickstart-templates/master/redhat-3tier-architecture/images/architecture.png?raw=true)
 
@@ -32,12 +32,12 @@ The Red Hat Enterprise Linux 7.3 image used in this solution is the PAYG model a
 
 ##Prerequisites 
 
-- Azure Subscription with specified payment method (Red Hat Enterprise Linux is a market place product and requires payment method to be specified in Azure Subscription
+- Azure Subscription with specified payment method (Red Hat Enterprise Linux is a marketplace product and requires payment method to be specified in Azure Subscription)
 
 ##Deployment Steps  
 
 Build your Red Hat 3-Tier IaaS environment on Azure in a two simple steps:  
-- Launch the Template deployment by clicking on Deploy on Azure button. 
+- Launch the Template deployment by clicking on Deploy to Azure button. 
 - Fill in all the required parameter values. Accept the terms and condition on click Purchase. The deployment takes about 5 minutes. 
 
 ##Post Deployment Steps 
@@ -45,7 +45,9 @@ Build your Red Hat 3-Tier IaaS environment on Azure in a two simple steps:
 After successful deployment, this template will output the IP address and FQDN of both external load balancer and Jump VM. Make a note of these values.
 
 - To access all VM's via SSH, you need to first ssh into jump VM using its public ip captured from template outputs, from jump VM you can ssh into other VMs through via their private IP.
-- Load balancer is configured for load balancing HTTP(Port 80) and HTTPS(Port 443) to distribute traffic to web servers. 
+  or
+- You can also get public IP of Jump VM from overview blade in VM Settings.
+- Load balancer is configured for load balancing HTTP(Port 80) and HTTPS(Port 443) to distribute traffic to web servers.You can configure web servers and start access websites using Load Balancer. 
 
 ##Support 
 
