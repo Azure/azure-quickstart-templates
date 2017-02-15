@@ -3,7 +3,7 @@
 set -e
 
 SUDOUSER=$1
-PASSWORD=$2
+PASSWORD="$2"
 PRIVATEKEY=$3
 MASTER=$4
 MASTERPUBLICIPHOSTNAME=$5
@@ -11,6 +11,8 @@ MASTERPUBLICIPADDRESS=$6
 NODEPREFIX=$7
 NODECOUNT=$8
 ROUTING=$9
+
+NODELOOP=$((NODECOUNT - 1))
 
 DOMAIN=$( awk 'NR==2' /etc/resolv.conf | awk '{ print $2 }' )
 
@@ -41,11 +43,13 @@ nodes
 [OSEv3:vars]
 ansible_ssh_user=$SUDOUSER
 ansible_become=yes
+openshift_install_examples=true
 deployment_type=origin
-openshift_release=v1.3
-openshift_image_tag=v1.3.0
+openshift_release=v1.4
+openshift_image_tag=v1.4.0
 docker_udev_workaround=True
-openshift_use_dnsmasq=no
+openshift_use_dnsmasq=false
+openshift_override_hostname_check=true
 openshift_master_default_subdomain=$ROUTING
 
 openshift_master_cluster_public_hostname=$MASTERPUBLICIPHOSTNAME
@@ -61,12 +65,8 @@ $MASTER.$DOMAIN
 # host group for nodes
 [nodes]
 $MASTER.$DOMAIN openshift_node_labels="{'region': 'master', 'zone': 'default'}"
+$NODE-[0:${NODELOOP}].$DOMAIN openshift_node_labels="{'region': 'infra', 'zone': 'default'}"
 EOF
-
-for (( c=0; c<$NODECOUNT; c++ ))
-do
-  echo "$NODEPREFIX-$c.$DOMAIN openshift_node_labels=\"{'region': 'infra', 'zone': 'default'}\"" >> /etc/ansible/hosts
-done
 
 runuser -l $SUDOUSER -c "git clone https://github.com/openshift/openshift-ansible /home/$SUDOUSER/openshift-ansible"
 
