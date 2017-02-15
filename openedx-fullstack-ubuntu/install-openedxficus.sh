@@ -3,7 +3,7 @@
 # Licensed under the MIT license. See LICENSE file on the project webpage for details.
 
 set -x
-export OPENEDX_RELEASE=$1
+export OPENEDX_RELEASE=${1:-"open-release/ficus.master"}
 CONFIG_REPO=https://github.com/edx/configuration.git
 ANSIBLE_ROOT=/edx/app/edx_ansible
 
@@ -29,7 +29,8 @@ cd configuration
 git checkout $OPENEDX_RELEASE
 pip install -r requirements.txt
 
-wget https://raw.githubusercontent.com/edx/configuration/$OPENEDX_RELEASE/util/install/sandbox.sh -O - | bash
 
-# cd playbooks
-# ansible-playbook -i localhost, -c local vagrant-fullstack.yml -e@$ANSIBLE_ROOT/server-vars.yml -e@$ANSIBLE_ROOT/extra-vars.yml
+cd playbooks
+ansible-playbook -i localhost, -c local vagrant-fullstack.yml -e@$ANSIBLE_ROOT/server-vars.yml -e@$ANSIBLE_ROOT/extra-vars.yml
+
+wget https://raw.githubusercontent.com/edx/configuration/$OPENEDX_RELEASE/util/install/sandbox.sh -O - | bash
