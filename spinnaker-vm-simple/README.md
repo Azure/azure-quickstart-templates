@@ -1,12 +1,11 @@
-# Host Spinnaker in an Azure VM
+# Azure Spinnaker
 
-<a href="https://aka.ms/azspindeployqs" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fspinnaker-vm-simple%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
-<a href="https://aka.ms/azspinvizqs" target="_blank">
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fspinnaker-vm-simple%2Fazuredeploy.json" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
-
 
 This template allows you to deploy an instance of Spinnaker on a Linux Ubuntu 14.04 LTS VM. This will deploy a D3_v2 size VM in the resource group location and return the FQDN of the VM. You will have to manually configure the instance to target a deployment environment.
 

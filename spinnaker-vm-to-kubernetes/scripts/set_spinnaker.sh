@@ -2,16 +2,19 @@
 
 client_id=$1
 client_secret=$2
-tenant_id=$3
-admin_user_name=$4
-resource_group=$5
-master_fqdn=$6
-master_count=$7
-artifacts_location=$8
-artifacts_location_sas_token=$9
+subscription_id=$3
+tenant_id=$4
+admin_user_name=$5
+resource_group=$6
+master_fqdn=$7
+master_count=$8
+storage_account_name=$9
+storage_account_key=${10}
+artifacts_location=${11}
+artifacts_location_sas_token=${12}
 
 #Install Spinnaker
-curl --silent https://raw.githubusercontent.com/spinnaker/spinnaker/master/InstallSpinnaker.sh | sudo bash -s -- --quiet
+curl --silent https://raw.githubusercontent.com/spinnaker/spinnaker/master/InstallSpinnaker.sh | sudo bash -s -- --quiet --noinstall_cassandra
 
 # Install Azure cli
 curl -sL https://deb.nodesource.com/setup_4.x | sudo -E bash -
@@ -21,6 +24,7 @@ sudo npm install -g azure-cli
 # Login to azure cli using service principal
 azure telemetry --disable
 azure login --service-principal -u $client_id -p $client_secret --tenant $tenant_id
+azure account set $subscription_id
 
 # Setup temporary credentials to access kubernetes master vms
 temp_user_name=$(uuidgen | sed 's/-//g')
@@ -37,7 +41,7 @@ for (( i=0; i<$master_count; i++ ))
 do
   master_vm="k8s-master-${kubernetes_suffix}-$i"
   azure vm extension set $resource_group $master_vm CustomScript Microsoft.Azure.Extensions 2.0 --auto-upgrade-minor-version \
-    --public-config "{\"fileUris\": [\"${artifacts_location}add_temp_user.sh${artifacts_location_sas_token}\"], \"commandToExecute\": \"./add_temp_user.sh $admin_user_name $temp_user_name '$temp_pub_key'\"}"
+    --public-config "{\"fileUris\": [\"${artifacts_location}scripts/add_temp_user.sh${artifacts_location_sas_token}\"], \"commandToExecute\": \"./add_temp_user.sh $admin_user_name $temp_user_name '$temp_pub_key'\"}"
 done
 
 # Copy kube config over from master kubernetes cluster and mark readable
@@ -50,19 +54,23 @@ for (( i=0; i<$master_count; i++ ))
 do
   master_vm="k8s-master-${kubernetes_suffix}-$i"
   azure vm extension set $resource_group $master_vm CustomScript Microsoft.Azure.Extensions 2.0 --auto-upgrade-minor-version \
-    --public-config "{\"fileUris\": [\"${artifacts_location}remove_temp_user.sh${artifacts_location_sas_token}\"], \"commandToExecute\": \"./remove_temp_user.sh $temp_user_name\"}"
+    --public-config "{\"fileUris\": [\"${artifacts_location}scripts/remove_temp_user.sh${artifacts_location_sas_token}\"], \"commandToExecute\": \"./remove_temp_user.sh $temp_user_name\"}"
 done
 
 # Delete temp key on spinnaker vm
 rm $temp_key_path
 rm ${temp_key_path}.pub
 
+# Enable Azure storage
+sudo /opt/spinnaker/install/change_cassandra.sh --echo=inMemory --front50=azs
+sudo sed -i "s|storageAccountName:|storageAccountName: ${storage_account_name}|" /opt/spinnaker/config/spinnaker-local.yml
+sudo sed -i "s|storageAccountKey:|storageAccountKey: ${storage_account_key}|" /opt/spinnaker/config/spinnaker-local.yml
+
 # Configure Spinnaker for Kubernetes
 sudo sed -i 's|SPINNAKER_KUBERNETES_ENABLED:false|SPINNAKER_KUBERNETES_ENABLED:true|' /opt/spinnaker/config/spinnaker-local.yml
-sudo sed -i 's|SPINNAKER_DOCKER_REPOSITORY:|SPINNAKER_DOCKER_REPOSITORY:lwander/spin-kub-demo|' /opt/spinnaker/config/spinnaker-local.yml
 
-# Restart spinnaker so that config changes take effect
-sudo service spinnaker restart
-
-# Restart cassandra to avoid front50 connection issue
-sudo service cassandra restart
+# Install and setup Kubernetes cli for admin user
+sudo curl -L -s -o /usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
+sudo chmod +x /usr/local/bin/kubectl
+mkdir /home/${admin_user_name}/.kube
+sudo cp /home/spinnaker/.kube/config /home/${admin_user_name}/.kube/config
