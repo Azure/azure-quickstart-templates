@@ -10,7 +10,7 @@
  Microsoft Azure Storage is the cloud storage solution for modern applications that rely on durability, availability, and scalability to meet the needs of their customers. Azure storage provides  Blob storage, Table storage, Queue storage, and File storage services.
 Azure Storage Analytics Solution collects and visualizes inventory information, capacity metrics, transaction metrics and storage errors for storage accounts in an Azure subscription. Users can easily create additional rules to monitor storage resources. This solution leverages Azure Automation, the Log Analytics Ingestion API, together with Log Analytics views to present data about all your storage accounts  in a single  workspace. 
 
-![alt text](images/sasolution.PNG "Overview")
+![alt text](images/sasolution.png "Overview")
 
 ## Pre-reqs
 
@@ -28,21 +28,21 @@ Log into Azure Portal (https://portal.azure.com) and ensure you are in the subsc
 
 Locate your existing OMS Log Analytics Workspace and note the name of the workspace, the location of the workspace, and the Resource Group
 
-![alt text](images/omsworkspace.PNG "omsws") 
+![alt text](images/omsworkspace.png "omsws") 
 
 Next, create a new Automation Account and click on *New* and search for 'Automation'
 
-![alt text](images/CreateAutomation1.PNG "automation")
+![alt text](images/createautomation1.png "automation")
  
 Select Automation and click *Create* 
 
 Specify the name of the Automation Account and ensure you are selecting 'Use existing' and selects the Resource Group containing the OMS Log Analytics workspace. If possible, use the same Azure Region for the Automation Account. Ensure that 'Create Azure Run As account' is set to 'Yes' and click 'Create'
 
-![alt text](images/CreateAutomation2.PNG "create")
+![alt text](images/createautomation2.png "create")
 
 Once the deployment has completed, you should see the Automation account and the Log Analytics workspace in the same Resource Group
 
-![alt text](images/OMSRGAA.PNG "Resource Group")
+![alt text](images/omsrgaa.png "Resource Group")
 
 ###You can now deploy the template   
 [![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FVolkanco%2FAzureDeploy%2Fmaster%2FOMSSolutions%2FStorageAnalytics%2FazureStorageAnalytics.json) 
@@ -76,7 +76,7 @@ You should also change the values for the *Ingest Scheduler Guid* and *Ingest Cl
 
 Once you have customized all the parameters, click *Create*
 
-![alt text](images/template.PNG "template")
+![alt text](images/template.png "template")
 
 The ingestion will start 5-10 minutes post deployment.
 
@@ -88,13 +88,13 @@ In the Resource Group where you deployed the template, you should see the soluti
 
 * AzureStorageAnalytics[workspaceName]
 
-![alt text](images/deploymentrg.PNG "Solutions")
+![alt text](images/deploymentrg.png "Solutions")
 
 ### Azure Storage Analytics 
 
 The views for Azure Storage Analytics  will give you an overview of all the storage accounts  within your Azure Subscription. 
 
-![alt text](images/Inv1.PNG "Azure Storage Inventory view")
+![alt text](images/inv1.png "Azure Storage Inventory view")
 
  Solution collects and visualizes ;
 
@@ -131,7 +131,7 @@ The views for Azure Storage Analytics  will give you an overview of all the stor
 * Classic quota usage 
 
 
-![alt text](images/Metrics.PNG "Azure Storage Metrics view")
+![alt text](images/metrics.png "Azure Storage Metrics view")
 
 Solution also includes 14 preconfigured alerts  which can be used to notify for when certain thresholds are reached.  You can view the alerts and modify thresholds  from Alerts under workspace settings.
 
