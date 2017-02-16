@@ -1,0 +1,254 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "spinnakerDnsPrefix": {
+            "type": "string",
+            "metadata": {
+                "description": "DNS prefix for the Spinnaker VM. dnsprefix.azureregion.cloudapp.azure.com, for example."
+            }
+        },
+        "jenkinsDnsPrefix": {
+            "type": "string",
+            "metadata": {
+                "description": "DNS prefix for the Jenkins VM. dnsprefix.azureregion.cloudapp.azure.com, for example."
+            }
+        },
+        "vmUserName": {
+            "type": "string",
+            "metadata": {
+                "description": "Login user name for the spinnaker VM."
+            }
+        },
+        "vmPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Login password for the spinnaker VM."
+            }
+        },
+        "servicePrincipalClientId": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Client ID of the Azure AD application that has rights to spinnaker."
+            }
+        },
+        "servicePrincipalClientSecret": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Client Secret of the Azure AD application that has rights to spinnaker."
+            }
+        },
+        "keyVaultAccountName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of your KeyVault account."
+            }
+        },
+        "OracleUserName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of your Oracle Account used to download the JDK."
+            }
+        },
+        "OraclePassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Password of your Oracle account."
+            }
+        },
+        "JenkinsUser": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of your Jenkins User account."
+            },
+            "defaultValue": "jenkins"
+        },
+        "JenkinsPassword": {
+            "type": "string",
+            "metadata": {
+                "description": "Password of your Jenkins User account."
+            }
+        },
+        "AptlyRepoName" : { 
+            "type": "string",
+            "metadata": {
+                "description": "Aptly Repo name"
+            }
+        },
+        "_artifactsLocation": {
+          "type": "string",
+          "metadata": {
+            "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+          },
+          "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/spinnaker-jenkins-to-vmss"
+        },
+        "_artifactsLocationSasToken": {
+          "type": "securestring",
+          "metadata": {
+            "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+          },
+          "defaultValue": ""
+        }
+    },
+  "variables": {
+    "scenarioPrefix": "spinnaker",
+    "storageAccountName": "[concat('vhdstorage', uniqueString(resourceGroup().id))]",
+    "front50StorageAccountName": "[concat('front50', uniqueString(resourceGroup().id))]",
+    "storageAccountContainerName": "vhds",
+    "packerStorageAccountName": "[concat('packer', uniqueString(resourceGroup().id))]",
+    "spinnakerTemplateUrl": "[concat(parameters('_artifactsLocation'), 'nested/', 'spinnakerDeploy.json', parameters('_artifactsLocationSasToken'))]",
+    "storageTemplateUrl": "[concat(parameters('_artifactsLocation'), 'nested/', 'storageDeploy.json', parameters('_artifactsLocationSasToken'))]",
+    "vnetTemplateUrl": "[concat(parameters('_artifactsLocation'), 'nested/', 'vnetDeploy.json', parameters('_artifactsLocationSasToken'))]",
+    "jenkinsTemplateUrl": "[concat(parameters('_artifactsLocation'), 'nested/', 'jenkinsDeploy.json', parameters('_artifactsLocationSasToken'))]",
+    "vnetName": "[concat(variables('scenarioPrefix'),'Vnet')]",
+    "subnet0Name": "[concat(variables('scenarioPrefix'),'Subnet0')]",
+    "subnet1Name": "[concat(variables('scenarioPrefix'),'Subnet1')]",
+    "subnet2Name": "[concat(variables('scenarioPrefix'),'Subnet2')]",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+    "subnet0Ref": "[concat(variables('vnetID'),'/subnets/', variables('subnet0Name'))]",
+    "jenkinsFQDN": "[concat(parameters('jenkinsDnsPrefix'), '.', resourceGroup().location, '.cloudapp.azure.com' )]"
+  },
+    "resources": [
+        {
+            "apiVersion": "2016-09-01",
+            "type": "Microsoft.Resources/deployments",
+            "name": "storage-deployment",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('storageTemplateUrl')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "storageAccountName": { "value": "[variables('storageAccountName')]" },
+                    "packerStorageAccountName": { "value": "[variables('packerStorageAccountName')]" },
+                    "front50StorageAccountName": { "value": "[variables('front50StorageAccountName')]" }
+                }
+            }
+        },
+        {
+            "apiVersion": "2016-09-01",
+            "type": "Microsoft.Resources/deployments",
+            "name": "vnet-deployment",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('vnetTemplateUrl')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "VirtualNetwork": {
+                        "value": {
+                            "name": "[variables('vnetName')]",
+                            "addressSpace": "10.0.0.0/20",
+                            "subnet0Name": "[variables('subnet0Name')]",
+                            "subnet1Name": "[variables('subnet1Name')]",
+                            "subnet2Name": "[variables('subnet2Name')]",
+                            "subnet0AddressPrefix": "10.0.0.0/24",
+                            "subnet1AddressPrefix": "10.0.1.0/24",
+                            "subnet2AddressPrefix": "10.0.2.0/24"
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "apiVersion": "2016-09-01",
+            "type": "Microsoft.Resources/deployments",
+            "name": "spinnaker-deployment",
+            "dependsOn": [
+                "Microsoft.Resources/deployments/storage-deployment",
+                "Microsoft.Resources/deployments/vnet-deployment"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('spinnakerTemplateUrl')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "SpinnakerVM": {
+                        "value": {
+                            "StorageAccountName": "[variables('storageAccountName')]",
+                            "StorageAccountContainerName": "[variables('storageAccountContainerName')]",
+                            "dnsPrefix": "[parameters('spinnakerDnsPrefix')]",
+                            "subnet0Ref": "[variables('subnet0Ref')]",
+                            "privateIp": "10.0.0.4",
+                            "storageKey": "[reference('storage-deployment').outputs.storageKey.value]",
+                            "front50StorageAccountName": "[variables('front50StorageAccountName')]",
+                            "jenkinsURL": "[variables('jenkinsFQDN')]"
+                        }
+                    },
+                    "Keyvault": {
+                        "value": {
+                            "name": "[parameters('keyVaultAccountName')]",
+                            "userName": "[parameters('vmUsername')]",
+                            "password": "[parameters('vmPassword')]",
+                            "clientId": "[parameters('servicePrincipalClientId')]",
+                            "clientSecret": "[parameters('servicePrincipalClientSecret')]"
+                        }
+                    },
+                    "Account": {
+                        "value": {
+                            "JenkinsUser": "[parameters('JenkinsUser')]",
+                            "JenkinsPassword": "[parameters('JenkinsPassword')]"
+                        }
+                    },
+                    "packerStorageAccountName": { "value": "[variables('packerStorageAccountName')]" },
+                    "_artifactsLocation": { "value": "[parameters('_artifactsLocation')]" },
+                    "_artifactsLocationSasToken": { "value": "[parameters('_artifactsLocationSasToken')]" }
+                }
+            }
+        },
+        {
+            "apiVersion": "2016-09-01",
+            "type": "Microsoft.Resources/deployments",
+            "name": "jenkins-deployment",
+            "dependsOn": [
+                "Microsoft.Resources/deployments/storage-deployment",
+                "Microsoft.Resources/deployments/vnet-deployment"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[variables('jenkinsTemplateUrl')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "JenkinsVM": {
+                        "value": {
+                            "StorageAccountName": "[variables('storageAccountName')]",
+                            "StorageAccountContainerName": "[variables('storageAccountContainerName')]",
+                            "dnsPrefix": "[parameters('jenkinsDnsPrefix')]",
+                            "subnet0Ref": "[variables('subnet0Ref')]",
+                            "privateIp": "10.0.0.5"
+                        }
+                    },
+                    "Keyvault": {
+                        "value": {
+                            "userName": "[parameters('vmUsername')]",
+                            "password": "[parameters('vmPassword')]"
+                        }
+                    },
+                    "Account": {
+                        "value": {
+                            "OracleUserName": "[parameters('OracleUserName')]",
+                            "OraclePassword": "[parameters('OraclePassword')]",
+                            "AptlyRepoName": "[parameters('AptlyRepoName')]",
+                            "JenkinsUser": "[parameters('JenkinsUser')]",
+                            "JenkinsPassword": "[parameters('JenkinsPassword')]"
+                        }
+                    },
+                    "_artifactsLocation": { "value": "[parameters('_artifactsLocation')]" },
+                    "_artifactsLocationSasToken": { "value": "[parameters('_artifactsLocationSasToken')]" }
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "listKeysOutput": {
+            "type": "string",
+            "value": "[reference('storage-deployment').outputs.storageKey.value]"
+        }
+    }
+}
