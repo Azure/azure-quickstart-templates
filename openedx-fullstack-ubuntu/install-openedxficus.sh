@@ -33,4 +33,7 @@ pip install -r requirements.txt
 cd playbooks
 ansible-playbook -i localhost, -c local vagrant-fullstack.yml -e@$ANSIBLE_ROOT/server-vars.yml -e@$ANSIBLE_ROOT/extra-vars.yml
 
-wget https://raw.githubusercontent.com/edx/configuration/$OPENEDX_RELEASE/util/install/sandbox.sh -O - | bash
+if [ ! -d "/edx/app/edxapp" ]; then        
+  echo "retry edxapp configuration..."
+  wget https://raw.githubusercontent.com/edx/configuration/$OPENEDX_RELEASE/util/install/sandbox.sh -O - | bash
+fi
