@@ -1,0 +1,76 @@
+﻿{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "newZoneName": {
+      "type": "string",
+      "defaultValue": "[concat(uniqueString(resourceGroup().id), '.azurequickstart.org')]",
+      "metadata": {
+        "description": "The name of the DNS zone to be created.  Must have at least 2 segements, e.g. hostname.org"
+      }
+    },
+    "aseVirtualIP": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The VIP of ASE."
+      }
+    },
+    "tagvalues": {
+      "type": "object"
+    }
+  },
+  "variables": {
+    "hostnames": [
+      "*",
+      "ftp",
+      "*.scm",
+      "publish"
+    ]
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/dnszones",
+      "name": "[parameters('newZoneName')]",
+      "apiVersion": "2016-04-01",
+      "location": "global",
+      "properties": {},
+      "tags": {
+        "layer": "management",
+        "environment": "[parameters('tagvalues').environment]",
+        "projectname": "[parameters('tagvalues').projectname]",
+        "dataprofile": "[parameters('tagvalues').dataprofile]",
+        "department": "[parameters('tagvalues').department]",
+        "businessUnit": "[parameters('tagvalues').businessUnit]"
+      }
+    },
+    {
+      "type": "Microsoft.Network/dnszones/A",
+      "name": "[concat(parameters('newZoneName'), '/', variables('hostnames')[copyIndex()])]",
+      "apiVersion": "2016-04-01",
+      "location": "global",
+      "copy": {
+        "name": "ARecordsCopy",
+        "count": "[length(variables('hostnames'))]"
+      },
+      "dependsOn": [
+        "[parameters('newZoneName')]"
+      ],
+      "properties": {
+        "TTL": 900,
+        "ARecords": [
+          {
+            "ipv4Address": "[parameters('aseVirtualIP')]"
+          }
+
+        ]
+      }
+    }
+  ],
+  "outputs": {
+    "nameServers": {
+      "type": "array",
+      "value": "[reference(parameters('newZoneName')).nameServers]"
+    }
+  }
+}
