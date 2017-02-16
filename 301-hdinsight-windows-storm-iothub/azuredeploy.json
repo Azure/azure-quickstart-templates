@@ -1,14 +1,6 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
-  "parameters": {
-    "storageAccountName": {
-      "type": "string",
-      "defaultValue": "hdistormstorage",
-      "metadata": {
-        "description": "The name of the storage account which hosts the storm physical storage."
-      }
-    },
     "storageAccountType": {
       "type": "string",
       "defaultValue": "Standard_LRS",
@@ -151,12 +143,13 @@
       "subnetPrefix": "10.0.0.0/24",
       "id": "[resourceId('Microsoft.Network/virtualNetworks', concat(parameters('stormClusterName'),'-vnet'))]",
       "subnet": "[concat(resourceId('Microsoft.Network/virtualNetworks', concat(parameters('stormClusterName'),'-vnet')), '/subnets/subnet1')]"
-    }
+    },
+    "storageAccountName": "[concat(uniqueString(resourceGroup().id),'storage')]"
   },
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[parameters('storageAccountName')]",
+      "name": "[variables('storageAccountName')]",
       "apiVersion": "2015-06-15",
       "location": "[variables('location')]",
       "properties": {
@@ -170,7 +163,7 @@
       "location": "[variables('location')]",
       "apiVersion": "2015-03-01-preview",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/',parameters('storageAccountName'))]"
+        "[concat('Microsoft.Storage/storageAccounts/',variables('storageAccountName'))]"
       ],
       "tags": { },
       "properties": {
@@ -189,10 +182,10 @@
         "storageProfile": {
           "storageaccounts": [
             {
-              "name": "[replace(replace(concat(reference(concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName')), '2016-01-01').primaryEndpoints.blob),'https:',''),'/','')]",
+              "name": "[replace(replace(concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2016-01-01').primaryEndpoints.blob),'https:',''),'/','')]",
               "isDefault": true,
               "container": "[parameters('stormClusterName')]",
-              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2016-01-01').keys[0].value]"
+              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2016-01-01').keys[0].value]"
             }
           ]
         },
