@@ -1,0 +1,271 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "clusterName": {
+      "type": "string",
+      "defaultValue": "es-azure",
+      "metadata": {
+        "description": "The Elasticsearch cluster name"
+      }
+    },
+    "vmssName": {
+      "type": "string",
+      "metadata": {
+        "description": "The scale set name; must be 3-61 characters in length and globally unique across Azure"
+      },
+      "defaultValue": "esvmss",
+      "maxLength": 61
+    },
+    "instanceCount": {
+      "type": "int",
+      "metadata": {
+        "description": "The number of virtual machines to create in the scale set (max 200)"
+      },
+      "defaultValue": 5,
+      "maxValue": 200
+    },
+    "adminUsername": {
+      "type": "string",
+      "defaultValue": "elastic",
+      "metadata": {
+        "description": "The admin username on all virtual machines"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The admin password on all virtual machines"
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/hglkrijger/azure-quickstart-templates/master/elasticsearch-managed/",
+      "metadata": {
+        "description": "The location of this template and other artifacts to use during installation"
+      }
+    }
+  },
+  "variables": {
+    "storageAccountType": "Premium_LRS",
+    "addressPrefix": "10.0.0.0/8",
+    "subnetPrefix": "10.0.0.0/16",
+    "natStartPort": 50000,
+    "natEndPort": 50200,
+    "natBackendPort": 22,
+    "namingInfix": "[toLower(parameters('vmssName'))]",
+    "domainNameLabel": "[variables('namingInfix')]",
+    "natPoolName": "[concat(variables('namingInfix'), '-natpool')]",
+    "backendPoolName": "[concat(variables('namingInfix'), '-bepool')]",
+    "virtualNetworkName": "[concat(variables('namingInfix'), '-vnet')]",
+    "loadBalancerName": "[concat(variables('namingInfix'), '-lb')]",
+    "loadBalancerId": "[resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName'))]",
+    "frontendIpConfigId": "[concat(variables('loadBalancerId'),'/frontendIPConfigurations/loadBalancerFrontEnd')]",
+    "publicIpAddressName": "[concat(variables('namingInfix'), '-pip')]",
+    "publicIpAddressId": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpAddressName'))]",
+    "subnetName": "[concat(variables('namingInfix'), '-subnet')]",
+    "nicName": "[concat(variables('namingInfix'), '-nic')]",
+    "nsgName": "[concat(variables('namingInfix'), '-nsg')]",
+    "ipConfigName": "[concat(variables('namingInfix'), '-ipconfig')]",
+    "vmSku": "Standard_DS4_v2",
+    "imageReference": {
+      "publisher": "Canonical",
+      "offer": "UbuntuServer",
+      "sku": "16.04-LTS",
+      "version": "latest"
+    },
+    "elasticsearchSetupScriptUrl": "[concat(parameters('_artifactsLocation'), 'setup-elasticsearch.sh')]",
+    "diskSetupScriptUrl": "[concat(parameters('_artifactsLocation'), 'setup-disk.sh')]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2016-03-30",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('nsgName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "ssh",
+            "properties": {
+              "description": "Allows inbound ssh traffic",
+              "protocol": "Tcp",
+              "sourcePortRange": "50000-50200",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIpAddressName')]",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[variables('domainNameLabel')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/loadBalancers",
+      "name": "[variables('loadBalancerName')]",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
+      ],
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "LoadBalancerFrontEnd",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[variables('publicIpAddressId')]"
+              }
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "[variables('backendPoolName')]"
+          }
+        ],
+        "inboundNatPools": [
+          {
+            "name": "[variables('natPoolName')]",
+            "properties": {
+              "frontendIPConfiguration": {
+                "id": "[variables('frontendIpConfigId')]"
+              },
+              "protocol": "tcp",
+              "frontendPortRangeStart": "[variables('natStartPort')]",
+              "frontendPortRangeEnd": "[variables('natEndPort')]",
+              "backendPort": "[variables('natBackendPort')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachineScaleSets",
+      "name": "[variables('namingInfix')]",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-04-30-preview",
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+      ],
+      "sku": {
+        "name": "[variables('vmSku')]",
+        "tier": "Standard",
+        "capacity": "[parameters('instanceCount')]"
+      },
+      "properties": {
+        "upgradePolicy": {
+          "mode": "Manual"
+        },
+        "virtualMachineProfile": {
+          "storageProfile": {
+            "osDisk": {
+              "createOption": "FromImage",
+              "managedDisk": {
+                "storageAccountType": "[variables('storageAccountType')]"
+              }
+            },
+            "imageReference": "[variables('imageReference')]",
+            "dataDisks": [
+              {
+                "lun": "0",
+                "createOption": "Empty",
+                "diskSizeGB": "128",
+                "caching": "ReadWrite",
+                "managedDisk": {
+                  "storageAccountType": "[variables('storageAccountType')]"
+                }
+              }
+            ]
+          },
+          "osProfile": {
+            "computerNamePrefix": "[variables('namingInfix')]",
+            "adminUsername": "[parameters('adminUsername')]",
+            "adminPassword": "[parameters('adminPassword')]"
+          },
+          "networkProfile": {
+            "networkInterfaceConfigurations": [
+              {
+                "name": "[variables('nicName')]",
+                "properties": {
+                  "primary": true,
+                  "ipConfigurations": [
+                    {
+                      "name": "[variables('ipConfigName')]",
+                      "properties": {
+                        "subnet": {
+                          "id": "[concat(resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName')), '/subnets/', variables('subnetName'))]"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "extensionProfile": {
+            "extensions": [
+              {
+                "name": "elasticsearch",
+                "properties": {
+                  "publisher": "Microsoft.Azure.Extensions",
+                  "type": "CustomScript",
+                  "typeHandlerVersion": "2.0",
+                  "autoUpgradeMinorVersion": true,
+                  "settings": {
+                    "fileUris": [
+                      "[variables('elasticsearchSetupScriptUrl')]",
+                      "[variables('diskSetupScriptUrl')]"
+                    ],
+                    "commandToExecute": "[concat('bash setup-elasticsearch.sh -n ', parameters('clusterName'))]"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "connection": {
+      "type": "string",
+      "value": "[concat('ssh ', variables('adminUsername'), '@', reference(resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpAddressName'))).dnsSettings.fqdn, ' -p ', variables('natStartPort'))]"
+    }
+  }
+}
