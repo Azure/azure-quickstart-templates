@@ -11,7 +11,5 @@ This template can help you deploy NAT firewall with round-robin load balancing u
 
 Since the front VM has 2 NICs, please refer [**HERE**](https://docs.microsoft.com/en-us/azure/virtual-machines/virtual-machines-windows-sizes) to choose satisfied VM size. 
 
-[**HERE**](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/blob/master/docs/get-started/create-service-principal.md) is how to create a service principal.
-
-Note: There is an issue that install Azure CLI using CustomScript extension in FreeBSD, after template deploy successfully, there is a script (deploy.sh) running to finish deployment, if you can access nginx using public IP of frontend VM from IE, the whole deployment is finished. You can see installation log under /tmp/install.log for detail installation process.
+After template deploys successfully, you can access nginx using public IP of frontend VM from IE.
       
