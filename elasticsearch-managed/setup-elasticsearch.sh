@@ -25,7 +25,7 @@
 
 #Script Parameters
 CLUSTER_NAME="es-azure"
-DOWNLOAD_SCRIPT="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/shared_scripts/ubuntu/vm-disk-utils-0.1.sh"
+DOWNLOAD_SCRIPT="https://raw.githubusercontent.com/hglkrijger/azure-quickstart-templates/master/elasticsearch-managed/setup-disks.sh"
 
 help()
 {
@@ -159,13 +159,13 @@ configure_system()
     chown -R elasticsearch:elasticsearch /usr/share/elasticsearch
     
     DATA_DIR="/datadisks/disk1"
-    if ! [ -f "setup-disk.sh" ]; 
+    if ! [ -f "setup-disks.sh" ]; 
     then
         log "Disk setup script not found in `pwd`, download from $DOWNLOAD_SCRIPT"
         wget -q $DOWNLOAD_SCRIPT
     fi
     
-    bash ./setup-disk.sh
+    bash ./setup-disks.sh
     if [ $? -eq 0 ] && [ -d "$DATA_DIR" ];
     then
         log "Disk setup successful, using $DATA_DIR"
