@@ -31,10 +31,31 @@ pip install -r requirements.txt
 
 
 cd playbooks
-ansible-playbook -i localhost, -c local vagrant-fullstack.yml -e@$ANSIBLE_ROOT/server-vars.yml -e@$ANSIBLE_ROOT/extra-vars.yml
+
+# Disable "immediate exit" on errors to allow for retry
+set +e
+
+# ansible-playbook -i localhost, -c local vagrant-fullstack.yml -e@$ANSIBLE_ROOT/server-vars.yml -e@$ANSIBLE_ROOT/extra-vars.yml
 
 if [ ! -d "/edx/app/edxapp" ]; then
   echo "retry edxapp configuration..."
-  wget https://raw.githubusercontent.com/edx/configuration/$OPENEDX_RELEASE/util/install/sandbox.sh -O - | bash
+#  wget https://raw.githubusercontent.com/edx/configuration/$OPENEDX_RELEASE/util/install/sandbox.sh -O - | bash
 fi
+for (( a=1; a<=11; a++ )) 
+  do      
+    echo      
+    echo "starting attempt number: $a"      
+    echo      
+    ansible-playbook -i localhost, -c local vagrant-fullstack.yml -e@$ANSIBLE_ROOT/server-vars.yml -e@$ANSIBLE_ROOT/extra-vars.yml
+    if [ $? -eq 0 ]; then          
+      echo "attempt number: $a succeeded!"          
+      break      
+    else          
+      echo "attempt number: $a failed"          
+      update_packages update          
+      update_packages upgrade      
+    fi
+  done   
 
+# Enable "immediate exit" on error
+set -e
