@@ -27,7 +27,7 @@
       }
     },
     "servicePrincipalClientId": {
-      "type": "securestring",
+      "type": "string",
       "metadata": {
         "description": "Service Principal Client ID (also called App ID) used by the Kubernetes cluster to dynamically manage resources (e.g. user-defined load balancers)."
       }
@@ -38,12 +38,30 @@
         "description": "Service Principal secret used by the Kubernetes cluster to dynamically manage resources (e.g. user-defined load balancers)."
       }
     },
+    "dockerRegistry": {
+      "type": "string",
+      "allowedValues": [
+        "AzureContainerRegistry",
+        "DockerHub"
+      ],
+      "defaultValue": "AzureContainerRegistry",
+      "metadata": {
+        "description": "Configure Spinnaker to target an Azure Container Registry or a Docker Hub Registry."
+      }
+    },
+    "azureContainerRegistryPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "If targeting an Azure Container Registry, a unique prefix used to create the registry."
+      },
+      "defaultValue": ""
+    },
     "_artifactsLocation": {
       "type": "string",
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/spinnaker-vm-to-kubernetes/scripts/"
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/spinnaker-vm-to-kubernetes/"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -64,7 +82,9 @@
     "publicIPAddressName": "[concat(variables('resourcePrefix'), 'PublicIP')]",
     "vmStorageAccountContainerName": "vhds",
     "vmName": "[concat(variables('resourcePrefix'), 'VM')]",
-    "virtualNetworkName": "[concat(variables('resourcePrefix'), 'VNET')]"
+    "virtualNetworkName": "[concat(variables('resourcePrefix'), 'VNET')]",
+    "vmExtensionName": "initializeSpinnaker",
+    "dockerDeploymentName": "dockerRegistryDeployment"
   },
   "resources": [
     {
@@ -235,7 +255,7 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('vmName'), '/downloadinitscript')]",
+      "name": "[concat(variables('vmName'), '/', variables('vmExtensionName'))]",
       "apiVersion": "2015-06-15",
       "location": "[resourceGroup().location]",
       "dependsOn": [
@@ -249,11 +269,49 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[concat(parameters('_artifactsLocation'), 'set_spinnaker.sh', parameters('_artifactsLocationSasToken'))]"
+            "[concat(parameters('_artifactsLocation'), 'scripts/set_spinnaker.sh', parameters('_artifactsLocationSasToken'))]"
           ]
         },
         "protectedSettings": {
-          "commandToExecute": "[concat('./set_spinnaker.sh', ' ', parameters('servicePrincipalClientId'), ' ', parameters('servicePrincipalClientSecret'), ' ', subscription().tenantId, ' ', parameters('adminUsername'), ' ', resourceGroup().name, ' ', reference(resourceId('Microsoft.ContainerService/containerServices', variables('kubernetesName'))).masterProfile.fqdn, ' ', variables('kubernetesMasterCount'), ' ', parameters('_artifactsLocation'), ' ', parameters('_artifactsLocationSasToken'))]"
+          "commandToExecute": "[concat('./set_spinnaker.sh', ' ', parameters('servicePrincipalClientId'), ' ', parameters('servicePrincipalClientSecret'), ' ', subscription().subscriptionId, ' ', subscription().tenantId, ' ', parameters('adminUsername'), ' ', resourceGroup().name, ' ', reference(resourceId('Microsoft.ContainerService/containerServices', variables('kubernetesName'))).masterProfile.fqdn, ' ', variables('kubernetesMasterCount'), ' ', variables('storageAccountName'), ' ', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2016-01-01').keys[0].value, ' ', parameters('_artifactsLocation'), ' ', parameters('_artifactsLocationSasToken'))]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2016-09-01",
+      "type": "Microsoft.Resources/deployments",
+      "name": "[variables('dockerDeploymentName')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions', variables('vmName'), variables('vmExtensionName'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('_artifactsLocation'), 'nested/', parameters('dockerRegistry'), '.json' , parameters('_artifactsLocationSasToken'))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "spinnakerVmName": {
+            "value": "[variables('vmName')]"
+          },
+          "vmExtensionName": {
+            "value": "[variables('vmExtensionName')]"
+          },
+          "azureContainerRegistryPrefix": {
+            "value": "[parameters('azureContainerRegistryPrefix')]"
+          },
+          "servicePrincipalClientId": {
+            "value": "[parameters('servicePrincipalClientId')]"
+          },
+          "servicePrincipalClientSecret": {
+            "value": "[parameters('servicePrincipalClientSecret')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          }
         }
       }
     }
@@ -274,6 +332,10 @@
     "kubernetesMasterSsh": {
       "type": "string",
       "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(resourceId('Microsoft.ContainerService/containerServices', variables('kubernetesName'))).masterProfile.fqdn)]"
+    },
+    "azureContainerRegistryName": {
+      "type": "string",
+      "value": "[reference(variables('dockerDeploymentName')).outputs.azureContainerRegistryName.value]"
     }
   }
 }
