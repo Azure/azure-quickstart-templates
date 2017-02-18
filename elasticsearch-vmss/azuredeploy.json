@@ -46,7 +46,8 @@
   },
   "variables": {
     "storageAccountType": "Premium_LRS",
-    "addressPrefix": "10.0.0.0/24",
+    "addressPrefix": "10.0.0.0/16",
+    "subnetPrefix": "10.0.0.0/24",
     "namingInfix": "[toLower(parameters('vmssName'))]",
     "domainNameLabel": "[variables('namingInfix')]",
     "virtualNetworkName": "[concat(variables('namingInfix'), '-vnet')]",
@@ -64,7 +65,7 @@
     "loadBalancerPoolId": "[concat(variables('loadBalancerId'),'/backendAddressPools/', variables('backendPoolName'))]",
     "loadBalancerProbeId": "[concat(variables('loadBalancerId'),'/probes/tcpProbe')]",
     "sshProbeId": "[concat(variables('loadBalancerId'),'/probes/sshProbe')]",
-    "masterStorageAccountName": "[concat(uniqueString(resourceGroup().id, variables('namingInfix')), 'master')]",
+    "subnetName": "[concat(variables('namingInfix'), '-subnet')]",
     "vmStorageAccountContainerName": "vhds",
     "masterSize": "Standard_DS3_v2",
     "vmSku": "Standard_DS4_v2",
@@ -126,7 +127,15 @@
           "addressPrefixes": [
             "[variables('addressPrefix')]"
           ]
-        }
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetPrefix')]"
+            }
+          }
+        ]
       }
     },
     {
@@ -258,6 +267,9 @@
             "properties": {
               "privateIPAllocationMethod": "Static",
               "privateIPAddress": "[concat('10.0.0.1', copyindex())]",
+              "subnet": {
+                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName')), '/subnets/', variables('subnetName'))]"
+              },
               "loadBalancerBackendAddressPools": [
                 {
                   "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName')), '/backendAddressPools/', variables('backendPoolName'))]"
@@ -282,8 +294,7 @@
       },
       "dependsOn": [
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyindex())]",
-        "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]",
-        "[concat('Microsoft.Storage/storageAccounts/', variables('masterStorageAccountName'))]"
+        "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
       ],
       "properties": {
         "availabilitySet": {
@@ -393,7 +404,12 @@
                   "primary": true,
                   "ipConfigurations": [
                     {
-                      "name": "[variables('ipConfigName')]"
+                      "name": "[variables('ipConfigName')]",
+                      "properties": {
+                        "subnet": {
+                          "id": "[concat(resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName')), '/subnets/', variables('subnetName'))]"
+                        }
+                      }
                     }
                   ]
                 }
