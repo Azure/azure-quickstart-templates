@@ -30,10 +30,10 @@
         "description": "Admin username on all VMs."
       }
     },
-    "adminKey": {
+    "adminPassword": {
       "type": "securestring",
       "metadata": {
-        "description": "Public key for ssh access"
+        "description": "Admin password for all VMs."
       }
     },
     "_artifactsLocation": {
@@ -45,16 +45,13 @@
     }
   },
   "variables": {
-    "storageAccountType": "Standard_LRS",
+    "storageAccountType": "Premium_LRS",
+    "addressPrefix": "10.0.0.0/24",
     "namingInfix": "[toLower(parameters('vmssName'))]",
-    "longNamingInfix": "[resourceGroup().name]",
     "domainNameLabel": "[variables('namingInfix')]",
-    "addressPrefix": "10.0.0.0/8",
-    "subnetPrefix": "10.0.0.0/16",
     "virtualNetworkName": "[concat(variables('namingInfix'), '-vnet')]",
     "publicIpAddressName": "[concat(variables('namingInfix'), '-pip')]",
     "publicIpAddressId": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpAddressName'))]",
-    "subnetName": "[concat(variables('namingInfix'), '-subnet')]",
     "loadBalancerName": "[concat(variables('namingInfix'), '-lb')]",
     "loadBalancerId": "[resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName'))]",
     "backendPoolName": "[concat(variables('namingInfix'), '-bepool')]",
@@ -68,11 +65,9 @@
     "loadBalancerProbeId": "[concat(variables('loadBalancerId'),'/probes/tcpProbe')]",
     "sshProbeId": "[concat(variables('loadBalancerId'),'/probes/sshProbe')]",
     "masterStorageAccountName": "[concat(uniqueString(resourceGroup().id, variables('namingInfix')), 'master')]",
-    "keyPath": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
-    "vmStorageAccountContainerName" : "vhds",
-    "OSDiskName": "osdisk",
-    "masterSize" : "Standard_D3_v2",
-    "vmSku": "Standard_D1_v2",
+    "vmStorageAccountContainerName": "vhds",
+    "masterSize": "Standard_DS3_v2",
+    "vmSku": "Standard_DS4_v2",
     "imageReference": {
       "publisher": "Canonical",
       "offer": "UbuntuServer",
@@ -90,7 +85,7 @@
       "location": "[resourceGroup().location]",
       "properties": {
         "securityRules": [
-            {
+          {
             "name": "ssh",
             "properties": {
               "description": "Allows inbound ssh traffic",
@@ -131,24 +126,7 @@
           "addressPrefixes": [
             "[variables('addressPrefix')]"
           ]
-        },
-        "subnets": [
-          {
-            "name": "[variables('subnetName')]",
-            "properties": {
-              "addressPrefix": "[variables('subnetPrefix')]"
-            }
-          }
-        ]
-      }
-    },
-    {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('masterStorageAccountName')]",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2015-06-15",
-      "properties": {
-        "accountType": "[variables('storageAccountType')]"
+        }
       }
     },
     {
@@ -222,7 +200,7 @@
               "enableFloatingIP": false,
               "idleTimeoutInMinutes": 5,
               "probe": {
-                  "id": "[variables('sshProbeId')]"
+                "id": "[variables('sshProbeId')]"
               }
             }
           }
@@ -250,131 +228,118 @@
       }
     },
     {
-        "apiVersion": "2016-04-30-preview",
-        "type": "Microsoft.Compute/availabilitySets",
-        "name": "[variables('availabilitySetName')]",
-        "location": "[resourceGroup().location]",
-        "properties": {
-          "platformUpdateDomainCount": 3,
-          "platformFaultDomainCount": 3
-        }
+      "apiVersion": "2016-04-30-preview",
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[variables('availabilitySetName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "platformUpdateDomainCount": 3,
+        "platformFaultDomainCount": 3,
+        "managed": true
+      }
     },
     {
-        "apiVersion": "2016-03-30",
-        "type": "Microsoft.Network/networkInterfaces",
-        "name": "[concat(variables('nicName'), copyindex())]",
-        "location": "[resourceGroup().location]",
-        "dependsOn": [
-          "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpAddressName'))]",
-          "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
-        ],
-        "copy": {
-          "name": "masterNodesNicLoop",
-          "count": 3
-        },
-        "properties": {
-          "ipConfigurations": [
-            {
-              "name": "ipconfig1",
-              "properties": {
-                "privateIPAllocationMethod": "Static",
-                "privateIPAddress": "[concat('10.0.0.1', copyindex())]",
-                "subnet": {
-                  "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName')), '/subnets/', variables('subnetName'))]"
-                },
-                "loadBalancerBackendAddressPools": [
-                    {
-                        "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName')), '/backendAddressPools/', variables('backendPoolName'))]"
-                    }
-                ],
-                "networkSecurityGroup": {
-                  "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+      "apiVersion": "2016-03-30",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('nicName'), copyindex())]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpAddressName'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+      ],
+      "copy": {
+        "name": "masterNodesNicLoop",
+        "count": 3
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfigmaster",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[concat('10.0.0.1', copyindex())]",
+              "loadBalancerBackendAddressPools": [
+                {
+                  "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName')), '/backendAddressPools/', variables('backendPoolName'))]"
                 }
+              ],
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
               }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2016-04-30-preview",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(variables('masterName'), copyindex())]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "masterVmLoop",
+        "count": 3
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyindex())]",
+        "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('masterStorageAccountName'))]"
+      ],
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySetName'))]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[variables('masterSize')]"
+        },
+        "osProfile": {
+          "computerName": "[concat('master-vm', copyIndex())]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": "[variables('imageReference')]",
+          "osDisk": {
+            "createOption": "FromImage",
+            "caching": "ReadWrite",
+            "managedDisk": {
+              "storageAccountType": "[variables('storageAccountType')]"
+            }
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('nicName'), copyindex()))]"
             }
           ]
         }
-    },
-    {
-        "apiVersion": "2016-04-30-preview",        
-        "type": "Microsoft.Compute/virtualMachines",
-        "name": "[concat(variables('masterName'), copyindex())]",
-        "location": "[resourceGroup().location]",
-        "copy": {
-          "name": "masterVmLoop",
-          "count": 3
-        },
-        "dependsOn": [
-          "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyindex())]",
-          "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]",
-          "[concat('Microsoft.Storage/storageAccounts/', variables('masterStorageAccountName'))]"
-        ],
-        "properties": {
-          "availabilitySet": {
-            "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySetName'))]"
-          },
-          "hardwareProfile": {
-            "vmSize": "[variables('masterSize')]"
-          },
-          "osProfile": {
-            "computerName": "[concat('master-vm', copyIndex())]",
-            "adminUsername": "[parameters('adminUsername')]",
-            "linuxConfiguration": {
-                "disablePasswordAuthentication": "true",
-                "ssh": {
-                    "publicKeys": [
-                        {
-                            "path": "[variables('keyPath')]",
-                            "keyData": "[parameters('adminKey')]"
-                        }
-                    ]
-                } 
-            }
-          },
-          "storageProfile": {
-            "imageReference": "[variables('imageReference')]",
-            "osDisk": {
-              "name": "osdisk",
-              "vhd": {
-                "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('masterStorageAccountName')), '2015-06-15').primaryEndpoints.blob, variables('vmStorageAccountContainerName'), '/', variables('masterName'), copyindex(), variables('OSDiskName'), '.vhd')]"
-              },
-              "caching": "ReadWrite",
-              "createOption": "FromImage"
-            }
-          },
-          "networkProfile": {
-            "networkInterfaces": [
-              {
-                "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('nicName'), copyindex()))]"
-              }
-            ]
-          }
-        },
-        "resources": [
-          {
-            "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "[concat(variables('masterName'), copyindex(), '/installelasticsearch')]",
-            "apiVersion": "2016-04-30-preview",
-            "location": "[resourceGroup().location]",
-            "dependsOn": [
-              "[concat('Microsoft.Compute/virtualMachines/', variables('masterName'), copyindex())]"
-            ],
-            "properties": {
-                  "publisher": "Microsoft.Azure.Extensions",
-                  "type": "CustomScript",
-                  "typeHandlerVersion": "2.0",
-                  "autoUpgradeMinorVersion": true,
-                  "settings": {
-                    "fileUris": [
-                      "[concat(variables('templateBaseUrl'), 'install-elasticsearch.sh')]",
-                      "[variables('diskSetupScriptUrl')]"
-                    ],
-                    "commandToExecute": "[concat('bash install-elasticsearch.sh -m -n ', parameters('clusterName'))]"
-                  }
-                }
-          }
-        ]
       },
+      "resources": [
+        {
+          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "name": "[concat(variables('masterName'), copyindex(), '/installelasticsearch')]",
+          "apiVersion": "2016-04-30-preview",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', variables('masterName'), copyindex())]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Azure.Extensions",
+            "type": "CustomScript",
+            "typeHandlerVersion": "2.0",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "fileUris": [
+                "[concat(variables('templateBaseUrl'), 'install-elasticsearch.sh')]",
+                "[variables('diskSetupScriptUrl')]"
+              ],
+              "commandToExecute": "[concat('bash install-elasticsearch.sh -m -n ', parameters('clusterName'))]"
+            }
+          }
+        }
+      ]
+    },
     {
       "type": "Microsoft.Compute/virtualMachineScaleSets",
       "name": "[variables('namingInfix')]",
@@ -404,27 +369,21 @@
             },
             "imageReference": "[variables('imageReference')]",
             "dataDisks": [
-                {
-                    "lun": "1",
-                    "createOption": "empty",
-                    "diskSizeGB": "1023"
+              {
+                "lun": "0",
+                "createOption": "Empty",
+                "diskSizeGB": "128",
+                "caching": "ReadWrite",
+                "managedDisk": {
+                  "storageAccountType": "[variables('storageAccountType')]"
                 }
+              }
             ]
           },
           "osProfile": {
             "computerNamePrefix": "[variables('namingInfix')]",
             "adminUsername": "[parameters('adminUsername')]",
-            "linuxConfiguration": {
-                "disablePasswordAuthentication": "true",
-                "ssh": {
-                    "publicKeys": [
-                        {
-                            "path": "[variables('keyPath')]",
-                            "keyData": "[parameters('adminKey')]"
-                        }
-                    ]
-                } 
-            }
+            "adminPassword": "[parameters('adminPassword')]"
           },
           "networkProfile": {
             "networkInterfaceConfigurations": [
@@ -434,12 +393,7 @@
                   "primary": true,
                   "ipConfigurations": [
                     {
-                      "name": "[variables('ipConfigName')]",
-                      "properties": {
-                        "subnet": {
-                          "id": "[concat(resourceId('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName')), '/subnets/', variables('subnetName'))]"
-                        }
-                      }
+                      "name": "[variables('ipConfigName')]"
                     }
                   ]
                 }
@@ -473,8 +427,10 @@
     "kibana-url": {
       "type": "string",
       "value": "[concat('http://', reference(resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpAddressName'))).dnsSettings.fqdn, ':5601/app/monitoring#/elasticsearch')]"
+    },
+    "ssh-connection": {
+      "type": "string",
+      "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(resourceId('Microsoft.Network/publicIPAddresses', variables('publicIpAddressName'))).dnsSettings.fqdn)]"
     }
   }
 }
-
-
