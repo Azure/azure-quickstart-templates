@@ -2180,8 +2180,8 @@
             "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]",
             "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/variables/', variables('azureSubscriptionId'))]",
             "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/variables/', variables('opsInsightWorkspaceID'))]",
-            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/variables/', variables('opsInsightWorkspaceKey'))]"
-            
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/variables/', variables('opsInsightWorkspaceKey'))]",
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/jobs/', parameters('ingestCleanupGuid'))]"
           ],
           "tags": {},
           "properties": {
@@ -2204,7 +2204,8 @@
             "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]",
             "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/variables/', variables('azureSubscriptionId'))]",
             "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/variables/', variables('opsInsightWorkspaceID'))]",
-            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/variables/', variables('opsInsightWorkspaceKey'))]"
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/variables/', variables('opsInsightWorkspaceKey'))]",
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/jobs/', parameters('ingestCleanupGuid'))]"
           ],
           "tags": {},
           "properties": {
@@ -2227,7 +2228,8 @@
             "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]",
             "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/variables/', variables('azureSubscriptionId'))]",
             "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/variables/', variables('opsInsightWorkspaceID'))]",
-            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/variables/', variables('opsInsightWorkspaceKey'))]"
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/variables/', variables('opsInsightWorkspaceKey'))]",
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/jobs/', parameters('ingestCleanupGuid'))]"
           ],
           "tags": {},
           "properties": {
@@ -2273,7 +2275,8 @@
             "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]",
             "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/variables/', variables('azureSubscriptionId'))]",
             "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/variables/', variables('opsInsightWorkspaceID'))]",
-            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/variables/', variables('opsInsightWorkspaceKey'))]"
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/variables/', variables('opsInsightWorkspaceKey'))]",
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/jobs/', parameters('ingestCleanupGuid'))]"
           ],
           "tags": {},
           "properties": {
@@ -2284,6 +2287,45 @@
             "publishContentLink": {
               "uri": "[variables('metricsEnablerRunbookUri')]",
               "version": "[variables('runbooks').ingestMetricsEnablerRunbook.version]"
+            }
+          }
+        },
+        {
+          "name": "[concat(parameters('omsAutomationAccountName'), '/', parameters('ingestCleanupGuid'))]",
+          "type": "Microsoft.Automation/automationAccounts/jobs",
+          "apiVersion": "2015-10-31",
+          "location": "[parameters('omsAutomationRegion')]",
+          "dependsOn": [
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]",
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/runbooks/', variables('runbooks').ingestCleanupRunbook.name)]"
+          ],
+          "tags": {},
+          "properties": {
+            "runbook": {
+              "name": "[variables('runbooks').ingestCleanupRunbook.name]"
+            },
+            "parameters": {
+              "targetSubscriptionId": "[subscription().subscriptionId]",
+              "resourcegroup": "[resourceGroup().name]",
+              "automationaccount": "[parameters('omsAutomationAccountName')]",
+              "deleteList": "AzSAAnalytic"
+            }
+          }
+        },
+        {
+          "name": "[concat(parameters('omsAutomationAccountName'), '/', parameters('ingestSchedulerGuid'))]",
+          "type": "Microsoft.Automation/automationAccounts/jobs",
+          "apiVersion": "2015-10-31",
+          "location": "[parameters('omsAutomationRegion')]",
+          "dependsOn": [
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]",
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/runbooks/', variables('runbooks').ingestSchedulerRunbook.name)]",
+            "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/jobs/', parameters('ingestCleanupGuid'))]"
+          ],
+          "tags": {},
+          "properties": {
+            "runbook": {
+              "name": "[variables('runbooks').ingestSchedulerRunbook.name]"
             }
           }
         }
@@ -2312,7 +2354,149 @@
           "[resourceId('Microsoft.OperationalInsights/workspaces/views/', parameters('omsLogAnalyticsWorkspaceName'), variables('omsSolutions').customSolution.name)]"
         ]
       }
+    },
+    {
+      "apiVersion": "2015-11-01-preview",
+      "type": "Microsoft.OperationalInsights/workspaces/savedSearches",
+      "name": "[concat(parameters('omsLogAnalyticsWorkspaceName'), '/', tolower(variables('alertArray')[copyIndex()].searchCategory), '|', toLower(variables('alertArray')[copyIndex()].searchName))]",
+      "copy": {
+        "name": "savedsearchcopy",
+        "count": "[length(variables('alertArray'))]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsLogAnalyticsWorkspaceName'))]",
+        "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsLogAnalyticsWorkspaceName'), '/views/', variables('omsSolutions').customSolution.name)]"
+      ],
+      "properties": {
+        "etag": "*",
+        "query": "[variables('alertArray')[copyIndex()].query]",
+        "displayName": "[variables('alertArray')[copyIndex()].searchName]",
+        "category": "[variables('alertArray')[copyIndex()].searchCategory]"
+      }
+    },
+    {
+      "apiVersion": "2015-11-01-preview",
+      "type": "Microsoft.OperationalInsights/workspaces/savedSearches",
+      "name": "[concat(parameters('omsLogAnalyticsWorkspaceName'), '/', tolower(variables('alertMetricArray')[copyIndex()].searchCategory), '|', toLower(variables('alertMetricArray')[copyIndex()].searchName))]",
+      "copy": {
+        "name": "savedsearchcopy",
+        "count": "[length(variables('alertMetricArray'))]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsLogAnalyticsWorkspaceName'))]",
+        "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsLogAnalyticsWorkspaceName'), '/views/', variables('omsSolutions').customSolution.name)]"
+      ],
+      "properties": {
+        "etag": "*",
+        "query": "[variables('alertMetricArray')[copyIndex()].query]",
+        "displayName": "[variables('alertMetricArray')[copyIndex()].searchName]",
+        "category": "[variables('alertMetricArray')[copyIndex()].searchCategory]"
+      }
+    },
+    {
+      "apiVersion": "2015-11-01-preview",
+      "type": "Microsoft.OperationalInsights/workspaces/savedSearches/schedules",
+      "name": "[concat(parameters('omsLogAnalyticsWorkspaceName'), '/', tolower(variables('alertArray')[copyIndex()].searchCategory), '|', toLower(variables('alertArray')[copyIndex()].searchName), '/','schedule-',uniqueString(resourceGroup().id, deployment().name,parameters('omsLogAnalyticsWorkspaceName'), '/', variables('alertArray')[copyIndex()].searchCategory, '|', variables('alertArray')[copyIndex()].searchName))]",
+      "copy": {
+        "name": "schedulescopy",
+        "count": "[length(variables('alertArray'))]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsLogAnalyticsWorkspaceName'))]",
+        "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsLogAnalyticsWorkspaceName'), '/views/', variables('omsSolutions').customSolution.name)]",
+        "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsLogAnalyticsWorkspaceName'), '/savedSearches/', tolower(variables('alertArray')[copyIndex()].searchCategory), '|', toLower(variables('alertArray')[copyIndex()].searchName))]"
+      ],
+      "properties": {
+        "etag": "*",
+        "Interval": "[variables('alertArray')[copyIndex()].scheduleIntervalInMinutes]",
+        "QueryTimeSpan": "[variables('alertArray')[copyIndex()].scheduleQueryTimeSpan]",
+        "enabled": true
+      }
+    },
+    {
+      "apiVersion": "2015-11-01-preview",
+      "type": "Microsoft.OperationalInsights/workspaces/savedSearches/schedules",
+      "name": "[concat(parameters('omsLogAnalyticsWorkspaceName'), '/', tolower(variables('alertMetricArray')[copyIndex()].searchCategory), '|', toLower(variables('alertMetricArray')[copyIndex()].searchName), '/','schedule-',uniqueString(resourceGroup().id, deployment().name,parameters('omsLogAnalyticsWorkspaceName'), '/', variables('alertMetricArray')[copyIndex()].searchCategory, '|', variables('alertMetricArray')[copyIndex()].searchName))]",
+      "copy": {
+        "name": "schedulescopy",
+        "count": "[length(variables('alertMetricArray'))]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsLogAnalyticsWorkspaceName'))]",
+        "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsLogAnalyticsWorkspaceName'), '/views/', variables('omsSolutions').customSolution.name)]",
+        "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsLogAnalyticsWorkspaceName'), '/savedSearches/', tolower(variables('alertMetricArray')[copyIndex()].searchCategory), '|', toLower(variables('alertMetricArray')[copyIndex()].searchName))]"
+      ],
+      "properties": {
+        "etag": "*",
+        "Interval": "[variables('alertMetricArray')[copyIndex()].scheduleIntervalInMinutes]",
+        "QueryTimeSpan": "[variables('alertMetricArray')[copyIndex()].scheduleQueryTimeSpan]",
+        "enabled": true
+      }
+    },
+    {
+      "apiVersion": "2015-11-01-preview",
+      "type": "Microsoft.OperationalInsights/workspaces/savedSearches/schedules/actions",
+      "name": "[concat(parameters('omsLogAnalyticsWorkspaceName'), '/', tolower(variables('alertArray')[copyIndex()].searchCategory), '|', toLower(variables('alertArray')[copyIndex()].searchName), '/','schedule-',uniqueString(resourceGroup().id, deployment().name,parameters('omsLogAnalyticsWorkspaceName'), '/', variables('alertArray')[copyIndex()].searchCategory, '|', variables('alertArray')[copyIndex()].searchName), '/', 'alert-',uniqueString(resourceGroup().id, deployment().name,parameters('omsLogAnalyticsWorkspaceName'), '/', variables('alertArray')[copyIndex()].searchCategory, '|', variables('alertArray')[copyIndex()].searchName))]",
+      "copy": {
+        "name": "actioncopy",
+        "count": "[length(variables('alertArray'))]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsLogAnalyticsWorkspaceName'))]",
+        "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsLogAnalyticsWorkspaceName'), '/views/', variables('omsSolutions').customSolution.name)]",
+        "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsLogAnalyticsWorkspaceName'), '/savedSearches/', tolower(variables('alertArray')[copyIndex()].searchCategory), '|', toLower(variables('alertArray')[copyIndex()].searchName))]",
+        "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsLogAnalyticsWorkspaceName'), '/savedSearches/', tolower(variables('alertArray')[copyIndex()].searchCategory), '|', toLower(variables('alertArray')[copyIndex()].searchName), '/schedules/','schedule-',uniqueString(resourceGroup().id, deployment().name,parameters('omsLogAnalyticsWorkspaceName'), '/', variables('alertArray')[copyIndex()].searchCategory, '|', variables('alertArray')[copyIndex()].searchName))]"
+      ],
+      "properties": {
+        "etag": "*",
+        "Type": "Alert",
+        "Name": "[variables('alertArray')[copyIndex()].alertName]",
+        "Description": "[variables('alertArray')[copyIndex()].description]",
+        "Severity": "[variables('alertArray')[copyIndex()].severity]",
+        "Throttling": {
+          "DurationInMinutes": "[variables('alertArray')[copyIndex()].alertThrottleInMinutes]"
+        },
+        "Threshold": {
+          "Operator": "[variables('alertArray')[copyIndex()].operator]",
+          "Value": "[variables('alertArray')[copyIndex()].alertTresholdValue]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-11-01-preview",
+      "type": "Microsoft.OperationalInsights/workspaces/savedSearches/schedules/actions",
+      "name": "[concat(parameters('omsLogAnalyticsWorkspaceName'), '/', tolower(variables('alertMetricArray')[copyIndex()].searchCategory), '|', toLower(variables('alertMetricArray')[copyIndex()].searchName), '/','schedule-',uniqueString(resourceGroup().id, deployment().name,parameters('omsLogAnalyticsWorkspaceName'), '/', variables('alertMetricArray')[copyIndex()].searchCategory, '|', variables('alertMetricArray')[copyIndex()].searchName), '/', 'alert-',uniqueString(resourceGroup().id, deployment().name,parameters('omsLogAnalyticsWorkspaceName'), '/', variables('alertMetricArray')[copyIndex()].searchCategory, '|', variables('alertMetricArray')[copyIndex()].searchName))]",
+      "copy": {
+        "name": "actioncopy",
+        "count": "[length(variables('alertMetricArray'))]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsLogAnalyticsWorkspaceName'))]",
+        "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsLogAnalyticsWorkspaceName'), '/views/', variables('omsSolutions').customSolution.name)]",
+        "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsLogAnalyticsWorkspaceName'), '/savedSearches/', tolower(variables('alertMetricArray')[copyIndex()].searchCategory), '|', toLower(variables('alertMetricArray')[copyIndex()].searchName))]",
+        "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsLogAnalyticsWorkspaceName'), '/savedSearches/', tolower(variables('alertMetricArray')[copyIndex()].searchCategory), '|', toLower(variables('alertMetricArray')[copyIndex()].searchName), '/schedules/','schedule-',uniqueString(resourceGroup().id, deployment().name,parameters('omsLogAnalyticsWorkspaceName'), '/', variables('alertMetricArray')[copyIndex()].searchCategory, '|', variables('alertMetricArray')[copyIndex()].searchName))]"
+      ],
+      "properties": {
+        "etag": "*",
+        "Type": "Alert",
+        "Name": "[variables('alertMetricArray')[copyIndex()].alertName]",
+        "Description": "[variables('alertMetricArray')[copyIndex()].description]",
+        "Severity": "[variables('alertMetricArray')[copyIndex()].severity]",
+        "Throttling": {
+          "DurationInMinutes": "[variables('alertMetricArray')[copyIndex()].alertThrottleInMinutes]"
+        },
+        "Threshold": {
+          "Operator": "[variables('alertMetricArray')[copyIndex()].operator]",
+          "Value": "[variables('alertMetricArray')[copyIndex()].alertTresholdValue]",
+          "MetricsTrigger": {
+            "TriggerCondition": "Total",
+            "Operator": "[variables('alertMetricArray')[copyIndex()].operator]",
+            "Value": "[variables('alertMetricArray')[copyIndex()].alertBreach]"
+          }
+        }
+      }
     }
+
   ],
   "outputs": {}
 }
