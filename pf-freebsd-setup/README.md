@@ -7,9 +7,9 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template can help you deploy NAT firewall with round-robin load balancing using FreeBSD's pf on Azure.
+This template can help you deploy a NAT firewall with round-robin load balancing using FreeBSD's pf on Azure for common web server scenario where 2 FreeBSD virtual machines install the Nginix web server. 
 
-Since the front VM has 2 NICs, please refer [**HERE**](https://docs.microsoft.com/en-us/azure/virtual-machines/virtual-machines-windows-sizes) to choose satisfied VM size. 
+Since the front-end VM acting as the NAT has 2 NICs, please refer [**HERE**](https://docs.microsoft.com/en-us/azure/virtual-machines/virtual-machines-windows-sizes) to choose satisfied VM size. 
 
-After template deploys successfully, you can access nginx using public IP of frontend VM from IE.
+After the template deploys successfully, you can access Nginx using the public IP of front-end VM from the explorer.
       
