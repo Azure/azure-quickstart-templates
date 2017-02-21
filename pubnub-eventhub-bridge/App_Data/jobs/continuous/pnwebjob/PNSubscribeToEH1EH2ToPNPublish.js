@@ -48,9 +48,9 @@ var pubnub = require("pubnub")({
 });
 
 var PNPublish = function (ehEvent) {
-     console.log('Event Received from Egress EH, Publishing to PN: ');
-     console.log(JSON.stringify(ehEvent.body));
-     console.log("");
+    console.log('Event Received from Egress EH, Publishing to PN: ');
+    console.log(JSON.stringify(ehEvent.body));
+    console.log("");
 
     if (Array.isArray(ehEvent.body)){
 
@@ -64,13 +64,11 @@ var PNPublish = function (ehEvent) {
                     console.log("Message causing error: ", element);
                 }
             });
-
         });
 
     } else {
 
         console.log("No array detected.");
-
         pubnub.publish({
             channel: PNPubChannel,
             message: ehEvent.body,
