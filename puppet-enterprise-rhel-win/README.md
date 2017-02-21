@@ -13,7 +13,7 @@ Puppet Enterprise is the leading platform for automatically delivering, operatin
 </a> 
 
 
-Once deployment finishes, you will able to directly access Puppet Master Console and accept certificate requests from Nodes to bring it into the Nodes Inventory. 
+Once deployment finishes, you will able to directly access Puppet Master Console and start Puppet configurations.
 
 ##Deployment Solution Architecture 
 
@@ -23,8 +23,8 @@ This template will deploy:
 -	One Virtual Network with three subnets
 -	Three Network Security Groups, one for each subnet
 -	2 Public IP’s, one for Puppet Master VM and other for Load Balancer.
--   One Load Balancer to facilitate RDP and SSH access (via NAT Rules) to puppet agent servers.
--	Virtual Machines Availability set for puppet master and agent vms.
+- One Load Balancer to facilitate RDP and SSH access (via NAT Rules) to puppet agent servers.
+-	2 Virtual Machines Availability set's for puppet master and agent vms.
 -	One Puppet Master Virtual Machine (Ubuntu 14.04)
 -	Multiple Linux Puppet Agent Virtual Machines (RHEL 7.2)
 -	Multiple Windows Puppet Agent Virtual Machines (Windows Server 2016 Datacenter)
@@ -40,7 +40,7 @@ A complimentary license for Puppet Enterprise is included with this template whi
 
 ##Prerequisites 
 
-- Azure Subscription with specified payment method (RHEL 7.2 is a market place product and requires payment method to be specified in Azure Subscription
+- Azure Subscription with specified payment method (RHEL 7.2 & Puppet is a market place product and requires payment method to be specified in Azure Subscription)
 
 
 ##Deployment Steps  
@@ -48,7 +48,7 @@ A complimentary license for Puppet Enterprise is included with this template whi
 Build your Puppet Enterprise environment on Azure in a few simple steps:  
 - Launch the Template by clicking on Deploy to Azure button.  
 - Fill in all the required parameter values. Accept the terms and condition on click Purchase. The deployment takes about 20 minutes. 
-- Access the deployment job once it is successful. In deployment job output you will find the Public IP Address, FQDN and Private IP Address of master VM so you can easily connect to the VM. Make a note of the FQDN of Puppet Master VM.
+- Access the deployment job once it is successful. In deployment job output you will find the Public IP Address and FQDN  of master VM so you can easily connect to the Puppet Console. Make a note of the FQDN of Puppet Master VM.Deployment will also output the public IP of load balancer, which can be used to connecto to agents VM's via SSH or RDP as applicable.
 - Access Puppet Console with the fqdn of master vm noted in above step by accessing https://fqdn
 - Login with username as ‘admin’ and password specified in parameters during deployment. 
 - You will now have access to working Puppet Master. 
