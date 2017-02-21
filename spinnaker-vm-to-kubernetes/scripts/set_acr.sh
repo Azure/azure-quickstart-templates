@@ -3,14 +3,17 @@
 registry_url=$1
 client_id=$2
 client_secret=$3
+artifacts_location=$4
+artifacts_location_sas_token=$5
 
-# Configure Spinnaker for Azure Container Registry
-sudo sed -i "s|SPINNAKER_DOCKER_REGISTRY:https://index.docker.io/|SPINNAKER_DOCKER_REGISTRY:https://${registry_url}/|" /opt/spinnaker/config/spinnaker-local.yml
-sudo sed -i "s|SPINNAKER_DOCKER_USERNAME:|SPINNAKER_DOCKER_USERNAME:${client_id}|" /opt/spinnaker/config/spinnaker-local.yml
-sudo sed -i "s|SPINNAKER_DOCKER_PASSWORD_FILE:|SPINNAKER_DOCKER_PASSWORD_FILE:/opt/spinnaker/config/acrPswd|" /opt/spinnaker/config/spinnaker-local.yml
+clouddriver_config_file="/opt/spinnaker/config/clouddriver-local.yml"
 
-sudo touch /opt/spinnaker/config/acrPswd
-echo $client_secret | sudo dd status=none of=/opt/spinnaker/config/acrPswd
+# Configure Spinnaker for Docker Hub and Azure Container Registry
+sudo wget -O $clouddriver_config_file "${artifacts_location}resources/docker_and_acr.yml${artifacts_location_sas_token}"
+
+sudo sed -i "s|ACR_REGISTRY|${registry_url}|" $clouddriver_config_file
+sudo sed -i "s|ACR_USERNAME|${client_id}|" $clouddriver_config_file
+sudo sed -i "s|ACR_PASSWORD|${client_secret}|" $clouddriver_config_file
 
 # Restart spinnaker so that config changes take effect
-sudo service spinnaker restart
+sudo restart spinnaker

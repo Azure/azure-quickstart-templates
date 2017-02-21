@@ -76,8 +76,8 @@ You need to setup port forwarding to view the Spinnaker UI on your local machine
 
 1. After you have started your tunnel, navigate to `http://localhost:9000/` on your local machine.
 1. Follow steps [here](http://www.spinnaker.io/docs/kubernetes-source-to-prod#section-1-create-a-spinnaker-application) to deploy a sample pipeline. The kubeconfig file has already been copied over to your Spinnaker instance, and a docker registry has been configured, so you can skip 'Step 0. Setup'.
-  1. If you specified 'DockerHub' as the registry, Spinnaker has been targeted to use the [repository](https://hub.docker.com/r/lwander/spin-kub-demo/) in the sample pipeline. Follow steps [here](http://www.spinnaker.io/v1.0/docs/target-deployment-configuration#section-docker-registry) to target a different repository.
-  1. If you specified 'AzureContainerRegistry' as the registry, follow steps [here](https://docs.microsoft.com/azure/container-registry/container-registry-get-started-docker-cli) to push your first image.
+  1. Spinnaker has been targeted to use the [repository](https://hub.docker.com/r/lwander/spin-kub-demo/) in the sample pipeline. Follow steps [here](http://www.spinnaker.io/v1.0/docs/target-deployment-configuration#section-docker-registry) to target different repositories.
+  1. If you enabled creating an Azure Container Registry, follow steps [here](https://docs.microsoft.com/azure/container-registry/container-registry-get-started-docker-cli) to push your first image.
 1. Check the [Troubleshooting Guide](http://www.spinnaker.io/docs/troubleshooting-guide) if you have any issues.
 
 ## Questions/Comments? azdevopspub@microsoft.com
