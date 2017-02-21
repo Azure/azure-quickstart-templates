@@ -13,7 +13,7 @@ Puppet Enterprise is the leading platform for automatically delivering, operatin
 </a> 
 
 
-Once deployment finishes, you will able to directly access Puppet Master Console and start Puppet configurations.
+Once deployment finishes, you will able to directly access Puppet Master Console and start Puppet configuration.
 
 ##Deployment Solution Architecture 
 
