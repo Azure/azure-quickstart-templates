@@ -3,7 +3,7 @@ echo $(date) " - Starting Script"
 
 # Update system to latest packages and install dependencies
 echo $(date) " - Install base packages and update system to latest packages"
-yum -y update --exclude=WALinuxAgent
+#yum -y update --exclude=WALinuxAgent
 yum -y install wget git net-tools bind-utils iptables-services bridge-utils bash-completion pyOpenSSL httpd-tools
 
 # Install the epel repo if not already present
@@ -14,7 +14,8 @@ yum -y clean all
 
 # Install the Ansible
 echo $(date) " - Installing Ansible"
-yum -y --enablerepo=epel install ansible 
+#yum -y --enablerepo=epel install ansible 
+yum -y install ansible 
 
 # Disable EPEL to prevent unexpected packages from being pulled in during installation.
 yum-config-manager epel --disable
