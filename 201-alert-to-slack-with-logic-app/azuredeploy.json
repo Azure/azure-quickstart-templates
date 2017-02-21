@@ -21,10 +21,48 @@
             "metadata": {
                 "description": "The Slack channel to post to."
             }
+        },
+        "svcPlanName": {
+            "type": "string",
+            "defaultValue": "SlackLogicAppsPlan",
+            "metadata": {
+                "description": "The name of the App Service plan to create for hosting the logic app."
+            }
+        },
+        "sku": {
+            "type": "string",
+            "defaultValue": "Standard",
+            "allowedValues": [
+                "Free",
+                "Basic",
+                "Standard",
+                "Premium"
+            ],
+            "metadata": {
+                "description": "The pricing tier for the App Service plan."
+            }
+        },
+        "svcPlanSize": {
+            "defaultValue": "S1",
+            "type": "string",
+            "metadata": {
+                "description": "The instance size of the app."
+            }
         }
     },
     "variables": {},
     "resources": [
+        {
+            "type": "Microsoft.Web/serverfarms",
+            "apiVersion": "2015-08-01",
+            "name": "[parameters('svcPlanName')]",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "[parameters('svcPlanSize')]",
+                "tier": "[parameters('sku')]",
+                "capacity": 1
+            }
+        },
         {
             "type": "Microsoft.Web/connections",
             "apiVersion": "2016-06-01",
@@ -40,13 +78,20 @@
         },
         {
             "type": "Microsoft.Logic/workflows",
-            "apiVersion": "2016-06-01",
+            "apiVersion": "2015-02-01-preview",
             "name": "[parameters('logicAppName')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Web/connections', parameters('slackConnectionName'))]"
+                "[resourceId('Microsoft.Web/connections', parameters('slackConnectionName'))]",
+                "[resourceId('Microsoft.Web/serverfarms', parameters('svcPlanName'))]"
             ],
             "location": "[resourceGroup().location]",
             "properties": {
+                "sku": {
+                    "name": "[parameters('sku')]",
+                    "plan": {
+                        "id": "[concat(resourceGroup().id, '/providers/Microsoft.Web/serverfarms/',parameters('svcPlanName'))]"
+                    }
+                },
                 "definition": {
                     "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
                     "contentVersion": "1.0.0.0",
@@ -127,7 +172,9 @@
                                 }
                             },
                             "runAfter": {
-                                "Http": ["Succeeded"]
+                                "Http": [
+                                    "Succeeded"
+                                ]
                             }
                         }
                     },
