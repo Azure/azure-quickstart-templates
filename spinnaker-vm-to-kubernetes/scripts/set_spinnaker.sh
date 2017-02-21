@@ -66,9 +66,6 @@ sudo /opt/spinnaker/install/change_cassandra.sh --echo=inMemory --front50=azs
 sudo sed -i "s|storageAccountName:|storageAccountName: ${storage_account_name}|" /opt/spinnaker/config/spinnaker-local.yml
 sudo sed -i "s|storageAccountKey:|storageAccountKey: ${storage_account_key}|" /opt/spinnaker/config/spinnaker-local.yml
 
-# Configure Spinnaker for Kubernetes
-sudo sed -i 's|SPINNAKER_KUBERNETES_ENABLED:false|SPINNAKER_KUBERNETES_ENABLED:true|' /opt/spinnaker/config/spinnaker-local.yml
-
 # Install and setup Kubernetes cli for admin user
 sudo curl -L -s -o /usr/local/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl
 sudo chmod +x /usr/local/bin/kubectl
