@@ -16,9 +16,9 @@ yum -y clean all
 #yum-config-manager epel --disable
 yum -y install ansible 
 
-# Install Docker 1.12.5
-echo $(date) " - Installing Docker 1.12.5"
-yum -y install docker-1.12.5
+# Install Docker 1.10.3
+echo $(date) " - Installing Docker 1.10.3"
+yum -y install docker-1.10.3
 
 # Create thin pool logical volume for Docker
 echo $(date) " - Creating thin pool logical volume for Docker and staring service"
@@ -40,6 +40,3 @@ fi
 systemctl enable docker
 systemctl start docker
 
-yum -y update --exclude=WALinuxAgent
-
-echo $(date) " - Script Complete"
