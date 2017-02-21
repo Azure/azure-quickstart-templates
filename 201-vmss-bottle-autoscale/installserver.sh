@@ -3,11 +3,7 @@ workserver_path=/srv/workserver
 mkdir $workserver_path
 cp workserver.py $workserver_path
 
-# install python3-bottle (in a loop in case of conflict with install happening
-# on VM init, so won't be able to grab the dpkg lock immediately)
-while ( ! (find /var/log/azure/Microsoft.OSTCExtensions.LinuxDiagnostic/*/extension.log | xargs grep "Start mdsd")); do
-	sleep 5
-done
+# install python3-bottle 
 apt-get -y update
 apt-get -y install python3-bottle
 

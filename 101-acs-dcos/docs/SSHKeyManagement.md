@@ -14,27 +14,27 @@ Pageant enables agent forwarding.  This means that you can SSH from any of the m
  1. Download and install [Putty Pageant](http://www.chiark.greenend.org.uk/~sgtatham/putty/download.html).
  2. Double Click on pageant.exe to run, and you will notice it appears in your tray
 
-  ![Image of Pageant in the tray](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-acs-mesos/images/pageant-tray.png)
+  ![Image of Pageant in the tray](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-acs-dcos/images/pageant-tray.png)
 
  3. Right click on Pageant in the tray and click "View Keys"
  4. Click "Add Key", and add your PPK generated in (#ssh-key-generation).
 
-  ![Image of Pageant addkey](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-acs-mesos/images/pageant-addkey.png)
+  ![Image of Pageant addkey](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-acs-dcos/images/pageant-addkey.png)
 
  5. Now try out the configuration by opening up Putty.exe
  6. Type in "azureuser@FQDN" and port 2200 where FQDN is the management name returned after deploying a cluster and port:
 
-  ![Image of Putty main](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-acs-mesos/images/putty-address.png)
+  ![Image of Putty main](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-acs-dcos/images/putty-address.png)
 
  7. Browse to Connection->SSH->Auth and click "Allow agent forwarding":
 
-  ![Image of Putty SSH](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-acs-mesos/images/putty-agentforwarding.png)
+  ![Image of Putty SSH](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-acs-dcos/images/putty-agentforwarding.png)
 
  8. Click "Open" to connect to the master.  Now ssh directly to an agent, and you will connect automatically.
 
 # Create Port 80 tunnel to the Master
 
-The Mesos admin router requires an SSH tunnel from port 80 to port 80.
+The DCOS admin router requires an SSH tunnel from port 80 to port 80.
 
  1. Verify you have nothing listening on port 80:
   1. on linux or Mac type `sudo netstat -anpe | grep ":80"` and stop any service or process listening on port 80
@@ -53,4 +53,4 @@ The Mesos admin router requires an SSH tunnel from port 80 to port 80.
 2. SSH to the machine
   1. on linux or Mac, modify the ssh command from "sshMaster0", and add `-L 80:localhost:80`, then use that command to connect
   2. on Windows, open Putty and in addition to the instructions from [agent forwarding](#key-management-and-agent-forwarding-with-windows-pageant), browse to Connection->SSH->Tunnel and add "80" to Source Port and "localhost:80" to Destination.
-  ![Image of putty port 80](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-acs-mesos/images/putty-port80tunnel.png)
+  ![Image of putty port 80](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-acs-dcos/images/putty-port80tunnel.png)
