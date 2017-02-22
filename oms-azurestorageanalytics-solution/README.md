@@ -136,6 +136,19 @@ The views for Azure Storage Analytics  will give you an overview of all the stor
 Solution also includes 14 preconfigured alerts  which can be used to notify for when certain thresholds are reached.  You can view the alerts and modify thresholds  from Alerts under workspace settings.
 
 
+### Troubleshooting 
 
+Solution relies on Automation Account with Runas Accounts  configured. Both SPN and Classic Certificate is used by the Storage REST API calls.  
 
+![alt text](images/runasaccounts.png "Azure Automation Runas Accounts")
 
+General Troubleshooting steps ;
+* Check if automation account can start  the runbooks
+* Check if Runas Accounts configured properly and has permission to query subscription details and can access storage keys  
+* Check if AzureStorageIngestion.......  Automation Schedules are enabled
+
+When solution is deployed  first MinuteMetrics will be enabled on all storage accounts. Transaction and capacity metrics will be logged after these metrics are first enabled. Based on the number of the storage accounts these runbook job can take  long time to finish. If you want to speed up the process you can enable metrics by running the following cdmlet;
+
+Set-AzureStorageServiceMetricsProperty -MetricsType Minute -ServiceType (Blob,Table,Queue,File)  -MetricsLevel ServiceAndApi -RetentionDays 1 -Context (storageaccountcontext)
+
+Sample script to get all strorage accounts and enable metrics can be found under /Scripts/EnableMetrics.ps1
