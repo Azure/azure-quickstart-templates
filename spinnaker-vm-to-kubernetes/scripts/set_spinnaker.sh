@@ -1,19 +1,27 @@
 #!/bin/bash
 
-client_id=$1
-client_secret=$2
-subscription_id=$3
-tenant_id=$4
-admin_user_name=$5
-resource_group=$6
-master_fqdn=$7
-master_count=$8
-storage_account_name=$9
-storage_account_key=${10}
-artifacts_location=${11}
-artifacts_location_sas_token=${12}
+while getopts :i:p:s:t:u:g:f:c:n:k:r:e:a:o: option; do
+  case "${option}" in
+        i) client_id="${OPTARG}";;
+        p) client_secret="${OPTARG}";;
+        s) subscription_id="${OPTARG}";;
+        t) tenant_id="${OPTARG}";;
+        u) admin_user_name="${OPTARG}";;
+        g) resource_group="${OPTARG}";;
+        f) master_fqdn="${OPTARG}";;
+        c) master_count="${OPTARG}";;
+        n) storage_account_name="${OPTARG}";;
+        k) storage_account_key="${OPTARG}";;
+        r) registry_url="${OPTARG}";;
+        e) enable_pipeline="${OPTARG}";;
+        a) artifacts_location="${OPTARG}";;
+        o) artifacts_location_sas_token="${OPTARG}";;
+    esac
+done
 
-spinnaker_config_file="/opt/spinnaker/config/spinnaker-local.yml"
+spinnaker_config_dir="/opt/spinnaker/config/"
+clouddriver_config_file="${spinnaker_config_dir}clouddriver-local.yml"
+spinnaker_config_file="${spinnaker_config_dir}spinnaker-local.yml"
 spinnaker_kube_config_file="/home/spinnaker/.kube/config"
 kubectl_file="/usr/local/bin/kubectl"
 
@@ -75,3 +83,22 @@ sudo curl -L -s -o $kubectl_file https://storage.googleapis.com/kubernetes-relea
 sudo chmod +x $kubectl_file
 mkdir /home/${admin_user_name}/.kube
 sudo cp $spinnaker_kube_config_file /home/${admin_user_name}/.kube/config
+
+# Configure Spinnaker for Docker Hub and Azure Container Registry (if specified)
+if [ -n "$registry_url" ]; then
+    sudo wget -O $clouddriver_config_file "${artifacts_location}resources/docker_and_acr.yml${artifacts_location_sas_token}"
+
+    sudo sed -i "s|ACR_REGISTRY|${registry_url}|" $clouddriver_config_file
+    sudo sed -i "s|ACR_USERNAME|${client_id}|" $clouddriver_config_file
+    sudo sed -i "s|ACR_PASSWORD|${client_secret}|" $clouddriver_config_file
+else
+    sudo wget -O $clouddriver_config_file "${artifacts_location}resources/docker_only.yml${artifacts_location_sas_token}"
+fi
+
+# Restart spinnaker so that config changes take effect
+curl --silent "${artifacts_location}scripts/await_restart_spinnaker.sh${artifacts_location_sas_token}" | sudo bash -s
+
+# Create sample pipeline if enabled
+if [ "$enable_pipeline" == "Enable" ]; then
+    curl --silent "${artifacts_location}scripts/add_pipeline.sh${artifacts_location_sas_token}" | sudo bash -s -- "Sample" "sampleuser" "sampleuser@Fabrikam.com" $artifacts_location $artifacts_location_sas_token
+fi
