@@ -3,7 +3,7 @@ echo $(date) " - Starting Script"
 
 # Update system to latest packages and install dependencies
 echo $(date) " - Install base packages and update system to latest packages"
-#yum -y update --exclude=WALinuxAgent
+yum -y update --exclude=WALinuxAgent
 yum -y install wget git net-tools bind-utils iptables-services bridge-utils bash-completion pyOpenSSL httpd-tools
 
 # Install the epel repo if not already present
@@ -11,9 +11,6 @@ yum -y install https://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-9
 
 # Clean yum metadata and cache to make sure we see the latest packages available
 yum -y clean all
-
-# Disable EPEL to prevent unexpected packages from being pulled in during installation.
-yum -y install ansible-2.2.1.0-2.el7 
 
 # Install Docker 1.12.5
 echo $(date) " - Installing Docker 1.12.5"
