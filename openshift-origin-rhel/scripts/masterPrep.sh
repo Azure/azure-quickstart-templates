@@ -14,7 +14,8 @@ yum -y clean all
 
 # Install the Ansible
 echo $(date) " - Installing Ansible"
-yum -y install ansible-2.2.1.0-2.el7
+#yum -y --enablerepo=epel install ansible
+yum -y install http://ftp.uni-hannover.de/pub/mirror/linux/epel/7Server/x86_64/a/ansible-2.2.0.0-4.el7.noarch.rpm
 
 # Disable EPEL to prevent unexpected packages from being pulled in during installation.
 yum-config-manager epel --disable
