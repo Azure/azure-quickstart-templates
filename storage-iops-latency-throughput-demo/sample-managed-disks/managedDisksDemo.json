@@ -1,0 +1,272 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmAdminUserName": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "The administrative user on the Windows VM."
+      }
+    },
+    "vmAdminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The administrative user password."
+      }
+    },
+    "vmPIPDnsName": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "The DNS prefix assigned to the public IP address resource."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/storage-iops-latency-throughput-demo/"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    }
+  },
+  "variables": {
+    "vNetName": "demo-vnet",
+    "vNetPrefix": "10.0.0.0/16",
+    "vNetSubnet1Name": "subnet-01",
+    "vNetSubnet1Prefix": "10.0.0.0/24",
+    "diskName": [ "[concat(variables('vmName'),'-standard','-01')]", "[concat(variables('vmName'),'-standard','-02')]", "[concat(variables('vmName'),'-standard','-03')]", "[concat(variables('vmName'),'-premium','-01')]" ],
+    "diskCreateOption": "empty",
+    "diskAccountType": [ "Standard_LRS", "Standard_LRS", "Standard_LRS", "Premium_LRS" ],
+    "diskSizeGB": [ "100", "100", "100", "1023" ],
+    "vmImagePublisher": "MicrosoftWindowsServer",
+    "vmImageOffer": "WindowsServer",
+    "vmOSDiskName": "[concat(variables('vmName'),'-','OSDisk')]",
+    "vmSize": "Standard_DS3_v2",
+    "vmName": "demo-01",
+    "vmWindowsOSVersion": "2016-Datacenter",
+    "vmSubnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vNetName'), variables('vNetSubnet1Name'))]",
+    "vmContainerName": "vhds",
+    "vmNicName": "[concat(variables('vmName'),'-nic-','0')]",
+    "vmPIPName": "[concat(variables('vmName'),'-PIP')]",
+    "dscResourceFolder": "dsc",
+    "dscResourceConfig": "vmDemo"
+
+  },
+  "resources": [
+    {
+      "name": "[variables('vNetName')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "dependsOn": [],
+      "tags": {
+        "displayName": "[variables('vNetName')]"
+      },
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('vNetPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('vNetSubnet1Name')]",
+            "properties": {
+              "addressPrefix": "[variables('vNetSubnet1Prefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[variables('vmNicName')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vNetName'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmPIPName'))]"
+      ],
+      "tags": {
+        "displayName": "[variables('vmNicName')]"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('vmSubnetRef')]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmPIPName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2016-04-30-preview",
+      "type": "Microsoft.Compute/disks",
+      "name": "[variables('diskName')[copyIndex()]]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "diskCopy",
+        "count": "[length(variables('diskName'))]"
+      },
+      "properties": {
+        "creationData": {
+          "createOption": "[variables('diskCreateOption')]"
+        },
+        "accountType": "[variables('diskAccountType')[copyIndex()]]",
+        "diskSizeGB": "[variables('diskSizeGB')[copyIndex()]]"
+      }
+    },
+    {
+      "name": "[variables('vmName')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-04-30-preview",
+      "dependsOn": [
+        "diskCopy",
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('vmNicName'))]"
+      ],
+      "tags": {
+        "displayName": "[variables('vmName')]"
+      },
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('vmName')]",
+          "adminUsername": "[parameters('vmAdminUserName')]",
+          "adminPassword": "[parameters('vmAdminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('vmImagePublisher')]",
+            "offer": "[variables('vmImageOffer')]",
+            "sku": "[variables('vmWindowsOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[variables('vmOSDiskName')]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          },
+          "dataDisks": [
+            {
+              "name": "[variables('diskName')[0]]",
+              "lun": 0,
+              "caching": "None",
+              "createOption": "Attach",
+              "managedDisk": {
+                "id": "[resourceId('Microsoft.Compute/disks',variables('diskName')[0])]"
+              }
+            },
+            {
+              "name": "[variables('diskName')[1]]",
+              "lun": 1,
+              "caching": "ReadOnly",
+              "createOption": "Attach",
+              "managedDisk": {
+                "id": "[resourceId('Microsoft.Compute/disks',variables('diskName')[1])]"
+              }
+            },
+            {
+              "name": "[variables('diskName')[2]]",
+              "lun": 2,
+              "caching": "ReadWrite",
+              "createOption": "Attach",
+              "managedDisk": {
+                "id": "[resourceId('Microsoft.Compute/disks',variables('diskName')[2])]"
+              }
+            },
+            {
+              "name": "[variables('diskName')[3]]",
+              "lun": 3,
+              "caching": "None",
+              "createOption": "Attach",
+              "managedDisk": {
+                "id": "[resourceId('Microsoft.Compute/disks',variables('diskName')[3])]"
+              }
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vmNicName'))]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "name": "DSC",
+          "type": "extensions",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2016-03-30",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
+          ],
+          "tags": {
+            "displayName": "[concat(variables('vmName'),'/','DSC')]"
+          },
+          "properties": {
+            "publisher": "Microsoft.Powershell",
+            "type": "DSC",
+            "typeHandlerVersion": "2.9",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "configuration": {
+                "url": "[concat(parameters('_artifactsLocation'),'/',variables('dscResourceFolder'),'/',variables('dscResourceConfig'),'.zip')]",
+                "script": "[concat(variables('dscResourceConfig'),'.ps1')]",
+                "function": "[variables('dscResourceConfig')]"
+              },
+              "configurationArguments": {
+                "nodeName": "[variables('vmName')]"
+              }
+            },
+            "protectedSettings": {
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "[variables('vmPIPName')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "dependsOn": [],
+      "tags": {
+        "displayName": "[variables('vmPIPName')]"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('vmPIPDnsName')]"
+        }
+      }
+    }
+
+  ],
+  "outputs": {
+    "vmURI": {
+      "type": "string",
+      "value": "[reference(variables('vmPIPName')).dnsSettings.fqdn]"
+    } 
+  }
+}
