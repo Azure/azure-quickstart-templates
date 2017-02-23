@@ -29,24 +29,24 @@
     "servicePrincipalClientId": {
       "type": "string",
       "metadata": {
-        "description": "Service Principal Client ID (also called App ID) used by the Kubernetes cluster to dynamically manage resources (e.g. user-defined load balancers)."
+        "description": "Service Principal Client ID (also called App ID) that has owner rights to the subscription used for this deployment. It is used by the Kubernetes cluster to dynamically manage resources (e.g. user-defined load balancers)."
       }
     },
     "servicePrincipalClientSecret": {
       "type": "securestring",
       "metadata": {
-        "description": "Service Principal secret used by the Kubernetes cluster to dynamically manage resources (e.g. user-defined load balancers)."
+        "description": "Service Principal secret that has owner rights to the subscription used for this deployment. It is used by the Kubernetes cluster to dynamically manage resources (e.g. user-defined load balancers)."
       }
     },
     "azureContainerRegistry": {
       "type": "string",
       "allowedValues": [
-        "Enable",
-        "Disable"
+        "Include",
+        "Exclude"
       ],
-      "defaultValue": "Enable",
+      "defaultValue": "Include",
       "metadata": {
-        "description": "If enabled, an Azure Container Registry will be created and a prefix must be specified."
+        "description": "If included, an Azure Container Registry will be created and a prefix must be specified."
       }
     },
     "azureContainerRegistryPrefix": {
@@ -56,30 +56,16 @@
       },
       "defaultValue": ""
     },
-    "createSamplePipeline": {
+    "kubernetesPipeline": {
       "type": "string",
       "allowedValues": [
-        "Enable",
-        "Disable"
+        "Include",
+        "Exclude"
       ],
-      "defaultValue": "Enable",
+      "defaultValue": "Include",
       "metadata": {
-        "description": "If enabled, a sample pipeline will be created in your Spinnaker instance. This also creates a dev (private) load balancer and prod (public) load balancer in your Kubernetes cluster."
+        "description": "If included, a sample pipeline will be created in your Spinnaker instance. This also creates a dev (private) load balancer and prod (public) load balancer in your Kubernetes cluster."
       }
-    },
-    "_artifactsLocation": {
-      "type": "string",
-      "metadata": {
-        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
-      },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/spinnaker-vm-to-kubernetes/"
-    },
-    "_artifactsLocationSasToken": {
-      "type": "securestring",
-      "metadata": {
-        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
-      },
-      "defaultValue": ""
     }
   },
   "variables": {
@@ -95,7 +81,9 @@
     "vmName": "[concat(variables('resourcePrefix'), 'VM')]",
     "virtualNetworkName": "[concat(variables('resourcePrefix'), 'VNET')]",
     "vmExtensionName": "initializeSpinnaker",
-    "acrDeploymentName": "acrDeployment"
+    "acrDeploymentName": "acrDeployment",
+    "_artifactsLocation": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/spinnaker-vm-to-kubernetes/",
+    "_artifactsLocationSasToken": ""
   },
   "resources": [
     {
@@ -271,7 +259,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'), 'nested/', parameters('azureContainerRegistry'), 'ACR.json' , parameters('_artifactsLocationSasToken'))]",
+          "uri": "[concat(variables('_artifactsLocation'), 'nested/', parameters('azureContainerRegistry'), 'ACR.json' , variables('_artifactsLocationSasToken'))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -298,11 +286,11 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[concat(parameters('_artifactsLocation'), 'scripts/set_spinnaker.sh', parameters('_artifactsLocationSasToken'))]"
+            "[concat(variables('_artifactsLocation'), 'scripts/set_spinnaker.sh', variables('_artifactsLocationSasToken'))]"
           ]
         },
         "protectedSettings": {
-          "commandToExecute": "[concat('./set_spinnaker.sh', ' -i \"', parameters('servicePrincipalClientId'), '\" -p \"', parameters('servicePrincipalClientSecret'), '\" -s \"', subscription().subscriptionId, '\" -t \"', subscription().tenantId, '\" -u \"', parameters('adminUsername'), '\" -g \"', resourceGroup().name, '\" -f \"', reference(resourceId('Microsoft.ContainerService/containerServices', variables('kubernetesName'))).masterProfile.fqdn, '\" -c \"', variables('kubernetesMasterCount'), '\" -n \"', variables('storageAccountName'), '\" -k \"', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2016-01-01').keys[0].value, '\" -r \"', reference(variables('acrDeploymentName')).outputs.azureContainerRegistryName.value, '\" -e \"', parameters('createSamplePipeline'), '\" -a \"', parameters('_artifactsLocation'), '\" -o \"', parameters('_artifactsLocationSasToken'), '\"')]"
+          "commandToExecute": "[concat('./set_spinnaker.sh', ' -i \"', parameters('servicePrincipalClientId'), '\" -p \"', parameters('servicePrincipalClientSecret'), '\" -s \"', subscription().subscriptionId, '\" -t \"', subscription().tenantId, '\" -u \"', parameters('adminUsername'), '\" -g \"', resourceGroup().name, '\" -f \"', reference(resourceId('Microsoft.ContainerService/containerServices', variables('kubernetesName'))).masterProfile.fqdn, '\" -c \"', variables('kubernetesMasterCount'), '\" -n \"', variables('storageAccountName'), '\" -k \"', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2016-01-01').keys[0].value, '\" -r \"', reference(variables('acrDeploymentName')).outputs.azureContainerRegistryName.value, '\" -e \"', parameters('kubernetesPipeline'), '\" -a \"', variables('_artifactsLocation'), '\" -o \"', variables('_artifactsLocationSasToken'), '\"')]"
         }
       }
     }
