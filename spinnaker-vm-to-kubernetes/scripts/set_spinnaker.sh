@@ -13,7 +13,7 @@ while getopts :i:p:s:t:u:g:f:c:n:k:r:e:a:o: option; do
         n) storage_account_name="${OPTARG}";;
         k) storage_account_key="${OPTARG}";;
         r) registry_url="${OPTARG}";;
-        e) enable_pipeline="${OPTARG}";;
+        e) kubernetes_pipeline="${OPTARG}";;
         a) artifacts_location="${OPTARG}";;
         o) artifacts_location_sas_token="${OPTARG}";;
     esac
@@ -98,7 +98,7 @@ fi
 # Restart spinnaker so that config changes take effect
 curl --silent "${artifacts_location}scripts/await_restart_spinnaker.sh${artifacts_location_sas_token}" | sudo bash -s
 
-# Create sample pipeline if enabled
-if [ "$enable_pipeline" == "Enable" ]; then
+# Create sample pipeline if included
+if [ "$kubernetes_pipeline" == "Include" ]; then
     curl --silent "${artifacts_location}scripts/add_pipeline.sh${artifacts_location_sas_token}" | sudo bash -s -- "Sample" "sampleuser" "sampleuser@Fabrikam.com" $artifacts_location $artifacts_location_sas_token
 fi
