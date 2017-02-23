@@ -24,7 +24,7 @@ This template will deploy:
 -	One Jump VM to faclitate ssh access to all other VMs.
 -	Multiple Red Hat Enterprise Linux VMs as per parameter value given during deployment for each tier.
 
-![Deployment Solution Architecture](https://github.com/Azure/azure-quickstart-templates/master/redhat-3tier-architecture/images/architecture.png?raw=true)
+![Deployment Solution Architecture](https://github.com/Azure/azure-quickstart-templates/master/rhel-3tier-iaas/images/architecture.png?raw=true)
 
 ##Licenses and Costs 
 
