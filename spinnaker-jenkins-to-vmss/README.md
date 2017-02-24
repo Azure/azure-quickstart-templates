@@ -38,7 +38,7 @@ Deploying from the command line
 1. SSH to the JenkinsVM and run `sudo vim /var/lib/jenkins/secrets/initialAdminPassword` to get the initial password.
 1. Navigate to 'http://Jenkins_IP_Address:8080' and enter the password to unlock Jenkins for the first time.
 1. Follow prompts to install the default plugins and create a jenkins user **with the same parameters as the ones entered at the deployment of the VM**.
-1. SSH to Jenkins and run the following command: ``/opt/azure_jenkins_config/init_jenkins.sh `` 
+1. SSH to Jenkins and run the following command: ``/opt/azure_jenkins_config/init_jenkins.sh -op "Password_of_your_oracle_account" `` 
 
 ## D. Setup SSH port forwarding to Spinnaker
 You need to setup port forwarding to view the Spinnaker UI on your local machine.
