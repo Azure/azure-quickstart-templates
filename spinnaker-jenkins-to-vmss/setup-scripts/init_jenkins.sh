@@ -13,9 +13,9 @@ function print_usage() {
 
 Usage: 
 
-        -ou :   (REQUIRED) The oracle usernme used to download the JDK 
+        -ou :   (REQUIRED) The oracle username used to download the JDK 
         -op :   (REQUIRED) The password associated with this username 
-        -ju :   (REQUIRED) the jenkins usermane that will create the intial job
+        -ju :   (REQUIRED) the jenkins username that will create the intial job
         -jp :   (REQUIRED) the jenkins user password 
 
 Example:
