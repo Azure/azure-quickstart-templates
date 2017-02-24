@@ -91,9 +91,6 @@ sudo printf " N\n /username:/ { s/username:/username: %s/ }\n" $JENKINS_USERNAME
 sudo printf " N\n /password:/ { s/password:/password: %s/ }\n" $JENKINS_PASSWORD >> $SED_FILE
 sudo printf "}\n" >> $SED_FILE
 
-# Disable cassandra
-sudo printf "/front50:/ {\n    N\n     /cassandra:/ {\n         N\n         s/enabled: true/enabled: false/\n         }\n    }\n" >> $SED_FILE
-
 # Configure Azure storage
 sudo printf "/azs:/ {\n   N\n   s/enabled: false/enabled: true/\n   N\n   s/storageAccountName:/storageAccountName: $FRONT50_STORAGE/\n   N\n   s|storageAccountKey:|storageAccountKey: $FRONT50_KEY|\n   }\n" >> $SED_FILE
 
