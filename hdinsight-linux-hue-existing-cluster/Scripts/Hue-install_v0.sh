@@ -171,12 +171,6 @@ setupHueService() {
 
     defaultfs=$(sed -n -e 's/.*<value>\(.*\)<\/value>.*/\1/p' <<< $defaultfsnode)
 
-    if [[ $defaultfs != wasb* ]]
-      then
-        echo "[ERROR] fs.defaultFS is not WASB. Exiting."
-        exit 138
-    fi
-
     sed -i "s|DEFAULTFSPLACEHOLDER|$defaultfs|g" $HUE_INIPATH
     
     rm1node=$(sed -n '/<name>yarn.resourcemanager.hostname.rm1/,/<\/value>/p' $YARNSITEPATH)
