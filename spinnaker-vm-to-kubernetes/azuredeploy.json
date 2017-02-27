@@ -20,12 +20,6 @@
         "description": "Unique DNS Name for the Public IP used to access the Spinnaker Virtual Machine."
       }
     },
-    "kubernetesDnsLabelPrefix": {
-      "type": "string",
-      "metadata": {
-        "description": "Unique DNS Name for the Public IP used to access the Kubernetes cluster targeted for deployment."
-      }
-    },
     "servicePrincipalClientId": {
       "type": "string",
       "metadata": {
@@ -38,24 +32,6 @@
         "description": "Service Principal secret that has owner rights to the subscription used for this deployment. It is used by the Kubernetes cluster to dynamically manage resources (e.g. user-defined load balancers)."
       }
     },
-    "azureContainerRegistry": {
-      "type": "string",
-      "allowedValues": [
-        "Include",
-        "Exclude"
-      ],
-      "defaultValue": "Include",
-      "metadata": {
-        "description": "If included, an Azure Container Registry will be created and a prefix must be specified."
-      }
-    },
-    "azureContainerRegistryPrefix": {
-      "type": "string",
-      "metadata": {
-        "description": "If targeting an Azure Container Registry, a unique prefix used to create the registry."
-      },
-      "defaultValue": ""
-    },
     "kubernetesPipeline": {
       "type": "string",
       "allowedValues": [
@@ -64,8 +40,26 @@
       ],
       "defaultValue": "Include",
       "metadata": {
-        "description": "If included, a sample pipeline will be created in your Spinnaker instance. This also creates a dev (private) load balancer and prod (public) load balancer in your Kubernetes cluster."
+        "description": "If included, a pipeline will be created in your Spinnaker instance. This also creates a dev (private) load balancer and prod (public) load balancer in your Kubernetes cluster."
       }
+    },
+    "pipelineRegistry": {
+      "type": "string",
+      "allowedValues": [
+        "<Azure Container Registry created by this template>",
+        "index.docker.io"
+      ],
+      "defaultValue": "index.docker.io",
+      "metadata": {
+        "description": "If including a pipeline, the registry used to trigger the pipeline. You can either target Docker Hub or the Azure Container Registry created by this template."
+      }
+    },
+    "pipelineRepository": {
+      "type": "string",
+      "metadata": {
+        "description": "If including a pipeline, the repository in your registry used to trigger the pipeline. It will only be triggered when a new tag is pushed."
+      },
+      "defaultValue": "lwander/spin-kub-demo"
     }
   },
   "variables": {
@@ -81,8 +75,11 @@
     "vmName": "[concat(variables('resourcePrefix'), 'VM')]",
     "virtualNetworkName": "[concat(variables('resourcePrefix'), 'VNET')]",
     "vmExtensionName": "initializeSpinnaker",
-    "acrDeploymentName": "acrDeployment",
-    "_artifactsLocation": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/spinnaker-vm-to-kubernetes/",
+    "acrPrefix": "[uniquestring(resourceGroup().id)]",
+    "acrStorageAccountName": "[concat('registry', uniquestring(resourceGroup().id))]",
+    "kubernetesDnsLabelPrefix": "[concat('k8s', uniquestring(resourceGroup().id))]",
+    "pipelinePort": "8000",
+    "_artifactsLocation": "https://raw.githubusercontent.com/azure/azure-quickstart-templates/master/spinnaker-vm-to-kubernetes/",
     "_artifactsLocationSasToken": ""
   },
   "resources": [
@@ -97,14 +94,14 @@
         },
         "masterProfile": {
           "count": "[variables('kubernetesMasterCount')]",
-          "dnsPrefix": "[concat(parameters('kubernetesDnsLabelPrefix'),'mgmt')]"
+          "dnsPrefix": "[concat(variables('kubernetesDnsLabelPrefix'),'mgmt')]"
         },
         "agentPoolProfiles": [
           {
             "name": "agentpools",
             "count": 1,
             "vmSize": "Standard_D2_v2",
-            "dnsPrefix": "[concat(parameters('kubernetesDnsLabelPrefix'),'agents')]"
+            "dnsPrefix": "[concat(variables('kubernetesDnsLabelPrefix'),'agents')]"
           }
         ],
         "linuxProfile": {
@@ -253,19 +250,38 @@
       }
     },
     {
-      "apiVersion": "2016-09-01",
-      "type": "Microsoft.Resources/deployments",
-      "name": "[variables('acrDeploymentName')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('acrStorageAccountName')]",
+      "apiVersion": "2016-01-01",
+      "location": "[resourceGroup().location]",
+      "kind": "Storage",
+      "sku": {
+        "name": "Standard_LRS"
+      },
       "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[concat(variables('_artifactsLocation'), 'nested/', parameters('azureContainerRegistry'), 'ACR.json' , variables('_artifactsLocationSasToken'))]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "azureContainerRegistryPrefix": {
-            "value": "[parameters('azureContainerRegistryPrefix')]"
-          }
+        "encryption": {
+          "services": {
+            "blob": {
+              "enabled": true
+            }
+          },
+          "keySource": "Microsoft.Storage"
+        }
+      }
+    },
+    {
+      "name": "[variables('acrPrefix')]",
+      "type": "Microsoft.ContainerRegistry/registries",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-06-27-preview",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('acrStorageAccountName'))]"
+      ],
+      "properties": {
+        "adminUserEnabled": false,
+        "storageAccount": {
+          "name": "[variables('acrStorageAccountName')]",
+          "accessKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('acrStorageAccountName')), '2016-01-01').keys[0].value]"
         }
       }
     },
@@ -277,7 +293,7 @@
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]",
         "[resourceId('Microsoft.ContainerService/containerServices', variables('kubernetesName'))]",
-        "[resourceId('Microsoft.Resources/deployments', variables('acrDeploymentName'))]"
+        "[resourceId('Microsoft.ContainerRegistry/registries', variables('acrPrefix'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
@@ -290,7 +306,7 @@
           ]
         },
         "protectedSettings": {
-          "commandToExecute": "[concat('./set_spinnaker.sh', ' -i \"', parameters('servicePrincipalClientId'), '\" -p \"', parameters('servicePrincipalClientSecret'), '\" -s \"', subscription().subscriptionId, '\" -t \"', subscription().tenantId, '\" -u \"', parameters('adminUsername'), '\" -g \"', resourceGroup().name, '\" -f \"', reference(resourceId('Microsoft.ContainerService/containerServices', variables('kubernetesName'))).masterProfile.fqdn, '\" -c \"', variables('kubernetesMasterCount'), '\" -n \"', variables('storageAccountName'), '\" -k \"', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2016-01-01').keys[0].value, '\" -r \"', reference(variables('acrDeploymentName')).outputs.azureContainerRegistryName.value, '\" -e \"', parameters('kubernetesPipeline'), '\" -a \"', variables('_artifactsLocation'), '\" -o \"', variables('_artifactsLocationSasToken'), '\"')]"
+          "commandToExecute": "[concat('./set_spinnaker.sh', ' -i \"', parameters('servicePrincipalClientId'), '\" -p \"', parameters('servicePrincipalClientSecret'), '\" -s \"', subscription().subscriptionId, '\" -t \"', subscription().tenantId, '\" -u \"', parameters('adminUsername'), '\" -g \"', resourceGroup().name, '\" -f \"', reference(resourceId('Microsoft.ContainerService/containerServices', variables('kubernetesName'))).masterProfile.fqdn, '\" -c \"', variables('kubernetesMasterCount'), '\" -n \"', variables('storageAccountName'), '\" -k \"', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2016-01-01').keys[0].value, '\" -r \"', reference(resourceId('Microsoft.ContainerRegistry/registries', variables('acrPrefix'))).loginServer, '\" -e $(expr \"', parameters('kubernetesPipeline'), '\" == \"Include\") -l \"', parameters('pipelineRegistry'), '\" -y \"', parameters('pipelineRepository'), '\" -x \"', variables('pipelinePort'), '\" -a \"', variables('_artifactsLocation'), '\" -o \"', variables('_artifactsLocationSasToken'), '\"')]"
         }
       }
     }
@@ -314,7 +330,7 @@
     },
     "azureContainerRegistryName": {
       "type": "string",
-      "value": "[reference(variables('acrDeploymentName')).outputs.azureContainerRegistryName.value]"
+      "value": "[reference(resourceId('Microsoft.ContainerRegistry/registries', variables('acrPrefix'))).loginServer]"
     }
   }
 }
