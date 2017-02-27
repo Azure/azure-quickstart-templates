@@ -109,3 +109,5 @@ On February 8, 2016, Managed Disk went generally available. Here is a list of te
 301-multi-vmss-linux
 
 301-multi-vmss-windows
+
+guacamole-rdp-vnc-gateway-existing-vnet
