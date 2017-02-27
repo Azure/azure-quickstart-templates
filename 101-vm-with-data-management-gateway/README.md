@@ -19,14 +19,14 @@ When you deploy this Azure Resource Template, you will create a logical gateway 
 - Network Interface
 - Network Sercurity Group
 
-This template can help you create a gateway and make it workable in azure VM. The VM can join in an exsiting VNET. You will see the new gateway is online after successful deployment.
+This template can help you create a gateway and make it workable in azure VM. The VM must join in an exsiting VNET. You will see the new gateway is online after successful deployment.
 
 ![](images/online.png)
 
 ```
 NOTE
 
-This template must be created in the same resource group with data factory.
+This template must be deployed in the same resource group with data factory.
 ```
 
 ## Sample
