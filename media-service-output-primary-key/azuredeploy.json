@@ -1,0 +1,59 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "uniqueResourcePrefix" : {
+        "type": "string"
+      }
+    },
+    "variables": {
+        "premiumStorage" : "[concat(parameters('uniqueResourcePrefix'), 'psstorage')]",
+        "mediaServerName" : "[concat(parameters('uniqueResourcePrefix'), 'mediaserv')]"
+    },
+    "outputs": {
+        "mediaServiceFullInfo": {
+            "type": "object",
+            "value": "[listKeys(resourceId('Microsoft.Media/mediaservices', variables('mediaServerName')), providers('Microsoft.Media', 'mediaservices').apiVersions[0])]"
+        },
+        "mediaServicePrimaryKey": {
+            "type": "string",
+            "value": "[listKeys(resourceId('Microsoft.Media/mediaservices', variables('mediaServerName')), providers('Microsoft.Media', 'mediaservices').apiVersions[0]).primaryKey]"
+        }
+    },
+    "resources" : [
+      {
+          "comments": "",
+          "type": "Microsoft.Storage/storageAccounts",
+          "sku": {
+              "name": "Premium_LRS"
+          },
+          "kind": "Storage",
+          "name": "[variables('premiumStorage')]",
+          "apiVersion": "2016-01-01",
+          "location": "[resourceGroup().location]",
+          "tags": {},
+          "properties": {},
+          "resources": [],
+          "dependsOn": []
+      },
+      {
+          "comments": "",
+          "type": "Microsoft.Media/mediaservices",
+          "name": "[variables('mediaServerName')]",
+          "apiVersion": "2015-10-01",
+          "location": "[resourceGroup().location]",
+          "properties": {
+              "storageAccounts": [
+                  {
+                      "id": "[resourceId('Microsoft.Storage/storageAccounts', variables('premiumStorage'))]",
+                      "isPrimary": true
+                  }
+              ]
+          },
+          "resources": [],
+          "dependsOn": [
+              "[resourceId('Microsoft.Storage/storageAccounts', variables('premiumStorage'))]"
+          ]
+      }
+    ]
+}
