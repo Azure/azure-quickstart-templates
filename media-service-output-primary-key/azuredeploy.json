@@ -4,29 +4,34 @@
     "parameters": {
     },
     "variables": {
-        "uniqueResourcePrefix" : "[uniqueString(subscription().subscriptionId)]",
-        "premiumStorage" : "[concat(variables('uniqueResourcePrefix'), 'psstorage')]",
-        "mediaServerName" : "[concat(variables('uniqueResourcePrefix'), 'mediaserv')]"
+        "uniqueResourcePrefix" : "[uniqueString(resourceGroup().id)]",
+        "storage" : {
+          "name" : "[concat(variables('uniqueResourcePrefix'), 'psstorage')]",
+          "sku" : "Premium_LRS"
+        },
+        "mediaService" : {
+          "name" : "[concat(variables('uniqueResourcePrefix'), 'mediaserv')]"
+        }
     },
     "outputs": {
         "mediaServiceFullInfo": {
             "type": "object",
-            "value": "[listKeys(resourceId('Microsoft.Media/mediaservices', variables('mediaServerName')), providers('Microsoft.Media', 'mediaservices').apiVersions[0])]"
+            "value": "[listKeys(resourceId('Microsoft.Media/mediaservices', variables('mediaService').name), providers('Microsoft.Media', 'mediaservices').apiVersions[0])]"
         },
         "mediaServicePrimaryKey": {
             "type": "string",
-            "value": "[listKeys(resourceId('Microsoft.Media/mediaservices', variables('mediaServerName')), providers('Microsoft.Media', 'mediaservices').apiVersions[0]).primaryKey]"
+            "value": "[listKeys(resourceId('Microsoft.Media/mediaservices', variables('mediaService').name), providers('Microsoft.Media', 'mediaservices').apiVersions[0]).primaryKey]"
         }
     },
     "resources" : [
       {
-          "comments": "",
+          "comments": "Storage used by Media Service",
           "type": "Microsoft.Storage/storageAccounts",
           "sku": {
-              "name": "Premium_LRS"
+              "name": "[variables('storage').sku]"
           },
           "kind": "Storage",
-          "name": "[variables('premiumStorage')]",
+          "name": "[variables('storage').name]",
           "apiVersion": "2016-01-01",
           "location": "[resourceGroup().location]",
           "tags": {},
@@ -35,22 +40,21 @@
           "dependsOn": []
       },
       {
-          "comments": "",
           "type": "Microsoft.Media/mediaservices",
-          "name": "[variables('mediaServerName')]",
+          "name": "[variables('mediaService').name]",
           "apiVersion": "2015-10-01",
           "location": "[resourceGroup().location]",
           "properties": {
               "storageAccounts": [
                   {
-                      "id": "[resourceId('Microsoft.Storage/storageAccounts', variables('premiumStorage'))]",
+                      "id": "[resourceId('Microsoft.Storage/storageAccounts', variables('storage').name)]",
                       "isPrimary": true
                   }
               ]
           },
           "resources": [],
           "dependsOn": [
-              "[resourceId('Microsoft.Storage/storageAccounts', variables('premiumStorage'))]"
+              "[resourceId('Microsoft.Storage/storageAccounts', variables('storage').name)]"
           ]
       }
     ]
