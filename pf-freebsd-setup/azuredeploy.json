@@ -1,0 +1,341 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "frontendPrivateNicIP1": {
+      "type": "string",
+      "defaultValue": "10.0.2.5",
+      "metadata": {
+        "description": "Frontend VM private IP address which resides in private subnet."
+      }
+    },
+    "frontendPrivateNicIP2": {
+      "type": "string",
+      "defaultValue": "10.0.0.5",
+      "metadata": {
+        "description": "Frontend VM public IP address which resides in public subnet."
+      }
+    },
+    "backendVM1PrivateNicIP": {
+      "type": "string",
+      "defaultValue": "10.0.2.6",
+      "metadata": {
+        "description": "Backend VM1 private IP address which resides in private subnet."
+      }
+    },
+    "backendVM2PrivateNicIP": {
+      "type": "string",
+      "defaultValue": "10.0.2.7",
+      "metadata": {
+        "description": "Backend VM2 private IP address which resides in private subnet."
+      }
+    },
+    "frontendVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_A4",
+      "metadata": {
+        "description": "Frontend VM size, please choose proper size which allow 2 NICs."
+      }
+    },
+    "frontendVmStorageAccountType":{
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "metadata": {
+        "description": "Type of frontend VM storage account."
+      }
+    },
+    "backendVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_A1",
+      "metadata": {
+        "description": "Backend VM size."
+      }
+    },
+    "backendVmStorageAccountType":{
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "metadata": {
+        "description": "Type of backend VM storage account."
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "defaultValue": "azureuser",
+      "metadata": {
+        "description": "User name for the Virtual Machine"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for frontend and backend VMs."
+      }
+    },
+    "vnetAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/19",
+      "metadata": {
+        "description": "Address prefix for VNET."
+      }
+    },
+    "publicSubnetAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/23",
+      "metadata": {
+        "description": "Address prefix for public subnet."
+      }
+    },
+    "privateSubnetAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.2.0/23",
+      "metadata": {
+        "description": "Address prefix for private subnet."
+      }
+    },
+    "networkPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Network prefix."
+      }
+    },
+    "domainNamePrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "DNS Label for the Public IP. Must be lowercase. It should match with the following regular expression: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$ or it will raise an error."
+      }
+    },
+    "environment": {
+      "type": "string",
+      "defaultValue": "AzureCloud",
+      "allowedValues": [
+        "AzureCloud",
+        "AzureChinaCloud"
+      ],
+      "metadata": {
+        "description": "Different environments in Azure. Choose AzureCloud for Global Azure, choose AzureChinaCloud for Azure China Cloud."
+      }
+    },
+    "clientID": {
+      "type": "string",
+      "minLength": 36,
+      "maxLength": 36,
+      "metadata": {
+        "description": "ID of the client. See https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/blob/master/docs/guidance.md"
+      }
+    },
+    "tenantID": {
+      "type": "string",
+      "minLength": 36,
+      "maxLength": 36,
+      "metadata": {
+        "description": "ID of the tenant. See https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/blob/master/docs/guidance.md"
+      }
+    },
+    "clientSecret": {
+      "type": "securestring",
+      "metadata": {
+        "description": "secret of the client. See https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/blob/master/docs/guidance.md"
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/pf-freebsd-setup/",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      }
+    }
+  },
+  "variables": {
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+    "publicSubnet": "subnet-public",
+    "privateSubnet": "subnet-private",
+    "subnetPublicID": "[concat(variables('vnetID'),'/subnets/', variables('publicSubnet'))]",
+    "subnetPrivateID": "[concat(variables('vnetID'),'/subnets/', variables('privateSubnet'))]",
+    "frontendPublicNic": "[concat(variables('vmName'),'-publicnic')]",
+    "frontendPrivateNic": "[concat(variables('vmName'),'-privatenic')]",
+    "vmName": "[concat(parameters('networkPrefix'),'-freebsd')]",
+    "vnetName": "[concat(parameters('networkPrefix'),'-vnet')]",
+    "baseUriAzureCloud": "[parameters('_artifactsLocation')]",
+    "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'pf')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('storageAccountName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "accountType": "[parameters('frontendVmStorageAccountType')]"
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('vnetName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('vnetAddressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "subnet-public",
+            "properties": {
+              "addressPrefix": "[parameters('publicSubnetAddressPrefix')]"
+            }
+          },
+          {
+            "name": "subnet-private",
+            "properties": {
+              "addressPrefix": "[parameters('privateSubnetAddressPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat(parameters('networkPrefix'),'-publicip')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "idleTimeoutInMinutes": 4,
+        "dnsSettings": {
+          "domainNameLabel": "[concat(parameters('domainNamePrefix'),parameters('networkPrefix'))]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('frontendPublicNic')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ip1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[parameters('frontendPrivateNicIP2')]",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat(parameters('networkPrefix'),'-publicip'))]"
+              },
+              "subnet": {
+                "id": "[variables('subnetPublicID')]"
+              }
+            }
+          }
+        ],
+        "enableIPForwarding": true
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('frontendPrivateNic')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ip1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[parameters('frontendPrivateNicIP1')]",
+              "subnet": {
+                "id": "[variables('subnetPrivateID')]"
+              }
+            }
+          }
+        ],
+        "enableIPForwarding": true
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('vmName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', variables('frontendPublicNic'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('frontendPrivateNic'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('frontendVmSize')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "MicrosoftOSTC",
+            "offer": "FreeBSD",
+            "sku": "11.0",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(variables('vmName'),'-osdisk')]",
+            "createOption": "FromImage",
+            "vhd": {
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2015-06-15').primaryEndpoints.blob, 'vhds/' ,variables('vmName'), '-osdisk.vhd')]"
+            },
+            "caching": "ReadWrite"
+          }
+        },
+        "osProfile": {
+          "computerName": "[variables('vmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": "false"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "properties": {
+                "primary": true
+              },
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('frontendPublicNic'))]"
+            },
+            {
+              "properties": {
+                "primary": false
+              },
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('frontendPrivateNic'))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('vmName'),'/installenv')]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.OSTCExtensions",
+        "type": "CustomScriptForLinux",
+        "typeHandlerVersion": "1.4",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[uri(variables('baseUriAzureCloud'), 'scripts/initilize.sh')]"
+          ]
+        },
+        "protectedSettings": {
+          "commandToExecute": "[concat('sh initilize.sh ', parameters('clientID'), ' ', parameters('tenantID'), ' ', parameters('clientSecret'), ' ', parameters('environment'), ' ', resourceGroup().name, ' ', resourceGroup().location, ' ', variables('frontendPrivateNic'), ' ', parameters('frontendPrivateNicIP1'), ' ',  variables('vnetName'), ' ', parameters('adminUsername'), ' ', base64(parameters('adminPassword')), ' ', parameters('backendVM1PrivateNicIP'), ' ', parameters('backendVM2PrivateNicIP'), ' ', variables('baseUriAzureCloud'), ' ', parameters('backendVmSize'), ' ', parameters('backendVmStorageAccountType'), ' ', variables('privateSubnet'))]"
+        }
+      }
+    }
+  ]
+}
