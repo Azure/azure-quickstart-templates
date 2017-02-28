@@ -1,3 +1,7 @@
+# v2.4.4 (2017-02-10)
+
+- On AzureChinaCloud, set PowerDNS server on BOSH VM as DNS server. For *.{cf-ip}.xip.io, PowerDNS server will respond without querying Azure DNS. For the real domains and *.{other-ip-other-than-cf-ip}.xip.io, PowerDNS server will go to Azure DNS at the first time, and cache the resolving result.
+
 # v2.4.3 (2017-02-08)
 
 - Use Azure blob storage as blobstore by default

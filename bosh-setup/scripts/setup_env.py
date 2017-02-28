@@ -62,6 +62,13 @@ def render_bosh_manifest(settings):
     environment = settings["ENVIRONMENT"]
     ntp_servers = ntp_servers_maps[environment]
 
+    postgres_address_maps = {
+        "AzureCloud": "127.0.0.1",
+        "AzureChinaCloud": bosh_director_ip,
+        "AzureUSGovernment": "127.0.0.1"
+    }
+    postgres_address = postgres_address_maps[environment]
+
     keys = [
         "SUBNET_ADDRESS_RANGE_FOR_BOSH",
         "SECONDARY_DNS",
@@ -88,13 +95,16 @@ def render_bosh_manifest(settings):
         "SSH_PUBLIC_KEY",
         "GATEWAY_IP",
         "BOSH_DIRECTOR_IP",
-        "NTP_SERVERS"
+        "NTP_SERVERS",
+        "POSTGRES_ADDRESS"
     ]
     values = settings.copy()
     values["SSH_PUBLIC_KEY"] = ssh_public_key
     values["GATEWAY_IP"] = gateway_ip
     values["BOSH_DIRECTOR_IP"] = bosh_director_ip
     values["NTP_SERVERS"] = ntp_servers
+    values["POSTGRES_ADDRESS"] = postgres_address
+    
     render_file("bosh.yml", keys, values)
 
     return bosh_director_ip

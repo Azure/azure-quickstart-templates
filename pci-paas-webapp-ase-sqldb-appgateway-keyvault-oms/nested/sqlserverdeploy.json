@@ -1,0 +1,158 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "administratorLogin": {
+      "type": "string",
+      "defaultValue": "adminLogin",
+      "metadata": {
+        "description": "The account name to use for the database server administrator (high-privileged)."
+      }
+    },
+    "administratorLoginPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The password to use for the database server administrator."
+      }
+    },
+    "tagValues": {
+      "type": "object"
+    },
+    "storageAccountDiagnostics": {
+      "type": "string"
+    },
+    "firewallIps": {
+      "type": "object",
+      "defaultValue": "{}",
+      "metadata": {
+        "description": "Start and end IP addresses of ASE subnet"
+      }
+    },
+    "emailAddresses": {
+      "type": "string",
+      "metadata": {
+        "description": "Email Address"
+      }
+    }
+  },
+  "variables": {
+    "defaultSqlServerName": "[concat('sqlserver-', uniqueString(resourceGroup().id))]",
+    "defaultSqlDatabaseName": "ContosoClinicDB",
+    "defaultSqlDatabaseCollation": "SQL_Latin1_General_CP1_CI_AS",
+    "defaultSqlDatabaseEdition": "Standard",
+    "defaultSqlDatabaseSlo": "S1",
+    "defaultSqlDatabaseMaxSizeBytes": "1073741824"
+  },
+  "resources": [
+    {
+      "name": "[variables('defaultSqlServerName')]",
+      "type": "Microsoft.Sql/servers",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2014-04-01-preview",
+      "tags": {
+        "layer": "back-end",
+        "environment": "[parameters('tagValues').environment]",
+        "projectname": "[parameters('tagValues').projectname]",
+        "dataprofile": "[parameters('tagValues').dataprofile]",
+        "department": "[parameters('tagValues').department]",
+        "businessUnit": "[parameters('tagValues').businessUnit]"
+      },
+      "properties": {
+        "administratorLogin": "[parameters('administratorLogin')]",
+        "administratorLoginPassword": "[parameters('administratorLoginPassword')]",
+        "version": "12.0"
+      },
+      "resources": [
+        {
+          "apiVersion": "2014-04-01-preview",
+          "dependsOn": [
+            "[concat('Microsoft.Sql/servers/', variables('defaultSqlServerName'))]"
+          ],
+          "location": "[resourceGroup().location]",
+          "name": "AllowASEIPs",
+          "properties": {
+            "startIpAddress": "[parameters('firewallIps').startIP]",
+            "endIpAddress": "[parameters('firewallIps').endIP]"
+          },
+          "type": "firewallrules"
+        },
+        {
+          "name": "[variables('defaultSqlDatabaseName')]",
+          "type": "databases",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2014-04-01-preview",
+          "dependsOn": [
+            "[concat('Microsoft.Sql/servers/', variables('defaultSqlServerName'))]"
+          ],
+          "tags": {
+            "layer": "back-end",
+            "environment": "[parameters('tagValues').environment]",
+            "projectname": "[parameters('tagValues').projectname]",
+            "dataprofile": "[parameters('tagValues').dataprofile]",
+            "department": "[parameters('tagValues').department]",
+            "businessUnit": "[parameters('tagValues').businessUnit]"
+          },
+          "properties": {
+            "edition": "[variables('defaultSqlDatabaseEdition')]",
+            "collation": "[variables('defaultSqlDatabaseCollation')]",
+            "maxSizeBytes": "[variables('defaultSqlDatabaseMaxSizeBytes')]",
+            "requestedServiceObjectiveName": "[variables('defaultSqlDatabaseSlo')]"
+          },
+          "resources": [
+
+            {
+              "apiVersion": "2014-04-01-preview",
+              "type": "auditingPolicies",
+              "dependsOn": [
+                "[concat('Microsoft.Sql/servers/', variables('defaultSqlServerName'), '/databases/',variables('defaultSqlDatabaseName'))]"
+              ],
+              "name": "Default",
+              "properties": {
+                "auditingState": "Enabled",
+                "storageAccountName": "[parameters('storageAccountDiagnostics')]",
+                "storageAccountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountDiagnostics')), '2015-05-01-preview').key1]",
+                "storageAccountResourceGroupName": "[resourceGroup().name]",
+                "storageAccountSubscriptionId": "[subscription().subscriptionId]",
+                "eventTypesToAudit": "Login_Failure,Login_Success,ParameterizedSQL_Failure,ParameterizedSQL_Success,PlainSQL_Failure,PlainSQL_Success,StoredProcedure_Failure,StoredProcedure_Success,TransactionManagement_Failure,TransactionManagement_Success"
+              }
+            },
+            {
+              "apiVersion": "2014-04-01-preview",
+              "type": "securityAlertPolicies",
+              "name": "Default",
+              "dependsOn": [
+                "[concat('Microsoft.Sql/servers/', variables('defaultSqlServerName'), '/databases/',variables('defaultSqlDatabaseName'))]",
+                "[concat('Microsoft.Sql/servers/', variables('defaultSqlServerName'), '/databases/',variables('defaultSqlDatabaseName'),'/auditingPolicies/Default')]"
+              ],
+              "properties": {
+                "state": "Enabled",
+                "disabledAlerts": "",
+                "emailAddresses": "[parameters('emailAddresses')]",
+                "emailAccountAdmins": "Enabled",
+                "storageEndpoint": "[concat('https://',parameters('storageAccountDiagnostics'), '.blob.core.windows.net/')]",
+                "storageAccountAccessKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountDiagnostics')), '2015-05-01-preview').key1]"
+              }
+            },
+            {
+              "name": "current",
+              "type": "transparentDataEncryption",
+              "dependsOn": [
+                "[concat('Microsoft.Sql/servers/', variables('defaultSqlServerName'), '/databases/',variables('defaultSqlDatabaseName'))]",
+                "[concat('Microsoft.Sql/servers/', variables('defaultSqlServerName'), '/databases/',variables('defaultSqlDatabaseName'),'/auditingPolicies/Default')]",
+                "[concat('Microsoft.Sql/servers/', variables('defaultSqlServerName'), '/databases/',variables('defaultSqlDatabaseName'),'/securityAlertPolicies/Default')]"
+
+              ],
+              "location": null,
+              "apiVersion": "2014-04-01",
+              "properties": {
+                "status": "Enabled"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "outputs": {
+  }
+}
