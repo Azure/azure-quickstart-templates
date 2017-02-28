@@ -1,6 +1,6 @@
 # List of tempaltes using Managed Disk
 
-On February 8, 2016, Managed Disk went generally available. Here is a list of templates in this repo that are already using Managed Disk:
+On February 8, 2017, Managed Disk went generally available. Here is a list of templates in this repo that are already using Managed Disk:
 
 101-vm-customdata
 
