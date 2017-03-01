@@ -19,4 +19,4 @@ This template deploys a KEMP LoadMaster with multiple NICs. Doing so will enable
 * Greater performance enhanced by additive bandwith 
 * Enabling extended topologies 
 * Multiple networks without the need for VLAN trunking
-* Management isoltion to a specific NIC
+* Management isolation to a specific NIC
