@@ -48,9 +48,9 @@ var pubnub = require("pubnub")({
 });
 
 var PNPublish = function (ehEvent) {
-    console.log('Event Received from Egress EH, Publishing to PN: ');
-    console.log(JSON.stringify(ehEvent.body));
-    console.log("");
+    // console.log('Event Received from Egress EH, Publishing to PN: ');
+    // console.log(JSON.stringify(ehEvent.body));
+    // console.log("");
 
     if (Array.isArray(ehEvent.body)){
 
@@ -73,7 +73,7 @@ var PNPublish = function (ehEvent) {
             channel: PNPubChannel,
             message: ehEvent.body,
             error: function(e) {
-                console.log("PN Object Publish Error: ", e);
+                console.log("PN Object Publish Error: ", JSON.stringify(e));
                 console.log("Message causing error: ", element);
             }
         });
@@ -106,7 +106,7 @@ EHInClient.createSender().then(function (sender) {
     pubnub.subscribe({
         channel: PNSubChannel,
         message: function (message) {
-            console.log("Forwarding from PN Subscriber to Ingress EH: " + JSON.stringify(message, null, 4));
+            // console.log("Forwarding from PN Subscriber to Ingress EH: " + JSON.stringify(message, null, 4));
             sender.send(message);
         },
         error: printError
