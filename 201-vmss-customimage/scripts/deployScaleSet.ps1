@@ -13,7 +13,7 @@
     [string]$newStorageAccountType,
     [string]$newImageContainer='images',
     [string]$newImageBlobName='IISBase-osDisk.vhd',
-    [string]$repoUri='https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vmss-windows-customimage/',
+    [string]$repoUri='https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vmss-customimage/',
     [string]$storageAccountTemplate='templates/storageaccount.json',
     [Parameter(Mandatory=$true)]
     [string]$scaleSetName,

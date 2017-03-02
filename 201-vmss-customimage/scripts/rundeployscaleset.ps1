@@ -6,6 +6,7 @@
     'scaleSetName'='windowscustom';
     'scaleSetVMSize'='Standard_DS1';
     'newStorageAccountType'='Premium_LRS';
+    'osType'='Windows';
 }
 
 .\deployscaleset.ps1 @args 

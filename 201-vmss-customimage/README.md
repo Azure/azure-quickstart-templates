@@ -1,4 +1,4 @@
-### Deploy a VM Scale Set based on a Windows Custom Image ###
+### Deploy a VM Scale Set based on a Custom Image ###
 
 This template deploys a VM Scale Set from a user provided Custom Image
 
@@ -14,13 +14,15 @@ To make it easier to see this template in action there is a PowerShell script lo
 ```
 A sample script with this command can be found at scripts/rundeployscaleset.ps1
 
-The sample Windows Custom Image is based on Windows Server 2012 R2 and has a simple MVC application installed that will render the name of the server that processed a request, by default this application is exposed on port 80
+The sample custom Image is based on Windows Server 2012 R2 and has a simple MVC application installed that will render the name of the server that processed a request, by default this application is exposed on port 80
 
-**Note: This image may not have all the latest windows updates applied to it**
+**Note: The default image may not have all the latest windows updates applied to it**
+
+**Note: The OS Type by default is Windows but you can change the OS Type by passing in the argument 'osType' with a value of 'Linux' and providing a generalized Linux image.**
 
 **Note: The maximum number of VMs in a storage account is 20, unless you set the "overprovision" property to false, in which case it is 40**
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fchandramouleswaran%2Fazure-quickstart-templates%2Fmaster%2F201-vmss-customimage%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vmss-customimage%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fchandramouleswaran%2Fazure-quickstart-templates%2Fmaster%2F201-vmss-customimage%2Fazuredeploy.json" target="_blank">
