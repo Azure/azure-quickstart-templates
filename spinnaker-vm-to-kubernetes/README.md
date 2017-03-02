@@ -7,11 +7,11 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template allows you to deploy an instance of Spinnaker on a Linux Ubuntu 14.04 LTS VM automatically configured to target a Kubernetes cluster. This will deploy a D3_v2 size VM and a Kubernetes cluster in the resource group location and return the FQDN of both. It will also optionally create an Azure Container Registry and return the full registry name.
+This template allows you to deploy an instance of Spinnaker on a Linux Ubuntu 14.04 LTS VM automatically configured to target a Kubernetes cluster. This will deploy a D3_v2 size VM and a Kubernetes cluster in the resource group location and return the FQDN of both. It will also create an Azure Container Registry and return the full registry name.
 
 ## A. Deploy Spinnaker VM
 1. Click the "Deploy to Azure" button. If you don't have an Azure subscription, you can follow instructions to signup for a free trial.
-1. Enter a valid name for the Spinnaker VM and Kubernetes cluster, as well as a user name and [ssh public key](https://docs.microsoft.com/azure/virtual-machines/virtual-machines-linux-mac-create-ssh-keys) that you will use to login remotely to both.
+1. Enter a valid name for the Spinnaker VM, a user name, and a [ssh public key](https://docs.microsoft.com/azure/virtual-machines/virtual-machines-linux-mac-create-ssh-keys) that you will use to login remotely to both.
 1. Create a [service principal](https://docs.microsoft.com/azure/container-service/container-service-kubernetes-service-principal#create-a-service-principal-in-azure-active-directory) for your Kubernetes cluster and enter the client id and key.
 
 ## B. Setup SSH port forwarding
@@ -75,9 +75,10 @@ You need to setup port forwarding to view the Spinnaker UI on your local machine
 ## C. Connect to Spinnaker
 
 1. After you have started your tunnel, navigate to `http://localhost:9000/` on your local machine.
-1. Follow steps [here](http://www.spinnaker.io/docs/kubernetes-source-to-prod#section-1-create-a-spinnaker-application) to deploy a sample pipeline. The kubeconfig file has already been copied over to your Spinnaker instance, and a docker registry has been configured, so you can skip 'Step 0. Setup'.
-  1. If you specified 'DockerHub' as the registry, Spinnaker has been targeted to use the [repository](https://hub.docker.com/r/lwander/spin-kub-demo/) in the sample pipeline. Follow steps [here](http://www.spinnaker.io/v1.0/docs/target-deployment-configuration#section-docker-registry) to target a different repository.
-  1. If you specified 'AzureContainerRegistry' as the registry, follow steps [here](https://docs.microsoft.com/azure/container-registry/container-registry-get-started-docker-cli) to push your first image.
+1. If you included a Kubernetes Pipeline when creating the template, navigate to 'Applications -> {Application Name} -> Pipelines' to see your pipeline. Follow steps [here](http://www.spinnaker.io/docs/kubernetes-source-to-prod#section-1-create-a-spinnaker-application) to create a pipeline manually.
+1. You can trigger the pipeline by pushing an image with a new tag to the configured repository or simply clicking 'Start Manual Execution' and selecting an existing tag.
+  1. By default, Spinnaker has been targeted to use the [repository](https://hub.docker.com/r/lwander/spin-kub-demo/) in the sample pipeline. Follow steps [here](http://www.spinnaker.io/v1.0/docs/target-deployment-configuration#section-docker-registry) to target different repositories.
+  1. If your Kubernetes pipeline targets your Azure Container Registry, follow steps [here](https://docs.microsoft.com/azure/container-registry/container-registry-get-started-docker-cli) to push your first image. You can find the registry url in the portal at 'Resource Groups -> {Resource Group Name} -> Overview -> Deployments -> Microsoft.Template -> Outputs'.
 1. Check the [Troubleshooting Guide](http://www.spinnaker.io/docs/troubleshooting-guide) if you have any issues.
 
 ## Questions/Comments? azdevopspub@microsoft.com
