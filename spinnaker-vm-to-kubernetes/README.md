@@ -37,6 +37,7 @@ You need to setup port forwarding to view the Spinnaker UI on your local machine
     LocalForward 9000 127.0.0.1:9000
     LocalForward 8084 127.0.0.1:8084
     LocalForward 8087 127.0.0.1:8087
+    LocalForward 8001 127.0.0.1:8001
     User <User name>
 
   Host spinnaker-stop
