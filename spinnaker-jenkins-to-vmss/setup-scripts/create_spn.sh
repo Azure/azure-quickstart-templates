@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Usage : ./init_jenkins.sh -ou oracleuser@oracle.com -op oraclepassword -gu githubuser -gp githubpass -ju jenkins -jp Passw0rd
+# Usage : ./create_spn.sh -n "Name_of_the_Subscription" 
 # -n  : (REQUIRED) the subscription name to create the spn in
 # -d  : (OPTIONAL) the display name to use for the application. If not present, value will be generated. 
 # -h  : (OPTIONAL) the application homepage.  If not present, value will be generated. 
@@ -125,8 +125,9 @@ then
 else
     # The application exist, we can create the SPN
     error_check=$(az ad sp list --filter "servicePrincipalNames/any(servicePrincipalNames: servicePrincipalNames eq 'http://$APPLICATION_URI')")
-    if [ -z $error_check ];
+    if [ "$error_check" = "[]" ];
     then 
+        echo "no error, creating the SPN"
         SPN_ObjectID=$(az ad sp create --id="$APP_ID" | jq -r '.objectId')
         echo "SPNId is $SPN_ObjectID"
         echo "Waiting for the SPN creation to complete"
