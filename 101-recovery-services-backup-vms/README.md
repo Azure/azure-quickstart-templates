@@ -7,7 +7,7 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template will use existing recovery services vault and policy, and enables backup of VMs belonging to same Resource Group. Recovery Services vault and VMs should be in same Geo. When selecting Resource Group to which this template needs to be deployed, please select Resource Group corresponding to the vault. 
+This template will use existing recovery services vault and backup policy, and enables backup of VMs belonging to same Resource Group. Recovery Services vault and VMs should be in same Geo. When selecting Resource Group to which this template needs to be deployed, please select Resource Group corresponding to the vault. 
 
 To create new Recovery Services Vault, please use this existing template: [Create Recovery Services Vault] (https://github.com/Azure/azure-quickstart-templates/tree/master/101-recovery-services-vault-create)
 
