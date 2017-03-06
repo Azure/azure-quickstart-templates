@@ -29,7 +29,7 @@ Once you know which SSL certificate to buy, you submit a Certificate Signing Req
 * [subjectAltName steps using OpenSSL](https://docs.microsoft.com/en-us/azure/app-service-web/web-sites-configure-ssl-certificate#bkmk_subjectaltname) - steps for getting subjectAltName certificates.
 
 
-The approach we used to secure the installation is document in [Running SonarQube behind a reversed proxy](https://blogs.msdn.microsoft.com/visualstudioalmrangers/2016/06/04/running-sonarqube-behind-an-iis-reversed-proxy/).
+The approach we used to secure the installation is documented in [Running SonarQube behind a reversed proxy](https://blogs.msdn.microsoft.com/visualstudioalmrangers/2016/06/04/running-sonarqube-behind-an-iis-reversed-proxy/).
 
 * * *
 
@@ -54,9 +54,9 @@ This template performs the following workflow to create the SonarQube installati
   5. Allow SonarQube HTTPS (443) Inbound through the Windows Firewall   
   6. Download SonarQube 5.6.1 and unzip to staging folder
   7. Replace the SonarQube connection string with the connection string of the Azure SQL Server created earlier  
-  8. Install SonarQube as a Windows Service using the Local Admin acctount
+  8. Install SonarQube as a Windows Service using the Local Admin account
   9. Start the SonarQube Windows Service and let it configure the SonarQube DB
-- In case of secure installtion, run a PowerShell custom extension on the Virtual Machine to:
+- In case of secure installation, run a PowerShell custom extension on the Virtual Machine to:
   1. Install Application Request Routing on IIS (ARR)
   2. Generate a self-signed certificate
   3. Change SonarQube website binding to HTTPs using port 443 and the self-signed certificate.
