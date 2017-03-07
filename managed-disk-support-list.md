@@ -115,3 +115,7 @@ On February 8, 2017, Managed Disk went generally available. Here is a list of te
 301-multi-vmss-windows
 
 301-drupal8-vmss-glusterfs-mysql
+
+managed-disk-performance-meter
+
+managed-disk-raid-performance-meter
