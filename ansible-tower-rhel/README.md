@@ -28,7 +28,7 @@ This template will deploy:
 -	Installation and configuration of Ansible Tower Server and Clients
 
 
-![Deployment Solution Architecture](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/ansible-tower-rhel/images/barracuda-architecture.png?raw=true)
+![Deployment Solution Architecture](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/ansible-tower-rhel/images/ansible-architecture.png?raw=true)
 
 ##Licenses and Costs 
 

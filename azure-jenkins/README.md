@@ -31,6 +31,11 @@ Pre-requisite: Ensure you have executed the script in section C above and have t
 2. Configure Azure Container Service plugin using the parameters from C2 and follow the instructions [here](https://github.com/Microsoft/azure-acs-plugin)
 3. Configure Azure Storage plugin following instructions [here](https://github.com/arroyc/windows-azure-storage-plugin/)
 
+## E. Connect to Jenkins
+
+1. Navigate to http://< your_jenkins_vm_dns >:8080
+1. Unlock the Jenkins dashboard for the first time with the initial admin password. To get this token, SSH into the VM and run `sudo cat /var/lib/jenkins/secrets/initialAdminPassword`
+
 ## Note
 This template uses a base Azure Marketplace image which will be updated regularly with the latest tools and plugins to access Azure resources. Readme instructions will be updated accordingly.
 
