@@ -1,6 +1,6 @@
 # Setup Concourse CI with Bosh
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fcerdmann-pivotal%2Fazure-quickstart-templates%2Fconcourse-update%2Fconcourse-ci%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fconcourse-update%2Fconcourse-ci%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fcerdmann-pivotal%2Fazure-quickstart-templates%2Fconcourse-update%2Fconcourse-ci%2Fazuredeploy.json" target="_blank">
@@ -27,7 +27,7 @@ Here we’ll create the following Azure resources that’s required for deployin
 * A Virtual Machine as your dev-box
 * A Bosh director if you need
 
-This ARM template can help you to deploy all the above resources on Azure. Just click the button below with the following parameters: 
+This ARM template can help you to deploy all the above resources on Azure. Just click the button below with the following parameters:
 
 
 | Name | Required | Default Value | Description |
@@ -119,7 +119,7 @@ After the deployment succeeded, you can find the resource group with the name yo
 * For Linux/Mac Users
 
   You can find the output `SSHDEVBOX` in `Last deployment`. `SSHDEVBOX` is a string just like `ssh <adminUsername>@<vm-name-in-lower-case>.<location>.cloudapp.azure.com`.
-  
+
   ![Deployment Result](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/raw/master/docs/get-started/via-arm-templates/sample-deployment.PNG)
 
   The private key is `~/.ssh/id_rsa` if you accept the default location and name when you generate the ssh key. If so, please run `ssh <adminUsername>@<vm-name-in-lower-case>.<location>.cloudapp.azure.com` to login your dev-box.
