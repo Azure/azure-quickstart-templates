@@ -1,9 +1,9 @@
 # Simple deployment of VMs using Managed Image and Managed Disks
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-vm-with-managed-osdisk-datadisk%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https://github.com/JustinBacaAIS/azure-quickstart-templates/blob/101-vm-with-managed-osdisk-datadisk/101-vm-with-managed-osdisk-datadisk/azuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-vm-with-managed-osdisk-datadisk%2Fazuredeploy.json" target="_blank">
+<a href="http://armviz.io/#/?load=https://github.com/JustinBacaAIS/azure-quickstart-templates/blob/101-vm-with-managed-osdisk-datadisk/101-vm-with-managed-osdisk-datadisk/azuredeploy.json" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
