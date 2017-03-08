@@ -1,0 +1,197 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "dataDiskCount": { "type": "int" },
+    "dataDiskSizeGB": { "type": "int" },
+    "vmName": { "type": "string" },
+    "vmSize": { "type": "string" },
+    "vmImagePublisher": { "type": "string" },
+    "vmImageOffer": { "type": "string" },
+    "vmImageSKU": { "type": "string" },
+    "vmImageOSVersion": {
+      "type": "string",
+      "allowedValues": [
+        "Windows",
+        "Linux"
+      ]
+    },
+    "vmOSDiskSizeGB": { "type": "int" },
+    "vmOSDiskStorageType": { "type": "string" },
+    "vmCount": { "type": "int" },
+    "localAdminUserName": { "type": "string" },
+    "localAdminPassword": { "type": "securestring" },
+    "vntName": { "type": "string" },
+    "sntName": { "type": "string" }
+  },
+  "variables": {
+    "vmAPI": "2017-03-30",
+    "nicAPI": "2016-03-30",
+    "pipAPI": "2016-03-30",
+    "nsgAPI": "2016-03-30",
+    "deploymentsAPI": "2015-01-01",
+
+    "vntResourceID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vntName'))]",
+    "sntResourceID": "[concat(variables('vntResourceID'), '/subnets/', parameters('sntName'))]",
+
+    "nsgRemoteAccessPort": {
+      "Windows": "3389",
+      "Linux": "22"
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "[variables('vmAPI')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "nicCopy",
+        "managedDataDiskCopy"
+      ],
+      "tags": {},
+      "copy": {
+        "count": "[parameters('vmCount')]",
+        "name": "vmCopy"
+      },
+      "name": "[concat(parameters('vmName'),'-',copyIndex(1))]",
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[concat(parameters('vmName'),'-',copyIndex(1))]",
+          "adminUsername": "[parameters('localAdminUserName')]",
+          "adminPassword": "[parameters('localAdminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[parameters('vmImagePublisher')]",
+            "offer": "[parameters('vmImagePublisher')]",
+            "sku": "[parameters('vmImageSKU')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(parameters('vmName'),'-',copyIndex(1),'-osdisk')]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage",
+            "diskSizeGB": "[parameters('vmOSDiskSizeGB')]",
+            "managedDisk": {
+              "storageAccountType": "[parameters('vmOSDiskStorageType')]"
+            }
+          },
+          "dataDisks": "[reference(concat('nested-managedDataDisks-template-', copyIndex(1))).outputs.dataDisks.value]"
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('vmName'),'-',copyIndex(1),'-nic'))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "[variables('nsgAPI')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [],
+      "tags": {},
+      "copy": {
+        "count": "[parameters('vmCount')]",
+        "name": "nsgCopy"
+      },
+      "name": "[concat(parameters('vmName'),'-',copyIndex(1),'-nsg')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "[concat(parameters('vmName'),'-',copyIndex(1),'-nsg-rule-remote-access')]",
+            "properties": {
+              "protocol": "TCP",
+              "sourcePortRange": "*",
+              "destinationPortRange": "[variables('nsgRemoteAccessPort')[parameters('vmImageOSVersion')]]",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 110,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      },
+      "resources": []
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "[variables('nicAPI')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat(parameters('vmName'),'-',copyIndex(1),'-pip')]",
+        "nsgCopy"
+      ],
+      "tags": {},
+      "copy": {
+        "count": "[parameters('vmCount')]",
+        "name": "nicCopy"
+      },
+      "name": "[concat(parameters('vmName'),'-',copyIndex(1),'-nic')]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat(parameters('vmName'),'-',copyIndex(1),'-pip'))]"
+              },
+              "subnet": {
+                "id": "[variables('sntResourceID')]"
+              }
+            }
+          }
+        ],
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups',concat(parameters('vmName'),'-',copyIndex(1),'-nsg'))]"
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('pipAPI')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [],
+      "tags": {},
+      "copy": {
+        "count": "[parameters('vmCount')]",
+        "name": "pipCopy"
+      },
+      "name": "[concat(parameters('vmName'),'-',copyIndex(1),'-pip')]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic"
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "[variables('deploymentsAPI')]",
+      "dependsOn": [],
+      "copy": {
+        "name": "managedDataDiskCopy",
+        "count": "[parameters('vmCount')]"
+      },
+      "name": "[concat('nested-managedDataDisks-template-', copyIndex(1))]",
+      "properties": {
+        "mode": "incremental",
+        "templateLink": {
+          "uri": "https://quickstarttemplates.blob.core.windows.net/templates/managed-datadisks-template.json",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "location": {"value": "[resourceGroup().location]"},
+          "vmName": { "value": "[concat(parameters('vmName'),'-',copyIndex(1))]" },
+          "dataDiskCount": { "value": "[parameters('dataDiskCount')]" },
+          "dataDiskSizeGB": { "value": "[parameters('dataDiskSizeGB')]" }
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}
