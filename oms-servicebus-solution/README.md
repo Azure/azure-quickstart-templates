@@ -1,10 +1,10 @@
 # Azure Service Bus Monitoring
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Ftianderturpijn%2FOMS%2Fmaster%2FServiceBus%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Foms-servicebus-solution%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-This solution (currently in private preview) will allow you to capture your Azure Service Bus metrics and visualize them in Operations Management Suite (Log Analytics). This solution leverages an automation runbook in Azure Automation, the Log Analytics Ingestion API, together with Log Analytics views to present data about all your Azure Service Bus instances in a single Log Analytics workspace. 
+This solution (currently in preview) will allow you to capture your Azure Service Bus metrics and visualize them in Operations Management Suite (Log Analytics). This solution leverages an automation runbook in Azure Automation, the Log Analytics Ingestion API, together with Log Analytics views to present data about all your Azure Service Bus instances in a single Log Analytics workspace. 
 
 ![alt text](images/ServiceBusSolution.png "Solution View")
 
@@ -16,8 +16,7 @@ This solution (currently in private preview) will allow you to capture your Azur
 
 ## Prerequisites
 
-+ Azure Subscription (if you don’t have one you can create one [here](https://azure.microsoft.com/en-us/free/))
-+ Operations Management Suite Account (Free Sign Up – No credit card required. Sign up for your free OMS account [here](https://www.microsoft.com/en-us/cloud-platform/operations-management-suite))
++ Azure Subscription (if you donï¿½t have one you can create one [here](https://azure.microsoft.com/en-us/free/))
 + New Azure Automation Account (with a RunAs Account AND a Classic RunAs account). To create a new Automation Account refer to step 1 below.+ The schedule (which automatically will be created during deployment) to run the runbook requires a unique GUID, please run the PowerShell command "New-Guid" to generate one
 
 **Note: The OMS Workspace and Azure Automation Account MUST exist within the same resource group. The Azure Automation Account name needs to be unique.**
@@ -28,11 +27,11 @@ This solution (currently in private preview) will allow you to capture your Azur
 
 If you have an existing OMS Log Analytics workspace in a Resource Group, proceed to create the Automation account in this Resource Group. It is recommended that the Azure region is the same as the OMS Log Analytics resource. By default, the wizard will create an SPN account as part of this process.
 
-Note: Make sure to create the new Automation Account leveraged for this solution in the subscription that you are wanting to monitor the Azure Service Bus instances. If you don’t have an existing OMS Log Analytics workspace in a Resource Group the template deployment will create one for you, create a new Automation account into a new Resource Group. A SPN account will be created by default.
+Note: Make sure to create the new Automation Account leveraged for this solution in the subscription that you are wanting to monitor the Azure Service Bus instances.ï¿½If you donï¿½t have an existing OMS Log Analytics workspace in a Resource Group the template deployment will create one for you, create a new Automation account into a new Resource Group. A SPN account will be created by default.
 
 **Note: An Azure Automation account needs to exist before deploying this solution, do not link it to your OMS workspace**
 
-Click the button that says ‘**Deploy to Azure**’. This will launch the ARM Template you need to configure in the Azure Portal:
+Click the button that says ï¿½**Deploy to Azure**ï¿½. This will launch the ARM Template you need to configure in the Azure Portal:
 
 ![alt text](images/step3deploy.png "Deployment in the portal")
 
@@ -53,19 +52,7 @@ Click the button that says ‘**Deploy to Azure**’. This will launch the ARM Templ
 
 Accept the "Terms and Conditions" and click on "Purchase"
 
-## Deploy using PowerShell:
-````powershell
-$myGUID = [guid]::newguid() 
-New-AzureRmResourceGroupDeployment -name servicebus `
-   -ResourceGroupName MyOMSRG `
-   -TemplateFile 'https://raw.githubusercontent.com/tianderturpijn/OMS/master/ServiceBus/azuredeploy.json' `
-   -omsWorkspaceName MyOMSworkspace `
-   -omsAutomationAccountName MyAutomationAccountName `
-   -workspaceRegion MyWorkspaceRegion `
-   -automationRegion MyAutomationRegion `
-   -jobGuid $myGUID `
-   -verbose 
-                                
+                               
 ````     
 ## Monitoring multiple subscriptions
 
@@ -94,7 +81,7 @@ Once you have completed the pre-reqs, you can click on the deploy button below
 4. Enter an unique jobID (use PowerShell's New-Guid command to generate one)
 5. Accept the terms and conditions and click on Purchase
 
-[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Ftianderturpijn%2FOMS%2Fmaster%2FServiceBus%2FaddMultipleSubscriptions.json) 
+[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Foms-servicebus-solution%2Fnestedtemplates%2FaddMultipleSubscriptions.json) 
 
 
 Once deployed you should start to see data from your additional subscriptions flowing into your workspace.
