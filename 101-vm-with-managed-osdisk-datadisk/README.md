@@ -40,7 +40,7 @@ The following resources are deployed as part of the solution
 
 #### Microsoft.Compute
 
-Azure Resource Manager Computer Provider
+Azure Resource Manager Compute Provider
 
 + **virtualMachines**: Resource type used to create VMs using a copy loop.
 + **disks**: Resource type used to create managed disks using a copy loop.
@@ -71,4 +71,4 @@ You can click the "deploy to Azure" button at the beginning of this document or 
 ## Notes
 
 You can use your own custom Managed Image resource by navigating to the virtualMachines resource > properties > storageProfile > imagaReference and deleting the publisher, offer, sku, and version keys and values completely and replacing them with 
-"id": "[reosurceId('Microsoft.Compute/images','Your Image Name Goes Here')]"
+"id": "[resourceId('Microsoft.Compute/images','Your Image Name Goes Here')]"
