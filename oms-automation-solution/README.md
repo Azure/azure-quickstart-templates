@@ -30,7 +30,6 @@ Once the prerequisites are complete, you can deploy the template.
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-
 Once the template is successfully deployed the following solution should now be visable in your OMS workspace.
 
 ![alt text](images/AutomationTile.PNG "Azure Automation Job Monitoring")
