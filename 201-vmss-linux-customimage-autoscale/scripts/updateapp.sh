@@ -8,10 +8,16 @@ set -e
 update_app(){
     echo "creating folder " $2 "/temp"
     mkdir $2/temp
-    cd $2/temp
-    echo "downloading" $1
-    wget --content-disposition $1
-    #you may need to uncompress it
+
+    if [ ${1:0:4} == "http" ]; then
+        cd $2/temp
+        echo "downloading" $1
+        wget --content-disposition $1
+    else
+        cp $1 $2/temp/
+        cd $2/temp
+    fi
+    #uncompress it
     tar -xzvf *.tar.gz -C ../
     cd -
     rm -r $2/temp
