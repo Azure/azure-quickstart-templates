@@ -31,7 +31,7 @@ Note: Make sure to create the new Automation Account leveraged for this solution
 
 **Note: An Azure Automation account needs to exist before deploying this solution, do not link it to your OMS workspace**
 
-Click the button that says �**Deploy to Azure**�. This will launch the ARM Template you need to configure in the Azure Portal:
+Click the button that says **Deploy to Azure**. This will launch the ARM Template you need to configure in the Azure Portal:
 
 ![alt text](images/step3deploy.png "Deployment in the portal")
 
