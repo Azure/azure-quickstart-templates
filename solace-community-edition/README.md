@@ -2,11 +2,11 @@
 
 The Solace Virtual Message Router (VMR) provides enterprise-grade messaging capabilities deployable in any computing environment. The VMR provides the same rich feature set as Solace’s proven hardware appliances, with the same open protocol support, APIs and common management. The VMR can be deployed in the datacenter or natively within all popular private and public clouds. 
 
-How to Deploy a VRM
+How to Deploy a VMR
 -------------------
 This is a 2 step process:
 
-* Go to the Solace Developer portal and request a Solace Comunity edition VRM. This process will return an email with a Download link.
+* Go to the Solace Developer portal and request a Solace Comunity edition VMR. This process will return an email with a Download link.
 
 <a href="http://dev.solace.com/downloads/download_vmr-ce_hyper-v/" target="_blank">
     <img src="https://raw.githubusercontent.com/KenBarr/Solace_ARM_Quickstart_Template/master/register.png"/>
