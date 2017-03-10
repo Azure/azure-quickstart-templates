@@ -16,7 +16,7 @@ This solution (currently in preview) will allow you to capture your Azure Servic
 
 ## Prerequisites
 
-+ Azure Subscription (if you don�t have one you can create one [here](https://azure.microsoft.com/en-us/free/))
++ Azure Subscription (if you don't have one you can create one [here](https://azure.microsoft.com/en-us/free/))
 + New Azure Automation Account (with a RunAs Account AND a Classic RunAs account). To create a new Automation Account refer to step 1 below.+ The schedule (which automatically will be created during deployment) to run the runbook requires a unique GUID, please run the PowerShell command "New-Guid" to generate one
 
 **Note: The OMS Workspace and Azure Automation Account MUST exist within the same resource group. The Azure Automation Account name needs to be unique.**
@@ -27,7 +27,7 @@ This solution (currently in preview) will allow you to capture your Azure Servic
 
 If you have an existing OMS Log Analytics workspace in a Resource Group, proceed to create the Automation account in this Resource Group. It is recommended that the Azure region is the same as the OMS Log Analytics resource. By default, the wizard will create an SPN account as part of this process.
 
-Note: Make sure to create the new Automation Account leveraged for this solution in the subscription that you are wanting to monitor the Azure Service Bus instances.�If you don�t have an existing OMS Log Analytics workspace in a Resource Group the template deployment will create one for you, create a new Automation account into a new Resource Group. A SPN account will be created by default.
+Note: Make sure to create the new Automation Account leveraged for this solution in the subscription that you are wanting to monitor the Azure Service Bus instances. If you don't have an existing OMS Log Analytics workspace in a Resource Group the template deployment will create one for you, create a new Automation account into a new Resource Group. A SPN account will be created by default.
 
 **Note: An Azure Automation account needs to exist before deploying this solution, do not link it to your OMS workspace**
 
@@ -53,7 +53,7 @@ Click the button that says �**Deploy to Azure**�. This will launch the ARM T
 Accept the "Terms and Conditions" and click on "Purchase"
 
                                
-````     
+
 ## Monitoring multiple subscriptions
 
 The solution is designed to monitor Azure Service Bus instances across subscriptions.
