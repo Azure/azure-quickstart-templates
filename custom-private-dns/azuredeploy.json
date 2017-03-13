@@ -1,0 +1,94 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+	"dnsZoneName": {
+		"type" : "string",
+		"defaultValue": "private.local",
+		"metadata" : {
+			"description": "The private DNS suffix and zone name."
+		}
+	},
+   "newStorageAccountName": {
+		"type": "string",
+		"metadata": {
+			"description": "The name of the new storage account created to store the VMs disks"
+		}
+    },
+    "adminUsername": {
+		"type": "string",
+		"metadata": {
+			"description": "The name of the Administrator of the new VM and Domain"
+		},
+		"defaultValue": "adAdministrator"
+    },
+    "adminPassword": {
+		"type": "securestring",
+		"metadata": {
+			"description": "The password for the Administrator account of the new VM and Domain"
+		}
+    },	
+	"serverPublicDnsName": {
+		"type": "string",
+		"metadata": {
+			"description": "The DNS prefix for the public IP address used by the Load Balancer infront of the DNS servers"
+		}
+    },
+    "assetLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The location of resources, such as templates and scripts, that this script depends on"
+      },
+      "defaultValue": "https://raw.githubusercontent.com/GarethBradshawMSFT/azure-quickstart-templates/master/custom-private-dns"
+    }
+
+  },
+  "variables": {
+	"adTemplate": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/active-directory-new-domain-ha-2-dc/azuredeploy.json",
+	"apiVersion": "2016-06-01",
+	"virtualNetworkName": "adVNet"
+
+  },
+  "resources":
+  [
+	{
+		"comments": "This uses one of the other templates to deploy a pair of AD controllers",
+		"name":"adDeployment",
+		"type":"Microsoft.Resources/deployments",
+		"apiVersion": "[variables('apiVersion')]",
+		"properties": {
+			"mode": "Incremental",
+			"templateLink": {
+				"uri": "[variables('adTemplate')]",
+				"contentVersion": "1.0.0.0"
+			},
+			"parameters": {
+				"newStorageAccountName": {
+					"value": "[parameters('newStorageAccountName')]"
+				},
+				"storageAccountType": {
+					"value": "Standard_LRS"
+				},
+				"virtualNetworkName": {
+					"value": "[variables('virtualNetworkName')]"
+				},
+				"adVMSize": {
+					"value": "Standard_D1"
+				},
+				"domainName": {
+					"value": "[parameters('dnsZoneName')]"
+				},
+				"adminUsername": {
+					"value": "[parameters('adminUsername')]"
+				},
+				"adminPassword": {
+					"value": "[parameters('adminPassword')]"
+				},
+				"dnsPrefix": {
+					"value": "[parameters('serverPublicDnsName')]"
+				}
+			}
+        }
+	}
+  ]
+}
