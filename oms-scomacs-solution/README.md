@@ -1,6 +1,6 @@
 # SCOM ACS Dashboard in OMS
 
-[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fgithub.com%2FAErmie%2Fazure-quickstart-templates%2Fblob%2Fmaster%2Foms-scomacs-solution%2Fazuredeploy.json)
+[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2AErmie%2Fazure-quickstart-templates%2Fmaster%2Foms-scomacs-solution%2F%2Fazuredeploy.json)
 <a href="http://armviz.io/#/?load=https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fgithub.com%2FAErmie%2Fazure-quickstart-templates%2Fblob%2Fmaster%2Foms-scomacs-solution%2Fazuredeploy.json" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
