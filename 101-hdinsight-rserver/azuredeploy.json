@@ -2,14 +2,6 @@
 	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
 	"contentVersion": "1.0.0.0",
 	"parameters": {
-		"clusterType": {
-			"type": "string",
-			"allowedValues": ["hadoop",
-			"spark"],
-			"metadata": {
-				"description": "The type of the HDInsight cluster to create."
-			}
-		},
 		"clusterName": {
 			"type": "string",
 			"metadata": {
@@ -39,85 +31,56 @@
 			"metadata": {
 				"description": "The password must be at least 10 characters in length and must contain at least one digit, one non-alphanumeric character, and one upper or lower case letter."
 			}
-		},
-		"clusterWorkerNodeCount": {
-			"type": "int",
-			"defaultValue": 4,
-			"metadata": {
-				"description": "The number of nodes in the HDInsight cluster."
-			}
 		}
 	},
   "variables": {
-    "storageAccountName": "[concat(uniquestring(resourceGroup().id),'storage')]",
-    "defaultApiVersion": "2015-05-01-preview",
-    "clusterApiVersion": "2015-03-01-preview"
+    "defaultStorageAccount":{
+      "name": "[uniqueString(resourceGroup().id)]",
+      "type": "Standard_LRS"
+    }
   },
-	"resources": [{
-		"name": "[concat(parameters('clusterName'),'/R-Server')]",
-		"type": "Microsoft.HDInsight/clusters/applications",
-		"apiVersion": "[variables('clusterApiVersion')]",
-		"dependsOn": ["[concat('Microsoft.HDInsight/clusters/',parameters('clusterName'))]"],
-		"properties": {
-			"marketPlaceIdentifier": "Microsoft.RServerForHDInsight.8.0.3",
-			"computeProfile": {
-				"roles": [{
-					"name": "edgenode",
-					"targetInstanceCount": 1,
-					"hardwareProfile": {
-						"vmSize": "Standard_D4_v2"
-					}
-				}]
-			},
-			"installScriptActions": [],
-			"uninstallScriptActions": [],
-			"httpsEndpoints": [],
-			"applicationType": "RServer"
-		}
-	},
+	"resources": [
     {
-      "name": "[variables('storageAccountName')]",
       "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('defaultStorageAccount').name]",
       "location": "[resourceGroup().location]",
-      "apiVersion": "[variables('defaultApiVersion')]",
-      "dependsOn": [ ],
-      "tags": {
-
+      "apiVersion": "2016-01-01",
+      "sku": {
+          "name": "[variables('defaultStorageAccount').type]"
       },
-      "properties": {
-        "accountType": "Standard_LRS"
-      }
+      "kind": "Storage", 
+      "properties": {}
     },
     {
-      "name": "[parameters('clusterName')]",
       "type": "Microsoft.HDInsight/clusters",
+      "name": "[parameters('clusterName')]",
       "location": "[resourceGroup().location]",
-      "apiVersion": "[variables('clusterApiVersion')]",
-      "dependsOn": [ "[concat('Microsoft.Storage/storageAccounts/',variables('storageAccountName'))]" ],
-      "tags": {
-
-      },
+      "apiVersion": "2015-03-01-preview",
+      "dependsOn": [ "[concat('Microsoft.Storage/storageAccounts/',variables('defaultStorageAccount').name)]" ],
       "properties": {
-        "clusterVersion": "3.4",
+        "clusterVersion": "3.5",
         "osType": "Linux",
-        "tier": "Premium",
+        "tier": "standard",
         "clusterDefinition": {
-          "kind": "[parameters('clusterType')]",
+          "kind": "rserver",
           "configurations": {
             "gateway": {
               "restAuthCredential.isEnabled": true,
               "restAuthCredential.username": "[parameters('clusterLoginUserName')]",
               "restAuthCredential.password": "[parameters('clusterLoginPassword')]"
+            },
+            "rserver":{
+              "rstudio": true
             }
           }
         },
         "storageProfile": {
           "storageaccounts": [
             {
-              "name": "[replace(replace(concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), variables('defaultApiVersion')).primaryEndpoints.blob),'https:',''),'/','')]",
+              "name": "[replace(replace(concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('defaultStorageAccount').name), '2016-01-01').primaryEndpoints.blob),'https:',''),'/','')]",
               "isDefault": true,
               "container": "[parameters('clusterName')]",
-              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), variables('defaultApiVersion')).key1]"
+              "key": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name), '2016-01-01').keys[0].value]"
             }
           ]
         },
@@ -125,9 +88,9 @@
           "roles": [
             {
               "name": "headnode",
-              "targetInstanceCount": "2",
+              "targetInstanceCount": 2,
               "hardwareProfile": {
-                "vmSize": "Standard_D3_v2"
+                "vmSize": "Standard_D12_v2"
               },
               "osProfile": {
                 "linuxOperatingSystemProfile": {
@@ -138,9 +101,9 @@
             },
             {
               "name": "workernode",
-              "targetInstanceCount": "[parameters('clusterWorkerNodeCount')]",
+              "targetInstanceCount": 4,
               "hardwareProfile": {
-                "vmSize": "Standard_D3_v2"
+                "vmSize": "Standard_D4_v2"
               },
               "osProfile": {
                 "linuxOperatingSystemProfile": {
@@ -148,12 +111,49 @@
                   "password": "[parameters('sshPassword')]"
                 }
               }
+            },
+            {
+              "name": "zookeepernode",
+              "minInstanceCount": 1,
+              "targetInstanceCount": 3,
+              "hardwareProfile": {
+                  "vmSize": "Medium"
+              },
+              "osProfile": {
+                  "linuxOperatingSystemProfile": {
+                      "username": "[parameters('sshUserName')]",
+                      "password": "[parameters('sshPassword')]"
+                  }
+              },
+              "virtualNetworkProfile": null,
+              "scriptActions": []
+            },
+            {
+              "name": "edgenode",
+              "minInstanceCount": 1,
+              "targetInstanceCount": 1,
+              "hardwareProfile": {
+                  "vmSize": "Standard_D4_V2"
+              },
+              "osProfile": {
+                  "linuxOperatingSystemProfile": {
+                      "username": "[parameters('sshUserName')]",
+                      "password": "[parameters('sshPassword')]"
+                  }
+              },
+              "virtualNetworkProfile": null,
+              "scriptActions": []
             }
           ]
         }
       }
-    }],
+    }
+  ],
 	"outputs": {
+    "storage":{
+      "type": "object",
+      "value": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name))]"
+    },
 		"cluster": {
 			"type": "object",
 			"value": "[reference(resourceId('Microsoft.HDInsight/clusters',parameters('clusterName')))]"
