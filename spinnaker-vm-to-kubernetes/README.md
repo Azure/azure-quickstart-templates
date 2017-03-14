@@ -9,6 +9,8 @@
 
 This template allows you to deploy an instance of Spinnaker on a Linux Ubuntu 14.04 LTS VM automatically configured to target a Kubernetes cluster. This will deploy a D3_v2 size VM and a Kubernetes cluster in the resource group location and return the FQDN of both. It will also create an Azure Container Registry and return the full registry name.
 
+> NOTE: The Spinnaker pipeline assumes your app is listening on port 8000. You can clone this template and modify the 'pipelinePort' variable in azuredepoy.json to target a different port.
+
 ## A. Deploy Spinnaker VM
 1. Click the "Deploy to Azure" button. If you don't have an Azure subscription, you can follow instructions to signup for a free trial.
 1. Enter a valid name for the Spinnaker VM, a user name, and a [ssh public key](https://docs.microsoft.com/azure/virtual-machines/virtual-machines-linux-mac-create-ssh-keys) that you will use to login remotely to both.
