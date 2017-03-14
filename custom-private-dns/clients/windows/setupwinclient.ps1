@@ -17,5 +17,7 @@ REG add "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\DNSClient" /v UpdateSecurit
 REG add "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\DNSClient" /v AdapterDomainName           /t REG_SZ    /d $args[0] /f
 
 
-# force a registration now
-ipconfig /registerdns
+# force a registration now (PTR registration will only happen after reboot)
+#ipconfig /registerdns
+shutdown /r /t 120
+
