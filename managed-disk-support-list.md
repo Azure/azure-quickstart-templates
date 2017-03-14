@@ -1,4 +1,4 @@
-# List of tempaltes using Managed Disk
+# List of templates using Managed Disk
 
 On February 8, 2017, Managed Disk went generally available. Here is a list of templates in this repo that are already using Managed Disk:
 
@@ -82,6 +82,8 @@ On February 8, 2017, Managed Disk went generally available. Here is a list of te
 
 201-vmss-ubuntu-web-ssl
 
+201-vmss-win-iis-app-ssl
+
 201-vmss-windows-app-gateway
 
 201-vmss-windows-autoscale
@@ -89,6 +91,8 @@ On February 8, 2017, Managed Disk went generally available. Here is a list of te
 201-vmss-windows-jumpbox
 
 201-vmss-windows-nat
+
+201-vmss-windows-webapp-dsc-autoscale
 
 201-vm-winrm-lb-windows
 
@@ -109,3 +113,9 @@ On February 8, 2017, Managed Disk went generally available. Here is a list of te
 301-multi-vmss-linux
 
 301-multi-vmss-windows
+
+301-drupal8-vmss-glusterfs-mysql
+
+managed-disk-performance-meter
+
+managed-disk-raid-performance-meter
