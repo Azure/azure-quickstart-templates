@@ -12,6 +12,7 @@ Options for blockchain software include:
 - [bitshares](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/bitshares.md) (note: failed testing on 10/7/2016)
 - [bitswift](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/bitswift.md)
 - [blocknet](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/blocknet.md)
+- [gameunits](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/gameunits.md)
 - [bloqenterprise](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/bloqenterprise.md) (note: failed testing on 10/7/2016)
 - [digibyte](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/digibyte.md)
 - [emercoin](https://github.com/Azure/azure-quickstart-templates/blob/master/blockchain/details/emercoin.md)
