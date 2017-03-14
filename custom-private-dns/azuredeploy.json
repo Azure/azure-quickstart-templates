@@ -45,9 +45,12 @@
   },
   "variables": {
 	"adTemplate": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/active-directory-new-domain-ha-2-dc/azuredeploy.json",
+	"setupServerTemplate": "[concat(parameters('assetLocation'),'/server/setupServer.json')]",
+	"clientVMTemplate": "[concat(parameters('assetLocation', '/clientvm.json')]",
 	"apiVersion": "2016-06-01",
-	"virtualNetworkName": "adVNet"
-
+	"virtualNetworkName": "adVNet",
+	"adPDCVMName": "adPDC",
+	"adBDCVMName": "adBDC"
   },
   "resources":
   [
@@ -86,9 +89,43 @@
 				},
 				"dnsPrefix": {
 					"value": "[parameters('serverPublicDnsName')]"
+				},
+				"adPDCVMName": {
+					"value": "[variables('adPDCVMName')]"
+				},
+				"adBDCVMName": {
+					"value": "[variables('adBDCVMName')]"
 				}
 			}
         }
+	},
+	{
+		"comments": "This deployment modifies the DNS servers to allow dynamic and reverse DNS",
+		"name": "setupServer",
+		"type":"Microsoft.Resources/deployments",
+		"dependsOn" : ["Microsoft.Resources/deployments/adDeployment"],
+		"apiVersion": "[variables('apiVersion')]",
+		"properties": {
+			"mode": "Incremental",
+			"templateLink": {
+				"uri": "[variables('setupServerTemplate')]",
+				"contentVersion": "1.0.0.0"
+			},
+			"parameters": {
+				"vmList": {
+					"value": "[concat(variables('adPDC'), ',', variables('adBDC'))]"
+				},
+				"dnsZone": {
+					"value": "[parameters('dnsZoneName')]"
+				},
+				"vnetName": {
+					"value": "[variables('virtualNetworkName')]"
+				},
+				"assetLocation": {
+					"value": "[concat(parameters('assetLocation'), '/server')]"
+				}
+			}
+		}
 	}
   ]
 }
