@@ -21,7 +21,7 @@ You need to setup port forwarding to view the Spinnaker UI on your local machine
 1. Install Putty or use any bash shell for Windows (if using a bash shell, follow the instructions for Linux or Mac).
 1. Launch Putty and navigate to 'Connection > SSH > Tunnels'
 1. In the Options controlling SSH port forwarding window, enter 8084 for Source port. Then enter 127.0.0.1:8084 for the Destination. Click Add.
-1. Repeat this process for ports: 8087 and 9000, until you have all three listed in the text box for Forward ports.
+1. Repeat this process for ports: 8087 and 9000.
 1. Navigate to 'Connection > SSH > Auth' and enter your private key file for authentication. For more information on using ssh keys with Putty, see [here](https://docs.microsoft.com/azure/virtual-machines/virtual-machines-linux-ssh-from-windows#create-a-private-key-for-putty).
 1. Click Open to establish the connection.
 
@@ -34,9 +34,12 @@ You need to setup port forwarding to view the Spinnaker UI on your local machine
     ControlMaster yes
     ControlPath ~/.ssh/spinnaker-tunnel.ctl
     RequestTTY no
+    # Spinnaker/deck
     LocalForward 9000 127.0.0.1:9000
+    # Spinnaker/gate
     LocalForward 8084 127.0.0.1:8084
-    LocalForward 8087 127.0.0.1:8087
+    # Default port if running 'kubectl proxy' on Spinnaker VM
+    LocalForward 8001 127.0.0.1:8001
     User <User name>
 
   Host spinnaker-stop
