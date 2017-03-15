@@ -9,15 +9,15 @@ This is a 2 step process:
 * Go to the Solace Developer portal and request a Solace Comunity edition VMR. This process will return an email with a Download link.
 
 <a href="http://dev.solace.com/downloads/download_vmr-ce-docker" target="_blank">
-    <img src="https://raw.githubusercontent.com/SolaceLabs/Solace_ARM_Quickstart_Template/master/register.png"/>
+    <img src="https://raw.githubusercontent.com/SolaceLabs/solace-azure-quickstart-template/master/register.png"/>
 </a>
 
 * Hit the "Deploy to Azure" button and in the dployment template add in the link to the VMR provided by Solace. 
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FSolaceLabs%2FSolace_ARM_Quickstart_Template%2Fmaster%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FSolaceLabs%2Fsolace-azure-quickstart-template%2Fmaster%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FSolaceLabs%2FSolace_ARM_Quickstart_Template%2Fmaster2Fazuredeploy.json" target="_blank">
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FSolaceLabs%2Fsolace-azure-quickstart-template%2Fmaster2Fazuredeploy.json" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
