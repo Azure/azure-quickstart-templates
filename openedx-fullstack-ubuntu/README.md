@@ -1,6 +1,6 @@
 # Deploy Open edX FullStack (Ficus) on Ubuntu
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fsaravpal%2Fazure-quickstart-templates%2Fmaster%2Fopenedx-fullstack-ubuntu%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fsaravpal%2Fazure-quickstart-templates%2Fmaster%2Fopenedx-fullstack-ubuntu%2Fazuredeployficus.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fopenedx-fullstack-ubuntu%2Fazuredeploy.json" target="_blank">
