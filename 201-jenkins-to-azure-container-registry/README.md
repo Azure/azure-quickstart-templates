@@ -23,10 +23,66 @@ You can optionally include a basic Jenkins pipeline that will checkout a user-pr
 1. Fill in the service principal client id and secret. These will be used by the Jenkins pipeline to push the built docker container.
 1. Enter a public git repository. The repository must have a Dockerfile in its root.
 
-After the deployment is completed, get the Jenkins DNS from the “Public IP address/DNS name label” field in the Essentials section of your Jenkins VM in the Azure portal. You can now now browse to the Jenkins instance in your browser by going to http://< your_jenkins_vm_dns >:8080.
+## C. Setup SSH port forwarding
+**By default the Jenkins instance is using the http protocol and listens on port 8080. Users shouldn't authenticate over unsecured protocols!**
 
-The first time you do this, you will be asked to get the login token from /var/lib/jenkins/secrets/initialAdminPassword. To get this token, SSH into the VM using the admin user name and password you provided and run: sudo cat /var/lib/jenkins/secrets/initialAdminPassword. Copy the token provided. Go back to the Jenkins instance in the browser and paste the token provided.
+You need to setup port forwarding to view the Jenkins UI on your local machine.
 
-Your Jenkins instance is now ready to use! Go to http://aka.ms/azjenkinsagents if you want to build/CI from this Jenkins master using Azure VM agents.
+### If you are using Windows:
+1. Install Putty or use any bash shell for Windows (if using a bash shell, follow the instructions for Linux or Mac).
+1. Launch Putty and navigate to 'Connection > SSH > Tunnels'
+1. In the Options controlling SSH port forwarding window, enter 8080 for Source port. Then enter 127.0.0.1:8080 for the Destination. Click Add.
+1. Click Open to establish the connection.
+
+### If you are using Linux or Mac:
+1. Add this to your ~/.ssh/config
+  ```
+  Host jenkins-start
+    HostName <Public DNS name of instance you just created>
+    IdentityFile <Path to your key file>
+    ControlMaster yes
+    ControlPath ~/.ssh/jenkins-tunnel.ctl
+    RequestTTY no
+    LocalForward 8080 127.0.0.1:8080
+    User <User name>
+
+  Host jenkins-stop
+    HostName <Public DNS name of instance you just created>
+    IdentityFile <Path to your key file>
+    ControlPath ~/.ssh/jenkins-tunnel.ctl
+    RequestTTY no
+  ```
+1. Create a jenkins-tunnel.sh file with the following content and give it execute permission using `chmod +x jenkins-tunnel.sh`
+  ```
+  #!/bin/bash
+
+  socket=$HOME/.ssh/jenkins-tunnel.ctl
+
+  if [ "$1" == "start" ]; then
+    if [ ! \( -e ${socket} \) ]; then
+      echo "Starting tunnel to Jenkins..."
+      ssh -f -N jenkins-start && echo "Done."
+    else
+      echo "Tunnel to Jenkins running."
+    fi
+  fi
+
+  if [ "$1" == "stop" ]; then
+    if [ \( -e ${socket} \) ]; then
+      echo "Stopping tunnel to Jenkins..."
+      ssh -O "exit" jenkins-stop && echo "Done."
+    else
+      echo "Tunnel to Jenkins stopped."
+    fi
+  fi
+  ```
+1. Call `./jenkins-tunnel.sh start` to start your tunnel
+1. Call `./jenkins-tunnel.sh stop` to stop your tunnel
+
+## D. Connect to Jenkins
+
+1. After you have started your tunnel, navigate to http://localhost:8080/ on your local machine.
+1. Unlock the Jenkins dashboard for the first time with the initial admin password. To get this token, SSH into the VM and run `sudo cat /var/lib/jenkins/secrets/initialAdminPassword`
+1. Your Jenkins instance is now ready to use! Go to http://aka.ms/azjenkinsagents if you want to build/CI from this Jenkins master using Azure VM agents.
 
 ## Questions/Comments? azdevopspub@microsoft.com
