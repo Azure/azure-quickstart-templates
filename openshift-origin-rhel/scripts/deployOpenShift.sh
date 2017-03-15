@@ -60,13 +60,18 @@ openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 
 
 # host group for masters
 [masters]
-$MASTER.$DOMAIN
+$MASTER
 
 # host group for nodes
 [nodes]
-$MASTER.$DOMAIN openshift_node_labels="{'region': 'master', 'zone': 'default'}"
-$NODE-[0:${NODELOOP}].$DOMAIN openshift_node_labels="{'region': 'infra', 'zone': 'default'}"
+$MASTER openshift_node_labels="{'type': 'master', 'zone': 'default'}" openshift_hostname=$MASTER
 EOF
+# Loop to add Nodes
+
+for (( c=0; c<$NODECOUNT; c++ ))
+do
+  echo "$NODE-$c openshift_node_labels=\"{'type': 'infra', 'zone': 'default'}\" openshift_hostname=$NODE-$c" >> /etc/ansible/hosts
+done
 
 runuser -l $SUDOUSER -c "git clone https://github.com/openshift/openshift-ansible /home/$SUDOUSER/openshift-ansible"
 
