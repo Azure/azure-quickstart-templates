@@ -7,4 +7,4 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template allows you to create an Azure virtual network, a HDInsight cluster with the dependent Azure storage account in the virtual network.
+This template allows you to a Linux-based Spark cluster in HDInsight  with the dependent Azure storage account.
