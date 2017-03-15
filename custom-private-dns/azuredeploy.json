@@ -42,27 +42,114 @@
     }
   },
   "variables": {
-	"adTemplate": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/active-directory-new-domain-ha-2-dc/azuredeploy.json",
-	"vmTemplate": "[concat(parameters('assetLocation'), '/nested/genericvm.json')]",
-	"serverTemplate": "[concat(parameters('assetLocation'),'/server/setupServer.json')]",
-	"windowsClientTemplate": "[concat(parameters('assetLocation'),'/clients/windows/setupwinclient.json')]",
-	"linuxClientTemplate": "[concat(parameters('assetLocation'),'/clients/linux/setuplinuxclient.json')]",
 	"apiVersion": "2016-06-01",
+	
+	"adTemplate": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/active-directory-new-domain-ha-2-dc/azuredeploy.json",
 	"virtualNetworkName": "adVNet",
 	"subnetName": "default",
-	"VnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
-    "subnetId": "[concat(variables('VnetID'),'/subnets/',variables('subnetName'))]",
-	"storageId": "[resourceId(resourceGroup().name, 'Microsoft.Storage/storageAccounts', parameters('newStorageAccountName'))]",
 	"adPDCVMName": "adPDC",
-	"adBDCVMName": "adBDC"
+	"adBDCVMName": "adBDC",
+
+    "subnetId": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName')),'/subnets/',variables('subnetName'))]",
+	"storageId": "[resourceId(resourceGroup().name, 'Microsoft.Storage/storageAccounts', parameters('newStorageAccountName'))]",
+	
+	"serverTemplateFolder": "server",
+	"serverTemplateFile": "setupserver.json",
+
+	"vmTemplate": "[concat(parameters('assetLocation'), '/nested/genericvm.json')]",
+	
+	"winClientTemplateFolder": "clients/windows",
+	"linClientTemplateFolder": "clients/linux",
+	"winClientTemplateFile": "setupwinclient.json",
+	"linClientTemplateFile": "setuplinuxclient.json"
   },
   "resources":
   [
+	{
+		"comments": "This uses one of the other templates to deploy a pair of AD controllers",
+		"name":"adDeployment",
+		"type":"Microsoft.Resources/deployments",
+		"apiVersion": "[variables('apiVersion')]",
+		"properties": {
+			"mode": "Incremental",
+			"templateLink": {
+				"uri": "[variables('adTemplate')]",
+				"contentVersion": "1.0.0.0"
+			},
+			"parameters": {
+				"newStorageAccountName": {
+					"value": "[parameters('newStorageAccountName')]"
+				},
+				"storageAccountType": {
+					"value": "Standard_LRS"
+				},
+				"virtualNetworkName": {
+					"value": "[variables('virtualNetworkName')]"
+				},
+				"adSubnetName": {
+					"value": "[variables('subnetName')]"
+				},
+				"adVMSize": {
+					"value": "Standard_D1"
+				},
+				"domainName": {
+					"value": "[parameters('dnsZoneName')]"
+				},
+				"adminUsername": {
+					"value": "[parameters('adminUsername')]"
+				},
+				"adminPassword": {
+					"value": "[parameters('adminPassword')]"
+				},
+				"dnsPrefix": {
+					"value": "[parameters('serverPublicDnsName')]"
+				},
+				"adPDCVMName": {
+					"value": "[variables('adPDCVMName')]"
+				},
+				"adBDCVMName": {
+					"value": "[variables('adBDCVMName')]"
+				}
+			}
+        }
+	},
+	{
+		"comments": "This deployment modifies the DNS servers to allow dynamic and reverse DNS",
+		"name": "setupServer",
+		"type":"Microsoft.Resources/deployments",
+		"dependsOn" : ["Microsoft.Resources/deployments/adDeployment"],
+		"apiVersion": "[variables('apiVersion')]",
+		"properties": {
+			"mode": "Incremental",
+			"templateLink": {
+				"uri": "[concat(parameters('assetLocation'),'/',variables('serverTemplateFolder'), '/', variables('serverTemplateFile'))]",
+				"contentVersion": "1.0.0.0"
+			},
+			"parameters": {
+				"vmList": {
+					"value": "[concat(variables('adPDCVMName'), ',', variables('adBDCVMName'))]"
+				},
+				"dnsZone": {
+					"value": "[parameters('dnsZoneName')]"
+				},
+				"vnetName": {
+					"value": "[variables('virtualNetworkName')]"
+				},
+				"relativeDownloadFolder": {
+					"value": "[concat('./',variables('serverTemplateFolder'))]"
+				},
+				"assetLocation": {
+					"value": "[concat(parameters('assetLocation'),'/',variables('serverTemplateFolder'))]"
+				}
+			}
+		}
+	},
 	{
 		"comments": "Create an example Windows client VM",
 		"name": "setupWindowsClient",
 		"type":"Microsoft.Resources/deployments",
 		"apiVersion": "[variables('apiVersion')]",
+		"dependsOn" : ["Microsoft.Resources/deployments/setupServer"],
 		"properties": {
 			"mode": "Incremental",
 			"templateLink": {
@@ -106,7 +193,7 @@
 		"properties": {
 			"mode": "Incremental",
 			"templateLink": {
-				"uri": "[variables('windowsClientTemplate')]",
+				"uri": "[concat(parameters('assetLocation'),'/',variables('winClientTemplateFolder'), '/', variables('winClientTemplateFile'))]",
 				"contentVersion": "1.0.0.0"
 			},
 			"parameters": {
@@ -117,10 +204,10 @@
 					"value": "[parameters('dnsZoneName')]"
 				},
 				"relativeDownloadFolder": {
-					"value": "./clients/windows"
+					"value": "[concat('./', variables('winClientTemplateFolder'))]"
 				},
 				"assetLocation":{
-					"value": "[concat(parameters('assetLocation'), '/clients/windows')]"
+					"value": "[concat(parameters('assetLocation'), '/', variables('winClientTemplateFolder'))]"
 				}
 			}
 		}
@@ -130,6 +217,7 @@
 		"name": "setupLinuxClient",
 		"type":"Microsoft.Resources/deployments",
 		"apiVersion": "[variables('apiVersion')]",
+		"dependsOn" : ["Microsoft.Resources/deployments/setupServer"],		
 		"properties": {
 			"mode": "Incremental",
 			"templateLink": {
@@ -173,7 +261,7 @@
 		"properties": {
 			"mode": "Incremental",
 			"templateLink": {
-				"uri": "[variables('linuxClientTemplate')]",
+				"uri": "[concat(parameters('assetLocation'),'/',variables('linClientTemplateFolder'), '/', variables('linClientTemplateFile'))]",
 				"contentVersion": "1.0.0.0"
 			},
 			"parameters": {
@@ -184,11 +272,10 @@
 					"value": "[parameters('dnsZoneName')]"
 				},
 				"assetLocation":{
-					"value": "[concat(parameters('assetLocation'), '/clients/linux')]"
+					"value": "[concat(parameters('assetLocation'), '/', variables('linClientTemplateFolder'))]"
 				}
-				
 			}
 		}
-	}	
+	}
   ]
 }
