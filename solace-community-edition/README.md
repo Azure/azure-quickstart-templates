@@ -8,7 +8,7 @@ This is a 2 step process:
 
 * Go to the Solace Developer portal and request a Solace Comunity edition VMR. This process will return an email with a Download link.
 
-<a href="https://products.solace.com/download/VMR_DOCKER_COMM" target="_blank">
+<a href="http://dev.solace.com/downloads/download_vmr-ce-docker" target="_blank">
     <img src="https://raw.githubusercontent.com/SolaceLabs/Solace_ARM_Quickstart_Template/master/register.png"/>
 </a>
 
