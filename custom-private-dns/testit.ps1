@@ -1,18 +1,17 @@
-﻿#Login-AzureRmAccount 
+﻿Login-AzureRmAccount 
 
 "Script Root Is $PSScriptRoot"
 
-$rgname = "customdnstest2"
+$rgname = "<a name for the resource group>"
 
 New-AzureRmResourceGroup -Name $rgname -Location "West Europe" -Force
 
 $params = @{
-    "newStorageAccountName" = "grb$rgname";
-    "serverPublicDnsName" = "grb$rgname";
-    "adminUsername" =  "garbrad";
-    "adminPassword" = "Gareth123123!";
+    "newStorageAccountName" = "<a name for the storage account>";
+    "serverPublicDnsName" = "<a name for the public IP>";
+    "adminUsername" =  "<admin name>";
+    "adminPassword" = "<admin password>";
     "dnsZoneName" = "default.local";
-    "assetLocation" = "https://dnsfwshare.blob.core.windows.net:443/share"
 }
 
-New-AzureRmResourceGroupDeployment -Name $rgname -ResourceGroupName $rgname -TemplateFile "$PSScriptRoot/azuredeploy.json"  -TemplateParameterObject $params
+New-AzureRmResourceGroupDeployment -Name "<deployment name>" -ResourceGroupName $rgname -TemplateFile "$PSScriptRoot/azuredeploy.json"  -TemplateParameterObject $params
