@@ -47,8 +47,8 @@ then
 fi
 
 # Download Gameunits Blockchain
-#su - "$AZUREUSER" -c "cd $GAMEUNITSPATH; wget https://github.com/gameunits/blockchain/releases/download/latest/blockchain.zip"
-#su - "$AZUREUSER" -c "cd $GAMEUNITSPATH; unzip blockchain.zip"
+su - "$AZUREUSER" -c "cd $GAMEUNITSPATH; wget https://github.com/gameunits/gameunits-blockchain/releases/download/last/blockchain.zip"
+su - "$AZUREUSER" -c "cd $GAMEUNITSPATH; unzip blockchain.zip"
 
 # Create configuration File
 su - "$AZUREUSER" -c "touch $GAMEUNITSPATH/gameunits.conf"
