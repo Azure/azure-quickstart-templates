@@ -15,7 +15,7 @@ docker volume create --name=softAdb
 docker load -i ./soltr*.tar.gz
 
 #Need to de
-export VMR_VERSION=`docker images | egrep -o [0-9\.]*vmr_docker[\-\.0-9a-z]*`
+export VMR_VERSION=`docker images | grep solace | awk '{print $2}'`
 
 #Define a create script
 tee /root/docker-create <<-EOF 
