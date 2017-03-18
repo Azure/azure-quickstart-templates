@@ -907,6 +907,8 @@ $vm.properties.extensions|?{$extlist+=$_.extension+";"}
                         state=$extobj.state
                         referenceName=$extobj.referenceName
                         ID=$vm.id+"/extensions/"+$extobj.Extension
+                        SubscriptionId = $subscriptioninfo.subscriptionId
+                             AzureSubscription = $subscriptionInfo.displayName
                           
                                    }
 
@@ -1233,6 +1235,8 @@ Foreach ($nicobj in $vm.properties.networkProfile.networkInterfaces)
                            VmName=$vm.Name
                           Extension=$extobj.Extension
                          ID=$extobj.id
+                                                     SubscriptionId = $subscriptioninfo.subscriptionId
+                             AzureSubscription = $subscriptionInfo.displayName
                           
                                    }
                         }
