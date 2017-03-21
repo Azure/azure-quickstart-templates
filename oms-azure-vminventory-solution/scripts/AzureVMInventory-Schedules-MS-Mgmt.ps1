@@ -2,8 +2,9 @@ param (
     [Parameter (Mandatory= $false)]
     [int] $frequency=30,
         [Parameter(Mandatory=$false)] [bool] $getNICandNSG=$true,
-    [Parameter(Mandatory=$false)] [bool] $getDiskInfo=$true
-)
+    [Parameter(Mandatory=$false)] [bool] $getDiskInfo=$true,
+    [Parameter(Mandatory=$false)] [bool] $clearLocks=$false
+    )
 
 
 
@@ -45,6 +46,24 @@ $ScheduleName = "AzureVMInventory-Scheduler-Hourly"
 $schedulerrunbookname="AzureVMInventory-Schedules-MS-Mgmt"
 $varVMIopsList="AzureVMInventory-VM-IOPSLimits"
 
+
+#clear locks is solution has deployed before and $clearLocks set to true
+
+If ($clearLocks)
+{
+        $lockList = Get-AzureRmResourceLock `
+		-ResourceGroupName $AAResourceGroup
+        "$($locklist|where {$_.Name -match "AzureVMInventory"}).count) locks found "
+
+            foreach ($l in $lockList|where {$_.Name -match "AzureVMInventory"}) 
+            {
+
+                    Write-Verbose "CleanUp:  Removing lock $l "
+                    Remove-AzureRmResourceLock -LockId $l.LockId -Force
+
+            }
+ }
+   
 #create new variales and schedules
 
 $iopslist=Get-AzureRmAutomationVariable -Name $varVMIopsList -ResourceGroupName $AAResourceGroup -AutomationAccountName $AAAccount
@@ -200,7 +219,7 @@ If (!$iopslist)
 
         $hourlysch=$RBsch|where{$_.ScheduleName  -match 'Hourly'}
                 $RunbookStartTime = $RunbookStartTime.Addhours(24)
-        $params1 = @{"frequency"=$frequency;"getNICandNSG"=$getNICandNSG;"getDiskInfo" = $getDiskInfo}
+        $params1 = @{"frequency"=$frequency;"getNICandNSG"=$getNICandNSG;"getDiskInfo" = $getDiskInfo;"clearLocks"=0}
 
 	 Remove-AzureRmAutomationSchedule -AutomationAccountName $AAAccount -Name $hourlysch.ScheduleName  -ResourceGroupName $AAResourceGroup -Force
      $Schedule1 = New-AzureRmAutomationSchedule -Name 'AzureVMInventory-Scheduler-Weekly' -StartTime $RunbookStartTime -DayInterval 7 -AutomationAccountName $AAAccount -ResourceGroupName $AAResourceGroup 
