@@ -4,19 +4,17 @@
   "parameters": {
     "omsLogAnalyticsWorkspaceName": {
       "type": "string",
-      "defaultValue": "",
       "metadata": {
         "description": "Create new or use an existing Log Analytic Workspace"
       }
     },
     "omsLogAnalyticsRegion": {
       "type": "string",
-      "defaultValue": "eastus",
       "allowedValues": [
         "westeurope",
         "eastus",
         "southeastasia",
-        "Australia Southeast",
+        "australiasoutheast",
         "wescentralus"
       ],
       "metadata": {
@@ -37,14 +35,12 @@
     },
     "omsAutomationAccountName": {
       "type": "string",
-      "defaultValue": "",
       "metadata": {
         "description": "Use an existing Automation account or create a new"
       }
     },
     "omsAutomationRegion": {
       "type": "string",
-      "defaultValue": "eastus2",
       "allowedValues": [
         "westeurope",
         "southeastasia",
@@ -63,18 +59,6 @@
         "description": "Specify the Azure Region for your OMS Automation Account"
       }
     },
-    "omsAutomationSKU": {
-      "type": "string",
-      "defaultValue": "basic",
-      "allowedValues": [
-        "free",
-        "basic",
-        "oms"
-      ],
-      "metadata": {
-        "description": "Specify the SKU for Automation Account"
-      }
-    },
     "omsDataIngestionFrequency": {
       "type": "int",
       "defaultValue": 30,
@@ -87,31 +71,9 @@
         "description": "Specify the Azure VM Inventory retrieval frequency"
       }
     },
-    "collectDiskInventory": {
-      "type": "int",
-      "defaultValue": 1,
-      "allowedValues": [
-        1,
-        0
-      ],
-      "metadata": {
-        "description": "Specify if you want to collect disk information for VMs"
-      }
-    },
-    "collectNICandNSGInventory": {
-      "type": "int",
-      "defaultValue": 1,
-      "allowedValues": [
-        1,
-        0
-      ],
-      "metadata": {
-        "description": "Specify if you want to collect Network Interface and NEtwork Security Rules  for VMs"
-      }
-    },
     "_artifactsLocation": {
       "type": "string",
-      "defaultValue": "https://raw.githubusercontent.com/volkanco/AzureDeploy/master/OMSSolutions/AzureVMInventory",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/oms-azure-vminventory-solution",
       "metadata": {
         "description": "The base URI where artifacts required by this template are located"
       }
@@ -172,9 +134,12 @@
     "createScheduleResourceGroupName": "AzureVMInventory-AzureAutomationResourceGroup-MS-Mgmt",
     "createScheduleResourceGroupType": "string",
     "createScheduleResourceGroupDescription": "The name of the resource group",
+    "omsAutomationSku": "basic",
     "ingestInterval": "1",
     "ingestFrequency": "hour",
     "ingestScheduleName": "AzureVMInventory-Scheduler-Hourly",
+    "collectDiskInventory": "1",
+    "collectNICandNSGInventory": "1",
     "alertArray": [
       {
         "searchName": "Azure VMs in Stopped State",
@@ -991,7 +956,7 @@
                     "useIcon": false
                   },
                   "Header": {
-                    "Title": "",
+                    "Title": "MAX DISK IO",
                     "Subtitle": ""
                   },
                   "Donut": {
@@ -1054,7 +1019,7 @@
                 "Version": 0,
                 "Configuration": {
                   "General": {
-                    "title": "Disks by Location",
+                    "title": "Disks by Storage Account",
                     "newGroup": false,
                     "icon": "",
                     "useIcon": false
@@ -1064,7 +1029,7 @@
                     "Subtitle": ""
                   },
                   "Donut": {
-                    "Query": "Type=AzureVMInventory_CL MetricName_s=VMDisk DiskIOType_s=Standard | measure countdistinct(VHDUri_s) by StorageAccount_s",
+                    "Query": "Type=AzureVMInventory_CL MetricName_s=VMDisk | measure countdistinct(VHDUri_s) by StorageAccount_s",
                     "CenterLegend": {
                       "Text": "Total",
                       "Operation": "Sum",
@@ -1080,12 +1045,81 @@
                     }
                   },
                   "List": {
-                    "Query": "Type=AzureVMInventory_CL MetricName_s=VMDisk DiskIOType_s=Standard | measure countdistinct(VHDUri_s) by StorageAccount_s",
+                    "Query": "Type=AzureVMInventory_CL MetricName_s=VMDisk | measure countdistinct(VHDUri_s) by StorageAccount_s",
                     "HideGraph": false,
                     "enableSparklines": false,
                     "operation": "Summary",
                     "ColumnsTitle": {
-                      "Name": "Location",
+                      "Name": "StorageAccount",
+                      "Value": "Count"
+                    },
+                    "Color": "#0072c6",
+                    "thresholds": {
+                      "isEnabled": false,
+                      "values": [
+                        {
+                          "name": "Normal",
+                          "threshold": "Default",
+                          "color": "#009e49",
+                          "isDefault": true
+                        },
+                        {
+                          "name": "Warning",
+                          "threshold": "60",
+                          "color": "#fcd116",
+                          "isDefault": false
+                        },
+                        {
+                          "name": "Error",
+                          "threshold": "90",
+                          "color": "#ba141a",
+                          "isDefault": false
+                        }
+                      ]
+                    },
+                    "NameDSVSeparator": "",
+                    "NavigationQuery": "{selected item}"
+                  }
+                }
+              },
+              {
+                "Id": "SingleQueryDonutBuilderBladeV1",
+                "Type": "Blade",
+                "Version": 0,
+                "Configuration": {
+                  "General": {
+                    "title": "VM Extensions Inventory",
+                    "newGroup": false,
+                    "icon": "",
+                    "useIcon": false
+                  },
+                  "Header": {
+                    "Title": "Extension Count",
+                    "Subtitle": ""
+                  },
+                  "Donut": {
+                    "Query": "Type=AzureVMInventory_CL MetricName_s=VMExtensions | measure countdistinct(VmName_s) by Extension_s",
+                    "CenterLegend": {
+                      "Text": "Total",
+                      "Operation": "Sum",
+                      "ArcsToSelect": []
+                    },
+                    "Options": {
+                      "colors": [
+                        "#00bcf2",
+                        "#ffb900",
+                        "#009e49"
+                      ],
+                      "valueColorMapping": []
+                    }
+                  },
+                  "List": {
+                    "Query": "Type=AzureVMInventory_CL MetricName_s=VMExtensions | measure countdistinct(VmName_s) by Extension_s",
+                    "HideGraph": false,
+                    "enableSparklines": false,
+                    "operation": "Summary",
+                    "ColumnsTitle": {
+                      "Name": "Extension",
                       "Value": "Count"
                     },
                     "Color": "#0072c6",
@@ -1161,7 +1195,7 @@
       "type": "Microsoft.Automation/automationAccounts",
       "properties": {
         "sku": {
-          "name": "[parameters('omsAutomationSKU')]"
+          "name": "[variables('omsAutomationSku')]"
         }
       },
       "resources": [
@@ -1325,8 +1359,9 @@
             },
             "parameters": {
               "frequency": "[parameters('omsDataIngestionFrequency')]",
-              "getNICandNSG": "[parameters('collectNICandNSGInventory')]",
-              "getDiskInfo": "[parameters('collectDiskInventory')]"
+              "getNICandNSG": "[variables('collectNICandNSGInventory')]",
+              "getDiskInfo": "[variables('collectDiskInventory')]",
+              "clearLocks": "1"
             }
           }
         }
@@ -1340,7 +1375,10 @@
       "dependsOn": [
         "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsLogAnalyticsWorkspaceName'))]",
         "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]",
-        "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsLogAnalyticsWorkspaceName'), '/views/', variables('omsSolutions').customSolution.name)]"
+        "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsLogAnalyticsWorkspaceName'), '/views/', variables('omsSolutions').customSolution.name)]",
+        "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/runbooks/', variables('runbooks').ingestSchedulerRunbook.name)]",
+        "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/runbooks/', variables('runbooks').ingestParentRunbook.name)]"
+
       ],
       "plan": {
         "name": "[variables('omsSolutions').customSolution.solutionName]",
@@ -1352,7 +1390,9 @@
         "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('omsLogAnalyticsWorkspaceName'))]",
         "referencedResources": [],
         "containedResources": [
-          "[resourceId('Microsoft.OperationalInsights/workspaces/views/', parameters('omsLogAnalyticsWorkspaceName'), variables('omsSolutions').customSolution.name)]"
+          "[resourceId('Microsoft.OperationalInsights/workspaces/views/', parameters('omsLogAnalyticsWorkspaceName'), variables('omsSolutions').customSolution.name)]",
+          "[resourceId('Microsoft.Automation/automationAccounts/runbooks/', parameters('omsAutomationAccountName'), variables('runbooks').ingestSchedulerRunbook.name)]",
+          "[resourceId('Microsoft.Automation/automationAccounts/runbooks/', parameters('omsAutomationAccountName'), variables('runbooks').ingestParentRunbook.name)]"
         ]
       }
     },
