@@ -113,5 +113,5 @@ sudo printf "apt-key done\n"
 sudo rm -f $SED_FILE
 
 # rebooting the VM to avoid issues with front50
-sudo restart spinnaker 
+sudo shutdown -r 0
 
