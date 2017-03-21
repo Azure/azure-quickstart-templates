@@ -11,19 +11,14 @@ The template allows you to host an instance of Jenkins on a DS1_v2 size Linux Ub
 
 You can optionally include a basic Jenkins pipeline that will checkout a user-provided git repository with a Dockerfile embedded and it will build and push the Docker container in the provisioned Azure Container Registry.
 
-## A. Deploy a Jenkins VM and an Azure Container Registry
+## A. Deploy an Azure Container Registry and a Jenkins VM with an embedded Docker build and publish pipeline
 1. Click the "Deploy to Azure" button. If you don't have an Azure subscription, you can follow instructions to signup for a free trial.
 1. Enter the desired user name and password for the VM that's going to host the Jenkins instance. Also provide a DNS prefix for your VM.
-1. Pick 'Exclude' for the 'Push To ACR Pipeline' dropdown. You can ignore the rest of the fields
-
-## B. Deploy an Azure Container Registry and a Jenkins VM with an embedded Docker build and publish pipeline
-1. Follow all the steps from section A.
-1. Pick 'Include' for the 'Push To ACR Pipeline' dropdown.
 1. Create a [service principal](https://docs.microsoft.com/azure/container-service/container-service-kubernetes-service-principal#create-a-service-principal-in-azure-active-directory).
 1. Fill in the service principal client id and secret. These will be used by the Jenkins pipeline to push the built docker container.
 1. Enter a public git repository. The repository must have a Dockerfile in its root.
 
-## C. Setup SSH port forwarding
+## B. Setup SSH port forwarding
 **By default the Jenkins instance is using the http protocol and listens on port 8080. Users shouldn't authenticate over unsecured protocols!**
 
 You need to setup port forwarding to view the Jenkins UI on your local machine.
@@ -79,7 +74,7 @@ You need to setup port forwarding to view the Jenkins UI on your local machine.
 1. Call `./jenkins-tunnel.sh start` to start your tunnel
 1. Call `./jenkins-tunnel.sh stop` to stop your tunnel
 
-## D. Connect to Jenkins
+## C. Connect to Jenkins
 
 1. After you have started your tunnel, navigate to http://localhost:8080/ on your local machine.
 1. Unlock the Jenkins dashboard for the first time with the initial admin password. To get this token, SSH into the VM and run `sudo cat /var/lib/jenkins/secrets/initialAdminPassword`
