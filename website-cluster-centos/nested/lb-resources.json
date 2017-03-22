@@ -1,0 +1,274 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminUsername": {
+      "type": "string"
+    },
+    "adminPassword": {
+      "type": "securestring"
+    },
+    "namespace": {
+      "type": "string"
+    },
+    "serviceEndPoint": {
+      "type": "string"
+    },
+    "webNodeCount": {
+      "type": "int"
+    },
+    "vmbasename": {
+      "type": "string"
+    },
+    "dnsname": {
+      "type": "string"
+    },
+    "osSettings": {
+      "type": "object"
+    },
+    "numDataDisks": {
+      "type": "string"
+    },
+    "sizeOfDataDiskInGB": {
+      "type": "int"
+    },
+    "templateBaseUrl": {
+      "type": "string"
+    },
+    "vmSize": {
+      "type": "string"
+    },
+    "zabbixServerIPAddress": {
+      "type": "string"
+    },
+    "subnet": {
+      "type": "object"
+    }
+  },
+  "variables": {
+    "subnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('subnet').vnet), '/subnets/', parameters('subnet').name)]",
+    "storageAccountName": "[concat(uniquestring(resourceGroup().id), parameters('vmbasename'))]",
+    "apiVersion": "2015-06-15",
+    "securityGroupName": "[concat(parameters('namespace'), parameters('vmbasename'), 'nsg')]"
+  },
+  "resources": [
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('storageAccountName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "accountType": "Standard_LRS"
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('securityGroupName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "SSH",
+            "properties": {
+              "description": "Allows SSH traffic",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "http",
+            "properties": {
+              "description": "Allows Http traffic",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 110,
+              "direction": "Inbound"
+            }
+          },
+		  {
+            "name": "zabbixAgent",
+            "properties": {
+              "description": "Allows zabbix monitoring",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "10050",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 120,
+              "direction": "Inbound"
+            }
+          },
+		  {
+            "name": "zabbixAgent1",
+            "properties": {
+              "description": "Allows zabbix monitoring",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "10051",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 130,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'PublicIp')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('dnsname')]"
+        }
+      }
+    },
+	{
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(parameters('namespace'), concat(parameters('vmbasename'), 'nic'))]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', parameters('namespace'), parameters('vmbasename'), 'PublicIp')]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('namespace'), parameters('vmbasename'), 'PublicIp'))]"
+              },
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              },
+			  "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('securityGroupName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(parameters('namespace'), concat(parameters('vmbasename'), 'vm'))]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', parameters('namespace'), parameters('vmbasename'), 'nic')]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[concat(parameters('vmbasename'), 'vm')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": "[parameters('osSettings').imageReference]",
+          "dataDisks": [ 
+             { 
+               "name": "datadisk1", 
+               "diskSizeGB": "[parameters('sizeOfDataDiskInGB')]", 
+               "lun": 0, 
+               "vhd": { 
+                 "Uri": "[concat('http://', variables('storageAccountName'), parameters('serviceEndPoint'), 'datadisk1.vhd')]" 
+               }, 
+               "createOption": "Empty",
+               "caching": "ReadWrite"			   
+             }, 
+             { 
+               "name": "datadisk2", 
+               "diskSizeGB": "[parameters('sizeOfDataDiskInGB')]", 
+               "lun": 1, 
+               "vhd": { 
+                 "Uri": "[concat('http://', variables('storageAccountName'), parameters('serviceEndPoint'), 'datadisk2.vhd')]" 
+               }, 
+               "caching": "ReadWrite",
+               "createOption": "Empty" 
+             }, 
+             { 
+               "name": "datadisk3", 
+               "diskSizeGB": "[parameters('sizeOfDataDiskInGB')]", 
+               "lun": 2, 
+               "vhd": { 
+                 "Uri": "[concat('http://', variables('storageAccountName'), parameters('serviceEndPoint'), 'datadisk3.vhd')]" 
+               },
+               "caching": "ReadWrite",			   
+               "createOption": "Empty" 
+             }, 
+             { 
+               "name": "datadisk4", 
+               "diskSizeGB": "[parameters('sizeOfDataDiskInGB')]", 
+               "lun": 3, 
+               "vhd": { 
+                 "Uri": "[concat('http://', variables('storageAccountName'), parameters('serviceEndPoint'), 'datadisk4.vhd')]" 
+               },
+               "caching": "ReadWrite",			   
+               "createOption": "Empty" 
+             } 
+           ], 
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat('http://', variables('storageAccountName'), parameters('serviceEndPoint'), parameters('vmbasename'), '-osdisk.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('namespace'), parameters('vmbasename'), 'nic'))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('namespace'), parameters('vmbasename'), 'vm', '/lbInstall')]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('namespace'), parameters('vmbasename'), 'vm')]",
+        "[concat('Microsoft.Network/networkInterfaces/', parameters('namespace'), parameters('vmbasename'), 'nic')]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": "[parameters('osSettings').scripts]"
+		},
+		"protectedSettings": {
+          "commandToExecute": "[concat('bash lb.sh ', parameters('webNodeCount'), ' ', parameters('zabbixServerIPAddress'))]"
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}

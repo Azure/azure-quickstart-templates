@@ -3,7 +3,9 @@
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vm-winrm-lb-windows%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
-
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vm-winrm-lb-windows%2Fazuredeploy.json" target="_blank">
+    <img src="http://armviz.io/visualizebutton.png"/>
+</a>
 
 Description of Template
 =======================
@@ -19,7 +21,7 @@ How to connect to a Target Azure VM post WinRM configuration
 Use the below script to connect to an azure vm post winrm configuration. Assign the exact fqdn of your azure vm to $hostname.
 The script pops up a credential window, provide the credentials of azure vm.
 
-	$hostName=<fqdn-of-vm>  #example: "mywindowsvm.westus.cloudapp.azure.com"
+	$hostName=<fqdn-of-vm>  #example: "myvm.westus.cloudapp.azure.com"
 	$winrmPort = '40003'
 
 	# Get the credentials of the machine

@@ -1,6 +1,6 @@
 {
-  "$schema": "http://schema.management.azure.com/schemas/2015-01-01-preview/deploymentTemplate.json",
-  "contentVersion": "1.0.0.0",
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "contentVersion": "1.0.0.1",
   "parameters": {
     "adminUserName": {
       "type": "string",
@@ -28,10 +28,10 @@
         "description": "password for the Cloudera Manager (A mix of upper and lower-case characters, digits and symbols)"
       }
     },
-    "storageAccountPrefix": {
+    "storageAccountSuffix": {
       "type": "string",
       "metadata": {
-        "description": "Unique namespace for the Storage Account where the VM disks will be placed (alphahumeric characters only)"
+        "description": "A label between 3 and 11 alphanumeric characters, inclusive. The final Storage Account name will be [13 random characters][suffix]. Only new storage accounts are supported."
       }
     },
     "dnsNamePrefix": {
@@ -40,30 +40,18 @@
         "description": "Unique public DNS name where the VMs will be exposed"
       }
     },
-    "location": {
-      "type": "string",
-      "defaultValue": "westeurope",
-      "allowedValues": [
-        "westus",
-        "eastus",
-        "northeurope", 
-        "westeurope",
-        "southeastasia",
-        "centralus", 
-        "eastus2",
-        "japaneast", 
-        "japanwest",
-        "australiaeast"
-      ],
-      "metadata": {
-        "description": "Location where resources will be provisioned (must support premium storage)"
-      }
-    },
-    "storageAccountType": {
+    "masterStorageAccountType": {
       "type": "string",
       "defaultValue": "Premium_LRS",
       "metadata": {
-        "description": "The type of the Storage Account to be created (Default to Premium_LRS)"
+        "description": "The type of the Storage Account to be created for master nodes (defaults to Premium_LRS)"
+      }
+    },
+    "workerStorageAccountType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "metadata": {
+        "description": "The type of the Storage Account to be created for worker nodes (defaults to Standard_LRS)"
       }
     },
     "virtualNetworkName": {
@@ -71,6 +59,24 @@
       "defaultValue": "clouderavnet",
       "metadata": {
         "description": "The name of the virtual network provisioned for the deployment"
+      }
+    },
+    "vnetNewOrExisting" : {
+      "type" : "string",
+      "defaultValue": "new",
+      "allowedValues": [
+        "new",
+        "existing"
+      ],
+      "metadata": {
+        "description": "Indicator for new or exiting Virtual Network"
+      }
+    },
+    "virtualNetworkRGName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Resource Group Name for Vnet. For new VNet leave it empty, otherwise type in existing resource group name"
       }
     },
     "subnetName": {
@@ -94,25 +100,18 @@
         "description": "CIDR for the subnet where VMs will be placed"
       }
     },
-    "nodeAddressPrefix": {
+    "masterNodeIPAddress": {
       "type": "string",
-      "defaultValue": "10.3.0.",
+      "defaultValue": "10.3.0.4",
       "metadata": {
-        "description": "Prefix for all VM IP addresses (NOT a CIDR)"
+        "description": "IP address for the first master"
       }
     },
-    "masterNodeAddressStart": {
+    "dataNodeIPOffSetFromMaster": {
       "type": "int",
-      "defaultValue": 10,
+      "defaultValue": 5,
       "metadata": {
-        "description": "IP suffix for first master node"
-      }
-    },
-    "dataNodeAddressStart": {
-      "type": "int",
-      "defaultValue": 20,
-      "metadata": {
-        "description": "IP suffix for first data node"
+        "description": "IP address from the master node, for example if the first master is 10.1.1.1, then the first dataNode would be 10.1.1.11"
       }
     },
     "tshirtSize": {
@@ -222,14 +221,26 @@
     }
   },
   "variables": {
+    "templateAPIVersion":"2015-11-01",
+    "resourceAPIVersion":"2015-06-15",
     "installCDH":"True",
     "addressPrefix":"[parameters('addressPrefix')]",
     "subnetPrefix":"[parameters('subnetPrefix')]",
-    "nodeAddressPrefix":"[parameters('nodeAddressPrefix')]",
     "scriptsUri": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/cloudera-on-centos",
-    "storageAccount": {
-      "prefix": "[parameters('storageAccountPrefix')]",
-      "type": "[parameters('storageAccountType')]"
+    "share-resourcesUri": "[concat(variables('scriptsUri'), '/shared-resources-', parameters('vnetNewOrExisting'), '-vnet.json')]",
+    "data-nodeUri":"[concat(variables('scriptsUri'), '/data-node-', toLower(subString(parameters('vmSize'), 9, 4)), '.json')]",
+    "sa": "[parameters('masterNodeIPAddress')]",
+    "ipOctet01": "[concat(split(variables('sa'), '.')[0], '.', split(variables('sa'), '.')[1], '.')]",
+    "ipOctet2": "[int(split(variables('sa'), '.')[2])]",
+    "ipOctet3": "[int(split(variables('sa'), '.')[3])]",
+    "datanodeIpOctet3":"[add(int(split(variables('sa'), '.')[3]), parameters('dataNodeIPOffSetFromMaster'))]",
+    "masterStorageAccount": {
+      "prefix": "[parameters('storageAccountSuffix')]",
+      "type": "[parameters('masterStorageAccountType')]"
+    },
+    "workerStorageAccount": {
+      "prefix": "[parameters('storageAccountSuffix')]",
+      "type": "[parameters('workerStorageAccountType')]"
     },
     "clusterTshirtSizeEval": {
       "masterNodeCount": 1,
@@ -244,7 +255,6 @@
     "clusterSpec": "[variables(concat('clusterTshirtSize', parameters('tshirtSize')))]",
     "vmSpec": {
       "vmSize": "[parameters('vmSize')]",
-      "privateIPAddressPrefix": "[variables('nodeAddressPrefix')]",
       "adminUserName": "[parameters('adminUserName')]",
       "adminPassword": "[parameters('adminPassword')]",
       "masterNodeASName": "[concat(parameters('dnsNamePrefix'), '-mnAS')]",
@@ -253,27 +263,35 @@
     "networkSpec": {
       "addressPrefix": "[variables('addressPrefix')]",
       "subnetPrefix": "[variables('subnetPrefix')]",
-      "privateIPPrefix": "[variables('nodeAddressPrefix')]",
-      "masterNodeAddressStart": "[parameters('masterNodeAddressStart')]",
-      "dataNodeAddressStart": "[parameters('dataNodeAddressStart')]",
+      "ipOctet01": "[variables('ipOctet01')]",
+      "ipOctet2": "[variables('ipOctet2')]",
+      "ipOctet3": "[variables('ipOctet3')]",
+      "datanodeIpOctet3":"[variables('datanodeIpOctet3')]",
+      "masterIP":"[variables('sa')]",
+      "workerIP":"[concat(variables('ipOctet01'), add(variables('ipOctet2'), div(variables('datanodeIpOctet3'), 255)), '.', mod(variables('datanodeIpOctet3'), 255))]",
       "virtualNetworkName": "[parameters('virtualNetworkName')]",
+      "virtualNetworkRGName":"[parameters('virtualNetworkRGName')]",
+      "vnetNewOrExisting": "[parameters('vnetNewOrExisting')]",
       "virtualNetworkSubnetName": "[parameters('subnetName')]"
-    }
+    },
+    "newVNetId":"[resourceId(concat('Microsoft.Network','/','virtualNetworks'),parameters('virtualNetworkName'))]",
+    "existingVNetId":"[resourceId(parameters('virtualNetworkRGName'),concat('Microsoft.Network','/','virtualNetworks'),parameters('virtualNetworkName'))]",
+    "VNetId": "[variables(concat(parameters('vnetNewOrExisting'),'VNetId'))]"
   },
   "resources": [
     {
       "name": "shared-resources",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "[variables('templateAPIVersion')]",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('scriptsUri'), '/shared-resources.json')]",
-          "contentVersion": "1.0.0.0"
+          "uri": "[variables('share-resourcesUri')]",
+          "contentVersion": "1.0.0.1"
         },
         "parameters": {
-          "location": {
-            "value": "[parameters('location')]"
+          "resourceAPIVersion":{
+            "value":"[variables('resourceAPIVersion')]"
           },
           "networkSpec": {
             "value": "[variables('networkSpec')]"
@@ -290,7 +308,7 @@
     {
       "name": "master-node",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "[variables('templateAPIVersion')]",
       "dependsOn": [
         "Microsoft.Resources/deployments/shared-resources"
       ],
@@ -298,20 +316,23 @@
         "mode": "Incremental",
         "templateLink": {
           "uri": "[concat(variables('scriptsUri'), '/master-node.json')]",
-          "contentVersion": "1.0.0.0"
+          "contentVersion": "1.0.0.1"
         },
         "parameters": {
+          "vnetID":{
+            "value":"[variables('VNetId')]"
+          },
+          "resourceAPIVersion":{
+            "value":"[variables('resourceAPIVersion')]"
+          },
           "dnsNamePrefix": {
             "value": "[parameters('dnsNamePrefix')]"
-          },
-          "location": {
-            "value": "[parameters('location')]"
           },
           "scriptsUri": {
             "value": "[variables('scriptsUri')]"
           },
           "storageAccount": {
-            "value": "[variables('storageAccount')]"
+            "value": "[variables('masterStorageAccount')]"
           },
           "vmCount": {
             "value": "[variables('clusterSpec').masterNodeCount]"
@@ -331,28 +352,31 @@
     {
       "name": "data-node",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "[variables('templateAPIVersion')]",
       "dependsOn": [
         "Microsoft.Resources/deployments/shared-resources"
       ],
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('scriptsUri'), '/data-node.json')]",
-          "contentVersion": "1.0.0.0"
+          "uri": "[variables('data-nodeUri')]",
+          "contentVersion": "1.0.0.1"
         },
         "parameters": {
+          "vnetID":{
+            "value":"[variables('VNetId')]"
+          },
+          "resourceAPIVersion":{
+            "value":"[variables('resourceAPIVersion')]"
+          },
           "dnsNamePrefix": {
             "value": "[parameters('dnsNamePrefix')]"
-          },
-          "location": {
-            "value": "[parameters('location')]"
           },
           "scriptsUri": {
             "value": "[variables('scriptsUri')]"
           },
           "storageAccount": {
-            "value": "[variables('storageAccount')]"
+            "value": "[variables('workerStorageAccount')]"
           },
           "vmCount": {
             "value": "[variables('clusterSpec').dataNodeCount]"
@@ -372,7 +396,7 @@
     {
       "name": "setup-cloudera",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "[variables('templateAPIVersion')]",
       "dependsOn": [
         "Microsoft.Resources/deployments/data-node",
         "Microsoft.Resources/deployments/master-node"
@@ -381,14 +405,14 @@
         "mode": "Incremental",
         "templateLink": {
           "uri": "[concat(variables('scriptsUri'), '/setup-cloudera.json')]",
-          "contentVersion": "1.0.0.0"
+          "contentVersion": "1.0.0.1"
         },
         "parameters": {
+          "resourceAPIVersion":{
+            "value":"[variables('resourceAPIVersion')]"
+          },
           "dnsNamePrefix": {
             "value": "[parameters('dnsNamePrefix')]"
-          },
-          "location": {
-            "value": "[parameters('location')]"
           },
           "scriptsUri": {
             "value": "[variables('scriptsUri')]"

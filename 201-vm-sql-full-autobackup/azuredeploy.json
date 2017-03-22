@@ -1,0 +1,466 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "virtualMachineName": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Virtual Machine Name"
+      }
+    },
+    "virtualMachineSize": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Virtual Machine Size"
+      },
+      "allowedValues": [
+        "Standard_DS1",
+        "Standard_DS2",
+        "Standard_DS3",
+        "Standard_DS4",
+        "Standard_DS11",
+        "Standard_DS12",
+        "Standard_DS13",
+        "Standard_DS14"
+      ],
+      "defaultValue": "Standard_DS4"
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Virtual Machine Administrator User Name"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SQL Server Virtual Machine Administrator Password"
+      }
+    },
+    "storageAccountType": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Virtual Machine Storage Account Type"
+      },
+      "allowedValues": [
+        "Premium_LRS",
+        "Standard_LRS"
+      ],
+      "defaultValue": "Premium_LRS"
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Virtual Machine Virtual Network Name"
+      }
+    },
+    "networkInterfaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Virtual Machine Network Interface Name"
+      }
+    },
+    "networkSecurityGroupName": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Virtual Machine Network Security Group Name"
+      }
+    },
+    "addressPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Virtual Machine Subnet Name"
+      },
+      "defaultValue": "10.0.0.0/16"
+    },
+    "subnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Virtual Machine Subnet Name"
+      },
+      "defaultValue": "default"
+    },
+    "subnetPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Virtual Machine Subnet Name"
+      },
+      "defaultValue": "10.0.0.0/24"
+    },
+    "publicIpAddressName": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Virtual Machine Public IP Address Name"
+      }
+    },
+    "publicIpAddressType": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Virtual Machine Public IP Address Type"
+      },
+      "defaultValue": "Dynamic"
+    },
+    "sqlConnectivityType": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Virtual Machine SQL Connectivity Type"
+      },
+      "defaultValue": "Public"
+    },
+    "sqlPortNumber": {
+      "type": "int",
+      "metadata": {
+        "description": "SQL Server Virtual Machine SQL Port Number"
+      },
+      "defaultValue": 1579
+    },
+    "sqlStorageDisksCount": {
+      "type": "int",
+      "metadata": {
+        "description": "SQL Server Virtual Machine Data Disk Count"
+      },
+      "defaultValue": "2"
+    },
+    "sqlStorageWorkloadType": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Virtual Machine Workload Type: GENERAL - general work load; DW - datawear house work load; OLTP - Transactional processing work load"
+      },
+      "allowedValues": [
+        "GENERAL",
+        "OLTP",
+        "DW"
+      ],
+      "defaultValue": "General"
+    },
+    "sqlAutobackupRetentionPeriod": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Auto Backup Retention Period"
+      },
+      "allowedValues": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15",
+        "16",
+        "17",
+        "18",
+        "19",
+        "20",
+        "21",
+        "22",
+        "23",
+        "24",
+        "25",
+        "26",
+        "27",
+        "28",
+        "29",
+        "30"
+      ],
+      "defaultValue": "30"
+    },
+    "sqlAutobackupStorageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Auto Backup Storage Account Name"
+      }
+    },
+    "sqlAutobackupEncryptionPassword": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Auto Backup Encryption Password"
+      }
+    },
+    "sqlAuthenticationLogin": {
+      "type": "string",
+      "metadata": {
+        "description": "SQL Server Authentication Login Account Name"
+      },
+      "defaultValue": "mysa"
+    },
+    "sqlAuthenticationPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "SQL Server Authentication Login Account Password"
+      }
+    }
+  },
+  "variables": {
+    "vnetId": "[resourceId(resourceGroup().Name,'Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
+    "subnetRef": "[concat(variables('vnetId'), '/subnets/', parameters('subnetName'))]"
+  },
+  "resources": [
+    {
+      "name": "[parameters('virtualMachineName')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2016-04-30-preview",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', parameters('networkInterfaceName'))]"
+      ],
+      "properties": {
+        "osProfile": {
+          "computerName": "[parameters('virtualMachineName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]",
+          "windowsConfiguration": {
+            "provisionVmAgent": "true"
+          }
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('virtualMachineSize')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "MicrosoftSQLServer",
+            "offer": "SQL2014SP1-WS2012R2",
+            "sku": "Enterprise",
+            "version": "latest"
+          },
+          "osDisk": {
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "[parameters('storageAccountType')]"
+            }
+          },
+          "dataDisks": [
+            {
+              "createOption": "Empty",
+              "managedDisk": {
+                "storageAccountType": "[parameters('storageAccountType')]"
+              },
+              "lun": 0,
+              "diskSizeGB": "1023",
+              "caching": "ReadOnly"
+            },
+            {
+              "createOption": "Empty",
+              "managedDisk": {
+                "storageAccountType": "[parameters('storageAccountType')]"
+              },
+              "lun": 1,
+              "diskSizeGB": "1023",
+              "caching": "ReadOnly"
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaceName'))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('virtualMachineName'), '/SqlIaasExtension')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('virtualMachineName'))]"
+      ],
+      "properties": {
+        "type": "SqlIaaSAgent",
+        "publisher": "Microsoft.SqlServer.Management",
+        "typeHandlerVersion": "1.2",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "AutoTelemetrySettings": {
+            "Region": "[resourceGroup().location]"
+          },
+          "AutoBackupSettings": {
+            "Enable": true,
+            "RetentionPeriod": "[parameters('sqlAutobackupRetentionPeriod')]",
+            "EnableEncryption": true
+          }
+        },
+        "protectedSettings": {
+          "StorageUrl": "[reference(resourceId('Microsoft.Storage/storageAccounts', parameters('sqlAutobackupStorageAccountName')), '2015-06-15').primaryEndpoints['blob']]",
+          "StorageAccessKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('sqlAutobackupStorageAccountName')), '2015-06-15').key1]",
+          "Password": "[parameters('sqlAutobackupEncryptionPassword')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "name": "prepareSqlVmDeployment",
+      "apiVersion": "2015-11-01",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('virtualMachineName'), '/extensions/SqlIaasExtension')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vm-sql-full-autobackup/nested/preparingSqlServerSa.json"
+        },
+        "parameters": {
+          "sqlVMName": {
+            "value": "[parameters('virtualMachineName')]"
+          },
+          "location": {
+            "value": "[resourceGroup().location]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "sqlUsername": {
+            "value": "[parameters('sqlAuthenticationLogin')]"
+          },
+          "sqlPassword": {
+            "value": "[parameters('sqlAuthenticationPassword')]"
+          },
+          "disksCount": {
+            "value": "[parameters('sqlStorageDisksCount')]"
+          },
+          "diskSizeInGB": {
+            "value": 1023
+          },
+          "sqlEnginePort": {
+            "value": "[parameters('sqlPortNumber')]"
+          },
+          "workloadType": {
+            "value": "[parameters('sqlStorageWorkloadType')]"
+          },
+          "connectionType": {
+            "value": "[parameters('sqlConnectivityType')]"
+          },
+          "sqlVMPrepareModulesURL": {
+            "value": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vm-sql-full-autobackup/scripts/PrepareSqlServer.ps1.zip"
+          },
+          "sqlVMPrepareConfigurationFunction": {
+            "value": "PrepareSqlServerSa.ps1\\PrepareSqlServerSa"
+          }
+        }
+      }
+    },
+    {
+      "name": "[parameters('sqlAutobackupStorageAccountName')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "accountType": "['Standard_LRS']"
+      }
+    },
+    {
+      "name": "[parameters('virtualNetworkName')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[parameters('subnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('subnetPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[parameters('networkInterfaceName')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]",
+        "[concat('Microsoft.Network/publicIpAddresses/', parameters('publicIpAddressName'))]",
+        "[concat('Microsoft.Network/networkSecurityGroups/', parameters('networkSecurityGroupName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              },
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIpAddress": {
+                "id": "[resourceId(resourceGroup().Name,'Microsoft.Network/publicIpAddresses', parameters('publicIpAddressName'))]"
+              }
+            }
+          }
+        ],
+        "networkSecurityGroup": {
+          "id": "[resourceId(resourceGroup().Name, 'Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]"
+        }
+      }
+    },
+    {
+      "name": "[parameters('publicIpAddressName')]",
+      "type": "Microsoft.Network/publicIpAddresses",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publicIpAllocationMethod": "[parameters('publicIpAddressType')]"
+      }
+    },
+    {
+      "name": "[parameters('networkSecurityGroupName')]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "default-allow-rdp",
+            "properties": {
+              "priority": 1000,
+              "sourceAddressPrefix": "*",
+              "protocol": "Tcp",
+              "destinationPortRange": "3389",
+              "access": "Allow",
+              "direction": "inbound",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*"
+            }
+          },
+          {
+            "name": "default-allow-sql",
+            "properties": {
+              "priority": 1500,
+              "sourceAddressPrefix": "*",
+              "protocol": "Tcp",
+              "destinationPortRange": "1433",
+              "access": "Allow",
+              "direction": "inbound",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "outputs": {
+    "adminUsername": {
+      "type": "string",
+      "value": "[parameters('adminUsername')]"
+    }
+  }
+}
