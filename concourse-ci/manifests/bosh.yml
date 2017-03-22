@@ -16,24 +16,25 @@ resource_pools:
     url: REPLACE_WITH_STEMCELL_URL
     sha1: REPLACE_WITH_STEMCELL_SHA1
   cloud_properties:
-    instance_type: Standard_D1
+    instance_type: Standard_D1_v2
 
 disk_pools:
 - name: disks
   disk_size: 25_000
 
 networks:
+- name: public
+  type: vip
+
 - name: private
   type: manual
   subnets:
   - range: REPLACE_WITH_SUBNET_ADDRESS_RANGE_FOR_BOSH
     gateway: REPLACE_WITH_GATEWAY_IP
-    dns: [168.63.129.16]
+    dns: [168.63.129.16, 8.8.8.8]
     cloud_properties:
       virtual_network_name: REPLACE_WITH_VNET_NAME
       subnet_name: REPLACE_WITH_SUBNET_NAME_FOR_BOSH
-- name: public
-  type: vip
 
 jobs:
 - name: bosh
@@ -46,7 +47,7 @@ jobs:
   - {name: director, release: bosh}
   - {name: health_monitor, release: bosh}
   - {name: registry, release: bosh}
-  - {name: cpi, release: bosh-azure-cpi}
+  - {name: azure_cpi, release: bosh-azure-cpi}
 
   resource_pool: vms
   persistent_disk_pool: disks
@@ -55,20 +56,20 @@ jobs:
   - name: private
     static_ips: [REPLACE_WITH_BOSH_DIRECTOR_IP]
     default: [dns, gateway]
-  # - name: public
-  #   static_ips: [REPLACE_WITH_BOSH_PUBLIC_IP]
+  - name: public
+    static_ips: [REPLACE_WITH_BOSH_PUBLIC_IP]
 
   properties:
     nats:
       address: 127.0.0.1
       user: nats
-      password: nats-password
+      password: REPLACE_WITH_NATS_PASSWORD
 
     postgres: &db
       listen_address: 127.0.0.1
       host: 127.0.0.1
       user: postgres
-      password: postgres-password
+      password: REPLACE_WITH_POSTGRES_PASSWORD
       database: bosh
       adapter: postgres
 
@@ -76,35 +77,35 @@ jobs:
       address: REPLACE_WITH_BOSH_DIRECTOR_IP
       host: REPLACE_WITH_BOSH_DIRECTOR_IP
       db: *db
-      http: {user: admin, password: admin, port: 25777}
+      http: {user: admin, password: REPLACE_WITH_REGISTRY_PASSWORD, port: 25777}
       username: admin
-      password: admin
+      password: REPLACE_WITH_REGISTRY_PASSWORD
       port: 25777
 
     blobstore:
       address: REPLACE_WITH_BOSH_DIRECTOR_IP
       port: 25250
       provider: dav
-      director: {user: director, password: director-password}
-      agent: {user: agent, password: agent-password}
+      director: {user: director, password: REPLACE_WITH_DIRECTOR_PASSWORD}
+      agent: {user: agent, password: REPLACE_WITH_AGENT_PASSWORD}
 
     director:
       address: 127.0.0.1
       name: bosh
       db: *db
-      cpi_job: cpi
+      cpi_job: azure_cpi
       max_threads: 10
       user_management:
         provider: local
         local:
           users:
-          - {name: admin, password: admin}
-          - {name: hm, password: hm-password}
+          - {name: admin, password: REPLACE_WITH_ADMIN_PASSWORD}
+          - {name: hm, password: REPLACE_WITH_HM_PASSWORD}
       debug:
         keep_unreachable_vms: REPLACE_WITH_KEEP_UNREACHABLE_VMS
 
     hm:
-      director_account: {user: hm, password: hm-password}
+      director_account: {user: hm, password: REPLACE_WITH_HM_PASSWORD}
       resurrector_enabled: true
 
     azure: &azure
@@ -119,23 +120,23 @@ jobs:
       ssh_user: vcap
       ssh_public_key: REPLACE_WITH_SSH_PUBLIC_KEY
 
-    agent: {mbus: "nats://nats:nats-password@REPLACE_WITH_BOSH_DIRECTOR_IP:4222"}
+    agent: {mbus: "nats://nats:REPLACE_WITH_NATS_PASSWORD@REPLACE_WITH_BOSH_DIRECTOR_IP:4222"}
 
     ntp: &ntp [REPLACE_WITH_NTP_SERVERS]
 
 cloud_provider:
-  template: {name: cpi, release: bosh-azure-cpi}
+  template: {name: azure_cpi, release: bosh-azure-cpi}
 
   ssh_tunnel:
-    host: REPLACE_WITH_BOSH_DIRECTOR_IP
+    host: REPLACE_WITH_BOSH_PUBLIC_IP
     port: 22
     user: vcap
     private_key: ./bosh # Path relative to this manifest file
 
-  mbus: "https://mbus:mbus-password@REPLACE_WITH_BOSH_DIRECTOR_IP:6868"
+  mbus: "https://mbus:REPLACE_WITH_MBUS_PASSWORD@REPLACE_WITH_BOSH_DIRECTOR_IP:6868"
 
   properties:
     azure: *azure
-    agent: {mbus: "https://mbus:mbus-password@0.0.0.0:6868"}
+    agent: {mbus: "https://mbus:REPLACE_WITH_MBUS_PASSWORD@0.0.0.0:6868"}
     blobstore: {provider: local, path: /var/vcap/micro_bosh/data/cache}
     ntp: *ntp
