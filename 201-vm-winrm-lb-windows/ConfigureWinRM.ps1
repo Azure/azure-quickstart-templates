@@ -17,16 +17,22 @@ param
 
 function Delete-WinRMListener
 {
-    $config = Winrm enumerate winrm/config/listener
-    foreach($conf in $config)
+    try
     {
-        if($conf.Contains("HTTPS"))
+        $config = Winrm enumerate winrm/config/listener
+        foreach($conf in $config)
         {
-            Write-Verbose "HTTPS is already configured. Deleting the exisiting configuration."
-
-            winrm delete winrm/config/Listener?Address=*+Transport=HTTPS
-            break
+            if($conf.Contains("HTTPS"))
+            {
+                Write-Verbose "HTTPS is already configured. Deleting the exisiting configuration."
+    
+                winrm delete winrm/config/Listener?Address=*+Transport=HTTPS
+                break
+            }
         }
+    }catch
+    {
+        Write-Verbose -Verbose "Exception while deleting the listener: " + $_.Exception.Message
     }
 }
 
@@ -71,6 +77,10 @@ function Add-FirewallException
 #################################################################################################################################
 
 $winrmHttpsPort=5986
+
+# The default MaxEnvelopeSizekb on Windows Server is 500 Kb which is very less. It needs to be at 8192 Kb. The small envelop size if not changed
+# results in WS-Management service responding with error that the request size exceeded the configured MaxEnvelopeSize quota.
+winrm set winrm/config '@{MaxEnvelopeSizekb = "8192"}'
 
 # Configure https listener
 Configure-WinRMHttpsListener $hostname $port

@@ -3,6 +3,9 @@
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fpostgresql-on-ubuntu%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fpostgresql-on-ubuntu%2Fazuredeploy.json" target="_blank">
+    <img src="http://armviz.io/visualizebutton.png"/>
+</a>
 
 This template creates one master PostgreSQL 9.3 server with streaming-replication to multiple (based on the T-Shirt size parameter) slave servers. Each database server is configured with multiple data disks that are striped into RAID-0 configuration using mdadm. The template also optionally creates one externally accessible VM to serve as a jumpbox for ssh into the backend database servers.
 
@@ -11,7 +14,7 @@ The template creates the following deployment resources:
 * Storage accounts to store VM data disks
 * Public IP address for accessing the jumpbox via ssh
 * Network interface card for each VM
-* Multiple remotely-hosted CustomScriptForLinux extensions to strip the data disks and to install and configure PostgreSQL services
+* Multiple remotely-hosted Custom Script Extensions to strip the data disks and to install and configure PostgreSQL services
 
 NOTE: To access the PostgreSQL servers, you need to use the externally accessible jumpbox VM and ssh from it into the backend servers.
 

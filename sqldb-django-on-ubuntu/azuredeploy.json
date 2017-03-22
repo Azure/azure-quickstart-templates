@@ -8,19 +8,6 @@
         "description": "Name of the Storage Account"
       }
     },
-    "location": {
-      "type": "string",
-      "allowedValues": [
-        "East US",
-        "West US",
-        "West Europe",
-        "East Asia",
-        "South East Asia"
-      ],
-      "metadata": {
-        "description": "Location of all resources created by this template."
-      }
-    },
     "adminUsername": {
       "type": "string",
       "metadata": {
@@ -106,12 +93,6 @@
       },
       "defaultValue": "f1173c43-91bd-4aaa-973c-54e79e15235b"
     },
-    "serverLocation": {
-      "type": "string",
-      "metadata": {
-        "description": "Location of your server - for example West US"
-      }
-    },
     "serverName": {
       "type": "string",
       "metadata": {
@@ -156,7 +137,7 @@
   "resources": [
     {
       "apiVersion": "2014-04-01-preview",
-      "location": "[parameters('serverLocation')]",
+      "location": "[resourceGroup().location]",
       "name": "[parameters('serverName')]",
       "properties": {
         "administratorLogin": "[parameters('administratorLogin')]",
@@ -169,7 +150,7 @@
           "dependsOn": [
             "[concat('Microsoft.Sql/servers/', parameters('serverName'))]"
           ],
-          "location": "[parameters('serverLocation')]",
+          "location": "[resourceGroup().location]",
           "name": "[parameters('databaseName')]",
           "properties": {
             "collation": "[parameters('collation')]",
@@ -184,7 +165,7 @@
           "dependsOn": [
             "[concat('Microsoft.Sql/servers/', parameters('serverName'))]"
           ],
-          "location": "[parameters('serverLocation')]",
+          "location": "[resourceGroup().location]",
           "name": "FirewallRule1",
           "properties": {
             "endIpAddress": "[parameters('firewallEndIP')]",
@@ -199,7 +180,7 @@
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[parameters('newStorageAccountName')]",
       "apiVersion": "2015-05-01-preview",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "properties": {
         "accountType": "[variables('storageAccountType')]"
       }
@@ -208,7 +189,7 @@
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "properties": {
         "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
         "dnsSettings": {
@@ -220,7 +201,7 @@
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -241,7 +222,7 @@
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
@@ -267,7 +248,7 @@
       "apiVersion": "2015-05-01-preview",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[variables('vmName')]",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
@@ -310,14 +291,15 @@
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('vmName'),'/newuserscript')]",
       "apiVersion": "2015-05-01-preview",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
       ],
       "properties": {
-        "publisher": "Microsoft.OSTCExtensions",
-        "type": "CustomScriptForLinux",
-        "typeHandlerVersion": "1.4",
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
             "https://raw.githubusercontent.com/meet-bhagdev/templates/master/django-sql-app/install_django.sh"

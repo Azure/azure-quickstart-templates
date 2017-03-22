@@ -1,0 +1,327 @@
+{
+   "$schema":"https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+   "contentVersion":"1.0.0.0",
+   "parameters":{
+      "WebApplicationWebAppName":{
+         "type":"string",
+         "minLength":1,
+         "defaultValue":"[concat('episervercmsapp', uniqueString(resourceGroup().id))]",
+         "metadata":{
+            "description":"Name of the WebApp Running EPiServer"
+         }
+      },
+      "WebApplication-HostingPlanNameName":{
+         "type":"string",
+         "minLength":1,
+         "defaultValue":"[concat('hostingplan', uniqueString(resourceGroup().id))]",
+         "metadata":{
+            "description":"Name of the App Service Hosting Plan"
+         }
+      },
+      "WebApplication-HostingPlanNameSKU":{
+         "type":"string",
+         "allowedValues":[
+            "Free",
+            "Shared",
+            "Basic",
+            "Standard",
+            "Premium"
+         ],
+         "defaultValue":"Free",
+         "metadata":{
+            "description":"Describes the pricing tier of the Hosting Plan"
+         }
+      },
+      "WebApplication-HostingPlanNameWorkerSize":{
+         "type":"string",
+         "allowedValues":[
+            "0",
+            "1",
+            "2"
+         ],
+         "defaultValue":"0",
+         "metadata":{
+            "description":"Describes the WorkerSize level of the Hosting Plan"
+         }
+      },
+      "StorageAccountType":{
+         "type":"string",
+         "defaultValue":"Standard_LRS",
+         "allowedValues":[
+            "Standard_LRS",
+            "Standard_ZRS",
+            "Standard_GRS",
+            "Standard_RAGRS",
+            "Premium_LRS"
+         ],
+         "metadata":{
+            "description":"Describes the Storage Account Type"
+         }
+      },
+      "StorageAccountName":{
+         "type":"string",
+         "defaultValue":"[concat('epistorage', uniqueString(resourceGroup().id))]",
+         "metadata":{
+            "description":"Name of the Storage Account"
+         }
+      },
+      "sqlserverName":{
+         "type":"string",
+         "defaultValue":"[concat('sqlserver', uniqueString(resourceGroup().id))]",
+         "metadata":{
+            "description":"Name of the Sql Server"
+         }
+      },
+      "sqlserverAdminLogin":{
+         "type":"string",
+         "minLength":1,
+         "metadata":{
+            "description":"Name of the Sql Admin Account"
+         }
+      },
+      "sqlserverAdminLoginPassword":{
+         "type":"securestring",
+         "metadata":{
+            "description":"Password of the Sql Admin Account"
+         }
+      },
+      "SQL-DatabaseName":{
+         "type":"string",
+         "minLength":1,
+         "defaultValue":"episerverdb",
+         "metadata":{
+            "description":"Name of the Sql Database"
+         }
+      },
+      "SQL-DatabaseCollation":{
+         "type":"string",
+         "minLength":1,
+         "defaultValue":"SQL_Latin1_General_CP1_CI_AS",
+         "metadata":{
+            "description":"Describes the performance level for SQL Databse Collation"
+         }
+      },
+      "SQL-DatabaseEdition":{
+         "type":"string",
+         "defaultValue":"Basic",
+         "allowedValues":[
+            "Basic",
+            "Standard",
+            "Premium"
+         ],
+         "metadata":{
+            "description":"Describes the performance level for SQL Database Edition"
+         }
+      },
+      "SQL-DatabaseRequestedServiceObjectiveName":{
+         "type":"string",
+         "defaultValue":"Basic",
+         "allowedValues":[
+            "Basic",
+            "S0",
+            "S1",
+            "S2",
+            "P1",
+            "P2",
+            "P3"
+         ],
+         "metadata":{
+            "description":"Describes the performance level for Edition"
+         }
+      },
+      "serviceBusNamespaceName":{
+         "type":"string",
+         "metadata":{
+            "description":"Name of the Service Bus namespace"
+         }
+      },
+      "serviceBusSku":{
+         "type":"string",
+         "allowedValues":[
+            "Basic",
+            "Standard"
+         ],
+         "defaultValue":"Standard",
+         "metadata":{
+            "description":"The messaging tier for service Bus namespace"
+         }
+      }
+   },
+   "variables":{
+      "location":"[resourceGroup().location]",
+      "defaultSASKeyName":"RootManageSharedAccessKey",
+      "defaultAuthRuleResourceId":"[resourceId('Microsoft.ServiceBus/namespaces/authorizationRules', parameters('serviceBusNamespaceName'), variables('defaultSASKeyName'))]",
+      "storageAccountApiVersion":"2015-06-15",
+      "serviceBusApiVersion":"2015-08-01",
+      "storageId":"[resourceId('Microsoft.Storage/storageAccounts', parameters('StorageAccountName'))]",
+      "storageConnectionStringPrefix":"[concat('DefaultEndpointsProtocol=https;AccountName=',parameters('StorageAccountName'),';AccountKey=')]"
+   },
+   "resources":[
+      {
+         "name":"[parameters('WebApplication-HostingPlanNameName')]",
+         "type":"Microsoft.Web/serverfarms",
+         "location":"[resourceGroup().location]",
+         "apiVersion":"2014-06-01",
+         "tags":{
+            "displayName":"WebApplication-HostingPlanName"
+         },
+         "properties":{
+            "name":"[parameters('WebApplication-HostingPlanNameName')]",
+            "sku":"[parameters('WebApplication-HostingPlanNameSKU')]",
+            "workerSize":"[parameters('WebApplication-HostingPlanNameWorkerSize')]",
+            "numberOfWorkers":1
+         }
+      },
+      {
+         "name":"[parameters('WebApplicationWebAppName')]",
+         "type":"Microsoft.Web/sites",
+         "location":"[resourceGroup().location]",
+         "apiVersion":"2015-08-01",
+         "dependsOn":[
+            "[concat('Microsoft.Web/serverfarms/', parameters('WebApplication-HostingPlanNameName'))]",
+            "[concat('Microsoft.Storage/storageAccounts/', parameters('StorageAccountName'))]",
+            "[concat('Microsoft.Sql/servers/', parameters('sqlserverName'))]",
+            "[concat('Microsoft.ServiceBus/Namespaces/', parameters('serviceBusNamespaceName'))]"
+         ],
+         "tags":{
+            "[concat('hidden-related:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', parameters('WebApplication-HostingPlanNameName'))]":"Resource",
+            "displayName":"WebApplication-WebApp"
+         },
+         "properties":{
+            "name":"[parameters('WebApplicationWebAppName')]",
+            "serverFarmId":"[resourceId('Microsoft.Web/serverfarms/', parameters('WebApplication-HostingPlanNameName'))]",
+            "webSocketsEnabled":true,
+            "alwaysOn":false
+         },
+         "resources":[
+            {
+               "name":"connectionstrings",
+               "type":"config",
+               "apiVersion":"2015-08-01",
+               "dependsOn":[
+                  "[concat('Microsoft.Web/sites/', parameters('WebApplicationWebAppName'))]"
+               ],
+               "tags":{
+                  "displayName":"WebApplication-WebApp-ConnectionStrings"
+               },
+               "properties":{
+                  "EPiServerAzureBlobs":{
+                     "value":"[concat(variables('storageConnectionStringPrefix'), listkeys(variables('storageId'), variables('storageAccountApiVersion')).key1)]",
+                     "type":"Custom"
+                  },
+                  "EPiServerAzureEvents":{
+                     "value":"[listkeys(variables('defaultAuthRuleResourceId'), variables('serviceBusApiVersion')).primaryConnectionString]",
+                     "type":"Custom"
+                  },
+                  "EPiServerDB":{
+                     "value":"[concat('Server=tcp:', reference(concat('Microsoft.Sql/servers/', parameters('sqlserverName'))).fullyQualifiedDomainName, ',1433;Initial Catalog=', parameters('SQL-DatabaseName'), ';User Id=', parameters('sqlserverAdminLogin'), '@', parameters('sqlserverName'), ';Password=', parameters('sqlserverAdminLoginPassword'), ';Trusted_Connection=False;Encrypt=True;Connection Timeout=30;MultipleActiveResultSets=True')]",
+                     "type":"SQLAzure"
+                  }
+               }
+            },
+            {
+               "name":"appsettings",
+               "type":"config",
+               "apiVersion":"2015-08-01",
+               "dependsOn":[
+                  "[resourceId('Microsoft.Web/sites', parameters('WebApplicationWebAppName'))]"
+               ],
+               "tags":{
+                  "displayName":"WebApplication-WebApp-ApplicationSettings"
+               },
+               "properties":{
+                  "episerver:ReadOnlyConfigurationAPI":"True"
+               }
+            },
+            {
+               "name":"web",
+               "type":"config",
+               "apiVersion":"2015-08-01",
+               "dependsOn":[
+                  "[resourceId('Microsoft.Web/sites', parameters('WebApplicationWebAppName'))]"
+               ],
+               "tags":{
+                  "displayName":"WebApplication-WebApp-GeneralSettings"
+               },
+               "properties":{
+                  "webSocketsEnabled":"True",
+                  "alwaysOn":"True"
+               }
+            }
+         ]
+      },
+      {
+         "name":"[parameters('StorageAccountName')]",
+         "type":"Microsoft.Storage/storageAccounts",
+         "location":"[resourceGroup().location]",
+         "apiVersion":"2015-06-15",
+         "tags":{
+            "displayName":"StorageAccount"
+         },
+         "properties":{
+            "accountType":"[parameters('StorageAccountType')]"
+         }
+      },
+      {
+         "apiVersion":"2014-04-01",
+         "location":"[resourceGroup().location]",
+         "name":"[parameters('sqlserverName')]",
+         "properties":{
+            "administratorLogin":"[parameters('sqlserverAdminLogin')]",
+            "administratorLoginPassword":"[parameters('sqlserverAdminLoginPassword')]",
+            "version":"12.0"
+         },
+         "resources":[
+            {
+               "name":"AllowAllWindowsAzureIps",
+               "type":"firewallrules",
+               "location":"[resourceGroup().location]",
+               "apiVersion":"2014-04-01",
+               "dependsOn":[
+                  "[concat('Microsoft.Sql/servers/', parameters('sqlserverName'))]"
+               ],
+               "properties":{
+                  "startIpAddress":"0.0.0.0",
+                  "endIpAddress":"0.0.0.0"
+               }
+            },
+            {
+               "name":"[parameters('SQL-DatabaseName')]",
+               "type":"databases",
+               "location":"[resourceGroup().location]",
+               "apiVersion":"2014-04-01",
+               "dependsOn":[
+                  "[parameters('sqlserverName')]"
+               ],
+               "tags":{
+                  "displayName":"SQL-Database"
+               },
+               "properties":{
+                  "collation":"[parameters('SQL-DatabaseCollation')]",
+                  "edition":"[parameters('SQL-DatabaseEdition')]",
+                  "maxSizeBytes":"1073741824",
+                  "requestedServiceObjectiveName":"[parameters('SQL-DatabaseRequestedServiceObjectiveName')]"
+               }
+            }
+         ],
+         "tags":{
+            "displayName":"SQL-Server"
+         },
+         "type":"Microsoft.Sql/servers"
+      },
+      {
+         "apiVersion":"2015-08-01",
+         "name":"[parameters('serviceBusNamespaceName')]",
+         "type":"Microsoft.ServiceBus/Namespaces",
+         "location":"[variables('location')]",
+         "kind":"Messaging",
+         "tags":{
+            "displayName":"ServiceBus"
+         },
+         "sku":{
+            "name":"[parameters('serviceBusSku')]",
+            "tier":"[parameters('serviceBusSku')]"
+         }
+      }
+   ]
+}

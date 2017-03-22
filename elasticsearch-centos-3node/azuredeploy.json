@@ -29,7 +29,6 @@
   },
   "variables": {
     "apiVersion": "2015-06-15",
-    "location": "[resourceGroup().location]",
     "vmSize": "Standard_D1",
     "clusterName": "elasticcluster",
     "logTableName": "elasticscriptlog",
@@ -69,7 +68,7 @@
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('storageName')]",
-      "location": "[variables('location')]",
+      "location": "[resourceGroup().location]",
       "tags": {
         "displayName": "StorageAccount"
       },
@@ -81,16 +80,16 @@
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
-      "location": "[variables('location')]",
+      "location": "[resourceGroup().location]",
       "properties": {
-        "publicIPAllocationMethod": "[variables('publicIPAddressType')]"        
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]"
       }
     },
     {
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('availabilitySetName')]",
-      "location": "[variables('location')]",
+      "location": "[resourceGroup().location]",
       "tags": {
         "displayName": "AvailabilitySet"
       }
@@ -99,7 +98,7 @@
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('JBNSGName')]",
-      "location": "[variables('location')]",
+      "location": "[resourceGroup().location]",
       "properties": {
         "securityRules": [
           {
@@ -118,12 +117,12 @@
           }
         ]
       }
-    },    
+    },
     {
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
-      "location": "[variables('location')]",
+      "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Network/networkSecurityGroups/', variables('JBNSGName'))]"
       ],
@@ -149,7 +148,7 @@
           {
             "name": "[variables('subnetName')]",
             "properties": {
-              "addressPrefix": "10.0.2.0/24"              
+              "addressPrefix": "10.0.2.0/24"
             }
           }
         ]
@@ -160,7 +159,7 @@
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(parameters('vmPrefix'), variables('networkInterfaceName'), copyindex())]",
-      "location": "[variables('location')]",
+      "location": "[resourceGroup().location]",
       "tags": {
         "displayName": "NetworkInterface"
       },
@@ -177,7 +176,7 @@
             "name": "ipconfig1",
             "properties": {
               "privateIPAllocationMethod": "Static",
-			  "privateIPAddress" :"[concat('10.0.2.1', copyindex())]",
+              "privateIPAddress": "[concat('10.0.2.1', copyindex())]",
               "subnet": {
                 "id": "[variables('subnetRef')]"
               }
@@ -194,7 +193,7 @@
         "name": "virtualMachineLoop",
         "count": "[variables('numberOfNodes')]"
       },
-      "location": "[variables('location')]",
+      "location": "[resourceGroup().location]",
       "tags": {
         "displayName": "VirtualMachines"
       },
@@ -230,7 +229,7 @@
             "caching": "ReadWrite",
             "createOption": "FromImage"
           },
-           "dataDisks": [
+          "dataDisks": [
             {
               "name": "datadisk1",
               "diskSizeGB": "[variables('dataDiskSize')]",
@@ -241,7 +240,7 @@
               "caching": "None",
               "createOption": "Empty"
             }
-           ]
+          ]
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -253,32 +252,33 @@
       }
     },
     {
-        "type": "Microsoft.Compute/virtualMachines/extensions",
-        "name": "[concat(parameters('vmPrefix'), copyindex(), '/installelasticsearch')]",
-        "apiVersion": "[variables('apiVersion')]",
-		  "copy": {
-			"name": "virtualMachineExtensions",
-			"count": "[variables('numberOfNodes')]"
-		  },
-        "location": "[variables('location')]",
-        "dependsOn": [
-          "[concat('Microsoft.Compute/virtualMachines/', parameters('vmPrefix'), copyindex())]"
-          ],
-        "properties": {
-          "publisher": "Microsoft.OSTCExtensions",
-          "type": "CustomScriptForLinux",
-          "typeHandlerVersion": "1.3",
-          "settings": {
-            "fileUris": "[variables('installScripts')]",
-            "commandToExecute": "[concat('python ',variables('elasticScript'), ' ', variables('clusterName'), ' ', variables('numberOfNodes'), ' ', variables('storageName'), ' ', listKeys(resourceId('Microsoft.Storage/storageAccounts',variables('storageName')) ,variables('apiVersion')).key1)]"
-          }
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmPrefix'), copyindex(), '/installelasticsearch')]",
+      "apiVersion": "[variables('apiVersion')]",
+      "copy": {
+        "name": "virtualMachineExtensions",
+        "count": "[variables('numberOfNodes')]"
+      },
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmPrefix'), copyindex())]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": "[variables('installScripts')]",
+          "commandToExecute": "[concat('python ',variables('elasticScript'), ' ', variables('clusterName'), ' ', variables('numberOfNodes'), ' ', variables('storageName'), ' ', listKeys(resourceId('Microsoft.Storage/storageAccounts',variables('storageName')) ,variables('apiVersion')).key1)]"
         }
-      },    
-	  {
+      }
+    },
+    {
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "JumpboxNic",
-      "location": "[variables('location')]",
+      "location": "[resourceGroup().location]",
       "tags": {
         "displayName": "NetworkInterface"
       },
@@ -292,8 +292,8 @@
             "name": "ipconfig1",
             "properties": {
               "privateIPAllocationMethod": "Static",
-			  "privateIPAddress" : "10.0.1.10",
-			  "publicIPAddress": {
+              "privateIPAddress": "10.0.1.10",
+              "publicIPAddress": {
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
               },
               "subnet": {
@@ -304,59 +304,60 @@
         ]
       }
     },
-	  {
-		"apiVersion": "[variables('apiVersion')]",
-		"type": "Microsoft.Compute/virtualMachines",
-		"name": "Jumpbox",
-		"location": "[variables('location')]",
-		"tags": {
-			"displayName": "VirtualMachines"
-		},
-		"dependsOn": [
-			"[concat('Microsoft.Storage/storageAccounts/', variables('storageName'))]",
-			"Microsoft.Network/networkInterfaces/jumpboxNic"
-		],
-		"properties": {
-			"hardwareProfile": {
-				"vmSize": "[variables('vmSize')]"
-			},
-			"osProfile": {
-				"computerName": "Jumpbox",
-				"adminUsername": "[parameters('adminUsername')]",
-				"adminPassword": "[parameters('adminPassword')]"
-			},
-			"storageProfile": {
-				"imageReference": {
-					"publisher": "MicrosoftWindowsServer",
-					"offer": "WindowsServer",
-					"sku": "2012-R2-Datacenter",
-					"version": "latest"
-				},
-				"osDisk": {
-					"name": "osdisk",
-					"vhd": {
-						"uri": "[concat('http://',variables('storageName'),'.blob.core.windows.net/vhds/jumpbox-osdisk.vhd')]"
-					},
-					"caching": "ReadWrite",
-					"createOption": "FromImage"
-				}
-			},
-			"networkProfile": {
-				"networkInterfaces": [
-					{
-						"id":"[resourceId('Microsoft.Network/networkInterfaces','jumpboxNic')]"
-					}
-				]
-			}
-		}
-	},
-  {
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "Jumpbox",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "VirtualMachines"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', variables('storageName'))]",
+        "Microsoft.Network/networkInterfaces/jumpboxNic"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "Jumpbox",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "MicrosoftWindowsServer",
+            "offer": "WindowsServer",
+            "sku": "2012-R2-Datacenter",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat('http://',variables('storageName'),'.blob.core.windows.net/vhds/jumpbox-osdisk.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces','jumpboxNic')]"
+            }
+          ]
+        }
+      }
+    },
+    {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "Jumpbox/PrepExtension",
       "apiVersion": "[variables('apiVersion')]",
-      "location": "[variables('location')]",
-      "dependsOn": ["Microsoft.Compute/virtualMachines/Jumpbox"
-        ],
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "Microsoft.Compute/virtualMachines/Jumpbox"
+      ],
       "properties": {
         "publisher": "Microsoft.Compute",
         "type": "CustomScriptExtension",

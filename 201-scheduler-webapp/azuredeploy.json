@@ -1,0 +1,128 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+	"contentVersion": "1.0.0.0",
+  "parameters": {    
+    "appSvcPlanName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the App Service Plan that will host the Web App."
+      }
+    },
+    "svcPlanSize": {
+      "type": "string",
+      "defaultValue": "F1",
+      "metadata": {
+        "description": "The instance size of the App Service Plan."
+      }
+    },
+    "svcPlanSku": {
+      "type": "string",
+      "allowedValues": [
+        "Free",
+        "Shared",
+        "Basic",
+        "Standard",
+        "Premium"
+      ],
+      "defaultValue": "Standard",
+      "metadata": {
+        "description": "The pricing tier of the App Service plan."
+      }
+    },
+    "webAppName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the Web App."
+      }
+    },
+    "jobCollectionName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the job collection."
+      }
+    },
+    "jobName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the job."
+      }
+    },
+    "sku": {
+      "type": "object",
+      "defaultValue": {
+        "name": "Standard"
+      },
+      "metadata": {
+        "description": "sku for job collection."
+      }
+    }
+  },
+  "variables": { },
+  "resources": [
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2015-08-01",
+      "name": "[parameters('appSvcPlanName')]",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "[parameters('svcPlanSize')]",
+        "tier": "[parameters('svcPlanSku')]",
+        "capacity": 1
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2015-08-01",
+      "name": "[parameters('webAppName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Web/serverFarms/', parameters('appSvcPlanName'))]"
+      ],
+      "properties": {
+        "name": "[parameters('webAppName')]",
+        "serverFarmId": "[parameters('appSvcPlanName')]"
+      }
+    },
+    {
+      "apiVersion": "2016-01-01",
+      "type": "Microsoft.Scheduler/jobCollections",
+      "name": "[parameters('jobCollectionName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "sku": "[parameters('sku')]"
+      },
+      "resources": [
+        {
+          "apiVersion": "2016-01-01",
+          "type": "jobs",
+          "name": "[parameters('jobName')]",
+          "dependsOn": [
+            "[concat('Microsoft.Scheduler/jobCollections/', parameters('jobCollectionName'))]"
+          ],
+          "properties": {
+            "state": "Enabled",
+            "action": {
+              "type": "HTTP",
+              "request": {
+                "uri": "[concat('http://', reference(resourceId('Microsoft.Web/sites', parameters('webAppName'))).hostNames[0])]",
+                "method": "GET",
+                "retryPolicy": {
+                  "retryType": "None"
+                }
+              }
+            },
+            "recurrence": {
+              "interval": 1,
+              "frequency": "Week",
+              "schedule": {
+                "weekDays": [ "Monday", "Tuesday", "Wednesday", "Thursday", "Friday" ],
+                "hours": [ 10, 12 ],
+                "minutes": [0,30]
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,203 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "omsRecoveryVaultName": {
+      "type": "string",
+      "metadata": {
+        "description": "Assign a name for the ASR Recovery Vault"
+      }
+    },
+    "omsRecoveryVaultRegion": {
+      "type": "string",
+      "defaultValue": "West Europe",
+      "allowedValues": [
+        "West US",
+        "East US",
+        "North Europe",
+        "West Europe",
+        "Brazil South",
+        "East Asia",
+        "Southeast Asia",
+        "North Central US",
+        "South Central US",
+        "Japan East",
+        "Japan West",
+        "Australia East",
+        "Australia Southeast",
+        "Central US",
+        "East US 2",
+        "Central India",
+        "South India"
+      ],
+      "metadata": {
+        "description": "Specify the region for your Recovery Vault"
+      }
+    },
+    "omsWorkspaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Assign a name for the Log Analytic Workspace Name"
+      }
+    },
+    "omsWorkspaceRegion": {
+      "type": "string",
+      "defaultValue": "West Europe",
+      "allowedValues": [
+        "East US",
+        "West Europe",
+        "Southeast Asia",
+        "Australia Southeast"
+      ],
+      "metadata": {
+        "description": "Specify the region for your Workspace"
+      }
+    },
+    "omsAutomationAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Assign a name for the Automation account"
+      }
+    },
+    "omsAutomationRegion": {
+      "type": "string",
+      "defaultValue": "West Europe",
+      "allowedValues": [
+        "Japan East",
+        "East US 2",
+        "West Europe",
+        "Southeast Asia",
+        "South Central US",
+        "North Europe",
+        "Canada Central",
+        "Australia Southeast",
+        "Central India",
+        "Japan East"
+      ],
+      "metadata": {
+        "description": "Specify the region for your Automation account"
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/oms-all-deploy",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located"
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated"
+      }
+    },
+    "azureAdmin": {
+      "type": "string",
+      "metadata": {
+        "description": "Enter your service admin user"
+      }
+    },
+    "azureAdminPwd": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Enter the pwd for the service admin user. The pwd is enrypted during runtime and in the Automation assets"
+      }
+    }
+  },
+  "variables": {
+    "nestedTemplates": {
+      "omsRecoveryServices": "[concat(parameters('_artifactsLocation'), '/nestedtemplates/omsRecoveryServices.json', parameters('_artifactsLocationSasToken'))]",
+      "omsAutomation": "[concat(parameters('_artifactsLocation'), '/nestedtemplates/omsAutomation.json', parameters('_artifactsLocationSasToken'))]",
+      "omsWorkspace": "[concat(parameters('_artifactsLocation'), '/nestedtemplates/omsWorkspace.json', parameters('_artifactsLocationSasToken'))]"
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2016-02-01",
+      "name": "omsWorkspace",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', 'omsRecoveryServices')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('nestedTemplates').omsWorkspace]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "omsWorkspaceName": {
+            "value": "[parameters('omsWorkspaceName')]"
+          },
+          "omsWorkspaceRegion": {
+            "value": "[parameters('omsWorkspaceRegion')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2016-02-01",
+      "name": "omsRecoveryServices",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('nestedTemplates').omsRecoveryServices]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "omsRecoveryVaultName": {
+            "value": "[parameters('omsRecoveryVaultName')]"
+          },
+          "omsRecoveryVaultRegion": {
+            "value": "[parameters('omsRecoveryVaultRegion')]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2016-02-01",
+      "name": "omsAutomation",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', 'omsRecoveryServices')]",
+        "[concat('Microsoft.Resources/deployments/', 'omsWorkspace')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('nestedTemplates').omsAutomation]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "omsAutomationAccountName": {
+            "value": "[parameters('omsAutomationAccountName')]"
+          },
+          "omsAutomationRegion": {
+            "value": "[parameters('omsAutomationRegion')]"
+          },
+          "omsRecoveryVaultName": {
+            "value": "[parameters('omsRecoveryVaultName')]"
+          },
+          "omsWorkspaceName": {
+            "value": "[parameters('omsWorkspaceName')]"
+          },
+          "azureAdmin": {
+            "value": "[parameters('azureAdmin')]"
+          },
+          "azureAdminPwd": {
+            "value": "[parameters('azureAdminPwd')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": { }
+}

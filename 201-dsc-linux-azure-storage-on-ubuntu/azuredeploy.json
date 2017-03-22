@@ -14,29 +14,6 @@
                 "description": "Password for the Virtual Machine."
             }
         },
-        "location": {
-            "type": "string",
-            "metadata": {
-                "description": "The location where the Virtual Machine will be deployed."
-            },
-            "allowedValues": [
-                "Australia East",
-                "Australia Southeast",
-                "Brazil South",
-                "Central US",
-                "East Asia",
-                "East US",
-                "East US 2",
-                "Japan East",
-                "Japan West",
-                "North Central US",
-                "North Europe",
-                "South Central US",
-                "Southeast Asia",
-                "West Europe",
-                "West US"
-            ]
-        },
         "newStorageAccountName": {
             "type": "string",
             "metadata": {
@@ -85,7 +62,8 @@
             "allowedValues": [
                 "Push",
                 "Pull",
-                "Install"
+                "Install",
+                "Register"
             ]
         },
         "storageAccountName": {
@@ -102,25 +80,25 @@
                 "description": "The key of the storage account that contains the MOF file/meta MOF file/resource ZIP file"
             }
         },
-        "containerName": {
+        "fileUri": {
             "type": "string",
             "defaultValue": "",
             "metadata": {
-                "description": "The name of the container that contains the MOF file/meta MOF file/resource ZIP file"
+                "description": "The uri of the MOF file/Meta MOF file/resource ZIP file"
             }
         },
-        "mofFileName": {
+        "registrationUrl": {
             "type": "string",
             "defaultValue": "",
             "metadata": {
-                "description": "The blob name of the MOF or meta MOF file in the Azure storage account"
+                "description": "The URL of the Azure Automation account"
             }
         },
-        "resourceZipFileName": {
+        "registrationKey": {
             "type": "string",
             "defaultValue": "",
             "metadata": {
-                "description": "The blob name of the custom resource ZIP file in the Azure storage account"
+                "description": "The access key of the Azure Automation account"
             }
         }
     },
@@ -142,140 +120,140 @@
         "OSDiskName": "osdiskfordsc"
     },
     "resources": [
-        {
-            "apiVersion": "[variables('api-version')]",
-            "type": "Microsoft.Storage/storageAccounts",
-            "name": "[parameters('newStorageAccountName')]",
-            "location": "[parameters('location')]",
-            "properties": {
-                "accountType": "[variables('storageAccountType')]"
-            }
-        },
-        {
-            "apiVersion": "[variables('api-version')]",
-            "type": "Microsoft.Network/publicIPAddresses",
-            "name": "[variables('publicIPAddressName')]",
-            "location": "[parameters('location')]",
-            "properties": {
-                "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
-                "dnsSettings": {
-                    "domainNameLabel": "[parameters('vmName')]"
-                }
-            }
-        },
-        {
-            "apiVersion": "[variables('api-version')]",
-            "type": "Microsoft.Network/virtualNetworks",
-            "name": "[variables('virtualNetworkName')]",
-            "location": "[parameters('location')]",
-            "properties": {
-                "addressSpace": {
-                    "addressPrefixes": [
-                        "[variables('vnetAddressPrefix')]"
-                    ]
-                },
-                "subnets": [
-                    {
-                        "name": "[variables('subnetName')]",
-                        "properties": {
-                            "addressPrefix": "[variables('subnetPrefix')]"
-                        }
-                    }
-                ]
-            }
-        },
-        {
-            "apiVersion": "[variables('api-version')]",
-            "type": "Microsoft.Network/networkInterfaces",
-            "name": "[variables('nicName')]",
-            "location": "[parameters('location')]",
-            "dependsOn": [
-                "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
-                "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
-            ],
-            "properties": {
-                "ipConfigurations": [
-                    {
-                        "name": "ipconfig1",
-                        "properties": {
-                            "privateIPAllocationMethod": "Dynamic",
-                            "publicIPAddress": {
-                                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
-                            },
-                            "subnet": {
-                                "id": "[variables('subnetRef')]"
-                            }
-                        }
-                    }
-                ]
-            }
-        },
-        {
-            "apiVersion": "[variables('api-version')]",
-            "type": "Microsoft.Compute/virtualMachines",
-            "name": "[parameters('vmName')]",
-            "location": "[parameters('location')]",
-            "dependsOn": [
-                "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
-                "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
-            ],
-            "properties": {
-                "hardwareProfile": {
-                    "vmSize": "[parameters('vmSize')]"
-                },
-                "osProfile": {
-                    "computerName": "[parameters('vmName')]",
-                    "adminUsername": "[parameters('username')]",
-                    "adminPassword": "[parameters('password')]"
-                },
-                "storageProfile": {
-                    "imageReference": {
-                        "publisher": "[variables('imagePublisher')]",
-                        "offer": "[variables('imageOffer')]",
-                        "sku": "[parameters('ubuntuOSVersion')]",
-                        "version": "latest"
-                    },
-                    "osDisk": {
-                        "name": "osdisk1",
-                        "vhd": {
-                            "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]"
-                        },
-                        "caching": "ReadWrite",
-                        "createOption": "FromImage"
-                    }
-                },
-                "networkProfile": {
-                    "networkInterfaces": [
-                        {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
-                        }
-                    ]
-                }
-            }
-        },
-        {
-            "apiVersion": "[variables('api-version')]",
-            "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "[concat(parameters('vmName'),'/enabledsc')]",
-            "location": "[parameters('location')]",
-            "dependsOn": [
-                "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
-            ],
-            "properties": {
-                "publisher": "Microsoft.OSTCExtensions",
-                "type": "DSCForLinux",
-                "typeHandlerVersion": "1.0",
-                "settings": {
-                    "Mode": "[parameters('mode')]"
-                },
-                "protectedSettings": {
-                    "StorageAccountName": "[parameters('storageAccountName')]",
-                    "StorageAccountKey": "[parameters('storageAccountKey')]",
-                    "ContainerName": "[parameters('containerName')]",
-                    "MofFileName": "[parameters('mofFileName')]",
-                    "ResourceZipFileName": "[parameters('resourceZipFileName')]"
-                }
-            }
+      {
+        "apiVersion": "[variables('api-version')]",
+        "type": "Microsoft.Storage/storageAccounts",
+        "name": "[parameters('newStorageAccountName')]",
+        "location": "[resourceGroup().location]",
+        "properties": {
+          "accountType": "[variables('storageAccountType')]"
         }
+      },
+      {
+        "apiVersion": "[variables('api-version')]",
+        "type": "Microsoft.Network/publicIPAddresses",
+        "name": "[variables('publicIPAddressName')]",
+        "location": "[resourceGroup().location]",
+        "properties": {
+          "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+          "dnsSettings": {
+            "domainNameLabel": "[parameters('vmName')]"
+          }
+        }
+      },
+      {
+        "apiVersion": "[variables('api-version')]",
+        "type": "Microsoft.Network/virtualNetworks",
+        "name": "[variables('virtualNetworkName')]",
+        "location": "[resourceGroup().location]",
+        "properties": {
+          "addressSpace": {
+            "addressPrefixes": [
+              "[variables('vnetAddressPrefix')]"
+            ]
+          },
+          "subnets": [
+            {
+              "name": "[variables('subnetName')]",
+              "properties": {
+                "addressPrefix": "[variables('subnetPrefix')]"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "apiVersion": "[variables('api-version')]",
+        "type": "Microsoft.Network/networkInterfaces",
+        "name": "[variables('nicName')]",
+        "location": "[resourceGroup().location]",
+        "dependsOn": [
+          "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+          "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        ],
+        "properties": {
+          "ipConfigurations": [
+            {
+              "name": "ipconfig1",
+              "properties": {
+                "privateIPAllocationMethod": "Dynamic",
+                "publicIPAddress": {
+                  "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+                },
+                "subnet": {
+                  "id": "[variables('subnetRef')]"
+                }
+              }
+            }
+          ]
+        }
+      },
+      {
+        "apiVersion": "[variables('api-version')]",
+        "type": "Microsoft.Compute/virtualMachines",
+        "name": "[parameters('vmName')]",
+        "location": "[resourceGroup().location]",
+        "dependsOn": [
+          "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
+          "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+        ],
+        "properties": {
+          "hardwareProfile": {
+            "vmSize": "[parameters('vmSize')]"
+          },
+          "osProfile": {
+            "computerName": "[parameters('vmName')]",
+            "adminUsername": "[parameters('username')]",
+            "adminPassword": "[parameters('password')]"
+          },
+          "storageProfile": {
+            "imageReference": {
+              "publisher": "[variables('imagePublisher')]",
+              "offer": "[variables('imageOffer')]",
+              "sku": "[parameters('ubuntuOSVersion')]",
+              "version": "latest"
+            },
+            "osDisk": {
+              "name": "osdisk1",
+              "vhd": {
+                "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]"
+              },
+              "caching": "ReadWrite",
+              "createOption": "FromImage"
+            }
+          },
+          "networkProfile": {
+            "networkInterfaces": [
+              {
+                "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+              }
+            ]
+          }
+        }
+      },
+      {
+        "apiVersion": "[variables('api-version')]",
+        "type": "Microsoft.Compute/virtualMachines/extensions",
+        "name": "[concat(parameters('vmName'),'/enabledsc')]",
+        "location": "[resourceGroup().location]",
+        "dependsOn": [
+          "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
+        ],
+        "properties": {
+          "publisher": "Microsoft.OSTCExtensions",
+          "type": "DSCForLinux",
+          "typeHandlerVersion": "2.0",
+          "settings": {
+            "Mode": "[parameters('mode')]",
+            "FileUri": "[parameters('fileUri')]"
+          },
+          "protectedSettings": {
+            "StorageAccountName": "[parameters('storageAccountName')]",
+            "StorageAccountKey": "[parameters('storageAccountKey')]",
+            "RegistrationUrl": "[parameters('registrationUrl')]",
+            "RegistrationKey": "[parameters('registrationKey')]"
+          }
+        }
+      }
     ]
 }
