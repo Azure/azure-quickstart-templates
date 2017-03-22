@@ -19,7 +19,7 @@
       "metadata": {
         "description": "URL to data disk resource"
       }
-    },    
+    },
     "dnsNameForPublicIP": {
       "type": "string",
       "metadata": {
@@ -47,7 +47,7 @@
       "metadata": {
         "description": "This is the OS that your VM will be running"
       }
-    },  
+    },
     "vmSize": {
       "type": "string",
       "defaultValue": "Standard_A3",
@@ -77,7 +77,7 @@
     "publicIPAddressName": "[concat(parameters('vmName'),'PublicIP')]",
     "vmName": "[parameters('vmName')]",
     "virtualNetworkName": "[concat(parameters('vmName'),'VNet')]",
-    "nicName": "[concat(parameters('vmName'),'Nic')]",
+    "nicName": "[concat(parameters('vmName'),'-nic1')]",
     "addressPrefix": "10.0.0.0/16",
     "subnet1Name": "Subnet-1",
     "subnet1Prefix": "10.0.0.0/24",
@@ -85,11 +85,22 @@
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
     "subnet1Ref": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]",
     "osDiskUrl": "[parameters('osDiskUrlParam')]",
-    "dataDiskUrl": "[parameters('dataDiskUrlParam')]",    
-    "osDiskVhdName": "[concat(variables('osDiskUrl'),'-',variables('vmName'),'.vhd')]",
-    "dataDiskVhdName": "[concat(variables('dataDiskUrl'),'-',variables('vmName'),'.vhd')]"
+    "dataDiskUrl": "[parameters('dataDiskUrlParam')]",
+    "storageAccountName": "[take(split(split(parameters('osDiskUrlParam'), '/')[2], '.' ), 0)]",
+    "diagStorageAccountName": "[concat(uniquestring(resourceGroup().id), 'diag')]"
   },
   "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('diagStorageAccountName')]",
+      "apiVersion": "2016-01-01",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "Storage",
+      "properties": {}
+    },
     {
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/publicIPAddresses",
@@ -176,7 +187,7 @@
                 "uri": "[variables('dataDiskUrl')]"
               },
               "vhd": {
-                "uri": "[variables('dataDiskVhdName')]"
+                "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2016-01-01').primaryEndpoints.blob, 'vhds/', uniqueString(resourceGroup().id), '-dataDisk0.vhd')]"
               }
             }
           ],
@@ -189,7 +200,7 @@
               "uri": "[variables('osDiskUrl')]"
             },
             "vhd": {
-              "uri": "[variables('osDiskVhdName')]"
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2016-01-01').primaryEndpoints.blob, 'vhds/', uniqueString(resourceGroup().id), '-osDisk.vhd')]"
             }
           }
         },
@@ -199,6 +210,12 @@
               "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
             }
           ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": "true",
+            "storageUri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('diagStorageAccountName')), '2016-01-01').primaryEndpoints.blob)]"
+          }
         }
       }
     }

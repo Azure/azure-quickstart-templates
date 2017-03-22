@@ -14,13 +14,12 @@
         "Standard_LRS",
         "Standard_GRS",
         "Standard_RAGRS",
-        "Standard_ZRS",
         "Premium_LRS"
       ],
       "metadata": {
         "description": "The type of the Storage Account created"
       },
-      "defaultValue": "Standard_LRS"
+      "defaultValue": "Premium_LRS"
     },
     "virtualNetworkName": {
       "type": "string",
@@ -127,7 +126,6 @@
       "type": "string",
       "allowedValues": [
         "Standard_D1",
-        "Standard_A1",
         "Standard_DS1",
         "Standard_D2",
         "Standard_DS2",
@@ -142,12 +140,28 @@
         "Standard_D13",
         "Standard_DS13",
         "Standard_D14",
-        "Standard_DS14"
+        "Standard_DS14",
+        "Standard_D1_v2",
+        "Standard_DS1_v2",
+        "Standard_D2_v2",
+        "Standard_DS2_v2",
+        "Standard_D3_v2",
+        "Standard_DS3_v2",
+        "Standard_D4_v2",
+        "Standard_DS4_v2",
+        "Standard_D11_v2",
+        "Standard_DS11_v2",
+        "Standard_D12_v2",
+        "Standard_DS12_v2",
+        "Standard_D13_v2",
+        "Standard_DS13_v2",
+        "Standard_D14_v2",
+        "Standard_DS14_v2"
       ],
       "metadata": {
         "description": "The size of the VM Created"
       },
-      "defaultValue": "Standard_D2"
+      "defaultValue": "Standard_DS2_v2"
     },
     "imagePublisher": {
       "type": "string",
@@ -208,7 +222,7 @@
       "metadata": {
         "description": "The location of resources such as templates and DSC modules that the script is dependent"
       },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/active-directory-new-domain-ha-2-dc/"
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/active-directory-new-domain-ha-2-dc"
     }
   },
   "variables": {
@@ -231,28 +245,32 @@
     "adPDCDataDisk": "ADPDCDataDisk",
     "adBDCDataDisk": "ADBDCDataDisk",
     "adDataDiskSize": 1000,
-    "vnetTemplateUri": "[concat(parameters('assetLocation'),'vnet.json')]",
-    "nicTemplateUri": "[concat(parameters('assetLocation'),'nic.json')]",
-    "vnetwithDNSTemplateUri": "[concat(parameters('assetLocation'),'vnet-with-dns-server.json')]",
-    "adPDCModulesURL": "[concat(parameters('assetLocation'),'CreateADPDC.ps1.zip')]",
+    "vnetTemplateUri": "[concat(parameters('assetLocation'),'/nestedtemplates/vnet.json')]",
+    "nicTemplateUri": "[concat(parameters('assetLocation'),'/nestedtemplates/nic.json')]",
+    "vnetwithDNSTemplateUri": "[concat(parameters('assetLocation'),'/nestedtemplates/vnet-with-dns-server.json')]",
+    "configureADBDCTemplateUri": "[concat(parameters('assetLocation'),'/nestedtemplates/configureADBDC.json')]",
+    "adPDCModulesURL": "[concat(parameters('assetLocation'),'/DSC/CreateADPDC.ps1.zip')]",
     "adPDCConfigurationFunction": "CreateADPDC.ps1\\CreateADPDC",
-    "adBDCModulesURL": "[concat(parameters('assetLocation'),'CreateADBDC.ps1.zip')]",
-    "adBDCConfigurationFunction": "CreateADBDC.ps1\\CreateADBDC"
+    "adBDCPreparationModulesURL": "[concat(parameters('assetLocation'),'/DSC/PrepareADBDC.ps1.zip')]",
+    "adBDCPreparationFunction": "PrepareADBDC.ps1\\PrepareADBDC",
+    "adBDCConfigurationModulesURL": "[concat(parameters('assetLocation'),'/DSC/ConfigureADBDC.ps1.zip')]",
+    "adBDCConfigurationFunction": "ConfigureADBDC.ps1\\ConfigureADBDC"
   },
   "resources": [
     {
-      "type": "Microsoft.Storage/storageAccounts",
       "name": "[parameters('newStorageAccountName')]",
-      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2016-05-01",
       "location": "[resourceGroup().location]",
       "properties": {
-        "accountType": "[parameters('storageAccountType')]"
-      }
+      },
+      "sku":{"name":"[parameters('storageAccountType')]"},
+      "kind":"Storage"
     },
     {
-      "apiVersion": "2015-05-01-preview",
-      "type": "Microsoft.Network/publicIPAddresses",
       "name": "[parameters('publicIPAddressName')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2016-10-01",
       "location": "[resourceGroup().location]",
       "properties": {
         "publicIPAllocationMethod": "[parameters('publicIPAddressType')]",
@@ -262,15 +280,15 @@
       }
     },
     {
-      "type": "Microsoft.Compute/availabilitySets",
       "name": "[parameters('adAvailabilitySetName')]",
-      "apiVersion": "2015-05-01-preview",
+      "type": "Microsoft.Compute/availabilitySets",
+      "apiVersion": "2016-03-30",
       "location": "[resourceGroup().location]"
     },
     {
       "name": "VNet",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2016-09-01",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -294,9 +312,9 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
       "name": "[variables('adLBName')]",
       "type": "Microsoft.Network/loadBalancers",
+      "apiVersion": "2016-10-01",
       "location": "[resourceGroup().location]",
       "dependsOn": [
         "[resourceId('Microsoft.Network/publicIPAddresses',parameters('publicIPAddressName'))]"
@@ -348,12 +366,12 @@
     {
       "name": "[parameters('adPDCNicName')]",
       "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2016-10-01",
       "location": "[resourceGroup().location]",
       "dependsOn": [
         "Microsoft.Resources/deployments/VNet",
         "[concat('Microsoft.Network/loadBalancers/',variables('adLBName'))]"
       ],
-      "apiVersion": "2015-05-01-preview",
       "properties": {
         "ipConfigurations": [
           {
@@ -382,12 +400,12 @@
     {
       "name": "[parameters('adBDCNicName')]",
       "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2016-10-01",
       "location": "[resourceGroup().location]",
       "dependsOn": [
         "Microsoft.Resources/deployments/VNet",
         "[concat('Microsoft.Network/loadBalancers/',variables('adLBName'))]"
       ],
-      "apiVersion": "2015-05-01-preview",
       "properties": {
         "ipConfigurations": [
           {
@@ -414,9 +432,9 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
-      "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('adPDCVMName')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2016-03-30",
       "location": "[resourceGroup().location]",
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts',parameters('newStorageAccountName'))]",
@@ -446,7 +464,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds0/','osdisk.vhd')]"
+              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))).primaryEndpoints.blob,'vhds0/','osdisk.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -454,7 +472,7 @@
           "dataDisks": [
             {
               "vhd": {
-                "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds0/', variables('adPDCDataDisk'),'-1.vhd')]"
+                "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))).primaryEndpoints.blob,'vhds0/', variables('adPDCDataDisk'),'-1.vhd')]"
               },
               "name": "[concat(parameters('adPDCVMName'),'-data-disk1')]",
               "caching": "None",
@@ -474,9 +492,9 @@
       },
       "resources": [
         {
-          "type": "Microsoft.Compute/virtualMachines/extensions",
           "name": "[concat(parameters('adPDCVMName'),'/CreateADForest')]",
-          "apiVersion": "2015-05-01-preview",
+          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "apiVersion": "2016-03-30",
           "location": "[resourceGroup().location]",
           "dependsOn": [
             "[resourceId('Microsoft.Compute/virtualMachines', parameters('adPDCVMName'))]"
@@ -484,7 +502,7 @@
           "properties": {
             "publisher": "Microsoft.Powershell",
             "type": "DSC",
-            "typeHandlerVersion": "2.19",
+            "typeHandlerVersion": "2.21",
             "autoUpgradeMinorVersion": true,
             "settings": {
               "ModulesUrl": "[variables('adPDCModulesURL')]",
@@ -509,7 +527,7 @@
     {
       "name": "UpdateVNetDNS1",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2016-09-01",
       "dependsOn": [
         "[concat('Microsoft.Compute/virtualMachines/', parameters('adPDCVMName'),'/extensions/CreateADForest')]"
       ],
@@ -545,6 +563,7 @@
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2015-01-01",
       "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/',parameters('adBDCNicName'))]",
         "Microsoft.Resources/deployments/UpdateVNetDNS1"
       ],
       "properties": {
@@ -590,9 +609,9 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
-      "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('adBDCVMName')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2016-03-30",
       "location": "[resourceGroup().location]",
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts',parameters('newStorageAccountName'))]",
@@ -622,7 +641,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds1/','osdisk.vhd')]"
+              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))).primaryEndpoints.blob,'vhds1/','osdisk.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -630,7 +649,7 @@
           "dataDisks": [
             {
               "vhd": {
-                "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds1/', variables('adBDCDataDisk'),'-1.vhd')]"
+                "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))).primaryEndpoints.blob,'vhds1/',variables('adBDCDataDisk'),'-1.vhd')]"
               },
               "name": "[concat(parameters('adBDCVMName'),'-data-disk1')]",
               "caching": "None",
@@ -651,32 +670,61 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(parameters('adBDCVMName'),'/CreateBDC')]",
-      "apiVersion": "2015-05-01-preview",
+      "name": "[concat(parameters('adBDCVMName'),'/PrepareBDC')]",
+      "apiVersion": "2016-03-30",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('adBDCVMName'))]",
-        "Microsoft.Resources/deployments/UpdateBDCNIC"
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('adBDCVMName'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Powershell",
         "type": "DSC",
-        "typeHandlerVersion": "2.19",
+        "typeHandlerVersion": "2.21",
         "autoUpgradeMinorVersion": true,
         "settings": {
-          "ModulesUrl": "[variables('adBDCModulesURL')]",
-          "ConfigurationFunction": "[variables('adBDCConfigurationFunction')]",
+          "ModulesUrl": "[variables('adBDCPreparationModulesURL')]",
+          "ConfigurationFunction": "[variables('adBDCPreparationFunction')]",
           "Properties": {
-            "DomainName": "[parameters('domainName')]",
-            "AdminCreds": {
-              "UserName": "[parameters('adminUserName')]",
-              "Password": "PrivateSettingsRef:AdminPassword"
-            }
+            "DNSServer": "[parameters('adPDCNicIPAddress')]"
           }
+        }
+      }
+    },
+    {
+      "name": "ConfiguringBackupADDomainController",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2016-09-01",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/',parameters('adBDCVMName'),'/extensions/PrepareBDC')]",
+        "Microsoft.Resources/deployments/UpdateBDCNIC"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('configureADBDCTemplateUri')]",
+          "contentVersion": "1.0.0.0"
         },
-        "protectedSettings": {
-          "Items": {
-            "AdminPassword": "[parameters('adminPassword')]"
+        "parameters": {
+          "adBDCVMName": {
+            "value": "[parameters('adBDCVMName')]"
+          },
+          "location": {
+            "value": "[resourceGroup().location]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "domainName": {
+            "value": "[parameters('domainName')]"
+          },
+          "adBDCConfigurationFunction": {
+            "value": "[variables('adBDCConfigurationFunction')]"
+          },
+          "adBDCConfigurationModulesURL": {
+            "value": "[variables('adBDCConfigurationModulesURL')]"
           }
         }
       }
@@ -684,9 +732,9 @@
     {
       "name": "UpdateVNetDNS2",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2016-09-01",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/',parameters('adBDCVMName'),'/extensions/CreateBDC')]"
+        "Microsoft.Resources/deployments/ConfiguringBackupADDomainController"
       ],
       "properties": {
         "mode": "Incremental",
