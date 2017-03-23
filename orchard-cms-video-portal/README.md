@@ -10,3 +10,5 @@
 [Orchard CMS](http://www.orchardproject.net/) is a free, open source content management system that allows users to rapidly create web sites on the Microsoft ASP.NET MVC platform. It is built on a flexible extensibility framework that enables developers and customizers to provide additional functionality through modules and themes.
 
 This template provides a easy way to deploy Orchard CMS on Azure App Service Web Apps with the [Azure Media Services](https://azure.microsoft.com/services/media-services/) module enabled and configured.
+
+`Tags: media-services, storage-account, sql-database, web-app, cms, orchard, video-portal`
