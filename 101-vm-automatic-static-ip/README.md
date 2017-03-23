@@ -8,7 +8,7 @@
 </a>
 
 
-This template allows you to deploy a simple Linux VM using Ubuntu from the marketplace. This will deploy a VNET, Subnet, and an A1 size VM in the resource group location with a static IP that is dynamically assigned."
+This template allows you to deploy a simple Linux VM using Ubuntu from the marketplace. This will deploy a VNET, Subnet, and an A1 size VM in the resource group location with a dynamically assigned IP address and then convert it to static IP.
 
 `Tags: vm, static, ipaddress, nic`
 
