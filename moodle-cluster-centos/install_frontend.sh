@@ -62,13 +62,13 @@ mkdir /opt/setup
 cd /opt/setup
 
 #Download Apache Source code
-wget http://apache.mirror.digitalpacific.com.au//httpd/httpd-2.4.20.tar.gz
+wget https://archive.apache.org/dist/httpd/httpd-2.4.20.tar.gz
 
-#Download APR  Apache dependency Source code
-wget http://mirror.ventraip.net.au/apache/apr/apr-1.5.2.tar.gz
+#Download APR Apache dependency Source code
+wget https://archive.apache.org/dist/apr/apr-1.5.2.tar.gz
 
-#Download APR-Util  Apache dependency Source code
-wget http://mirror.ventraip.net.au/apache//apr/apr-util-1.5.4.tar.gz
+#Download APR-Util Apache dependency Source code
+wget https://archive.apache.org/dist/apr/apr-util-1.5.4.tar.gz
 
 #Download PHP Source code
 wget http://au2.php.net/get/php-5.4.40.tar.gz/from/this/mirror
@@ -89,7 +89,7 @@ cd bkraft-securingc7
 git checkout -b puppet4.0
 git branch --set-upstream-to=remotes/origin/puppet4.0
 git pull
-cd /
+cd ..
 cp -r bkraft-securingc7/ /usr/share/puppet/modules/
 
 cd /usr/share/puppet/modules/
@@ -229,6 +229,18 @@ chown -R apache:apache /www/moodledata
 if [ "$installOfficePlugins" = "True" ]; then
     curl -k --max-redirs 10 https://github.com/Microsoft/o365-moodle/archive/$moodleVersion.zip -L -o o365.zip
     unzip o365.zip
+    
+# The plugins below are not required for new installations
+    rm -rf o365-moodle-$moodleVersion/blocks/onenote
+    rm -rf o365-moodle-$moodleVersion/local/m*
+    rm -rf o365-moodle-$moodleVersion/local/o365docs
+    rm -rf o365-moodle-$moodleVersion/local/office365
+    rm -rf o365-moodle-$moodleVersion/local/onenote
+    rm -rf o365-moodle-$moodleVersion/mod/assign
+    rm -rf o365-moodle-$moodleVersion/user/profile/
+    rm -rf o365-moodle-$moodleVersion/repository/onenote	
+    
+# Copy office plugins folder into moodle  and remove unzipped folder    
     cp -r o365-moodle-$moodleVersion/* moodle
     rm -rf o365-moodle-$moodleVersion
 fi
