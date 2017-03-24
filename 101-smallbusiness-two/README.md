@@ -15,4 +15,7 @@ Click the button below to deploy
 
 # Known Issues
 
-+	This template is entirely serial due to some concurrency issues between the platform agent and the DSC extension which cause problems when multiple VM and\or extension resources are deployed concurrently, this will be fixed in the near future
+
+# Changelog
+
+0.1 3-24-2017 Initial code release with two DCs only as AD servers
