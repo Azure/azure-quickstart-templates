@@ -1,0 +1,304 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "IP Prefix": {
+      "defaultValue": "10.0.0",
+      "type": "string"
+    },
+    "RDP Rule": {
+      "defaultValue": "Deny",
+      "type": "string",
+      "allowedValues": [
+        "Allow",
+        "Deny"
+      ],
+      "metadata": {
+        "description": "Is RDP to apps allowed?"
+      }
+    }
+  },
+  "variables": {
+    "ipRange": "[concat(parameters('IP Prefix'),'.0/24')]",
+    "VNET Name": "VNet",
+    "NSG App Gateway": "Nsg-AppGateway",
+    "NSG App": "Nsg-App"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('VNet Name')]",
+      "apiVersion": "2016-03-30",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('NSG App Gateway'))]",
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('NSG App'))]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('ipRange')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "appGateway",
+            "properties": {
+              "addressPrefix": "[concat(parameters('IP Prefix'),'.0/27')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('NSG App Gateway'))]"
+              }
+            }
+          },
+          {
+            "name": "app-A",
+            "properties": {
+              "addressPrefix": "[concat(parameters('IP Prefix'),'.32/28')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('NSG App'))]"
+              }
+            }
+          },
+          {
+            "name": "app-B",
+            "properties": {
+              "addressPrefix": "[concat(parameters('IP Prefix'),'.48/28')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('NSG App'))]"
+              }
+            }
+          },
+          {
+            "name": "app-C",
+            "properties": {
+              "addressPrefix": "[concat(parameters('IP Prefix'),'.64/28')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('NSG App'))]"
+              }
+            }
+          }
+        ]
+      },
+      "resources": []
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "name": "[variables('NSG App Gateway')]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "location": "[resourceGroup().location]",
+      "tags": {},
+      "properties": {
+        "securityRules": [
+          {
+            "name": "Allow-HTTP-From-Everywhere",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Allow-HTTPS-From-Everywhere",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 200,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Allow-RDP-From-Everywhere",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3389",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 300,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Allow-Health-Monitoring",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "AzureLoadBalancer",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 400,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Disallow-everything-else-Inbound",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Deny",
+              "priority": 500,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Allow-to-VNet",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Outbound"
+            }
+          },
+          {
+            "name": "Allow-to-8443",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "8443",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "Internet",
+              "access": "Allow",
+              "priority": 200,
+              "direction": "Outbound"
+            }
+          },
+          {
+            "name": "Disallow-everything-else-Outbound",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Deny",
+              "priority": 300,
+              "direction": "Outbound"
+            }
+          }
+        ],
+        "subnets": []
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "name": "[variables('NSG App')]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "location": "[resourceGroup().location]",
+      "tags": {},
+      "properties": {
+        "securityRules": [
+          {
+            "name": "Allow-HTTP-From-VNET",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Allow-RDP-From-Everywhere",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3389",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "[parameters('RDP Rule')]",
+              "priority": 300,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Allow-Health-Monitoring",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "AzureLoadBalancer",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 400,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Disallow-everything-else-Inbound",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Deny",
+              "priority": 500,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Allow-HTTPS-to-Internet",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "Internet",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Outbound"
+            }
+          },
+          {
+            "name": "Allow-to-8443",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "8443",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "Internet",
+              "access": "Allow",
+              "priority": 200,
+              "direction": "Outbound"
+            }
+          },
+          {
+            "name": "Disallow-everything-else-Outbound",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Deny",
+              "priority": 300,
+              "direction": "Outbound"
+            }
+          }
+        ],
+        "subnets": []
+      }
+    }
+  ]
+}

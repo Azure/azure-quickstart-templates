@@ -1,0 +1,198 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.1.0.0",
+  "parameters": {
+    "Storage Account Name": {
+      "defaultValue": null,
+      "type": "string"
+    },
+    "Deploy Container SAS Token": {
+      "defaultValue": null,
+      "type": "string"
+    },
+    "RDP Rule": {
+      "defaultValue": "Deny",
+      "type": "string",
+      "allowedValues": [
+        "Allow",
+        "Deny"
+      ],
+      "metadata": {
+        "description": "Is RDP to apps allowed?"
+      }
+    },
+    "Cookie Based Affinity": {
+      "type": "string",
+      "allowedValues": [
+        "Enabled",
+        "Disabled"
+      ],
+      "defaultValue": "Disabled",
+      "metadata": {
+        "description": "cookie based affinity"
+      }
+    },
+    "VNET IP Prefix": {
+      "defaultValue": "10.0.0",
+      "type": "string"
+    },
+    "Public DNS Prefix": {
+      "defaultValue": null,
+      "type": "string"
+    },
+    "VM Admin Password": {
+      "defaultValue": null,
+      "type": "securestring"
+    }
+  },
+  "variables": {
+    "Deploy Container URL": "[concat('https://', parameters('Storage Account Name'), '.blob.core.windows.net/deploy/')]",
+    "App Gateway Backend Pool ID Prefix": "[concat(resourceId('Microsoft.Network/applicationGateways', 'AppGateway'), '/backendAddressPools/')]"
+  },
+  "resources": [
+    {
+      "name": "[parameters('Storage Account Name')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-01-01",
+      "tags": {},
+      "dependsOn": [],
+      "sku": {
+        "name": "Standard_LRS",
+        "tier": "Standard"
+      },
+      "kind": "Storage",
+      "properties": {},
+      "resources": [
+        {
+          "name": "[concat(parameters('Storage Account Name'), '/Microsoft.Authorization/storage-lock')]",
+          "type": "Microsoft.Storage/storageAccounts/providers/locks",
+          "apiVersion": "2015-01-01",
+          "dependsOn": [
+            "[resourceid('Microsoft.Storage/storageAccounts/', parameters('Storage Account Name'))]"
+          ],
+          "properties": {
+            "level": "CannotDelete",
+            "notes": "Protect the account from deletion when deleting resource group"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Network",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('Deploy Container URL'), 'network.json', parameters('Deploy Container SAS Token'))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "RDP Rule": { "value": "[parameters('RDP Rule')]" },
+          "IP Prefix": { "value": "[parameters('VNET IP Prefix')]" }
+        }
+      }
+    },
+    {
+      "name": "AppGateway",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'Network')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('Deploy Container URL'), 'app-gateway.json', parameters('Deploy Container SAS Token'))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "VNet Name": { "value": "VNet" },
+          "Subnet Name": { "value": "appGateway" },
+          "AppGateway Size": { "value": "Standard_Medium" },
+          "AppGateway Instance Count": { "value": 2 },
+          "Cookie Based Affinity": { "value": "[parameters('Cookie Based Affinity')]" }
+        }
+      }
+    },
+    {
+      "name": "App-A",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'AppGateway')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('Deploy Container URL'), 'vmss.json', parameters('Deploy Container SAS Token'))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "Deploy Container URL": { "value": "[variables('Deploy Container URL')]" },
+          "Deploy Container SAS Token": { "value": "[parameters('Deploy Container SAS Token')]" },
+          "App Name": { "value": "A" },
+          "VNet Name": { "value": "VNet" },
+          "Subnet Name": { "value": "app-A" },
+          "App Gateway Backend Pool ID": { "value": "[concat(variables('App Gateway Backend Pool ID Prefix'), 'app-a-Pool')]" },
+          "Scale Set Name": { "value": "App-A" },
+          "Domain Name Label": { "value": "[concat(parameters('Public DNS Prefix'), 'a')]" },
+          "VM Admin Password": { "value": "[parameters('VM Admin Password')]" }
+        }
+      }
+    },
+    {
+      "name": "App-B",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'AppGateway')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('Deploy Container URL'), 'vmss.json', parameters('Deploy Container SAS Token'))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "Deploy Container URL": { "value": "[variables('Deploy Container URL')]" },
+          "Deploy Container SAS Token": { "value": "[parameters('Deploy Container SAS Token')]" },
+          "App Name": { "value": "B" },
+          "VNet Name": { "value": "VNet" },
+          "Subnet Name": { "value": "app-B" },
+          "App Gateway Backend Pool ID": { "value": "[concat(variables('App Gateway Backend Pool ID Prefix'), 'app-b-Pool')]" },
+          "Scale Set Name": { "value": "App-B" },
+          "Domain Name Label": { "value": "[concat(parameters('Public DNS Prefix'), 'b')]" },
+          "VM Admin Password": { "value": "[parameters('VM Admin Password')]" }
+        }
+      }
+    },
+    {
+      "name": "App-C",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'AppGateway')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('Deploy Container URL'), 'vmss.json', parameters('Deploy Container SAS Token'))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "Deploy Container URL": { "value": "[variables('Deploy Container URL')]" },
+          "Deploy Container SAS Token": { "value": "[parameters('Deploy Container SAS Token')]" },
+          "App Name": { "value": "C" },
+          "VNet Name": { "value": "VNet" },
+          "Subnet Name": { "value": "app-C" },
+          "App Gateway Backend Pool ID": { "value": "[concat(variables('App Gateway Backend Pool ID Prefix'), 'app-c-Pool')]" },
+          "Scale Set Name": { "value": "App-C" },
+          "Domain Name Label": { "value": "[concat(parameters('Public DNS Prefix'), 'c')]" },
+          "VM Admin Password": { "value": "[parameters('VM Admin Password')]" }
+        }
+      }
+    }
+  ]
+}
