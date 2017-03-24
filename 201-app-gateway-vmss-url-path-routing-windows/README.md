@@ -9,9 +9,9 @@ Note that this template does not install an application on the VM Scale Set VMs,
 
 This template supports VM scale sets of up to 1,000 VMs, and uses Azure Managed Disks.
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fvplauzon%2Fazure-quickstart-templates%2Fmaster%2F201-app-gateway-vmss-url-path-routing-windows.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fvplauzon%2Fazure-quickstart-templates%2Fmaster%2F201-app-gateway-vmss-url-path-routing-windows.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fvplauzon%2Fazure-quickstart-templates%2Fmaster%2F201-app-gateway-vmss-url-path-routing-windows.json" target="_blank">
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fvplauzon%2Fazure-quickstart-templates%2Fmaster%2F201-app-gateway-vmss-url-path-routing-windows.json" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
