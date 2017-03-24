@@ -2,13 +2,12 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.1.0.0",
   "parameters": {
-    "Storage Account Name": {
-      "defaultValue": null,
-      "type": "string"
-    },
-    "Deploy Container SAS Token": {
-      "defaultValue": null,
-      "type": "string"
+    "Location": {
+      "defaultValue": "[resourceGroup().location]",
+      "type": "string",
+      "metadata": {
+        "description": "Location to deploy"
+      }
     },
     "RDP Rule": {
       "defaultValue": "Deny",
@@ -18,7 +17,7 @@
         "Deny"
       ],
       "metadata": {
-        "description": "Is RDP to apps allowed?"
+        "description": "Is RDP to VMs allowed (or blocked)?"
       }
     },
     "Cookie Based Affinity": {
@@ -29,15 +28,29 @@
       ],
       "defaultValue": "Disabled",
       "metadata": {
-        "description": "cookie based affinity"
+        "description": "App Gateway cookie based affinity"
+      }
+    },
+    "VNET Name": {
+      "defaultValue": "VNet",
+      "type": "string",
+      "metadata": {
+        "description": "Name for the VNET"
       }
     },
     "VNET IP Prefix": {
       "defaultValue": "10.0.0",
-      "type": "string"
+      "type": "string",
+      "metadata": {
+        "description": "Prefix for the 256 IP addresses in the VNET"
+      }
     },
     "Public DNS Prefix": {
       "defaultValue": null,
+      "type": "string"
+    },
+    "VM Admin Name": {
+      "defaultValue": "vmssadmin",
       "type": "string"
     },
     "VM Admin Password": {
@@ -46,38 +59,13 @@
     }
   },
   "variables": {
-    "Deploy Container URL": "[concat('https://', parameters('Storage Account Name'), '.blob.core.windows.net/deploy/')]",
+    "URL Root": "https://raw.githubusercontent.com/vplauzon/azure-quickstart-templates/master/201-app-gateway-vmss-url-path-routing-windows/",
+    "Template Network URL": "[concat(variables('Url Root'), 'network.json')]",
+    "Template App Gateway URL": "[concat(variables('Url Root'), 'app-gateway.json')]",
+    "Template VMSS URL": "[concat(variables('Url Root'), 'vmss.json')]",
     "App Gateway Backend Pool ID Prefix": "[concat(resourceId('Microsoft.Network/applicationGateways', 'AppGateway'), '/backendAddressPools/')]"
   },
   "resources": [
-    {
-      "name": "[parameters('Storage Account Name')]",
-      "type": "Microsoft.Storage/storageAccounts",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2016-01-01",
-      "tags": {},
-      "dependsOn": [],
-      "sku": {
-        "name": "Standard_LRS",
-        "tier": "Standard"
-      },
-      "kind": "Storage",
-      "properties": {},
-      "resources": [
-        {
-          "name": "[concat(parameters('Storage Account Name'), '/Microsoft.Authorization/storage-lock')]",
-          "type": "Microsoft.Storage/storageAccounts/providers/locks",
-          "apiVersion": "2015-01-01",
-          "dependsOn": [
-            "[resourceid('Microsoft.Storage/storageAccounts/', parameters('Storage Account Name'))]"
-          ],
-          "properties": {
-            "level": "CannotDelete",
-            "notes": "Protect the account from deletion when deleting resource group"
-          }
-        }
-      ]
-    },
     {
       "name": "Network",
       "type": "Microsoft.Resources/deployments",
@@ -85,12 +73,13 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('Deploy Container URL'), 'network.json', parameters('Deploy Container SAS Token'))]",
+          "uri": "[variables('Template Network URL')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "RDP Rule": { "value": "[parameters('RDP Rule')]" },
-          "IP Prefix": { "value": "[parameters('VNET IP Prefix')]" }
+          "VNet Name": { "value": "[parameters('VNET Name')]" },
+          "IP Prefix": { "value": "[parameters('VNET IP Prefix')]" },
+          "RDP Rule": { "value": "[parameters('RDP Rule')]" }
         }
       }
     },
@@ -104,11 +93,11 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('Deploy Container URL'), 'app-gateway.json', parameters('Deploy Container SAS Token'))]",
+          "uri": "[variables('Template App Gateway URL')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "VNet Name": { "value": "VNet" },
+          "VNet Name": { "value": "[parameters('VNET Name')]" },
           "Subnet Name": { "value": "appGateway" },
           "AppGateway Size": { "value": "Standard_Medium" },
           "AppGateway Instance Count": { "value": 2 },
@@ -126,7 +115,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('Deploy Container URL'), 'vmss.json', parameters('Deploy Container SAS Token'))]",
+          "uri": "[variables('Template VMSS URL')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -152,7 +141,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('Deploy Container URL'), 'vmss.json', parameters('Deploy Container SAS Token'))]",
+          "uri": "[variables('Template VMSS URL')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -178,12 +167,10 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('Deploy Container URL'), 'vmss.json', parameters('Deploy Container SAS Token'))]",
+          "uri": "[variables('Template VMSS URL')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "Deploy Container URL": { "value": "[variables('Deploy Container URL')]" },
-          "Deploy Container SAS Token": { "value": "[parameters('Deploy Container SAS Token')]" },
           "App Name": { "value": "C" },
           "VNet Name": { "value": "VNet" },
           "Subnet Name": { "value": "app-C" },
