@@ -1,12 +1,12 @@
 # Couchbase
 
+This ARM template deploys a Couchbase Enterprise cluster to Azure.  The template provisions an availability set, vnet, and a variety of virtual machines each with their own managed disks and public IP addresses.  It also sets up a network security group.
+
 # Important Note
 
 For the most up to date version of this template, please do not use this repo. Instead go [here](https://github.com/couchbase-partners/azure-resource-manager-couchbase).  We strongly encourage use of the latest version as it incorporates bug fixes and is more flexible.
 
 # Deploying this Couchbase ARM Template
-
-This ARM template deploys a Couchbase Enterprise cluster to Azure.  The template provisions an availability set, vnet, and a variety of virtual machines each with their own managed disks and public IP addresses.  It also sets up a network security group.
 
 You can deploy or inspect the template by clicking the buttons below or using a command line tool like the Azure CLI or Azure PowerShell:
 
