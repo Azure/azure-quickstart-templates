@@ -11,7 +11,7 @@ manifest=$1
 default_password="c1oudc0w"
 
 while true; do
-  read -p "Enter a password to use in $manifest [$default_password]:" password
+  read -p "Enter a password(note: password should not contain special characters: @,' and so on) to use in $manifest [$default_password]:" password
   password=${password:-$default_password}
   read -p "Please double check your password [$password]. Type yes to continue:" ret
   if [ "$ret" == "yes" ]; then
