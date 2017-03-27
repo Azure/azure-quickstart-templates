@@ -1,9 +1,9 @@
 ### Application Gateway Integration fronting 3 VM Scale Sets and using URL Path based routing ###
 
 
-This template deploys a Windows VM Scale Set integrated with Azure Application Gateway.
+This template deploys an Azure Application Gateway fronting 3 Windows VM Scale Sets.  It uses URL path routing to route to the different scale set.  Optionnally it can use cookie based affinity to route to the same VM of each scale set for the same user (cookie).
 
-The Application Gateway is configured for round robin load balancing of incoming connections at port 80 (of the gateway's public IP address) to VMs in the scale set. 
+The Application Gateway is configured to listen to port 80 and route requests to VMs in the scale set. 
  
 Note that this template does not install an application on the VM Scale Set VMs, so if you want to demonstrate the round robin load balancing, the template will need to be updated (for example by adding an extension to install a web server). 
 
