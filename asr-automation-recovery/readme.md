@@ -5,7 +5,7 @@
 This Resource Manager Template will deploy the following:
 
 * Create or use an existing Azure Automation account
-* Import several PowerShell Modules, such as:
+* Imports the following PowerShell Modules:
 	* AzureRm.Profile
 	* AzureRm.Compute
 	* AzureRm.Network
