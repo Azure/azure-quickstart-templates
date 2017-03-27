@@ -1,3 +1,19 @@
+# v2.4.4 (2017-02-10)
+
+- On AzureChinaCloud, set PowerDNS server on BOSH VM as DNS server. For *.{cf-ip}.xip.io, PowerDNS server will respond without querying Azure DNS. For the real domains and *.{other-ip-other-than-cf-ip}.xip.io, PowerDNS server will go to Azure DNS at the first time, and cache the resolving result.
+
+# v2.4.3 (2017-02-08)
+
+- Use Azure blob storage as blobstore by default
+- Upgrade bosh to v260.5
+- Upgrade cf-cli to v6.23.1
+
+# v2.4.2 (2017-01-10)
+
+- Upgrade cf-release to v250
+- Upgrade bosh stemcell to v3312.12
+- Fix issue https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/issues/235
+
 # v2.4.0 (2016-12-21)
 
 - Upgrade Azure CPI version to v20. Please see new features in [bosh-azure-cpi-release v20](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v20)
