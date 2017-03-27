@@ -18,13 +18,13 @@ In order to test the routing, you need to find the URL to the AppGateway-IP publ
 http://0dd86922-82a7-4a4a-bc22-720d8e5a2dc7.cloudapp.net/ routes to the root of App-A
 </li>
 <li>
-http://0dd86922-82a7-4a4a-bc22-720d8e5a2dc7.cloudapp.net/a routes to the sub folder 'a' of App-A
+http://0dd86922-82a7-4a4a-bc22-720d8e5a2dc7.cloudapp.net/a/ routes to the sub folder 'a' of App-A
 </li>
 <li>
-http://0dd86922-82a7-4a4a-bc22-720d8e5a2dc7.cloudapp.net/b routes to the sub folder 'b' of App-B
+http://0dd86922-82a7-4a4a-bc22-720d8e5a2dc7.cloudapp.net/b/ routes to the sub folder 'b' of App-B
 </li>
 <li>
-http://0dd86922-82a7-4a4a-bc22-720d8e5a2dc7.cloudapp.net/c routes to the sub folder 'c' of App-C
+http://0dd86922-82a7-4a4a-bc22-720d8e5a2dc7.cloudapp.net/c/ routes to the sub folder 'c' of App-C
 </li>
 </ul>
 
