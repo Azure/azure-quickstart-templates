@@ -14,7 +14,7 @@
 3. [Licenses and Costs ](#licenses-and-costs)
 4. [Prerequisites](#prerequisites)
 5. [Deployment Steps](#deployment-steps)
-6. [Deployment Time](#deployment-steps)
+6. [Deployment Time](#deployment-time)
 7. [Support](#support)
 
 <!-- /TOC -->
