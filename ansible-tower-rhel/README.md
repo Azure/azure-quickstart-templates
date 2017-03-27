@@ -68,7 +68,7 @@ Build your Ansible Tower environment on Azure in a few simple steps:
 
 ## Deployment Time 
 
-The deployment takes about 20 minutes. 
+The deployment takes about 20 minutes to complete. 
 
 ## Support 
 
