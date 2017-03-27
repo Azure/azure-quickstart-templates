@@ -45,7 +45,7 @@ The Red Hat Enterprise Linux 7.3 image used in this solution is the PAYG model a
 
 ## Prerequisites 
 
-Azure Subscription with specified payment method (Red Hat Enterprise Linux is a market place product and requires payment method to be specified in Azure Subscription
+Azure Subscription with specified payment method (Red Hat Enterprise Linux is a market place product and requires payment method to be specified in Azure Subscription)
 
 ## Deployment Steps  
 
@@ -63,7 +63,7 @@ After successful deployment, this template will output the IP address and FQDN o
 
 - To access all VM's via SSH, you need to first ssh into jump VM using its public ip captured from template outputs, from jump VM you can ssh into other VMs through via private IP.
 - Alternatively You can also get public IP of Jump VM from overview blade in VM Settings.
-- Load balancer is configured for load balancing HTTP(Port 80) and HTTPS(Port 443) to distribute traffic to web servers.You can configure web servers and start access websites using Load Balancer.
+- Load balancer is configured for load balancing HTTP(Port 80) and HTTPS(Port 443) to distribute traffic to web servers.You can configure web servers and start accessing websites using Load Balancer.
 
 ## Support 
 
