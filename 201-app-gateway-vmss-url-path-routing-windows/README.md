@@ -5,7 +5,7 @@ This template deploys an Azure Application Gateway fronting 3 Windows VM Scale S
 
 The Application Gateway is configured to listen to port 80 and route requests to VMs in the scale set.
 
-<img src="https://raw.githubusercontent.com/vplauzon/azure-quickstart-templates/master/201-app-gateway-vmss-url-path-routing-windows/images/diagram.png" />
+<img src="https://raw.githubusercontent.com/vplauzon/azure-quickstart-templates/master/201-app-gateway-vmss-url-path-routing-windows/images/Diagram.png" />
  
 Note that this template does not install an application on the VM Scale Set VMs, so if you want to demonstrate the round robin load balancing, the template will need to be updated (for example by adding an extension to install a web server). 
 
