@@ -5,7 +5,7 @@
         "appName": {
             "type": "string",
             "metadata": {
-                "description": "Name of azure web app"
+                "description": "Name for the Azure Web App"
             }
         },
         "appServiceTier": {
@@ -80,34 +80,13 @@
             "metadata": {
                 "description": "Non-admin Database User password"
             }
-        },
-        "mediaServicesAccountName": {
-            "type": "string",
-            "metadata": {
-                "description": "Media Services account name"
-            }
-        },
-        "storageAccountName": {
-            "type": "string",
-            "metadata": {
-                "description": "Storage account name"
-            }
-        },
-        "storageAccountType": {
-            "type": "string",
-            "allowedValues": [
-                "Standard_LRS",
-                "Standard_GRS",
-                "Standard_RAGRS"
-            ],
-            "defaultValue": "Standard_LRS",
-            "metadata": {
-                "description": "Storage Account Type: Standard-LRS, Standard-GRS, Standard-RAGRS, Standard-ZRS"
-            }
         }
     },
     "variables": {
-        "appServicePlanName":"[concat(parameters('appName'), 'serviceplan')]"
+        "appServicePlanName":"[concat(parameters('appName'), 'serviceplan')]",
+        "mediaServicesAccountName": "[concat('media',uniqueString(resourceGroup().id))]",
+        "storageAccountName": "[concat('storage',uniqueString(resourceGroup().id))]",
+        "storageAccountType": "Standard_LRS"
     },
     "resources": [
         {
@@ -165,29 +144,29 @@
         },
         {
             "type": "Microsoft.Media/mediaServices",
-            "name": "[parameters('mediaServicesAccountName')]",
+            "name": "[variables('mediaServicesAccountName')]",
             "apiVersion": "2015-10-01",
             "location": "[resourceGroup().location]",
             "properties": {
                 "storageAccounts": [
                     {
-                        "id": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+                        "id": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
                         "isPrimary": true
                     }
                 ]
             },
             "resources": [],
             "dependsOn": [
-                "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]"
+                "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
             ]
         },
         {
             "type": "Microsoft.Storage/storageAccounts",
-            "name": "[parameters('storageAccountName')]",
+            "name": "[variables('storageAccountName')]",
             "apiVersion": "2016-01-01",
             "location": "[resourceGroup().location]",
             "sku": {
-                "name": "[parameters('storageAccountType')]"
+                "name": "[variables('storageAccountType')]"
              },
             "kind": "Storage",
             "properties": {
@@ -217,7 +196,7 @@
                     "dependsOn": [
                         "[concat('Microsoft.Web/Sites/', parameters('appName'))]",
                         "[concat('Microsoft.Sql/servers/', parameters('dbServerName'), '/databases/', parameters('dbName'))]",
-                        "[concat('Microsoft.Media/mediaservices/', parameters('mediaServicesAccountName'))]"
+                        "[concat('Microsoft.Media/mediaservices/', variables('mediaServicesAccountName'))]"
                     ],
                     "properties": {
                         "packageUri": "https://orchardamstest.blob.core.windows.net/packages/Orchard.Web.1.10.x-AMS.zip",
@@ -256,14 +235,14 @@
                     "type": "config",
                     "dependsOn": [
                         "[resourceId('Microsoft.Web/Sites', parameters('appName'))]",
-                        "[concat('Microsoft.Media/mediaservices/', parameters('mediaServicesAccountName'))]",
+                        "[concat('Microsoft.Media/mediaservices/', variables('mediaServicesAccountName'))]",
                         "[concat('Microsoft.Web/Sites/', parameters('appName'), '/Extensions/MSDeploy')]"
                     ],
                     "properties": {
                         "defaultRecipe": "Video Portal",
-                        "Azure.MediaServices.AccountName": "[parameters('mediaServicesAccountName')]",
-                        "Azure.MediaServices.AccountKey": "[listKeys(resourceId('Microsoft.Media/mediaservices', parameters('mediaServicesAccountName')), providers('Microsoft.Media', 'mediaservices').apiVersions[0]).primaryKey]",
-                        "Azure.MediaServices.StorageAccountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]"
+                        "Azure.MediaServices.AccountName": "[variables('mediaServicesAccountName')]",
+                        "Azure.MediaServices.AccountKey": "[listKeys(resourceId('Microsoft.Media/mediaservices', variables('mediaServicesAccountName')), providers('Microsoft.Media', 'mediaservices').apiVersions[0]).primaryKey]",
+                        "Azure.MediaServices.StorageAccountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]"
                     }
                 },
                 {
