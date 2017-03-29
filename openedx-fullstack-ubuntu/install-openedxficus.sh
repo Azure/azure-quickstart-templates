@@ -90,22 +90,24 @@ cd playbooks
 # Disable "immediate exit" on errors to allow for retry
 set +e
 
-for (( a=1; a<=11; a++ ))
-do
-    echo
-    echo "starting attempt number: $a"
-    echo
-    ansible-playbook -i localhost, -c local vagrant-fullstack.yml -e@$ANSIBLE_ROOT/server-vars.yml -e@$ANSIBLE_ROOT/extra-vars.yml
-
-    if [ $? -eq 0 ]; then
-        echo "attempt number: $a succeeded!"
-        break
-    else
-        echo "attempt number: $a failed"
-        update_packages update
-        update_packages upgrade
-    fi
+#retry transient failures
+MAX_ATTEMPTS=10
+retry_count=1
+until (retry_count==MAX_ATTEMPTS]
+do    
+    echo    
+    echo "starting attempt number: $retry_count"    
+    echo    
+    ansible-playbook -i localhost, -c local vagrant-fullstack.yml -e@$ANSIBLE_ROOT/server-vars.yml -e@$ANSIBLE_ROOT/extra-vars.yml    
+    if [ $? -eq 0 ]; then        
+        echo "attempt number: $retry_count succeeded!"        
+        break    
+    else        
+        echo "attempt number: $retry_count failed"        
+        update_packages update        
+        update_packages upgrade    
+    fi    
+    retry_count=retry_count+1
 done
 
-# Enable "immediate exit" on error
 set -e
