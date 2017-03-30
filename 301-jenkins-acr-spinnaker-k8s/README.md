@@ -17,12 +17,12 @@ The Jenkins instance will include a basic pipeline that checks out a user-provid
 1. Click the "Deploy to Azure" button. If you don't have an Azure subscription, you can follow instructions to signup for a free trial.
 1. Enter a valid name for the VM, as well as a user name and [ssh public key](https://docs.microsoft.com/azure/virtual-machines/virtual-machines-linux-mac-create-ssh-keys) that you will use to login remotely to the VM via SSH.
 1. Enter the appId and appKey for your Service Principal (used to access your ACR and by your Kubernetes cluster to dynamically manage resources). If you don't have a service principal, use the [Azure CLI 2.0](https://docs.microsoft.com/cli/azure/install-azure-cli) to create one (see [here](https://docs.microsoft.com/cli/azure/create-an-azure-service-principal-azure-cli?toc=%2fazure%2fazure-resource-manager%2ftoc.json) for more details):
-  ```bash
-  az login
-  az account set --subscription <Subscription ID>
-  az ad sp create-for-rbac --role="Contributor" --scopes="/subscriptions/<Subscription ID>" --name "Spinnaker"
-  ```
-  > NOTE: You can run `az account list` after you login to get a list of subscription IDs for your account.
+    ```bash
+    az login
+    az account set --subscription <Subscription ID>
+    az ad sp create-for-rbac --role="Contributor" --scopes="/subscriptions/<Subscription ID>" --name "Spinnaker"
+    ```
+    > NOTE: You can run `az account list` after you login to get a list of subscription IDs for your account.
 1. Leave the git repository as the [sample app](https://github.com/lwander/spin-kub-demo) or change it to target your own app's repository. The repo must have a Dockerfile in its root.
 1. Leave the docker repository as the sample name or change it to the name you desire. A repo with this name will be created in your ACR.
 
@@ -40,53 +40,53 @@ You need to setup port forwarding to view the Jenkins and Spinnaker UI on your l
 
 ### If you are using Linux or Mac:
 1. Add this to your ~/.ssh/config
-  ```
-  Host devops-start
-    HostName <Public DNS name of instance you just created>
-    IdentityFile <Path to your key file>
-    ControlMaster yes
-    ControlPath ~/.ssh/devops-tunnel.ctl
-    RequestTTY no
-    # Jenkins dashboard
-    LocalForward 8080 127.0.0.1:8080
-    # Spinnaker/deck
-    LocalForward 9000 127.0.0.1:9000
-    # Spinnaker/gate
-    LocalForward 8084 127.0.0.1:8084
-    # Default port if running 'kubectl proxy' on the VM
-    LocalForward 8001 127.0.0.1:8001
-    User <User name>
+    ```
+    Host devops-start
+      HostName <Public DNS name of instance you just created>
+      IdentityFile <Path to your key file>
+      ControlMaster yes
+      ControlPath ~/.ssh/devops-tunnel.ctl
+      RequestTTY no
+      # Jenkins dashboard
+      LocalForward 8080 127.0.0.1:8080
+      # Spinnaker/deck
+      LocalForward 9000 127.0.0.1:9000
+      # Spinnaker/gate
+      LocalForward 8084 127.0.0.1:8084
+      # Default port if running 'kubectl proxy' on the VM
+      LocalForward 8001 127.0.0.1:8001
+      User <User name>
 
-  Host devops-stop
-    HostName <Public DNS name of instance you just created>
-    IdentityFile <Path to your key file>
-    ControlPath ~/.ssh/devops-tunnel.ctl
-    RequestTTY no
-  ```
+    Host devops-stop
+      HostName <Public DNS name of instance you just created>
+      IdentityFile <Path to your key file>
+      ControlPath ~/.ssh/devops-tunnel.ctl
+      RequestTTY no
+    ```
 1. Create a devops-tunnel.sh file with the following content and give it execute permission using `chmod +x devops-tunnel.sh`
-  ```bash
-  #!/bin/bash
+    ```bash
+    #!/bin/bash
 
-  socket=$HOME/.ssh/devops-tunnel.ctl
+    socket=$HOME/.ssh/devops-tunnel.ctl
 
-  if [ "$1" == "start" ]; then
-    if [ ! \( -e ${socket} \) ]; then
-      echo "Starting tunnel to DevOps VM..."
-      ssh -f -N devops-start && echo "Done."
-    else
-      echo "Tunnel to DevOps VM running."
+    if [ "$1" == "start" ]; then
+      if [ ! \( -e ${socket} \) ]; then
+        echo "Starting tunnel to DevOps VM..."
+        ssh -f -N devops-start && echo "Done."
+      else
+        echo "Tunnel to DevOps VM running."
+      fi
     fi
-  fi
 
-  if [ "$1" == "stop" ]; then
-    if [ \( -e ${socket} \) ]; then
-      echo "Stopping tunnel to DevOps VM..."
-      ssh -O "exit" devops-stop && echo "Done."
-    else
-      echo "Tunnel to DevOps VM stopped."
+    if [ "$1" == "stop" ]; then
+      if [ \( -e ${socket} \) ]; then
+        echo "Stopping tunnel to DevOps VM..."
+        ssh -O "exit" devops-stop && echo "Done."
+      else
+        echo "Tunnel to DevOps VM stopped."
+      fi
     fi
-  fi
-  ```
+    ```
 1. Call `./devops-tunnel.sh start` to start your tunnel
 1. Call `./devops-tunnel.sh stop` to stop your tunnel
 

@@ -15,12 +15,12 @@ This template allows you to deploy an instance of Spinnaker on a Linux Ubuntu 14
 1. Click the "Deploy to Azure" button. If you don't have an Azure subscription, you can follow instructions to signup for a free trial.
 1. Enter a valid name for the Spinnaker VM, a user name, and a [ssh public key](https://docs.microsoft.com/azure/virtual-machines/virtual-machines-linux-mac-create-ssh-keys) that you will use to login remotely to both.
 1. Enter the appId and appKey for your Service Principal (used to access your ACR and by your Kubernetes cluster to dynamically manage resources). If you don't have a service principal, use the [Azure CLI 2.0](https://docs.microsoft.com/cli/azure/install-azure-cli) to create one (see [here](https://docs.microsoft.com/cli/azure/create-an-azure-service-principal-azure-cli?toc=%2fazure%2fazure-resource-manager%2ftoc.json) for more details):
-  ```bash
-  az login
-  az account set --subscription <Subscription ID>
-  az ad sp create-for-rbac --role="Contributor" --scopes="/subscriptions/<Subscription ID>" --name "Spinnaker"
-  ```
-  > NOTE: You can run `az account list` after you login to get a list of subscription IDs for your account.
+    ```bash
+    az login
+    az account set --subscription <Subscription ID>
+    az ad sp create-for-rbac --role="Contributor" --scopes="/subscriptions/<Subscription ID>" --name "Spinnaker"
+    ```
+    > NOTE: You can run `az account list` after you login to get a list of subscription IDs for your account.
 
 ## B. Setup SSH port forwarding
 You need to setup port forwarding to view the Spinnaker UI on your local machine.
@@ -35,51 +35,51 @@ You need to setup port forwarding to view the Spinnaker UI on your local machine
 
 ### If you are using Linux or Mac:
 1. Add this to your ~/.ssh/config
-  ```
-  Host spinnaker-start
-    HostName <Public DNS name of instance you just created>
-    IdentityFile <Path to your key file>
-    ControlMaster yes
-    ControlPath ~/.ssh/spinnaker-tunnel.ctl
-    RequestTTY no
-    # Spinnaker/deck
-    LocalForward 9000 127.0.0.1:9000
-    # Spinnaker/gate
-    LocalForward 8084 127.0.0.1:8084
-    # Default port if running 'kubectl proxy' on Spinnaker VM
-    LocalForward 8001 127.0.0.1:8001
-    User <User name>
+    ```
+    Host spinnaker-start
+      HostName <Public DNS name of instance you just created>
+      IdentityFile <Path to your key file>
+      ControlMaster yes
+      ControlPath ~/.ssh/spinnaker-tunnel.ctl
+      RequestTTY no
+      # Spinnaker/deck
+      LocalForward 9000 127.0.0.1:9000
+      # Spinnaker/gate
+      LocalForward 8084 127.0.0.1:8084
+      # Default port if running 'kubectl proxy' on Spinnaker VM
+      LocalForward 8001 127.0.0.1:8001
+      User <User name>
 
-  Host spinnaker-stop
-    HostName <Public DNS name of instance you just created>
-    IdentityFile <Path to your key file>
-    ControlPath ~/.ssh/spinnaker-tunnel.ctl
-    RequestTTY no
-  ```
+    Host spinnaker-stop
+      HostName <Public DNS name of instance you just created>
+      IdentityFile <Path to your key file>
+      ControlPath ~/.ssh/spinnaker-tunnel.ctl
+      RequestTTY no
+    ```
 1. Create a spinnaker-tunnel.sh file with the following content and give it execute permission using `chmod +x spinnaker-tunnel.sh`
-  ```bash
-  #!/bin/bash
+    ```bash
+    #!/bin/bash
 
-  socket=$HOME/.ssh/spinnaker-tunnel.ctl
+    socket=$HOME/.ssh/spinnaker-tunnel.ctl
 
-  if [ "$1" == "start" ]; then
-    if [ ! \( -e ${socket} \) ]; then
-      echo "Starting tunnel to Spinnaker..."
-      ssh -f -N spinnaker-start && echo "Done."
-    else
-      echo "Tunnel to Spinnaker running."
+    if [ "$1" == "start" ]; then
+      if [ ! \( -e ${socket} \) ]; then
+        echo "Starting tunnel to Spinnaker..."
+        ssh -f -N spinnaker-start && echo "Done."
+      else
+        echo "Tunnel to Spinnaker running."
+      fi
     fi
-  fi
 
-  if [ "$1" == "stop" ]; then
-    if [ \( -e ${socket} \) ]; then
-      echo "Stopping tunnel to Spinnaker..."
-      ssh -O "exit" spinnaker-stop && echo "Done."
-    else
-      echo "Tunnel to Spinnaker stopped."
+    if [ "$1" == "stop" ]; then
+      if [ \( -e ${socket} \) ]; then
+        echo "Stopping tunnel to Spinnaker..."
+        ssh -O "exit" spinnaker-stop && echo "Done."
+      else
+        echo "Tunnel to Spinnaker stopped."
+      fi
     fi
-  fi
-  ```
+    ```
 1. Call `./spinnaker-tunnel.sh start` to start your tunnel
 1. Call `./spinnaker-tunnel.sh stop` to stop your tunnel
 

@@ -27,46 +27,46 @@ You need to setup port forwarding to view the Jenkins UI on your local machine.
 
 ### If you are using Linux or Mac:
 1. Add this to your ~/.ssh/config
-  ```
-  Host jenkins-start
-    HostName <Public DNS name of instance you just created>
-    IdentityFile <Path to your key file>
-    ControlMaster yes
-    ControlPath ~/.ssh/jenkins-tunnel.ctl
-    RequestTTY no
-    LocalForward 8080 127.0.0.1:8080
-    User <User name>
+    ```
+    Host jenkins-start
+      HostName <Public DNS name of instance you just created>
+      IdentityFile <Path to your key file>
+      ControlMaster yes
+      ControlPath ~/.ssh/jenkins-tunnel.ctl
+      RequestTTY no
+      LocalForward 8080 127.0.0.1:8080
+      User <User name>
 
-  Host jenkins-stop
-    HostName <Public DNS name of instance you just created>
-    IdentityFile <Path to your key file>
-    ControlPath ~/.ssh/jenkins-tunnel.ctl
-    RequestTTY no
-  ```
+    Host jenkins-stop
+      HostName <Public DNS name of instance you just created>
+      IdentityFile <Path to your key file>
+      ControlPath ~/.ssh/jenkins-tunnel.ctl
+      RequestTTY no
+    ```
 1. Create a jenkins-tunnel.sh file with the following content and give it execute permission using `chmod +x jenkins-tunnel.sh`
-  ```bash
-  #!/bin/bash
+    ```bash
+    #!/bin/bash
 
-  socket=$HOME/.ssh/jenkins-tunnel.ctl
+    socket=$HOME/.ssh/jenkins-tunnel.ctl
 
-  if [ "$1" == "start" ]; then
-    if [ ! \( -e ${socket} \) ]; then
-      echo "Starting tunnel to Jenkins..."
-      ssh -f -N jenkins-start && echo "Done."
-    else
-      echo "Tunnel to Jenkins running."
+    if [ "$1" == "start" ]; then
+      if [ ! \( -e ${socket} \) ]; then
+        echo "Starting tunnel to Jenkins..."
+        ssh -f -N jenkins-start && echo "Done."
+      else
+        echo "Tunnel to Jenkins running."
+      fi
     fi
-  fi
 
-  if [ "$1" == "stop" ]; then
-    if [ \( -e ${socket} \) ]; then
-      echo "Stopping tunnel to Jenkins..."
-      ssh -O "exit" jenkins-stop && echo "Done."
-    else
-      echo "Tunnel to Jenkins stopped."
+    if [ "$1" == "stop" ]; then
+      if [ \( -e ${socket} \) ]; then
+        echo "Stopping tunnel to Jenkins..."
+        ssh -O "exit" jenkins-stop && echo "Done."
+      else
+        echo "Tunnel to Jenkins stopped."
+      fi
     fi
-  fi
-  ```
+    ```
 1. Call `./jenkins-tunnel.sh start` to start your tunnel
 1. Call `./jenkins-tunnel.sh stop` to stop your tunnel
 

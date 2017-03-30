@@ -15,12 +15,12 @@ You can optionally include a basic Jenkins pipeline that will checkout a user-pr
 1. Click the "Deploy to Azure" button. If you don't have an Azure subscription, you can follow instructions to signup for a free trial.
 1. Enter the desired user name and password for the VM that's going to host the Jenkins instance. Also provide a DNS prefix for your VM.
 1. Enter the appId and appKey for your Service Principal (used by the Jenkins pipeline to push the built docker container). If you don't have a service principal, use the [Azure CLI 2.0](https://docs.microsoft.com/cli/azure/install-azure-cli) to create one (see [here](https://docs.microsoft.com/cli/azure/create-an-azure-service-principal-azure-cli?toc=%2fazure%2fazure-resource-manager%2ftoc.json) for more details):
-  ```bash
-  az login
-  az account set --subscription <Subscription ID>
-  az ad sp create-for-rbac --role="Contributor" --scopes="/subscriptions/<Subscription ID>" --name "Spinnaker"
-  ```
-  > NOTE: You can run `az account list` after you login to get a list of subscription IDs for your account.
+    ```bash
+    az login
+    az account set --subscription <Subscription ID>
+    az ad sp create-for-rbac --role="Contributor" --scopes="/subscriptions/<Subscription ID>" --name "Spinnaker"
+    ```
+    > NOTE: You can run `az account list` after you login to get a list of subscription IDs for your account.
 1. Enter a public git repository. The repository must have a Dockerfile in its root.
 
 ## B. Setup SSH port forwarding
@@ -36,46 +36,46 @@ You need to setup port forwarding to view the Jenkins UI on your local machine.
 
 ### If you are using Linux or Mac:
 1. Add this to your ~/.ssh/config
-  ```
-  Host jenkins-start
-    HostName <Public DNS name of instance you just created>
-    IdentityFile <Path to your key file>
-    ControlMaster yes
-    ControlPath ~/.ssh/jenkins-tunnel.ctl
-    RequestTTY no
-    LocalForward 8080 127.0.0.1:8080
-    User <User name>
+    ```
+    Host jenkins-start
+      HostName <Public DNS name of instance you just created>
+      IdentityFile <Path to your key file>
+      ControlMaster yes
+      ControlPath ~/.ssh/jenkins-tunnel.ctl
+      RequestTTY no
+      LocalForward 8080 127.0.0.1:8080
+      User <User name>
 
-  Host jenkins-stop
-    HostName <Public DNS name of instance you just created>
-    IdentityFile <Path to your key file>
-    ControlPath ~/.ssh/jenkins-tunnel.ctl
-    RequestTTY no
-  ```
+    Host jenkins-stop
+      HostName <Public DNS name of instance you just created>
+      IdentityFile <Path to your key file>
+      ControlPath ~/.ssh/jenkins-tunnel.ctl
+      RequestTTY no
+    ```
 1. Create a jenkins-tunnel.sh file with the following content and give it execute permission using `chmod +x jenkins-tunnel.sh`
-  ```bash
-  #!/bin/bash
+    ```bash
+    #!/bin/bash
 
-  socket=$HOME/.ssh/jenkins-tunnel.ctl
+    socket=$HOME/.ssh/jenkins-tunnel.ctl
 
-  if [ "$1" == "start" ]; then
-    if [ ! \( -e ${socket} \) ]; then
-      echo "Starting tunnel to Jenkins..."
-      ssh -f -N jenkins-start && echo "Done."
-    else
-      echo "Tunnel to Jenkins running."
+    if [ "$1" == "start" ]; then
+      if [ ! \( -e ${socket} \) ]; then
+        echo "Starting tunnel to Jenkins..."
+        ssh -f -N jenkins-start && echo "Done."
+      else
+        echo "Tunnel to Jenkins running."
+      fi
     fi
-  fi
 
-  if [ "$1" == "stop" ]; then
-    if [ \( -e ${socket} \) ]; then
-      echo "Stopping tunnel to Jenkins..."
-      ssh -O "exit" jenkins-stop && echo "Done."
-    else
-      echo "Tunnel to Jenkins stopped."
+    if [ "$1" == "stop" ]; then
+      if [ \( -e ${socket} \) ]; then
+        echo "Stopping tunnel to Jenkins..."
+        ssh -O "exit" jenkins-stop && echo "Done."
+      else
+        echo "Tunnel to Jenkins stopped."
+      fi
     fi
-  fi
-  ```
+    ```
 1. Call `./jenkins-tunnel.sh start` to start your tunnel
 1. Call `./jenkins-tunnel.sh stop` to stop your tunnel
 
