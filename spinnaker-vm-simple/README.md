@@ -54,7 +54,7 @@ Once you have configured Spinnaker, you need to setup port forwarding to view th
     RequestTTY no
   ```
 2. Create a spinnaker-tunnel.sh file with the following content and give it execute permission using `chmod +x spinnaker-tunnel.sh`
-  ```
+  ```bash
   #!/bin/bash
 
   socket=$HOME/.ssh/spinnaker-tunnel.ctl

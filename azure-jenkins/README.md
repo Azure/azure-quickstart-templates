@@ -44,7 +44,7 @@ You need to setup port forwarding to view the Jenkins UI on your local machine.
     RequestTTY no
   ```
 1. Create a jenkins-tunnel.sh file with the following content and give it execute permission using `chmod +x jenkins-tunnel.sh`
-  ```
+  ```bash
   #!/bin/bash
 
   socket=$HOME/.ssh/jenkins-tunnel.ctl
