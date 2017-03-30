@@ -8,6 +8,7 @@
 </a>
 
 This template demonstrates X12 Disaster Recovery replication using Logic Apps. Creates replication Logic Apps for generated and received X12 control numbers. Each Logic App's trigger points to a primary site integration account. Each Logic App's action points to a secondary site integration account. Primary and secondary sites must have prerequisite Integration Accounts deployed (Integration Accounts are not deployed as part of this template). Furthermore to see the replication happen the primary site must have Logic Apps deployed with X12 Encode and/or Decode action(s) (Logic Apps for X12 Encode and Decode are not deployed as part of this template).
+It is recommended that the primary site and secondary site are deployed in different regions and different resource group. The replication Logic Apps should be deployed to the secondary site, region and resource group. Hence this template parameters include the resource group of the primary integration account and assume that the secondary integration account is in the same resource group as where the template is deployed.
 `Tags: X12, Logic Apps, Integration Account, Enterprise Integration`
 
 ## Deployment steps
@@ -27,7 +28,7 @@ Once the deployment is completed, you can perform below steps to test your Logic
 ![Image of Run details for Received Control Number replication Logic App](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-logic-app-x12-disaster-recovery-replication/images/received-run-details.png "Run details for Received Control Number replication Logic App"))
 -- To perform a disaster recovery:
 - Disable the X12 Encode-Decode Logic Apps on the primary site and the replication Logic Apps for Generated and Received control numbers.
-- Use the Azure PowerShell cmdlet Get-AzureRmIntegrationAccountGeneratedIcn and Set-AzureRmIntegrationAccountGeneratedIcn to increment the Interchange Control Number for each of your sent agreements on the secondary Integration Account.
+- Use the Azure PowerShell cmdlet Get-AzureRmIntegrationAccountGeneratedIcn and Set-AzureRmIntegrationAccountGeneratedIcn to increment the Interchange Control Number for each of your sent agreements on the secondary Integration Account. This change may take up to 15 seconds to take effect.
 - Redirect traffic to the X12 Encode-Decode Logic Apps on the secondary site. (These Logic Apps are not deployed as part of this template.)
 - Once your primary site has recovered, you need to deploy a new set of replication Logic Apps with source secondary Integration Account and target primary Integration Account. You need to wait that this new set drains the backlog of control numbers before switching traffic back to the primary site.
 
