@@ -5,44 +5,11 @@
         "appName": {
             "type": "string",
             "metadata": {
-                "description": "Name for the Azure Web App"
-            }
-        },
-        "appServiceTier": {
-            "type": "string",
-            "allowedValues": [
-                "Free",
-                "Shared",
-                "Basic",
-                "Standard",
-                "Premium"
-            ],
-            "defaultValue": "Basic",
-            "metadata": {
-                "description": "Choose a Web Apps pricing tier. It defaults to Basic"
-            }
-        },
-        "appServiceWorkerSize": {
-            "type": "string",
-            "allowedValues": [
-                "0",
-                "1",
-                "2"
-            ],
-            "defaultValue": "0",
-            "metadata": {
-                "description": "Worker Size (0=Small, 1=Medium, 2=Large)"
-            }
-        },
-        "dbServerName": {
-            "type": "string",
-            "metadata": {
-                "description": "SQL Azure DB Server name"
+                "description": "Name for the Azure Web App (.azurewebsites.net)"
             }
         },
         "dbAdministratorLogin": {
             "type": "string",
-            "defaultValue": "sqladminuser",
             "metadata": {
                 "description": "Make sure your login name meets the following requirements - It's a SQL Identifier, and not a typical system name (like admin, administrator, sa, root, dbmanager, loginmanager, etc.), or a built-in database user or role (like dbo, guest, public, etc.). Make sure your name doesn't contain whitespaces, unicode characters, or nonalphabetic characters, and that it doesn't begin with numbers or symbols."
             }
@@ -53,26 +20,8 @@
                 "description": "Database admin user password"
             }
         },
-        "dbName": {
-            "type": "string",
-            "metadata": {
-                "description": "Database Name"
-            }
-        },
-        "dbEdition": {
-            "type": "string",
-            "allowedValues": [
-                "Standard",
-                "Premium"
-            ],
-            "defaultValue": "Standard",
-            "metadata": {
-                "description": "SQL DB appServiceTier: Standard, Premium"
-            }
-        },
         "nonAdminDatabaseUserName": {
             "type": "string",
-            "defaultValue": "sqlorcharduser",
             "metadata": {
                 "description": "Non-admin database user. Make sure your login name meets the following requirements - It's a SQL Identifier, and not a typical system name (like admin, administrator, sa, root, dbmanager, loginmanager, etc.), or a built-in database user or role (like dbo, guest, public, etc.). Make sure your name doesn't contain whitespaces, unicode characters, or nonalphabetic characters, and that it doesn't begin with numbers or symbols."
             }
@@ -85,9 +34,14 @@
         }
     },
     "variables": {
-        "appServicePlanName":"[concat(parameters('appName'), 'serviceplan')]",
-        "mediaServicesAccountName": "[concat('media',uniqueString(resourceGroup().id))]",
-        "storageAccountName": "[concat('storage',uniqueString(resourceGroup().id))]",
+        "appServicePlanName":"[concat('serviceplan', uniqueString(resourceGroup().id))]",      
+        "appServiceTier": "Basic",
+        "appServiceWorkerSize": "0",
+        "dbServerName": "[concat('sqlserver', uniqueString(resourceGroup().id))]",
+        "dbName": "[concat('sqldatabase', uniqueString(resourceGroup().id))]",
+        "dbEdition": "Standard",
+        "mediaServicesAccountName": "[concat('media', uniqueString(resourceGroup().id))]",
+        "storageAccountName": "[concat('storage', uniqueString(resourceGroup().id))]",
         "storageAccountType": "Standard_LRS"
     },
     "resources": [
@@ -149,6 +103,9 @@
             "name": "[variables('mediaServicesAccountName')]",
             "apiVersion": "2015-10-01",
             "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
+            ],
             "properties": {
                 "storageAccounts": [
                     {
@@ -157,10 +114,7 @@
                     }
                 ]
             },
-            "resources": [],
-            "dependsOn": [
-                "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
-            ]
+            "resources": []
         },
         {
             "type": "Microsoft.Storage/storageAccounts",
@@ -180,14 +134,14 @@
             "type": "Microsoft.Web/Sites",
             "location": "[resourceGroup().location]",
             "tags": {
-                "[concat('hidden-related:', '/subscriptions/', subscription().subscriptionId,'/resourcegroups/', resourceGroup().name, '/providers/Microsoft.Web/serverfarms/', variables('appServicePlanName'))]": "empty"
+                "[concat('hidden-related:', resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName')))]": "empty"
             },
             "dependsOn": [
                 "[concat('Microsoft.Web/serverFarms/', variables('appServicePlanName'))]"
             ],
             "properties": {
                 "name": "[parameters('appName')]",
-                "serverFarmId": "[concat('/subscriptions/', subscription().subscriptionId,'/resourcegroups/',resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('appServicePlanName'))]",
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
                 "hostingEnvironment": ""
             },
             "resources": [
