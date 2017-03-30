@@ -14,8 +14,13 @@ You can optionally include a basic Jenkins pipeline that will checkout a user-pr
 ## A. Deploy an Azure Container Registry and a Jenkins VM with an embedded Docker build and publish pipeline
 1. Click the "Deploy to Azure" button. If you don't have an Azure subscription, you can follow instructions to signup for a free trial.
 1. Enter the desired user name and password for the VM that's going to host the Jenkins instance. Also provide a DNS prefix for your VM.
-1. Create a [service principal](https://docs.microsoft.com/azure/container-service/container-service-kubernetes-service-principal#create-a-service-principal-in-azure-active-directory).
-1. Fill in the service principal client id and secret. These will be used by the Jenkins pipeline to push the built docker container.
+1. Enter the appId and appKey for your Service Principal (used by the Jenkins pipeline to push the built docker container). If you don't have a service principal, use the [Azure CLI 2.0](https://docs.microsoft.com/cli/azure/install-azure-cli) to create one (see [here](https://docs.microsoft.com/cli/azure/create-an-azure-service-principal-azure-cli?toc=%2fazure%2fazure-resource-manager%2ftoc.json) for more details):
+  ```bash
+  az login
+  az account set --subscription <Subscription ID>
+  az ad sp create-for-rbac --role="Contributor" --scopes="/subscriptions/<Subscription ID>" --name "Spinnaker"
+  ```
+  > NOTE: You can run `az account list` after you login to get a list of subscription IDs for your account.
 1. Enter a public git repository. The repository must have a Dockerfile in its root.
 
 ## B. Setup SSH port forwarding
@@ -48,7 +53,7 @@ You need to setup port forwarding to view the Jenkins UI on your local machine.
     RequestTTY no
   ```
 1. Create a jenkins-tunnel.sh file with the following content and give it execute permission using `chmod +x jenkins-tunnel.sh`
-  ```
+  ```bash
   #!/bin/bash
 
   socket=$HOME/.ssh/jenkins-tunnel.ctl
