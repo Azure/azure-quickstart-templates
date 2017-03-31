@@ -1,0 +1,61 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+    },
+    "variables": {
+        "uniqueResourcePrefix" : "[uniqueString(resourceGroup().id)]",
+        "storage" : {
+          "name" : "[concat(variables('uniqueResourcePrefix'), 'psstorage')]",
+          "sku" : "Premium_LRS"
+        },
+        "mediaService" : {
+          "name" : "[concat(variables('uniqueResourcePrefix'), 'mediaserv')]"
+        }
+    },
+    "outputs": {
+        "mediaServiceFullInfo": {
+            "type": "object",
+            "value": "[listKeys(resourceId('Microsoft.Media/mediaservices', variables('mediaService').name), providers('Microsoft.Media', 'mediaservices').apiVersions[0])]"
+        },
+        "mediaServicePrimaryKey": {
+            "type": "string",
+            "value": "[listKeys(resourceId('Microsoft.Media/mediaservices', variables('mediaService').name), providers('Microsoft.Media', 'mediaservices').apiVersions[0]).primaryKey]"
+        }
+    },
+    "resources" : [
+      {
+          "comments": "Storage used by Media Service",
+          "type": "Microsoft.Storage/storageAccounts",
+          "sku": {
+              "name": "[variables('storage').sku]"
+          },
+          "kind": "Storage",
+          "name": "[variables('storage').name]",
+          "apiVersion": "2016-01-01",
+          "location": "[resourceGroup().location]",
+          "tags": {},
+          "properties": {},
+          "resources": [],
+          "dependsOn": []
+      },
+      {
+          "type": "Microsoft.Media/mediaservices",
+          "name": "[variables('mediaService').name]",
+          "apiVersion": "2015-10-01",
+          "location": "[resourceGroup().location]",
+          "properties": {
+              "storageAccounts": [
+                  {
+                      "id": "[resourceId('Microsoft.Storage/storageAccounts', variables('storage').name)]",
+                      "isPrimary": true
+                  }
+              ]
+          },
+          "resources": [],
+          "dependsOn": [
+              "[resourceId('Microsoft.Storage/storageAccounts', variables('storage').name)]"
+          ]
+      }
+    ]
+}

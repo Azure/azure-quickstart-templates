@@ -108,6 +108,9 @@ install_lustre_centos66()
 	# Install wget and dstat
 	yum install -y wget dstat
 
+	# Update certificates to prevent wget download errors
+	yum update -y ca-certificates
+	
 	# Install pdsh since it is convenient for managing multiple client hosts later
 	# RHEL/CentOS 6 64-Bit ##
 	wget http://download.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm
@@ -153,6 +156,9 @@ install_lustre_centos70()
 	# Install wget and dstat
 	yum install -y wget dstat
 	
+	# Update certificates to prevent wget download errors
+	yum update -y ca-certificates
+	
 	# Download stable Lustre client source targeting specific CentOS 7.0 kernel
 	# This code will be used to create the RPM for the currently running kernel
 	wget https://downloads.hpdd.intel.com/public/lustre/lustre-2.7.0/el7/client/SRPMS/lustre-client-2.7.0-3.10.0_123.20.1.el7.x86_64.src.rpm
@@ -187,6 +193,108 @@ install_lustre_centos70()
 	sed "/\[openlogic\]/a ${exclude}" -i /etc/yum.repos.d/OpenLogic.repo
 }
 
+install_lustre_centos_hpc_65()
+{
+	# Install wget and dstat
+	yum install -y wget dstat
+
+	# Update certificates to prevent wget download errors
+	yum update -y ca-certificates
+	
+	# Install pdsh since it is convenient for managing multiple client hosts later
+	# RHEL/CentOS 6 64-Bit ##
+	wget http://download.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm
+	rpm -ivh epel-release-6-8.noarch.rpm
+	yum install -y pdsh
+	
+	# Download stable Lustre client source targeting specific CentOS 6.5 kernel
+	# This code will be used to create the RPM for the currently running kernel
+	wget https://downloads.hpdd.intel.com/public/lustre/lustre-2.7.0/el6/client/SRPMS/lustre-client-2.7.0-2.6.32_504.8.1.el6.x86_64.src.rpm
+	
+	# Download current kernel-devel package from CentOS vault
+	wget --tries 10 --retry-connrefused --waitretry 15 http://vault.centos.org/6.5/updates/x86_64/Packages/kernel-devel-$(uname -r).rpm
+	if [ ! -f  kernel-devel-$(uname -r).rpm ]; then
+		# Try /os/
+		wget --tries 10 --retry-connrefused --waitretry 15 http://vault.centos.org/6.5/os/x86_64/Packages/kernel-devel-$(uname -r).rpm
+	fi
+	
+	# Un-exclude kernel updates in /etc/yum.conf
+	sed "s/exclude=/#exclude=/g" -i /etc/yum.conf
+	
+	# Install the downloaded kernel-devel package that is needed to recompile the Lustre client modules
+	yum --nogpgcheck localinstall -y kernel-devel-$(uname -r).rpm
+	
+	# Install the other packages necessary to recompile the Lustre client
+	# Documentation is here https://wiki.hpdd.intel.com/display/PUB/Rebuilding+the+Lustre-client+rpms+for+a+new+kernel
+	yum install -y rpm-build make libtool libselinux-devel
+	
+	# Rebuild the downloaded Lustre client RPM for the currently running kernel
+	rpmbuild --define "_topdir /root/rpmbuild" --rebuild --without servers lustre-client-2.7.0-2.6.32_504.8.1.el6.x86_64.src.rpm
+	
+	# Install the compiled RPM whose file names are based on the currently running kernel but with - replaced by _ (e.g. )
+	cd /root/rpmbuild/RPMS/x86_64/
+	yum --nogpgcheck localinstall -y lustre-client-2.7.0-$(uname -r | sed 's/-/_/').x86_64.rpm lustre-client-modules-2.7.0-$(uname -r | sed 's/-/_/').x86_64.rpm
+
+	modprobe lustre
+	
+	# To prevent the current kernel from being updated, add the following exclude line to [base] and [updates] in CentOS-Base.repo
+	exclude="exclude = kernel kernel-headers kernel-devel kernel-debug-devel"
+	sed "/\[base\]/a ${exclude}" -i /etc/yum.repos.d/CentOS-Base.repo
+	sed "/\[updates\]/a ${exclude}" -i /etc/yum.repos.d/CentOS-Base.repo
+	sed "/\[openlogic\]/a ${exclude}" -i /etc/yum.repos.d/OpenLogic.repo
+	
+	# Again exclude kernel updates in /etc/yum.conf
+	sed "s/#exclude=/exclude=/g" -i /etc/yum.conf
+}
+
+install_lustre_centos_hpc_71()
+{
+	# Install wget and dstat
+	yum install -y wget dstat
+	
+	# Update certificates to prevent wget download errors
+	yum update -y ca-certificates
+	
+	# Download stable Lustre client source targeting specific CentOS 7.0 kernel
+	# This code will be used to create the RPM for the currently running kernel
+	wget https://downloads.hpdd.intel.com/public/lustre/lustre-2.7.0/el7/client/SRPMS/lustre-client-2.7.0-3.10.0_123.20.1.el7.x86_64.src.rpm
+	
+	# Download current kernel-devel package from CentOS vault
+	wget --tries 10 --retry-connrefused --waitretry 15 http://vault.centos.org/7.1.1503/updates/x86_64/Packages/kernel-devel-$(uname -r).rpm
+	if [ ! -f  kernel-devel-$(uname -r).rpm ]; then
+		# Try /os/
+		wget --tries 10 --retry-connrefused --waitretry 15 http://vault.centos.org/7.1.1503/os/x86_64/Packages/kernel-devel-$(uname -r).rpm
+	fi
+	
+	# Un-exclude kernel updates in /etc/yum.conf
+	sed "s/exclude=/#exclude=/g" -i /etc/yum.conf
+	
+	# Install the downloaded kernel-devel package that is needed to recompile the Lustre client modules
+	yum --nogpgcheck localinstall -y kernel-devel-$(uname -r).rpm
+	
+	# Install the other packages necessary to recompile the Lustre client
+	# Documentation is here https://wiki.hpdd.intel.com/display/PUB/Rebuilding+the+Lustre-client+rpms+for+a+new+kernel
+	yum install -y rpm-build make libtool libselinux-devel
+	
+	# Rebuild the downloaded Lustre client RPM for the currently running kernel
+	rpmbuild --define "_topdir /root/rpmbuild" --rebuild --without servers lustre-client-2.7.0-3.10.0_123.20.1.el7.x86_64.src.rpm
+	
+	# Install the compiled RPM whose file names are based on the currently running kernel but with - replaced by _ (e.g. )
+	cd /root/rpmbuild/RPMS/x86_64/
+	yum --nogpgcheck localinstall -y lustre-client-2.7.0-$(uname -r | sed 's/-/_/').x86_64.rpm lustre-client-modules-2.7.0-$(uname -r | sed 's/-/_/').x86_64.rpm
+
+	modprobe lustre
+	
+	# To prevent the current kernel from being updated, add the following exclude line to [base] and [updates] in CentOS-Base.repo
+	exclude="exclude = kernel kernel-headers kernel-devel kernel-debug-devel"
+	sed "/\[base\]/a ${exclude}" -i /etc/yum.repos.d/CentOS-Base.repo
+	sed "/\[updates\]/a ${exclude}" -i /etc/yum.repos.d/CentOS-Base.repo
+	sed "/\[openlogic\]/a ${exclude}" -i /etc/yum.repos.d/OpenLogic.repo
+	
+	# Again exclude kernel updates in /etc/yum.conf
+	sed "s/#exclude=/exclude=/g" -i /etc/yum.conf
+}
+
 create_client() {
 	log "Create Lustre CLIENT"
 	
@@ -213,12 +321,22 @@ create_client() {
 	lfs df -h
 }
 
-if [ "$NODETYPE" == "CLIENTCENTOS6.6" ]; then
+if [ "$NODETYPE" == "OpenLogic:CentOS:6.6" ]; then
 	install_lustre_centos66
 	create_client
 fi
 
-if [ "$NODETYPE" == "CLIENTCENTOS7.0" ]; then
+if [ "$NODETYPE" == "OpenLogic:CentOS:7.0" ]; then
 	install_lustre_centos70
+	create_client
+fi
+
+if [ "$NODETYPE" == "OpenLogic:CentOS-HPC:6.5" ]; then
+	install_lustre_centos_hpc_65
+	create_client
+fi
+
+if [ "$NODETYPE" == "OpenLogic:CentOS-HPC:7.1" ]; then
+	install_lustre_centos_hpc_71
 	create_client
 fi

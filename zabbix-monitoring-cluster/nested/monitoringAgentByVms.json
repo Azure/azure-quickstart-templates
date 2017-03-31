@@ -1,0 +1,54 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmNames": {
+      "type": "array",
+      "metadata": {
+        "description": "vm name list."
+      }
+    },
+    "serverIp": {
+      "type": "string",
+      "metadata": {
+        "description": "server ip."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/zabbix-monitoring-cluster"
+    }
+  },
+  "variables": {
+    "location": "[resourceGroup().location]"
+  },
+  "resources": [
+    {
+      "name": "[concat(parameters('vmNames')[copyIndex()],'/configMonitoring')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "copy": {
+        "name": "vmCopy",
+        "count": "[length(parameters('vmNames'))]"
+      },
+      "apiVersion": "2015-06-15",
+      "location": "[variables('location')]",
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[concat(parameters('_artifactsLocation'), '/scripts/setup')]"
+          ]
+        },
+        "protectedSettings": {
+          "commandToExecute": "[concat('./setup -v agent -c agent.serverIp=', parameters('serverIp'))]"
+        }
+      }
+    }
+  ]
+}
