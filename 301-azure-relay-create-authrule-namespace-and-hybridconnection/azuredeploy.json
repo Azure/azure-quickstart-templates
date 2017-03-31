@@ -1,0 +1,109 @@
+{
+   "$schema":"http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+   "contentVersion":"1.0.0.0",
+   "parameters":{
+      "namespaceName":{
+         "type":"string",
+         "metadata":{
+            "description":"Name of the Azure Relay namespace"
+         }
+      },
+      "namespaceAuthorizationRuleName":{
+         "type":"string",
+         "metadata":{
+            "description":"Name of the Namespace AuthorizationRule"
+         }
+      },
+      "hybridConnectionName":{
+         "type":"string",
+         "metadata":{
+            "description":"Name of the HybridConnection"
+         }
+      },
+      "hybridConnectionAuthorizationRuleName":{
+         "type":"string",
+         "metadata":{
+            "description":"Name of the HybridConnection AuthorizationRule"
+         }
+      }
+   },
+   "variables":{
+      "location":"[resourceGroup().location]",
+      "apiVersion":"2016-07-01",
+      "namespaceAuthRuleName":"[concat(parameters('namespaceName'), concat('/', parameters('namespaceAuthorizationRuleName')))]",
+      "nsAuthorizationRuleResourceId":"[resourceId('Microsoft.Relay/namespaces/authorizationRules', parameters('namespaceName'), parameters('namespaceAuthorizationRuleName'))]",
+      "hcAuthorizationRuleResourceId":"[resourceId('Microsoft.Relay/namespaces/HybridConnections/authorizationRules', parameters('namespaceName'), parameters('hybridConnectionName'), parameters('hybridConnectionAuthorizationRuleName'))]"
+   },
+   "resources":[
+      {
+         "apiVersion":"[variables('apiVersion')]",
+         "name":"[parameters('namespaceName')]",
+         "type":"Microsoft.Relay/Namespaces",
+         "location":"[variables('location')]",
+         "kind":"Relay",
+         "resources":[
+            {
+               "apiVersion":"[variables('apiVersion')]",
+               "name":"[parameters('hybridConnectionName')]",
+               "type":"HybridConnections",
+               "dependsOn":[
+                  "[concat('Microsoft.Relay/namespaces/', parameters('namespaceName'))]"
+               ],
+               "properties":{
+                  "path":"[parameters('hybridConnectionName')]"
+               },
+               "resources":[
+                  {
+                     "apiVersion":"[variables('apiVersion')]",
+                     "name":"[parameters('hybridConnectionAuthorizationRuleName')]",
+                     "type":"authorizationRules",
+                     "dependsOn":[
+                        "[parameters('hybridConnectionName')]"
+                     ],
+                     "properties":{
+                        "Rights":[
+                           "Listen"
+                        ]
+                     }
+                  }
+               ]
+            },
+            {
+               "apiVersion":"[variables('apiVersion')]",
+               "name":"[variables('namespaceAuthRuleName')]",
+               "type":"Microsoft.Relay/namespaces/authorizationRules",
+               "dependsOn":[
+                  "[concat('Microsoft.Relay/namespaces/', parameters('namespaceName'))]"
+               ],
+               "location":"[variables('location')]",
+               "properties":{
+                  "Rights":[
+                     "Send"
+                  ]
+               }
+            }
+         ],
+         "properties":{
+
+         }
+      }
+   ],
+   "outputs":{
+      "NamespaceConnectionString":{
+         "type":"string",
+         "value":"[listkeys(variables('nsAuthorizationRuleResourceId'), variables('apiVersion')).primaryConnectionString]"
+      },
+      "NamespaceSharedAccessPolicyPrimaryKey":{
+         "type":"string",
+         "value":"[listkeys(variables('nsAuthorizationRuleResourceId'), variables('apiVersion')).primaryKey]"
+      },
+      "HybridConnectionConnectionString":{
+         "type":"string",
+         "value":"[listkeys(variables('hcAuthorizationRuleResourceId'), variables('apiVersion')).primaryConnectionString]"
+      },
+      "HybridConnectionSharedAccessPolicyPrimaryKey":{
+         "type":"string",
+         "value":"[listkeys(variables('hcAuthorizationRuleResourceId'), variables('apiVersion')).primaryKey]"
+      }
+   }
+}

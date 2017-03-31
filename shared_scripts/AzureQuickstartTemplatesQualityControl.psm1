@@ -17,14 +17,28 @@ $global:options['CustomArgumentCompleters']['Test-AzureQuickstartTemplate:Templa
 $function:tabexpansion2 = $function:tabexpansion2 -replace 'End\r\n{','End { if ($null -ne $options) { $options += $global:options} else {$options = $global:options}'
 #
 
+function Get-TemplateUniqueValue {
+param(
+  [Parameter(Position = 0, Mandatory = $true)]
+  [string]
+  $TemplateName
+)
+  $uniqueTemplateName = '{0}{1}{2}' -f $TemplateName,$env:COMPUTERNAME,$env:USERNAME
+  $md5 = new-object -TypeName System.Security.Cryptography.MD5CryptoServiceProvider
+  $utf8 = new-object -TypeName System.Text.UTF8Encoding
+  $hash = [System.BitConverter]::ToString($md5.ComputeHash($utf8.GetBytes($uniqueTemplateName)))
+  
+  'a{0}{1}' -f $env:USERNAME[0],($hash -replace '-','').ToLower().Substring(1,12)
+}
+
 <#
 .SYNOPSIS
 Executes one or many ARM template(s) deployment.
 
 .DESCRIPTION
-Enable testing of ARM templates using random value generation that mimic the validation the "Testing Bot" is performing on azure-quickstart-templates.
+Enable testing of ARM templates using deterministic value generation that mimic the validation the "Testing Bot" is performing on azure-quickstart-templates.
 
-The script load the parameters file in memory and generate at runtime a random value that will replace '#####' values that are present.
+The script load the parameters file in memory and generate at runtime a deterministic value that will replace '#####' values that are present.
 
 A ResourceGroup will be created and named like your template, each processed template will have their own ResourceGroup 
 
@@ -60,16 +74,6 @@ param(
 )
 	$ErrorActionPreference = 'Stop'
 
-	function Get-RandomValue 
-	{
-	  $set = 'abcdefghijklmnopqrstuvwxyz'.ToCharArray() 
-	  $result = @()
-	  $result += $set | Get-Random
-	  $set = 'abcdefghijklmnopqrstuvwxyz0123456789'.ToCharArray()
-	  $result += 1..4 | ForEach-Object -Process { $set | Get-Random }  
-	  $result -join ''
-	}
-
 
 	if (Get-Command Get-AzureRmContext -ErrorAction SilentlyContinue)
 	{
@@ -86,7 +90,7 @@ param(
 	  $currentTemplateName = Split-Path $_ -Leaf
 
 	  $templateFolder = Resolve-Path -Path $_ -ErrorAction SilentlyContinue
-
+    $uniqueValue = Get-TemplateUniqueValue -TemplateName $currentTemplateName
   
 	  if(-not $templateFolder) {
 		$templateFolder = Join-Path -Path $PSScriptRoot -ChildPath ..\$_ -Resolve -ErrorAction SilentlyContinue
@@ -97,14 +101,15 @@ param(
 		Write-Error -Message "Unable to locate/resolve properly template '$currentTemplateName' "
 	  }
 
-	  #load parameters and replace ##### by random value
-	  $randomValue = Get-RandomValue
+	  #load parameters and replace ##### by unique value
 	  $paramFile = Get-Content -Path $templateFolder\azuredeploy.parameters.json -Raw | ConvertFrom-Json
 	  $params = @{}
 	  $paramFile.parameters | Get-Member -MemberType NoteProperty | ForEach-Object -Process {
-		$value = $paramFile.parameters.$($_.Name).value
-		if ($value -eq '#####') {$value = $randomValue}
-		$params[$_.Name] = $value
+		  $value = $paramFile.parameters.$($_.Name).value
+		  if ($value -eq '#####') {
+        $value = $uniqueValue
+      }
+		  $params[$_.Name] = $value
 	  }  
 
 	  $resourceGroupName = 'azure-quickstart-templates--{0}' -f $currentTemplateName
@@ -120,3 +125,5 @@ param(
 	  }
 	}
 }
+
+Export-ModuleMember -Function Test-AzureQuickstartTemplate

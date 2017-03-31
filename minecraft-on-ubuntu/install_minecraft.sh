@@ -16,6 +16,10 @@ minecraft_user=minecraft
 minecraft_group=minecraft
 UUID_URL=https://api.mojang.com/users/profiles/minecraft/$1
 
+# screen scrape the server jar location from the Minecraft server download page
+SERVER_JAR_URL=`curl https://minecraft.net/en-us/download/server | grep Minecraft\.Download | cut -d '"' -f2`
+server_jar=`echo $SERVER_JAR_URL | cut -d '/' -f7`
+
 # add and update repos
 while ! echo y | apt-get install -y software-properties-common; do
     sleep 10
@@ -47,9 +51,9 @@ mkdir $minecraft_server_path
 cd $minecraft_server_path
 
 # download the server jar
-while ! echo y | wget https://s3.amazonaws.com/Minecraft.Download/versions/1.8/minecraft_server.1.8.jar; do
+while ! echo y | wget $SERVER_JAR_URL; do
     sleep 10
-    wget https://s3.amazonaws.com/Minecraft.Download/versions/1.8/minecraft_server.1.8.jar
+    wget $SERVER_JAR_URL
 done
 
 # set permissions on install folder
@@ -57,10 +61,12 @@ chown -R $minecraft_user $minecraft_server_path
 
 # adjust memory usage depending on VM size
 totalMem=$(free -m | awk '/Mem:/ { print $2 }')
-if [ $totalMem -lt 1024 ]; then
-    memoryAlloc=512m
+if [ $totalMem -lt 2048 ]; then
+    memoryAllocs=512m
+    memoryAllocx=1g
 else
-    memoryAlloc=1024m
+    memoryAllocs=1g
+    memoryAllocx=2g
 fi
 
 # create the uela file
@@ -71,9 +77,10 @@ echo 'eula=true' >> $minecraft_server_path/eula.txt
 touch /etc/systemd/system/minecraft-server.service
 printf '[Unit]\nDescription=Minecraft Service\nAfter=rc-local.service\n' >> /etc/systemd/system/minecraft-server.service
 printf '[Service]\nWorkingDirectory=%s\n' $minecraft_server_path >> /etc/systemd/system/minecraft-server.service
-printf 'ExecStart=/usr/bin/java -Xms%s -Xmx%s -jar %s/minecraft_server.1.8.jar nogui\n' $memoryAlloc $memoryAlloc $minecraft_server_path >> /etc/systemd/system/minecraft-server.service
+printf 'ExecStart=/usr/bin/java -Xms%s -Xmx%s -jar %s/%s nogui\n' $memoryAllocs $memoryAllocx $minecraft_server_path $server_jar >> /etc/systemd/system/minecraft-server.service
 printf 'ExecReload=/bin/kill -HUP $MAINPID\nKillMode=process\nRestart=on-failure\n' >> /etc/systemd/system/minecraft-server.service
 printf '[Install]\nWantedBy=multi-user.target\nAlias=minecraft-server.service' >> /etc/systemd/system/minecraft-server.service
+chmod +x /etc/systemd/system/minecraft-server.service
 
 # create and set permissions on user access JSON files
 touch $minecraft_server_path/banned-players.json
