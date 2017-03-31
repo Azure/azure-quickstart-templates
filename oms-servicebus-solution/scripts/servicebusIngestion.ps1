@@ -77,6 +77,7 @@ $logType  = "servicebus"
 			"Processing service bus `"$($sb.Name)`"..."
 			    
 		    $sbAuth = Get-AzureSBAuthorizationRule -Namespace $sb.Name
+		    $sbAuth = $sbAuth | where {$_.Name -eq "RootManageSharedAccessKey"}
 		    $nsManager = [Microsoft.ServiceBus.NamespaceManager]::CreateFromConnectionString($sbAuth.ConnectionString);
 		    $queueList = $nsManager.GetQueues()
 		    foreach ($sbQueue in $queueList)
