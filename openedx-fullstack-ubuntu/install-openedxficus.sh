@@ -93,7 +93,7 @@ set +e
 #retry transient failures
 MAX_ATTEMPTS=10
 retry_count=1
-until (retry_count==MAX_ATTEMPTS]
+until [ $retry_count -gt $MAX_ATTEMPTS ]
 do    
     echo    
     echo "starting attempt number: $retry_count"    
@@ -107,7 +107,7 @@ do   
         update_packages update        
         update_packages upgrade    
     fi    
-    retry_count=retry_count+1
+    $retry_count=$retry_count+1
 done
 
 set -e
