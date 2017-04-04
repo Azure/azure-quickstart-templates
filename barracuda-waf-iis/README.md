@@ -31,10 +31,10 @@ Once deployment finishes, you will able to directly access fully configured Barr
 
 This template will deploy: 
 
-- Two storage account 
+- Two storage accounts 
 -	One Virtual Network with two subnets
 -	One Load Balancer to facilitate RDP access (via NAT Rules) to backend web servers
--	2 Public IP’s, one for Barracuda WAF and other for Load Balancer
+-	2 Public IP’s, one for Barracuda WAF and one for the Load Balancer
 -	Virtual Machines Availability set for Barracuda and Backend Web server VMs.
 -	One Barracuda Web Application Firewall VM
 -	Two Windows Server 2012 R2 VMs
@@ -54,7 +54,7 @@ Azure Subscription with specified payment method (Barracuda WAF is a market plac
 
 Build your Barracuda WAF environment on Azure in a few simple steps:  
 - Launch the Template by click on Deploy to Azure button.  
-- Fill in all the required parameter values. Accept the terms and condition on click Purchase. 
+- Fill in all the required parameter values. Accept the terms and condition and click on Purchase. 
 - Follow the post deployment configuration document [here](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/barracuda-waf-iis/images/barracuda-waf-post-deployment-configuration-guide.pdf) for further configuration. 
 
 ## Deployment Time  
