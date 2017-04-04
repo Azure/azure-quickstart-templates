@@ -1,0 +1,90 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/glassfish-on-suse/"
+    },
+    "vmPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Naming prefix applied to the deployed VM resources"
+      }
+    },
+    "numberOfInstances": {
+      "type": "int",
+      "minValue": 1,
+      "maxValue": 10,
+      "metadata": {
+        "description": "Number of VMs"
+      }
+    },
+     "glassfishVersion": {
+      "type": "int",
+      "minValue": 3,
+      "allowedValues": [ 3, 4 ],
+      "metadata": {
+        "description": "Release number for the GlassFish package to be deployed"
+      }
+    },
+    "glassfishRelease": {
+      "type": "string",
+      "allowedValues": [
+        "3.1.1",
+        "3.1.2",
+        "3.1.2.2",
+        "3.2",
+        "4.0",
+        "4.1"
+      ],
+      "metadata": {
+        "description": "Version of GlassFish to deploy"
+      }
+    },
+    "glassfishAdminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "GlassFish admin user password"
+      }
+    }
+  },
+  "variables": {
+    "location": "[resourceGroup().location]",
+    "deploymentScriptFolder": "scripts/",
+    "deploymentScriptFileName": "deployGlassFish.sh",
+    "deploymentScriptUrl": "[concat(parameters('_artifactsLocation'), variables('deploymentScriptFolder'), variables('deploymentScriptFileName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmPrefix'), copyIndex(), '/deployGlassFish')]",
+      "location": "[variables('location')]",
+      "apiVersion": "2015-06-15",
+      "tags": {
+        "displayName": "deployGlassFish"
+      },
+      "copy": {
+        "name": "vmDeploymentScriptLoop",
+        "count": "[parameters('numberOfInstances')]"
+      },
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[variables('deploymentScriptUrl')]"
+          ],
+          "commandToExecute": "[concat('sudo bash ', variables('deploymentScriptFileName'), ' ', parameters('glassfishVersion'), ' ', parameters('glassfishRelease'), ' ', parameters('glassfishAdminPassword'))]"
+        }
+      }
+    }
+  ],
+  "outputs": {
+  }
+}
