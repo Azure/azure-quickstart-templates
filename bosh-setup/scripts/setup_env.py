@@ -57,7 +57,8 @@ def render_bosh_manifest(settings):
     ntp_servers_maps = {
         "AzureCloud": "0.north-america.pool.ntp.org",
         "AzureChinaCloud": "1.cn.pool.ntp.org, 1.asia.pool.ntp.org, 0.asia.pool.ntp.org",
-        "AzureUSGovernment": "0.north-america.pool.ntp.org"
+        "AzureUSGovernment": "0.north-america.pool.ntp.org",
+        "AzureGermanCloud": "0.europe.pool.ntp.org"
     }
     environment = settings["ENVIRONMENT"]
     ntp_servers = ntp_servers_maps[environment]
@@ -65,7 +66,8 @@ def render_bosh_manifest(settings):
     postgres_address_maps = {
         "AzureCloud": "127.0.0.1",
         "AzureChinaCloud": bosh_director_ip,
-        "AzureUSGovernment": "127.0.0.1"
+        "AzureUSGovernment": "127.0.0.1",
+        "AzureGermanCloud": "127.0.0.1"
     }
     postgres_address = postgres_address_maps[environment]
 
@@ -113,7 +115,8 @@ def get_cloud_foundry_configuration(scenario, settings, bosh_director_ip):
     dns_maps = {
         "AzureCloud": "168.63.129.16\n    - {0}".format(settings["SECONDARY_DNS"]),
         "AzureChinaCloud": bosh_director_ip,
-        "AzureUSGovernment": "168.63.129.16\n    - {0}".format(settings["SECONDARY_DNS"])
+        "AzureUSGovernment": "168.63.129.16\n    - {0}".format(settings["SECONDARY_DNS"]),
+        "AzureGermanCloud": "168.63.129.16\n    - {0}".format(settings["SECONDARY_DNS"])
     }
 
     config = {}
