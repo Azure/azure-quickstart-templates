@@ -47,6 +47,7 @@
     "virtualNetworkName": "[concat(variables('resourcePrefix'), 'VNET')]",
     "vmExtensionName": "initializeJenkins",
     "vmSize": "Standard_DS1_v2",
+    "frontEndNSGName": "jenkinsNSG"
   },
   "resources": [
     {
@@ -73,6 +74,33 @@
       }
     },
     {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('frontEndNSGName')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "NSG - Front End"
+      },
+      "properties": {
+        "securityRules": [
+          {
+            "name": "ssh-rule",
+            "properties": {
+              "description": "Allow SSH",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
       "apiVersion": "2016-09-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
@@ -87,11 +115,17 @@
           {
             "name": "[variables('subnetName')]",
             "properties": {
-              "addressPrefix": "10.0.0.0/24"
+              "addressPrefix": "10.0.0.0/24",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('frontEndNSGName'))]"
+              }
             }
           }
         ]
-      }
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('frontEndNSGName'))]"
+      ]
     },
     {
       "apiVersion": "2016-09-01",
@@ -187,9 +221,9 @@
     }
   ],
   "outputs": {
-    "Jenkins Dashboard": {
+    "jenkinsVmDns": {
       "type": "string",
-      "value": "[concat(reference(variables('publicIPAddressName')).dnsSettings.fqdn,':8080')]"
+      "value": "[reference(variables('publicIPAddressName')).dnsSettings.fqdn]"
     },
     "SSH": {
       "type": "string",
