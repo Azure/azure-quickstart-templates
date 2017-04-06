@@ -213,14 +213,14 @@
       "metadata": {
         "description": "The public RDP port for the First DC VM"
       },
-      "defaultValue": 3389
+      "defaultValue": 3441
     },
     "bdcRDPPort": {
       "type": "int",
       "metadata": {
         "description": "The public RDP port for the Second DC VM"
       },
-      "defaultValue": 13389
+      "defaultValue": 3442
     },
     "assetLocation": {
       "type": "string",
@@ -228,6 +228,70 @@
         "description": "The location of resources such as templates and DSC modules that the script is dependent"
       },
       "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-smallbusiness-two"
+    },
+    "vaultName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Recovery Services Vault"
+      }
+    },
+    "skuTier": {
+      "type": "string",
+      "defaultValue": "Standard",
+      "allowedValues": [
+        "Standard"
+      ],
+      "metadata": {
+        "description": "SKU tier for the vault"
+      }
+    },
+    "policyName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Backup Policy"
+      }
+    },
+    "scheduleRunTimes": {
+      "type": "array",
+      "metadata": {
+        "description": "Times in day when backup should be triggered. e.g. 01:00, 13:00. This will be used in LTR too for daily, weekly, monthly and yearly backup."
+      }
+    },
+    "dailyRetentionDurationCount": {
+      "type": "int",
+      "metadata": {
+        "description": "Number of days you want to retain the backup"
+      }
+    },
+    "daysOfTheWeek": {
+      "type": "array",
+      "metadata": {
+        "description": "Backup will run on array of Days like, Monday, Tuesday etc. Applies in Weekly retention only."
+      }
+    },
+    "weeklyRetentionDurationCount": {
+      "type": "int",
+      "metadata": {
+        "description": "Number of weeks you want to retain the backup"
+      }
+    },
+    "monthlyRetentionDurationCount": {
+      "type": "int",
+      "metadata": {
+        "description": "Number of months you want to retain the backup"
+      }
+    },
+    "monthsOfYear": {
+      "type": "array",
+      "metadata": {
+        "description": "Array of Months for Yearly Retention"
+      }
+    },
+    "yearlyRetentionDurationCount": {
+      "type": "int",
+      "metadata": {
+        "description": "Number of years you want to retain the backup"
+      }
     }
   },
   "variables": {
@@ -250,16 +314,20 @@
     "adPDCDataDisk": "ADPDCDataDisk",
     "adBDCDataDisk": "ADBDCDataDisk",
     "adDataDiskSize": 1000,
-    "vnetTemplateUri": "[concat(parameters('assetLocation'),'/nestedtemplates/vnet.json')]",
-    "nicTemplateUri": "[concat(parameters('assetLocation'),'/nestedtemplates/nic.json')]",
-    "vnetwithDNSTemplateUri": "[concat(parameters('assetLocation'),'/nestedtemplates/vnet-with-dns-server.json')]",
-    "configureADBDCTemplateUri": "[concat(parameters('assetLocation'),'/nestedtemplates/configureADBDC.json')]",
-    "adPDCModulesURL": "[concat(parameters('assetLocation'),'/DSC/CreateADPDC.ps1.zip')]",
+    "vnetTemplateUri": "[concat(parameters('assetLocation'),'/vnet.json')]",
+    "nicTemplateUri": "[concat(parameters('assetLocation'),'/nic.json')]",
+    "vnetwithDNSTemplateUri": "[concat(parameters('assetLocation'),'/vnet-with-dns-server.json')]",
+    "configureADBDCTemplateUri": "[concat(parameters('assetLocation'),'/configureADBDC.json')]",
+    "adPDCModulesURL": "[concat(parameters('assetLocation'),'/CreateADPDC.ps1.zip')]",
     "adPDCConfigurationFunction": "CreateADPDC.ps1\\CreateADPDC",
-    "adBDCPreparationModulesURL": "[concat(parameters('assetLocation'),'/DSC/PrepareADBDC.ps1.zip')]",
+    "adBDCPreparationModulesURL": "[concat(parameters('assetLocation'),'/PrepareADBDC.ps1.zip')]",
     "adBDCPreparationFunction": "PrepareADBDC.ps1\\PrepareADBDC",
-    "adBDCConfigurationModulesURL": "[concat(parameters('assetLocation'),'/DSC/ConfigureADBDC.ps1.zip')]",
-    "adBDCConfigurationFunction": "ConfigureADBDC.ps1\\ConfigureADBDC"
+    "adBDCConfigurationModulesURL": "[concat(parameters('assetLocation'),'/ConfigureADBDC.ps1.zip')]",
+    "adBDCConfigurationFunction": "ConfigureADBDC.ps1\\ConfigureADBDC",
+    "backupFabric": "Azure",
+    "v2VmType": "Microsoft.Compute/virtualMachines",
+    "v2VmContainer": "iaasvmcontainer;iaasvmcontainerv2;",
+    "v2Vm": "vm;iaasvmcontainerv2;"
   },
   "resources": [
     {
@@ -269,8 +337,8 @@
       "location": "[resourceGroup().location]",
       "properties": {
       },
-      "sku":{"name":"[parameters('storageAccountType')]"},
-      "kind":"Storage"
+      "sku": { "name": "[parameters('storageAccountType')]" },
+      "kind": "Storage"
     },
     {
       "name": "[parameters('publicIPAddressName')]",
@@ -678,29 +746,31 @@
             }
           ]
         }
-      }
-    },
-    {
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(parameters('adBDCVMName'),'/PrepareBDC')]",
-      "apiVersion": "2016-03-30",
-      "location": "[resourceGroup().location]",
-      "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('adBDCVMName'))]"
-      ],
-      "properties": {
-        "publisher": "Microsoft.Powershell",
-        "type": "DSC",
-        "typeHandlerVersion": "2.21",
-        "autoUpgradeMinorVersion": true,
-        "settings": {
-          "ModulesUrl": "[variables('adBDCPreparationModulesURL')]",
-          "ConfigurationFunction": "[variables('adBDCPreparationFunction')]",
-          "Properties": {
-            "DNSServer": "[parameters('adPDCNicIPAddress')]"
+      },
+      "resources": [
+        {
+          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "name": "[concat(parameters('adBDCVMName'),'/PrepareBDC')]",
+          "apiVersion": "2016-03-30",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', parameters('adBDCVMName'))]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Powershell",
+            "type": "DSC",
+            "typeHandlerVersion": "2.21",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "ModulesUrl": "[variables('adBDCPreparationModulesURL')]",
+              "ConfigurationFunction": "[variables('adBDCPreparationFunction')]",
+              "Properties": {
+                "DNSServer": "[parameters('adPDCNicIPAddress')]"
+              }
+            }
           }
         }
-      }
+      ]
     },
     {
       "name": "ConfiguringBackupADDomainController",
@@ -775,6 +845,87 @@
           }
         }
       }
-    }
+    },
+    {
+      "type": "Microsoft.RecoveryServices/vaults",
+      "apiVersion": "2015-11-10",
+      "name": "[parameters('vaultName')]",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "RS0",
+        "tier": "[parameters('skuTier')]"
+      },
+      "properties": {
+      }
+    },
+    {
+      "apiVersion": "2015-11-10",
+      "name": "[concat(parameters('vaultName'), '/', parameters('policyName'))]",
+      "type": "Microsoft.RecoveryServices/vaults/backupPolicies",
+      "dependsOn": [ "[concat('Microsoft.RecoveryServices/vaults/', parameters('vaultName'))]" ],
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "backupManagementType": "AzureIaasVM",
+        "schedulePolicy": {
+          "scheduleRunFrequency": "Daily",
+          "scheduleRunDays": null,
+          "scheduleRunTimes": "[parameters('scheduleRunTimes')]",
+          "schedulePolicyType": "SimpleSchedulePolicy"
+        },
+        "retentionPolicy": {
+          "dailySchedule": {
+            "retentionTimes": "[parameters('scheduleRunTimes')]",
+            "retentionDuration": {
+              "count": "[parameters('dailyRetentionDurationCount')]",
+              "durationType": "Days"
+            }
+          },
+          "weeklySchedule": {
+            "daysOfTheWeek": "[parameters('daysOfTheWeek')]",
+            "retentionTimes": "[parameters('scheduleRunTimes')]",
+            "retentionDuration": {
+              "count": "[parameters('weeklyRetentionDurationCount')]",
+              "durationType": "Weeks"
+            }
+          },
+          "monthlySchedule": {
+            "retentionScheduleFormatType": "Daily",
+            "retentionScheduleDaily": {
+              "daysOfTheMonth": [
+                {
+                  "date": 1,
+                  "isLast": false
+                }
+              ]
+            },
+            "retentionScheduleWeekly": null,
+            "retentionTimes": "[parameters('scheduleRunTimes')]",
+            "retentionDuration": {
+              "count": "[parameters('monthlyRetentionDurationCount')]",
+              "durationType": "Months"
+            }
+          },
+          "yearlySchedule": {
+            "retentionScheduleFormatType": "Daily",
+            "monthsOfYear": "[parameters('monthsOfYear')]",
+            "retentionScheduleDaily": {
+              "daysOfTheMonth": [
+                {
+                  "date": 1,
+                  "isLast": false
+                }
+              ]
+            },
+            "retentionScheduleWeekly": null,
+            "retentionTimes": "[parameters('scheduleRunTimes')]",
+            "retentionDuration": {
+              "count": "[parameters('yearlyRetentionDurationCount')]",
+              "durationType": "Years"
+            }
+          },
+          "retentionPolicyType": "LongTermRetentionPolicy"
+        }
+      }
+    } 
   ]
 }
