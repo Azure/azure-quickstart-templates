@@ -30,7 +30,6 @@ You need to setup port forwarding to view the Jenkins UI on your local machine.
     ```
     Host jenkins-start
       HostName <Public DNS name of instance you just created>
-      IdentityFile <Path to your key file>
       ControlMaster yes
       ControlPath ~/.ssh/jenkins-tunnel.ctl
       RequestTTY no
@@ -39,7 +38,6 @@ You need to setup port forwarding to view the Jenkins UI on your local machine.
 
     Host jenkins-stop
       HostName <Public DNS name of instance you just created>
-      IdentityFile <Path to your key file>
       ControlPath ~/.ssh/jenkins-tunnel.ctl
       RequestTTY no
     ```
