@@ -1,0 +1,175 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "keyVaultName": {
+            "type": "string",
+            "minLength": 1,
+            "metadata": {
+                "description": "KeyVault name"
+            }
+        },
+        "accessPolicies": {
+            "type": "array",
+            "defaultValue": "{}",
+            "metadata": {
+                "description": "Access policies object {\"tenantId\":\"\",\"objectId\":\"\",\"permissions\":{\"keys\":[\"\"],\"secrets\":[\"\"]}}"
+            }
+        },
+        "logsRetentionInDays": {
+            "type": "int",
+            "defaultValue": 0,
+            "minValue": 0,
+            "maxValue": 365,
+            "metadata": {
+                "description": "Specifies the number of days that logs are gonna be kept. If you do not want to apply any retention policy and retain data forever, set value to 0."
+            }
+        },
+        "enableVaultForDeployment": {
+            "type": "bool",
+            "defaultValue": false,
+            "allowedValues": [
+                true,
+                false
+            ],
+            "metadata": {
+                "description": "Specifies if the vault is enabled for deployment by script or compute (VM, Service Fabric, ...)"
+            }
+        },
+        "enableVaultForTemplateDeployment": {
+            "type": "bool",
+            "defaultValue": false,
+            "allowedValues": [
+                true,
+                false
+            ],
+            "metadata": {
+                "description": "Specifies if the vault is enabled for a template deployment"
+            }
+        },
+        "enableVaultForDiskEncryption": {
+            "type": "bool",
+            "defaultValue": false,
+            "allowedValues": [
+                true,
+                false
+            ],
+            "metadata": {
+                "description": "Specifies if the azure platform has access to the vault for enabling disk encryption scenarios."
+            }
+        },
+        "vaultSku": {
+            "type": "string",
+            "defaultValue": "Standard",
+            "allowedValues": [
+                "Standard",
+                "Premium"
+            ],
+            "metadata": {
+                "description": "Specifies the SKU for the vault"
+            }
+        },
+        "protectWithLocks": {
+            "type": "string",
+            "allowedValues": [
+                "enabled",
+                "disabled"
+            ],
+            "defaultValue": "disabled"
+        }
+    },
+    "variables": {
+        "template": {
+            "base": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-key-vault-with-logging-create/",
+            "protectWithLocks": "[concat('nestedtemplates/protectwithlocks', parameters('protectWithLocks'), '.json')]"
+        },
+        "uniqueString": "[uniqueString(subscription().id, resourceGroup().id)]",
+        "diagnosticStorageAccountName": "[toLower( substring( replace( concat( parameters('keyVaultName'), variables('uniqueString'), variables('uniqueString') ), '-', ''), 0, 23) )]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.KeyVault/vaults",
+            "name": "[parameters('keyVaultName')]",
+            "apiVersion": "2016-10-01",
+            "Location": "[resourceGroup().location]",
+            "tags": {
+                "displayName": "Key Vault with logging"
+            },
+            "properties": {
+                "enabledForDeployment": "[parameters('enableVaultForDeployment')]",
+                "enabledForTemplateDeployment": "[parameters('enableVaultForTemplateDeployment')]",
+                "enabledForDiskEncryption": "[parameters('enableVaultForDiskEncryption')]",
+                "tenantId": "[subscription().tenantId]",
+                "accessPolicies": "[parameters('AccessPolicies')]",
+                "sku": {
+                    "name": "[parameters('vaultSku')]",
+                    "family": "A"
+                }
+            },
+            "resources": [
+                {
+                    "type": "Microsoft.KeyVault/vaults/providers/diagnosticsettings",
+                    "name": "[concat(parameters('keyVaultName'), '/Microsoft.Insights/service')]",
+                    "apiVersion": "2016-09-01",
+                    "Location": "[resourceGroup().location]",
+                    "dependsOn": [
+                        "[concat('Microsoft.KeyVault/vaults/', parameters('keyVaultName'))]",
+                        "[concat('Microsoft.Storage/storageAccounts/', variables('diagnosticStorageAccountName'))]"
+                    ],
+                    "properties": {
+                        "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', variables('diagnosticStorageAccountName'))]",
+                        "logs": [
+                            {
+                                "category": "AuditEvent",
+                                "enabled": true,
+                                "retentionPolicy": {
+                                    "enabled": true,
+                                    "days": "[parameters('LogsRetentionInDays')]"
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[variables('diagnosticStorageAccountName')]",
+            "apiVersion": "2016-12-01",
+            "Location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Standard_LRS"
+            },
+            "kind": "Storage",
+            "tags": {
+                "displayName": "concat('Key Vault ', parameters('keyVaultName'), ' diagnostics storage account')"
+            },
+            "properties": {}
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "name": "protectWithLocks",
+            "apiVersion": "2016-09-01",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[concat(variables('template').base, variables('template').protectWithLocks)]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "keyVaultName": {
+                        "value": "[parameters('keyVaultName')]"
+                    },
+                    "diagnosticStorageAccountName": {
+                        "value": "[variables('diagnosticStorageAccountName')]"
+                    }
+                }
+            },
+            "dependsOn": [
+                "[concat('Microsoft.KeyVault/vaults/', parameters('keyVaultName'))]",
+                "[concat('Microsoft.Storage/storageAccounts/', variables('diagnosticStorageAccountName'))]"
+            ]
+        }
+    ],
+    "outputs": {}
+}
