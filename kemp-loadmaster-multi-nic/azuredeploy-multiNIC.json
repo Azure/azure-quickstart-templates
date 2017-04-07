@@ -50,14 +50,8 @@
             "metadata": {
                 "description": "Name of the existing subnet in the virtual network you want to use"
             }
-        },
-       "dnsNameForPublicIP": {
-            "type": "string",
-            "metadata": {
-                "description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
-            }
-        }
-    },
+         }
+       },
     "variables": {
         "publicIPAddressType": "Dynamic",
         "adminUsername": "bal",
@@ -65,6 +59,7 @@
         "subnetRef2": "[concat(parameters('existingVirtualNetworkId'),'/subnets/', parameters('existingsubnetName2'))]",
         "nicName1": "NIC1",
 	"nicName2": "NIC2",
+        "dnsNameForPublicIP": "[concat('vlm',uniqueString(resourceGroup().id))]",
         "storageAccountType": "Standard_LRS",
         "imageOffer": "vlm-azure",
         "imagePublisher": "kemptech",
@@ -88,6 +83,7 @@
         {
             "type": "Microsoft.Storage/storageAccounts",
             "name": "[variables('storageAccountName')]",
+            "comments": "This storage account is used to store the VM disk.",
             "apiVersion": "2016-01-01",
             "location": "[resourceGroup().location]",
             "sku": {
@@ -100,6 +96,7 @@
             "apiVersion": "2015-06-15",
             "type": "Microsoft.Network/publicIPAddresses",
             "name": "[variables('publicIPAddressName')]",
+            "comments": "This is the public IP assigned to the NIC on Existing Subnet 1.",
             "location": "[resourceGroup().location]",
             "tags": {
                 "displayName": "PublicIPAddress"
@@ -107,7 +104,7 @@
             "properties": {
                 "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
                 "dnsSettings": {
-                    "domainNameLabel": "[parameters('dnsNameForPublicIP')]"
+                    "domainNameLabel": "[variables('dnsNameForPublicIP')]"
                 }
             }
         },
@@ -115,6 +112,7 @@
             "apiVersion": "2015-06-15",
             "type": "Microsoft.Network/networkInterfaces",
             "name": "[variables('nicName1')]",
+            "comments": "This creates the NIC on Existing Subnet 1.",
             "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
@@ -143,6 +141,7 @@
             "apiVersion": "2015-06-15",
             "type": "Microsoft.Network/networkInterfaces",
             "name": "[variables('nicName2')]",
+            "comments": "This creates the NIC on Existing Subnet 2.",
             "location": "[resourceGroup().location]",
             "tags": {
                 "displayName": "NetworkInterface2"
@@ -165,6 +164,7 @@
             "apiVersion": "2015-06-15",
             "type": "Microsoft.Compute/virtualMachines",
             "name": "[parameters('vmName')]",
+            "comments": "This creates the KEMP LoadMaster with multiple interfaces.",
             "plan": "[variables('imagePlan')]",
             "location": "[resourceGroup().location]",
             "tags": {
@@ -194,7 +194,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-               "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))).primaryEndpoints.blob, 'vhds/osdisk.vhd')]"
+               "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName')),'2016-01-01').primaryEndpoints.blob, 'vhds/osdisk.vhd')]"
               }, 
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -214,5 +214,17 @@
                 }
             }
         }
-    ]
+    ],
+"outputs": {
+
+    "DNS Name": {
+         "type": "string",
+         "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName')),'2017-04-01').dnsSettings.fqdn]"
+       },
+    "IP Address": {
+         "type": "string",
+         "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName')),'2017-04-01').dnsSettings.fqdn]"
+  }
+ }
 }
+
