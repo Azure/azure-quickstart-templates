@@ -53,48 +53,48 @@ You need to setup port forwarding to view the Spinnaker UI on your local machine
 
 ### If you are using Linux or Mac:
 1. Add this to your ~/.ssh/config
-  ```
-  Host spinnaker-start
-    HostName <Public DNS name of instance you just created>
-    IdentityFile <Path to your key file>
-    ControlMaster yes
-    ControlPath ~/.ssh/spinnaker-tunnel.ctl
-    RequestTTY no
-    LocalForward 9000 127.0.0.1:9000
-    LocalForward 8084 127.0.0.1:8084
-    LocalForward 8087 127.0.0.1:8087
-    User <User name>
+    ```
+    Host spinnaker-start
+      HostName <Public DNS name of instance you just created>
+      IdentityFile <Path to your key file>
+      ControlMaster yes
+      ControlPath ~/.ssh/spinnaker-tunnel.ctl
+      RequestTTY no
+      LocalForward 9000 127.0.0.1:9000
+      LocalForward 8084 127.0.0.1:8084
+      LocalForward 8087 127.0.0.1:8087
+      User <User name>
 
-  Host spinnaker-stop
-    HostName <Public DNS name of instance you just created>
-    IdentityFile <Path to your key file>
-    ControlPath ~/.ssh/spinnaker-tunnel.ctl
-    RequestTTY no
-  ```
+    Host spinnaker-stop
+      HostName <Public DNS name of instance you just created>
+      IdentityFile <Path to your key file>
+      ControlPath ~/.ssh/spinnaker-tunnel.ctl
+      RequestTTY no
+    ```
 1. Create a spinnaker-tunnel.sh file with the following content and give it execute permission using `chmod +x spinnaker-tunnel.sh`
-  ```
-  #!/bin/bash
+    ```bash
+    #!/bin/bash
 
-  socket=$HOME/.ssh/spinnaker-tunnel.ctl
+    socket=$HOME/.ssh/spinnaker-tunnel.ctl
 
-  if [ "$1" == "start" ]; then
-    if [ ! \( -e ${socket} \) ]; then
-      echo "Starting tunnel to Spinnaker..."
-      ssh -f -N spinnaker-start && echo "Done."
-    else
-      echo "Tunnel to Spinnaker running."
+    if [ "$1" == "start" ]; then
+      if [ ! \( -e ${socket} \) ]; then
+        echo "Starting tunnel to Spinnaker..."
+        ssh -f -N spinnaker-start && echo "Done."
+      else
+        echo "Tunnel to Spinnaker running."
+      fi
     fi
-  fi
 
-  if [ "$1" == "stop" ]; then
-    if [ \( -e ${socket} \) ]; then
-      echo "Stopping tunnel to Spinnaker..."
-      ssh -O "exit" spinnaker-stop && echo "Done."
-    else
-      echo "Tunnel to Spinnaker stopped."
+    if [ "$1" == "stop" ]; then
+      if [ \( -e ${socket} \) ]; then
+        echo "Stopping tunnel to Spinnaker..."
+        ssh -O "exit" spinnaker-stop && echo "Done."
+      else
+        echo "Tunnel to Spinnaker stopped."
+      fi
     fi
-  fi
-  ```
+    ```
 1. Call `./spinnaker-tunnel.sh start` to start your tunnel
 1. Call `./spinnaker-tunnel.sh stop` to stop your tunnel
 
