@@ -8,11 +8,13 @@ This solution (currently in preview) will allow you to capture your Azure Servic
 
 ![alt text](images/ServiceBusSolution.png "Solution View")
 
-**Updates in this version:**
-+ Added monitoring of Topics
-+ Enabled removal of the view and solution in the Ibiza portal (under resource group properties)
-+ Changed artifactsLocationSasToken to a variable instead of a parameter
-+ Support for multiple Azure subscriptions
+**Updates in this version (April 2017):**
++ Added more fields for Topics
++ Added a free space remaining percentage for Queue and Topic thresholds
++ Before ingestion, added an alert threshold value if Queue and/or Topic threshold is reached, so that you can create an alert based on this value
++ Updated visualization with free space remaining for queues and topics, scheduled messages etc.
+ 
+![alt text](images/FreeSpaceAndAlertThreshold.png "Free space percentage and Alert Threshold")
 
 ## Prerequisites
 
