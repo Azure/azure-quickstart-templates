@@ -5,7 +5,7 @@
 
 ## Overview
 
-An OMS Solution that helps you manage Hyper-V replica. It give you visibility of the current replication state. It only shows data from the primary replica host.
+An OMS Solution that helps you manage Hyper-V replica. It gives you visibility of the current replication state. It only shows data from the primary replica host.
 
 **Overview Screen**
 
