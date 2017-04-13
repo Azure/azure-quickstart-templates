@@ -54,7 +54,7 @@
     "virtualNetworkName": "[concat(variables('resourcePrefix'), 'VNET')]",
     "vmExtensionName": "initializeJenkins",
     "frontEndNSGName": "[concat(variables('resourcePrefix'), 'NSG')]",
-    "_artifactsLocation": "https://raw.githubusercontent.com/Azure/azure-devops-utils/v0.8.0/",
+    "_artifactsLocation": "https://raw.githubusercontent.com/Azure/azure-devops-utils/v0.9.1/",
     "_extensionScript": "201-jenkins-acr.sh",
     "_artifactsLocationSasToken": ""
   },
@@ -139,6 +139,20 @@
               "destinationAddressPrefix": "*",
               "access": "Allow",
               "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "http-rule",
+            "properties": {
+              "description": "Allow HTTP",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 101,
               "direction": "Inbound"
             }
           }
@@ -261,19 +275,19 @@
           ]
         },
         "protectedSettings": {
-          "commandToExecute": "[concat('./' , variables('_extensionScript'),' -u \"', parameters('adminUsername') , '\" -g \"', parameters('gitRepository') , '\" -r \"https://',reference(resourceId('Microsoft.ContainerRegistry/registries', variables('acrName'))).loginServer, '\" -ru \"', parameters('servicePrincipalAppId'), '\" -rp \"', parameters('servicePrincipalAppKey'), '\" -al \"', variables('_artifactsLocation'), '\" -st \"', variables('_artifactsLocationSasToken'), '\"' )]"
+          "commandToExecute": "[concat('./' , variables('_extensionScript'),' -jf \"', reference(variables('publicIPAddressName')).dnsSettings.fqdn, '\" -u \"', parameters('adminUsername') , '\" -g \"', parameters('gitRepository') , '\" -r \"https://',reference(resourceId('Microsoft.ContainerRegistry/registries', variables('acrName'))).loginServer, '\" -ru \"', parameters('servicePrincipalAppId'), '\" -rp \"', parameters('servicePrincipalAppKey'), '\" -al \"', variables('_artifactsLocation'), '\" -st \"', variables('_artifactsLocationSasToken'), '\"' )]"
         }
       }
     }
   ],
   "outputs": {
-    "jenkinsVmFQDN": {
+    "jenkinsURL": {
       "type": "string",
-      "value": "[reference(variables('publicIPAddressName')).dnsSettings.fqdn]"
+      "value": "[concat('http://', reference(variables('publicIPAddressName')).dnsSettings.fqdn)]"
     },
     "SSH": {
       "type": "string",
-      "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(variables('publicIPAddressName')).dnsSettings.fqdn)]"
+      "value": "[concat('ssh -L 127.0.0.1:8080:localhost:8080 ', parameters('adminUsername'), '@', reference(variables('publicIPAddressName')).dnsSettings.fqdn)]"
     },
     "azureContainerRegistryUrl": {
       "type": "string",
