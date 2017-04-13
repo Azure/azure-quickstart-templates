@@ -32,7 +32,8 @@
     "vmName": "[concat(variables('resourcePrefix'), 'VM')]",
     "virtualNetworkName": "[concat(variables('resourcePrefix'), 'VNET')]",
     "frontEndNSGName": "[concat(variables('resourcePrefix'), 'NSG')]",
-    "_artifactsLocation": "https://raw.githubusercontent.com/azure/azure-devops-utils/v0.8.0/",
+    "_artifactsLocation": "https://raw.githubusercontent.com/azure/azure-devops-utils/v0.9.1/",
+    "_extensionScript": "101-jenkins.sh",
     "_artifactsLocationSasToken": ""
   },
   "resources": [
@@ -80,6 +81,20 @@
               "destinationAddressPrefix": "*",
               "access": "Allow",
               "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "http-rule",
+            "properties": {
+              "description": "Allow HTTP",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 101,
               "direction": "Inbound"
             }
           }
@@ -197,23 +212,23 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[concat(variables('_artifactsLocation'), 'jenkins/install_jenkins.sh', variables('_artifactsLocationSasToken'))]"
+            "[concat(variables('_artifactsLocation'), '/quickstart_template/', variables('_extensionScript'), variables('_artifactsLocationSasToken'))]"
           ]
         },
         "protectedSettings": {
-          "commandToExecute": "./install_jenkins.sh"
+          "commandToExecute": "[concat('./' , variables('_extensionScript'), ' -jf \"', reference(variables('publicIPAddressName')).dnsSettings.fqdn, '\" -al \"', variables('_artifactsLocation'), '\" -st \"', variables('_artifactsLocationSasToken'), '\"' )]"
         }
       }
     }
   ],
   "outputs": {
-    "jenkinsVmFQDN": {
+    "jenkinsURL": {
       "type": "string",
-      "value": "[reference(variables('publicIPAddressName')).dnsSettings.fqdn]"
+      "value": "[concat('http://', reference(variables('publicIPAddressName')).dnsSettings.fqdn)]"
     },
     "SSH": {
       "type": "string",
-      "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(variables('publicIPAddressName')).dnsSettings.fqdn)]"
+      "value": "[concat('ssh -L 127.0.0.1:8080:localhost:8080 ', parameters('adminUsername'), '@', reference(variables('publicIPAddressName')).dnsSettings.fqdn)]"
     }
   }
 }

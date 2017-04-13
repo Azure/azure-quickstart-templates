@@ -32,69 +32,17 @@ The Jenkins instance will include a basic pipeline that checks out a user-provid
 You need to setup port forwarding to view the Jenkins and Spinnaker UI on your local machine.
 
 ### If you are using Windows:
-1. Install Putty or use any bash shell for Windows (if using a bash shell, follow the instructions for Linux or Mac).
-1. Launch Putty and navigate to 'Connection > SSH > Tunnels'
-1. In the Options controlling SSH port forwarding window, enter 8080 for Source port. Then enter 127.0.0.1:8080 for the Destination. Click Add.
-1. Repeat this process for ports 8084, 8087, and 9000
-1. Click Open to establish the connection.
-
-### If you are using Linux or Mac:
-1. Add this to your ~/.ssh/config
-    ```
-    Host devops-start
-      HostName <Public DNS name of instance you just created>
-      IdentityFile <Path to your key file>
-      ControlMaster yes
-      ControlPath ~/.ssh/devops-tunnel.ctl
-      RequestTTY no
-      # Jenkins dashboard
-      LocalForward 8080 127.0.0.1:8080
-      # Spinnaker/deck
-      LocalForward 9000 127.0.0.1:9000
-      # Spinnaker/gate
-      LocalForward 8084 127.0.0.1:8084
-      # Default port if running 'kubectl proxy' on the VM
-      LocalForward 8001 127.0.0.1:8001
-      User <User name>
-
-    Host devops-stop
-      HostName <Public DNS name of instance you just created>
-      IdentityFile <Path to your key file>
-      ControlPath ~/.ssh/devops-tunnel.ctl
-      RequestTTY no
-    ```
-1. Create a devops-tunnel.sh file with the following content and give it execute permission using `chmod +x devops-tunnel.sh`
-    ```bash
-    #!/bin/bash
-
-    socket=$HOME/.ssh/devops-tunnel.ctl
-
-    if [ "$1" == "start" ]; then
-      if [ ! \( -e ${socket} \) ]; then
-        echo "Starting tunnel to DevOps VM..."
-        ssh -f -N devops-start && echo "Done."
-      else
-        echo "Tunnel to DevOps VM running."
-      fi
-    fi
-
-    if [ "$1" == "stop" ]; then
-      if [ \( -e ${socket} \) ]; then
-        echo "Stopping tunnel to DevOps VM..."
-        ssh -O "exit" devops-stop && echo "Done."
-      else
-        echo "Tunnel to DevOps VM stopped."
-      fi
-    fi
-    ```
-1. Call `./devops-tunnel.sh start` to start your tunnel
-1. Call `./devops-tunnel.sh stop` to stop your tunnel
+Run this command:
+```
+  ssh -L 127.0.0.1:8080:localhost:8080 -L 127.0.0.1:9000:localhost:9000 -L 127.0.0.1:8084:localhost:8084 -L 127.0.0.1:8001:localhost:8001 <User name>@<Public DNS name of instance you just created>
+```
 
 ## D. Connect to Jenkins
 
 1. After you have started your tunnel, navigate to http://localhost:8080/ on your local machine.
 1. Unlock the Jenkins dashboard for the first time with the initial admin password. To get this token, SSH into the VM and run `sudo cat /var/lib/jenkins/secrets/initialAdminPassword`
-1. Your Jenkins instance is now ready to use! Go to http://aka.ms/azjenkinsagents if you want to build/CI from this Jenkins master using Azure VM agents.
+1. Your Jenkins instance is now ready to use! You can access a read-only view by going to http://< Public DNS name of instance you just created >.
+1. Go to http://aka.ms/azjenkinsagents if you want to build/CI from this Jenkins master using Azure VM agents.
 
 ## E. Connect to Spinnaker
 
