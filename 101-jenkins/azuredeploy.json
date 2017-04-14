@@ -32,7 +32,11 @@
     "vmName": "[concat(variables('resourcePrefix'), 'VM')]",
     "virtualNetworkName": "[concat(variables('resourcePrefix'), 'VNET')]",
     "frontEndNSGName": "[concat(variables('resourcePrefix'), 'NSG')]",
-    "_artifactsLocation": "https://raw.githubusercontent.com/azure/azure-devops-utils/v0.8.0/",
+    "vNetAddressPrefixes": "10.0.0.0/16",
+    "sNetAddressPrefixes": "10.0.0.0/24",
+    "vmPrivateIP": "10.0.0.5",
+    "_artifactsLocation": "https://raw.githubusercontent.com/azure/azure-devops-utils/v0.10.0/",
+    "_extensionScript": "install_jenkins.sh",
     "_artifactsLocationSasToken": ""
   },
   "resources": [
@@ -82,6 +86,20 @@
               "priority": 100,
               "direction": "Inbound"
             }
+          },
+          {
+            "name": "http-rule",
+            "properties": {
+              "description": "Allow HTTP",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 101,
+              "direction": "Inbound"
+            }
           }
         ]
       }
@@ -94,14 +112,14 @@
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
-            "10.0.0.0/16"
+            "[variables('vNetAddressPrefixes')]"
           ]
         },
         "subnets": [
           {
             "name": "[variables('subnetName')]",
             "properties": {
-              "addressPrefix": "10.0.0.0/24",
+              "addressPrefix": "[variables('sNetAddressPrefixes')]",
               "networkSecurityGroup": {
                 "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('frontEndNSGName'))]"
               }
@@ -127,7 +145,8 @@
           {
             "name": "ipconfig1",
             "properties": {
-              "privateIPAllocationMethod": "Dynamic",
+              "privateIPAllocationMethod": "Static",
+              "privateIpAddress": "[variables('vmPrivateIP')]",
               "publicIPAddress": {
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
               },
@@ -197,23 +216,23 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[concat(variables('_artifactsLocation'), 'jenkins/install_jenkins.sh', variables('_artifactsLocationSasToken'))]"
+            "[concat(variables('_artifactsLocation'), '/jenkins/', variables('_extensionScript'), variables('_artifactsLocationSasToken'))]"
           ]
         },
         "protectedSettings": {
-          "commandToExecute": "./install_jenkins.sh"
+          "commandToExecute": "[concat('./' , variables('_extensionScript'), ' -jf \"', reference(variables('publicIPAddressName')).dnsSettings.fqdn, '\" -pi \"', variables('vmPrivateIP'), '\" -al \"', variables('_artifactsLocation'), '\" -st \"', variables('_artifactsLocationSasToken'), '\"' )]"
         }
       }
     }
   ],
   "outputs": {
-    "jenkinsVmFQDN": {
+    "jenkinsURL": {
       "type": "string",
-      "value": "[reference(variables('publicIPAddressName')).dnsSettings.fqdn]"
+      "value": "[concat('http://', reference(variables('publicIPAddressName')).dnsSettings.fqdn)]"
     },
     "SSH": {
       "type": "string",
-      "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(variables('publicIPAddressName')).dnsSettings.fqdn)]"
+      "value": "[concat('ssh -L 127.0.0.1:8080:localhost:8080 ', parameters('adminUsername'), '@', reference(variables('publicIPAddressName')).dnsSettings.fqdn)]"
     }
   }
 }
