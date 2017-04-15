@@ -18,11 +18,6 @@
 
     Node localhost
     {
-        LocalConfigurationManager
-        {
-       	    ConfigurationMode = 'ApplyOnly'
-            RebootNodeIfNeeded = $true
-        }
         xWaitForADDomain DscForestWait
         {
             DomainName = $DomainName
@@ -40,16 +35,18 @@
             SysvolPath = "F:\SYSVOL"
             DependsOn = "[xWaitForADDomain]DscForestWait"
         }
-        Script script1
+        Script UpdateDNSForwarder
         {
             SetScript =
             {
-                $dnsFwdRule = Get-DnsServerForwarder
+                Write-Verbose -Verbose "Getting DNS forwarding rule..."
+                $dnsFwdRule = Get-DnsServerForwarder -Verbose
                 if ($dnsFwdRule)
                 {
-                    Remove-DnsServerForwarder -IPAddress $dnsFwdRule.IPAddress -Force
+                    Write-Verbose -Verbose "Removing DNS forwarding rule"
+                    Remove-DnsServerForwarder -IPAddress $dnsFwdRule.IPAddress -Force -Verbose
                 }
-                Write-Verbose -Verbose "Removing DNS forwarding rule"
+                Write-Verbose -Verbose "End of UpdateDNSForwarder script..."
             }
             GetScript =  { @{} }
             TestScript = { $false}
