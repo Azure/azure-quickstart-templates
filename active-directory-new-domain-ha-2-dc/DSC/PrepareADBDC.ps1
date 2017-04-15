@@ -12,6 +12,7 @@
     Import-DscResource -ModuleName  xDisk, cDisk, xNetworking
     $Interface=Get-NetAdapter|Where Name -Like "Ethernet*"|Select-Object -First 1
     $InterfaceAlias=$($Interface.Name)
+
     Node localhost
     {
         LocalConfigurationManager
@@ -57,7 +58,7 @@
             Address        = $DNSServer
             InterfaceAlias = $InterfaceAlias
             AddressFamily  = 'IPv4'
-            DependsOn="[WindowsFeature]ADDSInstall"
+            DependsOn="[WindowsFeature]ADAdminCenter"
         }
    }
 }
