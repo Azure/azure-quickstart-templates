@@ -12,12 +12,17 @@
         [Int]$RetryIntervalSec=30
     )
 
-    Import-DscResource -ModuleName xActiveDirectory, xDisk, cDisk
+    Import-DscResource -ModuleName xActiveDirectory, xDisk, cDisk, xPendingReboot
 
     [System.Management.Automation.PSCredential ]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainName}\$($Admincreds.UserName)", $Admincreds.Password)
 
     Node localhost
     {
+        LocalConfigurationManager
+        {
+            RebootNodeIfNeeded = $true
+        }
+        
         xWaitForADDomain DscForestWait
         {
             DomainName = $DomainName
@@ -52,5 +57,11 @@
             TestScript = { $false}
             DependsOn = "[xADDomainController]BDC"
         }
+
+        xPendingReboot RebootAfterPromotion {
+            Name = "RebootAfterDCPromotion"
+            DependsOn = "[Script]UpdateDNSForwarder"
+        }
+
     }
 }

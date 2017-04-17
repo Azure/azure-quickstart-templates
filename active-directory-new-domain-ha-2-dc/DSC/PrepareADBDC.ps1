@@ -17,7 +17,6 @@
     {
         LocalConfigurationManager
         {
-            ConfigurationMode = 'ApplyOnly'
             RebootNodeIfNeeded = $true
         }
         xWaitforDisk Disk2
