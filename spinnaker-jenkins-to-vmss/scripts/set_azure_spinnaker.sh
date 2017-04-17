@@ -109,9 +109,12 @@ sudo printf "rosco.yml file has been updated\n"
 sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys EB9B1D8886F44E2A
 sudo printf "apt-key done\n" 
 
+# Enable Azure provider in /etc/default/spinnaker
+sudo sed -i '/SPINNAKER_AZURE_ENABLED=false/s/.*/SPINNAKER_AZURE_ENABLED=true/' /etc/default/spinnaker
+
 # Removing debug file
 sudo rm -f $SED_FILE
 
 # rebooting the VM to avoid issues with front50
-sudo restart spinnaker 
+sudo service spinnaker restart
 
