@@ -306,89 +306,7 @@ $meter.MeterRates.psobject.Properties|Foreach-object{
 
 }
 
-#get lowest cost region 
-<#
-$filteredMEters=$meters|where{$_.MeterCategory -eq $meter.MeterCategory -and $_.MeterName -eq $Meter.MeterName -and $_.MeterSubCategory -eq $meter.MeterSubCategory -and ![string]::IsNullOrEmpty($_.MeterREgion)}
-$sortedMEter=@()
-Foreach($billRegion in $filteredMEters)
-{
 
-        $sortedMeter+=new-object PSobject -Property @{
-                                MeterRegion=$billRegion.MeterRegion
-                                Meterrates=$billRegion.MeterRates.0
-                                Rates=$billRegion.MeterRates
-
-                        }
-}
-
-$sortedMEter|where {$_.Meterrates -eq $($sortedMEter|Sort-Object -Property Meterrates |select -First 1).Meterrates}|?{$lowestregion+="$($_.MEterregion),"}
-
-If ($lowestregion -match $meter.MeterRegion)
-{
-
-$calcLowestCost=$calcCost
-$calcSaving=0
-}
-Else
-{
-
-$calcLowestCost=0
-$lowestRate=($sortedMEter|Sort-Object -Property Meterrates |select -First 1).Rates
-$meterArr=[array]$lowestRate.psobject.Properties
-
-If($meterArr.Count -eq 1)
-{
-$calcLowestCost=[double]$meterArr[0].Value*$quantity
-}
-Else
-{
-
-$i=0
-$remaining=$quantity
-$calcLowestCost=0
-$lowestRate.psobject.Properties|Foreach-object{
-
-    [long]$curname=$_.name
-    [double]$curval=$_.value
-
-      "$curname  $curval  -$i"
-
-    IF ($i -gt 0 -and $quantity -gt 0 )
-    {
-        IF($quantity -le $curname )
-        {
-            $calcLowestCost+=$lastval*$quantity
-            "cost =  $lastval * $quantity  =$calcLowestCost"
-            $quantity=$quantity-$curname
-        }
-        Else
-        {
-            $calcLowestCost+=($curname-$lastname)*$lastval
-            $quantity=$quantity-$curname
-            "cost =  ($curname - $lastname) * $lastval  , total cost: $calcLowestCost"
-
-            "Remaining $quantity"
-            
-        }
-                 
-    }
-        
-        $i++
-    $lastname=$curname
-    $lastval=$curval
-
-}
-
-
-
-}
-
-
-$calcSaving=$calcCost-$calcLowestCost
-}
-
-
-#>
 
 $calcBillItem = New-Object PSObject -Property @{
                                     calcCost=[double]$calcCost
@@ -856,7 +774,7 @@ $metricitem=$_
     $insdata=(convertfrom-json $metricitem.instanceData).'Microsoft.Resources'
     $resid=$insdata.resourceUri
     $rg=$allrg|where {$_.Name -eq $resid.Split('/')[4]}
-
+    $tag=$null
     $tags=$null
    # $tags=(convertfrom-json $metricitem.instanceData).'Microsoft.Resources'.tags
    $tags=@{}
@@ -864,8 +782,14 @@ $metricitem=$_
    $restag=(convertfrom-json $metricitem.instanceData).'Microsoft.Resources'.tags
    If ($restag)
    {
-      $tags.add($restag.psobject.properties.Name,$restag.psobject.properties.value)
+      $restag.PSObject.Properties | foreach-object {
+                
+                   # add the tag if not  in the list already 
+                   $tags.add($_.Name,$_.value)
+               # $tags|add-member -MemberType NoteProperty -Name -ea 0
+                }   
     }
+
 
     $UsageType=$insdata.additionalInfo.UsageType
 
@@ -989,15 +913,19 @@ $meteredRegion=$metricitem.infoFields.meteredRegion
 
 $meteredServiceType=$metricitem.infoFields.meteredServiceType
 $rgcls=$null
+$rg=$null
+
 IF ($metricitem.infoFields.meteredservice -eq 'Compute')
 {
 
     $rgcls=$metricitem.infoFields.project.Split('(')[0]
+    $rg=$allrg|where {$_.Name -eq $rgcls}
+
 }Else
 {
 
     $rgcls=($resmap|where{$_.Resource -eq "$($metricitem.infoFields.project)"}).Resourcegroup
-
+    $rg=$allrg|where {$_.Name -eq $rgcls}
 }
 
 
@@ -1049,28 +977,24 @@ $cu1 = New-Object PSObject -Property @{
 
                                  #  Write-Verbose $cu1 -Verbose
 
-IF($propagatetags -eq $true -and ![string]::IsNullOrEmpty(($allrg|where {$_.Name -eq $rgcls}).Tags) )
+IF($propagatetags -eq $true -and ![string]::IsNullOrEmpty($rg.Tags) )
 {
 
- "tags $(($allrg|where {$_.Name -eq $rgcls}).Tags) added to classic res"
+ "tags $($rg.Tags) added to classic res"
+    
+        
+       $rg.tags.PSObject.Properties | foreach-object {
+                
+                   # add the tag if not  in the list already 
+                   $tags.add($_.Name,$_.value)
+               # $tags|add-member -MemberType NoteProperty -Name -ea 0
+                }   
 
 
-            foreach ($tag in $tags)
+            foreach ($tag in $tags.Keys)
             {
-                $tag.PSObject.Properties | foreach-object {
+                                
                 
-                #exclude devteslabsUID 
-                $name=$value=$null
-
-                $name = $_.Name 
-                $value = $_.value
-                
-                IF ($name -match '-LabUId'){Continue}
-                
-           Write-Verbose     "Adding tag $name : $value to $($metricitem.meterCategory)  - $($metricitem.meterName)"
-
-     
-             
              $cu1=$null
              $cu1 = New-Object PSObject -Property @{
                                     Timestamp = $metricitem.usageStartTime
@@ -1090,19 +1014,15 @@ IF($propagatetags -eq $true -and ![string]::IsNullOrEmpty(($allrg|where {$_.Name
                                    #UsageType=$insdata.additionalInfo.UsageType
                                     Resource= $metricitem.infoFields.project
                                     Aggregation=$syncInterval
-                                    Tag="$name : $value"
+                                    Tag="$tag : $($tags.item($tag))" 
                                     OfferDurableId=$OfferDurableId
                                     Currency=$Currency
                                     Locale=$Locale
                                     RegionInfo=$RegionInfo
-                                          #add Cost savings
-                                    LowestCostRegion=$lowcostregions
-                                    costForLowestRegion=$lowestprice.calcCost
-                                    possibleCostSaving=[double]($price.calcCost-$lowestprice.calcCost)
-
+                                    
                                     }
 
-               $cu1|add-member -MemberType NoteProperty -Name $name -Value $value -Ea 0
+               $cu1|add-member -MemberType NoteProperty -Name $tag  -Value $tags.item($tag) -ea 0
 
 
                                     #adding to array
@@ -1110,7 +1030,7 @@ IF($propagatetags -eq $true -and ![string]::IsNullOrEmpty(($allrg|where {$_.Name
        
                         
                         #End tag processing 
-                        }
+ 
 
 
 
