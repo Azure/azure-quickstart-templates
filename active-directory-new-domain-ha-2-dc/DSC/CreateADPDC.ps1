@@ -12,7 +12,7 @@
         [Int]$RetryIntervalSec=30
     )
 
-    Import-DscResource -ModuleName xActiveDirectory, xDisk, xNetworking, cDisk, PSDesiredStateConfiguration, xPendingReboot
+    Import-DscResource -ModuleName xActiveDirectory, xStorage, xNetworking, PSDesiredStateConfiguration, xPendingReboot
     [System.Management.Automation.PSCredential ]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainName}\$($Admincreds.UserName)", $Admincreds.Password)
     $Interface=Get-NetAdapter|Where Name -Like "Ethernet*"|Select-Object -First 1
     $InterfaceAlias=$($Interface.Name)
@@ -63,17 +63,17 @@
             RetryCount = $RetryCount
         }
 
-        cDiskNoRestart ADDataDisk
-        {
+        xDisk ADDataDisk {
             DiskNumber = 2
             DriveLetter = "F"
+            DependsOn = "[xWaitForDisk]Disk2"
         }
 
         WindowsFeature ADDSInstall
         {
             Ensure = "Present"
             Name = "AD-Domain-Services"
-            DependsOn="[cDiskNoRestart]ADDataDisk"
+            DependsOn="[WindowsFeature]DNS"
         }
 
         WindowsFeature ADDSTools
@@ -98,7 +98,7 @@
             DatabasePath = "F:\NTDS"
             LogPath = "F:\NTDS"
             SysvolPath = "F:\SYSVOL"
-            DependsOn = "[WindowsFeature]ADAdminCenter"
+            DependsOn = @("[WindowsFeature]ADDSInstall", "[xDisk]ADDataDisk")
         }
 
         xPendingReboot RebootAfterPromotion{

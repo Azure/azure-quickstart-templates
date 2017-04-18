@@ -9,7 +9,7 @@
         [Int]$RetryIntervalSec=30
     )
 
-    Import-DscResource -ModuleName  xDisk, cDisk, xNetworking
+    Import-DscResource -ModuleName  xStorage, xNetworking
     $Interface=Get-NetAdapter|Where Name -Like "Ethernet*"|Select-Object -First 1
     $InterfaceAlias=$($Interface.Name)
 
@@ -19,23 +19,25 @@
         {
             RebootNodeIfNeeded = $true
         }
+
         xWaitforDisk Disk2
         {
                 DiskNumber = 2
                 RetryIntervalSec =$RetryIntervalSec
                 RetryCount = $RetryCount
         }
-        cDiskNoRestart ADDataDisk
+
+        xDisk ADDataDisk
         {
             DiskNumber = 2
             DriveLetter = "F"
             DependsOn = "[xWaitForDisk]Disk2"
         }
+
         WindowsFeature ADDSInstall
         {
             Ensure = "Present"
             Name = "AD-Domain-Services"
-            DependsOn = "[cDiskNoRestart]ADDataDisk"
         }
 
         WindowsFeature ADDSTools
@@ -57,7 +59,7 @@
             Address        = $DNSServer
             InterfaceAlias = $InterfaceAlias
             AddressFamily  = 'IPv4'
-            DependsOn="[WindowsFeature]ADAdminCenter"
+            DependsOn="[WindowsFeature]ADDSInstall"
         }
    }
 }
