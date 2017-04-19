@@ -1,11 +1,11 @@
 # Hyper-V Replica Solution for OMS
 
-[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fbentaylorwork%2Fazure-arm-templates%2Fmaster%2Foms-solution-hypervReplica%2Fazuredeploy.json) 
-[![Deploy to Azure](http://armviz.io/visualizebutton.png)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fbentaylorwork%2Fazure-arm-templates%2Fmaster%2Foms-solution-hypervReplica%2Fazuredeploy.json) 
+[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Foms-hyperv-replica-solution%2Fazuredeploy.json) 
+[![Deploy to Azure](http://armviz.io/visualizebutton.png)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Foms-hyperv-replica-solution%2Fazuredeploy.json) 
 
 ## Overview
 
-An OMS Solution that helps you manage Hyper-V replica. It gives you visibility of the current replication state. It only shows data from the primary replica host.
+A community OMS Solution that helps you manage Hyper-V replica. It gives you visibility of the current replication state. It only shows data from the primary replica host.
 
 **Overview Screen**
 
@@ -58,7 +58,7 @@ An OMS Solution that helps you manage Hyper-V replica. It gives you visibility o
     * Run Number for only displaying the latest results.
 
 ## Limitations
-* No support for latency or replica sizes
+* No support for latency
 * No auto fixing of common replica errors
 
 ## Contributors
