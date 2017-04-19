@@ -27,8 +27,8 @@ You need to setup port forwarding to view the Jenkins UI on your local machine.
 
 ### If you are using Linux or Mac:
 Run this command:
-```
-  ssh -L 127.0.0.1:8080:localhost:8080 <User name>@<Public DNS name of instance you just created>
+```bash
+ssh -L 8080:localhost:8080 <User name>@<Public DNS name of instance you just created>
 ```
 
 ## C. Connect to Jenkins

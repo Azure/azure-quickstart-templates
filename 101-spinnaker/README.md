@@ -33,52 +33,11 @@ Once you have configured Spinnaker, you need to setup port forwarding to view th
 4. Click Open to establish the connection.
 
 ### If you are using Linux or Mac:
-1. Add this to your ~/.ssh/config
-    ```
-    Host spinnaker-start
-      HostName <Public DNS name of instance you just created>
-      IdentityFile <Path to your key file>
-      ControlMaster yes
-      ControlPath ~/.ssh/spinnaker-tunnel.ctl
-      RequestTTY no
-      # Spinnaker/deck
-      LocalForward 9000 127.0.0.1:9000
-      # Spinnaker/gate
-      LocalForward 8084 127.0.0.1:8084
-      User <User name>
-
-    Host spinnaker-stop
-      HostName <Public DNS name of instance you just created>
-      IdentityFile <Path to your key file>
-      ControlPath ~/.ssh/spinnaker-tunnel.ctl
-      RequestTTY no
-    ```
-2. Create a spinnaker-tunnel.sh file with the following content and give it execute permission using `chmod +x spinnaker-tunnel.sh`
-    ```bash
-    #!/bin/bash
-
-    socket=$HOME/.ssh/spinnaker-tunnel.ctl
-
-    if [ "$1" == "start" ]; then
-      if [ ! \( -e ${socket} \) ]; then
-        echo "Starting tunnel to Spinnaker..."
-        ssh -f -N spinnaker-start && echo "Done."
-      else
-        echo "Tunnel to Spinnaker running."
-      fi
-    fi
-
-    if [ "$1" == "stop" ]; then
-      if [ \( -e ${socket} \) ]; then
-        echo "Stopping tunnel to Spinnaker..."
-        ssh -O "exit" spinnaker-stop && echo "Done."
-      else
-        echo "Tunnel to Spinnaker stopped."
-      fi
-    fi
-    ```
-3. Call `./spinnaker-tunnel.sh start` to start your tunnel
-4. Call `./spinnaker-tunnel.sh stop` to stop your tunnel
+Run this command:
+```bash
+ssh -L 9000:localhost:9000 -L 8084:localhost:8084 <User name>@<Public DNS name of instance you just created>
+```
+> NOTE: Port 9000 and 8084 correspond to Spinnaker's deck and gate services, respectively.
 
 ## E. Connect to Spinnaker
 
