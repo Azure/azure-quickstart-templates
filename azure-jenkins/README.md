@@ -26,47 +26,10 @@ You need to setup port forwarding to view the Jenkins UI on your local machine.
 1. Click Open to establish the connection.
 
 ### If you are using Linux or Mac:
-1. Add this to your ~/.ssh/config
-    ```
-    Host jenkins-start
-      HostName <Public DNS name of instance you just created>
-      ControlMaster yes
-      ControlPath ~/.ssh/jenkins-tunnel.ctl
-      RequestTTY no
-      LocalForward 8080 127.0.0.1:8080
-      User <User name>
-
-    Host jenkins-stop
-      HostName <Public DNS name of instance you just created>
-      ControlPath ~/.ssh/jenkins-tunnel.ctl
-      RequestTTY no
-    ```
-1. Create a jenkins-tunnel.sh file with the following content and give it execute permission using `chmod +x jenkins-tunnel.sh`
-    ```bash
-    #!/bin/bash
-
-    socket=$HOME/.ssh/jenkins-tunnel.ctl
-
-    if [ "$1" == "start" ]; then
-      if [ ! \( -e ${socket} \) ]; then
-        echo "Starting tunnel to Jenkins..."
-        ssh -f -N jenkins-start && echo "Done."
-      else
-        echo "Tunnel to Jenkins running."
-      fi
-    fi
-
-    if [ "$1" == "stop" ]; then
-      if [ \( -e ${socket} \) ]; then
-        echo "Stopping tunnel to Jenkins..."
-        ssh -O "exit" jenkins-stop && echo "Done."
-      else
-        echo "Tunnel to Jenkins stopped."
-      fi
-    fi
-    ```
-1. Call `./jenkins-tunnel.sh start` to start your tunnel
-1. Call `./jenkins-tunnel.sh stop` to stop your tunnel
+Run this command:
+```bash
+ssh -L 8080:localhost:8080 <User name>@<Public DNS name of instance you just created>
+```
 
 ## C. Configure Sample Jobs and Azure Active Directory configuration
 1. Once you are logged into the VM, run /opt/azure_jenkins_config/config_azure.sh and pick option 1 - "All of the below". This script will guide you to set up and configure the Azure Storage plugin to be used in the sample jobs to upload and download to Storage.

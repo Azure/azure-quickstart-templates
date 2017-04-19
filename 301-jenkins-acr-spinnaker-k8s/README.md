@@ -33,9 +33,10 @@ You need to setup port forwarding to view the Jenkins and Spinnaker UI on your l
 
 ### If you are using Windows:
 Run this command:
+```bash
+ssh -L 8080:localhost:8080 -L 9000:localhost:9000 -L 8084:localhost:8084 -L 8001:localhost:8001 <User name>@<Public DNS name of instance you just created>
 ```
-  ssh -L 127.0.0.1:8080:localhost:8080 -L 127.0.0.1:9000:localhost:9000 -L 127.0.0.1:8084:localhost:8084 -L 127.0.0.1:8001:localhost:8001 <User name>@<Public DNS name of instance you just created>
-```
+> NOTE: Port 8080 corresponds to your Jenkins instance. Port 9000 and 8084 correspond to Spinnaker's deck and gate services, respectively. Port 8001 is used to view the dashboard for your Kubernetes cluster - just run `kubectl proxy` on the VM before navigating to http://localhost:8001 on your local machine.
 
 ## D. Connect to Jenkins
 
