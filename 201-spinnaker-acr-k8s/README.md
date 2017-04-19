@@ -26,7 +26,14 @@ This template allows you to deploy an instance of Spinnaker on a Linux Ubuntu 14
 You need to setup port forwarding to view the Spinnaker UI on your local machine.
 
 ### If you are using Windows:
-1. Install Putty or use any bash shell for Windows (if using a bash shell, follow the instructions for Linux or Mac).
+Install Putty or use any bash shell for Windows (if using a bash shell, follow the instructions for Linux or Mac).
+
+Run this command:
+```
+putty.exe -ssh -L 9000:localhost:9000 -L 8084:localhost:8084 -L 8001:localhost:8001 <User name>@<Public DNS name of instance you just created>
+```
+
+Or follow these manual steps:
 1. Launch Putty and navigate to 'Connection > SSH > Tunnels'
 1. In the Options controlling SSH port forwarding window, enter 8084 for Source port. Then enter 127.0.0.1:8084 for the Destination. Click Add.
 1. Repeat this process for port 9000 and 8001.

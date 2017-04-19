@@ -32,6 +32,21 @@ The Jenkins instance will include a basic pipeline that checks out a user-provid
 You need to setup port forwarding to view the Jenkins and Spinnaker UI on your local machine.
 
 ### If you are using Windows:
+Install Putty or use any bash shell for Windows (if using a bash shell, follow the instructions for Linux or Mac).
+
+Run this command:
+```
+putty.exe -ssh -L 8080:localhost:8080 -L 9000:localhost:9000 -L 8084:localhost:8084 -L 8001:localhost:8001 <User name>@<Public DNS name of instance you just created>
+```
+
+Or follow these manual steps:
+1. Launch Putty and navigate to 'Connection > SSH > Tunnels'
+1. In the Options controlling SSH port forwarding window, enter 8084 for Source port. Then enter 127.0.0.1:8084 for the Destination. Click Add.
+1. Repeat this process for port 8080, 9000 and 8001.
+1. Navigate to 'Connection > SSH > Auth' and enter your private key file for authentication. For more information on using ssh keys with Putty, see [here](https://docs.microsoft.com/azure/virtual-machines/virtual-machines-linux-ssh-from-windows#create-a-private-key-for-putty).
+1. Click Open to establish the connection.
+
+### If you are using Linux or Mac:
 Run this command:
 ```bash
 ssh -L 8080:localhost:8080 -L 9000:localhost:9000 -L 8084:localhost:8084 -L 8001:localhost:8001 <User name>@<Public DNS name of instance you just created>

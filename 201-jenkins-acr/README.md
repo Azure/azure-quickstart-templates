@@ -29,7 +29,14 @@ You can optionally include a basic Jenkins pipeline that will checkout a user-pr
 You need to setup port forwarding to view the Jenkins UI on your local machine.
 
 ### If you are using Windows:
-1. Install Putty or use any bash shell for Windows (if using a bash shell, follow the instructions for Linux or Mac).
+Install Putty or use any bash shell for Windows (if using a bash shell, follow the instructions for Linux or Mac).
+
+Run this command:
+```
+putty.exe -ssh -L 8080:localhost:8080 <User name>@<Public DNS name of instance you just created>
+```
+
+Or follow these manual steps:
 1. Launch Putty and navigate to 'Connection > SSH > Tunnels'
 1. In the Options controlling SSH port forwarding window, enter 8080 for Source port. Then enter 127.0.0.1:8080 for the Destination. Click Add.
 1. Click Open to establish the connection.
