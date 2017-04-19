@@ -14,26 +14,73 @@ You can deploy these samples directly through the Azure Portal or by using the s
 
 To deploy a sample using the Azure Portal, click the **Deploy to Azure** button found in the README.md of each sample.
 
-To deploy the sample via the command line (using [Azure PowerShell or the Azure CLI](https://azure.microsoft.com/en-us/downloads/)) you can use the scripts.
+To deploy the sample via the command line (using [Azure PowerShell](https://docs.microsoft.com/en-us/powershell/azure/overview) or the [Azure CLI 1.0](https://docs.microsoft.com/en-us/azure/cli-install-nodejs)) you can use the scripts below.
 
-Simply execute the script and pass in the folder name of the sample you want to deploy.  For example:
+Simply execute the script and pass in the folder name of the sample you want to deploy.  
 
+For example:
+
+### PowerShell
 ```PowerShell
 .\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactStagingDirectory '[foldername]'
 ```
+
+### Bash
 ```bash
 azure-group-deploy.sh -a [foldername] -l eastus
 ```
+
+### Bash on Ubuntu on Windows
+
+Run the following the first time to get all prerequisites installed:
+
+```bash
+sudo apt install npm
+sudo npm install -g n
+sudo n stable
+sudo npm install -g azure-cli
+sudo apt install dos2unix
+sudo apt install jq
+dos2unix azure-group-deploy.sh
+chmod +x azure-group-deploy.sh
+azure login
+azure account set [subscriptionNameOrId]
+```
+
+Run the following to execute the script:
+```bash
+./azure-group-deploy.sh -a [foldername] -l [location] -g [resourcegroup] -e azuredeploy.parameters.json
+```
+> The -e flag allows you to pass in a custom parameter override file.
+
+- If you see the following error: "syntax error near unexpected token `$'in\r''", make sure you run the dos2unix command above.
+- If you see the following error: "jq: command not found", make sure you run the "sudo apt install jq" command.
+- If you see the following error: "node: not found", make sure you run the "node" commands above.
+- If you see the following error: "azure-group-deploy.sh is not a command", make sure you run "chmod +x azure-group-deploy.sh".
+
+
 If the sample has artifacts that need to be "staged" for deployment (Configuration Scripts, Nested Templates, DSC Packages) then set the upload switch on the command.
 You can optionally specify a storage account to use, if so the storage account must already exist within the subscription.  If you don't want to specify a storage account
 one will be created by the script or reused if it already exists (think of this as "temp" storage for AzureRM).
 
+### PowerShell
+
 ```PowerShell
 .\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactStagingDirectory '201-vm-custom-script-windows' -UploadArtifacts 
 ```
+
+### Bash
 ```bash
-azure-group-deploy.sh -a '201-vm-custom-script-windows' -l eastus -u
+azure-group-deploy.sh -a [foldername] -l eastus -u
 ```
+
+### Bash on Ubuntu on Windows
+
+```bash
+./azure-group-deploy.sh -a [foldername] -l [location] -g [resourcegroup] -e azuredeploy.parameters.json -u
+```
+
+> The -e flag allows you to pass in a custom parameter override file.
 
 ## Contribution guide
 
