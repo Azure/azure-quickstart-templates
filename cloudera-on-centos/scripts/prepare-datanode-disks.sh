@@ -175,7 +175,7 @@ prepare_disk()
 
     # Set up the blkid for device entry in /etc/fstab
 
-    echo "UUID=${blockid} $mount $FS defaults,noatime,discard 0 0" >> /etc/fstab
+    echo "UUID=${blockid} $mount $FS defaults,noatime,discard,barrier=0 0 0" >> /etc/fstab
     mount ${mount}
 
   fi
