@@ -1,3 +1,4 @@
+ #This script is used by Azure Automation Runbook ASR-DNS-UpdateIP 
   Param(
   [string]$Zone,
   [string]$name,
