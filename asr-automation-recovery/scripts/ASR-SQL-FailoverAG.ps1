@@ -49,7 +49,7 @@ workflow ASR-SQL-FailoverAG
     ) 
  
     $connectionName = "AzureRunAsConnection" 
-    $scriptpath = "https://asrautomation.blob.core.windows.net/scripts/SQLAGFailover.ps1"
+    $scriptpath = "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/asr-automation-recovery/scripts/SQLAGFailover.ps1"
     $Location = "Southeast Asia"
     
     
