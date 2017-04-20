@@ -11,10 +11,13 @@
     "apiVersionStorageAccounts": {
       "type": "string"
     },
-    "loadBalancerBackendAddressPoolId": {
+    "loadBalancerName": {
       "type": "string"
     },
-    "loadBalancerInboundNatRuleIDprefix": {
+    "loadBalancerBackendAddressPoolName": {
+      "type": "string"
+    },
+    "loadBalancerInboundNatRuleNamePrefix": {
       "type": "string"
     },
     "txSubnetRef": {
@@ -47,7 +50,7 @@
     "adminPassword": {
       "type": "securestring"
     },
-    "sshKey": {
+    "adminSSHKey": {
       "type": "string"
     },
     "ubuntuImage": {
@@ -55,17 +58,23 @@
     },
     "namingInfix": {
       "type": "string"
+    },
+    "location": {
+      "type": "string"
     }
   },
   "variables": {
-    "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]"
+    "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
+    "loadBalancerID": "[resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancerName'))]",
+    "loadBalancerBackendAddressPoolID": "[concat(variables('loadBalancerID'), '/backendAddressPools/', parameters('loadBalancerBackendAddressPoolName'))]",
+    "loadBalancerInboundNatRuleIDprefix": "[concat(variables('loadBalancerID'),'/inboundNatRules/',parameters('loadBalancerInboundNatRuleNamePrefix'))]"
   },
   "resources": [
     {
       "apiVersion": "[parameters('apiVersionNetworkInterfaces')]",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat(parameters('txNIPrefix'), copyindex())]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "txNicLoop",
         "count": "[parameters('numTXNodes')]"
@@ -81,12 +90,12 @@
               },
               "loadBalancerBackendAddressPools": [
                 {
-                  "id": "[parameters('loadBalancerBackendAddressPoolId')]"
+                  "id": "[variables('loadBalancerBackendAddressPoolID')]"
                 }
               ],
               "loadBalancerInboundNatRules": [
                 {
-                  "id": "[concat(parameters('loadBalancerInboundNatRuleIDprefix'), copyindex())]"
+                  "id": "[concat(variables('loadBalancerInboundNatRuleIDprefix'), copyindex())]"
                 }
               ]
             }
@@ -98,7 +107,7 @@
       "apiVersion": "[parameters('apiVersionStorageAccounts')]",
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[parameters('txStorageAcctName')]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "sku": {
         "name": "[parameters('storageAccountType')]"
       },
@@ -109,7 +118,7 @@
       "apiVersion": "[parameters('apiVersionVirtualMachines')]",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat(parameters('txVMNamePrefix'), copyIndex())]",
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "copy": {
         "name": "txVMLoop",
         "count": "[parameters('numTXNodes')]"
@@ -134,7 +143,7 @@
               "publicKeys": [
                 {
                   "path": "[variables('sshKeyPath')]",
-                  "keyData": "[parameters('sshKey')]"
+                  "keyData": "[parameters('adminSSHKey')]"
                 }
               ]
             }
