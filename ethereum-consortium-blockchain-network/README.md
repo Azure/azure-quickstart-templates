@@ -180,9 +180,7 @@ We can then check the updated balances to see if our transfer went through:
 This concludes our smart contract sample. For additional information about the Solidity language, click [here](http://solidity.readthedocs.io/en/develop/).
 
 ## Accessing VMs running nodes
-You can remotely connect to the virtual machines on which the transaction nodes run via SSH with your provided admin username and password. Since the transaction node VMs do not have their own public IP addresses, you will need to go through the load balancer and specify the port number. The SSH command to run to access the first transaction node is the third template output (e.g. for the sample deployment it is: ssh -p 3000 gethadmin@ethnet7tl.southeastasia.cloudapp.azure.com). To get to additional transaction nodes, increment the port number by one (e.g. the first transaction node is on port 3000, second, is 3001, third is 3002, etc.).
-
-Since the virtual machines on which the mining nodes run are not publicly accessible, you will need to go through one of the transaction nodes. Once you have SSH’ed into a transaction node, you can SSH into any of the mining nodes.
+You can remotely connect to the virtual machines on which the nodes run via SSH with your provided admin username and password. Since the virtual machines on which the nodes run do not have their own public IP addresses, you will need to go through the load balancer and specify the port number. The SSH command to run to access the first transaction node is the third template output (e.g. for the sample deployment it is: ssh -p 3000 gethadmin@ethnet7tl.southeastasia.cloudapp.azure.com). To get to additional transaction nodes, increment the port number by one.  (e.g. for a network with two transaction nodes, the first transaction node is on port 3000, second is 3001).  To ssh to mining nodes, ssh to a transaction node first and then ssh to the mining node from there.
 
 ## Next Steps
 You are now ready to focus on application and smart contract development against your private consortium blockchain network.  Happy coding!
