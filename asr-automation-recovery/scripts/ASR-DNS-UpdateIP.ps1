@@ -37,7 +37,7 @@
  
     .NOTES 
         AUTHOR: Prateek.Sharma@microsoft.com 
-        LASTEDIT: 27 March, 2017 
+        LASTEDIT: 20 April, 2017 
 #> 
 
 
@@ -50,7 +50,7 @@ workflow ASR-DNS-UpdateIP
     ) 
  
     $connectionName = "AzureRunAsConnection" 
-    $scriptpath = "https://asrautomation.blob.core.windows.net/scripts/UpdateDNS.ps1"
+    $scriptpath = "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/asr-automation-recovery/scripts/UpdateDNS.ps1"
 
     $Location = ""
     $TestDNSVMName = ""
