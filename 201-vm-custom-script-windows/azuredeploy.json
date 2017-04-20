@@ -5,26 +5,13 @@
         "adminUsername": {
             "type": "string",
             "metadata": {
-               "description": "Username for the Virtual Machine."
+                "description": "Username for the Virtual Machine."
             }
         },
         "adminPassword": {
             "type": "securestring",
             "metadata": {
                 "description": "Password for the Virtual Machine."
-            }
-        },
-        "windowsOSVersion": {
-            "type": "string",
-            "defaultValue": "2012-R2-Datacenter",
-            "allowedValues": [
-                "2008-R2-SP1",
-                "2012-Datacenter",
-                "2012-R2-Datacenter",
-                "Windows-Server-Technical-Preview"
-            ],
-            "metadata": {
-                "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version. Allowed values: 2008-R2-SP1, 2012-Datacenter, 2012-R2-Datacenter."
             }
         },
         "_artifactsLocation": {
@@ -43,51 +30,35 @@
         }
     },
     "variables": {
-        "imagePublisher": "MicrosoftWindowsServer",
-        "imageOffer": "WindowsServer",
-        "OSDiskName": "osdiskforwindowssimple",
         "nicName": "myVMNic",
         "addressPrefix": "10.0.0.0/16",
         "subnetName": "Subnet",
         "subnetPrefix": "10.0.0.0/24",
-        "storageAccountType": "Standard_LRS",
-        "publicIPAddressName": "myPublicIP",
-        "publicIPAddressType": "Dynamic",
-        "vmStorageAccountContainerName": "vhds",
-        "vmName": "MyWindowsVM",
-        "vmSize": "Standard_A2",
+        "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
+        "vmName": "MyVM",
         "virtualNetworkName": "MyVNET",
-        "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
-        "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
+        "publicIPAddressName": "myPublicIP",
+        "dnsNameForPublicIP": "[uniqueString(resourceGroup().id)]",
         "scriptFolder": ".",
-        "scriptFileName": "CreateFolder.ps1",
-        "vhdStorageAccountName":"[concat(uniqueString(resourceGroup().id), 'storage')]",
-        "dnsNameForPublicIP" : "[uniqueString(resourceGroup().id)]"
+        "scriptFileName": "Copy-FileFromAzure.ps1",
+        "fileToBeCopied": "FileToBeCopied.txt",
+        "scriptParameters": "[concat('-artifactsLocation ', parameters('_artifactsLocation'), ' -artifactsLocationSasToken \"', parameters('_artifactsLocationSasToken'), '\" -folderName ', variables('scriptFolder'), ' -fileToInstall ', variables('fileToBeCopied'))]"
     },
     "resources": [
         {
-            "type": "Microsoft.Storage/storageAccounts",
-            "name": "[variables('vhdStorageAccountName')]",
-            "apiVersion": "2015-05-01-preview",
-            "location": "[resourceGroup().location]",
-            "properties": {
-                "accountType": "[variables('storageAccountType')]"
-            }
-        },
-        {
-            "apiVersion": "2015-05-01-preview",
+            "apiVersion": "2016-09-01",
             "type": "Microsoft.Network/publicIPAddresses",
             "name": "[variables('publicIPAddressName')]",
             "location": "[resourceGroup().location]",
             "properties": {
-                "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+                "publicIPAllocationMethod": "Dynamic",
                 "dnsSettings": {
                     "domainNameLabel": "[variables('dnsNameForPublicIP')]"
                 }
             }
         },
         {
-            "apiVersion": "2015-05-01-preview",
+            "apiVersion": "2016-09-01",
             "type": "Microsoft.Network/virtualNetworks",
             "name": "[variables('virtualNetworkName')]",
             "location": "[resourceGroup().location]",
@@ -108,7 +79,7 @@
             }
         },
         {
-            "apiVersion": "2015-05-01-preview",
+            "apiVersion": "2016-09-01",
             "type": "Microsoft.Network/networkInterfaces",
             "name": "[variables('nicName')]",
             "location": "[resourceGroup().location]",
@@ -134,17 +105,16 @@
             }
         },
         {
-            "apiVersion": "2015-05-01-preview",
+            "apiVersion": "2016-04-30-preview",
             "type": "Microsoft.Compute/virtualMachines",
             "name": "[variables('vmName')]",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[variables('vhdStorageAccountName')]",
                 "[variables('nicName')]"
             ],
             "properties": {
                 "hardwareProfile": {
-                    "vmSize": "[variables('vmSize')]"
+                    "vmSize": "Standard_D1_v2"
                 },
                 "osProfile": {
                     "computerName": "[variables('vmName')]",
@@ -153,17 +123,12 @@
                 },
                 "storageProfile": {
                     "imageReference": {
-                        "publisher": "[variables('imagePublisher')]",
-                        "offer": "[variables('imageOffer')]",
-                        "sku" : "[parameters('windowsOSVersion')]",
-                        "version":"latest"
+                        "publisher": "MicrosoftWindowsServer",
+                        "offer": "WindowsServer",
+                        "sku": "2016-Datacenter",
+                        "version": "latest"
                     },
-                   "osDisk" : {
-                        "name": "osdisk",
-                        "vhd": {
-                            "uri": "[concat(reference(variables('vhdStorageAccountName'), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob, variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]"
-                        },
-                        "caching": "ReadWrite",
+                    "osDisk": {
                         "createOption": "FromImage"
                     }
                 },
@@ -176,34 +141,34 @@
                 }
             },
             "resources": [
-              {
-                  "type": "extensions",
-                  "name": "CustomScriptExtension",
-                  "apiVersion": "2015-05-01-preview",
-                  "location": "[resourceGroup().location]",
-                  "dependsOn": [
-                      "[variables('vmName')]"
-                  ],
-                  "properties": {
-                      "publisher": "Microsoft.Compute",
-                      "type": "CustomScriptExtension",
-                      "typeHandlerVersion": "1.8",
-                      "autoUpgradeMinorVersion": true,
-                      "settings": {
-                      "fileUris": [
-                          "[concat(parameters('_artifactsLocation'), '/', variables('ScriptFolder'), '/', variables('ScriptFileName'), parameters('_artifactsLocationSasToken'))]"
-                        ],
-                      "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', variables('ScriptFolder'), '/', variables('ScriptFileName'))]"
+                {
+                    "type": "extensions",
+                    "name": "CustomScriptExtension",
+                    "apiVersion": "2015-06-15",
+                    "location": "[resourceGroup().location]",
+                    "dependsOn": [
+                        "[variables('vmName')]"
+                    ],
+                    "properties": {
+                        "publisher": "Microsoft.Compute",
+                        "type": "CustomScriptExtension",
+                        "typeHandlerVersion": "1.8",
+                        "autoUpgradeMinorVersion": true,
+                        "settings": {
+                            "fileUris": [
+                                "[concat(parameters('_artifactsLocation'), '/', variables('ScriptFolder'), '/', variables('ScriptFileName'), parameters('_artifactsLocationSasToken'))]"
+                            ],
+                            "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ', variables('scriptFolder'), '/', variables('scriptFileName'), ' ', variables('scriptParameters'))]"
                         }
                     }
-               }
+                }
             ]
         }
     ],
     "outputs": {
         "vm-fqdn": {
-        "type": "string",
-        "value": "[reference(variables('publicIPAddressName'),providers('Microsoft.Network','publicIPAddresses').apiVersions[0]).dnsSettings.fqdn]"
-        }        
+            "type": "string",
+            "value": "[reference(variables('publicIPAddressName'), '2016-03-30').dnsSettings.fqdn]"
+        }
     }
 }

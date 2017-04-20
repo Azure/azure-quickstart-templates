@@ -1,0 +1,65 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "sqlWitnessVMName": {
+      "type": "string"
+    },
+    "domainName": {
+      "type": "string"
+    },
+    "sharePath": {
+      "type": "string"
+    },
+    "adminUsername": {
+      "type": "string"
+    },
+    "adminPassword": {
+      "type": "securestring"
+    },
+    "_artifactsLocation": {
+      "type": "string"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "string"
+    }
+  },
+  "variables": {
+    "fswModulesURL": "[concat(parameters('_artifactsLocation'),'/dsc/create-file-share-witness.ps1.zip',parameters('_artifactsLocationSasToken'))]",
+    "fswConfigurationFunction": "CreateFileShareWitness.ps1\\CreateFileShareWitness"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('sqlWitnessVMName'),'/CreateFileShareWitness')]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [],
+      "properties": {
+        "publisher": "Microsoft.Powershell",
+        "type": "DSC",
+        "typeHandlerVersion": "2.17",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "wmfVersion": "5.0",
+          "modulesUrl": "[variables('fswModulesURL')]",
+          "configurationFunction": "[variables('fswConfigurationFunction')]",
+          "properties": {
+            "domainName": "[parameters('domainName')]",
+            "sharePath": "[parameters('sharePath')]",
+            "adminCreds": {
+              "userName": "[parameters('adminUserName')]",
+              "password": "PrivateSettingsRef:adminPassword"
+            }
+          }
+        },
+        "protectedSettings": {
+          "items": {
+            "adminPassword": "[parameters('adminPassword')]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}

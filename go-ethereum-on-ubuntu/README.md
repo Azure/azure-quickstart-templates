@@ -93,7 +93,7 @@ Great - we have the source, and the compiled version of this source. Unfortunate
 The next step is to use the web3 ethereum helpers to instantiate a contract object:
 
 ```
-var contract = web3.eth.contract(guestBookCompiled.GuestBook.info.abiDefinition);
+var contract = web3.eth.contract(guestBookCompiled['<stdin>:GuestBook'].info.abiDefinition);
 ```
 
 This will give us an instantiated contract object containing the all important `new` function. `new` is what we'll use to actually deploy the contract to your Ethereum private network. Since we're in Javascript land, `new` takes a call back as its final parameter to notify us of successful or failed deployment; lets set up this call back first:
