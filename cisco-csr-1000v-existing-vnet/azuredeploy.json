@@ -1,0 +1,295 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "adminUsername": {
+            "type": "string",
+            "metadata": {
+                "description": "Username for the Virtual Machine."
+            }
+        },
+        "adminPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Password for the Virtual Machine."
+            }
+        },
+        "virtualNetworkResourceGroupName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the resource group that contains the existing virutal network."
+            }
+        },
+        "virtualNetworkName": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the existing virutal network the router will be deployed to."
+            }
+        },
+        "subnet1Name": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the first subnet."
+            }
+        },
+        "subnet2Name": {
+            "type": "string",
+            "metadata": {
+                "description": "Name of the second subnet."
+            }
+        }
+    },
+    "variables": {
+        "imagePublisher": "cisco",
+        "imageOffer": "cisco-csr-1000v",
+        "imageSKU": "csr-azure-byol",
+        "storageAccountName": "[concat('vhds', uniqueString(resourceGroup().id))]",
+        "publicIPAddressName": "publicIP",
+        "dnsPrefix": "[concat('csr-', uniqueString(resourceGroup().id))]",
+        "vmName": "CSR",
+        "vmSize": "Standard_D2_V2",
+        "subnet1ResourceId": "[resourceId(parameters('virtualNetworkResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('Subnet1Name'))]",
+        "subnet2ResourceId": "[resourceId(parameters('virtualNetworkResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('virtualNetworkName'), parameters('Subnet2Name'))]",
+        "nsgname": "[concat(variables('vmName'),'-SSH-SecurityGroup')]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[variables('storageAccountName')]",
+            "apiVersion": "2016-01-01",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Standard_LRS"
+            },
+            "kind": "Storage",
+            "properties": {}
+        },
+        {
+            "apiVersion": "2016-03-30",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[variables('publicIPAddressName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "publicIPAllocationMethod": "Dynamic",
+                "dnsSettings": {
+                    "domainNameLabel": "[variables('dnsPrefix')]"
+                }
+            }
+        },
+        {
+            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[variables('nsgName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "SSH-Rule",
+                        "properties": {
+                            "description": "Allow SSH",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "22",
+                            "sourceAddressPrefix": "Internet",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 100,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "UDP-Rule1",
+                        "properties": {
+                            "description": "Allow UDP",
+                            "protocol": "Udp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "500",
+                            "sourceAddressPrefix": "Internet",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 101,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "UDP-Rule2",
+                        "properties": {
+                            "description": "Allow UDP",
+                            "protocol": "Udp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "4500",
+                            "sourceAddressPrefix": "Internet",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 102,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/routeTables",
+            "name": "[concat(parameters('subnet1Name'),'-CSR-RouteTable')]",
+            "apiVersion": "2015-06-15",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "routes": [
+                    {
+                    "name": "Route-Subnet2-To-CSR",
+                        "properties": {
+                            "addressPrefix": "[reference(variables('subnet2ResourceId'), providers('Microsoft.Network', 'virtualNetworks').apiVersions[0]).addressPrefix]",
+                            "nextHopType": "VirtualAppliance",
+                            "nextHopIpAddress": "[string(take(split(replace(reference(variables('subnet1ResourceId'), providers('Microsoft.Network', 'virtualNetworks').apiVersions[0]).addressPrefix, '0/', '4/'), '/'), 1)[0])]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Network/routeTables",
+            "name": "[concat(parameters('subnet2Name'),'-CSR-RouteTable')]",
+            "apiVersion": "2015-06-15",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "routes": [
+                  {
+                    "name": "Route-Subnet1-To-CSR",
+                    "properties": {
+                        "addressPrefix": "[reference(variables('subnet1ResourceId'), providers('Microsoft.Network', 'virtualNetworks').apiVersions[0]).addressPrefix]",
+                        "nextHopType": "VirtualAppliance",
+                        "nextHopIpAddress": "[string(take(split(replace(reference(variables('subnet2ResourceId'), providers('Microsoft.Network', 'virtualNetworks').apiVersions[0]).addressPrefix, '0/', '4/'), '/'), 1)[0])]"
+                    }
+                  },
+                  {
+                    "name": "Default-Route-To-CSR",
+                    "properties": {
+                        "addressPrefix": "0.0.0.0/0",
+                        "nextHopType": "VirtualAppliance",
+                        "nextHopIpAddress": "[string(take(split(replace(reference(variables('subnet2ResourceId'), providers('Microsoft.Network', 'virtualNetworks').apiVersions[0]).addressPrefix, '0/', '4/'), '/'), 1)[0])]"
+                    }
+                  }
+              ]
+            }
+        },
+        {
+            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[concat(variables('vmName'),'-Nic0')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('nsgName'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Static",
+                            "privateIPAddress": "[string(take(split(replace(reference(variables('subnet1ResourceId'), providers('Microsoft.Network', 'virtualNetworks').apiVersions[0]).addressPrefix, '0/', '4/'), '/'), 1)[0])]",
+                            "subnet": {
+                                "id": "[variables('subnet1ResourceId')]"
+                            },
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgname'))]"
+                            }
+                        }
+                    }
+                ],
+                "enableIPForwarding": true              
+            }
+        },
+        {
+            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[concat(variables('vmName'),'-Nic1')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [  ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Static",
+                            "privateIPAddress": "[string(take(split(replace(reference(variables('subnet2ResourceId'), providers('Microsoft.Network', 'virtualNetworks').apiVersions[0]).addressPrefix, '0/', '4/'), '/'), 1)[0])]",
+                            "subnet": {
+                                "id": "[variables('subnet2ResourceId')]"
+                            }
+                        }
+                    }
+                ],
+                "enableIPForwarding": true
+            }
+        },
+        {
+            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[variables('vmName')]",
+            "location": "[resourceGroup().location]",
+            "plan": {
+                "name": "csr-azure-byol",
+                "publisher": "cisco",
+                "product": "cisco-csr-1000v"
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+                "[resourceId('Microsoft.Network/networkInterfaces/', concat(variables('vmName'), '-Nic0'))]",
+                "[resourceId('Microsoft.Network/networkInterfaces/', concat(variables('vmName'), '-Nic1'))]"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[variables('vmSize')]"
+                },
+                "osProfile": {
+                    "computerName": "[variables('vmName')]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "[variables('imagePublisher')]",
+                        "offer": "[variables('imageOffer')]",
+                        "sku": "[variables('imageSKU')]",
+                        "version": "latest"
+                    },
+                    "osDisk": {
+                        "name": "osdisk",
+                        "vhd": {
+                            "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))).primaryEndpoints.blob, 'vhds/osdisk.vhd')]"
+                        },
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "properties": {
+                                "primary": true
+                            },
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('vmName'),'-Nic0'))]"
+                        },
+                        {
+                            "properties": {
+                                "primary": false
+                            },
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('vmName'),'-Nic1'))]"
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": "true",
+                        "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))).primaryEndpoints.blob]"
+                    }
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "hostname": {
+            "type": "string",
+            "value": "[reference(variables('publicIPAddressName')).dnsSettings.fqdn]"
+        }
+    }
+}

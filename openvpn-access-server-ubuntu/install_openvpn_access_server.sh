@@ -7,10 +7,10 @@ curl ifconfig.me > /tmp/ip.txt 2> /dev/null
 
 #download the packages
 cd /tmp
-wget -c http://swupdate.openvpn.org/as/openvpn-as-2.0-Ubuntu13.amd_64.deb
+wget -c http://swupdate.openvpn.org/as/openvpn-as-2.1.4-Ubuntu14.amd_64.deb
 
 #install the software
-sudo dpkg -i openvpn-as-2.0-Ubuntu13.amd_64.deb
+sudo dpkg -i openvpn-as-2.1.4-Ubuntu14.amd_64.deb
 
 #update the password for user openvpn
 sudo echo "openvpn:$userPassword"|sudo chpasswd

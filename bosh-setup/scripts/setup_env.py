@@ -16,7 +16,7 @@ from azure.mgmt.network import NetworkManagementClient, NetworkManagementClientC
 
 def prepare_storage(settings):
     default_storage_account_name = settings["DEFAULT_STORAGE_ACCOUNT_NAME"]
-    storage_access_key = settings["STORAGE_ACCESS_KEY"]
+    storage_access_key = settings["DEFAULT_STORAGE_ACCESS_KEY"]
     endpoint_suffix = settings["SERVICE_HOST_BASE"]
 
     blob_service = AppendBlobService(account_name=default_storage_account_name, account_key=storage_access_key, endpoint_suffix=endpoint_suffix)
@@ -30,6 +30,22 @@ def prepare_storage(settings):
     table_service = TableService(account_name=default_storage_account_name, account_key=storage_access_key, endpoint_suffix=endpoint_suffix)
     table_service.create_table('stemcells')
 
+# file_path: String. The path to the file in which some configs starting with 'REPLACE_WITH_' need to be replaced with the actual values.
+# keys: Array. The keys indicate which configs should be replaced in the file.
+# values: Dict. Key-value pairs indicate which configs should be replaced by what values.
+def render_file(file_path, keys, values):
+    try:
+        with open(file_path, 'r') as tmpfile:
+            contents = tmpfile.read()
+        for key in keys:
+            contents = re.compile(re.escape("REPLACE_WITH_{0}".format(key))).sub(values[key], contents)
+        with open(file_path, 'w') as tmpfile:
+            tmpfile.write(contents)
+        return True
+    except Exception as e:
+        print("render_file - {0}: {1}".format(file_path, e.strerror))
+        return False
+
 def render_bosh_manifest(settings):
     with open('bosh.pub', 'r') as tmpfile:
         ssh_public_key = tmpfile.read().strip()
@@ -40,148 +56,123 @@ def render_bosh_manifest(settings):
 
     ntp_servers_maps = {
         "AzureCloud": "0.north-america.pool.ntp.org",
-        "AzureChinaCloud": "1.cn.pool.ntp.org, 1.asia.pool.ntp.org, 0.asia.pool.ntp.org"
+        "AzureChinaCloud": "1.cn.pool.ntp.org, 1.asia.pool.ntp.org, 0.asia.pool.ntp.org",
+        "AzureUSGovernment": "0.north-america.pool.ntp.org",
+        "AzureGermanCloud": "0.europe.pool.ntp.org"
     }
     environment = settings["ENVIRONMENT"]
     ntp_servers = ntp_servers_maps[environment]
 
-    # Render the manifest for bosh-init
-    bosh_template = 'bosh.yml'
-    if os.path.exists(bosh_template):
-        with open(bosh_template, 'r') as tmpfile:
-            contents = tmpfile.read()
-        keys = [
-            "SUBNET_ADDRESS_RANGE_FOR_BOSH",
-            "SECONDARY_DNS",
-            "VNET_NAME",
-            "SUBNET_NAME_FOR_BOSH",
-            "DNS_RECURSOR",
-            "SUBSCRIPTION_ID",
-            "DEFAULT_STORAGE_ACCOUNT_NAME",
-            "RESOURCE_GROUP_NAME",
-            "KEEP_UNREACHABLE_VMS",
-            "TENANT_ID",
-            "CLIENT_ID",
-            "CLIENT_SECRET",
-            "BOSH_PUBLIC_IP",
-            "NSG_NAME_FOR_BOSH",
-            "BOSH_RELEASE_URL",
-            "BOSH_RELEASE_SHA1",
-            "BOSH_AZURE_CPI_RELEASE_URL",
-            "BOSH_AZURE_CPI_RELEASE_SHA1",
-            "STEMCELL_URL",
-            "STEMCELL_SHA1",
-            "ENVIRONMENT",
-            "BOSH_VM_SIZE"
-        ]
-        for k in keys:
-            v = settings[k]
-            contents = re.compile(re.escape("REPLACE_WITH_{0}".format(k))).sub(str(v), contents)
-        contents = re.compile(re.escape("REPLACE_WITH_SSH_PUBLIC_KEY")).sub(ssh_public_key, contents)
-        contents = re.compile(re.escape("REPLACE_WITH_GATEWAY_IP")).sub(gateway_ip, contents)
-        contents = re.compile(re.escape("REPLACE_WITH_BOSH_DIRECTOR_IP")).sub(bosh_director_ip, contents)
-        contents = re.compile(re.escape("REPLACE_WITH_NTP_SERVERS")).sub(ntp_servers, contents)
-        with open(bosh_template, 'w') as tmpfile:
-            tmpfile.write(contents)
+    postgres_address_maps = {
+        "AzureCloud": "127.0.0.1",
+        "AzureChinaCloud": bosh_director_ip,
+        "AzureUSGovernment": "127.0.0.1",
+        "AzureGermanCloud": "127.0.0.1"
+    }
+    postgres_address = postgres_address_maps[environment]
+
+    keys = [
+        "SUBNET_ADDRESS_RANGE_FOR_BOSH",
+        "SECONDARY_DNS",
+        "VNET_NAME",
+        "SUBNET_NAME_FOR_BOSH",
+        "DNS_RECURSOR",
+        "SUBSCRIPTION_ID",
+        "DEFAULT_STORAGE_ACCOUNT_NAME",
+        "RESOURCE_GROUP_NAME",
+        "KEEP_UNREACHABLE_VMS",
+        "TENANT_ID",
+        "CLIENT_ID",
+        "CLIENT_SECRET",
+        "BOSH_PUBLIC_IP",
+        "NSG_NAME_FOR_BOSH",
+        "BOSH_RELEASE_URL",
+        "BOSH_RELEASE_SHA1",
+        "BOSH_AZURE_CPI_RELEASE_URL",
+        "BOSH_AZURE_CPI_RELEASE_SHA1",
+        "DYNAMIC_STEMCELL_URL",
+        "DYNAMIC_STEMCELL_SHA1",
+        "ENVIRONMENT",
+        "BOSH_VM_SIZE",
+        "SSH_PUBLIC_KEY",
+        "GATEWAY_IP",
+        "BOSH_DIRECTOR_IP",
+        "NTP_SERVERS",
+        "POSTGRES_ADDRESS"
+    ]
+    values = settings.copy()
+    values["SSH_PUBLIC_KEY"] = ssh_public_key
+    values["GATEWAY_IP"] = gateway_ip
+    values["BOSH_DIRECTOR_IP"] = bosh_director_ip
+    values["NTP_SERVERS"] = ntp_servers
+    values["POSTGRES_ADDRESS"] = postgres_address
+    
+    render_file("bosh.yml", keys, values)
 
     return bosh_director_ip
 
 def get_cloud_foundry_configuration(scenario, settings, bosh_director_ip):
+    dns_maps = {
+        "AzureCloud": "168.63.129.16\n    - {0}".format(settings["SECONDARY_DNS"]),
+        "AzureChinaCloud": bosh_director_ip,
+        "AzureUSGovernment": "168.63.129.16\n    - {0}".format(settings["SECONDARY_DNS"]),
+        "AzureGermanCloud": "168.63.129.16\n    - {0}".format(settings["SECONDARY_DNS"])
+    }
+
     config = {}
+    config["DNS"] = dns_maps[settings["ENVIRONMENT"]]
+    config["SYSTEM_DOMAIN"] = "{0}.xip.io".format(settings["CLOUD_FOUNDRY_PUBLIC_IP"])
+
     keys = [
-        "SUBNET_ADDRESS_RANGE_FOR_CLOUD_FOUNDRY",
         "VNET_NAME",
         "SUBNET_NAME_FOR_CLOUD_FOUNDRY",
         "CLOUD_FOUNDRY_PUBLIC_IP",
-        "NSG_NAME_FOR_CLOUD_FOUNDRY"
+        "NSG_NAME_FOR_CLOUD_FOUNDRY",
+        "ENVIRONMENT",
+        "DEFAULT_STORAGE_ACCOUNT_NAME",
+        "DEFAULT_STORAGE_ACCESS_KEY"
     ]
     for key in keys:
         config[key] = settings[key]
-
-    dns_maps = {
-        "AzureCloud": "168.63.129.16, {0}".format(settings["SECONDARY_DNS"]),
-        "AzureChinaCloud": bosh_director_ip
-    }
-    environment = settings["ENVIRONMENT"]
-    config["DNS"] = dns_maps[environment]
-
-    with open('cloudfoundry.cert', 'r') as tmpfile:
-        ssl_cert = tmpfile.read()
-    with open('cloudfoundry.key', 'r') as tmpfile:
-        ssl_key = tmpfile.read()
-    ssl_cert_and_key = "{0}{1}".format(ssl_cert, ssl_key)
-    indentation = " " * 8
-    ssl_cert_and_key = ("\n"+indentation).join([line for line in ssl_cert_and_key.split('\n')])
-    config["SSL_CERT_AND_KEY"] = ssl_cert_and_key
-
-    ip = netaddr.IPNetwork(settings['SUBNET_ADDRESS_RANGE_FOR_CLOUD_FOUNDRY'])
-    config["GATEWAY_IP"] = str(ip[1])
-    config["RESERVED_IP_FROM"] = str(ip[2])
-    config["RESERVED_IP_TO"] = str(ip[3])
-    config["CLOUD_FOUNDRY_INTERNAL_IP"] = str(ip[4])
-    config["SYSTEM_DOMAIN"] = "{0}.xip.io".format(settings["CLOUD_FOUNDRY_PUBLIC_IP"])
-
-    if scenario == "single-vm-cf":
-        config["STATIC_IP_FROM"] = str(ip[4])
-        config["STATIC_IP_TO"] = str(ip[100])
-        config["POSTGRES_IP"] = str(ip[11])
-    elif scenario == "multiple-vm-cf":
-        config["STATIC_IP_FROM"] = str(ip[4])
-        config["STATIC_IP_TO"] = str(ip[100])
-        config["HAPROXY_IP"] = str(ip[4])
-        config["POSTGRES_IP"] = str(ip[11])
-        config["ROUTER_IP"] = str(ip[12])
-        config["NATS_IP"] = str(ip[13])
-        config["ETCD_IP"] = str(ip[14])
-        config["NFS_IP"] = str(ip[15])
-        config["CONSUL_IP"] = str(ip[16])
 
     return config
 
 def render_cloud_foundry_manifest(settings, bosh_director_ip):
     for scenario in ["single-vm-cf", "multiple-vm-cf"]:
         cloudfoundry_template = "{0}.yml".format(scenario)
-        if os.path.exists(cloudfoundry_template):
-            with open(cloudfoundry_template, 'r') as tmpfile:
-                contents = tmpfile.read()
-            config = get_cloud_foundry_configuration(scenario, settings, bosh_director_ip)
-            for key in config:
-                value = config[key]
-                contents = re.compile(re.escape("REPLACE_WITH_{0}".format(key))).sub(value, contents)
-            with open(cloudfoundry_template, 'w') as tmpfile:
-                tmpfile.write(contents)
+        config = get_cloud_foundry_configuration(scenario, settings, bosh_director_ip)
+        render_file(cloudfoundry_template, config.keys(), config)
 
 def render_bosh_deployment_cmd(bosh_director_ip):
-    bosh_deployment_cmd = "deploy_bosh.sh"
-    if os.path.exists(bosh_deployment_cmd):
-        with open(bosh_deployment_cmd, 'r') as tmpfile:
-            contents = tmpfile.read()
-        contents = re.compile(re.escape("REPLACE_WITH_BOSH_DIRECOT_IP")).sub(bosh_director_ip, contents)
-        with open(bosh_deployment_cmd, 'w') as tmpfile:
-            tmpfile.write(contents)
+    keys = ["BOSH_DIRECOT_IP"]
+    values = {}
+    values["BOSH_DIRECOT_IP"] = bosh_director_ip
+    render_file("deploy_bosh.sh", keys, values)
 
 def render_cloud_foundry_deployment_cmd(settings):
-    cloudfoundry_deployment_cmd = "deploy_cloudfoundry.sh"
-    if os.path.exists(cloudfoundry_deployment_cmd):
-        with open(cloudfoundry_deployment_cmd, 'r') as tmpfile:
-            contents = tmpfile.read()
-        keys = [
-            "STEMCELL_URL",
-            "STEMCELL_SHA1",
-            "CF_RELEASE_URL",
-            "CF_RELEASE_SHA1",
-            "DIEGO_RELEASE_URL",
-            "DIEGO_RELEASE_SHA1",
-            "GARDEN_RELEASE_URL",
-            "GARDEN_RELEASE_SHA1",
-            "CFLINUXFS2_RELEASE_URL",
-            "CFLINUXFS2_RELEASE_SHA1"
-        ]
-        for key in keys:
-            value = settings[key]
-            contents = re.compile(re.escape("REPLACE_WITH_{0}".format(key))).sub(value, contents)
-        with open(cloudfoundry_deployment_cmd, 'w') as tmpfile:
-            tmpfile.write(contents)
+    keys = [
+        "STATIC_STEMCELL_URL",
+        "STATIC_STEMCELL_SHA1",
+        "STATIC_CF_RELEASE_URL",
+        "STATIC_CF_RELEASE_SHA1",
+        "STATIC_DIEGO_RELEASE_URL",
+        "STATIC_DIEGO_RELEASE_SHA1",
+        "STATIC_GARDEN_RELEASE_URL",
+        "STATIC_GARDEN_RELEASE_SHA1",
+        "STATIC_CFLINUXFS2_RELEASE_URL",
+        "STATIC_CFLINUXFS2_RELEASE_SHA1",
+        "DYNAMIC_STEMCELL_URL",
+        "DYNAMIC_STEMCELL_SHA1",
+        "DYNAMIC_CF_RELEASE_URL",
+        "DYNAMIC_CF_RELEASE_SHA1",
+        "DYNAMIC_DIEGO_RELEASE_URL",
+        "DYNAMIC_DIEGO_RELEASE_SHA1",
+        "DYNAMIC_GARDEN_RELEASE_URL",
+        "DYNAMIC_GARDEN_RELEASE_SHA1",
+        "DYNAMIC_CFLINUXFS2_RELEASE_URL",
+        "DYNAMIC_CFLINUXFS2_RELEASE_SHA1"
+    ]
+    render_file("deploy_cloudfoundry.sh", keys, settings)
 
 def get_settings():
     settings = dict()

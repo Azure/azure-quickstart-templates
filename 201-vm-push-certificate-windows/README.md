@@ -1,4 +1,4 @@
-﻿# Push a certificate onto a VM
+# Push a certificate onto a VM
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vm-push-certificate-windows%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
@@ -9,7 +9,7 @@
 
 Push a certificate onto a VM. Pass in the URL of the secret in Key Vault.
 
-Pre-Requisistes - You need a certificate. A self-signed test certificate can be created by following this guide - https://msdn.microsoft.com/en-us/library/ff699202.aspx
+Pre-Requisites - You need a certificate. A self-signed test certificate can be created by following this guide - https://msdn.microsoft.com/en-us/library/ff699202.aspx
 
 These are the steps that need to be followed to upload the certificate into the Key Vault as a secret
 
