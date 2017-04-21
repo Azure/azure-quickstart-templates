@@ -26,38 +26,19 @@ For example:
 ```
 
 ### Bash
-```bash
-azure-group-deploy.sh -a [foldername] -l eastus
-```
 
-### Bash on Ubuntu on Windows
-
-Run the following the first time to get all prerequisites installed:
+Please ensure that you have [node and npm](https://docs.npmjs.com/getting-started/installing-node), [jq](https://stedolan.github.io/jq/download/) and [azure-cli](https://docs.microsoft.com/en-us/azure/cli-install-nodejs) installed.
 
 ```bash
-sudo apt install npm
-sudo npm install -g n
-sudo n stable
-sudo npm install -g azure-cli
-sudo apt install dos2unix
-sudo apt install jq
-dos2unix azure-group-deploy.sh
-chmod +x azure-group-deploy.sh
-azure login
-azure account set [subscriptionNameOrId]
+./azure-group-deploy.sh -a [foldername] -l eastus
 ```
 
-Run the following to execute the script:
-```bash
-./azure-group-deploy.sh -a [foldername] -l [location] -g [resourcegroup] -e azuredeploy.parameters.json
-```
-> The -e flag allows you to pass in a custom parameter override file.
-
-- If you see the following error: "syntax error near unexpected token `$'in\r''", make sure you run the dos2unix command above.
-- If you see the following error: "jq: command not found", make sure you run the "sudo apt install jq" command.
-- If you see the following error: "node: not found", make sure you run the "node" commands above.
+- If you see the following error: "syntax error near unexpected token `$'in\r''", run this command: 'dos2unix azure-group-deploy.sh'.
+- If you see the following error: "jq: command not found", run this command: "sudo apt install jq".
+- If you see the following error: "node: not found", install node and npm.
 - If you see the following error: "azure-group-deploy.sh is not a command", make sure you run "chmod +x azure-group-deploy.sh".
 
+## Uploading Artifacts
 
 If the sample has artifacts that need to be "staged" for deployment (Configuration Scripts, Nested Templates, DSC Packages) then set the upload switch on the command.
 You can optionally specify a storage account to use, if so the storage account must already exist within the subscription.  If you don't want to specify a storage account
@@ -71,16 +52,8 @@ one will be created by the script or reused if it already exists (think of this 
 
 ### Bash
 ```bash
-azure-group-deploy.sh -a [foldername] -l eastus -u
+./azure-group-deploy.sh -a [foldername] -l eastus -u
 ```
-
-### Bash on Ubuntu on Windows
-
-```bash
-./azure-group-deploy.sh -a [foldername] -l [location] -g [resourcegroup] -e azuredeploy.parameters.json -u
-```
-
-> The -e flag allows you to pass in a custom parameter override file.
 
 ## Contribution guide
 
