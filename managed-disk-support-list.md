@@ -88,6 +88,8 @@ On February 8, 2017, Managed Disk went generally available. Here is a list of te
 
 201-vmss-windows-autoscale
 
+201-vmss-windows-customimage
+
 201-vmss-windows-jumpbox
 
 201-vmss-windows-nat
