@@ -51,9 +51,9 @@ parameterJson=$( cat "$parametersFile" | jq '.parameters' )
 
 azure config mode arm
 
-if [[ ! -z $uploadArtifacts ]]
+if [[ $uploadArtifacts ]]
 then
-
+    
     if [[ -z $storageAccountName ]]
     then    
 
