@@ -17,12 +17,13 @@ The following resources will be created:
 - a redis cache to be used for Moodle Session Cache (manual setup required in Moodle)
 - a lot of underlying resources need for the environment (virtual network, storage accounts, etc)
 
-![Moodle On Azure](/images/moodle-on-azure.jpg)
+![Moodle On Azure](images/moodle-on-azure.jpg)
 
 The setup script will ask you about the 't-shirt size' for database & gluster layers.
 Here's an explanation for each one of these: 
 
 Gluster t-shirt sizes: 
+
 		tshirt | VM Size         | Disk Count | Disk Size | Total Size
 		Small  | Standard_DS2_v2 |  4         |  127 Gb   | 512 Gb
 		Medium | Standard_DS3_v2 |  2         |  512 Gb   | 1 Tb
