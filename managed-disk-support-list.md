@@ -22,6 +22,8 @@ On February 8, 2017, Managed Disk went generally available. Here is a list of te
 
 101-vm-tags
 
+101-vm-user-image
+
 101-vm-with-rdp-port
 
 101-vsts-cloudloadtest-rig
