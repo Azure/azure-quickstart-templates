@@ -123,7 +123,7 @@ function Install-Gateway([string] $gwPath)
 	}
 	
 	Trace-Log "Start Gateway installation"
-	Run-Process "msiexec.exe" "/i gateway.msi /quiet /passive"		
+	Run-Process "msiexec.exe" "/i gateway.msi INSTALLTYPE=AzureTemplate /quiet /norestart"		
 	
 	Start-Sleep -Seconds 30	
 
