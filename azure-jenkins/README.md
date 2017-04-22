@@ -38,13 +38,6 @@ Run this command:
 ssh -L 8080:localhost:8080 <User name>@<Public DNS name of instance you just created>
 ```
 
-If you see the following error: "bind:address is already in use", then you need to include the IP Address as follows:
-
-```
-ssh -L localhost:8080:<Public IP>:8080 <User name@<Public IP>
-```
-
-
 ## C. Configure Sample Jobs and Azure Active Directory configuration
 1. Once you are logged into the VM, run /opt/azure_jenkins_config/config_azure.sh and pick option 1 - "All of the below". This script will guide you to set up and configure the Azure Storage plugin to be used in the sample jobs to upload and download to Storage.
 It will also provide a Service Principal to access Azure resources from Jenkins.
