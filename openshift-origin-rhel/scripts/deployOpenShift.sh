@@ -3,14 +3,16 @@
 set -e
 
 SUDOUSER=$1
-PASSWORD=$2
-PUBLICKEY=$3
-PRIVATEKEY=$4
-MASTER=$5
-MASTERPUBLICIPHOSTNAME=$6
-MASTERPUBLICIPADDRESS=$7
-NODEPREFIX=$8
-NODECOUNT=$9
+PASSWORD="$2"
+PRIVATEKEY=$3
+MASTER=$4
+MASTERPUBLICIPHOSTNAME=$5
+MASTERPUBLICIPADDRESS=$6
+NODE=$7
+NODECOUNT=$8
+ROUTING=$9
+
+NODELOOP=$((NODECOUNT - 1))
 
 DOMAIN=$( awk 'NR==2' /etc/resolv.conf | awk '{ print $2 }' )
 
@@ -18,7 +20,6 @@ DOMAIN=$( awk 'NR==2' /etc/resolv.conf | awk '{ print $2 }' )
 
 echo "Generating keys"
 
-runuser -l $SUDOUSER -c "echo \"$PUBLICKEY\" > ~/.ssh/id_rsa.pub"
 runuser -l $SUDOUSER -c "echo \"$PRIVATEKEY\" > ~/.ssh/id_rsa"
 runuser -l $SUDOUSER -c "chmod 600 ~/.ssh/id_rsa*"
 
@@ -41,16 +42,20 @@ nodes
 # Set variables common for all OSEv3 hosts
 [OSEv3:vars]
 ansible_ssh_user=$SUDOUSER
-ansible_sudo=true
+ansible_become=yes
+openshift_install_examples=true
 deployment_type=origin
+openshift_release=v1.4
+openshift_image_tag=v1.4.0
 docker_udev_workaround=True
-# containerized=true
-openshift_use_dnsmasq=no
+openshift_use_dnsmasq=false
+openshift_override_hostname_check=true
+openshift_master_default_subdomain=$ROUTING
 
 openshift_master_cluster_public_hostname=$MASTERPUBLICIPHOSTNAME
 openshift_master_cluster_public_vip=$MASTERPUBLICIPADDRESS
 
-# Enable Azure AD auth
+# Enable htpasswd auth for username / password authentication
 openshift_master_identity_providers=[{'name': 'htpasswd_auth', 'login': 'true', 'challenge': 'true', 'kind': 'HTPasswdPasswordIdentityProvider', 'filename': '/etc/origin/master/htpasswd'}]
 
 # host group for masters
@@ -59,23 +64,11 @@ $MASTER.$DOMAIN
 
 # host group for nodes
 [nodes]
-$MASTER.$DOMAIN
+$MASTER.$DOMAIN openshift_node_labels="{'region': 'master', 'zone': 'default'}"
+$NODE-[0:${NODELOOP}].$DOMAIN openshift_node_labels="{'region': 'infra', 'zone': 'default'}"
 EOF
 
-for (( c=0; c<$NODECOUNT; c++ ))
-do
-  echo "$NODEPREFIX-$c.$DOMAIN" >> /etc/ansible/hosts
-done
-
-mkdir -p /etc/origin/master
-htpasswd -cb /etc/origin/master/htpasswd ${SUDOUSER} ${PASSWORD}
-
-# Reverting to April 22, 2016 commit
-
-echo "Cloning openshift-ansible repository and reseting to April 22, 2016 commit"
-
 runuser -l $SUDOUSER -c "git clone https://github.com/openshift/openshift-ansible /home/$SUDOUSER/openshift-ansible"
-runuser -l $SUDOUSER -c "git --git-dir="/home/$SUDOUSER/openshift-ansible/.git" --work-tree="/home/$SUDOUSER/openshift-ansible/" reset --hard 04b5245"
 
 echo "Executing Ansible playbook"
 
@@ -86,14 +79,25 @@ echo "Modifying sudoers"
 sed -i -e "s/Defaults    requiretty/# Defaults    requiretty/" /etc/sudoers
 sed -i -e '/Defaults    env_keep += "LC_TIME LC_ALL LANGUAGE LINGUAS _XKB_CHARSET XAUTHORITY"/aDefaults    env_keep += "PATH"' /etc/sudoers
 
+# Deploy Registry and Router
+
 echo "Deploying Registry"
 
-runuser -l $SUDOUSER -c "sudo oadm registry --config=/etc/origin/master/admin.kubeconfig --credentials=/etc/origin/master/openshift-registry.kubeconfig"
+# runuser -l $SUDOUSER -c "sudo oadm registry"
 
 echo "Deploying Router"
 
-runuser -l $SUDOUSER -c "sudo oadm router osrouter --replicas=$NODECOUNT --credentials=/etc/origin/master/openshift-router.kubeconfig --service-account=router"
+# runuser -l $SUDOUSER -c "sudo oadm router osrouter --replicas=$NODECOUNT --selector=region=infra"
 
 echo "Re-enabling requiretty"
 
 sed -i -e "s/# Defaults    requiretty/Defaults    requiretty/" /etc/sudoers
+
+# Create OpenShift User
+
+echo "Creating OpenShift User"
+
+mkdir -p /etc/origin/master
+htpasswd -cb /etc/origin/master/htpasswd ${SUDOUSER} ${PASSWORD}
+
+echo "Script complete"

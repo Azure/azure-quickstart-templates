@@ -14,7 +14,7 @@ The template creates the following deployment resources:
 * Storage accounts to store VM data disks
 * Public IP address for accessing the jumpbox via ssh
 * Network interface card for each VM
-* Multiple remotely-hosted CustomScriptForLinux extensions to strip the data disks and to install and configure PostgreSQL services
+* Multiple remotely-hosted Custom Script Extensions to strip the data disks and to install and configure PostgreSQL services
 
 NOTE: To access the PostgreSQL servers, you need to use the externally accessible jumpbox VM and ssh from it into the backend servers.
 

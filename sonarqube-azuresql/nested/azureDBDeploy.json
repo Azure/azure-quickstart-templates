@@ -1,0 +1,97 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminLogin": {
+      "type": "string",
+      "minLength": 1
+    },
+    "adminPassword": {
+      "type": "securestring"
+    },
+    "sonarSqlName": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "sonarsql"
+    },
+    "sonarDbName": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "sonar"
+    },
+    "sonarEdition": {
+      "type": "string",
+      "defaultValue": "Basic",
+      "allowedValues": [
+        "Basic",
+        "Business",
+        "Premium",
+        "Standard",
+        "Web"
+      ]
+    }
+  },
+
+
+  "variables": {
+    "sonarCollation": "Latin1_General_100_CS_AS"
+  },
+
+  "resources": [
+    {
+      "name": "[parameters('sonarSqlName')]",
+      "type": "Microsoft.Sql/servers",
+      "kind": "v12.0",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2014-04-01-preview",
+      "dependsOn": [ ],
+      "tags": {
+        "displayName": "sonarqsl"
+      },
+      "properties": {
+        "administratorLogin": "[parameters('adminLogin')]",
+        "administratorLoginPassword": "[parameters('adminPassword')]",
+        "version": "12.0"
+      },
+      "resources": [
+        {
+          "name": "[uniqueString(parameters('sonarSqlName'), 'AllowAllWindowsAzureIps' )]",          
+          "type": "firewallrules",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2014-04-01-preview",
+          "dependsOn": [
+            "[concat('Microsoft.Sql/servers/', parameters('sonarSqlName'))]"
+          ],
+          "properties": {
+            "startIpAddress": "0.0.0.0",
+            "endIpAddress": "0.0.0.0"
+          }
+        },
+        {
+          "name": "[parameters('sonarDbName')]",
+          "type": "databases",
+          "kind": "v12.0,user",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2014-04-01-preview",
+          "dependsOn": [
+            "[parameters('sonarSqlName')]"
+          ],
+          "tags": {
+            "displayName": "sonar"
+          },
+          "properties": {
+            "collation": "[variables('sonarCollation')]",
+            "edition": "[parameters('sonarEdition')]",
+            "maxSizeBytes": "1073741824"
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": {
+    "jdbcConnString": {
+      "type": "string",
+      "value": "[concat('jdbc:sqlserver://', reference(concat('Microsoft.Sql/servers/', parameters('sonarSqlName'))).fullyQualifiedDomainName, ':1433;database=', parameters('sonarDbName'), ';user=', parameters('adminLogin'), '@', parameters('sonarSqlName'), ';password={your_password_here}')]"
+    }
+  }
+}

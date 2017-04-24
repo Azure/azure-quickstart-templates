@@ -1,98 +1,105 @@
-﻿{
-  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "parameters": {},
   "variables": {
-    "cdnApiVersion":"2015-06-01",
-    "webAppApiVersion":"2014-06-01"
-  },
-  "parameters": {
-    "serverFarmName": {
-      "type": "string",
-      "metadata": {
-        "description": "Name of the Server Farm"
-      }
-    },
-    "webAppName": {
-      "type": "string",
-      "metadata": {
-        "description": "Name of the Web App"
-      }
-    },
-    "profileName": {
-      "type": "string",
-      "metadata": {
-        "description": "Name of the CDN Profile"
-      }
-    },
-    "endpointName": {
-      "type": "string",
-      "metadata": {
-        "description": "Name of the CDN Endpoint"
-      }
-    }
+    "endpointName": "[concat('endpoint-', uniqueString(resourceGroup().id))]",
+    "serverFarmName": "ServerFarm1",
+    "profileName": "CdnProfile1",
+    "webAppName": "[concat('web-', uniqueString(resourceGroup().id))]"
   },
   "resources": [
     {
-      "name": "[parameters('serverFarmName')]",
+      "name": "[variables('serverFarmName')]",
       "type": "Microsoft.Web/serverfarms",
       "location": "[resourceGroup().location]",
-      "apiVersion": "[variables('webAppApiVersion')]",
+      "apiVersion": "2016-03-01",
+      "tags": {
+        "displayName": "[variables('serverFarmName')]"
+      },
+      "sku": {
+        "name": "F1",
+        "capacity": 1
+      },
       "properties": {
-        "name": "[parameters('serverFarmName')]",
-        "sku": "Free",
-        "workerSize": "0",
-        "numberOfWorkers": 1
+        "name": "[variables('serverFarmName')]"
       }
     },
     {
-      "name": "[parameters('webAppName')]",
+      "name": "[variables('webAppName')]",
       "type": "Microsoft.Web/sites",
       "location": "[resourceGroup().location]",
-      "apiVersion": "[variables('webAppApiVersion')]",
+      "apiVersion": "2016-03-01",
       "dependsOn": [
-        "[concat('Microsoft.Web/serverfarms/', parameters('serverFarmName'))]"
+        "[variables('serverFarmName')]"
       ],
+      "tags": {
+        "displayName": "[variables('webAppName')]"
+      },
       "properties": {
-        "name": "[parameters('webAppName')]",
-        "serverFarm": "[parameters('serverFarmName')]"
+        "name": "[variables('webAppName')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('serverFarmName'))]"
       }
     },
     {
-      "name": "[parameters('profileName')]",
+      "name": "[variables('profileName')]",
       "type": "Microsoft.Cdn/profiles",
       "location": "[resourceGroup().location]",
-      "apiVersion": "[variables('cdnApiVersion')]",
-      "properties": {
-        "sku": {
-          "name": "Standard"
-        }
-      }
-    },
-    {
-      "name": "[concat(parameters('profileName'),'/',parameters('endpointName'))]",
-      "type": "Microsoft.Cdn/profiles/endpoints",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "[variables('cdnApiVersion')]",
-      "dependsOn": [
-        "[concat('Microsoft.Cdn/profiles/', parameters('profileName'))]",
-        "[concat('Microsoft.Web/sites/', parameters('webAppName'))]"
-      ],
-      "properties": {
-        "originHostHeader": "[reference(resourceId('Microsoft.Web/sites', parameters('webAppName')),'2014-06-01').hostNames[0]]",
-        "isHttpAllowed": true,
-        "isHttpsAllowed": true,
-        "queryStringCachingBehavior": "IgnoreQueryString",
-        "contentTypesToCompress": [ "text/plain", "text/html", "text/css", "application/x-javascript", "text/javascript" ],
-        "isCompressionEnabled": "True",
-        "origins": [
-          {
-            "name": "origin1",
-            "properties": {
-              "hostName": "[reference(resourceId('Microsoft.Web/sites', parameters('webAppName')),'2014-06-01').hostNames[0]]"
-            }
+      "apiVersion": "2016-04-02",
+      "tags": {
+        "displayName": "[variables('profileName')]"
+      },
+      "sku": {
+        "name": "Standard_Akamai"
+      },
+      "properties": {},
+      "resources": [
+        {
+          "name": "[variables('endpointName')]",
+          "type": "endpoints",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2016-04-02",
+          "dependsOn": [
+            "[variables('profileName')]",
+            "[variables('webAppName')]"
+          ],
+          "tags": {
+            "displayName": "[variables('endpointName')]"
+          },
+          "properties": {
+            "originHostHeader": "[reference(variables('webAppName')).hostNames[0]]",
+            "isHttpAllowed": true,
+            "isHttpsAllowed": true,
+            "queryStringCachingBehavior": "IgnoreQueryString",
+            "contentTypesToCompress": [
+              "text/plain",
+              "text/html",
+              "text/css",
+              "application/x-javascript",
+              "text/javascript"
+            ],
+            "isCompressionEnabled": true,
+            "origins": [
+              {
+                "name": "origin1",
+                "properties": {
+                  "hostName": "[reference(variables('webAppName')).hostNames[0]]"
+                }
+              }
+            ]
           }
-        ]
-      }
+        }
+      ]
     }
-  ]
+  ],
+  "outputs": {
+    "hostName": {
+      "type": "string",
+      "value": "[reference(variables('endpointName')).hostName]"
+    },
+    "originHostHeader": {
+      "type": "string",
+      "value": "[reference(variables('endpointName')).originHostHeader]"
+    }
+  }
 }
