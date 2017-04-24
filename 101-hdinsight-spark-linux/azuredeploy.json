@@ -1,0 +1,146 @@
+{
+    "$schema":"https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion":"1.0.0.0",
+    "parameters":{
+        "clusterName":{
+            "type":"string",
+            "metadata":{
+                "description":"The name of the HDInsight cluster to create."
+            }
+        },
+        "sparkVersion":{
+            "type":"string",
+            "defaultValue":"1.6",
+            "allowedValues":[
+                "1.6",
+                "2.0"
+            ],
+            "metadata":{
+                "description":"Spark version to be installed in the cluster. This parameter only applies to Spark cluster type in HDI 3.5 and will fail for other cluster types and other cluster versions."
+            }
+        },
+        "clusterLoginUserName":{
+            "type":"string",
+            "defaultValue":"admin",
+            "metadata":{
+                "description":"These credentials can be used to submit jobs to the cluster and to log into cluster dashboards."
+            }
+        },
+        "clusterLoginPassword":{
+            "type":"securestring",
+            "metadata":{
+                "description":"The password must be at least 10 characters in length and must contain at least one digit, one non-alphanumeric character, and one upper or lower case letter."
+            }
+        },
+        "sshUserName":{
+            "type":"string",
+            "defaultValue":"sshuser",
+            "metadata":{
+                "description":"These credentials can be used to remotely access the cluster."
+            }
+        },
+        "sshPassword":{
+            "type":"securestring",
+            "metadata":{
+                "description":"The password must be at least 10 characters in length and must contain at least one digit, one non-alphanumeric character, and one upper or lower case letter."
+            }
+        }
+    },
+    "variables":{
+        "defaultStorageAccount":{
+            "name":"[uniqueString(resourceGroup().id)]",
+            "type":"Standard_LRS"
+        }
+    },
+    "resources":[
+        {
+            "type":"Microsoft.Storage/storageAccounts",
+            "name":"[variables('defaultStorageAccount').name]",
+            "location":"[resourceGroup().location]",
+            "apiVersion":"2016-01-01",
+            "sku":{
+                "name":"[variables('defaultStorageAccount').type]"
+            },
+            "kind":"Storage",
+            "properties":{}
+        },
+        {
+            "type":"Microsoft.HDInsight/clusters",
+            "name":"[parameters('clusterName')]",
+            "location":"[resourceGroup().location]",
+            "apiVersion":"2015-03-01-preview",
+            "dependsOn":[
+                "[concat('Microsoft.Storage/storageAccounts/',variables('defaultStorageAccount').name)]"
+            ],
+            "tags":{},
+            "properties":{
+                "clusterVersion":"3.5",
+                "osType":"Linux",
+                "tier":"Standard",
+                "clusterDefinition":{
+                    "kind":"spark",
+                    "componentVersion":{
+                        "Spark":"[parameters('sparkVersion')]"
+                    },
+                    "configurations":{
+                        "gateway":{
+                            "restAuthCredential.isEnabled":true,
+                            "restAuthCredential.username":"[parameters('clusterLoginUserName')]",
+                            "restAuthCredential.password":"[parameters('clusterLoginPassword')]"
+                        }
+                    }
+                },
+                "storageProfile":{
+                    "storageaccounts":[
+                        {
+                            "name":"[replace(replace(reference(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name), '2016-01-01').primaryEndpoints.blob,'https://',''),'/','')]",
+                            "isDefault":true,
+                            "container":"[parameters('clusterName')]",
+                            "key":"[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name), '2016-01-01').keys[0].value]"
+                        }
+                    ]
+                },
+                "computeProfile":{
+                    "roles":[
+                        {
+                            "name": "headnode",
+                            "targetInstanceCount": "2",
+                            "hardwareProfile": {
+                                "vmSize": "Standard_D3_v2"
+                            },
+                            "osProfile":{
+                                "linuxOperatingSystemProfile":{
+                                    "username":"[parameters('sshUserName')]",
+                                    "password":"[parameters('sshPassword')]"
+                                }
+                            }
+                        },
+                        {
+                            "name": "workernode",
+                            "targetInstanceCount": "2",
+                            "hardwareProfile": {
+                                "vmSize": "Standard_D3_v2"
+                            },
+                            "osProfile":{
+                                "linuxOperatingSystemProfile":{
+                                    "username":"[parameters('sshUserName')]",
+                                    "password":"[parameters('sshPassword')]"
+                                }
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    ],
+    "outputs":{
+        "storage":{
+        "type": "object",
+        "value": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('defaultStorageAccount').name))]"
+        },
+        "cluster":{
+            "type":"object",
+            "value":"[reference(resourceId('Microsoft.HDInsight/clusters',parameters('clusterName')))]"
+        }
+    }
+}
