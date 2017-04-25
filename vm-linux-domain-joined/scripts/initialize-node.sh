@@ -64,9 +64,41 @@ replace_ad_params /etc/ntp.conf
 
 cat > /etc/dhclient-enter-hooks << EOF
 #!/bin/sh
-make_resolv_conf() {
-echo "do not change resolv.conf"
-}
+printf "\ndhclient-exit-hooks running...\n\treason:%s\n\tinterface:%s\n" "${reason:?}" "${interface:?}"
+# only execute on the primary nic
+if [ "$interface" != "eth0" ]
+then
+    exit 0;
+fi
+# when we have a new IP, perform nsupdate
+if [ "$reason" = BOUND ] || [ "$reason" = RENEW ] ||
+   [ "$reason" = REBIND ] || [ "$reason" = REBOOT ]
+then
+    printf "\tnew_ip_address:%s\n" "${new_ip_address:?}"
+    host=$(hostname | cut -d'.' -f1)
+    domain=$(hostname | cut -d'.' -f2- -s)
+    domain=${ADDNS} 
+    IFS='.' read -ra ipparts <<< "$new_ip_address"
+    ptrrec="${ipparts[3]}.${ipparts[2]}.${ipparts[1]}.${ipparts[0]}.in-addr.arpa"
+    nsupdatecmds=$(mktemp -t nsupdate.XXXXXXXXXX)
+    resolvconfupdate=$(mktemp -t resolvconfupdate.XXXXXXXXXX)
+    echo updating resolv.conf
+    grep -iv "search" /etc/resolv.conf > "$resolvconfupdate"
+    echo "search $domain" >> "$resolvconfupdate"
+    cat "$resolvconfupdate" > /etc/resolv.conf
+    echo "Attempting to register $host.$domain and $ptrrec"
+    {
+        echo "update delete $host.$domain a"
+        echo "update add $host.$domain 600 a $new_ip_address"
+        echo "send"
+        echo "update delete $ptrrec ptr"
+        echo "update add $ptrrec 600 ptr $host.$domain"
+        echo "send"
+    } > "$nsupdatecmds"
+    nsupdate "$nsupdatecmds"
+fi
+#done
+exit 0;
 EOF
 chmod a+x /etc/dhclient-enter-hooks
 chmod 600 /etc/sssd/sssd.conf
@@ -77,4 +109,8 @@ chkconfig smb on
 authconfig --enablesssd --enablemkhomedir --enablesssdauth --update
 service sssd start
 chkconfig sssd on
-
+service network restart
+net ads join -U${DOMAINADMINUSER}@${ADDNS}%${DOMAINADMINPWD}  
+authconfig --enablesssd --enablemkhomedir --enablesssdauth --update
+service sssd start
+echo ${DOMAINADMINPWD} | kinit ${DOMAINADMINUSER}@${ADDNS^^}
