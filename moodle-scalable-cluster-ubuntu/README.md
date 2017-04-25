@@ -17,7 +17,7 @@ The following resources will be created:
 - a redis cache to be used for Moodle Session Cache (manual setup required in Moodle)
 - a lot of underlying resources need for the environment (virtual network, storage accounts, etc)
 
-![Moodle On Azure](/images/moodle-on-azure.jpg)
+![Moodle On Azure](./images/moodle-on-azure.jpg)
 
 The setup script will ask you about the 't-shirt size' for database & gluster layers.
 Here's an explanation for each one of these: 
