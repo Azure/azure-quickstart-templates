@@ -31,7 +31,7 @@ Install Putty or use any bash shell for Windows (if using a bash shell, follow t
 
 Run this command:
 ```
-putty.exe -ssh -L 9000:localhost:9000 -L 8084:localhost:8084 <User name>@<Public DNS name of instance you just created>
+putty.exe -ssh -i <path to private key file> -L 9000:localhost:9000 -L 8084:localhost:8084 <User name>@<Public DNS name of instance you just created>
 ```
 
 Or follow these manual steps:
@@ -44,7 +44,7 @@ Or follow these manual steps:
 ### If you are using Linux or Mac:
 Run this command:
 ```bash
-ssh -L 9000:localhost:9000 -L 8084:localhost:8084 <User name>@<Public DNS name of instance you just created>
+ssh -i <path to private key file> -L 9000:localhost:9000 -L 8084:localhost:8084 <User name>@<Public DNS name of instance you just created>
 ```
 > NOTE: Port 9000 and 8084 correspond to Spinnaker's deck and gate services, respectively.
 
