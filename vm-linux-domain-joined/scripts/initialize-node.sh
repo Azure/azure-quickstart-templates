@@ -38,11 +38,11 @@ replace_ad_params() {
 sed -i '/Defaults[[:space:]]\+!*requiretty/s/^/#/' /etc/sudoers
 echo "$ADMINUSER ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
-myhostname=`hostname`
-fqdnstring=`python -c "import socket; print socket.getfqdn('$myhostname')"`
-sed -i "s/.*HOSTNAME.*/HOSTNAME=${fqdnstring}/g" /etc/sysconfig/network
-/etc/init.d/network restart
+# Disable SELinux
+setenforce 0 
+sed -i 's^SELINUX=enforcing^SELINUX=disabled^g' /etc/selinux/config
 
+# Install and configure domain join packages
 yum install -y ntp
 yum -y remove samba-client
 yum -y remove samba-common
@@ -70,7 +70,8 @@ chkconfig ntpd on
 service smb start
 chkconfig smb on
 
-cat > /etc/dhcp/dhclient-enter-hooks << "EOF"
+# Add hook for DNS update
+cat > /etc/dhcp/dhclient-exit-hooks << "EOF"
 #!/bin/sh
 printf "\ndhclient-exit-hooks running...\n\treason:%s\n\tinterface:%s\n" "${reason:?}" "${interface:?}"
 # only execute on the primary nic
@@ -87,11 +88,11 @@ then
     domain=$(hostname | cut -d'.' -f2- -s)
 EOF
 
-cat >> /etc/dhcp/dhclient-enter-hooks << EOF
+cat >> /etc/dhcp/dhclient-exit-hooks << EOF
     domain="${ADDNS}" 
 EOF
 
-cat >> /etc/dhcp/dhclient-enter-hooks << "EOF"
+cat >> /etc/dhcp/dhclient-exit-hooks << "EOF"
     IFS='.' read -ra ipparts <<< "$new_ip_address"
     ptrrec="${ipparts[3]}.${ipparts[2]}.${ipparts[1]}.${ipparts[0]}.in-addr.arpa"
     nsupdatecmds=$(mktemp -t nsupdate.XXXXXXXXXX)
@@ -115,12 +116,14 @@ fi
 exit 0;
 EOF
 
-chmod a+x /etc/dhcp/dhclient-enter-hooks
-#service network restart
+chmod a+x /etc/dhcp/dhclient-exit-hooks
+service network restart
 
-#net ads join -U${DOMAINADMINUSER}@${ADDNS}%${DOMAINADMINPWD}  
-#authconfig --enablesssd --enablemkhomedir --enablesssdauth --update
-#service sssd start
-#chkconfig sssd on
+# Join domain
+net ads join -U${DOMAINADMINUSER}@${ADDNS}%${DOMAINADMINPWD}  
+authconfig --enablesssd --enablemkhomedir --enablesssdauth --update
+service sssd start
+chkconfig sssd on
 
+# Get a keytab
 echo ${DOMAINADMINPWD} | kinit ${DOMAINADMINUSER}@${ADDNS^^}
