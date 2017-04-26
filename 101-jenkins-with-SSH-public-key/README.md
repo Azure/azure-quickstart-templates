@@ -11,7 +11,7 @@ This template allows you to host an instance of Jenkins on a DS1_v2 size Linux U
 
 ## A. Deploy Azure Jenkins VM
 1. Click "Deploy to Azure" button. If you haven't got an Azure subscription, it will guide you on how to signup for a free trial.
-2. Enter a valid name for the VM, as well as a user name and password that you will use to login remotely to the VM via SSH.
+2. Enter a valid name for the VM, as well as a user name and SSH key that you will use to login remotely to the VM via SSH.
 3. Remember these. You will need this to access the VM next.
 
 ## B. Setup SSH port forwarding
@@ -24,7 +24,7 @@ Install Putty or use any bash shell for Windows (if using a bash shell, follow t
 
 Run this command:
 ```
-putty.exe -ssh -L 8080:localhost:8080 <User name>@<Public DNS name of instance you just created>
+putty.exe -ssh -i <path to private key file> -L 8080:localhost:8080 <User name>@<Public DNS name of instance you just created>
 ```
 
 Or follow these manual steps:
@@ -36,7 +36,7 @@ Or follow these manual steps:
 ### If you are using Linux or Mac:
 Run this command:
 ```bash
-ssh -L 8080:localhost:8080 <User name>@<Public DNS name of instance you just created>
+ssh -i <path to private key file> -L 8080:localhost:8080 <User name>@<Public DNS name of instance you just created>
 ```
 ## C. Connect to Jenkins
 
