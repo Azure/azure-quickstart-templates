@@ -88,7 +88,7 @@ then
 EOF
 
 cat >> /etc/dhcp/dhclient-enter-hooks << EOF
-    domain=${ADDNS} 
+    domain="${ADDNS}" 
 EOF
 
 cat >> /etc/dhcp/dhclient-enter-hooks << "EOF"
