@@ -64,6 +64,12 @@ replace_ad_params /etc/sssd/sssd.conf
 cp -f ntp.conf /etc/ntp.conf
 replace_ad_params /etc/ntp.conf
 
+chmod 600 /etc/sssd/sssd.conf
+service ntpd start
+chkconfig ntpd on
+service smb start
+chkconfig smb on
+
 cat > /etc/dhcp/dhclient-enter-hooks << "EOF"
 #!/bin/sh
 printf "\ndhclient-exit-hooks running...\n\treason:%s\n\tinterface:%s\n" "${reason:?}" "${interface:?}"
@@ -110,16 +116,11 @@ exit 0;
 EOF
 
 chmod a+x /etc/dhcp/dhclient-enter-hooks
-service network restart
-chmod 600 /etc/sssd/sssd.conf
-service ntpd start
-chkconfig ntpd on
-service smb start
-chkconfig smb on
-authconfig --enablesssd --enablemkhomedir --enablesssdauth --update
-service sssd start
-chkconfig sssd on
-net ads join -U${DOMAINADMINUSER}@${ADDNS}%${DOMAINADMINPWD}  
-authconfig --enablesssd --enablemkhomedir --enablesssdauth --update
-service sssd start
+#service network restart
+
+#net ads join -U${DOMAINADMINUSER}@${ADDNS}%${DOMAINADMINPWD}  
+#authconfig --enablesssd --enablemkhomedir --enablesssdauth --update
+#service sssd start
+#chkconfig sssd on
+
 echo ${DOMAINADMINPWD} | kinit ${DOMAINADMINUSER}@${ADDNS^^}
