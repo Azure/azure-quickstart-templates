@@ -20,6 +20,8 @@ ADMINUSER=$6
 DOMAINADMINUSER=$7
 DOMAINADMINPWD=$8
 
+echo "$DOMAINADMINUSER $DOMAINADMINPWD" > /tmp/init.out
+
 replace_ad_params() {
     target=${1}
     shortdomain=`echo ${ADDNS} | sed 's/\.[^.]*$//'`
@@ -62,7 +64,7 @@ replace_ad_params /etc/sssd/sssd.conf
 cp -f ntp.conf /etc/ntp.conf
 replace_ad_params /etc/ntp.conf
 
-cat > /etc/dhclient-enter-hooks << EOF
+cat > /etc/dhcp/dhclient-enter-hooks << "EOF"
 #!/bin/sh
 printf "\ndhclient-exit-hooks running...\n\treason:%s\n\tinterface:%s\n" "${reason:?}" "${interface:?}"
 # only execute on the primary nic
@@ -77,7 +79,13 @@ then
     printf "\tnew_ip_address:%s\n" "${new_ip_address:?}"
     host=$(hostname | cut -d'.' -f1)
     domain=$(hostname | cut -d'.' -f2- -s)
+EOF
+
+cat >> /etc/dhcp/dhclient-enter-hooks << EOF
     domain=${ADDNS} 
+EOF
+
+cat >> /etc/dhcp/dhclient-enter-hooks << "EOF"
     IFS='.' read -ra ipparts <<< "$new_ip_address"
     ptrrec="${ipparts[3]}.${ipparts[2]}.${ipparts[1]}.${ipparts[0]}.in-addr.arpa"
     nsupdatecmds=$(mktemp -t nsupdate.XXXXXXXXXX)
@@ -100,7 +108,9 @@ fi
 #done
 exit 0;
 EOF
-chmod a+x /etc/dhclient-enter-hooks
+
+chmod a+x /etc/dhcp/dhclient-enter-hooks
+service network restart
 chmod 600 /etc/sssd/sssd.conf
 service ntpd start
 chkconfig ntpd on
@@ -109,7 +119,6 @@ chkconfig smb on
 authconfig --enablesssd --enablemkhomedir --enablesssdauth --update
 service sssd start
 chkconfig sssd on
-service network restart
 net ads join -U${DOMAINADMINUSER}@${ADDNS}%${DOMAINADMINPWD}  
 authconfig --enablesssd --enablemkhomedir --enablesssdauth --update
 service sssd start
