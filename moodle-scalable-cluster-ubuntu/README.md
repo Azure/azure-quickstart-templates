@@ -17,7 +17,7 @@ Main differences from other existing Moodle templates:
 - Azure Redis Cache is deployed in the solution, to be used as Moodle Session Cache backend (manual setup required in moodle)
 - it was built for Moodle 3.x deployments 
 - Azure Backup can be enabled for VMS hosting MariaDb Database and Moodledata content (very important for DR scenarios)
-- Apache is configured with SSL support (using self-signed certificates), allowing custom certificates with desired.
+- Apache is configured with SSL support (using a self-signed certificate), allowing custom certificates with desired.
 
 Summarizing, the following resources will be created during this process:
 
@@ -48,6 +48,14 @@ MariaDb t-shirt sizes:
 		Small  | Standard_DS2_v2 |  2         |  127 Gb   | 256 Gb
 		Medium | Standard_DS3_v2 |  2         |  512 Gb   | 1 Tb
 		Large  | Standard_DS4_v2 |  2         | 1023 Gb   | 2 Tb
+
+*Updating the source code or Apache SSL certificates* 
+
+There's a jumpbox machine in the deployment that can be used to update Moodle's source code, or SSL certificates in the web layer. 
+In order to proceed with this kind of update, connect to the machine using the root credentials provided during the template setup. 
+- Moodle source code is located at /moodle/html/moodle
+- Apache SSL certificates are located at /moodle/certs
+- Moodledata content is located at /moodle/moodledata
 
 This template is aimed to have constant updates, and would include other improvements in the future. 
 
