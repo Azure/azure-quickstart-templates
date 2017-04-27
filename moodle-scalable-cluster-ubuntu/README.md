@@ -34,6 +34,7 @@ The setup script will ask you about the 't-shirt size' for database & gluster la
 Here's an explanation for each one of these: 
 
 Gluster t-shirt sizes: 
+
 		tshirt | VM Size         | Disk Count | Disk Size | Total Size
 		Small  | Standard_DS2_v2 |  4         |  127 Gb   | 512 Gb
 		Medium | Standard_DS3_v2 |  2         |  512 Gb   | 1 Tb
