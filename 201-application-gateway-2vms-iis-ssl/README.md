@@ -7,83 +7,42 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template deploys an Application Gateway with WAF, end to end SSL and HTTP to HTTPS redirect on the IIS servers. It deploys two IIS servers into a new VNet.
-
-### Template Deployment ###
-
-### Certificates ###
-
-To deploy this template using the scripts from the root of this repo: (change the folder name below to match the folder name for this sample)
-
-```PowerShell
-.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactsStagingDirectory '[foldername]'
-```
-```bash
-azure-group-deploy.sh -a [foldername] -l eastus -u
-```
-If your sample has artifacts that need to be "staged" for deployment (Configuration Scripts, Nested Templates, DSC Packages) then set the upload switch on the command.
-You can optionally specify a storage account to use, if so the storage account must already exist within the subscription.  If you don't want to specify a storage account
-one will be created by the script (think of this as "temp" storage for AzureRM) and reused by subsequent deployments.
-
-```PowerShell
-.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactsStagingDirectory '100-blank-template' -UploadArtifacts 
-```
-```bash
-azure-group-deploy.sh -a 100-blank-template -l eastus -u
-```
-
-This template deploys a **solution name**. The **solution name** is a **description**
-
-`Tags: Tag1, Tag2, Tag3`
+This template deploys an Application Gateway with WAF, end to end SSL and HTTP to HTTPS redirect on the IIS servers. It deploys two IIS servers into a new VNet. The certificates for the front end and back end connections can be different, to demonstrate the use of a public CA externally and an internal CA internally. 
 
 ## Solution overview and deployed resources
 
 This is an overview of the solution
 
-The following resources are deployed as part of the solution
+The following resources are deployed as part of the solution:
 
-#### Resource provider 1
-
-Description Resource Provider 1
-
-+ **Resource type 1A**: Description Resource type 1A
-+ **Resource type 1B**: Description Resource type 1B
-+ **Resource type 1C**: Description Resource type 1C
-
-#### Resource provider 2
-
-Description Resource Provider 2
-
-+ **Resource type 2A**: Description Resource type 2A
-
-#### Resource provider 3
-
-Description Resource Provider 3
-
-+ **Resource type 3A**: Description Resource type 3A
-+ **Resource type 3B**: Description Resource type 3B
++ **Virtual Network**: A virtual network with two subnets, AppGatewaySubnet and WebSubnet.
++ **Application Gateway**: Application Gateway with WAF size Medium by default and an instance count of 2 by default. The Application Gateway will have a public IP and will route connections to the two backend IIS servers over both 80 and 443 with session persistence disabled.
++ **Two Windows Servers**: Two Windows 2016 (by default) servers running IIS. These servers will have a public IP and will be using managed disks. Default size is Standard_D2_v2.
 
 ## Prerequisites
 
-Decscription of the prerequistes for the deployment
+You will need certificates for this to successfully deploy. You can use valid certificates, or self-signed certificates (for demo and testing purposes). You will need the following certs:
+
++ **Front End Certificate**: This is the certificate that will terminate SSL on the Application Gateway for traffic coming from the internet. This will need to be in .pfx format, and will need to be encoded in base-64 in order to include in the template deployment.
++ **Back End Certificate**: This is the certificate that will be installed on the IIS servers to encrypt traffic between the Application Gateway and the IIS servers. This could be the same as the front end certificate or could be a different certificate. This will need to be in .pfx format, and will need to be encoded in base-64 in order to include in the template deployment.
++ **Back End Public Key**: This is the public key from the back end certificate that will be used by the Application Gateway to whitelist the back end servers. This will need to be in .cer format, and will need to be encoded in base-64 in order to include in the template deployment.
+
+### Using Self-Signed Certs
+**Create the certs**
+
+**Encode the certs**
 
 ## Deployment steps
 
-You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
-
-## Usage
+Click the "deploy to Azure" button at the beginning of this document.
 
 #### Connect
 
-How to connect to the solution
-
-#### Management
-
-How to manage the solution
+The template will output the URL that you can use to connect to the appliction. When connected you should see the default page showing which server you are connected to. Refreshing the page will send you to the other server. 
 
 ## Notes
 
-Solution notes
+
 
 Tags: `Application Gateway, IIS, SSL, Windows, DSC Extension`
 
