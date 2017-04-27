@@ -30,14 +30,14 @@
 NODEINDEX=${1}
 NODECOUNT=${2}
 NODELIST=${3}
-MYSQLUSERPASSWORD=${4}
+mySqlUserPassword=${4}
 DEBPASSWORD=${5:-`date +%D%A%B | md5sum| sha256sum | base64| fold -w16| head -n1`}
 CNAME=${6:-"GaleraCluster"}
 
 echo $NODEINDEX          >> /tmp/vars.txt
 echo $NODECOUNT          >> /tmp/vars.txt
 echo $NODELIST           >> /tmp/vars.txt
-echo $MYSQLUSERPASSWORD  >> /tmp/vars.txt
+echo $mySqlUserPassword  >> /tmp/vars.txt
 echo $DEBPASSWORD        >> /tmp/vars.txt
 echo $CNAME              >> /tmp/vars.txt
 
@@ -89,12 +89,12 @@ mv ~/debian.cnf /etc/mysql/
 mysql -u root <<EOF
 CREATE DATABASE moodle;
 GRANT ALL PRIVILEGES ON moodle.* TO 'moodledba'@'%'
-IDENTIFIED BY '$MYSQLUSERPASSWORD';
+IDENTIFIED BY '$mySqlUserPassword';
 FLUSH PRIVILEGES;
 
 GRANT ALL PRIVILEGES on *.* TO 'debian-sys-maint'@'localhost' IDENTIFIED BY '$DEBPASSWORD' WITH GRANT OPTION;
-SET PASSWORD FOR 'root'@'localhost' = PASSWORD('$MYSQLUSERPASSWORD');
-CREATE USER 'root'@'%' IDENTIFIED BY '$MYSQLUSERPASSWORD';
+SET PASSWORD FOR 'root'@'localhost' = PASSWORD('$mySqlUserPassword');
+CREATE USER 'root'@'%' IDENTIFIED BY '$mySqlUserPassword';
 GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;
 FLUSH PRIVILEGES;
 EOF

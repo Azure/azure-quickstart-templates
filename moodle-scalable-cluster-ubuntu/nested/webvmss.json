@@ -5,7 +5,7 @@
 	"parameters": { "moodleCommon": { "type": "object", "metadata": { "description": "Common Moodle values" } } },
 
 	"variables": {
- 		"SubnetWebRef":	"[concat(resourceId('Microsoft.Network/virtualNetworks',		parameters('moodleCommon').vnetName),'/subnets/',parameters('moodleCommon').SubnetWeb)]",
+ 		"subnetWebRef":	"[concat(resourceId('Microsoft.Network/virtualNetworks',		parameters('moodleCommon').vnetName),'/subnets/',parameters('moodleCommon').subnetWeb)]",
 		 "vmssID":		"[       resourceId('Microsoft.Compute/virtualMachineScaleSets',parameters('moodleCommon').vmssName)]",
 		"dstorID":		"[       resourceId('Microsoft.Storage/storageAccounts',		parameters('moodleCommon').vmssdStorageAccounttName)]",
 		  "pipID":		"[       resourceId('Microsoft.Network/publicIPAddresses',		parameters('moodleCommon').lbPipName)]",
@@ -18,13 +18,13 @@
 	
 		"storageApiVersion": "2015-06-15",  	
 
-		"wadlogs":			"<WadCfg><DiagnosticMonitorConfiguration>",
-		"wadperfcounter":	"<PerformanceCounters scheduledTransferPeriod=\"PT1M\"><PerformanceCounterConfiguration counterSpecifier=\"\\Processor\\PercentProcessorTime\" sampleRate=\"PT15S\" unit=\"Percent\"><annotation displayName=\"CPU percentage guest OS\" locale=\"en-us\"/></PerformanceCounterConfiguration></PerformanceCounters>",
-		"wadcfgxstart":		"[concat(variables('wadlogs'),variables('wadperfcounter'),'<Metrics resourceId=\"')]",
-		"wadcfgxend":		"[concat('\"><MetricAggregation scheduledTransferPeriod=\"PT1H\"/><MetricAggregation scheduledTransferPeriod=\"PT1M\"/></Metrics></DiagnosticMonitorConfiguration></WadCfg>')]",
+		"wadLogs":			"<WadCfg><DiagnosticMonitorConfiguration>",
+		"wadPerfCounter":	"<PerformanceCounters scheduledTransferPeriod=\"PT1M\"><PerformanceCounterConfiguration counterSpecifier=\"\\Processor\\PercentProcessorTime\" sampleRate=\"PT15S\" unit=\"Percent\"><annotation displayName=\"CPU percentage guest OS\" locale=\"en-us\"/></PerformanceCounterConfiguration></PerformanceCounters>",
+		"wadCfgxStart":		"[concat(variables('wadLogs'),variables('wadPerfCounter'),'<Metrics resourceId=\"')]",
+		"wadCfgxEnd":		"[concat('\"><MetricAggregation scheduledTransferPeriod=\"PT1H\"/><MetricAggregation scheduledTransferPeriod=\"PT1M\"/></Metrics></DiagnosticMonitorConfiguration></WadCfg>')]",
 	
-		"scriptUri":	"[concat(parameters('moodleCommon').ScriptLocation,parameters('moodleCommon').moodleSetupScriptFileName)]",
-		"cmdExec":		"[concat('bash ',                                  parameters('moodleCommon').moodleSetupScriptFileName,' ',parameters('moodleCommon').gfsNameRoot,'0', ' ','data' )]"
+		"scriptUri":	"[concat(parameters('moodleCommon').ScriptLocation,parameters('moodleCommon').moodleSetupScriptFilename)]",
+		"cmdExec":		"[concat('bash ',                                  parameters('moodleCommon').moodleSetupScriptFilename,' ',parameters('moodleCommon').gfsNameRoot,'0', ' ','data' )]"
 	
 	},
 	
@@ -55,12 +55,12 @@
 				"virtualMachineProfile": {
 					"storageProfile": {	"osDisk": { "caching": "ReadOnly", "createOption": "FromImage", "managedDisk": { "storageAccountType": "Standard_LRS" } }, "imageReference": "[parameters('moodleCommon').osType]" },
 					     "osProfile": { "computerNamePrefix": "[parameters('moodleCommon').vmssName]", "adminUsername": "[parameters('moodleCommon').adminUsername]", "adminPassword": "[parameters('moodleCommon').adminPassword]" },
-					"networkProfile": { "networkInterfaceConfigurations": [ { "name": "vmssnic", "properties": { "ipConfigurations": [ { "name": "ipcfg_lb", "properties": { "subnet": { "id": "[variables('SubnetWebRef')]" }, "loadBalancerBackendAddressPools": [ { "id": "[variables('extBeID')]" } ], "loadBalancerInboundNatPools": [ { "id": "[variables('extNatPoolID')]" } ] } } ], "primary": "true" } } ] },
+					"networkProfile": { "networkInterfaceConfigurations": [ { "name": "vmssnic", "properties": { "ipConfigurations": [ { "name": "ipcfg_lb", "properties": { "subnet": { "id": "[variables('subnetWebRef')]" }, "loadBalancerBackendAddressPools": [ { "id": "[variables('extBeID')]" } ], "loadBalancerInboundNatPools": [ { "id": "[variables('extNatPoolID')]" } ] } } ], "primary": "true" } } ] },
 				  "extensionProfile": {
 				    	"extensions": [
 				    		{	"name": "LinuxDiagnostic", 
 				    				"properties":			{ "publisher": "Microsoft.OSTCExtensions", "type": "LinuxDiagnostic", "typeHandlerVersion": "2.3", "autoUpgradeMinorVersion": true,
-				    				"settings":				{ "xmlCfg": "[base64(concat(variables('wadcfgxstart'), variables('vmssID'), variables('wadcfgxend')))]", "storageAccount": "[parameters('moodleCommon').vmssdStorageAccounttName]" },
+				    				"settings":				{ "xmlCfg": "[base64(concat(variables('wadCfgxStart'), variables('vmssID'), variables('wadCfgxEnd')))]", "storageAccount": "[parameters('moodleCommon').vmssdStorageAccounttName]" },
 				    				"protectedSettings":	{ "storageAccountName": "[parameters('moodleCommon').vmssdStorageAccounttName]", "storageAccountKey": "[listkeys(variables('dstorID'), variables('storageApiVersion')).key1]", "storageAccountEndPoint": "https://core.windows.net"} }
 				    		},
 				    		{	"name": "setup_moodle",
