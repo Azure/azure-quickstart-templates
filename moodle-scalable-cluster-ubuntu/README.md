@@ -1,5 +1,5 @@
 # MoodleAzure
-Moodle deployment using Azure Resource Manager Template
+High available, high scalable Moodle deployment using Azure Resource Manager Template
 
 [![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fpateixei%2FMoodleAzure%2Fv2%2Fazuredeploy.json)  [![Visualize](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/visualizebutton.png)](http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fpateixei%2FMoodleAzure%2Fv2%2Fazuredeploy.json)
 
@@ -13,10 +13,11 @@ Main differences from other existing Moodle templates:
 - web layer uses a VMScale Set with auto-scale configured, allowing better usage of resources (02 to 10 web nodes possible)
 - database layer was built using MariaDb Galera Cluster, in a high-available setup, providing 99.95% SLA
 - filesystem layer (MoodleData) was built on top of VMs with Premium Disks, supporting very intensive IO scenarios; also built on top of GlusterFS, a high scalable storage solution from RedHat (see www.glusterfs.org for details), in a High Available setup (data replication accross cluster nodes, also providing a 99.95% SLA).
-- Customer can define the size (small, medium, large) for database and filesystem layers
+- Customer can define the size (small, medium, large) for database and filesystem layers 
 - Azure Redis Cache is deployed in the solution, to be used as Moodle Session Cache backend (manual setup required in moodle)
 - it was built for Moodle 3.x deployments 
 - Azure Backup can be enabled for VMS hosting MariaDb Database and Moodledata content (very important for DR scenarios)
+- Apache is configured with SSL support (using self-signed certificates), allowing custom certificates with desired.
 
 Summarizing, the following resources will be created during this process:
 
