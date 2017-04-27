@@ -38,12 +38,6 @@
         "description": "Client Secret of the Azure AD application that has rights to spinnaker."
       }
     },
-    "keyVaultAccountName": {
-      "type": "string",
-      "metadata": {
-        "description": "Name of your KeyVault account."
-      }
-    },
     "OracleUserName": {
       "type": "string",
       "metadata": {
@@ -68,20 +62,6 @@
       "metadata": {
         "description": "A repository with that name will be created locally on the Jenkins VM with Aptly. Aptly is a tool for Debian repository management"
       }
-    },
-    "_artifactsLocation": {
-      "type": "string",
-      "metadata": {
-        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
-      },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/spinnaker-jenkins-to-vmss/"
-    },
-    "_artifactsLocationSasToken": {
-      "type": "securestring",
-      "metadata": {
-        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
-      },
-      "defaultValue": ""
     }
   },
   "variables": {
@@ -90,34 +70,24 @@
     "front50StorageAccountName": "[concat('front50', uniqueString(resourceGroup().id))]",
     "storageAccountContainerName": "vhds",
     "packerStorageAccountName": "[concat('packer', uniqueString(resourceGroup().id))]",
+    "keyVaultName": "[concat('vault', uniqueString(resourceGroup().id))]",
     "vnetName": "[concat(variables('scenarioPrefix'),'Vnet')]",
-    "vnetAddressSpace": "10.0.0.0/20",
     "subnet0Name": "[concat(variables('scenarioPrefix'),'Subnet0')]",
-    "subnet0AddressPrefix": "10.0.0.0/24",
     "subnet1Name": "[concat(variables('scenarioPrefix'),'Subnet1')]",
-    "subnet1AddressPrefix": "10.0.1.0/24",
     "subnet2Name": "[concat(variables('scenarioPrefix'),'Subnet2')]",
-    "subnet2AddressPrefix": "10.0.2.0/24",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
-    "subnet0Ref": "[concat(variables('vnetID'),'/subnets/', variables('subnet0Name'))]",
+    "subnet0Ref": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('vnetName')),'/subnets/', variables('subnet0Name'))]",
     "jenkinsNSGName": "jenkinsNSG",
     "jenkinsNICName": "jenkinsNic",
-    "jenkinsPrivateIP": "10.0.0.5",
     "jenkinsPublicIPAddressName": "jenkinsPublicIP",
     "jenkinsVMName": "jenkinsVm",
     "jenkinsOSDiskName": "jenkinsOSDisk",
     "spinnakerNSGName": "spinnakerNSG",
     "spinnakerNICName": "spinnakerNic",
-    "spinnakerPrivateIP": "10.0.0.4",
     "spinnakerPublicIPAddressName": "spinnakerPublicIP",
     "spinnakerVMName": "spinnakerVm",
     "spinnakerOSDiskName": "spinnakerOSDisk",
-    "keysPermissions": [
-      "all"
-    ],
-    "secretsPermissions": [
-      "get"
-    ]
+    "_artifactsLocation": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/spinnaker-jenkins-to-vmss/",
+    "_artifactsLocationSasToken": ""
   },
   "resources": [
     {
@@ -153,7 +123,7 @@
     {
       "type": "Microsoft.KeyVault/vaults",
       "apiVersion": "2015-06-01",
-      "name": "[parameters('keyVaultAccountName')]",
+      "name": "[variables('keyVaultName')]",
       "location": "[resourceGroup().location]",
       "properties": {
         "enabledForDeployment": true,
@@ -165,8 +135,12 @@
             "tenantId": "[subscription().tenantId]",
             "objectId": "[parameters('servicePrincipalClientId')]",
             "permissions": {
-              "keys": "[variables('keysPermissions')]",
-              "secrets": "[variables('secretsPermissions')]"
+              "keys": [
+                "all"
+              ],
+              "secrets": [
+                "get"
+              ]
             }
           }
         ],
@@ -184,7 +158,7 @@
             "value": "[parameters('vmUsername')]"
           },
           "dependsOn": [
-            "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultAccountName'))]"
+            "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
           ]
         },
         {
@@ -195,7 +169,7 @@
             "value": "[parameters('vmPassword')]"
           },
           "dependsOn": [
-            "[resourceId('Microsoft.KeyVault/vaults', parameters('keyVaultAccountName'))]"
+            "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
           ]
         }
       ]
@@ -208,26 +182,26 @@
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
-            "[variables('vnetAddressSpace')]"
+            "10.0.0.0/20"
           ]
         },
         "subnets": [
           {
             "name": "[variables('subnet0Name')]",
             "properties": {
-              "addressPrefix": "[variables('subnet0AddressPrefix')]"
+              "addressPrefix": "10.0.0.0/24"
             }
           },
           {
             "name": "[variables('subnet1Name')]",
             "properties": {
-              "addressPrefix": "[variables('subnet1AddressPrefix')]"
+              "addressPrefix": "10.0.1.0/24"
             }
           },
           {
             "name": "[variables('subnet2Name')]",
             "properties": {
-              "addressPrefix": "[variables('subnet2AddressPrefix')]"
+              "addressPrefix": "10.0.2.0/24"
             }
           }
         ]
@@ -352,7 +326,7 @@
             "name": "ipconfig1",
             "properties": {
               "privateIPAllocationMethod": "Static",
-              "privateIPAddress": "[variables('jenkinsPrivateIP')]",
+              "privateIPAddress": "10.0.0.5",
               "publicIPAddress": {
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('jenkinsPublicIPAddressName'))]"
               },
@@ -383,7 +357,7 @@
             "name": "ipconfig1",
             "properties": {
               "privateIPAllocationMethod": "Static",
-              "privateIPAddress": "[variables('spinnakerPrivateIP')]",
+              "privateIPAddress": "10.0.0.4",
               "publicIPAddress": {
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('spinnakerPublicIPAddressName'))]"
               },
@@ -454,11 +428,11 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[concat(parameters('_artifactsLocation'), 'scripts/set_azure_jenkins.sh', parameters('_artifactsLocationSasToken'))]"
+            "[concat(variables('_artifactsLocation'), 'scripts/set_azure_jenkins.sh', variables('_artifactsLocationSasToken'))]"
           ]
         },
         "protectedSettings": {
-          "commandToExecute": "[concat('bash set_azure_jenkins.sh', ' -ju ', parameters('JenkinsUserName'), ' -jp ', parameters('JenkinsPassword'), ' -ou ', parameters('OracleUserName'), ' -a ', parameters('AptlyRepoName'), ' -su ', parameters('_artifactsLocation'),'setup-scripts/')]"
+          "commandToExecute": "[concat('bash set_azure_jenkins.sh', ' -ju ', parameters('JenkinsUserName'), ' -jp ', parameters('JenkinsPassword'), ' -ou ', parameters('OracleUserName'), ' -a ', parameters('AptlyRepoName'), ' -su ', variables('_artifactsLocation'),'setup-scripts/')]"
         }
       }
     },
@@ -529,11 +503,11 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[concat(parameters('_artifactsLocation'), 'scripts/set_azure_spinnaker.sh', parameters('_artifactsLocationSasToken'))]"
+            "[concat(variables('_artifactsLocation'), 'scripts/set_azure_spinnaker.sh', variables('_artifactsLocationSasToken'))]"
           ]
         },
         "protectedSettings": {
-          "commandToExecute": "[concat('bash set_azure_spinnaker.sh', ' -s ', subscription().subscriptionId, ' -t ', subscription().tenantId, ' -c ', parameters('servicePrincipalClientId'), ' -p ', parameters('servicePrincipalClientSecret'), ' -r ', resourceGroup().name, ' -l ', resourceGroup().location, ' -h ', variables('packerStorageAccountName'), ' -k ', parameters('keyVaultAccountName'), ' -f ', variables('front50StorageAccountName'), ' -a ', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('front50StorageAccountName')), '2016-01-01').keys[0].value, ' -u ', parameters('JenkinsUserName'), ' -q ', parameters('JenkinsPassword'), ' -i ', reference('jenkinsPublicIP').dnsSettings.fqdn)]"
+          "commandToExecute": "[concat('bash set_azure_spinnaker.sh', ' -s ', subscription().subscriptionId, ' -t ', subscription().tenantId, ' -c ', parameters('servicePrincipalClientId'), ' -p ', parameters('servicePrincipalClientSecret'), ' -r ', resourceGroup().name, ' -l ', resourceGroup().location, ' -h ', variables('packerStorageAccountName'), ' -k ', variables('keyVaultName'), ' -f ', variables('front50StorageAccountName'), ' -a ', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('front50StorageAccountName')), '2016-01-01').keys[0].value, ' -u ', parameters('JenkinsUserName'), ' -q ', parameters('JenkinsPassword'), ' -i ', reference('jenkinsPublicIP').dnsSettings.fqdn)]"
         }
       }
     }
