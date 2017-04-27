@@ -19,8 +19,7 @@ BDCIP=$5
 ADMINUSER=$6
 DOMAINADMINUSER=$7
 DOMAINADMINPWD=$8
-
-echo "$DOMAINADMINUSER $DOMAINADMINPWD" > /tmp/init.out
+ADOUPATH=$9
 
 replace_ad_params() {
     target=${1}
@@ -70,60 +69,15 @@ chkconfig ntpd on
 service smb start
 chkconfig smb on
 
-# Add hook for DNS update
-cat > /etc/dhcp/dhclient-exit-hooks << "EOF"
-#!/bin/sh
-printf "\ndhclient-exit-hooks running...\n\treason:%s\n\tinterface:%s\n" "${reason:?}" "${interface:?}"
-# only execute on the primary nic
-if [ "$interface" != "eth0" ]
-then
-    exit 0;
+# Join domain, which will also add forward/reverse DNS
+shortHostName=`hostname`
+hostname ${shortHostName}.${ADDNS}
+if [ ! -z "$ADOUPATH" ]; then
+  net ads join createcomputer="$ADOUPATH" -U${DOMAINADMINUSER}@${ADDNS}%${DOMAINADMINPWD}  
+else
+  net ads join -U${DOMAINADMINUSER}@${ADDNS}%${DOMAINADMINPWD}  
 fi
-# when we have a new IP, perform nsupdate
-if [ "$reason" = BOUND ] || [ "$reason" = RENEW ] ||
-   [ "$reason" = REBIND ] || [ "$reason" = REBOOT ]
-then
-    printf "\tnew_ip_address:%s\n" "${new_ip_address:?}"
-    host=$(hostname | cut -d'.' -f1)
-    domain=$(hostname | cut -d'.' -f2- -s)
-EOF
-
-cat >> /etc/dhcp/dhclient-exit-hooks << EOF
-    domain="${ADDNS}" 
-EOF
-
-cat >> /etc/dhcp/dhclient-exit-hooks << "EOF"
-    IFS='.' read -ra ipparts <<< "$new_ip_address"
-    ptrrec="${ipparts[3]}.${ipparts[2]}.${ipparts[1]}.${ipparts[0]}.in-addr.arpa"
-    nsupdatecmds=$(mktemp -t nsupdate.XXXXXXXXXX)
-    resolvconfupdate=$(mktemp -t resolvconfupdate.XXXXXXXXXX)
-    echo updating resolv.conf
-    grep -iv "search" /etc/resolv.conf > "$resolvconfupdate"
-    echo "search $domain" >> "$resolvconfupdate"
-    cat "$resolvconfupdate" > /etc/resolv.conf
-    echo "Attempting to register $host.$domain and $ptrrec"
-    {
-        echo "update delete $host.$domain a"
-        echo "update add $host.$domain 600 a $new_ip_address"
-        echo "send"
-        echo "update delete $ptrrec ptr"
-        echo "update add $ptrrec 600 ptr $host.$domain"
-        echo "send"
-    } > "$nsupdatecmds"
-    nsupdate "$nsupdatecmds"
-fi
-#done
-exit 0;
-EOF
-
-chmod a+x /etc/dhcp/dhclient-exit-hooks
-service network restart
-
-# Join domain
-net ads join -U${DOMAINADMINUSER}@${ADDNS}%${DOMAINADMINPWD}  
+hostname ${shortHostName}
 authconfig --enablesssd --enablemkhomedir --enablesssdauth --update
 service sssd start
 chkconfig sssd on
-
-# Get a keytab
-echo ${DOMAINADMINPWD} | kinit ${DOMAINADMINUSER}@${ADDNS^^}
