@@ -9,10 +9,6 @@
 
 This template deploys an Application Gateway with WAF, end to end SSL and HTTP to HTTPS redirect on the IIS servers. It deploys two IIS servers into a new VNet. The certificates for the front end and back end connections can be different, to demonstrate the use of a public CA externally and an internal CA internally. 
 
-## Solution overview and deployed resources
-
-This is an overview of the solution
-
 The following resources are deployed as part of the solution:
 
 + **Virtual Network**: A virtual network with two subnets, AppGatewaySubnet and WebSubnet.
