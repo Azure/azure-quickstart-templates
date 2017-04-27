@@ -18,7 +18,7 @@ This template allows you to deploy an instance of Spinnaker on a Linux Ubuntu 14
     ```bash
     az login
     az account set --subscription <Subscription ID>
-    az ad sp create-for-rbac --role="Contributor" --scopes="/subscriptions/<Subscription ID>" --name "Spinnaker"
+    az ad sp create-for-rbac --name "Spinnaker"
     ```
     > NOTE: You can run `az account list` after you login to get a list of subscription IDs for your account.
 
