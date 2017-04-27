@@ -5,17 +5,17 @@ Moodle deployment using Azure Resource Manager Template
 
 This Azure Resource Manager template creates a clustered, multi-layered moodle environment. 
 With this template we have three main components being deployed: 
-a) a web application layer with VMSS and auto-scale enabled
-b) a database layer composed of a MariaDb Galera cluster 
-c) a shared filesystem layer, for the "moodledata" content.
+- a web application layer with VMSS and auto-scale enabled
+- a database layer composed of a MariaDb Galera cluster 
+- a shared filesystem layer, for the "moodledata" content.
 
 Main differences from other existing Moodle templates:
-a) web layer uses a VMScale Set with auto-scale configured, allowing better usage of resources (02 to 10 web nodes possible)
-b) database layer was built using MariaDb Galera Cluster, in a high-available setup, providing 99.95% SLA
-c) filesystem layer (MoodleData) was built on top of VMs with Premium Disks, supporting very intensive IO scenarios; also built on top of GlusterFS, a high scalable storage solution from RedHat (see www.glusterfs.org for details), in a High Available setup (data replication accross cluster nodes, also providing a 99.95% SLA).
-d) Customer can define the size (small, medium, large) for database and filesystem layers
-e) Azure Redis Cache is deployed in the solution, to be used as Moodle Session Cache backend (manual setup required in moodle)
-f) it was built for Moodle 3.x deployments 
+- web layer uses a VMScale Set with auto-scale configured, allowing better usage of resources (02 to 10 web nodes possible)
+- database layer was built using MariaDb Galera Cluster, in a high-available setup, providing 99.95% SLA
+- filesystem layer (MoodleData) was built on top of VMs with Premium Disks, supporting very intensive IO scenarios; also built on top of GlusterFS, a high scalable storage solution from RedHat (see www.glusterfs.org for details), in a High Available setup (data replication accross cluster nodes, also providing a 99.95% SLA).
+- Customer can define the size (small, medium, large) for database and filesystem layers
+- Azure Redis Cache is deployed in the solution, to be used as Moodle Session Cache backend (manual setup required in moodle)
+- it was built for Moodle 3.x deployments 
 
 Summarizing, the following resources will be created during this process:
 
