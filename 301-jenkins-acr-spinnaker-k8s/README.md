@@ -20,7 +20,7 @@ The Jenkins instance will include a basic pipeline that checks out a user-provid
     ```bash
     az login
     az account set --subscription <Subscription ID>
-    az ad sp create-for-rbac --role="Contributor" --scopes="/subscriptions/<Subscription ID>" --name "Spinnaker"
+    az ad sp create-for-rbac --name "Spinnaker"
     ```
     > NOTE: You can run `az account list` after you login to get a list of subscription IDs for your account.
 1. Leave the git repository as the [sample app](https://github.com/azure-devops/spin-kub-demo) or change it to target your own app's repository. The repo must have a Dockerfile in its root.
