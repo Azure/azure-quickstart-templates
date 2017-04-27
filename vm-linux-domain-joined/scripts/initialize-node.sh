@@ -72,6 +72,7 @@ chkconfig smb on
 # Join domain, which will also add forward/reverse DNS
 shortHostName=`hostname`
 hostname ${shortHostName}.${ADDNS}
+service sssd restart
 if [ ! -z "$ADOUPATH" ]; then
   net ads join createcomputer="$ADOUPATH" -U${DOMAINADMINUSER}@${ADDNS}%${DOMAINADMINPWD}  
 else
@@ -79,5 +80,5 @@ else
 fi
 hostname ${shortHostName}
 authconfig --enablesssd --enablemkhomedir --enablesssdauth --update
-service sssd start
+service sssd restart
 chkconfig sssd on
