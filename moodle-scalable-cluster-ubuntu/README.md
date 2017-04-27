@@ -16,6 +16,7 @@ Main differences from other existing Moodle templates:
 - Customer can define the size (small, medium, large) for database and filesystem layers
 - Azure Redis Cache is deployed in the solution, to be used as Moodle Session Cache backend (manual setup required in moodle)
 - it was built for Moodle 3.x deployments 
+- Azure Backup can be enabled for VMS hosting MariaDb Database and Moodledata content (very important for DR scenarios)
 
 Summarizing, the following resources will be created during this process:
 
@@ -24,7 +25,7 @@ Summarizing, the following resources will be created during this process:
 - 02 nodes MariaDb 10 Active-Active Cluster (Galera Cluster), in a HA setup scenario for the database layer
 - an Internal Load Balancer in front of the MariaDb cluster
 - an public Load Balancer in front of the Virtual Machine Scale Set (web layer)
-- a virtual machine used as a JumpBox for the environment, acessible via SSH and http
+- a virtual machine used as a JumpBox for the environment, acessible via SSH
 - a redis cache to be used for Moodle Session Cache (manual setup required in Moodle)
 - a lot of underlying resources need for the environment (virtual network, storage accounts, etc)
 
