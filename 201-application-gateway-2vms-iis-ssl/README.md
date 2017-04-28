@@ -51,7 +51,7 @@ Export-Certificate -Cert $cert -FilePath "C:\backend-public.cer"
 ```
 
 ### Encode the certs
-In order to use the certificates in the template, they need to be base-64 encoded. The following commands will dump the encoded certs to text files, which you can copy the content to use in the template.
+In order to use the certificates in the template, they need to be base-64 encoded. The following commands will dump the encoded certs to text files, which you can copy the content to use in the template. Update the paths as necessary.
 
 ```
 [System.Convert]::ToBase64String([System.IO.File]::ReadAllBytes("C:\frontend.pfx")) > "C:\frontend.txt"
