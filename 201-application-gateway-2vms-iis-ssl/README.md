@@ -7,7 +7,7 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template deploys an Application Gateway with WAF, end to end SSL and HTTP to HTTPS redirect on the IIS servers. It deploys two IIS servers into a new VNet. The certificates for the front end and back end connections can be different, to demonstrate the use of a public CA externally and an internal CA internally. 
+This template deploys an Application Gateway with WAF, end to end SSL and HTTP to HTTPS redirect on the IIS servers. It deploys two IIS servers into a new VNet. The certificates for the front end and back end connections can be different, to demonstrate the use of a public CA externally and an internal CA internally. HTTP to HTTPS redirection is currently not available on the Application Gateway, so in this template is achieved by using the URL Rewrite module in IIS. This will redirect all HTTP traffic back out to the HTTPS endpoint on the Application Gateway.
 
 The following resources are deployed as part of the solution:
 
