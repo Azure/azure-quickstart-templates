@@ -12,7 +12,7 @@ This template deploys an Application Gateway with WAF, end to end SSL and HTTP t
 The following resources are deployed as part of the solution:
 
 + **Virtual Network**: A virtual network with two subnets, AppGatewaySubnet and WebSubnet.
-+ **Application Gateway**: Application Gateway with WAF size Medium by default and an instance count of 2 by default. The Application Gateway will have a public IP and will route connections to the two backend IIS servers over both 80 and 443 with session persistence disabled.
++ **Application Gateway**: Application Gateway with WAF, size Medium by default and an instance count of 2 by default. The Application Gateway will have a public IP and will route connections to the internal addresses of two backend IIS servers on 80 and 443 with session persistence disabled.
 + **Two Windows Servers**: Two Windows 2016 (by default) servers running IIS. These servers will have a public IP and will be using managed disks. Default size is Standard_D2_v2.
 
 ## Prerequisites
@@ -66,10 +66,6 @@ Click the "deploy to Azure" button at the beginning of this document.
 #### Connect
 
 The template will output the URL that you can use to connect to the appliction. When connected you should see the default page showing which server you are connected to. Refreshing the page will send you to the other server. 
-
-## Notes
-
-
 
 Tags: `Application Gateway, IIS, SSL, Windows, DSC Extension`
 
