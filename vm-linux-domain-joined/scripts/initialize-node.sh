@@ -63,6 +63,14 @@ replace_ad_params /etc/sssd/sssd.conf
 cp -f ntp.conf /etc/ntp.conf
 replace_ad_params /etc/ntp.conf
 
+cat > /etc/dhcp/dhclient-enter-hooks << EOF
+#!/bin/sh
+make_resolv_conf() {
+echo "do not change resolv.conf"
+}
+EOF
+chmod a+x /etc/dhcp/dhclient-enter-hooks
+
 chmod 600 /etc/sssd/sssd.conf
 service ntpd start
 chkconfig ntpd on
