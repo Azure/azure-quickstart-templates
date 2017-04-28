@@ -69,15 +69,23 @@ chkconfig ntpd on
 service smb start
 chkconfig smb on
 
-# Join domain, which will also add forward/reverse DNS
+# Join domain, must join domain first, otherwise sssd won't start
 shortHostName=`hostname`
 hostname ${shortHostName}.${ADDNS}
-authconfig --enablesssd --enablemkhomedir --enablesssdauth --update
-service sssd restart
-chkconfig sssd on
 if [ ! -z "$ADOUPATH" ]; then
   net ads join createcomputer="$ADOUPATH" -U${DOMAINADMINUSER}@${ADDNS}%${DOMAINADMINPWD}  
 else
   net ads join -U${DOMAINADMINUSER}@${ADDNS}%${DOMAINADMINPWD}  
 fi
+authconfig --enablesssd --enablemkhomedir --enablesssdauth --update
+service sssd restart
+chkconfig sssd on
+
+# Registering forward/reverse DNS now that sssd has keytab
+if [ ! -z "$ADOUPATH" ]; then
+  net ads join createcomputer="$ADOUPATH" -U${DOMAINADMINUSER}@${ADDNS}%${DOMAINADMINPWD}  
+else
+  net ads join -U${DOMAINADMINUSER}@${ADDNS}%${DOMAINADMINPWD}  
+fi
+
 hostname ${shortHostName}
