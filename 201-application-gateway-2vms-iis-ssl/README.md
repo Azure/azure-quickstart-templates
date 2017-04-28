@@ -25,11 +25,10 @@ You will need certificates for this to successfully deploy. You can use valid ce
 
 If you have existing certs, you can jump down to the "Encode the certs" section below to base-64 encode them.
 
-### Using Self-Signed Certs
+### Create self-signed certs
 
 Follow the steps below to create self-signed certificates to use for this template. Note that you will get warnings in your browser when using these certificates as they are unable to be validated, but this will demonstrate the capabilities of using end-to-end SSL on Application Gateway.
 
-#### Create the certs
 Run the following PowerShell commands to create the self-signed certificates. Replace with the appropriate paths, DNS names and passwords as necessary.
 
 **Front end certificate**
@@ -51,8 +50,14 @@ Export-PfxCertificate -Cert $cert -FilePath "C:\backend.pfx" -Password $(Convert
 Export-Certificate -Cert $cert -FilePath "C:\backend-public.cer"
 ```
 
-#### Encode the certs
+### Encode the certs
+In order to use the certificates in the template, they need to be base-64 encoded. The following commands will dump the encoded certs to text files, which you can copy the content to use in the template.
 
+```
+[System.Convert]::ToBase64String([System.IO.File]::ReadAllBytes("C:\frontend.pfx")) > "C:\frontend.txt"
+[System.Convert]::ToBase64String([System.IO.File]::ReadAllBytes("C:\backend.pfx")) > "C:\backend.txt"
+[System.Convert]::ToBase64String([System.IO.File]::ReadAllBytes("C:\backend-public.pfx")) > "C:\backend-public.txt"
+```
 
 ## Deployment steps
 
