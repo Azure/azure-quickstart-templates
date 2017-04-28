@@ -17,7 +17,7 @@ The following resources are deployed as part of the solution:
 
 ## Prerequisites
 
-You will need certificates for this to successfully deploy. You can use valid certificates, or self-signed certificates (for demo and testing purposes). You will need the following certs:
+You will need certificates for this to successfully deploy. These can be valid certificates, or self-signed certificates (for demo and testing purposes). Specifically, you will need the following certs:
 
 + **Front End Certificate**: This is the certificate that will terminate SSL on the Application Gateway for traffic coming from the internet. This will need to be in .pfx format, and will need to be encoded in base-64 in order to include in the template deployment.
 + **Back End Certificate**: This is the certificate that will be installed on the IIS servers to encrypt traffic between the Application Gateway and the IIS servers. This could be the same as the front end certificate or could be a different certificate. This will need to be in .pfx format, and will need to be encoded in base-64 in order to include in the template deployment.
@@ -63,7 +63,7 @@ In order to use the certificates in the template, they need to be base-64 encode
 
 Click the "deploy to Azure" button at the beginning of this document.
 
-#### Connect
+## Outputs
 
 The template will output the URL that you can use to connect to the appliction. When connected you should see the default page showing which server you are connected to. Refreshing the page will send you to the other server. 
 
