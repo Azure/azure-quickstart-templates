@@ -63,9 +63,9 @@ In order to use the certificates in the template, they need to be base-64 encode
 
 Click the "deploy to Azure" button at the beginning of this document.
 
-## Outputs
+## Connecting
 
-The template will output the URL that you can use to connect to the appliction. When connected you should see the default page showing which server you are connected to. Refreshing the page will send you to the other server. 
+The web page can be accessed by getting the IP or FQDN of the Application Gateway and viewing it in your browser of choice. Connection attemps via HTTP will be redirected to HTTPS. When connected you should see the default page showing which server you are connected to. Refreshing the page will send you to the other server.
 
 Tags: `Application Gateway, IIS, SSL, Windows, DSC Extension`
 
