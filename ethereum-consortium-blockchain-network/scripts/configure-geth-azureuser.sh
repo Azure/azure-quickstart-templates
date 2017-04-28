@@ -55,7 +55,7 @@ sleep 5;
 ##################
 # Install packages
 ##################
-sudo apt-get -y install npm=3.5.2-0ubuntu4 git=1:2.7.4-0ubuntu1 software-properties-common=0.96.20.5 || exit 1;
+sudo apt-get -y install npm=3.5.2-0ubuntu4 git=1:2.7.4-0ubuntu1 software-properties-common=0.96.20.6 || exit 1;
 sudo update-alternatives --install /usr/bin/node nodejs /usr/bin/nodejs 100 || exit 1;
 
 ##############
