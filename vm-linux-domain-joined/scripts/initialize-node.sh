@@ -85,6 +85,7 @@ if [ ! -z "$ADOUPATH" ]; then
 else
   net ads join -U${DOMAINADMINUSER}@${ADDNS}%${DOMAINADMINPWD}  
 fi
+klist -k
 authconfig --enablesssd --enablemkhomedir --enablesssdauth --update
 service sssd restart
 chkconfig sssd on
