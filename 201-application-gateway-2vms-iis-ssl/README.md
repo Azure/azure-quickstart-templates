@@ -23,10 +23,36 @@ You will need certificates for this to successfully deploy. You can use valid ce
 + **Back End Certificate**: This is the certificate that will be installed on the IIS servers to encrypt traffic between the Application Gateway and the IIS servers. This could be the same as the front end certificate or could be a different certificate. This will need to be in .pfx format, and will need to be encoded in base-64 in order to include in the template deployment.
 + **Back End Public Key**: This is the public key from the back end certificate that will be used by the Application Gateway to whitelist the back end servers. This will need to be in .cer format, and will need to be encoded in base-64 in order to include in the template deployment.
 
-### Using Self-Signed Certs
-**Create the certs**
+If you have existing certs, you can jump down to the "Encode the certs" section below to base-64 encode them.
 
-**Encode the certs**
+### Using Self-Signed Certs
+
+Follow the steps below to create self-signed certificates to use for this template. Note that you will get warnings in your browser when using these certificates as they are unable to be validated, but this will demonstrate the capabilities of using end-to-end SSL on Application Gateway.
+
+#### Create the certs
+Run the following PowerShell commands to create the self-signed certificates. Replace with the appropriate paths, DNS names and passwords as necessary.
+
+**Front end certificate**
+
+```
+Get-ChildItem -Path $(New-SelfSignedCertificate -dnsname frontend.frontend).pspath | Export-PfxCertificate -FilePath "C:\frontend.pfx" -Password $(ConvertTo-SecureString -String "Password1234" -Force -AsPlainText)
+```
+
+**Back end certificate**
+
+```
+$cert = Get-ChildItem -Path $(New-SelfSignedCertificate -dnsname backend.backend).pspath
+Export-PfxCertificate -Cert $cert -FilePath "C:\backend.pfx" -Password $(ConvertTo-SecureString -String "Password1234" -Force -AsPlainText)
+```
+
+**Back end public key**
+
+```
+Export-Certificate -Cert $cert -FilePath "C:\backend-public.cer"
+```
+
+#### Encode the certs
+
 
 ## Deployment steps
 
