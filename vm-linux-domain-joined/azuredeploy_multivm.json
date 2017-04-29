@@ -1,0 +1,254 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmName": {
+      "type": "string",
+      "metadata": {
+        "description": "Virtual machine host name."
+      }
+    },
+    "adminUserName": {
+      "type": "string",
+      "metadata": {
+        "description": "User name for the Virtual Machine."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the Virtual Machine."
+      }
+    },
+    "existingVNetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Existing virtual network that's connected to Azure ADDS"
+      }
+    },
+    "existingVNetResourceGroup": {
+      "type": "string",
+      "metadata": {
+        "description": "The resource group of the existing virtual network that's connected to Azure ADDS"
+      }
+    },
+    "existingSubnetName": {
+      "type": "string",
+      "defaultValue": "default",
+      "metadata": {
+        "description": "Subnet name in existing virtual network that's connected to Azure ADDS"
+      }
+    },
+    "domainJoinUserName": {
+      "type": "string",
+      "metadata": {
+        "description": "Domain NetBiosName plus User name of a domain user with sufficient rights to perfom domain join operation. E.g. domain\\username"
+      }
+    },
+    "domainJoinPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Domain user password"
+      }
+    },
+    "domainFQDN": {
+      "type": "string",
+      "metadata": {
+        "description": "Domain FQDN where the virtual machine will be joined"
+      }
+    },
+    "ouPath": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Specifies an organizational unit (OU) this VM should be created in. Must be pre-created and in net ads format, xample: testOU/testDepartment"
+      }
+    },
+    "PDC": {
+      "type": "string",
+      "metadata": {
+        "description": "PDC host name"
+      }
+    },
+    "BDC": {
+      "type": "string",
+      "metadata": {
+        "description": "BDC host name"
+      }
+    },
+    "PDCIP": {
+      "type": "string",
+      "metadata": {
+        "description": "PDC private static IP"
+      }
+    },
+    "BDCIP": {
+      "type": "string",
+      "metadata": {
+        "description": "BDC private static IP"
+      }
+    },
+    "scriptsUri": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/liupeirong/azure-quickstart-templates/master/vm-linux-domain-joined",
+      "metadata": {
+        "description": "scripts location"
+      }
+    },
+    "vmCount": {
+      "type": "int",
+      "defaultValue": 4,
+      "metadata": {
+        "description": "Number of VMs to deploy"
+      }
+    }
+  },
+  "variables": {
+    "imagePublisher": "OpenLogic",
+    "imageOffer": "CentOS",
+    "imageVersion": "6.8",
+    "nicName": "myVMNic",
+    "publicIPAddressName": "myPublicIP",
+    "publicIPAddressType": "Dynamic",
+    "vmSize": "Standard_DS2_V2",
+    "vnetID": "[resourceId(parameters('existingVNetResourceGroup'), 'Microsoft.Network/virtualNetworks', parameters('existingVNetName'))]",
+    "subnetRef": "[concat(variables('vnetID'),'/subnets/',parameters('existingSubnetName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2016-09-01",
+      "name": "[concat(variables('publicIPAddressName'), copyIndex())]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "publicIpLoop",
+        "count": "[parameters('vmCount')]"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]"
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2016-09-01",
+      "name": "[concat(variables('nicName'), copyIndex())]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "nicLoop",
+        "count": "[parameters('vmCount')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses/', concat(variables('publicIPAddressName'), copyIndex()))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat(variables('publicIPAddressName'), copyIndex()))]"
+              },
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2016-04-30-preview",
+      "name": "[concat(parameters('vmName'), copyIndex())]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "vmLoop",
+        "count": "[parameters('vmCount')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces/', concat(variables('nicName'), copyIndex()))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[concat(parameters('vmName'), copyIndex())]",
+          "adminUsername": "[parameters('adminUserName')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[variables('imageVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "createOption": "FromImage"
+          },
+          "dataDisks": [
+            {
+              "diskSizeGB": "128",
+              "lun": 0,
+              "createOption": "Empty"
+            },
+            {
+              "diskSizeGB": "128",
+              "lun": 1,
+              "createOption": "Empty"
+            },
+            {
+              "diskSizeGB": "128",
+              "lun": 2,
+              "createOption": "Empty"
+            },
+            {
+              "diskSizeGB": "128",
+              "lun": 3,
+              "createOption": "Empty"
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('nicName'), copyIndex()))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2016-04-30-preview",
+      "name": "[concat(parameters('vmName'), copyIndex(), '/joindomain')]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "extensionLoop",
+        "count": "[parameters('vmCount')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'), copyIndex())]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[concat(parameters('scriptsUri'), '/config/krb5.conf')]",
+            "[concat(parameters('scriptsUri'), '/config/smb.conf')]",
+            "[concat(parameters('scriptsUri'), '/config/sssd.conf')]",
+            "[concat(parameters('scriptsUri'), '/config/ntp.conf')]",
+            "[concat(parameters('scriptsUri'), '/config/resolv.conf')]",
+            "[concat(parameters('scriptsUri'), '/scripts/initialize-node.sh')]"
+          ],
+          "commandToExecute": "[concat('sh initialize-node.sh \"', parameters('domainFQDN'), '\" \"', parameters('PDC'), '\" \"', parameters('BDC'), '\" \"', parameters('PDCIP'), '\" \"', parameters('BDCIP'), '\" \"', parameters('adminUserName'), '\" \"', parameters('domainJoinUserName'), '\" \"', parameters('domainJoinPassword'), '\" \"', parameters('ouPath'), '\" &>> /tmp/initialize-node.log')]"
+        }
+      }
+    }
+  ]
+}
