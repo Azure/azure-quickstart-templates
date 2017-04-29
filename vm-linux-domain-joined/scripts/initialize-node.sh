@@ -80,21 +80,23 @@ chkconfig smb on
 # Join domain, must join domain first, otherwise sssd won't start
 shortHostName=`hostname`
 hostname ${shortHostName}.${ADDNS}
-if [ ! -z "$ADOUPATH" ]; then
-  net ads join createcomputer="$ADOUPATH" -U${DOMAINADMINUSER}@${ADDNS}%${DOMAINADMINPWD}  
-else
-  net ads join -U${DOMAINADMINUSER}@${ADDNS}%${DOMAINADMINPWD}  
+n=0
+until [ $n -ge 3 ]
+do
+  if [ ! -z "$ADOUPATH" ]; then
+    net ads join createcomputer="$ADOUPATH" -U${DOMAINADMINUSER}@${ADDNS}%${DOMAINADMINPWD}  
+  else
+    net ads join -U${DOMAINADMINUSER}@${ADDNS}%${DOMAINADMINPWD}  
+  fi
+  result=$?
+  [ $result -eq 0 ] && break
+  n=$[$n+1]
+  sleep 15
+done
+if [ $result -eq 0 ]; then
+  klist -k
+  authconfig --enablesssd --enablemkhomedir --enablesssdauth --update
+  service sssd restart
+  chkconfig sssd on
 fi
-klist -k
-authconfig --enablesssd --enablemkhomedir --enablesssdauth --update
-service sssd restart
-chkconfig sssd on
-
-# Registering forward/reverse DNS now that sssd has keytab
-if [ ! -z "$ADOUPATH" ]; then
-  net ads join createcomputer="$ADOUPATH" -U${DOMAINADMINUSER}@${ADDNS}%${DOMAINADMINPWD}  
-else
-  net ads join -U${DOMAINADMINUSER}@${ADDNS}%${DOMAINADMINPWD}  
-fi
-
 hostname ${shortHostName}
