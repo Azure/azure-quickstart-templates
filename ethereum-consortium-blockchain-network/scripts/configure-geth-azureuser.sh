@@ -88,6 +88,24 @@ tar xzf geth-alltools-linux-amd64-1.6.0-facc47cb.tar.gz || unsuccessful_exit "ge
 # /usr/bin is in $PATH by default, we'll put our binaries there
 sudo cp geth-alltools-linux-amd64-1.6.0-facc47cb/* /usr/bin/ || nsuccessful_exit "copy of geth to /usr/bin failed";
 
+##############
+# Install geth
+##############
+wget https://gethstore.blob.core.windows.net/builds/geth-alltools-linux-amd64-1.5.9-a07539fb.tar.gz || exit 1;
+wget https://gethstore.blob.core.windows.net/builds/geth-alltools-linux-amd64-1.5.9-a07539fb.tar.gz.asc || exit 1;
+
+# Import geth buildserver keys
+gpg --recv-keys --keyserver hkp://keys.gnupg.net F9585DE6 C2FF8BBF 9BA28146 7B9E2481 D2A67EAC || exit 1;
+
+# Validate signature
+gpg --verify geth-alltools-linux-amd64-1.5.9-a07539fb.tar.gz.asc || exit 1;
+
+# Unpack archive
+tar xzf geth-alltools-linux-amd64-1.5.9-a07539fb.tar.gz || exit 1;
+
+# /usr/bin is in $PATH by default, we'll put our binaries there
+sudo cp geth-alltools-linux-amd64-1.5.9-a07539fb/* /usr/bin/ || exit 1;
+
 #############
 # Build node keys and node IDs
 #############

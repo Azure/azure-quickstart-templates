@@ -2,16 +2,17 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "vmName": {
+        "vmList": {
             "type": "string",
+            "minLength": 1,
             "metadata": {
-                "description": "Virtual machine to be domain joined"
+                "description": "List of virtual machines to be domain joined, if using multiple VMs, make their names comma separate. E.g. VM01, VM02, VM03."
             }
         },
-        "location":{
+        "location": {
             "type": "string",
-            "metadata":{
-                "description":"Location name of the virtual machine"
+            "metadata": {
+                "description": "Location name of the virtual machine"
             }
         },
         "domainJoinUserName": {
@@ -36,20 +37,25 @@
             "type": "string",
             "defaultValue": "",
             "metadata": {
-                "description": "Specifies an organizational unit (OU) for the domain account. Enter the full distinguished name of the OU in quotation marks. Example: OU=testOU,DC=domain,DC=Domain,DC=com"
+                "description": "Specifies an organizational unit (OU) for the domain account. Enter the full distinguished name of the OU in quotation marks. Example: OU=testOU; DC=domain; DC=Domain; DC=com"
             }
         }
     },
     "variables": {
-        "domainJoinOptions": 3
+        "domainJoinOptions": 3,
+        "vmListArray" : "[split(parameters('vmList'),',')]"
     },
     "resources": [
-        {
+            {
             "comments": "Join domain - JsonADDomainExtension",
             "apiVersion": "2015-06-15",
             "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "[concat(parameters('vmName'),'/joindomain')]",
+            "name": "[concat(variables('vmListArray')[copyIndex()],'/joindomain')]",
             "location": "[parameters('location')]",
+            "copy": {
+                "name": "vmDomainJoinCopy",
+                "count": "[length(variables('vmListArray'))]"
+            },
             "properties": {
                 "publisher": "Microsoft.Compute",
                 "type": "JsonADDomainExtension",
@@ -62,7 +68,7 @@
                     "Options": "[variables('domainJoinOptions')]",
                     "OUPath": "[parameters('ouPath')]"
                 },
-                "protectedsettings": {
+                "protectedSettings": {
                     "Password": "[parameters('domainJoinUserPassword')]"
                 }
             }
