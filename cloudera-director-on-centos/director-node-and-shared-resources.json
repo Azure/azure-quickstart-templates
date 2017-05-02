@@ -1,0 +1,261 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.1",
+  "parameters": {
+    "vnetID": {
+      "type":"string"
+    },
+    "version":{
+      "type":"object"
+    },
+    "dnsNamePrefix": {
+      "type": "string"
+    },
+    "dnsNameSuffix": {
+      "type": "string"
+    },
+    "scriptsUri": {
+      "type": "string"
+    },
+    "storageAccount": {
+      "type": "object"
+    },
+    "vmSpec": {
+      "type": "secureObject"
+    },
+    "networkSpec": {
+      "type": "object"
+    },
+    "userInfo": {
+      "type": "object"
+    },
+    "clusterParameters": {
+      "type": "object"
+    }
+  },
+  "variables": {
+    "singleQuote": "'",
+    "vmName": "[parameters('dnsNamePrefix')]",
+    "nicName": "[concat(variables('vmName'), '-nic')]",
+    "publicIPAddressName": "[concat(variables('vmName'), '-publicIP')]",
+    "storageAccountName": "[concat(parameters('storageAccount').prefix, 'dir')]",
+    "dirSecurityGroupName": "[concat(parameters('dnsNamePrefix'), '-dir-sg')]",
+    "masterAsName":"asmaster",
+    "workerAsName":"asworker",
+    "edgeAsName":"asedge"
+  },
+  "resources": [
+    {
+      "apiVersion": "[parameters('version').resourceAPIVersion]",
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[variables('masterAsName')]",
+      "location": "[resourceGroup().location]",
+      "properties": { }
+    },
+    {
+      "apiVersion": "[parameters('version').resourceAPIVersion]",
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[variables('workerAsName')]",
+      "location": "[resourceGroup().location]",
+      "properties": { }
+    },
+    {
+      "apiVersion": "[parameters('version').resourceAPIVersion]",
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[variables('edgeAsName')]",
+      "location": "[resourceGroup().location]",
+      "properties": { }
+    },
+    {
+      "apiVersion": "[parameters('version').resourceAPIVersion]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[concat(parameters('networkSpec').virtualNetworkName,'-nsg')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "SSH",
+            "properties": {
+              "description": "Allows SSH traffic",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "[parameters('version').resourceAPIVersion]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('dirSecurityGroupName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "SSH",
+            "properties": {
+              "description": "Allows SSH traffic",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('storageAccountName')]",
+      "apiVersion": "[parameters('version').resourceAPIVersion]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "accountType": "[parameters('storageAccount').type]"
+      }
+    },
+    {
+      "apiVersion": "[parameters('version').resourceAPIVersion]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIPAddressName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[variables('vmName')]"
+        }
+      }
+    },
+    {
+      "apiVersion": "[parameters('version').resourceAPIVersion]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('nicName'))]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('dirSecurityGroupName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[parameters('networkSpec').directorServerIPAddress]",
+              "subnet": {
+                "id": "[concat(parameters('vnetID'), '/subnets/', parameters('networkSpec').virtualNetworkSubnetName)]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat(variables('publicIPAddressName')))]"
+              }
+            }
+          }
+        ],
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('dirSecurityGroupName'))]"
+        }
+      }
+    },
+    {
+      "apiVersion": "[parameters('version').resourceAPIVersion]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(variables('vmName'))]",
+      "plan": {
+        "name": "cloudera-centos-6",
+        "publisher": "cloudera",
+        "product": "cloudera-centos-6"
+      },
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSpec').vmSize]"
+        },
+        "osProfile": {
+          "computerName": "[variables('vmName')]",
+          "adminUsername": "[parameters('vmSpec').adminUsername]",
+          "adminPassword": "[parameters('vmSpec').adminPassword]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": "false"
+          }
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "cloudera",
+            "offer": "cloudera-centos-6",
+            "sku": "CLOUDERA-CENTOS-6",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat('http://', variables('storageAccountName'), '.blob.core.windows.net/vhds/', variables('vmName'), '.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          },
+          "dataDisks": [
+            {
+              "name": "datadisk0",
+              "diskSizeGB": "128",
+              "lun": 0,
+              "vhd": {
+                "Uri": "[concat('http://', variables('storageAccountName'), '.blob.core.windows.net/vhds0/', variables('vmName'), '-datadisk0.vhd')]"
+              },
+              "caching": "ReadWrite",
+              "createOption": "Empty"
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('nicName')))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('vmName'), '/bootstrapServer')]",
+      "apiVersion": "[parameters('version').resourceAPIVersion]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "[parameters('version').typeHandlerVersion]",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[concat(parameters('scriptsUri'), '/scripts/initialize-director-server.sh')]",
+            "[concat(parameters('scriptsUri'), '/scripts/initialize-dns-server.sh')]",
+            "[concat(parameters('scriptsUri'), '/scripts/requirements.txt')]",
+            "[concat(parameters('scriptsUri'), '/scripts/prepare-mysql-disks.sh')]",
+            "[concat(parameters('scriptsUri'), '/scripts/initialize-mysql-server.sh')]",
+            "[concat(parameters('scriptsUri'), '/scripts/marketing.py')]",
+            "[concat(parameters('scriptsUri'), '/scripts/director_user_passwd.py')]"
+          ]
+        },
+        "protectedSettings":{
+          "commandToExecute": "[concat('sh initialize-director-server.sh ', variables('singleQuote'), parameters('vmSpec').adminUsername, variables('singleQuote'), ' ', variables('singleQuote'), parameters('dnsNameSuffix'), variables('singleQuote'), ' ', variables('singleQuote'), parameters('networkSpec').directorServerIPAddress, variables('singleQuote'), ' ', variables('singleQuote'), parameters('vmSpec').dbUsername, variables('singleQuote'), ' ', variables('singleQuote'), parameters('vmSpec').dbPassword, variables('singleQuote'), ' ', variables('singleQuote'), parameters('userInfo').company, variables('singleQuote'), ' ', variables('singleQuote'), parameters('userInfo').emailAddress, variables('singleQuote'), ' ', variables('singleQuote'), parameters('userInfo').businessPhone, variables('singleQuote'), ' ', variables('singleQuote'), parameters('userInfo').firstName, variables('singleQuote'), ' ', variables('singleQuote'), parameters('userInfo').lastName, variables('singleQuote'), ' ', variables('singleQuote'), parameters('userInfo').jobRole, variables('singleQuote'), ' ', variables('singleQuote'), parameters('userInfo').jobFunction, variables('singleQuote'), ' ', variables('singleQuote'), parameters('clusterParameters').dirUsername, variables('singleQuote'), ' ', variables('singleQuote'), parameters('clusterParameters').dirPassword, variables('singleQuote'))]"
+        }
+      }
+    }
+  ]
+}
