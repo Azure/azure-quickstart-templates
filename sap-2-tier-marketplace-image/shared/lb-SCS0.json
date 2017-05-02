@@ -2,7 +2,7 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-         "loadBalancerName": {
+        "loadBalancerName": {
             "type": "string",
             "metadata": {
                 "description": "The name of the the load balancer"
@@ -76,28 +76,123 @@
             }
         }
     },
-    "variables": {        
+    "variables": {
+        "lbPrefix": "lb",
+        "lbrulePrefix": "[concat(variables('lbPrefix'), 'Rule')]",
+        "loadBalancerFrontendNFS": "[concat(variables('lbPrefix'), 'FrontendNFS')]",
+        "lbProbePortNFS": "[concat(variables('lbPrefix'), 'ProbePortNFS')]",
+        "backendPoolNFS": "[concat(variables('lbPrefix'), 'BackendPoolNFS')]",
+        "lbProbePortInternalNFS": 61000,
+        "idleTimeoutInMinutesNFS": 30,
+        "nicBackAddressPools": {
+            "Linux": [
+                {
+                    "id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancerName')), '/backendAddressPools/', variables('backendPoolNFS'))]"
+                }
+            ],
+            "Windows": []
+        },
+        "frontendIPConfigurations": {
+            "Linux": [
+                {
+                    "properties": {
+                        "subnet": {
+                            "id": "[parameters('subnetId')]"
+                        },
+                        "privateIPAllocationMethod": "Dynamic"
+                    },
+                    "name": "[variables('loadBalancerFrontendNFS')]"
+                }
+            ],
+            "Windows": []
+        },
+        "backendAddressPools": {
+            "Linux": [{
+                "name": "[variables('backendPoolNFS')]"
+            }],
+            "Windows": []
+        },
+        "loadBalancingRules": {
+            "Linux": [
+                {
+                    "properties": {
+                        "frontendIPConfiguration": {
+                            "id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancerName')), '/frontendIpConfigurations/', variables('loadBalancerFrontendNFS'))]"
+                        },
+                        "backendAddressPool": {
+                            "id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancerName')), '/backendAddressPools/', variables('backendPoolNFS'))]"
+                        },
+                        "probe": {
+                            "id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancerName')), '/probes/', variables('lbProbePortNFS'))]"
+                        },
+                        "protocol": "Tcp",
+                        "frontendPort": 2049,
+                        "backendPort": 2049,
+                        "enableFloatingIP": true,
+                        "idleTimeoutInMinutes": "[variables('idleTimeoutInMinutesNFS')]"
+                    },
+                    "name": "[concat(variables('lbrulePrefix'), '2049T')]"
+                },
+                {
+                    "properties": {
+                        "frontendIPConfiguration": {
+                            "id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancerName')), '/frontendIpConfigurations/', variables('loadBalancerFrontendNFS'))]"
+                        },
+                        "backendAddressPool": {
+                            "id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancerName')), '/backendAddressPools/', variables('backendPoolNFS'))]"
+                        },
+                        "probe": {
+                            "id": "[concat(resourceId('Microsoft.Network/loadBalancers', parameters('loadBalancerName')), '/probes/', variables('lbProbePortNFS'))]"
+                        },
+                        "protocol": "Udp",
+                        "frontendPort": 2049,
+                        "backendPort": 2049,
+                        "enableFloatingIP": true,
+                        "idleTimeoutInMinutes": "[variables('idleTimeoutInMinutesNFS')]"
+                    },
+                    "name": "[concat(variables('lbrulePrefix'), '2049U')]"
+                }
+            ],
+            "Windows": []
+        },
+        "probes": {
+            "Linux": [{
+                "properties": {
+                    "protocol": "Tcp",
+                    "port": "[variables('lbProbePortInternalNFS')]",
+                    "intervalInSeconds": 5,
+                    "numberOfProbes": 2
+                },
+                "name": "[variables('lbProbePortNFS')]"
+            }],
+            "Windows": []
+        },
+        "nicBackAddressPoolsResult": "[variables('nicBackAddressPools')[parameters('osType')]]",
+        "frontendIPConfigurationsResult": "[variables('frontendIPConfigurations')[parameters('osType')]]",
+        "backendAddressPoolsResult": "[variables('backendAddressPools')[parameters('osType')]]",
+        "loadBalancingRulesResult": "[variables('loadBalancingRules')[parameters('osType')]]",
+        "probesResult": "[variables('probes')[parameters('osType')]]"
     },
     "resources": [],
     "outputs": {
         "nicBackAddressPools": {
-            "value": [],
+            "value": "[variables('nicBackAddressPoolsResult')]",
             "type": "array"
         },
         "frontendIPConfigurations": {
-            "value": [],
+            "value": "[variables('frontendIPConfigurationsResult')]",
             "type": "array"
         },
         "backendAddressPools": {
-            "value": [],
+            "value": "[variables('backendAddressPoolsResult')]",
             "type": "array"
         },
         "loadBalancingRules": {
-            "value": [],
+            "value": "[variables('loadBalancingRulesResult')]",
             "type": "array"
         },
         "probes": {
-            "value": [],
+            "value": "[variables('probesResult')]",
             "type": "array"
         }
     }
