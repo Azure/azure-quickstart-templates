@@ -6,14 +6,7 @@
       "type": "string",
       "minLength": 3,
       "metadata": {
-        "description": "Value used as a prefix to generate name of various objects like the virtual network or the storage account."
-      }
-    },
-    "vaultName": {
-      "type": "string",
-      "minLength": 3,
-      "metadata": {
-        "description": "Name of the Azure key vault service that will store passwords"
+        "description": "Value used as a prefix to generate name of various objects like the virtual network or the storage account. It must contain only numbers and lowercase letters"
       }
     },
     "tenantId": {
@@ -22,17 +15,18 @@
         "description": "GUID of the tenant, used to create Azure key vault. Get it using Get-AzureRmTenant cmdlet"
       }
     },
-    "objectId": {
+    "userObjectId": {
       "type": "string",
       "metadata": {
         "description": "Property ObjectId of the AAD user that will have access to secrets in Azure key vault. Get it using Get-AzureRmADUser or Get-AzureRmADServicePrincipal cmdlets"
       }
     },
     "storageAccountType": {
-      "type": "array",
-      "defaultValue": [ "Standard_LRS" ],
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [ "Standard_LRS", "Standard_GRS", "Premium_LRS" ],
       "metadata": {
-        "description": "Array that stores type of the storage accounts to create. Allowed values are \"Standard_LRS\", \"Standard_GRS\" and \"Premium_LRS\""
+        "description": "Type of the storage accounts to create. Allowed values are \"Standard_LRS\", \"Standard_GRS\" and \"Premium_LRS\""
       }
     },
     "domainFQDN": {
@@ -58,13 +52,6 @@
         "description": "Password of admin account"
       }
     },
-    "adminPasswordKeyName": {
-      "type": "string",
-      "defaultValue": "adminPassword",
-      "metadata": {
-        "description": "The name of the secret that will store value of adminPassword in Azure key vault"
-      }
-    },
     "adfsSvcUserName": {
       "type": "string",
       "defaultValue": "adfssvc",
@@ -78,13 +65,6 @@
       "minLength": 1,
       "metadata": {
         "description": "Password of ADFS service account"
-      }
-    },
-    "adfsSvcPasswordKeyName": {
-      "type": "string",
-      "defaultValue": "adfsSvcPassword",
-      "metadata": {
-        "description": "The name of the secret that will store value of adfsSvcPassword in Azure key vault"
       }
     },
     "sqlSvcUserName": {
@@ -102,13 +82,6 @@
         "description": "Password of SQL service account"
       }
     },
-    "sqlSvcPasswordKeyName": {
-      "type": "string",
-      "defaultValue": "sqlSvcPassword",
-      "metadata": {
-        "description": "The name of the secret that will store value of sqlSvcPassword in Azure key vault"
-      }
-    },
     "spSetupUserName": {
       "type": "string",
       "defaultValue": "spsetup",
@@ -122,13 +95,6 @@
       "minLength": 1,
       "metadata": {
         "description": "Password of SharePoint setup account"
-      }
-    },
-    "spSetupPasswordKeyName": {
-      "type": "string",
-      "defaultValue": "spSetupPassword",
-      "metadata": {
-        "description": "The name of the secret that will store value of spSetupPassword in Azure key vault"
       }
     },
     "spFarmUserName": {
@@ -146,13 +112,6 @@
         "description": "Password of SharePoint farm account"
       }
     },
-    "spFarmPasswordKeyName": {
-      "type": "string",
-      "defaultValue": "spFarmPassword",
-      "metadata": {
-        "description": "The name of the secret that will store value of spFarmPassword in Azure key vault"
-      }
-    },
     "spSvcUserName": {
       "type": "string",
       "defaultValue": "spsvc",
@@ -166,13 +125,6 @@
       "minLength": 1,
       "metadata": {
         "description": "Password of SharePoint service application account"
-      }
-    },
-    "spSvcPasswordKeyName": {
-      "type": "string",
-      "defaultValue": "spSvcPassword",
-      "metadata": {
-        "description": "The name of the secret that will store value of spSvcPassword in Azure key vault"
       }
     },
     "spAppPoolUserName": {
@@ -190,20 +142,6 @@
         "description": "Password of SharePoint application pool account"
       }
     },
-    "spAppPoolPasswordKeyName": {
-      "type": "string",
-      "defaultValue": "spAppPoolPassword",
-      "metadata": {
-        "description": "The name of the secret that will store value of spAppPoolPassword in Azure key vault"
-      }
-    },
-    "spPassphraseKeyName": {
-      "type": "string",
-      "defaultValue": "spPassphrase",
-      "metadata": {
-        "description": "The name of the secret that will store value of spPassphrase in Azure key vault"
-      }
-    },
     "spPassphrase": {
       "type": "securestring",
       "minLength": 1,
@@ -217,6 +155,13 @@
       "minLength": 2,
       "metadata": {
         "description": "Name of DC VM"
+      }
+    },
+    "vmDCSize": {
+      "type": "string",
+      "defaultValue": "Standard_F4",
+      "metadata": {
+        "description": "Size of the DC VM"
       }
     },
     "vmDCPublicIPDnsName": {
@@ -234,6 +179,13 @@
         "description": "Name of SQL VM"
       }
     },
+    "vmSQLSize": {
+      "type": "string",
+      "defaultValue": "Standard_A4_v2",
+      "metadata": {
+        "description": "Size of the SQL VM"
+      }
+    },
     "vmSQLPublicIPDnsName": {
       "type": "string",
       "minLength": 2,
@@ -247,6 +199,13 @@
       "minLength": 2,
       "metadata": {
         "description": "Name of SP VM"
+      }
+    },
+    "vmSPSize": {
+      "type": "string",
+      "defaultValue": "Standard_A8_v2",
+      "metadata": {
+        "description": "Size of the SQL VM"
       }
     },
     "vmSPPublicIPDnsName": {
@@ -300,7 +259,7 @@
     }
   },
   "variables": {
-    "storageAccountNamePrefix": "[concat(parameters('templatePrefix'), 'st')]",
+    "storageAccountName": "[concat(parameters('templatePrefix'), 'st')]",
     "vNetPrivateName": "[concat(parameters('templatePrefix'), '-vnet')]",
     "generalSettings": {
       "vmsStorageAccountContainerName": "vhds",
@@ -313,13 +272,24 @@
       "vNetPrivateSubnet3Name": "Subnet-3",
       "vNetPrivateSubnet3Prefix": "10.0.3.0/24"
     },
+    "keyVaultSettings": {
+      "vaultName": "[concat(parameters('templatePrefix'), '-vault')]",
+      "adminPasswordKeyName": "adminPassword",
+      "adfsSvcPasswordKeyName": "adfsSvcPassword",
+      "sqlSvcPasswordKeyName": "sqlSvcPassword",
+      "spSetupPasswordKeyName": "spSetupPassword",
+      "spFarmPasswordKeyName": "spFarmPassword",
+      "spSvcPasswordKeyName": "spSvcPassword",
+      "spAppPoolPasswordKeyName": "spAppPoolPassword",
+      "spPassphraseKeyName": "spPassphrase"
+    },
     "vmDC": {
       "vmImagePublisher": "MicrosoftWindowsServer",
       "vmImageOffer": "WindowsServer",
       "vmImageSKU": "2016-Datacenter",
       "vmOSDiskName": "vm-DC-OSDisk",
       "vmDataDiskName": "vm-DC-DataDisk",
-      "vmVmSize": "Standard_F4",
+      "vmVmSize": "[parameters('vmDCSize')]",
       "vmSubnetRef": "[concat(variables('generalSettings').vmsVnetID, '/subnets/', variables('generalSettings').vNetPrivateSubnet1Name)]",
       "vmNicName": "[concat(parameters('vmDCName'), '-', 'nic-0')]",
       "vmPublicIPName": "vmDC-PublicIP",
@@ -331,7 +301,7 @@
       "vmImageSKU": "Standard",
       "vmOSDiskName": "vm-SQL-OSDisk",
       "vmDataDiskName": "vm-SQL-DataDisk",
-      "vmVmSize": "Standard_A4_v2",
+      "vmVmSize": "[parameters('vmSQLSize')]",
       "vmSubnetRef": "[concat(variables('generalSettings').vmsVnetID, '/subnets/', variables('generalSettings').vNetPrivateSubnet2Name)]",
       "vmNicName": "[concat(parameters('vmSQLName'), '-', 'nic-0')]",
       "vmPublicIPName": "vmSQL-PublicIP"
@@ -342,7 +312,7 @@
       "vmImageSKU": "2016",
       "vmOSDiskName": "vm-SP-OSDisk",
       "vmDataDiskName": "vm-SP-DataDisk",
-      "vmVmSize": "Standard_A8_v2",
+      "vmVmSize": "[parameters('vmSPSize')]",
       "vmSubnetRef": "[concat(variables('generalSettings').vmsVnetID, '/subnets/', variables('generalSettings').vNetPrivateSubnet3Name)]",
       "vmNicName": "[concat(parameters('vmSPName'), '-', 'nic-0')]",
       "vmPublicIPName": "vmSP-PublicIP"
@@ -365,13 +335,13 @@
   },
   "resources": [
     {
-      "name": "[parameters('vaultName')]",
+      "name": "[variables('keyVaultSettings').vaultName]",
       "type": "Microsoft.KeyVault/vaults",
       "comments": "Generalized from resource: '/subscriptions/3c497a87-7ec4-4e9c-b227-a733be37d602/resourceGroups/yd-sp16adfs/providers/Microsoft.KeyVault/vaults/ydsp16adfsvault'.",
       "apiVersion": "2015-06-01",
       "location": "[resourceGroup().location]",
       "tags": {
-        "displayName": "[parameters('vaultName')]"
+        "displayName": "[variables('keyVaultSettings').vaultName]"
       },
       "properties": {
         "sku": {
@@ -382,7 +352,7 @@
         "accessPolicies": [
           {
             "tenantId": "[parameters('tenantId')]",
-            "objectId": "[parameters('objectId')]",
+            "objectId": "[parameters('userObjectId')]",
             "permissions": {
               "keys": [ "get", "create", "delete", "list", "update", "import", "backup", "restore" ],
               "secrets": [ "all" ]
@@ -395,125 +365,121 @@
       "dependsOn": []
     },
     {
-      "name": "[concat(parameters('vaultName'), '/', parameters('adminPasswordKeyName'))]",
+      "name": "[concat(variables('keyVaultSettings').vaultName, '/', variables('keyVaultSettings').adminPasswordKeyName)]",
       "type": "Microsoft.KeyVault/vaults/secrets",
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-01",
       "dependsOn": [
-        "[resourceId('Microsoft.KeyVault/vaults', parameters('vaultName'))]"
+        "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultSettings').vaultName)]"
       ],
       "tags": {
-        "displayName": "[concat(parameters('vaultName'), '/', parameters('adminPasswordKeyName'))]"
+        "displayName": "[concat(variables('keyVaultSettings').vaultName, '/', variables('keyVaultSettings').adminPasswordKeyName)]"
       },
       "properties": {
         "value": "[parameters('adminPassword')]"
       }
     },
     {
-      "name": "[concat(parameters('vaultName'), '/', parameters('adfsSvcPasswordKeyName'))]",
+      "name": "[concat(variables('keyVaultSettings').vaultName, '/', variables('keyVaultSettings').adfsSvcPasswordKeyName)]",
       "type": "Microsoft.KeyVault/vaults/secrets",
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-01",
       "dependsOn": [
-        "[resourceId('Microsoft.KeyVault/vaults', parameters('vaultName'))]"
+        "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultSettings').vaultName)]"
       ],
       "tags": {
-        "displayName": "[concat(parameters('vaultName'), '/', parameters('adfsSvcPasswordKeyName'))]"
+        "displayName": "[concat(variables('keyVaultSettings').vaultName, '/', variables('keyVaultSettings').adfsSvcPasswordKeyName)]"
       },
       "properties": {
         "value": "[parameters('adfsSvcPassword')]"
       }
     },
     {
-      "name": "[concat(parameters('vaultName'), '/', parameters('sqlSvcPasswordKeyName'))]",
+      "name": "[concat(variables('keyVaultSettings').vaultName, '/', variables('keyVaultSettings').sqlSvcPasswordKeyName)]",
       "type": "Microsoft.KeyVault/vaults/secrets",
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-01",
       "dependsOn": [
-        "[resourceId('Microsoft.KeyVault/vaults', parameters('vaultName'))]"
+        "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultSettings').vaultName)]"
       ],
       "tags": {
-        "displayName": "[concat(parameters('vaultName'), '/', parameters('sqlSvcPasswordKeyName'))]"
+        "displayName": "[concat(variables('keyVaultSettings').vaultName, '/', variables('keyVaultSettings').sqlSvcPasswordKeyName)]"
       },
       "properties": {
         "value": "[parameters('sqlSvcPassword')]"
       }
     },
     {
-      "name": "[concat(parameters('vaultName'), '/', parameters('spSetupPasswordKeyName'))]",
+      "name": "[concat(variables('keyVaultSettings').vaultName, '/', variables('keyVaultSettings').spSetupPasswordKeyName)]",
       "type": "Microsoft.KeyVault/vaults/secrets",
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-01",
       "dependsOn": [
-        "[resourceId('Microsoft.KeyVault/vaults', parameters('vaultName'))]"
+        "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultSettings').vaultName)]"
       ],
       "tags": {
-        "displayName": "[concat(parameters('vaultName'), '/', parameters('spSetupPasswordKeyName'))]"
+        "displayName": "[concat(variables('keyVaultSettings').vaultName, '/', variables('keyVaultSettings').spSetupPasswordKeyName)]"
       },
       "properties": {
         "value": "[parameters('spSetupPassword')]"
       }
     },
     {
-      "name": "[concat(parameters('vaultName'), '/', parameters('spSvcPasswordKeyName'))]",
+      "name": "[concat(variables('keyVaultSettings').vaultName, '/', variables('keyVaultSettings').spSvcPasswordKeyName)]",
       "type": "Microsoft.KeyVault/vaults/secrets",
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-01",
       "dependsOn": [
-        "[resourceId('Microsoft.KeyVault/vaults', parameters('vaultName'))]"
+        "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultSettings').vaultName)]"
       ],
       "tags": {
-        "displayName": "[concat(parameters('vaultName'), '/', parameters('spSvcPasswordKeyName'))]"
+        "displayName": "[concat(variables('keyVaultSettings').vaultName, '/', variables('keyVaultSettings').spSvcPasswordKeyName)]"
       },
       "properties": {
         "value": "[parameters('spSvcPassword')]"
       }
     },
     {
-      "name": "[concat(parameters('vaultName'), '/', parameters('spAppPoolPasswordKeyName'))]",
+      "name": "[concat(variables('keyVaultSettings').vaultName, '/', variables('keyVaultSettings').spAppPoolPasswordKeyName)]",
       "type": "Microsoft.KeyVault/vaults/secrets",
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-01",
       "dependsOn": [
-        "[resourceId('Microsoft.KeyVault/vaults', parameters('vaultName'))]"
+        "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultSettings').vaultName)]"
       ],
       "tags": {
-        "displayName": "[concat(parameters('vaultName'), '/', parameters('spAppPoolPasswordKeyName'))]"
+        "displayName": "[concat(variables('keyVaultSettings').vaultName, '/', variables('keyVaultSettings').spAppPoolPasswordKeyName)]"
       },
       "properties": {
         "value": "[parameters('spAppPoolPassword')]"
       }
     },
     {
-      "name": "[concat(parameters('vaultName'), '/', parameters('spPassphraseKeyName'))]",
+      "name": "[concat(variables('keyVaultSettings').vaultName, '/', variables('keyVaultSettings').spPassphraseKeyName)]",
       "type": "Microsoft.KeyVault/vaults/secrets",
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-01",
       "dependsOn": [
-        "[resourceId('Microsoft.KeyVault/vaults', parameters('vaultName'))]"
+        "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultSettings').vaultName)]"
       ],
       "tags": {
-        "displayName": "[concat(parameters('vaultName'), '/', parameters('spPassphraseKeyName'))]"
+        "displayName": "[concat(variables('keyVaultSettings').vaultName, '/', variables('keyVaultSettings').spPassphraseKeyName)]"
       },
       "properties": {
         "value": "[parameters('spPassphrase')]"
       }
     },
     {
-      "name": "[concat(variables('storageAccountNamePrefix'), copyIndex())]",
+      "name": "[variables('storageAccountName')]",
       "type": "Microsoft.Storage/storageAccounts",
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-15",
-      "copy": {
-        "count": "[length(parameters('storageAccountType'))]",
-        "name": "storageCopy"
-      },
       "dependsOn": [],
       "tags": {
-        "displayName": "[concat(variables('storageAccountNamePrefix'), copyIndex())]"
+        "displayName": "[variables('storageAccountName')]"
       },
       "properties": {
-        "accountType": "[parameters('storageAccountType')[copyIndex()]]"
+        "accountType": "[parameters('storageAccountType')]"
       }
     },
     {
@@ -605,7 +571,7 @@
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-15",
       "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts', concat(variables('storageAccountNamePrefix'),'0'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
         "[resourceId('Microsoft.Network/networkInterfaces', variables('vmDC').vmNicName)]"
       ],
       "tags": {
@@ -630,7 +596,7 @@
           "osDisk": {
             "name": "[variables('vmDC').vmOSDiskName]",
             "vhd": {
-              "uri": "[concat('https://', concat(variables('storageAccountNamePrefix'), '0'), '.blob.core.windows.net/', variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmDC').vmOSDiskName, '.vhd')]"
+              "uri": "[concat('https://', variables('storageAccountName'), '.blob.core.windows.net/', variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmDC').vmOSDiskName, '.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -638,7 +604,7 @@
           "dataDisks": [
             {
               "vhd": {
-                "uri": "[concat('https://', concat(variables('storageAccountNamePrefix'), '0'), '.blob.core.windows.net/', variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmDC').vmDataDiskName, '.vhd')]"
+                "uri": "[concat('https://', variables('storageAccountName'), '.blob.core.windows.net/', variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmDC').vmDataDiskName, '.vhd')]"
               },
               "name": "[variables('vmDC').vmDataDiskName]",
               "caching": "None",
@@ -756,7 +722,7 @@
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-15",
       "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts', concat(variables('storageAccountNamePrefix'),'0'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
         "[resourceId('Microsoft.Network/networkInterfaces', variables('vmSQL').vmNicName)]"
       ],
       "tags": {
@@ -781,7 +747,7 @@
           "osDisk": {
             "name": "[variables('vmSQL').vmOSDiskName]",
             "vhd": {
-              "uri": "[concat('https://', concat(variables('storageAccountNamePrefix'), '0'), '.blob.core.windows.net/', variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmSQL').vmOSDiskName, '.vhd')]"
+              "uri": "[concat('https://', variables('storageAccountName'), '.blob.core.windows.net/', variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmSQL').vmOSDiskName, '.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -789,7 +755,7 @@
           "dataDisks": [
             {
               "vhd": {
-                "uri": "[concat('https://', concat(variables('storageAccountNamePrefix'), '0'), '.blob.core.windows.net/', variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmSQL').vmDataDiskName, '.vhd')]"
+                "uri": "[concat('https://', variables('storageAccountName'), '.blob.core.windows.net/', variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmSQL').vmDataDiskName, '.vhd')]"
               },
               "name": "[variables('vmSQL').vmDataDiskName]",
               "caching": "None",
@@ -862,7 +828,7 @@
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-15",
       "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts', concat(variables('storageAccountNamePrefix'),'0'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
         "[resourceId('Microsoft.Network/networkInterfaces', variables('vmSP').vmNicName)]"
       ],
       "tags": {
@@ -887,7 +853,7 @@
           "osDisk": {
             "name": "[variables('vmSP').vmOSDiskName]",
             "vhd": {
-              "uri": "[concat('https://', concat(variables('storageAccountNamePrefix'), '0'), '.blob.core.windows.net/', variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmSP').vmOSDiskName, '.vhd')]"
+              "uri": "[concat('https://', variables('storageAccountName'), '.blob.core.windows.net/', variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmSP').vmOSDiskName, '.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -895,7 +861,7 @@
           "dataDisks": [
             {
               "vhd": {
-                "uri": "[concat('https://', concat(variables('storageAccountNamePrefix'), '0'), '.blob.core.windows.net/', variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmSP').vmDataDiskName, '.vhd')]"
+                "uri": "[concat('https://', variables('storageAccountName'), '.blob.core.windows.net/', variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmSP').vmDataDiskName, '.vhd')]"
               },
               "name": "[variables('vmSP').vmDataDiskName]",
               "caching": "None",
