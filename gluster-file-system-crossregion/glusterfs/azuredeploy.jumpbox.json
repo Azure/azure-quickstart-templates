@@ -1,0 +1,153 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "jumpBoxVmName": {
+            "type": "string",
+            "metadata": {
+                "description": "Prefix used for the jumpbox VM that will be created in the primary, only."
+            }
+        },
+        "adminUsername": {
+            "type": "string",
+            "metadata": {
+                "description": "User name for the Virtual Machine"
+            }
+        },
+        "adminPassword": {
+            "type": "string",
+            "metadata": {
+                "description": "Password for the Virtual Machine (for sudo and co)"
+            }
+        },
+        "sshKeyData": {
+            "type": "string",
+            "metadata": {
+                "description": "Please copy the content of your SSH RSA public key and paste it here. You can use \"ssh-keygen -t rsa -b 2048\" to generate your SSH key pairs."
+            }
+        },
+        "location": {
+            "type": "string",
+            "allowedValues": [
+                "North Europe",
+                "West Europe",
+                "East US",
+                "West US"
+            ],
+            "metadata": {
+                "description": "The region in which the JumpBox needs to be installed."
+            }
+        },
+        "jumpBoxSubnetIdRef": {
+            "type": "string",
+            "metadata": {
+                "description": "The reference ID of the subnet into which the JumpBox VM should be deployed.s"
+            }
+        }
+    },
+    "variables": {
+        "apiVersionStorage": "2016-12-01",
+        "apiVersionCompute": "2017-03-30",
+        "apiVersionNetwork": "2017-03-01",
+        "jumpBoxVhdStorageAccount": "[concat(toLower(parameters('jumpBoxVmName')), 'storage')]",
+        "jumpBoxPublicIpName": "[concat(parameters('jumpBoxVmName'), 'PublicIP')]",
+        "jumpBoxNicName": "[concat(parameters('jumpBoxVmName'), 'NIC')]",
+        "jumpBoxVmSize": "Standard_A1",
+        "osImagePublisher": "OpenLogic",
+        "osImageOffer": "CentOS",
+        "osImageSKU": "6.5",
+        "osImageVersion": "latest"
+    },
+    "resources": [
+        {
+            "apiVersion": "[variables('apiVersionStorage')]",
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[variables('jumpBoxVhdStorageAccount')]",
+            "location": "[parameters('location')]",
+            "sku":{
+                "name": "Standard_LRS"
+            },
+            "kind": "Storage",
+            "properties": {
+            }
+        },
+        {
+            "apiVersion": "[variables('apiVersionNetwork')]",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[variables('jumpBoxPublicIpName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "publicIPAllocationMethod": "Dynamic"
+            }
+        },
+        {
+            "apiVersion": "[variables('apiVersionNetwork')]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[variables('jumpBoxNicName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/publicIPAddresses/', variables('jumpBoxPublicIpName'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "defaultIpConfig",
+                        "properties": {
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('jumpBoxPublicIpName'))]"
+                            },
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[parameters('jumpBoxSubnetIdRef')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "[variables('apiVersionCompute')]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[parameters('jumpBoxVmName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Storage/storageAccounts/', variables('jumpBoxVhdStorageAccount'))]",
+                "[concat('Microsoft.Network/publicIPAddresses/', variables('jumpBoxPublicIpName'))]",
+                "[concat('Microsoft.Network/networkInterfaces/', variables('jumpBoxNicName'))]"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[variables('jumpBoxVmSize')]"
+                },
+                "osProfile": {
+                    "computerName": "[parameters('jumpBoxVmName')]",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('adminPassword')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "[variables('osImagePublisher')]",
+                        "offer": "[variables('osImageOffer')]",
+                        "sku": "[variables('osImageSKU')]",
+                        "version": "[variables('osImageVersion')]"
+                    },
+                    "osDisk": {
+                        "name": "osdisk",
+                        "vhd": {
+                            "uri": "[concat('http://',variables('jumpBoxVhdStorageAccount'), '.blob.core.windows.net/vhds/', toLower(parameters('jumpBoxVmName')), 'osdisk.vhd')]"
+                        },
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('jumpBoxNicName'))]"
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+}
