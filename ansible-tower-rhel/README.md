@@ -64,7 +64,7 @@ Build your Ansible Tower environment on Azure in a few simple steps:
 - Login with username as ‘admin’ and password specified in parameters during deployment. 
 - Request a trial Ansible license or provide your existing Ansible license file. You should get license file within 3-5 minutes on email after requesting a trial.
 - You will now have access to working Ansible Tower Server.
-- Follow the post deployment configuration document [here](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/ansible-tower-rhel/images/ansible-tower-rhel-postdeployment-configuration-guide.pdf) to learn about further configuration. 
+- Follow the post deployment configuration document [here](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/ansible-tower-rhel/images/ansibletower-postdeployment-configuration-guide.pdf) to learn about further configuration. 
 
 ## Deployment Time 
 
