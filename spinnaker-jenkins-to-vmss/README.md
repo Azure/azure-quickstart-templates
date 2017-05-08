@@ -44,7 +44,14 @@ Deploying from the command line
 You need to setup port forwarding to view the Spinnaker UI on your local machine.
 
 ### If you are using Windows:
-1. Install Putty or use any bash shell for Windows (if using a bash shell, follow the instructions for Linux or Mac).
+Install Putty or use any bash shell for Windows (if using a bash shell, follow the instructions for Linux or Mac).
+
+Run this command:
+```
+putty.exe -ssh -L 9000:localhost:9000 -L 8084:localhost:8084 -L 8087:localhost:8087 <User name>@<Public DNS name of instance you just created>
+```
+
+Or follow these manual steps:
 1. Launch Putty and navigate to 'Connection > SSH > Tunnels'
 1. In the Options controlling SSH port forwarding window, enter 8084 for Source port. Then enter 127.0.0.1:8084 for the Destination. Click Add.
 1. Repeat this process for ports: 8087 and 9000, until you have all three listed in the text box for Forward ports.
@@ -52,52 +59,11 @@ You need to setup port forwarding to view the Spinnaker UI on your local machine
 1. Click Open to establish the connection.
 
 ### If you are using Linux or Mac:
-1. Add this to your ~/.ssh/config
-    ```
-    Host spinnaker-start
-      HostName <Public DNS name of instance you just created>
-      IdentityFile <Path to your key file>
-      ControlMaster yes
-      ControlPath ~/.ssh/spinnaker-tunnel.ctl
-      RequestTTY no
-      LocalForward 9000 127.0.0.1:9000
-      LocalForward 8084 127.0.0.1:8084
-      LocalForward 8087 127.0.0.1:8087
-      User <User name>
-
-    Host spinnaker-stop
-      HostName <Public DNS name of instance you just created>
-      IdentityFile <Path to your key file>
-      ControlPath ~/.ssh/spinnaker-tunnel.ctl
-      RequestTTY no
-    ```
-1. Create a spinnaker-tunnel.sh file with the following content and give it execute permission using `chmod +x spinnaker-tunnel.sh`
-    ```bash
-    #!/bin/bash
-
-    socket=$HOME/.ssh/spinnaker-tunnel.ctl
-
-    if [ "$1" == "start" ]; then
-      if [ ! \( -e ${socket} \) ]; then
-        echo "Starting tunnel to Spinnaker..."
-        ssh -f -N spinnaker-start && echo "Done."
-      else
-        echo "Tunnel to Spinnaker running."
-      fi
-    fi
-
-    if [ "$1" == "stop" ]; then
-      if [ \( -e ${socket} \) ]; then
-        echo "Stopping tunnel to Spinnaker..."
-        ssh -O "exit" spinnaker-stop && echo "Done."
-      else
-        echo "Tunnel to Spinnaker stopped."
-      fi
-    fi
-    ```
-1. Call `./spinnaker-tunnel.sh start` to start your tunnel
-1. Call `./spinnaker-tunnel.sh stop` to stop your tunnel
-
+Run this command:
+```bash
+ssh -L 9000:localhost:9000 -L 8084:localhost:8084 -L 8087:localhost:8087 <User name>@<Public DNS name of instance you just created>
+```
+> NOTE: Port 9000, 8084, and 8087 correspond to Spinnaker's deck, gate and rosco services, respectively.
 
 ## E. Connect to Spinnaker 
 

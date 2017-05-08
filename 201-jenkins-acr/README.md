@@ -18,7 +18,7 @@ You can optionally include a basic Jenkins pipeline that will checkout a user-pr
     ```bash
     az login
     az account set --subscription <Subscription ID>
-    az ad sp create-for-rbac --role="Contributor" --scopes="/subscriptions/<Subscription ID>" --name "Spinnaker"
+    az ad sp create-for-rbac --name "Spinnaker"
     ```
     > NOTE: You can run `az account list` after you login to get a list of subscription IDs for your account.
 1. Enter a public git repository. The repository must have a Dockerfile in its root.
@@ -29,15 +29,22 @@ You can optionally include a basic Jenkins pipeline that will checkout a user-pr
 You need to setup port forwarding to view the Jenkins UI on your local machine.
 
 ### If you are using Windows:
-1. Install Putty or use any bash shell for Windows (if using a bash shell, follow the instructions for Linux or Mac).
+Install Putty or use any bash shell for Windows (if using a bash shell, follow the instructions for Linux or Mac).
+
+Run this command:
+```
+putty.exe -ssh -L 8080:localhost:8080 <User name>@<Public DNS name of instance you just created>
+```
+
+Or follow these manual steps:
 1. Launch Putty and navigate to 'Connection > SSH > Tunnels'
 1. In the Options controlling SSH port forwarding window, enter 8080 for Source port. Then enter 127.0.0.1:8080 for the Destination. Click Add.
 1. Click Open to establish the connection.
 
 ### If you are using Linux or Mac:
 Run this command:
-```
-  ssh -L 127.0.0.1:8080:localhost:8080 <User name>@<Public DNS name of instance you just created>
+```bash
+ssh -L 8080:localhost:8080 <User name>@<Public DNS name of instance you just created>
 ```
 
 ## C. Connect to Jenkins

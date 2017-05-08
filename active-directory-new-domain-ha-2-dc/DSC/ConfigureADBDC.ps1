@@ -12,7 +12,7 @@
         [Int]$RetryIntervalSec=30
     )
 
-    Import-DscResource -ModuleName xActiveDirectory, xDisk, cDisk, xPendingReboot
+    Import-DscResource -ModuleName xActiveDirectory, xPendingReboot
 
     [System.Management.Automation.PSCredential ]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainName}\$($Admincreds.UserName)", $Admincreds.Password)
 
@@ -40,6 +40,7 @@
             SysvolPath = "F:\SYSVOL"
             DependsOn = "[xWaitForADDomain]DscForestWait"
         }
+<#
         Script UpdateDNSForwarder
         {
             SetScript =
@@ -57,10 +58,10 @@
             TestScript = { $false}
             DependsOn = "[xADDomainController]BDC"
         }
-
+#>
         xPendingReboot RebootAfterPromotion {
             Name = "RebootAfterDCPromotion"
-            DependsOn = "[Script]UpdateDNSForwarder"
+            DependsOn = "[xADDomainController]BDC"
         }
 
     }

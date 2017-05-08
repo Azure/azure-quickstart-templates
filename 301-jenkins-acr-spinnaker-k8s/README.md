@@ -20,10 +20,10 @@ The Jenkins instance will include a basic pipeline that checks out a user-provid
     ```bash
     az login
     az account set --subscription <Subscription ID>
-    az ad sp create-for-rbac --role="Contributor" --scopes="/subscriptions/<Subscription ID>" --name "Spinnaker"
+    az ad sp create-for-rbac --name "Spinnaker"
     ```
     > NOTE: You can run `az account list` after you login to get a list of subscription IDs for your account.
-1. Leave the git repository as the [sample app](https://github.com/lwander/spin-kub-demo) or change it to target your own app's repository. The repo must have a Dockerfile in its root.
+1. Leave the git repository as the [sample app](https://github.com/azure-devops/spin-kub-demo) or change it to target your own app's repository. The repo must have a Dockerfile in its root.
 1. Leave the docker repository as the sample name or change it to the name you desire. A repo with this name will be created in your ACR.
 
 ## C. Setup SSH port forwarding
@@ -32,10 +32,26 @@ The Jenkins instance will include a basic pipeline that checks out a user-provid
 You need to setup port forwarding to view the Jenkins and Spinnaker UI on your local machine.
 
 ### If you are using Windows:
+Install Putty or use any bash shell for Windows (if using a bash shell, follow the instructions for Linux or Mac).
+
 Run this command:
 ```
-  ssh -L 127.0.0.1:8080:localhost:8080 -L 127.0.0.1:9000:localhost:9000 -L 127.0.0.1:8084:localhost:8084 -L 127.0.0.1:8001:localhost:8001 <User name>@<Public DNS name of instance you just created>
+putty.exe -ssh -i <path to private key file> -L 8080:localhost:8080 -L 9000:localhost:9000 -L 8084:localhost:8084 -L 8001:localhost:8001 <User name>@<Public DNS name of instance you just created>
 ```
+
+Or follow these manual steps:
+1. Launch Putty and navigate to 'Connection > SSH > Tunnels'
+1. In the Options controlling SSH port forwarding window, enter 8084 for Source port. Then enter 127.0.0.1:8084 for the Destination. Click Add.
+1. Repeat this process for port 8080, 9000 and 8001.
+1. Navigate to 'Connection > SSH > Auth' and enter your private key file for authentication. For more information on using ssh keys with Putty, see [here](https://docs.microsoft.com/azure/virtual-machines/virtual-machines-linux-ssh-from-windows#create-a-private-key-for-putty).
+1. Click Open to establish the connection.
+
+### If you are using Linux or Mac:
+Run this command:
+```bash
+ssh -i <path to private key file> -L 8080:localhost:8080 -L 9000:localhost:9000 -L 8084:localhost:8084 -L 8001:localhost:8001 <User name>@<Public DNS name of instance you just created>
+```
+> NOTE: Port 8080 corresponds to your Jenkins instance. Port 9000 and 8084 correspond to Spinnaker's deck and gate services, respectively. Port 8001 is used to view the dashboard for your Kubernetes cluster - just run `kubectl proxy` on the VM before navigating to http://localhost:8001 on your local machine.
 
 ## D. Connect to Jenkins
 

@@ -30,12 +30,13 @@
     "publicIPAddressName": "[concat(variables('resourcePrefix'), 'PublicIP')]",
     "vmStorageAccountContainerName": "vhds",
     "vmName": "[concat(variables('resourcePrefix'), 'VM')]",
+    "vmExtensionName": "[concat(variables('resourcePrefix'), 'Init')]",
     "virtualNetworkName": "[concat(variables('resourcePrefix'), 'VNET')]",
     "frontEndNSGName": "[concat(variables('resourcePrefix'), 'NSG')]",
     "vNetAddressPrefixes": "10.0.0.0/16",
     "sNetAddressPrefixes": "10.0.0.0/24",
     "vmPrivateIP": "10.0.0.5",
-    "_artifactsLocation": "https://raw.githubusercontent.com/azure/azure-devops-utils/v0.10.0/",
+    "_artifactsLocation": "https://raw.githubusercontent.com/Azure/azure-devops-utils/v0.12.0/",
     "_extensionScript": "install_jenkins.sh",
     "_artifactsLocationSasToken": ""
   },
@@ -199,30 +200,32 @@
             }
           ]
         }
-      }
-    },
-    {
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('vmName'), '/initializeJenkins')]",
-      "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
-      ],
-      "properties": {
-        "publisher": "Microsoft.Azure.Extensions",
-        "type": "CustomScript",
-        "typeHandlerVersion": "2.0",
-        "autoUpgradeMinorVersion": true,
-        "settings": {
-          "fileUris": [
-            "[concat(variables('_artifactsLocation'), '/jenkins/', variables('_extensionScript'), variables('_artifactsLocationSasToken'))]"
-          ]
-        },
-        "protectedSettings": {
-          "commandToExecute": "[concat('./' , variables('_extensionScript'), ' -jf \"', reference(variables('publicIPAddressName')).dnsSettings.fqdn, '\" -pi \"', variables('vmPrivateIP'), '\" -al \"', variables('_artifactsLocation'), '\" -st \"', variables('_artifactsLocationSasToken'), '\"' )]"
+      },
+      "resources": [
+        {
+          "type": "extensions",
+          "name": "[variables('vmExtensionName')]",
+          "apiVersion": "2015-06-15",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Azure.Extensions",
+            "type": "CustomScript",
+            "typeHandlerVersion": "2.0",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "fileUris": [
+                "[concat(variables('_artifactsLocation'), '/jenkins/', variables('_extensionScript'), variables('_artifactsLocationSasToken'))]"
+              ]
+            },
+            "protectedSettings": {
+              "commandToExecute": "[concat('./' , variables('_extensionScript'), ' -jf \"', reference(variables('publicIPAddressName')).dnsSettings.fqdn, '\" -pi \"', variables('vmPrivateIP'), '\" -al \"', variables('_artifactsLocation'), '\" -st \"', variables('_artifactsLocationSasToken'), '\"' )]"
+            }
+          }
         }
-      }
+      ]
     }
   ],
   "outputs": {
@@ -232,7 +235,7 @@
     },
     "SSH": {
       "type": "string",
-      "value": "[concat('ssh -L 127.0.0.1:8080:localhost:8080 ', parameters('adminUsername'), '@', reference(variables('publicIPAddressName')).dnsSettings.fqdn)]"
+      "value": "[concat('ssh -L 8080:localhost:8080 ', parameters('adminUsername'), '@', reference(variables('publicIPAddressName')).dnsSettings.fqdn)]"
     }
   }
 }
