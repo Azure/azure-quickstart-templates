@@ -1,11 +1,17 @@
 # NOTE: this script assumes to be executed as administrator (sudo install-hxe.sh "url" "server|all" "master-password")
 
+if [ "${UID}" -ne 0 ];
+then
+    log "Script executed without root permissions"
+    echo "You must be root to run this program." >&2
+    exit 3
+fi
+
 #
 # Parse arguments into readable bash variables
 #
 downloadUrl=$1
-adminUser=$2
-masterPwd=$3
+masterPwd=$2
 
 #
 # First get the OS to the laste patch grade
@@ -14,6 +20,13 @@ zypper -n update
 for svc in `zypper ps --short --print "%s"`; do
   service $svc restart
 done
+
+#
+# Prepare the data disks (defaults to /datadisks/diskx)
+#
+wget --output-document ./vm-disk-utils.sh https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/shared_scripts/ubuntu/vm-disk-utils-0.1.sh
+chmod +x ./vm-disk-utils.sh
+./vm-disk-utils.sh
 
 #
 # Pre-Requisites #1 - Java Runtime Environment
@@ -40,12 +53,12 @@ zypper -n install libltdl7
 #
 
 # Download and extract the installation files
-wget --output-document=hxe.tgz $downloadUrl
-chmod -R 777 hxe.tgz
-tar -xvzf hxe.tgz
+wget --output-document="./hxe.tgz" "$downloadUrl"
+chmod -R 777 ./hxe.tgz
+tar -xvzf ./hxe.tgz
 
 # Compile a parameters file for input
-parametersPrompt="/home/marioszp/HANA_EXPRESS_20\n"                    # Root directory of installation files
+parametersPrompt="./HANA_EXPRESS_20\n"                        # Root directory of installation files
 parametersPrompt="${parametersPrompt}$(hostname)\n"           # The hostname needed for HANA
 parametersPrompt="${parametersPrompt}HXE\n"                   # System ID of the HANA installation (aligned with tutorials)
 parametersPrompt="${parametersPrompt}00\n"                    # Instance number, aligned with the ports opened as per ARM template
@@ -54,4 +67,4 @@ parametersPrompt="${parametersPrompt}${masterPwd}\n"          # Master password 
 parametersPrompt="${parametersPrompt}Y\n"                     # Confirm the installation
 
 # Start the installation procedure (set the alias for HANA 2.0 SPS01)
-printf "$parametersPrompt" | /home/marioszp/setup_hxe.sh
+printf "$parametersPrompt" | ./setup_hxe.sh
