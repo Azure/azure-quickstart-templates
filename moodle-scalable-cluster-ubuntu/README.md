@@ -32,7 +32,7 @@ Summarizing, the following resources will be created during this process:
 
 ![Moodle On Azure](./images/moodle-on-azure.jpg)
 
-*Parameters for the deployment* 
+## *Parameters for the deployment* 
 
 - resourcesPrefix: Prefix for storage account name, network, virtual machines, and so on. Important: must be a unique value in the azure region; if you reach some error during the deployment, please confirm it's not being used by any other deployment (including from other people)
 - vNetAddressSpace: Address range for the Moodle virtual network - presumed /16 - further subneting during vnet creation
@@ -49,7 +49,7 @@ Summarizing, the following resources will be created during this process:
 
 In order to access Moodle admin console, please use the username 'admin' (without quotes) and the password you provided during the setup in Azure Portal.
 
-*Sizing the environment* 
+## *Sizing the environment* 
 
 The setup script will ask you about the 't-shirt size' for database & gluster layers.
 Here's an explanation for each one of these: 
@@ -74,7 +74,7 @@ However, as an initial guidance, remember that:
 - GlusterFS must be dimensioned considering the space requirements (size of your moodledata) + number of IOPS required. A Moodle deployment where students upload lots of content in a small windows of time would require more IOPS during that window, so consider using medium or large tiers in that case;
 
 
-*Updating the source code or Apache SSL certificates* 
+## *Updating the source code or Apache SSL certificates* 
 
 There's a jumpbox machine in the deployment that can be used to update Moodle's source code, or SSL certificates in the web layer. 
 In order to proceed with this kind of update, connect to the machine using the root credentials provided during the template setup. 
@@ -82,7 +82,8 @@ In order to proceed with this kind of update, connect to the machine using the r
 - Apache SSL certificates are located at /moodle/certs
 - Moodledata content is located at /moodle/moodledata
 
-*Step by step video walkthrough* 
+## *Step by step video walkthrough* 
+
 We also have a [step by step video](http://learningcontentdemo.azurewebsites.net/VideoHowToDemoMoodleOnAzure3) showing us how to deploy this template (Thanks to Ingo Laue for his contribution)
 
 This template is aimed to have constant updates, and would include other improvements in the future. 
