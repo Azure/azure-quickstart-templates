@@ -7,4 +7,4 @@
   <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template provides a easy way to deploy web app on Azure Web Apps on Windows with Azure database for PostgreSQL(Preview).
+This template provides a easy way to deploy web app on Azure Web Apps on Windows with Azure database for PostgreSQL(Preview) .
