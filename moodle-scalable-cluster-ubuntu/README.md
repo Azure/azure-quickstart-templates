@@ -83,7 +83,7 @@ In order to proceed with this kind of update, connect to the machine using the r
 - Moodledata content is located at /moodle/moodledata
 
 *Step by step video walkthrough* 
-We also have a ![step by step video](http://learningcontentdemo.azurewebsites.net/VideoHowToDemoMoodleOnAzure3) showing us how to deploy this template (Thanks to Ingo Laue for his contribution)
+We also have a [step by step video](http://learningcontentdemo.azurewebsites.net/VideoHowToDemoMoodleOnAzure3) showing us how to deploy this template (Thanks to Ingo Laue for his contribution)
 
 This template is aimed to have constant updates, and would include other improvements in the future. 
 
