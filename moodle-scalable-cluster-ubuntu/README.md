@@ -32,6 +32,25 @@ Summarizing, the following resources will be created during this process:
 
 ![Moodle On Azure](./images/moodle-on-azure.jpg)
 
+*Parameters for the deployment* 
+
+- resourcesPrefix: Prefix for storage account name, network, virtual machines, and so on. Important: must be a unique value in the azure region; if you reach some error during the deployment, please confirm it's not being used by any other deployment (including from other people)
+- vNetAddressSpace: Address range for the Moodle virtual network - presumed /16 - further subneting during vnet creation
+- moodleVersion: The Moodle version you want to install.
+- glusterTshirtSize: VM size for the gluster nodes (please check for more guidance below)
+- mariaDbTshirtSize: VM size for the mariadb nodes (please check for more guidance below)
+- adminUsername: ssh user name (do not use 'root' or 'administrator', using any of these will cause the deployment to fail)
+- adminPassword: ssh password & moodle 'admin' password
+- mySqlUserPassword: my sql regular user password
+- mySqlRootPassword: my sql root user password (take note of this, would be necessary for database maintenance tasks)
+- applyScriptsSwitch: Use '1' ALWAYS; Switch to process or bypass all scripts/extensions; if you use '0' (zero), this template will only create the machines;
+- azureBackupSwitch: Switch to configure AzureBackup and enlist VM's; if you use '1', Azure Backup will be configured to backup MariaDb and GlusterFS nodes; highly recommended. The backup schedule can be adjusted later in the portal.
+*Accessing Moodle administrative area*
+
+In order to access Moodle admin console, please use the username 'admin' (without quotes) and the password you provided during the setup in Azure Portal.
+
+*Sizing the environment* 
+
 The setup script will ask you about the 't-shirt size' for database & gluster layers.
 Here's an explanation for each one of these: 
 
@@ -48,6 +67,12 @@ MariaDb t-shirt sizes:
 		Small  | Standard_DS2_v2 |  2         |  127 Gb   | 256 Gb
 		Medium | Standard_DS3_v2 |  2         |  512 Gb   | 1 Tb
 		Large  | Standard_DS4_v2 |  2         | 1023 Gb   | 2 Tb
+
+There's no default rule or recommendation in order to decide which tier use for your deployment. 
+However, as an initial guidance, remember that: 
+- Moodle has a strong dependency of database setup; for a high number of simultanous users, consider using medium or large database sizes
+- GlusterFS must be dimensioned considering the space requirements (size of your moodledata) + number of IOPS required. A Moodle deployment where students upload lots of content in a small windows of time would require more IOPS during that window, so consider using medium or large tiers in that case;
+
 
 *Updating the source code or Apache SSL certificates* 
 
