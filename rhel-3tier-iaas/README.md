@@ -59,7 +59,7 @@ The deployment takes about 5 minutes to complete.
 
 ## Post Deployment Steps 
 
-After successful deployment, this template will output the IP address and FQDN of both external load balancer and Jump VM. Make a note of these values.
+After successful deployment, template will output the IP address and FQDN of both external load balancer and Jump VM. Make a note of these values.
 
 - To access all VM's via SSH, you need to first ssh into jump VM using its public ip captured from template outputs, from jump VM you can ssh into other VMs through via private IP.
 - Alternatively You can also get public IP of Jump VM from overview blade in VM Settings.
