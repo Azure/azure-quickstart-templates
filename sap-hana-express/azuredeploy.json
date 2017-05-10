@@ -4,8 +4,7 @@
     "parameters": {
         "vmNamePrefix": {
             "type": "string",
-            "minLength": 3,
-            "maxLength": 8
+            "minLength": 3
         },
         "vmSize": {
             "type": "string",
@@ -57,28 +56,33 @@
         },
         "hxeMasterPwd": {
             "type": "securestring"
+        },
+        "hxeInstallScriptUrl": {
+            "type": "string",
+            "defaultValue": "https://raw.githubusercontent.com/mszcool/azure-quickstart-templates/original/mszcool-hanaexpress/sap-hana-express/install-hxe-suse.sh"
+        }, 
+        "hxeInstallScriptName": {
+            "type": "string",
+            "defaultValue": "install-hxe-suse.sh"
         }
     },
     "variables": {
         "vmNicName": "[concat(parameters('vmNamePrefix'), 'NIC')]",
-        "vmOsDiskName": "[concat(parameters('vmNamePrefix'), 'OsDisk_', uniqueString(resourceGroup().id))]",
-        "vmDataDiskName": "[concat(parameters('vmNamePrefix'), 'DataDisk_', uniqueString(resourceGroup().id))]",
+        "vmOsDiskName": "[concat(parameters('vmNamePrefix'), 'DiskOS_', uniqueString(resourceGroup().id))]",
+        "vmDataDiskName": "[concat(parameters('vmNamePrefix'), 'DiskData_', uniqueString(resourceGroup().id))]",
         "vmOsDiskSizeInGb": "250",
         "vmDataDiskSizeInGb": "1023",
         "vmPublicIpName": "[concat(parameters('vmNamePrefix'), 'PublicIP', uniqueString(resourceGroup().id))]",
-        "vmImageUriId": "[concat('/Subscriptions/', subscription().subscriptionId, '/Providers/Microsoft.Compute/Locations/westeurope/Publishers/', variables(concat('vmImageUriId', parameters('vmOsType'))))]",
         "vmImagePublisher": "[variables(concat('vmImagePublisher', parameters('vmOsType')))]",
         "vmImageOffer": "[variables(concat('vmImageOffer', parameters('vmOsType')))]",
         "vmImageSku": "[variables(concat('vmImageSku', parameters('vmOsType')))]",
         "vmImageVersion": "latest",
-        "vmImagePublisheropenSUSE": "SUSE",        
+        "vmImagePublisheropenSUSE": "SUSE",
         "vmImageOfferopenSUSE": "openSUSE-Leap",
         "vmImageSkuopenSUSE": "42.2",
-        "vmImageUriIdopenSUSE": "SUSE/ArtifactTypes/VMImage/Offers/openSUSE-Leap/Skus/42.2/Versions/latest",
         "vmImagePublisherSLES": "SUSE",
         "vmImageOfferSLES": "SLES",
         "vmImageSkuSLES": "12-SP2",
-        "vmImageUriIdSLES": "SUSE/ArtifactTypes/VMImage/Offers/SLES/Skus/12-SP2/Versions/latest",
         "vnetName": "[concat(parameters('vmNamePrefix'), 'Network')]",
         "vnetSubnetName": "hxeSubnet",
         "vnetAddressPrefix": "172.16.27.0/24",
@@ -189,7 +193,7 @@
                             "sourceAddressPrefix": "*",
                             "destinationAddressPrefix": "*",
                             "access": "Allow",
-                            "priority": 1070,
+                            "priority": 1050,
                             "direction": "Inbound"
                         }
                     },
@@ -202,7 +206,7 @@
                             "sourceAddressPrefix": "*",
                             "destinationAddressPrefix": "*",
                             "access": "Allow",
-                            "priority": 1050,
+                            "priority": 1060,
                             "direction": "Inbound"
                         }
                     },
@@ -215,7 +219,7 @@
                             "sourceAddressPrefix": "*",
                             "destinationAddressPrefix": "*",
                             "access": "Allow",
-                            "priority": 1060,
+                            "priority": 1070,
                             "direction": "Inbound"
                         }
                     },
@@ -228,7 +232,7 @@
                             "sourceAddressPrefix": "*",
                             "destinationAddressPrefix": "*",
                             "access": "Allow",
-                            "priority": 1070,
+                            "priority": 1080,
                             "direction": "Inbound"
                         }
                     }
@@ -299,23 +303,6 @@
             "dependsOn": []
         },
         {
-            "type": "Microsoft.Compute/disks",
-            "name": "[variables('vmOsDiskName')]",
-            "apiVersion": "2016-04-30-preview",
-            "location": "[resourceGroup().location]",
-            "properties": {
-                "accountType": "Premium_LRS",
-                "osType": "Linux",
-                "creationData": {
-                    "createOption": "FromImage",
-                    "imageReference": {
-                        "id": "[variables('vmImageUriId')]"
-                    }
-                },
-                "diskSizeGB": "[variables('vmOsDiskSizeInGb')]"
-            }
-        },
-        {
             "type": "Microsoft.Compute/virtualMachines",
             "name": "[parameters('vmNamePrefix')]",
             "apiVersion": "2016-04-30-preview",
@@ -337,8 +324,7 @@
                         "createOption": "FromImage",
                         "caching": "None",
                         "managedDisk": {
-                            "storageAccountType": "Premium_LRS",
-                            "id": "[resourceId('Microsoft.Compute/disks', variables('vmOsDiskName'))]"
+                            "storageAccountType": "Premium_LRS"
                         },
                         "diskSizeGB": "[variables('vmOsDiskSizeInGb')]"
                     },
@@ -374,10 +360,32 @@
                 }
             },
             "dependsOn": [
-                "[resourceId('Microsoft.Compute/disks', variables('vmOsDiskName'))]",
                 "[resourceId('Microsoft.Compute/disks', variables('vmDataDiskName'))]",
                 "[resourceId('Microsoft.Network/networkInterfaces', variables('vmNicName'))]"
             ]
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(parameters('vmNamePrefix'), '/extension')]",
+            "apiVersion": "2015-05-01-preview",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('vmNamePrefix'))]"
+            ],
+            "properties": {
+                "publisher": "Microsoft.Azure.Extensions",
+                "type": "CustomScript",
+                "typeHandlerVersion": "2.0",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "fileUris": [
+                        "[parameters('hxeInstallScriptUrl')]"
+                    ]
+                },
+                "protectedSettings": {
+                    "commandToExecute": "[concat(parameters('hxeInstallScriptName'), ' \"', parameters('hxeSetupFileUrl'), '\" \"', parameters('hxeMasterPwd'), '\"')]"                    
+                }
+            }
         }
     ]
 }
