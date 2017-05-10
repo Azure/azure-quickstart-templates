@@ -9,6 +9,7 @@
         },
         "vmSize": {
             "type": "string",
+            "defaultValue": "Standard_DS5_v2",
             "allowedValues": [
                 "Standard_A6",
                 "Standard_A7",
@@ -34,6 +35,14 @@
                 "Standard_GS3"
             ]
         },
+        "vmOsType": {
+            "type": "string",
+            "defaultValue": "openSUSE",
+            "allowedValues": [
+                "openSUSE",
+                "SLES"
+            ]
+        },
         "dnsNamePrefix": {
             "type": "string"
         },
@@ -52,10 +61,323 @@
     },
     "variables": {
         "vmNicName": "[concat(parameters('vmNamePrefix'), 'NIC')]",
-        "vmOsDiskName": "[concat(parameters('vmNamePrefix'), 'OsDisk')]",
-        "vmDataDiskName": "[concat(parameters('vmNamePrefix'), 'DataDisk')]",
-        "vmPublicIpName": "[concat(parameters('vmNamePrefix'), 'PublicIP')]",  
-        "vnetName": "[concat(parameters('vmNamePrefix'), '_VNet')]",
-        "subnetName": "hxeSubnet",
-    }
+        "vmOsDiskName": "[concat(parameters('vmNamePrefix'), 'OsDisk_', uniqueString(resourceGroup().id))]",
+        "vmDataDiskName": "[concat(parameters('vmNamePrefix'), 'DataDisk_', uniqueString(resourceGroup().id))]",
+        "vmOsDiskSizeInGb": "250",
+        "vmDataDiskSizeInGb": "1023",
+        "vmPublicIpName": "[concat(parameters('vmNamePrefix'), 'PublicIP', uniqueString(resourceGroup().id))]",
+        "vmImageUriId": "[concat('/Subscriptions/', subscription().subscriptionId, '/Providers/Microsoft.Compute/Locations/westeurope/Publishers/', variables(concat('vmImageUriId', parameters('vmOsType'))))]",
+        "vmImagePublisher": "[variables(concat('vmImagePublisher', parameters('vmOsType')))]",
+        "vmImageOffer": "[variables(concat('vmImageOffer', parameters('vmOsType')))]",
+        "vmImageSku": "[variables(concat('vmImageSku', parameters('vmOsType')))]",
+        "vmImageVersion": "latest",
+        "vmImagePublisheropenSUSE": "SUSE",        
+        "vmImageOfferopenSUSE": "openSUSE-Leap",
+        "vmImageSkuopenSUSE": "42.2",
+        "vmImageUriIdopenSUSE": "SUSE/ArtifactTypes/VMImage/Offers/openSUSE-Leap/Skus/42.2/Versions/latest",
+        "vmImagePublisherSLES": "SUSE",
+        "vmImageOfferSLES": "SLES",
+        "vmImageSkuSLES": "12-SP2",
+        "vmImageUriIdSLES": "SUSE/ArtifactTypes/VMImage/Offers/SLES/Skus/12-SP2/Versions/latest",
+        "vnetName": "[concat(parameters('vmNamePrefix'), 'Network')]",
+        "vnetSubnetName": "hxeSubnet",
+        "vnetAddressPrefix": "172.16.27.0/24",
+        "vnetSubnetAddressPrefix": "172.16.27.0/24",
+        "vnetNsgName": "hxeNetworkSecurityGroup"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[variables('vnetName')]",
+            "apiVersion": "2016-03-30",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('vnetAddressPrefix')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[variables('vnetSubnetName')]",
+                        "properties": {
+                            "addressPrefix": "[variables('vnetSubnetAddressPrefix')]"
+                        }
+                    }
+                ]
+            },
+            "dependsOn": []
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[variables('vnetNsgName')]",
+            "apiVersion": "2016-03-30",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "default-allow-ssh",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "22",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1000,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "allow-http",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "80",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1010,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "allow-https",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "443",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1020,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "hxe-allow-http",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "8000",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1030,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "hxe-allow-https",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "4300",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1040,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "hxe-allow-agent",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "1128-1129",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1070,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "hxe-allow-components",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "30000-30100",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1050,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "hxe-allow-soap",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "50000-50050",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1060,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "hxe-allow-xsa",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "51000-51500",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1070,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            },
+            "dependsOn": []
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[variables('vmPublicIpName')]",
+            "apiVersion": "2016-03-30",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "publicIPAllocationMethod": "Dynamic",
+                "idleTimeoutInMinutes": 4,
+                "dnsSettings": {
+                    "domainNameLabel": "[parameters('dnsNamePrefix')]"
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[variables('vmNicName')]",
+            "apiVersion": "2016-03-30",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "[concat(parameters('vmNamePrefix'), 'ipConfig1')]",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmPublicIpName'))]"
+                            },
+                            "subnet": {
+                                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('vnetName')), '/subnets/', variables('vnetSubnetName'))]"
+                            }
+                        }
+                    }
+                ],
+                "dnsSettings": {
+                    "dnsServers": []
+                },
+                "enableIPForwarding": false,
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('vnetNsgName'))]"
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmPublicIpName'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('vnetNsgName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Compute/disks",
+            "name": "[variables('vmDataDiskName')]",
+            "apiVersion": "2016-04-30-preview",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "accountType": "Premium_LRS",
+                "creationData": {
+                    "createOption": "Empty"
+                },
+                "diskSizeGB": "[variables('vmDataDiskSizeInGb')]"
+            },
+            "dependsOn": []
+        },
+        {
+            "type": "Microsoft.Compute/disks",
+            "name": "[variables('vmOsDiskName')]",
+            "apiVersion": "2016-04-30-preview",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "accountType": "Premium_LRS",
+                "osType": "Linux",
+                "creationData": {
+                    "createOption": "FromImage",
+                    "imageReference": {
+                        "id": "[variables('vmImageUriId')]"
+                    }
+                },
+                "diskSizeGB": "[variables('vmOsDiskSizeInGb')]"
+            }
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[parameters('vmNamePrefix')]",
+            "apiVersion": "2016-04-30-preview",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('vmSize')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "[variables('vmImagePublisher')]",
+                        "offer": "[variables('vmImageOffer')]",
+                        "sku": "[variables('vmImageSku')]",
+                        "version": "[variables('vmImageVersion')]"
+                    },
+                    "osDisk": {
+                        "osType": "Linux",
+                        "name": "[variables('vmOsDiskName')]",
+                        "createOption": "FromImage",
+                        "caching": "None",
+                        "managedDisk": {
+                            "storageAccountType": "Premium_LRS",
+                            "id": "[resourceId('Microsoft.Compute/disks', variables('vmOsDiskName'))]"
+                        },
+                        "diskSizeGB": "[variables('vmOsDiskSizeInGb')]"
+                    },
+                    "dataDisks": [
+                        {
+                            "lun": 0,
+                            "name": "[variables('vmDataDiskName')]",
+                            "createOption": "Attach",
+                            "caching": "None",
+                            "managedDisk": {
+                                "storageAccountType": "Premium_LRS",
+                                "id": "[resourceId('Microsoft.Compute/disks', variables('vmDataDiskName'))]"
+                            },
+                            "diskSizeGB": "[variables('vmDataDiskSizeInGb')]"
+                        }
+                    ]
+                },
+                "osProfile": {
+                    "computerName": "[parameters('vmNamePrefix')]",
+                    "adminUsername": "[parameters('adminUserName')]",
+                    "adminPassword": "[parameters('adminPassword')]",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": false
+                    },
+                    "secrets": []
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vmNicName'))]"
+                        }
+                    ]
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/disks', variables('vmOsDiskName'))]",
+                "[resourceId('Microsoft.Compute/disks', variables('vmDataDiskName'))]",
+                "[resourceId('Microsoft.Network/networkInterfaces', variables('vmNicName'))]"
+            ]
+        }
+    ]
 }
