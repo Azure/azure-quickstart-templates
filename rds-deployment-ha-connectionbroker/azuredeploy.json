@@ -1,0 +1,250 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "ConnectionBrokerMachine": {
+      "type": "string",
+      "defaultValue": "broker",
+      "metadata": {
+        "description": "The name of the existing Connection Broker Machine."
+      }
+    },
+    "adDomainName": {
+      "type": "string",
+      "metadata": {
+        "description": "The domain to join the Connection Broker Machine to."
+      }
+    },
+    "cb-AvailabilitySet": {
+      "type": "string",
+      "defaultValue": "cb-availabilityset",
+      "metadata": {
+        "description": "The availability set that the existing connection broker is in."
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the administrator of the new VM and the domain. Exclusion list: 'administrator"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The password for the administrator account of the new VM and the domain"
+      }
+    },
+    "domainNetbios": {
+      "type": "string",
+      "metadata": {
+        "description": "Netbios Name for Domain"
+      }
+    },
+    "storageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Storage account name of RDS-Deployment"
+      }
+    },
+    "imageSKU": {
+      "type": "string",
+      "allowedValues": [
+        "2012-R2-Datacenter",
+        "Windows-Server-Technical-Preview"
+      ],
+      "metadata": {
+        "description": "Windows server SKU"
+      },
+      "defaultValue": "Windows-Server-Technical-Preview"
+    },
+    "cbVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2",
+      "metadata": {
+        "description": "The size of the Connectionbroker vm"
+      }
+    },
+    "clientURL": {
+      "type": "string",
+      "defaultValue": "http://go.microsoft.com/fwlink/?LinkID=239648&clcid=0x409",
+      "metadata": {
+        "description": "URL for the location of the SQL client install"
+      }
+    },
+    "PrimaryDBConString": {
+      "type": "string",
+      "metadata": {
+        "description": "Specifies the database primary connection string. The database connection string supports both high availability configurations: -- Dedicated database server. Uses Windows Authentication to connect to the databse. -- Shared database server. Uses database authentication (such as SQL authentication) with a user name and password to connect to the database."
+      }
+    },
+    "DNSServer": {
+      "type": "string",
+      "defaultValue": "dc",
+      "metadata": {
+        "description": "The name of the DNS Server to add the DNS entry to for the Connection Broker Names"
+      }
+    },
+    "clientAccessName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the Connection Broker Servers to be added to the DNS."
+      }
+    },
+    "sqlServer": {
+      "type": "string",
+      "metadata": {
+        "description":  "The name of the SQL server that the database is located on."
+      }
+    }
+  },
+  "variables": {
+    "imagePublisher": "MicrosoftWindowsServer",
+    "imageOffer": "WindowsServer",
+    "imageSKU": "Windows-Server-Technical-Preview",
+    "assetLocation": "https://raw.githubusercontent.com/klondon71/azure-quickstart-templates/master/rds-deployment-ha-connectionbroker",
+    "subnetName": "Subnet",
+    "subnet-id": "[concat(resourceId('Microsoft.Network/virtualNetworks','vnet'),'/subnets/',variables('subnetName'))]",
+    "apiVersion": "2015-06-15"
+  },
+  "resources": [
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[parameters('storageAccountName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "accountType": "Standard_LRS"
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[Parameters('cb-AvailabilitySet')]",
+      "location": "[resourceGroup().location]"
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "cb-2-nic",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('subnet-id')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "cb-vm-2",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', Parameters('storageAccountName'))]",
+        "[resourceId('Microsoft.Compute/availabilitySets', parameters('cb-AvailabilitySet'))]",
+        "Microsoft.Network/networkInterfaces/cb-2-nic"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('cbVmSize')]"
+        },
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('cb-AvailabilitySet'))]"
+        },
+        "osProfile": {
+          "computerName": "cbvm2",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[parameters('imageSKU')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/cb-vm-2-osdisk.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces','cb-2-nic')]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "cb-vm-2/rdsdeployment",
+      "apiVersion": "[variables('apiVersion')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', 'cb-vm-2')]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Powershell",
+        "type": "DSC",
+        "typeHandlerVersion": "2.11",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "ModulesUrl": "[concat(variables('assetLocation'),'/Configuration.zip')]",
+          "ConfigurationFunction": "Configuration.ps1\\ConnectionBroker",
+          "Properties": {
+            "domainName": "[parameters('adDomainName')]",
+            "adminCreds": {
+              "UserName": "[parameters('adminUsername')]",
+              "Password": "PrivateSettingsRef:adminPassword"
+            }
+          }
+        },
+        "protectedSettings": {
+          "Items": {
+            "adminPassword": "[parameters('adminPassword')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "[concat('cb-vm-2','/CB_PostConfig1.1')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "[variables('apiversion')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', 'cb-vm-2')]",
+        "[concat('Microsoft.Compute/virtualMachines/cb-vm-2','/extensions/','rdsdeployment')]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "CustomScriptExtension",
+        "typeHandlerVersion": "1.8",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [ "https://raw.githubusercontent.com/klondon71/azure-quickstart-templates/master/rds-deployment-ha-connectionbroker/Scripts/CB_PostConfig1.1.ps1" ]
+
+        },
+        "protectedSettings": {
+          "Items": { "AdminPassword": "[parameters('adminPassword')]" },
+          "storageAccountName": "[parameters('storageaccountname')]",
+          "commandToExecute": "[Concat('powershell.exe -ExecutionPolicy Unrestricted -File', ' ', 'CB_PostConfig1.1.ps1',' ','-username \"',parameters('adminusername'),'\" ', '-password \"',parameters('adminpassword'),'\" ','-BrokerServer \"',parameters('ConnectionBrokerMachine'),'\" ','-downloadClientURL \"',parameters('clientURL'),'\" ','-PrimaryDBConString \"',parameters('PrimaryDBConString'),'\" ','-cbDNSName ',parameters('clientAccessName'),'\" ','-DomainNetbios ',parameters('DomainNetbios'),'\" ','-DNSServer ',parameters('DNSServer'),'\" ','-adDomainName ',parameters('adDomainName'),'-sqlServer \"',parameters('sqlServer'),'\"')]"
+        }
+      }
+    }
+  ]
+    }
