@@ -53,7 +53,7 @@ zypper -n install libltdl7
 wget --output-document="./hxe.tgz" "$downloadUrl"
 chmod -R 777 ./hxe.tgz
 tar -xvzf ./hxe.tgz
-chmod -R 777 ./HANA_EXPRESS_20
+chmod -R 775 ./HANA_EXPRESS_20
 
 # Compile a parameters file for input
 parametersPrompt="./HANA_EXPRESS_20\n"                        # Root directory of installation files
