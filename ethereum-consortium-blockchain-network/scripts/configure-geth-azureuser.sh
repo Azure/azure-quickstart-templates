@@ -48,7 +48,6 @@ DIFFICULTY=`printf "0x%X" $(($DIFFICULTY_CONSTANT * $NUM_MN_NODES))`;
 ################
 # Update modules
 ################
-sudo add-apt-repository -y ppa:ethereum/ethereum || exit 1;
 sudo apt-get -y update || exit 1;
 # To avoid intermittent issues with package DB staying locked when next apt-get runs
 sleep 5;
@@ -56,8 +55,26 @@ sleep 5;
 ##################
 # Install packages
 ##################
-sudo apt-get -y install npm=3.5.2-0ubuntu4 git=1:2.7.4-0ubuntu1 software-properties-common=0.96.20.4 ethereum || exit 1;
+sudo apt-get -y install npm=3.5.2-0ubuntu4 git=1:2.7.4-0ubuntu1 software-properties-common=0.96.20.5 || exit 1;
 sudo update-alternatives --install /usr/bin/node nodejs /usr/bin/nodejs 100 || exit 1;
+
+##############
+# Install geth
+##############
+wget https://gethstore.blob.core.windows.net/builds/geth-alltools-linux-amd64-1.5.9-a07539fb.tar.gz || exit 1;
+wget https://gethstore.blob.core.windows.net/builds/geth-alltools-linux-amd64-1.5.9-a07539fb.tar.gz.asc || exit 1;
+
+# Import geth buildserver keys
+gpg --recv-keys --keyserver hkp://keys.gnupg.net F9585DE6 C2FF8BBF 9BA28146 7B9E2481 D2A67EAC || exit 1;
+
+# Validate signature
+gpg --verify geth-alltools-linux-amd64-1.5.9-a07539fb.tar.gz.asc || exit 1;
+
+# Unpack archive
+tar xzf geth-alltools-linux-amd64-1.5.9-a07539fb.tar.gz || exit 1;
+
+# /usr/bin is in $PATH by default, we'll put our binaries there
+sudo cp geth-alltools-linux-amd64-1.5.9-a07539fb/* /usr/bin/ || exit 1;
 
 #############
 # Build node keys and node IDs

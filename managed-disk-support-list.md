@@ -22,6 +22,8 @@ On February 8, 2017, Managed Disk went generally available. Here is a list of te
 
 101-vm-tags
 
+101-vm-from-user-image
+
 101-vm-with-rdp-port
 
 101-vsts-cloudloadtest-rig
@@ -87,6 +89,8 @@ On February 8, 2017, Managed Disk went generally available. Here is a list of te
 201-vmss-windows-app-gateway
 
 201-vmss-windows-autoscale
+
+201-vmss-windows-customimage
 
 201-vmss-windows-jumpbox
 
