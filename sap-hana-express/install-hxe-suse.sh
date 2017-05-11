@@ -52,11 +52,12 @@ zypper -n install libltdl7
 # Download and extract the installation files
 wget --output-document="./hxe.tgz" "$downloadUrl"
 chmod -R 777 ./hxe.tgz
-tar -xvzf ./hxe.tgz
-chmod -R 775 ./HANA_EXPRESS_20
+mkdir /usr/hanaexpress20
+tar -xvzf ./hxe.tgz -C /usr/hanaexpress20
+chmod -R 775 /usr/hanaexpress20
 
 # Compile a parameters file for input
-parametersPrompt="./HANA_EXPRESS_20\n"                        # Root directory of installation files
+parametersPrompt="/usr/hanaexpress20\n"                       # Root directory of installation files
 parametersPrompt="${parametersPrompt}$(hostname)\n"           # The hostname needed for HANA
 parametersPrompt="${parametersPrompt}HXE\n"                   # System ID of the HANA installation (aligned with tutorials)
 parametersPrompt="${parametersPrompt}00\n"                    # Instance number, aligned with the ports opened as per ARM template
@@ -65,6 +66,6 @@ parametersPrompt="${parametersPrompt}${masterPwd}\n"          # Master password 
 parametersPrompt="${parametersPrompt}Y\n"                     # Confirm the installation
 
 # Start the installation procedure (set the alias for HANA 2.0 SPS01)
-printf "$parametersPrompt" | ./setup_hxe.sh
+printf "$parametersPrompt" | /usr/hanaexpress20/setup_hxe.sh
 
 exit
