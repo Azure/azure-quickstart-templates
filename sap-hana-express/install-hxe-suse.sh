@@ -16,14 +16,6 @@ downloadUrl=$1
 masterPwd=$2
 
 #
-# First get the OS to the laste patch grade
-#
-# zypper -n update
-# for svc in `zypper ps --short --print "%s"`; do
-#   service $svc restart
-# done
-
-#
 # Prepare the data disks (defaults to /datadisks/diskx)
 #
 wget --output-document ./vm-disk-utils.sh https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/shared_scripts/ubuntu/vm-disk-utils-0.1.sh

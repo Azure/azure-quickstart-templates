@@ -51,7 +51,7 @@ fi
 echo "Uploading HANA setup package '$localHxeUrl' to storage container $containerName on storage account $storageAccountName..."
 fileNameOnly=`basename "$localHxeUrl"`     # Get the pure file name for the local tar archive with HXE setup files
 fileNameOnly=${fileNameOnly,,}              # Lower-case the file name
-existingBlob=`az storage blob exists --connection-string="$accountConnString" --container-name="$containerName" --name="$fileNameOnly"`
+existingBlob=`az storage blob exists --connection-string="$accountConnString" --container-name="$containerName" --name="$fileNameOnly" --output=tsv`
 if [ "$existingBlob" != "True" ]; then
     echo "Uploading $fileNameOnly since file not uploaded, yet!"
     az storage blob upload --connection-string="$accountConnString" --container-name="$containerName" --name="$fileNameOnly" --file="$localHxeUrl"
@@ -63,15 +63,11 @@ echo "Upload completed!"
 #
 # Finally we need a shared access signature for the blob just uploaded to the storage account
 #
-storageSas=`az storage blob generate-sas --connection-string="$accountConnString" --containerName="$containerName" --name="$fileNameOnly" --permissions=r --output=tsv`
+storageSas=`az storage blob generate-sas --connection-string="$accountConnString" --container-name="$containerName" --name="$fileNameOnly" --permissions=r --output=tsv`
+storageSas="https://$storageAccountName.blob.core.windows.net/$containerName/$fileNameOnly?$storageSas"
 echo "Created shared access storage signature. Please use this for downloading the file!"
 echo $storageSas
 
-echo "Now creating sample azuredeploy.sample.parameters.json..."
-cat azuredeploy.parameters.json \
-| sed -e "s/urltohxetgzdownload/$storageSas" \
->> azuredeploy.sample.parameters.json
-echo "azuredeploy.sample.parameters.json with corret SAS-URL generated."
-echo "Please adjust the other parameters in this file."
+echo "Update your azuredeploy.parameters.json with this URL for downloading the HXE Setup Files with the custom script!"
 echo "Then continue with az group create and az group deployment create!"
 echo "Thank You!"
