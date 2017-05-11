@@ -18,10 +18,10 @@ masterPwd=$2
 #
 # First get the OS to the laste patch grade
 #
-zypper -n update
-for svc in `zypper ps --short --print "%s"`; do
-  service $svc restart
-done
+# zypper -n update
+# for svc in `zypper ps --short --print "%s"`; do
+#   service $svc restart
+# done
 
 #
 # Prepare the data disks (defaults to /datadisks/diskx)
