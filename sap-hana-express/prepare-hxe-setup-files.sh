@@ -49,7 +49,7 @@ fi
 # Now upload the HXE setup package to the storage container
 #
 echo "Uploading HANA setup package '$localHxeUrl' to storage container $containerName on storage account $storageAccountName..."
-fileNameOnly=$`basename "$localHxeUrl"`     # Get the pure file name for the local tar archive with HXE setup files
+fileNameOnly=`basename "$localHxeUrl"`     # Get the pure file name for the local tar archive with HXE setup files
 fileNameOnly=${fileNameOnly,,}              # Lower-case the file name
 existingBlob=`az storage blob exists --connection-string="$accountConnString" --container-name="$containerName" --name="$fileNameOnly"`
 if [ "$existingBlob" != "True" ]; then
