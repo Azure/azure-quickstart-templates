@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # NOTE: this script assumes to be executed as administrator (sudo install-hxe.sh "url" "server|all" "master-password")
 
 if [ "${UID}" -ne 0 ];

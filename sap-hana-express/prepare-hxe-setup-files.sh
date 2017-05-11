@@ -1,11 +1,13 @@
+#!/bin/bash
+
 #
 # Uploads the HANA Express Setup .tgz file to an Azure Storage Account and
 # creates a shared access signature that can be used for launching the quick start deployment
 #
 
 resGroupName=$1
-storageAccountName=$2
-containerName=$3
+storageAccountName=${2,,}   # ToLowerCase the storage account name
+containerName=${3,,}        # ToLowerCase the container name
 location=$4
 localHxeUrl=$5
 
@@ -47,3 +49,23 @@ fi
 # Now upload the HXE setup package to the storage container
 #
 echo "Uploading HANA setup package '$localHxeUrl' to storage container $containerName on storage account $storageAccountName..."
+fileNameOnly=$`basename "$localHxeUrl"`     # Get the pure file name for the local tar archive with HXE setup files
+fileNameOnly=${fileNameOnly,,}              # Lower-case the file name
+az storage blob upload --connection-string="$accountConnString" --container-name="$containerName" --name="$fileNameOnly" --file="$localHxeUrl"
+echo "Upload completed!"
+
+#
+# Finally we need a shared access signature for the blob just uploaded to the storage account
+#
+storageSas=`az storage blob generate-sas --connection-string="$accountConnString" --containerName="$containerName" --name="$fileNameOnly" --permissions=r --output=tsv`
+echo "Created shared access storage signature. Please use this for downloading the file!"
+echo $storageSas
+
+echo "Now creating sample azuredeploy.sample.parameters.json..."
+cat azuredeploy.parameters.json \
+| sed -e "s/urltohxetgzdownload/$storageSas" \
+>> azuredeploy.sample.parameters.json
+echo "azuredeploy.sample.parameters.json with corret SAS-URL generated."
+echo "Please adjust the other parameters in this file."
+echo "Then continue with az group create and az group deployment create!"
+echo "Thank You!"
