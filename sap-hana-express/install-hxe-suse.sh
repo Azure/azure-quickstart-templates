@@ -33,11 +33,8 @@ chmod +x ./vm-disk-utils.sh
 #
 wget --header "Cookie: oraclelicense=accept-secure-backup-cookie" http://download.oracle.com/otn-pub/java/jdk/8u131-b11/d54c1d3a095b4ff2b6607d096fa80163/jre-8u131-linux-x64.tar.gz
 mkdir /usr/java
-chmod 777 /usr/java
-cp ./jre-8u131-linux-x64.tar.gz /usr/java/jre-8u131-linux-x64.tar.gz
-cd /usr/java
-tar -zxvf jre-8u131-linux-x64.tar.gz
-cd ~
+chmod -R 777 /usr/java
+tar -zxvf jre-8u131-linux-x64.tar.gz -C /usr/java
 update-alternatives --install /usr/bin/java java /usr/java/jre1.8.0_131/bin/java 100
 
 #
@@ -53,12 +50,13 @@ zypper -n install libltdl7
 #
 
 # Download and extract the installation files
-wget --output-document="~/hxe.tgz" "$downloadUrl"
-chmod -R 777 ~/hxe.tgz
-tar -xvzf ~/hxe.tgz
+wget --output-document="./hxe.tgz" "$downloadUrl"
+chmod -R 777 ./hxe.tgz
+tar -xvzf ./hxe.tgz
+chmod -R 777 ./HANA_EXPRESS_20
 
 # Compile a parameters file for input
-parametersPrompt="~/HANA_EXPRESS_20\n"                        # Root directory of installation files
+parametersPrompt="./HANA_EXPRESS_20\n"                        # Root directory of installation files
 parametersPrompt="${parametersPrompt}$(hostname)\n"           # The hostname needed for HANA
 parametersPrompt="${parametersPrompt}HXE\n"                   # System ID of the HANA installation (aligned with tutorials)
 parametersPrompt="${parametersPrompt}00\n"                    # Instance number, aligned with the ports opened as per ARM template
@@ -67,4 +65,6 @@ parametersPrompt="${parametersPrompt}${masterPwd}\n"          # Master password 
 parametersPrompt="${parametersPrompt}Y\n"                     # Confirm the installation
 
 # Start the installation procedure (set the alias for HANA 2.0 SPS01)
-printf "$parametersPrompt" | ~/setup_hxe.sh
+printf "$parametersPrompt" | ./setup_hxe.sh
+
+exit
