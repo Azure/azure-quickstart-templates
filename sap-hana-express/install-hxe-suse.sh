@@ -57,7 +57,7 @@ tar -xvzf ./hxe.tgz -C /usr/hana
 chmod -R 775 /usr/hana
 
 # Compile a parameters file for input
-parametersPrompt="/usr/hana/HANA_EXPRESS_20\n"                       # Root directory of installation files
+parametersPrompt="/usr/hana/HANA_EXPRESS_20\n"                # Root directory of installation files
 parametersPrompt="${parametersPrompt}$(hostname)\n"           # The hostname needed for HANA
 parametersPrompt="${parametersPrompt}HXE\n"                   # System ID of the HANA installation (aligned with tutorials)
 parametersPrompt="${parametersPrompt}00\n"                    # Instance number, aligned with the ports opened as per ARM template
@@ -68,4 +68,9 @@ parametersPrompt="${parametersPrompt}Y\n"                     # Confirm the inst
 # Start the installation procedure (set the alias for HANA 2.0 SPS01)
 printf "$parametersPrompt" | /usr/hana/setup_hxe.sh
 
-exit
+# Prompt a final message that all went well
+echo ""
+echo "------------------------------------"
+echo "Successfully installed HANA Express!"
+echo "------------------------------------"
+exit 0

@@ -1,0 +1,49 @@
+#
+# Uploads the HANA Express Setup .tgz file to an Azure Storage Account and
+# creates a shared access signature that can be used for launching the quick start deployment
+#
+
+resGroupName=$1
+storageAccountName=$2
+containerName=$3
+location=$4
+localHxeUrl=$5
+
+#
+# Only continue if the local file exists
+#
+if [ ! -f "$localHxeUrl" ]; then
+    echo "Local HXE Setup TAR-archive with name $localHxeUrl does not exist. Please download the file to your local machine and specify the full path to the HANA Express TAR Setup archive (i.e. ~/hxe.tgz) archive!"
+    exit -10
+fi
+
+#
+# First, try to get the storage account with the name specified above
+#
+echo "Checking if storage account $storageAccountName exists in resource group $resGroupName..."
+foundAccount=`az storage account show --name="$storageAccountName" --resource-group="$resGroupName" --output=tsv`
+if [ "$foundAccount"  == "" ]; then
+    echo "Storage account does not exist, creating one..."
+    az storage account create --name="$storageAccountName" --resource-group="$resGroupName" --location="$location" --sku="Standard_LRS"
+else
+    echo "Storage account found!"
+fi
+echo "Retrieving storage account connection string..."
+accountConnString=`az storage account show-connection-string --name="$storageAccountName" --resource-group="$resGroupName" --output=tsv`
+
+#
+# Create a container if needed
+#
+echo "Checking if container $containerName exists in Storage Account $storageAccountName..."
+containerExists=`az storage container exists --name="$containerName" --connection-string="$accountConnString" --output=tsv`
+if [ "$containerExists" != "True" ]; then
+    echo "Container does not exist, creating it..."
+    az storage container create --name="$containerName" --connection-string="$accountConnString"
+else
+    echo "Container exists, using it!"
+fi
+
+#
+# Now upload the HXE setup package to the storage container
+#
+echo "Uploading HANA setup package '$localHxeUrl' to storage container $containerName on storage account $storageAccountName..."
