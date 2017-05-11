@@ -1,0 +1,228 @@
+{  
+   "$schema":"http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+   "contentVersion":"1.0.0.0",
+   "parameters":{  
+      "siteName":{  
+         "type":"string",
+         "metadata":{  
+            "description":"Name of azure web app"
+         }
+      },
+      "sku":{  
+         "type":"string",
+         "allowedValues":[  
+            "Free",
+            "Shared",
+            "Basic",
+            "Standard",
+            "Premium"
+         ],
+         "defaultValue":"Standard",
+         "metadata":{  
+            "description":"App Service Pricing tier"
+         }
+      },
+      "administratorLogin":{  
+         "type":"string",
+         "minLength":1,
+         "maxLength":16,
+         "metadata":{  
+            "description":"Database administrator login name"
+         }
+      },
+      "administratorLoginPassword":{  
+         "type":"string",
+         "minLength":8,
+         "maxLength":128,
+         "metadata":{  
+            "description":"Database administrator password"
+         }
+      },
+      "skuCapacityDTU":{  
+         "type":"int",
+         "allowedValues":[  
+            50,
+            100
+         ],
+         "defaultValue":50,
+         "metadata":{  
+            "description":"Azure database for MySQL pricing tier"
+         }
+      },
+      "skuFamily":{  
+         "type":"string",
+         "allowedValues":[  
+            "SkuFamily"
+         ],
+         "defaultValue":"SkuFamily",
+         "metadata":{  
+            "description":"Azure database for MySQL SKU family"
+         }
+      },
+      "skuName":{  
+         "type":"string",
+         "allowedValues":[  
+            "MYSQLS3M100",
+            "MYSQLS2M50"
+         ],
+         "defaultValue":"MYSQLS2M50",
+         "metadata":{  
+            "description":"Azure database for MySQL sku name"
+         }
+      },
+      "skuSizeMB":{  
+         "type":"int",
+         "allowedValues":[  
+            102400,
+            51200
+         ],
+         "defaultValue":51200,
+         "metadata":{  
+            "description":"Azure database for PostgreSQL Sku Size "
+         }
+      },
+      "skuTier":{  
+         "type":"string",
+         "allowedValues":[  
+            "Basic"
+         ],
+         "defaultValue":"Basic",
+         "metadata":{  
+            "description":"Azure database for PostgreSQL pricing tier"
+         }
+      },
+      "version":{  
+         "type":"string",
+         "allowedValues":[  
+            "9.5"
+         ],
+         "defaultValue":"9.5",
+         "metadata":{  
+            "description":"PostgreSQL version"
+         }
+      },
+      "firewallRuleName":{  
+         "type":"string",
+         "minLength":1,
+         "maxLength":128,
+         "defaultValue":"AllowAll",
+         "metadata":{  
+            "description":"Firewall rule name"
+         }
+      },
+      "firewallStartIpAddress":{  
+         "type":"string",
+         "minLength":1,
+         "maxLength":15,
+         "defaultValue":"0.0.0.0",
+         "metadata":{  
+            "description":"Firewall rule start IP address"
+         }
+      },
+      "firewallEndIpAddress":{  
+         "type":"string",
+         "minLength":1,
+         "maxLength":15,
+         "defaultValue":"255.255.255.255",
+         "metadata":{  
+            "description":"Firewall rule end IP address."
+         }
+      }
+   },
+   "variables":{  
+      "databaseName":"[concat(parameters('appName'), 'database')]",
+      "serverName":"[concat(parameters('appName'), 'pgserver')]"
+   },
+   "resources":[  
+      {  
+         "apiVersion":"2014-06-01",
+         "name":"[parameters('hostingPlanName')]",
+         "type":"Microsoft.Web/serverfarms",
+         "location":"[resourceGroup().location]",
+         "properties":{  
+            "name":"[parameters('hostingPlanName')]",
+            "sku":"[parameters('sku')]",
+            "workerSize":"1",
+            "hostingEnvironment":"",
+            "numberOfWorkers":0
+         }
+      },
+      {  
+         "apiVersion":"2015-02-01",
+         "name":"[parameters('siteName')]",
+         "type":"Microsoft.Web/sites",
+         "location":"[resourceGroup().location]",
+         "dependsOn":[  
+            "[concat('Microsoft.Web/serverfarms/', parameters('hostingPlanName'))]"
+         ],
+         "properties":{  
+            "name":"[parameters('siteName')]",
+            "serverFarmId":"[parameters('hostingPlanName')]",
+            "hostingEnvironment":""
+         },
+         "resources":[  
+            {  
+               "apiVersion":"2015-04-01",
+               "name":"connectionstrings",
+               "type":"config",
+               "dependsOn":[  
+                  "[concat('Microsoft.Web/sites/', parameters('siteName'))]"
+               ],
+               "properties":{  
+                  "defaultConnection":{  
+                     "value":"[concat('Database=', variables('databaseName'), ';Data Source=', variables('serverName'), '.database.windows.net;User Id=', parameters('administratorLogin'),'@', variables('serverName'),';Password=', parameters('administratorLoginPassword'))]",
+                     "type":"MySQL"
+                  }
+               }
+            }
+         ]
+      },
+      {  
+         "apiVersion":"2016-02-01-privatepreview",
+         "kind":"",
+         "location":"[resourceGroup().location]",
+         "name":"[variables('serverName')]",
+         "properties":{  
+            "version":"[parameters('version')]",
+            "administratorLogin":"[parameters('administratorLogin')]",
+            "administratorLoginPassword":"[parameters('administratorLoginPassword')]",
+            "storageMB":"[parameters('skuSizeMB')]"
+         },
+         "sku":{  
+            "name":"[parameters('skuName')]",
+            "tier":"[parameters('skuTier')]",
+            "capacity":"[parameters('skuCapacityDTU')]",
+            "size":"[parameters('skuSizeMB')]",
+            "family":"[parameters('skuFamily')]"
+         },
+         "type":"Microsoft.DBforPostgreSQL/servers",
+         "resources":[  
+            {  
+               "type":"firewallrules",
+               "apiVersion":"2016-02-01-privatepreview",
+               "dependsOn":[  
+                  "[concat('Microsoft.DBforPostgreSQL/servers/', variables('serverName'))]"
+               ],
+               "location":"[resourceGroup().location]",
+               "name":"[parameters('firewallRuleName')]",
+               "properties":{  
+                  "startIpAddress":"[parameters('firewallStartIpAddress')]",
+                  "endIpAddress":"[parameters('firewallEndIpAddress')]"
+               }
+            },
+            {  
+               "name":"[variables('databaseName')]",
+               "type":"databases",
+               "apiVersion":"2016-02-01-privatepreview",
+               "properties":{  
+                  "charset":"utf8",
+                  "collation":"English_United States.1252"
+               },
+               "dependsOn":[  
+                  "[concat('Microsoft.DBforPostgreSQL/servers/', variables('serverName'))]"
+               ]
+            }
+         ]
+      }
+   ]
+}
