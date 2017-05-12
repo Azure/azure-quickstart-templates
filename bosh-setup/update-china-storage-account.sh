@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
 
+if [[ $# -ne 1 || -z "$1" ]]; then
+    echo "Usage: ./update-china-storage-account.sh <template-version>. For example: ./update-china-storage-account.sh v1-0-0"
+    exit 1
+fi
+
+set -e
+
 # The template version should be same as variables('templateVersion') in azuredeploy.json
 template_version="$1"
 container_name="bosh-setup"
@@ -11,3 +18,4 @@ for directory in $directories; do
     fi
   done
 done
+

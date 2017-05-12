@@ -5,6 +5,7 @@ source utils.sh
 echo "Start to update package lists from repositories..."
 retryop "apt-get update"
 
+echo "Start to install prerequisites..." 
 retryop "apt-get -y install build-essential ruby2.0 ruby2.0-dev libxml2-dev libsqlite3-dev libxslt1-dev libpq-dev libmysqlclient-dev zlibc zlib1g-dev openssl libxslt-dev libssl-dev libreadline6 libreadline6-dev libyaml-dev sqlite3 libffi-dev python-dev python-pip jq"
 
 set -e
@@ -61,7 +62,7 @@ environment=$(get_setting ENVIRONMENT)
 set +e
 
 echo "Start to install python packages..."
-pkg_list="msrest==0.4.4 msrestazure==0.4.4 requests==2.11.1 azure==2.0.0rc1 netaddr==0.7.18"
+pkg_list="pip==1.5.4 setuptools==32.3.1 msrest==0.4.4 msrestazure==0.4.4 requests==2.11.1 azure==2.0.0rc1 netaddr==0.7.18 PyGreSQL==5.0.2"
 if [ "$environment" = "AzureChinaCloud" ]; then
   for pkg in $pkg_list; do
     retryop "pip install $pkg --index-url https://mirror.azure.cn/pypi/simple/ --default-timeout=60"
@@ -123,4 +124,10 @@ fi
 
 echo "Start to run deploy_bosh.sh..."
 su -c "./deploy_bosh.sh" - $username
+
+if [ "$environment" = "AzureChinaCloud" ]; then 
+  echo "Start to inject some xip.io records to PowerDNS on BOSH VM..." 
+  python inject_xip_io_records.py "$home_dir/bosh.yml" "$home_dir/settings" 
+fi 
+
 echo "Finish"
