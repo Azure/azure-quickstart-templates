@@ -1,0 +1,403 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmSize": {
+      "type": "string",
+      "allowedValues": [
+        "Standard_A5",
+        "Standard_A8",
+        "Standard_D4",
+        "Standard_D14",
+        "Standard_DS4",
+        "Standard_DS14",
+        "Standard_D3_v2",
+        "Standard_D15_v2",
+        "Standard_DS3_v2",
+        "Standard_DS15_v2"
+      ],
+      "defaultValue": "Standard_DS4",
+      "metadata": {
+        "description": "Size of the VM that runs the test."
+      }
+    },
+    "dataDiskHostCaching": {
+      "type": "string",
+      "defaultValue": "ReadOnly",
+      "allowedValues": [
+        "",
+        "ReadOnly",
+        "ReadWrite"
+      ],
+      "metadata": {
+        "description": "Data disk caching type for the test disk."
+      }
+    },
+    "diskSizeGB": {
+      "type": "string",
+      "allowedValues": [
+        "128",
+        "512",
+        "1023"
+      ],
+      "defaultValue": "1023",
+      "metadata": {
+        "description": "Disk size in GB."
+      }
+    },
+    "disksInRAID": {
+      "type": "int",
+      "defaultValue": 5,
+      "minValue": 1,
+      "maxValue": 10,
+      "metadata": {
+        "description": "Number of disks striped in RAID. Should not be greater than selected instance type allows."
+      }
+    },
+    "testType": {
+      "type": "string",
+      "allowedValues": [
+        "read",
+        "write",
+        "randread",
+        "randwrite",
+        "randtrim",
+        "rw",
+        "readwrite",
+        "randrw"
+      ],
+      "defaultValue": "write",
+      "metadata": {
+        "description": "Disk test type to run. (rand: random, sequential otherwise; rw - read/write)."
+      }
+    },
+    "testSize": {
+      "type": "string",
+      "allowedValues": [
+        "32m",
+        "64m",
+        "128m",
+        "256m",
+        "512m",
+        "1g",
+        "2g",
+        "10g",
+        "30g"
+      ],
+      "defaultValue": "1g",
+      "metadata": {
+        "description": "Size of the file to test."
+      }
+    },
+    "testBlockSize": {
+      "type": "string",
+      "allowedValues": [
+        "4k",
+        "8k",
+        "16k",
+        "32k",
+        "64k",
+        "128k",
+        "256k"
+      ],
+      "defaultValue": "64k",
+      "metadata": {
+        "description": "Size of the block to test."
+      }
+    },
+    "secondsToRunTest": {
+      "type": "int",
+      "defaultValue": 30,
+      "metadata": {
+        "description": "Number of seconds for the test to run."
+      }
+    },
+    "threadsToRunTest": {
+      "type": "int",
+      "defaultValue": 8,
+      "minValue": 1,
+      "maxValue": 10,
+      "metadata": {
+        "description": "Number of worker threads for the test to run."
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Username for the test VMs."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the test VMs."
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/managed-disk-raid-performance-meter"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    }
+  },
+  "variables": {
+    "osVersion": "14.04.5-LTS",
+    "imagePublisher": "Canonical",
+    "imageOffer": "UbuntuServer",
+    "nicName": "testVMNic",
+    "addressPrefix": "10.0.0.0/16",
+    "subnetName": "Subnet",
+    "subnetPrefix": "10.0.0.0/24",
+    "storageAccountType": "Standard_LRS",
+    "publicIPAddressName": "publicIP",
+    "virtualNetworkName": "testVNET",
+    "scriptFolder": "scripts",
+    "storageAccountName": "[concat(uniqueString(resourceGroup().id), 'storage')]",
+    "frontEndNSGName": "[concat('webtestnsg-', uniqueString(resourceGroup().id))]",
+    "vmName": "testVM",
+    "testScriptFileName": "disktest.sh",
+    "diskArray": [
+      {
+        "diskSizeGB": "[parameters('diskSizeGB')]",
+        "lun": 0,
+        "caching": "[parameters('dataDiskHostCaching')]",
+        "createOption": "Empty"
+      },
+      {
+        "diskSizeGB": "[parameters('diskSizeGB')]",
+        "lun": 1,
+        "caching": "[parameters('dataDiskHostCaching')]",
+        "createOption": "Empty"
+      },
+      {
+        "diskSizeGB": "[parameters('diskSizeGB')]",
+        "lun": 2,
+        "caching": "[parameters('dataDiskHostCaching')]",
+        "createOption": "Empty"
+      },
+      {
+        "diskSizeGB": "[parameters('diskSizeGB')]",
+        "lun": 3,
+        "caching": "[parameters('dataDiskHostCaching')]",
+        "createOption": "Empty"
+      },
+      {
+        "diskSizeGB": "[parameters('diskSizeGB')]",
+        "lun": 4,
+        "caching": "[parameters('dataDiskHostCaching')]",
+        "createOption": "Empty"
+      },
+      {
+        "diskSizeGB": "[parameters('diskSizeGB')]",
+        "lun": 5,
+        "caching": "[parameters('dataDiskHostCaching')]",
+        "createOption": "Empty"
+      },
+      {
+        "diskSizeGB": "[parameters('diskSizeGB')]",
+        "lun": 6,
+        "caching": "[parameters('dataDiskHostCaching')]",
+        "createOption": "Empty"
+      },
+      {
+        "diskSizeGB": "[parameters('diskSizeGB')]",
+        "lun": 7,
+        "caching": "[parameters('dataDiskHostCaching')]",
+        "createOption": "Empty"
+      },
+      {
+        "diskSizeGB": "[parameters('diskSizeGB')]",
+        "lun": 8,
+        "caching": "[parameters('dataDiskHostCaching')]",
+        "createOption": "Empty"
+      },
+      {
+        "diskSizeGB": "[parameters('diskSizeGB')]",
+        "lun": 9,
+        "caching": "[parameters('dataDiskHostCaching')]",
+        "createOption": "Empty"
+      }
+    ]
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('storageAccountName')]",
+      "apiVersion": "2016-01-01",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "[variables('storageAccountType')]"
+      },
+      "kind": "Storage"
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIPAddressName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic"
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nicName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[variables('publicIPAddressName')]",
+        "[variables('virtualNetworkName')]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
+              },
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('frontEndNSGName')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "NSG"
+      },
+      "dependsOn": [
+        "[variables('publicIPAddressName')]"
+      ],
+      "properties": {
+        "securityRules": [
+          {
+            "name": "ssh-rule",
+            "properties": {
+              "description": "Allow SSH",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "Internet",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2016-04-30-preview",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('vmName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[variables('storageAccountName')]",
+        "[variables('nicName')]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('vmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('imagePublisher')]",
+            "offer": "[variables('imageOffer')]",
+            "sku": "[variables('osVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          },
+          "dataDisks": "[take(variables('diskArray'),parameters('disksInRAID'))]"
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": "true",
+            "storageUri": "[concat(reference(variables('storageAccountName'), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob)]"
+          }
+        }
+      },
+      "resources": [
+        {
+          "type": "extensions",
+          "name": "CustomScriptExtension",
+          "apiVersion": "2015-06-15",
+          "dependsOn": [
+            "[variables('vmName')]"
+          ],
+          "location": "[resourceGroup().location]",
+          "properties": {
+            "publisher": "Microsoft.OSTCExtensions",
+            "type": "CustomScriptForLinux",
+            "typeHandlerVersion": "1.5",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "fileUris": [
+                "[concat(parameters('_artifactsLocation'), '/', variables('scriptFolder'), '/', variables('testScriptFileName'), parameters('_artifactsLocationSasToken'))]"
+              ],
+              "commandToExecute": "[concat('sudo bash ', variables('testScriptFileName'), ' ', parameters('testSize'), ' ', parameters('testType'), ' ', parameters('secondsToRunTest'), ' ', parameters('threadsToRunTest'), ' ', parameters('testBlockSize'), ' ', parameters('disksInRAID'))]"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": {
+    "testresult": {
+      "type": "string",
+      "value": "[trim(split(reference('CustomScriptExtension').instanceView.statuses[0].message, '\n')[2])]"
+    }
+  }
+}
