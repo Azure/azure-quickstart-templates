@@ -63,7 +63,11 @@ echo "Upload completed!"
 #
 # Finally we need a shared access signature for the blob just uploaded to the storage account
 #
-storageSas=`az storage blob generate-sas --connection-string="$accountConnString" --container-name="$containerName" --name="$fileNameOnly" --permissions=r --output=tsv`
+formattedStartDate="$(date --utc +%Y-%m-%d)T$(date --utc +%H:%M:%S)Z"
+calculatedEndDate=$(date --utc --date="+1 year" +%Y-%m-%d)
+calculatedEndDateHrs=$(date --utc --date="+1 year" +%H:%M:%S)
+formattedEndDate="${calculatedEndDate}T${calculatedEndDateHrs}Z"
+storageSas=`az storage blob generate-sas --connection-string="$accountConnString" --container-name="$containerName" --name="$fileNameOnly" --start="$formattedStartDate" --expiry="$formattedEndDate" --permissions=r --output=tsv`
 storageSas="https://$storageAccountName.blob.core.windows.net/$containerName/$fileNameOnly?$storageSas"
 echo "Created shared access storage signature. Please use this for downloading the file!"
 echo $storageSas
