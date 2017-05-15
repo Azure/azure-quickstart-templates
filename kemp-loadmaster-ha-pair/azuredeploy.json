@@ -1,0 +1,359 @@
+{
+   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+   "contentVersion": "1.0.0.0",
+   "parameters": {
+      "balPassword": {
+         "type": "securestring",
+         "metadata": {
+            "description": "Password for bal account"
+         }
+      }
+   },
+   "variables": {
+      "availabilitySetName": "AvSet",
+      "vmNamePrefix": "KEMPVLM",
+      "loadBalancerName": "AzureLB",
+      "adminUsername": "bal",
+      "storageAccountType": "Standard_LRS",
+      "virtualNetworkName": "VLM_Network",
+      "subnetName": "Subnet1",
+      "vmSize": "Standard_A1",
+      "networkinterfacename": "[concat(variables('vmNamePrefix'),'-NIC')]",
+      "networksecurityname": "[concat(variables('vmNamePrefix'),'-NSG')]",
+      "publicIPAddressName": "[concat(variables('vmNamePrefix'),'-PIP')]",
+      "dnsNameforLBIP": "[concat('vlm',uniqueString(resourceGroup().id))]",
+      "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/Subnets', variables('virtualNetworkName'), variables('subnetName'))]",
+      "numberOfInstances": 2,
+      "lbID": "[resourceId('Microsoft.Network/loadBalancers',variables('loadBalancerName'))]",
+      "imageSKU": "basic-byol",
+      "publicIPAddressType": "Dynamic",
+      "publicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]",
+      "imageOffer": "vlm-azure",
+      "imagePublisher": "kemptech",
+      "imageVersion": "latest",
+      "storageAccountName": "[concat('vhds', uniqueString(resourceGroup().id))]",
+      "frontEndIPConfigID": "[concat(variables('lbID'),'/frontendIPConfigurations/loadBalancerFrontEnd')]",
+      "imageReference": {
+         "publisher": "[variables('imagePublisher')]",
+         "offer": "[variables('imageOffer')]",
+         "sku": "[variables('imageSku')]",
+         "version": "[variables('imageVersion')]"
+      },
+      "imagePlan": {
+         "name": "[variables('imageSku')]",
+         "product": "[variables('imageOffer')]",
+         "publisher": "[variables('imagePublisher')]"
+      }
+   },
+   "resources": [
+      {
+         "type": "Microsoft.Storage/storageAccounts",
+         "name": "[variables('storageAccountName')]",
+         "comments": "This storage account is used to store the VM disks.",
+         "apiVersion": "2016-01-01",
+         "location": "[resourceGroup().location]",
+         "sku": {
+            "name": "Standard_LRS"
+         },
+         "kind": "Storage",
+         "properties": {}
+      },
+      {
+         "apiVersion": "2016-03-30",
+         "type": "Microsoft.Compute/availabilitySets",
+         "name": "[variables('availabilitySetName')]",
+         "comments": "The Availability Set ensures at least one KEMP LoadMaster will be available during either a planned or unplanned maintenance event.",
+         "location": "[resourceGroup().location]"
+      },
+      {
+         "apiVersion": "2015-06-15",
+         "type": "Microsoft.Network/virtualNetworks",
+         "name": "[variables('virtualNetworkName')]",
+         "comments": "This the virtual network that all resources will be deployed to.",
+         "location": "[resourceGroup().location]",
+         "properties": {
+            "addressSpace": {
+               "addressPrefixes": [
+                  "10.0.0.0/16"
+               ]
+            },
+            "subnets": [
+               {
+                  "name": "[variables('subnetName')]",
+                  "properties": {
+                     "addressPrefix": "10.0.2.0/24"
+                  }
+               }
+            ]
+         }
+      },
+      {
+         "apiVersion": "2015-06-15",
+         "type": "Microsoft.Network/publicIPAddresses",
+         "name": "[variables('publicIPAddressName')]",
+         "comments": "This is the public IP address that will be assigned to the Azure Load Balancer.",
+         "location": "[resourceGroup().location]",
+         "properties": {
+            "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+            "dnsSettings": {
+               "domainNameLabel": "[variables('dnsNameforLBIP')]"
+            }
+         }
+      },
+      {
+         "apiVersion": "2015-06-15",
+         "type": "Microsoft.Network/networkSecurityGroups",
+         "name": "[variables('networksecurityname')]",
+         "comments": "This Network Security Group (NSG) will limit the TCP ports open to the KEMP LoadMasters.",
+         "location": "[resourceGroup().location]",
+         "tags": {
+            "displayName": "[variables('networksecurityname')]"
+         },
+         "properties": {
+            "securityRules": [
+               {
+                  "name": "wui-rule",
+                  "properties": {
+                     "description": "Allow WUI",
+                     "protocol": "Tcp",
+                     "sourcePortRange": "*",
+                     "destinationPortRange": "8443",
+                     "sourceAddressPrefix": "*",
+                     "destinationAddressPrefix": "*",
+                     "access": "Allow",
+                     "priority": 100,
+                     "direction": "Inbound"
+                  }
+               },
+               {
+                  "name": "ssh-rule",
+                  "properties": {
+                     "description": "Allow SSH",
+                     "protocol": "Tcp",
+                     "sourcePortRange": "*",
+                     "destinationPortRange": "22",
+                     "sourceAddressPrefix": "*",
+                     "destinationAddressPrefix": "*",
+                     "access": "Allow",
+                     "priority": 101,
+                     "direction": "Inbound"
+                  }
+               },
+               {
+                  "name": "ssl-rule",
+                  "properties": {
+                     "description": "Allow SSL",
+                     "protocol": "Tcp",
+                     "sourcePortRange": "*",
+                     "destinationPortRange": "443",
+                     "sourceAddressPrefix": "*",
+                     "destinationAddressPrefix": "*",
+                     "access": "Allow",
+                     "priority": 103,
+                     "direction": "Inbound"
+                  }
+               },
+               {
+                  "name": "web-rule",
+                  "properties": {
+                     "description": "Allow WEB",
+                     "protocol": "Tcp",
+                     "sourcePortRange": "*",
+                     "destinationPortRange": "80",
+                     "sourceAddressPrefix": "*",
+                     "destinationAddressPrefix": "*",
+                     "access": "Allow",
+                     "priority": 104,
+                     "direction": "Inbound"
+                  }
+               }
+            ]
+         }
+      },
+      {
+         "apiVersion": "2015-06-15",
+         "type": "Microsoft.Network/networkInterfaces",
+         "name": "[concat(variables('networkinterfacename'), copyindex())]",
+         "comments": "A Network Interface will be created for each of the KEMP LoadMasters.",
+         "location": "[resourceGroup().location]",
+         "copy": {
+            "name": "nicLoop",
+            "count": "[variables('numberOfInstances')]"
+         },
+         "dependsOn": [
+            "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+            "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]",
+            "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerName'), '/inboundNatRules/', 'VLM-MGMT', copyIndex())]",
+            "[concat('Microsoft.Network/networkSecurityGroups/', variables('networksecurityname'))]"
+         ],
+         "properties": {
+            "ipConfigurations": [
+               {
+                  "name": "ipconfig1",
+                  "properties": {
+                     "privateIPAllocationMethod": "Dynamic",
+                     "subnet": {
+                        "id": "[variables('subnetRef')]"
+                     },
+                     "networkSecurityGroup": {
+                        "id": "[resourceId('Microsoft.Network/networkSecurityGroups/', variables('networksecurityname'))]"
+                     },
+                     "loadBalancerBackendAddressPools": [
+                        {
+                           "id": "[concat(variables('lbID'), '/backendAddressPools/BackendPool1')]"
+                        }
+                     ],
+                     "loadBalancerInboundNatRules": [
+                        {
+                           "id": "[concat(variables('lbID'),'/inboundNatRules/VLM-MGMT', copyindex())]"
+                        }
+                     ]
+                  }
+               }
+            ]
+         }
+      },
+      {
+         "apiVersion": "2015-06-15",
+         "type": "Microsoft.Network/loadBalancers",
+         "name": "[variables('loadBalancerName')]",
+         "comments": "This Azure Load Balancer will be used to direct traffic to the active KEMP LoadMaster in the HA Pair.",
+         "location": "[resourceGroup().location]",
+         "dependsOn": [
+            "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
+            "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
+         ],
+         "properties": {
+            "frontendIPConfigurations": [
+               {
+                  "name": "LoadBalancerFrontend",
+                  "properties": {
+                     "publicIPAddress": {
+                        "id": "[variables('publicIPAddressID')]"
+                     }
+                  }
+               }
+            ],
+            "backendAddressPools": [
+               {
+                  "name": "BackendPool1"
+               }
+            ],
+            "loadBalancingRules": [
+               {
+                  "properties": {
+                     "frontendIPConfiguration": {
+                        "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName')), '/frontendIpConfigurations/LoadBalancerFrontend')]"
+                     },
+                     "backendAddressPool": {
+                        "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName')), '/backendAddressPools/BackendPool1')]"
+                     },
+                     "probe": {
+                        "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName')), '/probes/VLM-Health-Probe')]"
+                     },
+                     "protocol": "Tcp",
+                     "frontendPort": 8444,
+                     "backendPort": 8444,
+                     "idleTimeoutInMinutes": 15
+                  },
+                  "Name": "HealthCheck"
+               }
+            ],
+            "probes": [
+               {
+                  "properties": {
+                     "protocol": "http",
+                     "port": 8444,
+                     "requestPath": "/",
+                     "intervalInSeconds": 5,
+                     "numberOfProbes": 2
+                  },
+                  "name": "VLM-Health-Probe"
+               }
+            ]
+         }
+      },
+      {
+         "apiVersion": "2015-06-15",
+         "type": "Microsoft.Network/loadBalancers/inboundNatRules",
+         "name": "[concat(variables('loadBalancerName'), '/', 'VLM-MGMT', copyIndex())]",
+         "comments": "This will create inbound rules to access the KEMP LoadMaster web user interface (WUI).",
+         "location": "[resourceGroup().location]",
+         "copy": {
+            "name": "lbNatLoop",
+            "count": "[variables('numberOfInstances')]"
+         },
+         "dependsOn": [
+            "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]"
+         ],
+         "properties": {
+            "frontendIPConfiguration": {
+               "id": "[variables('frontEndIPConfigID')]"
+            },
+            "protocol": "tcp",
+            "frontendPort": "[copyIndex(8441)]",
+            "backendPort": 8443,
+            "enableFloatingIP": false
+         }
+      },
+      {
+         "apiVersion": "2015-06-15",
+         "type": "Microsoft.Compute/virtualMachines",
+         "name": "[concat(variables('vmNamePrefix'), copyindex())]",
+         "comments": "This will create two KEMP LoadMasters.",
+         "plan": "[variables('imagePlan')]",
+         "copy": {
+            "name": "virtualMachineLoop",
+            "count": "[variables('numberOfInstances')]"
+         },
+         "location": "[resourceGroup().location]",
+         "dependsOn": [
+            "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+            "[concat('Microsoft.Network/networkInterfaces/', variables('networkInterfaceName'), copyindex())]",
+            "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
+         ],
+         "properties": {
+            "availabilitySet": {
+               "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('availabilitySetName'))]"
+            },
+            "hardwareProfile": {
+               "vmSize": "[variables('vmSize')]"
+            },
+            "osProfile": {
+               "computerName": "[concat(variables('vmNamePrefix'), copyIndex())]",
+               "adminUsername": "[variables('adminUsername')]",
+               "adminPassword": "[parameters('balPassword')]"
+            },
+            "storageProfile": {
+               "imageReference": {
+                  "publisher": "[variables('imagePublisher')]",
+                  "offer": "[variables('imageOffer')]",
+                  "sku": "[variables('imageSKU')]",
+                  "version": "[variables('imageVersion')]"
+               },
+               "osDisk": {
+                  "name": "osdisk",
+                  "vhd": {
+                     "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName')),'2016-01-01').primaryEndpoints.blob, 'vhds/osdisk', copyindex(), '.vhd')]"
+                  },
+                  "caching": "ReadWrite",
+                  "createOption": "FromImage"
+               }
+            },
+            "networkProfile": {
+               "networkInterfaces": [
+                  {
+                     "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('networkInterfaceName'),copyindex()))]"
+                  }
+               ]
+            }
+         }
+      }
+   ],
+   "outputs": {
+      "FQDN": {
+         "type": "string",
+         "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName')),'2015-06-15').dnsSettings.fqdn]"
+      }
+   }
+}
