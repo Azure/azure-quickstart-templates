@@ -1,7 +1,7 @@
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmszcool%2Fazure-quickstart-templates%2Fmszcool-hanaexpress-localurls%2Fsap-hana-express%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsap-hana-express%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fmszcool%2Fazure-quickstart-templates%2Fmszcool-hanaexpress-localurls%2Fsap-hana-express%2Fazuredeploy.json" target="_blank">
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsap-hana-express%2Fazuredeploy.json" target="_blank">
   <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
@@ -16,13 +16,13 @@ Follow these steps to use this quick-start
 
 2. Register for HANA Express and use the "Download Manager" Option as shown below:
 
-    ![HANA Express Registration](https://raw.githubusercontent.com/mszcool/azure-quickstart-templates/mszcool-hanaexpress-localurls/sap-hana-express/images/Figure01.png)
+    ![HANA Express Registration](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sap-hana-express/images/Figure01.png)
 
-    ![HANA Express Download Manager Option](https://raw.githubusercontent.com/mszcool/azure-quickstart-templates/mszcool-hanaexpress-localurls/sap-hana-express/images/Figure02.png)
+    ![HANA Express Download Manager Option](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sap-hana-express/images/Figure02.png)
 
 3. Select the "Server only virtual machine" option and save the ".tgz" TAR-archive to your local machine.
 
-    ![HANA Express Server Only Download Option](https://raw.githubusercontent.com/mszcool/azure-quickstart-templates/mszcool-hanaexpress-localurls/sap-hana-express/images/Figure03.png)
+    ![HANA Express Server Only Download Option](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sap-hana-express/images/Figure03.png)
 
 4. Create a new Azure Resource Group, e.g. by using the Azure CLI as shown in the snippet below.
 
