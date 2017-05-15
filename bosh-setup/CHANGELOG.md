@@ -1,3 +1,9 @@
+# v2.6.0 (2017-5-15)
+
+- Upgrade Azure CPI version to v24. Please see new features in [bosh-azure-cpi-release v24](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v24)
+- Upgrade bosh stemcell to v3363.22
+- Change the account type of the default storage account to `Standard_LRS`.
+
 # v2.5.0 (2017-3-20)
 
 - Support AzureGermanCloud
