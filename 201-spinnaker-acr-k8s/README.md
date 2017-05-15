@@ -18,7 +18,7 @@ This template allows you to deploy an instance of Spinnaker on a Linux Ubuntu 14
     ```bash
     az login
     az account set --subscription <Subscription ID>
-    az ad sp create-for-rbac --role="Contributor" --scopes="/subscriptions/<Subscription ID>" --name "Spinnaker"
+    az ad sp create-for-rbac --name "Spinnaker"
     ```
     > NOTE: You can run `az account list` after you login to get a list of subscription IDs for your account.
 
@@ -30,7 +30,7 @@ Install Putty or use any bash shell for Windows (if using a bash shell, follow t
 
 Run this command:
 ```
-putty.exe -ssh -L 9000:localhost:9000 -L 8084:localhost:8084 -L 8001:localhost:8001 <User name>@<Public DNS name of instance you just created>
+putty.exe -ssh -i <path to private key file> -L 9000:localhost:9000 -L 8084:localhost:8084 -L 8001:localhost:8001 <User name>@<Public DNS name of instance you just created>
 ```
 
 Or follow these manual steps:
@@ -43,7 +43,7 @@ Or follow these manual steps:
 ### If you are using Linux or Mac:
 Run this command:
 ```bash
-ssh -L 9000:localhost:9000 -L 8084:localhost:8084 -L 8001:localhost:8001 <User name>@<Public DNS name of instance you just created>
+ssh -i <path to private key file> -L 9000:localhost:9000 -L 8084:localhost:8084 -L 8001:localhost:8001 <User name>@<Public DNS name of instance you just created>
 ```
 > NOTE: Port 9000 and 8084 correspond to Spinnaker's deck and gate services, respectively. Port 8001 is used to view the dashboard for your Kubernetes cluster - just run `kubectl proxy` on the VM before navigating to http://localhost:8001 on your local machine.
 
