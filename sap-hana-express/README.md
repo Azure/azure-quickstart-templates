@@ -9,8 +9,8 @@ This template deploys a single virtual machine instance and installs SAP HANA Ex
 
 -----------
 
-Follow these steps to use this quick-start
-==========================================
+Follow the steps below to use this quick-start
+==============================================
 
 1. Navigate to <https://www.sap.com/developer/topics/sap-hana-express.html>
 
