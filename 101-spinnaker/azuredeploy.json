@@ -30,8 +30,9 @@
     "publicIPAddressName": "[concat(variables('resourcePrefix'), 'PublicIP')]",
     "vmStorageAccountContainerName": "vhds",
     "vmName": "[concat(variables('resourcePrefix'), 'VM')]",
+    "vmExtensionName": "[concat(variables('resourcePrefix'), 'Init')]",
     "virtualNetworkName": "[concat(variables('resourcePrefix'), 'VNET')]",
-    "_artifactsLocation": "https://raw.githubusercontent.com/azure/azure-devops-utils/v0.8.0/",
+    "_artifactsLocation": "https://raw.githubusercontent.com/Azure/azure-devops-utils/v0.12.0/",
     "_artifactsLocationSasToken": ""
   },
   "resources": [
@@ -162,30 +163,32 @@
             "storageUri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2016-01-01').primaryEndpoints.blob)]"
           }
         }
-      }
-    },
-    {
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('vmName'), '/downloadinitscript')]",
-      "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
-      ],
-      "properties": {
-        "publisher": "Microsoft.Azure.Extensions",
-        "type": "CustomScript",
-        "typeHandlerVersion": "2.0",
-        "autoUpgradeMinorVersion": true,
-        "settings": {
-          "fileUris": [
-            "[concat(variables('_artifactsLocation'), 'spinnaker/install_spinnaker/install_spinnaker.sh', variables('_artifactsLocationSasToken'))]"
-          ]
-        },
-        "protectedSettings": {
-          "commandToExecute": "[concat('./install_spinnaker.sh', ' -san \"', variables('storageAccountName'), '\" -sak \"', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2016-01-01').keys[0].value, '\" -al \"', variables('_artifactsLocation'), '\" -st \"', variables('_artifactsLocationSasToken'), '\"')]"
+      },
+      "resources": [
+        {
+          "type": "extensions",
+          "name": "[variables('vmExtensionName')]",
+          "apiVersion": "2015-06-15",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Azure.Extensions",
+            "type": "CustomScript",
+            "typeHandlerVersion": "2.0",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "fileUris": [
+                "[concat(variables('_artifactsLocation'), 'spinnaker/install_spinnaker/install_spinnaker.sh', variables('_artifactsLocationSasToken'))]"
+              ]
+            },
+            "protectedSettings": {
+              "commandToExecute": "[concat('./install_spinnaker.sh', ' -san \"', variables('storageAccountName'), '\" -sak \"', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2016-01-01').keys[0].value, '\" -al \"', variables('_artifactsLocation'), '\" -st \"', variables('_artifactsLocationSasToken'), '\"')]"
+            }
+          }
         }
-      }
+      ]
     }
   ],
   "outputs": {

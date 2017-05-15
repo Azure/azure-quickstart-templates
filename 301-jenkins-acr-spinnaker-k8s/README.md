@@ -20,10 +20,10 @@ The Jenkins instance will include a basic pipeline that checks out a user-provid
     ```bash
     az login
     az account set --subscription <Subscription ID>
-    az ad sp create-for-rbac --role="Contributor" --scopes="/subscriptions/<Subscription ID>" --name "Spinnaker"
+    az ad sp create-for-rbac --name "Spinnaker"
     ```
     > NOTE: You can run `az account list` after you login to get a list of subscription IDs for your account.
-1. Leave the git repository as the [sample app](https://github.com/lwander/spin-kub-demo) or change it to target your own app's repository. The repo must have a Dockerfile in its root.
+1. Leave the git repository as the [sample app](https://github.com/azure-devops/spin-kub-demo) or change it to target your own app's repository. The repo must have a Dockerfile in its root.
 1. Leave the docker repository as the sample name or change it to the name you desire. A repo with this name will be created in your ACR.
 
 ## C. Setup SSH port forwarding
@@ -36,7 +36,7 @@ Install Putty or use any bash shell for Windows (if using a bash shell, follow t
 
 Run this command:
 ```
-putty.exe -ssh -L 8080:localhost:8080 -L 9000:localhost:9000 -L 8084:localhost:8084 -L 8001:localhost:8001 <User name>@<Public DNS name of instance you just created>
+putty.exe -ssh -i <path to private key file> -L 8080:localhost:8080 -L 9000:localhost:9000 -L 8084:localhost:8084 -L 8001:localhost:8001 <User name>@<Public DNS name of instance you just created>
 ```
 
 Or follow these manual steps:
@@ -49,7 +49,7 @@ Or follow these manual steps:
 ### If you are using Linux or Mac:
 Run this command:
 ```bash
-ssh -L 8080:localhost:8080 -L 9000:localhost:9000 -L 8084:localhost:8084 -L 8001:localhost:8001 <User name>@<Public DNS name of instance you just created>
+ssh -i <path to private key file> -L 8080:localhost:8080 -L 9000:localhost:9000 -L 8084:localhost:8084 -L 8001:localhost:8001 <User name>@<Public DNS name of instance you just created>
 ```
 > NOTE: Port 8080 corresponds to your Jenkins instance. Port 9000 and 8084 correspond to Spinnaker's deck and gate services, respectively. Port 8001 is used to view the dashboard for your Kubernetes cluster - just run `kubectl proxy` on the VM before navigating to http://localhost:8001 on your local machine.
 
