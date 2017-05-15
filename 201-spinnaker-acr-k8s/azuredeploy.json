@@ -1,0 +1,341 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "User name for the Virtual Machine."
+      }
+    },
+    "sshPublicKey": {
+      "type": "string",
+      "metadata": {
+        "description": "Configure all linux machines with the SSH public key string.  Your key should include three parts, for example 'ssh-rsa AAAAB...snip...UcyupgH azureuser@linuxvm'"
+      }
+    },
+    "spinnakerDnsPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Unique DNS Name for the Public IP used to access the Spinnaker Virtual Machine."
+      }
+    },
+    "servicePrincipalAppId": {
+      "type": "string",
+      "metadata": {
+        "description": "Service Principal App ID (also called Client ID) that has contributor rights to the subscription used for this deployment. It is used by the Kubernetes cluster to dynamically manage resources (e.g. user-defined load balancers)."
+      }
+    },
+    "servicePrincipalAppKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Service Principal App Key (also called Client Secret) that has contributor rights to the subscription used for this deployment. It is used by the Kubernetes cluster to dynamically manage resources (e.g. user-defined load balancers)."
+      }
+    },
+    "kubernetesPipeline": {
+      "type": "string",
+      "allowedValues": [
+        "Include",
+        "Exclude"
+      ],
+      "defaultValue": "Include",
+      "metadata": {
+        "description": "If included, a pipeline will be created in your Spinnaker instance. This also creates a dev (private) load balancer and prod (public) load balancer in your Kubernetes cluster."
+      }
+    },
+    "pipelineRegistry": {
+      "type": "string",
+      "allowedValues": [
+        "<Azure Container Registry created by this template>",
+        "index.docker.io"
+      ],
+      "defaultValue": "index.docker.io",
+      "metadata": {
+        "description": "If including a pipeline, the registry used to trigger the pipeline. You can either target Docker Hub or the Azure Container Registry created by this template."
+      }
+    },
+    "pipelineRepository": {
+      "type": "string",
+      "metadata": {
+        "description": "If including a pipeline, the repository in your registry used to trigger the pipeline. It will only be triggered when a new tag is pushed."
+      },
+      "defaultValue": "lwander/spin-kub-demo"
+    }
+  },
+  "variables": {
+    "resourcePrefix": "spinnaker",
+    "kubernetesName": "[concat('containerservice-', resourceGroup().name)]",
+    "storageAccountName": "[concat(variables('resourcePrefix'), uniquestring(resourceGroup().id))]",
+    "OSDiskName": "[concat(variables('resourcePrefix'), 'OSDisk')]",
+    "nicName": "[concat(variables('resourcePrefix'), 'VMNic')]",
+    "subnetName": "[concat(variables('resourcePrefix'), 'Subnet')]",
+    "publicIPAddressName": "[concat(variables('resourcePrefix'), 'PublicIP')]",
+    "vmStorageAccountContainerName": "vhds",
+    "vmName": "[concat(variables('resourcePrefix'), 'VM')]",
+    "virtualNetworkName": "[concat(variables('resourcePrefix'), 'VNET')]",
+    "vmExtensionName": "[concat(variables('resourcePrefix'), 'Init')]",
+    "acrPrefix": "[uniquestring(resourceGroup().id)]",
+    "acrStorageAccountName": "[concat('registry', uniquestring(resourceGroup().id))]",
+    "kubernetesDnsPrefix": "[concat('k8s', uniquestring(resourceGroup().id))]",
+    "pipelinePort": "8000",
+    "_artifactsLocation": "https://raw.githubusercontent.com/Azure/azure-devops-utils/v0.12.0/",
+    "_extensionScript": "201-spinnaker-acr-k8s.sh",
+    "_artifactsLocationSasToken": ""
+  },
+  "resources": [
+    {
+      "apiVersion": "2016-09-30",
+      "type": "Microsoft.ContainerService/containerServices",
+      "location": "[resourceGroup().location]",
+      "name": "[variables('kubernetesName')]",
+      "properties": {
+        "orchestratorProfile": {
+          "orchestratorType": "Kubernetes"
+        },
+        "masterProfile": {
+          "count": 1,
+          "dnsPrefix": "[concat(variables('kubernetesDnsPrefix'),'mgmt')]"
+        },
+        "agentPoolProfiles": [
+          {
+            "name": "agentpools",
+            "count": 1,
+            "vmSize": "Standard_D2_v2",
+            "dnsPrefix": "[concat(variables('kubernetesDnsPrefix'),'agents')]"
+          }
+        ],
+        "linuxProfile": {
+          "adminUsername": "[parameters('adminUsername')]",
+          "ssh": {
+            "publicKeys": [
+              {
+                "keyData": "[parameters('sshPublicKey')]"
+              }
+            ]
+          }
+        },
+        "servicePrincipalProfile": {
+          "ClientId": "[parameters('servicePrincipalAppId')]",
+          "Secret": "[parameters('servicePrincipalAppKey')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('storageAccountName')]",
+      "apiVersion": "2016-01-01",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "Storage",
+      "properties": {}
+    },
+    {
+      "apiVersion": "2016-09-01",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIPAddressName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('spinnakerDnsPrefix')]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2016-09-01",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.0.0/16"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "10.0.0.0/24"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2016-09-01",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('nicName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
+              },
+              "subnet": {
+                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName')),'/subnets/',variables('subnetName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2016-03-30",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('vmName')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "Standard_D3_v2"
+        },
+        "osProfile": {
+          "computerName": "[variables('vmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": "true",
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
+                  "keyData": "[parameters('sshPublicKey')]"
+                }
+              ]
+            }
+          }
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "Canonical",
+            "offer": "UbuntuServer",
+            "sku": "14.04.5-LTS",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2016-01-01').primaryEndpoints.blob, variables('vmStorageAccountContainerName'), '/', variables('OSDiskName'), '.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": "true",
+            "storageUri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2016-01-01').primaryEndpoints.blob)]"
+          }
+        }
+      },
+      "resources": [
+        {
+          "type": "extensions",
+          "name": "[variables('vmExtensionName')]",
+          "apiVersion": "2015-06-15",
+          "location": "[resourceGroup().location]",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', variables('vmName'))]",
+            "[resourceId('Microsoft.ContainerService/containerServices', variables('kubernetesName'))]",
+            "[resourceId('Microsoft.ContainerRegistry/registries', variables('acrPrefix'))]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.Azure.Extensions",
+            "type": "CustomScript",
+            "typeHandlerVersion": "2.0",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "fileUris": [
+                "[concat(variables('_artifactsLocation'), 'quickstart_template/', variables('_extensionScript'), variables('_artifactsLocationSasToken'))]"
+              ]
+            },
+            "protectedSettings": {
+              "commandToExecute": "[concat('./', variables('_extensionScript'),' -ai \"', parameters('servicePrincipalAppId'), '\" -ak \"', parameters('servicePrincipalAppKey'), '\" -si \"', subscription().subscriptionId, '\" -ti \"', subscription().tenantId, '\" -un \"', parameters('adminUsername'), '\" -rg \"', resourceGroup().name, '\" -mf \"', reference(resourceId('Microsoft.ContainerService/containerServices', variables('kubernetesName'))).masterProfile.fqdn, '\" -san \"', variables('storageAccountName'), '\" -sak \"', listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2016-01-01').keys[0].value, '\" -acr \"', reference(resourceId('Microsoft.ContainerRegistry/registries', variables('acrPrefix'))).loginServer, '\" -ikp $(expr \"', parameters('kubernetesPipeline'), '\" == \"Include\") -prg \"', parameters('pipelineRegistry'), '\" -prp \"', parameters('pipelineRepository'), '\" -pp \"', variables('pipelinePort'), '\" -al \"', variables('_artifactsLocation'), '\" -st \"', variables('_artifactsLocationSasToken'), '\"')]"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('acrStorageAccountName')]",
+      "apiVersion": "2016-01-01",
+      "location": "[resourceGroup().location]",
+      "kind": "Storage",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "properties": {
+        "encryption": {
+          "services": {
+            "blob": {
+              "enabled": true
+            }
+          },
+          "keySource": "Microsoft.Storage"
+        }
+      }
+    },
+    {
+      "name": "[variables('acrPrefix')]",
+      "type": "Microsoft.ContainerRegistry/registries",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2017-03-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('acrStorageAccountName'))]"
+      ],
+      "sku": {
+        "name": "Basic"
+      },
+      "properties": {
+        "adminUserEnabled": false,
+        "storageAccount": {
+          "name": "[variables('acrStorageAccountName')]",
+          "accessKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('acrStorageAccountName')), '2016-01-01').keys[0].value]"
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "spinnakerVmFQDN": {
+      "type": "string",
+      "value": "[reference(variables('publicIPAddressName')).dnsSettings.fqdn]"
+    },
+    "SSH": {
+      "type": "string",
+      "value": "[concat('ssh -L 9000:localhost:9000 -L 8084:localhost:8084 -L 8001:localhost:8001 ', parameters('adminUsername'), '@', reference(variables('publicIPAddressName')).dnsSettings.fqdn)]"
+    },
+    "kubernetesMasterFQDN": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.ContainerService/containerServices', variables('kubernetesName'))).masterProfile.fqdn]"
+    },
+    "kubernetesMasterSsh": {
+      "type": "string",
+      "value": "[concat('ssh ', parameters('adminUsername'), '@', reference(resourceId('Microsoft.ContainerService/containerServices', variables('kubernetesName'))).masterProfile.fqdn)]"
+    },
+    "azureContainerRegistryName": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.ContainerRegistry/registries', variables('acrPrefix'))).loginServer]"
+    }
+  }
+}
