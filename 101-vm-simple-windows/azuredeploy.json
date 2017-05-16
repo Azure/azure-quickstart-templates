@@ -38,6 +38,7 @@
   },
   "variables": {
     "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'sawinvm')]",
+    "dataDiskName": "[concat(variables('vmName'),'-datadisk')]",
     "nicName": "myVMNic",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet",
@@ -58,6 +59,19 @@
       },
       "kind": "Storage",
       "properties": {}
+    },
+    {
+        "apiVersion": "2016-04-30-preview",
+        "type": "Microsoft.Compute/disks",
+        "name": "[variables('dataDiskName')]",
+        "location": "[resourceGroup().location]",
+        "properties": {
+            "creationData": {
+                "createOption": "Empty"
+            },
+            "accountType": "Standard_LRS",
+            "diskSizeGB": 1023
+        }
     },
     {
       "apiVersion": "2016-03-30",
@@ -125,7 +139,8 @@
       "location": "[resourceGroup().location]",
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
-        "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces/', variables('nicName'))]",
+        "[resourceId('Microsoft.Compute/disks/', variables('dataDiskName'))]"
       ],
       "properties": {
         "hardwareProfile": {
@@ -144,13 +159,19 @@
             "version": "latest"
           },
           "osDisk": {
-            "createOption": "FromImage"
+            "createOption": "FromImage",
+            "managedDisk": {
+                "storageAccountType": "Standard_LRS"
+            }
           },
           "dataDisks": [
             {
-              "diskSizeGB": "1023",
               "lun": 0,
-              "createOption": "Empty"
+              "name": "[variables('dataDiskName')]",
+              "createOption": "attach",
+              "managedDisk": {
+                "id": "[resourceId('Microsoft.Compute/disks/', variables('dataDiskName'))]"
+              }
             }
           ]
         },
