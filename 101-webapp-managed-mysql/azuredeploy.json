@@ -7,21 +7,7 @@
          "metadata":{  
             "description":"Name of azure web app"
          }
-      },
-      "sku":{  
-         "type":"string",
-         "allowedValues":[  
-            "Free",
-            "Shared",
-            "Basic",
-            "Standard",
-            "Premium"
-         ],
-         "defaultValue":"Standard",
-         "metadata":{  
-            "description":"App Service Pricing tier"
-         }
-      },
+      },     
       "administratorLogin":{  
          "type":"string",
          "minLength":1,
@@ -37,7 +23,7 @@
             "description":"Database administrator password"
          }
       },
-      "skuCapacityDTU":{  
+      "databaseDTU":{  
          "type":"int",
          "allowedValues":[  
             50,
@@ -47,18 +33,8 @@
          "metadata":{  
             "description":"Azure database for MySQL pricing tier"
          }
-      },
-      "skuFamily":{  
-         "type":"string",
-         "allowedValues":[  
-            "SkuFamily"
-         ],
-         "defaultValue":"SkuFamily",
-         "metadata":{  
-            "description":"Azure database for MySQL SKU family"
-         }
-      },
-      "skuName":{  
+      },      
+      "databaseSkuName":{  
          "type":"string",
          "allowedValues":[  
             "MYSQLS3M100",
@@ -69,7 +45,7 @@
             "description":"Azure database for MySQL sku name"
          }
       },
-      "skuSizeMB":{  
+      "databaseSkuSizeMB":{  
          "type":"int",
          "allowedValues":[  
             102400,
@@ -80,7 +56,7 @@
             "description":"Azure database for MySQL Sku Size "
          }
       },
-      "skuTier":{  
+      "databaseSkuTier":{  
          "type":"string",
          "allowedValues":[  
             "Basic"
@@ -90,41 +66,15 @@
             "description":"Azure database for MySQL pricing tier"
          }
       },
-      "version":{  
+      "mysqlVersion":{  
          "type":"string",
-         "allowedValues":[  
-            "5.6"
+         "allowedValues":[   
+            "5.6",
+            "5.7",
          ],
-         "defaultValue":"5.6",
+         "defaultValue":"5.7",
          "metadata":{  
             "description":"MySQL version"
-         }
-      },
-      "firewallRuleName":{  
-         "type":"string",
-         "minLength":1,
-         "maxLength":128,
-         "defaultValue":"AllowAll",
-         "metadata":{  
-            "description":"Firewall rule name"
-         }
-      },
-      "firewallStartIpAddress":{  
-         "type":"string",
-         "minLength":1,
-         "maxLength":15,
-         "defaultValue":"0.0.0.0",
-         "metadata":{  
-            "description":"Firewall rule start IP address"
-         }
-      },
-      "firewallEndIpAddress":{  
-         "type":"string",
-         "minLength":1,
-         "maxLength":15,
-         "defaultValue":"255.255.255.255",
-         "metadata":{  
-            "description":"Firewall rule end IP address."
          }
       }
    },
@@ -135,16 +85,20 @@
    },
    "resources":[  
       {  
-         "apiVersion":"2014-06-01",
+         "apiVersion":"2016-09-01",
          "name":"[variables('hostingPlanName')]",
          "type":"Microsoft.Web/serverfarms",
          "location":"[resourceGroup().location]",
          "properties":{  
             "name":"[variables('hostingPlanName')]",
-            "sku":"[parameters('sku')]",
-            "workerSize":"1",
-            "hostingEnvironment":"",
-            "numberOfWorkers":0
+            "workerSizeId":"1",
+            "reserved":true,
+            "numberOfWorkers":"1",
+            "hostingEnvironment":""
+         },
+         "sku":{  
+            "Tier":"Standard",
+            "Name":"S1"
          }
       },
       {  
@@ -183,17 +137,17 @@
          "location":"[resourceGroup().location]",
          "name":"[variables('serverName')]",
          "properties":{  
-            "version":"[parameters('version')]",
+            "version":"[parameters('mysqlVersion')]",
             "administratorLogin":"[parameters('administratorLogin')]",
             "administratorLoginPassword":"[parameters('administratorLoginPassword')]",
-            "storageMB":"[parameters('skuSizeMB')]"
+            "storageMB":"[parameters('databaseSkuSizeMB')]"
          },
          "sku":{  
-            "name":"[parameters('skuName')]",
-            "tier":"[parameters('skuTier')]",
-            "capacity":"[parameters('skuCapacityDTU')]",
-            "size":"[parameters('skuSizeMB')]",
-            "family":"[parameters('skuFamily')]"
+            "name":"[parameters('databaseSkuName')]",
+            "tier":"[parameters('databaseSkuTier')]",
+            "capacity":"[parameters('databaseDTU')]",
+            "size":"[parameters('dataaseSkuSizeMB')]",
+            "family":"SkuFamily"
          },
          "type":"Microsoft.DBforMySQL/servers",
          "resources":[  
@@ -204,10 +158,10 @@
                   "[concat('Microsoft.DBforMySQL/servers/', variables('serverName'))]"
                ],
                "location":"[resourceGroup().location]",
-               "name":"[parameters('firewallRuleName')]",
+               "name":"[concat(variables('serverName'),'firewall')]",
                "properties":{  
-                  "startIpAddress":"[parameters('firewallStartIpAddress')]",
-                  "endIpAddress":"[parameters('firewallEndIpAddress')]"
+                  "startIpAddress":"0.0.0.0",
+                  "endIpAddress":"255.255.255.255"
                }
             },
             {  
