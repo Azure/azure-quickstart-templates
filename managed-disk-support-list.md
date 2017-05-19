@@ -32,7 +32,7 @@ On February 8, 2017, Managed Disk went generally available. Here is a list of te
 
 [201-2-vms-internal-load-balancer](https://github.com/Azure/azure-quickstart-templates/tree/master/201-2-vms-internal-load-balancer)
 
-[201-2-vms-loadbalancer-lbrules](https://github.com/Azure/azure-quickstart-templates/tree/master/201](-2-vms-loadbalancer-lbrules)
+[201-2-vms-loadbalancer-lbrules](https://github.com/Azure/azure-quickstart-templates/tree/master/201-2-vms-loadbalancer-lbrules)
 
 [201-2-vms-loadbalancer-natrules](https://github.com/Azure/azure-quickstart-templates/tree/master/201-2-vms-loadbalancer-natrules)
 
