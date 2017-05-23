@@ -12,7 +12,7 @@ This template deploys a virtual machine on Azure runnnig Ubuntu 14.04 and Rethin
 
 ## Detailed Instructions
 
-The BigchainDB Server docs have [detailed instructions about how to use this template](https://docs.bigchaindb.com/projects/server/en/master/cloud-deployment-starter-templates/azure-quickstart-template.html).
+The BigchainDB Server docs have [detailed instructions about how to use this template](https://docs.bigchaindb.com/projects/server/en/master/appendices/azure-quickstart-template.html).
 
 
 ## Short Instuctions
