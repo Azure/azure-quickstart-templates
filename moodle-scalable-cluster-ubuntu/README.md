@@ -51,30 +51,35 @@ In order to access Moodle admin console, please use the username 'admin' (withou
 
 ## *Sizing the environment* 
 
+### Gluster and MariaDb
 The setup script will ask you about the 't-shirt size' for database & gluster layers.
 Here's an explanation for each one of these: 
 
 Gluster t-shirt sizes: 
 
-		tshirt | VM Size         | Disk Count | Disk Size | Total Size
-		-------|-----------------|------------|-----------|------------
-		Small  | Standard_DS2_v2 |  4         |  127 Gb   | 512 Gb
-		Medium | Standard_DS3_v2 |  2         |  512 Gb   | 1 Tb
-		Large  | Standard_DS4_v2 |  2         | 1023 Gb   | 2 Tb
+tshirt | VM Size         | Disk Count | Disk Size | Total Size
+-------|-----------------|------------|-----------|------------
+Small  | Standard_DS2_v2 |  4         |  127 Gb   | 512 Gb
+Medium | Standard_DS3_v2 |  2         |  512 Gb   | 1 Tb
+Large  | Standard_DS4_v2 |  2         | 1023 Gb   | 2 Tb
 
 MariaDb t-shirt sizes: 
 
-		tshirt | VM Size         | Disk Count | Disk Size | Total Size
-		-------|-----------------|------------|-----------|------------
-		Small  | Standard_DS2_v2 |  2         |  127 Gb   | 256 Gb
-		Medium | Standard_DS3_v2 |  2         |  512 Gb   | 1 Tb
-		Large  | Standard_DS4_v2 |  2         | 1023 Gb   | 2 Tb
+tshirt | VM Size         | Disk Count | Disk Size | Total Size
+-------|-----------------|------------|-----------|------------
+Small  | Standard_DS2_v2 |  2         |  127 Gb   | 256 Gb
+Medium | Standard_DS3_v2 |  2         |  512 Gb   | 1 Tb
+Large  | Standard_DS4_v2 |  2         | 1023 Gb   | 2 Tb
 
 There's no default rule or recommendation in order to decide which tier use for your deployment. 
 However, as an initial guidance, remember that: 
 - Moodle has a strong dependency of database setup; for a high number of simultanous users, consider using medium or large database sizes
 - GlusterFS must be dimensioned considering the space requirements (size of your moodledata) + number of IOPS required. A Moodle deployment where students upload lots of content in a small windows of time would require more IOPS during that window, so consider using medium or large tiers in that case;
 
+### The web layer
+
+This script deploys a vm scale set (vmss) for the web layer. It's configured with Standard_DS2_v2 instances, with no data-disks, all connected to the GlusterFS cluster (mounted in the /moodle folder where source code, moodledata and ssl certificates resides).
+The VMSS is also configured with auto-scale settings and will run, at minimum 02 instances up to 10 instances of the web application; the trigger for deploying additional instances is based on CPU usage. Those settings can be ajusted in Azure Portal or in the Azure Resources Editor (resources.azure.com).
 
 ## *Updating the source code or Apache SSL certificates* 
 
