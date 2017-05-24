@@ -1,0 +1,411 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "webCount": {
+      "type": "int",
+      "defaultValue": 2,
+      "metadata": {
+        "description": "Number of VMs to be deployed to the front end subnet."
+      }
+    },
+    "sqlCount": {
+      "type": "int",
+      "defaultValue": 2,
+      "metadata": {
+        "description": "Number of VMs to be deployed to the back end subnet."
+      }
+    },
+    "vnetName": {
+      "type": "string",
+      "defaultValue": "TestVNet",
+      "metadata": {
+        "description": "Name for the new VNet."
+      }
+    },
+    "vnetPrefix": {
+      "type": "string",
+      "defaultValue": "192.168.0.0/16",
+      "metadata": {
+        "description": "CIDR prefix for the VNet address space."
+      }
+    },
+    "frontEndSubnetName": {
+      "type": "string",
+      "defaultValue": "FrontEnd",
+      "metadata": {
+        "description": "Name for the front end subnet."
+      }
+    },
+    "frontEndSubnetPrefix": {
+      "type": "string",
+      "defaultValue": "192.168.1.0/24",
+      "metadata": {
+        "description": "CIDR address prefix for the front end subnet."
+      }
+    },
+    "backEndSubnetName": {
+      "type": "string",
+      "defaultValue": "BackEnd",
+      "metadata": {
+        "description": "Name for the back end subnet."
+      }
+    },
+    "backEndSubnetPrefix": {
+      "type": "string",
+      "defaultValue": "192.168.2.0/24",
+      "metadata": {
+        "description": "CIDR address prefix for the back end subnet."
+      }
+    },
+    "stdStorageName": {
+      "type": "string",
+      "defaultValue": "testvnetstoragestd",
+      "metadata": {
+        "description": "Name for simple storage account."
+      }
+    },
+    "stdStorageType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_GRS",
+        "Standard_ZRS"
+      ]
+    },
+    "prmStorageName": {
+      "type": "string",
+      "defaultValue": "testvnetstorageprm",
+      "metadata": {
+        "description": "Name for simple storage account."
+      }
+    },
+    "prmStorageType": {
+      "type": "string",
+      "defaultValue": "Premium_LRS",
+      "allowedValues": [
+        "Premium_LRS",
+        "Premium_GRS",
+        "Premium_ZRS"
+      ]
+    }
+  },
+  "variables": {
+    "webVMSettings": {
+      "vmSize": "Standard_A1",
+      "adminUsername": "adminuser",
+      "adminPassword": "adminP@ssw0rd",
+      "publisher": "MicrosoftWindowsServer",
+      "offer": "WindowsServer",
+      "sku": "2012-R2-Datacenter",
+      "version": "latest",
+      "vmName": "Web",
+      "osdisk": "osdiskweb",
+      "nicName": "TestNICWeb",
+      "pipName": "TestPIPWeb",
+      "avsetName": "webAvSet"
+    },
+    "sqlVMSettings": {
+      "vmSize": "Standard_DS1",
+      "adminUsername": "adminuser",
+      "adminPassword": "adminP@ssw0rd",
+      "publisher": "MicrosoftSQLServer",
+      "offer": "SQL2014SP1-WS2012R2",
+      "sku": "Standard",
+      "version": "latest",
+      "vmName": "SQL",
+      "osdisk": "osdisksql",
+      "datadisk": "datadisksql",
+      "nicName": "TestNICSQL",
+      "pipName": "TestPIPSQL",
+      "avsetName": "sqlAvSet"
+    },
+    "location": "[resourceGroup().location]",
+    "vmStorageAccountContainerName": "vhds",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('vnetName'))]",
+    "frontEndSubnetRef": "[concat(variables('vnetID'),'/subnets/',parameters('frontEndSubnetName'))]",
+    "backEndSubnetRef": "[concat(variables('vnetID'),'/subnets/',parameters('backEndSubnetName'))]",
+    "templateBaseUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-IaaS-WebFrontEnd-SQLBackEnd/"
+  },
+  "resources": [
+    {
+      "apiVersion": "2015-01-01",
+      "name": "storageTemplate",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('templateBaseUrl'),'Storage.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parametersLink": {
+          "uri": "[concat(variables('templateBaseUrl'),'Storage-param.json')]",
+          "contentVersion": "1.0.0.0"
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-01-01",
+      "name": "vnetTemplate",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('templateBaseUrl'),'VNet.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parametersLink": {
+          "uri": "[concat(variables('templateBaseUrl'),'VNet-param.json')]",
+          "contentVersion": "1.0.0.0"
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "location": "[variables('location')]",
+      "name": "[concat(variables('webVMSettings').pipName, copyindex(1))]",
+      "properties": {
+        "publicIPAllocationMethod": "dynamic"
+      },
+      "tags": {
+        "displayName": "PublicIPAddresses - Web"
+      },
+      "copy": {
+        "name": "webpipcount",
+        "count": "[parameters('webCount')]"
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "location": "[variables('location')]",
+      "name": "[concat(variables('sqlVMSettings').pipName, copyindex(1))]",
+      "properties": {
+        "publicIPAllocationMethod": "dynamic"
+      },
+      "tags": {
+        "displayName": "PublicIPAddresses - SQL"
+      },
+      "copy": {
+        "name": "sqlpipcount",
+        "count": "[parameters('sqlCount')]"
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[variables('location')]",
+      "tags": {
+        "displayName": "NetworkInterfaces - Web"
+      },
+      "name": "[concat(variables('webVMSettings').nicName, copyindex(1))]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('webVMSettings').pipName, copyindex(1))]",
+        "[concat('Microsoft.Resources/deployments/', 'vnetTemplate')]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat(variables('webVMSettings').pipName, copyindex(1)))]"
+              },
+              "subnet": {
+                "id": "[variables('frontEndSubnetRef')]"
+              }
+            }
+          }
+        ]
+      },
+      "copy": {
+        "name": "webniccount",
+        "count": "[parameters('webCount')]"
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[variables('location')]",
+      "tags": {
+        "displayName": "NetworkInterfaces - SQL"
+      },
+      "name": "[concat(variables('sqlVMSettings').nicName, copyindex(1))]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('sqlVMSettings').pipName, copyindex(1))]",
+        "[concat('Microsoft.Resources/deployments/', 'vnetTemplate')]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat(variables('sqlVMSettings').pipName, copyindex(1)))]"
+              },
+              "subnet": {
+                "id": "[variables('backEndSubnetRef')]"
+              }
+            }
+          }
+        ]
+      },
+      "copy": {
+        "name": "webniccount",
+        "count": "[parameters('sqlCount')]"
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[variables('webVMSettings').avsetName]",
+      "location": "[variables('location')]",
+      "dependsOn": [ ],
+      "tags": {
+        "displayName": "AvailabilitySet - Web"
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[variables('sqlVMSettings').avsetName]",
+      "location": "[variables('location')]",
+      "dependsOn": [ ],
+      "tags": {
+        "displayName": "AvailabilitySet - SQL"
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "name": "[concat(variables('webVMSettings').vmName,copyindex(1))]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "location": "[variables('location')]",
+      "copy": {
+        "name": "webvmcount",
+        "count": "[parameters('webCount')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', variables('webVMSettings').nicName, copyindex(1))]",
+        "[concat('Microsoft.Compute/availabilitySets/', variables('webVMSettings').avsetName)]",
+        "[concat('Microsoft.Resources/deployments/', 'storageTemplate')]"
+      ],
+      "tags": {
+        "displayName": "VMs - Web"
+      },
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('webVMSettings').avsetName)]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[variables('webVMSettings').vmSize]"
+        },
+        "osProfile": {
+          "computerName": "[concat(variables('webVMSettings').vmName,copyindex(1))]",
+          "adminUsername": "[variables('webVMSettings').adminUsername]",
+          "adminPassword": "[variables('webVMSettings').adminPassword]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('webVMSettings').publisher]",
+            "offer": "[variables('webVMSettings').offer]",
+            "sku": "[variables('webVMSettings').sku]",
+            "version": "[variables('webVMSettings').version]"
+          },
+          "osDisk": {
+            "name": "[concat(variables('webVMSettings').osdisk,copyindex(1))]",
+            "vhd": {
+              "uri": "[concat('http://', parameters('stdStorageName'), '.blob.core.windows.net/', variables('vmStorageAccountContainerName'), '/', variables('webVMSettings').osdisk, copyindex(1),'.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('webVMSettings').nicName,copyindex(1)))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "name": "[concat(variables('sqlVMSettings').vmName,copyindex(1))]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "location": "[variables('location')]",
+      "copy": {
+        "name": "sqlvmcount",
+        "count": "[parameters('sqlCount')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', variables('sqlVMSettings').nicName, copyindex(1))]",
+        "[concat('Microsoft.Compute/availabilitySets/', variables('sqlVMSettings').avsetName)]",
+        "[concat('Microsoft.Resources/deployments/', 'storageTemplate')]"
+      ],
+      "tags": {
+        "displayName": "VMs - SQL"
+      },
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('sqlVMSettings').avsetName)]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[variables('sqlVMSettings').vmSize]"
+        },
+        "osProfile": {
+          "computerName": "[concat(variables('sqlVMSettings').vmName,copyindex(1))]",
+          "adminUsername": "[variables('sqlVMSettings').adminUsername]",
+          "adminPassword": "[variables('sqlVMSettings').adminPassword]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('sqlVMSettings').publisher]",
+            "offer": "[variables('sqlVMSettings').offer]",
+            "sku": "[variables('sqlVMSettings').sku]",
+            "version": "[variables('sqlVMSettings').version]"
+          },
+          "osDisk": {
+            "name": "[concat(variables('sqlVMSettings').osdisk,copyindex(1))]",
+            "vhd": {
+              "uri": "[concat('http://', parameters('prmStorageName'), '.blob.core.windows.net/', variables('vmStorageAccountContainerName'), '/', variables('sqlVMSettings').osdisk, copyindex(1),'.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          },
+          "dataDisks": [
+            {
+              "vhd": {
+                "uri": "[concat('http://', parameters('prmStorageName'), '.blob.core.windows.net/', variables('vmStorageAccountContainerName'), '/', variables('sqlVMSettings').datadisk, copyindex(1),'-1','.vhd')]"
+              },
+              "name": "[concat(variables('sqlVMSettings').datadisk,copyindex(1),'-data-disk1')]",
+              "diskSizeGB": "127",
+              "createOption": "Empty",
+              "lun": 0
+            },
+            {
+              "vhd": {
+                "uri": "[concat('http://', parameters('prmStorageName'), '.blob.core.windows.net/', variables('vmStorageAccountContainerName'), '/', variables('sqlVMSettings').datadisk, copyindex(1),'-2','.vhd')]"
+              },
+              "name": "[concat(variables('sqlVMSettings').datadisk,copyindex(1),'-data-disk2')]",
+              "diskSizeGB": "127",
+              "createOption": "Empty",
+              "lun": 1
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('sqlVMSettings').nicName,copyindex(1)))]"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
