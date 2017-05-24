@@ -1,0 +1,90 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "namePrefix": {
+            "type": "string",
+            "metadata": { 
+                "description": "Name prefix that will be applied to all resources in this template." 
+            } 
+        }
+    },
+    "variables": {
+        "routeTable1Name": "[concat(parameters('namePrefix'), 'RouteTable1')]",
+        "routeTable2Name": "[concat(parameters('namePrefix'), 'RouteTable2')]",
+        "virtualNetworkName": "[concat(parameters('namePrefix'), 'VNet')]"
+    },
+    "resources": [
+		{
+			"apiVersion": "2015-06-15",
+            "type": "Microsoft.Network/routeTables",
+			"name": "[variables('routeTable1Name')]",
+			"location": "[resourceGroup().location]",
+			"properties": { 
+				"routes": [ 
+					{
+						"name": "toSubnet2",
+						"properties": { 
+							"addressPrefix": "10.0.1.0/24",
+							"nextHopType": "VNETLocal"
+						}
+					}
+				]
+			}
+		},
+		{
+			"apiVersion": "2015-06-15",
+            "type": "Microsoft.Network/routeTables",
+			"name": "[variables('routeTable2Name')]",
+			"location": "[resourceGroup().location]",
+			"properties": { 
+				"routes": [ 
+					{
+						"name": "toSubnet1",
+						"properties": { 
+							"addressPrefix": "10.0.0.0/24",
+							"nextHopType": "VNETLocal"
+						}
+					}
+				]
+			}
+		},
+        {
+            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[variables('virtualNetworkName')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/routeTables/', variables('routeTable1Name'))]",
+				"[concat('Microsoft.Network/routeTables/', variables('routeTable2Name'))]"
+            ],
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "10.0.0.0/16"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "subnet1",
+                        "properties": {
+                            "addressPrefix": "10.0.0.0/24",
+                            "routeTable": {
+                                "id": "[resourceId('Microsoft.Network/routeTables', variables('routeTable1Name'))]"
+                            }
+                        }
+                    },
+					{
+                        "name": "subnet2",
+                        "properties": {
+                            "addressPrefix": "10.0.1.0/24",
+                            "routeTable": {
+                                "id": "[resourceId('Microsoft.Network/routeTables', variables('routeTable2Name'))]"
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}
