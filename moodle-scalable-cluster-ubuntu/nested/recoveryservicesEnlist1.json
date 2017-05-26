@@ -1,0 +1,38 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+
+	"parameters": {
+		"moodleCommon":	{ "type": "object", "metadata": { "description": "Common Moodle values" } },
+		"vmName":		{ "type": "string", "metadata": { "description": "Name of VM to enlist in AzureBackup" } }
+	},
+
+	"variables": {
+		"documentation1": "This sub-template adds a VM to the recovery services vault.  It expects certain values in the 'common' datastructure.",
+		"documentation2": "    vaultName  - name of virtual network",
+		"documentation3": "    policyName - name of backup policy inside vault",
+		"documentation4": "",
+
+		"backupFabric":		"Azure",
+		"v2VmType":			"Microsoft.Compute/virtualMachines",
+		"v2VmContainer":	"iaasvmcontainer;iaasvmcontainerv2;",
+		"v2Vm":				"vm;iaasvmcontainerv2;"
+	},
+
+	"resources": [
+
+		{
+			"type":			"Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers/protectedItems",
+			"apiVersion":	"2016-06-01",
+			"name":			"[concat(parameters('moodleCommon').vaultName, '/', variables('backupFabric'), '/', variables('v2VmContainer'), concat(resourceGroup().name,';',parameters('vmName')), '/', variables('v2Vm'), concat(resourceGroup().name,';',parameters('vmName')))]",
+			"location":		"[resourceGroup().location]",
+
+			"properties": {
+				"protectedItemType":	"[variables('v2VmType')]",
+				"policyId":				"[resourceId('Microsoft.RecoveryServices/vaults/backupPolicies',parameters('moodleCommon').vaultName,parameters('moodleCommon').policyName )]",
+				"sourceResourceId":		"[resourceId(subscription().subscriptionId,resourceGroup().name,'Microsoft.Compute/virtualMachines',parameters('vmName'))]"
+			}
+		}	
+	]
+}
+
