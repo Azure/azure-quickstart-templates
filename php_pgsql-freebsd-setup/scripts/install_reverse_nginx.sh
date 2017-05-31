@@ -30,3 +30,5 @@ service nginx restart
 sed -i -e '/^[^#]/d' /etc/sysctl.conf
 echo 'kern.ipc.soacceptqueue=4096' >> /etc/sysctl.conf
 echo 'net.inet.tcp.msl=1000' >> /etc/sysctl.conf
+
+echo "/sbin/reboot" | at + 1 minute
