@@ -26,7 +26,7 @@ You can optionally include a basic Jenkins pipeline that will checkout a user-pr
 ## B. Setup SSH port forwarding
 **By default the Jenkins instance is using the http protocol and listens on port 8080. Users shouldn't authenticate over unsecured protocols!**
 
-You need to setup port forwarding to view the Jenkins UI on your local machine.
+You need to setup port forwarding to view the Jenkins UI on your local machine. If you do not know the full DNS name of your instance, go to the Portal and find it in the deployment outputs here: `Resource Groups > {Resource Group Name} > Deployments > {Deployment Name, usually 'Microsoft.Template'} > Outputs`
 
 ### If you are using Windows:
 Install Putty or use any bash shell for Windows (if using a bash shell, follow the instructions for Linux or Mac).
