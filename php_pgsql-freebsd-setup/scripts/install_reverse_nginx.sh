@@ -7,7 +7,7 @@ backendvm2ip=$3
 echo 'ifconfig_hn1="DHCP"' >> /etc/rc.conf
 ifconfig hn1 up
 env ASSUME_ALWAYS_YES=YES pkg bootstrap
-pkg update -y
+pkg update
 pkg install -y nginx
 
 echo 'nginx_enable="YES"' >> /etc/rc.conf
