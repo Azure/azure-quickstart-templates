@@ -50,7 +50,7 @@ ssh -i <path to private key file> -L 9000:localhost:9000 -L 8084:localhost:8084 
 
 ## E. Connect to Spinnaker
 
-1. After you have started your tunnel, navigate to `http://localhost:9000/` on your local machine.
+1. After you have started your tunnel, navigate to http://localhost:9000/ on your local machine.
 1. Check the [Troubleshooting Guide](http://www.spinnaker.io/docs/troubleshooting-guide) if you have any issues.
 
 ## Questions/Comments? azdevopspub@microsoft.com
