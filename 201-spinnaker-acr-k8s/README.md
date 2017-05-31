@@ -23,7 +23,7 @@ This template allows you to deploy an instance of Spinnaker on a Linux Ubuntu 14
     > NOTE: You can run `az account list` after you login to get a list of subscription IDs for your account.
 
 ## B. Setup SSH port forwarding
-You need to setup port forwarding to view the Spinnaker UI on your local machine.
+You need to setup port forwarding to view the Spinnaker UI on your local machine. If you do not know the full DNS name of your instance, go to the Portal and find it in the deployment outputs here: `Resource Groups > {Resource Group Name} > Deployments > {Deployment Name, usually 'Microsoft.Template'} > Outputs`
 
 ### If you are using Windows:
 Install Putty or use any bash shell for Windows (if using a bash shell, follow the instructions for Linux or Mac).
