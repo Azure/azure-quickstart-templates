@@ -24,7 +24,7 @@ In Azure, Spinnaker can target a Kubernetes cluster or VM Scale Sets.
 - To target VM Scale Sets, follow instructions [here](http://www.spinnaker.io/v1.0/docs/target-deployment-configuration#section-azure) to configure Spinnaker.
 
 ## D. Setup SSH port forwarding
-Once you have configured Spinnaker, you need to setup port forwarding to view the Spinnaker UI on your local machine.
+Once you have configured Spinnaker, you need to setup port forwarding to view the Spinnaker UI on your local machine. If you do not know the full DNS name of your instance, go to the Portal and find it in the deployment outputs here: `Resource Groups > {Resource Group Name} > Deployments > {Deployment Name, usually 'Microsoft.Template'} > Outputs`
 
 ### If you are using Windows:
 Install Putty or use any bash shell for Windows (if using a bash shell, follow the instructions for Linux or Mac).
