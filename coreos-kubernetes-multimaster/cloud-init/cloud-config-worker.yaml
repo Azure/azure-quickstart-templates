@@ -1,0 +1,215 @@
+write-files:
+  - path: /opt/kubernetes/bin/download-worker-certs.sh
+    permissions: "0755"
+    content: |
+      #!/bin/bash
+
+      WORKDIR=/etc/kubernetes/certs
+      ETCD_ENDPOINT=REPLACE_ME
+
+      while [ ! $(/bin/etcdctl --endpoints $ETCD_ENDPOINT ls /cluster-bootstrap 2>/dev/null) ]
+      do
+        echo "Waiting for certificates to be available"
+        sleep 10
+      done
+
+      if [ $(/bin/etcdctl --endpoints $ETCD_ENDPOINT ls /cluster-bootstrap 2>/dev/null) ]
+      then
+        while [ $(/bin/etcdctl --endpoints $ETCD_ENDPOINT get /cluster-bootstrap/kubernetes/certs/lock 2>/dev/null) ]; do echo "Etcd endpoint locked" && sleep 5; done
+        echo "Found existing certificates"
+        if [ ! -f $WORKDIR/ca.pem ]; then
+          echo "Downloading ca authority from etcd"
+          /bin/etcdctl --endpoints $ETCD_ENDPOINT get /cluster-bootstrap/kubernetes/certs/ca.pem | base64 -d > $WORKDIR/ca.pem
+        fi
+        if [ ! -f $WORKDIR/ca-key.pem ]; then
+          echo "Downloading ca authority key from etcd"
+           /bin/etcdctl --endpoints $ETCD_ENDPOINT get /cluster-bootstrap/kubernetes/certs/ca-key.pem | base64 -d > $WORKDIR/ca-key.pem
+        fi
+        openssl genrsa -out /etc/kubernetes/certs/worker-key.pem 4096
+        openssl req -new -key /etc/kubernetes/certs/worker-key.pem -out /etc/kubernetes/certs/worker.csr -subj "/CN=$(hostname)"
+        openssl x509 -req -in /etc/kubernetes/certs/worker.csr -CA /etc/kubernetes/certs/ca.pem -CAkey /etc/kubernetes/certs/ca-key.pem -CAcreateserial -out /etc/kubernetes/certs/worker.pem -days 365 -extensions v3_req
+        echo "We are ready to go"
+        exit 0
+      fi
+  - path: /etc/kubernetes/conf/azure.json
+    permissions: "0600"
+    content: |
+      {
+        "aadClientId": "REPLACE_ME",
+        "aadClientSecret": "REPLACE_ME",
+        "location": "REPLACE_ME",
+        "resourceGroup": "REPLACE_ME",
+        "routeTableName": "REPLACE_ME",
+        "securityGroupName": "REPLACE_ME",
+        "subnetName": "REPLACE_ME",
+        "subscriptionId": "REPLACE_ME",
+        "tenantId": "REPLACE_ME",
+        "vnetName": "REPLACE_ME"
+      }
+  - path: /etc/kubernetes/conf/kubeconfig.yaml
+    permissions: "0600"
+    content: |
+      apiVersion: v1
+      kind: Config
+      clusters:
+      - name: local
+        cluster:
+          certificate-authority: /etc/kubernetes/certs/ca.pem
+      users:
+      - name: kubelet
+        user:
+          client-certificate: /etc/kubernetes/certs/worker.pem
+          client-key: /etc/kubernetes/certs/worker-key.pem
+      contexts:
+      - context:
+          cluster: local
+          user: kubelet
+        name: kubelet-context
+      current-context: kubelet-context
+  - path: /etc/kubernetes/manifests/kube-proxy.yaml
+    permissions: "0600"
+    content: |
+      apiVersion: v1
+      kind: Pod
+      metadata:
+        name: kube-proxy
+        namespace: kube-system
+      spec:
+        hostNetwork: true
+        containers:
+        - name: kube-proxy
+          image: gcr.io/google_containers/hyperkube-amd64:REPLACE_ME
+          command:
+          - /hyperkube
+          - proxy
+          - --master=REPLACE_ME
+          - --kubeconfig=/etc/kubernetes/conf/kubeconfig.yaml
+          - --proxy-mode=iptables
+          - --v=4
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - mountPath: /etc/ssl/certs
+              name: "ssl-certs"
+            - mountPath: /etc/kubernetes/conf/kubeconfig.yaml
+              name: "kubeconfig"
+              readOnly: true
+            - mountPath: /etc/kubernetes/certs
+              name: "etc-kube-ssl"
+              readOnly: true
+        volumes:
+          - name: "ssl-certs"
+            hostPath:
+              path: "/usr/share/ca-certificates"
+          - name: "kubeconfig"
+            hostPath:
+              path: "/etc/kubernetes/conf/kubeconfig.yaml"
+          - name: "etc-kube-ssl"
+            hostPath:
+              path: "/etc/kubernetes/certs"
+coreos:
+  update:
+    reboot-strategy: "etcd-lock"
+  units:
+    - name: "docker.service"
+      drop-ins:
+        - name: "50-docker-ops.conf"
+          content: |
+            [Service]
+            Environment=DOCKER_OPTS="--iptables=false --ip-masq=false --storage-driver=overlay"
+            MountFlags=shared
+            LimitNOFILE=1048576
+            LimitNPROC=1048576
+            LimitCORE=infinity
+            Restart=always
+            RestartSec=2s
+            StartLimitInterval=0
+    - name: "format-ephemeral.service"
+      command: "start"
+      content: |
+        [Unit]
+        Description=Format Ephemeral Volume
+        Documentation=https://coreos.com/os/docs/latest/mounting-storage.html
+        Before=docker.service var-lib-docker.mount
+        After=dev-sdb.device
+        Requires=dev-sdb.device
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        ExecStart=/bin/bash -c -x "umount -f /mnt/resource || /bin/true"
+        ExecStart=/bin/bash -c -x "umount -A /dev/sdb1 || /bin/true"
+        ExecStart=/bin/bash -c -x "umount -A /dev/sdb || /bin/true"
+        ExecStart=/bin/bash -c -x "rm -rf /mnt/resource"
+        ExecStart=/bin/bash -c -x "wipefs -f /dev/sdb1 || true"
+        ExecStart=/bin/bash -c -x "mkfs.ext4 -F /dev/sdb"
+        [Install]
+        RequiredBy=var-lib-docker.mount
+    - name: "var-lib-docker.mount"
+      command: "start"
+      content: |
+        [Unit]
+        Description=Mount /var/lib/docker
+        Documentation=https://coreos.com/os/docs/latest/mounting-storage.html
+        Before=docker.service
+        After=format-ephemeral.service
+        Requires=format-ephemeral.service
+        [Install]
+        RequiredBy=docker.service
+        [Mount]
+        What=/dev/sdb
+        Where=/var/lib/docker
+        Type=ext4
+    - name: "download-certs.service"
+      command: "start"
+      content: |
+        [Unit]
+        Description=Generate TLS certificates
+        ConditionPathExists=/opt/kubernetes/bin/download-worker-certs.sh
+        [Service]
+        ExecStartPre=/bin/mkdir -p /opt/kubernetes/bin
+        ExecStartPre=/bin/mkdir -p /etc/kubernetes/certs
+        ExecStart=/opt/kubernetes/bin/download-worker-certs.sh
+        RemainAfterExit=yes
+        Type=oneshot
+    - name: "kubelet.service"
+      command: "start"
+      content: |
+        [Unit]
+        Description=Kubernetes Kubelet Server
+        Documentation=https://github.com/kubernetes/kubernetes
+
+        [Service]
+        ExecStartPre=/bin/mkdir -p /var/lib/kubelet
+        ExecStartPre=/bin/mount --bind /var/lib/kubelet /var/lib/kubelet
+        ExecStartPre=/bin/mount --make-shared /var/lib/kubelet
+        ExecStart=/usr/bin/docker run \
+          --net=host \
+          --pid=host \
+          --privileged \
+          -v /dev:/dev \
+          -v /sys:/sys:ro \
+          -v /var/run:/var/run:rw \
+          -v /var/lib/docker/:/var/lib/docker:rw \
+          -v /var/lib/kubelet/:/var/lib/kubelet:shared \
+          -v /etc/kubernetes:/etc/kubernetes:ro \
+          gcr.io/google_containers/hyperkube-amd64:REPLACE_ME \
+          /hyperkube kubelet \
+            --cloud-provider=azure \
+            --cloud-config=/etc/kubernetes/conf/azure.json \
+            --reconcile-cidr=true \
+            --hairpin-mode=promiscuous-bridge \
+            --api-servers=REPLACE_ME \
+            --network-plugin-dir=/etc/kubernetes/cni/net.d \
+            --network-plugin=kubenet \
+            --register-node=true \
+            --allow-privileged=true \
+            --config=/etc/kubernetes/manifests \
+            --cluster-dns=10.240.0.10 \
+            --cluster-domain=cluster.local \
+            --kubeconfig=/etc/kubernetes/conf/kubeconfig.yaml \
+            --tls-cert-file=/etc/kubernetes/certs/worker.pem \
+            --tls-private-key-file=/etc/kubernetes/certs/worker-key.pem
+        Restart=always
+        RestartSec=10
+        [Install]
+        WantedBy=multi-user.target
