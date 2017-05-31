@@ -147,11 +147,7 @@ Under the StateHolder section, click the "At Address" button, and enter the addr
 
 Your interface will change to reflect all the values that you modified before. This is an important point - by taking note of the contract address, you can allow other people to interact with the same contract on the blockchain, and they will see the same functions and values that you do.
 
-Attempt to modify the "openString" variable. This should work fine - after the transaction is mined, clicking the blue openString button will reflect the new value in the interface. Now, attempt to modify the "myString" variable - this should fail since we are not currently the contract owner:
-
-![consortium network](images/contracts7.png)
-
-The error message of "Gas required exceeds limit: 50000000" is admittedly not very clear, but this shows that we cannot run this function unless we are the contract owner.
+Attempt to modify the "openString" variable. This should work fine - after the transaction is mined, clicking the blue openString button will reflect the new value in the interface. Now, attempt to modify the "myString" variable. The transaction will succeed however, when you view the contract again you will see that the "myString" variable remains unchanged (you can check this my refreshing the Solidity browser and adding the contract address again with 'At Address' Button.
 
 Next, we'll look at a very simple token contract. In this contract, we have a mapping between Ethereum addresses and integers - think of this like a bank balance, showing that a particular address has a particular amount of money. The constructor function assigns a balance of one million to whoever deploys the contract, and the "transfer" function allows us to transfer from our balance to an arbitrary Ethereum address.
 
