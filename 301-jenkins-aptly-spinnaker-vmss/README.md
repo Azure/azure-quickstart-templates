@@ -61,14 +61,14 @@ ssh -i <path to private key file> -L 8080:localhost:8080 -L 9000:localhost:9000 
 
 ## D. Connect to Jenkins
 
-1. After you have started your tunnel, navigate to `http://localhost:8080/` on your local machine.
+1. After you have started your tunnel, navigate to http://localhost:8080/ on your local machine.
 1. The instance should already be unlocked and your first account setup. Login with the credentials you specified when deploying the template.
 1. Your Jenkins instance is now ready to use! You can access a read-only view by going to http://< Public DNS name of instance you just created >.
 1. Go to http://aka.ms/azjenkinsagents if you want to build/CI from this Jenkins master using Azure VM agents.
 
 ## E. Connect to Spinnaker 
 
-1. After you have started your tunnel, navigate to `http://localhost:9000/` on your local machine.
+1. After you have started your tunnel, navigate to http://localhost:9000/ on your local machine.
 1. Documention to create a sample pipeline is forthcoming.
 
 ## Questions/Comments? azdevopspub@microsoft.com

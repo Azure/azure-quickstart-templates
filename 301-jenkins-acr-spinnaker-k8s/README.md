@@ -51,7 +51,7 @@ Run this command:
 ```bash
 ssh -i <path to private key file> -L 8080:localhost:8080 -L 9000:localhost:9000 -L 8084:localhost:8084 -L 8001:localhost:8001 <User name>@<Public DNS name of instance you just created>
 ```
-> NOTE: Port 8080 corresponds to your Jenkins instance. Port 9000 and 8084 correspond to Spinnaker's deck and gate services, respectively. Port 8001 is used to view the dashboard for your Kubernetes cluster - just run `kubectl proxy` on the VM before navigating to http://localhost:8001 on your local machine.
+> NOTE: Port 8080 corresponds to your Jenkins instance. Port 9000 and 8084 correspond to Spinnaker's deck and gate services, respectively. Port 8001 is used to view the dashboard for your Kubernetes cluster - just run `kubectl proxy` on the VM before navigating to http://localhost:8001/ui on your local machine.
 
 ## D. Connect to Jenkins
 
@@ -62,7 +62,7 @@ ssh -i <path to private key file> -L 8080:localhost:8080 -L 9000:localhost:9000 
 
 ## E. Connect to Spinnaker
 
-1. After you have started your tunnel, navigate to `http://localhost:9000/` on your local machine.
+1. After you have started your tunnel, navigate to http://localhost:9000/ on your local machine.
 1. Navigate to 'Applications -> {Application Name} -> Pipelines' to see your pipeline. Follow steps [here](http://www.spinnaker.io/docs/kubernetes-source-to-prod#section-1-create-a-spinnaker-application) to create a pipeline manually.
 1. Check the [Troubleshooting Guide](http://www.spinnaker.io/docs/troubleshooting-guide) if you have any issues.
 
