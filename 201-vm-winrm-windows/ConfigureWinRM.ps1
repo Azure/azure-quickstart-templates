@@ -49,14 +49,13 @@ function Create-Certificate
 	# https://github.com/golang/go/issues/8265
     $serial = Get-Random
     .\makecert -r -pe -n CN=$hostname -b 01/01/2012 -e 01/01/2022 -eku 1.3.6.1.5.5.7.3.1 -ss my -sr localmachine -sky exchange -sp "Microsoft RSA SChannel Cryptographic Provider" -sy 12 -# $serial
+
     $thumbprint=(Get-ChildItem cert:\Localmachine\my | Where-Object { $_.Subject -eq "CN=" + $hostname } | Select-Object -Last 1).Thumbprint
 
     if(-not $thumbprint)
     {
         throw "Failed to create the test certificate."
     }
-
-    return $thumbprint
 }
 
 function Configure-WinRMHttpsListener
@@ -72,14 +71,16 @@ function Configure-WinRMHttpsListener
     $thumbprint = $cert.Thumbprint
     if(-not $thumbprint)
     {
-	    $thumbprint = Create-Certificate -hostname $HostName
+	    Create-Certificate -hostname $HostName
+        $thumbprint=(Get-ChildItem cert:\Localmachine\my | Where-Object { $_.Subject -eq "CN=" + $hostname } | Select-Object -Last 1).Thumbprint
     }
     elseif (-not $cert.PrivateKey)
     {
         # The private key is missing - could have been sysprepped
         # Delete the certificate
-        Remove-Item Cert:\LocalMachine\My\$thumbprint -DeleteKey -Force
-        $thumbprint = Create-Certificate -hostname $HostName
+        Remove-Item Cert:\LocalMachine\My\$thumbprint -Force
+        Create-Certificate -hostname $HostName
+        $thumbprint=(Get-ChildItem cert:\Localmachine\my | Where-Object { $_.Subject -eq "CN=" + $hostname } | Select-Object -Last 1).Thumbprint
     }
 
     $response = cmd.exe /c .\winrmconf.cmd $hostname $thumbprint
