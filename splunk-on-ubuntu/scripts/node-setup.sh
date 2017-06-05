@@ -72,13 +72,13 @@ MY_IP="$(ip -4 address show eth0 | sed -rn 's/^[[:space:]]*inet ([[:digit:].]+)[
 DATA_MOUNTPOINT="/datadrive"
 SPLUNK_DB_DIR="${DATA_MOUNTPOINT}/splunk_db"
 
-# Minimum recommended values for system-wide resource limits
+# Minimum recommended values for system-wide resource limits for Splunk Enterprise
 MIN_LIMITS=(
-  'n|nofile|8192'
-  'u|nproc|16384'
-  'd|data|-1'
-  'm|rss|-1'
-  'f|fsize|-1'
+  'n|nofile|8192'  # Open files
+  'u|nproc|16384'  # User processes
+  'd|data|-1'      # Data segment size
+  'm|rss|-1'       # Resident memory size
+  'f|fsize|-1'     # File size limit
 )
 
 # Arguments
@@ -174,6 +174,8 @@ ip6tables -t nat -A PREROUTING -p tcp -m tcp --dport 514 -j REDIRECT --to-ports 
 ip6tables-save > /etc/iptables/rules.v6
 
 log "Set system-wide resources to minimum recommended values for Splunk performance"
+# Set up user limits in limits.conf
+sed -i 's/# End of file//' /etc/security/limits.conf
 for min_limit in "${MIN_LIMITS[@]}"; do
   # Example ulimit: n(option) nofile(item) 8192(min)
   IFS=$'|' read -r option item min <<< "$min_limit"
@@ -183,13 +185,17 @@ for min_limit in "${MIN_LIMITS[@]}"; do
     new="-1"
   elif [[ $val -eq "0" || $val -lt $min ]]; then
     new=$min
-    echo "Increasing ${item} ulimit from ${val} to ${new}"
+    log "Increasing ulimit ${item} from ${val} to ${new}"
   else
     new=$val
   fi
   echo "splunk       soft    ${item}  ${new}" >> /etc/security/limits.conf
   echo "splunk       hard    ${item}  ${new}" >> /etc/security/limits.conf
 done
+echo " " >> /etc/security/limits.conf
+echo "# End of file" >> /etc/security/limits.conf
+# Enable pam_limits module for su command (used by splunk init.d)
+sed -i 's/^#\(session.*required.*pam_limits.so\)$/\1/' /etc/pam.d/su
 
 log "Configuring Splunk"
 # Finally configure Splunk using chef client in local mode
