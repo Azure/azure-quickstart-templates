@@ -195,7 +195,7 @@ done
 echo " " >> /etc/security/limits.conf
 echo "# End of file" >> /etc/security/limits.conf
 # Enable pam_limits module for su command (used by splunk init.d)
-sed -i 's/^#\(session.*required.*pam_limits.so\)$/\1/' /etc/pam.d/su
+sed -i 's/^#\s*\(session\s*required\s*pam_limits.so\)$/\1/' /etc/pam.d/su
 
 log "Configuring Splunk"
 # Finally configure Splunk using chef client in local mode
