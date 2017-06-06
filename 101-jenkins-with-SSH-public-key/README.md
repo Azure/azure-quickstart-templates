@@ -1,4 +1,4 @@
-# Azure hosted Jenkins Master on Ubuntu [![Build Status](http://devops-ci.westcentralus.cloudapp.azure.com/job/qs/job/101-jenkins-with-SSH-public-key/badge/icon)](http://devops-ci.westcentralus.cloudapp.azure.com/blue/organizations/jenkins/qs%2F101-jenkins-with-SSH-public-key/activity)
+# Jenkins on Azure (SSH key) [![Build Status](http://devops-ci.westcentralus.cloudapp.azure.com/job/qs/job/101-jenkins-with-SSH-public-key/badge/icon)](http://devops-ci.westcentralus.cloudapp.azure.com/blue/organizations/jenkins/qs%2F101-jenkins-with-SSH-public-key/activity)
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-jenkins-with-SSH-public-key%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
@@ -7,24 +7,24 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template allows you to host an instance of Jenkins on a DS1_v2 size Linux Ubuntu 14.04 LTS VM in Azure.
+This template allows you to host an instance of Jenkins on a DS1_v2 size Linux Ubuntu 14.04 LTS VM in Azure. For more information regarding this template and how it secures Jenkins on Azure, refer to http://aka.ms/secure-jenkins.
 
 ## A. Deploy Azure Jenkins VM
 1. Click "Deploy to Azure" button. If you haven't got an Azure subscription, it will guide you on how to signup for a free trial.
-2. Enter a valid name for the VM, as well as a user name and password that you will use to login remotely to the VM via SSH.
+2. Enter a valid name for the VM, as well as a user name and [ssh public key](https://docs.microsoft.com/azure/virtual-machines/virtual-machines-linux-mac-create-ssh-keys) that you will use to login remotely to the VM via SSH.
 3. Remember these. You will need this to access the VM next.
 
 ## B. Setup SSH port forwarding
 **By default the Jenkins instance is using the http protocol and listens on port 8080. Users shouldn't authenticate over unsecured protocols!**
 
-You need to setup port forwarding to view the Jenkins UI on your local machine.
+You need to setup port forwarding to view the Jenkins UI on your local machine. If you do not know the full DNS name of your instance, go to the Portal and find it in the deployment outputs here: `Resource Groups > {Resource Group Name} > Deployments > {Deployment Name, usually 'Microsoft.Template'} > Outputs`
 
 ### If you are using Windows:
 Install Putty or use any bash shell for Windows (if using a bash shell, follow the instructions for Linux or Mac).
 
 Run this command:
 ```
-putty.exe -ssh -L 8080:localhost:8080 <User name>@<Public DNS name of instance you just created>
+putty.exe -ssh -i <path to private key file> -L 8080:localhost:8080 <User name>@<Public DNS name of instance you just created>
 ```
 
 Or follow these manual steps:
@@ -36,7 +36,7 @@ Or follow these manual steps:
 ### If you are using Linux or Mac:
 Run this command:
 ```bash
-ssh -L 8080:localhost:8080 <User name>@<Public DNS name of instance you just created>
+ssh -i <path to private key file> -L 8080:localhost:8080 <User name>@<Public DNS name of instance you just created>
 ```
 ## C. Connect to Jenkins
 

@@ -7,7 +7,7 @@ backendvm2ip=$3
 echo 'ifconfig_hn1="DHCP"' >> /etc/rc.conf
 ifconfig hn1 up
 env ASSUME_ALWAYS_YES=YES pkg bootstrap
-pkg update -y
+pkg update
 pkg install -y nginx
 
 echo 'nginx_enable="YES"' >> /etc/rc.conf
@@ -30,3 +30,5 @@ service nginx restart
 sed -i -e '/^[^#]/d' /etc/sysctl.conf
 echo 'kern.ipc.soacceptqueue=4096' >> /etc/sysctl.conf
 echo 'net.inet.tcp.msl=1000' >> /etc/sysctl.conf
+
+echo "/sbin/reboot" | at + 1 minute
