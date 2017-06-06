@@ -24,14 +24,14 @@ In Azure, Spinnaker can target a Kubernetes cluster or VM Scale Sets.
 - To target VM Scale Sets, follow instructions [here](http://www.spinnaker.io/v1.0/docs/target-deployment-configuration#section-azure) to configure Spinnaker.
 
 ## D. Setup SSH port forwarding
-Once you have configured Spinnaker, you need to setup port forwarding to view the Spinnaker UI on your local machine.
+Once you have configured Spinnaker, you need to setup port forwarding to view the Spinnaker UI on your local machine. If you do not know the full DNS name of your instance, go to the Portal and find it in the deployment outputs here: `Resource Groups > {Resource Group Name} > Deployments > {Deployment Name, usually 'Microsoft.Template'} > Outputs`
 
 ### If you are using Windows:
 Install Putty or use any bash shell for Windows (if using a bash shell, follow the instructions for Linux or Mac).
 
 Run this command:
 ```
-putty.exe -ssh -L 9000:localhost:9000 -L 8084:localhost:8084 <User name>@<Public DNS name of instance you just created>
+putty.exe -ssh -i <path to private key file> -L 9000:localhost:9000 -L 8084:localhost:8084 <User name>@<Public DNS name of instance you just created>
 ```
 
 Or follow these manual steps:
@@ -44,13 +44,13 @@ Or follow these manual steps:
 ### If you are using Linux or Mac:
 Run this command:
 ```bash
-ssh -L 9000:localhost:9000 -L 8084:localhost:8084 <User name>@<Public DNS name of instance you just created>
+ssh -i <path to private key file> -L 9000:localhost:9000 -L 8084:localhost:8084 <User name>@<Public DNS name of instance you just created>
 ```
 > NOTE: Port 9000 and 8084 correspond to Spinnaker's deck and gate services, respectively.
 
 ## E. Connect to Spinnaker
 
-1. After you have started your tunnel, navigate to `http://localhost:9000/` on your local machine.
+1. After you have started your tunnel, navigate to http://localhost:9000/ on your local machine.
 1. Check the [Troubleshooting Guide](http://www.spinnaker.io/docs/troubleshooting-guide) if you have any issues.
 
 ## Questions/Comments? azdevopspub@microsoft.com
