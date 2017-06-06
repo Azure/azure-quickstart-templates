@@ -1,0 +1,81 @@
+{
+
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+
+  "contentVersion": "1.0.0.0",
+
+  "parameters": {
+
+    "existingRecoveryServicesVaultName": {
+
+      "type": "string",
+
+      "defaultValue": "myRSVault"
+
+    },
+
+    "vmResourceGroupName": {
+
+      "type": "string",
+
+      "defaultValue": "myVMRG"
+
+    },
+
+    "vmName": {
+
+      "type": "string",
+
+      "defaultValue": "myVM"
+
+    },
+
+    "existingPolicyName": {
+
+      "type": "string",
+
+      "defaultValue": "DefaultPolicy"
+
+    }
+
+  },
+
+  "variables": {
+
+    "protectionContainers": "[concat('iaasvmcontainer;iaasvmcontainerv2;', parameters('vmResourceGroupName'), ';', parameters('vmName'))]",
+
+    "protectedItems": "[concat('vm;iaasvmcontainerv2;', parameters('vmResourceGroupName'), ';', parameters('vmName'))]",
+
+    "protectedItemType": "Microsoft.Compute/virtualMachines",
+
+    "virtualMachineId": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', parameters('vmResourceGroupName'), '/providers/', variables('protectedItemType'), '/' , parameters('vmName'))]",
+
+    "backupFabric": "Azure",
+
+    "workloadType": "VM",
+
+    "containerName": "[concat('iaasvmcontainerv2;', parameters('vmResourceGroupName'), ';', parameters('vmName'))]"
+
+  },
+
+  "resources": [
+
+    {
+
+      "type": "Microsoft.RecoveryServices/vaults/backupFabrics/protectionContainers/protectedItems",
+
+      "name": "[concat(parameters('existingRecoveryServicesVaultName'), '/', variables('backupFabric'), '/', variables('protectionContainers'), '/', variables('protectedItems'))]",
+
+      "apiVersion": "2016-06-01",
+      "location": "[resourceGroup().location]",
+
+            "properties": {
+                "protectedItemType": "[variables('protectedItemType')]",
+                "policyId": "[resourceId('Microsoft.RecoveryServices/vaults/backupPolicies', parameters('existingRecoveryServicesVaultName'), parameters('existingPolicyName'))]",
+                "sourceResourceId": "[variables('virtualMachineId')]"
+            }
+    }
+
+  ]
+
+}
