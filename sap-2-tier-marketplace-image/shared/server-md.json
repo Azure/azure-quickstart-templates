@@ -1,0 +1,245 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "imageReference": {
+      "type": "object",
+      "metadata": {
+        "description": "imageReference object that should be used to create the virtual machine"
+      }
+    },
+    "planReference": {
+      "type": "object",
+      "defaultValue": {},
+      "metadata": {
+        "description": "The object that contains information about the plan of the gallery image."
+      }
+    },
+    "usePlanReference": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Determines if a plan should be used to create the virtual machine"
+      }
+    },
+    "osDisk": {
+      "type": "object",
+      "metadata": {
+        "description": "osDisk object that should be used to create the virtual machine"
+      }
+    },
+    "osDiskType": {
+      "type": "string",
+      "allowedValues": [
+        "image",
+        "userImage",
+        "osdisk"
+      ],
+      "metadata": {
+        "description": "The type of OS disk."
+      }
+    },
+    "sidlower": {
+      "type": "string",
+      "metadata": {
+        "description": "SAP System ID in lower case."
+      }
+    },
+    "vmName": {
+      "type": "string",
+      "metadata": {
+        "description": "Prefix of the virtual machine name."
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "metadata": {
+        "description": "Size of the Virtual Machine."
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Username for the Virtual Machine."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the Virtual Machine."
+      }
+    },
+    "csExtensionScript": {
+      "type": "string",
+      "metadata": {
+        "description": "Script that should be passed to the CustomScriptExtension."
+      }
+    },
+    "csExtensionscriptCall": {
+      "type": "string",
+      "metadata": {
+        "description": "Script call that should be passed to the CustomScriptExtension."
+      }
+    },
+    "csExtensionscriptArgs": {
+      "type": "string",
+      "metadata": {
+        "description": "Script call that should be passed to the CustomScriptExtension."
+      }
+    },
+    "avSetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the availability set."
+      }
+    },
+    "nicName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the network interface."
+      }
+    },
+    "dataDiskSizes": {
+      "type": "array",
+      "metadata": {
+        "description": "Information about the data disks that the VM should have."
+      }
+    },
+    "osType": {
+      "type": "string",
+      "metadata": {
+        "description": "URL to github templates."
+      }
+    }
+  },
+  "variables": {
+    "csExtension": {
+      "Windows": {
+        "Publisher": "Microsoft.Compute",
+        "Name": "CustomScriptExtension",
+        "Version": "1.7"
+      },
+      "Linux": {
+        "Publisher": "Microsoft.Azure.Extensions",
+        "Name": "CustomScript",
+        "Version": "2.0"
+      }
+    },
+    "cseExtPublisher": "[variables('csExtension')[parameters('osType')].Publisher]",
+    "cseExtName": "[variables('csExtension')[parameters('osType')].Name]",
+    "cseExtVersion": "[variables('csExtension')[parameters('osType')].Version]",
+    "diskCount": "[length(parameters('dataDiskSizes'))]",
+    "hardwareProfile": {
+      "vmSize": "[parameters('vmSize')]"
+    },
+    "networkProfile": {
+      "networkInterfaces": [
+        {
+          "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('nicName'))]"
+        }
+      ]
+    },
+    "availableProperties": {
+      "image": {
+        "availabilitySet": null,
+        "hardwareProfile": "[variables('hardwareProfile')]",
+        "osProfile": {
+          "computerName": "[parameters('vmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": "[parameters('imageReference')]",
+          "osDisk": "[parameters('osDisk')]",
+          "copy": [
+            {
+              "name": "dataDisks",
+              "count": "[variables('diskCount')]",
+              "input": {
+                "lun": "[copyIndex('dataDisks')]",
+                "createOption": "Empty",
+                "diskSizeGB": "[parameters('dataDiskSizes')[copyIndex('dataDisks')]]"
+              }
+            }
+          ]
+        },
+        "networkProfile": "[variables('networkProfile')]"
+      },
+      "userImage": {
+        "availabilitySet": null,
+        "hardwareProfile": "[variables('hardwareProfile')]",
+        "osProfile": {
+          "computerName": "[parameters('vmName')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "osDisk": "[parameters('osDisk')]",
+          "copy": [
+            {
+              "name": "dataDisks",
+              "count": "[variables('diskCount')]",
+              "input": {
+                "lun": "[copyIndex('dataDisks')]",
+                "createOption": "Empty",
+                "diskSizeGB": "[parameters('dataDiskSizes')[copyIndex('dataDisks')]]"
+              }
+            }
+          ]
+        },
+        "networkProfile": "[variables('networkProfile')]"
+      },
+      "osdisk": {
+        "availabilitySet": null,
+        "hardwareProfile": "[variables('hardwareProfile')]",
+        "storageProfile": {
+          "osDisk": "[parameters('osDisk')]",
+          "copy": [
+            {
+              "name": "dataDisks",
+              "count": "[variables('diskCount')]",
+              "input": {
+                "lun": "[copyIndex('dataDisks')]",
+                "createOption": "Empty",
+                "diskSizeGB": "[parameters('dataDiskSizes')[copyIndex('dataDisks')]]"
+              }
+            }
+          ]
+        },
+        "networkProfile": "[variables('networkProfile')]"
+      }
+    },
+    "internalProperties": "[variables('availableProperties')[parameters('osDiskType')]]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[parameters('vmName')]",
+      "apiVersion": "2017-03-30",
+      "location": "[resourceGroup().location]",
+      "plan": "[parameters('planReference')]",
+      "properties": "[variables('internalProperties')]"
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmName'), '/', variables('cseExtName'))]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
+      ],
+      "properties": {
+        "publisher": "[variables('cseExtPublisher')]",
+        "type": "[variables('cseExtName')]",
+        "typeHandlerVersion": "[variables('cseExtVersion')]",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[parameters('csExtensionScript')]"
+          ],
+          "commandToExecute": "[concat(parameters('csExtensionscriptCall'), ' ', parameters('csExtensionscriptArgs'))]"
+        }
+      }
+    }
+  ]
+}
