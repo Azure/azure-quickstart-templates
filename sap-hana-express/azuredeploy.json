@@ -1,0 +1,424 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vmNamePrefix": {
+            "type": "string",
+            "minLength": 3,
+            "metadata": {
+                "description": "The basic hostname for the virtual machine. Will also be used to prefix the other resources related to the VM."
+            }
+        },
+        "vmSize": {
+            "type": "string",
+            "defaultValue": "Standard_DS5_v2",
+            "allowedValues": [
+                "Standard_A6",
+                "Standard_A7",
+                "Standard_A8_v2",
+                "Standard_A2m_v2",
+                "Standard_A4m_v2",
+                "Standard_A8m_v2",
+                "Standard_D4",
+                "Standard_DS4",
+                "Standard_D4_v2",
+                "Standard_D5_v2",
+                "Standard_DS4_v2",
+                "Standard_DS5_v2",
+                "Standard_F8",
+                "Standard_F16",
+                "Standard_F8s",
+                "Standard_F16s",
+                "Standard_G1",
+                "Standard_G2",
+                "Standard_G3",
+                "Standard_GS1",
+                "Standard_GS2",
+                "Standard_GS3"
+            ],
+            "metadata": {
+                "description": "The size of the Virtual Machine for HANA Express to be deployed. Sizes are defined based on the minimum requirements for SAP HANA Express according to the SAP home pages."
+            }
+        },
+        "vmOsType": {
+            "type": "string",
+            "defaultValue": "openSUSE",
+            "allowedValues": [
+                "openSUSE",
+                "SLES"
+            ],
+            "metadata": {
+                "description": "The operating system used for deploying the HANA Express Virtual Machine. Only SuSE based virtual machines have been tested so far."
+            }
+        },
+        "dnsNamePrefix": {
+            "type": "string",
+            "metadata": {
+                "description": "The DNS Name Pre-Fix used for the public IP assigned to the virtual machine."
+            }
+
+        },
+        "adminUserName": {
+            "type": "string",
+            "metadata": {
+                "description": "The user name for the administrator/root user of the Virtual Machine deployed."
+            }
+        },
+        "adminPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The password of the administrator user for being able to log into the provisioned virtual machine."
+            }
+        },
+        "hxeSetupFileUrl": {
+            "type": "string",
+            "metadata": {
+                "description": "An Azure Storage Account URL with a Shared Access Signature that allows the setup provisioning scripts to download the SAP HANA Express setup TAR archive. The SAP HANA Express Setup files need to be uploaded to an Azure Storage Account and a Shared Access Signature needs to be generated. The Complete URL including the Shared Access Signature needs to be entered here!"
+            }
+        },
+        "hxeMasterPwd": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The master password used for SAP HANA Express. Use this password first to sign into HANA Express using HANA Tools and Web Interfaces."
+            }
+        },
+        "hxeInstallScriptUrl": {
+            "type": "string",
+            "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sap-hana-express/scripts/install-hxe-suse.sh",
+            "metadata": {
+                "description": "The complete URL for the SAP HANA Express setup script which is used by the template to setup HANA Express and all of its dependencies after the deployment/provisioning of the virtual machine."
+            }
+        },
+        "hxeInstallScriptName": {
+            "type": "string",
+            "defaultValue": "install-hxe-suse.sh",
+            "metadata": {
+                "description": "The name of the virtual machine post provisioning setup script used for local execution after download. You only need to change this if you change the download URL above and assign a different name to the setup script."
+            }
+        }
+    },
+    "variables": {
+        "vmNicName": "[concat(parameters('vmNamePrefix'), 'NIC')]",
+        "vmOsDiskName": "[concat(parameters('vmNamePrefix'), 'DiskOS_', uniqueString(resourceGroup().id))]",
+        "vmDataDiskName": "[concat(parameters('vmNamePrefix'), 'DiskData_', uniqueString(resourceGroup().id))]",
+        "vmOsDiskSizeInGb": "250",
+        "vmDataDiskSizeInGb": "1023",
+        "vmPublicIpName": "[concat(parameters('vmNamePrefix'), 'PublicIP', uniqueString(resourceGroup().id))]",
+        "vmImagePublisher": "[variables(concat('vmImagePublisher', parameters('vmOsType')))]",
+        "vmImageOffer": "[variables(concat('vmImageOffer', parameters('vmOsType')))]",
+        "vmImageSku": "[variables(concat('vmImageSku', parameters('vmOsType')))]",
+        "vmImageVersion": "latest",
+        "vmImagePublisheropenSUSE": "SUSE",
+        "vmImageOfferopenSUSE": "openSUSE-Leap",
+        "vmImageSkuopenSUSE": "42.2",
+        "vmImagePublisherSLES": "SUSE",
+        "vmImageOfferSLES": "SLES",
+        "vmImageSkuSLES": "12-SP2",
+        "vnetName": "[concat(parameters('vmNamePrefix'), 'Network')]",
+        "vnetSubnetName": "hxeSubnet",
+        "vnetAddressPrefix": "172.16.27.0/24",
+        "vnetSubnetAddressPrefix": "172.16.27.0/24",
+        "vnetNsgName": "hxeNetworkSecurityGroup"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[variables('vnetName')]",
+            "apiVersion": "2016-03-30",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('vnetAddressPrefix')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[variables('vnetSubnetName')]",
+                        "properties": {
+                            "addressPrefix": "[variables('vnetSubnetAddressPrefix')]"
+                        }
+                    }
+                ]
+            },
+            "dependsOn": []
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[variables('vnetNsgName')]",
+            "apiVersion": "2016-03-30",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "default-allow-ssh",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "22",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1000,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "allow-http",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "80",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1010,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "allow-https",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "443",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1020,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "hxe-allow-http",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "8000",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1030,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "hxe-allow-https",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "4300",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1040,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "hxe-allow-agent",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "1128-1129",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1050,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "hxe-allow-components",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "30000-30100",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1060,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "hxe-allow-soap",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "50000-50050",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1070,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "hxe-allow-xsa",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "51000-51500",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 1080,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            },
+            "dependsOn": []
+        },
+        {
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[variables('vmPublicIpName')]",
+            "apiVersion": "2016-03-30",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "publicIPAllocationMethod": "Dynamic",
+                "idleTimeoutInMinutes": 4,
+                "dnsSettings": {
+                    "domainNameLabel": "[parameters('dnsNamePrefix')]"
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[variables('vmNicName')]",
+            "apiVersion": "2016-03-30",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "[concat(parameters('vmNamePrefix'), 'ipConfig1')]",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmPublicIpName'))]"
+                            },
+                            "subnet": {
+                                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('vnetName')), '/subnets/', variables('vnetSubnetName'))]"
+                            }
+                        }
+                    }
+                ],
+                "dnsSettings": {
+                    "dnsServers": []
+                },
+                "enableIPForwarding": false,
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('vnetNsgName'))]"
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIPAddresses', variables('vmPublicIpName'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('vnetNsgName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Compute/disks",
+            "name": "[variables('vmDataDiskName')]",
+            "apiVersion": "2016-04-30-preview",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "accountType": "Premium_LRS",
+                "creationData": {
+                    "createOption": "Empty"
+                },
+                "diskSizeGB": "[variables('vmDataDiskSizeInGb')]"
+            },
+            "dependsOn": []
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[parameters('vmNamePrefix')]",
+            "apiVersion": "2016-04-30-preview",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('vmSize')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "[variables('vmImagePublisher')]",
+                        "offer": "[variables('vmImageOffer')]",
+                        "sku": "[variables('vmImageSku')]",
+                        "version": "[variables('vmImageVersion')]"
+                    },
+                    "osDisk": {
+                        "osType": "Linux",
+                        "name": "[variables('vmOsDiskName')]",
+                        "createOption": "FromImage",
+                        "caching": "None",
+                        "managedDisk": {
+                            "storageAccountType": "Premium_LRS"
+                        },
+                        "diskSizeGB": "[variables('vmOsDiskSizeInGb')]"
+                    },
+                    "dataDisks": [
+                        {
+                            "lun": 0,
+                            "name": "[variables('vmDataDiskName')]",
+                            "createOption": "Attach",
+                            "caching": "None",
+                            "managedDisk": {
+                                "storageAccountType": "Premium_LRS",
+                                "id": "[resourceId('Microsoft.Compute/disks', variables('vmDataDiskName'))]"
+                            },
+                            "diskSizeGB": "[variables('vmDataDiskSizeInGb')]"
+                        }
+                    ]
+                },
+                "osProfile": {
+                    "computerName": "[parameters('vmNamePrefix')]",
+                    "adminUsername": "[parameters('adminUserName')]",
+                    "adminPassword": "[parameters('adminPassword')]",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": false
+                    },
+                    "secrets": []
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vmNicName'))]"
+                        }
+                    ]
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Compute/disks', variables('vmDataDiskName'))]",
+                "[resourceId('Microsoft.Network/networkInterfaces', variables('vmNicName'))]"
+            ],
+            "resources": [
+                {
+                    "type": "extensions",
+                    "name": "hxeinstallextension",
+                    "apiVersion": "2016-04-30-preview",
+                    "location": "[resourceGroup().location]",
+                    "dependsOn": [
+                        "[concat('Microsoft.Compute/virtualMachines/', parameters('vmNamePrefix'))]"
+                    ],
+                    "properties": {
+                        "publisher": "Microsoft.Azure.Extensions",
+                        "type": "CustomScript",
+                        "typeHandlerVersion": "2.0",
+                        "autoUpgradeMinorVersion": true,
+                        "settings": {
+                            "fileUris": [
+                                "[parameters('hxeInstallScriptUrl')]"
+                            ]
+                        },
+                        "protectedSettings": {
+                            "commandToExecute": "[concat('sudo ./', parameters('hxeInstallScriptName'), ' \"', parameters('hxeSetupFileUrl'), '\" \"', parameters('hxeMasterPwd'), '\" && exit 0')]"
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}
