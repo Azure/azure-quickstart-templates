@@ -53,7 +53,7 @@ In order to access Moodle admin console, please use the username 'admin' (withou
 
 ### Gluster and MariaDb
 The setup script will ask you about the 't-shirt size' for database & gluster layers.
-Here's an explanation for each one of these: 
+Here's an explanation for each one of them: 
 
 Gluster t-shirt sizes: 
 
