@@ -1,0 +1,415 @@
+{
+  "contentVersion": "1.0.0.0",
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "parameters": {
+    "storageAccountResourceGroupName": {
+      "type": "string",
+      "metadata": {
+        "description": "The resource group that contains your Azure storage account that contains the input/output data."
+      }
+    },
+    "storageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Azure storage account that contains the input/output data."
+      }
+    },
+    "storageAccountKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Key for the Azure storage account."
+      }
+    },
+    "blobContainer": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the blob container in the Azure Storage account."
+      }
+    },
+    "inputBlobFolder": {
+      "type": "string",
+      "metadata": {
+        "description": "The folder in the blob container that has the input file."
+      }
+    },
+    "inputBlobName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the input file/blob."
+      }
+    },
+    "ftpHost": {
+      "type": "string",
+      "metadata": {
+        "description": "Name or IP address of FTP server."
+      }
+    },
+    "ftpUser": {
+      "type": "string",
+      "metadata": {
+        "description": "User account that has access to the FTP server."
+      }
+    },
+    "ftpPassword": {
+      "type": "string",
+      "metadata": {
+        "description": "Password for the user account that has access to the FTP server."
+      }
+    },
+    "ftpFolderName": {
+      "type": "string",
+      "metadata": {
+        "description": "The folder in FTP that has the input file."
+      }
+    },
+    "ftpFileName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the input file in FTP."
+      }
+    },
+    "outputBlobFolder": {
+      "type": "string",
+      "metadata": {
+        "description": "The folder in the blob container that will hold the transformed data."
+      }
+    },
+    "hiveScriptFolder": {
+      "type": "string",
+      "metadata": {
+        "description": "The folder in the blob container that contains the Hive query file."
+      }
+    },
+    "hiveScriptFile": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the hive query (HQL) file."
+      }
+    },
+    "sqlServerName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Azure SQL Server that will hold the output/copied data."
+      }
+    },
+    "sqlDatabaseName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Azure SQL Database in the Azure SQL server."
+      }
+    },
+    "sqlServerUserName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the user that has access to the Azure SQL server."
+      }
+    },
+    "sqlServerPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the user."
+      }
+    },
+    "targetSQLTable": {
+      "type": "string",
+      "metadata": {
+        "description": "Table in the Azure SQL Database that will hold the copied data."
+      }
+    }
+  },
+  "variables": {
+    "dataFactoryName": "[concat('HiveTransformDF', uniqueString(resourceGroup().id))]",
+    "azureStorageLinkedServiceName": "AzureStorageLinkedService",
+    "ftpLinkedServiceName": "FTPLinkedService",
+    "hdInsightOnDemandLinkedServiceName": "HDInsightOnDemandLinkedService",
+    "azureSqlLinkedServiceName": "AzureSqlLinkedService",
+    "ftpDatasetName": "FTPDataset",
+    "blobInputDatasetName": "AzureBlobInputDataset",
+    "blobOutputDatasetName": "AzureBlobOutputDataset",
+    "sqlDatasetName": "AzureSQLDataset",
+    "pipelineName": "Pipeline"
+  },
+  "resources": [
+    {
+      "name": "[variables('dataFactoryName')]",
+      "apiVersion": "2015-10-01",
+      "type": "Microsoft.DataFactory/datafactories",
+      "location": "West US",
+      "resources": [
+        {
+          "type": "linkedservices",
+          "name": "[variables('ftpLinkedServiceName')]",
+          "dependsOn": [
+            "[variables('dataFactoryName')]"
+          ],
+          "apiVersion": "2015-10-01",
+          "properties": {
+            "type": "FtpServer",
+            "typeProperties": {
+              "host": "[parameters('ftpHost')]",
+              "port": 21,
+              "authenticationType": "Basic",
+              "username": "[parameters('ftpUser')]",
+              "password": "[parameters('ftpPassword')]",
+              "enableSsl": false,
+              "enableServerCertificateValidation": false
+            }
+          }
+        },
+        {
+          "type": "linkedservices",
+          "name": "[variables('azureStorageLinkedServiceName')]",
+          "dependsOn": [
+            "[variables('dataFactoryName')]"
+          ],
+          "apiVersion": "2015-10-01",
+          "properties": {
+            "type": "AzureStorage",
+            "description": "Azure Storage linked service",
+            "typeProperties": {
+              "connectionString": "[concat('DefaultEndpointsProtocol=https;AccountName=',parameters('storageAccountName'),';AccountKey=',parameters('storageAccountKey'))]"
+            }
+          }
+        },
+        {
+          "type": "linkedservices",
+          "name": "[variables('hdInsightOnDemandLinkedServiceName')]",
+          "dependsOn": [
+            "[variables('dataFactoryName')]",
+            "[variables('azureStorageLinkedServiceName')]"
+          ],
+          "apiVersion": "2015-10-01",
+          "properties": {
+            "type": "HDInsightOnDemand",
+            "typeProperties": {
+              "clusterSize": 1,
+              "version": "3.2",
+              "timeToLive": "00:05:00",
+              "osType": "windows",
+              "linkedServiceName": "[variables('azureStorageLinkedServiceName')]"
+            }
+          }
+        },
+        {
+          "type": "linkedservices",
+          "name": "[variables('azureSqlLinkedServiceName')]",
+          "dependsOn": [
+            "[variables('dataFactoryName')]"
+          ],
+          "apiVersion": "2015-10-01",
+          "properties": {
+            "type": "AzureSqlDatabase",
+            "description": "Azure SQL linked service",
+            "typeProperties": {
+              "connectionString": "[concat('Server=tcp:',parameters('sqlServerName'),'.database.windows.net,1433;Database=', parameters('sqlDatabaseName'), ';User ID=',parameters('sqlServerUserName'),';Password=',parameters('sqlServerPassword'),';Trusted_Connection=False;Encrypt=True;Connection Timeout=30')]"
+            }
+          }
+        },
+        {
+          "type": "datasets",
+          "name": "[variables('ftpDatasetName')]",
+          "dependsOn": [
+            "[variables('dataFactoryName')]",
+            "[variables('ftpLinkedServiceName')]"
+          ],
+          "apiVersion": "2015-10-01",
+          "properties": {
+            "type": "FileShare",
+            "linkedServiceName": "[variables('ftpLinkedServiceName')]",
+            "typeProperties": {
+              "folderPath": "[parameters('ftpFolderName')]",
+              "fileName": "[parameters('ftpFileName')]"
+            },
+            "availability": {
+              "frequency": "Day",
+              "interval": 1
+            },
+            "external": true
+          }
+        },
+        {
+          "type": "datasets",
+          "name": "[variables('blobInputDatasetName')]",
+          "dependsOn": [
+            "[variables('dataFactoryName')]",
+            "[variables('azureStorageLinkedServiceName')]"
+          ],
+          "apiVersion": "2015-10-01",
+          "properties": {
+            "type": "AzureBlob",
+            "linkedServiceName": "[variables('azureStorageLinkedServiceName')]",
+            "typeProperties": {
+              "fileName": "[parameters('inputBlobName')]",
+              "folderPath": "[concat(parameters('blobContainer'), '/', parameters('inputBlobFolder'))]"
+            },
+            "availability": {
+              "frequency": "Day",
+              "interval": 1
+            }
+          }
+        },
+        {
+          "type": "datasets",
+          "name": "[variables('blobOutputDatasetName')]",
+          "dependsOn": [
+            "[variables('dataFactoryName')]",
+            "[variables('azureStorageLinkedServiceName')]"
+          ],
+          "apiVersion": "2015-10-01",
+          "properties": {
+            "type": "AzureBlob",
+            "linkedServiceName": "[variables('azureStorageLinkedServiceName')]",
+            "typeProperties": {
+              "folderPath": "[concat(parameters('blobContainer'), '/', parameters('outputBlobFolder'))]",
+              "format": {
+                "type": "TextFormat",
+                "columnDelimiter": ","
+              }
+            },
+            "availability": {
+              "frequency": "Day",
+              "interval": 1
+            }
+          }
+        },
+        {
+          "type": "datasets",
+          "name": "[variables('sqlDatasetName')]",
+          "dependsOn": [
+            "[variables('dataFactoryName')]",
+            "[variables('azureSqlLinkedServiceName')]"
+          ],
+          "apiVersion": "2015-10-01",
+          "properties": {
+            "type": "AzureSqlTable",
+            "linkedServiceName": "[variables('azureSqlLinkedServiceName')]",
+            "typeProperties": {
+              "tableName": "[parameters('targetSQLTable')]"
+            },
+            "availability": {
+              "frequency": "Day",
+              "interval": 1
+            },
+            "policy": {}
+          }
+        },
+        {
+          "type": "datapipelines",
+          "name": "[variables('pipelineName')]",
+          "dependsOn": [
+            "[variables('dataFactoryName')]",
+            "[variables('azureStorageLinkedServiceName')]",
+            "[variables('hdInsightOnDemandLinkedServiceName')]",
+            "[variables('ftpLinkedServiceName')]",
+            "[variables('azureSqlLinkedServiceName')]",
+            "[variables('ftpDatasetName')]",
+            "[variables('blobInputDatasetName')]",
+            "[variables('blobOutputDatasetName')]",
+            "[variables('sqlDatasetName')]"
+          ],
+          "apiVersion": "2015-10-01",
+          "properties": {
+            "description": "Pipeline that copies data from an FTP server to Azure Blobs, invokes a hive script on an on-demand HDInsightcluster to transform the data",
+            "activities": [
+              {
+                "type": "Copy",
+                "name": "FTPToBlobCopy",
+                "typeProperties": {
+                  "source": {
+                    "type": "FileSystemSource",
+                    "recursive": false
+                  },
+                  "sink": {
+                    "type": "BlobSink",
+                    "copyBehavior": "PreserveHierarchy",
+                    "writeBatchSize": 0,
+                    "writeBatchTimeout": "00:00:00"
+                  }
+                },
+                "inputs": [
+                  {
+                    "name": "[variables('ftpDatasetName')]"
+                  }
+                ],
+                "outputs": [
+                  {
+                    "name": "[variables('blobInputDatasetName')]"
+                  }
+                ],
+                "policy": {
+                  "concurrency": 1,
+                  "executionPriorityOrder": "NewestFirst",
+                  "retry": 1,
+                  "timeout": "00:05:00"
+                }
+              },
+              {
+                "type": "HDInsightHive",
+                "typeProperties": {
+                  "scriptPath": "[concat(parameters('blobContainer'), '/', parameters('hiveScriptFolder'), '/', parameters('hiveScriptFile'))]",
+                  "scriptLinkedService": "[variables('azureStorageLinkedServiceName')]",
+                  "defines": {
+                    "inputtable": "[concat(replace(reference(resourceId(parameters('storageAccountResourceGroupName'), 'Microsoft.Storage/storageAccounts/', parameters('storageAccountName')), '2016-01-01').primaryEndpoints.blob, 'https://', concat('wasb://', parameters('blobContainer'), '@')), parameters('inputBlobFolder'))]",
+                    "outputtable": "[concat(replace(reference(resourceId(parameters('storageAccountResourceGroupName'), 'Microsoft.Storage/storageAccounts/', parameters('storageAccountName')), '2016-01-01').primaryEndpoints.blob, 'https://', concat('wasb://', parameters('blobContainer'), '@')), parameters('outputBlobFolder'))]"
+                  }
+                },
+                "inputs": [
+                  {
+                    "name": "[variables('blobInputDatasetName')]"
+                  }
+                ],
+                "outputs": [
+                  {
+                    "name": "[variables('blobOutputDatasetName')]"
+                  }
+                ],
+                "policy": {
+                  "concurrency": 1,
+                  "retry": 2
+                },
+                "name": "RunSampleHiveActivity",
+                "linkedServiceName": "[variables('hdInsightOnDemandLinkedServiceName')]"
+              },
+              {
+                "type": "Copy",
+                "typeProperties": {
+                  "source": {
+                    "type": "BlobSource"
+                  },
+                  "sink": {
+                    "type": "SqlSink",
+                    "writeBatchSize": 0,
+                    "writeBatchTimeout": "00:00:00"
+                  }
+                },
+                "inputs": [
+                  {
+                    "name": "[variables('blobOutputDatasetName')]"
+                  }
+                ],
+                "outputs": [
+                  {
+                    "name": "[variables('sqlDatasetName')]"
+                  }
+                ],
+                "policy": {
+                  "timeout": "1.00:00:00",
+                  "concurrency": 1,
+                  "executionPriorityOrder": "NewestFirst",
+                  "style": "StartOfInterval",
+                  "retry": 3,
+                  "longRetry": 0,
+                  "longRetryInterval": "00:00:00"
+                },
+                "name": "BlobToSqlCopy"
+              }
+            ],
+            "start": "2015-10-01T00:00:00Z",
+            "end": "2015-10-02T00:00:00Z",
+            "isPaused": false
+          }
+        }
+      ]
+    }
+  ]
+}

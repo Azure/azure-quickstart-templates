@@ -11,80 +11,67 @@
     "adminPassword": {
       "type": "securestring",
       "metadata": {
-        "description": "Admin password for VM"
+        "description": "Admin password for VMs"
       }
     },
     "numberOfInstances": {
       "type": "int",
       "defaultValue": 2,
+      "minValue": 2,
+      "maxValue": 5,
       "metadata": {
-        "description": "Number of VMs to deploy"
-      }
-    },
-    "vmSize": {
-      "type": "string",
-      "defaultValue": "Standard_D1",
-      "metadata": {
-        "description": "Size of the Virtual Machine."
+        "description": "Number of VMs to deploy, limit 5 since this sample is using a single storage account"
       }
     },
     "OS": {
       "type": "string",
-      "defaultValue": "Ubuntu14.04LTS",
+      "defaultValue": "Ubuntu",
       "allowedValues": [
-        "Ubuntu14.04LTS",
-        "WindowsServer2012R2"
+        "Ubuntu",
+        "Windows"
       ],
       "metadata": {
-        "description": "Size of the Virtual Machine."
+        "description": "OS Platform for the VM"
       }
     }
   },
   "variables": {
-    "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'standardsa')]",
     "virtualNetworkName": "myVNET",
-    "availabilitySetName": "myAvSet",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
     "addressPrefix": "10.0.0.0/16",
     "subnet1Name": "Subnet-1",
     "subnet1Prefix": "10.0.0.0/24",
-    "subnet1Ref": "[concat(variables('vnetID'),'/subnets/', variables('subnet1Name'))]",
-    "vmStorageAccountContainerName": "vhds",
-    "Ubuntu14.04LTS": {
+    "subnet1Ref": "[resourceId('Microsoft.Network/virtualNetworks/subnets',variables('virtualNetworkName'),variables('subnet1Name'))]",
+    "availabilitySetName": "myAvSet",
+    "Ubuntu": {
       "publisher": "Canonical",
       "offer": "UbuntuServer",
-      "sku": "14.04.4-LTS",
+      "sku": "16.04.0-LTS",
       "version": "latest"
     },
-    "WindowsServer2012R2": {
+    "Windows": {
       "publisher": "MicrosoftWindowsServer",
       "offer": "WindowsServer",
-      "sku": "2012-R2-Datacenter",
+      "sku": "2016-Datacenter",
       "version": "latest"
     },
-    "imageReference": "[variables(parameters('OS'))]",
-    "apiVersion": "2015-06-15"
+    "imageReference": "[variables(parameters('OS'))]"
   },
   "resources": [
     {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('storageAccountName')]",
-      "apiVersion": "[variables('apiVersion')]",
-      "location": "[resourceGroup().location]",
-      "properties": {
-        "accountType": "Standard_LRS"
-      }
-    },
-    {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('availabilitySetName')]",
-      "apiVersion": "[variables('apiVersion')]",
-      "location": "[resourceGroup().location]"
+      "apiVersion": "2016-04-30-preview",
+	"location": "[resourceGroup().location]",
+	"properties": {
+	    "platformFaultDomainCount": "2",
+	    "platformUpdateDomainCount": "2",
+	    "managed" : "true"
+	}
     },
     {
-      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
+      "apiVersion": "2016-03-30",
       "location": "[resourceGroup().location]",
       "properties": {
         "addressSpace": {
@@ -103,16 +90,16 @@
       }
     },
     {
-      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat('nic', copyindex())]",
+      "apiVersion": "2016-03-30",
       "location": "[resourceGroup().location]",
       "copy": {
         "name": "nicLoop",
         "count": "[parameters('numberOfInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        "[variables('virtualNetworkName')]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -129,24 +116,23 @@
       }
     },
     {
-      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat('myvm', copyIndex())]",
+      "apiVersion": "2016-04-30-preview",
       "location": "[resourceGroup().location]",
       "copy": {
         "name": "virtualMachineLoop",
         "count": "[parameters('numberOfInstances')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', 'nic', copyindex())]",
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
+        "nicLoop"
       ],
       "properties": {
         "availabilitySet": {
           "id": "[resourceId('Microsoft.Compute/availabilitySets', variables('availabilitySetName'))]"
         },
         "hardwareProfile": {
-          "vmSize": "[parameters('vmSize')]"
+          "vmSize": "Standard_D1_v2"
         },
         "osProfile": {
           "computerName": "[concat('vm', copyIndex())]",
@@ -156,11 +142,6 @@
         "storageProfile": {
           "imageReference": "[variables('imageReference')]",
           "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/vhds/','osdisk', copyIndex(), '.vhd')]"
-            },
-            "caching": "ReadWrite",
             "createOption": "FromImage"
           }
         },
