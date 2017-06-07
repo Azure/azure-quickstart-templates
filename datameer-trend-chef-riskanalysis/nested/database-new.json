@@ -1,0 +1,82 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": { "type": "string" },
+    "newsqlServerName": { "type": "string" },
+    "existingSQLServerName": { "type": "string" },
+    "dbAdminName": { "type": "string" },
+    "dbAdminPassword": { "type": "string" },
+    "sqlDBName": { "type": "string" },
+    "datameerTags": {
+        "type": "object"
+    },
+    "trendmicroTags": {
+        "type": "object"
+    },
+    "chefSoftwareTags": {
+        "type": "object"
+    },
+    "quickstartTags": {
+        "type": "object"
+    }
+  },
+  "variables": {
+    "sql-api-version": "2014-04-01",
+    "sqldb-api-version": "2015-05-01-preview",
+    "sqlfirewallrules-api-version": "2014-04-01"
+  },
+  "resources": [
+      {
+          "name": "[parameters('newsqlServerName')]",
+          "type": "Microsoft.Sql/servers",
+          "location": "[parameters('location')]",
+          "apiVersion": "[variables('sql-api-version')]",
+          "properties": {
+            "administratorLogin": "[parameters('dbAdminName')]",
+            "administratorLoginPassword": "[parameters('dbAdminPassword')]",
+            "version": "12.0"
+          },
+          "tags": {
+            "quickstartName": "[parameters('quickstartTags').name]",
+            "provider": "[parameters('trendmicroTags').provider]"
+          },
+          "resources": [
+              {
+                  "name": "[parameters('sqlDBName')]",
+                  "type": "databases",
+                  "location": "[parameters('location')]",
+                  "apiVersion": "[variables('sqldb-api-version')]",
+                  "dependsOn": [
+                      "[concat('Microsoft.Sql/servers/', parameters('newsqlServerName'))]"
+                      ],
+                  "properties": {
+                      "edition": "Standard",
+                      "collation": "SQL_Latin1_General_CP1_CI_AS",
+                      "maxSizeBytes": "21474836480",
+                      "requestedServiceObjectiveName": "S3"
+                  }
+              },
+              {
+                  "apiVersion": "[variables('sqlfirewallrules-api-version')]",
+                  "dependsOn": [
+                      "[concat('Microsoft.Sql/servers/', parameters('newsqlServerName'))]"
+                  ],
+                  "location": "[parameters('location')]",
+                  "name": "AllowAllAzureIps",
+                  "properties": {
+                      "endIpAddress": "0.0.0.0",
+                      "startIpAddress": "0.0.0.0"
+                  },
+                  "type": "firewallrules"
+              }
+          ]
+      }
+  ],
+  "outputs": {
+    "sqlServerFQDN": {
+      "type": "string",
+      "value": "[reference(concat('Microsoft.Sql/servers/', parameters('newsqlServerName'))).fullyQualifiedDomainName]"
+    }
+  }
+}
