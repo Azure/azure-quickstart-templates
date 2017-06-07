@@ -24,7 +24,7 @@
 #
 # Script Name: node-setup.sh
 # Author: Roy Arsan - Splunk Inc github:(rarsan)
-# Version: 0.2
+# Version: 0.3
 # Last Modified By: Roy Arsan
 # Description:
 #  This script sets up a node by configuring pre-installed Splunk Enterprise via Chef in local mode.
@@ -33,10 +33,11 @@
 #  1 - r: role of Splunk server
 #  2 - p: password of Splunk server
 #  3 - c: cluster master ip address (optional)
-#  4 - i: index of node (optional)
-#  5 - h: Help
+#  4 - s: cluster secret (optional)
+#  5 - i: index of node (optional)
+#  6 - h: Help
 # Note : 
-# This script has only been tested on Ubuntu 12.04 LTS & 14.04.2-LTS and must be root
+# This script has only been tested on Ubuntu 12.04 LTS & 14.04 LTS and must be root
 
 set -e
 
@@ -82,8 +83,8 @@ MIN_LIMITS=(
 )
 
 # Arguments
-while getopts :r:p:c:i: optname; do
-  if [ $optname != 'p' ]; then
+while getopts :r:p:c:s:i: optname; do
+  if [[ $optname != 'p' && $optname != 's' ]]; then
     log "Option $optname set with value ${OPTARG}"
   fi
   case $optname in
@@ -95,6 +96,9 @@ while getopts :r:p:c:i: optname; do
       ;;
     c) #IP of cluster master
       CLUSTER_MASTER_IP=${OPTARG}
+      ;;
+    s) #Secret shared by cluster members
+      CLUSTER_SECRET=${OPTARG}
       ;;
     i) #Index of node
       NODE_INDEX=${OPTARG}
@@ -122,6 +126,7 @@ chmod u+x vm-disk-utils-0.1.sh && ./vm-disk-utils-0.1.sh -s -p $DATA_MOUNTPOINT
 
 # Update Chef data bag with custom user credentials
 sed -i "s/notarealpassword/${ADMIN_PASSWD}/" /etc/chef/repo/data_bags/vault/splunk__default.json
+sed -i "s/notarealsecret/${CLUSTER_SECRET}/" /etc/chef/repo/data_bags/vault/splunk__default.json
 
 # Update Chef placeholder nodes with existing resources data
 if [ -n "${CLUSTER_MASTER_IP}" ]; then
