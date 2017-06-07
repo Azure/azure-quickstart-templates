@@ -38,9 +38,6 @@
     "adminSitePort": {
       "type": "int"
     },
-    "metricsStorageAcctName": {
-      "type": "string"
-    },
     "apiVersionStorageAccounts": {
       "type": "string"
     },
@@ -55,17 +52,6 @@
     "maxPeers": 25
   },
   "resources": [
-    {
-      "apiVersion": "[parameters('apiVersionStorageAccounts')]",
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[parameters('metricsStorageAcctName')]",
-      "location": "[parameters('location')]",
-      "sku": {
-        "name": "Standard_LRS"
-      },
-      "kind": "Storage",
-      "properties": {}
-    },
     {
       "apiVersion": "[variables('apiVersionVirtualMachinesExtensions')]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
@@ -91,36 +77,6 @@
       }
     },
     {
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(parameters('txVMNamePrefix'), copyIndex(), '/diagscript')]",
-      "apiVersion": "[variables('apiVersionVirtualMachinesExtensions')]",
-      "location": "[parameters('location')]",
-      "copy": {
-        "name": "txNodesDiagLoop",
-        "count": "[parameters('numTXNodes')]"
-      },
-      "properties": {
-        "publisher": "Microsoft.OSTCExtensions",
-        "type": "LinuxDiagnostic",
-        "typeHandlerVersion": "2.3",
-        "autoUpgradeMinorVersion": true,
-        "settings": {
-           "perfCfg":[
-              {
-                "query":"SELECT UsedMemory,AvailableMemory FROM SCX_MemoryStatisticalInformation","table":"Memory"
-              },
-              {
-                "query":"SELECT PercentIdleTime,PercentProcessorTime,PercentIOWaitTime FROM SCX_ProcessorStatisticalInformation WHERE IsAggregate = TRUE","table":"CPU"
-              }
-            ]
-        },
-        "protectedSettings": {
-          "storageAccountName": "[parameters('metricsStorageAcctName')]",
-          "storageAccountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('metricsStorageAcctName')), parameters('apiVersionStorageAccounts')).keys[0].value]"
-        }
-      }
-    },
-    {
       "apiVersion": "[variables('apiVersionVirtualMachinesExtensions')]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('mnVMNamePrefix'), copyIndex(), '/newuserscript')]",
@@ -141,36 +97,6 @@
         },
         "protectedSettings": {
           "commandToExecute": "[concat('/bin/bash configure-geth.sh \"', parameters('adminUsername'), '\" \"', parameters('ethereumAccountPsswd'), '\" \"', parameters('ethereumAccountPassphrase'), '\" \"', parameters('artifactsLocationURL'), '\" \"', parameters('ethereumNetworkID'), '\" \"', variables('maxPeers'), '\" \"', variables('mnNode'), '\" \"', parameters('gethIPCPort'), '\" \"', parameters('numBootNodes'), '\" \"', parameters('numMNNodes'), '\" \"', parameters('mnVMNamePrefix'), '\" \"', copyIndex(), '\"')]"
-        }
-      }
-    },
-    {
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(parameters('mnVMNamePrefix'), copyIndex(), '/diagscript')]",
-      "apiVersion": "[variables('apiVersionVirtualMachinesExtensions')]",
-      "location": "[parameters('location')]",
-      "copy": {
-        "name": "mnNodesDiagLoop",
-        "count": "[parameters('numMNNodes')]"
-      },
-      "properties": {
-        "publisher": "Microsoft.OSTCExtensions",
-        "type": "LinuxDiagnostic",
-        "typeHandlerVersion": "2.3",
-        "autoUpgradeMinorVersion": true,
-        "settings": {
-          "perfCfg":[
-             {
-               "query":"SELECT UsedMemory,AvailableMemory FROM SCX_MemoryStatisticalInformation","table":"Memory"
-             },
-             {
-               "query":"SELECT PercentIdleTime,PercentProcessorTime,PercentIOWaitTime FROM SCX_ProcessorStatisticalInformation WHERE IsAggregate = TRUE","table":"CPU"
-             }
-           ]
-        },
-        "protectedSettings": {
-          "storageAccountName": "[parameters('metricsStorageAcctName')]",
-          "storageAccountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('metricsStorageAcctName')), parameters('apiVersionStorageAccounts')).keys[0].value]"
         }
       }
     }
