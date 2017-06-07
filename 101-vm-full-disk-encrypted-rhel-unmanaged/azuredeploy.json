@@ -1,0 +1,162 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "User name for the Virtual Machine."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the Virtual Machine."
+      }
+    },
+    "aadClientID": {
+      "metadata": {
+        "description": "Client ID of AAD app which has permissions to KeyVault"
+      },
+      "type": "string"
+    },
+    "aadClientSecret": {
+      "metadata": {
+        "description": "Client Secret of AAD app which has permissions to KeyVault"
+      },
+      "type": "securestring"
+    },
+    "keyVaultName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the KeyVault to place the volume encryption key"
+      }
+    },
+    "keyVaultResourceGroup": {
+      "type": "string",
+      "metadata": {
+        "description": "Resource group of the KeyVault"
+      }
+    },
+    "vmName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the VM that will be created"
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      }
+    }
+  },
+  "variables": {
+    "templateName": "101-vm-full-disk-encrypted-rhel-unmanaged",
+    "createVmUrl": "[concat(parameters('_artifactsLocation'), '/', '101-vm-simple-rhel-unmanaged', '/', 'azuredeploy.json', parameters('_artifactsLocationSasToken'))]",
+    "createVmDeploymentName": "[concat(uniquestring(parameters('vmName')), 'createVm')]",
+    "encryptVmUrl": "[concat(parameters('_artifactsLocation'), '/', '201-encrypt-running-linux-vm', '/', 'azuredeploy.json', parameters('_artifactsLocationSasToken'))]",
+    "encryptVmDeploymentName": "[concat(uniquestring(parameters('vmName')), 'encryptVm')]",
+    "scriptsFolder": "scripts",
+    "scriptFileName": "setup_raid.sh",
+    "setupRaidUrl": "[concat(parameters('_artifactsLocation'), '/', variables('templateName'), '/', variables('scriptsFolder'), '/', variables('scriptFileName'), parameters('_artifactsLocationSasToken'))]",
+    "setupRaidExtensionName": "setupRaidCustomScript",
+    "diskFormatQuery": "{\"dev_path\":\"/dev/md0\",\"name\":\"encryptedraid\",\"file_system\":\"ext4\"}"
+  },
+  "resources": [
+    {
+      "apiVersion": "2016-02-01",
+      "name": "[variables('createVmDeploymentName')]",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "parameters": {
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "vmName": {
+            "value": "[parameters('vmName')]"
+          }
+        },
+        "templateLink": {
+          "contentVersion": "1.0.0.0",
+          "uri": "[variables('createVmUrl')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('vmName'), '/', variables('setupRaidExtensionName'))]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', variables('createVmDeploymentName'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[variables('setupRaidUrl')]"
+          ],
+          "commandToExecute": "./setup_raid.sh"
+        },
+        "protectedSettings": {}
+      }
+    },
+    {
+      "apiVersion": "2016-02-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('vmName'), variables('setupRaidExtensionName'))]"
+      ],
+      "name": "[variables('encryptVmDeploymentName')]",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "parameters": {
+          "encryptionOperation": {
+            "value": "EnableEncryptionFormat"
+          },
+          "volumeType": {
+            "value": "All"
+          },
+          "diskFormatQuery": {
+            "value": "[variables('diskFormatQuery')]"
+          },
+          "aadClientID": {
+            "value": "[parameters('aadClientID')]"
+          },
+          "aadClientSecret": {
+            "value": "[parameters('aadClientSecret')]"
+          },
+          "keyVaultName": {
+            "value": "[parameters('keyVaultName')]"
+          },
+          "keyVaultResourceGroup": {
+            "value": "[parameters('keyVaultResourceGroup')]"
+          },
+          "vmName": {
+            "value": "[parameters('vmName')]"
+          }
+        },
+        "templateLink": {
+          "contentVersion": "1.0.0.0",
+          "uri": "[variables('encryptVmUrl')]"
+        }
+      }
+    }
+  ]
+}
