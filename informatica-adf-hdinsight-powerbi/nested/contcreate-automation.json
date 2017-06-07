@@ -1,0 +1,166 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "automationAccountName": {
+            "type": "string"
+        },
+        "sku": {
+            "type": "string",
+            "defaultValue": "Free",
+            "allowedValues": [
+                "Free",
+                "Basic"
+            ]
+        },
+        "runbookName": {
+            "type": "string"
+        },
+        "credential1Name": {
+            "defaultValue": "Azure_RM_Account_Credentials",
+            "type": "string"
+        },
+        "cred1Username": {
+            "type": "string",
+            "defaultValue": "ash@sysgaininc.onmicrosoft.com"
+        },
+        "cred1Password": {
+            "type": "string",
+            "defaultValue": "Sysgain#@"
+        },
+        "jobIdCont": {
+            "type": "string",
+            "metadata": {
+                "description": "Generate a Job ID (GUID) from https://www.guidgenerator.com/online-guid-generator.aspx "
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "East US 2",
+            "allowedValues": [
+                "Japan East",
+                "North Europe",
+                "South Central US",
+                "West Europe",
+                "Southeast Asia",
+                "East US 2"
+            ],
+            "metadata": {
+                "description": "Automation Service Location"
+            }
+        },
+        "scriptUri": {
+            "type": "string"
+        },
+        "tag": {
+            "type": "object",
+            "defaultValue": {
+                "key1": "key",
+                "value1": "value"
+            },
+            "metadata": {
+                "description": "Tag Values"
+            }
+        },
+        "adfStorageAccKey": {
+            "type": "string"
+        },
+        "adfStorageAccName": {
+            "type": "string"
+        },
+        "informaticaTags": {
+            "type": "object"
+        },
+        "quickstartTags": {
+            "type": "object"
+        }
+    },
+    "resources": [
+        {
+            "name": "[parameters('automationAccountName')]",
+            "type": "Microsoft.Automation/automationAccounts",
+            "apiVersion": "2015-01-01-preview",
+            "location": "[parameters('location')]",
+            "tags": {
+                "[parameters('tag').key1]": "[parameters('tag').value1]",
+                "quickstartName": "[parameters('quickstartTags').name]",        
+                "provider": "[parameters('informaticaTags').provider]"
+            },
+            "properties": {
+                "sku": {
+                    "name": "[parameters('sku')]"
+                }
+            },
+            "resources": [
+                {
+                    "name": "[parameters('runbookName')]",
+                    "type": "runbooks",
+                    "apiVersion": "2015-01-01-preview",
+                    "location": "[parameters('location')]",
+                    "dependsOn": [
+                        "[concat('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]"
+                    ],
+                    "tags": {
+                        "[parameters('tag').key1]": "[parameters('tag').value1]",
+                        "quickstartName": "[parameters('quickstartTags').name]",        
+                        "provider": "[parameters('informaticaTags').provider]"
+                    },
+                    "properties": {
+                        "runbookType": "Script",
+                        "logProgress": "false",
+                        "logVerbose": "false",
+                        "description": null,
+                        "publishContentLink": {
+                            "uri": "[parameters('scriptUri')]",
+                            "version": "1.0.0.0"
+                        }
+                    }
+                },
+                {
+                    "name": "[parameters('credential1Name')]",
+                    "type": "credentials",
+                    "apiVersion": "2015-01-01-preview",
+                    "location": "[parameters('location')]",
+                    "dependsOn": [
+                        "[concat('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]"
+                    ],
+                    "tags": {
+                        "[parameters('tag').key1]": "[parameters('tag').value1]",
+                        "quickstartName": "[parameters('quickstartTags').name]",        
+                        "provider": "[parameters('informaticaTags').provider]"
+                    },
+                    "properties": {
+                        "userName": "[parameters('cred1Username')]",
+                        "password": "[parameters('cred1Password')]"
+                    }
+                },
+                {
+                    "name": "[concat(parameters('automationAccountName'), '/', parameters('jobIdCont'))]",
+                    "type": "Microsoft.Automation/automationAccounts/jobs",
+                    "apiVersion": "2015-10-31",
+                    "location": "[parameters('location')]",
+                    "tags": {
+                        "[parameters('tag').key1]": "[parameters('tag').value1]",
+                        "quickstartName": "[parameters('quickstartTags').name]",        
+                        "provider": "[parameters('informaticaTags').provider]"
+                    },
+                    "properties": {
+                        "runbook": {
+                            "name": "[parameters('runbookName')]"
+                        },
+                        "parameters": {
+                           
+                            "adfStorageAccName": "[parameters('adfStorageAccName')]",
+                            "adfStorageAccKey": "[parameters('adfStorageAccKey')]"
+                        }
+                    },
+                    "dependsOn": [
+                        "[concat('Microsoft.Automation/automationAccounts/', parameters('automationAccountName'))]",
+                        "[resourceId('Microsoft.Automation/automationAccounts/runbooks', parameters('automationAccountName'), parameters('runbookName'))]",
+                        "[resourceId('Microsoft.Automation/automationAccounts/credentials', parameters('automationAccountName'), parameters('credential1Name'))]"
+                    ]
+                }
+            ]
+        }
+    ]
+}

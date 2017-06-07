@@ -1,0 +1,309 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "omsWorkspaceId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Specify the Log Analytics workspace Id  where Azure VM Inventory solution is deployed"
+      }
+    },
+    "omsWorkspaceKey": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Specify the Log Analytics workspace key  where Azure VM Inventory solution is deployed"
+      }
+    },
+    "omsAutomationAccountName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Use an existing Automation account or create a new"
+      }
+    },
+    "omsAutomationRegion": {
+      "type": "string",
+      "allowedValues": [
+        "westeurope",
+        "southeastasia",
+        "eastus2",
+        "southcentralus",
+        "japaneast",
+        "southeastasia",
+        "southcentralus",
+        "northeurope",
+        "canadacentral",
+        "australiasoutheast",
+        "centralindia",
+        "japaneast"
+      ],
+      "metadata": {
+        "description": "Specify the Azure Region for your OMS Automation Account"
+      }
+    },
+    "omsAutomationSku": {
+      "type": "string",
+      "defaultValue": "basic",
+      "allowedValues": [
+        "free",
+        "basic"
+      ],
+      "metadata": {
+        "description": "Specify the SKU for Automation Account"
+      }
+    },
+    "omsDataIngestionFrequency": {
+      "type": "int",
+      "defaultValue": 30,
+      "allowedValues": [
+        15,
+        30,
+        60
+      ],
+      "metadata": {
+        "description": "Specify the Azure VM Inventory retrieval frequency"
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/oms-azure-vminventory-solution",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located"
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      }
+    },
+    "ingestSchedulerGuid": {
+      "type": "string",
+      "defaultValue": "53c6dea7-806f-4598-9ec9-a35ca2732b54",
+      "metadata": {
+        "description": "GUID for the schedule creation - create a unique before deploy"
+      }
+    }
+  },
+  "variables": {
+    "runbooks": {
+      "ingestParentRunbook": {
+        "name": "AzureVMInventory-MS-Mgmt",
+        "version": "1.0.0.1",
+        "description": "Runbook to automatically ingest Azure VM Inventory data and events into OMS Log Analytics",
+        "type": "PowerShell",
+        "Id": ""
+      },
+      "ingestSchedulerRunbook": {
+        "name": "AzureVMInventory-Schedules-MS-Mgmt",
+        "version": "1.0.0.1",
+        "description": "Runbook to automatically create required schedules for OMS Log Analytics ingestion",
+        "type": "PowerShell",
+        "Id": ""
+      }
+    },
+    "parentRunbookUri": "[concat(parameters('_artifactsLocation'),'/scripts/AzureVMInventory-MS-Mgmt.ps1', parameters('_artifactsLocationSasToken'))]",
+    "schedulerRunbookUri": "[concat(parameters('_artifactsLocation'),'/scripts/AzureVMInventory-Schedules-MS-Mgmt.ps1', parameters('_artifactsLocationSasToken'))]",
+    "opsInsightWorkspaceID": "AzureVMInventory-OPSINSIGHTS_WS_ID",
+    "opsInsightWorkspaceIDType": "string",
+    "opsInsightWorkspaceIDDescription": "Value of the user's omsWorkspaceId",
+    "opsInsightWorkspaceKey": "AzureVMInventory-OPSINSIGHT_WS_KEY",
+    "opsInsightWorkspaceKeyType": "string",
+    "opsInsightWorkspaceKeyDescription": "Encrypted value of the user's omsWorkspaceKey",
+    "createScheduleAutomationAccountName": "AzureVMInventory-AzureAutomationAccount-MS-Mgmt",
+    "createScheduleAutomationAccountType": "string",
+    "createScheduleAutomationAccountDescription": "The name of the Automation Account",
+    "createScheduleResourceGroupName": "AzureVMInventory-AzureAutomationResourceGroup-MS-Mgmt",
+    "createScheduleResourceGroupType": "string",
+    "createScheduleResourceGroupDescription": "The name of the resource group",
+    "collectDiskInventory": "1",
+    "collectNICandNSGInventory": "1",
+    "ingestInterval": "1",
+    "ingestFrequency": "hour",
+    "ingestScheduleName": "AzureVMInventory-Scheduler-Hourly"
+  },
+  "resources": [
+      {
+      "apiversion": "2015-10-31",
+      "location": "[parameters('omsAutomationRegion')]",
+      "name": "[parameters('omsAutomationAccountName')]",
+      "type": "Microsoft.Automation/automationAccounts",
+      "properties": {
+        "sku": {
+          "name": "[parameters('omsAutomationSku')]"
+        }
+      },
+        "resources": [
+          {
+            "name": "[variables('opsInsightWorkspaceID')]",
+            "type": "variables",
+            "apiVersion": "2015-10-31",
+            "dependsOn": [
+              "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]"
+            ],
+            "tags": {},
+            "properties": {
+              "description": "[variables('opsInsightWorkspaceIDDescription')]",
+              "isEncrypted": 0,
+              "type": "[variables('opsInsightWorkspaceIDType')]",
+              "value": "[concat('\"',parameters('omsWorkspaceId'),'\"')]"
+            }
+          },
+          {
+            "name": "[variables('opsInsightWorkspaceKey') ]",
+            "type": "variables",
+            "apiVersion": "2015-10-31",
+            "dependsOn": [
+              "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]"
+            ],
+            "tags": {},
+            "properties": {
+              "description": "[variables('opsInsightWorkspaceKeyDescription')]",
+              "isEncrypted": 1,
+              "type": "[variables('opsInsightWorkspaceKeyType')]",
+              "value": "[concat('\"',parameters('omsWorkspaceKey'),'\"')]"
+            }
+          },
+          {
+            "name": "[variables('createScheduleAutomationAccountName')]",
+            "type": "variables",
+            "apiVersion": "2015-10-31",
+            "dependsOn": [
+              "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]"
+            ],
+            "tags": {},
+            "properties": {
+              "description": "[variables('createScheduleAutomationAccountDescription')]",
+              "isEncrypted": 0,
+              "type": "[variables('createScheduleAutomationAccountType')]",
+              "value": "[concat('\"', parameters('omsAutomationAccountName'),'\"')]"
+            }
+          },
+          {
+            "name": "[variables('createScheduleResourceGroupName')]",
+            "type": "variables",
+            "apiVersion": "2015-10-31",
+            "dependsOn": [
+              "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]"
+            ],
+            "tags": {},
+            "properties": {
+              "description": "[variables('createScheduleResourceGroupDescription')]",
+              "isEncrypted": 0,
+              "type": "[variables('createScheduleResourceGroupType')]",
+              "value": "[concat('\"', resourceGroup().name, '\"')]"
+            }
+          },
+          {
+            "name": "[variables('runbooks').ingestParentRunbook.name]",
+            "type": "runbooks",
+            "apiVersion": "2015-10-31",
+            "location": "[parameters('omsAutomationRegion')]",
+            "dependsOn": [
+              "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]",
+              "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/variables/', variables('opsInsightWorkspaceID'))]",
+              "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/variables/', variables('opsInsightWorkspaceKey'))]"
+            ],
+            "tags": {},
+            "properties": {
+              "runbookType": "[variables('runbooks').ingestParentRunbook.type]",
+              "logProgress": "false",
+              "logVerbose": "false",
+              "description": "[variables('runbooks').ingestParentRunbook.description]",
+              "publishContentLink": {
+                "uri": "[variables('parentRunbookUri')]",
+                "version": "[variables('runbooks').ingestParentRunbook.version]"
+              }
+            }
+          },
+          {
+            "name": "[variables('runbooks').ingestSchedulerRunbook.name]",
+            "type": "runbooks",
+            "apiVersion": "2015-10-31",
+            "location": "[parameters('omsAutomationRegion')]",
+            "dependsOn": [
+              "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]",
+              "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/variables/', variables('opsInsightWorkspaceID'))]",
+              "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/variables/', variables('opsInsightWorkspaceKey'))]"
+            ],
+            "tags": {},
+            "properties": {
+              "runbookType": "[variables('runbooks').ingestSchedulerRunbook.type]",
+              "logProgress": "false",
+              "logVerbose": "false",
+              "description": "[variables('runbooks').ingestSchedulerRunbook.description]",
+              "publishContentLink": {
+                "uri": "[variables('schedulerRunbookUri')]",
+                "version": "[variables('runbooks').ingestSchedulerRunbook.version]"
+              }
+            }
+          },
+          {
+            "name": "[concat(parameters('omsAutomationAccountName'), '/', variables('ingestscheduleName'),'-',parameters('ingestSchedulerGuid'))]",
+            "type": "microsoft.automation/automationAccounts/schedules",
+            "apiVersion": "2015-10-31",
+            "location": "[parameters('omsAutomationRegion')]",
+            "dependsOn": [
+              "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]",
+              "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/runbooks/', variables('runbooks').ingestSchedulerRunbook.name)]"
+            ],
+            "tags": {},
+            "properties": {
+              "description": "OMS Ingestion API Scheduler",
+              "startTime": "",
+              "isEnabled": "true",
+              "interval": "[variables('ingestInterval')]",
+              "frequency": "[variables('ingestFrequency')]"
+            }
+          },
+          {
+            "name": "[concat(parameters('omsAutomationAccountName'), '/', parameters('ingestSchedulerGuid'))]",
+            "type": "microsoft.automation/automationAccounts/jobSchedules",
+            "apiVersion": "2015-10-31",
+            "location": "[parameters('omsAutomationRegion')]",
+            "dependsOn": [
+              "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/schedules/', variables('ingestscheduleName'),'-',parameters('ingestSchedulerGuid'))]",
+              "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]"
+            ],
+            "tags": {},
+            "properties": {
+              "schedule": {
+                "name": "[concat(variables('ingestscheduleName'),'-',parameters('ingestSchedulerGuid'))]"
+              },
+              "runbook": {
+                "name": "[variables('Runbooks').ingestSchedulerRunbook.name]"
+              }
+            }
+          },
+          {
+            "name": "[concat(parameters('omsAutomationAccountName'), '/', parameters('ingestSchedulerGuid'))]",
+            "type": "Microsoft.Automation/automationAccounts/jobs",
+            "apiVersion": "2015-10-31",
+            "location": "[parameters('omsAutomationRegion')]",
+            "dependsOn": [
+              "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'))]",
+              "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/runbooks/', variables('runbooks').ingestSchedulerRunbook.name)]",
+              "[concat('Microsoft.Automation/automationAccounts/', parameters('omsAutomationAccountName'), '/runbooks/', variables('runbooks').ingestParentRunbook.name)]"
+
+            ],
+            "tags": {},
+            "properties": {
+              "runbook": {
+                "name": "[variables('runbooks').ingestSchedulerRunbook.name]"
+              },
+              "parameters": {
+                "frequency": "[parameters('omsDataIngestionFrequency')]",
+                "getNICandNSG": "[variables('collectNICandNSGInventory')]",
+                "getDiskInfo": "[variables('collectDiskInventory')]",
+                "clearLocks": "1"
+              }
+            }
+          }
+        ]
+    }
+  ],
+  "outputs": {}
+}

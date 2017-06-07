@@ -8,7 +8,7 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template allows you to deploy an Ubuntu Server 15.04 VM with Docker (using the [Docker Extension][ext])
+This template allows you to deploy an Ubuntu Server 16.04.0-LTS VM with Docker (using the [Docker Extension][ext])
 and starts a WordPress container listening an port 80 which uses MySQL database running
 in a separate but linked Docker container, which are created using [Docker Compose][compose]
 capabilities of the [Azure Docker Extension][ext].

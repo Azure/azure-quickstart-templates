@@ -2,12 +2,6 @@
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-	"newStorageAccountName": {
-	    "type": "string",
-	    "metadata": {
-		"description": "Unique DNS Name for the Storage Account where the Virtual Machine's disks will be placed."
-	    }
-	},
 	"newDBStorageAccountName": {
 	    "type": "string",
 	    "metadata": {
@@ -107,9 +101,7 @@
     "variables": {
 	"imagePublisher": "MicrosoftWindowsServer",
 	"imageOffer": "WindowsServer",
-	"OSDiskName": "osdiskforwindowssimple",
 	"storageAccountType": "Standard_LRS",
-	"vmStorageAccountContainerName": "vhds",
 	"vmSize": "Standard_A2",
 	"VNetName": "multiTierVNet",
 	"FESubnetName": "FrontendSubnet",
@@ -151,15 +143,6 @@
 	"apiVer": "2015-06-15"
     },
     "resources": [
-      {
-        "type": "Microsoft.Storage/storageAccounts",
-        "name": "[parameters('newStorageAccountName')]",
-        "apiVersion": "2015-05-01-preview",
-        "location": "[resourceGroup().location]",
-        "properties": {
-          "accountType": "[variables('storageAccountType')]"
-        }
-      },
       {
         "type": "Microsoft.Storage/storageAccounts",
         "name": "[parameters('newDBStorageAccountName')]",
@@ -665,12 +648,16 @@
       {
         "type": "Microsoft.Compute/availabilitySets",
         "name": "[variables('appAvailabilitySetName')]",
-        "apiVersion": "[variables('apiVer')]",
+        "apiVersion": "2016-04-30-preview",
         "location": "[resourceGroup().location]",
-        "properties": { }
+          "properties": {
+	      "platformFaultDomainCount": "2",
+	      "platformUpdateDomainCount": "2",
+	      "managed" : "true"
+	  }
       },
       {
-        "apiVersion": "2015-05-01-preview",
+        "apiVersion": "2016-04-30-preview",
         "type": "Microsoft.Compute/virtualMachines",
         "name": "[concat(parameters('appVmNamePrefix'), copyIndex())]",
         "location": "[resourceGroup().location]",
@@ -679,7 +666,6 @@
           "count": "[variables('appScaleCount')]"
         },
         "dependsOn": [
-          "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
           "[concat('Microsoft.Network/networkInterfaces/', variables('appNicName'), copyIndex())]",
           "[concat('Microsoft.Compute/availabilitySets/', variables('appAvailabilitySetName'))]"
         ],
@@ -703,10 +689,6 @@
               "version": "latest"
             },
             "osDisk": {
-              "name": "osdisk",
-              "vhd": {
-                "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/vhds/', 'osdisk', copyIndex(), '.vhd')]"
-              },
               "caching": "ReadWrite",
               "createOption": "FromImage"
             }
@@ -723,12 +705,16 @@
       {
         "type": "Microsoft.Compute/availabilitySets",
         "name": "[variables('dbAvailabilitySetName')]",
-        "apiVersion": "2015-05-01-preview",
+        "apiVersion": "2016-04-30-preview",
         "location": "[resourceGroup().location]",
-        "properties": { }
+          "properties": {
+	      "platformFaultDomainCount": "2",
+	      "platformUpdateDomainCount": "2",
+	      "managed" : "true"
+	  }
       },
       {
-        "apiVersion": "2015-05-01-preview",
+        "apiVersion": "2016-04-30-preview",
         "type": "Microsoft.Compute/virtualMachines",
         "name": "[concat(parameters('dbVmNamePrefix'), copyIndex())]",
         "location": "[resourceGroup().location]",
@@ -737,7 +723,6 @@
           "count": "[variables('dbSclaeCount')]"
         },
         "dependsOn": [
-          "[concat('Microsoft.Storage/storageAccounts/', parameters('newDBStorageAccountName'))]",
           "[concat('Microsoft.Network/networkInterfaces/', variables('dbNicName'), copyIndex())]",
           "[concat('Microsoft.Compute/availabilitySets/', variables('dbAvailabilitySetName'))]"
         ],
@@ -761,10 +746,6 @@
               "version": "latest"
             },
             "osDisk": {
-              "name": "osdisk",
-              "vhd": {
-                "uri": "[concat('http://',parameters('newDBStorageAccountName'),'.blob.core.windows.net/vhds/', 'osdisk', copyIndex(), '.vhd')]"
-              },
               "caching": "ReadWrite",
               "createOption": "FromImage"
             }

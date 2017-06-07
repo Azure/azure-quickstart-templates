@@ -1,0 +1,399 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "westus",
+      "allowedValues": [
+        "brazilsouth",
+        "eastasia",
+        "eastus",
+        "japaneast",
+        "japanwest",
+        "northcentralus",
+        "northeurope",
+        "southcentralus",
+        "westeurope",
+        "westus",
+        "southeastasia",
+        "centralus",
+        "eastus2"
+      ],
+      "metadata": {
+        "description": "Deployment location of where Apigee will be installed"
+      }
+    },
+    "baseUri": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/pivotalcloudfoundry-apigee/",
+      "metadata": {
+        "description": "base uri for your git repo"
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "User name for the Stack"
+      }
+    },
+    "adminSSHKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Public SSH key to add to admin user."
+      }
+    },
+    "tenantID": {
+      "type": "string",
+      "defaultValue": "TENANT-ID",
+      "metadata": {
+        "description": "ID of the tenant. See https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/blob/master/docs/guidance.md"
+      }
+    },
+    "clientID": {
+      "type": "string",
+      "defaultValue": "CLIENT-ID",
+      "metadata": {
+        "description": "ID of the client. See https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/blob/master/docs/guidance.md"
+      }
+    },
+    "clientSecret": {
+      "type": "securestring",
+      "defaultValue": "CLIENT-SECRET",
+      "metadata": {
+        "description": "secret of the client. See https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/blob/master/docs/guidance.md"
+      }
+    },
+    "pivnetAPIToken": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "API Token for Pivotal Network"
+      }
+    },
+    "storageAccountNamePrefixString": {
+      "type": "string",
+      "metadata": {
+        "description": "Unique DNS Name for the Storage Account prefix where the Virtual Machine's disks will be placed. It can not be more than 10 characters in length and use numbers and lower-case letters only."
+      }
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "defaultValue": "boshvnet-crp",
+      "metadata": {
+        "description": "name of the virtual network"
+      }
+    },
+    "subnetNameForBosh": {
+      "type": "string",
+      "defaultValue": "Bosh",
+      "metadata": {
+        "description": "name of the subnet for Bosh"
+      }
+    },
+    "NSGNameForBosh": {
+      "type": "string",
+      "defaultValue": "BoshSecurityGroup",
+      "metadata": {
+        "description": "name of the security group for Bosh"
+      }
+    },
+    "subnetNameForCloudFoundry": {
+      "type": "string",
+      "defaultValue": "CloudFoundry",
+      "metadata": {
+        "description": "name of the subnet for CloudFoundy"
+      }
+    },
+    "NSGNameForCF": {
+      "type": "string",
+      "defaultValue": "CFSecurityGroup",
+      "metadata": {
+        "description": "name of the security group for CF"
+      }
+    },
+    "enableDNSOnDevbox": {
+      "type": "bool",
+      "defaultValue": true,
+      "allowedValues": [
+        true,
+        false
+      ],
+      "metadata": {
+        "description": "A default DNS will be setup in the devbox if it is true."
+      }
+    },
+    "apigeeEdge": {
+      "type": "String",
+      "allowedValues": [
+        "ApigeeRequired",
+        "ApigeeNotRequired"
+      ],
+      "metadata": {
+        "description": "Select if you want to deploy Apigee Edge Gateway and Apigee Service Broker"
+      }
+    },
+    "apigeeDeploymentName": {
+      "type": "string",
+      "defaultValue": "apigee",
+      "metadata": {
+        "description": "Deployment Name It can not be more than 10 characters in length and use numbers and lower-case letters only."
+      }
+    },
+    "apigeeAdminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Apigee Admin Password"
+      }
+    },
+    "apigeeAdminEmail": {
+      "type": "string",
+      "metadata": {
+        "description": "email address used as super admin of Apigee deployment"
+      }
+    },
+    "licenseFileText": {
+      "type": "securestring",
+      "metadata": {
+        "description": "License file that is given to your organization by Apigee. Paste the content of the file here"
+      }
+    }
+  },
+  "variables": {
+    "api-version": "2015-06-15",
+    "extensionName": "initdevbox",
+    "newStorageAccountName": "[concat(parameters('storageAccountNamePrefixString'),uniquestring(resourceGroup().id, deployment().name))]",
+    "vmName": "[concat('myjumpbox',uniquestring(resourceGroup().id, deployment().name))]",
+    "location": "[parameters('location')]",
+    "storageAccountType": "Standard_GRS",
+    "vmStorageAccountContainerName": "vhds",
+    "storageid": "[resourceId('Microsoft.Storage/storageAccounts', variables('newStorageAccountName'))]",
+    "virtualNetworkName": "[parameters('virtualNetworkName')]",
+    "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
+    "addressPrefix": "10.0.0.0/16",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
+    "subnet1Name": "[parameters('subnetNameForBosh')]",
+    "subnet1Prefix": "10.0.0.0/24",
+    "subnet1Ref": "[concat(variables('vnetID'),'/subnets/', variables('subnet1Name'))]",
+    "subnet1NSG": "[parameters('NSGNameForBosh')]",
+    "subnet2Name": "[parameters('subnetNameForCloudFoundry')]",
+    "subnet2Prefix": "10.0.16.0/20",
+    "subnet2NSG": "[parameters('NSGNameForCF')]",
+    "nicName": "[variables('vmName')]",
+    "devboxPrivateIPAddress": "10.0.0.100",
+    "devboxPublicIPAddressID": "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('vmName'),'-devbox'))]",
+    "imagePublisher": "Canonical",
+    "imageOffer": "UbuntuServer",
+    "ubuntuOSVersion": "14.04.2-LTS",
+    "webSessionPassword": "[uniqueString(parameters('adminSSHKey'))]",
+    "installSize": "Small",
+    "vmSize": "Standard_D2_v2",
+    "baseUri": "[parameters('baseUri')]",
+    "apigeeTemplateLink": "[concat(variables('baseUri'),'Apigee/',parameters('apigeeEdge'),'.json')]",
+    "pcfTemplateLink": "[concat(variables('baseUri'),'pcf/pcfdeploy.json')]",
+    "managementPublicIPDNSName": "[concat(parameters('apigeeDeploymentName'), uniqueString(resourceGroup().id, deployment().name), '-management')]",
+    "managementUI": "[concat('http://', variables('managementPublicIPDNSName'), '.', tolower(replace(variables('location'),' ','')), '.cloudapp.azure.com', ':9000')]",
+    "managementDNSName": "[concat('https://', variables('managementPublicIPDNSName'), '.', tolower(replace(variables('location'),' ','')), '.cloudapp.azure.com')]",
+    "managementDNSAlias": "[concat(variables('managementPublicIPDNSName'), '.', tolower(replace(variables('location'),' ','')), '.cloudapp.azure.com')]",
+    "managementPublicIPAddressName": "[concat('ApigeeManagementPublicIP-',parameters('apigeeDeploymentName'))]",
+    "managementPublicIPResourceId": "[resourceId('Microsoft.Network/publicIPAddresses', variables('managementPublicIPAddressName'))]",
+    "runtimePublicIPDNSName": "[concat(parameters('apigeeDeploymentName'), uniqueString(resourceGroup().id, deployment().name), '-runtime')]",
+    "runtimePublicDNSName": "[concat('https://', variables('runtimePublicIPDNSName'), '.', tolower(replace(variables('location'),' ','')), '.cloudapp.azure.com')]",
+    "runtimePublicDNSAlias": "[concat(variables('runtimePublicIPDNSName'), '.', tolower(replace(variables('location'),' ','')), '.cloudapp.azure.com')]",
+    "runtimePublicIPAddressName": "[concat('ApigeeRuntimePublicIP-',parameters('apigeeDeploymentName'))]",
+    "runtimePublicIPResourceId": "[resourceId('Microsoft.Network/publicIPAddresses', variables('runtimePublicIPAddressName'))]",
+    "publicIPDNSName": "[concat(parameters('apigeeDeploymentName'), '-management')]",
+    "sshKey": "[parameters('adminSSHKey')]",
+    "sshPrivateKey": " ",
+    "templateLocation": "https://raw.githubusercontent.com/sysgain/azurequickstarts/master/PivtoalCloudFoundry-Concourse-Apigee-AzureMetaService/pivotal-P2P/Apigee",
+    "tshirtSize": "XSmall"
+  },
+  "resources": [
+    {
+      "name": "pcf",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('pcfTemplateLink')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "apigeeEdge": {
+            "value": "[parameters('apigeeEdge')]"
+          },
+          "managementUI": {
+            "value": "[variables('managementUI')]"
+          },
+          "managementDNSName": {
+            "value": "[variables('managementDNSName')]"
+          },
+          "runtimePublicDNSName": {
+            "value": "[variables('runtimePublicDNSName')]"
+          },
+          "storageAccountNamePrefixString": {
+            "value": "[parameters('storageAccountNamePrefixString')]"
+          },
+          "virtualNetworkName": {
+            "value": "[parameters('virtualNetworkName')]"
+          },
+          "subnetNameForBosh": {
+            "value": "[parameters('subnetNameForBosh')]"
+          },
+          "NSGNameForBosh": {
+            "value": "[parameters('NSGNameForBosh')]"
+          },
+          "subnetNameForCloudFoundry": {
+            "value": "[parameters('subnetNameForCloudFoundry')]"
+          },
+          "NSGNameForCF": {
+            "value": "[parameters('NSGNameForCF')]"
+          },
+          "vmSize": {
+            "value": "[variables('vmSize')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminSSHKey": {
+            "value": "[parameters('adminSSHKey')]"
+          },
+          "enableDNSOnDevbox": {
+            "value": "[parameters('enableDNSOnDevbox')]"
+          },
+          "tenantID": {
+            "value": "[parameters('tenantID')]"
+          },
+          "clientID": {
+            "value": "[parameters('clientID')]"
+          },
+          "clientSecret": {
+            "value": "[parameters('clientSecret')]"
+          },
+          "pivnetAPIToken": {
+            "value": "[parameters('pivnetAPIToken')]"
+          },
+          "installSize": {
+            "value": "[variables('installSize')]"
+          },
+          "location": {
+            "value": "[variables('location')]"
+          },
+          "apigeeAdminPassword": {
+            "value": "[parameters('apigeeAdminPassword')]"
+          },
+          "apigeeAdminEmail": {
+            "value": "[parameters('apigeeAdminEmail')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "apigeeEdge",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('apigeeTemplateLink')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "tshirtSize": {
+            "value": "[variables('tshirtSize')]"
+          },
+          "location": {
+            "value": "[variables('location')]"
+          },
+          "apigeeDeploymentName": {
+            "value": "[parameters('apigeeDeploymentName')]"
+          },
+          "adminUserName": {
+            "value": "[parameters('adminUserName')]"
+          },
+          "apigeeAdminEmail": {
+            "value": "[parameters('apigeeAdminEmail')]"
+          },
+          "apigeeAdminPassword": {
+            "value": "[parameters('apigeeAdminPassword')]"
+          },
+          "licenseFileText": {
+            "value": "[parameters('licenseFileText')]"
+          },
+          "sshKey": {
+            "value": "[variables('sshKey')]"
+          },
+          "sshPrivateKey": {
+            "value": "[variables('sshPrivateKey')]"
+          },
+          "templateLocation": {
+            "value": "[variables('templateLocation')]"
+          },
+          "managementPublicIPDNSName": {
+            "value": "[variables('managementPublicIPDNSName')]"
+          },
+          "managementUI": {
+            "value": "[variables('managementUI')]"
+          },
+          "managementDNSName": {
+            "value": "[variables('managementDNSName')]"
+          },
+          "managementDNSAlias": {
+            "value": "[variables('managementDNSAlias')]"
+          },
+          "managementPublicIPAddressName": {
+            "value": "[variables('managementPublicIPAddressName')]"
+          },
+          "managementPublicIPResourceId": {
+            "value": "[variables('managementPublicIPResourceId')]"
+          },
+          "runtimePublicIPDNSName": {
+            "value": "[variables('runtimePublicIPDNSName')]"
+          },
+          "runtimePublicDNSName": {
+            "value": "[variables('runtimePublicDNSName')]"
+          },
+          "runtimePublicDNSAlias": {
+            "value": "[variables('runtimePublicDNSAlias')]"
+          },
+          "runtimePublicIPAddressName": {
+            "value": "[variables('runtimePublicIPAddressName')]"
+          },
+          "runtimePublicIPResourceId": {
+            "value": "[variables('runtimePublicIPResourceId')]"
+          },
+          "publicIPDNSName": {
+            "value": "[variables('runtimePublicIPResourceId')]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "managementPublicDNSName": {
+      "value": "[variables('managementDNSName')]",
+      "type": "string"
+    },
+    "runtimePublicDNSName": {
+      "value": "[variables('runtimePublicDNSName')]",
+      "type": "string"
+    },
+    "managementUI": {
+      "value": "[variables('managementUI')]",
+      "type": "string"
+    },
+    "scriptoutput": {
+      "type": "String",
+      "value": "[reference('pcf').outputs.scriptoutput.value]"
+    },
+    "ProgressMonitorURL": {
+      "type": "String",
+      "value": "[reference('pcf').outputs.ProgressMonitorURL.value]"
+    },
+    "JumpboxFQDN": {
+      "type": "String",
+      "value": "[reference('pcf').outputs.JumpboxFQDN.value]"
+    }
+  }
+}

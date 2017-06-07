@@ -22,35 +22,25 @@
     }
   },
   "variables": {
-    "storageAccountName": "[concat(uniquestring(parameters('vmName')), 'storage')]",
-    "dataDisk1VhdName": "[concat(uniquestring(parameters('vmName')), 'datadisk1')]",
-    "dataDisk2VhdName": "[concat(uniquestring(parameters('vmName')), 'datadisk2')]",
+    "computeResouresApiVersion": "2016-04-30-preview",
+    "dataDisk1Name": "[concat(uniquestring(parameters('vmName')), 'datadisk1')]",
+    "dataDisk2Name": "[concat(uniquestring(parameters('vmName')), 'datadisk2')]",
     "imagePublisher": "RedHat",
     "imageOffer": "RHEL",
+    "imageSku": "7.2",
     "OSDiskName": "[concat(uniquestring(parameters('vmName')), 'osdisk')]",
     "nicName": "[concat(uniquestring(parameters('vmName')), 'nic')]",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet",
     "subnetPrefix": "10.0.0.0/24",
-    "storageAccountType": "Standard_LRS",
     "publicIPAddressName": "[concat(uniquestring(parameters('vmName')), 'publicip')]",
     "publicIPAddressType": "Dynamic",
-    "vmStorageAccountContainerName": "vhds",
-    "vmSize": "Standard_DS2",
+    "vmSize": "Standard_A2",
     "virtualNetworkName": "[concat(uniquestring(parameters('vmName')), 'vnet')]",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
     "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]"
   },
   "resources": [
-    {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('storageAccountName')]",
-      "apiVersion": "2015-06-15",
-      "location": "[resourceGroup().location]",
-      "properties": {
-        "accountType": "[variables('storageAccountType')]"
-      }
-    },
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/publicIPAddresses",
@@ -108,12 +98,12 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
+      "apiVersion": "[variables('computeResouresApiVersion')]",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('vmName')]",
       "location": "[resourceGroup().location]",
+      "tags": {"Tag1": "ManagedVM"},
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
       ],
       "properties": {
@@ -129,34 +119,20 @@
           "imageReference": {
             "publisher": "[variables('imagePublisher')]",
             "offer": "[variables('imageOffer')]",
-            "sku": "7.2",
+            "sku": "[variables('imageSku')]",
             "version": "latest"
-          },
-          "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2015-06-15').primaryEndpoints.blob, variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]"
-            },
-            "caching": "ReadWrite",
-            "createOption": "FromImage"
           },
           "dataDisks": [
             {
-              "name": "datadisk1",
+              "name": "[variables('dataDisk1Name')]",
               "diskSizeGB": "100",
               "lun": 0,
-              "vhd": {
-                "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2015-06-15').primaryEndpoints.blob, variables('vmStorageAccountContainerName'),'/',variables('dataDisk1VhdName'),'.vhd')]"
-              },
               "createOption": "Empty"
             },
             {
-              "name": "datadisk2",
+              "name": "[variables('dataDisk2Name')]",
               "diskSizeGB": "100",
               "lun": 1,
-              "vhd": {
-                "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2015-06-15').primaryEndpoints.blob, variables('vmStorageAccountContainerName'),'/',variables('dataDisk2VhdName'),'.vhd')]"
-              },
               "createOption": "Empty"
             }
           ]
@@ -167,12 +143,6 @@
               "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
             }
           ]
-        },
-        "diagnosticsProfile": {
-          "bootDiagnostics": {
-            "enabled": "true",
-            "storageUri": "[reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2015-06-15').primaryEndpoints.blob]"
-          }
         }
       }
     }
