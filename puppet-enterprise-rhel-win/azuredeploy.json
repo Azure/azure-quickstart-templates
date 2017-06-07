@@ -1,0 +1,1161 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "User name for the user of Virtual Machine. Used for both Linux and Windows machines"
+      }
+    },
+    "vmPassword": {
+      "type": "securestring",
+      "minLength":12,
+      "metadata": {
+        "description": "Password for the user of Virtual Machine. Used for both Linux and Windows machines."
+      }
+    },
+    "puppetConsolePassword": {
+      "type": "securestring",
+      "minLength":8,
+      "metadata": {
+        "description": "Password for the Puppet Enterprise Console."
+      }
+    },
+    "windowsAgentCount": {
+      "type": "int",
+      "minValue": 1,
+      "maxValue": 20,
+      "defaultValue": 2,
+      "metadata": {
+        "description": "Number of Windows Puppet Agents to deploy. Deploys Windows Server 2016."
+      }
+
+    },
+    "linuxAgentCount": {
+      "type": "int",
+      "minValue": 1,
+      "maxValue": 20,
+      "defaultValue": 2,
+      "metadata": {
+        "description": "Number of Linux Puppet Agents to deploy. Deploys RHEL 7.2"
+      }
+    },
+    "remoteAllowedCIDR": {
+      "type": "string",
+      "minLength": 7,
+      "defaultValue": "0.0.0.0/0", 
+      "metadata": {
+        "description": "Enter Public IP CIDR Allowed for accessing the deployment.Enter in 0.0.0.0/0 format. You can always modify these later in NSG Settings"
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/puppet-enterprise-rhel-win/",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated.Leave blank if unsure"
+      },
+      "defaultValue": ""
+    }
+  },
+  "variables": {
+    "puppetNsgName": "puppet-nsg",
+    "linuxAgentNsgName": "linux-agent-nsg",
+    "windowsAgentNsgName": "windows-agent-nsg",
+    "puppetStorageName": "[concat('puppetstor',uniqueString(resourceGroup().id))]",
+    "linuxAgentStorageName": "[concat('linstor',uniqueString(resourceGroup().id))]",
+    "windowsAgentStorageName": "[concat('winstor',uniqueString(resourceGroup().id))]",
+    "diagStorageAccountName": "[concat('diagstor',uniqueString(resourceGroup().id))]",
+    "storageAccountType": "Standard_GRS",
+    "virtualNetworkName": "puppet-vnet",
+    "linuxSubnetName": "linux-agent-subnet",
+    "windowsSubnetName": "windows-agent-subnet",
+    "puppetSubnetName": "puppet-subnet",
+    "addressPrefix": "10.0.0.0/16",
+    "puppetSubnetPrefix": "10.0.1.0/24",
+    "linuxSubnetPrefix": "10.0.2.0/24",
+    "linuxPrivateIpAddressStart": "10.0.2.2",
+    "windowsSubnetPrefix": "10.0.3.0/24",
+    "winPrivateIpAddressStart": "10.0.3.2",
+    "publicIPAddressNamePuppetMaster": "puppet-master-pip",
+    "dnsNamePuppetMaster": "[concat('puppet',uniqueString(resourceGroup().id))]",
+    "loadBalancerName": "agent-lb",
+    "lbIPAddressName": "lb-pip",
+    "lbIPAddressDNSName": "[concat('agent', uniqueString(resourceGroup().id))]",
+    "puppetMasterNicName": "puppet-master-nic",
+    "puppetMasterVmName": "vm-puppet-master",
+    "vmWinAgentName": "vm-windows-agent",
+    "vmLinAgentName": "vm-linux-agent",
+    "vmWinAgentNicName": "vm-windows-agent-nic-",
+    "vmLinAgentNicName": "vm-linux-agent-nic-",
+    "vmStorageAccountContainerName": "vhds",
+    "scriptClose": "'",
+    "scriptFileName2": "installpuppetagent.sh",
+    "scriptStart": "su -c'sh ",
+    "customScriptCommand2": "[concat(variables('scriptStart'), variables('scriptFileName2'), ' ')]",
+    "redHatTags": {
+      "type": "object",
+      "provider": "9d2c71fc-96ba-4b4a-93b3-14def5bc96fc"
+    }, 
+    "puppetTags": {
+      "type": "object",
+      "provider": "8D5B50DB-4F4A-4112-A0D2-1385BD3BB64E"
+    },
+    "quickstartTags": {
+      "type": "object",
+      "name": "puppet-enterprise-rhel-win"
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "master-avset",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "comments": "This availability set will consist of puppet master installed virtual machine",
+      "tags": {
+        "displayName": "Availability Set Puppet Master",
+        "quickstartName": "[variables('quickstartTags').name]",        
+        "provider": "[variables('puppetTags').provider]"
+      },
+      "properties": {
+      }
+    },
+    {
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "agent-avset",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "comments": "This availability set will consist of windows virtual machines configured as puppet agents ",
+      "tags": {
+        "displayName": "Puppet Agents Availability Set",
+        "quickstartName": "[variables('quickstartTags').name]",        
+        "provider": "[variables('redHatTags').provider]"
+      },
+      "properties": {
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('puppetNsgName')]",
+      "apiVersion": "2016-03-30",
+      "location": "[resourceGroup().location]",
+      "comments": "This will have firewall rules for Puppet Master Virtual machine",
+      "tags": {
+        "displayName": "Puppet NSG",
+        "quickstartName": "[variables('quickstartTags').name]",        
+        "provider": "[variables('puppetTags').provider]"
+      },
+      "properties": {
+        "securityRules": [
+          {
+            "name": "puppet",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "8140",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "allow-8080",
+            "properties": {
+              "description": "Allow 8080",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "8080",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 131,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "allow-80",
+            "properties": {
+              "description": "Allow 80",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 120,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "ssh",
+            "properties": {
+              "description": "Allow RDP",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 201,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "MCollective",
+            "properties": {
+              "description": "MCollective",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "61613",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 102,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "https",
+            "properties": {
+              "description": "MCollective",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 103,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "orchestrator",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "8142",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 104,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('linuxAgentNsgName')]",
+      "apiVersion": "2016-03-30",
+      "location": "[resourceGroup().location]",
+      "comments": "This will have firewall rules for linux puppet agents",
+      "tags": {
+        "displayName": "Linux Agent NSG",
+        "quickstartName": "[variables('quickstartTags').name]",        
+        "provider": "[variables('redHatTags').provider]"
+      },
+      "properties": {
+        "securityRules": [
+          {
+            "name": "puppet",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "8140",
+              "sourceAddressPrefix": "[parameters('remoteAllowedCIDR')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "allow-8080",
+            "properties": {
+              "description": "Allow 8080",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "8080",
+              "sourceAddressPrefix": "[parameters('remoteAllowedCIDR')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 131,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "allow-80",
+            "properties": {
+              "description": "Allow 80",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "[parameters('remoteAllowedCIDR')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 120,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "ssh",
+            "properties": {
+              "description": "Allow SSH",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "[parameters('remoteAllowedCIDR')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 201,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "MCollective",
+            "properties": {
+              "description": "MCollective",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "61613",
+              "sourceAddressPrefix": "[parameters('remoteAllowedCIDR')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 102,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "https",
+            "properties": {
+              "description": "MCollective",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "[parameters('remoteAllowedCIDR')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 103,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "orchestrator",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "8142",
+              "sourceAddressPrefix": "[parameters('remoteAllowedCIDR')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 104,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('windowsAgentNsgName')]",
+      "apiVersion": "2016-03-30",
+      "location": "[resourceGroup().location]",
+      "comments": "This will have firewall rules for windows puppet agents",
+      "tags": {
+        "displayName": "Windows Agent NSG",
+        "quickstartName": "[variables('quickstartTags').name]",        
+        "provider": "[variables('redHatTags').provider]"
+      },
+      "properties": {
+        "securityRules": [
+          {
+            "name": "puppet",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "8140",
+              "sourceAddressPrefix": "[parameters('remoteAllowedCIDR')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "allow-8080",
+            "properties": {
+              "description": "Allow 8080",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "8080",
+              "sourceAddressPrefix": "[parameters('remoteAllowedCIDR')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 121,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "allow-80",
+            "properties": {
+              "description": "Allow 80",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "[parameters('remoteAllowedCIDR')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 120,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "rdp",
+            "properties": {
+              "description": "Allow RDP",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3389",
+              "sourceAddressPrefix": "[parameters('remoteAllowedCIDR')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 101,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "ssh",
+            "properties": {
+              "description": "Allow SSH",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "[parameters('remoteAllowedCIDR')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 201,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "MCollective",
+            "properties": {
+              "description": "MCollective",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "61613",
+              "sourceAddressPrefix": "[parameters('remoteAllowedCIDR')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 102,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "https",
+            "properties": {
+              "description": "MCollective",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "[parameters('remoteAllowedCIDR')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 103,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "orchestrator",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "8142",
+              "sourceAddressPrefix": "[parameters('remoteAllowedCIDR')]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 104,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('puppetStorageName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "comments": "This storage account is used to store the VM disks of puppet master vm",
+      "tags": {
+        "displayName": "Puppet Master Storage Account",
+        "quickstartName": "[variables('quickstartTags').name]",        
+        "provider": "[variables('puppetTags').provider]"
+      },
+      "properties": {
+        "accountType": "[variables('StorageAccountType')]"
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('linuxAgentStorageName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "comments": "This storage account is used to store the VM disks of RHEL puppet agent vms",
+      "tags": {
+        "displayName": "Linux Agent Storage Account",
+        "quickstartName": "[variables('quickstartTags').name]",        
+        "provider": "[variables('redHatTags').provider]"
+      },
+      "properties": {
+        "accountType": "[variables('storageAccountType')]"
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('windowsAgentStorageName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "comments": "This storage account is used to store the VM disks of windows puppet agent vms",
+      "tags": {
+        "displayName": "Windows Agent Storage Account",
+        "quickstartName": "[variables('quickstartTags').name]",        
+        "provider": "[variables('redHatTags').provider]"
+      },
+      "properties": {
+        "accountType": "[variables('storageAccountType')]"
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('diagStorageAccountName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "comments": "This storage account is used for diagnostic data for all vms",
+      "tags": {
+        "displayName": "Diagnostics Storage Account",
+        "quickstartName": "[variables('quickstartTags').name]",        
+        "provider": "[variables('redHatTags').provider]"
+      },
+      "properties": {
+        "accountType": "Standard_LRS"
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('virtualNetworkName')]",
+      "apiVersion": "2016-03-30",
+      "location": "[resourceGroup().location]",
+      "comments": "This Virtual Network contains all the VMs needed",
+      "tags": {
+        "displayName": "Puppet Virtual Network",
+        "quickstartName": "[variables('quickstartTags').name]",        
+        "provider": "[variables('redHatTags').provider]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('puppetNsgName'))]",
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('linuxAgentNsgName'))]",
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('windowsAgentNsgName'))]"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('puppetSubnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('puppetSubnetPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups',  variables('puppetNsgName'))]"
+              }
+            }
+          },
+          {
+            "name": "[variables('windowsSubnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('windowsSubnetPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('windowsAgentNsgName'))]"
+              }
+            }
+          },
+          {
+            "name": "[variables('linuxSubnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('linuxSubnetPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('linuxAgentNsgName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIPAddressNamePuppetMaster')]",
+      "apiVersion": "2016-03-30",
+      "location": "[resourceGroup().location]",
+      "comments": "This Public IP is used by the Puppet Master installed VM",
+      "tags": {
+        "displayName": "Public IP - Puppet Master",
+        "quickstartName": "[variables('quickstartTags').name]",        
+        "provider": "[variables('redHatTags').provider]"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Static",
+        "dnsSettings": {
+          "domainNameLabel": "[variables('dnsNamePuppetMaster')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('lbIPAddressName')]",
+      "apiVersion": "2016-03-30",
+      "location": "[resourceGroup().location]",
+      "comments": "This Public IP is used by the Load Balancer",
+      "tags": {
+        "displayName": "LB Public IP",
+        "quickstartName": "[variables('quickstartTags').name]",        
+        "provider": "[variables('redHatTags').provider]"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Static",
+        "idleTimeoutInMinutes": 4,
+        "dnsSettings": {
+          "domainNameLabel": "[variables('lbIPAddressDNSName')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/loadBalancers",
+      "name": "[variables('loadBalancerName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "comments": "This Load Balancer is used to allow RDP and SSH acess to Agent VMs via NAT rules",
+      "tags": {
+        "displayName": "Load Balancer",
+        "quickstartName": "[variables('quickstartTags').name]",        
+        "provider": "[variables('redHatTags').provider]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('lbIPAddressName'))]"
+      ],
+      "properties": {
+        "frontendIPConfigurations": [
+          {
+            "name": "loadBalancerFrontEnd",
+            "properties": {
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('lbIPAddressName'))]"
+              }
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "loadBalancerBackEnd1"
+          },
+          {
+            "name": "loadBalancerBackEnd2"
+          }
+        ]
+
+      }
+    },
+    {
+      "type": "Microsoft.Network/loadBalancers/inboundNatRules",
+      "name": "[concat(variables('loadBalancerName'), '/', 'RDPVM', copyIndex(1))]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "comments": "This resource adds all the NAT rules needed to allow RDP access for Windows VMs",
+      "tags": {
+        "displayName": "LB nat rules-RDP",
+        "quickstartName": "[variables('quickstartTags').name]",        
+        "provider": "[variables('redHatTags').provider]"
+      },
+      "copy": {
+        "name": "lbNatLoop1",
+        "count": "[parameters('windowsAgentCount')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]"
+      ],
+      "properties": {
+        "frontendIPConfiguration": {
+          "id": "[concat(resourceId('Microsoft.Network/loadBalancers',variables('loadBalancerName')),'/frontendIPConfigurations/loadBalancerFrontEnd')]"
+        },
+        "protocol": "Tcp",
+        "frontendPort": "[copyIndex(5001)]",
+        "backendPort": 3389,
+        "enableFloatingIP": false
+      }
+    },
+    {
+      "type": "Microsoft.Network/loadBalancers/inboundNatRules",
+      "name": "[concat(variables('loadBalancerName'), '/', 'SSHVM', copyIndex(1))]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "comments": "This resource adds all the NAT rules needed to give SSH access for RHEL agent VMs",
+      "tags": {
+        "displayName": "LB nat rules-SSH",
+        "quickstartName": "[variables('quickstartTags').name]",        
+        "provider": "[variables('redHatTags').provider]"
+      },
+      "copy": {
+        "name": "lbNatLoop2",
+        "count": "[parameters('linuxAgentCount')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]"
+      ],
+      "properties": {
+        "frontendIPConfiguration": {
+          "id": "[concat(resourceId('Microsoft.Network/loadBalancers',variables('loadBalancerName')),'/frontendIPConfigurations/loadBalancerFrontEnd')]"
+        },
+        "protocol": "Tcp",
+        "frontendPort": "[copyIndex(6001)]",
+        "backendPort": 22,
+        "enableFloatingIP": false
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('puppetMasterNicName')]",
+      "apiVersion": "2016-03-30",
+      "location": "[resourceGroup().location]",
+      "comments": "This NIC will be used by puppet master vm",
+      "tags": {
+        "displayName": "Puppet Master NIC",
+        "quickstartName": "[variables('quickstartTags').name]",        
+        "provider": "[variables('puppetTags').provider]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressNamePuppetMaster'))]",
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "10.0.1.21",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressNamePuppetMaster'))]"
+              },
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets/',variables('virtualNetworkName'),variables('puppetSubnetName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('vmLinAgentNicName'),copyIndex(1))]",
+      "apiVersion": "2016-03-30",
+      "location": "[resourceGroup().location]",
+      "comments": "These NIC's will be used by linux agent vms",
+      "tags": {
+        "displayName": "Linux Agent NICs",
+        "quickstartName": "[variables('quickstartTags').name]",        
+        "provider": "[variables('redHatTags').provider]"
+      },
+      "copy": {
+        "name": "linuxAgentNicLoop",
+        "count": "[parameters('linuxAgentCount')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+        "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]",
+        "[concat('Microsoft.Network/loadBalancers/',variables('loadBalancerName'),'/inboundNatRules/', 'SSHVM', copyIndex(1))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[concat(variables('linuxPrivateIpAddressStart'),copyIndex(1))]",
+
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets/',variables('virtualNetworkName'),variables('linuxSubnetName'))]"
+              },
+              "loadBalancerBackendAddressPools": [
+                {
+                  "id": "[concat(resourceId('Microsoft.Network/loadBalancers',variables('loadBalancerName')), '/backendAddressPools/LoadBalancerBackend2')]"
+                }
+              ],
+              "loadBalancerInboundNatRules": [
+                {
+                  "id": "[concat(resourceId('Microsoft.Network/loadBalancers',variables('loadBalancerName')),'/inboundNatRules/SSHVM',copyIndex(1))]"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('vmWinAgentNicName'),copyIndex(1))]",
+      "apiVersion": "2016-03-30",
+      "location": "[resourceGroup().location]",
+      "comments": "These NIC's will be used by windows agent vms",
+      "tags": {
+        "displayName": "Windows Agent NICs",
+        "quickstartName": "[variables('quickstartTags').name]",        
+        "provider": "[variables('redHatTags').provider]"
+      },
+      "copy": {
+        "name": "windowsAgentNicLoop",
+        "count": "[parameters('windowsAgentCount')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+        "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]",
+        "[concat('Microsoft.Network/loadBalancers/',variables('loadBalancerName'),'/inboundNatRules/', 'RDPVM', copyIndex(1))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[concat(variables('winPrivateIpAddressStart'),copyIndex(1))]",
+
+              "subnet": {
+                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets/',variables('virtualNetworkName'),variables('windowsSubnetName'))]"
+              },
+              "loadBalancerBackendAddressPools": [
+                {
+                  "id": "[concat(resourceId('Microsoft.Network/loadBalancers',variables('loadBalancerName')), '/backendAddressPools/LoadBalancerBackend1')]"
+                }
+              ],
+              "loadBalancerInboundNatRules": [
+                {
+                  "id": "[concat(resourceId('Microsoft.Network/loadBalancers',variables('loadBalancerName')),'/inboundNatRules/RDPVM',copyIndex(1))]"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('puppetMasterVmName')]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "comments": "This vm will be used as puppet master",
+      "tags": {
+        "displayName": "Puppet Master VM",
+        "quickstartName": "[variables('quickstartTags').name]",        
+        "provider": "[variables('puppetTags').provider]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', variables('puppetStorageName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('puppetMasterNicName'))]"
+      ],
+      "plan": {
+        "name": "2016-1",
+        "product": "puppet-enterprise",
+        "publisher": "puppet"
+      },
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', 'master-avset')]"
+        },
+        "hardwareProfile": {
+          "vmSize": "Standard_D2_v2"
+        },
+        "osProfile": {
+          "computerName": "[variables('puppetMasterVmName')]",
+          "adminUsername": "[parameters('vmUsername')]",
+          "adminPassword": "[parameters('vmPassword')]",
+          "customData": "[base64(concat('#!/bin/bash\n\ncat <<EOF >/tmp/puppet_override.answers\n','azure_externalFQDN=',reference(resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressNamePuppetMaster')), '2016-03-30').dnsSettings.fqdn,'\n','azure_internalFQDN=$(hostname -f)\n\nq_puppet_enterpriseconsole_auth_password=',parameters('puppetConsolePassword'),'\nq_database_host=\\${azure_externalFQDN}\nq_puppet_enterpriseconsole_master_hostname=\\${azure_externalFQDN}\nq_puppet_enterpriseconsole_smtp_host=\\${azure_externalFQDN}\nq_puppetagent_certname=\\${azure_externalFQDN}\nq_puppetmaster_dnsaltnames=puppet,$(hostname),\\${azure_internalFQDN},\\${azure_externalFQDN}\nq_puppetagent_server=\\${azure_externalFQDN}\nq_puppetdb_hostname=\\${azure_externalFQDN}\nq_puppetmaster_certname=\\${azure_externalFQDN}\necho \"deb [trusted=yes] file:/usr/bin/puppet-init/puppet-enterprise-2016.1.2-ubuntu-14.04-amd64/packages/ubuntu-14.04-amd64 ./\" > /etc/apt/sources.list.d/puppet-enterprise.list\nEOF\nchmod +x /tmp/puppet_override.answers\n'))]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "Puppet",
+            "offer": "Puppet-Enterprise",
+            "sku": "2016-1",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('puppetStorageName')),'2015-06-15').primaryEndpoints.blob,variables('vmStorageAccountContainerName'),'/OSDisk','.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('puppetMasterNicName'))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": "true",
+            "storageUri": "[reference(concat('Microsoft.Storage/storageAccounts/', variables('diagStorageAccountName')),'2015-06-15').primaryEndpoints.blob]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('puppetMasterVmName'),'/CustomScriptPuppet')]",
+      "apiVersion": "2016-03-30",
+      "location": "[resourceGroup().location]",
+      "comments": "This Script will wait untill Puppet Master gets installed",
+      "tags": {
+        "displayName": "Puppet Master VM Extension",
+        "quickstartName": "[variables('quickstartTags').name]",        
+        "provider": "[variables('puppetTags').provider]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', variables('puppetMasterVmName'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[concat(parameters('_artifactslocation'),'scripts/', 'wait.sh',parameters('_artifactsLocationSasToken'))]"
+          ]
+        },
+        "protectedSettings": {
+          "commandToExecute": "./wait.sh"
+
+        }
+      }
+    },
+
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(variables('vmWinAgentName'),copyIndex(1))]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "comments": "These vms will be used as Windows puppet agents",
+      "tags": {
+        "displayName": "Windows Agent VMs",
+        "quickstartName": "[variables('quickstartTags').name]",        
+        "provider": "[variables('redHatTags').provider]"
+      },
+      "copy": {
+        "name": "windowsAgentVmLoop",
+        "count": "[parameters('windowsAgentCount')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', variables('windowsAgentStorageName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('vmWinAgentNicName'),copyIndex(1))]"
+      ],
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', 'agent-avset')]"
+        },
+        "hardwareProfile": {
+          "vmSize": "Standard_D1_v2"
+        },
+        "osProfile": {
+          "computerName": "[concat('vmWinAgent',copyIndex(1))]",
+          "adminUsername": "[parameters('vmUsername')]",
+          "adminPassword": "[parameters('vmPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "MicrosoftWindowsServer",
+            "offer": "WindowsServer",
+            "sku": "2016-Datacenter",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat('vmWinAgent',copyIndex(1),'os-disk')]",
+            "vhd": {
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('windowsAgentStorageName')),'2015-06-15').primaryEndpoints.blob,variables('vmStorageAccountContainerName'),'/','vmWinAgent',copyIndex(1),'os-disk','.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('vmWinAgentNicName'),copyIndex(1)))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": "true",
+            "storageUri": "[reference(concat('Microsoft.Storage/storageAccounts/', variables('diagStorageAccountName')),'2015-06-15').primaryEndpoints.blob]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('vmWinAgentName'),copyIndex(1),'/puppetExtension')]",
+      "apiVersion": "2016-03-30",
+      "location": "[resourceGroup().location]",
+      "comments": "These VM Extensions are used to setup puppet agent on the VM",
+      "tags": {
+        "displayName": "Windows Agent VM Extension",
+        "quickstartName": "[variables('quickstartTags').name]",        
+        "provider": "[variables('redHatTags').provider]"
+      },
+      "copy": {
+        "name": "puppetAgentExtLoop",
+        "count": "[parameters('windowsAgentCount')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', concat(variables('vmWinAgentName'),copyIndex(1)))]",
+        "[concat('Microsoft.Compute/virtualMachines/', variables('puppetMasterVmName'),'/extensions/CustomScriptPuppet')]"
+      ],
+      "properties": {
+        "publisher": "Puppet",
+        "type": "PuppetAgent",
+        "typeHandlerVersion": "1.5",
+        "autoUpgradeMinorVersion": true,
+        "protectedSettings": {
+          "PUPPET_MASTER_SERVER": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressNamePuppetMaster')), '2016-03-30').dnsSettings.fqdn]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(variables('vmLinAgentName'),copyIndex(1))]",
+      "apiVersion": "2015-06-15",
+      "location": "[resourceGroup().location]",
+      "comments": "These vms will be used as puppet agents",
+      "tags": {
+        "displayName": "Linux Agent VMs",
+        "quickstartName": "[variables('quickstartTags').name]",        
+        "provider": "[variables('redHatTags').provider]"
+      },
+      "copy": {
+        "name": "redhatAgentVmLoop",
+        "count": "[parameters('linuxAgentCount')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', variables('linuxAgentStorageName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('vmLinAgentNicName'),copyIndex(1))]"
+      ],
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', 'agent-avset')]"
+        },
+        "hardwareProfile": {
+          "vmSize": "Standard_D1_v2"
+        },
+        "osProfile": {
+          "computerName": "[concat(variables('vmLinAgentName'),copyIndex(1))]",
+          "adminUsername": "[parameters('vmUsername')]",
+          "adminPassword": "[parameters('vmPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "RedHat",
+            "offer": "RHEL",
+            "sku": "7.2",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat('vmLinAgent',copyIndex(1),'os-disk')]",
+            "vhd": {
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('linuxAgentStorageName')),'2015-06-15').primaryEndpoints.blob,variables('vmStorageAccountContainerName'),'/','vmLinAgent',copyIndex(1),'os-disk','.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('vmLinAgentNicName'),copyIndex(1)))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": "true",
+            "storageUri": "[reference(concat('Microsoft.Storage/storageAccounts/', variables('diagStorageAccountName')),'2015-06-15').primaryEndpoints.blob]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('vmLinAgentName'),copyIndex(1),'/CustomScriptLinuxAgent')]",
+      "apiVersion": "2016-03-30",
+      "location": "[resourceGroup().location]",
+      "comments": "These VM Extensions are used to setup puppet agent on the VM",
+      "tags": {
+        "displayName": "Linux Agent VM Extension",
+        "quickstartName": "[variables('quickstartTags').name]",        
+        "provider": "[variables('puppetTags').provider]"
+      },
+      "copy": {
+        "name": "linuxAgentExtLoop",
+        "count": "[parameters('linuxAgentCount')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', concat(variables('vmLinAgentName'),copyIndex(1)))]",
+        "[concat('Microsoft.Compute/virtualMachines/', variables('puppetMasterVmName'),'/extensions/CustomScriptPuppet')]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[concat(parameters('_artifactslocation'),'scripts/', variables('scriptFileName2'),parameters('_artifactsLocationSasToken'))]"
+          ]
+        },
+        "protectedSettings": {
+          "commandToExecute": "[concat(variables('customScriptCommand2'), reference(resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressNamePuppetMaster'))).ipAddress, ' ', reference(resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressNamePuppetMaster')), '2016-03-30').dnsSettings.fqdn, variables('scriptClose'))]"
+        }
+      }
+    }
+
+  ],
+  "outputs": {
+    "Puppet Enterprise Console FQDN:": {
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressNamePuppetMaster')), '2016-03-30').dnsSettings.fqdn]",
+      "type": "string"
+    },
+    "Puppet Enterprise Console IP": {
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressNamePuppetMaster'))).ipAddress]",
+      "type": "string"
+    },
+      "Load Balancer Public IP": {
+      "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('lbIPAddressName'))).ipAddress]",
+      "type": "string"
+    }
+  }
+}

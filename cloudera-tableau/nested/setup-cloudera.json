@@ -1,0 +1,100 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.1",
+  "parameters": {
+    "resourceAPIVersion":{
+      "type":"string"
+    },
+    "dnsNamePrefix": {
+      "type": "string"
+    },
+    "scriptsUri": {
+      "type": "string"
+    },
+    "vmSpec": {
+      "type": "object"
+    },
+    "networkSpec": {
+      "type": "object"
+    },
+    "clusterSpec": {
+      "type": "object"
+    },
+    "fqdn": {
+      "type": "string"
+    },
+    "cmUsername": {
+      "type": "string"
+    },
+    "cmPassword": {
+      "type": "securestring"
+    },
+    "company": {
+      "type": "string"
+    },
+    "emailAddress": {
+      "type": "string"
+    },
+    "businessPhone": {
+      "type": "string"
+    },
+    "firstName": {
+      "type": "string"
+    },
+    "lastName": {
+      "type": "string"
+    },
+    "jobRole": {
+      "type": "string"
+    },
+    "jobFunction": {
+      "type": "string"
+    },
+    "installCDH": {
+      "type": "string"
+    },
+    "clouderaTags":{
+      "type":"object"
+    },
+    "tableauTags":{
+      "type":"object"
+    },
+    "quickstartTags":{
+      "type":"object"
+    }
+  },
+  "variables": {
+    "masterIP":"[parameters('networkSpec').masterIP]",
+    "workerIP":"[parameters('networkSpec').workerIP]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('dnsNamePrefix'), '-mn0', '/prepareDisks')]",
+      "apiVersion": "[parameters('resourceAPIVersion')]",
+      "location": "[resourceGroup().location]",
+      "comments": "Cloudera Setup extensions that run to configure the Cloudera cluster environment",
+       "tags": {
+        "quickstartName":"[parameters('quickstartTags').name]",
+        "provider":"[parameters('clouderaTags').provider]"
+       },
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[concat(parameters('scriptsUri'), '/scripts/bootstrap-cloudera.sh')]",
+            "[concat(parameters('scriptsUri'), '/scripts/initialize-cloudera-server.sh')]",
+            "[concat(parameters('scriptsUri'), '/scripts/cmxDeployOnIbiza.py')]",
+            "[concat(parameters('scriptsUri'), '/scripts/install-postgresql.sh')]"
+          ]
+        },
+        "protectedSettings": {
+          "commandToExecute": "[concat('sh bootstrap-cloudera.sh \"', variables('masterIP'), '\" \"', variables('workerIP'), '\" \"', parameters('dnsNamePrefix'), '\" \"', parameters('fqdn'), '\" ', parameters('clusterSpec').masterNodeCount, ' ', parameters('clusterSpec').dataNodeCount, ' \"', parameters('vmSpec').adminUserName, '\" \"', parameters('clusterSpec').highAvailability, '\" \"', parameters('vmSpec').adminPassword, '\" \"', parameters('cmUsername'), '\" \"', parameters('cmPassword'), '\" \"', parameters('emailAddress'), '\" \"', parameters('businessPhone'), '\" \"', parameters('firstName'), '\" \"', parameters('lastName'), '\" \"', parameters('jobRole'), '\" \"', parameters('jobFunction'), '\" \"', parameters('company'), '\" \"', parameters('installCDH'), '\" \"', parameters('vmSpec').vmSize, '\" >> /home/$ADMINUSER/bootstrap-cloudera.log 2>&1')]"
+        }
+      }
+    }
+  ]
+}

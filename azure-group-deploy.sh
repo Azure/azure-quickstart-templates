@@ -51,9 +51,9 @@ parameterJson=$( cat "$parametersFile" | jq '.parameters' )
 
 azure config mode arm
 
-if [[ ! -z $uploadArtifacts ]]
+if [[ $uploadArtifacts ]]
 then
-
+    
     if [[ -z $storageAccountName ]]
     then    
 
@@ -106,7 +106,7 @@ azure group create "$resourceGroupName" "$location"
 # Remove line endings from parameter JSON so it can be passed in to the CLI as a single line
 parameterJson=$( echo "$parameterJson" | jq -c '.' )
 
-if [[ -z $validateOnly ]]
+if [[ $validateOnly ]]
 then
     azure group template validate -g "$resourceGroupName" -f $templateFile -p "$parameterJson" -v
 else
