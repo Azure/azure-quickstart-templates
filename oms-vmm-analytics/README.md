@@ -1,6 +1,6 @@
 # VMM Analytics
 
-[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fkrnese%2Fazuredeploy%2Fmaster%2FOMS%2FMSOMS%2FSolutions%2Fvmm%2Fazuredeploy.json)
+[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](../azuredeploy.json)
 
 Virtual Machine Manager (VMM) Analytics solution in OMS provides a single view  of the jobs' status across multiple VMM instances that helps you gain insight about the health & performance of these jobs.
 
@@ -18,7 +18,7 @@ Use the following procedure:
 
 1.	Log on to the OMS space using your Azure subscription details.
 2.	Go to the [GitHub location](https://github.com/krnese/AzureDeploy/tree/master/OMS/MSOMS/Solutions/vmm) where the solution is available.
-3. Click [![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fkrnese%2Fazuredeploy%2Fmaster%2FOMS%2FMSOMS%2FSolutions%2Fvmm%2Fazuredeploy.json).
+3. Click [![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](../azuredeploy.json).
 
     **Custom deployment** blade appears.
 
