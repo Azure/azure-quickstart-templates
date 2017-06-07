@@ -49,6 +49,7 @@ help()
     echo "-r role to configure node, supported role(s): splunk_server"
     echo "-p password for Splunk Enterprise admin"
     echo "-c cluster master ip address"
+    echo "-s cluster secret"
     echo "-i index of node"
     echo "-h help"
 }
