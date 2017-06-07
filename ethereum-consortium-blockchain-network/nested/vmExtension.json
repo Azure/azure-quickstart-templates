@@ -8,9 +8,6 @@
     "txVMNamePrefix": {
       "type": "string"
     },
-    "txStorageAcctName": {
-      "type": "string"
-    },
     "numTXNodes": {
       "type": "int"
     },
@@ -40,6 +37,12 @@
     },
     "adminSitePort": {
       "type": "int"
+    },
+    "apiVersionStorageAccounts": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
     }
   },
   "variables": {
@@ -57,7 +60,7 @@
         "name": "txNodesConfigLoop",
         "count": "[parameters('numTXNodes')]"
       },
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
         "type": "CustomScript",
@@ -74,36 +77,6 @@
       }
     },
     {
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(parameters('txVMNamePrefix'), copyIndex(), '/diagscript')]",
-      "apiVersion": "[variables('apiVersionVirtualMachinesExtensions')]",
-      "location": "[resourceGroup().location]",
-      "copy": {
-        "name": "txNodesDiagLoop",
-        "count": "[parameters('numTXNodes')]"
-      },
-      "properties": {
-        "publisher": "Microsoft.OSTCExtensions",
-        "type": "LinuxDiagnostic",
-        "typeHandlerVersion": "2.3",
-        "autoUpgradeMinorVersion": true,
-        "settings": {
-           "perfCfg":[
-              {
-                "query":"SELECT UsedMemory,AvailableMemory FROM SCX_MemoryStatisticalInformation","table":"Memory"
-              },
-              {
-                "query":"SELECT PercentIdleTime,PercentProcessorTime,PercentIOWaitTime FROM SCX_ProcessorStatisticalInformation WHERE IsAggregate = TRUE","table":"CPU"
-              }
-            ]
-        },
-        "protectedSettings": {
-          "storageAccountName": "[parameters('txStorageAcctName')]",
-          "storageAccountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('txStorageAcctName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]"
-        }
-      }
-    },
-    {
       "apiVersion": "[variables('apiVersionVirtualMachinesExtensions')]",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('mnVMNamePrefix'), copyIndex(), '/newuserscript')]",
@@ -111,7 +84,7 @@
         "name": "bootMNNodesConfigLoop",
         "count": "[parameters('numMNNodes')]"
       },
-      "location": "[resourceGroup().location]",
+      "location": "[parameters('location')]",
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
         "type": "CustomScript",
@@ -124,36 +97,6 @@
         },
         "protectedSettings": {
           "commandToExecute": "[concat('/bin/bash configure-geth.sh \"', parameters('adminUsername'), '\" \"', parameters('ethereumAccountPsswd'), '\" \"', parameters('ethereumAccountPassphrase'), '\" \"', parameters('artifactsLocationURL'), '\" \"', parameters('ethereumNetworkID'), '\" \"', variables('maxPeers'), '\" \"', variables('mnNode'), '\" \"', parameters('gethIPCPort'), '\" \"', parameters('numBootNodes'), '\" \"', parameters('numMNNodes'), '\" \"', parameters('mnVMNamePrefix'), '\" \"', copyIndex(), '\"')]"
-        }
-      }
-    },
-    {
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(parameters('mnVMNamePrefix'), copyIndex(), '/diagscript')]",
-      "apiVersion": "[variables('apiVersionVirtualMachinesExtensions')]",
-      "location": "[resourceGroup().location]",
-      "copy": {
-        "name": "mnNodesDiagLoop",
-        "count": "[parameters('numMNNodes')]"
-      },
-      "properties": {
-        "publisher": "Microsoft.OSTCExtensions",
-        "type": "LinuxDiagnostic",
-        "typeHandlerVersion": "2.3",
-        "autoUpgradeMinorVersion": true,
-        "settings": {
-          "perfCfg":[
-             {
-               "query":"SELECT UsedMemory,AvailableMemory FROM SCX_MemoryStatisticalInformation","table":"Memory"
-             },
-             {
-               "query":"SELECT PercentIdleTime,PercentProcessorTime,PercentIOWaitTime FROM SCX_ProcessorStatisticalInformation WHERE IsAggregate = TRUE","table":"CPU"
-             }
-           ]
-        },
-        "protectedSettings": {
-          "storageAccountName": "[parameters('txStorageAcctName')]",
-          "storageAccountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('txStorageAcctName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]"
         }
       }
     }

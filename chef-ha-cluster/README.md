@@ -7,23 +7,34 @@
 <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-**This template has artifacts that need to be staged for deployment (Configuration Scripts) so use the below command with the upload flag to deploy this template or provide a storage account and SAS token when using the deploy button above.**
-You can optionally specify a storage account to use, if so the storage account must already exist within the subscription.  If you don't want to specify a storage account
-one will be created by the script (think of this as "temp" storage for AzureRM) and reused by subsequent deployments.
-
-```PowerShell
-.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactsStagingDirectory 'chef-ha-cluster' -UploadArtifacts 
-```
-```bash
-azure-group-deploy.sh -a chef-ha-cluster -l eastus -u
-```
-
-This template deploys a Chef Backend High-Availability Cluster.
+This template deploys a Chef High-Availability Cluster.
 `Tags: chef,cluster,ha`
 
 ## Deployment steps
 
-You can click the "deploy to Azure" button at the beginning of this document or follow the instructions for command line deployment using the scripts in the root of this repo.
+This template has artifacts (Configuration Scripts) which are automatically grabbed from github, or can be staged for deployment. Use the below command with the upload flag to deploy this template or provide a storage account and SAS token when using the deploy button above.
+
+This template also uses blob storage to share secrets and configuration templates between nodes in the cluster. You must create a blob storage container for these and provide an SAS token. If you're creating a storage container for artifacts, you can use the same one for secrets storage.
+
+## Using the command-line
+ ```PowerShell
+ .\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactsStagingDirectory 'chef-ha-cluster' UploadArtifacts
+ ```
+ ```bash
+ azure-group-deploy.sh -a chef-ha-cluster -l eastus -u
+ ```
+
+## Using the "deploy to Azure" button
+1. Provision a Standard (LRS) storage account, or use an existing one (must be Standard)
+2. Provision a blob storage container underneath storage account.  Note the container URL (ie. https://mystandardstorage.blob.core.windows.net/artifactsfolder )
+3. Generate a Shared Acccess Signature (SAS) token with and End date exceeding the life of your cluster.  Note the SAS token.
+4.  Click the "deploy to Azure" button at the beginning of this document
+5.  Enter in the required fields
+  * Artifacts Location:  the container URL from step 2
+  * Artifacts Location SAS Token: the SAS token from step 3
+  * Chef DNS name: A unique short name (ex: mychefhacluster ) that will be prepended to `.region.cloudapp.azure.com` (ex: `mychefhacluster.westus.cloudapp.azure.com`)
+  * SSH Key Data: The contents of your [SSH Public key](https://git-scm.com/book/en/v2/Git-on-the-Server-Generating-Your-SSH-Public-Key) for SSH authentication
+
 
 ## Usage
 
@@ -42,4 +53,3 @@ ssh -o ProxyCommand="ssh -W %h:%p -p 50000 -q chefadmin@yourhost.youregion.cloud
 #### Management
 
 See the chef documentation at [Chef](https://docs.chef.io/)
-

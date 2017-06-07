@@ -195,11 +195,11 @@ The following guidelines are relevant to the main deployment template and nested
  ```
  "outputs": {
  "fqdn": {
- 	"value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',parameters('publicIPAddressName')),providers('Microsoft.Network', 'publicIPAddresses').apiVersions[0]).dnsSettings.fqdn]",
+ 	"value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',parameters('publicIPAddressName')),'2016-10-01').dnsSettings.fqdn]",
  	"type": "string"
  },
  "ipaddress": {
- 	"value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',parameters('publicIPAddressName')),providers('Microsoft.Network', 'publicIPAddresses').apiVersions[0]).ipAddress]",
+ 	"value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',parameters('publicIPAddressName')),'2016-10-01').dnsSettings.fqdn]",
   	"type": "string"
  }
 }
