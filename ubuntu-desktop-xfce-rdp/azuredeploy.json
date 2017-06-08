@@ -14,22 +14,88 @@
         "description": "Password for the Virtual Machine."
       }
     },
-    "dnsNamePrefix": {
+    "virtualDNSNamePrefix": {
       "type": "string",
       "metadata": {
         "description": "DNS Name for the publicly accessible node. Must be lowercase. It should match with the following regular expression: ^[a-z][a-z0-9-]{1,61}[a-z0-9]$ or it will raise an error."
       }
     },
+    "virtualSimpleLinuxOSDisk": {
+      "type": "string",
+      "metadata": {
+        "description": "Enter the name of the linux disk"
+      }
+    },
+    "virtualMachineNic": {
+      "type": "string",
+      "metadata": {
+        "description": "virtualMachineNic"
+      }
+    },
+    "virtualAddressPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "addressPrefix"
+      }
+    },
+    "virtualSubnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Enter virtual subnet name."
+      }
+    },
+    "virtualSubnetPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Enter virtual subnet prefix."
+      }
+    },
+    "virtualStorageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Enter virtual storage account name."
+      }
+    },
+    "virtualStorageAccountType": {
+      "type": "string",
+      "metadata": {
+        "description": "Enter virtual storage account type."
+      }
+    },
+    "virtualPublicIPAddressName": {
+      "type": "string",
+      "metadata": {
+        "description": "Enter virtual public ipAddress name."
+      }
+    },
+    "virtualPublicIPAddressType": {
+      "type": "string",
+      "metadata": {
+        "description": "Enter virtual public ipAddress type."
+      }
+    },
+    "virtualMachineName": {
+      "type": "string",
+      "metadata": {
+        "description": "Enter virtual machine name."
+      }
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "metadata": {
+        "description": "Enter virtual network name."
+      }
+    },
 	"vmSize": {
       "type": "string",
-      "defaultValue": "Standard_A1",
+      "defaultValue": "Standard_D3",
       "allowedValues": [
 	    "Standard_A1",
-		"Standard_A2",
-		"Standard_A3",
-        "Standard_D1",
-        "Standard_D3",
-		"Standard_D4"
+		  "Standard_A2",
+		  "Standard_A3",
+      "Standard_D1",
+      "Standard_D3",
+		  "Standard_D4"
       ],
       "metadata": {
         "description": "The size of the virtual machines used when provisioning"
@@ -37,11 +103,12 @@
     },
     "ubuntuOSVersion": {
       "type": "string",
-      "defaultValue": "14.04.2-LTS",
+      "defaultValue": "16.04.0-LTS",
       "allowedValues": [
         "12.04.5-LTS",
         "14.04.2-LTS",
-        "15.10"
+        "15.10",
+        "16.04.0-LTS"
       ],
       "metadata": {
         "description": "The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version. Allowed values: 12.04.5-LTS, 14.04.2-LTS, 15.10."
@@ -51,60 +118,49 @@
   "variables": {
     "imagePublisher": "Canonical",
     "imageOffer": "UbuntuServer",
-    "OSDiskName": "osdiskforlinuxsimple",
-    "nicName": "myVMNic",
-    "addressPrefix": "10.0.0.0/16",
-    "subnetName": "Subnet",
-    "subnetPrefix": "10.0.0.0/24",
-	"storageAccountName": "[concat(uniquestring(resourceGroup().id), 'standardsa')]",
-	"apiVersion": "2015-06-15",
-    "storageAccountType": "Standard_LRS",
-    "publicIPAddressName": "myPublicIP",
-    "publicIPAddressType": "Dynamic",
+	  "apiVersion": "2015-06-15",
     "vmStorageAccountContainerName": "vhds",
-    "vmName": "MyubuntuVM",
-    "virtualNetworkName": "MyVNET",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
-    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]"
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
+    "subnetRef": "[concat(variables('vnetID'),'/subnets/',parameters('virtualSubnetName'))]"
   },
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('storageAccountName')]",
+      "name": "[parameters('virtualStorageAccountName')]",
       "apiVersion": "[variables('apiVersion')]",
       "location": "[resourceGroup().location]",
       "properties": {
-        "accountType": "[variables('storageAccountType')]"
+        "accountType": "[parameters('virtualStorageAccountType')]"
       }
     },
     {
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[variables('publicIPAddressName')]",
+      "name": "[parameters('virtualPublicIPAddressName')]",
       "location": "[resourceGroup().location]",
       "properties": {
-        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+        "publicIPAllocationMethod": "[parameters('virtualPublicIPAddressType')]",
         "dnsSettings": {
-          "domainNameLabel": "[parameters('dnsNamePrefix')]"
+          "domainNameLabel": "[parameters('virtualDNSNamePrefix')]"
         }
       }
     },
     {
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/virtualNetworks",
-      "name": "[variables('virtualNetworkName')]",
+      "name": "[parameters('virtualNetworkName')]",
       "location": "[resourceGroup().location]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
-            "[variables('addressPrefix')]"
+            "[parameters('virtualAddressPrefix')]"
           ]
         },
         "subnets": [
           {
-            "name": "[variables('subnetName')]",
+            "name": "[parameters('virtualSubnetName')]",
             "properties": {
-              "addressPrefix": "[variables('subnetPrefix')]"
+              "addressPrefix": "[parameters('virtualSubnetPrefix')]"
             }
           }
         ]
@@ -113,11 +169,11 @@
     {
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[variables('nicName')]",
+      "name": "[parameters('virtualMachineNic')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        "[concat('Microsoft.Network/publicIPAddresses/', parameters('virtualPublicIPAddressName'))]",
+        "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -126,7 +182,7 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('virtualPublicIPAddressName'))]"
               },
               "subnet": {
                 "id": "[variables('subnetRef')]"
@@ -139,18 +195,18 @@
     {
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[variables('vmName')]",
+      "name": "[parameters('virtualMachineName')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+        "[concat('Microsoft.Storage/storageAccounts/', parameters('virtualStorageAccountName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', parameters('virtualMachineNic'))]"
       ],
       "properties": {
         "hardwareProfile": {
           "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
-          "computerName": "[variables('vmName')]",
+          "computerName": "[parameters('virtualMachineName')]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]"
         },
@@ -164,7 +220,7 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]"
+              "uri": "[concat('http://',parameters('virtualStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',parameters('virtualSimpleLinuxOSDisk'),'.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -173,7 +229,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('virtualMachineNic'))]"
             }
           ]
         }
@@ -181,11 +237,11 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('vmName'),'/newuserscript')]",
+      "name": "[concat(parameters('virtualMachineName'),'/newuserscript')]",
       "apiVersion": "[variables('apiVersion')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('virtualMachineName'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",
