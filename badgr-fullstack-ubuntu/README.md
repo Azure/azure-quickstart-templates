@@ -1,11 +1,12 @@
 # Deploy Open edX FullStack (Dogwood) on Ubuntu
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fbadgr-fullstack-ubuntu%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAsatyarapelly%2FAazure-quickstart-templates%2FAmaster%2FAbadgr-fullstack-ubuntu%2FAazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fbadgr-fullstack-ubuntu%2Fazuredeploy.json" target="_blank">
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAsatyarapelly%2FAazure-quickstart-templates%2FAmaster%2FAbadgr-fullstack-ubuntu%2FAazuredeploy.json" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
+
 
 This template deploys the Open edX full stack (Dogwood) on Ubuntu. A default server-vars.yml is saved to */edx/app/edx_ansible*.
 
