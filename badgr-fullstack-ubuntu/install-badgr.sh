@@ -97,11 +97,13 @@ pip install setuptools=="${SETUPTOOLS_VERSION}"
 pip install virtualenv=="${VIRTUAL_ENV_VERSION}"
 
 
+sudo sudo
 cd /
 mkdir $BADGR_ROOT_DIR
 cd $BADGR_ROOT_DIR
 virtualenv "${VIRTUAL_ENV}"
 $VIRTUAL_ENV_ACTIVATE
+mkdir $BADGR_ROOT_DIR
 git clone $BADGR_REPO $BADGR_APP_DIR
 cd $BADGR_APP_DIR
 pip install -r requirements-dev.txt
