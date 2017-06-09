@@ -102,8 +102,8 @@ cd /
 mkdir $BADGR_ROOT_DIR
 cd $BADGR_ROOT_DIR
 virtualenv "${VIRTUAL_ENV}"
-$VIRTUAL_ENV_ACTIVATE
-mkdir $BADGR_ROOT_DIR
+source $VIRTUAL_ENV_ACTIVATE
+
 git clone $BADGR_REPO $BADGR_APP_DIR
 cd $BADGR_APP_DIR
 pip install -r requirements-dev.txt
