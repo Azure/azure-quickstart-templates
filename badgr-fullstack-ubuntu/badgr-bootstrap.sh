@@ -27,20 +27,6 @@ SETUPTOOLS_VERSION="24.0.3"
 VIRTUAL_ENV="/tmp/bootstrap"
 PYTHON_BIN="${VIRTUAL_ENV}/bin"
 
-cat << EOF
-******************************************************************************
-
-Running the edx_ansible bootstrap script with the following arguments:
-
-ANSIBLE_REPO="${ANSIBLE_REPO}"
-ANSIBLE_VERSION="${ANSIBLE_VERSION}"
-CONFIGURATION_REPO="${CONFIGURATION_REPO}"
-CONFIGURATION_VERSION="${CONFIGURATION_VERSION}"
-
-******************************************************************************
-EOF
-
-
 if [[ $(id -u) -ne 0 ]] ;then
     echo "Please run as root";
     exit 1;
