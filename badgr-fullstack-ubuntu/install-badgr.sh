@@ -27,7 +27,7 @@ SETUPTOOLS_VERSION="24.0.3"
 VIRTUAL_ENV="/badgr/env"
 VIRTUAL_ENV_ACTIVATE="${VIRTUAL_ENV}/bin/activate"
 BADGR_ROOT_DIR=badgr
-BADGR_REPO=https://github.com/concentricsky/badgr-server.git
+BADGR_REPO=https://github.com/satyarapelly/badgr-server.git
 BADGR_APP_DIR=code
 
 if [[ $(id -u) -ne 0 ]] ;then
