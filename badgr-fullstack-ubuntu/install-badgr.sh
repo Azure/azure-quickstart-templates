@@ -25,7 +25,8 @@ VIRTUAL_ENV_VERSION="15.0.2"
 PIP_VERSION="8.1.2"
 SETUPTOOLS_VERSION="24.0.3"
 VIRTUAL_ENV="/badgr/env"
-PYTHON_BIN="${VIRTUAL_ENV}/bin"
+VIRTUAL_ENV_ACTIVATE="${VIRTUAL_ENV}/bin/activate"
+BADGR_ROOT_DIR=badgr
 BADGR_REPO=https://github.com/concentricsky/badgr-server.git
 BADGR_APP_DIR=code
 
@@ -97,8 +98,10 @@ pip install virtualenv=="${VIRTUAL_ENV_VERSION}"
 
 
 cd /
-mkdir badgr
+mkdir $BADGR_ROOT_DIR
+cd $BADGR_ROOT_DIR
 virtualenv "${VIRTUAL_ENV}"
+$VIRTUAL_ENV_ACTIVATE
 git clone $BADGR_REPO $BADGR_APP_DIR
 cd $BADGR_APP_DIR
 pip install -r requirements-dev.txt
