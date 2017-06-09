@@ -26,6 +26,7 @@ PIP_VERSION="8.1.2"
 SETUPTOOLS_VERSION="24.0.3"
 VIRTUAL_ENV="/tmp/bootstrap"
 PYTHON_BIN="${VIRTUAL_ENV}/bin"
+BADGR_REPO=https://github.com/concentricsky/badgr-server.git
 
 if [[ $(id -u) -ne 0 ]] ;then
     echo "Please run as root";
@@ -92,3 +93,7 @@ fi
 PATH=/usr/local/bin:${PATH}
 pip install setuptools=="${SETUPTOOLS_VERSION}"
 pip install virtualenv=="${VIRTUAL_ENV_VERSION}"
+
+cd /tmp
+git clone $BADGR_REPO
+
