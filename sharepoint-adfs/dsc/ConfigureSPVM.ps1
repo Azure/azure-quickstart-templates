@@ -330,6 +330,42 @@ configuration ConfigureSPVM
         # TODO: implement stupid workaround documented in https://technet.microsoft.com/en-us/library/mt723354(v=office.16).aspx until SP2016 image is fixed
         #>
 
+        xScript WaitForSQL
+        {
+            SetScript = 
+            {
+                $retryCount = $using:RetryIntervalSec
+                $server = $using:SQLName
+                $db="tempdb"
+                $retry = $true
+                while ($retry) {
+                    $sqlConnection = New-Object System.Data.SqlClient.SqlConnection "Data Source=$server;Initial Catalog=$db;Integrated Security=True;Enlist=False;Connect Timeout=1"
+                    try {
+                        $sqlConnection.Open()
+                        Write-Verbose "Connection to SQL Server $server succeeded"
+                        $sqlConnection.Close()
+                        $retry = $false
+                    }
+                    catch {
+                        Write-Verbose "SQL connection to $server failed, retry in $retryCount secs..."
+                        Start-Sleep -s $retryCount
+                    }
+                }
+            }
+            GetScript =  
+            {
+                # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+                return @{ "Result" = "false" }
+            }
+            TestScript = 
+            {
+                # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+               return $false
+            }
+            PsDscRunAsCredential     = $DomainAdminCredsQualified
+            DependsOn = "[xRemoteFile]DownloadLdapcp"
+        }
+
         #**********************************************************
         # SharePoint configuration
         #**********************************************************
@@ -345,7 +381,7 @@ configuration ConfigureSPVM
             RunCentralAdmin           = $true
             Ensure                    = "Present"
             #DependsOn = "[xPackage]Install201612CU"
-            DependsOn = "[xRemoteFile]DownloadLdapcp"
+            DependsOn = "[xScript]WaitForSQL"
         }
 
         SPManagedAccount CreateSPSvcManagedAccount
