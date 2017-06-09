@@ -97,7 +97,7 @@ pip install setuptools=="${SETUPTOOLS_VERSION}"
 pip install virtualenv=="${VIRTUAL_ENV_VERSION}"
 
 
-sudo sudo
+sudo su
 cd /
 mkdir $BADGR_ROOT_DIR
 cd $BADGR_ROOT_DIR
