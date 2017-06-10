@@ -76,7 +76,7 @@ add-apt-repository -y ppa:git-core/ppa
 # which may differ from what is pinned in virtualenvironments
 apt-get update -y
 
-apt-get install -y python2.7 python2.7-dev python-pip python-apt python-yaml python-jinja2 build-essential sudo git-core libmysqlclient-dev libffi-dev libssl-dev gcc
+apt-get install -y python2.7 python2.7-dev python-pip python-apt python-yaml python-jinja2 python-dev build-essential sudo git-core libmysqlclient-dev libffi-dev libssl-dev gcc npm ruby
 
 
 # Workaround for a 16.04 bug, need to upgrade to latest and then
@@ -96,6 +96,7 @@ PATH=/usr/local/bin:${PATH}
 pip install setuptools=="${SETUPTOOLS_VERSION}"
 pip install virtualenv=="${VIRTUAL_ENV_VERSION}"
 
+gem install sass
 
 sudo su
 cd /
@@ -107,5 +108,10 @@ source $VIRTUAL_ENV_ACTIVATE
 git clone $BADGR_REPO $BADGR_APP_DIR
 cd $BADGR_APP_DIR
 pip install -r requirements-dev.txt
+npm install grunt
+npm install grunt-cli
+npm install
+grunt dist
+
 
 
