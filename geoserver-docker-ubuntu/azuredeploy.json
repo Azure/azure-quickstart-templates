@@ -17,24 +17,30 @@
     },
     "dnsNameForPublicIP": {
       "type": "string"
+    },
+
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_DS2_v2",
+      "metadata": {
+        "description": "VM size"
+      }
     }
-
-
   },
   "variables": {
     "ubuntuOSVersion": "16.04-LTS",
     "imagePublisher": "Canonical",
     "imageOffer": "UbuntuServer",
     "OSDiskName": "osdisk",
-    "nicName": "myVMNic",
+    "nicName": "nic",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet",
     "subnetPrefix": "10.0.0.0/24",
     "vhdStorageType": "Standard_LRS",
     "publicIPAddressType": "Dynamic",
-    "vmName": "GeoServer",
-    "vmSize": "Standard_DS2_v2",
-    "virtualNetworkName": "MyVNET",
+    "vmName": "GeoServerVM",
+    
+    "virtualNetworkName": "GeoServerVNET",
     "vnetId": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
     "subnetRef": "[concat(variables('vnetId'), '/subnets/', variables('subnetName'))]"
 
@@ -44,7 +50,7 @@
       "apiVersion": "2016-03-30",
       "type": "Microsoft.Network/publicIPAddresses",
       "tags": {
-        "displayName": "PublicIPAddress"
+        "displayName": "GeoServerIP"
       },
       "name": "[parameters('dnsNameForPublicIP')]",
       "location": "[resourceGroup().location]",
@@ -60,7 +66,7 @@
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "tags": {
-        "displayName": "VirtualNetwork"
+        "displayName": "[variables('virtualNetworkName')]"
       },
       "location": "[resourceGroup().location]",
       "properties": {
@@ -121,7 +127,7 @@
       ],
       "properties": {
         "hardwareProfile": {
-          "vmSize": "[variables('vmSize')]"
+          "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
           "computerName": "[variables('vmName')]",
@@ -148,7 +154,7 @@
           "dataDisks": [
             {
               "lun": 1,
-              "name": "gwcdata",
+              "name": "geoserverdata",
               "diskSizeGB": "1023",
               "caching": "readwrite",
               "managedDisk": {
@@ -185,7 +191,7 @@
             "autoUpgradeMinorVersion": true,
             "settings": {
               "fileUris": [
-                "https://gist.githubusercontent.com/marrobi/f8db729216ccb8d5cc20fdefaa115c31/raw/5d2175f9a60c6595395c149886493c7cc22bff87/autopart.sh"
+                "https://raw.githubusercontent.com/marrobi/azure-quickstart-templates/geoserver-docker-ubuntu/geoserver-docker-ubuntu/scripts/autopart.sh"
               ],
               "commandToExecute": "[concat('bash autopart.sh')]"
             }
@@ -214,7 +220,7 @@
                   "image": "winsent/geoserver",
                   "ports": [ "8080:8080" ],
                   "volumes": [
-                    "/media/data1:/geowebcache"
+                    "/media/data1:/geoserver_data"
                   ],
                   "environment": [
                     "GEOSERVER_DATA_DIR"
@@ -227,7 +233,7 @@
             "protectedSettings": {
               "environment": {
 
-                "GEOSERVER_DATA_DIR": "/geowebcache"
+                "GEOSERVER_DATA_DIR": "/geoserver_data"
 
 
               }
