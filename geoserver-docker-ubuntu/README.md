@@ -10,6 +10,13 @@ This template uses the Azure Docker Extension to run the GeoServer image at  htt
 
 A 1GB data disk created and mounted to ```/geoserver_data``` within the container and the ```GEOSERVER_DATA_DIR``` variable set to this location.
 
-The GeoServer web interface can be accessed at http://yourdnsname:8080/geoserver/
+The GeoServer web interface can be accessed at http://yourdnsname:8080/geoserver/, this address is provided as an output of the template.
 
 IMPORTANT: This is a default installation of GeoServer with no security configured.
+
+### TODO:
+
+1. Move GeoServer data to Azure Files.
+2. Add Azure Blob Storage plugin as per https://github.com/jjcollinge/geoserver/tree/jjcollinge/gwc-azure, and https://github.com/jjcollinge/geowebcache/tree/jjcollinge/gwc-azure-blob .
+3. Configure GeoWebCache to local disk.
+4. Configure VM scaleset for HA. 
