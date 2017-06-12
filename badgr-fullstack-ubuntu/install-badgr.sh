@@ -26,9 +26,9 @@ PIP_VERSION="8.1.2"
 SETUPTOOLS_VERSION="24.0.3"
 VIRTUAL_ENV="/badgr/env"
 VIRTUAL_ENV_ACTIVATE="${VIRTUAL_ENV}/bin/activate"
-BADGR_ROOT_DIR=badgr
+BADGR_ROOT_DIR=/badgr
 BADGR_REPO=https://github.com/satyarapelly/badgr-server.git
-BADGR_APP_DIR=code
+BADGR_APP_DIR=/badgr/code
 
 if [[ $(id -u) -ne 0 ]] ;then
     echo "Please run as root";
@@ -107,11 +107,12 @@ source $VIRTUAL_ENV_ACTIVATE
 
 git clone $BADGR_REPO $BADGR_APP_DIR
 cd $BADGR_APP_DIR
+sudo su
 pip install -r requirements-dev.txt
-npm install grunt
-npm install grunt-cli
-ln -s /usr/bin/nodejs /usr/bin/node
 npm install
+npm install grunt
+npm install -g grunt-cli
+ln -s /usr/bin/nodejs /usr/bin/node
 grunt dist
 
 
