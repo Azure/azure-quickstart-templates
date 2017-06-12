@@ -16,7 +16,6 @@ IMPORTANT: This is a default installation of GeoServer with no security configur
 
 ### Future work:
 
-1. Move GeoServer data to Azure Files.
-2. Add Azure Blob Storage plugin as per https://github.com/jjcollinge/geoserver/tree/jjcollinge/gwc-azure, and https://github.com/jjcollinge/geowebcache/tree/jjcollinge/gwc-azure-blob .
-3. Configure GeoWebCache to local disk.
-4. Configure VM scale set for HA.
+1. Move GeoServer data to Azure Files and configure GeoWebCache to use local disk.
+2. Work on blob storage plugin https://github.com/jjcollinge/geoserver/tree/jjcollinge/gwc-azure, and https://github.com/jjcollinge/geowebcache/tree/jjcollinge/gwc-azure-blob and integrate.
+3. Configure VM scale set for HA.
