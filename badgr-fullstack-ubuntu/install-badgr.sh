@@ -110,6 +110,7 @@ cd $BADGR_APP_DIR
 pip install -r requirements-dev.txt
 npm install grunt
 npm install grunt-cli
+ln -s /usr/bin/nodejs /usr/bin/node
 npm install
 grunt dist
 
