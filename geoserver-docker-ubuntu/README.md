@@ -4,7 +4,7 @@
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-This template allows you to deploy an Ubuntu VM with a Docker container running GeoServer. the GeoServer GeoWebCache is redirected to an additional data disk.
+This template allows you to deploy an Ubuntu VM with a Docker container running GeoServer. The GeoServer GeoWebCache is redirected to an additional data disk.
 
 This template uses the Azure Docker Extension to run the GeoServer image at  https://hub.docker.com/r/winsent/geoserver/ .
 
