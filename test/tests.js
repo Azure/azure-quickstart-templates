@@ -315,9 +315,9 @@ describe('Template', function () {
                 parameters: readJSONFile(parametersFilePath)
               };
 
-              if (fs.existsSync(path.join(testDirectory, 'ci-scripts'))) {
-                var preReqTemplateFilePath = path.join(testDirectory, 'ci-scripts/azureprereqdeploy.json');
-                var preReqParametersFilePath = path.join(testDirectory, 'ci-scripts/azureprereqdeploy.parameters.json');
+              if (fs.existsSync(path.join(testDirectory, 'prereqs'))) {
+                var preReqTemplateFilePath = path.join(testDirectory, 'prereqs/azureprereqdeploy.json');
+                var preReqParametersFilePath = path.join(testDirectory, 'prereqs/azureprereqdeploy.parameters.json');
 
                 requestBody.preReqTemplate = readJSONFile(preReqTemplateFilePath);
                 requestBody.preReqParameters = readJSONFile(preReqParametersFilePath);
