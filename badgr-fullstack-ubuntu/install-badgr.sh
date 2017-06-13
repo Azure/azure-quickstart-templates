@@ -98,49 +98,6 @@ pip install virtualenv=="${VIRTUAL_ENV_VERSION}"
 
 gem install sass
 
-parse_args $@ # pass existing command line arguments
-
-parse_args()
-{
-    while [[ "$#" -gt 0 ]]
-        do
-
-        arg_value="${2}"
-        shift_once=0
-
-        if [[ "${arg_value}" =~ "--" ]]; 
-        then
-            arg_value=""
-            shift_once=1
-        fi
-
-         # Log input parameters to facilitate troubleshooting
-        echo "Option '${1}' set with value '"${arg_value}"'"
-
-        case "$1" in
-           --storage-account-name)
-                BACKUP_STORAGEACCOUNT_NAME="${arg_value}"
-                ;;
-             --storage-account-key)
-                BACKUP_STORAGEACCOUNT_KEY="${arg_value}"
-                ;;
-				         *) # unknown option
-                echo "Option '${BOLD}$1${NORM} ${arg_value}' not allowed."
-                help
-                exit 2
-                ;;
-        esac
-        
-        shift # past argument
-
-        if [ $shift_once -eq 0 ]; 
-        then
-            shift # past argument or value
-        fi
-
-    done
-}
-
 sudo su
 cd /
 mkdir $BADGR_ROOT_DIR
