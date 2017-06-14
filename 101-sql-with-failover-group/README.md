@@ -6,6 +6,6 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template creates two Azure SQL servers, a SQL database, and failover group. For demonstration purposes, all resources are deployed into the same region, but they could also be deployed into different regions. Template was authored by John Downs.
+This template creates two Azure SQL servers, a SQL database, and failover group. Template was authored by John Downs.
 
 `Tags: sql`
