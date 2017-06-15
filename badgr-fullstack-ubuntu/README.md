@@ -16,4 +16,4 @@ You can learn more about Badgr Server here:
 - [Source Code](https://github.com/concentricsky/badgr-server)
 - [Concentric Sky](https://concentricsky.com)
 
-*Note that this template uses a different license than the [ConcentricSky](https://github.com/concentricsky/badgr-server/blob/master/LICENSE) platform.*
+*Note that this template uses a different license than the [BadgrServer](https://github.com/concentricsky/badgr-server/blob/master/LICENSE) platform.*
