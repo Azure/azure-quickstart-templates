@@ -1,4 +1,4 @@
-# Deploy Open edX FullStack (Dogwood) on Ubuntu
+# Deploy Badgr-Server FullStack on Ubuntu
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fsatyarapelly%2Fazure-quickstart-templates%2Fmaster%2Fbadgr-fullstack-ubuntu%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
@@ -7,13 +7,13 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template deploys the Open edX full stack (Dogwood) on Ubuntu. A default server-vars.yml is saved to */edx/app/edx_ansible*.
+This template deploys the Badgr Server web application (concentricsky) on Ubuntu. 
 
 Connect to the virtual machine with SSH: `ssh {adminUsername}@{dnsNameForPublicIP}.{region}.cloudapp.azure.com`. Installation log can be found under */var/log/azure*.
 
-You can learn more about Open edX and fullstack here:
-- [Open edX](https://open.edx.org)
-- [Running FullStack](https://openedx.atlassian.net/wiki/display/OpenOPS/Running+Fullstack)
-- [Source Code](https://github.com/edx/edx-platform)
+You can learn more about Badgr Server here:
+- [Badgr Server](https://badgr.io)
+- [Source Code](https://github.com/concentricsky/badgr-server)
+- [Concentric Sky](https://concentricsky.com)
 
-*Note that this template uses a different license than the [Open edX](https://github.com/edx/edx-platform/blob/master/LICENSE) platform.*
+*Note that this template uses a different license than the [ConcentricSky](https://github.com/concentricsky/badgr-server/blob/master/LICENSE) platform.*

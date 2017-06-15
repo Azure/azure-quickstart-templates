@@ -109,12 +109,14 @@ git clone $BADGR_REPO $BADGR_APP_DIR
 cd $BADGR_APP_DIR
 sudo su
 pip install -r requirements-dev.txt
+pip install gunicorn
 npm install
 npm install grunt
 npm install -g grunt-cli
 ln -s /usr/bin/nodejs /usr/bin/node
 grunt dist
 ./manage.py migrate
+#gunicorn -b 0.0.0.0:80 --workers=5 wsgi
 
 
 
