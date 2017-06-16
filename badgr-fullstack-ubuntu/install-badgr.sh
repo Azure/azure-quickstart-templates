@@ -131,9 +131,11 @@ mkdir -p $BADGR_ROOT_DIR/bin
 #Copy supervisor.conf
 wget https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/supervisord.conf $BADGR_ROOT_DIR/app/supervisor/supervisord.conf
 wget https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/wsgi.py $BADGR_APP_DIR/wsgy.py
-wget https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/wsgi.py $BADGR_APP_DIR/gunicorn.py
+wget https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/gunicorn.py $BADGR_APP_DIR/gunicorn.py
 wget https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/badgr.conf $BADGR_ROOT_DIR/app/supervisor/conf.d/badgr.conf
 wget https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/supervisorctl $BADGR_ROOT_DIR/bin/supervisorctl
+
+touch $BADGR_ROOT_DIR/var/supervisor/supervisor.sock
 
 cd $BADGR_ROOT_DIR/app/supervisor/
 virtualenv venv/supervisor
