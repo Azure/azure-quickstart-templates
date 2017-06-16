@@ -121,7 +121,7 @@ add-apt-repository -y ppa:git-core/ppa
 # which may differ from what is pinned in virtualenvironments
 apt-get update -y
 
-apt-get install -y python2.7 python2.7-dev python-pip python-apt python-yaml python-jinja2 python-dev build-essential sudo git-core libmysqlclient-dev libffi-dev libssl-dev gcc npm ruby gunicorn
+apt-get install -y python2.7 python2.7-dev python-pip python-apt python-yaml python-jinja2 python-dev build-essential sudo git-core libmysqlclient-dev libffi-dev libssl-dev gcc npm ruby gunicorn supervisor
 
 
 # Workaround for a 16.04 bug, need to upgrade to latest and then
@@ -167,7 +167,7 @@ deactivate
 
 # Setting up the badgr-server service
 cd $BADGR_ROOT_DIR
-#/badgr/app/supervisor/conf.available.d
+mkdir -p $BADGR_ROOT_DIR/app/supervisor/conf.available.d
 mkdir -p $BADGR_ROOT_DIR/app/supervisor/conf.d
 mkdir -p $BADGR_ROOT_DIR/var/log/supervisor
 mkdir -p $BADGR_ROOT_DIR/var/supervisor
@@ -189,7 +189,8 @@ cp gunicorn.py $BADGR_APP_DIR/gunicorn.py
 rm -r gunicorn.py
 
 curl --remote-name https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/badgr.conf
-cp badgr.conf $BADGR_ROOT_DIR/app/supervisor/conf.d/badgr.conf
+cp badgr.conf $BADGR_ROOT_DIR/app/supervisor/conf.available.d
+ln -s $BADGR_ROOT_DIR/app/supervisor/conf.available.d/badgr.conf /usr/bin/node $BADGR_ROOT_DIR/app/supervisor/conf.d/badgr.conf
 rm -r badgr.conf
 
 curl --remote-name https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/supervisorctl
@@ -197,6 +198,7 @@ cp supervisorctl $BADGR_ROOT_DIR/bin/supervisorctl
 rm -r supervisorctl
 
 sudo touch $BADGR_ROOT_DIR/var/supervisor/supervisor.sock
+chmod 0700 $BADGR_ROOT_DIR/var/supervisor/supervisor.sock
 
 cd $BADGR_ROOT_DIR/app/supervisor/
 virtualenv venv/supervisor
