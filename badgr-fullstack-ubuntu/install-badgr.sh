@@ -190,7 +190,7 @@ rm -r gunicorn.py
 
 curl --remote-name https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/badgr.conf
 cp badgr.conf $BADGR_ROOT_DIR/app/supervisor/conf.available.d
-ln -s $BADGR_ROOT_DIR/app/supervisor/conf.available.d/badgr.conf /usr/bin/node $BADGR_ROOT_DIR/app/supervisor/conf.d/badgr.conf
+ln -s $BADGR_ROOT_DIR/app/supervisor/conf.available.d/badgr.conf $BADGR_ROOT_DIR/app/supervisor/conf.d/badgr.conf
 rm -r badgr.conf
 
 curl --remote-name https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/supervisorctl
@@ -199,6 +199,7 @@ rm -r supervisorctl
 
 sudo touch $BADGR_ROOT_DIR/var/supervisor/supervisor.sock
 chmod 0700 $BADGR_ROOT_DIR/var/supervisor/supervisor.sock
+sudo service supervisor restart
 
 cd $BADGR_ROOT_DIR/app/supervisor/
 virtualenv venv/supervisor
