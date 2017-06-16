@@ -174,11 +174,21 @@ mkdir -p $BADGR_ROOT_DIR/var/supervisor
 mkdir -p $BADGR_ROOT_DIR/bin
 
 #Copy supervisor.conf
-sudo wget https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/supervisord.conf $BADGR_ROOT_DIR/app/supervisor/supervisord.conf
-sudo wget https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/wsgi.py $BADGR_APP_DIR/wsgy.py
-sudo wget https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/gunicorn.py $BADGR_APP_DIR/gunicorn.py
-sudo wget https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/badgr.conf $BADGR_ROOT_DIR/app/supervisor/conf.d/badgr.conf
-sudo wget https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/supervisorctl $BADGR_ROOT_DIR/bin/supervisorctl
+sudo wget https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/supervisord.conf
+sudo cp supervisord.conf $BADGR_ROOT_DIR/app/supervisor/supervisord.conf
+rm -r supervisord.conf
+sudo wget https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/wsgi.py
+sudo cp wsgy.py $BADGR_APP_DIR/wsgy.py
+rm -r wsgy.py
+sudo wget https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/gunicorn.py
+cp gunicorn.py $BADGR_APP_DIR/gunicorn.py
+rm -r gunicorn.py
+sudo wget https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/badgr.conf
+cp badgr.conf $BADGR_ROOT_DIR/app/supervisor/conf.d/badgr.conf
+rm -r badgr.conf
+sudo wget https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/supervisorctl
+cp supervisorctl $BADGR_ROOT_DIR/bin/supervisorctl
+rm -r supervisorctl
 
 sudo touch $BADGR_ROOT_DIR/var/supervisor/supervisor.sock
 
