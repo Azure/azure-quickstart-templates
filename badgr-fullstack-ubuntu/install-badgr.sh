@@ -29,6 +29,8 @@ VIRTUAL_ENV_ACTIVATE="${VIRTUAL_ENV}/bin/activate"
 BADGR_ROOT_DIR=/badgr
 BADGR_REPO=https://github.com/satyarapelly/badgr-server.git
 BADGR_APP_DIR=/badgr/code
+BADGR_ADMIN_USER=""
+BADGR_ADMIN_USER_PWD=""
 
 if [[ $(id -u) -ne 0 ]] ;then
     echo "Please run as root";
@@ -54,6 +56,49 @@ else
 EOF
    exit 1;
 fi
+
+parse_args()
+{
+    while [[ "$#" -gt 0 ]]
+        do
+
+        arg_value="${2}"
+        shift_once=0
+
+        if [[ "${arg_value}" =~ "--" ]]; 
+        then
+            arg_value=""
+            shift_once=1
+        fi
+
+         # Log input parameters to facilitate troubleshooting
+        echo "Option '${1}' set with value '"${arg_value}"'"
+
+        case "$1" in
+            -u| --admin-user) # OS Admin User Name
+                BADGR_ADMIN_USER="${arg_value}"
+                ;;
+			-p| --admin-user-password) # OS Admin User Name
+                BADGR_ADMIN_USER_PWD="${arg_value}"
+                ;;	
+			*) # unknown option
+                echo "Option '${BOLD}$1${NORM} ${arg_value}' not allowed."
+                help
+                exit 2
+                ;;
+        esac
+        
+        shift # past argument
+
+        if [ $shift_once -eq 0 ]; 
+        then
+            shift # past argument or value
+        fi
+
+    done
+}
+
+parse_args $@ # pass existing command line arguments
 
 # Upgrade the OS
 apt-get update -y
@@ -117,7 +162,7 @@ npm install -g grunt-cli
 ln -s /usr/bin/nodejs /usr/bin/node
 grunt dist
 ./manage.py migrate
-echo "from django.contrib.auth import get_user_model; me = get_user_model(); me.objects.create_superuser('admin1@example.com', 'admin', 'pass'); quit()" | python manage.py shell
+echo "from django.contrib.auth import get_user_model; me = get_user_model(); me.objects.create_superuser('admin2@example.com', '$BADGR_ADMIN_USER', '$BADGR_ADMIN_USER_PWD'); quit()" | python manage.py shell
 deactivate
 
 # Setting up the badgr-server service
