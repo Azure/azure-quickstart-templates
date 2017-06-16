@@ -152,14 +152,14 @@ source $VIRTUAL_ENV_ACTIVATE
 
 git clone $BADGR_REPO $BADGR_APP_DIR
 cd $BADGR_APP_DIR
-sudo su
+cp $BADGR_APP_DIR/apps/mainsite/settings_local.py.example $BADGR_APP_DIR/apps/mainsite/settings_local.py
 pip install -r requirements-dev.txt
 pip install gunicorn
 npm install
 
 npm install grunt
 npm install -g grunt-cli
-ln -s /usr/bin/nodejs /usr/bin/node
+#ln -s /usr/bin/nodejs /usr/bin/node
 grunt dist
 ./manage.py migrate
 echo "from django.contrib.auth import get_user_model; me = get_user_model(); me.objects.create_superuser('admin2@example.com', '$BADGR_ADMIN_USER', '$BADGR_ADMIN_USER_PWD'); quit()" | python manage.py shell
@@ -174,11 +174,11 @@ mkdir -p $BADGR_ROOT_DIR/var/supervisor
 mkdir -p $BADGR_ROOT_DIR/bin
 
 #Copy supervisor.conf
-wget https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/supervisord.conf $BADGR_ROOT_DIR/app/supervisor/supervisord.conf
-wget https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/wsgi.py $BADGR_APP_DIR/wsgy.py
-wget https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/gunicorn.py $BADGR_APP_DIR/gunicorn.py
-wget https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/badgr.conf $BADGR_ROOT_DIR/app/supervisor/conf.d/badgr.conf
-wget https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/supervisorctl $BADGR_ROOT_DIR/bin/supervisorctl
+sudo wget https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/supervisord.conf $BADGR_ROOT_DIR/app/supervisor/supervisord.conf
+sudo wget https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/wsgi.py $BADGR_APP_DIR/wsgy.py
+sudo wget https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/gunicorn.py $BADGR_APP_DIR/gunicorn.py
+sudo wget https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/badgr.conf $BADGR_ROOT_DIR/app/supervisor/conf.d/badgr.conf
+sudo wget https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/supervisorctl $BADGR_ROOT_DIR/bin/supervisorctl
 
 touch $BADGR_ROOT_DIR/var/supervisor/supervisor.sock
 
