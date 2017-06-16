@@ -195,6 +195,7 @@ rm -r badgr.conf
 
 curl --remote-name https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/supervisorctl
 cp supervisorctl $BADGR_ROOT_DIR/bin/supervisorctl
+chmod 777 $BADGR_ROOT_DIR/bin/supervisorctl
 rm -r supervisorctl
 
 sudo touch $BADGR_ROOT_DIR/var/supervisor/supervisor.sock
@@ -206,10 +207,10 @@ virtualenv venv/supervisor
 source venv/supervisor/bin/activate
 pip install supervisor
 deactivate
-$BADGR_ROOT_DIR/bin/supervisorctl restart all
+sudo supervisord -c $BADGR_ROOT_DIR/app/supervisor/supervisord.conf
+sudo $BADGR_ROOT_DIR/bin/supervisorctl restart all
+echo "Badgr Deployment is successful."
 
-
-#gunicorn -b 0.0.0.0:80 --workers=5 wsgi
 
 
 
