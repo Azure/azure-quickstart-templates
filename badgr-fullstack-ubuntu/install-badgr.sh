@@ -76,7 +76,7 @@ add-apt-repository -y ppa:git-core/ppa
 # which may differ from what is pinned in virtualenvironments
 apt-get update -y
 
-apt-get install -y python2.7 python2.7-dev python-pip python-apt python-yaml python-jinja2 python-dev build-essential sudo git-core libmysqlclient-dev libffi-dev libssl-dev gcc npm ruby
+apt-get install -y python2.7 python2.7-dev python-pip python-apt python-yaml python-jinja2 python-dev build-essential sudo git-core libmysqlclient-dev libffi-dev libssl-dev gcc npm ruby gunicorn
 
 
 # Workaround for a 16.04 bug, need to upgrade to latest and then
@@ -111,11 +111,38 @@ sudo su
 pip install -r requirements-dev.txt
 pip install gunicorn
 npm install
+
 npm install grunt
 npm install -g grunt-cli
 ln -s /usr/bin/nodejs /usr/bin/node
 grunt dist
 ./manage.py migrate
+echo "from django.contrib.auth import get_user_model; me = get_user_model(); me.objects.create_superuser('admin1@example.com', 'admin', 'pass'); quit()" | python manage.py shell
+deactivate
+
+# Setting up the badgr-server service
+cd $BADGR_ROOT_DIR
+#/badgr/app/supervisor/conf.available.d
+mkdir -p $BADGR_ROOT_DIR/app/supervisor/conf.d
+mkdir -p $BADGR_ROOT_DIR/var/log/supervisor
+mkdir -p $BADGR_ROOT_DIR/var/supervisor
+mkdir -p $BADGR_ROOT_DIR/bin
+
+#Copy supervisor.conf
+wget https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/supervisord.conf $BADGR_ROOT_DIR/app/supervisor/supervisord.conf
+wget https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/wsgi.py $BADGR_APP_DIR/wsgy.py
+wget https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/wsgi.py $BADGR_APP_DIR/gunicorn.py
+wget https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/badgr.conf $BADGR_ROOT_DIR/app/supervisor/conf.d/badgr.conf
+wget https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/supervisorctl $BADGR_ROOT_DIR/bin/supervisorctl
+
+cd $BADGR_ROOT_DIR/app/supervisor/
+virtualenv venv/supervisor
+source venv/supervisor/bin/activate
+pip install supervisor
+deactivate
+$BADGR_ROOT_DIR/bin/supervisorctl restart all
+
+
 #gunicorn -b 0.0.0.0:80 --workers=5 wsgi
 
 
