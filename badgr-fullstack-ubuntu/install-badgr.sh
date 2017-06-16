@@ -174,19 +174,25 @@ mkdir -p $BADGR_ROOT_DIR/var/supervisor
 mkdir -p $BADGR_ROOT_DIR/bin
 
 #Copy supervisor.conf
-sudo wget https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/supervisord.conf
+curl --remote-name https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/supervisord.conf
+#sudo wget https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/supervisord.conf
 sudo cp supervisord.conf $BADGR_ROOT_DIR/app/supervisor/supervisord.conf
 rm -r supervisord.conf
-sudo wget https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/wsgi.py
-sudo cp wsgy.py $BADGR_APP_DIR/wsgy.py
-rm -r wsgy.py
-sudo wget https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/gunicorn.py
+
+#sudo wget https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/wsgi.py
+curl --remote-name https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/wsgi.py
+sudo cp wsgi.py $BADGR_APP_DIR/wsgi.py
+rm -r wsgi.py
+
+curl --remote-name https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/gunicorn.py
 cp gunicorn.py $BADGR_APP_DIR/gunicorn.py
 rm -r gunicorn.py
-sudo wget https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/badgr.conf
+
+curl --remote-name https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/badgr.conf
 cp badgr.conf $BADGR_ROOT_DIR/app/supervisor/conf.d/badgr.conf
 rm -r badgr.conf
-sudo wget https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/supervisorctl
+
+curl --remote-name https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/supervisorctl
 cp supervisorctl $BADGR_ROOT_DIR/bin/supervisorctl
 rm -r supervisorctl
 
