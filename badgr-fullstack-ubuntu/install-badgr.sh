@@ -148,7 +148,7 @@ cd /
 
 curl --remote-name https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/setup-mysql.sh
 chmod 777 setup-mysql.sh
-bash ./setup-mysql $BADGR_ADMIN_USER $BADGR_ADMIN_USER_PWD 
+bash ./setup-mysql.sh $BADGR_ADMIN_USER $BADGR_ADMIN_USER_PWD 
 
 mkdir $BADGR_ROOT_DIR
 cd $BADGR_ROOT_DIR
