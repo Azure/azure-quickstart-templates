@@ -145,6 +145,11 @@ gem install sass
 
 sudo su
 cd /
+
+curl --remote-name https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/setup-mysql.sh
+chmod 777 setup-mysql.sh
+bash ./setup-mysql $BADGR_ADMIN_USER $BADGR_ADMIN_USER_PWD 
+
 mkdir $BADGR_ROOT_DIR
 cd $BADGR_ROOT_DIR
 virtualenv "${VIRTUAL_ENV}"
@@ -172,6 +177,7 @@ mkdir -p $BADGR_ROOT_DIR/app/supervisor/conf.d
 mkdir -p $BADGR_ROOT_DIR/var/log/supervisor
 mkdir -p $BADGR_ROOT_DIR/var/supervisor
 mkdir -p $BADGR_ROOT_DIR/bin
+mkdir -p $BADGR_ROOT_DIR/var/log/nginx
 
 #Copy supervisor.conf
 curl --remote-name https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/supervisord.conf
@@ -207,6 +213,12 @@ virtualenv venv/supervisor
 source venv/supervisor/bin/activate
 pip install supervisor
 deactivate
+
+#Setting up NGINX
+curl --remote-name https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/nginx
+cp nginx /etc/nginx/sites-available/badgr
+ln -s /etc/nginx/sites-available/badgr /etc/nginx/sites-enabled/badgr
+
 sudo supervisord -c $BADGR_ROOT_DIR/app/supervisor/supervisord.conf
 sudo $BADGR_ROOT_DIR/bin/supervisorctl restart all
 echo "Badgr Deployment is successful."

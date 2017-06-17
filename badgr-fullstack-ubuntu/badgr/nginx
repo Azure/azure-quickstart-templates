@@ -1,0 +1,73 @@
+upstream badgr-server {
+    server 127.0.0.1:8000 fail_timeout=0;
+}
+
+server {
+  # BADGR configuration file for nginx
+  listen 80 default_server;
+
+  # Nginx does not support nested condition or or conditions so
+  # there is an unfortunate mix of conditonals here.
+
+  #access_log /badgr/var/log/nginx/access.log p_combined;
+  error_log /badgr/var/log/nginx/error.log error;
+
+  # CS184 requires uploads of up to 4MB for submitting screenshots.
+  # CMS requires larger value for course assest, values provided
+  # via hiera.
+  client_max_body_size 4M;
+
+  rewrite ^(.*)/favicon.ico$ /static/images/favicon.ico last;
+  # Blackholes an archive of python library files that instructors
+  # may provide for sandboxed python problem types, the internal
+  # directive will result in nginx emitting an nginx 404. Users
+  # will not be redirected to the application 404 page.
+  location ~* python_lib.zip {
+    internal;
+  }
+
+  # Disables server version feedback on pages and in headers
+  server_tokens off;
+
+  location @proxy_to_badgr_app {
+    proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;
+    proxy_set_header X-Forwarded-Port $http_x_forwarded_port;
+    proxy_set_header X-Forwarded-For $http_x_forwarded_for;
+
+    # newrelic-specific header records the time when nginx handles a request.
+    proxy_set_header X-Queue-Start "t=${msec}";
+
+    proxy_set_header Host $http_host;
+
+    proxy_redirect off;
+    proxy_pass http://badgr-server;
+  }
+
+  location / {
+    try_files $uri @proxy_to_badgr_app;
+  }
+
+  # /login?next=<any image> can be used by 3rd party sites in <img> tags to
+  # determine whether a user on their site is logged into edX.
+  # The most common image to use is favicon.ico.
+  location /login {
+
+    if ( $arg_next ~* "favicon.ico" ) {
+      return 403;
+    }
+
+    try_files $uri @proxy_to_badgr_app;
+  }
+  # The api is accessed using OAUTH2 which
+  # uses the authorization header so we can't have
+  # basic auth on it as well.
+  location /api {
+    try_files $uri @proxy_to_badgr_app;
+  }
+
+  location ~ ^/media/(?P<file>.*) {
+    root /badgr/code/media/;
+    try_files /$file =404;
+    expires 31536000s;
+  }
+}  
