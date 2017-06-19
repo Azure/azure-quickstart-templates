@@ -1,15 +1,8 @@
 #!/usr/bin/env bash
 
 #
-# Script for installing Ansible and the edX configuration repostory
-# onto a host to enable running ansible to complete configuration.
-# This script can be used by Docker, Packer or any other system
-# for building images that requires having ansible available.
+# Script for installing Badgr-server on Linux Ubuntu 16
 #
-# Can be run as follows:
-#
-# UPGRADE_OS=true CONFIGURATION_VERSION="master" \
-# bash <(curl -s https://raw.githubusercontent.com/edx/configuration/master/util/install/ansible-bootstrap.sh)
 
 set -xe
 
@@ -32,7 +25,6 @@ BADGR_APP_DIR=/badgr/code
 BADGR_ADMIN_USER=""
 BADGR_ADMIN_USER_PWD=""
 BADGR_ADMIN_USER_EMAIL=""
-
 BADGR_DB=badgr
 
 
@@ -153,9 +145,10 @@ gem install sass
 sudo su
 cd /
 
-curl --remote-name https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/setup-mysql.sh
-chmod 777 setup-mysql.sh
-bash ./setup-mysql.sh $BADGR_ADMIN_USER $BADGR_ADMIN_USER_PWD $BADGR_DB
+# Install MySQL and creating the badgr database
+#curl --remote-name https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/setup-mysql.sh
+#chmod 777 setup-mysql.sh
+#bash ./setup-mysql.sh $BADGR_ADMIN_USER $BADGR_ADMIN_USER_PWD $BADGR_DB
 
 mkdir $BADGR_ROOT_DIR
 cd $BADGR_ROOT_DIR
