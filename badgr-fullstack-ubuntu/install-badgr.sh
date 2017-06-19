@@ -221,14 +221,18 @@ source venv/supervisor/bin/activate
 pip install supervisor
 deactivate
 
+# Start badgr service
+
+sudo supervisord -c $BADGR_ROOT_DIR/app/supervisor/supervisord.conf
+sudo $BADGR_ROOT_DIR/bin/supervisorctl restart all
+
 #Setting up NGINX
 curl --remote-name https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/nginx
 cp nginx /etc/nginx/sites-available/badgr
 ln -s /etc/nginx/sites-available/badgr /etc/nginx/sites-enabled/badgr
 rm /etc/nginx/sites-enabled/default
+sudo service nginx restart
 
-sudo supervisord -c $BADGR_ROOT_DIR/app/supervisor/supervisord.conf
-sudo $BADGR_ROOT_DIR/bin/supervisorctl restart all
 echo "Badgr Deployment is successful."
 
 
