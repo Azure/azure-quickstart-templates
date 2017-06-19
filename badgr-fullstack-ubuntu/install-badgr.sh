@@ -31,7 +31,10 @@ BADGR_REPO=https://github.com/satyarapelly/badgr-server.git
 BADGR_APP_DIR=/badgr/code
 BADGR_ADMIN_USER=""
 BADGR_ADMIN_USER_PWD=""
+BADGR_ADMIN_USER_EMAIL=""
+
 BADGR_DB=badgr
+
 
 if [[ $(id -u) -ne 0 ]] ;then
     echo "Please run as root";
@@ -81,6 +84,9 @@ parse_args()
                 ;;
 			-p| --admin-user-password) # OS Admin User Name
                 BADGR_ADMIN_USER_PWD="${arg_value}"
+                ;;	
+			-e| --admin-user-email) # OS Admin User Name
+                BADGR_ADMIN_USER_EMAIL="${arg_value}"
                 ;;	
 			*) # unknown option
                 echo "Option '${BOLD}$1${NORM} ${arg_value}' not allowed."
@@ -168,7 +174,7 @@ npm install -g grunt-cli
 ln -s /usr/bin/nodejs /usr/bin/node
 grunt dist
 ./manage.py migrate
-echo "from django.contrib.auth import get_user_model; me = get_user_model(); me.objects.create_superuser('admin2@example.com', '$BADGR_ADMIN_USER', '$BADGR_ADMIN_USER_PWD'); quit()" | python manage.py shell
+echo "from django.contrib.auth import get_user_model; me = get_user_model(); me.objects.create_superuser(email='$BADGR_ADMIN_USER_EMAIL', username='$BADGR_ADMIN_USER', password='$BADGR_ADMIN_USER_PWD'); quit()" | python manage.py shell
 deactivate
 
 # Setting up the badgr-server service
@@ -219,6 +225,7 @@ deactivate
 curl --remote-name https://raw.githubusercontent.com/satyarapelly/azure-quickstart-templates/master/badgr-fullstack-ubuntu/badgr/nginx
 cp nginx /etc/nginx/sites-available/badgr
 ln -s /etc/nginx/sites-available/badgr /etc/nginx/sites-enabled/badgr
+rm /etc/nginx/sites-enabled/default
 
 sudo supervisord -c $BADGR_ROOT_DIR/app/supervisor/supervisord.conf
 sudo $BADGR_ROOT_DIR/bin/supervisorctl restart all
