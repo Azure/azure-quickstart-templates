@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
+#!/bin/bash
+# Copyright (c) Microsoft Corporation. All Rights Reserved.
 
 #
-# Script for installing Badgr-server on Linux Ubuntu 16
+# Script for installing Badgr-Server on Linux Ubuntu 16 machine
 #
 
 set -xe
@@ -71,13 +73,13 @@ parse_args()
         echo "Option '${1}' set with value '"${arg_value}"'"
 
         case "$1" in
-            -u| --admin-user) # OS Admin User Name
+            -u| --super-user) # Super User Name
                 BADGR_ADMIN_USER="${arg_value}"
                 ;;
-			-p| --admin-user-password) # OS Admin User Name
+			-p| --super-user-password) # Super User Password
                 BADGR_ADMIN_USER_PWD="${arg_value}"
                 ;;	
-			-e| --admin-user-email) # OS Admin User Name
+			-e| --super-user-email) # Super User Email address
                 BADGR_ADMIN_USER_EMAIL="${arg_value}"
                 ;;	
 			*) # unknown option

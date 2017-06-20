@@ -17,3 +17,5 @@ You can learn more about Badgr Server here:
 - [Concentric Sky](https://concentricsky.com)
 
 *Note that this template uses a different license than the [BadgrServer](https://github.com/concentricsky/badgr-server/blob/master/LICENSE) platform.*
+
+*Note: SMTP configuration is commented in settings_local.py, uncomment the lines and update appropriate email configuration values.
