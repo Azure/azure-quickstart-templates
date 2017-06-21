@@ -7,7 +7,6 @@ configuration ConfigureSPVM
 
         [Parameter(Mandatory)]
         [String]$DomainFQDN,
-        [String]$DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN),
 
         [Parameter(Mandatory)]
         [String]$DCName,
@@ -33,25 +32,24 @@ configuration ConfigureSPVM
         [Parameter(Mandatory)]
         [System.Management.Automation.PSCredential]$SPPassphraseCreds,
 
-        [String]$SPTrustedSitesName = "SPSites"
+        [String] $SPTrustedSitesName = "SPSites"
     )
 
     Import-DscResource -ModuleName xComputerManagement, xDisk, cDisk, xNetworking, xActiveDirectory, xCredSSP, xWebAdministration, SharePointDsc, xPSDesiredStateConfiguration, xDnsServer, xCertificate
 
+    [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     $Interface=Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
     $InterfaceAlias=$($Interface.Name)
-    [System.Management.Automation.PSCredential]$DomainAdminCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($DomainAdminCreds.UserName)", $DomainAdminCreds.Password)
-    [System.Management.Automation.PSCredential]$SPSetupCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSetupCreds.UserName)", $SPSetupCreds.Password)
-    [System.Management.Automation.PSCredential]$SPFarmCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPFarmCreds.UserName)", $SPFarmCreds.Password)
-    [System.Management.Automation.PSCredential]$SPSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSvcCreds.UserName)", $SPSvcCreds.Password)
-    [System.Management.Automation.PSCredential]$SPAppPoolCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPAppPoolCreds.UserName)", $SPAppPoolCreds.Password)
-    [String]$SPDBPrefix = "SP16DSC_"
-	[Int]$RetryCount = 30
-    [Int]$RetryIntervalSec = 30
+    [System.Management.Automation.PSCredential] $DomainAdminCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($DomainAdminCreds.UserName)", $DomainAdminCreds.Password)
+    [System.Management.Automation.PSCredential] $SPSetupCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSetupCreds.UserName)", $SPSetupCreds.Password)
+    [System.Management.Automation.PSCredential] $SPFarmCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPFarmCreds.UserName)", $SPFarmCreds.Password)
+    [System.Management.Automation.PSCredential] $SPSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSvcCreds.UserName)", $SPSvcCreds.Password)
+    [System.Management.Automation.PSCredential] $SPAppPoolCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPAppPoolCreds.UserName)", $SPAppPoolCreds.Password)
+    [String] $SPDBPrefix = "SP16DSC_"
+	[Int] $RetryCount = 30
+    [Int] $RetryIntervalSec = 30
     $ComputerName = Get-Content env:computername
     $LdapcpLink = (Get-LatestGitHubRelease -repo "Yvand/LDAPCP" -artifact "LDAPCP.wsp")
-    # $DCName will be valid only after computer joined domain, which is fine since it will trigger a restart and var won't be used before
-    #$DCName = [regex]::match([environment]::GetEnvironmentVariable("LOGONSERVER","Process"),"[A-Za-z0-9-]+").Groups[0].Value
 
     Node localhost
     {
@@ -64,6 +62,7 @@ configuration ConfigureSPVM
 		#**********************************************************
         # Initialization of VM
         #**********************************************************
+
 		xWaitforDisk Disk2
         {
             DiskNumber = 2
@@ -336,10 +335,10 @@ configuration ConfigureSPVM
             {
                 $retryCount = $using:RetryIntervalSec
                 $server = $using:SQLName
-                $db="tempdb"
+                $db="master"
                 $retry = $true
                 while ($retry) {
-                    $sqlConnection = New-Object System.Data.SqlClient.SqlConnection "Data Source=$server;Initial Catalog=$db;Integrated Security=True;Enlist=False;Connect Timeout=1"
+                    $sqlConnection = New-Object System.Data.SqlClient.SqlConnection "Data Source=$server;Initial Catalog=$db;Integrated Security=True;Enlist=False;Connect Timeout=3"
                     try {
                         $sqlConnection.Open()
                         Write-Verbose "Connection to SQL Server $server succeeded"

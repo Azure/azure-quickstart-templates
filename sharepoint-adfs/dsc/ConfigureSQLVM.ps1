@@ -16,19 +16,20 @@ configuration ConfigureSQLVM
 
         [Parameter(Mandatory)]
         [System.Management.Automation.PSCredential]$SPSetupCreds,
-        [String]$DomainNetbiosName=(Get-NetBIOSName -DomainFQDN $DomainFQDN),
-        [Int]$RetryCount = 30,
-        [Int]$RetryIntervalSec = 30
+
+        [Int] $RetryCount = 30,
+        [Int] $RetryIntervalSec = 30
     )
 
     Import-DscResource -ModuleName xComputerManagement, xNetworking, xDisk, cDisk, xActiveDirectory, xSQLServer
 	
 	WaitForSqlSetup
+    [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
     $InterfaceAlias = $($Interface.Name)
-    [PSCredential]$DomainCreds = New-Object PSCredential ("${DomainNetbiosName}\$($DomainAdminCreds.UserName)", $DomainAdminCreds.Password)
-    [PSCredential]$SPSCreds = New-Object PSCredential ("${DomainNetbiosName}\$($SPSetupCreds.UserName)", $SPSetupCreds.Password)
-    [PSCredential]$SQLCreds = New-Object PSCredential ("${DomainNetbiosName}\$($SqlSvcCreds.UserName)", $SqlSvcCreds.Password)
+    [PSCredential] $DomainCreds = New-Object PSCredential ("${DomainNetbiosName}\$($DomainAdminCreds.UserName)", $DomainAdminCreds.Password)
+    [PSCredential] $SPSCreds = New-Object PSCredential ("${DomainNetbiosName}\$($SPSetupCreds.UserName)", $SPSetupCreds.Password)
+    [PSCredential] $SQLCreds = New-Object PSCredential ("${DomainNetbiosName}\$($SqlSvcCreds.UserName)", $SqlSvcCreds.Password)
     $ComputerName = Get-Content env:computername
 
     Node localhost
@@ -42,6 +43,7 @@ configuration ConfigureSQLVM
 		#**********************************************************
         # Initialization of VM
         #**********************************************************
+
 		xWaitforDisk Disk2
         {
             DiskNumber = 2
@@ -146,23 +148,33 @@ configuration ConfigureSQLVM
             DependsOn = "[xADUser]CreateSPSetupAccount"
         }
 
-        xSQLServerRole GrantDomainAdminSQLRoles
+        xSQLServerRole GrantSQLRoleSysadmin
         {
-            Name = "${DomainNetbiosName}\$($DomainAdminCreds.UserName)"
+            ServerRoleName = "sysadmin"
+            MembersToInclude = "${DomainNetbiosName}\$($DomainAdminCreds.UserName)"
             Ensure = "Present"
             SQLServer = $ComputerName
             SQLInstanceName = "MSSQLSERVER"
-            ServerRole = "sysadmin"
             DependsOn = "[xSQLServerLogin]AddDomainAdminLogin"
         }
 
-        xSQLServerRole GrantSPSetupSQLRoles
+        xSQLServerRole GrantSQLRoleSecurityAdmin
         {
-            Name = "${DomainNetbiosName}\$($SPSetupCreds.UserName)"
-            Ensure = "Present"
+            ServerRoleName = "securityadmin"
+            MembersToInclude = "${DomainNetbiosName}\$($SPSetupCreds.UserName)"
             SQLServer = $ComputerName
             SQLInstanceName = "MSSQLSERVER"
-            ServerRole = "securityadmin","dbcreator"
+            Ensure = "Present"
+            DependsOn = "[xSQLServerLogin]AddSPSetupLogin"
+        }
+
+        xSQLServerRole GrantSQLRoleDBCreator
+        {
+            ServerRoleName = "dbcreator"
+            MembersToInclude = "${DomainNetbiosName}\$($SPSetupCreds.UserName)"
+            SQLServer = $ComputerName
+            SQLInstanceName = "MSSQLSERVER"
+            Ensure = "Present"
             DependsOn = "[xSQLServerLogin]AddSPSetupLogin"
         }
 

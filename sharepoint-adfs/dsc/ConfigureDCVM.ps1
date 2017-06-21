@@ -14,18 +14,18 @@
         [Parameter(Mandatory)]
         [String]$PrivateIP,
 
-        [String]$DomainNetbiosName=(Get-NetBIOSName -DomainFQDN $DomainFQDN),
-        [Int]$RetryCount=20,
-        [Int]$RetryIntervalSec=30,
-        [String]$SPTrustedSitesName = "SPSites",
-        [String]$ADFSSiteName = "ADFS"
+        [Int] $RetryCount=20,
+        [Int] $RetryIntervalSec=30,
+        [String] $SPTrustedSitesName = "SPSites",
+        [String] $ADFSSiteName = "ADFS"
     ) 
     
     Import-DscResource -ModuleName xActiveDirectory, xDisk, xNetworking, cDisk, xPSDesiredStateConfiguration, xAdcsDeployment, xCertificate, xPendingReboot, cADFS, xDnsServer
-    [System.Management.Automation.PSCredential]$DomainCredsNetbios = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
-    [System.Management.Automation.PSCredential]$AdfsSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($AdfsSvcCreds.UserName)", $AdfsSvcCreds.Password)
-    $Interface=Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
-    $InterfaceAlias=$($Interface.Name)
+    [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
+    [System.Management.Automation.PSCredential] $DomainCredsNetbios = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
+    [System.Management.Automation.PSCredential] $AdfsSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($AdfsSvcCreds.UserName)", $AdfsSvcCreds.Password)
+    $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
+    $InterfaceAlias = $($Interface.Name)
     $ComputerName = Get-Content env:computername
 
     Node localhost
@@ -138,6 +138,25 @@
         #**********************************************************
         # Configure AD FS
         #**********************************************************
+        xScript WaitAfterADCSProvisioning
+        {
+            SetScript = 
+            {
+                Start-Sleep -s 30
+            }
+            GetScript =  
+            {
+                # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+                return @{ "Result" = "false" }
+            }
+            TestScript = 
+            {
+                # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+               return $false
+            }
+            DependsOn = '[xADCSCertificationAuthority]ADCS'
+        }
+
         xCertReq ADFSSiteCert
         {
             CARootName                = "$DomainNetbiosName-$ComputerName-CA"
@@ -152,7 +171,7 @@
             AutoRenew                 = $true
 			#SubjectAltName            = "certauth.$ADFSSiteName.$DomainFQDN"
             Credential                = $DomainCredsNetbios
-            DependsOn = '[xADCSCertificationAuthority]ADCS'
+            DependsOn = '[xScript]WaitAfterADCSProvisioning'
         }
 
         xCertReq ADFSSigningCert
