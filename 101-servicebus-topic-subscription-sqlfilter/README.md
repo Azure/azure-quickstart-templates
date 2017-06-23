@@ -4,4 +4,4 @@
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-This template creates a Service Bus Namespace and Topic with a Subscription to catch all messages.
+This template creates a Service Bus Namespace and Topic with a Subscription using a SQL Filter to define what messages will be directed to or received by the Subscription.
