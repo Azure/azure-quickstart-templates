@@ -30,7 +30,7 @@ Steelscript Application Framework reference for developpers: https://support.riv
 
 Get the URL in the Deployment outputs. For example:
 ```
-URL = http://ssappfwkdev-e6dmmedjht2yy.westeurope.cloudapp.azure.com:8000)
+URL = http://ssappfwkdev-e6dmmedjht2yy.westeurope.cloudapp.azure.com:8000
 ```
 
 ![](images/appfwk-browser.png)
