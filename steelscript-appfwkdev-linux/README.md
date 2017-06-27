@@ -28,7 +28,7 @@ Steelscript Application Framework reference for developpers: https://support.riv
 
 ### Open the URL in a browser
 
-Get the URL in the Deployment outputs (it looks like: URL = http://ssappfwkdev-e6dmmedjht2yy.westeurope.cloudapp.azure.com:8000
+Get the URL in the Deployment outputs (looks like: URL = http://ssappfwkdev-e6dmmedjht2yy.westeurope.cloudapp.azure.com:8000)
 
 ![](images/appfwk-browser.png)
 
