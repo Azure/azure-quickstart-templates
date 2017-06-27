@@ -21,8 +21,8 @@ Steelscript Application Framework reference for developpers: https://support.riv
     * Choose the linux distribution
 
 2. When deployment is done (should take less than 25min), see the outputs
-    * ssh command
     * URL
+    * ssh command
 
 ## Usage (when the deployment is done)
 
