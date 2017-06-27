@@ -28,7 +28,10 @@ Steelscript Application Framework reference for developpers: https://support.riv
 
 ### Open the URL in a browser
 
-Get the URL in the Deployment outputs (looks like: URL = http://ssappfwkdev-e6dmmedjht2yy.westeurope.cloudapp.azure.com:8000)
+Get the URL in the Deployment outputs. For example:
+```
+URL = http://ssappfwkdev-e6dmmedjht2yy.westeurope.cloudapp.azure.com:8000)
+```
 
 ![](images/appfwk-browser.png)
 
@@ -36,7 +39,7 @@ Get the URL in the Deployment outputs (looks like: URL = http://ssappfwkdev-e6dm
 
 Get the command in the Deployment outputs. For example:
 ```
-$ ssh ssappfwkdev-admin@ssappfwkdev-bcncuqdggmvjc.koreacentral.cloudapp.azure.com
+ssh command = ssh ssappfwkdev-admin@ssappfwkdev-e6dmmedjht2yy.westeurope.cloudapp.azure.com
 ```
 
 ### Manually start the web server 
@@ -49,11 +52,12 @@ $ cd /appfwk_project ; sudo python runserver 0.0.0.0:8000
     
 ## Troubleshooting
 
-### Check installation log in the VM
+### Check installation log files in the VM
 
 ```
 $ sudo cat /var/log/azure/custom-script/handler.log
 $ sudo ls /var/log/azure/Microsoft.Azure.Extensions.CustomScript
+...
 ```
 
 ### Identify appfwk webserver processes running in background
