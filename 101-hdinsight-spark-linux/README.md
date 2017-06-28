@@ -7,4 +7,4 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template allows you to create a Linux-based Spark cluster in HDInsight. For more information, see <a href="https://docs.microsoft.com/azure/hdinsight/hdinsight-apache-spark-jupyter-spark-sql">Get started: Create Apache Spark cluster on HDInsight Linux and run interactive queries using Spark SQL</a>.
+This template allows you to a Linux-based Spark cluster in HDInsight  with the dependent Azure storage account.
