@@ -1,0 +1,140 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0", 
+	
+	"parameters": {
+		"moodleCommon":	{ "type": "object", "metadata": { "description": "Common Moodle values" } }, 
+		"counter":		{ "type": "int",    "metadata": { "description": "from the copyindex function of calling template" } } 
+	},
+
+	"variables": {
+		"documentation01": "This sub-template create the nodes of the gluster farm",
+		"documentation02": "It expects certain values in the 'common' datastructure.",
+		"documentation03": "    computeApi             - the 'managed' resources need to all use this value",
+		"documentation04": "    gfxAvailabilitySetName  - name of availability set for the gluster farm",
+		"documentation05": "    vnetName                - name of virtual network",
+		"documentation06": "    subnetSan               - name of subnet for gluster",
+		"documentation07": "    gfsNameRoot             - nameroot for the gluster nodes - combined with counter to get actual name of each node - disk and nic follow the naming scheme",
+		"documentation08": "    glusterTshirtSize       - supports flexible sizing - translates to a CPU/MEM/DISK details",
+		"documentation09": "    adminUsername           - OS accountusername",
+		"documentation10": "    adminPassword           - OS account password",
+		"documentation11": "    osType                  - an array of value that specifies the type of VM",
+
+		"documentation15": "This sub-template calls other sub-templates",
+		"documentation16": "    diskSelection          - returns an arry of disk names - for flexible sizing",
+		"documentation17": "    glustervmconfig        - conditionally applies post-deployment script on the VM",
+		"documentation18": "    recoveryservicesEnlist - conditionally enlists the VM into the backup regimen",
+
+		"subnetSanRef":	"[concat(resourceId('Microsoft.Network/virtualNetworks',   parameters('moodleCommon').vnetName), '/subnets/',parameters('moodleCommon').subnetSan)]",
+			   "asRef":	"[       resourceId('Microsoft.Compute/availabilitySets',  parameters('moodleCommon').gfxAvailabilitySetName)]",
+              "nicRef":	"[       resourceId('Microsoft.Network/networkInterfaces', variables('nicName') )]",
+		
+		  "vmName":		"[concat(parameters('moodleCommon').gfsNameRoot,parameters('counter'))]",
+		 "nicName":		"[concat(variables('vmName'),'-nic')]",
+		"diskLoop":		"[concat(variables('vmName'),'-disk')]",
+
+		"GlusterSizeSmall":		{ "vmSku": "Standard_DS2_v2", "diskCount": 4, "diskSize":  127 }, 
+		"GlusterSizeMedium":	{ "vmSku": "Standard_DS3_v2", "diskCount": 2, "diskSize":  512 }, 
+		"GlusterSizeLarge":		{ "vmSku": "Standard_DS4_v2", "diskCount": 2, "diskSize": 1023 },
+
+		"GlusterTshirt" : "[variables(concat('GlusterSize', parameters('moodleCommon').glusterTshirtSize))]"
+	},     
+  
+	
+	"resources": [
+		{
+			"type":			"Microsoft.Network/networkInterfaces",
+			"apiVersion":	"2015-05-01-preview",
+			"name":			"[variables('nicName')]",
+			"location":		"[resourceGroup().location]",
+			
+			"tags":			{ "displayName": "Gluster VM NIC" },
+			"properties":	{ "ipConfigurations": [ { "name": "ipcfggfs", "properties": { "privateIPAllocationMethod": "Dynamic", "subnet": { "id": "[variables('subnetSanRef')]" } } } ] }
+		},
+
+
+		{
+			"type":			"Microsoft.Compute/disks",
+			"apiVersion":	"[parameters('moodleCommon').computeApi]",
+			"name":			"[concat(variables('vmName'),'-datadisk',copyIndex(1))]",
+			"location":		"[resourceGroup().location]",
+
+			"tags":			{ "displayName": "Gluster VM Data Disk" },
+
+			"copy":			{ "name": "[variables('diskLoop')]", "count": "[variables('GlusterTshirt').diskCount]" },
+			
+			"properties":	{ "creationData": { "createOption": "Empty" }, "accountType": "Premium_LRS", "diskSizeGB": "[variables('GlusterTshirt').diskSize]" }
+		},
+
+
+		{
+			"type":			"Microsoft.Resources/deployments",
+			"apiVersion":	"2015-01-01",
+			"name":			"[concat(variables('vmName'),'-diskSelection')]",
+
+			"dependsOn":	[ "[variables('diskLoop')]" ],
+
+			"properties": {
+				"mode":			"Incremental",
+				"templateLink":	{ "uri": "[concat(parameters('moodleCommon').baseTemplateUrl,'diskSelection.json')]" },
+				"parameters":	{ "vmName":			{ "value": "[variables('vmName')]" }, 
+								  "vmDiskCount":	{ "value": "[variables('GlusterTshirt').diskCount]" } }
+			}
+		},
+
+
+		{
+			"type":			"Microsoft.Compute/virtualMachines",
+			"apiVersion":	"[parameters('moodleCommon').computeApi]",
+			"name":			"[variables('vmName')]",
+			"location":		"[resourceGroup().location]",
+			
+			"tags":			{ "displayName": "Gluster Virtual Machine" },
+
+			"dependsOn":	[ "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]", "[concat('Microsoft.Resources/deployments/',concat(variables('vmName'),'-diskSelection'))]" ],
+			
+			"properties":	{
+				"availabilitySet":	{                          "id": "[variables( 'asRef')]" },
+				 "networkProfile":	{ "networkInterfaces": [ { "id": "[variables('nicRef')]" } ] },
+				"hardwareProfile":	{ "vmSize":			"[variables('GlusterTshirt').vmSku]" },
+				      "osProfile":	{ "computerName":	"[variables('vmName')]", "adminUsername": "[parameters('moodleCommon').adminUsername]", "adminPassword": "[parameters('moodleCommon').adminPassword]" },
+				 "storageProfile":	{ "imageReference":	"[parameters('moodleCommon').osType]",
+									  "osDisk":			{ "name": "[variables('vmName')]", "createOption": "fromImage", "managedDisk": { "storageAccountType": "Premium_LRS" } },
+									  "dataDisks":		"[reference(concat(variables('vmName'),'-diskSelection')).outputs.dataDiskArray.value]"
+				}
+			}
+		},
+
+
+		{
+			"type":			"Microsoft.Resources/deployments",
+			"apiVersion":	"2015-01-01",
+			"name":			"[concat(variables('vmName'),'-ScriptProcessor')]",
+
+			"dependsOn":	[ "[concat('Microsoft.Compute/virtualMachines/',variables('vmName'))]" ],
+
+			"properties": {
+				"mode":			"Incremental",
+				"templateLink":	{ "uri":          "[concat(    parameters('moodleCommon').baseTemplateUrl,'glustervmconfig',parameters('moodleCommon').applyScriptsSwitch,'.json')]" },
+				"parameters":	{ "moodleCommon": { "value": "[parameters('moodleCommon')]"	}, 
+								  "vmName":		  { "value": "[ variables('vmName')]"		}, "vmNumber":	  { "value": "[parameters('counter')]"	} }
+			}
+		},
+	
+
+		{
+			"type":			"Microsoft.Resources/deployments",
+			"apiVersion":	"2015-01-01",
+			"name":			"[concat(variables('vmName'),'-Backup')]",
+
+			"dependsOn":	[ "[concat('Microsoft.Compute/virtualMachines/',variables('vmName'))]" ],
+
+			"properties":	{
+				"mode":			"Incremental",
+				"templateLink":	{ "uri":          "[concat(    parameters('moodleCommon').baseTemplateUrl,'recoveryservicesEnlist',parameters('moodleCommon').azureBackupSwitch,'.json')]" },
+				"parameters":	{ "moodleCommon": { "value": "[parameters('moodleCommon')]" }, "vmName": { "value": "[variables('vmName')]"} }
+			}
+		}    
+	
+	]
+}
