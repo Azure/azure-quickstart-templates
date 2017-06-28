@@ -1,6 +1,6 @@
-﻿# Azure Files templates for VM scale sets
+﻿# Azure Files template for VM scale sets
 
-This template demonstrates using Azure File with Virtual Macine Scale Sets on Ubuntu. Every VM in this scale set will have a monuted Azure Files file share at the location you specify and a link will be created to the user's home directory.
+This template demonstrates using Azure File with virtual machine scale sets on Ubuntu. Every VM in this scale set will have a monuted Azure Files file share at the location you specify, and a symbolic link will also be created in the user's home directory.
 
 ## Prerequisites
 In order to run this template you need to create a storage account and file share in advance, which you will pass in as parameters. This template expects the following parameters (in addition to scale set name, capacity etc.):
