@@ -20,24 +20,24 @@
         "description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
       }
     },
-    "ubuntuOSVersion": {
+    "centOSVersion": {
       "type": "string",
-      "defaultValue": "16.04.0-LTS",
+      "defaultValue": "7.3",
       "allowedValues": [
-        "12.04.5-LTS",
-        "14.04.5-LTS",
-        "15.10",
-        "16.04.0-LTS"
+        "6.5",
+        "6.8",
+        "7.1",
+        "7.3"
       ],
       "metadata": {
-        "description": "The Ubuntu version for the VM. This will pick a fully patched image of this given Ubuntu version."
+        "description": "The CentOS version for the VM. This will pick a fully patched image of this given Centos version, specifically for HPC."
       }
     }
   },
   "variables": {
-    "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'salinuxvm')]",
-    "imagePublisher": "Canonical",
-    "imageOffer": "UbuntuServer",
+    "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'singularityvm')]",
+    "imagePublisher": "OpenLogic",
+    "imageOffer": "CentOS-HPC",
     "nicName": "myVMNic",
     "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet",
@@ -45,8 +45,8 @@
     "storageAccountType": "Standard_LRS",
     "publicIPAddressName": "myPublicIP",
     "publicIPAddressType": "Dynamic",
-    "vmName": "MyUbuntuVM",
-    "vmSize": "Standard_A1",
+    "vmName": "MySingularityVM",
+    "vmSize": "Standard_D2_v2",
     "virtualNetworkName": "MyVNET",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
     "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]"
@@ -144,7 +144,7 @@
           "imageReference": {
             "publisher": "[variables('imagePublisher')]",
             "offer": "[variables('imageOffer')]",
-            "sku": "[parameters('ubuntuOSVersion')]",
+            "sku": "[parameters('centOSVersion')]",
             "version": "latest"
           },
           "osDisk": {
@@ -170,6 +170,30 @@
             "enabled": "true",
             "storageUri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2016-01-01').primaryEndpoints.blob)]"
           }
+        }
+      }
+    },
+    {
+      "name": "scriptextensiondemo",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [
+          "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+      ],
+      "tags": {
+          "displayName": "InstallSingularity"
+      },
+      "properties": {
+          "publisher": "Microsoft.Azure.Extensions",
+          "type": "CustomScript",
+          "typeHandlerVersion": "2.0",
+          "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "https://gist.github.com/ahmetalpbalkan/b5d4a856fe15464015ae87d5587a4439/raw/466f5c30507c990a4d5a2f5c79f901fa89a80841/hello.sh"
+          ],
+          "commandToExecute": "sh hello.sh"
         }
       }
     }
