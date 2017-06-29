@@ -379,8 +379,7 @@ configuration ConfigureSPVM
             CentralAdministrationPort = 5000
             RunCentralAdmin           = $true
             Ensure                    = "Present"
-            #DependsOn = "[xPackage]Install201612CU"
-            DependsOn = "[xScript]WaitForSQL"
+            DependsOn                 = "[xScript]WaitForSQL"
         }
 
         SPManagedAccount CreateSPSvcManagedAccount
@@ -401,10 +400,10 @@ configuration ConfigureSPVM
 
         SPDiagnosticLoggingSettings ApplyDiagnosticLogSettings
         {
-            LogPath                                     = "F:\ULS"
-            LogSpaceInGB = 20
-            PsDscRunAsCredential                        = $SPSetupCredsQualified
-            DependsOn                                   = "[SPFarm]CreateSPFarm"
+            LogPath              = "F:\ULS"
+            LogSpaceInGB         = 20
+            PsDscRunAsCredential = $SPSetupCredsQualified
+            DependsOn            = "[SPFarm]CreateSPFarm"
         }
 
         SPStateServiceApp StateServiceApp
@@ -426,14 +425,35 @@ configuration ConfigureSPVM
             DependsOn            = "[SPFarm]CreateSPFarm"
         }
 
+        xScript RestartSPTimer
+        {
+            SetScript = 
+            {
+                # The deployment of the solution is made in owstimer.exe tends to fail very often, so restart the service before to mitigate this risk
+                Restart-Service SPTimerV4
+            }
+            GetScript =  
+            {
+                # This block must return a hashtable. The hashtable must only contain one key Result and the value must be of type String.
+                return @{ "Result" = "false" }
+            }
+            TestScript = 
+            {
+                # If it returns $false, the SetScript block will run. If it returns $true, the SetScript block will not run.
+               return $false
+            }
+            PsDscRunAsCredential = $DomainAdminCredsQualified
+            DependsOn = "[SPDistributedCacheService]EnableDistributedCache"
+        }
+
         SPFarmSolution InstallLdapcp 
         {
             LiteralPath = "F:\Setup\LDAPCP.wsp"
             Name = "LDAPCP.wsp"
             Deployed = $true
             Ensure = "Present"
-            PsDscRunAsCredential  = $SPSetupCredsQualified
-            DependsOn = "[SPDistributedCacheService]EnableDistributedCache"
+            PsDscRunAsCredential = $SPSetupCredsQualified
+            DependsOn = "[xScript]RestartSPTimer"
         }
 
         SPTrustedIdentityTokenIssuer CreateSPTrust
