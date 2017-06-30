@@ -27,7 +27,7 @@ function ScheduleSnoozeAction ($VMObject,[string]$Action)
     }    
 
     Write-Output "Performing the schedule $($Action) for the VM : $($VMObject.Name)"
-    $runbook = Start-AzureRmAutomationRunbook -AutomationAccountName $AutomationAccountName -Name 'ScheduledSnooze_Child' -ResourceGroupName $aroResourceGroupName –Parameters $params
+    $runbook = Start-AzureRmAutomationRunbook -automationAccountName $automationAccountName -Name 'ScheduledSnooze_Child' -ResourceGroupName $aroResourceGroupName –Parameters $params
 }
 
 function CheckExcludeVM ($FilterVMList)
@@ -101,7 +101,7 @@ catch
 $SubId = Get-AutomationVariable -Name 'Internal_AzureSubscriptionId'
 $ResourceGroupNames = Get-AutomationVariable -Name 'External_ResourceGroupNames'
 $ExcludeVMNames = Get-AutomationVariable -Name 'External_ExcludeVMNames'
-$AutomationAccountName = Get-AutomationVariable -Name 'Internal_AROAutomationAccountName'
+$automationAccountName = Get-AutomationVariable -Name 'Internal_AROautomationAccountName'
 $aroResourceGroupName = Get-AutomationVariable -Name 'Internal_AROResourceGroupName'
 
 try

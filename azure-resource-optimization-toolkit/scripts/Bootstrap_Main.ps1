@@ -98,13 +98,13 @@ function ValidateKeyVaultAndCreate([string] $keyVaultName, [string] $resourceGro
 
  function CreateAutomationCertificateAsset ([string] $resourceGroup, [string] $automationAccountName, [string] $certifcateAssetName,[string] $certPath, [string] $certPlainPassword, [Boolean] $Exportable) {
    $CertPassword = ConvertTo-SecureString $certPlainPassword -AsPlainText -Force   
-   Remove-AzureRmAutomationCertificate -ResourceGroupName $resourceGroup -AutomationAccountName $automationAccountName -Name $certifcateAssetName -ErrorAction SilentlyContinue
-   New-AzureRmAutomationCertificate -ResourceGroupName $resourceGroup -AutomationAccountName $automationAccountName -Path $certPath -Name $certifcateAssetName -Password $CertPassword -Exportable:$Exportable  | write-verbose
+   Remove-AzureRmAutomationCertificate -ResourceGroupName $resourceGroup -automationAccountName $automationAccountName -Name $certifcateAssetName -ErrorAction SilentlyContinue
+   New-AzureRmAutomationCertificate -ResourceGroupName $resourceGroup -automationAccountName $automationAccountName -Path $certPath -Name $certifcateAssetName -Password $CertPassword -Exportable:$Exportable  | write-verbose
  }
 
  function CreateAutomationConnectionAsset ([string] $resourceGroup, [string] $automationAccountName, [string] $connectionAssetName, [string] $connectionTypeName, [System.Collections.Hashtable] $connectionFieldValues ) {
-   Remove-AzureRmAutomationConnection -ResourceGroupName $resourceGroup -AutomationAccountName $automationAccountName -Name $connectionAssetName -Force -ErrorAction SilentlyContinue
-   New-AzureRmAutomationConnection -ResourceGroupName $ResourceGroup -AutomationAccountName $automationAccountName -Name $connectionAssetName -ConnectionTypeName $connectionTypeName -ConnectionFieldValues $connectionFieldValues 
+   Remove-AzureRmAutomationConnection -ResourceGroupName $resourceGroup -automationAccountName $automationAccountName -Name $connectionAssetName -Force -ErrorAction SilentlyContinue
+   New-AzureRmAutomationConnection -ResourceGroupName $ResourceGroup -automationAccountName $automationAccountName -Name $connectionAssetName -ConnectionTypeName $connectionTypeName -ConnectionFieldValues $connectionFieldValues 
  }
 
 
@@ -117,7 +117,7 @@ try
     $servicePrincipalConnection=Get-AutomationConnection -Name 'AzureRunAsConnection' -ErrorAction SilentlyContinue
 
     #---------Inputs variables for NewRunAsAccountCertKeyVault.ps1 child bootstrap script--------------
-    $AutomationAccountName = Get-AutomationVariable -Name 'Internal_AROAutomationAccountName'
+    $automationAccountName = Get-AutomationVariable -Name 'Internal_AROautomationAccountName'
     $SubscriptionId = Get-AutomationVariable -Name 'Internal_AzureSubscriptionId'
     $aroResourceGroupName = Get-AutomationVariable -Name 'Internal_AROResourceGroupName'
 
@@ -155,7 +155,7 @@ try
                 return
             }
      
-            [String] $ApplicationDisplayName="$($AutomationAccountName)App1"
+            [String] $ApplicationDisplayName="$($automationAccountName)App1"
             [Boolean] $CreateClassicRunAsAccount=$false
             [String] $SelfSignedCertPlainPassword = [Guid]::NewGuid().ToString().Substring(0,8)+"!" 
             [String] $KeyVaultName="KeyVault"+ [Guid]::NewGuid().ToString().Substring(0,5)        
@@ -172,7 +172,7 @@ try
             Write-Output "Creating Keyvault for generating cert..."
             ValidateKeyVaultAndCreate $KeyVaultName $aroResourceGroupName $KeyVaultLocation
 
-            $CertificateName = $AutomationAccountName+$CertifcateAssetName
+            $CertificateName = $automationAccountName+$CertifcateAssetName
             $PfxCertPathForRunAsAccount = Join-Path $env:TEMP ($CertificateName + ".pfx")
             $PfxCertPlainPasswordForRunAsAccount = $SelfSignedCertPlainPassword
             $CerCertPathForRunAsAccount = Join-Path $env:TEMP ($CertificateName + ".cer")
@@ -188,7 +188,7 @@ try
 
             Write-Output "Creating Certificate in the Asset..."
             # Create the automation certificate asset
-            CreateAutomationCertificateAsset $aroResourceGroupName $AutomationAccountName $CertifcateAssetName $PfxCertPathForRunAsAccount $PfxCertPlainPasswordForRunAsAccount $true
+            CreateAutomationCertificateAsset $aroResourceGroupName $automationAccountName $CertifcateAssetName $PfxCertPathForRunAsAccount $PfxCertPlainPasswordForRunAsAccount $true
 
             # Populate the ConnectionFieldValues
             $SubscriptionInfo = Get-AzureRmSubscription -SubscriptionId $SubscriptionId
@@ -198,7 +198,7 @@ try
 
             Write-Output "Creating Connection in the Asset..."
             # Create a Automation connection asset named AzureRunAsConnection in the Automation account. This connection uses the service principal.
-            CreateAutomationConnectionAsset $aroResourceGroupName $AutomationAccountName $ConnectionAssetName $ConnectionTypeName $ConnectionFieldValues
+            CreateAutomationConnectionAsset $aroResourceGroupName $automationAccountName $ConnectionAssetName $ConnectionTypeName $ConnectionFieldValues
 
             Write-Output "RunAsAccount Creation Completed..."
 
@@ -254,7 +254,7 @@ try
         $webhookNameforStopVM = "AutoSnooze_StopVM_ChildWebhook"
         [String] $WebhookUriVariableName ="Internal_AutoSnooze_WebhookUri"
 
-        $checkWebhook = Get-AzureRmAutomationWebhook -Name $webhookNameforStopVM -AutomationAccountName $AutomationAccountName -ResourceGroupName $aroResourceGroupName -ErrorAction SilentlyContinue
+        $checkWebhook = Get-AzureRmAutomationWebhook -Name $webhookNameforStopVM -automationAccountName $automationAccountName -ResourceGroupName $aroResourceGroupName -ErrorAction SilentlyContinue
 
         if($checkWebhook -eq $null)
         {
@@ -263,16 +263,16 @@ try
             $ExpiryTime = (Get-Date).AddDays(730)
 
             Write-Output "Creating the Webhook ($($webhookNameforStopVM)) for the Runbook ($($runbookNameforStopVM))..."
-            $Webhookdata = New-AzureRmAutomationWebhook -Name $webhookNameforStopVM -AutomationAccountName $AutomationAccountName -ResourceGroupName $aroResourceGroupName -RunbookName $runbookNameforStopVM -IsEnabled $true -ExpiryTime $ExpiryTime -Force
+            $Webhookdata = New-AzureRmAutomationWebhook -Name $webhookNameforStopVM -automationAccountName $automationAccountName -ResourceGroupName $aroResourceGroupName -RunbookName $runbookNameforStopVM -IsEnabled $true -ExpiryTime $ExpiryTime -Force
             Write-Output "Successfully created the Webhook ($($webhookNameforStopVM)) for the Runbook ($($runbookNameforStopVM))..."
     
             $ServiceUri = $Webhookdata.WebhookURI
 
             Write-Output "Webhook Uri [$($ServiceUri)]"
 
-            Write-Output "Creating the Assest Variable ($($WebhookUriVariableName)) in the Automation Account ($($AutomationAccountName)) to store the Webhook URI..."
-            New-AzureRmAutomationVariable -AutomationAccountName $AutomationAccountName -Name $WebhookUriVariableName -Encrypted $False -Value $ServiceUri -ResourceGroupName $aroResourceGroupName
-            Write-Output "Successfully created the Assest Variable ($($WebhookUriVariableName)) in the Automation Account ($($AutomationAccountName)) and Webhook URI value updated..."
+            Write-Output "Creating the Assest Variable ($($WebhookUriVariableName)) in the Automation Account ($($automationAccountName)) to store the Webhook URI..."
+            New-AzureRmAutomationVariable -automationAccountName $automationAccountName -Name $WebhookUriVariableName -Encrypted $False -Value $ServiceUri -ResourceGroupName $aroResourceGroupName
+            Write-Output "Successfully created the Assest Variable ($($WebhookUriVariableName)) in the Automation Account ($($automationAccountName)) and Webhook URI value updated..."
 
             Write-Output "Webhook Creation completed..."
 
@@ -303,7 +303,7 @@ try
         $runbookNameforCreateAlert = "AutoSnooze_CreateAlert_Parent"
         $scheduleNameforCreateAlert = "Schedule_AutoSnooze_CreateAlert_Parent"
 
-        $checkMegaSchedule = Get-AzureRmAutomationSchedule -Name $scheduleNameforCreateAlert -AutomationAccountName $AutomationAccountName -ResourceGroupName $aroResourceGroupName -ErrorAction SilentlyContinue
+        $checkMegaSchedule = Get-AzureRmAutomationSchedule -Name $scheduleNameforCreateAlert -automationAccountName $automationAccountName -ResourceGroupName $aroResourceGroupName -ErrorAction SilentlyContinue
 
         if($checkMegaSchedule -eq $null)
         {
@@ -317,19 +317,19 @@ try
             $Hours = 8
 
             #---Create the schedule at the Automation Account level--- 
-            Write-Output "Creating the Schedule ($($scheduleNameforCreateAlert)) in Automation Account ($($AutomationAccountName))..."
-            New-AzureRmAutomationSchedule -AutomationAccountName $AutomationAccountName -Name $scheduleNameforCreateAlert -ResourceGroupName $aroResourceGroupName -StartTime $StartTime -ExpiryTime $EndTime -HourInterval $Hours
+            Write-Output "Creating the Schedule ($($scheduleNameforCreateAlert)) in Automation Account ($($automationAccountName))..."
+            New-AzureRmAutomationSchedule -automationAccountName $automationAccountName -Name $scheduleNameforCreateAlert -ResourceGroupName $aroResourceGroupName -StartTime $StartTime -ExpiryTime $EndTime -HourInterval $Hours
 
             #Disable the schedule    
-            Set-AzureRmAutomationSchedule -AutomationAccountName $AutomationAccountName -Name $scheduleNameforCreateAlert -ResourceGroupName $aroResourceGroupName -IsEnabled $false
+            Set-AzureRmAutomationSchedule -automationAccountName $automationAccountName -Name $scheduleNameforCreateAlert -ResourceGroupName $aroResourceGroupName -IsEnabled $false
     
-            Write-Output "Successfully created the Schedule ($($scheduleNameforCreateAlert)) in Automation Account ($($AutomationAccountName))..."
+            Write-Output "Successfully created the Schedule ($($scheduleNameforCreateAlert)) in Automation Account ($($automationAccountName))..."
 
             $paramsAutoSnooze = @{"WhatIf"=$false}
 
             #---Link the schedule to the runbook--- 
             Write-Output "Registering the Schedule ($($scheduleNameforCreateAlert)) in the Runbook ($($runbookNameforCreateAlert))..."
-            Register-AzureRmAutomationScheduledRunbook -AutomationAccountName $AutomationAccountName -Name $runbookNameforCreateAlert -ScheduleName $scheduleNameforCreateAlert -ResourceGroupName $aroResourceGroupName -Parameters $paramsAutoSnooze
+            Register-AzureRmAutomationScheduledRunbook -automationAccountName $automationAccountName -Name $runbookNameforCreateAlert -ScheduleName $scheduleNameforCreateAlert -ResourceGroupName $aroResourceGroupName -Parameters $paramsAutoSnooze
             Write-Output "Successfully Registered the Schedule ($($scheduleNameforCreateAlert)) in the Runbook ($($runbookNameforCreateAlert))..."
     
             Write-Output "Completed Step-3 ..."
@@ -359,8 +359,8 @@ try
         $scheduleStart = "ScheduledSnooze-StartVM"
         $scheduleStop = "ScheduledSnooze-StopVM"
     
-        $checkSchSnoozeStart = Get-AzureRmAutomationSchedule -AutomationAccountName $AutomationAccountName -Name $scheduleStart -ResourceGroupName $aroResourceGroupName -ErrorAction SilentlyContinue
-        $checkSchSnoozeStop = Get-AzureRmAutomationSchedule -AutomationAccountName $AutomationAccountName -Name $scheduleStop -ResourceGroupName $aroResourceGroupName -ErrorAction SilentlyContinue 
+        $checkSchSnoozeStart = Get-AzureRmAutomationSchedule -automationAccountName $automationAccountName -Name $scheduleStart -ResourceGroupName $aroResourceGroupName -ErrorAction SilentlyContinue
+        $checkSchSnoozeStop = Get-AzureRmAutomationSchedule -automationAccountName $automationAccountName -Name $scheduleStop -ResourceGroupName $aroResourceGroupName -ErrorAction SilentlyContinue 
 
         #Starts everyday 6AM
         $StartVmUTCTime = (Get-Date "13:00:00").AddDays(1).ToUniversalTime()
@@ -372,31 +372,31 @@ try
             Write-Output "Executing Step-4 : Create schedule for ScheduledSnooze_Parent runbook ..."
 
             #---Create the schedule at the Automation Account level--- 
-            Write-Output "Creating the Schedule in Automation Account ($($AutomationAccountName))..."
-            New-AzureRmAutomationSchedule -AutomationAccountName $AutomationAccountName -Name $scheduleStart -ResourceGroupName $aroResourceGroupName -StartTime $StartVmUTCTime -ExpiryTime $StartVmUTCTime.AddYears(1) -DayInterval 1
+            Write-Output "Creating the Schedule in Automation Account ($($automationAccountName))..."
+            New-AzureRmAutomationSchedule -automationAccountName $automationAccountName -Name $scheduleStart -ResourceGroupName $aroResourceGroupName -StartTime $StartVmUTCTime -ExpiryTime $StartVmUTCTime.AddYears(1) -DayInterval 1
 
-            Write-Output "Successfully created the Schedule in Automation Account ($($AutomationAccountName))..."
+            Write-Output "Successfully created the Schedule in Automation Account ($($automationAccountName))..."
 
-            Set-AzureRmAutomationSchedule -AutomationAccountName $AutomationAccountName -Name $scheduleStart -ResourceGroupName $aroResourceGroupName -IsEnabled $false
+            Set-AzureRmAutomationSchedule -automationAccountName $automationAccountName -Name $scheduleStart -ResourceGroupName $aroResourceGroupName -IsEnabled $false
 
             $paramsStartVM = @{"Action"="Start";"WhatIf"=$false}
-            Register-AzureRmAutomationScheduledRunbook -AutomationAccountName $AutomationAccountName -Name $runbookNameforARMVMOptimization -ScheduleName $scheduleStart -ResourceGroupName $aroResourceGroupName -Parameters $paramsStartVM
+            Register-AzureRmAutomationScheduledRunbook -automationAccountName $automationAccountName -Name $runbookNameforARMVMOptimization -ScheduleName $scheduleStart -ResourceGroupName $aroResourceGroupName -Parameters $paramsStartVM
 
             Write-Output "Successfully Registered the Schedule in the Runbook ($($runbookNameforARMVMOptimization))..."
         }
 
         if($checkSchSnoozeStop -eq $null)
         {
-            New-AzureRmAutomationSchedule -AutomationAccountName $AutomationAccountName -Name $scheduleStop -ResourceGroupName $aroResourceGroupName -StartTime $StopVmUTCTime -ExpiryTime $StopVmUTCTime.AddYears(1) -DayInterval 1 
-            Write-Output "Successfully created the Schedule in Automation Account ($($AutomationAccountName))..."
+            New-AzureRmAutomationSchedule -automationAccountName $automationAccountName -Name $scheduleStop -ResourceGroupName $aroResourceGroupName -StartTime $StopVmUTCTime -ExpiryTime $StopVmUTCTime.AddYears(1) -DayInterval 1 
+            Write-Output "Successfully created the Schedule in Automation Account ($($automationAccountName))..."
                
-            Set-AzureRmAutomationSchedule -AutomationAccountName $AutomationAccountName -Name $scheduleStop -ResourceGroupName $aroResourceGroupName -IsEnabled $false
+            Set-AzureRmAutomationSchedule -automationAccountName $automationAccountName -Name $scheduleStop -ResourceGroupName $aroResourceGroupName -IsEnabled $false
 
             Write-Output "Registering the Schedule in the Runbook ($($runbookNameforARMVMOptimization))..."
 
             $paramsStopVM = @{"Action"="Stop";"WhatIf"=$false}
 
-            Register-AzureRmAutomationScheduledRunbook -AutomationAccountName $AutomationAccountName -Name $runbookNameforARMVMOptimization -ScheduleName $scheduleStop -ResourceGroupName $aroResourceGroupName -Parameters $paramsStopVM
+            Register-AzureRmAutomationScheduledRunbook -automationAccountName $automationAccountName -Name $runbookNameforARMVMOptimization -ScheduleName $scheduleStop -ResourceGroupName $aroResourceGroupName -Parameters $paramsStopVM
     
             Write-Output "Successfully Registered the Schedule in the Runbook ($($runbookNameforARMVMOptimization))..."
          }
@@ -427,24 +427,24 @@ try
         $scheduleNameforAutoupdate = "Schedule_AROToolkit_AutoUpdate"
         $StartUTCTime = (Get-Date "13:00:00").AddDays(1).ToUniversalTime()
 
-        $checkScheduleAU = Get-AzureRmAutomationSchedule -AutomationAccountName $AutomationAccountName -Name $scheduleNameforAutoupdate -ResourceGroupName $aroResourceGroupName -ErrorAction SilentlyContinue
+        $checkScheduleAU = Get-AzureRmAutomationSchedule -automationAccountName $automationAccountName -Name $scheduleNameforAutoupdate -ResourceGroupName $aroResourceGroupName -ErrorAction SilentlyContinue
 
         if($checkScheduleAU -eq $null)
         {
 
             Write-Output "Executing Step-5 : Create schedule for AROToolkit_AutoUpdate runbook ..."    
                         
-            Write-Output "Creating the Schedule ($($scheduleNameforAutoupdate)) in Automation Account ($($AutomationAccountName))..."
-            New-AzureRmAutomationSchedule -AutomationAccountName $AutomationAccountName -Name $scheduleNameforAutoupdate -ResourceGroupName $aroResourceGroupName -StartTime $StartUTCTime -WeekInterval 2
+            Write-Output "Creating the Schedule ($($scheduleNameforAutoupdate)) in Automation Account ($($automationAccountName))..."
+            New-AzureRmAutomationSchedule -automationAccountName $automationAccountName -Name $scheduleNameforAutoupdate -ResourceGroupName $aroResourceGroupName -StartTime $StartUTCTime -WeekInterval 2
 
             #Disable the schedule    
-            Set-AzureRmAutomationSchedule -AutomationAccountName $AutomationAccountName -Name $scheduleNameforAutoupdate -ResourceGroupName $aroResourceGroupName -IsEnabled $false
+            Set-AzureRmAutomationSchedule -automationAccountName $automationAccountName -Name $scheduleNameforAutoupdate -ResourceGroupName $aroResourceGroupName -IsEnabled $false
     
-            Write-Output "Successfully created the Schedule ($($scheduleNameforAutoupdate)) in Automation Account ($($AutomationAccountName))..."
+            Write-Output "Successfully created the Schedule ($($scheduleNameforAutoupdate)) in Automation Account ($($automationAccountName))..."
 
             #---Link the schedule to the runbook--- 
             Write-Output "Registering the Schedule ($($scheduleNameforAutoupdate)) in the Runbook ($($runbookNameforAutoupdate))..."
-            Register-AzureRmAutomationScheduledRunbook -AutomationAccountName $AutomationAccountName -Name $runbookNameforAutoupdate -ScheduleName $scheduleNameforAutoupdate -ResourceGroupName $aroResourceGroupName
+            Register-AzureRmAutomationScheduledRunbook -automationAccountName $automationAccountName -Name $runbookNameforAutoupdate -ScheduleName $scheduleNameforAutoupdate -ResourceGroupName $aroResourceGroupName
             Write-Output "Successfully Registered the Schedule ($($scheduleNameforAutoupdate)) in the Runbook ($($runbookNameforAutoupdate))..."
     
         }
@@ -473,8 +473,8 @@ try
         $sequenceStart = "SequencedSnooze-StartVM"
         $sequenceStop = "SequencedSnooze-StopVM"
 
-        $checkSeqSnoozeStart = Get-AzureRmAutomationSchedule -AutomationAccountName $AutomationAccountName -Name $sequenceStart -ResourceGroupName $aroResourceGroupName -ErrorAction SilentlyContinue
-        $checkSeqSnoozeStop = Get-AzureRmAutomationSchedule -AutomationAccountName $AutomationAccountName -Name $sequenceStop -ResourceGroupName $aroResourceGroupName -ErrorAction SilentlyContinue 
+        $checkSeqSnoozeStart = Get-AzureRmAutomationSchedule -automationAccountName $automationAccountName -Name $sequenceStart -ResourceGroupName $aroResourceGroupName -ErrorAction SilentlyContinue
+        $checkSeqSnoozeStop = Get-AzureRmAutomationSchedule -automationAccountName $automationAccountName -Name $sequenceStop -ResourceGroupName $aroResourceGroupName -ErrorAction SilentlyContinue 
 
         #Starts every monday 6AM
         $StartVmUTCTime = (Get-Date "13:00:00").AddDays(1).ToUniversalTime()
@@ -486,15 +486,15 @@ try
             Write-Output "Executing Step-6 : Create schedule for SequencedSnooze_Parent runbook ..."
 
             #---Create the schedule at the Automation Account level--- 
-            Write-Output "Creating the Schedule in Automation Account ($($AutomationAccountName))..."
-            New-AzureRmAutomationSchedule -AutomationAccountName $AutomationAccountName -Name $sequenceStart -ResourceGroupName $aroResourceGroupName -StartTime $StartVmUTCTime -DaysOfWeek Monday -WeekInterval 1
+            Write-Output "Creating the Schedule in Automation Account ($($automationAccountName))..."
+            New-AzureRmAutomationSchedule -automationAccountName $automationAccountName -Name $sequenceStart -ResourceGroupName $aroResourceGroupName -StartTime $StartVmUTCTime -DaysOfWeek Monday -WeekInterval 1
 
-            Write-Output "Successfully created the Schedule in Automation Account ($($AutomationAccountName))..."
+            Write-Output "Successfully created the Schedule in Automation Account ($($automationAccountName))..."
 
-            Set-AzureRmAutomationSchedule -AutomationAccountName $AutomationAccountName -Name $sequenceStart -ResourceGroupName $aroResourceGroupName -IsEnabled $false
+            Set-AzureRmAutomationSchedule -automationAccountName $automationAccountName -Name $sequenceStart -ResourceGroupName $aroResourceGroupName -IsEnabled $false
 
             $paramsStartVM = @{"Action"="start";"WhatIf"=$false;"ContinueOnError"=$false}
-            Register-AzureRmAutomationScheduledRunbook -AutomationAccountName $AutomationAccountName -Name $runbookNameforARMVMOptimization -ScheduleName $sequenceStart -ResourceGroupName $aroResourceGroupName -Parameters $paramsStartVM
+            Register-AzureRmAutomationScheduledRunbook -automationAccountName $automationAccountName -Name $runbookNameforARMVMOptimization -ScheduleName $sequenceStart -ResourceGroupName $aroResourceGroupName -Parameters $paramsStartVM
 
             Write-Output "Successfully Registered the Schedule in the Runbook ($($runbookNameforARMVMOptimization))..."
         }
@@ -504,15 +504,15 @@ try
             Write-Output "Executing Step-6 : Create schedule for SequencedSnooze_Parent runbook ..."
 
             #---Create the schedule at the Automation Account level--- 
-            Write-Output "Creating the Schedule in Automation Account ($($AutomationAccountName))..."
-            New-AzureRmAutomationSchedule -AutomationAccountName $AutomationAccountName -Name $sequenceStop -ResourceGroupName $aroResourceGroupName -StartTime $StopVmUTCTime -DaysOfWeek Friday -WeekInterval 1
+            Write-Output "Creating the Schedule in Automation Account ($($automationAccountName))..."
+            New-AzureRmAutomationSchedule -automationAccountName $automationAccountName -Name $sequenceStop -ResourceGroupName $aroResourceGroupName -StartTime $StopVmUTCTime -DaysOfWeek Friday -WeekInterval 1
 
-            Write-Output "Successfully created the Schedule in Automation Account ($($AutomationAccountName))..."
+            Write-Output "Successfully created the Schedule in Automation Account ($($automationAccountName))..."
 
-            Set-AzureRmAutomationSchedule -AutomationAccountName $AutomationAccountName -Name $sequenceStop -ResourceGroupName $aroResourceGroupName -IsEnabled $false
+            Set-AzureRmAutomationSchedule -automationAccountName $automationAccountName -Name $sequenceStop -ResourceGroupName $aroResourceGroupName -IsEnabled $false
 
             $paramsStartVM = @{"Action"="stop";"WhatIf"=$false;"ContinueOnError"=$false}
-            Register-AzureRmAutomationScheduledRunbook -AutomationAccountName $AutomationAccountName -Name $runbookNameforARMVMOptimization -ScheduleName $sequenceStop -ResourceGroupName $aroResourceGroupName -Parameters $paramsStartVM
+            Register-AzureRmAutomationScheduledRunbook -automationAccountName $automationAccountName -Name $runbookNameforARMVMOptimization -ScheduleName $sequenceStop -ResourceGroupName $aroResourceGroupName -Parameters $paramsStartVM
 
             Write-Output "Successfully Registered the Schedule in the Runbook ($($runbookNameforARMVMOptimization))..."
         }
@@ -545,14 +545,14 @@ try
         if ($Status -gt 0) 
         {
             Write-Output "Executing Step-7 : Linking Automation Workspace to OMS Log Analytics..."
-            Write-Output "Checking if OMSWorkspaceID Variable is defined..."
-            $OMSWorkspaceId = Get-AzureRmAutomationVariable -Name 'Internal_OMSWorkspaceId' -ResourceGroupName $aroResourceGroupName -AutomationAccountName $AutomationAccountName -ErrorAction SilentlyContinue
+            Write-Output "Checking if omsWorkspaceId Variable is defined..."
+            $omsWorkspaceId = Get-AzureRmAutomationVariable -Name 'Internal_omsWorkspaceId' -ResourceGroupName $aroResourceGroupName -automationAccountName $automationAccountName -ErrorAction SilentlyContinue
             #Link to OMS Logging
-            if ([string]::IsNullOrWhiteSpace($OMSWorkspaceId.Value)) {
-                Write-Output "OMSWorkspaceID Variable is null, skipping OMS Log Analytics link step..."
+            if ([string]::IsNullOrWhiteSpace($omsWorkspaceId.Value)) {
+                Write-Output "omsWorkspaceId Variable is null, skipping OMS Log Analytics link step..."
             } else {
-                Write-Output "OMSWorkspaceID Variable Found!  Linking to OMS Log Analytics..."
-                Set-AzureRmDiagnosticSetting -ResourceId $automationAccountId -WorkspaceId $OMSworkspaceId.Value -Enabled $true
+                Write-Output "omsWorkspaceId Variable Found!  Linking to OMS Log Analytics..."
+                Set-AzureRmDiagnosticSetting -ResourceId $automationAccountId -WorkspaceId $omsWorkspaceId.Value -Enabled $true
                 Start-Sleep -s 15
                 $Status = (Get-AzureRmDiagnosticSetting -ResourceID $automationAccountId | Select-Object -ExpandProperty Logs | Where-Object {$_.Enabled -eq $false}).Count
                     if ($Status -eq 0) {
@@ -589,33 +589,33 @@ try
             Remove-AzureRmKeyVault -VaultName $KeyVaultName -ResourceGroupName $aroResourceGroupName -Confirm:$False -Force
         }
         
-        $checkCredentials = Get-AzureRmAutomationCredential -Name "AzureCredentials" -AutomationAccountName $AutomationAccountName -ResourceGroupName $aroResourceGroupName -ErrorAction SilentlyContinue
+        $checkCredentials = Get-AzureRmAutomationCredential -Name "AzureCredentials" -automationAccountName $automationAccountName -ResourceGroupName $aroResourceGroupName -ErrorAction SilentlyContinue
         
         if($checkCredentials -ne $null)
         {
             Write-Output "Removing the Azure Credentials..."
 
-            Remove-AzureRmAutomationCredential -Name "AzureCredentials" -AutomationAccountName $AutomationAccountName -ResourceGroupName $aroResourceGroupName 
+            Remove-AzureRmAutomationCredential -Name "AzureCredentials" -automationAccountName $automationAccountName -ResourceGroupName $aroResourceGroupName 
         }
 
-        $checkScheduleBootstrap = Get-AzureRmAutomationSchedule -AutomationAccountName $AutomationAccountName -Name "startBootstrap" -ResourceGroupName $aroResourceGroupName -ErrorAction SilentlyContinue
+        $checkScheduleBootstrap = Get-AzureRmAutomationSchedule -automationAccountName $automationAccountName -Name "startBootstrap" -ResourceGroupName $aroResourceGroupName -ErrorAction SilentlyContinue
 
         if($checkScheduleBootstrap -ne $null)
         {
 
             Write-Output "Removing Bootstrap Schedule..."    
                         
-            Remove-AzureRmAutomationSchedule -Name "startBootstrap" -AutomationAccountName $AutomationAccountName -ResourceGroupName $aroResourceGroupName -Force
+            Remove-AzureRmAutomationSchedule -Name "startBootstrap" -automationAccountName $automationAccountName -ResourceGroupName $aroResourceGroupName -Force
         }    
 
-        Write-Output "Removing OMSWorkspaceID Variable..."
+        Write-Output "Removing omsWorkspaceId Variable..."
         
-        Remove-AzureRmAutomationVariable -Name 'Internal_OMSWorkspaceId' -ResourceGroupName $aroResourceGroupName -AutomationAccountName $AutomationAccountName -ErrorAction SilentlyContinue
+        Remove-AzureRmAutomationVariable -Name 'Internal_omsWorkspaceId' -ResourceGroupName $aroResourceGroupName -automationAccountName $automationAccountName -ErrorAction SilentlyContinue
 
 
         Write-Output "Removing the Bootstrap_Main Runbook..."
 
-        Remove-AzureRmAutomationRunbook -Name "Bootstrap_Main" -ResourceGroupName $aroResourceGroupName -AutomationAccountName $AutomationAccountName -Force
+        Remove-AzureRmAutomationRunbook -Name "Bootstrap_Main" -ResourceGroupName $aroResourceGroupName -automationAccountName $automationAccountName -Force
 
 
         Write-Output "Completed Step-8 ..."

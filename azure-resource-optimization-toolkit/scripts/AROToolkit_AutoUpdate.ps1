@@ -47,7 +47,7 @@ try
     $FileName = "AutoUpdateWorker.ps1"
     $GithubFullPath = "$($GithubRootPath)/$($GithubBranch)/$($ScriptPath)/$($FileName)"
 
-    $AutomationAccountName = Get-AutomationVariable -Name 'Internal_AROAutomationAccountName'
+    $automationAccountName = Get-AutomationVariable -Name 'Internal_AROautomationAccountName'
     $aroResourceGroupName = Get-AutomationVariable -Name 'Internal_AROResourceGroupName'
 
     #[System.Reflection.Assembly]::LoadWithPartialName("System.Web.Extensions")
@@ -62,18 +62,18 @@ try
 
     Write-Output "Creating the worker runbook in the Automation Account..." 
 
-    New-AzureRmAutomationRunbook -Name $RunbookName -AutomationAccountName $AutomationAccountName -ResourceGroupName $aroResourceGroupName -Type PowerShell -Description "New autoupdate worker runbook"
+    New-AzureRmAutomationRunbook -Name $RunbookName -automationAccountName $automationAccountName -ResourceGroupName $aroResourceGroupName -Type PowerShell -Description "New autoupdate worker runbook"
 
-    Import-AzureRmAutomationRunbook -AutomationAccountName $AutomationAccountName -ResourceGroupName $aroResourceGroupName -Path $psScriptPath -Name $RunbookName -Force -Type PowerShell 
+    Import-AzureRmAutomationRunbook -automationAccountName $automationAccountName -ResourceGroupName $aroResourceGroupName -Path $psScriptPath -Name $RunbookName -Force -Type PowerShell 
 
     Write-Output "Publishing the new Runbook $($RunbookName)..."
-    Publish-AzureRmAutomationRunbook -AutomationAccountName $AutomationAccountName -ResourceGroupName $aroResourceGroupName -Name $RunbookName
+    Publish-AzureRmAutomationRunbook -automationAccountName $automationAccountName -ResourceGroupName $aroResourceGroupName -Name $RunbookName
 
     Write-Output "Executing the new Runbook $($RunbookName)..."
-    Start-AzureRmAutomationRunbook -Name $RunbookName -AutomationAccountName $AutomationAccountName -ResourceGroupName $aroResourceGroupName -Wait
+    Start-AzureRmAutomationRunbook -Name $RunbookName -automationAccountName $automationAccountName -ResourceGroupName $aroResourceGroupName -Wait
 
     Write-Output "Runbook $($RunbookName) execution completed. Deleting the runbook..."
-    Remove-AzureRmAutomationRunbook -Name $RunbookName -AutomationAccountName $AutomationAccountName -ResourceGroupName $aroResourceGroupName -Force 
+    Remove-AzureRmAutomationRunbook -Name $RunbookName -automationAccountName $automationAccountName -ResourceGroupName $aroResourceGroupName -Force 
     
     Write-Output "AutoUpdate Wrapper execution completed..."
 }

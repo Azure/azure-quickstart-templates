@@ -65,10 +65,10 @@ try
     #Get the Automation Account tags to read the version
     Write-Output "Reading the Automation Account details..."
 
-    $AutomationAccountName = Get-AutomationVariable -Name 'Internal_AROAutomationAccountName'
+    $automationAccountName = Get-AutomationVariable -Name 'Internal_AROautomationAccountName'
     $aroResourceGroupName = Get-AutomationVariable -Name 'Internal_AROResourceGroupName'
 
-    $AutomationAccountDetails = Get-AzureRmAutomationAccount -Name $AutomationAccountName -ResourceGroupName $aroResourceGroupName
+    $AutomationAccountDetails = Get-AzureRmAutomationAccount -Name $automationAccountName -ResourceGroupName $aroResourceGroupName
     $CurrentVersion = $AutomationAccountDetails.Tags.Values
     $UpdateVersion = $jsonData.variables.AROToolkitVersion
 
@@ -87,7 +87,7 @@ try
         Write-Output "======================================"
         Write-Output "Checking for asset variable updates..."
         Write-Output "======================================"
-        $ExistingVariables = Get-AzureRmAutomationVariable -AutomationAccountName $AutomationAccountName -ResourceGroupName $aroResourceGroupName | Select-Object Name 
+        $ExistingVariables = Get-AzureRmAutomationVariable -automationAccountName $automationAccountName -ResourceGroupName $aroResourceGroupName | Select-Object Name 
         $ExistingVariables = $ExistingVariables | Foreach {"$($_.Name)"} | Sort-Object Name
         $NewVariables=$jsonData.variables.Keys | Where-Object { $_.Trim() -match "Internal" -or $_ -match "External" } | Sort-Object
 
@@ -115,7 +115,7 @@ try
                         {
                             $rvarPropVal = ""
                         }
-                        New-AzureRmAutomationVariable -Name $difv.InputObject.Trim() -AutomationAccountName $AutomationAccountName -ResourceGroupName $aroResourceGroupName -Encrypted $False -Value $rvarPropVal.Trim()
+                        New-AzureRmAutomationVariable -Name $difv.InputObject.Trim() -automationAccountName $automationAccountName -ResourceGroupName $aroResourceGroupName -Encrypted $False -Value $rvarPropVal.Trim()
                         break;
                     }
             
@@ -141,7 +141,7 @@ try
             {
                 [string[]] $runbookScriptUri = $runb.scriptUri -split ","
                 $Runbooktable.Add($runb.name,$runbookScriptUri.get(1).Replace(")]","").Replace("'",""))
-                $currentRunbook = Get-AzureRmAutomationRunbook -AutomationAccountName $AutomationAccountName -ResourceGroupName $aroResourceGroupName -Name $runb.name -ErrorAction SilentlyContinue
+                $currentRunbook = Get-AzureRmAutomationRunbook -automationAccountName $automationAccountName -ResourceGroupName $aroResourceGroupName -Name $runb.name -ErrorAction SilentlyContinue
                 #check if this is new runbook or existing
                 if($currentRunbook -ne $null)
                 {
@@ -163,10 +163,10 @@ try
                         $RunbookScriptPath = "$PSScriptRoot\$($runb.name).ps1"
 
                         Write-Output "Updating the Runbook content..." 
-                        Import-AzureRmAutomationRunbook -AutomationAccountName $AutomationAccountName -ResourceGroupName $aroResourceGroupName -Path $RunbookScriptPath -Name $runb.name -Tags @{version=$NewVersion} -Force -Type PowerShell
+                        Import-AzureRmAutomationRunbook -automationAccountName $automationAccountName -ResourceGroupName $aroResourceGroupName -Path $RunbookScriptPath -Name $runb.name -Tags @{version=$NewVersion} -Force -Type PowerShell
 
                         Write-Output "Publishing the Runbook $($runb.name)..."
-                        Publish-AzureRmAutomationRunbook -AutomationAccountName $AutomationAccountName -ResourceGroupName $aroResourceGroupName -Name $runb.name                
+                        Publish-AzureRmAutomationRunbook -automationAccountName $automationAccountName -ResourceGroupName $aroResourceGroupName -Name $runb.name                
                     }
                 }
                 else
@@ -181,11 +181,11 @@ try
                     $NewVersion = $runb.version
 
                     Write-Output "Creating the Runbook in the Automation Account..." 
-                    New-AzureRmAutomationRunbook -Name $runb.name -AutomationAccountName $AutomationAccountName -ResourceGroupName $aroResourceGroupName -Type PowerShell -Description "New Runbook"
-                    Import-AzureRmAutomationRunbook -AutomationAccountName $AutomationAccountName -ResourceGroupName $aroResourceGroupName -Path $RunbookScriptPath -Name $runb.name -Force -Type PowerShell -Tags @{version=$NewVersion} 
+                    New-AzureRmAutomationRunbook -Name $runb.name -automationAccountName $automationAccountName -ResourceGroupName $aroResourceGroupName -Type PowerShell -Description "New Runbook"
+                    Import-AzureRmAutomationRunbook -automationAccountName $automationAccountName -ResourceGroupName $aroResourceGroupName -Path $RunbookScriptPath -Name $runb.name -Force -Type PowerShell -Tags @{version=$NewVersion} 
 
                     Write-Output "Publishing the new Runbook $($runb.name)..."
-                    Publish-AzureRmAutomationRunbook -AutomationAccountName $AutomationAccountName -ResourceGroupName $aroResourceGroupName -Name $runb.name
+                    Publish-AzureRmAutomationRunbook -automationAccountName $automationAccountName -ResourceGroupName $aroResourceGroupName -Name $runb.name
                 }
             }
         }
@@ -204,16 +204,16 @@ try
         $RunbookScriptPath = "$PSScriptRoot\Bootstrap_Main.ps1"
         
         Write-Output "Creating the Runbook in the Automation Account..." 
-        New-AzureRmAutomationRunbook -Name $Bootstrap_MainRunbook -AutomationAccountName $AutomationAccountName -ResourceGroupName $aroResourceGroupName -Type PowerShell -Description "New Runbook"
-        Import-AzureRmAutomationRunbook -AutomationAccountName $AutomationAccountName -ResourceGroupName $aroResourceGroupName -Path $RunbookScriptPath -Name $Bootstrap_MainRunbook -Force -Type PowerShell
+        New-AzureRmAutomationRunbook -Name $Bootstrap_MainRunbook -automationAccountName $automationAccountName -ResourceGroupName $aroResourceGroupName -Type PowerShell -Description "New Runbook"
+        Import-AzureRmAutomationRunbook -automationAccountName $automationAccountName -ResourceGroupName $aroResourceGroupName -Path $RunbookScriptPath -Name $Bootstrap_MainRunbook -Force -Type PowerShell
 
         Write-Output "Publishing the Bootstrap_Main Runbook..."
-        Publish-AzureRmAutomationRunbook -AutomationAccountName $AutomationAccountName -ResourceGroupName $aroResourceGroupName -Name $Bootstrap_MainRunbook
+        Publish-AzureRmAutomationRunbook -automationAccountName $automationAccountName -ResourceGroupName $aroResourceGroupName -Name $Bootstrap_MainRunbook
 
-        Start-AzureRmAutomationRunbook -Name $Bootstrap_MainRunbook -AutomationAccountName $AutomationAccountName -ResourceGroupName $aroResourceGroupName -Wait
+        Start-AzureRmAutomationRunbook -Name $Bootstrap_MainRunbook -automationAccountName $automationAccountName -ResourceGroupName $aroResourceGroupName -Wait
 
         #Update the Automation Account version tag to latest version
-        Set-AzureRmAutomationAccount -Name $AutomationAccountName -ResourceGroupName $aroResourceGroupName -Tags @{AROToolkitVersion=$UpdateVersion}
+        Set-AzureRmAutomationAccount -Name $automationAccountName -ResourceGroupName $aroResourceGroupName -Tags @{AROToolkitVersion=$UpdateVersion}
 
     }    
     elseif($VersionDiff -le 0)

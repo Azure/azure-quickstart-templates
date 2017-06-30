@@ -87,7 +87,7 @@ catch
 $SubId = Get-AutomationVariable -Name 'Internal_AzureSubscriptionId'
 $ResourceGroupNames = Get-AutomationVariable -Name 'External_ResourceGroupNames'
 $ExcludeVMNames = Get-AutomationVariable -Name 'External_ExcludeVMNames'
-$AutomationAccountName = Get-AutomationVariable -Name 'Internal_AROAutomationAccountName'
+$automationAccountName = Get-AutomationVariable -Name 'Internal_AROautomationAccountName'
 $aroResourceGroupName = Get-AutomationVariable -Name 'Internal_AROResourceGroupName'
 
 #-----Prepare the inputs for alert attributes-----
@@ -114,7 +114,7 @@ try
                 {
                         Write-Output "Disabling the alert rules for VM : $($VM.Name)" 
                         $params = @{"VMObject"=$VM;"AlertAction"="Disable";"WebhookUri"=$webhookUri}                    
-                        $runbook = Start-AzureRmAutomationRunbook -AutomationAccountName $AutomationAccountName -Name 'AutoSnooze_CreateAlert_Child' -ResourceGroupName $aroResourceGroupName –Parameters $params
+                        $runbook = Start-AzureRmAutomationRunbook -automationAccountName $automationAccountName -Name 'AutoSnooze_CreateAlert_Child' -ResourceGroupName $aroResourceGroupName –Parameters $params
                 }
                 catch
                 {
@@ -183,7 +183,7 @@ try
             {  
                     Write-Output "Creating alert rules for the VM : $($VM.Name)"
                     $params = @{"VMObject"=$VM;"AlertAction"="Create";"WebhookUri"=$webhookUri}                    
-                    $runbook = Start-AzureRmAutomationRunbook -AutomationAccountName $AutomationAccountName -Name 'AutoSnooze_CreateAlert_Child' -ResourceGroupName $aroResourceGroupName –Parameters $params
+                    $runbook = Start-AzureRmAutomationRunbook -automationAccountName $automationAccountName -Name 'AutoSnooze_CreateAlert_Child' -ResourceGroupName $aroResourceGroupName –Parameters $params
             }
             Write-Output "Note: All the alert rules creation are processed in parallel. Please check the child runbook (AutoSnooze_CreateAlert_Child) job status..."
         }

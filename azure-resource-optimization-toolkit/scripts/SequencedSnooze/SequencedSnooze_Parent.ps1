@@ -56,7 +56,7 @@ function CheckVMState ($VMObject,[string]$Action)
 }
 
 #---------Read all the input variables---------------
-$AutomationAccountName = Get-AutomationVariable -Name 'Internal_AROAutomationAccountName'
+$automationAccountName = Get-AutomationVariable -Name 'Internal_AROautomationAccountName'
 $aroResourceGroupName = Get-AutomationVariable -Name 'Internal_AROResourceGroupName'
 
 try
@@ -105,7 +105,7 @@ try
             {                
                 Write-Output "Performing the $($Action) action on VM: $($vmobj.Name)"
                 $params = @{"VMName"="$($vmObj.Name)";"Action"=$Action;"ResourceGroupName"="$($vmObj.ResourceGroupName)"}                    
-                Start-AzureRmAutomationRunbook -AutomationAccountName $AutomationAccountName -Name 'ScheduledSnooze_Child' -ResourceGroupName $aroResourceGroupName –Parameters $params                
+                Start-AzureRmAutomationRunbook -automationAccountName $automationAccountName -Name 'ScheduledSnooze_Child' -ResourceGroupName $aroResourceGroupName –Parameters $params                
             }
 
             Write-Output "Completed the sequenced $($Action) for the sequence-$($seq) VM's..."
