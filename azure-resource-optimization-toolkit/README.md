@@ -23,7 +23,6 @@ Click Deploy to Azure and proceed to Step 2, "Configure Azure Automation Variabl
 </a>
 
 Important!  A bootstrap runbook can take up to 15 minutes to complete setting up your Azure Automation account.  Before you use ARO Toolkit, validate that the Azure Run As account has been created as show below.  If not, follow the steps in Appendix D. 
-
     <img src="https://raw.githubusercontent.com/toddrob/azure-quickstart-templates/aro-toolkit/azure-resource-optimization-toolkit/images/AROToolkit/validateRunAs.png">
     
 
