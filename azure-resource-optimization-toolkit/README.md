@@ -37,19 +37,17 @@ Important!  A bootstrap runbook can take up to 15 minutes to complete setting up
 ![alt text](images/AROToolkit/image10.png "Services")
     
 
-3.  select the Azure Automation Account which you deployed
+3.  Select the Azure Automation Account which you deployed
 
 4.  Navigate to the dashboard by clicking “Overview”
 
 5.  Click “**Assets**”
 
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/azure-resource-optimization-toolkit/images/AROToolkit/image11.png">
-    
+    ![alt text](images/AROToolkit/image11.png "Assets")
 
 6.  Click “**Variables**” tile
 
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/azure-resource-optimization-toolkit/images/AROToolkit/image12.png">
-    
+    ![alt text](images/AROToolkit/image12.png "Variables")
 
 7.  If needed you can maximize the variables window to get better
     visibility
@@ -71,9 +69,8 @@ Important!  A bootstrap runbook can take up to 15 minutes to complete setting up
     d.  **Note:** Please make sure you don’t make any changes to the
         variables that prefixed with “Internal”
 
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/azure-resource-optimization-toolkit/images/AROToolkit/image13a.png">
-        
-
+    ![alt text](images/AROToolkit/image13a.png "Variables")
+     
 # **Step 3 Enable Azure Automation Schedules**
 By Default, all default schedules deployed with the AROToolkit are disabled.  Based upon which optimization you wish to perform, you will need to enable the corresponding schedule.  To learn more about which schedule is right for you, please refer to Appendix -B. 
 
@@ -85,14 +82,14 @@ By Default, all default schedules deployed with the AROToolkit are disabled.  B
 
 3.  Click on “**Schedules**”
 
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/azure-resource-optimization-toolkit/images/AROToolkit/image14a.png">
+    ![alt text](images/AROToolkit/image14a.png "Schedules")
 
 4.  Select each schedule which will open the edit blade where you can
     enable them
 
 5.  Click “**Yes**” in the Enabled attribute and click “**Save**”
 
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/azure-resource-optimization-toolkit/images/AROToolkit/image15.png">
+    ![alt text](images/AROToolkit/image15.png "Enable Schedule")
 
 6.  If you want to create the custom schedule, please refer to Appendix - A
 7.  If you want to learn more about the default schedules installed with the AROToolkit, please refer to Appendix -B.
@@ -103,7 +100,7 @@ By Default, all default schedules deployed with the AROToolkit are disabled.  B
 
 2.  Click on “Add a schedule”
 
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/azure-resource-optimization-toolkit/images/AROToolkit/image16.png">
+    ![alt text](images/AROToolkit/image16.png "Add Schedule")
 
 3.  New Schedule blade will be open. Provide all the inputs
 
@@ -119,13 +116,13 @@ By Default, all default schedules deployed with the AROToolkit are disabled.  B
 
 4.  Click on “**Create**”
 
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/azure-resource-optimization-toolkit/images/AROToolkit/image17.png">
-    
+    ![alt text](images/AROToolkit/image17.png "Create Schedule")
+   
 
 5.  Click on “Runbooks” to link the runbook to the above created
     schedule.
 
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/azure-resource-optimization-toolkit/images/AROToolkit/image18.png">
+    ![alt text](images/AROToolkit/image18.png "Runbooks schedule")
     
 
 6.  Select the required Runbook
@@ -140,21 +137,20 @@ By Default, all default schedules deployed with the AROToolkit are disabled.  B
 
 7.  After selecting the runbook, click on “**Schedules**” tile.
 
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/azure-resource-optimization-toolkit/images/AROToolkit/image19.png">
+     ![alt text](images/AROToolkit/image19.png "Schedules")
 
 8.  Click on “**Add a schedule**”
 
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/azure-resource-optimization-toolkit/images/AROToolkit/image20.png">
-    
-
+     ![alt text](images/AROToolkit/image20.png "Add Schedule")
+  
 9.  Click on “**Link a schedule to your runbook**”
 
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/azure-resource-optimization-toolkit/images/AROToolkit/image21.png">
+     ![alt text](images/AROToolkit/image21.png "Link Schedule")
 
 10. Select the schedule which you have created earlier. In this example,
     it is “TestSchedule1” so select that
 
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/azure-resource-optimization-toolkit/images/AROToolkit/image22.png">
+     ![alt text](images/AROToolkit/image22.png "Select Schedule")
     
 
 11. Click on “**Parameters and run settings**” to add the parameters
@@ -221,15 +217,15 @@ to the trouble of provisioning a service account to deploy ARO Toolkit.
 2.  Go into your automation account and navigate to “Run As Accounts”
     and then click Create for Azure Run As Account.
 
-<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/azure-resource-optimization-toolkit/images/AROToolkit/image23.png">
+     ![alt text](images/AROToolkit/image23.png "Run As Accounts")
 
 
 1.  Once this completes, navigate to the Bootstrap\_Main runbook and
     start it.
 
-<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/azure-resource-optimization-toolkit/images/AROToolkit/image24.png">
+     ![alt text](images/AROToolkit/image24.png "Bootstrap")
 
 
-<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/azure-resource-optimization-toolkit/images/AROToolkit/image25.png">
+     ![alt text](images/AROToolkit/image25.png "Bootstrap")
 
 2. After this runs successfully, you should be all set up
