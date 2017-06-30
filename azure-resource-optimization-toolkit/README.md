@@ -21,61 +21,10 @@ Click Deploy to Azure and proceed to Step 2, "Configure Azure Automation Variabl
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FMicrosoft%2FMSITARM%2Fmaster%2Fazure-resource-optimization-toolkit%2Fazuredeploy.json" target="_blank">
 <img src="http://armviz.io/visualizebutton.png"/>
 </a>
-<br>
-***
-## **From Azure Template**
 
-
-1.  Navigate to Azure portal and select your subscription (if you have
-    more than one)
-
-2.  Click on More Services &gt;
-
-    <img src="https://raw.githubusercontent.com/toddrob/azure-quickstart-templates/aro-toolkit/azure-resource-optimization-toolkit/images/AROToolkit/image3.png">
-<br>
-
-3.  <img src="https://raw.githubusercontent.com/toddrob/azure-quickstart-templates/aro-toolkit/azure-resource-optimization-toolkit/images/AROToolkit/image4.png">
+Important!  A bootstrap runbook can take up to 15 minutes to complete setting up your Azure Automation account.  Before you use ARO Toolkit, validate that the Azure Run As account has been created as show below.  If not, follow the steps in Appendix D 
+    <img src="https://raw.githubusercontent.com/toddrob/azure-quickstart-templates/aro-toolkit/azure-resource-optimization-toolkit/images/AROToolkit/validateRunAs.png">
     
-
-4.  In the search window, type “**Templates**” which will display the
-    Templates
-
-    <img src="https://raw.githubusercontent.com/toddrob/azure-quickstart-templates/aro-toolkit/azure-resource-optimization-toolkit/images/AROToolkit/image5.png">
-    
-    Note: Click the star symbol to toggle
-    favorites
-
-5.  Click the Templates, which will display all the available templates
-    for your subscription based on your logged in user.
-
-6.  Select the ARO Toolkit template “**azure-resource-optimizer-toolkit**”
-
-7.  Click the “**azure-resource-optimizer-toolkit**” template
-
-8.  Click the “Deploy”
-
-9.  Fill all the mandatory input parameters
-
-    **Note1:** Click <img src="https://raw.githubusercontent.com/toddrob/azure-quickstart-templates/aro-toolkit/azure-resource-optimization-toolkit/images/AROToolkit/image6.png">
-    this icon to get the help text
-
-    **Note2:** Make sure you provide your own service account in the
-    “**Azure Admin**” input field instead of regular user account (due
-    to 2FA enabled on all user account)
-
-    <img src="https://raw.githubusercontent.com/toddrob/azure-quickstart-templates/aro-toolkit/azure-resource-optimization-toolkit/images/AROToolkit/image7.png">
-
-10. Select the checkbox (Terms and Conditions)
-
-    <img src="https://raw.githubusercontent.com/toddrob/azure-quickstart-templates/aro-toolkit/azure-resource-optimization-toolkit/images/AROToolkit/image8.png">
-    
-
-11. Click “**Purchase**” button to start the deployment
-
-    <img src="https://raw.githubusercontent.com/toddrob/azure-quickstart-templates/aro-toolkit/azure-resource-optimization-toolkit/images/AROToolkit/image9.png">
-    
-
-12. Deployment will take approximately 15-20 minutes to complete
 
 # **Step 2 Configure Azure Automation Variables**
 
