@@ -42,8 +42,8 @@ try
     #Local Variables
 
     $GithubRootPath    = "https://raw.githubusercontent.com/Microsoft/MSITARM"
-    $GithubBranch  = "__branch__"
-    $ScriptPath    = "ARO-toolkit/scripts"
+    $GithubBranch  = "azure-resource-optimization-toolkit"
+    $ScriptPath    = "azure-resource-optimization-toolkit/scripts"
     $FileName = "AutoUpdateWorker.ps1"
     $GithubFullPath = "$($GithubRootPath)/$($GithubBranch)/$($ScriptPath)/$($FileName)"
 

@@ -17,8 +17,8 @@ Deploy an Azure Automation account with preconfigured runbooks and schedules to 
 ## **From Github**
 Click Deploy to Azure and proceed to Step 2, "Configure Azure Automation Variables".
 
-[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FMicrosoft%2FMSITARM%2Fmaster%2FARO-toolkit%2Fazuredeploy.json)
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FMicrosoft%2FMSITARM%2Fmaster%2FARO-toolkit%2Fazuredeploy.json" target="_blank">
+[![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FMicrosoft%2FMSITARM%2Fmaster%2Fazure-resource-optimization-toolkit%2Fazuredeploy.json)
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FMicrosoft%2FMSITARM%2Fmaster%2Fazure-resource-optimization-toolkit%2Fazuredeploy.json" target="_blank">
 <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 <br>
@@ -31,16 +31,16 @@ Click Deploy to Azure and proceed to Step 2, "Configure Azure Automation Variabl
 
 2.  Click on More Services &gt;
 
-    <img src="https://raw.githubusercontent.com/Microsoft/MSITARM/master/images/AROToolkit/image3.png">
+    <img src="https://raw.githubusercontent.com/toddrob/azure-quickstart-templates/master/images/AROToolkit/image3.png">
 <br>
 
-3.  <img src="https://raw.githubusercontent.com/Microsoft/MSITARM/master/images/AROToolkit/image4.png">
+3.  <img src="https://raw.githubusercontent.com/toddrob/azure-quickstart-templates/master/images/AROToolkit/image4.png">
     
 
 4.  In the search window, type “**Templates**” which will display the
     Templates
 
-    <img src="https://raw.githubusercontent.com/Microsoft/MSITARM/master/images/AROToolkit/image5.png">
+    <img src="https://raw.githubusercontent.com/toddrob/azure-quickstart-templates/master/images/AROToolkit/image5.png">
     
     Note: Click the star symbol to toggle
     favorites
@@ -56,23 +56,23 @@ Click Deploy to Azure and proceed to Step 2, "Configure Azure Automation Variabl
 
 9.  Fill all the mandatory input parameters
 
-    **Note1:** Click <img src="https://raw.githubusercontent.com/Microsoft/MSITARM/master/images/AROToolkit/image6.png">
+    **Note1:** Click <img src="https://raw.githubusercontent.com/toddrob/azure-quickstart-templates/master/images/AROToolkit/image6.png">
     this icon to get the help text
 
     **Note2:** Make sure you provide your own service account in the
     “**Azure Admin**” input field instead of regular user account (due
     to 2FA enabled on all user account)
 
-    <img src="https://raw.githubusercontent.com/Microsoft/MSITARM/master/images/AROToolkit/image7.png">
+    <img src="https://raw.githubusercontent.com/toddrob/azure-quickstart-templates/master/images/AROToolkit/image7.png">
 
 10. Select the checkbox (Terms and Conditions)
 
-    <img src="https://raw.githubusercontent.com/Microsoft/MSITARM/master/images/AROToolkit/image8.png">
+    <img src="https://raw.githubusercontent.com/toddrob/azure-quickstart-templates/master/images/AROToolkit/image8.png">
     
 
 11. Click “**Purchase**” button to start the deployment
 
-    <img src="https://raw.githubusercontent.com/Microsoft/MSITARM/master/images/AROToolkit/image9.png">
+    <img src="https://raw.githubusercontent.com/toddrob/azure-quickstart-templates/master/images/AROToolkit/image9.png">
     
 
 12. Deployment will take approximately 15-20 minutes to complete
@@ -84,7 +84,7 @@ Click Deploy to Azure and proceed to Step 2, "Configure Azure Automation Variabl
 
 2.  Click on “**Automation Accounts**” from the service blade
 
-    <img src="https://raw.githubusercontent.com/Microsoft/MSITARM/master/images/AROToolkit/image10.png">
+    <img src="https://raw.githubusercontent.com/toddrob/azure-quickstart-templates/master/images/AROToolkit/image10.png">
     
 
 3.  select the Azure Automation Account which you deployed
@@ -93,12 +93,12 @@ Click Deploy to Azure and proceed to Step 2, "Configure Azure Automation Variabl
 
 5.  Click “**Assets**”
 
-    <img src="https://raw.githubusercontent.com/Microsoft/MSITARM/master/images/AROToolkit/image11.png">
+    <img src="https://raw.githubusercontent.com/toddrob/azure-quickstart-templates/master/images/AROToolkit/image11.png">
     
 
 6.  Click “**Variables**” tile
 
-    <img src="https://raw.githubusercontent.com/Microsoft/MSITARM/master/images/AROToolkit/image12.png">
+    <img src="https://raw.githubusercontent.com/toddrob/azure-quickstart-templates/master/images/AROToolkit/image12.png">
     
 
 7.  If needed you can maximize the variables window to get better
@@ -121,7 +121,7 @@ Click Deploy to Azure and proceed to Step 2, "Configure Azure Automation Variabl
     d.  **Note:** Please make sure you don’t make any changes to the
         variables that prefixed with “Internal”
 
-    <img src="https://raw.githubusercontent.com/Microsoft/MSITARM/master/images/AROToolkit/image13a.png">
+    <img src="https://raw.githubusercontent.com/toddrob/azure-quickstart-templates/master/images/AROToolkit/image13a.png">
         
 
 # **Step 3 Enable Azure Automation Schedules**
@@ -135,14 +135,14 @@ By Default, all default schedules deployed with the AROToolkit are disabled.  B
 
 3.  Click on “**Schedules**”
 
-    <img src="https://raw.githubusercontent.com/Microsoft/MSITARM/master/images/AROToolkit/image14a.png">
+    <img src="https://raw.githubusercontent.com/toddrob/azure-quickstart-templates/master/images/AROToolkit/image14a.png">
 
 4.  Select each schedule which will open the edit blade where you can
     enable them
 
 5.  Click “**Yes**” in the Enabled attribute and click “**Save**”
 
-    <img src="https://raw.githubusercontent.com/Microsoft/MSITARM/master/images/AROToolkit/image15.png">
+    <img src="https://raw.githubusercontent.com/toddrob/azure-quickstart-templates/master/images/AROToolkit/image15.png">
 
 6.  If you want to create the custom schedule, please refer to Appendix - A
 7.  If you want to learn more about the default schedules installed with the AROToolkit, please refer to Appendix -B.
@@ -153,7 +153,7 @@ By Default, all default schedules deployed with the AROToolkit are disabled.  B
 
 2.  Click on “Add a schedule”
 
-    <img src="https://raw.githubusercontent.com/Microsoft/MSITARM/master/images/AROToolkit/image16.png">
+    <img src="https://raw.githubusercontent.com/toddrob/azure-quickstart-templates/master/images/AROToolkit/image16.png">
 
 3.  New Schedule blade will be open. Provide all the inputs
 
@@ -169,13 +169,13 @@ By Default, all default schedules deployed with the AROToolkit are disabled.  B
 
 4.  Click on “**Create**”
 
-    <img src="https://raw.githubusercontent.com/Microsoft/MSITARM/master/images/AROToolkit/image17.png">
+    <img src="https://raw.githubusercontent.com/toddrob/azure-quickstart-templates/master/images/AROToolkit/image17.png">
     
 
 5.  Click on “Runbooks” to link the runbook to the above created
     schedule.
 
-    <img src="https://raw.githubusercontent.com/Microsoft/MSITARM/master/images/AROToolkit/image18.png">
+    <img src="https://raw.githubusercontent.com/toddrob/azure-quickstart-templates/master/images/AROToolkit/image18.png">
     
 
 6.  Select the required Runbook
@@ -190,21 +190,21 @@ By Default, all default schedules deployed with the AROToolkit are disabled.  B
 
 7.  After selecting the runbook, click on “**Schedules**” tile.
 
-    <img src="https://raw.githubusercontent.com/Microsoft/MSITARM/master/images/AROToolkit/image19.png">
+    <img src="https://raw.githubusercontent.com/toddrob/azure-quickstart-templates/master/images/AROToolkit/image19.png">
 
 8.  Click on “**Add a schedule**”
 
-    <img src="https://raw.githubusercontent.com/Microsoft/MSITARM/master/images/AROToolkit/image20.png">
+    <img src="https://raw.githubusercontent.com/toddrob/azure-quickstart-templates/master/images/AROToolkit/image20.png">
     
 
 9.  Click on “**Link a schedule to your runbook**”
 
-    <img src="https://raw.githubusercontent.com/Microsoft/MSITARM/master/images/AROToolkit/image21.png">
+    <img src="https://raw.githubusercontent.com/toddrob/azure-quickstart-templates/master/images/AROToolkit/image21.png">
 
 10. Select the schedule which you have created earlier. In this example,
     it is “TestSchedule1” so select that
 
-    <img src="https://raw.githubusercontent.com/Microsoft/MSITARM/master/images/AROToolkit/image22.png">
+    <img src="https://raw.githubusercontent.com/toddrob/azure-quickstart-templates/master/images/AROToolkit/image22.png">
     
 
 11. Click on “**Parameters and run settings**” to add the parameters
@@ -271,15 +271,15 @@ to the trouble of provisioning a service account to deploy ARO Toolkit.
 2.  Go into your automation account and navigate to “Run As Accounts”
     and then click Create for Azure Run As Account.
 
-<img src="https://raw.githubusercontent.com/Microsoft/MSITARM/master/images/AROToolkit/image23.png">
+<img src="https://raw.githubusercontent.com/toddrob/azure-quickstart-templates/master/images/AROToolkit/image23.png">
 
 
 1.  Once this completes, navigate to the Bootstrap\_Main runbook and
     start it.
 
-<img src="https://raw.githubusercontent.com/Microsoft/MSITARM/master/images/AROToolkit/image24.png">
+<img src="https://raw.githubusercontent.com/toddrob/azure-quickstart-templates/master/images/AROToolkit/image24.png">
 
 
-<img src="https://raw.githubusercontent.com/Microsoft/MSITARM/master/images/AROToolkit/image25.png">
+<img src="https://raw.githubusercontent.com/toddrob/azure-quickstart-templates/master/images/AROToolkit/image25.png">
 
 2. After this runs successfully, you should be all set up
