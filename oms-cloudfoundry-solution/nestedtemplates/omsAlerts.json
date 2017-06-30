@@ -1,0 +1,305 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "omsWorkspaceName": {
+            "type": "string",
+            "metadata": {
+                "description": "Assign a name for the Log Analytic Workspace Name"
+            }
+        },
+        "omsWorkspaceRegion": {
+            "type": "string",
+            "defaultValue": "West Europe",
+            "allowedValues": [
+                "East US",
+                "West Central US",
+                "West Europe",
+                "Southeast Asia",
+                "Australia Southeast"
+            ],
+            "metadata": {
+                "description": "Specify the region for your Workspace"
+            }
+        },
+        "recipients": {
+            "type": "string",
+            "metadata": {
+                "description": "List of recipients for the email alert separated by semicolon"
+            }
+        }
+    },
+    "variables": {
+        "alerts": [
+            {
+                "search": {
+                    "name": "Apps Synchronized",
+                    "category": "CF - Alerts",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=bbs Name_s=\"Domain.cf-apps\""
+                },
+                "alert": {
+                    "displayName": "Apps Not Synchronized",
+                    "description": "CF App requests from CC are not synchronized with DesiredLRPs for Diego to run",
+                    "severity": "Critical",
+                    "thresholdOperator": "lt",
+                    "thresholdValue": 1,
+                    "schedule": {
+                        "interval": 15,
+                        "timeSpan": 60
+                    },
+                    "throttleMinutes": 60,
+                    "notification": {
+                        "recipients": [
+                            "[parameters('recipients')]"
+                        ],
+                        "subject": "Apps Not Synchronized"
+                    }
+                }
+            },
+            {
+                "search": {
+                    "name": "Unhealthy Cells",
+                    "category": "CF - Alerts",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=rep Name_s=UnhealthyCell Value_d>1"
+                },
+                "alert": {
+                    "displayName": "Unhealthy Cells",
+                    "description": "Unhealthy Diego cells",
+                    "severity": "Critical",
+                    "thresholdOperator": "gt",
+                    "thresholdValue": 0,
+                    "schedule": {
+                        "interval": 15,
+                        "timeSpan": 60
+                    },
+                    "throttleMinutes": 60,
+                    "notification": {
+                        "recipients": [
+                            "[parameters('recipients')]"
+                        ],
+                        "subject": "Unhealthy Cells"
+                    }
+                }
+            },
+            {
+                "search": {
+                    "name": "System Unhealthy",
+                    "category": "CF - Alerts",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=\"bosh-hm-forwarder\" Name_s=\"system.healthy\" Value_d=0"
+                },
+                "alert": {
+                    "displayName": "System Unhealthy",
+                    "description": "System is not healthy",
+                    "severity": "Critical",
+                    "thresholdOperator": "gt",
+                    "thresholdValue": 0,
+                    "schedule": {
+                        "interval": 15,
+                        "timeSpan": 60
+                    },
+                    "throttleMinutes": 60,
+                    "notification": {
+                        "recipients": [
+                            "[parameters('recipients')]"
+                        ],
+                        "subject": "System Unhealthy"
+                    }
+                }
+            },
+            {
+                "search": {
+                    "name": "Consul is Down",
+                    "category": "CF - Alerts",
+                    "query": "Type=CF_ValueMetric_CL Origin_s=route_emitter Name_s=ConsulDownMode Value_d>0"
+                },
+                "alert": {
+                    "displayName": "Consul is Down",
+                    "description": "Consul is Down",
+                    "severity": "Critical",
+                    "thresholdOperator": "gt",
+                    "thresholdValue": 0,
+                    "schedule": {
+                        "interval": 15,
+                        "timeSpan": 60
+                    },
+                    "throttleMinutes": 60,
+                    "notification": {
+                        "recipients": [
+                            "[parameters('recipients')]"
+                        ],
+                        "subject": "Consul is Down"
+                    }
+                }
+            },
+            {
+                "search": {
+                    "name": "Dropped Messages",
+                    "category": "CF - Alerts",
+                    "query": "Type=CF_CounterEvent_CL Origin_s=DopplerServer (Name_s=\"TruncatingBuffer.DroppedMessages\" or Name_s=\"doppler.shedEnvelopes\") Delta_d>0"
+                },
+                "alert": {
+                    "displayName": "Dropped Messages",
+                    "description": "The delta number of messages intentionally dropped by Doppler due to back pressure",
+                    "severity": "Critical",
+                    "thresholdOperator": "gt",
+                    "thresholdValue": 0,
+                    "schedule": {
+                        "interval": 15,
+                        "timeSpan": 60
+                    },
+                    "throttleMinutes": 60,
+                    "notification": {
+                        "recipients": [
+                            "[parameters('recipients')]"
+                        ],
+                        "subject": "Dropped Messages"
+                    }
+                }
+            },
+            {
+                "search": {
+                    "name": "Problem in Logging Process",
+                    "category": "CF - Alerts",
+                    "query": "Type=CF_LogMessage_CL SourceType_s=LGR MessageType_s=ERR"
+                },
+                "alert": {
+                    "displayName": "Problem in Logging Process",
+                    "description": "Loggregator emits LGR to indicate problems with the logging process",
+                    "severity": "Critical",
+                    "thresholdOperator": "gt",
+                    "thresholdValue": 0,
+                    "schedule": {
+                        "interval": 15,
+                        "timeSpan": 60
+                    },
+                    "throttleMinutes": 60,
+                    "notification": {
+                        "recipients": [
+                            "[parameters('recipients')]"
+                        ],
+                        "subject": "Problem in Logging Process"
+                    }
+                }
+            },
+            {
+                "search": {
+                    "name": "Slow Consumer Alert",
+                    "category": "CF - Alerts",
+                    "query": "Type=CF_ValueMetric_CL Name_s=slowConsumerAlert"
+                },
+                "alert": {
+                    "displayName": "Slow Consumer Alert",
+                    "description": "When the nozzle receives slow consumer alert from Loggregator, it sends slowConsumerAlert ValueMetric to OMS",
+                    "severity": "Critical",
+                    "thresholdOperator": "gt",
+                    "thresholdValue": 0,
+                    "schedule": {
+                        "interval": 15,
+                        "timeSpan": 60
+                    },
+                    "throttleMinutes": 60,
+                    "notification": {
+                        "recipients": [
+                            "[parameters('recipients')]"
+                        ],
+                        "subject": "Slow Consumer Alert"
+                    }
+                }
+            },
+            {
+                "search": {
+                    "name": "Lost Events from Nozzle",
+                    "category": "CF - Alerts",
+                    "query": "Type=CF_CounterEvent_CL Job_s=nozzle Name_s=eventsLost Delta_d>0"
+                },
+                "alert": {
+                    "displayName": "Lost Events from Nozzle",
+                    "description": "Lost Events from Nozzle",
+                    "severity": "Critical",
+                    "thresholdOperator": "gt",
+                    "thresholdValue": 0,
+                    "schedule": {
+                        "interval": 15,
+                        "timeSpan": 60
+                    },
+                    "throttleMinutes": 60,
+                    "notification": {
+                        "recipients": [
+                            "[parameters('recipients')]"
+                        ],
+                        "subject": "Lost Events from Nozzle"
+                    }
+                }
+            }
+        ]
+    },
+    "resources": [
+        {
+            "name": "[concat(parameters('omsWorkspaceName'), '/', 'SavedSearchForAlert', copyIndex())]",
+            "type": "Microsoft.OperationalInsights/workspaces/savedSearches",
+            "apiVersion": "2015-11-01-preview",
+            "copy": {
+                "name": "searchCopy",
+                "count": "[length(variables('alerts'))]"
+            },
+            "tags": {},
+            "properties": {
+                "etag": "*",
+                "query": "[variables('alerts')[copyIndex()].search.query]",
+                "displayName": "[variables('alerts')[copyIndex()].search.name]",
+                "category": "[variables('alerts')[copyIndex()].search.category]"
+            }
+        },
+        {
+            "name": "[concat(parameters('omsWorkspaceName'), '/', 'SavedSearchForAlert', copyIndex(), '/Schedule', copyIndex())]",
+            "type": "Microsoft.OperationalInsights/workspaces/savedSearches/schedules",
+            "apiVersion": "2015-11-01-preview",
+            "copy": {
+                "name": "scheduleCopy",
+                "count": "[length(variables('alerts'))]"
+            },
+            "tags": {},
+            "dependsOn": [
+                "searchCopy"
+            ],
+            "properties": {
+                "etag": "*",
+                "interval": "[variables('alerts')[copyIndex()].alert.schedule.interval]",
+                "queryTimeSpan": "[variables('alerts')[copyIndex()].alert.schedule.timeSpan]",
+                "enabled": true
+            }
+        },
+        {
+            "name": "[concat(parameters('omsWorkspaceName'), '/', 'SavedSearchForAlert', copyIndex(), '/Schedule', copyIndex(), '/Alert', copyIndex())]",
+            "type": "Microsoft.OperationalInsights/workspaces/savedSearches/schedules/actions",
+            "apiVersion": "2015-11-01-preview",
+            "copy": {
+                "name": "alertCopy",
+                "count": "[length(variables('alerts'))]"
+            },
+            "dependsOn": [
+                "scheduleCopy"
+            ],
+            "tags": {},
+            "properties": {
+                "etag": "*",
+                "Type": "Alert",
+                "Name": "[variables('alerts')[copyIndex()].alert.displayName]",
+                "Description": "[variables('alerts')[copyIndex()].alert.description]",
+                "Severity": "[variables('alerts')[copyIndex()].alert.severity]",
+                "Threshold": {
+                    "Operator": "[variables('alerts')[copyIndex()].alert.thresholdOperator]",
+                    "Value": "[variables('alerts')[copyIndex()].alert.thresholdValue]"
+                },
+                "Throttling": {
+                    "DurationInMinutes": "[variables('alerts')[copyIndex()].alert.throttleMinutes]"
+                },
+                "EmailNotification": {
+                    "Recipients": "[variables('alerts')[copyIndex()].alert.notification.recipients]",
+                    "Subject": "[variables('alerts')[copyIndex()].alert.notification.subject]",
+                    "Attachment": "None"
+                }
+            }
+        }        
+    ]
+}
