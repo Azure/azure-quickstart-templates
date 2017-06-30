@@ -33,6 +33,7 @@ Important!  A bootstrap runbook can take up to 15 minutes to complete setting up
     more than one)
 
 2.  Click on “**Automation Accounts**” from the service blade
+
 ![alt text](images/AROToolkit/image10.png "Services")
     
 
