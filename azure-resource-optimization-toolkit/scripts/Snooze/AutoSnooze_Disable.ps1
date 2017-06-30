@@ -43,7 +43,7 @@ try
     #---------Read all the input variables---------------
     $SubId = Get-AutomationVariable -Name 'Internal_AzureSubscriptionId'
     $ResourceGroupNames = Get-AutomationVariable -Name 'External_ResourceGroupNames'
-    $AutomationAccountName = Get-AutomationVariable -Name 'Internal_AROAutomationAccountName'
+    $automationAccountName = Get-AutomationVariable -Name 'Internal_AROautomationAccountName'
     $aroResourceGroupName = Get-AutomationVariable -Name 'Internal_AROResourceGroupName'
 
     $webhookUri = Get-AutomationVariable -Name 'Internal_AutoSnooze_WebhookUri'
@@ -52,7 +52,7 @@ try
     Write-Output "Disabling the schedules for AutoSnooze..."
 
     #Disable the schedule for AutoSnooze
-    Set-AzureRmAutomationSchedule -AutomationAccountName $AutomationAccountName -Name $scheduleNameforCreateAlert -ResourceGroupName $aroResourceGroupName -IsEnabled $false
+    Set-AzureRmAutomationSchedule -automationAccountName $automationAccountName -Name $scheduleNameforCreateAlert -ResourceGroupName $aroResourceGroupName -IsEnabled $false
 
     Write-Output "Disabling the alerts on all the VM's configured as per asset variable..."
 
@@ -95,7 +95,7 @@ try
         try
         {
             $params = @{"VMObject"=$VM;"AlertAction"="Disable";"WebhookUri"=$webhookUri}                    
-            $runbook = Start-AzureRmAutomationRunbook -AutomationAccountName $AutomationAccountName -Name 'AutoSnooze_CreateAlert_Child' -ResourceGroupName $aroResourceGroupName –Parameters $params
+            $runbook = Start-AzureRmAutomationRunbook -automationAccountName $automationAccountName -Name 'AutoSnooze_CreateAlert_Child' -ResourceGroupName $aroResourceGroupName –Parameters $params
         }
         catch
         {

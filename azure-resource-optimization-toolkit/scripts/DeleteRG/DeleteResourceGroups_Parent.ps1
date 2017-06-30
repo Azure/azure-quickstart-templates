@@ -41,7 +41,7 @@ catch
 try
 {
     [string[]] $VMRGList = $RGNames -split ","
-    $AutomationAccountName = Get-AutomationVariable -Name 'Internal_AROAutomationAccountName'
+    $automationAccountName = Get-AutomationVariable -Name 'Internal_AROautomationAccountName'
     $aroResourceGroupName = Get-AutomationVariable -Name 'Internal_AROResourceGroupName'
 
 
@@ -62,7 +62,7 @@ try
                 {
                     Write-Output "Calling the child runbook DeleteRG to delete the resource group $($Resource)..."
                     $params = @{"RGName"=$Resource}                  
-                    $runbook = Start-AzureRmAutomationRunbook -AutomationAccountName $AutomationAccountName -ResourceGroupName $aroResourceGroupName -Name "DeleteResourceGroup_Child" -Parameters $params
+                    $runbook = Start-AzureRmAutomationRunbook -automationAccountName $automationAccountName -ResourceGroupName $aroResourceGroupName -Name "DeleteResourceGroup_Child" -Parameters $params
                 }                
                 $Resources+=$Resource                
             }
