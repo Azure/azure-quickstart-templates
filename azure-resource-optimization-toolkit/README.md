@@ -33,8 +33,7 @@ Important!  A bootstrap runbook can take up to 15 minutes to complete setting up
     more than one)
 
 2.  Click on “**Automation Accounts**” from the service blade
-
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/azure-resource-optimization-toolkit/images/AROToolkit/image10.png">
+![alt text](images/AROToolkit/image10.png "Services")
     
 
 3.  select the Azure Automation Account which you deployed
