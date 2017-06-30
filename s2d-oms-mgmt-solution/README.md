@@ -299,7 +299,7 @@ C:\temp\s2dmon.ps1 -Start
  execute the command twice. I've implemented a logic for checking double records and removing
  duplicate records. This might be the cause for Issue 2.
 
-To update to new version reinstall the service on all nodes:
+To update to new version reinstall the service on all nodes: 
 
 ```powershell
 C:\temp\s2dmon.ps1 -Stop
