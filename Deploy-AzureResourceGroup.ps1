@@ -33,7 +33,9 @@ function Format-ValidationOutput {
 
 $OptionalParameters = New-Object -TypeName Hashtable
 
-$OptionalParameters.Add('DeploymentDebugLogLevel', $DebugOptions)
+if (!$ValidateOnly) {
+    $OptionalParameters.Add('DeploymentDebugLogLevel', $DebugOptions)
+}
 
 $TemplateFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $TemplateFile))
 $TemplateParametersFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $TemplateParametersFile))
