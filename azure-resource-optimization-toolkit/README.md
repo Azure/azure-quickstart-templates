@@ -54,11 +54,8 @@ Important!  A bootstrap runbook can take up to 15 minutes to complete setting up
 
 8.  Update the variables as per your requirements
 
-    **Note:** If you want to act on all the VM’s at subscription level,
-    then you don’t need to specify the below \#a step.
-
     a.  **External\_ResourceGroupNames:** Enter the resource group names
-        with comma separated values. (Example: RG1, RG2, RG3)
+        with comma separated values. (Example: RG1, RG2, RG3).  If you want to act on all the VMs at the subscription level, then leave this field blank.
 
     b.  **External\_ExcludeVMNames:** Enter the VM names with comma
         separated values to opt-in for the excluded list.
