@@ -43,8 +43,8 @@ try
     #Local Variables
 
     $GithubRootPath = "https://raw.githubusercontent.com/Microsoft/MSITARM"
-    $GithubBranch = "__branch__"
-    $ScriptPath = "ARO-toolkit/nestedtemplates"
+    $GithubBranch = "azure-resource-optimization-toolkit"
+    $ScriptPath = "azure-resource-optimization-toolkit/nestedtemplates"
     $FileName = "Automation.json"
     $GithubFullPath = "$($GithubRootPath)/$($GithubBranch)/$($ScriptPath)/$($FileName)"
 
@@ -153,7 +153,7 @@ try
 
                     if($VersionDiffRB -gt 0)
                     {
-                        $RunbookDownloadPath = "$($GithubRootPath)/$($GithubBranch)/ARO-toolkit$($Runbooktable[$runb.name])"
+                        $RunbookDownloadPath = "$($GithubRootPath)/$($GithubBranch)/azure-resource-optimization-toolkit$($Runbooktable[$runb.name])"
                         Write-Output "Updates needed for $($runb.name)..."
                         #Now download the runbook and do the update
                         Write-Output "Downloading the updated PowerShell script from Github..."
@@ -171,7 +171,7 @@ try
                 }
                 else
                 {
-                    $RunbookDownloadPath = "$($GithubRootPath)/$($GithubBranch)/ARO-toolkit$($Runbooktable[$runb.name])"
+                    $RunbookDownloadPath = "$($GithubRootPath)/$($GithubBranch)/azure-resource-optimization-toolkit$($Runbooktable[$runb.name])"
                     Write-Output "New Runbook $($runb.name) found..."
                     #New Runbook. So download and create it
                     Write-Output "Downloading the PowerShell script from Github..."
@@ -197,7 +197,7 @@ try
         #just run the bootstrap_main runbook to create the schedules
         $Bootstrap_MainRunbook = "Bootstrap_Main"
 
-        $RunbookDownloadPath = "$($GithubRootPath)/$($GithubBranch)/ARO-toolkit/scripts/Bootstrap_Main.ps1"
+        $RunbookDownloadPath = "$($GithubRootPath)/$($GithubBranch)/azure-resource-optimization-toolkit/scripts/Bootstrap_Main.ps1"
         Write-Output "Downloading the Bootstrap_Main PowerShell script from Github..."
         $WebClientRB = New-Object System.Net.WebClient
         $WebClientRB.DownloadFile($($RunbookDownloadPath),"$PSScriptRoot\$($Bootstrap_MainRunbook).ps1")

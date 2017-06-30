@@ -24,11 +24,11 @@ Param(
 try
 {
     $formatedDate = (Get-Date).ToString('MMddyyyy-hhmmss')
-    $outfile = ".\ARO-toolkit\Logs\AROToolKit-$formatedDate.log"
+    $outfile = ".\azure-resource-optimization-toolkit\Logs\AROToolKit-$formatedDate.log"
     if(!(Test-Path $outfile -Type Leaf))
     {
-        New-Item -Path ".\ARO-toolkit\Logs" -ItemType directory -ErrorAction SilentlyContinue
-        Remove-Item -Path ".\ARO-toolkit\Logs" -Include *.log -Recurse
+        New-Item -Path ".\azure-resource-optimization-toolkit\Logs" -ItemType directory -ErrorAction SilentlyContinue
+        Remove-Item -Path ".\azure-resource-optimization-toolkit\Logs" -Include *.log -Recurse
 	    New-Item -Path "$outfile" -ItemType file -ErrorAction SilentlyContinue
     }
 
@@ -47,8 +47,8 @@ try
     $depName ="AROToolkit"
     $newGUID = [Guid]::NewGuid() 
     $resourceGroupLocation = 'East US 2'
-    $templateFilePath = ".\ARO-toolkit\azuredeploy.json"
-    $parametersFilePath = ".\ARO-toolkit\azuredeploy.parameters.json"
+    $templateFilePath = ".\azure-resource-optimization-toolkit\azuredeploy.json"
+    $parametersFilePath = ".\azure-resource-optimization-toolkit\azuredeploy.parameters.json"
 
 
     # Create requested resource group
