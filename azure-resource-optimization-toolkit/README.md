@@ -23,7 +23,7 @@ Click Deploy to Azure and proceed to Step 2, "Configure Azure Automation Variabl
 </a>
 
 Important!  A bootstrap runbook can take up to 15 minutes to complete setting up your Azure Automation account.  Before you use ARO Toolkit, validate the Azure Run As account is created as show below.  If not, follow the steps in Appendix D. 
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/azure-resource-optimization-toolkit/images/AROToolkit/validateRunAs.png">
+    <img src="https://raw.githubusercontent.com/toddrob/azure-quickstart-templates/aro-toolkit/azure-resource-optimization-toolkit/images/AROToolkit/validateRunAs.png">
     
 
 # **Step 2 Configure Azure Automation Variables**
@@ -33,7 +33,7 @@ Important!  A bootstrap runbook can take up to 15 minutes to complete setting up
 
 2.  Click on “**Automation Accounts**” from the service blade
 
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/azure-resource-optimization-toolkit/images/AROToolkit/image10.png">
+    <img src="https://raw.githubusercontent.com/toddrob/azure-quickstart-templates/aro-toolkit/azure-resource-optimization-toolkit/images/AROToolkit/image10.png">
     
 
 3.  select the Azure Automation Account which you deployed
@@ -42,12 +42,12 @@ Important!  A bootstrap runbook can take up to 15 minutes to complete setting up
 
 5.  Click “**Assets**”
 
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/azure-resource-optimization-toolkit/images/AROToolkit/image11.png">
+    <img src="https://raw.githubusercontent.com/toddrob/azure-quickstart-templates/aro-toolkit/azure-resource-optimization-toolkit/images/AROToolkit/image11.png">
     
 
 6.  Click “**Variables**” tile
 
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/azure-resource-optimization-toolkit/images/AROToolkit/image12.png">
+    <img src="https://raw.githubusercontent.com/toddrob/azure-quickstart-templates/aro-toolkit/azure-resource-optimization-toolkit/images/AROToolkit/image12.png">
     
 
 7.  If needed you can maximize the variables window to get better
@@ -70,7 +70,7 @@ Important!  A bootstrap runbook can take up to 15 minutes to complete setting up
     d.  **Note:** Please make sure you don’t make any changes to the
         variables that prefixed with “Internal”
 
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/azure-resource-optimization-toolkit/images/AROToolkit/image13a.png">
+    <img src="https://raw.githubusercontent.com/toddrob/azure-quickstart-templates/aro-toolkit/azure-resource-optimization-toolkit/images/AROToolkit/image13a.png">
         
 
 # **Step 3 Enable Azure Automation Schedules**
@@ -84,14 +84,14 @@ By Default, all default schedules deployed with the AROToolkit are disabled.  B
 
 3.  Click on “**Schedules**”
 
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/azure-resource-optimization-toolkit/images/AROToolkit/image14a.png">
+    <img src="https://raw.githubusercontent.com/toddrob/azure-quickstart-templates/aro-toolkit/azure-resource-optimization-toolkit/images/AROToolkit/image14a.png">
 
 4.  Select each schedule which will open the edit blade where you can
     enable them
 
 5.  Click “**Yes**” in the Enabled attribute and click “**Save**”
 
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/azure-resource-optimization-toolkit/images/AROToolkit/image15.png">
+    <img src="https://raw.githubusercontent.com/toddrob/azure-quickstart-templates/aro-toolkit/azure-resource-optimization-toolkit/images/AROToolkit/image15.png">
 
 6.  If you want to create the custom schedule, please refer to Appendix - A
 7.  If you want to learn more about the default schedules installed with the AROToolkit, please refer to Appendix -B.
@@ -102,7 +102,7 @@ By Default, all default schedules deployed with the AROToolkit are disabled.  B
 
 2.  Click on “Add a schedule”
 
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/azure-resource-optimization-toolkit/images/AROToolkit/image16.png">
+    <img src="https://raw.githubusercontent.com/toddrob/azure-quickstart-templates/aro-toolkit/azure-resource-optimization-toolkit/images/AROToolkit/image16.png">
 
 3.  New Schedule blade will be open. Provide all the inputs
 
@@ -118,13 +118,13 @@ By Default, all default schedules deployed with the AROToolkit are disabled.  B
 
 4.  Click on “**Create**”
 
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/azure-resource-optimization-toolkit/images/AROToolkit/image17.png">
+    <img src="https://raw.githubusercontent.com/toddrob/azure-quickstart-templates/aro-toolkit/azure-resource-optimization-toolkit/images/AROToolkit/image17.png">
     
 
 5.  Click on “Runbooks” to link the runbook to the above created
     schedule.
 
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/azure-resource-optimization-toolkit/images/AROToolkit/image18.png">
+    <img src="https://raw.githubusercontent.com/toddrob/azure-quickstart-templates/aro-toolkit/azure-resource-optimization-toolkit/images/AROToolkit/image18.png">
     
 
 6.  Select the required Runbook
@@ -139,21 +139,21 @@ By Default, all default schedules deployed with the AROToolkit are disabled.  B
 
 7.  After selecting the runbook, click on “**Schedules**” tile.
 
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/azure-resource-optimization-toolkit/images/AROToolkit/image19.png">
+    <img src="https://raw.githubusercontent.com/toddrob/azure-quickstart-templates/aro-toolkit/azure-resource-optimization-toolkit/images/AROToolkit/image19.png">
 
 8.  Click on “**Add a schedule**”
 
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/azure-resource-optimization-toolkit/images/AROToolkit/image20.png">
+    <img src="https://raw.githubusercontent.com/toddrob/azure-quickstart-templates/aro-toolkit/azure-resource-optimization-toolkit/images/AROToolkit/image20.png">
     
 
 9.  Click on “**Link a schedule to your runbook**”
 
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/azure-resource-optimization-toolkit/images/AROToolkit/image21.png">
+    <img src="https://raw.githubusercontent.com/toddrob/azure-quickstart-templates/aro-toolkit/azure-resource-optimization-toolkit/images/AROToolkit/image21.png">
 
 10. Select the schedule which you have created earlier. In this example,
     it is “TestSchedule1” so select that
 
-    <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/azure-resource-optimization-toolkit/images/AROToolkit/image22.png">
+    <img src="https://raw.githubusercontent.com/toddrob/azure-quickstart-templates/aro-toolkit/azure-resource-optimization-toolkit/images/AROToolkit/image22.png">
     
 
 11. Click on “**Parameters and run settings**” to add the parameters
@@ -220,15 +220,15 @@ to the trouble of provisioning a service account to deploy ARO Toolkit.
 2.  Go into your automation account and navigate to “Run As Accounts”
     and then click Create for Azure Run As Account.
 
-<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/azure-resource-optimization-toolkit/images/AROToolkit/image23.png">
+<img src="https://raw.githubusercontent.com/toddrob/azure-quickstart-templates/aro-toolkit/azure-resource-optimization-toolkit/images/AROToolkit/image23.png">
 
 
 1.  Once this completes, navigate to the Bootstrap\_Main runbook and
     start it.
 
-<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/azure-resource-optimization-toolkit/images/AROToolkit/image24.png">
+<img src="https://raw.githubusercontent.com/toddrob/azure-quickstart-templates/aro-toolkit/azure-resource-optimization-toolkit/images/AROToolkit/image24.png">
 
 
-<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/azure-resource-optimization-toolkit/images/AROToolkit/image25.png">
+<img src="https://raw.githubusercontent.com/toddrob/azure-quickstart-templates/aro-toolkit/azure-resource-optimization-toolkit/images/AROToolkit/image25.png">
 
 2. After this runs successfully, you should be all set up
