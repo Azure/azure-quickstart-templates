@@ -9,7 +9,7 @@
 
 This template deploys the Badgr Server web application (concentricsky) on Ubuntu. 
 
-Connect to the virtual machine with SSH: `ssh {adminUsername}@{dnsNameForPublicIP}.{region}.cloudapp.azure.com`. Installation log can be found under */var/log/azure*.
+Installation log can be found under */var/log/azure*.
 
 You can learn more about Badgr Server here:
 - [Badgr Server](https://badgr.io)

@@ -65,6 +65,7 @@
     "virtualNetworkName": "VNET",
 	"subnetName": "Subnet",
     "subnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName')),'/subnets/',variables('subnetName'))]",
+    
     "addressPrefix": "10.0.0.0/16",
     "subnetPrefix": "10.0.0.0/24",
     "nsgName": "node-nsg",
@@ -227,24 +228,34 @@
             }
           ]
         }
-      },
-	  "extensions": [
-	    {
-		  "name": "[concat(variables('vmName'), '-installscript')]",
-		  "properties": {
-			"publisher": "Microsoft.Azure.Extensions",
-			"type": "CustomScript",
-			"typeHandlerVersion": "2.0",
-			"autoUpgradeMinorVersion": true,
-			"settings": { 
-				"fileUris": [
-					"[concat(variables('scriptDownloadUri'), variables('installScript'))]"
-					],
-					"commandToExecute": "[variables('installCommand')]"
-				}
-			}
-		}
-	  ]
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('vmName'), '/installscript')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[concat(variables('scriptDownloadUri'), variables('installScript'))]"
+          ],
+          "commandToExecute": "[variables('installCommand')]"
+        }
+      }
     }
-  ]
+  ],
+  "outputs": {
+    "cluster": {
+      "type": "string",
+      "value": "[concat('Connect to the virtual machine with SSH: ssh ', variables('adminUsername'), '@', reference(concat('Microsoft.ContainerService/containerServices/', 'containerservice-', resourceGroup().name)).masterProfile.fqdn)]"
+    }
+  }
 }
