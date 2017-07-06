@@ -1,4 +1,4 @@
-### Service Health Alert ###
+### Autoscale Alert ###
 
 The following template deploys an Activity Log Alert with Action Group integrated
 
