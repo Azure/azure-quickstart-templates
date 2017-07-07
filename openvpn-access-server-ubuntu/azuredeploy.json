@@ -71,7 +71,8 @@
     "vmName": "MyubuntuVM",
     "virtualNetworkName": "MyVNET",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
-    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]"
+    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
+    "networkSecurityGroupName": "OpenVPN-NSG"
   },
   "resources": [
     {
@@ -94,6 +95,68 @@
           "domainNameLabel": "[parameters('dnsNamePrefix')]"
         }
       }
+    },
+    {
+        "name": "[parameters('networkSecurityGroupName')]",
+        "type": "Microsoft.Network/networkSecurityGroups",
+        "apiVersion": "[variables('apiVersion')]",
+        "location": "[parameters('location')]",
+        "properties": {
+            "securityRules": [
+                {
+                    "name": "OpenVPN_WebServer",
+                    "properties": {
+                        "priority": 1200,
+                        "sourceAddressPrefix": "*",
+                        "protocol": "TCP",
+                        "destinationPortRange": "943",
+                        "access": "Allow",
+                        "direction": "Inbound",
+                        "sourcePortRange": "*",
+                        "destinationAddressPrefix": "*"
+                    }
+                },
+                {
+                    "name": "OpenVPN443",
+                    "properties": {
+                        "priority": 1100,
+                        "sourceAddressPrefix": "*",
+                        "protocol": "TCP",
+                        "destinationPortRange": "443",
+                        "access": "Allow",
+                        "direction": "Inbound",
+                        "sourcePortRange": "*",
+                        "destinationAddressPrefix": "*"
+                    }
+                },
+                {
+                    "name": "OpenVPN1194",
+                    "properties": {
+                        "priority": 1300,
+                        "sourceAddressPrefix": "*",
+                        "protocol": "UDP",
+                        "destinationPortRange": "1194",
+                        "access": "Allow",
+                        "direction": "Inbound",
+                        "sourcePortRange": "*",
+                        "destinationAddressPrefix": "*"
+                    }
+                },
+                {
+                    "name": "default-allow-ssh",
+                    "properties": {
+                        "priority": 1000,
+                        "sourceAddressPrefix": "*",
+                        "protocol": "TCP",
+                        "destinationPortRange": "22",
+                        "access": "Allow",
+                        "direction": "Inbound",
+                        "sourcePortRange": "*",
+                        "destinationAddressPrefix": "*"
+                    }
+                }
+            ]
+        }
     },
     {
       "apiVersion": "[variables('apiVersion')]",
@@ -123,7 +186,8 @@
       "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+        "[concat('Microsoft.Network/networkSecurityGroups/', parameters('networkSecurityGroupName'))]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -139,7 +203,10 @@
               }
             }
           }
-        ]
+        ],
+        "networkSecurityGroup": {
+            "id": "[resourceId('TesteTemplate', 'Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]"
+        }
       }
     },
     {
