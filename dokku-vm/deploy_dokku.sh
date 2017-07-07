@@ -1,3 +1,4 @@
 # installs dokku via apt-get
-wget https://raw.githubusercontent.com/progrium/dokku/v0.4.4/bootstrap.sh
-sudo DOKKU_TAG=v0.4.4 bash bootstrap.sh
+DOKKU_VERSION=$1
+wget https://raw.githubusercontent.com/progrium/dokku/v${DOKKU_VERSION}/bootstrap.sh
+sudo DOKKU_TAG=v${DOKKU_VERSION} bash bootstrap.sh

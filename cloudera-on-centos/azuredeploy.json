@@ -1,6 +1,6 @@
 {
-  "$schema": "http://schema.management.azure.com/schemas/2015-01-01-preview/deploymentTemplate.json",
-  "contentVersion": "1.0.0.0",
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "contentVersion": "1.0.0.1",
   "parameters": {
     "adminUserName": {
       "type": "string",
@@ -48,12 +48,15 @@
         "eastus",
         "northeurope", 
         "westeurope",
+        "eastasia",
         "southeastasia",
-        "centralus", 
+        "southcentralus",
+        "centralus",
         "eastus2",
-        "japaneast", 
+        "japaneast",
         "japanwest",
-        "australiaeast"
+        "australiaeast",
+        "australiasoutheast"
       ],
       "metadata": {
         "description": "Location where resources will be provisioned (must support premium storage)"
@@ -71,6 +74,24 @@
       "defaultValue": "clouderavnet",
       "metadata": {
         "description": "The name of the virtual network provisioned for the deployment"
+      }
+    },
+    "vnetNewOrExisting" : {
+      "type" : "string",
+      "defaultValue": "new",
+      "allowedValues": [
+        "new",
+        "existing"
+      ],
+      "metadata": {
+        "description": "Indicator for new or exiting Virtual Network"
+      }
+    },
+    "virtualNetworkRGName": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Resource Group Name for Vnet. For new VNet, use the same resource group for the cluster. O stherwise, type in existing resource group name"
       }
     },
     "subnetName": {
@@ -94,25 +115,18 @@
         "description": "CIDR for the subnet where VMs will be placed"
       }
     },
-    "nodeAddressPrefix": {
+    "masterNodeIPAddress": {
       "type": "string",
-      "defaultValue": "10.3.0.",
+      "defaultValue": "10.3.0.4",
       "metadata": {
-        "description": "Prefix for all VM IP addresses (NOT a CIDR)"
+        "description": "IP address for the first master"
       }
     },
-    "masterNodeAddressStart": {
+    "dataNodeIPOffSetFromMaster": {
       "type": "int",
       "defaultValue": 10,
       "metadata": {
-        "description": "IP suffix for first master node"
-      }
-    },
-    "dataNodeAddressStart": {
-      "type": "int",
-      "defaultValue": 20,
-      "metadata": {
-        "description": "IP suffix for first data node"
+        "description": "IP address from the master node, for example if the first master is 10.1.1.1, then the first dataNode would be 10.1.1.11"
       }
     },
     "tshirtSize": {
@@ -222,11 +236,19 @@
     }
   },
   "variables": {
+    "templateAPIVersion":"2015-11-01",
+    "resourceAPIVersion":"2015-06-15",
     "installCDH":"True",
     "addressPrefix":"[parameters('addressPrefix')]",
     "subnetPrefix":"[parameters('subnetPrefix')]",
-    "nodeAddressPrefix":"[parameters('nodeAddressPrefix')]",
     "scriptsUri": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/cloudera-on-centos",
+    "share-resourcesUri": "[concat(variables('scriptsUri'), '/shared-resources-', parameters('vnetNewOrExisting'), '-vnet.json')]",
+    "data-nodeUri":"[concat(variables('scriptsUri'), '/data-node-', toLower(subString(parameters('vmSize'), 9, 4)), '.json')]",
+    "sa": "[parameters('masterNodeIPAddress')]",
+    "ipOctet01": "[concat(split(variables('sa'), '.')[0], '.', split(variables('sa'), '.')[1], '.')]",
+    "ipOctet2": "[int(split(variables('sa'), '.')[2])]",
+    "ipOctet3": "[int(split(variables('sa'), '.')[3])]",
+    "datanodeIpOctet3":"[add(int(split(variables('sa'), '.')[3]), parameters('dataNodeIPOffSetFromMaster'))]",
     "storageAccount": {
       "prefix": "[parameters('storageAccountPrefix')]",
       "type": "[parameters('storageAccountType')]"
@@ -244,7 +266,6 @@
     "clusterSpec": "[variables(concat('clusterTshirtSize', parameters('tshirtSize')))]",
     "vmSpec": {
       "vmSize": "[parameters('vmSize')]",
-      "privateIPAddressPrefix": "[variables('nodeAddressPrefix')]",
       "adminUserName": "[parameters('adminUserName')]",
       "adminPassword": "[parameters('adminPassword')]",
       "masterNodeASName": "[concat(parameters('dnsNamePrefix'), '-mnAS')]",
@@ -253,10 +274,15 @@
     "networkSpec": {
       "addressPrefix": "[variables('addressPrefix')]",
       "subnetPrefix": "[variables('subnetPrefix')]",
-      "privateIPPrefix": "[variables('nodeAddressPrefix')]",
-      "masterNodeAddressStart": "[parameters('masterNodeAddressStart')]",
-      "dataNodeAddressStart": "[parameters('dataNodeAddressStart')]",
+      "ipOctet01": "[variables('ipOctet01')]",
+      "ipOctet2": "[variables('ipOctet2')]",
+      "ipOctet3": "[variables('ipOctet3')]",
+      "datanodeIpOctet3":"[variables('datanodeIpOctet3')]",
+      "masterIP":"[variables('sa')]",
+      "workerIP":"[concat(variables('ipOctet01'), add(variables('ipOctet2'), div(variables('datanodeIpOctet3'), 255)), '.', mod(variables('datanodeIpOctet3'), 255))]",
       "virtualNetworkName": "[parameters('virtualNetworkName')]",
+      "virtualNetworkRGName":"[parameters('virtualNetworkRGName')]",
+      "vnetNewOrExisting": "[parameters('vnetNewOrExisting')]",
       "virtualNetworkSubnetName": "[parameters('subnetName')]"
     }
   },
@@ -264,14 +290,17 @@
     {
       "name": "shared-resources",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "[variables('templateAPIVersion')]",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('scriptsUri'), '/shared-resources.json')]",
-          "contentVersion": "1.0.0.0"
+          "uri": "[variables('share-resourcesUri')]",
+          "contentVersion": "1.0.0.1"
         },
         "parameters": {
+          "resourceAPIVersion":{
+            "value":"[variables('resourceAPIVersion')]"
+          },
           "location": {
             "value": "[parameters('location')]"
           },
@@ -290,7 +319,7 @@
     {
       "name": "master-node",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "[variables('templateAPIVersion')]",
       "dependsOn": [
         "Microsoft.Resources/deployments/shared-resources"
       ],
@@ -298,9 +327,15 @@
         "mode": "Incremental",
         "templateLink": {
           "uri": "[concat(variables('scriptsUri'), '/master-node.json')]",
-          "contentVersion": "1.0.0.0"
+          "contentVersion": "1.0.0.1"
         },
         "parameters": {
+          "vnetID":{
+            "value":"[reference('Microsoft.Resources/deployments/shared-resources', '2015-01-01').outputs.vnetIDRef.value]"
+          },
+          "resourceAPIVersion":{
+            "value":"[variables('resourceAPIVersion')]"
+          },
           "dnsNamePrefix": {
             "value": "[parameters('dnsNamePrefix')]"
           },
@@ -331,17 +366,23 @@
     {
       "name": "data-node",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "[variables('templateAPIVersion')]",
       "dependsOn": [
         "Microsoft.Resources/deployments/shared-resources"
       ],
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('scriptsUri'), '/data-node.json')]",
-          "contentVersion": "1.0.0.0"
+          "uri": "[variables('data-nodeUri')]",
+          "contentVersion": "1.0.0.1"
         },
         "parameters": {
+          "vnetID":{
+            "value":"[reference('Microsoft.Resources/deployments/shared-resources', '2015-01-01').outputs.vnetIDRef.value]"
+          },
+          "resourceAPIVersion":{
+            "value":"[variables('resourceAPIVersion')]"
+          },
           "dnsNamePrefix": {
             "value": "[parameters('dnsNamePrefix')]"
           },
@@ -372,7 +413,7 @@
     {
       "name": "setup-cloudera",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2015-01-01",
+      "apiVersion": "[variables('templateAPIVersion')]",
       "dependsOn": [
         "Microsoft.Resources/deployments/data-node",
         "Microsoft.Resources/deployments/master-node"
@@ -381,9 +422,12 @@
         "mode": "Incremental",
         "templateLink": {
           "uri": "[concat(variables('scriptsUri'), '/setup-cloudera.json')]",
-          "contentVersion": "1.0.0.0"
+          "contentVersion": "1.0.0.1"
         },
         "parameters": {
+          "resourceAPIVersion":{
+            "value":"[variables('resourceAPIVersion')]"
+          },
           "dnsNamePrefix": {
             "value": "[parameters('dnsNamePrefix')]"
           },

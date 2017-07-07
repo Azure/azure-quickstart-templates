@@ -23,7 +23,7 @@ perl -0777 -p -i -e 's/\*:80/*:80 *:8080/g' /etc/apache2/sites-enabled/000-defau
 
 # install Moodle
 cd /var/www/html
-wget https://download.moodle.org/download.php/direct/stable29/moodle-2.9.2.zip -O moodle.zip
+wget https://download.moodle.org/download.php/direct/stable30/moodle-3.0.2.zip -O moodle.zip
 apt-get install unzip
 unzip moodle.zip
 

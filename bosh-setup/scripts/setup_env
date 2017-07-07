@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+
+set -e
+
+username=$5
+home_dir="/home/$username"
+
+apt-get update >/dev/null 2>&1
+apt-get -y install python-pip >/dev/null 2>&1
+pip install msrest msrestazure azure==2.0.0rc1 azure-storage netaddr >/dev/null 2>&1
+
+# Generate SSH key pair for BOSH
+bosh_key="bosh"
+ssh-keygen -t rsa -f $bosh_key -P "" -C ""
+chmod 400 $bosh_key
+cp $bosh_key $home_dir
+cp "$bosh_key.pub" $home_dir
+
+# Generate SSL certificate for cloud foundry
+chmod +x create_cert.sh
+cf_key="cloudfoundry.key"
+cf_cert="cloudfoundry.cert"
+./create_cert.sh $cf_key $cf_cert
+
+bosh_director_ip=`python setup_env.py $1 $2 $3 $4`
+
+# For backward compatibility
+sed -i "s/CLOUD_FOUNDRY_PUBLIC_IP/cf-ip/g" settings
+cp settings $home_dir
+
+sed -i "s/REPLACE_WITH_BOSH_DIRECOT_IP/$bosh_director_ip/g" deploy_bosh.sh
+chmod +x deploy_bosh.sh
+cp deploy_bosh.sh $home_dir
+cp bosh.yml $home_dir
+
+chmod +x deploy_cloudfoundry.sh
+cp deploy_cloudfoundry.sh $home_dir
+example_manifests="$home_dir/example_manifests"
+mkdir -p $example_manifests
+cp single-vm-cf.yml $example_manifests 
+cp multiple-vm-cf.yml $example_manifests
+
+install_log="$home_dir/install.log"
+chmod +x init.sh
+./init.sh >$install_log 2>&1
+
+chown -R $username $home_dir
+
+auto_deploy_bosh=$6
+if [ "$auto_deploy_bosh" != "enabled" ]; then
+  exit 0
+fi
+
+su -c "./deploy_bosh.sh" - $username

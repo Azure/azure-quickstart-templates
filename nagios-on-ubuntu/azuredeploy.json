@@ -89,7 +89,7 @@
     "vmStorageAccountContainerName": "vhd",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',parameters('virtualNetworkName'))]",
     "subnetRef": "[concat(variables('vnetID'),'/subnets/',parameters('subnetName'))]",
-    "computerNamePrefix": "NagiosCoreSrv_",
+    "computerNamePrefix": "NagiosCoreSrv",
     "scriptUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/nagios-on-ubuntu/",
     "tshirtSizeSmall": {
       "numberOfInstances": 1,
@@ -113,20 +113,21 @@
     },
     "numberOfInstances": "[variables(concat('tshirtSize', parameters('tshirtSize'))).numberOfInstances]",
     "vmSize": "[variables(concat('tshirtSize', parameters('tshirtSize'))).vmSize]",
-    "securityGroupName": "nagiosNSG"
+    "securityGroupName": "nagiosNSG",
+    "apiVersion": "2015-06-15"
   },
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[parameters('storageAccountName')]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "location": "[parameters('location')]",
       "properties": {
         "accountType": "Standard_LRS"
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[parameters('virtualNetworkName')]",
       "location": "[parameters('location')]",
@@ -147,7 +148,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[concat('publicIP', copyIndex())]",
       "location": "[parameters('location')]",
@@ -163,7 +164,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('securityGroupName')]",
       "location": "[parameters('location')]",
@@ -174,7 +175,7 @@
             "properties": {
               "description": "Allows SSH traffic",
               "protocol": "Tcp",
-              "sourcePortRange": "22",
+              "sourcePortRange": "*",
               "destinationPortRange": "22",
               "sourceAddressPrefix": "*",
               "destinationAddressPrefix": "*",
@@ -187,7 +188,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[concat('nic', copyindex())]",
       "location": "[parameters('location')]",
@@ -201,6 +202,9 @@
         "[concat('Microsoft.Network/networkSecurityGroups/', variables('securityGroupName'))]"
       ],
       "properties": {
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('securityGroupName'))]"
+        },
         "ipConfigurations": [
           {
             "name": "ipconfig1",
@@ -208,9 +212,6 @@
               "privateIPAllocationMethod": "Dynamic",
               "publicIPAddress": {
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat('publicIP', copyindex()))]"
-              },
-              "networkSecurityGroup": {
-                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('securityGroupName'))]"
               },
               "subnet": {
                 "id": "[variables('subnetRef')]"
@@ -221,7 +222,7 @@
       }
     },
     {
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[concat('nagiosSrv', copyindex())]",
       "location": "[parameters('location')]",
@@ -270,7 +271,7 @@
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat('nagiosSrv', copyindex(), '/installnagios')]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[variables('apiVersion')]",
       "location": "[parameters('location')]",
       "copy": {
         "name": "virtualMachineExtensionsLoop",
@@ -283,11 +284,14 @@
       "properties": {
         "publisher": "Microsoft.OSTCExtensions",
         "type": "CustomScriptForLinux",
-        "typeHandlerVersion": "1.2",
+        "typeHandlerVersion": "1.4",
+        "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
             "[concat(variables('scriptUrl'), 'nagios-core-install.sh')]"
-          ],
+          ]
+        },
+        "protectedSettings": {
           "commandToExecute": "[concat('bash nagios-core-install.sh -u ', parameters('adminUsername'), ' -p ', parameters('adminPassword'))]"
         }
       }

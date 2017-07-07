@@ -27,7 +27,7 @@
     "availabilitySetNodes": "swarm-nodes-set",
     "osImagePublisher": "CoreOS",
     "osImageOffer": "CoreOS",
-    "osImageSKU": "Stable",
+    "osImageSKU": "Beta",
     "managementPublicIPAddrName": "swarm-lb-masters-ip",
     "nodesPublicIPAddrName": "swarm-lb-nodes-ip",
     "virtualNetworkName": "swarm-vnet",
@@ -39,8 +39,10 @@
     "subnetPrefixNodes": "192.168.0.0/24",
     "subnetRefMaster": "[concat(resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName')),'/subnets/',variables('subnetNameMasters'))]",
     "subnetRefNodes": "[concat(resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName')),'/subnets/',variables('subnetNameNodes'))]",
-    "nsgName": "swarm-nsg",
-    "nsgID": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('nsgName'))]",
+    "mastersNsgName": "swarm-masters-firewall",
+    "nodesNsgName": "swarm-nodes-firewall",
+    "mastersNsgID": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('mastersNsgName'))]",
+    "nodesNsgID": "[resourceId('Microsoft.Network/networkSecurityGroups',variables('nodesNsgName'))]",
     "newStorageAccountName": "[uniqueString(resourceGroup().id, deployment().name)]",
     "clusterFqdn": "[concat('swarm-',uniqueString(resourceGroup().id, deployment().name))]",
     "storageAccountType": "Standard_LRS",
@@ -114,7 +116,8 @@
       "name": "[variables('virtualNetworkName')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[variables('nsgID')]"
+        "[variables('mastersNsgID')]",
+        "[variables('nodesNsgID')]"
       ],
       "properties": {
         "addressSpace": {
@@ -129,7 +132,7 @@
             "properties": {
               "addressPrefix": "[variables('subnetPrefixMasters')]",
               "networkSecurityGroup": {
-                "id": "[variables('nsgID')]"
+                "id": "[variables('mastersNsgID')]"
               }
             }
           },
@@ -138,7 +141,7 @@
             "properties": {
               "addressPrefix": "[variables('subnetPrefixNodes')]",
               "networkSecurityGroup": {
-                "id": "[variables('nsgID')]"
+                "id": "[variables('nodesNsgID')]"
               }
             }
           }
@@ -148,21 +151,45 @@
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "name": "[variables('nsgName')]",
+      "name": "[variables('mastersNsgName')]",
       "location": "[resourceGroup().location]",
       "properties": {
         "securityRules": [
           {
             "name": "ssh",
             "properties": {
-              "description": "SSH",
+              "description": "",
               "protocol": "Tcp",
               "sourcePortRange": "*",
               "destinationPortRange": "22",
               "sourceAddressPrefix": "*",
               "destinationAddressPrefix": "*",
               "access": "Allow",
-              "priority": 200,
+              "priority": 1000,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('nodesNsgName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "AllowAny",
+            "properties": {
+              "description": "Swarm node ports need to be configured on the load balancer to be reachable",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 1000,
               "direction": "Inbound"
             }
           }
@@ -229,7 +256,7 @@
         ],
         "backendAddressPools": [
           {
-          "name": "[variables('mastersLbBackendPoolName')]"
+            "name": "[variables('mastersLbBackendPoolName')]"
           }
         ]
       }
@@ -451,28 +478,29 @@
         "publisher": "Microsoft.Azure.Extensions",
         "type": "DockerExtension",
         "typeHandlerVersion": "1.0",
+        "autoUpgradeMinorVersion": true,
         "settings": {
           "compose": {
             "consul": {
               "image": "progrium/consul",
               "command": "[concat('-server -node master', copyIndex(), ' ', variables('consulServerArgs')[copyIndex()])]",
               "ports": [
+                "8500:8500",
                 "8300:8300",
                 "8301:8301",
                 "8301:8301/udp",
                 "8302:8302",
                 "8302:8302/udp",
-                "8400:8400",
-                "8500:8500"
-              ],
+                "8400:8400"
+             ],
               "volumes": [
                 "/data/consul:/data"
               ],
               "restart": "always"
             },
             "swarm": {
-              "image": "swarm:1.0.0",
-              "command": "[concat('manage --replication --advertise ', reference(concat(variables('vmNameMaster'), copyIndex(), '-nic')).ipConfigurations[0].properties.privateIPAddress, ':2375 consul://10.0.0.4:8500/nodes')]",
+              "image": "swarm:1.0.1",
+              "command": "[concat('manage --replication --advertise ', reference(concat(variables('vmNameMaster'), copyIndex(), '-nic')).ipConfigurations[0].properties.privateIPAddress, ':2375 --discovery-opt kv.path=docker/nodes consul://10.0.0.4:8500')]",
               "ports": [
                 "2375:2375"
               ],
@@ -504,16 +532,14 @@
         "publisher": "Microsoft.Azure.Extensions",
         "type": "DockerExtension",
         "typeHandlerVersion": "1.0",
+        "autoUpgradeMinorVersion": true,
         "settings": {
           "docker": {
-            "port": "2375"
-          },
-          "compose": {
-            "swarm": {
-              "image": "swarm:1.0.0",
-              "restart": "always",
-              "command": "[concat('join --advertise=', reference(concat(variables('vmNameNode'), copyIndex(), '-nic')).ipConfigurations[0].properties.privateIPAddress, ':2375 consul://10.0.0.4:8500/nodes')]"
-            }
+            "port": "2375",
+	    "options": [
+	      "--cluster-store=consul://10.0.0.4:8500",
+	      "--cluster-advertise=eth0:2375"
+	    ]
           }
         }
       }

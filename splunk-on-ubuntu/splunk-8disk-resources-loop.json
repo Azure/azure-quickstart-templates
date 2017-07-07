@@ -1,0 +1,238 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string"
+    },
+    "storageSettings": {
+      "type": "object"
+    },
+    "machineSettings": {
+      "type": "object"
+    },
+    "osSettings": {
+      "type": "object"
+    },
+    "adminUsername": {
+      "type": "string"
+    },
+    "adminPassword": {
+      "type": "securestring"
+    },
+    "splunkAdminPassword": {
+      "type": "securestring"
+    },
+    "namespace": {
+      "type": "string"
+    },
+    "subnet": {
+      "type": "string"
+    },
+    "splunkServerRole": {
+      "type": "string",
+      "defaultValue": "splunk_server"
+    },
+    "securityGroupName": {
+      "type": "string"
+    }
+  },
+  "variables": {
+    "templateAPIVersion": "2015-01-01",
+    "resourceAPIVersion": "2015-06-15",
+    "singleQuote": "'",
+    "vmCount": "[parameters('machineSettings').vmCount]",
+    "vmName": "[concat(parameters('namespace'), '-vm')]",
+    "nicName": "[concat(parameters('namespace'), '-nic')]",
+    "publicIpName": "[parameters('machineSettings').publicIPName]",
+    "clusterMasterIp": "[parameters('machineSettings').clusterMasterIp]",
+    "securityGroupRef": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('securityGroupName'))]",
+    "ipOctet01": "[parameters('machineSettings').staticIps.ipOctet01]",
+    "ipOctet2": "[parameters('machineSettings').staticIps.ipOctet2]",
+    "ipOctet3": "[parameters('machineSettings').staticIps.ipOctet3]"
+  },
+  "resources": [
+    {
+      "apiVersion": "[variables('resourceAPIVersion')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('nicName'), copyindex())]",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "nicCopyLoop",
+        "count": "[variables('vmCount')]"
+      },
+      "properties": {
+        "networkSecurityGroup": {
+          "id": "[variables('securityGroupRef')]"
+        },
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[concat(variables('ipOctet01'), add(variables('ipOctet2'), div(copyindex(variables('ipOctet3')), 255)), '.', mod(copyindex(variables('ipOctet3')), 255))]",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('publicIpName'), copyindex()))]"
+              },
+              "subnet": {
+                "id": "[parameters('subnet')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "[variables('resourceAPIVersion')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(variables('vmName'), copyindex())]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyindex())]"
+      ],
+      "copy": {
+        "name": "vmCopyLoop",
+        "count": "[variables('vmCount')]"
+      },
+      "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('machineSettings').availabilitySet)]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[parameters('machineSettings').vmSize]"
+        },
+        "osProfile": {
+          "computername": "[concat(variables('vmName'), copyindex())]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": "[parameters('osSettings').imageReference]",
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat('http://', parameters('storageSettings').name, parameters('storageSettings').map[copyindex()], '.blob.core.windows.net/vhds/', variables('vmName'), copyindex(), '-osdisk.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          },
+          "dataDisks": [
+            {
+              "name": "datadisk1",
+              "diskSizeGB": "[parameters('machineSettings').diskSize]",
+              "lun": 0,
+              "vhd": {
+                "Uri": "[concat('http://', parameters('storageSettings').name, parameters('storageSettings').map[copyindex()], '.blob.core.windows.net/vhds/', variables('vmName'), copyindex(), '-datadisk1.vhd')]"
+              },
+              "caching": "ReadOnly",
+              "createOption": "Empty"
+            },
+            {
+              "name": "datadisk2",
+              "diskSizeGB": "[parameters('machineSettings').diskSize]",
+              "lun": 1,
+              "vhd": {
+                "Uri": "[concat('http://', parameters('storageSettings').name, parameters('storageSettings').map[copyindex()], '.blob.core.windows.net/vhds/', variables('vmName'), copyindex(), '-datadisk2.vhd')]"
+              },
+              "caching": "ReadOnly",
+              "createOption": "Empty"
+            },
+            {
+              "name": "datadisk3",
+              "diskSizeGB": "[parameters('machineSettings').diskSize]",
+              "lun": 2,
+              "vhd": {
+                "Uri": "[concat('http://', parameters('storageSettings').name, parameters('storageSettings').map[copyindex()], '.blob.core.windows.net/vhds/', variables('vmName'), copyindex(), '-datadisk3.vhd')]"
+              },
+              "caching": "ReadOnly",
+              "createOption": "Empty"
+            },
+            {
+              "name": "datadisk4",
+              "diskSizeGB": "[parameters('machineSettings').diskSize]",
+              "lun": 3,
+              "vhd": {
+                "Uri": "[concat('http://', parameters('storageSettings').name, parameters('storageSettings').map[copyindex()], '.blob.core.windows.net/vhds/', variables('vmName'), copyindex(), '-datadisk4.vhd')]"
+              },
+              "caching": "ReadOnly",
+              "createOption": "Empty"
+            },
+            {
+              "name": "datadisk5",
+              "diskSizeGB": "[parameters('machineSettings').diskSize]",
+              "lun": 4,
+              "vhd": {
+                "Uri": "[concat('http://', parameters('storageSettings').name, parameters('storageSettings').map[copyindex()], '.blob.core.windows.net/vhds/', variables('vmName'), copyindex(), '-datadisk5.vhd')]"
+              },
+              "caching": "ReadOnly",
+              "createOption": "Empty"
+            },
+            {
+              "name": "datadisk6",
+              "diskSizeGB": "[parameters('machineSettings').diskSize]",
+              "lun": 5,
+              "vhd": {
+                "Uri": "[concat('http://', parameters('storageSettings').name, parameters('storageSettings').map[copyindex()], '.blob.core.windows.net/vhds/', variables('vmName'), copyindex(), '-datadisk6.vhd')]"
+              },
+              "caching": "ReadOnly",
+              "createOption": "Empty"
+            },
+            {
+              "name": "datadisk7",
+              "diskSizeGB": "[parameters('machineSettings').diskSize]",
+              "lun": 6,
+              "vhd": {
+                "Uri": "[concat('http://', parameters('storageSettings').name, parameters('storageSettings').map[copyindex()], '.blob.core.windows.net/vhds/', variables('vmName'), copyindex(), '-datadisk7.vhd')]"
+              },
+              "caching": "ReadOnly",
+              "createOption": "Empty"
+            },
+            {
+              "name": "datadisk8",
+              "diskSizeGB": "[parameters('machineSettings').diskSize]",
+              "lun": 7,
+              "vhd": {
+                "Uri": "[concat('http://', parameters('storageSettings').name, parameters('storageSettings').map[copyindex()], '.blob.core.windows.net/vhds/', variables('vmName'), copyindex(), '-datadisk8.vhd')]"
+              },
+              "caching": "ReadOnly",
+              "createOption": "Empty"
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'), copyindex()))]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('resourceAPIVersion')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('vmName'), copyindex(), '/node-setup')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'), copyindex())]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'), copyindex())]"
+      ],
+      "copy": {
+        "name": "scriptCopyLoop",
+        "count": "[variables('vmCount')]"
+      },
+      "properties": {
+        "publisher": "Microsoft.OSTCExtensions",
+        "type": "CustomScriptForLinux",
+        "typeHandlerVersion": "1.4",
+        "settings": {
+          "fileUris": "[parameters('osSettings').scripts]"
+        },
+        "protectedSettings": {
+          "commandToExecute": "[concat('bash node-setup.sh', ' -r ', parameters('splunkServerRole'), ' -c ', variables('clusterMasterIp'),' -p ', variables('singleQuote'), parameters('splunkAdminPassword'), variables('singleQuote'))]"
+        }
+      }
+    }
+  ],
+  "outputs": { }
+}

@@ -8,10 +8,10 @@
         "description": "Admin username used when provisioning virtual machines"
       }
     },
-    "adminPassword": {
-      "type": "securestring",
+    "authSet": {
+      "type": "object",
       "metadata": {
-        "description": "Admin password used when provisioning virtual machines"
+        "description": "Authentication information"
       }
     },
     "storageSettings": {
@@ -75,27 +75,15 @@
   "variables": {
     "vmStorageAccountContainerName": "vhd",
     "subnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('subnet').vnet), '/subnets/', parameters('subnet').name)]",
-    "storageAccountName": "[concat(parameters('storageSettings').prefix)]",
-    "vmName": "[concat(parameters('namespace'), 'vm')]"
+    "storageAccountName": "[parameters('storageSettings').prefix]",
+    "storageAccountNameAFS": "[parameters('storageSettings').afs]",
+    "vmName": "[concat(parameters('namespace'), '-vm')]"
   },
   "resources": [
     {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[concat(variables('storageAccountName'), copyindex(1))]",
-      "apiVersion": "2015-05-01-preview",
-      "location": "[parameters('location')]",
-      "copy": {
-        "name": "[concat(parameters('namespace'),'storageLoop')]",
-        "count": "[parameters('storageSettings').count]"
-      },
-      "properties": {
-        "accountType": "[parameters('storageSettings').accountType]"
-      }
-    },
-    {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/availabilitySets",
-      "name": "[concat(parameters('namespace'), '-set')]",
+      "name": "es-data-set",
       "location": "[parameters('location')]",
       "properties": {
         "platformUpdateDomainCount": 20,
@@ -105,7 +93,7 @@
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[concat(parameters('namespace'), 'nic', copyindex())]",
+      "name": "[concat(parameters('namespace'), '-nic', copyindex())]",
       "location": "[parameters('location')]",
       "copy": {
         "name": "[concat(parameters('namespace'),'nicLoop')]",
@@ -129,27 +117,28 @@
     {
       "apiVersion": "2015-06-15",
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[concat(parameters('namespace'), 'vm', copyindex())]",
+      "name": "[concat(variables('vmName'), copyindex())]",
       "location": "[parameters('location')]",
       "copy": {
         "name": "[concat(parameters('namespace'), 'virtualMachineLoop')]",
         "count": "[parameters('vmCount')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', parameters('namespace'), 'nic', copyindex())]",
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'), parameters('storageSettings').mapping[copyindex()])]"
+        "[concat('Microsoft.Network/networkInterfaces/', parameters('namespace'), '-nic', copyindex())]",
+        "[resourceId('Microsoft.Compute/availabilitySets', 'es-data-set')]"
       ],
       "properties": {
         "availabilitySet": {
-          "id": "[resourceId('Microsoft.Compute/availabilitySets', concat(parameters('namespace'), '-set'))]"
+          "id": "[resourceId('Microsoft.Compute/availabilitySets', 'es-data-set')]"
         },
         "hardwareProfile": {
           "vmSize": "[parameters('vmSize')]"
         },
         "osProfile": {
-          "computerName": "[concat(parameters('namespace'), 'vm', copyIndex())]",
+          "computerName": "[concat('data-vm', copyIndex())]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('authSet').password]",
+          "linuxConfiguration": "[parameters('osSettings').linuxConfiguration]"
         },
         "storageProfile": {
           "imageReference": "[parameters('osSettings').imageReference]",
@@ -247,7 +236,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('namespace'),'nic', copyindex()))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(parameters('namespace'),'-nic', copyindex()))]"
             }
           ]
         }
@@ -255,13 +244,21 @@
       "resources": [
         {
           "type": "Microsoft.Compute/virtualMachines/extensions",
-          "name": "[concat(parameters('namespace'),'vm', copyindex(), '/installelasticsearch')]",
+          "name": "[concat(variables('vmName'), copyindex(), '/installelasticsearch')]",
           "apiVersion": "2015-06-15",
           "location": "[parameters('location')]",
           "dependsOn": [
-            "[concat('Microsoft.Compute/virtualMachines/', parameters('namespace'), 'vm', copyindex())]"
+            "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'), copyindex())]"
           ],
-          "properties": "[parameters('osSettings').extentionSettings.data]"
+          "properties": {
+            "publisher": "[parameters('osSettings').extensionSettings.data.publisher]",
+            "type": "[parameters('osSettings').extensionSettings.data.type]",
+            "typeHandlerVersion": "[parameters('osSettings').extensionSettings.data.typeHandlerVersion]",
+            "settings": {
+              "fileUris": "[parameters('osSettings').extensionSettings.data.settings.fileUris]",
+              "commandToExecute": "[concat(parameters('osSettings').extensionSettings.data.settings.commandToExecute, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountNameAFS')), '2015-05-01-preview').key1)]"
+            }
+          }
         }
       ]
     }

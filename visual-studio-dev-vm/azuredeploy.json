@@ -1,13 +1,7 @@
 {
   "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-  "contentVersion": "1.0.0.1",
+  "contentVersion": "1.0.0.2",
   "parameters": {
-    "storageName": {
-      "type": "string",
-      "metadata": {
-        "description": "Globally unique storage account name"
-      }
-    },
     "storageType": {
       "type": "string",
       "defaultValue": "Premium_LRS",
@@ -22,8 +16,12 @@
     "deployLocation": {
       "type": "string",
       "allowedValues": [
+        "Central US",
+        "East US",
         "East US 2",
+        "South Central US",
         "West US",
+        "North Europe",
         "West Europe",
         "South East Asia",
         "Japan East",
@@ -61,14 +59,19 @@
     },
     "vmVisualStudioVersion": {
       "type": "string",
-      "defaultValue": "VS-2015-Community-AzureSDK-2.7-WS2012R2",
+      "defaultValue": "VS-2015-Comm-VSU1-AzureSDK-2.8-WS2012R2",
       "allowedValues": [
-        "VS-2015-Enterprise-AzureSDK-2.7-WS2012R2",
-        "VS-2015-Enterprise-AzureSDK-2.7-Cordova-Win8.1-N-x64",
-        "VS-2015-Professional-AzureSDK-2.7-Cordova-Win8.1-N-x64",
-        "VS-2015-Community-AzureSDK-2.7-WS2012R2",
-        "VS-2013-Ultimate-VSU5-AzureSDK-2.7-WS2012R2",
-        "VS-2013-Community-VSU5-AzureSDK-2.7-WS2012R2"
+        "VS-2015-Pro-VSU1-AzureSDK-2.8-W10T-1511-N-x64",
+        "VS-2015-Pro-AzureSDK-2.8-Cordova-Win8.1-N-x64",
+        "VS-2015-Ent-VSU1-AzureSDK-2.8-WS2012R2",
+        "VS-2015-Ent-VSU1-AzureSDK-2.8-W10T-1511-N-x64",
+        "VS-2015-Comm-VSU1-AzureSDK-2.8-WS2012R2",
+        "VS-2015-Comm-VSU1-AzureSDK-2.8-W10T-N-x64",
+        "VS-2015-Comm-AzureSDK-2.8-Cordova-Win8.1-N-x64",
+        "VS-2013-Ultimate-VSU5-AzureSDK-2.8-WS2012R2",
+        "VS-2013-Prem-VSU5-AzureSDK-2.8-WS2012R2",
+        "VS-2013-Comm-VSU5-Cordova-CTP3.2-AzureSDK-2.8-WS2012R2",
+        "VS-2013-Comm-VSU5-AzureSDK-2.8-WS2012R2"
       ],
       "metadata": {
         "description": "Which version of Visual Studio you would like to deploy"
@@ -82,6 +85,10 @@
     }
   },
   "variables": {
+    "apiVersionStorage":"2015-06-15",
+    "apiVersionNetwork":"2015-06-15",
+    "apiVersionCompute":"2015-06-15",
+    "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'visstudiovm')]",
     "vnet01Prefix": "10.0.0.0/16",
     "vnet01Subnet1Name": "Subnet-1",
     "vnet01Subnet1Prefix": "10.0.0.0/24",
@@ -91,15 +98,15 @@
     "vmVnetID": "[resourceId('Microsoft.Network/virtualNetworks', 'Vnet01')]",
     "vmSubnetRef": "[concat(variables('VMVnetID'), '/subnets/', variables('Vnet01Subnet1Name'))]",
     "vmStorageAccountContainerName": "vhds",
-    "vmNicName": "[concat(parameters('VMName'), 'NetworkInterface')]",
+    "vmNicName": "[concat(parameters('vmName'), 'NetworkInterface')]",
     "vmIP01Name": "VMIP01"
   },
   "resources": [
     {
-      "name": "[parameters('storageName')]",
+      "name":"[variables('storageAccountName')]",
       "type": "Microsoft.Storage/storageAccounts",
       "location": "[parameters('deployLocation')]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion":"[variables('apiVersionStorage')]",
       "dependsOn": [ ],
       "tags": {
         "displayName": "Storage01"
@@ -112,7 +119,7 @@
       "name": "VNet01",
       "type": "Microsoft.Network/virtualNetworks",
       "location": "[parameters('deployLocation')]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion":"[variables('apiVersionNetwork')]",
       "dependsOn": [ ],
       "tags": {
         "displayName": "VNet01"
@@ -136,7 +143,7 @@
       "name": "[variables('vmNicName')]",
       "type": "Microsoft.Network/networkInterfaces",
       "location": "[parameters('deployLocation')]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion":"[variables('apiVersionNetwork')]",
       "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/', 'Vnet01')]",
         "[concat('Microsoft.Network/publicIPAddresses/', variables('vmIP01Name'))]"
@@ -165,9 +172,9 @@
       "name": "[parameters('vmName')]",
       "type": "Microsoft.Compute/virtualMachines",
       "location": "[parameters('deployLocation')]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion":"[variables('apiVersionCompute')]",
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', parameters('storageName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('vmNicName'))]"
       ],
       "tags": {
@@ -192,7 +199,7 @@
           "osDisk": {
             "name": "VMOSDisk",
             "vhd": {
-              "uri": "[concat('http://', parameters('storageName'), '.blob.core.windows.net/', variables('vmStorageAccountContainerName'), '/', variables('vmOSDiskName'), '.vhd')]"
+              "uri": "[concat('http://', variables('storageAccountName'), '.blob.core.windows.net/', variables('vmStorageAccountContainerName'), '/', variables('vmOSDiskName'), '.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -212,7 +219,7 @@
       "name": "[variables('vmIP01Name')]",
       "type": "Microsoft.Network/publicIPAddresses",
       "location": "[parameters('deployLocation')]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion":"[variables('apiVersionNetwork')]",
       "dependsOn": [ ],
       "tags": {
         "displayName": "VMIP01"

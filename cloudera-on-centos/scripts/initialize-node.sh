@@ -12,13 +12,35 @@
 # limitations under the License.
 
 echo "initializing nodes..."
-IPPREFIX=$1
-NAMEPREFIX=$2
-NAMESUFFIX=$3
-MASTERNODES=$4
-DATANODES=$5
-ADMINUSER=$6
-NODETYPE=$7
+
+MASTERIP=$1
+WORKERIP=$2
+NAMEPREFIX=$3
+NAMESUFFIX=$4
+MASTERNODES=$5
+DATANODES=$6
+ADMINUSER=$7
+NODETYPE=$8
+
+function atoi
+{
+#Returns the integer representation of an IP arg, passed in ascii dotted-decimal notation (x.x.x.x)
+IP=$1; IPNUM=0
+for (( i=0 ; i<4 ; ++i )); do
+((IPNUM+=${IP%%.*}*$((256**$((3-${i}))))))
+IP=${IP#*.}
+done
+echo $IPNUM
+}
+
+function itoa
+{
+#returns the dotted-decimal ascii form of an IP arg passed in integer format
+echo -n $(($(($(($((${1}/256))/256))/256))%256)).
+echo -n $(($(($((${1}/256))/256))%256)).
+echo -n $(($((${1}/256))%256)).
+echo $((${1}%256))
+}
 
 # Converts a domain like machine.domain.com to domain.com by removing the machine name
 NAMESUFFIX=`echo $NAMESUFFIX | sed 's/^[^.]*\.//'`
@@ -29,15 +51,19 @@ NODES=()
 let "NAMEEND=MASTERNODES-1"
 for i in $(seq 0 $NAMEEND)
 do 
-  let "IP=i+10"
-  NODES+=("$IPPREFIX$IP:${NAMEPREFIX}-mn$i.$NAMESUFFIX:${NAMEPREFIX}-mn$i")
+  IP=`atoi ${MASTERIP}`
+  let "IP=i+IP"
+  HOSTIP=`itoa ${IP}`
+  NODES+=("$HOSTIP:${NAMEPREFIX}-mn$i.$NAMESUFFIX:${NAMEPREFIX}-mn$i")
 done
 
 let "DATAEND=DATANODES-1"
 for i in $(seq 0 $DATAEND)
 do 
-  let "IP=i+20"
-  NODES+=("$IPPREFIX$IP:${NAMEPREFIX}-dn$i.$NAMESUFFIX:${NAMEPREFIX}-dn$i")
+  IP=`atoi ${WORKERIP}`
+  let "IP=i+IP"
+  HOSTIP=`itoa ${IP}`
+  NODES+=("$HOSTIP:${NAMEPREFIX}-dn$i.$NAMESUFFIX:${NAMEPREFIX}-dn$i")
 done
 
 OIFS=$IFS

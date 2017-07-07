@@ -1,0 +1,176 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string"
+    },
+    "storageSettings": {
+      "type": "object"
+    },
+    "machineSettings": {
+      "type": "object"
+    },
+    "osSettings": {
+      "type": "object"
+    },
+    "adminUsername": {
+      "type": "string"
+    },
+    "adminPassword": {
+      "type": "securestring"
+    },
+    "splunkAdminPassword": {
+      "type": "securestring"
+    },
+    "namespace": {
+      "type": "string"
+    },
+    "subnet": {
+      "type": "string"
+    },
+    "templateBaseUrl": {
+      "type": "string"
+    }
+  },
+  "variables": {
+    "templateAPIVersion": "2015-01-01",
+    "resourceAPIVersion": "2015-06-15",
+    "splunkServerRole": "splunk_server",
+    "securityGroupName": "[concat(parameters('namespace'), '-nsg')]",
+    "splunkTemplateUrl": "[concat(parameters('templateBaseUrl'), 'splunk-8disk-resources.json')]"
+  },
+  "resources": [
+    {
+      "apiVersion": "[variables('resourceAPIVersion')]",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('securityGroupName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "Allow-SSH",
+            "properties": {
+              "description": "Allows SSH traffic",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "[parameters('machineSettings').sshFrom]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Allow-HTTP",
+            "properties": {
+              "description": "Allows HTTP traffic on port 8000",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "8000",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 110,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Allow-HTTPS",
+            "properties": {
+              "description": "Allows HTTPS traffic on port 443",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 120,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Allow-Receiver-TCP",
+            "properties": {
+              "description": "Allows receiver TCP traffic on port 9997",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "9997",
+              "sourceAddressPrefix": "[parameters('machineSettings').forwardedDataFrom]",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 130,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Allow-Mgmt-From-VNET",
+            "properties": {
+              "description": "Allows mgmt on port 8089 from VNET only",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "8089",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 140,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "[variables('templateAPIVersion')]",
+      "type": "Microsoft.Resources/deployments",
+      "name": "standalone",
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkSecurityGroups/', variables('securityGroupName'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('splunkTemplateUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "splunkServerRole": {
+            "value": "[variables('splunkServerRole')]"
+          },
+          "securityGroupName": {
+            "value": "[variables('securityGroupName')]"
+          },
+          "namespace": {
+            "value": "[parameters('namespace')]"
+          },
+          "machineSettings": {
+            "value": "[parameters('machineSettings')]"
+          },
+          "storageSettings": {
+            "value": "[parameters('storageSettings')]"
+          },
+          "osSettings": {
+            "value": "[parameters('osSettings')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "splunkAdminPassword": {
+            "value": "[parameters('splunkAdminPassword')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "subnet": {
+            "value": "[parameters('subnet')]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}

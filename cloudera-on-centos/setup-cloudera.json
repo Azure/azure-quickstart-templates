@@ -1,7 +1,10 @@
 {
-  "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
-  "contentVersion": "1.0.0.0",
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.1",
   "parameters": {
+    "resourceAPIVersion":{
+      "type":"string"
+    },
     "dnsNamePrefix": {
       "type": "string"
     },
@@ -54,24 +57,36 @@
       "type": "string"
     }
   },
+  "variables": {
+    "masterIP":"[parameters('networkSpec').masterIP]",
+    "workerIP":"[parameters('networkSpec').workerIP]"
+  },
   "resources": [
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('dnsNamePrefix'), '-mn0', '/prepareDisks')]",
-      "apiVersion": "2015-05-01-preview",
+      "apiVersion": "[parameters('resourceAPIVersion')]",
       "location": "[parameters('location')]",
       "properties": {
         "publisher": "Microsoft.OSTCExtensions",
         "type": "CustomScriptForLinux",
-        "typeHandlerVersion": "1.3",
+        "typeHandlerVersion": "1.4",
         "settings": {
           "fileUris": [
             "[concat(parameters('scriptsUri'), '/scripts/bootstrap-cloudera.sh')]",
             "[concat(parameters('scriptsUri'), '/scripts/initialize-cloudera-server.sh')]",
             "[concat(parameters('scriptsUri'), '/scripts/cmxDeployOnIbiza.py')]",
             "[concat(parameters('scriptsUri'), '/scripts/install-postgresql.sh')]"
-          ],
-          "commandToExecute": "[concat('sh bootstrap-cloudera.sh \"', parameters('networkSpec').privateIPPrefix, '\" \"', parameters('dnsNamePrefix'), '\" \"', parameters('fqdn'), '\" ', parameters('clusterSpec').masterNodeCount, ' ', parameters('clusterSpec').dataNodeCount, ' \"', parameters('vmSpec').adminUserName, '\" \"', parameters('clusterSpec').highAvailability, '\" \"', parameters('vmSpec').adminPassword, '\" \"', parameters('cmUsername'), '\" \"', parameters('cmPassword'), '\" \"', parameters('emailAddress'), '\" \"', parameters('businessPhone'), '\" \"', parameters('firstName'), '\" \"', parameters('lastName'), '\" \"', parameters('jobRole'), '\" \"', parameters('jobFunction'), '\" \"', parameters('company'), '\" \"', parameters('installCDH'), '\" >> /home/$ADMINUSER/bootstrap-cloudera.log 2>&1')]"
+          ]
+        },
+        "protectedSettings": {
+          "commandToExecute": "[concat('sh bootstrap-cloudera.sh \"', variables('masterIP'), '\" \"', variables('workerIP'), '\" \"', parameters('dnsNamePrefix'), '\" \"', parameters('fqdn'), '\" ', parameters('clusterSpec').masterNodeCount, ' ', parameters('clusterSpec').dataNodeCount, ' \"', parameters('vmSpec').adminUserName, '\" \"', parameters('clusterSpec').highAvailability, '\" \"', parameters('vmSpec').adminPassword, '\" \"', parameters('cmUsername'), '\" \"', parameters('cmPassword'), '\" \"', parameters('emailAddress'), '\" \"', parameters('businessPhone'), '\" \"', parameters('firstName'), '\" \"', parameters('lastName'), '\" \"', parameters('jobRole'), '\" \"', parameters('jobFunction'), '\" \"', parameters('company'), '\" \"', parameters('installCDH'), '\" \"', parameters('vmSpec').vmSize, '\" >> /home/$ADMINUSER/bootstrap-cloudera.log 2>&1')]",
+          "Items": {
+            "AdminUserName": "[parameters('vmSpec').adminUserName]",
+            "AdminPassword": "[parameters('vmSpec').adminPassword]",
+            "CMUserName": "[parameters('cmUsername')]",
+            "CMPassword": "[parameters('cmPassword')]"
+          }
         }
       }
     }

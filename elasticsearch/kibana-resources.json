@@ -1,186 +1,196 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-  "contentVersion": "1.0.0.0",
-  "parameters": {
-    "namespace": {
-      "type": "string",
-      "defaultValue": "kibana",
-      "metadata": {
-        "description": "The namespace prefix for resources created by this template"
-      }
-    },
-    "location": {
-      "type": "string",
-      "metadata": {
-        "description": "Location where resources will be provisioned"
-      }
-    },
-    "subnet": {
-      "type": "object",
-      "metadata": {
-        "description": "Subnet object for provisioning resources in (expects properties name as the subnet name, and vnet as the virtual network name on the object)"
-      }
-    },
-    "storageAccountName": {
-      "type": "string",
-      "metadata": {
-        "description": "Existing Storage Account where the Virtual Machine's disks will be placed"
-      }
-    },
-    "adminUsername": {
-      "type": "string",
-      "metadata": {
-        "description": "Administrator user name used when provisioning virtual machines"
-      }
-    },
-    "adminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Administrator password used when provisioning virtual machines"
-      }
-    },
-    "osSettings": {
-      "type": "object",
-      "metadata": {
-        "description": "Platform and OS settings"
-      }
-    }
-  },
-  "variables": {
-    "vmStorageAccountContainerName": "vhd",
-    "vmSize": "Standard_A1",
-    "subnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('subnet').vnet), '/subnets/', parameters('subnet').name)]",
-    "vmName": "[concat(parameters('namespace'), '-vm')]",
-    "publicIpName": "[concat(parameters('namespace'), '-pip')]",
-    "securityGroupName": "[concat(parameters('namespace'), '-nsg')]",
-    "nicName": "[concat(parameters('namespace'), '-nic')]"
-  },
-  "resources": [
-    {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Network/networkSecurityGroups",
-      "name": "[variables('securityGroupName')]",
-      "location": "[parameters('location')]",
-      "properties": {
-        "securityRules": [
-          {
-            "name": "SSH",
-            "properties": {
-              "description": "Allows inbound SSH traffic from anyone",
-              "protocol": "Tcp",
-              "sourcePortRange": "[parameters('osSettings').managementPort]",
-              "destinationPortRange": "[parameters('osSettings').managementPort]",
-              "sourceAddressPrefix": "*",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 100,
-              "direction": "Inbound"
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "namespace": {
+            "type": "string",
+            "defaultValue": "kibana",
+            "metadata": {
+                "description": "The namespace prefix for resources created by this template"
             }
-          },
-		      {
-            "name": "Kibana",
-            "properties": {
-              "description": "Allows inbound Kibana HTTP traffic from anyone",
-              "protocol": "Tcp",
-              "sourcePortRange": "5601",
-              "destinationPortRange": "5601",
-              "sourceAddressPrefix": "*",
-              "destinationAddressPrefix": "*",
-              "access": "Allow",
-              "priority": 200,
-              "direction": "Inbound"
-            }
-          }
-        ]
-      }
-    },
-    {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[variables('publicIpName')]",
-      "location": "[parameters('location')]",
-      "properties": {
-        "publicIPAllocationMethod": "Dynamic"
-      }
-    },
-    {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Network/networkInterfaces",
-      "name": "[variables('nicName')]",
-      "location": "[parameters('location')]",
-      "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIpName'))]",
-        "[concat('Microsoft.Network/networkSecurityGroups/', variables('securityGroupName'))]"
-      ],
-      "properties": {
-        "ipConfigurations": [
-          {
-            "name": "ipconfig1",
-            "properties": {
-              "privateIPAllocationMethod": "Dynamic",
-              "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIpName'))]"
-              },
-              "subnet": {
-                "id": "[variables('subnetRef')]"
-              },
-              "networkSecurityGroup": {
-                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('securityGroupName'))]"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Compute/virtualMachines",
-      "name": "[variables('vmName')]",
-      "location": "[parameters('location')]",
-      "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
-      ],
-      "properties": {
-        "hardwareProfile": {
-          "vmSize": "[variables('vmSize')]"
         },
-        "osProfile": {
-          "computerName": "[variables('vmName')]",
-          "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
-        },
-        "storageProfile": {
-          "imageReference": "[parameters('osSettings').imageReference]",
-          "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat('http://', parameters('storageAccountName'),'.blob.core.windows.net/vhds/', variables('vmName'), '-osdisk.vhd')]"
-            },
-            "caching": "ReadWrite",
-            "createOption": "FromImage"
-          }
-        },
-        "networkProfile": {
-          "networkInterfaces": [
-            {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+        "location": {
+            "type": "string",
+            "metadata": {
+                "description": "Location where resources will be provisioned"
             }
-          ]
+        },
+        "subnet": {
+            "type": "object",
+            "metadata": {
+                "description": "Subnet object for provisioning resources in (expects properties name as the subnet name, and vnet as the virtual network name on the object)"
+            }
+        },
+        "storageAccountName": {
+            "type": "string",
+            "metadata": {
+                "description": "Existing Storage Account where the Virtual Machine's disks will be placed"
+            }
+        },
+        "adminUsername": {
+            "type": "string",
+            "metadata": {
+                "description": "Administrator user name used when provisioning virtual machines"
+            }
+        },
+        "authSet": {
+            "type": "object",
+            "metadata": {
+                "description": "Authentication information"
+            }
+        },
+        "osSettings": {
+            "type": "object",
+            "metadata": {
+                "description": "Platform and OS settings"
+            }
         }
-      },
-      "resources": [
+    },
+    "variables": {
+        "vmStorageAccountContainerName": "vhd",
+        "vmSize": "Standard_A1",
+        "subnetRef": "[concat(resourceId('Microsoft.Network/virtualNetworks', parameters('subnet').vnet), '/subnets/', parameters('subnet').name)]",
+        "vmName": "[concat(parameters('namespace'), '-vm')]",
+        "publicIpName": "[concat(parameters('namespace'), '-pip')]",
+        "securityGroupName": "[concat(parameters('namespace'), '-nsg')]",
+        "nicName": "[concat(parameters('namespace'), '-nic')]"
+    },
+    "resources": [
         {
-          "type": "Microsoft.Compute/virtualMachines/extensions",
-          "name": "[concat(variables('vmName'), '/installkibana')]",
-          "apiVersion": "2015-06-15",
-          "location": "[parameters('location')]",
-          "dependsOn": [
-            "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
-          ],
-          "properties": "[parameters('osSettings').extentionSettings.kibana]"
-        }   
-      ]
+            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[variables('securityGroupName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "SSH",
+                        "properties": {
+                            "description": "Allows inbound SSH traffic from anyone",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "[parameters('osSettings').managementPort]",
+                            "destinationPortRange": "[parameters('osSettings').managementPort]",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 100,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "Kibana",
+                        "properties": {
+                            "description": "Allows inbound Kibana HTTP traffic from anyone",
+                            "protocol": "Tcp",
+                            "sourcePortRange": "5601",
+                            "destinationPortRange": "5601",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 200,
+                            "direction": "Inbound"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[variables('publicIpName')]",
+            "location": "[parameters('location')]",
+            "properties": {
+                "publicIPAllocationMethod": "Static"
+            }
+        },
+        {
+            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[variables('nicName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIpName'))]",
+                "[concat('Microsoft.Network/networkSecurityGroups/', variables('securityGroupName'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIpName'))]"
+                            },
+                            "subnet": {
+                                "id": "[variables('subnetRef')]"
+                            },
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('securityGroupName'))]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "2015-06-15",
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[variables('vmName')]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+            ],
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[variables('vmSize')]"
+                },
+                "osProfile": {
+                    "computerName": "kibana",
+                    "adminUsername": "[parameters('adminUsername')]",
+                    "adminPassword": "[parameters('authSet').password]",
+                    "linuxConfiguration": "[parameters('osSettings').linuxConfiguration]"
+                },
+                "storageProfile": {
+                    "imageReference": "[parameters('osSettings').imageReference]",
+                    "osDisk": {
+                        "name": "osdisk",
+                        "vhd": {
+                            "uri": "[concat('http://', parameters('storageAccountName'),'.blob.core.windows.net/vhds/', variables('vmName'), '-osdisk.vhd')]"
+                        },
+                        "caching": "ReadWrite",
+                        "createOption": "FromImage"
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+                        }
+                    ]
+                }
+            },
+            "resources": [
+                {
+                    "type": "Microsoft.Compute/virtualMachines/extensions",
+                    "name": "[concat(variables('vmName'), '/installkibana')]",
+                    "apiVersion": "2015-06-15",
+                    "location": "[parameters('location')]",
+                    "dependsOn": [
+                        "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+                    ],
+                    "properties": "[parameters('osSettings').extensionSettings.kibana]"
+                }
+            ]
+        }
+    ],
+    "outputs": {
+        "kibana-url": {
+            "type": "string",
+            "value": "[concat('http://', reference(concat('Microsoft.Network/publicIPAddresses/', variables('publicIpName'))).ipAddress , ':5601')]"
+        },
+        "kibana-ip": {
+            "type": "string",
+            "value": "[reference(concat('Microsoft.Network/publicIPAddresses/', variables('publicIpName'))).ipAddress]"
+        }
     }
-  ],
-  "outputs": {}
 }
