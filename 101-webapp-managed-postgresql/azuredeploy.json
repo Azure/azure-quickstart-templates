@@ -8,20 +8,6 @@
             "description":"Name of azure web app"
          }
       },
-      "sku":{  
-         "type":"string",
-         "allowedValues":[  
-            "Free",
-            "Shared",
-            "Basic",
-            "Standard",
-            "Premium"
-         ],
-         "defaultValue":"Standard",
-         "metadata":{  
-            "description":"App Service Pricing tier"
-         }
-      },
       "administratorLogin":{  
          "type":"string",
          "minLength":1,
@@ -30,14 +16,14 @@
          }
       },
       "administratorLoginPassword":{  
-         "type":"string",
+         "type":"securestring",
          "minLength":8,
          "maxLength":128,
          "metadata":{  
             "description":"Database administrator password"
          }
       },
-      "skuCapacityDTU":{  
+      "databaseDTU":{  
          "type":"int",
          "allowedValues":[  
             50,
@@ -48,28 +34,18 @@
             "description":"Azure database for PostgreSQL pricing tier"
          }
       },
-      "skuFamily":{  
+      "databaseSkuName":{  
          "type":"string",
          "allowedValues":[  
-            "SkuFamily"
+            "PostgreSQLB100",
+            "PostgreSQLB50"
          ],
-         "defaultValue":"SkuFamily",
+         "defaultValue":"PostgreSQLB100",
          "metadata":{  
-            "description":"Azure database for PostgreSQL SKU family"
+            "description":"Azure database for PostgreSQL sku name : PostgreSQLB100 (Basic 100 DTU tier) and PostgreSQLB50 (Basic 50 DTU tier)"
          }
       },
-      "skuName":{  
-         "type":"string",
-         "allowedValues":[  
-            "PostgreSQLS3M100",
-            "PostgreSQLS2M50"
-         ],
-         "defaultValue":"PostgreSQLS2M50",
-         "metadata":{  
-            "description":"Azure database for PostgreSQL sku name"
-         }
-      },
-      "skuSizeMB":{  
+      "databaseSkuSizeMB":{  
          "type":"int",
          "allowedValues":[  
             102400,
@@ -80,7 +56,7 @@
             "description":"Azure database for PostgreSQL Sku Size "
          }
       },
-      "skuTier":{  
+      "databaseSkuTier":{  
          "type":"string",
          "allowedValues":[  
             "Basic"
@@ -90,41 +66,15 @@
             "description":"Azure database for PostgreSQL pricing tier"
          }
       },
-      "version":{  
+      "postgresqlVersion":{  
          "type":"string",
          "allowedValues":[  
-            "9.5"
+            "9.5",
+            "9.6"
          ],
-         "defaultValue":"9.5",
+         "defaultValue":"9.6",
          "metadata":{  
             "description":"PostgreSQL version"
-         }
-      },
-      "firewallRuleName":{  
-         "type":"string",
-         "minLength":1,
-         "maxLength":128,
-         "defaultValue":"AllowAll",
-         "metadata":{  
-            "description":"Firewall rule name"
-         }
-      },
-      "firewallStartIpAddress":{  
-         "type":"string",
-         "minLength":1,
-         "maxLength":15,
-         "defaultValue":"0.0.0.0",
-         "metadata":{  
-            "description":"Firewall rule start IP address"
-         }
-      },
-      "firewallEndIpAddress":{  
-         "type":"string",
-         "minLength":1,
-         "maxLength":15,
-         "defaultValue":"255.255.255.255",
-         "metadata":{  
-            "description":"Firewall rule end IP address."
          }
       }
    },
@@ -135,20 +85,23 @@
    },
    "resources":[  
       {  
-         "apiVersion":"2014-06-01",
+         "apiVersion":"2016-09-01",
          "name":"[variables('hostingPlanName')]",
          "type":"Microsoft.Web/serverfarms",
          "location":"[resourceGroup().location]",
          "properties":{  
             "name":"[variables('hostingPlanName')]",
-            "sku":"[parameters('sku')]",
             "workerSize":"1",
             "hostingEnvironment":"",
             "numberOfWorkers":0
+         },
+         "sku":{  
+            "Tier":"Standard",
+            "Name":"S1"
          }
       },
       {  
-         "apiVersion":"2015-02-01",
+         "apiVersion":"2016-03-01",
          "name":"[parameters('siteName')]",
          "type":"Microsoft.Web/sites",
          "location":"[resourceGroup().location]",
@@ -170,7 +123,7 @@
                ],
                "properties":{  
                   "defaultConnection":{  
-                     "value":"[concat('Database=', variables('databaseName'), ';Data Source=', variables('serverName'), '.database.windows.net;User Id=', parameters('administratorLogin'),'@', variables('serverName'),';Password=', parameters('administratorLoginPassword'))]",
+                     "value":"[concat('Database=', variables('databaseName'), ';Server=', variables('serverName'), '.postgres.database.azure.com;User Id=', parameters('administratorLogin'),'@', variables('serverName'),';Password=', parameters('administratorLoginPassword'))]",
                      "type":"PostgreSQL"
                   }
                }
@@ -183,17 +136,17 @@
          "location":"[resourceGroup().location]",
          "name":"[variables('serverName')]",
          "properties":{  
-            "version":"[parameters('version')]",
+            "version":"[parameters('postgresqlVersion')]",
             "administratorLogin":"[parameters('administratorLogin')]",
             "administratorLoginPassword":"[parameters('administratorLoginPassword')]",
-            "storageMB":"[parameters('skuSizeMB')]"
+            "storageMB":"[parameters('databaseSkuSizeMB')]"
          },
          "sku":{  
-            "name":"[parameters('skuName')]",
-            "tier":"[parameters('skuTier')]",
-            "capacity":"[parameters('skuCapacityDTU')]",
-            "size":"[parameters('skuSizeMB')]",
-            "family":"[parameters('skuFamily')]"
+            "name":"[parameters('databaseSkuName')]",
+            "tier":"[parameters('databaseSkuTier')]",
+            "capacity":"[parameters('databaseDTU')]",
+            "size":"[parameters('databaseSkuSizeMB')]",
+            "family":"SkuFamily"
          },
          "type":"Microsoft.DBforPostgreSQL/servers",
          "resources":[  
@@ -204,10 +157,10 @@
                   "[concat('Microsoft.DBforPostgreSQL/servers/', variables('serverName'))]"
                ],
                "location":"[resourceGroup().location]",
-               "name":"[parameters('firewallRuleName')]",
+               "name":"[concat(variables('serverName'),'firewall')]",
                "properties":{  
-                  "startIpAddress":"[parameters('firewallStartIpAddress')]",
-                  "endIpAddress":"[parameters('firewallEndIpAddress')]"
+                  "startIpAddress":"0.0.0.0",
+                  "endIpAddress":"255.255.255.255"
                }
             },
             {  
