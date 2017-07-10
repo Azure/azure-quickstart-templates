@@ -7,7 +7,7 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template allows you to deploys a simple VM Scale Set of Ubuntu 16.04-LTS VMs and assigns a public IP address to each one. With this scale set you can connect directly to the public IP addresses, or indirectly to the scale set VM private IP addresses using the load balancer inbound NAT rules:
+This template deploys a simple VM Scale Set of Ubuntu 16.04-LTS VMs and assigns a public IP address to each one. With this scale set you can connect directly to the public IP addresses, or indirectly to the scale set VM private IP addresses using the load balancer inbound NAT rules:
 
 Direct connection: ssh {username}@{public-ip-address of VM}
 
