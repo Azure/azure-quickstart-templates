@@ -1,4 +1,4 @@
-# Simple VM scale set example which assigns public IPv4 addresses to each VM, and load balancer inbound NAT connections
+# Simple VM scale set example which assigns public IPv4 addresses to each VM, and load balancer inbound NAT rules
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-vmss-public-ip-linux%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
