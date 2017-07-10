@@ -2,6 +2,20 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vm-linux-dynamic-data-disks/"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    },
     "dnsLabelPrefix": {
       "type": "string",
       "metadata": {
@@ -220,7 +234,6 @@
   },
   "variables": {
     "armApiVersion": "2015-06-15",
-    "artifactsLocation": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vm-linux-dynamic-data-disks/",
     "avSetName": "avSet",
     "diskCaching": "ReadWrite",
     "networkSettings": {
@@ -265,7 +278,7 @@
       "name": "[variables('avSetName')]",
       "apiVersion": "[variables('armApiVersion')]",
       "location": "[resourceGroup().location]",
-      "properties": { }
+      "properties": {}
     },
     {
       "apiVersion": "[variables('armApiVersion')]",
@@ -349,7 +362,7 @@
           "computername": "[parameters('masterVMName')]",
           "adminUsername": "[parameters('adminUsername')]",
           "linuxConfiguration": {
-            "disablePasswordAuthentication": "true",
+            "disablePasswordAuthentication": true,
             "ssh": {
               "publicKeys": [
                 {
@@ -369,10 +382,8 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),parameters('masterVMName'),'.vhd')]"
-            },
+            "name": "[variables('OSDiskName')]",
+            "vhd": { "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName')), variables('armApiVersion')).primaryEndpoints.blob, variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]" },
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -401,7 +412,7 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[concat(variables('artifactsLocation'), 'azuredeploy.sh')]"
+            "[concat(parameters('_artifactsLocation'), 'azuredeploy.sh', parameters('_artifactsLocationSasToken'))]"
           ],
           "commandToExecute": "[variables('installationCLI')]"
         }
@@ -414,7 +425,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('artifactsLocation'), 'diskSelection', '.json')]",
+          "uri": "[concat(parameters('_artifactsLocation'), 'diskSelection', '.json', parameters('_artifactsLocationSasToken'))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
