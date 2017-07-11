@@ -16,4 +16,4 @@ Note that only the following VM SKUs are currently supported:
 * Standard_H16r
 * Standard_H16mr
 
-Their availability varies by region, so please double-check before deploying.
+Their availability varies by region, so please double-check before deploying. 
