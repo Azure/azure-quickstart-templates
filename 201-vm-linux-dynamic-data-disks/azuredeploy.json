@@ -7,14 +7,14 @@
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       },
-      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vm-linux-dynamic-data-disks/"
+      "defaultValue": "[split(deployment().properties.templateLink.uri,'?')[0]]"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
       "metadata": {
         "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
       },
-      "defaultValue": ""
+      "defaultValue": "[concat('?', split(deployment().properties.templateLink.uri,'?')[1])]"
     },
     "dnsLabelPrefix": {
       "type": "string",
@@ -34,7 +34,6 @@
       "defaultValue": "openlogic",
       "allowedValues": [
         "Canonical",
-        "credativ",
         "openlogic"
       ],
       "metadata": {
@@ -46,7 +45,6 @@
       "defaultValue": "CentOS",
       "allowedValues": [
         "CentOS",
-        "Debian",
         "UbuntuServer"
       ],
       "metadata": {
@@ -61,8 +59,7 @@
         "6.5",
         "6.6",
         "7.1",
-        "7.2",
-        "8"
+        "7.2"
       ],
       "metadata": {
         "description": "P.S: OpenLogic CentOS version to use **docker usage Only for 7.1/7.2 kernels 3.10 and above **"
@@ -202,8 +199,7 @@
       "defaultValue": "centos",
       "allowedValues": [
         "centos",
-        "ubuntuserver",
-        "debian"
+        "ubuntuserver"
       ],
       "metadata": {
         "description": "The Name of the VM."
@@ -237,7 +233,6 @@
     }
   },
   "variables": {
-    "armApiVersion": "2015-06-15",
     "avSetName": "avSet",
     "diskCaching": "ReadWrite",
     "networkSettings": {
@@ -271,7 +266,7 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('newStorageAccountName')]",
-      "apiVersion": "[variables('armApiVersion')]",
+      "apiVersion": "2015-06-15",
       "location": "[resourceGroup().location]",
       "properties": {
         "accountType": "[variables('storageAccountType')]"
@@ -280,12 +275,12 @@
     {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('avSetName')]",
-      "apiVersion": "[variables('armApiVersion')]",
+      "apiVersion": "2016-04-30-preview",
       "location": "[resourceGroup().location]",
       "properties": {}
     },
     {
-      "apiVersion": "[variables('armApiVersion')]",
+      "apiVersion": "2017-03-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('networkSettings').virtualNetworkName]",
       "location": "[resourceGroup().location]",
@@ -307,7 +302,7 @@
     },
     {
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "[variables('armApiVersion')]",
+      "apiVersion": "2017-03-01",
       "name": "[variables('publicIPAddressName')]",
       "location": "[resourceGroup().location]",
       "properties": {
@@ -318,7 +313,7 @@
       }
     },
     {
-      "apiVersion": "[variables('armApiVersion')]",
+      "apiVersion": "2017-03-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
       "location": "[resourceGroup().location]",
@@ -345,7 +340,7 @@
       }
     },
     {
-      "apiVersion": "[variables('armApiVersion')]",
+      "apiVersion": "2016-04-30-preview",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('masterVMName')]",
       "location": "[resourceGroup().location]",
@@ -387,7 +382,7 @@
           },
           "osDisk": {
             "name": "[variables('OSDiskName')]",
-            "vhd": { "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName')), variables('armApiVersion')).primaryEndpoints.blob, variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]" },
+            "vhd": { "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName')), '2015-06-15').primaryEndpoints.blob, variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]" },
             "caching": "ReadWrite",
             "createOption": "FromImage"
           }
@@ -402,7 +397,7 @@
       }
     },
     {
-      "apiVersion": "[variables('armApiVersion')]",
+      "apiVersion": "2016-03-30",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('masterVMName'), '/Installation')]",
       "location": "[resourceGroup().location]",
@@ -416,28 +411,28 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[concat(parameters('_artifactsLocation'), 'azuredeploy.sh', parameters('_artifactsLocationSasToken'))]"
+            "[uri(uri(parameters('_artifactsLocation'), 'azuredeploy.sh'), parameters('_artifactsLocationSasToken'))]"
           ],
           "commandToExecute": "[variables('installationCLI')]"
         }
       }
     },
     {
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2016-02-01",
       "name": "diskSelection",
       "type": "Microsoft.Resources/deployments",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'), 'diskSelection', '.json', parameters('_artifactsLocationSasToken'))]",
+          "uri": "[uri(uri(parameters('_artifactsLocation'), 'diskSelection.json'), parameters('_artifactsLocationSasToken'))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
           "numDataDisks": {
             "value": "[parameters('numDataDisks')]"
           },
-          "diskStorageAccountName": {
-            "value": "[variables('newStorageAccountName')]"
+          "diskStorageAccountUri": {
+            "value": "[reference(concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName')), '2015-06-15').primaryEndpoints.blob]"
           },
           "diskCaching": {
             "value": "[variables('diskCaching')]"
