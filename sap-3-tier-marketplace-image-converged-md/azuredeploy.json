@@ -87,27 +87,22 @@
         "description": "Password for the Virtual Machine."
       }
     },
-    "newOrExistingSubnet": {
-      "type": "string",
-      "defaultValue": "new",
-      "allowedValues": [
-        "new",
-        "existing"
-      ],
-      "metadata": {
-        "description": "Determines whether a new virtual network and subnet should be created or an existing subnet should be used."
-      }
-    },
     "subnetId": {
       "type": "string",
       "defaultValue": "",
       "metadata": {
         "description": "The id of the subnet you want to use."
       }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sap-2-tier-marketplace-image/shared/"
     }
   },
   "variables": {
-    "github": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sap-2-tier-marketplace-image/shared/",
     "images": {
       "Windows Server 2012 Datacenter": {
         "sku": "2012-Datacenter",
@@ -180,11 +175,11 @@
     "internalOSType": "[variables('images')[parameters('osType')].OSType]",
     "csExtension": {
       "Windows": {
-        "script": "[concat(variables('github'), 'noop.ps1')]",
+        "script": "[concat(parameters('_artifactsLocation'), 'noop.ps1')]",
         "scriptCall": "powershell.exe -ExecutionPolicy bypass -File noop.ps1"
       },
       "Linux": {
-        "script": "[concat(variables('github'), 'noop.sh')]",
+        "script": "[concat(parameters('_artifactsLocation'), 'noop.sh')]",
         "scriptCall": "sh noop.sh"
       }
     },
@@ -436,16 +431,8 @@
         }
       }
     },
-    "internalExtensionScriptCL": "[variables('csExtension')[variables('internalOSType')].script]",
-    "internalExtensionScriptCallCL": "[variables('csExtension')[variables('internalOSType')].scriptCall]",
-    "internalExtensionScriptCallArgsCL": "",
-    "internalExtensionScriptDI": "[variables('csExtension')[variables('internalOSType')].script]",
-    "internalExtensionScriptCallDI": "[variables('csExtension')[variables('internalOSType')].scriptCall]",
-    "internalExtensionScriptCallArgsDI": "",
-    "clvmSize": "[variables('vmSizes')[parameters('sapSystemSize')][parameters('systemAvailability')].clserversize]",
     "clvmCount": "[variables('vmSizes')[parameters('sapSystemSize')][parameters('systemAvailability')].clservercount]",
     "clvmDataDisks": "[variables('vmSizes')[parameters('sapSystemSize')][parameters('systemAvailability')].clserverdisks]",
-    "divmSize": "[variables('vmSizes')[parameters('sapSystemSize')][parameters('systemAvailability')].diserversize]",
     "divmCount": "[variables('vmSizes')[parameters('sapSystemSize')][parameters('systemAvailability')].diservercount]",
     "sidlower": "[toLower(parameters('sapSystemId'))]",
     "vmName": "[variables('sidlower')]",
@@ -455,10 +442,10 @@
     "subnetName": "Subnet",
     "subnetPrefix": "10.0.0.0/24",
     "subnets": {
-      "new": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('vnetName')), '/subnets/', variables('subnetName'))]",
-      "existing": "[parameters('subnetId')]"
+      "true": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('vnetName')), '/subnets/', variables('subnetName'))]",
+      "false": "[parameters('subnetId')]"
     },
-    "selectedSubnetId": "[variables('subnets')[parameters('newOrExistingSubnet')]]",
+    "selectedSubnetId": "[variables('subnets')[string(equals(length(parameters('subnetId')), 0))]]",
     "nestedDeploymentName": "nestedTemplate",
     "nestedDeploymentNameVNet": "[concat(variables('nestedDeploymentName'), 'vnet')]",
     "nestedDeploymentNamePIP": "[concat(variables('nestedDeploymentName'), 'pip')]",
@@ -473,26 +460,24 @@
     "avSetNameCL": "[concat(variables('sidlower'), '-avset-cl')]",
     "nestedDeploymentNameNSG": "[concat(variables('nestedDeploymentNameCL'), 'nsg')]",
     "nsgNameCL": "[concat(variables('sidlower'), '-nsg')]",
-    "internalStorageTypeCL": "Premium_LRS",
     "loadBalancerNameCL": "[concat(variables('sidlower'), '-lb-cl')]",
     "vmNameCL": "[concat(variables('vmName'), '-cl')]",
     "nicNameCL": "[concat(variables('sidlower'), '-nic-cl')]",
     "avSetNameDI": "[concat(variables('sidlower'), '-avset-di')]",
     "nicNameDI": "[concat(variables('sidlower'), '-nic-di')]",
-    "internalStorageTypeDI": "Premium_LRS",
     "vmNameDI": "[concat(variables('vmName'), '-di')]",
-    "osDiskType": "image",
-    "apiVerion": "2015-06-15"
+    "osDiskType": "image"
   },
   "resources": [
     {
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2017-05-10",
       "name": "[variables('nestedDeploymentNameNSG')]",
       "type": "Microsoft.Resources/deployments",
+      "condition": "[equals(length(parameters('subnetId')), 0)]",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('github'), parameters('newOrExistingSubnet'), 'nsg.json')]",
+          "uri": "[concat(parameters('_artifactsLocation'), 'newnsg.json')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -506,16 +491,17 @@
       }
     },
     {
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2017-05-10",
       "name": "[variables('nestedDeploymentNameVnet')]",
       "type": "Microsoft.Resources/deployments",
+      "condition": "[equals(length(parameters('subnetId')), 0)]",
       "dependsOn": [
         "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameNSG'))]"
       ],
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('github'), parameters('newOrExistingSubnet'), 'vnetnsg.json')]",
+          "uri": "[concat(parameters('_artifactsLocation'), 'newvnetnsg.json')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -551,17 +537,18 @@
       }
     },
     {
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2017-05-10",
       "name": "[concat(variables('nestedDeploymentNamePIP'), '-', copyIndex())]",
       "type": "Microsoft.Resources/deployments",
       "copy": {
         "name": "pipLoop",
         "count": "[variables('clvmCount')]"
       },
+      "condition": "[equals(length(parameters('subnetId')), 0)]",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('github'), parameters('newOrExistingSubnet'), 'pip.json')]",
+          "uri": "[concat(parameters('_artifactsLocation'), 'newpip.json')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -584,7 +571,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('github'), 'loadbalancer.json')]",
+          "uri": "[concat(parameters('_artifactsLocation'), 'loadbalancer.json')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -613,7 +600,7 @@
             "value": "[variables('selectedSubnetId')]"
           },
           "github": {
-            "value": "[variables('github')]"
+            "value": "[parameters('_artifactsLocation')]"
           }
         }
       }
@@ -629,7 +616,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('github'), 'nic-config.json')]",
+          "uri": "[concat(parameters('_artifactsLocation'), 'nic-config.json')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -644,9 +631,6 @@
           },
           "nsgName": {
             "value": ""
-          },
-          "newOrExistingSubnet": {
-            "value": "[parameters('newOrExistingSubnet')]"
           },
           "subnetId": {
             "value": "[parameters('subnetId')]"
@@ -694,7 +678,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('github'), 'os-disk-parts-md.json')]",
+          "uri": "[concat(parameters('_artifactsLocation'), 'os-disk-parts-md.json')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -723,7 +707,7 @@
             "value": "[concat(variables('vmNameCL'), '-', copyIndex())]"
           },
           "storageType": {
-            "value": "[variables('internalStorageTypeCL')]"
+            "value": "Premium_LRS"
           }
         }
       }
@@ -744,7 +728,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('github'), 'server-md.json')]",
+          "uri": "[concat(parameters('_artifactsLocation'), 'server-md.json')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -761,7 +745,7 @@
             "value": "[concat(variables('vmNameCL'), '-', copyIndex())]"
           },
           "vmSize": {
-            "value": "[variables('clvmSize')]"
+            "value": "[variables('vmSizes')[parameters('sapSystemSize')][parameters('systemAvailability')].clserversize]"
           },
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
@@ -770,13 +754,13 @@
             "value": "[parameters('adminPassword')]"
           },
           "csExtensionScript": {
-            "value": "[variables('internalExtensionScriptCL')]"
+            "value": "[variables('csExtension')[variables('internalOSType')].script]"
           },
           "csExtensionscriptCall": {
-            "value": "[variables('internalExtensionScriptCallCL')]"
+            "value": "[variables('csExtension')[variables('internalOSType')].scriptCall]"
           },
           "csExtensionscriptArgs": {
-            "value": "[variables('internalExtensionScriptCallArgsCL')]"
+            "value": ""
           },
           "avSetObj": {
             "value": {
@@ -834,7 +818,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('github'), 'nic-config.json')]",
+          "uri": "[concat(parameters('_artifactsLocation'), 'nic-config.json')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -849,9 +833,6 @@
           },
           "nsgName": {
             "value": ""
-          },
-          "newOrExistingSubnet": {
-            "value": "[parameters('newOrExistingSubnet')]"
           },
           "subnetId": {
             "value": "[parameters('subnetId')]"
@@ -895,7 +876,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('github'), 'os-disk-parts-md.json')]",
+          "uri": "[concat(parameters('_artifactsLocation'), 'os-disk-parts-md.json')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -924,7 +905,7 @@
             "value": "[concat(variables('vmNameDI'), '-', copyIndex())]"
           },
           "storageType": {
-            "value": "[variables('internalStorageTypeDI')]"
+            "value": "Premium_LRS"
           }
         }
       }
@@ -945,7 +926,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('github'), 'server-md.json')]",
+          "uri": "[concat(parameters('_artifactsLocation'), 'server-md.json')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -962,7 +943,7 @@
             "value": "[concat(variables('vmNameDI'), '-', copyIndex())]"
           },
           "vmSize": {
-            "value": "[variables('divmSize')]"
+            "value": "[variables('vmSizes')[parameters('sapSystemSize')][parameters('systemAvailability')].diserversize]"
           },
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
@@ -971,13 +952,13 @@
             "value": "[parameters('adminPassword')]"
           },
           "csExtensionScript": {
-            "value": "[variables('internalExtensionScriptDI')]"
+            "value": "[variables('csExtension')[variables('internalOSType')].script]"
           },
           "csExtensionscriptCall": {
-            "value": "[variables('internalExtensionScriptCallDI')]"
+            "value": "[variables('csExtension')[variables('internalOSType')].scriptCall]"
           },
           "csExtensionscriptArgs": {
-            "value": "[variables('internalExtensionScriptCallArgsDI')]"
+            "value": ""
           },
           "avSetObj": {
             "value": {
