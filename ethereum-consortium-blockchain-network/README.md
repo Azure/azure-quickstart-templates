@@ -121,7 +121,7 @@ The sample code for this exercise can be found in the "sample-contracts.sol" fil
 
 The first contract we'll be working with is the StateHolder contract. This is a simple contract that just stores some state on the blockchain - you can think of it as a very simplified database. There are three variables: a number that anyone can edit (openNumber), a string that anyone can edite (openString), and a string that only the contract owner can edit (myString). The owner of the contract is the person that first deploys the contract, as seen in the StateHolder() constructor function.
 
-Click on the red "Create" button under the "StateHolder" contract section on the far right. Metamask will ask you to confirm the transaction - deploying a new contract to the blockchain costs gas, which is payable in Ether from your account:
+Click on the red "Create" button under the "StateHolder" contract section on the far right (Note: you may receive an error about Gas limit being exceeded, so make sure to increase the 'Transaction Gas Limit' to something greater if this occurs). Metamask will ask you to confirm the transaction - deploying a new contract to the blockchain costs gas, which is payable in Ether from your account:
 
 ![consortium network](images/contracts2.png)
 
