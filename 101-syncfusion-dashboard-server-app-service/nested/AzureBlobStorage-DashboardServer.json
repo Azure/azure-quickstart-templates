@@ -1,0 +1,159 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "WebAppName": {
+      "type": "string",
+      "metadata": {
+        "description": "App name for dashboard server. The name must be between 3 and 24 characters long, and can contain only numbers and lowercase letters."
+      }
+    },
+    "storageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "App name for dashboard server. The name must be between 3 and 24 characters long, and can contain only numbers and lowercase letters."
+      }
+    },
+    "storageAccountType": {
+      "type": "string",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_GRS",
+        "Standard_RAGRS"
+      ],
+      "metadata": {
+        "description": "Type of the storage account created"
+      },
+      "defaultValue": "Standard_LRS"
+    }
+  },
+  "variables": {
+    "WebAppSvcPlanWorkerSize": "0",
+    "WebAppSvcPlanSKU": "Basic",
+    "WebAppSvcPlanName": "SyncfusionAppSvcPlan"
+  },
+  "resources": [
+    {
+      "name": "[variables('WebAppSvcPlanName')]",
+      "type": "Microsoft.Web/serverfarms",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2014-06-01",
+      "dependsOn": [],
+      "tags": {
+        "displayName": "AppSvcPlan"
+      },
+      "properties": {
+        "name": "[variables('WebAppSvcPlanName')]",
+        "sku": "[variables('WebAppSvcPlanSKU')]",
+        "workerSize": "[variables('WebAppSvcPlanWorkerSize')]"
+      }
+    },
+    {
+      "name": "[parameters('WebAppName')]",
+      "type": "Microsoft.Web/sites",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-08-01",
+      "dependsOn": [
+        "[concat('Microsoft.Web/serverfarms/', variables('WebAppSvcPlanName'))]"
+      ],
+      "tags": {
+        "[concat('hidden-related:', resourceGroup().id, '/providers/Microsoft.Web/serverfarms/', variables('WebAppSvcPlanName'))]": "Resource",
+        "displayName": "WebApp"
+      },
+      "properties": {
+        "name": "[parameters('WebAppName')]",
+        "clientAffinityEnabled": "false",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms/', variables('WebAppSvcPlanName'))]"
+      },
+      "resources": [
+        {
+          "apiVersion": "2015-08-01",
+          "name": "web",
+          "type": "config",
+          "dependsOn": [
+            "[concat('Microsoft.Web/sites/', parameters('WebAppName'))]",
+            "[concat('Microsoft.Web/sites/', parameters('WebAppName'), '/extensions/MSDeploy')]"
+          ],
+          "tags": {
+            "displayName": "WebAppConfig"
+          },
+          "properties": {
+            "netFrameworkVersion": "v4.6",
+            "use32BitWorkerProcess": true,
+            "webSocketsEnabled": true,
+            "alwaysOn": true,
+            "remoteDebuggingEnabled": false,
+            "remoteDebuggingVersion": "VS2015",
+            "virtualApplications": [
+              {
+                "virtualPath": "/",
+                "physicalPath": "site\\wwwroot"
+              },
+              {
+                "virtualPath": "/API",
+                "physicalPath": "site\\wwwroot\\API"
+              },
+              {
+                "virtualPath": "/DashboardService",
+                "physicalPath": "site\\wwwroot\\DashboardService"
+              }
+            ]
+          }
+        },
+        {
+          "name": "MSDeploy",
+          "type": "extensions",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2015-08-01",
+          "dependsOn": [
+            "[concat('Microsoft.Web/sites/', parameters('WebAppName'))]"
+          ],
+          "tags": {
+            "displayName": "WebAppMSDeploy"
+          },
+          "properties": {
+            "packageUri": "https://enterpriseserver.blob.core.windows.net/dashboardserver/2.2.0.31/DashboardServer_AzurePackage_2.2.0.31_07232017_072350.zip"
+          }
+        },
+        {
+          "name": "appsettings",
+          "type": "config",
+          "apiVersion": "2015-08-01",
+          "dependsOn": [
+            "[concat('Microsoft.Web/sites/', parameters('WebAppName'))]",
+            "[concat('Microsoft.Web/sites/', parameters('WebAppName'), '/extensions/MSDeploy')]",
+            "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]"
+
+          ],
+          "tags": {
+            "displayName": "WebAppSettings"
+          },
+          "properties": {
+            "AzureStorageAccountName": "[parameters('storageAccountName')]",
+            "AzureStorageBlobServiceEndpoint": "[concat('https://',parameters('storageAccountName'), '.blob.core.windows.net/')]",
+            "AzureStorageAccessKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]",
+            "AzureStorageContainerName": "syncfusiondashboardcontainer",
+            "AzureStorageConnectionType": "https",
+            "AzureStorageBlobURL": "[concat('https://',parameters('storageAccountName'), '.blob.core.windows.net/')]",
+            "StorageType": "AzureBlob",
+            "IsAzureApplication": "true",
+            "log4net.Config": "logs\\log4net.config"
+          }
+        }
+      ]
+    },
+    {
+      "name": "[parameters('storageAccountName')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [],
+      "tags": {
+        "displayName": "storageaccount"
+      },
+      "properties": {
+        "accountType": "[parameters('storageAccountType')]"
+      }
+    }
+  ]
+}
