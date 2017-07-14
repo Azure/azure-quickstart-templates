@@ -91,7 +91,7 @@
       "type": "string",
       "defaultValue": "",
       "metadata": {
-        "description": "The id of the subnet you want to use."
+        "description": "The id of the subnet you want to use. Leave blank if you want to create a new virtual network and subnet"
       }
     },
     "_artifactsLocation": {
@@ -100,6 +100,13 @@
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       },
       "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sap-2-tier-marketplace-image/shared/"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
     }
   },
   "variables": {
@@ -175,11 +182,11 @@
     "internalOSType": "[variables('images')[parameters('osType')].OSType]",
     "csExtension": {
       "Windows": {
-        "script": "[concat(parameters('_artifactsLocation'), 'noop.ps1')]",
+        "script": "[concat(parameters('_artifactsLocation'), 'noop.ps1', parameters('_artifactsLocationSasToken'))]",
         "scriptCall": "powershell.exe -ExecutionPolicy bypass -File noop.ps1"
       },
       "Linux": {
-        "script": "[concat(parameters('_artifactsLocation'), 'noop.sh')]",
+        "script": "[concat(parameters('_artifactsLocation'), 'noop.sh', parameters('_artifactsLocationSasToken'))]",
         "scriptCall": "sh noop.sh"
       }
     },
@@ -442,7 +449,7 @@
     "subnetName": "Subnet",
     "subnetPrefix": "10.0.0.0/24",
     "subnets": {
-      "true": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('vnetName')), '/subnets/', variables('subnetName'))]",
+      "true": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('subnetName'))]",
       "false": "[parameters('subnetId')]"
     },
     "selectedSubnetId": "[variables('subnets')[string(equals(length(parameters('subnetId')), 0))]]",
@@ -477,7 +484,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'), 'newnsg.json')]",
+          "uri": "[concat(parameters('_artifactsLocation'), 'newnsg.json', parameters('_artifactsLocationSasToken'))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -501,7 +508,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'), 'newvnetnsg.json')]",
+          "uri": "[concat(parameters('_artifactsLocation'), 'newvnetnsg.json', parameters('_artifactsLocationSasToken'))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -548,7 +555,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'), 'newpip.json')]",
+          "uri": "[concat(parameters('_artifactsLocation'), 'newpip.json', parameters('_artifactsLocationSasToken'))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -562,7 +569,7 @@
       }
     },
     {
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2017-05-10",
       "name": "[variables('nestedDeploymentNameLBCL')]",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
@@ -571,7 +578,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'), 'loadbalancer.json')]",
+          "uri": "[concat(parameters('_artifactsLocation'), 'loadbalancer.json', parameters('_artifactsLocationSasToken'))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -599,14 +606,17 @@
           "subnetId": {
             "value": "[variables('selectedSubnetId')]"
           },
-          "github": {
+          "_artifactsLocation": {
             "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
           }
         }
       }
     },
     {
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2017-05-10",
       "name": "[concat(variables('nestedDeploymentNameNICCL'), '-', copyIndex())]",
       "type": "Microsoft.Resources/deployments",
       "copy": {
@@ -616,7 +626,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'), 'nic-config.json')]",
+          "uri": "[concat(parameters('_artifactsLocation'), 'nic-config.json', parameters('_artifactsLocationSasToken'))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -647,8 +657,8 @@
         "count": "[variables('clvmCount')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNamePIP'), '-', copyIndex())]",
-        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameNICCL'), '-', copyIndex())]",
+        "pipLoop",
+        "nicConfigCLLoop",
         "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameVnet'))]",
         "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameLBCL'))]"
       ],
@@ -668,7 +678,7 @@
       }
     },
     {
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2017-05-10",
       "name": "[concat(variables('nestedDeploymentNameProf'), '-cl-', copyIndex())]",
       "type": "Microsoft.Resources/deployments",
       "copy": {
@@ -678,7 +688,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'), 'os-disk-parts-md.json')]",
+          "uri": "[concat(parameters('_artifactsLocation'), 'os-disk-parts-md.json', parameters('_artifactsLocationSasToken'))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -713,7 +723,7 @@
       }
     },
     {
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2017-05-10",
       "name": "[concat(variables('nestedDeploymentNameCL'), '-', copyIndex())]",
       "type": "Microsoft.Resources/deployments",
       "copy": {
@@ -721,14 +731,14 @@
         "count": "[variables('clvmCount')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicNameCL'), '-', copyIndex())]",
+        "nicCLLoop",
         "[concat('Microsoft.Compute/availabilitySets/', variables('avSetNameCL'))]",
-        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameProf'), '-cl-', copyIndex())]"
+        "osDiskPartsCLLoop"
       ],
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'), 'server-md.json')]",
+          "uri": "[concat(parameters('_artifactsLocation'), 'server-md.json', parameters('_artifactsLocationSasToken'))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -808,7 +818,7 @@
       }
     },
     {
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2017-05-10",
       "name": "[concat(variables('nestedDeploymentNameNICDI'), '-', copyIndex())]",
       "type": "Microsoft.Resources/deployments",
       "copy": {
@@ -818,7 +828,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'), 'nic-config.json')]",
+          "uri": "[concat(parameters('_artifactsLocation'), 'nic-config.json', parameters('_artifactsLocationSasToken'))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -846,7 +856,7 @@
       "apiVersion": "2015-06-15",
       "dependsOn": [
         "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameVnet'))]",
-        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameNICDI'), '-', copyIndex())]"
+        "nicConfigDILoop"
       ],
       "copy": {
         "name": "nicDILoop",
@@ -866,7 +876,7 @@
       }
     },
     {
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2017-05-10",
       "name": "[concat(variables('nestedDeploymentNameProf'), '-di-', copyIndex())]",
       "type": "Microsoft.Resources/deployments",
       "copy": {
@@ -876,7 +886,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'), 'os-disk-parts-md.json')]",
+          "uri": "[concat(parameters('_artifactsLocation'), 'os-disk-parts-md.json', parameters('_artifactsLocationSasToken'))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -911,7 +921,7 @@
       }
     },
     {
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2017-05-10",
       "name": "[concat(variables('nestedDeploymentNameDI'), '-', copyIndex())]",
       "type": "Microsoft.Resources/deployments",
       "copy": {
@@ -919,14 +929,14 @@
         "count": "[variables('divmCount')]"
       },
       "dependsOn": [
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicNameDI'), '-', copyIndex())]",
+        "nicDILoop",
         "[concat('Microsoft.Compute/availabilitySets/', variables('avSetNameDI'))]",
-        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameProf'), '-di-', copyIndex())]"
+        "osDiskPartsDILoop"
       ],
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(parameters('_artifactsLocation'), 'server-md.json')]",
+          "uri": "[concat(parameters('_artifactsLocation'), 'server-md.json', parameters('_artifactsLocationSasToken'))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
