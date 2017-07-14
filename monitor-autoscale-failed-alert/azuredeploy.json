@@ -1,0 +1,93 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "actionGroupName": {
+      "type": "string",
+      "defaultValue":  "autoscaleActionGroup",
+      "minLength": 1,
+      "metadata": {
+        "description": "Name for the Action group."
+      }
+    },
+    "actionGroupShortName": {
+      "type": "string",
+      "defaultValue": "autoscaleAG",
+      "minLength": 1,
+      "maxLength": 12,
+      "metadata": {
+        "description": "Short name for the Action group."
+      }
+    },
+    "emailAddress": {
+      "type": "string",
+      "metadata": {
+        "description": "Email address."
+      }
+    },
+    "activityLogAlertName": {
+      "type": "string",
+      "defaultValue": "autoscaleFailedAlert",
+      "minLength": 1,
+      "metadata": {
+        "description": "Name for the Activity log alert."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Insights/actionGroups",
+      "apiVersion": "2017-04-01",
+      "name": "[parameters('actionGroupName')]",
+      "location": "Global",
+      "properties": {
+        "groupShortName": "[parameters('actionGroupShortName')]",
+        "enabled": "true",
+        "smsReceivers": [
+        ],
+        "emailReceivers": [
+          {
+            "name": "emailReceiver",
+            "emailAddress": "[parameters('emailAddress')]"
+          }
+        ],
+        "webhookReceivers": [
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Insights/activityLogAlerts",
+      "apiVersion": "2017-04-01",
+      "name": "[parameters('activityLogAlertName')]",
+      "location": "Global",
+      "dependsOn": [
+        "[parameters('actionGroupName')]"
+      ],
+      "properties": {
+        "enabled": "true",
+        "scopes": [
+          "[subscription().id]"
+        ],
+        "condition": {
+          "allOf": [
+            {
+              "field": "Category",
+              "equals": "Autoscale"
+            },
+            {
+              "field": "Status",
+              "equals": "Failed"
+            }
+          ]
+        },
+        "actions": {
+          "actionGroups": [
+            {
+              "actionGroupId": "[resourceId('Microsoft.Insights/actionGroups', parameters('actionGroupName'))]"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
