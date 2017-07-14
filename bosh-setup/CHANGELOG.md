@@ -1,3 +1,16 @@
+# v2.6.1 (2017-6-2)
+
+- Upgrade bosh to v262
+- Upgrade bosh stemcell to v3421.3
+- Add ssl cert & key for the director job
+- Add `user_add` job to add a cpidebug user to the bosh director
+
+# v2.6.0 (2017-5-15)
+
+- Upgrade Azure CPI version to v24. Please see new features in [bosh-azure-cpi-release v24](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v24)
+- Upgrade bosh stemcell to v3363.22
+- Change the account type of the default storage account to `Standard_LRS`.
+
 # v2.5.0 (2017-3-20)
 
 - Support AzureGermanCloud

@@ -1,8 +1,8 @@
 <h1>Enterprise Azure Governance and Operations </h1>
 <h2>Composite template version 1.0</h2>
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAvyanConsultingCorp%2Fazure-quickstart-templates%2Fmaster%2Fazure-governance-operations-automation%2Fazuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAvyanConsultingCorp%2Fazure-quickstart-templates%2Fmaster%2Fazure-governance-operations-automation%2Fazuredeploy.json" target="_blank"> <img src="http://armviz.io/visualizebutton.png"/></a>
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fazure-governance-operations-automation%2Fazuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fazure-governance-operations-automation%2Fazuredeploy.json" target="_blank"> <img src="http://armviz.io/visualizebutton.png"/></a>
 
 ----------
 <h2> Table of Contents </h2>
@@ -13,7 +13,7 @@
 - [Solution Template Overview](#solution-template-overview)
 - [Quick Overview Video](#quick-overview-video)
 - [Target Audience](#target-audience)
-- [Licenses & Costs](#licenses-costs)
+- [Licenses & Costs](#licenses--costs)
 - [Prerequisites](#prerequisites)
 - [Reference Architecture Diagram](#reference-architecture-diagram)
 - [Dashboards](#dashboards)

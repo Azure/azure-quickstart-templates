@@ -1,4 +1,6 @@
-# Azure Spinnaker to Kubernetes [![Build Status](http://devops-ci.westcentralus.cloudapp.azure.com/job/qs/job/201-spinnaker-acr-k8s/badge/icon)](http://devops-ci.westcentralus.cloudapp.azure.com/blue/organizations/jenkins/qs%2F201-spinnaker-acr-k8s/activity)
+# Azure Spinnaker to Kubernetes [DEPRECATED]
+
+**IMPORTANT**: This template has been deprecated. Please use the [Azure Spinnaker](https://github.com/Azure/azure-quickstart-templates/tree/master/101-spinnaker) or [Continuous Deployment to Kubernetes](https://github.com/Azure/azure-quickstart-templates/tree/master/301-jenkins-acr-spinnaker-k8s) templates instead.
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F201-spinnaker-acr-k8s%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
@@ -23,7 +25,7 @@ This template allows you to deploy an instance of Spinnaker on a Linux Ubuntu 14
     > NOTE: You can run `az account list` after you login to get a list of subscription IDs for your account.
 
 ## B. Setup SSH port forwarding
-You need to setup port forwarding to view the Spinnaker UI on your local machine.
+You need to setup port forwarding to view the Spinnaker UI on your local machine. If you do not know the full DNS name of your instance, go to the Portal and find it in the deployment outputs here: `Resource Groups > {Resource Group Name} > Deployments > {Deployment Name, usually 'Microsoft.Template'} > Outputs`
 
 ### If you are using Windows:
 Install Putty or use any bash shell for Windows (if using a bash shell, follow the instructions for Linux or Mac).
@@ -45,11 +47,11 @@ Run this command:
 ```bash
 ssh -i <path to private key file> -L 9000:localhost:9000 -L 8084:localhost:8084 -L 8001:localhost:8001 <User name>@<Public DNS name of instance you just created>
 ```
-> NOTE: Port 9000 and 8084 correspond to Spinnaker's deck and gate services, respectively. Port 8001 is used to view the dashboard for your Kubernetes cluster - just run `kubectl proxy` on the VM before navigating to http://localhost:8001 on your local machine.
+> NOTE: Port 9000 and 8084 correspond to Spinnaker's deck and gate services, respectively. Port 8001 is used to view the dashboard for your Kubernetes cluster - just run `kubectl proxy` on the VM before navigating to http://localhost:8001/ui on your local machine.
 
 ## C. Connect to Spinnaker
 
-1. After you have started your tunnel, navigate to `http://localhost:9000/` on your local machine.
+1. After you have started your tunnel, navigate to http://localhost:9000/ on your local machine.
 1. If you included a Kubernetes Pipeline when creating the template, navigate to 'Applications -> {Application Name} -> Pipelines' to see your pipeline. Follow steps [here](http://www.spinnaker.io/docs/kubernetes-source-to-prod#section-1-create-a-spinnaker-application) to create a pipeline manually.
 1. You can trigger the pipeline by pushing an image with a new tag to the configured repository or simply clicking 'Start Manual Execution' and selecting an existing tag.
   1. By default, Spinnaker has been targeted to use the [repository](https://hub.docker.com/r/lwander/spin-kub-demo/) in the sample pipeline. Follow steps [here](http://www.spinnaker.io/v1.0/docs/target-deployment-configuration#section-docker-registry) to target different repositories.
