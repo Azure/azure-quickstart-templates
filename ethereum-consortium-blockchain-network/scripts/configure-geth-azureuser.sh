@@ -65,7 +65,7 @@ sleep 5;
 # Install packages
 ##################
 echo "===== Starting packages installation =====";
-sudo apt-get -y install npm=3.5.2-0ubuntu4 git=1:2.7.4-0ubuntu1 software-properties-common=0.96.20.6 || unsuccessful_exit "package install 1 failed";
+sudo apt-get -y install npm=3.5.2-0ubuntu4 git=1:2.7.4-0ubuntu1 || unsuccessful_exit "package install 1 failed";
 sudo update-alternatives --install /usr/bin/node nodejs /usr/bin/nodejs 100 || unsuccessful_exit "package install 2 failed";
 echo "===== Completed packages installation =====";
 
@@ -77,7 +77,7 @@ wget https://gethstore.blob.core.windows.net/builds/geth-alltools-linux-amd64-1.
 wget https://gethstore.blob.core.windows.net/builds/geth-alltools-linux-amd64-1.6.0-facc47cb.tar.gz.asc || unsuccessful_exit "geth signature download failed";
 
 # Import geth buildserver keys
-gpg --recv-keys --keyserver hkp://keys.gnupg.net F9585DE6 C2FF8BBF 9BA28146 7B9E2481 D2A67EAC || unsuccessful_exit "import geth buildserver keys failed";
+gpg --recv-keys --keyserver hkp://keyserver.ubuntu.com F9585DE6 C2FF8BBF 9BA28146 7B9E2481 D2A67EAC || unsuccessful_exit "import geth buildserver keys failed";
 
 # Validate signature
 gpg --verify geth-alltools-linux-amd64-1.6.0-facc47cb.tar.gz.asc || unsuccessful_exit "validate geth download failed";
@@ -86,25 +86,8 @@ gpg --verify geth-alltools-linux-amd64-1.6.0-facc47cb.tar.gz.asc || unsuccessful
 tar xzf geth-alltools-linux-amd64-1.6.0-facc47cb.tar.gz || unsuccessful_exit "geth download unpack failed";
 
 # /usr/bin is in $PATH by default, we'll put our binaries there
-sudo cp geth-alltools-linux-amd64-1.6.0-facc47cb/* /usr/bin/ || nsuccessful_exit "copy of geth to /usr/bin failed";
-
-##############
-# Install geth
-##############
-wget https://gethstore.blob.core.windows.net/builds/geth-alltools-linux-amd64-1.5.9-a07539fb.tar.gz || exit 1;
-wget https://gethstore.blob.core.windows.net/builds/geth-alltools-linux-amd64-1.5.9-a07539fb.tar.gz.asc || exit 1;
-
-# Import geth buildserver keys
-gpg --recv-keys --keyserver hkp://keys.gnupg.net F9585DE6 C2FF8BBF 9BA28146 7B9E2481 D2A67EAC || exit 1;
-
-# Validate signature
-gpg --verify geth-alltools-linux-amd64-1.5.9-a07539fb.tar.gz.asc || exit 1;
-
-# Unpack archive
-tar xzf geth-alltools-linux-amd64-1.5.9-a07539fb.tar.gz || exit 1;
-
-# /usr/bin is in $PATH by default, we'll put our binaries there
-sudo cp geth-alltools-linux-amd64-1.5.9-a07539fb/* /usr/bin/ || exit 1;
+sudo cp geth-alltools-linux-amd64-1.6.0-facc47cb/* /usr/bin/ || unsuccessful_exit "copy of geth to /usr/bin failed";
+echo "===== Completed geth installation =====";
 
 #############
 # Build node keys and node IDs
