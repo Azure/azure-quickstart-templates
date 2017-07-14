@@ -1,0 +1,461 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "generated-cn-dr-logicappName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "metadata": {
+        "description": "Name of the Generated Control Numbers replication Logic App."
+      },
+      "defaultValue": "GeneratedCnReplication"
+    },
+    "received-cn-dr-logicappName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "metadata": {
+        "description": "Name of the Received Control Numbers replication Logic App."
+      },
+      "defaultValue": "ReceivedCnReplication"
+    },
+    "as2-mic-dr-logicappName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80,
+      "metadata": {
+        "description": "Name of the AS2 MIC replication Logic App."
+      },
+      "defaultValue": "MicReplication"
+    },
+    "dr-logicappLocation": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "allowedValues": [
+        "eastasia",
+        "southeastasia",
+        "centralus",
+        "eastus",
+        "eastus2",
+        "westus",
+        "northcentralus",
+        "southcentralus",
+        "northeurope",
+        "westeurope",
+        "japanwest",
+        "japaneast",
+        "brazilsouth",
+        "australiaeast",
+        "australiasoutheast",
+        "southindia",
+        "centralindia",
+        "westindia",
+        "canadacentral",
+        "canadaeast",
+        "westcentralus",
+        "westus2",
+        "[resourceGroup().location]"
+      ],
+      "metadata": {
+        "description": "Location of the Logic App."
+      }
+    },
+    "primaryIntegrationAccount_X12Connection_Name": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the primary Integration Account X12 Connection."
+      },
+      "defaultValue": "x12-primary"
+    },
+    "primaryIntegrationAccount_X12Connection_DisplayName": {
+      "type": "string",
+      "metadata": {
+        "description": "Display name of the primary Integration Account X12 Connection."
+      },
+      "defaultValue": "primaryIntegrationAccount_x12"
+    },
+    "primaryIntegrationAccount_AS2Connection_Name": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the primary Integration Account AS2 Connection."
+      },
+      "defaultValue": "as2-primary"
+    },
+    "primaryIntegrationAccount_AS2Connection_DisplayName": {
+      "type": "string",
+      "metadata": {
+        "description": "Display name of the primary Integration Account AS2 Connection."
+      },
+      "defaultValue": "primaryIntegrationAccount_as2"
+    },
+    "primaryIntegrationAccount_ResourceGroupName": {
+      "type": "string",
+      "metadata": {
+        "description": "Primary Integration Account Resource Group Name"
+      }
+    },
+    "primaryIntegrationAccount_IntegrationAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Primary Integration Account Name"
+      }
+    },
+    "secondaryIntegrationAccount_X12Connection_Name": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the secondary Integration Account X12 Connection."
+      },
+      "defaultValue": "x12-secondary"
+    },
+    "secondaryIntegrationAccount_X12Connection_DisplayName": {
+      "type": "string",
+      "metadata": {
+        "description": "Display name of the secondary Integration Account X12 Connection."
+      },
+      "defaultValue": "secondaryIntegrationAccount_x12"
+    },
+    "secondaryIntegrationAccount_AS2Connection_Name": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the secondary Integration Account AS2 Connection."
+      },
+      "defaultValue": "as2-secondary"
+    },
+    "secondaryIntegrationAccount_AS2Connection_DisplayName": {
+      "type": "string",
+      "metadata": {
+        "description": "Display name of the secondary Integration Account Connection."
+      },
+      "defaultValue": "secondaryIntegrationAccount_as2"
+    },
+    "secondaryIntegrationAccount_IntegrationAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Secondary Integration Account Name"
+      }
+    }
+  },
+  "variables": {},
+  "resources": [
+    {
+      "name": "[parameters('generated-cn-dr-logicappName')]",
+      "type": "Microsoft.Logic/workflows",
+      "location": "[parameters('dr-logicappLocation')]",
+      "apiVersion": "2016-06-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/connections', parameters('primaryIntegrationAccount_X12Connection_Name'))]",
+        "[resourceId('Microsoft.Web/connections', parameters('secondaryIntegrationAccount_X12Connection_Name'))]"
+      ],
+      "tags": {
+        "displayName": "x12-generatedcn-dr-logicapp"
+      },
+      "properties": {
+        "definition": {
+          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+          "actions": {
+            "Add_or_update_a_generated_control_number": {
+              "type": "ApiConnection",
+              "inputs": {
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['secondaryIntegrationAccount']['connectionId']"
+                  }
+                },
+                "method": "put",
+                "path": "/generatedcontrolnumbers",
+                "body": {
+                  "AgreementName": "@{triggerBody()?['AgreementName']}",
+                  "ControlNumberType": "@{triggerBody()?['ControlNumberType']}",
+                  "ControlNumber": "@{triggerBody()?['ControlNumber']}",
+                  "ControlNumberChangedTime": "@{triggerBody()?['ControlNumberChangedTime']}",
+                  "IsAcknowledgement": "@triggerBody()?['IsAcknowledgement']"
+                }
+              },
+              "runAfter": {}
+            }
+          },
+          "parameters": {
+            "$connections": {
+              "defaultValue": {},
+              "type": "Object"
+            }
+          },
+          "triggers": {
+            "When_a_generated_control_number_is_modified": {
+              "type": "ApiConnection",
+              "inputs": {
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['primaryIntegrationAccount']['connectionId']"
+                  }
+                },
+                "method": "get",
+                "path": "/triggers/onmodifiedgeneratedcontrolnumber"
+              },
+              "recurrence": {
+                "frequency": "Minute",
+                "interval": 3
+              },
+              "splitOn": "@triggerBody()"
+            }
+          },
+          "contentVersion": "1.0.0.0",
+          "outputs": {}
+        },
+        "parameters": {
+          "$connections": {
+            "value": {
+              "primaryIntegrationAccount": {
+                "id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', parameters('dr-logicappLocation'), '/managedApis/', 'x12')]",
+                "connectionId": "[resourceId('Microsoft.Web/connections', parameters('primaryIntegrationAccount_X12Connection_Name'))]",
+                "connectionName": "[parameters('primaryIntegrationAccount_X12Connection_Name')]"
+              },
+              "secondaryIntegrationAccount": {
+                "id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', parameters('dr-logicappLocation'), '/managedApis/', 'x12')]",
+                "connectionId": "[resourceId('Microsoft.Web/connections', parameters('secondaryIntegrationAccount_X12Connection_Name'))]",
+                "connectionName": "[parameters('secondaryIntegrationAccount_X12Connection_Name')]"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "[parameters('received-cn-dr-logicappName')]",
+      "type": "Microsoft.Logic/workflows",
+      "location": "[parameters('dr-logicappLocation')]",
+      "apiVersion": "2016-06-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/connections', parameters('secondaryIntegrationAccount_X12Connection_Name'))]",
+        "[resourceId('Microsoft.Web/connections', parameters('primaryIntegrationAccount_X12Connection_Name'))]"
+      ],
+      "tags": {
+        "displayName": "x12-receivedcn-dr-logicapp"
+      },
+      "properties": {
+        "definition": {
+          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+          "actions": {
+            "Add_or_update_a_received_control_number": {
+              "type": "ApiConnection",
+              "inputs": {
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['secondaryIntegrationAccount']['connectionId']"
+                  }
+                },
+                "method": "put",
+                "path": "/receivedcontrolnumbers",
+                "body": {
+                  "AgreementName": "@{triggerBody()?['AgreementName']}",
+                  "ControlNumberType": "@{triggerBody()?['ControlNumberType']}",
+                  "ControlNumber": "@{triggerBody()?['ControlNumber']}",
+                  "ControlNumberChangedTime": "@{triggerBody()?['ControlNumberChangedTime']}",
+                  "IsAcknowledgement": "@triggerBody()?['IsAcknowledgement']",
+                  "IsMessageProcessingFailed": "@triggerBody()?['IsMessageProcessingFailed']"
+                }
+              },
+              "runAfter": {}
+            }
+          },
+          "parameters": {
+            "$connections": {
+              "defaultValue": {},
+              "type": "Object"
+            }
+          },
+          "triggers": {
+            "When_a_received_control_number_is_modified": {
+              "type": "ApiConnection",
+              "inputs": {
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['primaryIntegrationAccount']['connectionId']"
+                  }
+                },
+                "method": "get",
+                "path": "/triggers/onmodifiedreceivedcontrolnumber",
+                "queries": {
+                  "startSyncTime": "2016-01-02"
+                }
+              },
+              "recurrence": {
+                "frequency": "Second",
+                "interval": 20
+              },
+              "splitOn": "@triggerBody()"
+            }
+          },
+          "contentVersion": "1.0.0.0",
+          "outputs": {}
+        },
+        "parameters": {
+          "$connections": {
+            "value": {
+              "secondaryIntegrationAccount": {
+                "id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', parameters('dr-logicappLocation'), '/managedApis/', 'x12')]",
+                "connectionId": "[resourceId('Microsoft.Web/connections', parameters('primaryIntegrationAccount_X12Connection_Name'))]",
+                "connectionName": "[parameters('secondaryIntegrationAccount_X12Connection_Name')]"
+              },
+              "primaryIntegrationAccount": {
+                "id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', parameters('dr-logicappLocation'), '/managedApis/', 'x12')]",
+                "connectionId": "[resourceId('Microsoft.Web/connections', parameters('secondaryIntegrationAccount_X12Connection_Name'))]",
+                "connectionName": "[parameters('primaryIntegrationAccount_X12Connection_Name')]"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "[parameters('as2-mic-dr-logicappName')]",
+      "type": "Microsoft.Logic/workflows",
+      "location": "[parameters('dr-logicappLocation')]",
+      "apiVersion": "2016-06-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/connections', parameters('primaryIntegrationAccount_AS2Connection_Name'))]",
+        "[resourceId('Microsoft.Web/connections', parameters('secondaryIntegrationAccount_AS2Connection_Name'))]"
+      ],
+      "tags": {
+        "displayName": "as2-mic-dr-logicapp"
+      },
+      "properties": {
+        "definition": {
+          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+          "actions": {
+            "Add_or_update_a_MIC": {
+              "type": "ApiConnection",
+              "inputs": {
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['secondaryIntegrationAccount']['connectionId']"
+                  }
+                },
+                "method": "put",
+                "path": "/createOrUpdateMic",
+                "body": {
+                  "AgreementName": "@{triggerBody()?['AgreementName']}",
+                  "As2From": "@{triggerBody()?['As2From']}",
+                  "As2To": "@{triggerBody()?['As2To']}",
+                  "MessageId": "@{triggerBody()?['MessageId']}",
+                  "MicChangedTime": "@{triggerBody()?['MicChangedTime']}",
+                  "MicValue": "@{triggerBody()?['MicValue']}"
+                }
+              },
+              "runAfter": {}
+            }
+          },
+          "parameters": {
+            "$connections": {
+              "defaultValue": {},
+              "type": "Object"
+            }
+          },
+          "triggers": {
+            "When_a_MIC_value_is_created": {
+              "type": "ApiConnection",
+              "inputs": {
+                "host": {
+                  "connection": {
+                    "name": "@parameters('$connections')['primaryIntegrationAccount']['connectionId']"
+                  }
+                },
+                "method": "get",
+                "path": "/triggers/oncreatedmic"
+              },
+              "recurrence": {
+                "frequency": "Minute",
+                "interval": 3
+              },
+              "splitOn": "@triggerBody()"
+            }
+          },
+          "contentVersion": "1.0.0.0",
+          "outputs": {}
+        },
+        "parameters": {
+          "$connections": {
+            "value": {
+              "primaryIntegrationAccount": {
+                "id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', parameters('dr-logicappLocation'), '/managedApis/', 'as2')]",
+                "connectionId": "[resourceId('Microsoft.Web/connections', parameters('primaryIntegrationAccount_AS2Connection_Name'))]",
+                "connectionName": "[parameters('primaryIntegrationAccount_AS2Connection_Name')]"
+              },
+              "secondaryIntegrationAccount": {
+                "id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', parameters('dr-logicappLocation'), '/managedApis/', 'as2')]",
+                "connectionId": "[resourceId('Microsoft.Web/connections', parameters('secondaryIntegrationAccount_AS2Connection_Name'))]",
+                "connectionName": "[parameters('secondaryIntegrationAccount_AS2Connection_Name')]"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "MICROSOFT.WEB/CONNECTIONS",
+      "apiVersion": "2016-06-01",
+      "name": "[parameters('primaryIntegrationAccount_X12Connection_Name')]",
+      "location": "[parameters('dr-logicappLocation')]",
+      "properties": {
+        "api": {
+          "id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', parameters('dr-logicappLocation'), '/managedApis/', 'x12')]"
+        },
+        "displayName": "[parameters('primaryIntegrationAccount_X12Connection_DisplayName')]",
+        "parameterValues": {
+          "integrationAccountId": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', parameters('primaryIntegrationAccount_ResourceGroupName'), '/providers/Microsoft.Logic/integrationaccounts/', parameters('primaryIntegrationAccount_IntegrationAccountName'))]",
+          "integrationAccountUrl": "[listCallbackURL(concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', parameters('primaryIntegrationAccount_ResourceGroupName'), '/providers/Microsoft.Logic/integrationaccounts/', parameters('primaryIntegrationAccount_IntegrationAccountName')), '2015-08-01-preview').value]"
+        }
+      }
+    },
+    {
+      "type": "MICROSOFT.WEB/CONNECTIONS",
+      "apiVersion": "2016-06-01",
+      "name": "[parameters('secondaryIntegrationAccount_X12Connection_Name')]",
+      "location": "[parameters('dr-logicappLocation')]",
+      "properties": {
+        "api": {
+          "id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', parameters('dr-logicappLocation'), '/managedApis/', 'x12')]"
+        },
+        "displayName": "[parameters('secondaryIntegrationAccount_X12Connection_DisplayName')]",
+        "parameterValues": {
+          "integrationAccountId": "[resourceId('Microsoft.Logic/integrationaccounts', parameters('secondaryIntegrationAccount_IntegrationAccountName'))]",
+          "integrationAccountUrl": "[listCallbackURL(resourceId('Microsoft.Logic/integrationaccounts', parameters('secondaryIntegrationAccount_IntegrationAccountName')), '2015-08-01-preview').value]"
+        }
+      }
+    },
+    {
+      "type": "MICROSOFT.WEB/CONNECTIONS",
+      "apiVersion": "2016-06-01",
+      "name": "[parameters('primaryIntegrationAccount_AS2Connection_Name')]",
+      "location": "[parameters('dr-logicappLocation')]",
+      "properties": {
+        "api": {
+          "id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', parameters('dr-logicappLocation'), '/managedApis/', 'as2')]"
+        },
+        "displayName": "[parameters('primaryIntegrationAccount_AS2Connection_DisplayName')]",
+        "parameterValues": {
+          "integrationAccountId": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', parameters('primaryIntegrationAccount_ResourceGroupName'), '/providers/Microsoft.Logic/integrationaccounts/', parameters('primaryIntegrationAccount_IntegrationAccountName'))]",
+          "integrationAccountUrl": "[listCallbackURL(concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', parameters('primaryIntegrationAccount_ResourceGroupName'), '/providers/Microsoft.Logic/integrationaccounts/', parameters('primaryIntegrationAccount_IntegrationAccountName')), '2015-08-01-preview').value]"
+        }
+      }
+    },
+    {
+      "type": "MICROSOFT.WEB/CONNECTIONS",
+      "apiVersion": "2016-06-01",
+      "name": "[parameters('secondaryIntegrationAccount_AS2Connection_Name')]",
+      "location": "[parameters('dr-logicappLocation')]",
+      "properties": {
+        "api": {
+          "id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', parameters('dr-logicappLocation'), '/managedApis/', 'as2')]"
+        },
+        "displayName": "[parameters('secondaryIntegrationAccount_AS2Connection_DisplayName')]",
+        "parameterValues": {
+          "integrationAccountId": "[resourceId('Microsoft.Logic/integrationaccounts', parameters('secondaryIntegrationAccount_IntegrationAccountName'))]",
+          "integrationAccountUrl": "[listCallbackURL(resourceId('Microsoft.Logic/integrationaccounts', parameters('secondaryIntegrationAccount_IntegrationAccountName')), '2015-08-01-preview').value]"
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}

@@ -1,4 +1,5 @@
-# Web App Monitoring
+# Web App Monitoring [Solution Deprecated] 
+*This solution has been deprecated.  Please see the following Azure Marketplace location for the updated solution and instructions on how to enable within your OMS environment*: <https://azuremarketplace.microsoft.com/en-us/marketplace/apps/Microsoft.AzureWebAppsAnalyticsOMS?tab=Overview>
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-webappazure-oms-monitoring%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
