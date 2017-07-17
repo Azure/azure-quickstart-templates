@@ -1,10 +1,6 @@
 ﻿param(
  [string]
- $gatewayKey,
- [string]
- $vmdnsname,
- [string]
- $openPort
+ $gatewayKey
 )
 
 # init log setting
@@ -168,28 +164,17 @@ function Register-Gateway([string] $instanceKey)
     Trace-Log "Agent registration is successful!"
 }
 
-function Set-ExternalHostName([string] $keyValue)
-{
-    $regkey = "hklm:\Software\Microsoft\DataTransfer\DataManagementGateway\HostService"
-    Trace-Log "set externalhostname for gateway"
-    Set-ItemProperty -Path $regkey -Name ExternalHostName -Value $keyValue
-    Trace-Log "Successfully add VM DNS name $keyValue in Registry"
-}
 
 
 Trace-Log "Log file: $logLoc"
 $uri = "https://go.microsoft.com/fwlink/?linkid=839822"
-Trace-Log "Configuration service url: $uri"
+Trace-Log "Gateway download fw link: $uri"
 $gwPath= "$PWD\gateway.msi"
 Trace-Log "Gateway download location: $gwPath"
 
 
 Download-Gateway $uri $gwPath
 Install-Gateway $gwPath
-if($openPort -eq 'yes')
-{
-	Set-ExternalHostName $vmdnsname
-}
 
 Register-Gateway $gatewayKey
 
