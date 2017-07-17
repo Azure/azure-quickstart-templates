@@ -1,0 +1,613 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "StorageAccountType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_ZRS",
+        "Standard_GRS",
+        "Standard_RAGRS",
+        "Premium_LRS"
+      ],
+      "metadata": {
+        "description": "The storage account Type used to store VHD's"
+      }
+    },
+    "StorageAccountName": {
+      "type": "string",
+      "defaultValue": "sfbsan",
+      "metadata": {
+        "description": "The DNS prefix for the public IP address used by the Load Balancer"
+      }
+    },
+    "AvailabilitySet1Name": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "AVailabilitySet1",
+      "metadata": {
+        "description": "Avability Set name"
+      }
+    },
+    "publicIPAddressType": {
+      "type": "string",
+      "allowedValues": [
+        "Dynamic",
+        "Static"
+      ],
+      "metadata": {
+        "description": "The type of the public IP address used by the Load Balancer"
+      },
+      "defaultValue": "Dynamic"
+    },
+    "dnsPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "The DNS prefix for the public IP address used by the Load Balancer"
+      }
+    },
+    "domainName": {
+      "type": "string",
+      "metadata": {
+        "description": "The FQDN of the AD Domain eg: contoso.com "
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the Administrator and Domain Admin"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The password for the Administrator account "
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The location of resources such as templates and DSC modules that the script is dependent"
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/skypeforbusiness-lab-1"
+    },
+    "ShareLocation": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The storage account Name - not the url - where Skype for Business executable files are strored"
+      }
+    },
+    "ShareAccessKey": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "The token for the share where the software is"
+      }
+    }
+  },
+  "variables": {
+    "apiVersion": "2015-06-15",
+    "StorageAccountName": "[concat(parameters('StorageAccountName'), uniqueString(resourceGroup().id))]",
+    "VnetName": "Vnet1",
+    "Vnet1Prefix": "10.0.0.0/16",
+    "Vnet1Sub1Name": "Subnet-1",
+    "Vnet1Subnet1Prefix": "10.0.0.0/24",
+    "Vnet1Sub2Name": "Subnet-2",
+    "Vnet1Subnet2Prefix": "10.0.1.0/24",
+    "PublicIPName": "LBPublic1",
+    "LoadBalancerName": "LBSFB",
+    "LBFrontEndName": "SFBLBFE",
+    "LBBackEndName": "SFBLBBE",
+    "VMconfig": {
+      "VMName": [ "VM-SFB-AD01", "VM-SFB-FE01", "VM-SFB-ADFS-01", "VM-SFB-RP01", "VM-SFB-EDGE01", "VM-SFB-CL1", "VM-SFB-CL2" ],
+      "FENATPort": [ "33891", "33892", "33893", "33894", "33895", "33896", "33897" ],
+      "VMSize": [ "Standard_D1", "Standard_D2", "Standard_A1", "Standard_A1", "Standard_D1", "Standard_D1", "Standard_D1" ],
+      "VMIPtype": [ "Static", "Static", "Static", "Static", "Static", "Dynamic", "Dynamic" ],
+      "VMIPaddr": [ "10.0.0.4", "10.0.0.5", "10.0.0.6", "10.0.0.7", "10.0.0.8", "10.0.1.9", "10.0.1.10" ],
+      "VMSubnet": [ "[variables('Vnet1Sub1Name')]", "[variables('Vnet1Sub1Name')]", "[variables('Vnet1Sub1Name')]", "[variables('Vnet1Sub1Name')]", "[variables('Vnet1Sub1Name')]", "[variables('Vnet1Sub2Name')]", "[variables('Vnet1Sub2Name')]" ],
+      "publisher": [ "MicrosoftWindowsServer", "MicrosoftWindowsServer", "MicrosoftWindowsServer", "MicrosoftWindowsServer", "MicrosoftWindowsServer", "MicrosoftVisualStudio", "MicrosoftVisualStudio" ],
+      "offer": [ "WindowsServer", "WindowsServer", "WindowsServer", "WindowsServer", "WindowsServer", "Windows", "Windows" ],
+      "sku": [ "2012-R2-Datacenter", "2012-R2-Datacenter", "2012-R2-Datacenter", "Windows-Server-Technical-Preview", "2012-R2-Datacenter", "Windows-10-N-x64", "Windows-10-N-x64" ]
+    },
+    "tojoindomain": [ "VM-SFB-FE01", "VM-SFB-ADFS-01", "VM-SFB-RP01", "VM-SFB-CL1" ],
+    "VM_deployTemplateUri": "[concat(parameters('_artifactsLocation'),'/nested/VM-deploy.json')]",
+    "VM_ADDSCSTemplateUri": "[concat(parameters('_artifactsLocation'),'/nested/VM-ext-ADDSCS.json')]",
+    "VM_DjoinTemplateUri": "[concat(parameters('_artifactsLocation'),'/nested/VM-ext-Domainjoin.json')]",
+    "VM_SFBFETemplateUri": "[concat(parameters('_artifactsLocation'),'/nested/VM-ext-SFBFE.json')]",
+    "VM_SFBClientTemplateUri": "[concat(parameters('_artifactsLocation'),'/nested/VM-ext-SFBClient.json')]",
+    "Shared-ResourcesTemplateUri": "[concat(parameters('_artifactsLocation'),'/nested/Shared.json')]"
+
+  },
+  "resources": [
+    {
+      "name": "Shared-Resources",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('Shared-ResourcesTemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "StorageAccountName": {
+            "value": "[variables('StorageAccountName')]"
+          },
+          "StorageAccountType": {
+            "value": "[parameters('StorageAccountType')]"
+          },
+          "AvailabilitySet1Name": {
+            "value": "[parameters('AvailabilitySet1Name')]"
+          },
+          "LoadBalancerName": {
+            "value": "[variables('LoadBalancerName')]"
+          },
+          "LBFEConfig": {
+            "value": "[variables('LBFrontEndName')]"
+          },
+          "LBBEPoolName": {
+            "value": "[variables('LBBackEndName')]"
+          },
+          "PublicIPName": {
+            "value": "[variables('PublicIPName')]"
+          },
+          "VnetName": {
+            "value": "[variables('VnetName')]"
+          },
+          "Vnet1Prefix": {
+            "value": "[variables('Vnet1Prefix')]"
+          },
+          "Vnet1Subnet1Name": {
+            "value": "[variables('Vnet1Sub1Name')]"
+          },
+          "Vnet1Subnet1Prefix": {
+            "value": "[variables('Vnet1Subnet1Prefix')]"
+          },
+          "Vnet1Subnet2Name": {
+            "value": "[variables('Vnet1Sub2Name')]"
+          },
+          "Vnet1Subnet2Prefix": {
+            "value": "[variables('Vnet1Subnet2Prefix')]"
+          },
+          "DnsPrefix": {
+            "value": "[parameters('dnsPrefix')]"
+          },
+          "publicIPAddressType": {
+            "value": "Static"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "[concat('VM-deploy-0')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', 'Shared-Resources')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('VM_deployTemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "StorageAccountName": {
+            "value": "[variables('StorageAccountName')]"
+          },
+          "AvailabilitySetName": {
+            "value": "[parameters('AvailabilitySet1Name')]"
+          },
+          "LoadBalancerName": {
+            "value": "[variables('LoadBalancerName')]"
+          },
+          "LBFEConfig": {
+            "value": "[variables('LBFrontEndName')]"
+          },
+          "LBBEPoolName": {
+            "value": "[variables('LBBackEndName')]"
+          },
+          "VMName": {
+            "value": "[variables('VMconfig').VMName[0]]"
+          },
+          "VMSize": {
+            "value": "[variables('VMconfig').VMSize[0]]"
+          },
+          "VMFENATport": {
+            "value": "[variables('VMconfig').FENATPort[0]]"
+          },
+          "VMIPtype": {
+            "value": "[variables('VMconfig').VMIPtype[0]]"
+          },
+          "VMIPaddr": {
+            "value": "[variables('VMconfig').VMIPaddr[0]]"
+          },
+          "VMimagePublisher": {
+            "value": "[variables('VMconfig').publisher[0]]"
+          },
+          "VMimageOffer": {
+            "value": "[variables('VMconfig').offer[0]]"
+          },
+          "VMimageSKU": {
+            "value": "[variables('VMconfig').sku[0]]"
+          },
+          "VnetName": {
+            "value": "[variables('VnetName')]"
+          },
+          "VMVnetSubnetName": {
+            "value": "[variables('VMconfig').VMSubnet[0]]"
+          },
+          "AdminUserName": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "AdminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "VM-ext-ADDSCS",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', 'Shared-Resources')]",
+        "[concat('Microsoft.Resources/deployments/', 'VM-deploy-0')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "contentVersion": "1.0.0.0",
+          "uri": "[variables('VM_ADDSCSTemplateUri')]"
+        },
+        "parameters": {
+          "VMName": {
+            "value": "[variables('VMconfig').VMName[0]]"
+          },
+          "VnetName": {
+            "value": "[variables('VnetName')]"
+          },
+          "Vnet1Prefix": {
+            "value": "[variables('Vnet1Prefix')]"
+          },
+          "VMNicIPAddress": {
+            "value": "[variables('VMconfig').VMIPaddr[0]]"
+          },
+          "Vnet1Subnet1Name": {
+            "value": "[variables('Vnet1Sub1Name')]"
+          },
+          "Vnet1Subnet1Prefix": {
+            "value": "[variables('Vnet1Subnet1Prefix')]"
+          },
+          "Vnet1Subnet2Name": {
+            "value": "[variables('Vnet1Sub2Name')]"
+          },
+          "Vnet1Subnet2Prefix": {
+            "value": "[variables('Vnet1Subnet2Prefix')]"
+          },
+          "DomainName": {
+            "value": "[parameters('domainName')]"
+          },
+          "AdminUserName": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "AdminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "[concat('VM-deploy-', copyIndex(1))]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', 'Shared-Resources')]",
+        "[resourceId('Microsoft.Resources/deployments','VM-ext-ADDSCS')]"
+      ],
+      "copy": {
+        "name": "vmLoop",
+        "count": "[length('1')]"
+      },
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('VM_deployTemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "StorageAccountName": {
+            "value": "[variables('StorageAccountName')]"
+          },
+          "AvailabilitySetName": {
+            "value": "[parameters('AvailabilitySet1Name')]"
+          },
+          "LoadBalancerName": {
+            "value": "[variables('LoadBalancerName')]"
+          },
+          "LBFEConfig": {
+            "value": "[variables('LBFrontEndName')]"
+          },
+          "LBBEPoolName": {
+            "value": "[variables('LBBackEndName')]"
+          },
+          "VMName": {
+            "value": "[variables('VMconfig').VMName[copyIndex(1)]]"
+          },
+          "VMSize": {
+            "value": "[variables('VMconfig').VMSize[copyIndex(1)]]"
+          },
+          "VMFENATport": {
+            "value": "[variables('VMconfig').FENATPort[copyIndex(1)]]"
+          },
+          "VMIPtype": {
+            "value": "[variables('VMconfig').VMIPtype[copyIndex(1)]]"
+          },
+          "VMIPaddr": {
+            "value": "[variables('VMconfig').VMIPaddr[copyIndex(1)]]"
+          },
+          "VMimagePublisher": {
+            "value": "[variables('VMconfig').publisher[copyIndex(1)]]"
+          },
+          "VMimageOffer": {
+            "value": "[variables('VMconfig').offer[copyIndex(1)]]"
+          },
+          "VMimageSKU": {
+            "value": "[variables('VMconfig').sku[copyIndex(1)]]"
+          },
+          "VnetName": {
+            "value": "[variables('VnetName')]"
+          },
+          "VMVnetSubnetName": {
+            "value": "[variables('VMconfig').VMSubnet[copyIndex(1)]]"
+          },
+          "AdminUserName": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "AdminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "[concat('VM-deploy-5')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', 'Shared-Resources')]",
+        "[resourceId('Microsoft.Resources/deployments','VM-ext-ADDSCS')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('VM_deployTemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "StorageAccountName": {
+            "value": "[variables('StorageAccountName')]"
+          },
+          "AvailabilitySetName": {
+            "value": "[parameters('AvailabilitySet1Name')]"
+          },
+          "LoadBalancerName": {
+            "value": "[variables('LoadBalancerName')]"
+          },
+          "LBFEConfig": {
+            "value": "[variables('LBFrontEndName')]"
+          },
+          "LBBEPoolName": {
+            "value": "[variables('LBBackEndName')]"
+          },
+          "VMName": {
+            "value": "[variables('VMconfig').VMName[5]]"
+          },
+          "VMSize": {
+            "value": "[variables('VMconfig').VMSize[5]]"
+          },
+          "VMFENATport": {
+            "value": "[variables('VMconfig').FENATPort[5]]"
+          },
+          "VMIPtype": {
+            "value": "[variables('VMconfig').VMIPtype[5]]"
+          },
+          "VMIPaddr": {
+            "value": "[variables('VMconfig').VMIPaddr[5]]"
+          },
+          "VMimagePublisher": {
+            "value": "[variables('VMconfig').publisher[5]]"
+          },
+          "VMimageOffer": {
+            "value": "[variables('VMconfig').offer[5]]"
+          },
+          "VMimageSKU": {
+            "value": "[variables('VMconfig').sku[5]]"
+          },
+          "VnetName": {
+            "value": "[variables('VnetName')]"
+          },
+          "VMVnetSubnetName": {
+            "value": "[variables('VMconfig').VMSubnet[5]]"
+          },
+          "AdminUserName": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "AdminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "[concat('VM-ext-Domainjoin-', copyIndex())]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments','VM-ext-ADDSCS')]",
+        "[concat('Microsoft.Resources/deployments/', 'VM-deploy-1')]"
+      ],
+      "copy": {
+        "name": "DomainJLoop",
+        "count": "[length('1')]"
+      },
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('VM_DjoinTemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "VMName": {
+            "value": "[variables('tojoindomain')[copyIndex()]]"
+          },
+          "DomainName": {
+            "value": "[parameters('domainName')]"
+          },
+          "AdminUserName": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "AdminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "[concat('VM-ext-Domainjoin-3')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments','VM-ext-ADDSCS')]",
+        "[concat('Microsoft.Resources/deployments/', 'VM-deploy-5')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('VM_DjoinTemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "VMName": {
+            "value": "[variables('tojoindomain')[3]]"
+          },
+          "DomainName": {
+            "value": "[parameters('domainName')]"
+          },
+          "AdminUserName": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "AdminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "VM-SFBFE",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', 'Shared-Resources')]",
+        "[resourceId('Microsoft.Resources/deployments','VM-ext-Domainjoin-0')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('VM_SFBFETemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "VMName": {
+            "value": "[variables('VMconfig').VMName[1]]"
+          },
+          "DomainName": {
+            "value": "[parameters('domainName')]"
+          },
+          "AdminUserName": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "AdminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_SfBshareLocation": {
+            "value": "[parameters('ShareLocation')]"
+          },
+          "_SfBshareSasToken": {
+            "value": "[parameters('ShareAccessKey')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "VM-SFBClient",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', 'Shared-Resources')]",
+        "[resourceId('Microsoft.Resources/deployments','VM-ext-Domainjoin-3')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('VM_SFBClientTemplateUri')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "VMName": {
+            "value": "[variables('VMconfig').VMName[5]]"
+          },
+          "DomainName": {
+            "value": "[parameters('domainName')]"
+          },
+          "AdminUserName": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "AdminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_SfBsharelocation": {
+            "value": "[parameters('ShareLocation')]"
+          },
+          "_SfBshareSasToken": {
+            "value": "[parameters('ShareAccessKey')]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+  }
+}
+
