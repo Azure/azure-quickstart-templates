@@ -48,14 +48,37 @@ var pubnub = require("pubnub")({
 });
 
 var PNPublish = function (ehEvent) {
-    console.log('Event Received from EHOutClient, Publishing via PubNub: ');
-    console.log(JSON.stringify(ehEvent.body));
-    console.log("");
+    // console.log('Event Received from Egress EH, Publishing to PN: ');
+    // console.log(JSON.stringify(ehEvent.body));
+    // console.log("");
 
-    pubnub.publish({
-        channel: PNPubChannel,
-        message: ehEvent.body
-    });
+    if (Array.isArray(ehEvent.body)){
+
+        ehEvent.body.forEach(function(element){
+
+            pubnub.publish({
+                channel: PNPubChannel,
+                message: element,
+                error: function(e) {
+                    console.log("PN Array Element Publish Error: ", e);
+                    console.log("Message causing error: ", element);
+                }
+            });
+        });
+
+    } else {
+
+        console.log("No array detected.");
+        pubnub.publish({
+            channel: PNPubChannel,
+            message: ehEvent.body,
+            error: function(e) {
+                console.log("PN Object Publish Error: ", JSON.stringify(e));
+                console.log("Message causing error: ", element);
+            }
+        });
+
+    }
 };
 
 var receiveAfterTime = Date.now() - 0;
@@ -65,7 +88,7 @@ var Promise = require('bluebird');
 
 
 var printError = function (err) {
-    console.log("Error: " + err.message);
+    console.log("Event Hub Error: " + err.message);
 };
 
 /**************                                 Create the Ingress Path                                 */
@@ -83,9 +106,10 @@ EHInClient.createSender().then(function (sender) {
     pubnub.subscribe({
         channel: PNSubChannel,
         message: function (message) {
-            console.log("Received and forwarding message: " + JSON.stringify(message, null, 4));
+            // console.log("Forwarding from PN Subscriber to Ingress EH: " + JSON.stringify(message, null, 4));
             sender.send(message);
-        }
+        },
+        error: printError
     });
 
     if (PNAnnounceChannel && PNAnnounceChannel != "disabled") {
