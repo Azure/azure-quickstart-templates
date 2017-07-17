@@ -75,6 +75,10 @@ fi
 
 set -e
 
+# Install Ruby before other operations to make sure Ruby 2.0 is used
+bosh_init_url=$(get_setting BOSH_INIT_URL)
+install_bosh_cli_and_init $environment $bosh_init_url
+
 username=$(get_setting ADMIN_USER_NAME)
 home_dir="/home/$username"
 
@@ -111,9 +115,6 @@ chmod 644 $example_manifests/single-vm-cf.yml
 chmod 644 $example_manifests/multiple-vm-cf.yml
 
 cp cf* $home_dir
-bosh_init_url=$(get_setting BOSH_INIT_URL)
-install_bosh_cli_and_init $environment $bosh_init_url
-
 chown -R $username $home_dir
 
 auto_deploy_bosh=$(get_setting AUTO_DEPLOY_BOSH)

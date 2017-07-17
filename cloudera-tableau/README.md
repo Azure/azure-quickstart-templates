@@ -1,3 +1,4 @@
+# Refer to install instructions Cloudera + Tableau Quickstart Deployment and Usage Guide.pdf located in the root folder
 # Deploy a Cloudera Express cluster with the option to unlock Cloudera Enterprise features for a free 60-day trial
 # Will also deploy the latest Bring Your Own License version of Tableau
 # Important!  You must increase the default 20 cores in the region you are deploying

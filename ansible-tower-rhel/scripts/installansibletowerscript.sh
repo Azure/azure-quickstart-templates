@@ -38,8 +38,8 @@ yum install ansible -y
 #############################
 
 
-wget http://releases.ansible.com/ansible-tower/setup/ansible-tower-setup-latest.tar.gz 
-tar xvzf ansible-tower-setup-latest.tar.gz
+wget http://releases.ansible.com/ansible-tower/setup/ansible-tower-setup-latest.tar.gz
+tar xvzf ansible-tower-setup*
 cd ansible-tower-setup*
 
 
@@ -49,30 +49,17 @@ sed -i -e "s/10000000000/100000000/" roles/preflight/defaults/main.yml
 # Allow sudo with out tty
 sed -i -e "s/Defaults    requiretty/Defaults    \!requiretty/" /etc/sudoers
 
-### Update passwords for admin of Tower Web UI and database ###
-
-cat <<EOF >> tower_setup_conf.yml 
-admin_password: "$1"
-configure_private_vars: {}
-database: internal
-munin_password: "$1"
-pg_password: "$2"
-primary_machine: localhost
-redis_password: "$2"
-
-EOF
-
 cat <<EOF > inventory
 
-[primary]
+[tower]
 
 localhost ansible_connection=local
-[secondary]
+
 [database]
 [all:vars]
 
 admin_password="$1"
-redis_password="$2"
+
 
 pg_host=''
 pg_port=''
@@ -80,6 +67,16 @@ pg_port=''
 pg_database='awx'
 pg_username='awx'
 pg_password="$2"
+
+rabbitmq_port=5672
+rabbitmq_vhost=tower
+rabbitmq_username=tower
+rabbitmq_password="$2"
+rabbitmq_cookie=rabbitmqcookie
+
+# Needs to be true for fqdns and ip addresses
+rabbitmq_use_long_name=false
+
 
 EOF
 
