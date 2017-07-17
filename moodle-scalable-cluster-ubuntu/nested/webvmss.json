@@ -1,0 +1,91 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+
+	"parameters": { "moodleCommon": { "type": "object", "metadata": { "description": "Common Moodle values" } } },
+
+	"variables": {
+ 		"subnetWebRef":	"[concat(resourceId('Microsoft.Network/virtualNetworks',		parameters('moodleCommon').vnetName),'/subnets/',parameters('moodleCommon').subnetWeb)]",
+		 "vmssID":		"[       resourceId('Microsoft.Compute/virtualMachineScaleSets',parameters('moodleCommon').vmssName)]",
+		"dstorID":		"[       resourceId('Microsoft.Storage/storageAccounts',		parameters('moodleCommon').vmssdStorageAccounttName)]",
+		  "pipID":		"[       resourceId('Microsoft.Network/publicIPAddresses',		parameters('moodleCommon').lbPipName)]",
+		"extLbID":		"[       resourceId('Microsoft.Network/loadBalancers',			parameters('moodleCommon').lbName)]",
+
+		"extFeID":		"[concat(variables('extLbID'),'/frontendIPConfigurations/', parameters('moodleCommon').extFeName )]",
+		"extBeID":		"[concat(variables('extLbID'),'/backendAddressPools/',      parameters('moodleCommon').extBeName )]",
+		"extProbeID":	"[concat(variables('extLbID'),'/probes/',                   parameters('moodleCommon').extProbe  )]",
+		"extNatPoolID":	"[concat(variables('extLbID'),'/inboundNatPools/',          parameters('moodleCommon').extNatPool)]",
+	
+		"storageApiVersion": "2015-06-15",  	
+
+		"wadLogs":			"<WadCfg><DiagnosticMonitorConfiguration>",
+		"wadPerfCounter":	"<PerformanceCounters scheduledTransferPeriod=\"PT1M\"><PerformanceCounterConfiguration counterSpecifier=\"\\Processor\\PercentProcessorTime\" sampleRate=\"PT15S\" unit=\"Percent\"><annotation displayName=\"CPU percentage guest OS\" locale=\"en-us\"/></PerformanceCounterConfiguration></PerformanceCounters>",
+		"wadCfgxStart":		"[concat(variables('wadLogs'),variables('wadPerfCounter'),'<Metrics resourceId=\"')]",
+		"wadCfgxEnd":		"[concat('\"><MetricAggregation scheduledTransferPeriod=\"PT1H\"/><MetricAggregation scheduledTransferPeriod=\"PT1M\"/></Metrics></DiagnosticMonitorConfiguration></WadCfg>')]",
+	
+		"scriptUri":	"[concat(parameters('moodleCommon').ScriptLocation,parameters('moodleCommon').moodleSetupScriptFilename)]",
+		"cmdExec":		"[concat('bash ',                                  parameters('moodleCommon').moodleSetupScriptFilename,' ',parameters('moodleCommon').gfsNameRoot,'0', ' ','data' )]"
+	
+	},
+	
+	"resources": [
+		{
+			"type":			"Microsoft.Storage/storageAccounts",
+			"apiVersion":	"[variables('storageApiVersion')]",
+			"name":			"[parameters('moodleCommon').vmssdStorageAccounttName]",
+			"location":		"[resourceGroup().location]",
+
+			"properties":	{ "accountType": "Standard_LRS" }
+		},
+
+
+		{
+			"type":			"Microsoft.Compute/virtualMachineScaleSets",
+			"apiVersion":	"2016-04-30-preview",
+			"name":			"[parameters('moodleCommon').vmssName]",
+			"location":		"[resourceGroup().location]",
+
+			"tags":			{ "displayName": "webfarm" },
+			
+			"dependsOn":	[ "[concat('Microsoft.Storage/storageAccounts/', parameters('moodleCommon').vmssdStorageAccounttName)]" ],
+			
+			"sku":			{ "capacity": 3, "name": "Standard_D2", "tier": "Standard" },
+
+			"properties":	{ "overprovision": "true", "upgradePolicy": { "mode": "Manual" },
+				"virtualMachineProfile": {
+					"storageProfile": {	"osDisk": { "caching": "ReadOnly", "createOption": "FromImage", "managedDisk": { "storageAccountType": "Standard_LRS" } }, "imageReference": "[parameters('moodleCommon').osType]" },
+					     "osProfile": { "computerNamePrefix": "[parameters('moodleCommon').vmssName]", "adminUsername": "[parameters('moodleCommon').adminUsername]", "adminPassword": "[parameters('moodleCommon').adminPassword]" },
+					"networkProfile": { "networkInterfaceConfigurations": [ { "name": "vmssnic", "properties": { "ipConfigurations": [ { "name": "ipcfg_lb", "properties": { "subnet": { "id": "[variables('subnetWebRef')]" }, "loadBalancerBackendAddressPools": [ { "id": "[variables('extBeID')]" } ], "loadBalancerInboundNatPools": [ { "id": "[variables('extNatPoolID')]" } ] } } ], "primary": "true" } } ] },
+				  "extensionProfile": {
+				    	"extensions": [
+				    		{	"name": "LinuxDiagnostic", 
+				    				"properties":			{ "publisher": "Microsoft.OSTCExtensions", "type": "LinuxDiagnostic", "typeHandlerVersion": "2.3", "autoUpgradeMinorVersion": true,
+				    				"settings":				{ "xmlCfg": "[base64(concat(variables('wadCfgxStart'), variables('vmssID'), variables('wadCfgxEnd')))]", "storageAccount": "[parameters('moodleCommon').vmssdStorageAccounttName]" },
+				    				"protectedSettings":	{ "storageAccountName": "[parameters('moodleCommon').vmssdStorageAccounttName]", "storageAccountKey": "[listkeys(variables('dstorID'), variables('storageApiVersion')).key1]", "storageAccountEndPoint": "https://core.windows.net"} }
+				    		},
+				    		{	"name": "setup_moodle",
+				    				"properties":			{ "publisher": "Microsoft.OSTCExtensions", "type": "CustomScriptForLinux", "typeHandlerVersion": "1.4", "autoUpgradeMinorVersion": true,
+				    				"settings":				{ "fileUris": [ "[variables('scriptUri')]" ], "commandToExecute": "[variables('cmdExec')]" } }
+				    		}
+				    	]
+				    }
+				}
+			}
+		},
+
+	
+		{
+			"type":			"Microsoft.Insights/autoscaleSettings",
+			"apiVersion":	"2015-04-01",
+			"name":			"autoscalewad",
+			"location":		"[resourceGroup().location]",
+            
+			"dependsOn":	[ "[concat('Microsoft.Compute/virtualMachineScaleSets/', parameters('moodleCommon').vmssName)]" ],
+
+			"properties":	{         "name": "autoscalewad", "targetResourceUri": "[variables('vmssID')]", "enabled": true,
+				"profiles": [ { "name": "Profile1", "capacity": { "minimum": "2", "maximum": "10", "default": "4" },
+					"rules":	[ { "scaleAction": { "direction": "Increase", "type": "ChangeCount", "value": "1", "cooldown": "PT1M" }, "metricTrigger":	{ "metricName": "\\Processor\\PercentProcessorTime", "metricNamespace": "", "metricResourceUri": "[variables('vmssID')]", "timeGrain": "PT1M", "statistic": "Average", "timeWindow": "PT5M", "timeAggregation": "Average", "operator": "GreaterThan", "threshold": 80 } },
+								  { "scaleAction": { "direction": "Decrease", "type": "ChangeCount", "value": "1", "cooldown": "PT5M" }, "metricTrigger":	{ "metricName": "\\Processor\\PercentProcessorTime", "metricNamespace": "", "metricResourceUri": "[variables('vmssID')]", "timeGrain": "PT1M", "statistic": "Average", "timeWindow": "PT5M", "timeAggregation": "Average", "operator": "LessThan",    "threshold": 50 } } ] } ] }
+		}
+	]
+}
