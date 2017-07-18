@@ -9,8 +9,6 @@
 
 This template allows you to deploy an instance of Spinnaker on a Linux Ubuntu 14.04 LTS VM to an existing Virtual Network. This will deploy a VM in the resource group location and return the FQDN of the VM. You will have to manually configure the instance to target a deployment environment.
 
-This template is modeled after the [Azure Spinnaker VM template] (https://github.com/yaron2/azure-quickstart-templates/tree/master/101-spinnaker)
-
 ## A. Deploy Spinnaker VM
 1. Click the "Deploy to Azure" button. If you don't have an Azure subscription, you can follow instructions to signup for a free trial.
 1. Enter a valid name for the VM, as well as a user name and [ssh public key](https://docs.microsoft.com/azure/virtual-machines/virtual-machines-linux-mac-create-ssh-keys) that you will use to login remotely to the VM via SSH.
