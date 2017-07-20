@@ -12,11 +12,13 @@
             "type": "string",
             "defaultValue": "West Europe",
             "allowedValues": [
+                "Australia Southeast",
                 "East US",
-                "West Central US",
-                "West Europe",
+                "Japan East",
                 "Southeast Asia",
-                "Australia Southeast"
+                "UK South",
+                "West Central US",
+                "West Europe"
             ],
             "metadata": {
                 "description": "Specify the region for your Workspace"
@@ -41,10 +43,27 @@
         "omsviews": {
             "templates": [
                 "[concat(parameters('_artifactsLocation'), '/Cloud%20Foundry.omsview', parameters('_artifactsLocationSasToken'))]",
-                "[concat(parameters('_artifactsLocation'), '/Diego%20Metrics.omsview', parameters('_artifactsLocationSasToken'))]",
-                "[concat(parameters('_artifactsLocation'), '/Doppler%20Server%20Metrics.omsview', parameters('_artifactsLocationSasToken'))]",
-                "[concat(parameters('_artifactsLocation'), '/Gorouter%20Metrics.omsview', parameters('_artifactsLocationSasToken'))]",
-                "[concat(parameters('_artifactsLocation'), '/System%20Metrics.omsview', parameters('_artifactsLocationSasToken'))]"
+                "[concat(parameters('_artifactsLocation'), '/CF%20KPI%20-%20Diego%20Metrics.omsview', parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/CF%20KPI%20-%20Doppler%20Server%20Metrics.omsview', parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/CF%20KPI%20-%20Gorouter%20Metrics.omsview', parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/CF%20KPI%20-%20System%20Metrics.omsview', parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/CF%20-%20Apps.omsview', parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/CF%20-%20BBS.omsview', parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/CF%20-%20Cell%20Capacity.omsview', parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/CF%20-%20Cloud%20Controller.omsview', parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/CF%20-%20Component%20Metrics.omsview', parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/CF%20-%20Diego%20Auctions.omsview', parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/CF%20-%20Diego%20Health.omsview', parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/CF%20-%20Doppler%20Server.omsview', parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/CF%20-%20Etcd%20Operations.omsview', parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/CF%20-%20Etcd.omsview', parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/CF%20-%20Garden%20Linux.omsview', parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/CF%20-%20Gorouter.omsview', parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/CF%20-%20LRPs%20and%20Tasks.omsview', parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/CF%20-%20Metron%20Agent.omsview', parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/CF%20-%20Nozzle%20Status.omsview', parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/CF%20-%20Route%20Emitter.omsview', parameters('_artifactsLocationSasToken'))]",
+                "[concat(parameters('_artifactsLocation'), '/CF%20-%20UAA.omsview', parameters('_artifactsLocationSasToken'))]"
             ]
         }
     },
@@ -55,7 +74,9 @@
             "name": "[concat('omsviews', copyIndex())]",
             "copy": {
                 "name": "viewCopy",
-                "count": "[length(variables('omsviews').templates)]"
+                "count": "[length(variables('omsviews').templates)]",
+                "mode": "serial",
+                "batchSize": 1
             },
             "properties": {
                 "mode": "Incremental",
@@ -80,6 +101,28 @@
                         "value": "2015-11-01-preview"
                     }
                 }
+            }
+        },
+        {
+            "apiVersion": "2015-11-01-preview",
+            "type": "Microsoft.OperationsManagement/solutions",
+            "name": "[concat(parameters('omsWorkspaceName'), '[CloudFoundry]')]",
+            "location": "[parameters('omsWorkspaceRegion')]",
+            "dependsOn": [
+                "viewCopy"
+                ],
+            "properties": {
+                "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('omsWorkspaceName'))]",
+                "containedResources": [
+                    "[resourceId('Microsoft.OperationalInsights/workspaces/views/', parameters('omsWorkspaceName'), 'Cloud Foundry')]"
+                ]
+            },
+            "plan": {
+                "name": "[concat('cloudfoundrysolution', '[' ,parameters('omsWorkspaceName'), ']')]",
+                "product": "cloudfoundrysolution",
+                "promotionCode": "",
+                "publisher": "Microsoft",
+                "version": "1.0"
             }
         }
     ],

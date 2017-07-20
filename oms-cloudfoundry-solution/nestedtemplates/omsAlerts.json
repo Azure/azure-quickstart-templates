@@ -12,20 +12,16 @@
             "type": "string",
             "defaultValue": "West Europe",
             "allowedValues": [
+                "Australia Southeast",
                 "East US",
-                "West Central US",
-                "West Europe",
+                "Japan East",
                 "Southeast Asia",
-                "Australia Southeast"
+                "UK South",
+                "West Central US",
+                "West Europe"
             ],
             "metadata": {
                 "description": "Specify the region for your Workspace"
-            }
-        },
-        "recipients": {
-            "type": "string",
-            "metadata": {
-                "description": "List of recipients for the email alert separated by semicolon"
             }
         }
     },
@@ -47,13 +43,7 @@
                         "interval": 15,
                         "timeSpan": 60
                     },
-                    "throttleMinutes": 60,
-                    "notification": {
-                        "recipients": [
-                            "[parameters('recipients')]"
-                        ],
-                        "subject": "Apps Not Synchronized"
-                    }
+                    "throttleMinutes": 60
                 }
             },
             {
@@ -72,13 +62,7 @@
                         "interval": 15,
                         "timeSpan": 60
                     },
-                    "throttleMinutes": 60,
-                    "notification": {
-                        "recipients": [
-                            "[parameters('recipients')]"
-                        ],
-                        "subject": "Unhealthy Cells"
-                    }
+                    "throttleMinutes": 60
                 }
             },
             {
@@ -97,13 +81,7 @@
                         "interval": 15,
                         "timeSpan": 60
                     },
-                    "throttleMinutes": 60,
-                    "notification": {
-                        "recipients": [
-                            "[parameters('recipients')]"
-                        ],
-                        "subject": "System Unhealthy"
-                    }
+                    "throttleMinutes": 60
                 }
             },
             {
@@ -122,13 +100,7 @@
                         "interval": 15,
                         "timeSpan": 60
                     },
-                    "throttleMinutes": 60,
-                    "notification": {
-                        "recipients": [
-                            "[parameters('recipients')]"
-                        ],
-                        "subject": "Consul is Down"
-                    }
+                    "throttleMinutes": 60
                 }
             },
             {
@@ -147,13 +119,7 @@
                         "interval": 15,
                         "timeSpan": 60
                     },
-                    "throttleMinutes": 60,
-                    "notification": {
-                        "recipients": [
-                            "[parameters('recipients')]"
-                        ],
-                        "subject": "Dropped Messages"
-                    }
+                    "throttleMinutes": 60
                 }
             },
             {
@@ -172,13 +138,7 @@
                         "interval": 15,
                         "timeSpan": 60
                     },
-                    "throttleMinutes": 60,
-                    "notification": {
-                        "recipients": [
-                            "[parameters('recipients')]"
-                        ],
-                        "subject": "Problem in Logging Process"
-                    }
+                    "throttleMinutes": 60
                 }
             },
             {
@@ -197,13 +157,7 @@
                         "interval": 15,
                         "timeSpan": 60
                     },
-                    "throttleMinutes": 60,
-                    "notification": {
-                        "recipients": [
-                            "[parameters('recipients')]"
-                        ],
-                        "subject": "Slow Consumer Alert"
-                    }
+                    "throttleMinutes": 60
                 }
             },
             {
@@ -222,20 +176,14 @@
                         "interval": 15,
                         "timeSpan": 60
                     },
-                    "throttleMinutes": 60,
-                    "notification": {
-                        "recipients": [
-                            "[parameters('recipients')]"
-                        ],
-                        "subject": "Lost Events from Nozzle"
-                    }
+                    "throttleMinutes": 60
                 }
             }
         ]
     },
     "resources": [
         {
-            "name": "[concat(parameters('omsWorkspaceName'), '/', 'SavedSearchForAlert', copyIndex())]",
+            "name": "[concat(parameters('omsWorkspaceName'), '/', toLower(variables('alerts')[copyIndex()].search.category), '|', toLower(variables('alerts')[copyIndex()].search.name))]",
             "type": "Microsoft.OperationalInsights/workspaces/savedSearches",
             "apiVersion": "2015-11-01-preview",
             "copy": {
@@ -251,7 +199,7 @@
             }
         },
         {
-            "name": "[concat(parameters('omsWorkspaceName'), '/', 'SavedSearchForAlert', copyIndex(), '/Schedule', copyIndex())]",
+            "name": "[concat(parameters('omsWorkspaceName'), '/', toLower(variables('alerts')[copyIndex()].search.category), '|', toLower(variables('alerts')[copyIndex()].search.name), '/', 'schedule-', uniqueString(resourceGroup().id, deployment().name, parameters('omsWorkspaceName'), '/', variables('alerts')[copyIndex()].search.category, '|', variables('alerts')[copyIndex()].search.name))]",
             "type": "Microsoft.OperationalInsights/workspaces/savedSearches/schedules",
             "apiVersion": "2015-11-01-preview",
             "copy": {
@@ -260,7 +208,7 @@
             },
             "tags": {},
             "dependsOn": [
-                "searchCopy"
+                "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'), '/savedSearches/', toLower(variables('alerts')[copyIndex()].search.category), '|', toLower(variables('alerts')[copyIndex()].search.name))]"
             ],
             "properties": {
                 "etag": "*",
@@ -270,7 +218,7 @@
             }
         },
         {
-            "name": "[concat(parameters('omsWorkspaceName'), '/', 'SavedSearchForAlert', copyIndex(), '/Schedule', copyIndex(), '/Alert', copyIndex())]",
+            "name": "[concat(parameters('omsWorkspaceName'), '/', toLower(variables('alerts')[copyIndex()].search.category), '|', toLower(variables('alerts')[copyIndex()].search.name), '/', 'schedule-', uniqueString(resourceGroup().id, deployment().name, parameters('omsWorkspaceName'), '/', variables('alerts')[copyIndex()].search.category, '|', variables('alerts')[copyIndex()].search.name), '/', 'alert-', uniqueString(resourceGroup().id, deployment().name, parameters('omsWorkspaceName'), '/', variables('alerts')[copyIndex()].search.category, '|', variables('alerts')[copyIndex()].search.name))]",
             "type": "Microsoft.OperationalInsights/workspaces/savedSearches/schedules/actions",
             "apiVersion": "2015-11-01-preview",
             "copy": {
@@ -278,7 +226,8 @@
                 "count": "[length(variables('alerts'))]"
             },
             "dependsOn": [
-                "scheduleCopy"
+                "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'), '/savedSearches/', toLower(variables('alerts')[copyIndex()].search.category), '|', toLower(variables('alerts')[copyIndex()].search.name))]",
+                "[concat('Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName'), '/savedSearches/', toLower(variables('alerts')[copyIndex()].search.category), '|', toLower(variables('alerts')[copyIndex()].search.name), '/schedules/','schedule-',uniqueString(resourceGroup().id, deployment().name,parameters('omsWorkspaceName'), '/', variables('alerts')[copyIndex()].search.category, '|', variables('alerts')[copyIndex()].search.name))]"
             ],
             "tags": {},
             "properties": {
@@ -293,11 +242,6 @@
                 },
                 "Throttling": {
                     "DurationInMinutes": "[variables('alerts')[copyIndex()].alert.throttleMinutes]"
-                },
-                "EmailNotification": {
-                    "Recipients": "[variables('alerts')[copyIndex()].alert.notification.recipients]",
-                    "Subject": "[variables('alerts')[copyIndex()].alert.notification.subject]",
-                    "Attachment": "None"
                 }
             }
         }        
