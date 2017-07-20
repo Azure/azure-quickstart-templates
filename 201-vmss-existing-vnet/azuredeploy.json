@@ -12,7 +12,7 @@
     "vmssName": {
       "type": "string",
       "metadata": {
-        "description": "String used as a base for naming resources. Must be 3-61 characters in length and globally unique across Azure. A hash is prepended to this string for some resources, and resource-specific information is appended."
+        "description": "Globally unique dns name for the scale set. Must be 3-61 characters in length and globally unique across Azure."
       },
       "maxLength": 61
     },
@@ -36,25 +36,26 @@
         "description": "Admin password on all VMs."
       }
     },
-    "existingSubnetResourceId": {
+    "existingVnetResourceGroupName": {
       "type": "string",
       "metadata": {
-        "description": "Resource ID of the existing subnet to deploy the scale set into. Should be of the form: /subscriptions/YOUR_SUBSCRIPTION_ID/resourceGroups/YOUR_RESOURCE_GROUP/providers/Microsoft.Network/virtualNetworks/YOUR_VNET_NAME/subnets/YOUR_SUBNET_NAME"
+        "description": "Name of the resourceGroup for the existing virtual network to deploy the scale set into."
+      }
+    },
+    "existingVnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "vName of the existing virtual network to deploy the scale set into."
+      }
+    },
+    "existingSubnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the existing subnet to deploy the scale set into."
       }
     }
   },
   "variables": {
-    "namingInfix": "[toLower(substring(concat(parameters('vmssName'), uniqueString(resourceGroup().id)), 0, 9))]",
-    "storageAccountType": "Standard_LRS",
-    "newStorageAccountSuffix": "[concat(variables('namingInfix'), 'sa')]",
-    "uniqueStringArray": [
-      "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'), '0')))]",
-      "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'), '1')))]",
-      "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'), '2')))]",
-      "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'), '3')))]",
-      "[concat(uniqueString(concat(resourceGroup().id, variables('newStorageAccountSuffix'), '4')))]"
-    ],
-    "saCount": "[length(variables('uniqueStringArray'))]",
     "publicIPAddressName": "pip",
     "loadBalancerName": "loadBalancer",
     "loadBalancerFrontEndName": "loadBalancerFrontEnd",
@@ -64,25 +65,11 @@
   },
   "resources": [
     {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[concat(variables('uniqueStringArray')[copyIndex()], variables('newStorageAccountSuffix'))]",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2015-06-15",
-      "copy": {
-        "name": "storageLoop",
-        "count": "[variables('saCount')]"
-      },
-      "properties": {
-        "accountType": "[variables('storageAccountType')]"
-      }
-    },
-    {
       "type": "Microsoft.Compute/virtualMachineScaleSets",
       "name": "[parameters('vmssName')]",
       "location": "[resourceGroup().location]",
-      "apiVersion": "2016-03-30",
+      "apiVersion": "2017-03-30",
       "dependsOn": [
-        "storageLoop",
         "[resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName'))]"
       ],
       "sku": {
@@ -97,20 +84,13 @@
         "virtualMachineProfile": {
           "storageProfile": {
             "osDisk": {
-              "vhdContainers": [
-                "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('uniqueStringArray')[0], variables('newStorageAccountSuffix')), '2015-06-15').primaryEndpoints.blob, 'vhds')]",
-                "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('uniqueStringArray')[1], variables('newStorageAccountSuffix')), '2015-06-15').primaryEndpoints.blob, 'vhds')]",
-                "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('uniqueStringArray')[2], variables('newStorageAccountSuffix')), '2015-06-15').primaryEndpoints.blob, 'vhds')]",
-                "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('uniqueStringArray')[3], variables('newStorageAccountSuffix')), '2015-06-15').primaryEndpoints.blob, 'vhds')]",
-                "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('uniqueStringArray')[4], variables('newStorageAccountSuffix')), '2015-06-15').primaryEndpoints.blob, 'vhds')]"
-              ],
-              "name": "osdisk",
-              "createOption": "FromImage"
+              "createOption": "FromImage",
+              "caching": "ReadWrite"
             },
             "imageReference": {
               "publisher": "Canonical",
               "offer": "UbuntuServer",
-              "sku": "14.04.5-LTS",
+              "sku": "16.10",
               "version": "latest"
             }
           },
@@ -124,13 +104,13 @@
               {
                 "name": "nic",
                 "properties": {
-                  "primary": "true",
+                  "primary": true,
                   "ipConfigurations": [
                     {
                       "name": "ipconfig",
                       "properties": {
                         "subnet": {
-                          "id": "[parameters('existingSubnetResourceId')]"
+                          "id": "[resourceId(parameters('existingVnetResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('existingVnetName'), parameters('existingSubNetName'))]"
                         },
                         "loadBalancerBackendAddressPools": [
                           {
@@ -156,7 +136,7 @@
       "type": "Microsoft.Network/publicIPAddresses",
       "name": "[variables('publicIPAddressName')]",
       "location": "[resourceGroup().location]",
-      "apiVersion": "2016-06-01",
+      "apiVersion": "2017-04-01",
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
@@ -168,9 +148,9 @@
       "type": "Microsoft.Network/loadBalancers",
       "name": "[variables('loadBalancerName')]",
       "location": "[resourceGroup().location]",
-      "apiVersion": "2016-06-01",
+      "apiVersion": "2017-04-01",
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]"
+        "[variables('publicIPAddressName')]"
       ],
       "properties": {
         "frontendIPConfigurations": [
@@ -198,7 +178,7 @@
               "backendAddressPool": {
                 "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName')), '/backendAddressPools/', variables('loadBalancerBackendName'))]"
               },
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "frontendPort": 80,
               "backendPort": 80,
               "enableFloatingIP": false,
@@ -213,10 +193,10 @@
           {
             "name": "[variables('loadBalancerProbeName')]",
             "properties": {
-              "protocol": "tcp",
+              "protocol": "Tcp",
               "port": 80,
-              "intervalInSeconds": "5",
-              "numberOfProbes": "2"
+              "intervalInSeconds": 5,
+              "numberOfProbes": 2
             }
           }
         ],
@@ -228,9 +208,9 @@
                 "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName')), '/frontendIPConfigurations/', variables('loadBalancerFrontEndName'))]"
               },
               "protocol": "tcp",
-              "frontendPortRangeStart": "50000",
-              "frontendPortRangeEnd": "50019",
-              "backendPort": "22"
+              "frontendPortRangeStart": 50000,
+              "frontendPortRangeEnd": 50019,
+              "backendPort": 22
             }
           }
         ]
