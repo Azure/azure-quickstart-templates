@@ -18,11 +18,11 @@ This template can create a new Log Analytics workspace and deploy the following 
 
 Follow these instructions to deploy the template:
 1. If you want to use an existing Log Analytics workspace, note the name, location and resource group name of the workspace from [Azure Portal](https://portal.azure.com).
-    ![alt text](images/Workspace.png "workspace")
+    ![alt text](images/workspace.png "workspace")
 1. Click "Deploy to Azure", this will send you to the Azure Portal with some default values for the template parameters. 
     [![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Foms-cloudfoundry-solution%2Fazuredeploy.json)
 1. Fill the parameters.
-    ![alt text](images/Deploy.png "deploy")
+    ![alt text](images/deploy.png "deploy")
 	1. **Subscription**: Select the subscription where your existing workspace is located, or where you want to create a new workspace
 	1. **Resource group**: Select the resource group where your existing workspace is located, or enter a resource group name for your new workspace
 	1. **Location**: Select the region of the resource group
@@ -36,15 +36,15 @@ Once the template has been deployed successfully, you need to deploy the [Micros
 
 ### Views
 Open the OMS portal of the workspace, on the overview page, multipe views should be already imported.
-    ![alt text](images/Overview.png "overview")
+    ![alt text](images/overview.png "overview")
 Click on each view and more dashboards will be displayed.
-    ![alt text](images/View.png "view")
+    ![alt text](images/view.png "view")
 
 ### Alerts
 Go to **Settings** -> **Alerts**, there're 8 predefined alerts. You could edit and customize these alerts.
-    ![alt text](images/Alerts.png "alerts")
+    ![alt text](images/alerts.png "alerts")
 
 ### Saved Searches
 Go to **Log Search** -> **Favorites**, on the right side panel, you could find categorized search queries for major Cloud Foundry metrics and logs.
-    ![alt text](images/SavedSearches.png "savedsearch")
+    ![alt text](images/savedSearches.png "savedsearch")
 	
