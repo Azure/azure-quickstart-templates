@@ -27,6 +27,7 @@ BADGR_APP_DIR=/badgr/code
 BADGR_ADMIN_USER=""
 BADGR_ADMIN_USER_PWD=""
 BADGR_ADMIN_USER_EMAIL=""
+BADGR_HOST_ADDRESS=""
 BADGR_DB=badgr
 
 
@@ -82,6 +83,9 @@ parse_args()
 			-e| --super-user-email) # Super User Email address
                 BADGR_ADMIN_USER_EMAIL="${arg_value}"
                 ;;	
+			-h| --host-name) # Badgr Host name
+                BADGR_HOST_ADDRESS="${arg_value}"
+                ;;		
 			*) # unknown option
                 echo "Option '${BOLD}$1${NORM} ${arg_value}' not allowed."
                 help
@@ -122,7 +126,7 @@ add-apt-repository -y ppa:git-core/ppa
 # which may differ from what is pinned in virtualenvironments
 apt-get update -y
 
-apt-get install -y python2.7 python2.7-dev python-pip python-apt python-yaml python-jinja2 python-dev build-essential sudo git-core libmysqlclient-dev libffi-dev libssl-dev gcc npm ruby ruby-dev gunicorn supervisor nginx
+apt-get install -y python2.7 python2.7-dev python-pip python-apt python-yaml python-jinja2 python-dev build-essential sudo git-core libmysqlclient-dev libffi-dev libssl-dev gcc npm ruby ruby-dev gunicorn supervisor nginx sed
 
 
 # Workaround for a 16.04 bug, need to upgrade to latest and then
@@ -160,6 +164,7 @@ source $VIRTUAL_ENV_ACTIVATE
 git clone $BADGR_REPO $BADGR_APP_DIR
 cd $BADGR_APP_DIR
 cp $BADGR_APP_DIR/apps/mainsite/settings_local.py.example $BADGR_APP_DIR/apps/mainsite/settings_local.py
+sed -i 's/localhost:8000/'$BADGR_HOST_ADDRESS'/g' $BADGR_APP_DIR/apps/mainsite/settings_local.py
 pip install -r requirements-dev.txt
 pip install gunicorn
 npm install
