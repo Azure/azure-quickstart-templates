@@ -11,7 +11,7 @@ This solution allows you to visualize and monitor the metrics and logs from your
 
 This template can create a new Log Analytics workspace and deploy the following resources into the workspace, or deploy the following resources into an existing Log Analytics workspace.
 * all the [OMS views](https://github.com/Azure/oms-log-analytics-firehose-nozzle/tree/master/docs/omsview) for Cloud Foundry metrics and logs
-* proposed [alerts](https://github.com/Azure/oms-log-analytics-firehose-nozzle#2-create-alert-rules) for important events from Cloud Foundry environments
+* predefined [alerts](https://github.com/Azure/oms-log-analytics-firehose-nozzle#2-create-alert-rules) for important events from Cloud Foundry environments
 * predefined saved searches for major Cloud Foundry metrics and logs
 
 ## Installation
@@ -21,7 +21,7 @@ Follow these instructions to deploy the template:
     ![alt text](images/Workspace.png "workspace")
 1. Click "Deploy to Azure", this will send you to the Azure Portal with some default values for the template parameters. 
     [![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Foms-cloudfoundry-solution%2Fazuredeploy.json)
-1. Fill the parameters
+1. Fill the parameters.
     ![alt text](images/Deploy.png "deploy")
 	1. **Subscription**: Select the subscription where your existing workspace is located, or where you want to create a new workspace
 	1. **Resource group**: Select the resource group where your existing workspace is located, or enter a resource group name for your new workspace
@@ -29,7 +29,7 @@ Follow these instructions to deploy the template:
 	1. **Oms Workspace Name**: Enter the name of your existing workspace, or enter a name for your new workspace
 	1. **Oms Workspace Region**: Select the region where your existing workspace is located, or select a region for your new workspace
 	1. **Oms Workspace Sku**: Select the pricing tier of the workspace
-1. Once you have customized all the parameters, click *Create*
+1. Once you have customized all the parameters, click *Purchase*.
 
 ## Exploring the workspace
 Once the template has been deployed successfully, you need to deploy the [Microsoft Azure Log Analytics Nozzle](https://github.com/Azure/oms-log-analytics-firehose-nozzle) to collect Cloud Foundry metrics and logs to the workspace. If the workspace is newly created, it might take several minutes for data to be injected after the nozzle is started.
@@ -45,6 +45,6 @@ Go to **Settings** -> **Alerts**, there're 8 predefined alerts. You could edit a
     ![alt text](images/Alerts.png "alerts")
 
 ### Saved Searches
-Go to **Log Search** -> **Favorites**, search queries for major Cloud Foundry metrics and logs are categorized.
+Go to **Log Search** -> **Favorites**, on the right side panel, you could find categorized search queries for major Cloud Foundry metrics and logs.
     ![alt text](images/SavedSearches.png "savedsearch")
 	
