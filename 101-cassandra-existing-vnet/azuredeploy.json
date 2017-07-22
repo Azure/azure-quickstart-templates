@@ -71,8 +71,8 @@
     }
   },
   "variables": {
-    "publicIPAddressName": "pip",
-    "loadBalancerName": "loadBalancer",
+    "publicIPAddressName": "loadBalancerPublicIP",
+    "loadBalancerName": "cassandraLoadBalancer",
     "loadBalancerFrontEndName": "loadBalancerFrontEnd",
     "loadBalancerBackEndName": "loadBalancerBackEnd",
     "loadBalancerProbeName": "loadBalancerHttpProbe",
@@ -81,13 +81,13 @@
     "nicName": "[concat(variables('namingInfix'), '-nic')]",
     "_artifactsLocation": "https://raw.githubusercontent.com/yaron2/azure-quickstart-templates/cassandra-cluster/101-cassandra-existing-vnet/customScripts",
     "_extensionScript": "cassandraSetup.sh",
-    "masterVM": "[concat('Microsoft.Compute/virtualMachineScaleSets/',parameters('clusterName'),'/virtualMachines/1/networkInterfaces/', variables('nicName')]",
+    "masterVM": "[concat('Microsoft.Compute/virtualMachineScaleSets/', variables('namingInfix'), '/virtualMachines/1/networkInterfaces/', variables('nicName'))]",
     "_artifactsLocationSasToken": ""
   },
   "resources": [
     {
       "type": "Microsoft.Compute/virtualMachineScaleSets",
-      "name": "[parameters('clusterName')]",
+      "name": "[variables('namingInfix')]",
       "location": "[resourceGroup().location]",
       "apiVersion": "2017-03-30",
       "dependsOn": [
@@ -116,7 +116,7 @@
             }
           },
           "osProfile": {
-            "computerNamePrefix": "[parameters('clusterName')]",
+            "computerNamePrefix": "[variables('namingInfix')]",
             "adminUsername": "[parameters('adminUsername')]",
             "adminPassword": "[parameters('adminPassword')]"
           },
@@ -137,34 +137,10 @@
                           {
                             "id": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('loadBalancerName'), '/backendAddressPools/', variables('loadBalancerBackEndName'))]"
                           }
-                        ],
-                        "loadBalancerInboundNatPools": [
-                          {
-                            "id": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Network/loadBalancers/', variables('loadBalancerName'), '/inboundNatPools/', variables('loadBalancerNatPoolName'))]"
-                          }
                         ]
                       }
                     }
                   ]
-                }
-              }
-            ]
-          },
-          "extensionProfile": {
-            "extensions": [
-              {
-                "name": "cassandra",
-                "properties": {
-                  "publisher": "Microsoft.Azure.Extensions",
-                  "type": "CustomScript",
-                  "typeHandlerVersion": "2.0",
-                  "autoUpgradeMinorVersion": true,
-                  "settings": {
-                    "fileUris": [
-                      "[concat(variables('_artifactsLocation'), '/', variables('_extensionScript'), variables('artifactsLocationSasToken'))]"
-                    ],
-                    "commandToExecute": "[concat('sh ', variables('_extensionScript'), variables('masterVM').ipConfigurations[0].properties.privateIPAddress)]"
-                  }
                 }
               }
             ]
@@ -180,7 +156,7 @@
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
-          "domainNameLabel": "[toLower(parameters('vmssName'))]"
+          "domainNameLabel": "[toLower(parameters('clusterName'))]"
         }
       }
     },
@@ -241,6 +217,35 @@
           }
         ],
         "inboundNatPools": []
+      }
+    },
+    {
+      "apiVersion": "2015-01-01",
+      "name": "VMSSextension",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachineScaleSets/', variables('namingInfix'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "http://pastebin.com/raw/GsNTiAMc",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "clusterName": {
+            "value": "[variables('namingInfix')]"
+          },
+          "scriptLocation": {
+            "value": "[concat(variables('_artifactsLocation'), '/', variables('_extensionScript'), variables('_artifactsLocationSasToken'))]"
+          },
+          "scriptName": {
+            "value": "[variables('_extensionScript')]"
+          },
+          "privateIPAddress": {
+            "value": "[reference(variables('masterVM'),'2016-09-01').ipConfigurations[0].properties.privateIPAddress]"
+          }
+        }
       }
     }
   ]
