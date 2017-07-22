@@ -1,9 +1,5 @@
 #!/bin/bash
 
-echo "test" >> $HOME/test
-echo "$1"
-echo "$2"
-
 LOCAL_PRIVATE_IP=$(ifconfig | grep -A 1 'eth0' | tail -1 | cut -d ':' -f 2 | cut -d ' ' -f 1)
 IS_SEED_NODE=1
 HOST_IP=""
@@ -18,9 +14,7 @@ else
 fi
 
 if [ -n "$2" ]; then
-    echo "1"
     CASSANDRA_VERSION=$2
-    echo "2"
 fi
 
 echo "3"
@@ -37,6 +31,8 @@ function install_cassandra() {
         echo "8"
     fi
 }
+
+echo "3.5"
 
 function install_dependencies() {
     echo "8"
@@ -61,5 +57,7 @@ function install_dependencies() {
     echo "15"
 }
 
+echo "install_deps"
 install_dependencies
+echo "install_cassandra"
 install_cassandra
