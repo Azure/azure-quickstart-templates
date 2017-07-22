@@ -21,8 +21,10 @@ install_cassandra()
 {
     if [ $IS_SEED_NODE = 0 ]; then
         docker run -d -e CASSANDRA_BROADCAST_ADDRESS="$LOCAL_PRIVATE_IP" -p 7000:7000 -p 9042:9042 cassandra:"$CASSANDRA_VERSION"
+        echo "Running Cassandra version $CASSANDRA_VERSION as Host Node with IP $LOCAL_PRIVATE_IP as Broadcast Address"
     else
         docker run -d -e CASSANDRA_BROADCAST_ADDRESS="$LOCAL_PRIVATE_IP" -e CASSANDRA_SEEDS="$HOST_IP" -p 7000:7000 -p 9042:9042 cassandra:"$CASSANDRA_VERSION"
+        echo "Running Cassandra version $CASSANDRA_VERSION as Seed Node with IP $LOCAL_PRIVATE_IP as Broadcast Address and $HOST_IP as Seed target"
     fi
 }
 
