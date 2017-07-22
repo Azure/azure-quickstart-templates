@@ -1,5 +1,7 @@
 #!/bin/bash
 
+echo "test" >> $HOME/test
+
 LOCAL_PRIVATE_IP=$(ifconfig | grep -A 1 'eth0' | tail -1 | cut -d ':' -f 2 | cut -d ' ' -f 1)
 IS_SEED_NODE=1
 HOST_IP=""
