@@ -1,3 +1,8 @@
+# v2.7.0 (2017-7-10)
+
+- Upgrade Azure CPI version to v25. Please see new features in [bosh-azure-cpi-release v25](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v25)
+- Support the deployment in AzureStackTP3.
+
 # v2.6.1 (2017-6-2)
 
 - Upgrade bosh to v262
