@@ -6,15 +6,15 @@ echo "Start to update package lists from repositories..."
 retryop "apt-get update"
 
 echo "Start to install prerequisites..." 
-retryop "apt-get -y install build-essential ruby2.0 ruby2.0-dev libxml2-dev libsqlite3-dev libxslt1-dev libpq-dev libmysqlclient-dev zlibc zlib1g-dev openssl libxslt-dev libssl-dev libreadline6 libreadline6-dev libyaml-dev sqlite3 libffi-dev python-dev python-pip jq"
+retryop "apt-get -y install build-essential zlibc zlib1g-dev ruby ruby-dev openssl libxslt-dev libxml2-dev libssl-dev libreadline6 libreadline6-dev libyaml-dev libsqlite3-dev sqlite3 python-dev python-pip jq"
 
 set -e
 
-custom_data_file="/var/lib/cloud/instance/user-data.txt"
-settings=$(cat ${custom_data_file})
 tenant_id=$1
 client_id=$2
-client_secret=$3
+client_secret=$(echo $3 | base64 --decode)
+custom_data_file="/var/lib/cloud/instance/user-data.txt"
+settings=$(cat ${custom_data_file})
 
 function get_setting() {
   key=$1
@@ -22,39 +22,12 @@ function get_setting() {
   echo $value
 }
 
-function install_bosh_cli_and_init() {
-  echo "Start to update udpate Ruby 1.9 to 2.0 ..."
-  # Update Ruby 1.9 to 2.0
-  sudo rm /usr/bin/ruby /usr/bin/gem /usr/bin/irb /usr/bin/rdoc /usr/bin/erb
-  sudo ln -s /usr/bin/ruby2.0 /usr/bin/ruby
-  sudo ln -s /usr/bin/gem2.0 /usr/bin/gem
-  sudo ln -s /usr/bin/irb2.0 /usr/bin/irb
-  sudo ln -s /usr/bin/rdoc2.0 /usr/bin/rdoc
-  sudo ln -s /usr/bin/erb2.0 /usr/bin/erb
-
-  set +e
-
-  environment=$1
-  if [ "$environment" == "AzureChinaCloud" ]; then
-    sudo gem sources --remove https://rubygems.org/
-    sudo gem sources --add https://ruby.taobao.org/
-    sudo gem sources --add https://gems.ruby-china.org/
-  fi
-
-  set -e
-
-  gem sources -l
-  sudo gem update --system
-  sudo gem pristine --all
-
-  echo "Start to install bosh_cli..."
-  sudo gem install bosh_cli -v 1.3169.0 --no-ri --no-rdoc
-
-  echo "Start to install bosh-init..."
-  bosh_init_url=$2
-  wget $bosh_init_url
-  chmod +x ./bosh-init-*
-  sudo mv ./bosh-init-* /usr/local/bin/bosh-init
+function install_bosh_cli() {
+  echo "Start to install bosh-cli v2..."
+  bosh_cli_url=$1
+  wget $bosh_cli_url
+  chmod +x ./bosh-cli-*
+  sudo mv ./bosh-cli-* /usr/local/bin/bosh
 }
 
 environment=$(get_setting ENVIRONMENT)
@@ -62,7 +35,7 @@ environment=$(get_setting ENVIRONMENT)
 set +e
 
 echo "Start to install python packages..."
-pkg_list="pip==1.5.4 setuptools==32.3.1 msrest==0.4.4 msrestazure==0.4.4 requests==2.11.1 azure==2.0.0rc1 netaddr==0.7.18 PyGreSQL==5.0.2 ruamel.yaml==0.15.18"
+pkg_list="setuptools==32.3.1 azure==2.0.0rc1"
 if [ "$environment" = "AzureChinaCloud" ]; then
   for pkg in $pkg_list; do
     retryop "pip install $pkg --index-url https://mirror.azure.cn/pypi/simple/ --default-timeout=60"
@@ -75,52 +48,175 @@ fi
 
 set -e
 
-# Install Ruby before other operations to make sure Ruby 2.0 is used
-bosh_init_url=$(get_setting BOSH_INIT_URL)
-install_bosh_cli_and_init $environment $bosh_init_url
+echo "Creating the containers (bosh and stemcell) and the table (stemcells) in the default storage account"
+default_storage_account=$(get_setting DEFAULT_STORAGE_ACCOUNT_NAME)
+default_storage_access_key=$(get_setting DEFAULT_STORAGE_ACCESS_KEY)
+endpoint_suffix=$(get_setting SERVICE_HOST_BASE)
+python prepare_storage_account.py ${default_storage_account} ${default_storage_access_key} ${endpoint_suffix} ${environment}
+
+bosh_cli_url=$(get_setting BOSH_CLI_URL)
+install_bosh_cli $bosh_cli_url
 
 username=$(get_setting ADMIN_USER_NAME)
 home_dir="/home/$username"
 
-echo "Start to generate SSH key pair for BOSH..."
-bosh_key="bosh"
-ssh-keygen -t rsa -f $bosh_key -P "" -C ""
-chmod 400 $bosh_key
-cp $bosh_key $home_dir
-cp "$bosh_key.pub" $home_dir
+manifests_dir="$home_dir/example_manifests"
+mkdir -p $manifests_dir
+cp *.yml $manifests_dir
+chmod 775 $manifests_dir
+chmod 644 $manifests_dir/*
+dpkg -i cf-cli*
 
-echo "Start to run setup_env.py..."
-python setup_env.py ${tenant_id} ${client_id} ${client_secret} ${custom_data_file}
+cat > "$home_dir/deploy_bosh.sh" << EOF
+#!/usr/bin/env bash
 
-echo "Start to replace cert varialbes for manifests..."
-chmod +x replace_certs.sh
-./replace_certs.sh
+set -e
 
-# For backward compatibility
-sed -i "s/CLOUD_FOUNDRY_PUBLIC_IP/cf-ip/g" settings
-cp settings $home_dir
-cp bosh.yml $home_dir
+export BOSH_LOG_LEVEL="debug"
+export BOSH_LOG_PATH="./run.log"
 
-chmod +x deploy_bosh.sh
-cp deploy_bosh.sh $home_dir
+bosh create-env ~/example_manifests/bosh.yml \\
+  --state=state.json \\
+  --vars-store=~/bosh-deployment-vars.yml \\
+  -o ~/example_manifests/cpi.yml \\
+  -o ~/example_manifests/custom-environment.yml \\
+  -o ~/example_manifests/use-azure-dns.yml \\
+  -o ~/example_manifests/jumpbox-user.yml \\
+EOF
 
-chmod +x deploy_cloudfoundry.sh
-cp deploy_cloudfoundry.sh $home_dir
-cp utils.sh $home_dir
-
-example_manifests="$home_dir/example_manifests"
-mkdir -p $example_manifests
-if [ "$environment" = "AzureStack" ]; then
-  cp multiple-vm-cf.yml $example_manifests
-  chmod 644 $example_manifests/multiple-vm-cf.yml
+if [ "$environment" = "AzureChinaCloud" ]; then
+  cat >> "$home_dir/deploy_bosh.sh" << EOF
+  -o ~/example_manifests/use-managed-disks.yml \\
+  -o ~/example_manifests/use-mirror-releases-for-bosh.yml \\
+  -o ~/example_manifests/custom-ntp-server.yml \\
+EOF
+elif [ "$environment" = "AzureStack" ]; then
+  cat >> "$home_dir/deploy_bosh.sh" << EOF
+  -o ~/example_manifests/azure-stack-properties.yml \\
+  -v storage_account_name=$(get_setting DEFAULT_STORAGE_ACCOUNT_NAME) \\
+  -v azure_stack_domain=$(get_setting AZURE_STACK_DOMAIN) \\
+  -v azure_stack_resource=$(get_setting AZURE_STACK_RESOURCE) \\
+EOF
 else
-  cp single-vm-cf.yml $example_manifests 
-  cp multiple-vm-cf.yml $example_manifests
-  chmod 644 $example_manifests/single-vm-cf.yml
-  chmod 644 $example_manifests/multiple-vm-cf.yml
+  cat >> "$home_dir/deploy_bosh.sh" << EOF
+  -o ~/example_manifests/use-managed-disks.yml \\
+EOF
 fi
 
-cp cf* $home_dir
+cat >> "$home_dir/deploy_bosh.sh" << EOF
+  -v director_name=azure \\
+  -v internal_cidr=10.0.0.0/24 \\
+  -v internal_gw=10.0.0.1 \\
+  -v internal_ip=10.0.0.4 \\
+  -v cpi_release_url=$(get_setting BOSH_AZURE_CPI_RELEASE_URL) \\
+  -v cpi_release_sha1=$(get_setting BOSH_AZURE_CPI_RELEASE_SHA1) \\
+  -v stemcell_url=$(get_setting STEMCELL_URL) \\
+  -v stemcell_sha1=$(get_setting STEMCELL_SHA1) \\
+  -v director_vm_instance_type=$(get_setting BOSH_VM_SIZE) \\
+  -v vnet_name=$(get_setting VNET_NAME) \\
+  -v subnet_name=$(get_setting SUBNET_NAME_FOR_BOSH) \\
+  -v environment=$(get_setting ENVIRONMENT) \\
+  -v subscription_id=$(get_setting SUBSCRIPTION_ID) \\
+  -v tenant_id=${tenant_id} \\
+  -v client_id=${client_id} \\
+  -v client_secret="${client_secret}" \\
+  -v resource_group_name=$(get_setting RESOURCE_GROUP_NAME) \\
+  -v default_security_group=$(get_setting NSG_NAME_FOR_BOSH)
+EOF
+chmod 777 $home_dir/deploy_bosh.sh
+
+cat > "$home_dir/deploy_cloud_foundry.sh" << EOF
+export BOSH_ENVIRONMENT=10.0.0.4
+export BOSH_CLIENT=admin
+export BOSH_CLIENT_SECRET="\$(bosh int ~/bosh-deployment-vars.yml --path /admin_password)"
+export BOSH_CA_CERT="\$(bosh int ~/bosh-deployment-vars.yml --path /director_ssl/ca)"
+
+bosh alias-env azure
+bosh -e azure login
+
+bosh -n update-cloud-config ~/example_manifests/cloud-config.yml \\
+  -v internal_cidr=10.0.16.0/20 \\
+  -v internal_gw=10.0.16.1 \\
+  -v vnet_name=$(get_setting VNET_NAME) \\
+  -v subnet_name=$(get_setting SUBNET_NAME_FOR_CLOUD_FOUNDRY) \\
+  -v security_group=$(get_setting NSG_NAME_FOR_CLOUD_FOUNDRY) \\
+  -v load_balancer_name=$(get_setting LOAD_BALANCER_NAME)
+
+bosh upload-stemcell $(get_setting STEMCELL_URL)
+EOF
+
+cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
+bosh -n -d cf deploy ~/example_manifests/cf-deployment.yml \\
+  --vars-store=~/cf-deployment-vars.yml \\
+  -o ~/example_manifests/azure.yml \\
+EOF
+if [ "$environment" = "AzureChinaCloud" ]; then
+  cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
+  -o ~/example_manifests/use-azure-storage-blobstore.yml \\
+  -o ~/example_manifests/use-mirror-releases-for-cf.yml \\
+  -o ~/example_manifests/scale-to-one-az.yml \\
+  -v system_domain=$(get_setting CLOUD_FOUNDRY_PUBLIC_IP).xip.io \\
+  -v environment=$(get_setting ENVIRONMENT) \\
+  -v blobstore_storage_account_name=$(get_setting DEFAULT_STORAGE_ACCOUNT_NAME) \\
+  -v blobstore_storage_access_key=$(get_setting DEFAULT_STORAGE_ACCESS_KEY) \\
+  -v app_package_directory_key=cc-packages \\
+  -v buildpack_directory_key=cc-buildpack \\
+  -v droplet_directory_key=cc-droplet \\
+  -v resource_directory_key=cc-resource
+EOF
+elif [ "$environment" = "AzureStack" ]; then
+  cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
+  -o ~/example_manifests/scale-to-one-az.yml \\
+  -o ~/example_manifests/scale-to-availability-set-no-HA.yml \\
+  -v system_domain=$(get_setting CLOUD_FOUNDRY_PUBLIC_IP).xip.io
+EOF
+else
+  cat >> "$home_dir/deploy_cloud_foundry.sh" << EOF
+  -o ~/example_manifests/use-azure-storage-blobstore.yml \\
+  -o ~/example_manifests/scale-to-one-az.yml \\
+  -v system_domain=$(get_setting CLOUD_FOUNDRY_PUBLIC_IP).xip.io \\
+  -v environment=$(get_setting ENVIRONMENT) \\
+  -v blobstore_storage_account_name=$(get_setting DEFAULT_STORAGE_ACCOUNT_NAME) \\
+  -v blobstore_storage_access_key=$(get_setting DEFAULT_STORAGE_ACCESS_KEY) \\
+  -v app_package_directory_key=cc-packages \\
+  -v buildpack_directory_key=cc-buildpack \\
+  -v droplet_directory_key=cc-droplet \\
+  -v resource_directory_key=cc-resource
+EOF
+fi 
+chmod 777 $home_dir/deploy_cloud_foundry.sh
+
+cat >> "$home_dir/connect_director_vm.sh" << EOF
+#!/usr/bin/env bash
+
+bosh int ~/bosh-deployment-vars.yml --path /jumpbox_ssh/private_key > jumpbox.key
+chmod 600 jumpbox.key
+ssh jumpbox@10.0.0.4 -i jumpbox.key
+EOF
+chmod 777 $home_dir/connect_director_vm.sh
+
+cat >> "$home_dir/login_bosh.sh" << EOF
+#!/usr/bin/env bash
+
+export BOSH_ENVIRONMENT=10.0.0.4
+export BOSH_CLIENT=admin
+export BOSH_CLIENT_SECRET="\$(bosh int ~/bosh-deployment-vars.yml --path /admin_password)"
+export BOSH_CA_CERT="\$(bosh int ~/bosh-deployment-vars.yml --path /director_ssl/ca)"
+
+bosh alias-env azure
+bosh -e azure login
+EOF
+chmod 777 $home_dir/login_bosh.sh
+
+cat >> "$home_dir/login_cloud_foundry.sh" << EOF
+#!/usr/bin/env bash
+
+cf_admin_password="\$(bosh int ~/cf-deployment-vars.yml --path /cf_admin_password)"
+
+cf login -a https://api.$(get_setting CLOUD_FOUNDRY_PUBLIC_IP).xip.io -u admin -p "\${cf_admin_password}" --skip-ssl-validation
+EOF
+chmod 777 $home_dir/login_cloud_foundry.sh
+
 chown -R $username $home_dir
 
 auto_deploy_bosh=$(get_setting AUTO_DEPLOY_BOSH)
@@ -129,12 +225,17 @@ if [ "$auto_deploy_bosh" != "enabled" ]; then
   exit 0
 fi
 
-echo "Start to run deploy_bosh.sh..."
+echo "Starting to deploy BOSH director..."
 su -c "./deploy_bosh.sh" - $username
 
-if [ "$environment" = "AzureChinaCloud" ]; then 
-  echo "Start to inject some xip.io records to PowerDNS on BOSH VM..." 
-  python inject_xip_io_records.py "$home_dir/bosh.yml" "$home_dir/settings" 
-fi 
+auto_deploy_cf=$(get_setting AUTO_DEPLOY_CLOUD_FOUNDRY)
+if [ "$auto_deploy_cf" != "enabled" ]; then
+  echo "Finish"
+  exit 0
+fi
+
+echo "Starting to deploy Cloud Foundry..."
+nohup su - $username -c "./deploy_cloud_foundry.sh" &
 
 echo "Finish"
+exit 0
