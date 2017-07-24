@@ -35,7 +35,7 @@ Follow these instructions to deploy the template:
 Once the template has been deployed successfully, you need to deploy the [Microsoft Azure Log Analytics Nozzle](https://github.com/Azure/oms-log-analytics-firehose-nozzle) to collect Cloud Foundry metrics and logs to the workspace. If the workspace is newly created, it might take several minutes for data to be injected after the nozzle is started.
 
 ### Views
-Open the OMS portal of the workspace, on the overview page, multipe views should be already imported.
+You can find the URL of OMS portal `OMSPORTAL` in the outputs of `Microsoft.Template` deployment. Navigate to the OMS portal of the workspace, on the overview page, multipe views should be already imported.
     ![alt text](images/overview.png "overview")
 Click on each view and more dashboards will be displayed.
     ![alt text](images/view.png "view")
