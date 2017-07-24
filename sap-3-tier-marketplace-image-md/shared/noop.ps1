@@ -4,7 +4,7 @@
     [String] $DBLogLUNS = "3",
     [string] $DBDataDrive = "S:",
     [string] $DBLogDrive = "L:",
-	[string] $DBDataName = "dbdata",
+    [string] $DBDataName = "dbdata",
     [string] $DBLogName = "dblog"
 )
 
