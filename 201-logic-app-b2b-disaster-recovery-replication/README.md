@@ -9,6 +9,7 @@
 
 This template demonstrates B2B Disaster Recovery replication using Logic Apps. Creates replication Logic Apps for AS2 MIC, generated and received X12 and Edifact control numbers. Each Logic App's trigger points to a primary site integration account. Each Logic App's action points to a secondary site integration account. Primary and secondary sites must have prerequisite Integration Accounts deployed (Integration Accounts are not deployed as part of this template). Furthermore to see the replication happen the primary site must have Logic Apps deployed with X12 Encode and/or Decode action(s) and AS2 Encode action. (Logic Apps for X12/AS2 Encode and Decode are not deployed as part of this template).
 It is recommended that the primary site and secondary site are deployed in different regions and different resource group. The replication Logic Apps should be deployed to the secondary site, region and resource group. Hence this template parameters include the resource group of the primary integration account and assume that the secondary integration account is in the same resource group as where the template is deployed.
+For deployment of the integration accounts and sample B2B (AS2) logic app, please refer to "201-logic-app-as2-send-receive" as example.
 `Tags: AS2, X12, Logic Apps, Integration Account, Enterprise Integration`
 
 ## Deployment steps
@@ -23,7 +24,7 @@ Once the deployment is completed, you should see the following resources in the 
 
 ### X12/Edifact DR Logic App ###
 - In order for control numbers to be replicated, X12/Edifact encode and/or decode activity must happen on the primary site Logic App which X12/Edifact action uses the primary Integration Account. Send a test message to your pre-requisite Logic App.
-- The replication Logic Apps will trigger every 1 minute by default. If the test message you sent was less than a minutes ago, you may click 'Run Trigger' 'When_a_control_number_is_...' to generate an immediate run. The logic app run will contain the replication of all the control numbers that was modified by the X12/Edifact Encode/Decode operations in the 1 minute window since previous trigger run.
+- The replication Logic Apps will trigger every 1 minute by default. If the test message you sent was less than a minute ago, you may click 'Run Trigger' 'When_a_control_number_is_...' to generate an immediate run. The logic app run will contain the replication of all the control numbers that was modified by the X12/Edifact Encode/Decode operations in the 1 minute window since previous trigger run.
 ![Image of History for Control Number replication Logic App](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-logic-app-b2b-disaster-recovery-replication/images/cn-replication-history.png "History for Control Number replication Logic App")
 - You can look into the run history and input/output for each action for these logic apps for replication results.
 ![Image of Run details for Control Number replication Logic App](https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-logic-app-b2b-disaster-recovery-replication/images/cn-run-details.png "Run details for Control Number replication Logic App")
@@ -35,7 +36,7 @@ Once the deployment is completed, you should see the following resources in the 
 
 ### AS2 DR Logic App ###
 - MIC content is created on AS2 encode when AS2 agreement is configured for MDN. On successful encode, MIC content is created which is replicated to secondary Integration Account by the DR Logic App. Send a test message to the pre-requisite Logic App.
-- The replication Logic App will trigger every 1 minute by default.  If the test message you sent was less than a minutes ago, you may click 'Run Trigger' 'When_a_MIC_values_is_created' to generate an immediate run. The logic app run will contain the replication of all the MIC values that was created in the 1 minute window since previous trigger run.
+- The replication Logic App will trigger every 1 minute by default.  If the test message you sent was less than a minute ago, you may click 'Run Trigger' 'When_a_MIC_values_is_created' to generate an immediate run. The logic app run will contain the replication of all the MIC values that was created in the 1 minute window since previous trigger run.
 - You can look into the run history and input/output for each action for these logic apps for replication results.
 - To perform a disaster recovery:
   - Disable the Logic Apps performing AS2 Encode-Decode operations and the MIC Replication Logic App (if present) on the primary site.
@@ -44,7 +45,7 @@ Once the deployment is completed, you should see the following resources in the 
 
 ### Note: ###
   - Please note that without encode or decode activity on the primary site there will be no MIC and control number to be replicated and the replication Logic Apps' trigger history will show 'skipped' status.
-  - By default the trigger frequency for the replication Logic Apps is three minutes. You can change this value in the Logic App Designer or code view.
+  - By default the trigger frequency for the replication Logic Apps is 1 minute. You can change this value in the Logic App Designer or code view.
   - The X12/Edifact triggers "When a control number is modified" alternate runs between a query for change until current time and a query for change five minutes or older to ensure no change is overlooked due to possible time-skew between distributed computing hosts. You will see the same control numbers change trigger once near real-time then a second time five minutes later. In the first run you will see the "Add or update control numbers" output "updateControlNumberStatus" property have the value "ControlNumberSuccessfullyUpdated". In the second run you will see the "Add or update control numbers" output "updateControlNumberStatus" property have the value "ControlNumberContentNotChanged". Similar behaviour is applicable for all the B2B Triggers.
   - The AS2 DR replication is applicable for AS2 encoded/decoded data processed post DR release.
 
