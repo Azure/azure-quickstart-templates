@@ -38,17 +38,6 @@
         "description": "The size of the SAP System you want to deploy."
       }
     },
-    "storageType": {
-      "type": "string",
-      "allowedValues": [
-        "Premium",
-        "Standard"
-      ],
-      "defaultValue": "Standard",
-      "metadata": {
-        "description": "The storage type that should be used for the virtual machine."
-      }
-    },
     "adminUsername": {
       "type": "string",
       "metadata": {
@@ -62,27 +51,29 @@
         "description": "Password for the Virtual Machine."
       }
     },
-    "newOrExistingSubnet": {
-      "type": "string",
-      "defaultValue": "new",
-      "allowedValues": [
-        "new",
-        "existing"
-      ],
-      "metadata": {
-        "description": "Determines whether a new virtual network and subnet should be created or an existing subnet should be used."
-      }
-    },
     "subnetId": {
       "type": "string",
       "defaultValue": "",
       "metadata": {
         "description": "The id of the subnet you want to use."
       }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sap-2-tier-marketplace-image-md/"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
     }
   },
   "variables": {
-    "github": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/sap-2-tier-marketplace-image/shared/",
     "images": {
       "Windows Server 2012 Datacenter": {
         "sku": "2012-Datacenter",
@@ -124,212 +115,99 @@
         "UsePlan": false
       }
     },
-    "imageSku": "[variables('images')[parameters('osType')].sku]",
-    "imagePublisher": "[variables('images')[parameters('osType')].publisher]",
-    "imageOffer": "[variables('images')[parameters('osType')].offer]",
     "internalOSType": "[variables('images')[parameters('osType')].OSType]",
     "csExtension": {
-      "Windows": {       
-        "script": "[concat(variables('github'), 'configureSAPVM.ps1')]",
-        "scriptCall": "powershell.exe -ExecutionPolicy bypass -File configureSAPVM.ps1"
+      "Windows": {
+        "script": "[concat(parameters('_artifactsLocation'), '/shared/configureSAPVM.ps1', parameters('_artifactsLocationSasToken'))]",
+        "scriptCall": "powershell.exe -ExecutionPolicy bypass -File .\\shared\\configureSAPVM.ps1"
       },
-      "Linux": {        
-        "script": "[concat(variables('github'), 'configureSAPVM.sh')]",
+      "Linux": {
+        "script": "[concat(parameters('_artifactsLocation'), '/shared/configureSAPVM.sh', parameters('_artifactsLocationSasToken'))]",
         "scriptCall": "sh configureSAPVM.sh"
       }
-    },   
-    "storageTypes": {
-      "Premium": "Premium_LRS",
-      "Standard": "Standard_LRS"
     },
-    "internalStorageType": "[variables('storageTypes')[parameters('storageType')]]",
     "vmSizes": {
       "Small < 2.000 SAPS": {
-        "Premium": {
-          "size": "Standard_DS11",
-          "disks": [
-            {
-              "size": 512
-            },
-            {
-              "size": 512
-            },
-            {
-              "size": 128
-            }
-          ],
-          "scriptArgs": " -DBDataLUNS '0,1' -DBLogLUNS '2'"
-        },
-        "Standard": {
-          "size": "Standard_D11",
-          "disks": [
-            {
-              "size": 1023
-            },
-            {
-              "size": 1023
-            },
-            {
-              "size": 1023
-            },
-            {
-              "size": 1023
-            }
-          ],
-          "scriptArgs": " -DBDataLUNS '0,1,2' -DBLogLUNS '3'"
-        }
+        "size": "Standard_DS11",
+        "disks": [
+          {
+            "size": 512
+          },
+          {
+            "size": 512
+          },
+          {
+            "size": 128
+          }
+        ],
+        "scriptArgs": " -DBDataLUNS '0,1' -DBLogLUNS '2'"
       },
       "Medium < 9.000 SAPS": {
-        "Premium": {
-          "size": "Standard_DS13",
-          "disks": [
-            {
-              "size": 512
-            },
-            {
-              "size": 512
-            },
-            {
-              "size": 512
-            },
-            {
-              "size": 128
-            }
-          ],
-          "scriptArgs": " -DBDataLUNS '0,1,2' -DBLogLUNS '3'"
-        },
-        "Standard": {
-          "size": "Standard_D13",
-          "disks": [
-            {
-              "size": 1023
-            },
-            {
-              "size": 1023
-            },
-            {
-              "size": 1023
-            },
-            {
-              "size": 1023
-            },
-            {
-              "size": 1023
-            },
-            {
-              "size": 1023
-            }
-          ],
-          "scriptArgs": " -DBDataLUNS '0,1,2,3' -DBLogLUNS '4,5'"
-        }
+        "size": "Standard_DS13",
+        "disks": [
+          {
+            "size": 512
+          },
+          {
+            "size": 512
+          },
+          {
+            "size": 512
+          },
+          {
+            "size": 128
+          }
+        ],
+        "scriptArgs": " -DBDataLUNS '0,1,2' -DBLogLUNS '3'"
       },
       "Large < 18.000 SAPS": {
-        "Premium": {
-          "size": "Standard_DS14",
-          "disks": [
-            {
-              "size": 1023
-            },
-            {
-              "size": 1023
-            },
-            {
-              "size": 1023
-            },
-            {
-              "size": 512
-            }
-          ],
-          "scriptArgs": " -DBDataLUNS '0,1,2' -DBLogLUNS '3'"
-        },
-        "Standard": {
-          "size": "Standard_D14",
-          "disks": [
-            {
-              "size": 1023
-            },
-            {
-              "size": 1023
-            },
-            {
-              "size": 1023
-            },
-            {
-              "size": 1023
-            },
-            {
-              "size": 1023
-            },
-            {
-              "size": 1023
-            }
-          ],
-          "scriptArgs": " -DBDataLUNS '0,1,2,3' -DBLogLUNS '4,5'"
-        }
+        "size": "Standard_DS14",
+        "disks": [
+          {
+            "size": 1023
+          },
+          {
+            "size": 1023
+          },
+          {
+            "size": 1023
+          },
+          {
+            "size": 512
+          }
+        ],
+        "scriptArgs": " -DBDataLUNS '0,1,2' -DBLogLUNS '3'"
       },
       "X-Large < 40.000 SAPS": {
-        "Premium": {
-          "size": "Standard_GS5",
-          "disks": [
-            {
-              "size": 1023
-            },
-            {
-              "size": 1023
-            },
-            {
-              "size": 1023
-            },
-            {
-              "size": 1023
-            },
-            {
-              "size": 512
-            }
-          ],
-          "scriptArgs": " -DBDataLUNS '0,1,2,3' -DBLogLUNS '4'"
-        },
-        "Standard": {
-          "size": "Standard_D14",
-          "disks": [
-            {
-              "size": 1023
-            },
-            {
-              "size": 1023
-            },
-            {
-              "size": 1023
-            },
-            {
-              "size": 1023
-            },
-            {
-              "size": 1023
-            },
-            {
-              "size": 1023
-            }
-          ],
-          "scriptArgs": " -DBDataLUNS '0,1,2,3' -DBLogLUNS '4,5'"
-        }
+        "size": "Standard_GS5",
+        "disks": [
+          {
+            "size": 1023
+          },
+          {
+            "size": 1023
+          },
+          {
+            "size": 1023
+          },
+          {
+            "size": 1023
+          },
+          {
+            "size": 512
+          }
+        ],
+        "scriptArgs": " -DBDataLUNS '0,1,2,3' -DBLogLUNS '4'"
       }
     },
-    "vmSize": "[variables('vmSizes')[parameters('sapSystemSize')][parameters('storageType')].size]",
-    "internalExtensionScript": "[variables('csExtension')[variables('internalOSType')].script]",
-    "internalExtensionScriptCall": "[variables('csExtension')[variables('internalOSType')].scriptCall]",
-    "internalExtensionScriptCallArgs": "[variables('vmSizes')[parameters('sapSystemSize')][parameters('storageType')].scriptArgs]",
-    "dataDiskSizes": "[variables('vmSizes')[parameters('sapSystemSize')][parameters('storageType')].disks]",
+    "dataDiskSizes": "[variables('vmSizes')[parameters('sapSystemSize')].disks]",
     "sidlower": "[toLower(parameters('sapSystemId'))]",
     "vmName": "[concat(variables('sidlower'), '-servercs')]",
     "vnetName": "[concat(variables('sidlower'), '-vnet')]",
     "publicIpName": "[concat(variables('sidlower'), '-pib')]",
     "nicName": "[concat(variables('sidlower'), '-nic')]",
     "nsgName": "[concat(variables('sidlower'), '-nsg-cs')]",
-    "publicIPAddressType": "Dynamic",
-    "addressPrefix": "10.0.0.0/16",
     "subnetName": "Subnet",
-    "subnetPrefix": "10.0.0.0/24",
     "nestedDeploymentName": "nestedTemplate",
     "nestedDeploymentNameProf": "[concat(variables('nestedDeploymentName'), 'prof')]",
     "nestedDeploymentNameVnet": "[concat(variables('nestedDeploymentName'), 'vnet')]",
@@ -338,15 +216,16 @@
     "nestedDeploymentNamePIP": "[concat(variables('nestedDeploymentName'), 'pip')]",
     "osDiskType": "image"
   },
-  "resources": [    
+  "resources": [
     {
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2017-05-10",
       "name": "[variables('nestedDeploymentNameVnet')]",
       "type": "Microsoft.Resources/deployments",
+      "condition": "[equals(length(parameters('subnetId')), 0)]",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('github'), parameters('newOrExistingSubnet'), 'vnet.json')]",
+          "uri": "[concat(parameters('_artifactsLocation'), '/shared/newvnet.json', parameters('_artifactsLocationSasToken'))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -354,25 +233,25 @@
             "value": "[variables('vnetName')]"
           },
           "addressPrefix": {
-            "value": "[variables('addressPrefix')]"
+            "value": "10.0.0.0/16"
           },
           "subnetName": {
             "value": "[variables('subnetName')]"
           },
           "subnetPrefix": {
-            "value": "[variables('subnetPrefix')]"
+            "value": "10.0.0.0/24"
           }
         }
       }
     },
     {
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2017-05-10",
       "name": "[variables('nestedDeploymentNameNIC')]",
       "type": "Microsoft.Resources/deployments",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('github'), 'nic-config.json')]",
+          "uri": "[concat(parameters('_artifactsLocation'), '/shared/nic-config.json', parameters('_artifactsLocationSasToken'))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -388,9 +267,6 @@
           "nsgName": {
             "value": "[variables('nsgName')]"
           },
-          "newOrExistingSubnet": {
-            "value": "[parameters('newOrExistingSubnet')]"
-          },
           "subnetId": {
             "value": "[parameters('subnetId')]"
           }
@@ -398,24 +274,24 @@
       }
     },
     {
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2017-05-10",
       "name": "[variables('nestedDeploymentNameProf')]",
       "type": "Microsoft.Resources/deployments",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('github'), 'os-disk-parts-md.json')]",
+          "uri": "[concat(parameters('_artifactsLocation'), '/shared/os-disk-parts-md.json', parameters('_artifactsLocationSasToken'))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
           "imageSku": {
-            "value": "[variables('imageSku')]"
+            "value": "[variables('images')[parameters('osType')].sku]"
           },
           "imagePublisher": {
-            "value": "[variables('imagePublisher')]"
+            "value": "[variables('images')[parameters('osType')].publisher]"
           },
           "imageOffer": {
-            "value": "[variables('imageOffer')]"
+            "value": "[variables('images')[parameters('osType')].offer]"
           },
           "osDiskType": {
             "value": "[variables('osDiskType')]"
@@ -428,9 +304,9 @@
           },
           "vmName": {
             "value": "[variables('vmName')]"
-          },          
+          },
           "storageType": {
-            "value": "[variables('internalStorageType')]"
+            "value": "Premium_LRS"
           },
           "managedDiskId": {
             "value": ""
@@ -439,13 +315,14 @@
       }
     },
     {
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2017-05-10",
       "name": "[variables('nestedDeploymentNamePIP')]",
       "type": "Microsoft.Resources/deployments",
+      "condition": "[equals(length(parameters('subnetId')), 0)]",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('github'), parameters('newOrExistingSubnet'), 'pip.json')]",
+          "uri": "[concat(parameters('_artifactsLocation'), '/shared/newpip.json', parameters('_artifactsLocationSasToken'))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -453,19 +330,20 @@
             "value": "[variables('publicIpName')]"
           },
           "publicIPAddressType": {
-            "value": "[variables('publicIPAddressType')]"
+            "value": "Dynamic"
           }
         }
       }
     },
     {
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2017-05-10",
       "name": "[variables('nestedDeploymentNameNSG')]",
       "type": "Microsoft.Resources/deployments",
+      "condition": "[equals(length(parameters('subnetId')), 0)]",
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('github'), parameters('newOrExistingSubnet'), 'nsg.json')]",
+          "uri": "[concat(parameters('_artifactsLocation'), '/shared/newnsg.json', parameters('_artifactsLocationSasToken'))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -504,7 +382,7 @@
       }
     },
     {
-      "apiVersion": "2015-01-01",
+      "apiVersion": "2017-05-10",
       "name": "[variables('nestedDeploymentName')]",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
@@ -514,7 +392,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('github'), 'server-md.json')]",
+          "uri": "[concat(parameters('_artifactsLocation'), '/shared/server-md.json', parameters('_artifactsLocationSasToken'))]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -531,7 +409,7 @@
             "value": "[variables('vmName')]"
           },
           "vmSize": {
-            "value": "[variables('vmSize')]"
+            "value": "[variables('vmSizes')[parameters('sapSystemSize')].size]"
           },
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
@@ -540,13 +418,13 @@
             "value": "[parameters('adminPassword')]"
           },
           "csExtensionScript": {
-            "value": "[variables('internalExtensionScript')]"
+            "value": "[variables('csExtension')[variables('internalOSType')].script]"
           },
           "csExtensionscriptCall": {
-            "value": "[variables('internalExtensionScriptCall')]"
+            "value": "[variables('csExtension')[variables('internalOSType')].scriptCall]"
           },
           "csExtensionscriptArgs": {
-            "value": "[variables('internalExtensionScriptCallArgs')]"
+            "value": "[variables('vmSizes')[parameters('sapSystemSize')].scriptArgs]"
           },
           "avSetObj": {
             "value": {}
