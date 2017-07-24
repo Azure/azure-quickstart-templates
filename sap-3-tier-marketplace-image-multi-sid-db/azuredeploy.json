@@ -74,8 +74,20 @@
         "description": "Password for the Virtual Machine."
       }
     },
+    "newOrExistingSubnet": {
+      "type": "string",
+      "defaultValue": "new",
+      "allowedValues": [
+        "new",
+        "existing"
+      ],
+      "metadata": {
+        "description": "Determines whether a new virtual network and subnet should be created or an existing subnet should be used."
+      }
+    },
     "subnetId": {
       "type": "string",
+      "defaultValue": "",
       "metadata": {
         "description": "The id of the subnet you want to use."
       }
@@ -88,6 +100,7 @@
         "sku": "2012-Datacenter",
         "offer": "WindowsServer",
         "publisher": "MicrosoftWindowsServer",
+        "version": "latest",
         "OSType": "Windows",
         "Plan": {},
         "UsePlan": false
@@ -96,6 +109,7 @@
         "sku": "2012-R2-Datacenter",
         "offer": "WindowsServer",
         "publisher": "MicrosoftWindowsServer",
+        "version": "latest",
         "OSType": "Windows",
         "Plan": {},
         "UsePlan": false
@@ -104,34 +118,34 @@
         "sku": "2016-Datacenter",
         "offer": "WindowsServer",
         "publisher": "MicrosoftWindowsServer",
+        "version": "latest",
         "OSType": "Windows",
         "Plan": {},
         "UsePlan": false
       },
       "SLES 12": {
         "sku": "12-SP1",
-        "offer": "SLES",
+        "offer": "SLES-SAP",
         "publisher": "SUSE",
+        "version": "latest",
         "OSType": "Linux",
         "Plan": {},
         "UsePlan": false
       },
       "SLES 12 BYOS": {
-        "sku": "12-sp1",
-        "offer": "sles-for-sap-byos",
-        "publisher": "SUSE-byos",
+        "sku": "12-SP1",
+        "offer": "SLES-SAP-BYOS",
+        "publisher": "SUSE",
+        "version": "latest",
         "OSType": "Linux",
-        "Plan": {
-          "name": "12-sp1",
-          "publisher": "suse-byos",
-          "product": "sles-for-sap-byos"
-        },
-        "UsePlan": true
+        "Plan": {},
+        "UsePlan": false
       },
       "RHEL 7.2": {
         "sku": "7.2",
         "offer": "RHEL",
         "publisher": "RedHat",
+        "version": "latest",
         "OSType": "Linux",
         "Plan": {},
         "UsePlan": false
@@ -140,6 +154,7 @@
     "imageSku": "[variables('images')[parameters('osType')].sku]",
     "imagePublisher": "[variables('images')[parameters('osType')].publisher]",
     "imageOffer": "[variables('images')[parameters('osType')].offer]",
+    "imageVersion": "[variables('images')[parameters('osType')].version]",
     "internalOSType": "[variables('images')[parameters('osType')].OSType]",
     "planRefernce": "[variables('images')[parameters('osType')].Plan]",
     "usePlanRefernce": "[variables('images')[parameters('osType')].UsePlan]",
@@ -399,13 +414,29 @@
     "sidlower": "[toLower(parameters('sapSystemId'))]",
     "vmName": "[variables('sidlower')]",
     "storageAccountName": "[concat(variables('sidlower'), uniqueString(variables('sidlower'), resourceGroup().id))]",
-    "selectedSubnetId": "[parameters('subnetId')]",
+    
+    "publicIpNameDB": "[concat(variables('sidlower'), '-pip-db')]",
+    "vnetName": "[concat(variables('sidlower'), '-vnet')]",
+    "publicIPAddressType": "Dynamic",
+    "addressPrefix": "10.0.0.0/16",
+    "subnetName": "Subnet",
+    "subnetPrefix": "10.0.0.0/24",
+    "subnets": {
+      "new": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('subnetName'))]",
+      "existing": "[parameters('subnetId')]"
+    },
+    "selectedSubnetId": "[variables('subnets')[parameters('newOrExistingSubnet')]]",
+
     "nestedDeploymentName": "nestedTemplate",
+    "nestedDeploymentNameVNet": "[concat(variables('nestedDeploymentName'), 'vnet')]",
     "nestedDeploymentNameLBDB": "[concat(variables('nestedDeploymentName'), 'lbdb')]",
     "nestedDeploymentNameDB": "[concat(variables('nestedDeploymentName'), 'db')]",
     "nestedDeploymentNameProf": "[concat(variables('nestedDeploymentName'), 'prof')]",
     "nestedDeploymentNameNIC": "[concat(variables('nestedDeploymentName'), 'nic')]",
     "nestedDeploymentNameNICDB": "[concat(variables('nestedDeploymentNameNIC'), 'db')]",
+    "nestedDeploymentNamePIP": "[concat(variables('nestedDeploymentNameNIC'), 'pip')]",    
+    "nestedDeploymentNameNSG": "[concat(variables('nestedDeploymentNameDB'), 'nsg')]",
+    "nsgNameDB": "[concat(variables('sidlower'), '-nsg')]",
     "avSetNameDB": "[concat(variables('sidlower'), '-avset-db')]",
     "storageAccountNameDB": "[concat('db', variables('storageAccountName'))]",
     "internalStorageTypeDB": "Premium_LRS",
@@ -418,6 +449,58 @@
   },
   "resources": [
     {
+      "apiVersion": "[variables('apiVerionRm')]",
+      "name": "[variables('nestedDeploymentNameNSG')]",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('github'), parameters('newOrExistingSubnet'), 'nsg.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "nsgName": {
+            "value": "[variables('nsgNameDB')]"
+          },
+          "osType": {
+            "value": "[variables('internalOSType')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVerionRm')]",
+      "name": "[variables('nestedDeploymentNameVnet')]",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameNSG'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('github'), parameters('newOrExistingSubnet'), 'vnetnsg.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "vnetName": {
+            "value": "[variables('vnetName')]"
+          },
+          "addressPrefix": {
+            "value": "[variables('addressPrefix')]"
+          },
+          "subnetName": {
+            "value": "[variables('subnetName')]"
+          },
+          "subnetPrefix": {
+            "value": "[variables('subnetPrefix')]"
+          },
+          "nsgName": {
+            "value": "[variables('nsgNameDB')]"
+          }
+        }
+      }
+    },
+    {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('avSetNameDB')]",
       "apiVersion": "[variables('apiVerion')]",
@@ -425,6 +508,30 @@
       "properties": {
         "platformFaultDomainCount": 3,
         "platformUpdateDomainCount": 20
+      }
+    },
+    {
+      "apiVersion": "[variables('apiVerionRm')]",
+      "name": "[concat(variables('nestedDeploymentNamePIP'), '-', copyIndex())]",
+      "type": "Microsoft.Resources/deployments",
+      "copy": {
+        "name": "pipLoop",
+        "count": "[variables('dbvmCount')]"
+      },
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('github'), parameters('newOrExistingSubnet'), 'pip.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "publicIpName": {
+            "value": "[concat(variables('publicIpNameDB'), '-', copyIndex())]"
+          },
+          "publicIPAddressType": {
+            "value": "[variables('publicIPAddressType')]"
+          }
+        }
       }
     },
     {
@@ -444,6 +551,9 @@
       "apiVersion": "[variables('apiVerionRm')]",
       "name": "[variables('nestedDeploymentNameLBDB')]",
       "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameVnet'))]"
+      ],
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -491,19 +601,19 @@
         },
         "parameters": {
           "vnetName": {
-            "value": ""
+            "value": "[variables('vnetName')]"
           },
           "subnetName": {
-            "value": ""
+            "value": "[variables('subnetName')]"
           },
           "publicIpName": {
-            "value": ""
+            "value": "[concat(variables('publicIpNameDB'), '-', copyIndex())]"
           },
           "nsgName": {
             "value": ""
           },
           "newOrExistingSubnet": {
-            "value": "existing"
+            "value": "[parameters('newOrExistingSubnet')]"
           },
           "subnetId": {
             "value": "[parameters('subnetId')]"
@@ -520,7 +630,9 @@
         "count": "[variables('dbvmCount')]"
       },
       "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNamePIP'), '-', copyIndex())]",
         "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameLBDB'))]",
+        "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameVnet'))]",
         "[concat('Microsoft.Resources/deployments/', variables('nestedDeploymentNameNICDB'), '-', copyIndex())]"
       ],
       "location": "[resourceGroup().location]",
@@ -530,6 +642,7 @@
             "name": "ipconfig1",
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": "[reference(concat(variables('nestedDeploymentNameNICDB'), '-', copyIndex())).outputs.selectedConfiguration.value.publicIPAddress]",
               "subnet": "[reference(concat(variables('nestedDeploymentNameNICDB'), '-', copyIndex())).outputs.selectedConfiguration.value.subnet]",
               "loadBalancerBackendAddressPools": "[reference(variables('nestedDeploymentNameLBDB')).outputs.nicBackAddressPools.value]"
             }
@@ -563,6 +676,9 @@
           },
           "imageOffer": {
             "value": "[variables('imageOffer')]"
+          },
+          "imageVersion": {
+            "value": "[variables('imageVersion')]"
           },
           "userImageVhdUri": {
             "value": ""
