@@ -135,12 +135,6 @@ while true; do
 	if [[ -z "$1" ]]; then break; fi
 done
 
-vLinux=$(cat /etc/os-release) 
-if [[ $vLinux =~ NAME=\"Oracle ]];    
-then 
-    yum -y install lsscsi lvm2
-fi
-
 if [[ -n "$dbluns" ]];
 then
 	createlvm $dbluns "vg-$dbname" "lv-$dbname" "/$dbname";
