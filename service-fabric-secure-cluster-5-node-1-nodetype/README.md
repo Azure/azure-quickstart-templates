@@ -7,7 +7,8 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template allows you to deploy a secure 5 node, Single Node Type Service fabric Cluster running Windows server 2012 R2 Data center on Standard_D2 Size VMs with Windows Azure diagnostics turned on. This template assumes that you already have certificates uploaded to your keyvault, else I strongly suggest you follow one of the two links below.
+This template allows you to deploy a secure 5 node, Single Node Type Service fabric Cluster running Windows server 2012 R2 Data center on Standard_D2 Size VMs with Windows Azure diagnostics turned on. This template assumes that you already have certificates uploaded to your keyvault, else I strongly suggest you follow one of the two links below. 
+Uploaded cluster certificates will be also be used to secure client to cluster communications apart from just node to node this is because by default, the cluster certificates are added to the allowed Admin certificates list hence the template here secures both node-node and client-node communication. You can though add separate client certs for readonly and admin cluster roles later if you like.
 
 ## Creating a custom ARM template
 
