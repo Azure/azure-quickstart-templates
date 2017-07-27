@@ -1,0 +1,189 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "siteName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of Azure Web App"
+      }
+    },
+    "hostingPlanName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of App Service Plan"
+      }
+    },
+    "hostingSkuTier": {
+      "type": "string",
+      "defaultValue": "Basic",
+      "metadata": {
+        "description": "App Service Plan Tier, e.g. 'Basic'"
+      }
+    },
+    "hostingSkuName": {
+      "type": "string",
+      "defaultValue": "B2",
+      "metadata": {
+        "description": "App Service Plan SKU, e.g. 'B2'"
+      }
+    },
+    "sqlServerName": {
+      "type": "string",
+      "metadata": {
+        "description": "Azure SQL Server name, e.g. 'mysqlserver'"
+      }
+    },
+    "sqlUsername": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Azure SQL Server username"
+      }
+    },
+    "sqlPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Azure SQL Server password"
+      }
+    },
+    "SqlDbEdition": {
+      "type": "string",
+      "defaultValue": "Basic",
+      "allowedValues": [
+        "Basic",
+        "Standard",
+        "Premium"
+      ]
+    },
+    "SqlRequestedServiceObjectiveName": {
+      "type": "string",
+      "defaultValue": "Basic",
+      "allowedValues": [
+        "Basic",
+        "S0",
+        "S1",
+        "S2",
+        "P1",
+        "P2",
+        "P3"
+      ],
+      "metadata": {
+        "description": "Describes the performance level for Edition"
+      }
+    }
+  },
+  "variables": {
+    "hostingPlanName": "[parameters('hostingPlanName')]",
+    "databaseName": "sonar",
+    "sqlDbCollation": "SQL_Latin1_General_CP1_CS_AS"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Web/sites",
+      "name": "[parameters('siteName')]",
+      "dependsOn": [
+        "[variables('hostingPlanName')]"
+      ],
+      "tags": {
+        "displayName": "Web App"
+      },
+      "properties": {
+        "siteConfig": {
+          "linuxFxVersion": "DOCKER|SONARQUBE",
+          "appSettings": [
+            {
+              "name": "SONARQUBE_JDBC_USERNAME",
+              "value": "[parameters('sqlUsername')]"
+            },
+            {
+              "name": "SONARQUBE_JDBC_PASSWORD",
+              "value": "[parameters('sqlPassword')]"
+            },
+            {
+              "name": "SONARQUBE_JDBC_URL",
+              "value": "[concat('jdbc:sqlserver://', parameters('sqlServerName'), '.database.windows.net;databaseName=sonar')]"
+            },
+            {
+              "name": "DOCKER_CUSTOM_IMAGE_NAME",
+              "value": "sonarqube"
+            }
+          ]
+        },
+        "name": "[parameters('siteName')]",
+        "serverFarmId": "[variables('hostingPlanName')]",
+        "hostingEnvironment": ""
+      },
+      "apiVersion": "2016-08-01",
+      "location": "[resourceGroup().location]"
+    },
+    {
+      "apiVersion": "2016-09-01",
+      "name": "[variables('hostingPlanName')]",
+      "type": "Microsoft.Web/serverfarms",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "name": "[variables('hostingPlanName')]",
+        "workerSizeId": "1",
+        "reserved": true,
+        "numberOfWorkers": "1",
+        "hostingEnvironment": ""
+      },
+      "sku": {
+        "Tier": "[parameters('hostingSkuTier')]",
+        "Name": "[parameters('hostingSkuName')]"
+      },
+      "kind": "linux",
+      "tags": {
+        "displayName": "App Service Plan"
+      }
+    },
+    {
+      "name": "[parameters('sqlServerName')]",
+      "type": "Microsoft.Sql/servers",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2014-04-01-preview",
+      "dependsOn": [],
+      "tags": {
+        "displayName": "SQL Server"
+      },
+      "properties": {
+        "administratorLogin": "[parameters('sqlUsername')]",
+        "administratorLoginPassword": "[parameters('sqlPassword')]"
+      },
+      "resources": [
+        {
+          "name": "AllowAllWindowsAzureIps",
+          "type": "firewallrules",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2014-04-01-preview",
+          "dependsOn": [
+            "[resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))]"
+          ],
+          "properties": {
+            "startIpAddress": "0.0.0.0",
+            "endIpAddress": "0.0.0.0"
+          }
+        },
+        {
+          "name": "[variables('databaseName')]",
+          "type": "databases",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2014-04-01-preview",
+          "dependsOn": [
+            "[resourceId('Microsoft.Sql/servers', parameters('sqlServerName'))]"
+          ],
+          "tags": {
+            "displayName": "sonar DB"
+          },
+          "properties": {
+            "collation": "[variables('sqlDbCollation')]",
+            "edition": "[parameters('SqlDbEdition')]",
+            "maxSizeBytes": "1073741824",
+            "requestedServiceObjectiveName": "[parameters('SqlRequestedServiceObjectiveName')]"
+          }
+        }
+      ]
+    }
+  ]
+}
