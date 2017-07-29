@@ -45,7 +45,10 @@ done
 
 setup_haproxy() {
     # Install haproxy
-    apt-get -y update && apt-get install -y haproxy
+    apt-get install -y software-properties-common
+    add-apt-repository -y ppa:vbernat/haproxy-1.6
+    apt-get update
+    apt-get install -y haproxy    
 
     # Enable haproxy (to be started during boot)
     tmpf=`mktemp` && mv /etc/default/haproxy $tmpf && sed -e "s/ENABLED=0/ENABLED=1/" $tmpf > /etc/default/haproxy && chmod --reference $tmpf /etc/default/haproxy
@@ -80,7 +83,8 @@ defaults
     errorfile 504 /etc/haproxy/errors/504.http
 
 # Listen on all IP addresses. This is required for load balancer probe to work
-listen http 0.0.0.0:$LB_PORT
+listen http 
+    bind 0.0.0.0:$LB_PORT
     mode tcp
     option tcplog
     balance roundrobin

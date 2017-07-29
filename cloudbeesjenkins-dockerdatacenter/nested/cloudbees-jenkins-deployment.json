@@ -1,0 +1,604 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "templateBaseUrl": {
+      "type": "string",
+      "metadata": {
+        "description": "Base URL for Marketplace",
+        "artifactsBaseUrl": ""
+      },
+      "defaultValue": "https://gallery.azure.com/artifact/20151001/cloudbees.jenkins-platformjenkins-platform.1.0.10/Artifacts"
+    },
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "The location where the solution will be deployed."
+      }
+    },
+    "storageAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Unique DNS Name for the Storage Account where the Virtual Machine's disks will be placed."
+      }
+    },
+    "storageAccountType": {
+      "type": "string",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_GRS"
+      ]
+    },
+    "publicIPNewOrExisting": {
+      "type": "string",
+      "allowedValues": [
+        "new",
+        "existing"
+      ]
+    },
+    "publicIPName": {
+      "type": "string"
+    },
+    "dnsNameForPublicIP": {
+      "type": "string",
+      "metadata": {
+        "description": "Unique DNS Name for the Public IP used to access the Jenkins Operations Center Web Front-End."
+      }
+    },
+    "authenticationType": {
+      "type": "string",
+      "allowedValues": [
+        "password",
+        "sshPublicKey"
+      ]
+    },
+    "sshPublicKey": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "SSH RSA public key file as a string. Not used if authenticationType of password."
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "User name for the Virtual Machine."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Password for the Virtual Machine."
+      }
+    },
+    "jenkinsAdminPassword": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Password for the 'admin' user on jenkins initial security setup."
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "metadata": {
+        "description": "VM Size"
+      },
+      "defaultValue": "Standard_A2"
+    },
+    "size": {
+      "type": "string",
+      "defaultValue": "Solo",
+      "allowedValues": [
+        "Solo",
+        "Project",
+        "Team",
+        "Workgroup",
+        "Pro"
+      ],
+      "metadata": {
+        "description": "Size of your CloudBees Jenkins Platform deployment."
+      }
+    },
+    "subnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Subnet Name"
+      }
+    },
+     "dockerTags": {
+      "type": "object"
+      },
+     "cloudbeesTags": {
+      "type": "object"
+      },
+     "quickstartTags": {
+      "type": "object"
+      }
+  },
+  "variables": {
+    "location": "[parameters('location')]",
+    "subscription": "[subscription().subscriptionId]",
+    "clusterSpecSolo": {
+      "numberOfMasters": 1,
+      "numberOfExecutors": 1,
+      "vmImageSku": "jenkins-operations-center-solo"
+    },
+    "clusterSpecProject": {
+      "numberOfMasters": 1,
+      "numberOfExecutors": 5,
+      "vmImageSku": "jenkins-operations-center-project"
+    },
+    "clusterSpecTeam": {
+      "numberOfMasters": 2,
+      "numberOfExecutors": 10,
+      "vmImageSku": "jenkins-operations-center-team"
+    },
+    "clusterSpecWorkgroup": {
+      "numberOfMasters": 5,
+      "numberOfExecutors": 25,
+      "vmImageSku": "jenkins-operations-center-workgroup"
+    },
+    "clusterSpecPro": {
+      "numberOfMasters": 10,
+      "numberOfExecutors": 100,
+      "vmImageSku": "jenkins-operations-center-pro"
+    },
+    "clusterSpec": "[variables(concat('clusterSpec', parameters('size')))]",
+    "storageTemplateLink": "[concat(parameters('templateBaseUrl'), '/newStorageAccount.json')]",
+    "publicIPTemplateLink": "[concat(parameters('templateBaseUrl'), '/', parameters('publicIPNewOrExisting'), 'PublicIP.json')]",
+    "dns": "[parameters('dnsNameForPublicIP')]",
+    "FQdns": "[concat(variables('dns'), '.', variables('location'), '.cloudapp.azure.com')]",
+    "mastersCount": "[variables('clusterSpec').numberOfMasters]",
+    "executorsCount": "[variables('clusterSpec').numberOfExecutors]",
+    "sku": "[variables('clusterSpec').vmImageSku]",
+    "mastersProperty": "[concat('com.cloudbees.jenkins.plugin.marketplace.azure.AzureMarketplace.masters=',variables('mastersCount'))]",
+    "executorsProperty": "[concat('com.cloudbees.jenkins.plugin.marketplace.azure.AzureMarketplace.executors=',variables('executorsCount'))]",
+    "sshKeyPath": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+    "linuxConfiguration_sshPublicKey": {
+      "disablePasswordAuthentication": "true",
+      "ssh": {
+        "publicKeys": [
+          {
+            "path": "[variables('sshKeyPath')]",
+            "keyData": "[parameters('sshPublicKey')]"
+          }
+        ]
+      }
+    },
+    "linuxConfiguration_password": {},
+    "linuxConfiguration": "[variables(concat('linuxConfiguration_', parameters('authenticationType')))]",
+    "uniqueString": "[uniquestring(resourceGroup().id)]",
+    "storageaccountResourceDtr": "[concat('stordtr',variables('uniqueString'))]", 
+    "blobStorageAccountType": "Standard_LRS",
+    "blobStorageaccessTier": "Hot",
+    "blobStorageencryptionEnabled": false
+  },
+  "resources": [
+    {
+      "apiVersion": "2015-01-01",
+      "name": "storageTemplate",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('storageTemplateLink')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "storageAccountName": {
+            "value": "[parameters('storageAccountName')]"
+          },
+          "storageAccountType": {
+            "value": "[parameters('storageAccountType')]"
+          },
+          "location": {
+            "value": "[variables('location')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2016-01-01",
+      "name": "[variables('storageaccountResourceDtr')]",
+      "location": "eastus2",
+      "type": "Microsoft.Storage/storageAccounts",
+      "sku": {
+        "name": "[variables('blobStorageAccountType')]"
+      },
+      "tags": {
+        "quickstartName":"[parameters('quickstartTags').name]",
+        "provider":"[parameters('cloudbeesTags').provider]"
+      },
+      "kind": "BlobStorage",
+      "properties": {
+        "accessTier": "[variables('blobStorageaccessTier')]",
+        "encryption": {
+          "services": {
+            "blob": {
+              "enabled": "[variables('blobStorageencryptionEnabled')]"
+            }
+          },
+          "keySource": "Microsoft.Storage"
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "jenkinsSecurityGroup",
+      "location": "[variables('location')]",
+      "tags": {
+        "quickstartName":"[parameters('quickstartTags').name]",
+        "provider":"[parameters('cloudbeesTags').provider]"
+      },
+      "properties": {
+        "securityRules": [
+          {
+            "name": "SSH",
+            "properties": {
+              "description": "Allows SSH traffic",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Git-SSH",
+            "properties": {
+              "description": "Allows SSH traffic",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "2222",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 110,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "HTTP",
+            "properties": {
+              "description": "Allows HTTP traffic",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 120,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "HTTPS",
+            "properties": {
+              "description": "Allows HTTPS traffic",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 130,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "JNLP",
+            "properties": {
+              "description": "Allows JNLP traffic",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "50000",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 140,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2016-03-30",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat('jenkinsIP',copyIndex())]",
+      "location": "[variables('location')]",
+      "tags": {
+        "quickstartName":"[parameters('quickstartTags').name]",
+        "provider":"[parameters('cloudbeesTags').provider]"
+      },
+      "copy": {
+        "name": "ipLoop",
+        "count": "[variables('mastersCount')]"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[concat('jenkins-', copyIndex(), '-', variables('dns'))]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2016-03-30",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat('jenkinsNic',copyIndex())]",
+      "location": "[variables('location')]",
+      "tags": {
+        "quickstartName":"[parameters('quickstartTags').name]",
+        "provider":"[parameters('cloudbeesTags').provider]"
+      },
+      "copy": {
+        "name": "nicLoop",
+        "count": "[variables('mastersCount')]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/publicIPAddresses/jenkinsIP',copyIndex())]",
+        "Microsoft.Network/networkSecurityGroups/jenkinsSecurityGroup"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "[concat('ipconfig',copyIndex())]",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[concat('10.0.0.', copyIndex(100))]",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat('jenkinsIP',copyIndex()))]"
+              },
+              "subnet": {
+                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks','MyVnet'), '/subnets/',parameters('subnetName'))]"
+              }
+            }
+          }
+        ],
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'jenkinsSecurityGroup')]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2016-03-30",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat('jenkins-',copyIndex())]",
+      "location": "[variables('location')]",
+      "tags": {
+        "quickstartName":"[parameters('quickstartTags').name]",
+        "provider":"[parameters('cloudbeesTags').provider]"
+      },
+      "copy": {
+        "name": "VMsLoop",
+        "count": "[variables('mastersCount')]"
+      },
+      "dependsOn": [
+        "Microsoft.Resources/deployments/storageTemplate",
+        "[concat('Microsoft.Network/networkInterfaces/jenkinsNic',copyIndex())]",
+        "Microsoft.Compute/virtualMachines/operations-center"
+      ],
+      "plan": {
+        "name": "jenkins-enterprise",
+        "publisher": "cloudbees",
+        "product": "jenkins-enterprise"
+      },
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[concat('jenkins-',copyIndex(),'-',variables('dns'))]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]",
+          "linuxConfiguration": "[variables('linuxConfiguration')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "cloudbees",
+            "offer": "jenkins-enterprise",
+            "sku": "jenkins-enterprise",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/jenkins-',copyIndex(),'.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat('jenkinsNic',copyIndex()))]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "apiVersion": "2016-03-30",
+          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "name": "[concat('jenkins-',copyIndex(),'/CustomScript')]",
+          "location": "[variables('location')]",
+          "tags": {
+            "quickstartName":"[parameters('quickstartTags').name]",
+            "provider":"[parameters('cloudbeesTags').provider]"
+          },
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/jenkins-',copyIndex())]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.OSTCExtensions",
+            "type": "CustomScriptForLinux",
+            "typeHandlerVersion": "1.4",
+            "settings": {
+              "fileUris": [
+                "[concat(parameters('templateBaseUrl'), '/setup-master.sh')]"
+              ],
+              "commandToExecute": "[concat('bash setup-master.sh ', copyIndex(), ' ', parameters('size'), ' ', variables('FQdns'), ' ', parameters('templateBaseUrl'), ' ', variables('subscription'))]"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "apiVersion": "2015-01-01",
+      "name": "publicIPTemplate",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('publicIPTemplateLink')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "publicIPName": {
+            "value": "[parameters('publicIPName')]"
+          },
+          "dnsNameForPublicIP": {
+            "value": "[parameters('dnsNameForPublicIP')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2016-03-30",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "ocNic",
+      "location": "[variables('location')]",
+      "tags": {
+        "quickstartName":"[parameters('quickstartTags').name]",
+        "provider":"[parameters('cloudbeesTags').provider]"
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Resources/deployments/publicIPTemplate')]",
+        "Microsoft.Network/networkSecurityGroups/jenkinsSecurityGroup"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig-oc",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "10.0.0.10",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIPName'))]"
+              },
+              "subnet": {
+                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks','MyVnet'), '/subnets/',parameters('subnetName'))]"
+              }
+            }
+          }
+        ],
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', 'jenkinsSecurityGroup')]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2016-03-30",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "operations-center",
+      "location": "[variables('location')]",
+      "tags": {
+        "quickstartName":"[parameters('quickstartTags').name]",
+        "provider":"[parameters('cloudbeesTags').provider]"
+      },
+      "dependsOn": [
+        "Microsoft.Resources/deployments/storageTemplate",
+        "Microsoft.Network/networkInterfaces/ocNic"
+      ],
+      "plan": {
+        "name": "[variables('sku')]",
+        "publisher": "cloudbees",
+        "product": "jenkins-operations-center"
+      },
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[concat('operations-center-', variables('dns'))]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]",
+          "linuxConfiguration": "[variables('linuxConfiguration')]",
+          "customData": "[base64(concat(variables('mastersProperty'), '\n', variables('executorsProperty')))]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "cloudbees",
+            "offer": "jenkins-operations-center",
+            "sku": "[variables('sku')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "osdisk",
+            "vhd": {
+              "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/operations-center.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces','ocNic')]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "apiVersion": "2016-03-30",
+          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "name": "operations-center/CustomScript",
+          "location": "[variables('location')]",
+          "tags": {
+            "quickstartName":"[parameters('quickstartTags').name]",
+            "provider":"[parameters('cloudbeesTags').provider]"
+          },
+          "dependsOn": [
+            "Microsoft.Compute/virtualMachines/operations-center"
+          ],
+          "properties": {
+            "publisher": "Microsoft.OSTCExtensions",
+            "type": "CustomScriptForLinux",
+            "typeHandlerVersion": "1.4",
+            "settings": {
+              "fileUris": [
+                "[concat(parameters('templateBaseUrl'), '/setup-operations-center.sh')]"
+              ],
+              "commandToExecute": "[concat('bash setup-operations-center.sh ', variables('mastersCount'), ' ', variables('FQdns'), ' ', base64(parameters('jenkinsAdminPassword')), ' ', parameters('templateBaseUrl'), ' ', variables('subscription'), ' ', parameters('size'))]"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": {
+    "operationsCenter": {
+      "value": "[variables('FQdns')]",
+      "type": "string"
+    },
+    "jenkinsApplicationUsername": {
+      "value": "Admin",
+      "type": "string"
+    },
+    "jenkinsApplicationPassword": {
+      "value": "[parameters('jenkinsAdminPassword')]",
+      "type": "string"
+    }
+  }
+}

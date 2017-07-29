@@ -1,0 +1,235 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "westus",
+      "metadata": {
+        "description": "Network Security Group Deployment Location"
+      }
+    },
+    "tag": {
+      "type": "object",
+      "defaultValue": {
+        "key1": "key",
+        "value1": "value"
+      },
+      "metadata": {
+        "description": "Tag Values"
+      }
+    },
+    "vmName": {
+      "type": "string",
+      "defaultValue": "vmName",
+      "metadata": {
+        "description": "Virtual Machine Name"
+      }
+    },
+    "vmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2",
+      "metadata": {
+        "description": "Virtual Machine Size"
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "defaultValue": "sysgain",
+      "metadata": {
+        "description": "Admin Username of Virtual Machine to SSH or RDP"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "defaultValue": "Sysga1n4205!",
+      "metadata": {
+        "description": "Admin Password of Virtual Machine to SSH or RDP"
+      }
+    },
+    "imagePublisher": {
+      "type": "string",
+      "defaultValue": "Canonical",
+      "metadata": {
+        "description": "Virtual Machine Image Publisher"
+      }
+    },
+    "imageOffer": {
+      "type": "string",
+      "defaultValue": "UbuntuServer",
+      "metadata": {
+        "description": "Virtual Machine Image Offer"
+      }
+    },
+    "imageSKU": {
+      "type": "string",
+      "defaultValue": "14.04.2-LTS",
+      "metadata": {
+        "description": "Virtual Machine Image SKU"
+      }
+    },
+    "imageVersion": {
+      "type": "string",
+      "defaultValue": "latest",
+      "metadata": {
+        "description": "Virtual Machine Image Version"
+      }
+    },
+    "templateBaseUrl": {
+      "type": "string",
+      "metadata": {
+        "description": "Base URL for Marketplace"
+      },
+      "defaultValue": "https://gallery.azure.com/artifact/20151001/cloudbees.jenkins-platformjenkins-platform.1.0.8/Artifacts"
+    },
+    "size": {
+      "type": "string",
+      "defaultValue": "Solo",
+      "allowedValues": [
+        "Solo",
+        "Project",
+        "Team",
+        "Workgroup",
+        "Pro"
+      ],
+      "metadata": {
+        "description": "Size of your CloudBees Jenkins Platform deployment."
+      }
+    },
+    "FQdns": {
+      "type": "string"
+    },
+    "subscription": {
+      "type": "string"
+    },
+    "jenkinsAdminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the 'admin' user on jenkins initial security setup."
+      }
+    },
+    "storageAccountName": {
+      "type": "string",
+      "defaultValue": "storageAccountName",
+      "metadata": {
+        "description": "Storage Account Name"
+      }
+    },
+    "vmStorageAccountContainerName": {
+      "type": "string",
+      "defaultValue": "vhds",
+      "metadata": {
+        "description": "Caintainer name in the storage account"
+      }
+    },
+    "networkInterfaceName": {
+      "type": "string",
+      "defaultValue": "networkInterfaceName",
+      "metadata": {
+        "description": "Network Security Group Name"
+      }
+    },
+    "dtrScriptUrl": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Script URL for Docker Trusted Registry setup"
+      }
+    },
+    "commandToExecuteDtr": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Script command for Docker Trusted Registry setup"
+      }
+    },
+     "dockerTags": {
+       "type": "object"
+        },
+      "cloudbeesTags": {
+        "type": "object"
+        },
+      "quickstartTags": {
+         "type": "object"
+        }
+  },
+  "variables": {},
+  "resources": [
+    {
+      "apiVersion": "2016-03-30",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(parameters('vmName'))]",
+      "location": "[parameters('location')]",
+      "tags": {
+        "[parameters('tag').key1]": "[parameters('tag').value1]",
+        "quickstartName":"[parameters('quickstartTags').name]",
+        "provider":"[parameters('dockerTags').provider]"
+      },
+      "plan": {
+        "name": "jenkins-enterprise",
+        "publisher": "cloudbees",
+        "product": "jenkins-enterprise"
+      },
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('vmSize')]"
+        },
+        "osProfile": {
+          "computername": "[concat(parameters('vmName'))]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[parameters('imagePublisher')]",
+            "offer": "[parameters('imageOffer')]",
+            "sku": "[parameters('imageSKU')]",
+            "version": "[parameters('imageVersion')]"
+          },
+          "osDisk": {
+            "name": "[concat(parameters('vmName'),'-osDisk')]",
+            "vhd": {
+              "uri": "[concat('http://', parameters('storageAccountName'), '.blob.core.windows.net/',parameters('vmStorageAccountContainerName'),'/', parameters('vmName'),'-osdisk.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(parameters('networkInterfaceName')))]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "apiVersion": "2016-03-30",
+          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "name": "jenkins/customScript",
+          "location": "[parameters('location')]",
+          "tags": {
+            "quickstartName":"[parameters('quickstartTags').name]",
+            "provider":"[parameters('dockerTags').provider]"
+          },
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/jenkins')]"
+          ],
+          "properties": {
+            "publisher": "Microsoft.OSTCExtensions",
+            "type": "CustomScriptForLinux",
+            "typeHandlerVersion": "1.5",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "fileUris": [
+                "[concat(parameters('templateBaseUrl'), '/setup-master.sh')]"
+              ],
+              "commandToExecute": "[concat('bash setup-master.sh', ' 0 ', parameters('size'), ' ', parameters('FQdns'), ' ', parameters('templateBaseUrl'), ' ',parameters('subscription'))]"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

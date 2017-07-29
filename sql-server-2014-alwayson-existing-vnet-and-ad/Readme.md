@@ -7,15 +7,11 @@ This template creates the following resources:
 +	Three Storage Accounts
 +	One internal load balancer
 +	Three VMs in a Windows Server Cluster, two VMs run SQL Server 2014 with an availability group and the third is a File Share Witness for the Cluster
-+	One Availability Set for the SQL and Witness VMs, configured with three Update Domains and three Fault Domains
++	One Availability Set for the SQL and Witness VMs
 
 A SQL Server always on listener is created using the internal load balancer.
 
-For nested templates and DSC resources specific to SQL Server AlwaysOn, this template references these resources from this <a href="https://github.com/Azure/azure-quickstart-templates/tree/master/sql-server-2014-alwayson-dsc">SQL Server AlwaysOn AG QuickStart</a> template repository.
-
-# Known Issues
-
-This template is serial in nature for deploying some of the resources, due to some issues between the platform agent and the DSC extension which cause problems when multiple VM and\or extension resources are deployed concurrently.
+To deploy the required Azure VNET and Active Directory infrastructure, if not already in place, you may use <a href="https://github.com/Azure/azure-quickstart-templates/tree/master/active-directory-new-domain-ha-2-dc">this template</a> to deploy the prerequisite infrastructure.
 
 ## Notes
 
@@ -27,55 +23,46 @@ This template is serial in nature for deploying some of the resources, due to so
 	+ 	SQL Server - Latest SQL Server 2014 on Windows Server 2012 R2 Image
 	+ 	Witness - Latest Windows Server 2012 R2 Image
 
-+ 	The image configuration is defined in variables - details below - but the scripts that configure this deployment have only been tested with these versions and may not work on other images.
++ 	The image configuration is defined in variables, but the scripts that configure this deployment have only been tested with these versions and may not work on other images.
 
 +	To successfully deploy this template, be sure that the subnet to which the SQL VMs are being deployed already exists on the specified Azure virtual network, AND this subnet should be defined in Active Directory Sites and Services for the appropriate AD site in which the closest domain controllers are configured.
-
-+ To deploy the required Azure VNET and Active Directory infrastructure, if not already in place, you may use <a href="https://github.com/Azure/azure-quickstart-templates/tree/master/active-directory-new-domain-ha-2-dc">this template</a>.
 
 Click the button below to deploy from the portal
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsql-server-2014-alwayson-existing-vnet-and-ad%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
+<a href="https://portal.azure.us/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsql-server-2014-alwayson-existing-vnet-and-ad%2Fazuredeploy.json" target="_blank">
+    <img src="http://azuredeploy.net/deploybutton.png"/>
+</a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsql-server-2014-alwayson-existing-vnet-and-ad%2Fazuredeploy.json" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-## Deploying from PowerShell
+## Deploying Sample Templates
 
-For details on how to install and configure Azure Powershell see [here].(https://azure.microsoft.com/en-us/documentation/articles/powershell-install-configure/)
+You can deploy these samples directly through the Azure Portal or by using the scripts supplied in the root of the repo.
 
-Launch a PowerShell console
+To deploy a sammple using the Azure Portal, click the **Deploy to Azure** button found in the README.md of each sample.
 
-Ensure that you are in Resource Manager Mode
+To deploy the sample via the command line (using [Azure PowerShell or the Azure CLI](https://azure.microsoft.com/en-us/downloads/)) you can use the scripts.
 
-```PowerShell
-
-Switch-AzureMode AzureResourceManager
-
-```
-Change working folder to the folder containing this template
+Simple execute the script and pass in the folder name of the sample you want to deploy.  For example:
 
 ```PowerShell
-
-New-AzureResourceGroup -Name "<new resourcegroup name>" -Location "<new resourcegroup location>"  -TemplateParameterFile .\azuredeploy-parameters.json -TemplateFile .\azuredeploy.json
-
+.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactsStagingDirectory '[foldername]'
 ```
-## Notable Variables
+```bash
+azure-group-deploy.sh -a [foldername] -l eastus -u
+```
+If the sample has artifacts that need to be "staged" for deployment (Configuration Scripts, Nested Templates, DSC Packages) then set the upload switch on the command.
+You can optionally specify a storage account to use, if so the storage account must already exist within the subscription.  If you don't want to specify a storage account
+one will be created by the script or reused if it already exists (think of this as "temp" storage for AzureRM).
 
-|Name|Description|
-|:---|:---------------------|
-|sqlLBName|Resource name of the SQL ILB|
-|sqlAvailabilitySetName|Name for Azure availability set for SQL and Witness VMs|
-|lbFE|Load balancer front-end pool name|
-|lbBE|Load balancer back-endpool name|
-|sqlWitnessSharePath|Shared folder name for Witness|
-|windowsImagePublisher|The name of the pulisher of the AD and Witness Image|
-|windowsImageOffer|The Offer Name for the Image used by AD and Witness VMs|
-|windowsImageSKU|The Image SKU for the AD and Witness Image|
-|sqlImagePublisher|The name of the pulisher of the SQL Image|
-|sqlImageOffer|The Offer Name for the Image used by SQL|
-|sqlImageSKU|The Image SKU for the SQL Image|
-|windowsDiskSize|The size of the VHD allocated for AD and Witness VMs Data Disk|
-|sqlDiskSize|The size of the VHD allocated for SQL VMs Data and Log Disks|
+```PowerShell
+.\Deploy-AzureResourceGroup.ps1 -ResourceGroupLocation 'eastus' -ArtifactsStagingDirectory '201-vm-custom-script-windows' -UploadArtifacts 
+```
+```bash
+azure-group-deploy.sh -a '201-vm-custom-script-windows' -l eastus -u
+```
+Tags: ``cluster, ha, sql, alwayson``

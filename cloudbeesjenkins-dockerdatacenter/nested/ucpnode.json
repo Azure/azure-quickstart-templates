@@ -1,0 +1,238 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"imagePublisher": {
+			"type": "string",
+			"metadata": {
+				"description": "Image Publisher Name"
+			}
+		},
+		"imageOffer": {
+			"type": "string",
+			"metadata": {
+				"description": "Image Offer Name"
+			}
+		},
+		"imageSKU": {
+			"type": "string",
+			"metadata": {
+				"description": "Image SKU Name"
+			}
+		},
+		"apiVersionCompute": {
+			"type": "string",
+			"metadata": {
+				"description": "compute API Version"
+			}
+		},
+		"apiVersionNetwork": {
+			"type": "string",
+			"metadata": {
+				"description": "Network API Version"
+			}
+		},
+		"location": {
+			"type": "string",
+			"metadata": {
+				"description": "Location where to create the resources"
+			}
+		},
+		"vmNamePrefix": {
+			"type": "string",
+			"metadata": {
+				"description": "Cluster Name (Prefix)"
+			}
+		},
+		"adminUsername": {
+			"type": "string",
+			"metadata": {
+				"description": "Admin user name"
+			}
+		},
+		"adminPassword": {
+			"type": "securestring",
+			"metadata": {
+				"description": "Admin password"
+			}
+		},
+		"authenticationType": {
+			"type": "string",
+			"metadata": {
+				"description": "Authentication type"
+			}
+		},
+		"sshPublicKey": {
+			"type": "string",
+			"metadata": {
+				"description": "SSH public key"
+			}
+		},
+		"vmSize": {
+			"type": "string",
+			"metadata": {
+				"description": "Master VM Size"
+			}
+		},
+		"availabilitySetName": {
+			"type": "string",
+			"metadata": {
+				"description": "Availability Set Name"
+			}
+		},
+		"nodeSubnetRef": {
+			"type": "string",
+			"metadata": {
+				"description": "Node Subnet reference"
+			}
+		},
+		"nodeLbBackendPoolName": {
+			"type": "string",
+			"metadata": {
+				"description": "Node Load Balancer back end pool name"
+			}
+		},
+		"nodeLbId": {
+			"type": "string",
+			"metadata": {
+				"description": "Node Load Balancer ID"
+			}
+		},
+		"storageAccountName": {
+			"type": "string",
+			"metadata": {
+				"description": "Storage account name"
+			}
+		},
+		"dockerTags": {
+		    "type": "object"
+		},
+		"cloudbeesTags": {
+		    "type": "object"
+		},
+		"quickstartTags": {
+		    "type": "object"
+		}
+	},
+
+	"variables": {
+		"sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
+		"osProfileChosen": "[concat('osProfile', parameters('authenticationType'))]",
+		"osProfilesshPublicKey": {
+			"computerName": "[concat(parameters('vmNamePrefix'), '-ucpnode')]",
+			"adminUsername": "[parameters('adminUsername')]",
+			"linuxConfiguration": {
+				"disablePasswordAuthentication": "true",
+				"ssh": {
+					"publicKeys": [{
+						"keyData": "[parameters('sshPublicKey')]",
+						"path": "[variables('sshKeyPath')]"
+					}]
+				}
+			}
+		},
+		"osProfilepassword": {
+			"computerName": "[concat(parameters('vmNamePrefix'), '-ucpnode')]",
+			"adminUsername": "[parameters('adminUsername')]",
+			"adminPassword": "[parameters('adminPassword')]"
+		},
+		"nicName": "[concat(parameters('vmNamePrefix'),'-ucpnode-nic')]",
+		"dataDiskSize": "128",
+		"storageUriProd": "[concat('http://', parameters('storageAccountName'), '.blob.core.windows.net/vhds/')]"
+	},
+
+	"resources": [{
+			"apiVersion": "[parameters('apiVersionNetwork')]",
+			"type": "Microsoft.Network/networkInterfaces",
+			"name": "[variables('nicName')]",
+			"location": "[parameters('location')]",
+			"dependsOn": [],
+		        "tags": {
+			    "quickstartName":"[parameters('quickstartTags').name]",
+			    "provider":"[parameters('dockerTags').provider]"
+		        },
+			"properties": {
+				"ipConfigurations": [{
+					"name": "ipconfig1",
+					"properties": {
+						"privateIPAllocationMethod": "Dynamic",
+						"subnet": {
+							"id": "[parameters('nodeSubnetRef')]"
+						},
+						"loadBalancerBackendAddressPools": [
+							{
+								"id": "[concat(parameters('nodeLbId'), '/backendAddressPools/', parameters('nodeLbBackendPoolName'))]"
+							}
+						],
+						"loadBalancerInboundNatRules": [
+							{
+								"id": "[concat(parameters('nodeLbId'),'/inboundNatRules/SSH-',parameters('VMNamePrefix'))]"
+							}
+						]
+					}
+				}]
+			}
+		},
+
+		{
+			"apiVersion": "[parameters('apiVersionCompute')]",
+			"type": "Microsoft.Compute/virtualMachines",
+			"name": "[concat(parameters('vmNamePrefix'), '-ucpnode')]",
+			"location": "[parameters('location')]",
+		        "tags": {
+			    "quickstartName":"[parameters('quickstartTags').name]",
+			    "provider":"[parameters('dockerTags').provider]"
+		        },
+			"plan": {
+                "name": "[parameters('imageSKU')]",
+                "publisher": "[parameters('imagePublisher')]",
+                "product": "[parameters('imageOffer')]"
+            },
+			"dependsOn": [
+				"[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+			],
+			"properties": {
+				"availabilitySet": {
+					"id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySetName'))]"
+				},
+				"hardwareProfile": {
+					"vmSize": "[parameters('vmSize')]"
+				},
+				"osProfile": "[variables(variables('osProfileChosen'))]",
+				"storageProfile": {
+					"imageReference": {
+                        "publisher": "[parameters('imagePublisher')]",
+                        "offer": "[parameters('imageOffer')]",
+                        "sku": "[parameters('imageSKU')]",
+                        "version": "latest"
+                    },
+					"osDisk": {
+						"name": "[concat(parameters('vmNamePrefix'),'-ucpnode-osDisk')]",
+						"caching": "ReadWrite",
+						"createOption": "FromImage",
+						"vhd": {
+							"uri": "[concat(variables('storageUriProd'), parameters('vmNamePrefix'),'-ucpnode-osDisk.vhd')]"
+						}
+					},
+					"dataDisks": [ 
+                    {
+						"name": "[concat(parameters('vmNamePrefix'),'-ucpnode-data-disk')]",
+						"diskSizeGB": "[variables('dataDiskSize')]",
+						"lun": 0,
+						"vhd": {
+							"Uri": "[concat(variables('storageUriProd') ,parameters('vmNamePrefix'),'-ucpnode-data-disk.vhd')]"
+						},
+						"createOption": "Empty"
+					}
+					]
+				},
+				"networkProfile": {
+					"networkInterfaces": [{
+						"id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+					}]
+				}
+			}
+		}
+	],
+	"outputs": {}
+}

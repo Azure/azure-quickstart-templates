@@ -6,6 +6,18 @@ apt-get -y update
 
 # set up a silent install of MySQL
 dbpass=$1
+SharedStorageAccountName=$2
+SharedAzureFileName=$3
+FullNameOfSite=$4
+ShortNameOfSite=$5
+MoodleAdminUser=$6
+MoodleAdminPass=$7
+MoodleAdminEmail=$8
+moodleVersion=$9
+installOfficePlugins=$10
+SharedStorageAccountKey=$11
+LoadbalancerFqdn=$12
+DbFqdn=$13
 
 export DEBIAN_FRONTEND=noninteractive
 echo mysql-server-5.6 mysql-server/root_password password $dbpass | debconf-set-selections
@@ -21,11 +33,34 @@ apt-get -y install graphviz aspell php5-pspell php5-curl php5-gd php5-intl php5-
 perl -0777 -p -i -e 's/Listen 80/Listen 80\nListen 8080/ig' /etc/apache2/ports.conf
 perl -0777 -p -i -e 's/\*:80/*:80 *:8080/g' /etc/apache2/sites-enabled/000-default.conf
 
+apt-get install unzip
+
 # install Moodle
 cd /var/www/html
-wget https://download.moodle.org/download.php/direct/stable30/moodle-3.0.2.zip -O moodle.zip
-apt-get install unzip
+curl -k --max-redirs 10 https://github.com/moodle/moodle/archive/$moodleVersion.zip -L -o moodle.zip
 unzip moodle.zip
+mv moodle-$moodleVersion moodle
+
+# install Office 365 plugins if asked for
+if [ "$installOfficePlugins" = "True" ]; then
+    curl -k --max-redirs 10 https://github.com/Microsoft/o365-moodle/archive/$moodleVersion.zip -L -o o365.zip
+    unzip o365.zip
+    
+    # The plugins below are not required for new installations
+    rm -rf o365-moodle-$moodleVersion/blocks/onenote
+    rm -rf o365-moodle-$moodleVersion/local/m*
+    rm -rf o365-moodle-$moodleVersion/local/o365docs
+    rm -rf o365-moodle-$moodleVersion/local/office365
+    rm -rf o365-moodle-$moodleVersion/local/onenote
+    rm -rf o365-moodle-$moodleVersion/mod/assign
+    rm -rf o365-moodle-$moodleVersion/user/profile/
+    rm -rf o365-moodle-$moodleVersion/repository/onenote	
+    
+    #Copy office plugins to moodle and remove office unzipped folder
+   
+    cp -r o365-moodle-$moodleVersion/* moodle
+    rm -rf o365-moodle-$moodleVersion
+fi
 
 # make the moodle directory writable for owner
 chown -R www-data moodle
@@ -45,23 +80,12 @@ crontab cronjob
 apachectl restart
 
 # mount share file on /var/www/moodledata
-SharedStorageAccountName=$2
-SharedAzureFileName=$3
-SharedStorageAccountKey=$4
 apt-get install cifs-utils
 mount -t cifs //$SharedStorageAccountName.file.core.windows.net/$SharedAzureFileName /var/www/moodledata -o uid=$(id -u www-data),vers=2.1,username=$SharedStorageAccountName,password=$SharedStorageAccountKey,dir_mode=0770,file_mode=0770
 	
 #add mount to /etc/fstab to persist across reboots
 chmod 770 /etc/fstab
 echo "//$SharedStorageAccountName.file.core.windows.net/$SharedAzureFileName /var/www/moodledata cifs uid=$(id -u www-data),vers=3.0,username=$SharedStorageAccountName,password=$SharedStorageAccountKey,dir_mode=0770,file_mode=0770" >> /etc/fstab
-
-LoadbalancerFqdn=$5
-DbFqdn=$6
-FullNameOfSite=$7
-ShortNameOfSite=$8
-MoodleAdminUser=$9
-MoodleAdminPass=$10
-MoodleAdminEmail=$11
 
 cd /var/www/html/moodle
 

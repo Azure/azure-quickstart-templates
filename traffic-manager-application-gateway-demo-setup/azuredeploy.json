@@ -1,0 +1,205 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "dnsName": {
+      "type": "string",
+      "metadata": {
+        "description": "Traffic Manager profile DNS name. Must be unique in .trafficmanager.net"
+      }
+    },
+    "primarylocation": {
+      "type": "string",
+      "allowedValues": [
+        "East Asia",
+        "Southeast Asia",
+        "Central US",
+        "East US",
+        "East US 2",
+        "West US",
+        "North Central US",
+        "South Central US",
+        "North Europe",
+        "West Europe",
+        "Japan West",
+        "Japan East",
+        "Brazil South",
+        "Canada Central",
+        "Canada East"
+      ],
+      "defaultValue": "East US",
+      "metadata": {
+        "description": "Location of the primary endpoint"
+      }
+    },
+    "secondarylocation": {
+      "type": "string",
+      "allowedValues": [
+        "East Asia",
+        "Southeast Asia",
+        "Central US",
+        "East US",
+        "East US 2",
+        "West US",
+        "North Central US",
+        "South Central US",
+        "North Europe",
+        "West Europe",
+        "Japan West",
+        "Japan East",
+        "Brazil South",
+        "Canada Central",
+        "Canada East"
+      ],
+      "defaultValue": "West US",
+      "metadata": {
+        "description": "Location of the secondary endpoint"
+      }
+    },
+    "trafficRoutingMethod": {
+      "type": "string",
+      "allowedValues": [
+        "Priority",
+        "Weighted",
+        "Performance"
+      ],
+      "defaultValue": "Priority",
+      "metadata": {
+        "description": "Traffic routing methods available in Traffic Manager"
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "User name for the backend Web servers"
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the backend Web servers"
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located."
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/traffic-manager-application-gateway-demo-setup/"
+    }
+  },
+  "variables": {
+    "virtualNetworkName": "virtualNetwork1",
+    "subnetName": "subnet1",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
+    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
+    "addressPrefix": "10.0.0.0/16",
+    "subnetPrefix": "10.0.0.0/28",
+    "nestedTemplatesFolder": "nested",
+    "appGwTemplateName": "azuredeployappgw.json",
+    "location": [
+      "[parameters('primarylocation')]",
+      "[parameters('secondarylocation')]"
+    ]
+  },
+  "resources": [
+    {
+      "apiVersion": "2015-01-01",
+      "name": "[concat('appgw', copyIndex(1))]",
+      "type": "Microsoft.Resources/deployments",
+      "copy": {
+        "name": "appgwcopy",
+        "count": 2
+      },
+      "properties": {
+        "mode": "incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('_artifactsLocation'), '/', variables('nestedTemplatesFolder'), '/', variables('appGwTemplateName'))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "location": {
+            "value": "[variables('location')[copyIndex()]]"
+          },
+          "appGwName": {
+            "value": "[concat('appgw', copyIndex(1))]"
+          },
+          "_artifactsLocation": {
+            "value": "[concat(parameters('_artifactsLocation'), '/', variables('nestedTemplatesFolder'))]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnetName')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2015-11-01",
+      "type": "Microsoft.Network/trafficManagerProfiles",
+      "name": "trafficManagerDemo",
+      "location": "global",
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+        "appgwcopy"
+      ],
+      "properties": {
+        "profileStatus": "Enabled",
+        "trafficRoutingMethod": "[parameters('trafficRoutingMethod')]",
+        "dnsConfig": {
+          "relativeName": "[parameters('dnsName')]",
+          "ttl": 30
+        },
+        "monitorConfig": {
+          "protocol": "http",
+          "port": 80,
+          "path": "/"
+        },
+        "endpoints": [
+          {
+            "name": "endpoint1",
+            "type": "Microsoft.Network/trafficManagerProfiles/azureEndpoints",
+            "properties": {
+              "targetResourceId": "[reference('appgw1').outputs.ipId.value]",
+              "endpointStatus": "Enabled",
+              "weight": 1
+            }
+          },
+          {
+            "name": "endpoint2",
+            "type": "Microsoft.Network/trafficManagerProfiles/azureEndpoints",
+            "properties": {
+              "targetResourceId": "[reference('appgw2').outputs.ipId.value]",
+              "endpointStatus": "Enabled",
+              "weight": 1
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,433 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "westus",
+      "allowedValues": [
+        "eastus",
+        "northcentralus",
+        "northeurope",
+        "southcentralus",
+        "westeurope",
+        "westus",
+        "centralus",
+        "eastus2",
+        "westus2"
+      ],
+      "metadata": {
+        "description": "The location where the solution will be deployed."
+      }
+    },
+    "jenkinsDnsNameForPublicIP": {
+      "type": "string",
+      "defaultValue": "ocdns",
+      "metadata": {
+        "description": "Unique DNS Name for the Public IP used to access the Jenkins Operations Center Web Front-End."
+      }
+    },
+    "jenkinsUsername": {
+      "type": "string",
+      "defaultValue": "ashuser",
+      "metadata": {
+        "description": "Admin User name for SSH Cloudbees Jenkins related Virtual Machines."
+      }
+    },
+    "jenkinsPassword": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Admin Password for SSH Cloudbees Jenkins related Virtual Machines."
+      }
+    },
+    "jenkinsAdminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for the 'admin' user on jenkins initial security setup."
+      }
+    },
+    "size": {
+      "type": "string",
+      "defaultValue": "Project",
+      "metadata": {
+        "description": "Size of your CloudBees Jenkins Platform deployment."
+      }
+    },
+    "ucpControllerCount": {
+      "type": "int",
+      "defaultValue": 3,
+      "metadata": {
+        "description": "Number of UCP Controller VMs"
+      }
+    },
+    "ucpNodeCount": {
+      "type": "int",
+      "defaultValue": 3,
+      "metadata": {
+        "description": "Number of UCP node VMs"
+      }
+    },
+    "ucpDtrNodeCount": {
+      "type": "int",
+      "defaultValue": 3,
+      "metadata": {
+        "description": "Number of DTR node VMs"
+      }
+    },
+    "dockerAdminUsername": {
+      "type": "string",
+      "defaultValue": "ucpadmin",
+      "metadata": {
+        "description": "OS Admin User Name for UCP Controller Nodes, UCP Nodes and DTR Nodes"
+      }
+    },
+    "dockerAdminPassword": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "OS Admin password"
+      }
+    },
+    "controllerLbPublicIpDnsName": {
+      "type": "string",
+      "defaultValue": "dockercontrdns",
+      "metadata": {
+        "description": "DNS label of Public IP for Controller Load Balancer"
+      }
+    },
+    "nodeLbPublicIpDnsName": {
+      "type": "string",
+      "defaultValue": "ucpnodedns",
+      "metadata": {
+        "description": "DNS label for UCP Nodes Load Balancer"
+      }
+    },
+    "nodeDtrLbPublicIpDnsName": {
+      "type": "string",
+      "defaultValue": "dtrnodedns",
+      "metadata": {
+        "description": "DNS label of Public IP for DTR Load Balancer"
+      }
+    },
+    "ucpLicenseKey": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "License Key for UCP (Url)"
+      }
+    },
+    "ucpAdminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password for UCP Admin Account"
+      }
+    },
+    "baseUrl": {
+      "type": "string",
+      "metadata": {
+        "description": "Base URL for Artifacts",
+        "artifactsBaseUrl": ""
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/cloudbeesjenkins-dockerdatacenter"
+    }
+  },
+  "variables": {
+    "deploymentApiVersion": "2015-01-01",
+    "networkApiVersion": "2015-06-15",
+    "storageAccountNameCloudbees": "[concat('cbstor',variables('uniqueString'))]",
+    "storageAccountType": "Standard_LRS",
+    "virtualNetworkName": "MyVnet",
+    "virtualNetworkAddressPrefix": "10.0.0.0/16",
+    "jenkinsSubnetName": "jenkins-subnet",
+    "jenkinsSubnetPrefix": "10.0.0.0/24",
+    "JenkinsdnsNameForPublicIP": "jenkins-0-",
+    "ucpControllerSubnetName": "ucp-controller-subnet",
+    "ucpControllerSubnetPrefix": "10.0.1.0/24",
+    "ucpdtrNodeSubnetName": "ucp-node-subnet",
+    "ucpdtrnodeSubnetPrefix": "10.0.2.0/24",
+    "vmSize": "Standard_A2",
+    "uniqueString": "[uniquestring(resourceGroup().id)]",
+    "dockerDataCenterClusterPrefix": "ucpclus",
+    "ucpControllerSize": "Standard_DS2_v2",
+    "ucpNodeSize": "Standard_DS2_v2",
+    "ucpDtrNodeSize": "Standard_DS2_v2",
+    "dockerAuthenticationType": "password",
+    "dockersshPublicKey": "",
+    "controllerLbPublicIpAddress": "clbpip",
+    "nodeLbPublicIpAddress": "nlbpip",
+    "nodeDtrLbPublicIpAddress": "dlbpip",
+    "vnetDeploymentURI": "[concat(parameters('baseUrl'), '/', 'nested/newvnet.json')]",
+    "cloubeesDeploymnetURI": "[concat(parameters('baseUrl'),'/nested/cloudbees-jenkins-deployment.json')]",
+    "dockerDataCenterDeploymentURI": "[concat(parameters('baseUrl'),'/nested/docker-data-center-deployment.json')]",
+    "cloudbeesLocation": "[parameters('location')]",
+    "jenkinsPublicIPName": "jenkinsPublicIP",
+    "jenkinsPublicIPNewOrExisting": "new",
+    "jenkinsTemplateBaseUrl": "https://gallery.azure.com/artifact/20151001/cloudbees.jenkins-platformjenkins-platform.1.0.10/Artifacts",
+    "jenkinsDnsNameForPublicIP": "[concat(parameters('jenkinsDnsNameForPublicIP'),variables('uniqueString'))]",
+    "jenkinsAuthenticationType": "password",
+    "jenkinssshPublicKey": "",
+    "dockerTags": {
+      "type":"object",
+      "provider": "8CF0E79C-DF97-4992-9B59-602DB544D354"  
+    },
+    "cloudbeesTags": {
+      "type":"object",
+      "provider": "9F392E29-83D7-4569-AE61-608E2708A010"  
+    },
+    "quickstartTags": {
+      "type":"object",
+      "name": "cloudbeesjenkins-dockerdatacenter"  
+    }
+  },
+  "resources": [
+    {
+      "apiVersion": "[variables('deploymentApiVersion')]",
+      "name": "virtualNetworkDeployment",
+      "type": "Microsoft.Resources/deployments",
+      "properties": {
+        "mode": "incremental",
+        "templateLink": {
+          "uri": "[variables('vnetDeploymentURI')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "virtualNetworkName": {
+            "value": "[variables('virtualNetworkName')]"
+          },
+          "virtualNetworkAddressPrefix": {
+            "value": "[variables('virtualNetworkAddressPrefix')]"
+          },
+          "jenkinsSubnetName": {
+            "value": "[variables('jenkinsSubnetName')]"
+          },
+          "jenkinsSubnetPrefix": {
+            "value": "[variables('jenkinsSubnetPrefix')]"
+          },
+          "controllerSubnetName": {
+            "value": "[variables('ucpControllerSubnetName')]"
+          },
+          "controllerSubnetPrefix": {
+            "value": "[variables('ucpControllerSubnetPrefix')]"
+          },
+          "nodeSubnetName": {
+            "value": "[variables('ucpdtrNodeSubnetName')]"
+          },
+          "nodeSubnetPrefix": {
+            "value": "[variables('ucpdtrnodeSubnetPrefix')]"
+          },
+          "apiVersion": {
+            "value": "[variables('networkApiVersion')]"
+          },
+          "dockerTags": {
+            "value": "[variables('dockerTags')]"
+          },
+          "cloudbeesTags": {
+            "value": "[variables('cloudbeesTags')]"
+          },
+          "quickstartTags": {
+            "value": "[variables('quickstartTags')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('deploymentApiVersion')]",
+      "name": "cloudbeesDeployment",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "['Microsoft.Resources/deployments/virtualNetworkDeployment']"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('cloubeesDeploymnetURI')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "templateBaseUrl": {
+            "value": "[variables('jenkinsTemplateBaseUrl')]"
+          },
+          "location": {
+            "value": "[variables('cloudbeesLocation')]"
+          },
+          "storageAccountName": {
+            "value": "[variables('storageAccountNameCloudbees')]"
+          },
+          "storageAccountType": {
+            "value": "[variables('storageAccountType')]"
+          },
+          "publicIPNewOrExisting": {
+            "value": "[variables('jenkinsPublicIPNewOrExisting')]"
+          },
+          "publicIPName": {
+            "value": "[variables('jenkinsPublicIPName')]"
+          },
+          "dnsNameForPublicIP": {
+            "value": "[variables('jenkinsDnsNameForPublicIP')]"
+          },
+          "authenticationType": {
+            "value": "[variables('jenkinsAuthenticationType')]"
+          },
+          "sshPublicKey": {
+            "value": "[variables('jenkinssshPublicKey')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('jenkinsUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('jenkinsPassword')]"
+          },
+          "jenkinsAdminPassword": {
+            "value": "[parameters('jenkinsAdminPassword')]"
+          },
+          "vmSize": {
+            "value": "[variables('vmSize')]"
+          },
+          "size": {
+            "value": "[parameters('size')]"
+          },
+          "subnetName": {
+            "value": "[variables('jenkinsSubnetName')]"
+          },
+          "dockerTags": {
+            "value": "[variables('dockerTags')]"
+          },
+          "cloudbeesTags": {
+            "value": "[variables('cloudbeesTags')]"
+          },
+          "quickstartTags": {
+            "value": "[variables('quickstartTags')]"
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "[variables('deploymentApiVersion')]",
+      "name": "dockerDatacenterDeployment",
+      "type": "Microsoft.Resources/deployments",
+      "dependsOn": [
+        "['Microsoft.Resources/deployments/virtualNetworkDeployment']"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('dockerDataCenterDeploymentURI')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "baseUrl": {
+            "value": "[parameters('baseUrl')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "clusterPrefix": {
+            "value": "[variables('dockerDataCenterClusterPrefix')]"
+          },
+          "ucpControllerSize": {
+            "value": "[variables('ucpControllerSize')]"
+          },
+          "ucpControllerCount": {
+            "value": "[parameters('ucpControllerCount')]"
+          },
+          "ucpNodeSize": {
+            "value": "[variables('ucpNodeSize')]"
+          },
+          "ucpNodeCount": {
+            "value": "[parameters('ucpNodeCount')]"
+          },
+          "ucpDtrNodeSize": {
+            "value": "[variables('ucpDtrNodeSize')]"
+          },
+          "ucpDtrNodeCount": {
+            "value": "[parameters('ucpDtrNodeCount')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('dockerAdminUsername')]"
+          },
+          "authenticationType": {
+            "value": "[variables('dockerAuthenticationType')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('dockerAdminPassword')]"
+          },
+          "sshPublicKey": {
+            "value": "[variables('dockersshPublicKey')]"
+          },
+          "virtualNetworkName": {
+            "value": "[variables('virtualNetworkName')]"
+          },
+          "controllerSubnetName": {
+            "value": "[variables('ucpControllerSubnetName')]"
+          },
+          "nodeSubnetName": {
+            "value": "[variables('ucpdtrNodeSubnetName')]"
+          },
+          "controllerLbPublicIpAddress": {
+            "value": "[variables('controllerLbPublicIpAddress')]"
+          },
+          "controllerLbPublicIpDnsName": {
+            "value": "[concat(parameters('controllerLbPublicIpDnsName'),variables('uniqueString'))]"
+          },
+          "nodeLbPublicIpAddress": {
+            "value": "[variables('nodeLbPublicIpAddress')]"
+          },
+          "nodeLbPublicIpDnsName": {
+            "value": "[concat(parameters('nodeLbPublicIpDnsName'),variables('uniqueString'))]"
+          },
+          "nodeDtrLbPublicIpAddress": {
+            "value": "[variables('nodeDtrLbPublicIpAddress')]"
+          },
+          "nodeDtrLbPublicIpDnsName": {
+            "value": "[concat(parameters('nodeDtrLbPublicIpDnsName'),variables('uniqueString'))]"
+          },
+          "ucpLicenseKey": {
+            "value": "[parameters('ucpLicenseKey')]"
+          },
+          "ucpAdminPassword": {
+            "value": "[parameters('ucpAdminPassword')]"
+          },
+          "dockerTags": {
+            "value": "[variables('dockerTags')]"
+          },
+          "cloudbeesTags": {
+            "value": "[variables('cloudbeesTags')]"
+          },
+          "quickstartTags": {
+            "value": "[variables('quickstartTags')]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "Cloudbees Operations Center URL": {
+      "type": "string",
+      "value": "[concat('http://',reference('cloudbeesDeployment').outputs.operationsCenter.value)]"
+    },
+    "Jenkins Portal Username": {
+      "type": "string",
+      "value": "[reference('cloudbeesDeployment').outputs.jenkinsApplicationUsername.value]"
+    },
+    "Jenkins Portal Password": {
+      "type": "string",
+      "value": "[reference('cloudbeesDeployment').outputs.jenkinsApplicationPassword.value]"
+    },
+    "UCP Console URL": {
+      "type": "string",
+      "value": "[reference('dockerDatacenterDeployment').outputs.ucpConsoleAddress.value]"
+    },
+    "DTR Console URL": {
+      "type": "string",
+      "value": "[reference('dockerDatacenterDeployment').outputs.dtrConsoleAddress.value]"
+    },
+    "UCP Loadbalancer DNS": {
+      "type": "string",
+      "value": "[reference('dockerDatacenterDeployment').outputs.ucpNodeLoadBalancer.value]"
+    }
+  }
+}

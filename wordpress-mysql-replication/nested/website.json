@@ -1,0 +1,123 @@
+{  
+   "$schema":"http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+   "contentVersion":"1.0.0.0",
+   "parameters":{  
+      "siteName":{  
+         "type":"string"
+      },
+      "hostingPlanName":{  
+         "type":"string"
+      },
+      "sku":{  
+         "type":"string",
+         "allowedValues":[  
+            "Free",
+            "Shared",
+            "Basic",
+            "Standard",
+            "Premium"
+         ],
+         "defaultValue":"Free"
+      },
+      "workerSize":{  
+         "type":"string",
+         "allowedValues":[  
+            "0",
+            "1",
+            "2"
+         ],
+         "defaultValue":"0"
+      },
+      "dbServer":{  
+         "type":"string"
+      },
+      "dbName":{  
+         "type":"string"
+      },
+      "dbAdminPassword":{  
+         "type":"securestring"
+      }
+   },
+   "variables":{  
+      "connectionString":"[concat('Database=', parameters('dbName'), ';Data Source=', parameters('dbServer'), ';User Id=admin;Password=', parameters('dbAdminPassword'))]",
+      "repoUrl":"https://github.com/azureappserviceoss/wordpress-azure",
+      "branch":"master",
+      "workerSize":"[parameters('workerSize')]",
+      "sku":"[parameters('sku')]",
+      "hostingPlanName":"[parameters('hostingPlanName')]"
+   },
+   "resources":[  
+      {  
+         "apiVersion":"2014-06-01",
+         "name":"[variables('hostingPlanName')]",
+         "type":"Microsoft.Web/serverfarms",
+         "location":"[resourceGroup().location]",
+         "properties":{  
+            "name":"[variables('hostingPlanName')]",
+            "sku":"[variables('sku')]",
+            "workerSize":"[variables('workerSize')]",
+            "hostingEnvironment":"",
+            "numberOfWorkers":0
+         }
+      },
+      {  
+         "apiVersion":"2015-02-01",
+         "name":"[parameters('siteName')]",
+         "type":"Microsoft.Web/sites",
+         "location":"[resourceGroup().location]",
+         "tags":{  
+            "[concat('hidden-related:', '/subscriptions/', subscription().subscriptionId,'/resourcegroups/', resourceGroup().name, '/providers/Microsoft.Web/serverfarms/', variables('hostingPlanName'))]":"empty"
+         },
+         "dependsOn":[  
+            "[concat('Microsoft.Web/serverfarms/', variables('hostingPlanName'))]"
+         ],
+         "properties":{  
+            "name":"[parameters('siteName')]",
+            "serverFarmId":"[concat('/subscriptions/', subscription().subscriptionId,'/resourcegroups/', resourceGroup().name, '/providers/Microsoft.Web/serverfarms/', variables('hostingPlanName'))]",
+            "hostingEnvironment":""
+         },
+         "resources":[  
+            {  
+               "apiVersion":"2015-04-01",
+               "name":"connectionstrings",
+               "type":"config",
+               "dependsOn":[  
+                  "[concat('Microsoft.Web/Sites/', parameters('siteName'))]"
+               ],
+               "properties":{  
+                  "defaultConnection":{  
+                     "value":"[variables('connectionString')]",
+                     "type":"MySQL"
+                  }
+               }
+            },
+            {  
+               "apiVersion":"2015-04-01",
+               "name":"web",
+               "type":"config",
+               "dependsOn":[  
+                  "[concat('Microsoft.Web/Sites/', parameters('siteName'))]"
+               ],
+               "properties":{  
+                  "phpVersion":"5.6"
+               }
+            },
+            {  
+               "apiVersion":"2015-08-01",
+               "name":"web",
+               "type":"sourcecontrols",
+               "dependsOn":[  
+                  "[resourceId('Microsoft.Web/Sites', parameters('siteName'))]",
+                  "[concat('Microsoft.Web/Sites/', parameters('siteName'), '/config/connectionstrings')]",
+                  "[concat('Microsoft.Web/Sites/', parameters('siteName'), '/config/web')]"
+               ],
+               "properties":{  
+                  "RepoUrl":"[variables('repoUrl')]",
+                  "branch":"[variables('branch')]",
+                  "IsManualIntegration":true
+               }
+            }
+         ]
+      }      
+   ]
+}

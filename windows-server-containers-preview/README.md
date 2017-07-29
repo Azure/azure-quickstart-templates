@@ -1,4 +1,4 @@
-## Windows Server Container Host Preview (Docker Ready)
+# Windows Server 2016 Technical Preview - Containers
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fwindows-server-containers-preview%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
@@ -7,13 +7,17 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template will deploy and configure a Windows Server 2016 TP4 core VM instance with Windows Server Containers. These items are performed by the template:
+The template will deploy a Windows Server 2016 Technical Preview virtual machine with Windows containers. 
 
-- Deploy the TP4 Windows Server Container Image.
-- Create inbound network security group rules for HTTP, RDP and Docker.
-- Create inbound Windows Firewall rules for HTTP and Docker (custom script extensions).
-- Modify the Docker Daemon configuration file to listen for incoming requests on port 2375 (custom script extension).
+The following actions are completed:
 
-Windows Server 2016 TP4 and Windows Server Container are in an early preview release and are not production ready and or supported.
+- Deploy the Windows Server 2016 Technical Preview system.
+- Enable the Windows containers role.
+- Download and install the Windows Server Core container base OS image.
+- Download and configure Docker.
 
-> Microsoft Azure does not support Hyper-V containers. To complete Hyper-V Container exercises, you need an on-prem container host.   
+Once the template has been deployed, the virtual machine will be rebooted. At first logon, a second configuration script will be run to complete the process. Due to a large download, this configuration can take quite some time.
+
+Windows Server 2016 TP5 and Windows Containers are in an early preview release and are not production ready or supported.
+
+> Microsoft Azure does not support Hyper-V containers. To complete Hyper-V Container exercises, you need an on-premises container host.    

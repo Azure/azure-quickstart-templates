@@ -8,25 +8,6 @@
                     "description": "Unique DNS Name for the Storage Account where the Virtual Machine's disks will be placed."
                 }
             },
-            "location": {
-                "type": "string",
-                "metadata": {
-                    "description": "The location where the Virtual Machine will be deployed."
-                },
-                "allowedValues": [
-                    "East US",
-                    "East US 2",
-                    "East Asia",
-                    "West US",
-                    "West Europe",
-                    "Southeast Asia",
-                    "South Central US",
-                    "East US 2",
-                    "Japan East",
-                    "Japan West",
-                    "Central US"
-                ]
-            },
             "adminUsername": {
                 "type": "string",
                 "metadata": {
@@ -85,7 +66,8 @@
             "ubuntuOSVersion": "15.10",
             "OSDiskName": "osDisk",
             "nsgName": "[concat(parameters('vmName'),'NeoNSG')]",
-            "nicName": "[concat(parameters('vmName'),'NeoNIC')]",             "dockerExtensionName": "DockerExtension",
+            "nicName": "[concat(parameters('vmName'),'NeoNIC')]",
+			"dockerExtensionName": "DockerExtension",
             "azureVMUtilsName": "vmCustomizationExt",
             "azureVMUtilsScriptUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/docker-neo4j/extras/setup_data_disk.sh",
             "addressPrefix": "10.0.0.0/16",
@@ -105,244 +87,244 @@
 
         },
         "resources": [
-        {
+          {
             "type": "Microsoft.Storage/storageAccounts",
             "name": "[parameters('newStorageAccountName')]",
             "apiVersion": "[variables('apiVersion')]",
-            "location": "[parameters('location')]",
+            "location": "[resourceGroup().location]",
             "properties": {
-                "accountType": "[variables('storageAccountType')]"
+              "accountType": "[variables('storageAccountType')]"
             }
-        },
-        {
+          },
+          {
             "apiVersion": "[variables('apiVersion')]",
             "type": "Microsoft.Network/publicIPAddresses",
             "name": "[variables('publicIPAddressName')]",
-            "location": "[parameters('location')]",
+            "location": "[resourceGroup().location]",
             "properties": {
-                "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
-                "dnsSettings": {
-                    "domainNameLabel": "[parameters('dnsNameForPublicIP')]"
-                }
+              "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+              "dnsSettings": {
+                "domainNameLabel": "[parameters('dnsNameForPublicIP')]"
+              }
             }
-        },
-        {
+          },
+          {
             "apiVersion": "[variables('apiVersion')]",
             "type": "Microsoft.Network/virtualNetworks",
             "name": "[variables('virtualNetworkName')]",
-            "location": "[parameters('location')]",
+            "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[variables('nsgID')]"
+              "[variables('nsgID')]"
             ],
             "properties": {
-                "addressSpace": {
-                    "addressPrefixes": [
-                        "[variables('addressPrefix')]"
-                        ]
-                },
-                "subnets": [
-                {
-                    "name": "[variables('subnetName')]",
-                    "properties": {
-                        "addressPrefix": "[variables('subnetPrefix')]",
-                        "networkSecurityGroup" : {
-                            "id": "[variables('nsgID')]"
-                        }
-                    }
-                }
+              "addressSpace": {
+                "addressPrefixes": [
+                  "[variables('addressPrefix')]"
                 ]
+              },
+              "subnets": [
+                {
+                  "name": "[variables('subnetName')]",
+                  "properties": {
+                    "addressPrefix": "[variables('subnetPrefix')]",
+                    "networkSecurityGroup": {
+                      "id": "[variables('nsgID')]"
+                    }
+                  }
+                }
+              ]
             }
-        },
-        {
+          },
+          {
             "apiVersion": "[variables('apiVersion')]",
             "type": "Microsoft.Network/networkInterfaces",
             "name": "[variables('nicName')]",
-            "location": "[parameters('location')]",
+            "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
-                "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+              "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+              "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
             ],
             "properties": {
-                "ipConfigurations": [
+              "ipConfigurations": [
                 {
-                    "name": "ipconfig1",
-                    "properties": {
-                        "privateIPAllocationMethod": "Dynamic",
-                        "publicIPAddress": {
-                            "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
-                        },
-                        "subnet": {
-                            "id": "[variables('subnetRef')]"
-                        }
+                  "name": "ipconfig1",
+                  "properties": {
+                    "privateIPAllocationMethod": "Dynamic",
+                    "publicIPAddress": {
+                      "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+                    },
+                    "subnet": {
+                      "id": "[variables('subnetRef')]"
                     }
+                  }
                 }
-                ]
+              ]
             }
-        },
-        {
+          },
+          {
             "apiVersion": "[variables('apiVersion')]",
             "type": "Microsoft.Network/networkSecurityGroups",
             "name": "[variables('nsgName')]",
-            "location": "[parameters('location')]",
+            "location": "[resourceGroup().location]",
             "properties": {
-                "securityRules": [
+              "securityRules": [
                 {
-                    "name": "neo4j",
-                    "properties": {
-                        "description": "Allow HTTP connections",
-                        "protocol": "Tcp",
-                        "sourcePortRange": "*",
-                        "destinationPortRange": "7474",
-                        "sourceAddressPrefix": "Internet",
-                        "destinationAddressPrefix": "*",
-                        "access": "Allow",
-                        "priority": 100,
-                        "direction": "Inbound"
-                    }
+                  "name": "neo4j",
+                  "properties": {
+                    "description": "Allow HTTP connections",
+                    "protocol": "Tcp",
+                    "sourcePortRange": "*",
+                    "destinationPortRange": "7474",
+                    "sourceAddressPrefix": "Internet",
+                    "destinationAddressPrefix": "*",
+                    "access": "Allow",
+                    "priority": 100,
+                    "direction": "Inbound"
+                  }
                 },
                 {
-                    "name": "neo4j-ssl",
-                    "properties": {
-                        "description": "Allow HTTPS connections",
-                        "protocol": "Tcp",
-                        "sourcePortRange": "*",
-                        "destinationPortRange": "7473",
-                        "sourceAddressPrefix": "Internet",
-                        "destinationAddressPrefix": "*",
-                        "access": "Allow",
-                        "priority": 101,
-                        "direction": "Inbound"
-                    }
+                  "name": "neo4j-ssl",
+                  "properties": {
+                    "description": "Allow HTTPS connections",
+                    "protocol": "Tcp",
+                    "sourcePortRange": "*",
+                    "destinationPortRange": "7473",
+                    "sourceAddressPrefix": "Internet",
+                    "destinationAddressPrefix": "*",
+                    "access": "Allow",
+                    "priority": 101,
+                    "direction": "Inbound"
+                  }
                 },
                 {
-                    "name": "neo4j-remote-shell",
-                    "properties": {
-                        "description": "Remote shell connections",
-                        "protocol": "Tcp",
-                        "sourcePortRange": "*",
-                        "destinationPortRange": "1337",
-                        "sourceAddressPrefix": "Internet",
-                        "destinationAddressPrefix": "*",
-                        "access": "Allow",
-                        "priority": 102,
-                        "direction": "Inbound"
-                    }
+                  "name": "neo4j-remote-shell",
+                  "properties": {
+                    "description": "Remote shell connections",
+                    "protocol": "Tcp",
+                    "sourcePortRange": "*",
+                    "destinationPortRange": "1337",
+                    "sourceAddressPrefix": "Internet",
+                    "destinationAddressPrefix": "*",
+                    "access": "Allow",
+                    "priority": 102,
+                    "direction": "Inbound"
+                  }
                 },
                 {
-                    "name": "ssh",
-                    "properties": {
-                        "description": "Allow SSH",
-                        "protocol": "Tcp",
-                        "sourcePortRange": "*",
-                        "destinationPortRange": "22",
-                        "sourceAddressPrefix": "Internet",
-                        "destinationAddressPrefix": "*",
-                        "access": "Allow",
-                        "priority": 110,
-                        "direction": "Inbound"
-                    }
+                  "name": "ssh",
+                  "properties": {
+                    "description": "Allow SSH",
+                    "protocol": "Tcp",
+                    "sourcePortRange": "*",
+                    "destinationPortRange": "22",
+                    "sourceAddressPrefix": "Internet",
+                    "destinationAddressPrefix": "*",
+                    "access": "Allow",
+                    "priority": 110,
+                    "direction": "Inbound"
+                  }
                 }
-                ]
+              ]
             }
-        },
-        {
+          },
+          {
             "apiVersion": "[variables('apiVersion')]",
             "type": "Microsoft.Compute/virtualMachines",
             "name": "[variables('vmName')]",
-            "location": "[parameters('location')]",
+            "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
-            "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
-                ],
+              "[concat('Microsoft.Storage/storageAccounts/', parameters('newStorageAccountName'))]",
+              "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]"
+            ],
             "properties": {
-                "hardwareProfile": {
-                    "vmSize": "[variables('vmSize')]"
+              "hardwareProfile": {
+                "vmSize": "[variables('vmSize')]"
+              },
+              "osProfile": {
+                "computerName": "[variables('vmName')]",
+                "adminUsername": "[parameters('adminUsername')]",
+                "adminPassword": "[parameters('adminPassword')]"
+              },
+              "storageProfile": {
+                "imageReference": {
+                  "publisher": "[variables('imagePublisher')]",
+                  "offer": "[variables('imageOffer')]",
+                  "sku": "[variables('ubuntuOSVersion')]",
+                  "version": "latest"
                 },
-                "osProfile": {
-                    "computerName": "[variables('vmName')]",
-                    "adminUsername": "[parameters('adminUsername')]",
-                    "adminPassword": "[parameters('adminPassword')]"
+                "osDisk": {
+                  "name": "osdisk1",
+                  "vhd": {
+                    "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]"
+                  },
+                  "caching": "ReadWrite",
+                  "createOption": "FromImage"
                 },
-                "storageProfile": {
-                    "imageReference": {
-                        "publisher": "[variables('imagePublisher')]",
-                        "offer": "[variables('imageOffer')]",
-                        "sku" : "[variables('ubuntuOSVersion')]",
-                        "version":"latest"
+                "dataDisks": [
+                  {
+                    "name": "datadisk1",
+                    "diskSizeGB": "10",
+                    "lun": 0,
+                    "vhd": {
+                      "Uri": "[variables('dataDisk1VhdName')]"
                     },
-                    "osDisk" : {
-                        "name": "osdisk1",
-                        "vhd": {
-                            "uri": "[concat('http://',parameters('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]"
-                        },
-                        "caching": "ReadWrite",
-                        "createOption": "FromImage"
-                    },
-                    "dataDisks": [
-                        {
-                            "name": "datadisk1",
-                            "diskSizeGB": "10",
-                            "lun": 0,
-                            "vhd": {
-                                "Uri": "[variables('dataDisk1VhdName')]"
-                            },
-                            "createOption": "Empty"
-                        }
-                    ]
-                },
-                "networkProfile": {
-                    "networkInterfaces": [
-                        {
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
-                        }
-                    ]
-                }
+                    "createOption": "Empty"
+                  }
+                ]
+              },
+              "networkProfile": {
+                "networkInterfaces": [
+                  {
+                    "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+                  }
+                ]
+              }
             }
-        },
-        {
+          },
+          {
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "name": "[concat(variables('vmName'),'/', variables('azureVMUtilsName'))]",
             "apiVersion": "[variables('apiVersion')]",
-            "location": "[parameters('location')]",
+            "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
+              "[concat('Microsoft.Compute/virtualMachines/', variables('vmName'))]"
             ],
             "properties": {
-                "publisher": "Microsoft.OSTCExtensions",
-                "type": "CustomScriptForLinux",
-                "typeHandlerVersion": "1.2",
-                "autoUpgradeMinorVersion": true,
-                "settings": {
-                    "fileUris": [
-                        "[variables('azureVMUtilsScriptUrl')]"
-                    ],
-                    "commandToExecute": "bash setup_data_disk.sh"
-                }
+              "publisher": "Microsoft.Azure.Extensions",
+              "type": "CustomScript",
+              "typeHandlerVersion": "2.0",
+              "autoUpgradeMinorVersion": true,
+              "settings": {
+                "fileUris": [
+                  "[variables('azureVMUtilsScriptUrl')]"
+                ],
+                "commandToExecute": "bash setup_data_disk.sh"
+              }
             }
-        },
-        {
+          },
+          {
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "name": "[concat(variables('vmName'),'/', variables('dockerExtensionName'))]",
             "apiVersion": "[variables('apiVersion')]",
-            "location": "[parameters('location')]",
+            "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[concat('Microsoft.Compute/virtualMachines/',variables('vmName'),'/','extensions/',variables('azureVMUtilsName'))]"
+              "[concat('Microsoft.Compute/virtualMachines/',variables('vmName'),'/','extensions/',variables('azureVMUtilsName'))]"
             ],
             "properties": {
-                "publisher": "Microsoft.Azure.Extensions",
-                "type": "DockerExtension",
-                "typeHandlerVersion": "1.0",
-                "autoUpgradeMinorVersion": true,
-                "settings": {
-                    "compose": {
-                        "neo4j": {
-                            "image": "tpires/neo4j",
-                            "ports": ["7474:7474", "7473:7473"],
-                            "volumes" : ["/datadisk:/var/lib/neo4j/data"]
-                        }
-                    }
+              "publisher": "Microsoft.Azure.Extensions",
+              "type": "DockerExtension",
+              "typeHandlerVersion": "1.0",
+              "autoUpgradeMinorVersion": true,
+              "settings": {
+                "compose": {
+                  "neo4j": {
+                    "image": "tpires/neo4j",
+                    "ports": [ "7474:7474", "7473:7473" ],
+                    "volumes": [ "/datadisk:/var/lib/neo4j/data" ]
+                  }
                 }
+              }
             }
-        }
+          }
     ]
 }

@@ -1,7 +1,21 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-  "contentVersion": "1.0.0.0",
+  "contentVersion": "1.0.0.0",  
   "parameters": {
+    "_artifactsLocation": {
+        "type": "string",
+        "metadata": {
+            "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+        },
+        "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/iis-2vm-sql-1vm/"
+    },
+      "_artifactsLocationSasToken": {
+          "type": "securestring",
+          "metadata": {
+              "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+          },
+          "defaultValue": ""
+      },
     "envPrefixName": {
       "type": "string",
       "metadata": {
@@ -10,23 +24,6 @@
       "defaultValue": "cust1",
       "minLength": 2,
       "maxLength": 5
-    },
-    "location": {
-      "type": "string",
-      "allowedValues": [
-        "West US",
-        "East US",
-        "East US 2",
-        "Central US",
-        "North Europe",
-        "West Europe",
-        "Southeast Asia",
-        "Japan East",
-        "Japan West"
-      ],
-      "metadata": {
-        "description": "This is the region where the resources will be created"
-      }
     },
     "username": {
       "type": "string",
@@ -119,7 +116,7 @@
     "sqlPublicIP": "[concat(parameters('envPrefixName'), 'SqlPip')]",
     "sqlPublicIPRef": "[resourceId('Microsoft.Network/publicIPAddresses', variables('sqlPublicIP'))]",
     "sqlImagePublisher": "MicrosoftSQLServer",
-    "sqlImageOffer": "SQL2014-WS2012R2",
+    "sqlImageOffer": "SQL2014SP2-WS2012R2",
     "sqlImageSku": "Standard",
     "webSrvName": "[concat(parameters('envPrefixName'), 'webSrv')]",
     "webSrvVMSize": "[parameters('webSrvVMSize')]",
@@ -138,15 +135,15 @@
     "lbPoolID": "[concat(variables('webLbId'),'/backendAddressPools/BackendPool1')]",
     "lbProbeID": "[concat(variables('webLbId'),'/probes/tcpProbe')]",
     "vmExtensionName": "dscExtension",
-    "modulesUrl": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/iis-2vm-sql-1vm/scripts/WebServerConfig.ps1.zip",
+    "modulesUrl": "[concat(parameters('_artifactsLocation'), 'scripts/WebServerConfig.ps1.zip', parameters('_artifactsLocationSasToken'))]",
     "configurationFunction": "WebServerConfig.ps1\\WebServerConfig"
   },
   "resources": [
     {
-      "apiVersion": "[variables('apiVersion')]", 
+      "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('feNSGName')]",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "tags": {
         "displayName": "FrontEndNSG"
       },
@@ -187,7 +184,7 @@
       "type": "Microsoft.Network/networkSecurityGroups",
       "apiVersion": "[variables('apiVersion')]",
       "name": "[variables('dbNSGName')]",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "tags": {
         "displayName": "BackEndNSG"
       },
@@ -256,7 +253,7 @@
       "apiVersion": "[variables('apiVersion')]",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Network/networkSecurityGroups/', variables('feNSGName'))]",
         "[concat('Microsoft.Network/networkSecurityGroups/', variables('dbNSGName'))]"
@@ -295,7 +292,7 @@
     {
       "name": "[variables('storageName')]",
       "type": "Microsoft.Storage/storageAccounts",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "apiVersion": "[variables('apiVersion')]",
       "dependsOn": [ ],
       "tags": {
@@ -308,7 +305,7 @@
     {
       "name": "[variables('sqlPublicIP')]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "apiVersion": "[variables('apiVersion')]",
       "tags": {
         "displayName": "SqlPIP"
@@ -321,7 +318,7 @@
     {
       "name": "[variables('sqlSrvDBNicName')]",
       "type": "Microsoft.Network/networkInterfaces",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "apiVersion": "[variables('apiVersion')]",
       "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
@@ -349,7 +346,7 @@
     {
       "name": "[concat(parameters('envPrefixName'), 'sqlSrv14')]",
       "type": "Microsoft.Compute/virtualMachines",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "apiVersion": "[variables('apiVersion')]",
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('storageName'))]",
@@ -378,7 +375,7 @@
           "osDisk": {
             "name": "SQL-Svr-DBOSDisk",
             "vhd": {
-              "uri": "[concat('http://', variables('storageName'), '.blob.core.windows.net/', variables('vhdContainer'), '/', variables('sqlSrvDBOsDiskName'), '.vhd')]"
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageName')), variables('apiVersion')).primaryEndpoints.blob, variables('vhdContainer'), '/',variables('sqlSrvDBOsDiskName'), '.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -407,7 +404,7 @@
     {
       "name": "[variables('webSrvPublicIP')]",
       "type": "Microsoft.Network/publicIPAddresses",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "apiVersion": "[variables('apiVersion')]",
       "tags": {
         "displayName": "WebSrvPIP for LB"
@@ -510,7 +507,7 @@
     {
       "name": "[concat(variables('webSrvNicName'), copyindex())]",
       "type": "Microsoft.Network/networkInterfaces",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "apiVersion": "[variables('apiVersion')]",
       "copy": {
         "name": "nicLoop",
@@ -551,7 +548,7 @@
     {
       "name": "[concat(variables('webSrvName'), copyindex())]",
       "type": "Microsoft.Compute/virtualMachines",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "apiVersion": "[variables('apiVersion')]",
       "copy": {
         "name": "webSrvMachineLoop",
@@ -587,7 +584,7 @@
           "osDisk": {
             "name": "WebSvrOSDisk",
             "vhd": {
-              "uri": "[concat('http://', variables('storageName'), '.blob.core.windows.net/', variables('vhdContainer'), '/', variables('webSrvOSDiks'), copyindex(), '.vhd')]"
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageName')), variables('apiVersion')).primaryEndpoints.blob, variables('vhdContainer'), '/',variables('webSrvOSDiks'), copyindex(), '.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -606,7 +603,7 @@
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('webSrvName'), copyindex(),'/', variables('vmExtensionName'))]",
       "apiVersion": "[variables('apiVersion')]",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "copy": {
         "name": "webSrvMachineLoop",
         "count": "[variables('webSrvNumbOfInstances')]"
@@ -620,7 +617,7 @@
       "properties": {
         "publisher": "Microsoft.Powershell",
         "type": "DSC",
-        "typeHandlerVersion": "2.7",
+        "typeHandlerVersion": "2.19",
         "autoUpgradeMinorVersion": true,
         "settings": {
           "ModulesUrl": "[variables('modulesUrl')]",

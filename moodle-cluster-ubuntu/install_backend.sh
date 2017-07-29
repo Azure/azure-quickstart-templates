@@ -6,6 +6,9 @@ apt-get -y update
 
 # set up a silent install of MySQL
 dbpass=$1
+SharedStorageAccountName=$2
+SharedAzureFileName=$3
+SharedStorageAccountKey=$4
 
 export DEBIAN_FRONTEND=noninteractive
 echo mysql-server-5.6 mysql-server/root_password password $dbpass | debconf-set-selections
@@ -31,9 +34,6 @@ SQL="${Q1}${Q2}${Q3}"
 $MYSQL -uroot -p$dbpass -e "$SQL"
 
 # Create Azure file share that will be used by front end VM's for moodledata directory
-SharedStorageAccountName=$2
-SharedAzureFileName=$3
-SharedStorageAccountKey=$4
 
 apt-get -y install nodejs-legacy
 apt-get -y install npm

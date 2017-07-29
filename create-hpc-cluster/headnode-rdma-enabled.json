@@ -8,12 +8,6 @@
         "description": "The API version"
       }
     },
-    "location": {
-      "type": "string",
-      "metadata": {
-        "description": "The location in which the resources are created"
-      }
-    },
     "vmName": {
       "type": "string",
       "metadata": {
@@ -74,7 +68,7 @@
       "apiVersion": "[parameters('apiVersion')]",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('vmName')]",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "properties": {
         "availabilitySet": {
           "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySetName'))]"
@@ -128,7 +122,7 @@
           "type": "Microsoft.Compute/virtualMachines/extensions",
           "name": "[concat(parameters('vmName'),'/installRDMADriver')]",
           "apiVersion": "[parameters('apiVersion')]",
-          "location": "[parameters('location')]",
+          "location": "[resourceGroup().location]",
           "dependsOn": [
             "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
           ],
@@ -142,7 +136,7 @@
           "type": "Microsoft.Compute/virtualMachines/extensions",
           "name": "[concat(parameters('vmName'),'/promoteDomainController')]",
           "apiVersion": "[parameters('apiVersion')]",
-          "location": "[parameters('location')]",
+          "location": "[resourceGroup().location]",
           "dependsOn": [
             "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]",
             "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'),'/extensions/installRDMADriver')]"
@@ -150,22 +144,24 @@
           "properties": {
             "publisher": "Microsoft.Powershell",
             "type": "DSC",
-            "typeHandlerVersion": "2.13",
+            "typeHandlerVersion": "2.19",
+            "autoUpgradeMinorVersion": true,
             "settings": {
-              "modulesUrl": "[concat(parameters('scriptBaseUri'),'/CreateADPDC.ps1.zip')]",
-              "configurationFunction": "CreateADPDC.ps1\\CreateADPDC",
-              "wmfVersion": "4.0",
-              "Properties": {
-                "DomainName": "[parameters('privateDomainName')]",
-                "AdminCreds": {
-                  "UserName": "[parameters('adminUsername')]",
-                  "Password": "PrivateSettingsRef:AdminPassword"
-                }
+              "configuration": {
+                "url": "[concat(parameters('scriptBaseUri'),'/CreateADPDC.ps1.zip')]",
+                "script": "CreateADPDC.ps1",
+                "function": "CreateADPDC"
+              },
+              "configurationArguments": {
+                "DomainName": "[parameters('privateDomainName')]"
               }
             },
             "protectedSettings": {
-              "Items": {
-                "AdminPassword": "[parameters('adminPassword')]"
+              "configurationArguments": {
+                "AdminCreds": {
+                  "UserName": "[parameters('adminUsername')]",
+                  "Password": "[parameters('adminPassword')]"
+                }
               }
             }
           }

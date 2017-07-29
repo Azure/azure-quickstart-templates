@@ -1,0 +1,403 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  	"contentVersion": "1.0.0.0",
+  	"parameters": {
+
+      "storageAccountName": {
+        "type": "string",
+        "defaultValue": ""
+      },
+      "vmStorageAccountContainerName": {
+        "type": "string",
+        "defaultValue": ""
+      },      
+      "location": {
+        "type": "string",
+        "defaultValue": ""
+      },
+      "network-api-version": {
+        "type": "string",
+        "defaultValue": ""
+      },
+      "compute-api-version": {
+        "type": "string",
+        "defaultValue": ""
+      },
+      "tagvalues": {
+	      "type": "object",
+	      "defaultValue": {
+          "program": "PushToPilot",
+          "project": "DatameerTrendHDInsightChef"
+      }
+    },
+    "publicIPAddressNameTrendDSM": {
+        "type": "string",
+        "defaultValue": ""
+    },
+    "publicIPDomainNameLabelTrendDSM": {
+        "type": "string",
+        "defaultValue": ""
+    },
+    "publicIPAddressType": {
+        "type": "string",
+        "defaultValue": ""
+    },
+    "nicNameTrendDSM": {
+        "type": "string",
+        "defaultValue": ""
+    },
+    "virtualNetworkName": {
+        "type": "string",
+          "defaultValue": "dsmvnet"
+    },
+    "subnet1Ref": {
+        "type": "string",
+          "defaultValue": ""
+    },
+    "securityGroupNameTrendDSM": {
+        "type": "string",
+          "defaultValue": ""
+    },
+    "managerPortTrendDSM": {
+        "type": "string",
+          "defaultValue": ""
+    },
+    "heartbeatPortTrendDSM": {
+        "type": "string",
+          "defaultValue": ""
+    },
+    "vmNameTrendDSM": {
+        "type": "string",
+          "defaultValue": ""
+    },
+    "publisherTrendDSM": {
+        "type": "string",
+          "defaultValue": ""
+    },
+    "offerChoosedTrendDSM": {
+        "type": "object",
+          "defaultValue": ""
+    },
+    "vmAdminNameTrendDSM": {
+        "type": "string",
+          "defaultValue": ""
+    },
+    "vmAdminPasswordTrendDSM": {
+        "type": "securestring",
+          "defaultValue": ""
+    },
+    "linuxConfigurationChoosenTrendDSM": {
+        "type": "object",
+          "defaultValue": ""
+    },
+    "deployment-api-version": {
+        "type": "string",
+          "defaultValue": ""
+    },
+    "baseUrl": {
+        "type": "string",
+        "metadata": {
+            "description": "The base URL for dependent assets",
+            "artifactsBaseUrl": ""
+        },
+        "defaultValue": "https://deepsecurityazure.blob.core.windows.net/dsmtemplate"
+    },
+    "dsmAdminName": {
+        "type": "string",
+          "defaultValue": ""
+    },
+      "dsmAdminPassword": {
+        "type": "securestring",
+          "defaultValue": ""
+    },
+    "databaseOption": {
+        "type": "string",
+          "defaultValue": ""
+    },
+    "newsqlServerName": {
+        "type": "string",
+          "defaultValue": ""
+    },
+    "existingSQLServerName": {
+        "type": "string",
+          "defaultValue": ""
+    },
+    "dbAdminName": {
+        "type": "string",
+          "defaultValue": ""
+    },
+    "dbAdminPassword": {
+        "type": "securestring",
+          "defaultValue": ""
+    },
+    "dbName": {
+        "type": "string",
+          "defaultValue": ""
+    },
+    "datameerTags": {
+        "type": "object"
+    },
+    "trendmicroTags": {
+        "type": "object"
+    },
+    "chefSoftwareTags": {
+        "type": "object"
+    },
+    "quickstartTags": {
+        "type": "object"
+    }
+  	},
+  	"variables": {
+  		"licenseMode": "10"
+  		},
+  	"resources": [
+  	{
+        "apiVersion": "[parameters('network-api-version')]",
+        "type": "Microsoft.Network/publicIPAddresses",
+        "name": "[parameters('publicIPAddressNameTrendDSM')]",
+        "location": "[parameters('location')]",
+        "tags": {
+          "program": "[parameters('tagvalues').program]",
+          "project": "[parameters('tagvalues').project]",
+          "quickstartName": "[parameters('quickstartTags').name]",
+          "provider": "[parameters('trendmicroTags').provider]"
+        },
+        "properties": {
+            "publicIPAllocationMethod": "[parameters('publicIPAddressType')]",
+            "dnsSettings": {
+                "domainNameLabel": "[parameters('publicIPDomainNameLabelTrendDSM')]"
+            }
+        }
+     },
+  	{
+        "apiVersion": "[parameters('network-api-version')]",
+        "type": "Microsoft.Network/networkInterfaces",
+        "name": "[parameters('nicNameTrendDSM')]",
+        "location": "[parameters('location')]",
+        "tags": {
+          "program": "[parameters('tagvalues').program]",
+          "project": "[parameters('tagvalues').project]",
+          "quickstartName": "[parameters('quickstartTags').name]",
+          "provider": "[parameters('trendmicroTags').provider]"
+        },
+        "dependsOn": [
+            "[concat('Microsoft.Network/publicIPAddresses/', parameters('publicIPAddressNameTrendDSM'))]",
+           
+            "[concat('Microsoft.Network/networkSecurityGroups/', parameters('securityGroupNameTrendDSM'))]"
+        ],
+        "properties": {
+            "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('securityGroupNameTrendDSM'))]"
+            },
+            "ipConfigurations": [{
+                "name": "ipconfig1",
+                "properties": {
+                    "privateIPAllocationMethod": "Dynamic",
+                    "publicIPAddress": {
+                        "id": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('publicIPAddressNameTrendDSM'))]"
+                    },
+                    "subnet": {
+                        "id": "[parameters('subnet1Ref')]"
+                    }
+                }
+            }]
+        }
+      },
+	 {
+        "apiVersion": "[parameters('network-api-version')]",
+        "type": "Microsoft.Network/networkSecurityGroups",
+        "name": "[parameters('securityGroupNameTrendDSM')]",
+        "location": "[parameters('location')]",
+        "tags": {
+          "program": "[parameters('tagvalues').program]",
+          "project": "[parameters('tagvalues').project]",
+          "quickstartName": "[parameters('quickstartTags').name]",
+          "provider": "[parameters('trendmicroTags').provider]"
+        },
+        "properties": {
+          "securityRules": [
+            {
+              "name": "allow-inbound-ssh",
+              "properties": {
+                "protocol": "Tcp",
+                "sourcePortRange": "*",
+                "destinationPortRange": "22",
+                "sourceAddressPrefix": "*",
+                "destinationAddressPrefix": "*",
+                "access": "Allow",
+                "priority": 1000,
+                "direction": "Inbound"
+              }
+            },
+            {
+              "name": "allow-inbound-dsmportal",
+              "properties": {
+                "protocol": "Tcp",
+                "sourcePortRange": "*",
+                "destinationPortRange": "[parameters('managerPortTrendDSM')]",
+                "sourceAddressPrefix": "*",
+                "destinationAddressPrefix": "*",
+                "access": "Allow",
+                "priority": 1100,
+                "direction": "Inbound"
+              }
+            },
+            {
+              "name": "allow-inbound-dsmagent",
+              "properties": {
+                "protocol": "Tcp",
+                "sourcePortRange": "*",
+                "destinationPortRange": "4118",
+                "sourceAddressPrefix": "*",
+                "destinationAddressPrefix": "*",
+                "access": "Allow",
+                "priority": 1200,
+                "direction": "Inbound"
+              }
+            },
+            {
+              "name": "allow-inbound-dsmheartbeat",
+              "properties": {
+                "protocol": "Tcp",
+                "sourcePortRange": "*",
+                "destinationPortRange": "[parameters('heartbeatPortTrendDSM')]",
+                "sourceAddressPrefix": "*",
+                "destinationAddressPrefix": "*",
+                "access": "Allow",
+                "priority": 1300,
+                "direction": "Inbound"
+              }
+            },
+            {
+              "name": "allow-inbound-dsmdownload",
+              "properties": {
+                "protocol": "Tcp",
+                "sourcePortRange": "*",
+                "destinationPortRange": "4122",
+                "sourceAddressPrefix": "*",
+                "destinationAddressPrefix": "*",
+                "access": "Allow",
+                "priority": 1400,
+                "direction": "Inbound"
+              }
+            },
+            {
+              "name": "allow-inbound-dsmwebinstaller",
+              "properties": {
+                "protocol": "Tcp",
+                "sourcePortRange": "*",
+                "destinationPortRange": "8443",
+                "sourceAddressPrefix": "*",
+                "destinationAddressPrefix": "*",
+                "access": "Allow",
+                "priority": 1500,
+                "direction": "Inbound"
+              }
+            }
+          ]
+        }
+      },
+	 {
+        "apiVersion": "[parameters('compute-api-version')]",
+        "type": "Microsoft.Compute/virtualMachines",
+        "name": "[parameters('vmNameTrendDSM')]",
+        "location": "[parameters('location')]",
+        "tags": {
+          "program": "[parameters('tagvalues').program]",
+          "project": "[parameters('tagvalues').project]",
+          "quickstartName": "[parameters('quickstartTags').name]",
+          "provider": "[parameters('trendmicroTags').provider]"
+        },
+        "dependsOn": [
+           
+            "[concat('Microsoft.Network/networkInterfaces/', parameters('nicNameTrendDSM'))]",
+            "[concat('Microsoft.Resources/deployments/', 'buildSQLServer')]"
+        ],
+        "plan": {
+            "publisher": "[parameters('publisherTrendDSM')]",
+            "product": "[parameters('offerChoosedTrendDSM').product]",
+            "name": "[parameters('offerChoosedTrendDSM').vmSku]"            
+        },
+        "properties": {
+            "hardwareProfile": {
+                "vmSize": "[parameters('offerChoosedTrendDSM').vmSize]"
+            },
+            "osProfile": {
+                "computerName": "[parameters('vmNameTrendDSM')]",
+                "adminUsername": "[parameters('vmAdminNameTrendDSM')]",
+                "adminPassword": "[parameters('vmAdminPasswordTrendDSM')]",
+                "customData": "[base64(concat('vmName:',base64(parameters('vmNameTrendDSM')),',databaseServer:',reference('buildSQLServer').outputs.sqlServerFQDN.value,',databaseName:',base64(parameters('dbName')),',location:',parameters('location'),',managerPort:',parameters('managerPortTrendDSM'),',heartbeatPort:',parameters('heartbeatPortTrendDSM'),',vmFQDN:',reference(resourceId('Microsoft.Network/publicIPAddresses',parameters('publicIPAddressNameTrendDSM')),providers('Microsoft.Network', 'publicIPAddresses').apiVersions[0]).dnsSettings.fqdn,',publicIP:,adminUserName:',base64(parameters('dsmAdminName')),',adminPassword:',base64(parameters('dsmAdminPassword')),',databaseUserName:',base64(parameters('dbAdminName')),',databaseUserPassword:',base64(parameters('dbAdminPassword')),',subscriptionId:',subscription().subscriptionId,',databaseOption:',parameters('databaseOption'),',vmSize:',parameters('offerChoosedTrendDSM').vmSize,',licenseMode:',variables('licenseMode')))]",
+                "linuxConfiguration": "[parameters('linuxConfigurationChoosenTrendDSM')]"                
+            },
+            "storageProfile": {
+                "imageReference": {
+                    "publisher": "[parameters('publisherTrendDSM')]",
+                    "offer": "[parameters('offerChoosedTrendDSM').product]",
+                    "sku": "[parameters('offerChoosedTrendDSM').vmSku]",
+                    "version": "2.0.0"
+                },
+                "osDisk": {
+                    "name": "[concat(parameters('vmNameTrendDSM'),'-osDisk')]",
+                    "caching": "ReadWrite",
+                    "createOption": "FromImage",
+                    "vhd": {
+                        "uri": "[concat('https://',parameters('storageAccountName'),'.blob.core.windows.net/',parameters('vmStorageAccountContainerName'),'/',parameters('vmNameTrendDSM'),'-osdisk.vhd')]"
+                    }
+                }
+            },
+            "networkProfile": {
+                "networkInterfaces": [{
+                    "id": "[resourceId('Microsoft.Network/networkInterfaces',parameters('nicNameTrendDSM'))]"
+                }]
+            },
+            "diagnosticsProfile": {
+                "bootDiagnostics": {
+                    "enabled": "true",
+                    "storageUri": "[concat('https://',parameters('storageAccountName'),'.blob.core.windows.net/')]"
+                }
+            }
+        }
+      },
+      {
+        "name": "buildSQLServer",
+        "type": "Microsoft.Resources/deployments",
+        "apiVersion": "[parameters('deployment-api-version')]",
+        "dependsOn": [
+        ],
+        "properties": {
+            "mode": "Incremental",
+            "templateLink": {
+              "uri": "[concat(parameters('baseUrl'), '/nested/database-',parameters('databaseOption'),'.json')]",
+              "contentVersion": "1.0.0.0"
+            },
+            "parameters":{
+              "location": { "value": "[parameters('location')]" },
+              "newsqlServerName": { "value": "[parameters('newsqlServerName')]" },
+              "existingSQLServerName": { "value": "[parameters('existingSQLServerName')]"},
+              "dbAdminName": { "value": "[parameters('dbAdminName')]" },
+              "dbAdminPassword": { "value": "[parameters('dbAdminPassword')]" },
+              "sqlDBName": { "value": "[parameters('dbName')]" },
+              "datameerTags": {
+                "value": "[parameters('datameerTags')]"
+              },
+              "trendmicroTags": {
+                "value": "[parameters('trendmicroTags')]"
+              },
+              "chefSoftwareTags": {
+                "value": "[parameters('chefSoftwareTags')]"
+              },
+              "quickstartTags": {
+                "value": "[parameters('quickstartTags')]"
+              }           
+            }
+        }
+      }
+
+  	],
+"outputs": {
+  "trendmicrodsmUri": {
+      "type": "string",
+      "value": "[concat('https://',reference(resourceId('Microsoft.Network/publicIPAddresses',parameters('publicIPAddressNameTrendDSM'))).dnsSettings.fqdn)]"
+    }
+}
+}

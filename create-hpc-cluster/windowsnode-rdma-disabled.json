@@ -8,12 +8,6 @@
         "description": "The API version"
       }
     },
-    "location": {
-      "type": "string",
-      "metadata": {
-        "description": "The location in which the resources are created"
-      }
-    },
     "nicName": {
       "type": "string",
       "metadata": {
@@ -126,7 +120,7 @@
       "apiVersion": "[parameters('apiVersion')]",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[parameters('nicName')]",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "properties": {
         "ipConfigurations": [
           {
@@ -145,7 +139,7 @@
       "apiVersion": "[parameters('apiVersion')]",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('vmName')]",
-      "location": "[parameters('location')]",
+      "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Network/networkInterfaces/', parameters('nicName'))]"
       ],
@@ -191,30 +185,32 @@
           "type": "Microsoft.Compute/virtualMachines/extensions",
           "name": "[concat(parameters('vmName'), '/configureComputeNode')]",
           "apiVersion": "[parameters('apiVersion')]",
-          "location": "[parameters('location')]",
+          "location": "[resourceGroup().location]",
           "dependsOn": [
             "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
           ],
           "properties": {
             "publisher": "Microsoft.Powershell",
             "type": "DSC",
-            "typeHandlerVersion": "2.13",
+            "typeHandlerVersion": "2.19",
+            "autoUpgradeMinorVersion": true,
             "settings": {
-              "modulesUrl": "[concat(parameters('scriptBaseUri'),'/ConfigComputeNode.ps1.zip')]",
-              "configurationFunction": "ConfigComputeNode.ps1\\ConfigComputeNode",
-              "wmfVersion": "4.0",
-              "Properties": {
+              "configuration": {
+                "url": "[concat(parameters('scriptBaseUri'),'/ConfigComputeNode.ps1.zip')]",
+                "script": "ConfigComputeNode.ps1",
+                "function": "ConfigComputeNode"
+              },
+              "configurationArguments": {
                 "DomainName": "[parameters('privateDomainName')]",
-                "AdminCreds": {
-                  "UserName": "[parameters('adminUsername')]",
-                  "Password": "PrivateSettingsRef:AdminPassword"
-                },
                 "PostConfigScript": "[parameters('computeNodePostConfigScript')]"
               }
             },
             "protectedSettings": {
-              "Items": {
-                "AdminPassword": "[parameters('adminPassword')]"
+              "configurationArguments": {
+                "AdminCreds": {
+                  "UserName": "[parameters('adminUsername')]",
+                  "Password": "[parameters('adminPassword')]"
+                }
               }
             }
           }

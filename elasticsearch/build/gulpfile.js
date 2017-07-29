@@ -42,7 +42,7 @@ gulp.task('datatemplates', function() {
 		2,4,8,16
 	];
 	
-	// This is currently in YAML and an experiment in working with tempaltes in YAML form
+	// This is currently in YAML and an experiment in working with templates in YAML form
 	var dataTemplate = yaml.load('../tmpl/data-nodes.yml');
 	
 	var dataDiskTemplate = JSON.stringify(_.find(dataTemplate.resources,
@@ -55,7 +55,7 @@ gulp.task('datatemplates', function() {
 	).properties.storageProfile.dataDisks;
 	
 	// write a zero disk template
-	fs.writeFileSync('../data-nodes-0disk-resources.json', JSON.stringify(dataTemplate, null, '  '));
+	fs.writeFileSync('../nestedtemplates/data-nodes-0disk-resources.json', JSON.stringify(dataTemplate, null, '  '));
 	
 	//Create a template for each disk size defined
 	_.forEach(sizes, function(disks) {
@@ -70,7 +70,7 @@ gulp.task('datatemplates', function() {
 			{type: 'Microsoft.Compute/virtualMachines'}
 		).properties.storageProfile.dataDisks = dataDisks;
 		
-		fs.writeFileSync('../data-nodes-' + disks + 'disk-resources.json', JSON.stringify(dataTemplate, null, '  '));
+		fs.writeFileSync('../nestedtemplates/data-nodes-' + disks + 'disk-resources.json', JSON.stringify(dataTemplate, null, '  '));
 	});
 });
 
@@ -95,7 +95,7 @@ gulp.task('mocks', ['datatemplates'], function() {
 	
 	_.forEach(templates, function(resource) {
 		// create and write a mock for each of these used for testing
-		var source = JSON.parse(fs.readFileSync('../' + resource + '-resources.json', 'utf8'));
+		var source = JSON.parse(fs.readFileSync('../nestedtemplates/' + resource + '-resources.json', 'utf8'));
 		
 		source.variables = {};
 		source.resources = [];
