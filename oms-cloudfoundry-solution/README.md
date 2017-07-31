@@ -1,4 +1,4 @@
-# Cloud Foundry Solution for OMS
+# Azure OMS Log Analytics Solution for Cloud Foundry
 
 [![Deploy to Azure](http://azuredeploy.net/deploybutton.png)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fazure%2Fazure-quickstart-templates%2Fmaster%2Foms-cloudfoundry-solution%2F%2Fazuredeploy.json) 
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Foms-cloudfoundry-solution%2Fazuredeploy.json" target="_blank">
@@ -7,7 +7,11 @@
 
 ## Overview
 
-This solution allows you to visualize and monitor the metrics and logs from your Cloud Foundry environments in OMS Log Analytics. For collecting metrics and logs from Cloud Foundry environments to OMS Log Analytics, please see details of [Microsoft Azure Log Analytics Nozzle](https://github.com/Azure/oms-log-analytics-firehose-nozzle).
+This solution allows you to visualize and monitor the metrics and logs from your Cloud Foundry environments in OMS Log Analytics.
+
+In order to use the workspace created by this template, you must have
+1. A Cloud Foundry deployment
+1. The [Azure Log Analytics Nozzle](https://github.com/Azure/oms-log-analytics-firehose-nozzle) deployed to your Cloud Foundry environment.
 
 This template can create a new Log Analytics workspace and deploy the following resources into the workspace, or deploy the following resources into an existing Log Analytics workspace.
 * all the [OMS views](https://github.com/Azure/oms-log-analytics-firehose-nozzle/tree/master/docs/omsview) for Cloud Foundry metrics and logs
