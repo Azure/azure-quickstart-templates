@@ -2,13 +2,6 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "templatePrefix": {
-      "type": "string",
-      "minLength": 3,
-      "metadata": {
-        "description": "Value used as a prefix to generate name of various objects like the vnet or the storage account. IT MUST CONTAIN ONLY NUMBERS AND lowercase LETTERS"
-      }
-    },
     "storageAccountType": {
       "type": "string",
       "defaultValue": "Standard_LRS",
@@ -160,13 +153,6 @@
         "description": "Size of the DC VM"
       }
     },
-    "vmDCPublicIPDnsName": {
-      "type": "string",
-      "minLength": 2,
-      "metadata": {
-        "description": "'Input' used to create public DNS name 'Input.region.cloudapp.azure.com' of DC VM"
-      }
-    },
     "vmSQLName": {
       "type": "string",
       "defaultValue": "SQL",
@@ -182,13 +168,6 @@
         "description": "Size of the SQL VM"
       }
     },
-    "vmSQLPublicIPDnsName": {
-      "type": "string",
-      "minLength": 2,
-      "metadata": {
-        "description": "'Input' used to create public DNS name 'Input.region.cloudapp.azure.com' of SQL VM"
-      }
-    },
     "vmSPName": {
       "type": "string",
       "defaultValue": "SP",
@@ -202,13 +181,6 @@
       "defaultValue": "Standard_A8_v2",
       "metadata": {
         "description": "Size of the SQL VM"
-      }
-    },
-    "vmSPPublicIPDnsName": {
-      "type": "string",
-      "minLength": 2,
-      "metadata": {
-        "description": "'Input' used to create public DNS name 'Input.region.cloudapp.azure.com' of SP VM"
       }
     },
     "vmsTimeZone": {
@@ -242,8 +214,8 @@
     }
   },
   "variables": {
-    "storageAccountName": "[concat(parameters('templatePrefix'), 'st')]",
-    "vNetPrivateName": "[concat(parameters('templatePrefix'), '-vnet')]",
+    "storageAccountName": "[concat('storage', uniqueString(resourceGroup().id))]",
+    "vNetPrivateName": "[concat(resourceGroup().name, '-vnet')]",
     "generalSettings": {
       "vmsStorageAccountContainerName": "vhds",
       "vmsVnetID": "[resourceId('Microsoft.Network/virtualNetworks', variables('vNetPrivateName'))]",
@@ -264,8 +236,9 @@
       "vmVmSize": "[parameters('vmDCSize')]",
       "vmSubnetRef": "[concat(variables('generalSettings').vmsVnetID, '/subnets/', variables('generalSettings').vNetPrivateSubnet1Name)]",
       "vmNicName": "[concat(parameters('vmDCName'), '-', 'nic-0')]",
+      "nicPrivateIPAddress": "10.0.1.4",
       "vmPublicIPName": "vmDC-PublicIP",
-      "nicPrivateIPAddress": "10.0.1.4"
+      "vmPublicIPDnsName": "[toLower(concat(resourceGroup().name, '-', parameters('vmDCName')))]"
     },
     "vmSQL": {
       "vmImagePublisher": "MicrosoftSQLServer",
@@ -276,7 +249,8 @@
       "vmVmSize": "[parameters('vmSQLSize')]",
       "vmSubnetRef": "[concat(variables('generalSettings').vmsVnetID, '/subnets/', variables('generalSettings').vNetPrivateSubnet2Name)]",
       "vmNicName": "[concat(parameters('vmSQLName'), '-', 'nic-0')]",
-      "vmPublicIPName": "vmSQL-PublicIP"
+      "vmPublicIPName": "vmSQL-PublicIP",
+      "vmPublicIPDnsName": "[toLower(concat(resourceGroup().name, '-', parameters('vmSQLName')))]"
     },
     "vmSP": {
       "vmImagePublisher": "MicrosoftSharePoint",
@@ -287,7 +261,8 @@
       "vmVmSize": "[parameters('vmSPSize')]",
       "vmSubnetRef": "[concat(variables('generalSettings').vmsVnetID, '/subnets/', variables('generalSettings').vNetPrivateSubnet3Name)]",
       "vmNicName": "[concat(parameters('vmSPName'), '-', 'nic-0')]",
-      "vmPublicIPName": "vmSP-PublicIP"
+      "vmPublicIPName": "vmSP-PublicIP",
+      "vmPublicIPDnsName": "[toLower(concat(resourceGroup().name, '-', parameters('vmSPName')))]"
     },
     "dscConfigureDCVM": {
       "url": "[parameters('dscDCTemplateURL')]",
@@ -371,7 +346,7 @@
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
-          "domainNameLabel": "[parameters('vmDCPublicIPDnsName')]"
+          "domainNameLabel": "[variables('vmDC').vmPublicIPDnsName]"
         }
       }
     },
@@ -439,7 +414,7 @@
           "osDisk": {
             "name": "[variables('vmDC').vmOSDiskName]",
             "vhd": {
-              "uri": "[concat('https://', variables('storageAccountName'), '.blob.core.windows.net/', variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmDC').vmOSDiskName, '.vhd')]"
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2015-06-15').primaryEndpoints.blob, variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmDC').vmOSDiskName,'.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -447,7 +422,7 @@
           "dataDisks": [
             {
               "vhd": {
-                "uri": "[concat('https://', variables('storageAccountName'), '.blob.core.windows.net/', variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmDC').vmDataDiskName, '.vhd')]"
+                "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2015-06-15').primaryEndpoints.blob, variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmDC').vmDataDiskName,'.vhd')]"
               },
               "name": "[variables('vmDC').vmDataDiskName]",
               "caching": "None",
@@ -526,7 +501,7 @@
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
-          "domainNameLabel": "[parameters('vmSQLPublicIPDnsName')]"
+          "domainNameLabel": "[variables('vmSQL').vmPublicIPDnsName]"
         }
       }
     },
@@ -593,7 +568,7 @@
           "osDisk": {
             "name": "[variables('vmSQL').vmOSDiskName]",
             "vhd": {
-              "uri": "[concat('https://', variables('storageAccountName'), '.blob.core.windows.net/', variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmSQL').vmOSDiskName, '.vhd')]"
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2015-06-15').primaryEndpoints.blob, variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmSQL').vmOSDiskName,'.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -601,7 +576,7 @@
           "dataDisks": [
             {
               "vhd": {
-                "uri": "[concat('https://', variables('storageAccountName'), '.blob.core.windows.net/', variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmSQL').vmDataDiskName, '.vhd')]"
+                "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2015-06-15').primaryEndpoints.blob, variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmSQL').vmDataDiskName,'.vhd')]"
               },
               "name": "[variables('vmSQL').vmDataDiskName]",
               "caching": "None",
@@ -635,7 +610,7 @@
       "properties": {
         "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
-          "domainNameLabel": "[parameters('vmSPPublicIPDnsName')]"
+          "domainNameLabel": "[variables('vmSP').vmPublicIPDnsName]"
         }
       }
     },
@@ -702,7 +677,7 @@
           "osDisk": {
             "name": "[variables('vmSP').vmOSDiskName]",
             "vhd": {
-              "uri": "[concat('https://', variables('storageAccountName'), '.blob.core.windows.net/', variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmSP').vmOSDiskName, '.vhd')]"
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2015-06-15').primaryEndpoints.blob, variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmSP').vmOSDiskName,'.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
@@ -710,7 +685,7 @@
           "dataDisks": [
             {
               "vhd": {
-                "uri": "[concat('https://', variables('storageAccountName'), '.blob.core.windows.net/', variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmSP').vmDataDiskName, '.vhd')]"
+                "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2015-06-15').primaryEndpoints.blob, variables('generalSettings').vmsStorageAccountContainerName, '/', variables('vmSP').vmDataDiskName,'.vhd')]"
               },
               "name": "[variables('vmSP').vmDataDiskName]",
               "caching": "None",
