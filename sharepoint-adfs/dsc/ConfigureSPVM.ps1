@@ -559,25 +559,7 @@ configuration ConfigureSPVM
             PsDscRunAsCredential   = $SPSetupCredsQualified
             DependsOn = '[xCertReq]SPSSiteCert'
         }
-
-        <# Not working because there is no way to get CertificateThumbprint dynamically (created by a previous resource)
-        xWebsite SetHTTPSCertificate
-        {
-            Name            = "SharePoint - 443"
-            BindingInfo     = MSFT_xWebBindingInformation
-            {
-                Protocol              = 'https'
-                Port                  = '443'
-                CertificateStoreName  = 'WebHosting'
-                CertificateThumbprint = 'BB84DE3EC423DDDE90C08AB3C5A828692089493C'
-                HostName              = ""
-                IPAddress             = '*'
-                SSLFlags              = '0'
-            }
-            Ensure          = "Present"
-            DependsOn = '[SPWebApplicationExtension]ExtendWebApp'
-        }#>
-
+        
         xScript SetHTTPSCertificate
         {
             SetScript = 
