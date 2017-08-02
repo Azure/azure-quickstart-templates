@@ -7,7 +7,7 @@
 </a>
 
 
-This template creates a new 2012r2 VM with standard_A2 and two NICs which connect to two different subnets within the same VNet.
+This template creates a new 2012r3 VM with standard_A2 and two NICs which connect to two different subnets within the same VNet.
 
 ## Tips
 1. If running under PowerShell you may update the **azuredeploy.parameters** file with the **allowedValues** for the subnet name of the Primary NIC and Secondary NIC for a nice dropdown list.
