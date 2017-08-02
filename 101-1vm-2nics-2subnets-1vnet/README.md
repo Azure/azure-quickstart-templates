@@ -1,8 +1,8 @@
 # Multi-NIC Virtual Machine Creation using Two Subnets
-<a href="https://portal.azure.cn/#create/Microsoft.Template/uri/https%3A%2F%github.com/HuangXiaojuan/azure-quickstart-templates/blob/master/101-1vm-2nics-2subnets-1vnet/azuredeploy.json" target="_blank">
+<a href="https://portal.azure.cn/#create/Microsoft.Template/uri/https%3A%2F%raw.githubusercontent.com/HuangXiaojuan/azure-quickstart-templates/master/101-1vm-2nics-2subnets-1vnet/azuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2github.com/HuangXiaojuan/azure-quickstart-templates/blob/master/101-1vm-2nics-2subnets-1vnet/azuredeploy.json" target="_blank">
+<a href="http://armviz.io/#/?load=https%3A%2F%raw.githubusercontent.com/HuangXiaojuan/azure-quickstart-templates/master/101-1vm-2nics-2subnets-1vnet/azuredeploy.json" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
