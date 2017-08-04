@@ -1,4 +1,3 @@
-https%3A%2F%2Fraw.githubusercontent.com%2FHuangXiaojuan%2Fazure-quickstart-templates%2FHuangXiaojuan%2F1vm-2nics%2Fazuredeploy.json
 # Two-NIC Virtual Machine Creation using Two Subnets
 <a href="https://portal.azure.cn/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FHuangXiaojuan%2Fazure-quickstart-templates%2FHuangXiaojuan%2F1vm-2nics%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
