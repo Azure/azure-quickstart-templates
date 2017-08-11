@@ -55,7 +55,7 @@ $userName = '' # username for the VM
 $vmNameSuffix = '' # Specify the suffix for the virtual machine(s) that will be created
 $instanceCount = '' # You can create 1-10 VMs
 $deploymentName = '' # Specify the name of the main ARM template deployment job
-$templateUri = 'https://raw.githubusercontent.com/Azure/azure-quickstart-templates/azmgmt-demo/azuredeploy.json'
+$templateUri = 'https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/azmgmt-demo/azuredeploy.json'
 
 # Deploy template
 
