@@ -1,4 +1,4 @@
-# Trend Micro - Cloud Security Solution Template 001
+# Trend Micro - Cloud Security Solution Template
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Ftrend-chef-splunk-security%2Fazuredeploy.json" target="_blank">
 <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
@@ -11,7 +11,7 @@
 
 Customers benefit greatly from solution templates because of the ease with which they can stand up enterprise-grade, fully integrated stacks on Azure. The extensive automation and testing of these solutions will allow them to spin up pre-production environments with minimal manual steps and customization.  Most importantly, customers now have the confidence to transition the solution into a fully production-ready environment with confidence.
 
-**Cloud Security Solution Template 001** launches a security-at-scale solution stack that provides an automated provisioning, configuration and integration of [Trend Micro's Deep Security](https://azure.microsoft.com/en-us/marketplace/partners/trendmicro/deep-security-manager-st-byoldeep-security-manager-byol/) product on Azure. Combined with [Splunk Enterprise](https://azure.microsoft.com/en-us/marketplace/partners/splunk/splunk-enterprisebyol/) & [Chef Server](https://azure.microsoft.com/en-us/marketplace/partners/chef-software/chef-server/) products makes this solution ready for pre-production environments. These are intended as pilot solutions and not production ready.
+**Cloud Security Solution Template 001** launches a security-at-scale solution stack that provides an automated provisioning, configuration and integration of [Trend Micro's Deep Security](https://azure.microsoft.com/en-us/marketplace/partners/trendmicro/deep-security-manager-st-byoldeep-security-manager-byol/) product on Azure. Combined with [Splunk Enterprise](https://azure.microsoft.com/en-us/marketplace/partners/splunk/splunk-enterprisebyol/) & [Chef Automate](https://azuremarketplace.microsoft.com/en-us/marketplace/apps/chef-software.chef-automate) products makes this solution ready for pre-production environments. These are intended as pilot solutions and not production ready.
 Please [contact us](azuremarketplace@sysgain.com) if you need further info or support on this solution.
 
 ##Licenses & Costs
@@ -47,7 +47,7 @@ TrendMicro DSM is an agents based security control platform. The agents need to 
 1. **TrendMicro Azure Extension:** Azure provides an extension to deploy and configure the agent on a VM.
 2. **TrendMicro Chef Cookbooks:** Configuration Management is a key aspect in configuring servers, its applications and handling security. Chef, which is a very popular configuration management solution, can be used to install and configure TrendMicro agents. Further Chef recipes can be used to manage configuration of the application and servers to ensure they fall in line with the security policies defined in Trend Micro DSM. 
 
-This solution stack implements the second option (with Chef). It deploys a Chef Server and an automated framework that allows any new VM's to bootstrap to chef Server as and when they get provisioned. Additionally, in order to integrate Chef Server with Chef Nodes in an automated way, additional microservices are deployed as a set of two Docker Containers (a Node.js app and a database).
+This solution stack implements the second option (with Chef). It deploys a Chef Automate and an automated framework that allows any new VM's to bootstrap to Chef Automate (Chef Server) as and when they get provisioned. Additionally, in order to integrate Chef Automate with Chef Nodes in an automated way, additional microservices are deployed as a set of two Docker Containers (a Node.js app and a database).
 
 Cloud security monitoring is another critical aspect of enabling security at scale. The logs and data that is generated on the VMs can be monitored using Splunk's intelligence platform service, part of Splunk Enterprise. This solution stack also deploys the Splunk Enterprise solution and automatically integrates it with TrendMicro DSM to collect all logs and event data from the VMs.
  
@@ -83,7 +83,7 @@ As a part of deployment the template launches the following:
 
 * Network security group(NSG2) is assigned to Network Interface (NIC 2) which is attached to Splunk VM. The NSG 2 rules are the same as the security rules mentioned in the Splunk section. A public IP is attached to Network interface.
 * Place the Splunk VM in a availability set. 
-* Deploy Chef Server in Subnet2 and integrate with orchestrator. A public IP is attached to Network interface. Deploy an orchestrator service using Docker.
+* Deploy Chef Automate in Subnet2 and integrate with orchestrator. A public IP is attached to Network interface. Deploy an orchestrator service using Docker.
 * Deploy 2 VMs (Linux, Windows) with bootstrap scripts to install TrendMicro agents (through extensions).
 * Deploy 1 VMs (Linux) with bootstrap scripts to install Chef Agents and connect them to the server using orchestrator.
 
