@@ -1,20 +1,8 @@
 ﻿configuration ConfigureADBDC
 {
-   param
-    (
-        [Parameter(Mandatory)]
-        [String]$DomainName,
+   Import-DscResource -ModuleName xActiveDirectory, xPendingReboot
 
-        [Parameter(Mandatory)]
-        [System.Management.Automation.PSCredential]$Admincreds,
-
-        [Int]$RetryCount=20,
-        [Int]$RetryIntervalSec=30
-    )
-
-    Import-DscResource -ModuleName xActiveDirectory, xPendingReboot
-
-    [System.Management.Automation.PSCredential ]$DomainCreds = New-Object System.Management.Automation.PSCredential ("${DomainName}\$($Admincreds.UserName)", $Admincreds.Password)
+    [System.Management.Automation.PSCredential ]$DomainCreds = New-Object System.Management.Automation.PSCredential ("nonprod\azadmin", Temp123456!!)
 
     Node localhost
     {
@@ -25,19 +13,19 @@
         
         xWaitForADDomain DscForestWait
         {
-            DomainName = $DomainName
+            DomainName = "nonprod.core.bams.cloud"
             DomainUserCredential= $DomainCreds
-            RetryCount = $RetryCount
-            RetryIntervalSec = $RetryIntervalSec
+            RetryCount = "3"
+            RetryIntervalSec = "30"
         }
         xADDomainController BDC
         {
-            DomainName = $DomainName
+            DomainName = "nonprod.core.bams.cloud"
             DomainAdministratorCredential = $DomainCreds
             SafemodeAdministratorPassword = $DomainCreds
-            DatabasePath = "F:\NTDS"
-            LogPath = "F:\NTDS"
-            SysvolPath = "F:\SYSVOL"
+            DatabasePath = "C:\NTDS"
+            LogPath = "C:\NTDS"
+            SysvolPath = "C:\SYSVOL"
             DependsOn = "[xWaitForADDomain]DscForestWait"
         }
 <#
