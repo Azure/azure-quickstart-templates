@@ -35,7 +35,7 @@ Deploying from the command line
 ## C. Setup SSH port forwarding
 **By default the Jenkins instance is using the http protocol and listens on port 8080. Users shouldn't authenticate over unsecured protocols!**
 
-You need to setup port forwarding to view the Jenkins and Spinnaker UI on your local machine.
+You need to setup port forwarding to view the Jenkins and Spinnaker UI on your local machine. If you do not know the full DNS name of your instance, go to the Portal and find it in the deployment outputs here: `Resource Groups > {Resource Group Name} > Deployments > {Deployment Name, usually 'Microsoft.Template'} > Outputs`
 
 ### If you are using Windows:
 Install Putty or use any bash shell for Windows (if using a bash shell, follow the instructions for Linux or Mac).
@@ -61,14 +61,14 @@ ssh -i <path to private key file> -L 8080:localhost:8080 -L 9000:localhost:9000 
 
 ## D. Connect to Jenkins
 
-1. After you have started your tunnel, navigate to `http://localhost:8080/` on your local machine.
+1. After you have started your tunnel, navigate to http://localhost:8080/ on your local machine.
 1. The instance should already be unlocked and your first account setup. Login with the credentials you specified when deploying the template.
 1. Your Jenkins instance is now ready to use! You can access a read-only view by going to http://< Public DNS name of instance you just created >.
 1. Go to http://aka.ms/azjenkinsagents if you want to build/CI from this Jenkins master using Azure VM agents.
 
 ## E. Connect to Spinnaker 
 
-1. After you have started your tunnel, navigate to `http://localhost:9000/` on your local machine.
+1. After you have started your tunnel, navigate to http://localhost:9000/ on your local machine.
 1. Documention to create a sample pipeline is forthcoming.
 
 ## Questions/Comments? azdevopspub@microsoft.com
