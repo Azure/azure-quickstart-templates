@@ -6,13 +6,10 @@ install_postgresql_service() {
 	if [ $? == 0 ];then
 		echo 'postgresql_enable="YES"' >> /etc/rc.conf
 		echo 'postgresql_data="/stripe/postgres/data"' >> /etc/rc.conf
-		chown -R pgsql:pgsql /stripe/
+		chown -R pgsql:pgsql /stripe/	
 		su pgsql -c '/usr/local/bin/initdb -D /stripe/postgres/data/'
-		sed -i -e "s/#listen_addresses = 'localhost'/listen_addresses = ''/g" /stripe/postgres/data/postgresql.conf
-		sed -i -e 's/^#port = 5432/port = 5432/g' /stripe/postgres/data/postgresql.conf
-		sed -i -e 's/^max_connections = 100/max_connections = 500/g' /stripe/postgres/data/postgresql.conf
-		sed -i -e 's/^shared_buffers = 128MB/#shared_buffers = 128MB/g' /stripe/postgres/data/postgresql.conf
 		echo 'host    all             all             0.0.0.0/0               md5' >> /stripe/postgres/data/pg_hba.conf
+		cp ./postgresql.conf /stripe/postgres/data/postgresql.conf
 	fi
 	echo "Done installing PostgreSQL..."
 }
@@ -58,7 +55,7 @@ setup_datadisks(){
 }
 
 env ASSUME_ALWAYS_YES=YES pkg bootstrap
-pkg update -y
+pkg update
 
 numofdisks=$1
 setup_datadisks
