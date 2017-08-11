@@ -11,5 +11,9 @@ admin
 REPLACE_WITH_ADMIN_PASSWORD
 EndOfMessage
 
-sed -i -e "s/REPLACE_WITH_DIRECTOR_UUID/$(bosh status --uuid)/" ./example_manifests/single-vm-cf.yml
-sed -i -e "s/REPLACE_WITH_DIRECTOR_UUID/$(bosh status --uuid)/" ./example_manifests/multiple-vm-cf.yml
+if [ -e ~/example_manifests/single-vm-cf.yml ]; then
+  sed -i -e "s/REPLACE_WITH_DIRECTOR_UUID/$(bosh status --uuid)/" ~/example_manifests/single-vm-cf.yml
+fi
+if [ -e ~/example_manifests/multiple-vm-cf.yml ]; then
+  sed -i -e "s/REPLACE_WITH_DIRECTOR_UUID/$(bosh status --uuid)/" ~/example_manifests/multiple-vm-cf.yml
+fi
