@@ -40,7 +40,7 @@ This Quickstart deploys a production ready and secure environment which includes
 
 This template will deploy: 
 
-- 5 storage accounts 
+-	5 Storage Accounts
 -	One Virtual Network with two subnets
 -	2 Public IP’s, one for OnCommand Manager and one for the Jump VM
 -	One OnCommand Cloud Manager (BYOL)(for ONTAP Cloud)
