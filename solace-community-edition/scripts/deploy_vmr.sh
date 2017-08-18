@@ -41,7 +41,7 @@ yum -y install lvm2
 
 echo "`date` INFO: walk redirect to get underlying URL"
 #-------------------------------------------------------------
-wget -O /tmp/redirect.html  ${URL}
+wget -O /tmp/redirect.html  ${solace_url}
 REAL_LINK=`egrep -o "https://[a-zA-Z0-9\.\/\_\?\=]*" /tmp/redirect.html`
 
 echo "`date` INFO: check to make sure we have a complete load"
