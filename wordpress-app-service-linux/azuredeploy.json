@@ -1,24 +1,125 @@
 {  
    "$schema":"http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
    "contentVersion":"1.0.0.0",
+   "parameters":{  
+      "siteName":{  
+         "type":"string",
+         "metadata":{  
+            "description":"Enter a unique sitename "
+         }
+      },
+      "administratorLogin":{  
+         "type":"string",
+         "minLength":1,
+         "metadata":{  
+            "description":"Database administrator login name"
+         }
+      },
+      "administratorLoginPassword":{  
+         "type":"securestring",
+         "minLength":8,
+         "maxLength":128,
+         "metadata":{  
+            "description":"Database administrator password"
+         }
+      },
+      "databaseDTU":{  
+         "type":"int",
+         "allowedValues":[  
+            50,
+            100
+         ],
+         "defaultValue":50,
+         "metadata":{  
+            "description":"Azure database for MySQL pricing tier"
+         }
+      },
+      "databaseSkuName":{  
+         "type":"string",
+         "allowedValues":[  
+            "MYSQLB100",
+            "MYSQLB50"
+         ],
+         "defaultValue":"MYSQLB100",
+         "metadata":{  
+            "description":"Azure database for MySQL sku name: MySQL Basic 50 DTU (MYSQLB50)or 100 DTU (MYSQLB100)"
+         }
+      },
+      "databaseSkuTier":{  
+         "type":"string",
+         "allowedValues":[  
+            "Basic"
+         ],
+         "defaultValue":"Basic",
+         "metadata":{  
+            "description":"Azure database for MySQL pricing tier"
+         }
+      },
+      "mysqlVersion":{  
+         "type":"string",
+         "allowedValues":[  
+            "5.6",
+            "5.7"
+         ],
+         "defaultValue":"5.6",
+         "metadata":{  
+            "description":"MySQL version"
+         }
+      }
+   },
    "variables":{  
       "databaseSku":"Free",
       "databaseName":"[concat(uniquestring(resourceGroup().id),'db')]",
-      "siteName":"[concat(uniquestring(resourceGroup().id),'website')]",
-      "aspName":"[concat(uniquestring(resourceGroup().id),'hostingplan')]"
+      "aspName":"[concat(uniquestring(resourceGroup().id),'hostingplan')]",
+      "serverName":"[concat(parameters('siteName'), 'server')]"
    },
    "resources":[  
       {  
-         "apiVersion":"2014-01-01",
-         "name":"[variables('databaseName')]",
-         "type":"SuccessBricks.ClearDB/databases",
-         "plan":{  
-            "name":"[variables('databaseSku')]"
-         },
+         "apiVersion":"2016-02-01-privatepreview",
+         "kind":"",
          "location":"[resourceGroup().location]",
-         "tags":{  
-            "provision_source":"RMS"
-         }
+         "name":"[variables('serverName')]",
+         "properties":{  
+            "version":"[parameters('mysqlVersion')]",
+            "administratorLogin":"[parameters('administratorLogin')]",
+            "administratorLoginPassword":"[parameters('administratorLoginPassword')]",
+            "storageMB":"51200"
+         },
+         "sku":{  
+            "name":"[parameters('databaseSkuName')]",
+            "tier":"[parameters('databaseSkuTier')]",
+            "capacity":"[parameters('databaseDTU')]",
+            "size":"51200",
+            "family":"SkuFamily"
+         },
+         "type":"Microsoft.DBforMySQL/servers",
+         "resources":[  
+            {  
+               "type":"firewallrules",
+               "apiVersion":"2016-02-01-privatepreview",
+               "dependsOn":[  
+                  "[concat('Microsoft.DBforMySQL/servers/', variables('serverName'))]"
+               ],
+               "location":"[resourceGroup().location]",
+               "name":"[concat(variables('serverName'),'firewall')]",
+               "properties":{  
+                  "startIpAddress":"0.0.0.0",
+                  "endIpAddress":"255.255.255.255"
+               }
+            },
+            {  
+               "name":"[variables('databaseName')]",
+               "type":"databases",
+               "apiVersion":"2016-02-01-privatepreview",
+               "properties":{  
+                  "charset":"utf8",
+                  "collation":"utf8_general_ci"
+               },
+               "dependsOn":[  
+                  "[concat('Microsoft.DBforMySQL/servers/', variables('serverName'))]"
+               ]
+            }
+         ]
       },
       {  
          "apiVersion":"2015-05-01",
@@ -40,61 +141,39 @@
             "capacity":1
          }
       },
-      {  
-         "apiVersion":"2015-05-01",
-         "name":"[variables('siteName')]",
+      {   "apiVersion": "2016-03-01",
          "type":"Microsoft.Web/sites",
+         "name":"[parameters('siteName')]",
          "location":"[resourceGroup().location]",
-         "dependsOn":[  
-            "[variables('aspName')]"
-         ],
          "properties":{  
-            "serverFarmId":"[variables('aspName')]",
             "siteConfig":{  
+               "linuxFxVersion":"DOCKER|appsvc/apps:apache-php-mysql-0.1",
+               "connectionStrings":[  
+                  {  
+                     "name":"defaultConnection",
+                     "ConnectionString":"[concat('Database=', variables('databaseName'), ';Data Source=', variables('serverName') ,'.mysql.database.azure.com;User Id=',parameters('administratorLogin'),'@',variables('serverName') ,';Password=',parameters('administratorLoginPassword'))]",
+                     "type":"MySQL"
+                  }
+               ],
                "properties":{  
                   "numberOfWorkers":"1",
                   "phpVersion":"7.0"
                }
             },
-            "maxNumberOfWorkers":"1"
+            "name":"[parameters('siteName')]",
+            "serverFarmId":"[variables('aspName')]",
+            "hostingEnvironment":""
          },
          "resources":[  
             {  
-               "apiVersion":"2015-04-01",
-               "name":"connectionstrings",
-               "type":"config",
-               "dependsOn":[  
-                  "[concat('Microsoft.Web/sites/', variables('siteName'))]",
-                  "[concat('SuccessBricks.ClearDB/databases/', variables('databaseName'))]"
-               ],
-               "properties":{  
-                  "defaultConnection":{  
-                     "value":"[reference(concat('SuccessBricks.ClearDB/databases/', variables('databaseName'))).connectionString]",
-                     "type":"MySQL"
-                  }
-               }
-            },
-            {  
-               "apiVersion":"2015-06-01",
-               "type":"config",
-               "name":"web",
-               "dependsOn":[  
-                  "[concat('Microsoft.Web/sites/', variables('siteName'))]"
-               ],
-               "properties":{  
-                  "phpVersion":"5.6"
-               }
-            },
-            {  
-               "apiVersion":"2014-04-01",
+               "apiVersion": "2016-03-01",
                "name":"web",
                "type":"sourcecontrols",
                "dependsOn":[  
-                  "[resourceId('Microsoft.Web/Sites', variables('siteName'))]",
-                  "[concat('Microsoft.Web/sites/', variables('siteName'), '/config/web')]"
+                  "[resourceId('Microsoft.Web/Sites', parameters('siteName'))]"              
                ],
                "properties":{  
-                  "RepoUrl":"https://github.com/sunbuild/wordpress-azure",
+                  "RepoUrl":"https://github.com/azureappserviceoss/wordpress-azure",
                   "branch":"linux-appservice",
                   "IsManualIntegration":true
                }
