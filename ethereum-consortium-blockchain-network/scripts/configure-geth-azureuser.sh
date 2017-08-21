@@ -77,7 +77,7 @@ wget https://gethstore.blob.core.windows.net/builds/geth-alltools-linux-amd64-1.
 wget https://gethstore.blob.core.windows.net/builds/geth-alltools-linux-amd64-1.6.0-facc47cb.tar.gz.asc || unsuccessful_exit "geth signature download failed";
 
 # Import geth buildserver keys
-gpg --recv-keys --keyserver hkp://keys.gnupg.net F9585DE6 C2FF8BBF 9BA28146 7B9E2481 D2A67EAC || unsuccessful_exit "import geth buildserver keys failed";
+gpg --recv-keys --keyserver hkp://keyserver.ubuntu.com F9585DE6 C2FF8BBF 9BA28146 7B9E2481 D2A67EAC || unsuccessful_exit "import geth buildserver keys failed";
 
 # Validate signature
 gpg --verify geth-alltools-linux-amd64-1.6.0-facc47cb.tar.gz.asc || unsuccessful_exit "validate geth download failed";
