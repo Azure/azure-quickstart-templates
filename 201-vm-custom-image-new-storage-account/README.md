@@ -115,7 +115,7 @@ The process of this template is:
 7. Since we already have all necessary information, define the remaining variables required to deploy this template
   
   ```powershell
-  $adminUserName = $credential.UserName
+  $adminUsername = $credential.UserName
   $adminPassword = $credential.GetNetworkCredential().Password
   # Following line is the equivalent of defining "images/Win10MasterImage-osDisk.72451a98-4c26-4375-90c5-0a940dd56bab.vhd", but here we executed optional steps 5 and 6 and have an array of vhds, we are picking the second vhd 
   $customImageName = $vhds[1].Name  
@@ -129,7 +129,7 @@ The process of this template is:
 8. Define a hashtable with all parameters
   
   ```powershell
-  $parameters = @{"AdminUsername"=$adminUserName;"AdminPassword"=$adminPassword;"sourceStorageAccountResourceGroup"=$sourceStorageAccountResourceGroup;"CustomImageName"=$CustomImageName;"sourceImageUri"=$sourceImageUri;"TransferVmName"=$transferVmName;"NewVmName"=$newVmName;"vmSize"=$vmSize}
+  $parameters = @{"AdminUsername"=$adminUsername;"AdminPassword"=$adminPassword;"sourceStorageAccountResourceGroup"=$sourceStorageAccountResourceGroup;"CustomImageName"=$CustomImageName;"sourceImageUri"=$sourceImageUri;"TransferVmName"=$transferVmName;"NewVmName"=$newVmName;"vmSize"=$vmSize}
   ```
   
 9. Deploy your template
