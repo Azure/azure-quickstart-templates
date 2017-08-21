@@ -1,15 +1,10 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "virtualMachineName": {
-            "type": "string",
-            "metadata": {
-                "description": "The name of your new virtual machine"
-            }
-        },
         "virtualMachineSize": {
             "type": "string",
+            "defaultValue": "Standard_DS1_v2",
             "metadata": {
                 "description": "Virtual machine size (has to be at least the size of Standard_A3 to support 2 NICs)"
             }
@@ -28,96 +23,44 @@
         },
         "storageAccountType": {
             "type": "string",
+            "defaultValue": "Standard_LRS",
             "metadata": {
                 "description": "Storage Account type for the VM and VM diagnostic storage"
-            }
-        },
-        "storageAccountName": {
-            "type": "string",
-            "metadata": {
-                "description": "Pre-existing storage Account name for your VM"
-            }
-        },
-        "diagnosticsStorageAccountName": {
-            "type": "string",
-            "metadata": {
-                "description": "Pre-existing storage account for your VM diagnostics"
-            }
-        },
-        "virtualNetworkName": {
-            "type": "string",
-            "metadata": {
-                "description": "Pre-existing virtual network (VNet) name"
-            }
-        },
-        "networkInterfaceName": {
-            "type": "string",
-            "metadata": {
-                "description": "The name of your Primay Network Interface Card (NIC)"
-            }
-        },
-        "networkInterface2Name": {
-            "type": "string",
-            "metadata": {
-                "description": "The name of your Secondary Network Interface Card (NIC)"
-            }
-        },
-        "networkSecurityGroupName": {
-            "type": "string",
-            "metadata": {
-                "description": "A default network security group (NSG) for your Primary NIC"
-            }
-        },
-        "subnetName": {
-            "type": "string",
-            "metadata": {
-                "description": "Primary NIC subnet (hardcode subnets in allowedValues)"
-            }
-        },
-        "subnet2Name": {
-            "type": "string",
-            "metadata": {
-                "description": "Secondary NIC subnet (hardcode subnets in allowedValues)"
-            }
-        },
-        "publicIpAddressName": {
-            "type": "string",
-            "metadata": {
-                "description": "A Public IPAddress for your Primary NIC"
-            }
-        },
-        "publicIpAddressType": {
-            "type": "string",
-            "metadata": {
-                "description": "Public IP address type (Dynamic or Static)"
-            }
+            },
+            "allowedValues": [
+                "Standard_LRS",
+                "Premium_LRS"
+            ]
         }
     },
     "variables": {
-        "resourceGroupName": "[resourceGroup().name]",
-        "vnetId": "[resourceId(variables('resourceGroupName'),'Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
-        "subnetRef": "[concat(variables('vnetId'), '/subnets/', parameters('subnetName'))]",
-        "subnet2Ref": "[concat(variables('vnetId'), '/subnets/', parameters('subnet2Name'))]",
-        "location": "[resourceGroup().location]",
-        "storageAccountUnique": "[concat(parameters('storageAccountName'), take(uniqueString(resourceGroup().id),3))]",
-        "diagStorageAccountUnique": "[concat(parameters('diagnosticsStorageAccountName'), take(uniqueString(resourceGroup().id),3))]"
+        "virtualMachineName": "VM-MultiNic",
+        "nic1": "nic-1",
+        "nic2": "nic-2",
+        "virtualNetworkName": "virtualNetwork",
+        "subnet1Name": "subnet-1",
+        "subnet2Name": "subnet-2",
+        "publicIPAddressName": "publicIp",
+        "subnet1Ref": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnet1Name'))]",
+        "subnet2Ref": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnet2Name'))]",
+        "diagStorageAccountName": "[concat('diags',uniqueString(resourceGroup().id))]",
+        "networkSecurityGroupName": "NSG"
     },
     "resources": [
         {
-            "name": "[parameters('virtualMachineName')]",
+            "name": "[variables('virtualMachineName')]",
             "type": "Microsoft.Compute/virtualMachines",
-            "apiVersion": "2016-03-30",
-            "location": "[variables('location')]",
+            "apiVersion": "2017-03-30",
+            "location": "[resourceGroup().location]",
             "comments": "This is the virtual machine that you're building.",
             "dependsOn": [
-                "[concat('Microsoft.Network/networkInterfaces/', parameters('networkInterfaceName'))]",
-                "[concat('Microsoft.Network/networkInterfaces/', parameters('networkInterface2Name'))]",
-                "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountUnique'))]",
-                "[concat('Microsoft.Storage/storageAccounts/', variables('diagStorageAccountUnique'))]"
+                "[variables('nic1')]",
+                "[variables('nic2')]",
+                "[variables('diagStorageAccountName')]"
             ],
             "properties": {
                 "osProfile": {
-                    "computerName": "[parameters('virtualMachineName')]",
+                    "computerName": "[variables('virtualMachineName')]",
                     "adminUsername": "[parameters('adminUsername')]",
                     "adminPassword": "[parameters('adminPassword')]",
                     "windowsConfiguration": {
@@ -131,15 +74,11 @@
                     "imageReference": {
                         "publisher": "MicrosoftWindowsServer",
                         "offer": "WindowsServer",
-                        "sku": "2012-R2-Datacenter",
+                        "sku": "2016-Datacenter",
                         "version": "latest"
                     },
                     "osDisk": {
-                        "name": "[parameters('virtualMachineName')]",
-                        "createOption": "fromImage",
-                        "vhd": {
-                            "uri": "[concat(concat(reference(resourceId(variables('resourceGroupName'), 'Microsoft.Storage/storageAccounts', variables('storageAccountUnique')), '2015-06-15').primaryEndpoints['blob'], 'vhds/'), parameters('virtualMachineName'), '-osdisk.vhd')]"
-                        }
+                        "createOption": "fromImage"
                     },
                     "dataDisks": []
                 },
@@ -149,39 +88,28 @@
                             "properties": {
                                 "primary": true
                             },
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterfaceName'))]"
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nic1'))]"
                         },
                         {
                             "properties": {
                                 "primary": false
                             },
-                            "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('networkInterface2Name'))]"
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nic2'))]"
                         }
                     ]
                 },
                 "diagnosticsProfile": {
                     "bootDiagnostics": {
                         "enabled": true,
-                        "storageUri": "[reference(resourceId(variables('resourceGroupName'), 'Microsoft.Storage/storageAccounts', variables('diagStorageAccountUnique')), '2015-06-15').primaryEndpoints['blob']]"
+                        "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts', variables('diagStorageAccountName')), '2017-06-01').primaryEndpoints['blob']]"
                     }
                 }
             }
         },
         {
             "type": "Microsoft.Storage/storageAccounts",
-            "name": "[variables('storageAccountUnique')]",
-            "apiVersion": "2016-01-01",
-            "location": "[resourceGroup().location]",
-            "sku": {
-                "name": "[parameters('storageAccountType')]"
-            },
-            "kind": "Storage",
-            "properties": {}
-        },
-        {
-            "type": "Microsoft.Storage/storageAccounts",
-            "name": "[variables('diagStorageAccountUnique')]",
-            "apiVersion": "2016-01-01",
+            "name": "[variables('diagStorageAccountName')]",
+            "apiVersion": "2017-06-01",
             "location": "[resourceGroup().location]",
             "sku": {
                 "name": "[parameters('storageAccountType')]"
@@ -191,10 +119,10 @@
         },
         {
             "type": "Microsoft.Network/virtualNetworks",
-            "name": "[parameters('virtualNetworkName')]",
-            "apiVersion": "2016-03-30",
+            "name": "[variables('virtualNetworkName')]",
+            "apiVersion": "2017-06-01",
             "location": "[resourceGroup().location]",
-            "comments": "This will build a Virtual Network if you don't already have one.",
+            "comments": "This will build a Virtual Network.",
             "properties": {
                 "addressSpace": {
                     "addressPrefixes": [
@@ -203,13 +131,13 @@
                 },
                 "subnets": [
                     {
-                        "name": "[parameters('subnetName')]",
+                        "name": "[variables('subnet1Name')]",
                         "properties": {
                             "addressPrefix": "10.0.0.0/24"
                         }
                     },
                     {
-                        "name": "[parameters('subnet2Name')]",
+                        "name": "[variables('subnet2Name')]",
                         "properties": {
                             "addressPrefix": "10.0.1.0/24"
                         }
@@ -218,15 +146,15 @@
             }
         },
         {
-            "name": "[parameters('networkInterfaceName')]",
+            "name": "[variables('nic1')]",
             "type": "Microsoft.Network/networkInterfaces",
-            "apiVersion": "2016-09-01",
-            "location": "[variables('location')]",
+            "apiVersion": "2017-06-01",
+            "location": "[resourceGroup().location]",
             "comments": "This will be your Primary NIC",
             "dependsOn": [
-                "[concat('Microsoft.Network/publicIpAddresses/', parameters('publicIpAddressName'))]",
-                "[concat('Microsoft.Network/networkSecurityGroups/', parameters('networkSecurityGroupName'))]",
-                "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
+                "[variables('publicIpAddressName')]",
+                "[variables('networkSecurityGroupName')]",
+                "[variables('virtualNetworkName')]"
             ],
             "properties": {
                 "ipConfigurations": [
@@ -234,28 +162,28 @@
                         "name": "ipconfig1",
                         "properties": {
                             "subnet": {
-                                "id": "[variables('subnetRef')]"
+                                "id": "[variables('subnet1Ref')]"
                             },
                             "privateIPAllocationMethod": "Dynamic",
                             "publicIpAddress": {
-                                "id": "[resourceId(variables('resourceGroupName'),'Microsoft.Network/publicIpAddresses', parameters('publicIpAddressName'))]"
+                                "id": "[resourceId('Microsoft.Network/publicIpAddresses', variables('publicIpAddressName'))]"
                             }
                         }
                     }
                 ],
                 "networkSecurityGroup": {
-                    "id": "[resourceId(variables('resourceGroupName'), 'Microsoft.Network/networkSecurityGroups', parameters('networkSecurityGroupName'))]"
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
                 }
             }
         },
         {
-            "name": "[parameters('networkInterface2Name')]",
+            "name": "[variables('nic2')]",
             "type": "Microsoft.Network/networkInterfaces",
-            "apiVersion": "2016-09-01",
-            "location": "[variables('location')]",
+            "apiVersion": "2017-06-01",
+            "location": "[resourceGroup().location]",
             "comments": "This will be your Secondary NIC",
             "dependsOn": [
-                "[concat('Microsoft.Network/virtualNetworks/', parameters('virtualNetworkName'))]"
+                "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
             ],
             "properties": {
                 "ipConfigurations": [
@@ -272,20 +200,20 @@
             }
         },
         {
-            "name": "[parameters('publicIpAddressName')]",
+            "name": "[variables('publicIpAddressName')]",
             "type": "Microsoft.Network/publicIpAddresses",
-            "apiVersion": "2016-09-01",
-            "location": "[variables('location')]",
+            "apiVersion": "2017-06-01",
+            "location": "[resourceGroup().location]",
             "comments": "Public IP for your Primary NIC",
             "properties": {
-                "publicIpAllocationMethod": "[parameters('publicIpAddressType')]"
+                "publicIpAllocationMethod": "Dynamic"
             }
         },
         {
-            "name": "[parameters('networkSecurityGroupName')]",
+            "name": "[variables('networkSecurityGroupName')]",
             "type": "Microsoft.Network/networkSecurityGroups",
             "apiVersion": "2016-09-01",
-            "location": "[variables('location')]",
+            "location": "[resourceGroup().location]",
             "comments": "Network Security Group (NSG) for your Primary NIC",
             "properties": {
                 "securityRules": [
@@ -294,7 +222,7 @@
                         "properties": {
                             "priority": 1000,
                             "sourceAddressPrefix": "*",
-                            "protocol": "TCP",
+                            "protocol": "Tcp",
                             "destinationPortRange": "3389",
                             "access": "Allow",
                             "direction": "Inbound",
@@ -306,14 +234,5 @@
             }
         }
     ],
-    "outputs": {
-        "virtualMachineName": {
-            "type": "string",
-            "value": "[parameters('virtualMachineName')]"
-        },
-        "adminUsername": {
-            "type": "string",
-            "value": "[parameters('adminUsername')]"
-        }
-    }
+    "outputs": {}
 }
