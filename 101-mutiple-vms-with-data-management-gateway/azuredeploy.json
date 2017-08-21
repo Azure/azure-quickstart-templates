@@ -8,6 +8,12 @@
         "description": "your existing data factory name"
       }
     },
+    "existingDataFactoryResourceGroup": {
+      "type":"string",
+      "metadata": {
+        "description": "your existing data factory resource group"
+      }
+    },
     "GatewayName": {
       "type": "string",
       "metadata": {
@@ -77,21 +83,39 @@
   "variables": {
     "delimiters": [ "-", "_" ],
     "prefix": "[split(parameters('GatewayName'), variables('delimiters'))[0]]", 
-    "gatewayId": "[resourceId('Microsoft.DataFactory/dataFactories/gateways', parameters('existingDataFactoryName'), parameters('GatewayName'))]",
+    "gatewayId": "[resourceId(parameters('existingDataFactoryResourceGroup'), 'Microsoft.DataFactory/dataFactories/gateways', parameters('existingDataFactoryName'), parameters('GatewayName'))]",
     "storageAccountName": "[take(concat(toLower(variables('prefix')), uniquestring(resourceGroup().id, parameters('GatewayName'))), 24)]",   
     "networkSecurityGroupName": "[concat(parameters('GatewayName'), 'nsg')]",
     "vmTemplateLink": "[concat(parameters('_artifactsLocation'), 'nested/VMtemplate.json',parameters('_artifactsLocationSasToken'))]",
     "subnetId": "[resourceId(parameters('existingVnetResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets', parameters('existingVirtualNetworkName'), parameters('existingSubnetInYourVnet'))]",
     "scriptURL": "[concat(parameters('_artifactsLocation'), 'scripts/gatewayInstall.ps1',parameters('_artifactsLocationSasToken'))]"
   },
-  "resources": [
+  "resources": [    
     {
-      "type": "Microsoft.DataFactory/dataFactories/gateways",
-      "apiVersion": "2015-10-01",
-      "name": "[concat(parameters('existingDataFactoryName'), '/', parameters('GatewayName'))]",
+      "apiVersion": "2017-05-10",
+      "name": "nestedTemplate",
+      "type": "Microsoft.Resources/deployments",
+      "resourceGroup": "[parameters('existingDataFactoryResourceGroup')]",
       "properties": {
-        "multiNodeSupportEnabled": true,
-        "description": "my gateway"
+          "mode": "Incremental",
+          "template": {
+              "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+              "contentVersion": "1.0.0.0",
+              "parameters": {},
+              "variables": {},
+              "resources": [
+                  {
+                    "type": "Microsoft.DataFactory/dataFactories/gateways",
+                    "apiVersion": "2015-10-01",
+                    "name": "[concat(parameters('existingDataFactoryName'), '/', parameters('GatewayName'))]",
+                    "properties": {
+                      "multiNodeSupportEnabled": true,
+                      "description": "my gateway"
+                    }
+                  }
+              ]
+          },
+          "parameters": {}
       }
     },
     {
@@ -123,7 +147,7 @@
       "apiVersion": "2016-01-01",
       "location": "[parameters('existingVnetLocation')]",
       "dependsOn": [
-        "[resourceId('Microsoft.DataFactory/dataFactories/gateways', parameters('existingDataFactoryName'), parameters('GatewayName'))]"
+        "[resourceId(parameters('existingDataFactoryResourceGroup'), 'Microsoft.Resources/deployments', 'nestedTemplate')]"
       ],
       "sku": {
         "name": "Standard_LRS"
@@ -136,7 +160,7 @@
       "name": "[concat('VMtemplate-', copyIndex())]",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
-        "[resourceId('Microsoft.DataFactory/dataFactories/gateways', parameters('existingDataFactoryName'), parameters('GatewayName'))]",
+        "[resourceId(parameters('existingDataFactoryResourceGroup'), 'Microsoft.Resources/deployments', 'nestedTemplate')]",
         "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]",
         "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
       ],

@@ -1,4 +1,4 @@
-# Create a data management gateway and make it workable in azure VM
+# Create HA data management gateway and make it workable in azure VMs
 
 Before deploying the template you must have the following
 
@@ -23,12 +23,4 @@ This template can help you create a gateway and make it workable in azure VM. Th
 
 ![](images/online.png)
 
-```
-NOTE
 
-This template must be deployed in the same resource group with data factory.
-```
-
-## Sample
-
-![Azure Custom Deployment](images/screenshot.png)
