@@ -1,15 +1,13 @@
 # Azure Spinnaker [![Build Status](http://devops-ci.westcentralus.cloudapp.azure.com/job/qs/job/101-spinnaker/badge/icon)](http://devops-ci.westcentralus.cloudapp.azure.com/blue/organizations/jenkins/qs%2F101-spinnaker/activity)
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-spinnaker%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-spinnaker-existing-vnet%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-spinnaker%2Fazuredeploy.json" target="_blank">
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2F101-spinnaker-existing-vnet%2Fazuredeploy.json" target="_blank">
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
 This template allows you to deploy an instance of Spinnaker on a Linux Ubuntu 14.04 LTS VM to an existing Virtual Network. This will deploy a VM in the resource group location and return the FQDN of the VM. You will have to manually configure the instance to target a deployment environment.
-
-This template is modeled after the [Azure Spinnaker VM template] (https://github.com/yaron2/azure-quickstart-templates/tree/master/101-spinnaker)
 
 ## A. Deploy Spinnaker VM
 1. Click the "Deploy to Azure" button. If you don't have an Azure subscription, you can follow instructions to signup for a free trial.
