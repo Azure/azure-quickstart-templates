@@ -15,6 +15,8 @@ This will then configure a WinRM https listener by creating a new test certifica
 The template uses a custom script extension which executes the script 'https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vm-winrm-windows/ConfigureWinRM.ps1' on the target machine.
 This script creates a self signed certificate and configures the WinRM Https listener using the certificate's thumbprint.
 
+This template has been tested with Windows Server 2008-R2-SP1, 2012-Datacenter, and 2012-R2-Datacenter.
+
 
 
 How to connect to a Target Azure VM post WinRM configuration
