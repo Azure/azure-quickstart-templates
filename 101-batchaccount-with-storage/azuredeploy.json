@@ -1,0 +1,71 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "batchAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "Batch Account Name"
+      }
+    },
+    "storageAccountsku": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_GRS",
+        "Standard_ZRS",
+        "Premium_LRS"
+      ],
+      "metadata": {
+        "description": "Storage Account type"
+      }
+    }
+  },
+  "variables": {
+    "storageAccountName": "[concat(uniqueString(resourceGroup().id),'storage')]"
+  },
+  "resources": [{
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('storageAccountname')]",
+      "apiVersion": "2016-01-01",
+      "location": "[resourceGroup().location]",
+      "comments": "This storage account is used to associate to a batch account",
+      "sku": {
+        "name": "[parameters('storageAccountsku')]"
+      },
+      "kind": "Storage",
+      "tags": {
+        "ObjectName": "[variables('storageAccountName')]"
+      },
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.Batch/batchAccounts",
+      "name": "[parameters('batchAccountName')]",
+      "apiVersion": "2015-12-01",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "ObjectName": "[parameters('batchAccountName')]"
+      },
+      "properties": {
+        "autoStorage": {
+          "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "storageAccountName": {
+      "type": "string",
+      "value": "[variables('storageAccountName')]"
+    },
+    "batchAccountName": {
+      "type": "string",
+      "value": "[parameters('batchAccountName')]"
+    }
+  }
+}
