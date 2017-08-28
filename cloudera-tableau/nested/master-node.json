@@ -21,13 +21,22 @@
       "type": "int"
     },
     "vmSpec": {
-      "type": "secureobject"
+      "type": "secureObject"
     },
     "networkSpec": {
       "type": "object"
     },
     "clusterSpec": {
       "type": "object"
+    },
+    "clouderaTags":{
+      "type":"object"
+    },
+    "tableauTags":{
+      "type":"object"
+    },
+    "quickstartTags":{
+      "type":"object"
     }
   },
   "variables": {
@@ -46,6 +55,10 @@
       "name": "[variables('securityGroupName')]",
       "location": "[resourceGroup().location]",
       "comments": "Shared Resources Network Security Group Rules",
+      "tags": {
+        "quickstartName":"[parameters('quickstartTags').name]",
+        "provider":"[parameters('clouderaTags').provider]"
+       },
       "properties": {
         "securityRules": [
           {
@@ -189,12 +202,12 @@
             }
           },
           {
-            "name": "IMPALA.Statestore",
+            "name": "HDFS.dn.Web.UI",
             "properties": {
-              "description": "Allows Impala statestore traffic",
+              "description": "Allow HDFS Web UI traffic",
               "protocol": "Tcp",
               "sourcePortRange": "*",
-              "destinationPortRange": "25010",
+              "destinationPortRange": "50075",
               "sourceAddressPrefix": "*",
               "destinationAddressPrefix": "*",
               "access": "Allow",
@@ -203,12 +216,12 @@
             }
           },
           {
-            "name": "IMPALA.Catalog.Server",
+            "name": "YARN.nm.Web.UI",
             "properties": {
-              "description": "Allows Impala CatalogServer traffic",
+              "description": "Allow YARN Web UI traffic",
               "protocol": "Tcp",
               "sourcePortRange": "*",
-              "destinationPortRange": "25020",
+              "destinationPortRange": "8042",
               "sourceAddressPrefix": "*",
               "destinationAddressPrefix": "*",
               "access": "Allow",
@@ -217,16 +230,44 @@
             }
           },
           {
-            "name": "NTP",
+            "name": "Impala.JDBC",
             "properties": {
-              "description": "Allows NTP traffic",
-              "protocol": "Udp",
+              "description": "Allow Impala JDBC traffic",
+              "protocol": "Tcp",
               "sourcePortRange": "*",
-              "destinationPortRange": "123",
+              "destinationPortRange": "21050",
               "sourceAddressPrefix": "*",
               "destinationAddressPrefix": "*",
               "access": "Allow",
               "priority": 112,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "Impala.Shell",
+            "properties": {
+              "description": "Allow Impala Shell traffic",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "21000",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 113,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "RDP",
+            "properties": {
+              "description": "Allow RDP Traffic",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3389",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 114,
               "direction": "Inbound"
             }
           }
@@ -239,6 +280,10 @@
       "apiVersion": "[parameters('resourceAPIVersion')]",
       "location": "[resourceGroup().location]",
       "comments": "Master Node storage account configurations",
+      "tags": {
+        "quickstartName":"[parameters('quickstartTags').name]",
+        "provider":"[parameters('clouderaTags').provider]"
+       },
       "copy": {
         "name": "storageAccountLoop",
         "count": "[parameters('vmCount')]"
@@ -253,6 +298,10 @@
       "name": "[concat(variables('publicIPAddressName'), copyIndex())]",
       "location": "[resourceGroup().location]",
       "comments": "Master Node Public IP Address configuration",
+      "tags": {
+        "quickstartName":"[parameters('quickstartTags').name]",
+        "provider":"[parameters('clouderaTags').provider]"
+       },
       "copy": {
         "name": "publicIPLoop",
         "count": "[parameters('vmCount')]"
@@ -270,6 +319,10 @@
       "name": "[concat(variables('nicName'), copyIndex())]",
       "location": "[resourceGroup().location]",
       "comments": "Master Node network interface configuration",
+      "tags": {
+        "quickstartName":"[parameters('quickstartTags').name]",
+        "provider":"[parameters('clouderaTags').provider]"
+       },
       "dependsOn": [
         "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'), copyIndex())]",
         "[concat('Microsoft.Network/networkSecurityGroups/', variables('securityGroupName'))]"
@@ -305,6 +358,10 @@
       "name": "[concat(variables('vmName'), copyIndex())]",
       "location": "[resourceGroup().location]",
       "comments": "Master Node virtual machines configurations",
+      "tags": {
+        "quickstartName":"[parameters('quickstartTags').name]",
+        "provider":"[parameters('clouderaTags').provider]"
+       },
       "copy": {
         "name": "masterNodeNicLoop",
         "count": "[parameters('vmCount')]"
@@ -322,7 +379,7 @@
         },
         "osProfile": {
           "computerName": "[reference(concat(variables('publicIPAddressName'), copyIndex())).dnsSettings.fqdn]",
-          "adminUsername": "[parameters('vmSpec').adminUserName]",
+          "adminUsername": "[parameters('vmSpec').adminUsername]",
           "adminPassword": "[parameters('vmSpec').adminPassword]",
           "linuxConfiguration": {
             "disablePasswordAuthentication": "false"
@@ -349,7 +406,7 @@
               "diskSizeGB": "512",
               "lun": 0,
               "vhd": {
-                "Uri": "[concat('http://', copyIndex(), variables('storageAccountName'), '.blob.core.windows.net/vhds0/', variables('vmName'), '-datadisk0.vhd')]"
+                "uri": "[concat('http://', copyIndex(), variables('storageAccountName'), '.blob.core.windows.net/vhds0/', variables('vmName'), '-datadisk0.vhd')]"
               },
               "createOption": "Empty"
             },
@@ -358,7 +415,7 @@
               "diskSizeGB": "512",
               "lun": 1,
               "vhd": {
-                "Uri": "[concat('http://', copyIndex(), variables('storageAccountName'), '.blob.core.windows.net/vhds1/', variables('vmName'), '-datadisk1.vhd')]"
+                "uri": "[concat('http://', copyIndex(), variables('storageAccountName'), '.blob.core.windows.net/vhds1/', variables('vmName'), '-datadisk1.vhd')]"
               },
               "createOption": "Empty"
             },
@@ -367,7 +424,7 @@
               "diskSizeGB": "512",
               "lun": 2,
               "vhd": {
-                "Uri": "[concat('http://', copyIndex(), variables('storageAccountName'), '.blob.core.windows.net/vhds2/', variables('vmName'), '-datadisk2.vhd')]"
+                "uri": "[concat('http://', copyIndex(), variables('storageAccountName'), '.blob.core.windows.net/vhds2/', variables('vmName'), '-datadisk2.vhd')]"
               },
               "createOption": "Empty"
             },
@@ -376,7 +433,7 @@
               "diskSizeGB": "512",
               "lun": 3,
               "vhd": {
-                "Uri": "[concat('http://', copyIndex(), variables('storageAccountName'), '.blob.core.windows.net/vhds3/', variables('vmName'), '-datadisk3.vhd')]"
+                "uri": "[concat('http://', copyIndex(), variables('storageAccountName'), '.blob.core.windows.net/vhds3/', variables('vmName'), '-datadisk3.vhd')]"
               },
               "createOption": "Empty"
             }
@@ -397,6 +454,10 @@
       "apiVersion": "[parameters('resourceAPIVersion')]",
       "location": "[resourceGroup().location]",
       "comments": "Master Node VM Extensions and scripts to configure the Cloudera cluster",
+      "tags": {
+        "quickstartName":"[parameters('quickstartTags').name]",
+        "provider":"[parameters('clouderaTags').provider]"
+       },
       "copy": {
         "name": "nameNodeNicLoop",
         "count": "[parameters('vmCount')]"
@@ -414,7 +475,7 @@
             "[concat(parameters('scriptsUri'), '/scripts/prepare-masternode-disks.sh')]",
             "[concat(parameters('scriptsUri'), '/scripts/initialize-node.sh')]"
           ],
-          "commandToExecute": "[concat('sh initialize-node.sh \"', variables('masterIP'), '\" \"', variables('workerIP'), '\" \"', parameters('dnsNamePrefix'), '\" \"', reference(concat(variables('publicIPAddressName'), copyIndex())).dnsSettings.fqdn, '\" ', parameters('clusterSpec').masterNodeCount, ' ', parameters('clusterSpec').dataNodeCount, ' \"', parameters('vmSpec').adminUserName, '\" ', 'masternode', ' >> /home/$ADMINUSER/initialize-datanode.log 2>&1')]"
+          "commandToExecute": "[concat('sh initialize-node.sh \"', variables('masterIP'), '\" \"', variables('workerIP'), '\" \"', parameters('dnsNamePrefix'), '\" \"', reference(concat(variables('publicIPAddressName'), copyIndex())).dnsSettings.fqdn, '\" ', parameters('clusterSpec').masterNodeCount, ' ', parameters('clusterSpec').dataNodeCount, ' \"', parameters('vmSpec').adminUsername, '\" ', 'masternode', ' >> /home/$ADMINUSER/initialize-datanode.log 2>&1')]"
         }
       }
     }

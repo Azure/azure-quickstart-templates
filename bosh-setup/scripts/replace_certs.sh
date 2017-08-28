@@ -50,6 +50,10 @@ EOF
 variables() {
   cat <<-EOF
 # variables start
+$(cert_variable blobstore_ca_cert     certs/blobstore-certs/server-ca.crt)		
+$(cert_variable blobstore_tls_cert certs/blobstore-certs/blobstore-server.crt)		
+$(cert_variable blobstore_private_key  certs/blobstore-certs/blobstore-server.key)		
+
 $(cert_variable consul_ca_cert     certs/consul-certs/server-ca.crt)
 $(cert_variable consul_agent_cert  certs/consul-certs/consul-agent.crt)
 $(cert_variable consul_agent_key   certs/consul-certs/consul-agent.key)
@@ -232,6 +236,7 @@ pushd certs
   certstrap_generate_certs --depot_path "diego-certs" --ca_cn "diegoCA" --component_name "rep" --server_cn "cell.service.cf.internal" --domain '*.cell.service.cf.internal,cell.service.cf.internal' --agent_cn "rep client"
   certstrap_generate_certs --depot_path "diego-certs" --ca_cn "diegoCA" --component_name "auctioneer" --server_cn "auctioneer.service.cf.internal" --domain 'auctioneer.service.cf.internal' --agent_cn "auctioneer client"
   certstrap_generate_certs --depot_path "uaa-certs" --ca_cn "cert-authority" --component_name "uaa" --server_cn "uaa.service.cf.internal"
+  certstrap_generate_certs --depot_path "blobstore-certs" --ca_cn "cert-authority" --component_name "blobstore" --server_cn "blobstore.service.cf.internal"
   certstrap_generate_certs --depot_path "saml-certs" --ca_cn "uaa_login_saml" --component_name "saml"
 
   echo -e "=== GENERATING JWT KEY ==="
@@ -264,7 +269,10 @@ cat ${SINGLE_TEMPLATE} > ${single_template_temp} # single template does not use 
 cat ${WORK_DIR}/variables.yml ${MULTIPLE_TEMPLATE} > ${multiple_template_temp}
 
 # replace cf certs
-replace_certs_list="REPLACE_WITH_CONSUL_CA_CERT \
+replace_certs_list="REPLACE_WITH_BLOBSTORE_CA_CERT \
+                    REPLACE_WITH_BLOBSTORE_TLS_CERT \
+                    REPLACE_WITH_BLOBSTORE_PRIVATE_KEY \
+                    REPLACE_WITH_CONSUL_CA_CERT \
                     REPLACE_WITH_CONSUL_SERVER_CERT \
                     REPLACE_WITH_CONSUL_SERVER_KEY \
                     REPLACE_WITH_CONSUL_AGENT_CERT \
@@ -318,9 +326,12 @@ for cert_name in ${replace_certs_list}; do
   replace_variable ${multiple_template_temp} ${cert_name} ${cert_variable}
 done
 
+# Replace cf secrets
 replace_secrets_list="REPLACE_WITH_STAGING_UPLOAD_PASSWORD \
                       REPLACE_WITH_BULK_API_PASSWORD \
                       REPLACE_WITH_DB_ENCRYPTION_KEY \
+                      REPLACE_WITH_BLOBSTORE_PASSWORD \
+                      REPLACE_WITH_BLOBSTORE_SECRET \
                       REPLACE_WITH_CONSUL_ENCRYPT_KEY \
                       REPLACE_WITH_LOGGREGATOR_ENDPOINT_SHARED_SECRET \
                       REPLACE_WITH_NATS_PASSWORD \
@@ -350,6 +361,14 @@ done
 
 cp ${single_template_temp} ${SINGLE_TEMPLATE}
 cp ${multiple_template_temp} ${MULTIPLE_TEMPLATE}
+
+# replace bosh certs
+echo -e "=== GENERATING DIRECTOR CERT AND KEY ==="
+openssl req -nodes -new -newkey rsa:2048 -out director.csr -keyout director.key -subj '/O=Bosh/CN=*'
+openssl x509 -req -days 3650 -in director.csr -signkey director.key -out director.crt
+ruby -r yaml -e 'data = YAML::load(STDIN.read); data["jobs"][0]["properties"]["director"]["ssl"] = {"cert" => File.read("director.crt").strip, "key" => File.read("director.key").strip}; puts data.to_yaml' \
+  < "${BOSH_TEMPLATE}" > "${BOSH_TEMPLATE}.tmp"
+mv "${BOSH_TEMPLATE}.tmp" "${BOSH_TEMPLATE}"
 
 # Replace bosh secrets
 replace_bosh_secrets_list="REPLACE_WITH_NATS_PASSWORD \

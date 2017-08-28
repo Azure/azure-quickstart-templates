@@ -1,3 +1,31 @@
+# v2.8.0 (2017-8-11)
+
+- Upgrade Azure CPI version to v26. Please see new features in [bosh-azure-cpi-release v26](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v26)
+- Correct the range of CloudFoundry subnet.
+
+# v2.7.0 (2017-7-10)
+
+- Upgrade Azure CPI version to v25. Please see new features in [bosh-azure-cpi-release v25](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v25)
+- Support the deployment in AzureStackTP3.
+
+# v2.6.1 (2017-6-2)
+
+- Upgrade bosh to v262
+- Upgrade bosh stemcell to v3421.3
+- Add ssl cert & key for the director job
+- Add `user_add` job to add a cpidebug user to the bosh director
+
+# v2.6.0 (2017-5-15)
+
+- Upgrade Azure CPI version to v24. Please see new features in [bosh-azure-cpi-release v24](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v24)
+- Upgrade bosh stemcell to v3363.22
+- Change the account type of the default storage account to `Standard_LRS`.
+
+# v2.5.0 (2017-3-20)
+
+- Support AzureGermanCloud
+- Upgrade Azure CPI version to v22. Please see new features in [bosh-azure-cpi-release v22](https://github.com/cloudfoundry-incubator/bosh-azure-cpi-release/releases/tag/v22)
+
 # v2.4.4 (2017-02-10)
 
 - On AzureChinaCloud, set PowerDNS server on BOSH VM as DNS server. For *.{cf-ip}.xip.io, PowerDNS server will respond without querying Azure DNS. For the real domains and *.{other-ip-other-than-cf-ip}.xip.io, PowerDNS server will go to Azure DNS at the first time, and cache the resolving result.
