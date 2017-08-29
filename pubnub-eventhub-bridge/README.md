@@ -111,6 +111,16 @@ The Egress Event Hub should serve as an "Output" from Azure Cloud services of yo
 
 20. Click *Purchase*.
 
+## Throughput Limits
+The ARM template and use case discussed in this tutorial serve to provide a “general purpose” PubNub <-> Azure bridging architecture.
+The ARM template defines a **Basic 1: Small** service plan, with a
+**1 Throughput Unit** Event Hub configuration.
+
+Its an economical setup that is great to explore Azure and PubNub with, but definitely not a one-size-fits all for production.
+**The default configuration should be able to handle one Megabyte per second OR one thousand messages per second**, however, there are many factors which may increase or decrease these default limits based on your specific traffic patterns, Azure service plan, use case, and overall system complexity.
+
+For this reason, if you plan to implement this bridge for an enterprise / production environment, please contact us at support@pubnub.com so we may review your particular use case and assist with any fine tuning necessary on the PubNub and/or Microsoft side.  With proper architectural review, the PubNub and Microsoft components can be scaled to handle and process as much load as your use case demands.
+
 ## Troubleshooting
 
 The following tools can give you a 360-degree view of your traffic as it enters the ingress and egress PubNub Channels and Event Hubs.  Together they are useful for tracing your data through the system.
