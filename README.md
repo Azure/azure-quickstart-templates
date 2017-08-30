@@ -176,6 +176,7 @@ Quickstart CI engine provides few pre-created azure components which can be used
 ** Existing VHD related placeholders:**
 + **GEN-SPECIALIZED-WINVHD-URI** - URI of a specialized Windows VHD stored in an existing storage account.
 + **GEN-GENERALIZED-WINVHD-URI** - URI of a generalized Windows VHD stored in an existing storage account.
++ **GEN-DATAVHD-URI** - URI of a sample data disk VHD stored in an existing storage account.
 + **GEN-VHDSTORAGEACCOUNT-NAME** - Name of storage account in which the VHD's are stored.
 + **GEN-VHDRESOURCEGROUP-NAME** - Name of resource group in which the existing storage account having VHD's resides.
 
