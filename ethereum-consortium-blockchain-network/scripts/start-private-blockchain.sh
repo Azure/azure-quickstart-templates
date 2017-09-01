@@ -42,7 +42,7 @@ IPADDR=`ifconfig eth0 | grep "inet addr" | cut -d ':' -f 2 | cut -d ' ' -f 1`;
 
 # Only mine on mining nodes
 if [ $NODE_TYPE -ne 0 ]; then
-  MINE_OPTIONS="--mine --minerthreads $MINER_THREADS";
+  MINE_OPTIONS="--mine --minerthreads $MINER_THREADS --targetgaslimit $GASLIMIT";
 else
   FAST_SYNC="--fast";
 fi
