@@ -27,10 +27,11 @@ GETH_IPC_PORT=$8;
 NUM_BOOT_NODES=$9;
 NUM_MN_NODES=${10};
 MN_NODE_PREFIX=${11};
-MN_NODE_SEQNUM=${12};   #Only supplied for NODE_TYPE=1
-NUM_TX_NODES=${12};     #Only supplied for NODE_TYPE=0
-TX_NODE_PREFIX=${13};   #Only supplied for NODE_TYPE=0
-ADMIN_SITE_PORT=${14};  #Only supplied for NODE_TYPE=0
+SPECIFIED_GENESIS_BLOCK=${12};
+MN_NODE_SEQNUM=${13};   #Only supplied for NODE_TYPE=1
+NUM_TX_NODES=${13};     #Only supplied for NODE_TYPE=0
+TX_NODE_PREFIX=${14};   #Only supplied for NODE_TYPE=0
+ADMIN_SITE_PORT=${15};  #Only supplied for NODE_TYPE=0
 
 MINER_THREADS=1;
 # Difficulty constant represents ~15 sec. block generation for one node
@@ -52,6 +53,7 @@ NODEKEY_FILE_PATH="$GETH_HOME/nodekey";
 # Target difficulty scales with number of miners
 DIFFICULTY=`printf "0x%X" $(($DIFFICULTY_CONSTANT * $NUM_MN_NODES))`;
 
+
 ################
 # Update modules
 ################
@@ -65,7 +67,7 @@ sleep 5;
 # Install packages
 ##################
 echo "===== Starting packages installation =====";
-sudo apt-get -y install npm=3.5.2-0ubuntu4 git=1:2.7.4-0ubuntu1 || unsuccessful_exit "package install 1 failed";
+sudo apt-get -y install npm=3.5.2-0ubuntu4 git=1:2.7.4-0ubuntu1 jq=1.5+dfsg-1 || unsuccessful_exit "package install 1 failed";
 sudo update-alternatives --install /usr/bin/node nodejs /usr/bin/nodejs 100 || unsuccessful_exit "package install 2 failed";
 echo "===== Completed packages installation =====";
 
@@ -125,29 +127,55 @@ done
 
 echo "===== Completed node key and node ID generation =====";
 
+echo "===== Starting genesis file =====";
+
 ##############################################
-# Setup Genesis file and pre-allocated account
+# Generate private key and import into geth
 ##############################################
-echo "===== Starting genesis file and pre-allocated account creation =====";
+
 PASSWD_FILE="$GETH_HOME/passwd.info";
 printf %s $PASSWD > $PASSWD_FILE;
 
 PRIV_KEY=`echo "$PASSPHRASE" | sha256sum | sed s/-// | sed "s/ //"`;
 printf "%s" $PRIV_KEY > $HOMEDIR/priv_genesis.key;
-PREFUND_ADDRESS=`geth --datadir $GETH_HOME --password $PASSWD_FILE account import $HOMEDIR/priv_genesis.key | grep -oP '\{\K[^}]+'` || unsuccessful_exit "failed to import pre-fund account";
-if [ -z $PREFUND_ADDRESS ]; then unsuccessful_exit "could not determine address of pre-fund account after importing into geth"; fi
+ETHERBASE_ADDRESS=`geth --datadir $GETH_HOME --password $PASSWD_FILE account import $HOMEDIR/priv_genesis.key | grep -oP '\{\K[^}]+'` || unsuccessful_exit "failed to import pre-fund account";
+
+if [ -z $ETHERBASE_ADDRESS ]; then unsuccessful_exit "could not determine address of etherbase account after importing into geth"; fi
 rm $HOMEDIR/priv_genesis.key;
 rm $PASSWD_FILE;
 
-cd $HOMEDIR
-wget -N ${ARTIFACTS_URL_PREFIX}/scripts/start-private-blockchain.sh || unsuccessful_exit "failed to download start-private-blockchain.sh";
-wget -N ${ARTIFACTS_URL_PREFIX}/genesis-template.json || unsuccessful_exit "failed to download genesis-template.json";
-# Place our calculated difficulty into genesis file
-sed s/#DIFFICULTY/$DIFFICULTY/ $HOMEDIR/genesis-template.json > $HOMEDIR/genesis-intermediate1.json;
-sed s/#PREFUND_ADDRESS/$PREFUND_ADDRESS/ $HOMEDIR/genesis-intermediate1.json > $HOMEDIR/genesis-intermediate2.json;
-sed s/#NETWORKID/$NETWORK_ID/ $HOMEDIR/genesis-intermediate2.json > $HOMEDIR/genesis.json;
+##############################################
+# Did we get a genesis file specified?  if so decode the base64
+# Otherwise we need to create one
+##############################################
+if [ ${#SPECIFIED_GENESIS_BLOCK} -gt 0 ]; then
+	# Genesis block comes in as base64, need to decode it
+	SPECIFIED_GENESIS_BLOCK=`echo ${SPECIFIED_GENESIS_BLOCK} | base64 --decode`;
+	echo ${SPECIFIED_GENESIS_BLOCK} > $GENESIS_FILE_PATH;
+
+	echo "===== Genesis block specified! =====";
+else
+	##############################################
+	# Setup Genesis file and pre-allocated account
+	##############################################
+	echo "===== Starting genesis file creation =====";
+
+	cd $HOMEDIR
+	wget -N ${ARTIFACTS_URL_PREFIX}/genesis-template.json || unsuccessful_exit "failed to download genesis-template.json";
+	# Place our calculated difficulty into genesis file
+	sed s/#DIFFICULTY/$DIFFICULTY/ $HOMEDIR/genesis-template.json > $HOMEDIR/genesis-intermediate1.json;
+	sed s/#PREFUND_ADDRESS/$ETHERBASE_ADDRESS/ $HOMEDIR/genesis-intermediate1.json > $HOMEDIR/genesis-intermediate2.json;
+	sed s/#NETWORKID/$NETWORK_ID/ $HOMEDIR/genesis-intermediate2.json > $HOMEDIR/genesis.json;
+fi
+
+##################
+# Extract gasLimit from genesis.json, needed for miner option targetgaslimit 
+GASLIMIT=`cat "$GENESIS_FILE_PATH" | jq '.gasLimit'`;
 
 echo "===== Completed genesis file and pre-allocated account creation =====";
+
+cd $HOMEDIR
+wget -N ${ARTIFACTS_URL_PREFIX}/scripts/start-private-blockchain.sh || unsuccessful_exit "failed to download start-private-blockchain.sh";
 
 ####################
 # Initialize geth for private network
@@ -218,10 +246,11 @@ printf "%s\n" "NUM_BOOT_NODES=$NUM_BOOT_NODES" >> $GETH_CFG_FILE_PATH;
 printf "%s\n" "MINER_THREADS=$MINER_THREADS" >> $GETH_CFG_FILE_PATH;
 printf "%s\n" "GETH_HOME=$GETH_HOME" >> $GETH_CFG_FILE_PATH;
 printf "%s\n" "GETH_LOG_FILE_PATH=$GETH_LOG_FILE_PATH" >> $GETH_CFG_FILE_PATH;
+printf "%s\n" "GASLIMIT=$GASLIMIT" >> $GETH_CFG_FILE_PATH;
 
 if [ $NODE_TYPE -eq 0 ]; then #TX node
   printf "%s\n" "ETHERADMIN_HOME=$ETHERADMIN_HOME" >> $GETH_CFG_FILE_PATH;
-  printf "%s\n" "PREFUND_ADDRESS=$PREFUND_ADDRESS" >> $GETH_CFG_FILE_PATH;
+  printf "%s\n" "ETHERBASE_ADDRESS=$ETHERBASE_ADDRESS" >> $GETH_CFG_FILE_PATH;
   printf "%s\n" "NUM_MN_NODES=$NUM_MN_NODES" >> $GETH_CFG_FILE_PATH;
   printf "%s\n" "TX_NODE_PREFIX=$TX_NODE_PREFIX" >> $GETH_CFG_FILE_PATH;
   printf "%s\n" "NUM_TX_NODES=$NUM_TX_NODES" >> $GETH_CFG_FILE_PATH;
