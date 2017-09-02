@@ -138,7 +138,6 @@ printf %s $PASSWD > $PASSWD_FILE;
 
 PRIV_KEY=`echo "$PASSPHRASE" | sha256sum | sed s/-// | sed "s/ //"`;
 printf "%s" $PRIV_KEY > $HOMEDIR/priv_genesis.key;
-
 ETHERBASE_ADDRESS=`geth --datadir $GETH_HOME --password $PASSWD_FILE account import $HOMEDIR/priv_genesis.key | grep -oP '\{\K[^}]+'` || unsuccessful_exit "failed to import pre-fund account";
 
 if [ -z $ETHERBASE_ADDRESS ]; then unsuccessful_exit "could not determine address of etherbase account after importing into geth"; fi
@@ -154,22 +153,18 @@ if [ ${#SPECIFIED_GENESIS_BLOCK} -gt 0 ]; then
 	SPECIFIED_GENESIS_BLOCK=`echo ${SPECIFIED_GENESIS_BLOCK} | base64 --decode`;
 	echo ${SPECIFIED_GENESIS_BLOCK} > $GENESIS_FILE_PATH;
 
-	##################
-	# Extract pre-fund address from genesis.json 
-	PREFUND_ADDRESS=`cat "$GENESIS_FILE_PATH" | jq '.alloc | keys[0]'`;
-
 	echo "===== Genesis block specified! =====";
 else
 	##############################################
 	# Setup Genesis file and pre-allocated account
 	##############################################
 	echo "===== Starting genesis file creation =====";
-	PREFUND_ADDRESS=$ETHERBASE_ADDRESS;
+
 	cd $HOMEDIR
 	wget -N ${ARTIFACTS_URL_PREFIX}/genesis-template.json || unsuccessful_exit "failed to download genesis-template.json";
 	# Place our calculated difficulty into genesis file
 	sed s/#DIFFICULTY/$DIFFICULTY/ $HOMEDIR/genesis-template.json > $HOMEDIR/genesis-intermediate1.json;
-	sed s/#PREFUND_ADDRESS/$PREFUND_ADDRESS/ $HOMEDIR/genesis-intermediate1.json > $HOMEDIR/genesis-intermediate2.json;
+	sed s/#PREFUND_ADDRESS/$ETHERBASE_ADDRESS/ $HOMEDIR/genesis-intermediate1.json > $HOMEDIR/genesis-intermediate2.json;
 	sed s/#NETWORKID/$NETWORK_ID/ $HOMEDIR/genesis-intermediate2.json > $HOMEDIR/genesis.json;
 fi
 
@@ -255,7 +250,7 @@ printf "%s\n" "GASLIMIT=$GASLIMIT" >> $GETH_CFG_FILE_PATH;
 
 if [ $NODE_TYPE -eq 0 ]; then #TX node
   printf "%s\n" "ETHERADMIN_HOME=$ETHERADMIN_HOME" >> $GETH_CFG_FILE_PATH;
-  printf "%s\n" "PREFUND_ADDRESS=$PREFUND_ADDRESS" >> $GETH_CFG_FILE_PATH;
+  printf "%s\n" "ETHERBASE_ADDRESS=$ETHERBASE_ADDRESS" >> $GETH_CFG_FILE_PATH;
   printf "%s\n" "NUM_MN_NODES=$NUM_MN_NODES" >> $GETH_CFG_FILE_PATH;
   printf "%s\n" "TX_NODE_PREFIX=$TX_NODE_PREFIX" >> $GETH_CFG_FILE_PATH;
   printf "%s\n" "NUM_TX_NODES=$NUM_TX_NODES" >> $GETH_CFG_FILE_PATH;
