@@ -1,68 +1,30 @@
 #!/usr/bin/env perl
 package main;
 
-use 5.010;
-use strict;
+use 5.012;
 use warnings;
-use Getopt::Long;
 use Pod::Usage;
-import util;
+import flow;
+our $VERSION    = 0.5.0;
 
-our $VERSION    = 0.1.8;
-
-my %config      = (
-    "agent.serverIp"        => undef,
-    "server.mysqlHost"      => undef,
-    "server.mysqlDbName"    => undef,
-    "server.mysqlUser"      => undef,
-    "server.mysqlPassword"  => undef,
-    "server.smtpServer"     => undef,
-    "server.smtpUser"       => undef,
-    "server.smtpPassword"   => undef,
-    "server.smtpTo"         => undef,
-);
-
-{   # Parse options.
-    Getopt::Long::Configure qw(gnu_getopt);
-    my $optVerbose;
-    my $optQuiet;
-    my $optDryrun;
-    my %optConfig;
-
-    GetOptions(
-        'verbose|v'     =>  \$optVerbose,
-        'quiet|q'       =>  \$optQuiet,
-        'dryrun|n'      =>  \$optDryrun,
-        'config|c=s'    =>  \%optConfig,
-    ) || exit(1);
-    $util::verbose  = $optVerbose ? 1 : ($optQuiet ? 3 : 2 );
-    $util::dryrun   = $optDryrun;
-
-    # parse config
-    while (my ($key,$value) = each %optConfig) {
-        if(exists $config{$key}){
-            $config{$key} = $value;
-        }else{
-            pod2usage(
-                -msg => "Invalid config key '$key' specified. Supported keys are:",
-                -sections => "CONFIGKEY",
-                -verbose => 99);
-        }
-    }
+sub centosPrepare {
+  my $rpmRepo = "http://mirror.kaiyuanshe.org/zabbix/zabbix/2.2/rhel/7/x86_64/zabbix-release-2.2-1.el7.noarch.rpm";
+  runCmd("rpm -q --quiet zabbix-release || rpm -i --quiet $rpmRepo && sed -i s/repo\.zabbix\.com/mirror.kaiyuanshe.org\\\\/zabbix/ /etc/yum.repos.d/zabbix.repo");
 }
 
-my $optType     = shift || "help";
-
-my %flow = (
+regFlows({
     agent   => sub {
-        unless ($config{'agent.serverIp'}){
+        my $regStep = shift;
+        my $config = shift;
+
+        unless ($config->{'serverIp'}){
             pod2usage(
-                -msg        => "agent.serverIp not set",
+                -msg        => "serverIp not set",
                 -sections   => "DESCRIPTION",
                 -verbose    => 99);
         }
-        
-        my $zabbixServerIp = $config{'agent.serverIp'};
+
+        my $zabbixServerIp = $config->{'serverIp'};
         require Sys::Hostname;
         my $host = &Sys::Hostname::hostname;
 
@@ -79,26 +41,27 @@ EOM
 UserParameter=azure.vm.agent.alive,ps aux |grep -c "[w]aagent -daemon"
 EOM
 
-        my $s1 = [];
-        regSteps($s1, "Install Zabbix Agent package.", sub {
-            installPackageSuite("zabbix-agent");
+        $regStep->("Prepare on CentOS", \&centosPrepare) if (getDistro() =~ /centos/);
+
+        $regStep->("Install Zabbix Agent package.", sub {
+            installPackageSuite(['zabbix-agent']);
         });
-        regSteps($s1, "Configure zabbix agent.", sub {
+        $regStep->("Configure zabbix agent.", sub {
             installFile('/etc/zabbix/zabbix_agentd.conf', $confAgent)
             || runCmd("mkdir -p $confAgentDir")
             || installFile("$confAgentDir/azure_vm.conf", $confAzureVM);
         });
-        regSteps($s1, "Enable Zabbix Agent service.", sub {
+        $regStep->("Enable Zabbix Agent service.", sub {
             enableService('zabbix-agent');
         });
-        regSteps($s1, "Restart Zabbix Agent service.", sub {
-            runCmd('service zabbix-agent restart');
+        $regStep->("Restart Zabbix Agent service.", sub {
+            restartService('zabbix-agent');
         });
-
-        return $s1;
     },
     server  => sub {
-        unless ($config{'server.mysqlDbName'} && $config{'server.mysqlUser'} && $config{'server.mysqlPassword'}){
+        my $regStep = shift;
+        my $config = shift;
+        unless ($config->{'mysqlPassword'}){
             pod2usage(
                 -msg        => "server configuration not well set",
                 -sections   => [qw(DESCRIPTION CONFIGKEY/SERVER)],
@@ -107,21 +70,29 @@ EOM
 
         my $dbLocalhost     = 'localhost';
 
-        my $dbServerHost    = $config{'server.mysqlHost'} || $dbLocalhost;
-        my $zabbixDb        = $config{'server.mysqlDbName'};
-        my $zabbixUser      = $config{'server.mysqlUser'};
-        my $zabbixPassword  = $config{'server.mysqlPassword'};
+        my $dbServerHost    = $config->{'mysqlHost'} // $dbLocalhost;
+        my $zabbixDb        = $config->{'mysqlDbName'} // 'zabbix';
+        my $zabbixUser      = $config->{'mysqlUser'} // 'zabbix';
+        my $zabbixPassword  = $config->{'mysqlPassword'};
 
-        my $smtpServer      = $config{'server.smtpServer'   };
-        my $smtpUser        = $config{'server.smtpUser'     };
-        my $smtpPassword    = $config{'server.smtpPassword' };
-        my $smtpTo          = $config{'server.smtpTo'       };
+        my $smtpServer      = $config->{'smtpServer'   };
+        my $smtpUser        = $config->{'smtpUser'     };
+        my $smtpPassword    = $config->{'smtpPassword' };
+        my $smtpTo          = $config->{'smtpTo'       };
 
-        my $s1 = [];
-        regSteps($s1, "Install Zabbix Server package.", sub{
-            installPackageSuite("zabbix-server");
+        if($dbServerHost=~/(.*):/){
+          $dbServerHost = $1;
+        }
+
+        $regStep->("Prepare on CentOS", \&centosPrepare) if (getDistro() =~ /centos/);
+
+        $regStep->("Install Zabbix Server package.", sub{
+            installPackageSuite({
+                'ubuntu14.04' => ['zabbix-server-mysql', 'zabbix-frontend-php', 'php5-mysql', 'mysql-client'],
+                'centos7' => ['zabbix-server-mysql', 'zabbix-web-mysql', 'mariadb'],
+            });
         });
-        regSteps($s1, "Configure apache.", sub{
+        $regStep->("Configure apache.", sub{
             my $confServerApachePhp = << 'EOM';
 <Directory "/usr/share/zabbix">
   Require all granted
@@ -145,22 +116,25 @@ EOM
             }
         });
 
-        regSteps($s1, "Create database.", sub {
+        $regStep->("Create database.", sub {
             my $dbSetup = << "EOM";
 create database if not exists $zabbixDb character set utf8 collate utf8_bin;
 grant all privileges on $zabbixDb.* to $zabbixUser\@localhost identified by "$zabbixPassword";
 EOM
-            installPackageSuite('mysql-server');
-            runCmd("service mariadb start");
+            installPackageSuite({
+                'ubuntu14.04' => ['mysql-server'],
+                'centos7' => ['mariadb-server'],
+            });
+            restartService('mariadb');
             enableService("mariadb");
             runCmd("mysql -e '$dbSetup'");
         }) if ($dbServerHost eq $dbLocalhost);
 
-        regSteps($s1, "Test db connection.", sub {
+        $regStep->("Test db connection.", sub {
             runCmd("mysql -h \"$dbServerHost\" -u\"$zabbixUser\" -p'$zabbixPassword' \"$zabbixDb\" -e \"\"");
         });
 
-        regSteps($s1, "Configure initial db.", sub {
+        $regStep->("Configure initial db.", sub {
             my $confServerPhp = << "EOM";
 <?php
 global \$DB;
@@ -197,10 +171,10 @@ EOM
                 $catsql = "zcat /usr/share/zabbix-server-mysql/schema.sql.gz "
                         ."/usr/share/zabbix-server-mysql/images.sql.gz "
                         ."/usr/share/zabbix-server-mysql/data.sql.gz";
-            }elsif(-d '/usr/share/doc/zabbix-server-mysql-2.2.15/create'){
-                $catsql = "cat /usr/share/doc/zabbix-server-mysql-2.2.15/create/schema.sql "
-                        ."/usr/share/doc/zabbix-server-mysql-2.2.15/create/images.sql "
-                        ."/usr/share/doc/zabbix-server-mysql-2.2.15/create/data.sql";
+            }else {
+                $catsql = "cat /usr/share/doc/zabbix-server-mysql-2.2*/create/schema.sql "
+                        ."/usr/share/doc/zabbix-server-mysql-2.2*/create/images.sql "
+                        ."/usr/share/doc/zabbix-server-mysql-2.2*/create/data.sql";
             }
 
             if(-d '/etc/zabbix/web/') {
@@ -215,23 +189,36 @@ EOM
         });
 
         if (-x '/usr/sbin/semodule'){
-          regSteps($s1, "Configure selinux.", sub{
-            installPackageSuite("selinux-util");
-            my $log = 'type=AVC msg=audit(1477461524.352:480): avc:  denied  { name_connect } for  pid=1852 comm="/usr/sbin/httpd" dest=10051 scontext=system_u:system_r:httpd_t:s0 tcontext=system_u:object_r:zabbix_port_t:s0 tclass=tcp_socket';
-            runCmd("audit2allow -M zabbix-web << EO\n$log\nEO\n")
-            || runCmd("semodule -i zabbix-web.pp");
+          $regStep->("Configure selinux.", sub{
+            installPackageSuite(['policycoreutils-python']);
+
+            my $log = << "EOM";
+type=AVC msg=audit(1477461524.352:480): avc:  denied  { name_connect } for  pid=1852 comm="/usr/sbin/httpd" dest=10051 scontext=system_u:system_r:httpd_t:s0 tcontext=system_u:object_r:zabbix_port_t:s0 tclass=tcp_socket
+type=AVC msg=audit(1479693715.631:287): avc:  denied  { name_connect } for  pid=1924 comm="zabbix_server" dest=3306 scontext=system_u:system_r:zabbix_t:s0 tcontext=system_u:object_r:mysqld_port_t:s0 tclass=tcp_socket
+type=AVC msg=audit(1479694135.883:346): avc:  denied  { name_connect } for  pid=2504 comm="/usr/sbin/httpd" dest=3306 scontext=system_u:system_r:httpd_t:s0 tcontext=system_u:object_r:mysqld_port_t:s0 tclass=tcp_socket
+EOM
+            installFile('zabbix_sw.input', $log)
+            || runCmd("audit2allow -M zabbix_sw < zabbix_sw.input")
+            || runCmd("semodule -i zabbix_sw.pp");
           });
         }
 
-        regSteps($s1, "Enable and restart service.", sub{
-            enableService("httpd");
-            enableService("zabbix-server");
-            runCmd("service apache2 restart || service httpd restart")
-            || runCmd("service zabbix-server restart");
+        $regStep->("Enable and restart service.", sub{
+          restartService('zabbix-server');
+          if(getDistro() =~ /centos/) {
+            enableService('httpd');
+            enableService('zabbix-server');
+            restartService('httpd');
+          } else {
+            restartService('apache2');
+          }
         });
 
-        regSteps($s1, "Configure azure specific tempalte.", sub {
-            installPackageSuite("perl-jsonrpc");    # for regTemplate
+        $regStep->("Configure azure specific tempalte.", sub {
+            installPackageSuite({
+                'ubuntu14.04' => ['libjson-rpc-perl'],
+                'centos7' => ['perl-JSON-RPC'],
+            });    # for regTemplate
             require JSON::RPC::Legacy::Client;
             our $client      = new JSON::RPC::Legacy::Client;
             my $endpoint    = 'http://127.0.0.1/zab/';
@@ -283,35 +270,28 @@ EOM
 
             my $importRequest  = 
             {
-                "jsonrpc", "2.0",
-                "method", "configuration.import",
-                "params", {
-                    "format", "xml",
-                    "rules", {
-                        "templates", {
-                            "createMissing", 1
-                        },
-                        "items", {
-                            "createMissing", 1
-                        },
-                        "triggers",{
-                            "createMissing", 1
-                        },
-                        "templateLinkage",{
-                            "createMissing", 1
-                        },
+                'jsonrpc', '2.0',
+                'method', 'configuration.import',
+                'params', {
+                    'format', 'xml',
+                    'rules', {
+                        'templates',      { 'createMissing', 1 },
+                        'applications',   { 'createMissing', 1 },
+                        'items',          { 'createMissing', 1 },
+                        'triggers',       { 'createMissing', 1 },
+                        'templateLinkage',{ 'createMissing', 1 },
                     },
-                    "source", "$xml"
+                    'source', $xml
                 },
-                "auth", "$token",
-                "id", 1
+                'auth', $token,
+                'id', 1
             };
 
             ($ret, $token) = callrpc($importRequest);
             return $ret;
         });
 
-        regSteps($s1, "Configure autoreg.", sub{
+        $regStep->("Configure autoreg.", sub{
             my $autoRegSetup = <<'EOM';
 INSERT INTO \`actions\` VALUES (7,'autoreg1',2,0,0,0,'Auto registration: {HOST.HOST}','Host name: {HOST.HOST}\r\nHost IP: {HOST.IP}\r\nAgent port: {HOST.PORT}',0,'','');
 INSERT INTO \`operations\` VALUES (7,7,6,0,1,1,0);
@@ -320,7 +300,7 @@ EOM
             runCmd("mysql -h \"$dbServerHost\" -u\"$zabbixUser\" -p'$zabbixPassword' \"$zabbixDb\" -e \"$autoRegSetup\"");
         });
 
-        regSteps($s1, "Configure mail media.", sub {
+        $regStep->("Configure mail media.", sub {
           my $mailBin;
           if ($smtpServer && $smtpUser && $smtpPassword){
             $mailBin = << "EOM";
@@ -342,7 +322,7 @@ INSERT INTO \\`media\\` VALUES (1,1,4,'$smtpTo',0,63,'1-7,00:00-24:00');
 UPDATE \\`actions\\` SET status=0 WHERE actionid=3;
 EOM
 
-            installPackageSuite('sendemail')
+            installPackageSuite(['sendemail'])
             && runCmd("curl http://caspian.dotconf.net/menu/Software/SendEmail/sendEmail-v1.56.tar.gz| "
               ."tar zxO sendEmail-v1.56/sendEmail > /usr/local/bin/sendEmail && chmod +x /usr/local/bin/sendEmail");
             runCmd("mkdir -p $alertScriptsPath");
@@ -352,239 +332,275 @@ EOM
             || runCmd("chmod +x $mailBinPath")
             || runCmd("mysql -h \"$dbServerHost\" -u\"$zabbixUser\" -p'$zabbixPassword' \"$zabbixDb\" -e \"$smtpMailMediaSetup\"");
         }) if ($smtpTo);
-
-        return $s1;
     }
-);
+});
+&runFlows;
 
-my $getSteps = $flow{$optType};
-pod2usage(1) unless $getSteps;
-runSteps(&$getSteps);
 
 BEGIN{
-package util;
-
-use 5.010;
-use strict;
+# Module flow, provides flow running logic and some system utils.
+package flow;
+use 5.012;
 use warnings;
 use Exporter qw(import);
-
-our @EXPORT        = qw(installFile installPackageSuite runCmd runSteps regSteps enableService
-    LOGDEBUG LOGINFO LOGWARN LOGERR info);
-our %EXPORT_TAGS    = (logging => [qw(LOGDEBUG LOGINFO LOGWARN LOGERR info)]);
-
-my $rpmRepo = "http://mirror.azure.cn/zabbix/zabbix/2.2/rhel/7/x86_64/zabbix-release-2.2-1.el7.noarch.rpm http://mirror.azure.cn/epel/7/x86_64/e/epel-release-7-8.noarch.rpm";
-
+use File::Copy qw(copy);
+use File::Temp qw(tempfile);
+use Getopt::Long qw(:config gnu_getopt);
+use Pod::Usage qw(pod2usage);
 use constant {
-    LOGDEBUG  => 1,
-    LOGINFO   => 2,
-    LOGWARN   => 3,
-    LOGERR    => 4,
+  LOGERR   => 1,
+  LOGINFO  => 2,
+  LOGDEBUG => 3,
 };
 
-our $verbose        = LOGINFO;
-our $dryrun         = 1;
-our $defaultRetry   = 5;
-our $defaultSleep   = 30;
-
-sub installFile
-{
-    my $path        = shift;
-    my $content     = shift;
-    my $FL;
-
-    return 0 if $dryrun;
-
-    open($FL, '>', $path);
-    print $FL $content;
-    close $FL;
-    return 0;
-}
-
-sub setLogLevel
-{
-    $verbose = shift;
-}
-
-sub info
-{
-    my $msg     = shift;
-    my $level   = shift || LOGINFO;
-
-    return if ($verbose > $level);
-    say "[MONICAKE] $msg";
-}
-
-sub runCmd
-{
-    my $cmd = shift;
-    if ($verbose >= LOGINFO) { $cmd .= " >/dev/null"; }
-
-    info "Run command:\n$cmd", LOGDEBUG;
-    return 0 if $dryrun;
-
-    my $ret = system($cmd);
-    if ($ret){
-        info "Return code is $ret", LOGDEBUG;
-    }
-
-    return $ret;
-}
-
-my %suites = (
-    "zabbix-agent"      => ['zabbix-agent'],
-    "zabbix-server"     => ['zabbix-server-mysql', 'zabbix-frontend-php', 'php5-mysql', 'mysql-client'],
-    "zabbix-server\@centos7"    => ['zabbix-server-mysql', 'zabbix-web-mysql', 'mariadb'],
-    "mysql-server"              => ['mysql-server'],
-    "mysql-server\@centos7"     => ['mariadb-server'],
-    "perl-jsonrpc"      => ['libjson-rpc-perl'],
-    "perl-jsonrpc\@centos7"      => ['perl-JSON-RPC'],
-    "sendemail"         => ['sendemail'],
-    "selinux-util"      => ['policycoreutils-python']
+our $VERSION = '0.2.9.e';
+our @EXPORT = qw(
+    mlog regFlows runFlows
+    installPackageSuite
+    runCmd enableService restartService stopService
+    getDistro installFile getConfig
 );
+our ( $retryCount, $retryWait ) = ( 5, 30 );
+my ( $logPrefix, $verbosity, $dryrun, %flows ) = ( '', LOGINFO );
 
-sub installPackageSuite
-{
-    my $packageSuite    = shift;
-    my $packageManager  = getPackageManager();
-    return 1 unless $packageManager;
+sub mlog {
+  my ( $msg, $level ) = @_;
+  say $logPrefix. $msg if $verbosity >= ( $level // LOGINFO );
+  return 0;
+}
 
-    my $packageInstall  = $$packageManager{install};
+sub regFlows {
+  for my $flowsRef (@_) {
+    for my $key ( keys %$flowsRef ) { $flows{$key} = $flowsRef->{$key}; }
+  }
+}
 
-    my $packagesRef;
-    if($$packageManager{distro}){
-       my $psfull = "$packageSuite\@".$$packageManager{distro};
-       if(exists $suites{$psfull}){
-           $packagesRef = $suites{$psfull}
-       }
+sub runFlows {
+  _exit( 2, 'No registered flows found.' ) unless (%flows);
+  my %parameter;
+  my %optConfig;
+  GetOptions(
+    'help|h'    => sub { pod2usage(-1); },
+    'dryrun|n'  => sub { $dryrun = 1; },
+    'verbose|v' => sub { $verbosity = LOGDEBUG; },
+    'quiet|q'   => sub { $verbosity = LOGERR; },
+    'config|c=s' => \%optConfig,
+  ) or _exit(1);
+  my $flowname = shift @ARGV;
+  @parameter{ map { (/(.*?)\.(.*)/) ? $2 : $_ } keys %optConfig } = values %optConfig;
+
+  {
+    local $" = ', ';
+    my @supportedFlows = sort keys %flows;
+    _exit( 2, "Supported flows: @supportedFlows." ) unless $flowname;
+    unless ( $flows{$flowname} ) {
+      my @matched = grep {/^$flowname/i} @supportedFlows;
+      _exit( 2,
+        ( @matched == 0 )
+        ? "No flows match name '$flowname' found."
+        : "Multiple flows match name '$flowname' found: @matched." )
+          if ( @matched != 1 );
+      $flowname = $matched[0];
     }
+  }
 
-    if (!$packagesRef){
-        unless(exists $suites{$packageSuite}){
-            info("Package suite $packageSuite not supported.");
-            exit(4);
-        } else {
-            $packagesRef = $suites{$packageSuite};
+  $logPrefix = "[$flowname] ";
+  mlog('Begin Flow');
+  my @stepCol = ();
+  my $ret     = &{ $flows{$flowname} }(
+    sub {
+      my $name = shift;
+      my $sub  = shift;
+      if ($name) { push @stepCol, { name => $name, run => $sub, }; }
+      else       { @stepCol = (); }
+      0;
+    },
+    \%parameter
+  );
+
+  _exit( 3, "Flow failed with code: $ret" ) if ($ret);
+  runSteps( \@stepCol );
+  mlog('End Flow');
+}
+
+sub runSteps {
+  my $steps = shift;
+  my $len   = @$steps;
+  my $index = 0;
+  foreach my $step (@$steps) {
+    ++$index;
+    mlog "($index/$len) $step->{name}";
+    my $run   = $step->{run};
+    my $ret   = &$run;
+    my $retry = $retryCount;
+    while ( $ret && $retry ) {
+      mlog "Failed with code: $ret. $retry retries remaining, wait ${retryWait}s...";
+      sleep($retryWait);
+      --$retry;
+      $ret = &$run;
+    }
+    _exit( 3, "Step failed with code: $ret" ) if ($ret);
+  }
+}
+
+sub installFile {
+  return 0 if $dryrun;
+  my ( $path, $content ) = @_;
+  open( my $FL, '>', $path ) or _exit( 17, "Error writing to $path: $!." );
+  print $FL $content;
+  close $FL;
+  return 0;
+}
+
+sub runCmd {
+  my $cmd = shift;
+  mlog "Command Line: $cmd", LOGDEBUG;
+  return 0 if $dryrun;
+  $cmd .= " >/dev/null" if ( $verbosity < LOGINFO );
+  my $rcmd = ( $cmd =~ /["']/ ) ? 'bash ' . _writeTmpFile( [ $cmd, "\n" ] ) : $cmd;
+  my $ret = system($rcmd);
+  $ret = $ret >> 8 if ( $ret > 0 );
+  mlog( "Command Return: $ret", LOGDEBUG );
+  return $ret;
+}
+
+sub installPackageSuite {
+  state $installSub = do {
+    my $apt = {
+      install => 'DEBIAN_FRONTEND=noninteractive apt-get -y --no-install-recommends install',
+      refresh => 'apt-get update',
+      verify  => '[ $(dpkg-query -l %1$s |grep ^ii |wc -l) -eq %2$s ]',
+    };
+    my $pacman = {
+      install => 'pacman -Sq --noconfirm',
+      refresh => 'pacman -Sy',
+      verify  => 'pacman -Qq %1$s',
+    };
+    my $yum = {
+      install => 'yum -y -q install',
+      verify  => 'rpm -q --quiet %1$s',
+      refresh => 'yum -y -q install epel-release'
+    };
+    my $packageManager = getConfig(
+      { 'arch'        => $pacman,
+        'centos7'     => $yum,
+        '@'           => $apt, # ubuntu14.04, ubuntu16.04
+      }
+    ) or _exit( 4, 'Package manager not supported.' );
+    sub {
+      my $packageConfig = shift;
+      _exit( 4, 'Package suite should be a list or hash.' ) unless ( $packageConfig && ref $packageConfig );
+      my $packagesRef = getConfig( ( ref $packageConfig eq 'ARRAY' )
+        ? { '@' => $packageConfig }
+        : $packageConfig );
+      _exit( 4, 'Package suite not supported.' ) unless ( $packagesRef && ref $packagesRef eq 'ARRAY' && @$packagesRef );
+      my $packageLine = join( " ", @$packagesRef );
+      my $packageVerify = $packageManager->{verify};
+      my $packageVerifyCmd;
+
+      if ($packageVerify) {
+        my $packageVerifyCmd
+            = sprintf( $packageVerify, $packageLine, scalar @$packagesRef )
+            . ' >/dev/null 2>&1';
+        if ( runCmd($packageVerifyCmd) == 0 ) {
+          mlog( "Already installed.", LOGDEBUG );
+          return 0;
         }
-    }
+      }
 
-    return 0 unless @$packagesRef;
-
-    my $packageLine = join(" ", @$packagesRef);
-    my $cmd = "$packageInstall $packageLine";
-    info "Begin install packages:$packageLine", LOGDEBUG;
-    my $ret = runCmd($cmd);
-
-    if (!$ret){
-        my $verify = $$packageManager{verify};
-        if($verify){
-            $ret = runCmd("$verify $packageLine");
-        }
-    }
-
-    if (!$ret){
-        info("Install succeed.", LOGDEBUG);
-    }else{
-        info("Install failed. Try update.", LOGDEBUG);
+      my $packageInstall = $packageManager->{install};
+      my $cmd            = "$packageInstall $packageLine";
+      mlog "Begin install packages:$packageLine", LOGDEBUG;
+      my $ret = runCmd($cmd);
+      $ret = runCmd($packageVerifyCmd) if ( !$ret && $packageVerifyCmd );
+      if ( !$ret ) { mlog( "Install succeed.", LOGDEBUG ); }
+      else {
+        mlog( "Install failed. Try update.", LOGDEBUG );
         my $packageUpdate = $$packageManager{refresh};
         runCmd($packageUpdate);
         $ret = runCmd($cmd);
-        if (!$ret){
-            info("Install succeed.", LOGDEBUG);
-        }else{
-            info("Install failed.", LOGDEBUG);
-        }
+        if   ( !$ret ) { mlog( "Install succeed.", LOGDEBUG ); }
+        else           { mlog( "Install failed.",  LOGDEBUG ); }
+      }
+
+      return $ret;
     }
+  };
 
-    return $ret;
+  return $installSub->(@_);
 }
 
-# Add verification for yum since it does not fail on missing package.
-sub getPackageManager()
 {
-    my %pm  = (
-        aptitude    => {
-            install => "DEBIAN_FRONTEND=noninteractive apt-get -y --no-install-recommends install",
-            refresh => "apt-get update"
-        },
-        yum         => {
-            distro  => "centos7",
-            install => "yum -y install",
-            verify  => "rpm -q",
-            refresh => "rpm -q zabbix-release || rpm -ivh $rpmRepo && sed -i s/repo\.zabbix\.com/mirror.azure.cn\\\\/zabbix/ /etc/yum.repos.d/zabbix.repo"
-        }
-    );
-
-    return $pm{aptitude}    unless runCmd('which apt-get 2> /dev/null');
-    return $pm{yum}         unless runCmd('which yum 2> /dev/null');
-
-    info("Package manager not supported.", LOGERR);
-    exit(3);
+  no strict 'refs';
+  for my $action (qw(enable restart stop)){
+    *{$action.'Service'} = sub {
+      state $run = do {
+        my $cmd = &_getServiceManager->{$action} or _exit( 5, "Serivce operation not supported." );
+        sub { return runCmd( sprintf( $cmd, shift ) ); }
+      };
+      return $run->(@_);
+    }
+  }
 }
 
-sub regSteps
-{
-    my $steps       = shift;
-    my $name        = shift;
-    my $sub         = shift;
-    push @$steps, {
-        name    => $name,
-        run     => $sub,
+sub _getServiceManager(){
+  state $serviceManager = do {
+    my $svcSystemctl = {
+        enable  => 'systemctl enable %s',
+        restart => 'systemctl restart %s',
+        stop    => 'systemctl stop %s',
+      };
+    my $svcUpstart = {
+      enable  => 'echo %s',
+      restart => 'service %s restart',
     };
+    getConfig(
+      { '@'           => $svcSystemctl, # arch, centos7, ubuntu16.04
+        'ubuntu14.04' => $svcUpstart,
+      }
+    ) or _exit( 5, "Serivce manager not supported." );
+  };
+  return $serviceManager;
 }
 
-sub runSteps
-{
-    my $steps   = shift;
-    my $len     = @$steps;
-    my $index   = 0;
-    foreach my $step (@$steps){
-        ++$index;
-        info "($index/$len) $$step{name}";
-        my $run = $$step{run};
-        my $ret = &$run;
-        my $retry = $defaultRetry;
-        while ($ret && $retry){
-            info "failed with code: $ret, $retry retries remaining. Sleep for $defaultSleep seconds...";
-            sleep($defaultSleep);
-            --$retry;
-            $ret = &$run;
-        }
-
-        if ($ret){
-            info "failed with code: $ret";
-            exit(2);
-        }
+sub getDistro {
+  state $distro = do {
+    if ( $^O eq 'msys' ) { 'windows'; }
+    else {
+      my ( $id, $version_id ) = ( 'UNKNOWN', '' );
+      for ( _readFile('/etc/os-release') ) {
+        if    (/^ID="?(.*?)"?$/)         { $id         = $1; }
+        elsif (/^VERSION_ID="?(.*?)"?$/) { $version_id = $1; }
+      }
+      $id . $version_id;
     }
+  };
+  return $distro;
 }
 
-sub enableService
-{
-    my $serviceName     = shift;
-    my $serviceManager  = getServiceManager();
-    return 1 unless $serviceManager;
-    my $cmd = sprintf $$serviceManager{enable}, $serviceName;
-    my $ret = runCmd($cmd);
-
-    return $ret;
+sub _readFile {
+  my $targetFile = shift;
+  _exit( 17, "Could not open file '$targetFile'." ) unless ( -r $targetFile );
+  return do { local @ARGV = $targetFile; readline(); };
 }
 
-sub getServiceManager
-{
-     my %pm  = (
-        systemctl    => {
-            enable => "systemctl enable %s",
-        },
-        upstart      => {
-            enable => "echo %s",
-        }
-    );
+sub _writeTmpFile {
+  my $lines = shift;
+  my ( $tmpFileHandle, $tmpFilePath ) = tempfile( UNLINK => 1 );
+  print $tmpFileHandle @$lines;
+  close($tmpFileHandle);
+  return $tmpFilePath;
+}
 
-    return $pm{systemctl}       unless runCmd('which systemctl 2> /dev/null');
-    return $pm{upstart}         unless runCmd('which status 2> /dev/null');
+sub _exit {
+  my ( $code, $msg ) = @_;
+  mlog( $msg, LOGERR ) if ($msg);
+  exit($code);
+}
 
-    info("Service manager not supported.", LOGERR);
-    exit(3);
+sub getConfig {
+  my $map = shift;
+  return $map->{ &getDistro } // $map->{'@'};
 }
 
 1;
@@ -635,7 +651,7 @@ Key configruation.
 
 =over 4
 
-=item B<agent.serverIp>
+=item B<serverIp>
 
 Required. Specify server ip address.
 
@@ -645,22 +661,22 @@ Required. Specify server ip address.
 
 =over 4
 
-=item B<server.mysqlHost>
+=item B<mysqlHost>
 
 Specify database host.
 If this option is not given or set to localhost, will setup a new MySQL instance on localhost.
 Otherwise an existing mysql will be used.
 
 
-=item B<server.mysqlDbName>
+=item B<mysqlDbName>
 
 Specify the name for monitoring database.
 
-=item B<server.mysqlUser>
+=item B<mysqlUser>
 
 Specify the username for monitoring database.
 
-=item B<server.mysqlPassword>
+=item B<mysqlPassword>
 
 Specify the password for monitoring database.
 
