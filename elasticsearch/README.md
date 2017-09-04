@@ -15,5 +15,5 @@ This template deploys Virtual Machines, Storage Accounts, a Virtual Network, Ava
 
 An option is provided to install the cloud-azure plugin, details can be found here: http://elastic.co/blog/azure-cloud-plugin-for-elasticsearch
 
-##Notes
+## Notes
 Warning!  The configuration allows you to enabled external load balanced endpoints on a public IP.  The endpoint is not secure and it's recommended that you keep these endpoints internal or secure them. Elasticsearch Shield product should be considered.

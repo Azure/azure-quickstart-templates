@@ -55,7 +55,7 @@ then
     if [[ -z $storageAccountName ]]
     then    
 
-        subscriptionId=$( azure account show --json | jq -r '.[0].id' )
+        subscriptionId=$( az account show -o json | jq -r '.id' )
         subscriptionId="${subscriptionId//-/}" 
         subscriptionId="${subscriptionId:0:19}"
         artifactsStorageAccountName="stage$subscriptionId"

@@ -1,0 +1,406 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "instanceCount": {
+            "type": "int",
+            "defaultValue": 2,
+            "maxValue": 10,
+            "metadata": {
+                "description": "Specify the number of VMs to create"
+            }
+        },
+        "vmNameSuffix": {
+            "type": "string",
+            "defaultValue": "VM",
+            "metadata": {
+                "description": "Assing a suffix for the VMs you will create"
+            }
+        },
+        "platform": {
+            "type": "string",
+            "defaultValue": "Windows",
+            "allowedValues": [
+                "Windows",
+                "Linux"
+            ],
+            "metadata": {
+                "description": "Select the OS type to deploy"
+            }
+        },
+        "vmSize": {
+            "type": "string",
+            "defaultValue": "Standard_D1",
+            "allowedValues": [
+                "Standard_A1",
+                "Standard_A2",
+                "Standard_A3",
+                "Standard_A4",
+                "Standard_A5",
+                "Standard_A6",
+                "Standard_D1",
+                "Standard_D2",
+                "Standard_D3_v2",
+                "Standard_D4_v2",
+                "Standard_D5_v2"
+            ]
+        },
+        "username": {
+            "type": "string",
+            "defaultValue": "azureadmin"
+        },
+        "pwd": {
+            "type": "securestring"
+        },
+        "omsResourceGroup": {
+            "type": "string",
+            "metadata": {
+                "description": "Specify name of Resource Group containing the mgmt services"
+            }
+        },
+        "omsWorkspaceName": {
+            "type": "string",
+            "metadata": {
+                "description": "Specify the name of your OMS workspace"
+            }
+        },
+        "omsRecoveryVaultName": {
+            "type": "string"
+        },
+        "omsRecoveryVaultRegion": {
+            "type": "string"
+        }
+    },
+    "variables": {
+        "storageAccountName": "[toLower(concat('st', uniquestring(resourceGroup().id)))]",
+        "vNetName": "managedVnet",
+        "vNetAddressPrefix": "192.168.0.0/16",
+        "subnetName": "subnet01",
+        "subnetAddressPrefix": "192.168.0.0/24",
+        "vNetId": "[resourceId('Microsoft.Network/virtualNetworks', variables('vNetName'))]",
+        "subnetRef": "[concat(variables('vNetId'),'/subnets/', variables('subnetName'))]",
+        "managementTypeWindows": {
+            "type": "MicrosoftMonitoringAgent",
+            "version": "2.19"
+        },
+        "managementTypeLinux": {
+            "type": "OmsAgentForLinux",
+            "version": "2.0"
+        },
+        "osTypeWindows": {
+            "imageOffer": "WindowsServer",
+            "imageSku": "2016-Datacenter",
+            "imagepublisher": "MicrosoftWindowsServer"
+        },
+        "osTypeLinux": {
+            "imageOffer": "UbuntuServer",
+            "imageSku": "12.04.5-LTS",
+            "imagepublisher": "Canonical"
+        }
+    },
+    "resources": [
+        {
+            "apiversion": "2017-06-01",
+            "type": "Microsoft.Storage/storageAccounts",
+            "name": "[variables('storageAccountName')]",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Standard_LRS"
+            },
+            "kind": "Storage",
+            "properties": {}
+        },       
+        {
+            "apiVersion": "2017-04-01",
+            "type": "Microsoft.Network/publicIPAddresses",
+            "name": "[concat(parameters('vmNameSuffix'), 'IP', copyIndex())]",
+            "location": "[resourceGroup().location]",
+            "copy": {
+                "name": "[concat(parameters('vmNameSuffix'), 'IP')]",
+                "count": "[parameters('instancecount')]"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "Dynamic",
+                "dnsSettings": {
+                    "domainNameLabel": "[toLower(concat(parameters('vmNameSuffix'), 'VM', copyIndex()))]"
+                }
+            }
+        },
+        {
+            "apiVersion": "2017-04-01",
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[variables('vNetName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[variables('vNetAddressPrefix')]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[variables('subnetName')]",
+                        "properties": {
+                            "addressPrefix": "[variables('subnetAddressPrefix')]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "apiVersion": "2017-04-01",
+            "type": "Microsoft.Network/networkInterfaces",
+            "name": "[concat(parameters('vmNameSuffix'), 'nic', copyIndex())]",
+            "location": "[resourceGroup().location]",
+            "copy": {
+                "name": "[concat(parameters('vmNameSuffix'), 'nic')]",
+                "count": "[parameters('instanceCount')]"
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Network/publicIPAddresses/', parameters('vmNameSuffix'), 'IP', copyIndex())]",
+                "[concat('Microsoft.Network/virtualNetworks/', variables('vNetName'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(parameters('vmNameSuffix'), 'IP', copyIndex()))]"
+                            },
+                            "subnet": {
+                                "id": "[variables('subnetRef')]"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "condition": "[equals(parameters('platform'), 'Linux')]",
+            "apiVersion": "2016-03-30",
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[concat(parameters('vmNameSuffix'), 'VML', copyIndex())]",
+            "location": "[resourceGroup().location]",
+            "copy": {
+                "name": "[concat(parameters('vmNameSuffix'), 'VML')]",
+                "count": "[parameters('instanceCount')]"
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Storage/StorageAccounts/', variables('storageaccountname'))]",
+                "[concat('Microsoft.Network/networkinterfaces/', parameters('vmNameSuffix'), 'nic', copyIndex())]"
+            ],
+            "properties": {
+                "hardwareprofile": {
+                    "vmsize": "[parameters('vmSize')]"
+                },
+                "osProfile": {
+                    "computerName": "[concat(parameters('vmNameSuffix'), 'VML', copyIndex())]",
+                    "adminusername": "[parameters('username')]",
+                    "adminpassword": "[parameters('pwd')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "[variables('osTypeLinux').imagepublisher]",
+                        "offer": "[variables('osTypeLinux').imageOffer]",
+                        "version": "latest",
+                        "sku": "[variables('osTypeLinux').imageSku]"
+                    },
+                    "osdisk": {
+                        "name": "osdisk",
+                        "vhd": {
+                            "uri": "[concat('http://', variables('storageAccountName'), '.blob.core.windows.net/', 'vhds', '/', 'osdisk', copyIndex(), '.vhd')]"
+                        },
+                        "caching": "readwrite",
+                        "createoption": "FromImage"
+                    }
+                },
+                "networkprofile": {
+                    "networkinterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkinterfaces', concat(parameters('vmNameSuffix'),'nic', copyIndex()))]"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "condition": "[equals(parameters('platform'), 'Linux')]",
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "apiVersion": "2016-03-30",            
+            "name": "[concat(parameters('vmNameSuffix'), 'VML', copyIndex(), '/OMS')]",
+            "location": "[resourceGroup().location]",
+            "copy": {
+                "name": "[concat(parameters('vmNameSuffix'), 'VML', 'OMS')]",
+                "count": "[parameters('instanceCount')]"
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('vmNameSuffix'), 'VML', copyIndex())]"
+            ],
+            "properties": {
+                "publisher": "Microsoft.EnterpriseCloud.Monitoring",
+                "type": "[variables('managementTypeLinux').type]",
+                "typeHandlerVersion": "1.3",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "workspaceId": "[reference(resourceId(parameters('omsResourceGroup'), 'Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName')), '2015-11-01-preview').customerId]",
+                    "azureResourceId": "[resourceId('Microsoft.Compute/virtualMachines/', concat(parameters('vmNameSuffix'), 'VML', copyIndex()))]"
+                },
+                "protectedSettings": {
+                    "workspaceKey": "[listKeys(resourceId(parameters('omsResourceGroup'),'Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName')), '2015-11-01-preview').primarySharedKey]"
+                }
+            }
+        },        
+        {
+            "condition": "[equals(parameters('platform'), 'Windows')]",
+            "apiVersion": "2016-03-30",
+            "type": "Microsoft.Compute/virtualMachines",
+            "name": "[concat(parameters('vmNameSuffix'), 'VM', copyIndex())]",
+            "location": "[resourceGroup().location]",
+            "copy": {
+                "name": "[concat(parameters('vmNameSuffix'), 'VM')]",
+                "count": "[parameters('instanceCount')]"
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Storage/StorageAccounts/', variables('storageaccountname'))]",
+                "[concat('Microsoft.Network/networkinterfaces/', parameters('vmNameSuffix'), 'nic', copyIndex())]"
+            ],
+            "properties": {
+                "hardwareprofile": {
+                    "vmsize": "[parameters('vmSize')]"
+                },
+                "osProfile": {
+                    "computerName": "[concat(parameters('vmNameSuffix'), 'VM', copyIndex())]",
+                    "adminusername": "[parameters('username')]",
+                    "adminpassword": "[parameters('pwd')]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "publisher": "[variables('osTypeWindows').imagepublisher]",
+                        "offer": "[variables('osTypeWindows').imageOffer]",
+                        "version": "latest",
+                        "sku": "[variables('osTypeWindows').imageSku]"
+                    },
+                    "osdisk": {
+                        "name": "osdisk",
+                        "vhd": {
+                            "uri": "[concat('http://', variables('storageAccountName'), '.blob.core.windows.net/', 'vhds', '/', 'osdisk', copyIndex(), '.vhd')]"
+                        },
+                        "caching": "readwrite",
+                        "createoption": "FromImage"
+                    }
+                },
+                "networkprofile": {
+                    "networkinterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkinterfaces', concat(parameters('vmNameSuffix'),'nic', copyIndex()))]"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "condition": "[equals(parameters('platform'), 'Windows')]",
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "apiVersion": "2016-03-30",            
+            "name": "[concat(parameters('vmNameSuffix'), 'VM', copyIndex(), '/OMS')]",
+            "location": "[resourceGroup().location]",
+            "copy": {
+                "name": "[concat(parameters('vmNameSuffix'), 'VM', 'OMS')]",
+                "count": "[parameters('instanceCount')]"
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('vmNameSuffix'), 'VM', copyIndex())]"
+            ],
+            "properties": {
+                "publisher": "Microsoft.EnterpriseCloud.Monitoring",
+                "type": "[variables('managementTypeWindows').type]",
+                "typeHandlerVersion": "1.0",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "workspaceId": "[reference(resourceId(parameters('omsResourceGroup'), 'Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName')), '2015-11-01-preview').customerId]",
+                    "azureResourceId": "[resourceId('Microsoft.Compute/virtualMachines/', concat(parameters('vmNameSuffix'), 'VM', copyIndex()))]"
+                },
+                "protectedSettings": {
+                    "workspaceKey": "[listKeys(resourceId(parameters('omsResourceGroup'),'Microsoft.OperationalInsights/workspaces/', parameters('omsWorkspaceName')), '2015-11-01-preview').primarySharedKey]"
+                }
+            }
+        },
+        {
+            "condition": "[equals(parameters('platform'), 'Linux')]",
+            "apiVersion": "2017-05-10",
+            "type": "Microsoft.Resources/deployments",
+            "resourceGroup": "[parameters('omsResourceGroup')]",
+            "name": "enableBackupLinux",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('vmNameSuffix'), 'VML0', '/extensions/', 'OMS')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[uri(deployment().properties.templateLink.uri, 'managedVmsBackup.json')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "instanceCount": {
+                        "value": "[parameters('instanceCount')]"                        
+                    },
+                    "vmNameSuffix": {
+                        "value": "[parameters('vmNameSuffix')]"
+                    },
+                    "vmRgName": {
+                        "value": "[resourceGroup().name]"
+                    },
+                    "omsRecoveryVaultName": {
+                        "value": "[parameters('omsRecoveryVaultName')]"
+                    },
+                    "omsRecoveryVaultRegion": {
+                        "value": "[parameters('omsRecoveryVaultRegion')]"
+                    },
+                    "platform": {
+                        "value": "[parameters('platform')]"
+                    }
+                }
+            }
+        },
+        {
+            "condition": "[equals(parameters('platform'), 'Windows')]",
+            "apiVersion": "2017-05-10",
+            "type": "Microsoft.Resources/deployments",
+            "resourceGroup": "[parameters('omsResourceGroup')]",
+            "name": "enableBackupWindows",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('vmNameSuffix'), 'VM0', '/extensions/', 'OMS')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[uri(deployment().properties.templateLink.uri, 'managedVmsBackup.json')]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "instanceCount": {
+                        "value": "[parameters('instanceCount')]"                        
+                    },
+                    "vmNameSuffix": {
+                        "value": "[parameters('vmNameSuffix')]"
+                    },
+                    "vmRgName": {
+                        "value": "[resourceGroup().name]"
+                    },
+                    "omsRecoveryVaultName": {
+                        "value": "[parameters('omsRecoveryVaultName')]"
+                    },
+                    "omsRecoveryVaultRegion": {
+                        "value": "[parameters('omsRecoveryVaultRegion')]"
+                    },
+                    "platform": {
+                        "value": "[parameters('platform')]"
+                    }
+                }
+            }
+        }        
+    ],
+    "outputs": {}
+}
