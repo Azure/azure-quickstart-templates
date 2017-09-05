@@ -1,55 +1,64 @@
 {
-  "$schema":"http://schema.management.azure.com/schemas/2015-01-01-preview/deploymentTemplate.json",
-  "contentVersion":"1.0.0.0",
-  "parameters":{
-    "vmSSPrefix":{
-      "type":"string",
-      "maxLength":8,
-      "metadata":{
-        "description":"Base string for naming resources (max length of 8)"
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Admin username for all VMs"
       }
     },
-    "numberOfVMSS":{
-      "type":"int",
-      "maxValue":5,
-      "metadata":{
-        "description":"Number of VMSSes to deploy (max of 5)"
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Admin password for all VMs"
       }
     },
-    "instanceCountPerVMSS":{
-      "type":"int",
-      "maxValue":100,
-      "metadata":{
-        "description":"Number of VM instances per scale set (max of 100)"
+    "numberOfVMSS": {
+      "type": "int",
+      "metadata": {
+        "description": "Number of VMSSes to deploy"
       }
     },
-    "adminUsername":{
-      "type":"string",
-      "metadata":{
-        "description":"Admin username for all VMs"
+    "singlePlacementGroup": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Documentation here: https://docs.microsoft.com/en-us/azure/virtual-machine-scale-sets/virtual-machine-scale-sets-placement-groups"
       }
     },
-    "adminPassword":{
-      "type":"securestring",
-      "metadata":{
-        "description":"Admin password for all VMs"
+    "instanceCountPerVMSS": {
+      "type": "int",
+      "maxValue": 1000,
+      "metadata": {
+        "description": "Number of VM instances per scale set; if singlePlacementGroup is true (the default), then this value must be 100 or less; if singlePlacementGroup is false, then this value must be 1000 or less"
       }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/301-multi-vmss-windows"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
     }
   },
-  "variables":{
-    "apiVersion":"2015-06-15",
-    "addressPrefix":"10.0.0.0/16",
-    "namingInfix":"[toLower(parameters('vmSSPrefix'))]",
-    "newVNETName":"[concat(variables('namingInfix'), 'vnet')]",
-    "newStorageAccountPrefix":"[concat(variables('namingInfix'), 'sa')]",
-    "subnetName":"subnet",
-    "subnetPrefix":"10.0.0.0/16",
-    "storageAccountType":"Standard_LRS",
-    "baseTemplateUri":"https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/301-multi-vmss-linux/base.json"
+  "variables": {
+    "VMSSPrefix": "vmss-w",
+    "newVNETName": "[concat(variables('VMSSPrefix'), '-vnet')]",
+    "addressPrefix": "10.0.0.0/16",
+    "subnetName": "subnet",
+    "subnetPrefix": "10.0.0.0/16"
   },
-  "resources":[
+  "resources": [
     {
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2017-04-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('newVNETName')]",
       "location": "[resourceGroup().location]",
@@ -70,40 +79,40 @@
       }
     },
     {
-      "name":"[concat('clusterSet', copyindex())]",
-      "type":"Microsoft.Resources/deployments",
-      "apiVersion":"2015-11-01",
-      "copy":{
-        "name":"deploymentLoop",
-        "count":"[parameters('numberOfVMSS')]"
+      "name": "[concat('clusterSet', copyindex())]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2016-09-01",
+      "copy": {
+        "name": "deploymentLoop",
+        "count": "[parameters('numberOfVMSS')]"
       },
-      "dependsOn":[
+      "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/', variables('newVNETName'))]"
       ],
-      "properties":{
-        "mode":"Incremental",
-        "templateLink":{
-          "uri":"[variables('baseTemplateUri')]",
-          "contentVersion":"1.0.0.0"
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('_artifactsLocation'), '/nestedtemplates/base.json', parameters('_artifactsLocationSasToken'))]",
+          "contentVersion": "1.0.0.0"
         },
-        "parameters":{
-          "vmSSName":{
-            "value":"[concat(parameters('vmSSPrefix'), padLeft(copyindex(), 2, '0'))]"
+        "parameters": {
+          "VMSSName": {
+            "value": "[concat(variables('VMSSPrefix'), padLeft(copyindex(), 2, '0'))]"
           },
-          "instanceCount":{
-            "value":"[parameters('instanceCountPerVMSS')]"
+          "singlePlacementGroup": {
+            "value": "[parameters('singlePlacementGroup')]"
           },
-          "newStorageAccountPrefix":{
-            "value":"[concat(variables('newStorageAccountPrefix'), padLeft(copyindex(), 2, '0'))]"
+          "instanceCount": {
+            "value": "[parameters('instanceCountPerVMSS')]"
           },
-          "vnetName":{
-            "value":"[variables('newVNETName')]"
+          "subnetId": {
+            "value": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('newVnetName'), variables('subnetName'))]"
           },
-          "adminUsername":{
-            "value":"[parameters('adminUsername')]"
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
           },
-          "adminPassword":{
-            "value":"[parameters('adminPassword')]"
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
           }
         }
       }

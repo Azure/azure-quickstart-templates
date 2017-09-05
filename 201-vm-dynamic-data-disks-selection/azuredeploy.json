@@ -1,4 +1,4 @@
-﻿{
+{
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
@@ -32,36 +32,27 @@
         "description": "The Windows version for the VM. This will pick a fully patched image of this given Windows version. Allowed values: 2008-R2-SP1, 2012-Datacenter, 2012-R2-Datacenter."
       }
     },
+    "numberOfVms": {
+        "type": "int",
+        "defaultValue": 2,
+        "minValue": 1,
+        "maxValue": 10,
+        "metadata": {
+          "description": "The number of VMs to create."
+        }
+    },
     "numDataDisks": {
-      "type": "string",
-      "allowedValues": [
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "7",
-        "8",
-        "9",
-        "10",
-        "11",
-        "12",
-        "13",
-        "14",
-        "15",
-        "16",
-        "32",
-        "64"
-      ],
+      "type": "int",
+      "defaultValue": 4,
+      "minValue": 1,
+      "maxValue": 64,
       "metadata": {
         "description": "This parameter allows the user to select the number of disks they want"
       }
     }
   },
   "variables": {
-    "artifactsLocation": "https://raw.githubusercontent.com/singhkay/azure-quickstart-templates/master/201-vm-dynamic-data-disks-selection/",
-    "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'dynamicdisk')]",
+    "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'dynadisk')]",
     "sizeOfDataDisksInGB": 100,
     "diskCaching": "ReadWrite",
     "imagePublisher": "MicrosoftWindowsServer",
@@ -76,62 +67,44 @@
     "publicIPAddressType": "Dynamic",
     "vmStorageAccountContainerName": "vhds",
     "vmName": "dynamicDisksVM",
-    "vmSize": "Standard_G5",
+    "vmSize": "Standard_DS4",
     "virtualNetworkName": "dynamicDisksVNET",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
-    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
-    "apiVersion": "2015-06-15"
+    "subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
   },
   "resources": [
     {
-      "apiVersion": "2015-01-01",
-      "name": "diskSelection",
-      "type": "Microsoft.Resources/deployments",
-      "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[concat(variables('artifactsLocation'), 'disksSelector', '.json')]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "numDataDisks": {
-            "value": "[parameters('numDataDisks')]"
-          },
-          "diskStorageAccountName": {
-            "value": "[variables('storageAccountName')]"
-          },
-          "diskCaching": {
-            "value": "[variables('diskCaching')]"
-          },
-          "diskSizeGB": {
-            "value": "[variables('sizeOfDataDisksInGB')]"
-          }
-        }
-      }
-    },
-    {
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('storageAccountName')]",
-      "apiVersion": "[variables('apiVersion')]",
+      "name": "[concat(variables('storageAccountName'), copyIndex())]",
+      "apiVersion": "2017-06-01",
       "location": "[resourceGroup().location]",
-      "properties": {
-        "accountType": "[variables('storageAccountType')]"
-      }
+      "copy": {
+        "name": "storageLoop",
+        "count": "[parameters('numberOfVms')]"
+      },
+      "sku": {
+        "name": "[variables('storageAccountType')]"
+      },
+      "kind": "Storage",    
+      "properties": { }
     },
     {
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2017-03-01",
       "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[variables('publicIPAddressName')]",
+      "name": "[concat(variables('publicIPAddressName'), copyIndex())]",
       "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "ipLoop",
+        "count": "[parameters('numberOfVms')]"
+      },
       "properties": {
         "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
         "dnsSettings": {
-          "domainNameLabel": "[parameters('dnsLabelPrefix')]"
+          "domainNameLabel": "[concat(parameters('dnsLabelPrefix'), copyIndex())]"
         }
       }
     },
     {
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2017-03-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('virtualNetworkName')]",
       "location": "[resourceGroup().location]",
@@ -152,13 +125,17 @@
       }
     },
     {
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2017-03-01",
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[variables('nicName')]",
+      "name": "[concat(variables('nicName'), copyIndex())]",
       "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "nicLoop",
+        "count": "[parameters('numberOfVms')]"
+      },
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+        "ipLoop",
+        "[variables('virtualNetworkName')]"
       ],
       "properties": {
         "ipConfigurations": [
@@ -167,7 +144,7 @@
             "properties": {
               "privateIPAllocationMethod": "Dynamic",
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('publicIPAddressName'), copyIndex()))]"
               },
               "subnet": {
                 "id": "[variables('subnetRef')]"
@@ -178,21 +155,24 @@
       }
     },
     {
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[variables('vmName')]",
+      "name": "[concat(variables('vmName'), copyIndex())]",
       "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "vmLoop",
+        "count": "[parameters('numberOfVms')]"
+      },
       "dependsOn": [
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]",
-        "[concat('Microsoft.Resources/deployments/', 'diskSelection')]"
+        "storageLoop",
+        "nicLoop"
       ],
       "properties": {
         "hardwareProfile": {
           "vmSize": "[variables('vmSize')]"
         },
         "osProfile": {
-          "computerName": "[variables('vmName')]",
+          "computerName": "[concat(variables('vmName'), copyIndex())]",
           "adminUsername": "[parameters('adminUsername')]",
           "adminPassword": "[parameters('adminPassword')]"
         },
@@ -206,24 +186,39 @@
           "osDisk": {
             "name": "osdisk",
             "vhd": {
-              "uri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]"
+              "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', concat(variables('storageAccountName'), copyIndex())), '2017-06-01').primaryEndpoints.blob, variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]"
             },
             "caching": "ReadWrite",
             "createOption": "FromImage"
           },
-          "dataDisks": "[reference('diskSelection').outputs.dataDiskArray.value]"
+          "copy": [
+            {
+              "name": "dataDisks",
+              "count": "[parameters('numDataDisks')]",
+              "input": {
+                "caching": "[variables('diskCaching')]",
+                "diskSizeGB": "[variables('sizeOfDataDisksInGB')]",
+                "lun": "[copyIndex('dataDisks')]",
+                "name": "[concat(variables('vmName'), '-datadisk', copyIndex('dataDisks'))]",
+                "vhd": {
+                  "uri": "[uri(reference(concat('Microsoft.Storage/storageAccounts/', concat(variables('storageAccountName'), copyIndex())), '2017-06-01').primaryEndpoints.blob, concat('/vhds/', variables('vmName'), '-datadisk', copyIndex('dataDisks'), '.vhd'))]"
+                },
+                "createOption": "Empty"
+              }
+            }
+          ]
         },
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('nicName'))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('nicName'), copyIndex()))]"
             }
           ]
         },
         "diagnosticsProfile": {
           "bootDiagnostics": {
-            "enabled": "true",
-            "storageUri": "[concat('http://',variables('storageAccountName'),'.blob.core.windows.net')]"
+            "enabled": true,
+            "storageUri": "[reference(concat('Microsoft.Storage/storageAccounts/', concat(variables('storageAccountName'), copyIndex())), '2017-06-01').primaryEndpoints.blob]"
           }
         }
       }

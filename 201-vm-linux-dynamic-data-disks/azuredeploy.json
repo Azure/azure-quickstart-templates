@@ -2,13 +2,27 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+      },
+      "defaultValue": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vm-linux-dynamic-data-disks/"
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
+      },
+      "defaultValue": ""
+    },
     "dnsLabelPrefix": {
       "type": "string",
       "metadata": {
         "description": "Unique public dns prefix where the  node will be exposed"
       }
     },
-    "adminUserName": {
+    "adminUsername": {
       "type": "string",
       "defaultValue": "azureuser",
       "metadata": {
@@ -18,28 +32,37 @@
     "imagePublisher": {
       "type": "string",
       "defaultValue": "openlogic",
+      "allowedValues": [
+        "Canonical",
+        "openlogic"
+      ],
       "metadata": {
-        "description": "openlogic is the CentOS Distributor in Azure Market Place"
+        "description": "openlogic/Canonical are the respective CentOS/Ubuntu Distributor in Azure Market Place"
       }
     },
     "imageOffer": {
       "type": "string",
       "defaultValue": "CentOS",
+      "allowedValues": [
+        "CentOS",
+        "UbuntuServer"
+      ],
       "metadata": {
-        "description": "New CentOS Image Offer"
+        "description": "New CentOS/UbuntuServer Image Offer"
       }
     },
     "imageSku": {
       "type": "string",
       "defaultValue": "7.2",
       "allowedValues": [
+        "16.04.0-LTS",
         "6.5",
         "6.6",
         "7.1",
         "7.2"
       ],
       "metadata": {
-        "description": "OpenLogic CentOS version to use **docker usage Only for 7.1/7.2 kernels 3.10 and above **"
+        "description": "P.S: OpenLogic CentOS version to use **docker usage Only for 7.1/7.2 kernels 3.10 and above **"
       }
     },
     "sshPublicKey": {
@@ -58,18 +81,73 @@
     "nodeSize": {
       "type": "string",
       "allowedValues": [
-    		"Standard_A0", "Standard_A1", "Standard_A2", "Standard_A3", "Standard_A4", "Standard_A5",
-    		"Standard_A6", "Standard_A7", "Standard_A8", "Standard_A9", "Standard_A10", "Standard_A11",
-    		"Standard_D1", "Standard_D2", "Standard_D3", "Standard_D4",
-    		"Standard_D11", "Standard_D12", "Standard_D13", "Standard_D14",
-    		"Standard_D1_v2", "Standard_D2_v2", "Standard_D3_v2", "Standard_D4_v2", "Standard_D5_v2",
-    		"Standard_D11_v2", "Standard_D12_v2", "Standard_D13_v2", "Standard_D14_v2",
-    		"Standard_G1", "Standard_G2", "Standard_G3", "Standard_G4", "Standard_G5",
-    		"Standard_DS1", "Standard_DS2", "Standard_DS3", "Standard_DS4",
-    		"Standard_DS11", "Standard_DS12", "Standard_DS13", "Standard_DS14",
-    		"Standard_GS1", "Standard_GS2", "Standard_GS3", "Standard_GS4", "Standard_GS5"
-  	  ],
-      "defaultValue": "Standard_D2_v2",
+        "Standard_DS1",
+        "Basic_A0",
+        "Basic_A1",
+        "Basic_A2",
+        "Basic_A3",
+        "Basic_A4",
+        "Standard_A0",
+        "Standard_A1",
+        "Standard_A10",
+        "Standard_A11",
+        "Standard_A2",
+        "Standard_A3",
+        "Standard_A4",
+        "Standard_A5",
+        "Standard_A6",
+        "Standard_A7",
+        "Standard_A8",
+        "Standard_A9",
+        "Standard_D1",
+        "Standard_D11",
+        "Standard_D11_v2",
+        "Standard_D12",
+        "Standard_D12_v2",
+        "Standard_D13",
+        "Standard_D13_v2",
+        "Standard_D14",
+        "Standard_D14_v2",
+        "Standard_D15_v2",
+        "Standard_D1_v2",
+        "Standard_D2",
+        "Standard_D2_v2",
+        "Standard_D3",
+        "Standard_D3_v2",
+        "Standard_D4",
+        "Standard_D4_v2",
+        "Standard_D5_v2",
+        "Standard_DS1",
+        "Standard_DS11",
+        "Standard_DS11_v2",
+        "Standard_DS12",
+        "Standard_DS12_V2",
+        "Standard_DS12_v2",
+        "Standard_DS13",
+        "Standard_DS13_v2",
+        "Standard_DS14",
+        "Standard_DS14_v2",
+        "Standard_DS15_v2",
+        "Standard_DS1_v2",
+        "Standard_DS2",
+        "Standard_DS2_v2",
+        "Standard_DS3",
+        "Standard_DS3_v2",
+        "Standard_DS4",
+        "Standard_DS4_v2",
+        "Standard_DS5_v2",
+        "Standard_G1",
+        "Standard_G2",
+        "Standard_G3",
+        "Standard_G4",
+        "Standard_G5",
+        "Standard_GS1",
+        "Standard_GS2",
+        "Standard_GS3",
+        "Standard_GS4",
+        "Standard_GS5"
+      ],
+      "defaultValue": "Standard_DS2_v2",
       "metadata": {
         "description": "Size of the  node."
       }
@@ -90,21 +168,21 @@
     },
     "dockerVer": {
       "type": "string",
-      "defaultValue": "1.11",
+      "defaultValue": "1.12",
       "metadata": {
         "description": "The docker version **Only for 7.1/7.2 kernels 3.10 and above **"
       }
     },
     "dockerComposeVer": {
       "type": "string",
-      "defaultValue": "1.7.1",
+      "defaultValue": "1.9.0-rc2",
       "metadata": {
         "description": "The Docker Compose Version **Only for 7.1/7.2 kernels 3.10 and above **"
       }
     },
     "dockerMachineVer": {
       "type": "string",
-      "defaultValue": "0.7.0",
+      "defaultValue": "0.8.2",
       "metadata": {
         "description": "The docker-machine version **Only for 7.1/7.2 kernels 3.10 and above **"
       }
@@ -119,39 +197,25 @@
     "masterVMName": {
       "type": "string",
       "defaultValue": "centos",
+      "allowedValues": [
+        "centos",
+        "ubuntuserver"
+      ],
       "metadata": {
         "description": "The Name of the VM."
       }
     },
     "numDataDisks": {
-      "type": "string",
+      "type": "int",
       "defaultValue": "4",
-      "allowedValues": [
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "7",
-        "8",
-        "9",
-        "10",
-        "11",
-        "12",
-        "13",
-        "14",
-        "15",
-        "16"
-      ],
+      "minValue": 0,
+      "maxValue": 64,
       "metadata": {
         "description": "This parameter allows the user to select the number of disks wanted"
       }
     }
   },
   "variables": {
-    "armApiVersion": "2015-06-15",
-    "artifactsLocation": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/201-vm-linux-dynamic-data-disks/",
     "avSetName": "avSet",
     "diskCaching": "ReadWrite",
     "networkSettings": {
@@ -176,16 +240,16 @@
     "vmStorageAccountContainerName": "vhd",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('networkSettings').virtualNetworkName)]",
     "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('networkSettings').subnet.dse.name)]",
-    "installationCLI": "[concat('bash azuredeploy.sh ', parameters('masterVMName'), ' ', parameters('mountFolder'), ' ', parameters('numDataDisks'), ' ', parameters('dockerVer'), ' ', parameters('dockerComposeVer'), ' ', parameters('adminUserName'), ' ', parameters('imageSku'), ' ', parameters('dockerMachineVer'))]",
+    "installationCLI": "[concat('bash azuredeploy.sh ', parameters('masterVMName'), ' ', parameters('mountFolder'), ' ', parameters('numDataDisks'), ' ', parameters('dockerVer'), ' ', parameters('dockerComposeVer'), ' ', parameters('adminUsername'), ' ', parameters('imageSku'), ' ', parameters('dockerMachineVer'))]",
     "storageAccountType": "[parameters('storageType')]",
-    "sshKeyPath": "[concat('/home/',parameters('adminUserName'),'/.ssh/authorized_keys')]"
+    "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]"
   },
 
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
       "name": "[variables('newStorageAccountName')]",
-      "apiVersion": "[variables('armApiVersion')]",
+      "apiVersion": "2015-06-15",
       "location": "[resourceGroup().location]",
       "properties": {
         "accountType": "[variables('storageAccountType')]"
@@ -194,12 +258,12 @@
     {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('avSetName')]",
-      "apiVersion": "[variables('armApiVersion')]",
+      "apiVersion": "2017-03-30",
       "location": "[resourceGroup().location]",
-      "properties": { }
+      "properties": {}
     },
     {
-      "apiVersion": "[variables('armApiVersion')]",
+      "apiVersion": "2017-03-01",
       "type": "Microsoft.Network/virtualNetworks",
       "name": "[variables('networkSettings').virtualNetworkName]",
       "location": "[resourceGroup().location]",
@@ -221,7 +285,7 @@
     },
     {
       "type": "Microsoft.Network/publicIPAddresses",
-      "apiVersion": "[variables('armApiVersion')]",
+      "apiVersion": "2017-03-01",
       "name": "[variables('publicIPAddressName')]",
       "location": "[resourceGroup().location]",
       "properties": {
@@ -232,7 +296,7 @@
       }
     },
     {
-      "apiVersion": "[variables('armApiVersion')]",
+      "apiVersion": "2017-03-01",
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicName')]",
       "location": "[resourceGroup().location]",
@@ -259,15 +323,14 @@
       }
     },
     {
-      "apiVersion": "[variables('armApiVersion')]",
+      "apiVersion": "2017-03-30",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('masterVMName')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicName'))]",
-        "[concat('Microsoft.Compute/availabilitySets/', variables('avSetName'))]",
-        "[concat('Microsoft.Resources/deployments/', 'diskSelection')]"
+        "[concat('Microsoft.Compute/availabilitySets/', variables('avSetName'))]"
       ],
       "properties": {
         "availabilitySet": {
@@ -277,10 +340,10 @@
           "vmSize": "[parameters('nodeSize')]"
         },
         "osProfile": {
-          "computername": "[parameters('masterVMName')]",
+          "computerName": "[parameters('masterVMName')]",
           "adminUsername": "[parameters('adminUsername')]",
           "linuxConfiguration": {
-            "disablePasswordAuthentication": "true",
+            "disablePasswordAuthentication": true,
             "ssh": {
               "publicKeys": [
                 {
@@ -292,7 +355,6 @@
           }
         },
         "storageProfile": {
-          "dataDisks": "[reference('diskSelection').outputs.dataDiskArray.value]",
           "imageReference": {
             "publisher": "[parameters('imagePublisher')]",
             "offer": "[parameters('imageOffer')]",
@@ -300,13 +362,27 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),parameters('masterVMName'),'.vhd')]"
-            },
+            "name": "[variables('OSDiskName')]",
+            "vhd": { "uri": "[concat(reference(concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName')), '2015-06-15').primaryEndpoints.blob, variables('vmStorageAccountContainerName'),'/',variables('OSDiskName'),'.vhd')]" },
             "caching": "ReadWrite",
             "createOption": "FromImage"
-          }
+          },
+          "copy": [
+            {
+              "name": "dataDisks",
+              "count": "[parameters('numDataDisks')]",
+              "input": {
+                "caching": "[variables('diskCaching')]",
+                "diskSizeGB": "[parameters('dataDiskSize')]",
+                "lun": "[copyIndex('dataDisks')]",
+                "name": "[concat(parameters('masterVMName'),'-datadisk',copyIndex('dataDisks'))]",
+                "vhd": {
+                  "uri": "[uri(reference(concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName')), '2015-06-15').primaryEndpoints.blob, concat('/',variables('vmStorageAccountContainerName'),'/',parameters('masterVMName'),'-datadisk',copyIndex('dataDisks'),'.vhd'))]"
+                },
+                "createOption": "Empty"
+              }
+            }
+          ]
         },
         "networkProfile": {
           "networkInterfaces": [
@@ -318,7 +394,7 @@
       }
     },
     {
-      "apiVersion": "[variables('armApiVersion')]",
+      "apiVersion": "2016-03-30",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('masterVMName'), '/Installation')]",
       "location": "[resourceGroup().location]",
@@ -326,47 +402,15 @@
         "[concat('Microsoft.Compute/virtualMachines/', parameters('masterVMName'))]"
       ],
       "properties": {
-        "publisher": "Microsoft.OSTCExtensions",
-        "type": "CustomScriptForLinux",
-        "typeHandlerVersion": "1.5",
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[concat(variables('artifactsLocation'), 'azuredeploy.sh')]"
+            "[concat(uri(parameters('_artifactsLocation'), 'azuredeploy.sh'), parameters('_artifactsLocationSasToken'))]"
           ],
           "commandToExecute": "[variables('installationCLI')]"
-        }
-      }
-    },
-    {
-      "apiVersion": "2015-01-01",
-      "name": "diskSelection",
-      "type": "Microsoft.Resources/deployments",
-      "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[concat(variables('artifactsLocation'), 'diskSelection', '.json')]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "numDataDisks": {
-            "value": "[parameters('numDataDisks')]"
-          },
-          "diskStorageAccountName": {
-            "value": "[variables('newStorageAccountName')]"
-          },
-          "diskCaching": {
-            "value": "[variables('diskCaching')]"
-          },
-          "diskSizeGB": {
-            "value": "[parameters('dataDiskSize')]"
-          },
-          "vmStAccountContainerName": {
-            "value": "[variables('vmStorageAccountContainerName')]"
-          },
-          "masterName": {
-            "value": "[parameters('masterVMName')]"
-          }
         }
       }
     }

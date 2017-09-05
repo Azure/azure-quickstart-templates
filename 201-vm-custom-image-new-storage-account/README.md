@@ -7,7 +7,7 @@
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-This template allows you to create a new Virtual Machine from a custom image on a new storage account deployed togheter with the storage account, which means the source image VHD must be transfered to the newly created storage account before that Virtual Machine is deployed. This is accomplished by the usage of a transfer virtual machine that is deployed and then uses a script via custom script extension to copy the source VHD to the destination storage account. This process is used to overcome the limitation of the custom VHD that needs to reside at the same storage account where new virtual machines based on it will be spinned up, the problem arises when you are also deploying the storage account within your template, since the storage account does not exist yet, how can you add the source VHDs beforehand?
+This template allows you to create a new Virtual Machine from a custom image on a new storage account deployed together with the storage account, which means the source image VHD must be transfered to the newly created storage account before that Virtual Machine is deployed. This is accomplished by the usage of a transfer virtual machine that is deployed and then uses a script via custom script extension to copy the source VHD to the destination storage account. This process is used to overcome the limitation of the custom VHD that needs to reside at the same storage account where new virtual machines based on it will be spinned up, the problem arises when you are also deploying the storage account within your template, since the storage account does not exist yet, how can you add the source VHDs beforehand?
 
 Basically it creates two VMs, one that is the transfer virtual machine and the second that is the actual virtual machine that is the goal of the deployment. Transfer VM can be removed later.
 
@@ -115,7 +115,7 @@ The process of this template is:
 7. Since we already have all necessary information, define the remaining variables required to deploy this template
   
   ```powershell
-  $adminUserName = $credential.UserName
+  $adminUsername = $credential.UserName
   $adminPassword = $credential.GetNetworkCredential().Password
   # Following line is the equivalent of defining "images/Win10MasterImage-osDisk.72451a98-4c26-4375-90c5-0a940dd56bab.vhd", but here we executed optional steps 5 and 6 and have an array of vhds, we are picking the second vhd 
   $customImageName = $vhds[1].Name  
@@ -129,7 +129,7 @@ The process of this template is:
 8. Define a hashtable with all parameters
   
   ```powershell
-  $parameters = @{"AdminUsername"=$adminUserName;"AdminPassword"=$adminPassword;"sourceStorageAccountResourceGroup"=$sourceStorageAccountResourceGroup;"CustomImageName"=$CustomImageName;"sourceImageUri"=$sourceImageUri;"TransferVmName"=$transferVmName;"NewVmName"=$newVmName;"vmSize"=$vmSize}
+  $parameters = @{"AdminUsername"=$adminUsername;"AdminPassword"=$adminPassword;"sourceStorageAccountResourceGroup"=$sourceStorageAccountResourceGroup;"CustomImageName"=$CustomImageName;"sourceImageUri"=$sourceImageUri;"TransferVmName"=$transferVmName;"NewVmName"=$newVmName;"vmSize"=$vmSize}
   ```
   
 9. Deploy your template

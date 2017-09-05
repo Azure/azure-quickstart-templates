@@ -1,0 +1,57 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+
+	"parameters": { "moodleCommon": { "type": "object", "metadata": { "description": "Common Moodle values" } } },
+
+	"variables": {
+		"documentation1": "This sub-template creates a recovery services vault.  It expects certain values in the 'common' datastructure.",
+		"documentation2": "    vaultName  - name of virtual network",
+		"documentation3": "    policyName - name of backup policy inside vault",
+		"documentation4": "",
+		"documentation5": "The policy will create a daily backup with the following retentions",
+		"documentation6": "    Daily   - keep last 7 daily",
+		"documentation7": "    Weekly  - keep last 4 Sundays",
+		"documentation8": "    Monthly - keep last 6 1st-of-the-month",
+
+	    "scheduleRunTimes":					[ "2017-01-01T22:30:00Z" ], 
+		"dailyRetentionDurationCount":		7,
+		"daysOfTheWeek":					[ "Sunday" ],
+		"weeklyRetentionDurationCount":		4,
+		"monthlyRetentionDurationCount":	6
+	},
+
+	"resources": [
+
+		{
+			"type":			"Microsoft.RecoveryServices/vaults",
+			"apiVersion":	"2015-11-10",
+			"name":			"[parameters('moodleCommon').vaultName]",
+			"location":		"[resourceGroup().location]",
+			
+			"sku":			{ "name": "RS0", "tier": "Standard" },
+
+			"properties":	{ }
+		},
+
+		{
+			"type":			"Microsoft.RecoveryServices/vaults/backupPolicies",
+			"apiVersion":	"2015-11-10",
+			"name":			"[concat(parameters('moodleCommon').vaultName, '/', parameters('moodleCommon').policyName)]",
+			"location":		"[resourceGroup().location]",
+
+			"dependsOn":	[ "[concat('Microsoft.RecoveryServices/vaults/', parameters('moodleCommon').vaultName)]" ],
+
+			"properties":	{	"backupManagementType": "AzureIaasVM",
+								"schedulePolicy": { "scheduleRunFrequency": "Daily","scheduleRunDays": null, "scheduleRunTimes": "[variables('scheduleRunTimes')]", "schedulePolicyType": "SimpleSchedulePolicy" },
+								"retentionPolicy": {
+									"dailySchedule":	{                                                                                                                                                              "retentionTimes": "[variables('scheduleRunTimes')]", "retentionDuration": { "count": "[variables(  'dailyRetentionDurationCount')]", "durationType": "Days"   } },
+									"weeklySchedule":	{ "daysOfTheWeek": "[variables('daysOfTheWeek')]",                                                                                                             "retentionTimes": "[variables('scheduleRunTimes')]", "retentionDuration": { "count": "[variables( 'weeklyRetentionDurationCount')]", "durationType": "Weeks"  } },
+									"monthlySchedule":	{ "retentionScheduleFormatType": "Daily", "retentionScheduleDaily": { "daysOfTheMonth": [ { "date": 1, "isLast": false } ] }, "retentionScheduleWeekly": null, "retentionTimes": "[variables('scheduleRunTimes')]", "retentionDuration": { "count": "[variables('monthlyRetentionDurationCount')]", "durationType": "Months" } },
+									"retentionPolicyType": "LongTermRetentionPolicy"
+								}
+			}
+		}
+	]
+}
+
