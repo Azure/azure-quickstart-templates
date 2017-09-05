@@ -17,6 +17,17 @@
         "description": "The fully qualified domain name (FQDN) for the private domain forest which will be created by this template, for example 'hpc.local'."
       }
     },
+    "headNodeDiskType": {
+      "type": "string",
+      "defaultValue": "HDD",
+      "allowedValues": [
+        "HDD",
+        "SSD"
+      ],
+      "metadata": {
+        "description": "The disk type of head node VM. Note that SSD only supports DS-series, DSv2-series, GS-series, and Fs-series VMs."
+      }
+    },
     "headNodeVMSize": {
       "type": "string",
       "defaultValue": "Standard_D4_v2",
@@ -86,7 +97,7 @@
       "type": "string",
       "defaultValue": "IaaSCN-",
       "minLength": 1,
-      "maxLength": 12,      
+      "maxLength": 12,
       "metadata": {
         "description": "The name prefix of the compute nodes. It must be no more than 12 characters, begin with a letter, and contain only letters, numbers and hyphens. For example, if 'IaaSCN-' is specified, the compute node names will be 'IaaSCN-000', 'IaaSCN-001', ..."
       }
@@ -95,9 +106,20 @@
       "type": "int",
       "defaultValue": 2,
       "minValue": 1,
-      "maxValue": 500,      
+      "maxValue": 500,
       "metadata": {
         "description": "The number of the compute nodes"
+      }
+    },
+    "computeNodeDiskType": {
+      "type": "string",
+      "defaultValue": "HDD",
+      "allowedValues": [
+        "HDD",
+        "SSD"
+      ],
+      "metadata": {
+        "description": "The disk type of the compute node VMs. Note that SSD only supports DS-series, DSv2-series, GS-series, and Fs-series VMs."
       }
     },
     "computeNodeVMSize": {
@@ -197,20 +219,22 @@
   },
   "variables": {
     "virtualNetworkName": "[concat(parameters('clusterName'), 'VNet')]",
-    "storageAccountNamePrefix": "[toLower(concat('hpc', uniqueString(resourceGroup().id, toLower(parameters('clusterName')))))]",
-    "storageAccountType": "Standard_LRS",
+    "soaStorageAccountName": "[toLower(concat('hpc', uniqueString(resourceGroup().id, toLower(parameters('clusterName')))))]",
+    "soaStorageAccountType": "Standard_LRS",
     "publicIPAddressName": "[concat(parameters('clusterName'), '-PublicIP-HN')]",
     "computeNodeImageOsPlatform": "Windows",
     "computeNodeImages": {
       "ComputeNode": {
         "publisher": "MicrosoftWindowsServerHPCPack",
         "offer": "WindowsServerHPCPack",
-        "sku": "2012R2CN"
+        "sku": "2012R2CN",
+        "version": "latest"
       },
       "ComputeNodeWithExcel": {
         "publisher": "MicrosoftWindowsServerHPCPack",
         "offer": "WindowsServerHPCPack",
-        "sku": "2012R2CNExcel"
+        "sku": "2012R2CNExcel",
+        "version": "latest"
       }
     },
     "currentComputeNodeImage": "[variables('computeNodeImages')[parameters('computeNodeImage')]]",
@@ -237,17 +261,14 @@
           "privateDomainName": {
             "value": "[parameters('privateDomainName')]"
           },
-          "storageAccountNamePrefix": {
-            "value": "[variables('storageAccountNamePrefix')]"
+          "soaStorageAccountName": {
+            "value": "[variables('soaStorageAccountName')]"
           },
-          "storageAccountStartIndex": {
-            "value": 0
+          "soaStorageAccountType": {
+            "value": "[variables('soaStorageAccountType')]"
           },
-          "storageAccountType": {
-            "value": "[variables('storageAccountType')]"
-          },
-          "nbrCNPerStorageAccount": {
-            "value": 20
+          "headNodeDiskType": {
+            "value": "[parameters('headNodeDiskType')]"
           },
           "headNodeVMSize": {
             "value": "[parameters('headNodeVMSize')]"
@@ -255,20 +276,17 @@
           "computeNodeImageOsPlatform": {
             "value": "[variables('computeNodeImageOsPlatform')]"
           },
-          "computeNodeImagePublisher": {
-            "value": "[variables('currentComputeNodeImage').publisher]"
-          },
-          "computeNodeImageOffer": {
-            "value": "[variables('currentComputeNodeImage').offer]"
-          },
-          "computeNodeImageSku": {
-            "value": "[variables('currentComputeNodeImage').sku]"
+          "computeNodeImageRef": {
+            "value": "[variables('currentComputeNodeImage')]"
           },
           "computeNodeNamePrefix": {
             "value": "[parameters('computeNodeNamePrefix')]"
           },
           "computeNodeNumber": {
             "value": "[parameters('computeNodeNumber')]"
+          },
+          "computeNodeDiskType": {
+            "value": "[parameters('computeNodeDiskType')]"
           },
           "computeNodeVMSize": {
             "value": "[parameters('computeNodeVMSize')]"
