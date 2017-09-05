@@ -1,4 +1,5 @@
 # Informatica - Informatica HDInsight Azure Partner Quickstart Template
+
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Finformatica-adf-hdinsight-powerbi%2Fazuredeploy.json" target="_blank">
 <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
@@ -6,27 +7,32 @@
 <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-## Azure Partner Quickstart Template Overview
-***Azure Partner Quickstart Templates*** provide customers with a highly automated process to launch enterprise ready first and 3rd party ISV solution stacks on Azure in a pre-production environment. The **Azure Partner Quickstart Template** effort is complimentary to the [Azure Marketplace test drive program](https://azure.microsoft.com/en-us/marketplace/test-drives/). These fully baked stacks enable customers to quickly stand up a PoC or Piloting environments and also integrate it with their systems and customization.
+## Azure Partner Solution Template Overview
+
+***Azure Partner Solution Templates*** provide customers with a highly automated process to launch enterprise ready first and 3rd party ISV solution stacks on Azure in a pre-production environment. The **Azure Partner Quickstart Template** effort is complimentary to the [Azure Marketplace test drive program](https://azure.microsoft.com/en-us/marketplace/test-drives/). These fully baked stacks enable customers to quickly stand up a PoC or Piloting environments and also integrate it with their systems and customization.
 
 Customers benefit greatly from solution templates because of the ease with which they can stand up enterprise-grade, fully integrated stacks on Azure. The extensive automation and testing of these solutions will allow them to spin up pre-production environments with minimal manual steps and customization.  Most importantly, customers now have the confidence to transition the solution into a fully production-ready environment with confidence.
 
-**The Informatica HDInsight Azure Partner Quickstart Template** launches a big data solution stack that provides an automated provisioning, configuration, and integration of Informatica Cloud and [Informatica CSA](https://azure.microsoft.com/en-us/marketplace/partners/informatica-cloud/informatica-cloud/) products on Azure. Combination with Azure Data Factory, with on-demand HDInsight, and SQL Datawarehouse products makes this solution ready for pre-production environments. These are intended as pilot solutions and not production-ready.
+**The Informatica HDInsight Azure Partner Quickstart Template** launches a big data solution stack that provides an automated provisioning, configuration, and integration of Informatica Cloud and [Informatica CSA](https://azure.microsoft.com/en-us/marketplace/partners/informatica-cloud/informatica-cloud/) products on Azure. The combination of Azure Data Factory, with on-demand HDInsight, and SQL Datawarehouse products makes this solution ready for pre-production environments. These are intended as pilot solutions and not production-ready.
 
 Please [contact us](azuremarketplace@sysgain.com) if you need further info or support on this solution.
 
-##Licenses & Costs
+## Licenses & Costs
+
 In its current state, licenses may be required to use the Infromatica products featured in this solution stack. The solution template will be deployed in the Customer’s Azure subscription, and the Customer will incur Azure usage charges associated with running the solution stack.
 
-##Target Audience
+## Target Audience
+
 The target audience for these solution templates are IT professionals who need to stand-up and/or deploy infrastructure stacks.
 
 ## Prerequisites
+
 * Azure Subscription - if you want to test drive individual ISV products, please check out the [Azure Marketplace Test Drive Program](https://azure.microsoft.com/en-us/marketplace/test-drives/)
 * Azure user account with Contributor/Admin Role
 * Sufficient Quota - At least 14 Cores (with default VM Sizes)
  
-##Solution Summary
+## Solution Summary
+
 The goal of this Azure Partner Quickstart Template is to build an automated big data solution stack ready for pre-production deployments. This allows customers to bring in their data using the Informatica Cloud and ingest them into a managed Hadoop cluster for processing through Azure Data Factory, and store the results in an Enterprise-grade data warehouse. This can be used for near real-time visualizations of data to gain actionable insights using Power BI.
 
 ![]( images/informatica-cloud.png)
