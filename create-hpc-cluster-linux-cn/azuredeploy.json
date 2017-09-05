@@ -17,6 +17,17 @@
         "description": "The fully qualified domain name (FQDN) for the private domain forest which will be created by this template, for example 'hpc.local'."
       }
     },
+    "headNodeDiskType": {
+      "type": "string",
+      "defaultValue": "HDD",
+      "allowedValues": [
+        "HDD",
+        "SSD"
+      ],
+      "metadata": {
+        "description": "The disk type of head node VM. Note that SSD only supports DS-series, DSv2-series, GS-series, and Fs-series VMs."
+      }
+    },
     "headNodeVMSize": {
       "type": "string",
       "defaultValue": "Standard_D4_v2",
@@ -101,7 +112,7 @@
       "type": "string",
       "defaultValue": "IaaSLnxCN-",
       "minLength": 1,
-      "maxLength": 12,      
+      "maxLength": 12,
       "metadata": {
         "description": "The name prefix of the compute nodes. It must be no more than 12 characters, begin with a letter, and contain only letters, numbers and hyphens. For example, if 'IaaSCN-' is specified, the compute node names will be 'IaaSCN-000', 'IaaSCN-001', ..."
       }
@@ -110,9 +121,20 @@
       "type": "int",
       "defaultValue": 2,
       "minValue": 1,
-      "maxValue": 500,      
+      "maxValue": 500,
       "metadata": {
         "description": "The number of the compute nodes"
+      }
+    },
+    "computeNodeDiskType": {
+      "type": "string",
+      "defaultValue": "HDD",
+      "allowedValues": [
+        "HDD",
+        "SSD"
+      ],
+      "metadata": {
+        "description": "The disk type of the compute node VMs. Note that SSD only supports DS-series, DSv2-series, GS-series, and Fs-series VMs."
       }
     },
     "computeNodeVMSize": {
@@ -200,95 +222,112 @@
   },
   "variables": {
     "virtualNetworkName": "[concat(parameters('clusterName'), 'VNet')]",
-    "storageAccountNamePrefix": "[toLower(concat('hpc', uniqueString(resourceGroup().id, toLower(parameters('clusterName')))))]",
-    "storageAccountType": "Standard_LRS",
+    "soaStorageAccountName": "[toLower(concat('hpc', uniqueString(resourceGroup().id, toLower(parameters('clusterName')))))]",
+    "soaStorageAccountType": "Standard_LRS",
     "publicIPAddressName": "[concat(parameters('clusterName'), '-PublicIP-HN')]",
     "computeNodeImageOsPlatform": "Linux",
     "computeNodeImages": {
       "CentOS_6.5": {
         "publisher": "OpenLogic",
         "offer": "CentOS",
-        "sku": "6.5"
+        "sku": "6.5",
+        "version": "latest"
       },
       "CentOS_6.6": {
         "publisher": "OpenLogic",
         "offer": "CentOS",
-        "sku": "6.6"
+        "sku": "6.6",
+        "version": "latest"
       },
       "CentOS_6.7": {
         "publisher": "OpenLogic",
         "offer": "CentOS",
-        "sku": "6.7"
+        "sku": "6.7",
+        "version": "latest"
       },
       "CentOS_7.0": {
         "publisher": "OpenLogic",
         "offer": "CentOS",
-        "sku": "7.0"
+        "sku": "7.0",
+        "version": "latest"
       },
       "CentOS_7.1": {
         "publisher": "OpenLogic",
         "offer": "CentOS",
-        "sku": "7.1"
+        "sku": "7.1",
+        "version": "latest"
       },
       "CentOS_7.2": {
         "publisher": "OpenLogic",
         "offer": "CentOS",
-        "sku": "7.2"
+        "sku": "7.2",
+        "version": "latest"
       },
       "CentOS_6.5_HPC": {
         "publisher": "OpenLogic",
         "offer": "CentOS-HPC",
-        "sku": "6.5"
+        "sku": "6.5",
+        "version": "latest"
       },
       "CentOS_7.1_HPC": {
         "publisher": "OpenLogic",
         "offer": "CentOS-HPC",
-        "sku": "7.1"
+        "sku": "7.1",
+        "version": "latest"
       },
       "RHEL_6.7": {
         "publisher": "RedHat",
         "offer": "RHEL",
-        "sku": "6.7"
+        "sku": "6.7",
+        "version": "latest"
       },
       "RHEL_6.8": {
         "publisher": "RedHat",
         "offer": "RHEL",
-        "sku": "6.8"
+        "sku": "6.8",
+        "version": "latest"
       },
       "RHEL_7.2": {
         "publisher": "RedHat",
         "offer": "RHEL",
-        "sku": "7.2"
+        "sku": "7.2",
+        "version": "latest"
       },
       "SLES_12": {
         "publisher": "SUSE",
         "offer": "SLES",
-        "sku": "12"
+        "sku": "12",
+        "version": "latest"
       },
       "SLES_12_Premium": {
         "publisher": "SUSE",
         "offer": "SLES-Priority",
-        "sku": "12"
+        "sku": "12",
+        "version": "latest"
       },
       "SLES_12_HPC": {
         "publisher": "SUSE",
         "offer": "SLES-HPC",
-        "sku": "12"
+        "sku": "12",
+        "version": "latest"
       },
       "SLES_12_HPC_Premium": {
         "publisher": "SUSE",
         "offer": "SLES-HPC-Priority",
-        "sku": "12"
+        "sku": "12",
+        "version": "latest"
       },
       "Ubuntu_14.04": {
         "publisher": "Canonical",
         "offer": "UbuntuServer",
-        "sku": "14.04.3-LTS"
+        "sku": "14.04.3-LTS",
+        "version": "latest"
       },
       "Ubuntu_16.04": {
         "publisher": "Canonical",
         "offer": "UbuntuServer",
-        "sku": "16.04.0-LTS"
+        "sku": "16.04.0-LTS",
+        "version": "latest"
       }
     },
     "currentComputeNodeImage": "[variables('computeNodeImages')[parameters('computeNodeImage')]]",
@@ -315,17 +354,14 @@
           "privateDomainName": {
             "value": "[parameters('privateDomainName')]"
           },
-          "storageAccountNamePrefix": {
-            "value": "[variables('storageAccountNamePrefix')]"
+          "soaStorageAccountName": {
+            "value": "[variables('soaStorageAccountName')]"
           },
-          "storageAccountStartIndex": {
-            "value": 0
+          "soaStorageAccountType": {
+            "value": "[variables('soaStorageAccountType')]"
           },
-          "storageAccountType": {
-            "value": "[variables('storageAccountType')]"
-          },
-          "nbrCNPerStorageAccount": {
-            "value": 20
+          "headNodeDiskType": {
+            "value": "[parameters('headNodeDiskType')]"
           },
           "headNodeVMSize": {
             "value": "[parameters('headNodeVMSize')]"
@@ -333,20 +369,17 @@
           "computeNodeImageOsPlatform": {
             "value": "[variables('computeNodeImageOsPlatform')]"
           },
-          "computeNodeImagePublisher": {
-            "value": "[variables('currentComputeNodeImage').publisher]"
-          },
-          "computeNodeImageOffer": {
-            "value": "[variables('currentComputeNodeImage').offer]"
-          },
-          "computeNodeImageSku": {
-            "value": "[variables('currentComputeNodeImage').sku]"
+          "computeNodeImageRef": {
+            "value": "[variables('currentComputeNodeImage')]"
           },
           "computeNodeNamePrefix": {
             "value": "[parameters('computeNodeNamePrefix')]"
           },
           "computeNodeNumber": {
             "value": "[parameters('computeNodeNumber')]"
+          },
+          "computeNodeDiskType": {
+            "value": "[parameters('computeNodeDiskType')]"
           },
           "computeNodeVMSize": {
             "value": "[parameters('computeNodeVMSize')]"

@@ -20,10 +20,11 @@
         "description": "The VM role size"
       }
     },
-    "storageAccountName": {
+    "storageAccountType": {
       "type": "string",
+      "allowedValues": [ "Standard_LRS", "Premium_LRS" ],
       "metadata": {
-        "description": "The storage account name to store the VHD of the VM"
+        "description": "The storage account type for the disks of the VM"
       }
     },
     "nicName": {
@@ -50,6 +51,13 @@
         "description": "The availability set name"
       }
     },
+    "enableAutomaticUpdates": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Specify whether the VM is enabled for automatic updates"
+      }
+    },
     "scriptBaseUri": {
       "type": "string",
       "metadata": {
@@ -65,7 +73,7 @@
   },
   "resources": [
     {
-      "apiVersion": "[parameters('apiVersion')]",
+      "apiVersion": "2016-04-30-preview",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('vmName')]",
       "location": "[resourceGroup().location]",
@@ -79,7 +87,10 @@
         "osProfile": {
           "computerName": "[parameters('vmName')]",
           "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
+          "adminPassword": "[parameters('adminPassword')]",
+          "windowsConfiguration": {
+            "enableAutomaticUpdates": "[parameters('enableAutomaticUpdates')]"
+          }
         },
         "storageProfile": {
           "imageReference": {
@@ -89,22 +100,22 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "osdisk",
-            "vhd": {
-              "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/', toLower(parameters('vmName')), '-osdisk.vhd')]"
-            },
+            "name": "[concat(parameters('vmName'), '-osdisk')]",
             "caching": "ReadOnly",
-            "createOption": "FromImage"
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "[parameters('storageAccountType')]"
+            }
           },
           "dataDisks": [
             {
-              "name": "datadisk",
-              "vhd": {
-                "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/vhds/', toLower(parameters('vmName')), '-datadisk.vhd')]"
-              },
+              "name": "[concat(parameters('vmName'), '-datadisk')]",
               "caching": "None",
               "createOption": "Empty",
-              "diskSizeGB": "200",
+              "diskSizeGB": 500,
+              "managedDisk": {
+                "storageAccountType": "[parameters('storageAccountType')]"
+              },
               "lun": 0
             }
           ]
@@ -144,7 +155,7 @@
           "properties": {
             "publisher": "Microsoft.Powershell",
             "type": "DSC",
-            "typeHandlerVersion": "2.19",
+            "typeHandlerVersion": "2.24",
             "autoUpgradeMinorVersion": true,
             "settings": {
               "configuration": {
