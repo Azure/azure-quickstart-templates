@@ -2,7 +2,7 @@ configuration ConfigureSQLVM
 {
     param
     (
-		[Parameter(Mandatory)]
+        [Parameter(Mandatory)]
         [String]$DNSServer,
 
         [Parameter(Mandatory)]
@@ -22,8 +22,8 @@ configuration ConfigureSQLVM
     )
 
     Import-DscResource -ModuleName xComputerManagement, xNetworking, xDisk, cDisk, xActiveDirectory, xSQLServer
-	
-	WaitForSqlSetup
+
+    WaitForSqlSetup
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     $Interface = Get-NetAdapter| Where-Object Name -Like "Ethernet*"| Select-Object -First 1
     $InterfaceAlias = $($Interface.Name)
@@ -40,11 +40,11 @@ configuration ConfigureSQLVM
             RebootNodeIfNeeded = $true
         }
 
-		#**********************************************************
+        #**********************************************************
         # Initialization of VM
         #**********************************************************
 
-		xWaitforDisk Disk2
+        xWaitforDisk Disk2
         {
             DiskNumber = 2
             RetryIntervalSec =$RetryIntervalSec
@@ -54,7 +54,7 @@ configuration ConfigureSQLVM
         {
             DiskNumber = 2
             DriveLetter = "F"
-	        DependsOn="[xWaitForDisk]Disk2"
+            DependsOn="[xWaitForDisk]Disk2"
         }
         xFirewall DatabaseEngineFirewallRule
         {
@@ -82,8 +82,8 @@ configuration ConfigureSQLVM
             AddressFamily  = 'IPv4'
             DependsOn="[WindowsFeature]ADPS"
         }
-        
-		#**********************************************************
+
+        #**********************************************************
         # Join AD forest
         #**********************************************************
         xWaitForADDomain DscForestWait
@@ -103,7 +103,7 @@ configuration ConfigureSQLVM
             DependsOn = "[xWaitForADDomain]DscForestWait"
         }
 
-		#**********************************************************
+        #**********************************************************
         # Create accounts and configure SQL Server
         #**********************************************************
         xADUser CreateSqlSvcAccount
