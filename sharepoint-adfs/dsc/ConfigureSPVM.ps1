@@ -2,7 +2,7 @@ configuration ConfigureSPVM
 {
     param
     (
-		[Parameter(Mandatory)]
+        [Parameter(Mandatory)]
         [String]$DNSServer,
 
         [Parameter(Mandatory)]
@@ -19,7 +19,7 @@ configuration ConfigureSPVM
 
         [Parameter(Mandatory)]
         [System.Management.Automation.PSCredential]$SPSetupCreds,
-        
+
         [Parameter(Mandatory)]
         [System.Management.Automation.PSCredential]$SPFarmCreds,
 
@@ -46,7 +46,7 @@ configuration ConfigureSPVM
     [System.Management.Automation.PSCredential] $SPSvcCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPSvcCreds.UserName)", $SPSvcCreds.Password)
     [System.Management.Automation.PSCredential] $SPAppPoolCredsQualified = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($SPAppPoolCreds.UserName)", $SPAppPoolCreds.Password)
     [String] $SPDBPrefix = "SP16DSC_"
-	[Int] $RetryCount = 30
+    [Int] $RetryCount = 30
     [Int] $RetryIntervalSec = 30
     $ComputerName = Get-Content env:computername
     $LdapcpLink = (Get-LatestGitHubRelease -repo "Yvand/LDAPCP" -artifact "LDAPCP.wsp")
@@ -59,11 +59,11 @@ configuration ConfigureSPVM
             RebootNodeIfNeeded = $true
         }
 
-		#**********************************************************
+        #**********************************************************
         # Initialization of VM
         #**********************************************************
 
-		xWaitforDisk Disk2
+        xWaitforDisk Disk2
         {
             DiskNumber = 2
             RetryIntervalSec = $RetryIntervalSec
@@ -85,7 +85,7 @@ configuration ConfigureSPVM
             DependsOn="[WindowsFeature]ADPS"
         }
 
-		xCredSSP CredSSPServer { Ensure = "Present"; Role = "Server"; DependsOn = "[xDnsServerAddress]DnsServerAddress" } 
+        xCredSSP CredSSPServer { Ensure = "Present"; Role = "Server"; DependsOn = "[xDnsServerAddress]DnsServerAddress" } 
         xCredSSP CredSSPClient { Ensure = "Present"; Role = "Client"; DelegateComputers = "*.$DomainFQDN", "localhost"; DependsOn = "[xCredSSP]CredSSPServer" }
 
         #**********************************************************

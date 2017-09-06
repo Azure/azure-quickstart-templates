@@ -1,7 +1,7 @@
-﻿configuration ConfigureDCVM 
-{ 
-    param 
-    ( 
+﻿configuration ConfigureDCVM
+{
+    param
+    (
         [Parameter(Mandatory)]
         [String]$DomainFQDN,
 
@@ -14,12 +14,12 @@
         [Parameter(Mandatory)]
         [String]$PrivateIP,
 
-        [Int] $RetryCount=20,
-        [Int] $RetryIntervalSec=30,
+        [Int] $RetryCount = 20,
+        [Int] $RetryIntervalSec = 30,
         [String] $SPTrustedSitesName = "SPSites",
         [String] $ADFSSiteName = "ADFS"
-    ) 
-    
+    )
+
     Import-DscResource -ModuleName xActiveDirectory, xDisk, xNetworking, cDisk, xPSDesiredStateConfiguration, xAdcsDeployment, xCertificate, xPendingReboot, cADFS, xDnsServer
     [String] $DomainNetbiosName = (Get-NetBIOSName -DomainFQDN $DomainFQDN)
     [System.Management.Automation.PSCredential] $DomainCredsNetbios = New-Object System.Management.Automation.PSCredential ("${DomainNetbiosName}\$($Admincreds.UserName)", $Admincreds.Password)
@@ -30,34 +30,34 @@
 
     Node localhost
     {
-        LocalConfigurationManager 
+        LocalConfigurationManager
         {
             ConfigurationMode = 'ApplyOnly'
             RebootNodeIfNeeded = $true
         }
-    
+
         WindowsFeature ADDS { Name = "AD-Domain-Services"; Ensure = "Present" }
-	    WindowsFeature DNS  { Name = "DNS"; Ensure = "Present" }
+        WindowsFeature DNS  { Name = "DNS"; Ensure = "Present" }
 
         Script script1
-	    {
-      	    SetScript =  { 
-		        Set-DnsServerDiagnostics -All $true
+        {
+            SetScript =  {
+                Set-DnsServerDiagnostics -All $true
                 Write-Verbose -Verbose "Enabling DNS client diagnostics" 
             }
             GetScript =  { @{} }
             TestScript = { $false }
-	        DependsOn = "[WindowsFeature]DNS"
+            DependsOn = "[WindowsFeature]DNS"
         }
 
-	    WindowsFeature DnsTools { Name = "RSAT-DNS-Server"; Ensure = "Present" }
+        WindowsFeature DnsTools { Name = "RSAT-DNS-Server"; Ensure = "Present" }
 
         xDnsServerAddress DnsServerAddress 
-        { 
+        {
             Address        = '127.0.0.1' 
             InterfaceAlias = $InterfaceAlias
             AddressFamily  = 'IPv4'
-	        DependsOn = "[WindowsFeature]DNS"
+            DependsOn = "[WindowsFeature]DNS"
         }
 
         xWaitforDisk Disk2
@@ -72,8 +72,8 @@
             DiskNumber = 2
             DriveLetter = "F"
         }
-         
-        xADDomain FirstDS 
+
+        xADDomain FirstDS
         {
             DomainName = $DomainFQDN
             DomainAdministratorCredential = $DomainCredsNetbios
@@ -81,11 +81,11 @@
             DatabasePath = "F:\NTDS"
             LogPath = "F:\NTDS"
             SysvolPath = "F:\SYSVOL"
-	        DependsOn = "[cDiskNoRestart]ADDataDisk"
+            DependsOn = "[cDiskNoRestart]ADDataDisk"
         }
 
         xPendingReboot Reboot1
-        { 
+        {
             Name = "RebootServer"
             DependsOn = "[xADDomain]FirstDS"
         }
@@ -164,7 +164,7 @@
             KeyUsage                  = '0xa0'
             CertificateTemplate       = 'WebServer'
             AutoRenew                 = $true
-			#SubjectAltName            = "certauth.$ADFSSiteName.$DomainFQDN"
+            #SubjectAltName            = "certauth.$ADFSSiteName.$DomainFQDN"
             Credential                = $DomainCredsNetbios
             DependsOn = '[xWaitForCertificateServices]WaitAfterADCSProvisioning'
         }
@@ -185,7 +185,7 @@
             Credential                = $DomainCredsNetbios
             DependsOn = '[xWaitForCertificateServices]WaitAfterADCSProvisioning'
         }
-        
+
         xCertReq ADFSDecryptionCert
         {
             CARootName                = "$DomainNetbiosName-$ComputerName-CA"
@@ -235,7 +235,7 @@
             Ensure = "Present"
             DependsOn = "[xPendingReboot]Reboot1"
         }
-        
+
         xScript ExportCertificates
         {
             SetScript = 
