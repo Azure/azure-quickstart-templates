@@ -6,7 +6,7 @@ This template deploys 3 new Azure VMs, each with its own public IP address and s
 
 * A new AD Domain Controller with a root certificate authority (AD CS) and AD FS configured
 * A SQL Server 2016
-* A single server running a SharePoint 2016 or 2013 farm configured with 1 web application and 2 zones. Default zone is using Windows authentication and Intranet zone is using federated authentication with ADFS. Latest version of claims provider [LDAPCP](https://ldapcp.codeplex.com/) is installed and configured. Some service applications and site collections are also provisionned.
+* A single server running a SharePoint 2016 or 2013 farm configured with 1 web application and 2 zones. Default zone is using Windows authentication and Intranet zone is using federated authentication with ADFS. Latest version of claims provider [LDAPCP](http://ldapcp.com/) is installed and configured. Some service applications and site collections are also provisionned.
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2FAzure%2Fazure-quickstart-templates%2Fmaster%2Fsharepoint-adfs%2Fazuredeploy.json" target="_blank">
     <img src="http://azuredeploy.net/deploybutton.png"/>
@@ -16,6 +16,12 @@ This template deploys 3 new Azure VMs, each with its own public IP address and s
 </a>
 
 ## Changelog
+
+### September 2017 release
+
+* Granted spsvc full control to UPA to allow newsfeeds to work properly
+* Improved consistency of the template
+* Added parameter dnsPrefix to specify the prefix of public DNS names of VMs
 
 ### August 2017 release
 
