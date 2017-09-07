@@ -15,7 +15,7 @@ This template deploys 3 new Azure VMs, each with its own public IP address and s
     <img src="http://armviz.io/visualizebutton.png"/>
 </a>
 
-With the VM size set by default, provisioning of template takes about 1h30 - 1h45 to complete.
+With the default sizes of virtual machines, provisioning of the template takes about 1h30 - 1h45 to complete.
 
 ## Known issues or limitations
 
