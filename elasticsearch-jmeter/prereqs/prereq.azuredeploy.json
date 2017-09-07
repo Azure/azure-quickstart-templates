@@ -1,201 +1,66 @@
-﻿{
+{
     "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
-    "parameters": {
-
-    },
+    "parameters": {},
     "variables": {
-        "adminUsername": "demouser",
-        "adminPassword": "demoPassword1!",
-        "virtualNetworkName": "es-vnet",
-        "OS": "ubuntu",
-        "authenticationType": "password",
-        "sshPublicKey": "",
-        "loadBalancerType": "internal",
-        "jumpbox": "Yes",
-        "vmClientNodeCount": 1,
-        "vmSizeClientNodes": "Standard_D2_v2",
-        "vmSizeMasterNodes": "Standard_D2_v2",
-        "vmSizeDataNodes": "Standard_D2_v2",
-        "vmDataNodeCount": 3,
         "esClusterName": "elasticsearch",
-        "esVersion": "2.3.1",
-        "afs": "no",
-        "marvel": "yes",
-        "marvelCluster": "no",
-        "vmSizeMarvelNodes": "Standard_D2_v2",
-        "kibana": "yes",
-        "sense": "yes",
-        "_artifactsLocationSasToken": "",
-        "cloudAzureStorageAccount": "",
-        "jmeterAgent": "no",
-        "cloudAzure": "no",
-        "cloudAzureStorageKey": "",
         "_artifactsLocation": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/elasticsearch",
         "nestedTemplatesFolderName": "nestedtemplates",
         "scriptsLocation": "[concat(variables('_artifactsLocation'), '/scripts/')]",
         "sharedScriptsLocation": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/shared_scripts/ubuntu/",
-        "storageAccountPrefix": "[concat(substring(uniqueString(resourceGroup().id, variables('esClusterName')), 0, 6), substring(variables('esClusterName'), 0, 3))]",
+        "storageAccountPrefix": "[concat('st',uniqueString(resourceGroup().id))]",
         "storageAccountNameAFS": "[concat(variables('storageAccountPrefix'), 'afs')]",
         "storageAccountNameShared": "[concat(variables('storageAccountPrefix'), 'sh')]",
         "masterNodesIpPrefix": "10.0.0.1",
         "marvelNodesIpPrefix": "10.0.2.2",
-        "kibanaIPPrefix": {
-            "yes": "[variables('marvelNodesIpPrefix')]",
-            "no": "[variables('masterNodesIpPrefix')]"
-        },
-        "kibanaIP": "[concat('http://', variables('kibanaIPPrefix')[variables('marvelCluster')], '0:9200')]",
         "networkSettings": {
-            "virtualNetworkName": "[variables('virtualNetworkName')]",
+            "virtualNetworkName": "es-vnet",
             "addressPrefix": "10.0.0.0/16",
             "subnet": {
                 "master": {
                     "name": "master",
                     "prefix": "10.0.0.0/24",
-                    "vnet": "[variables('virtualNetworkName')]"
+                    "vnet": "es-vnet"
                 },
                 "data": {
                     "name": "data",
                     "prefix": "10.0.1.0/24",
-                    "vnet": "[variables('virtualNetworkName')]"
+                    "vnet": "es-vnet"
                 },
                 "other": {
                     "name": "other",
                     "prefix": "10.0.2.0/24",
-                    "vnet": "[variables('virtualNetworkName')]"
+                    "vnet": "es-vnet"
                 }
             }
         },
         "esSettings": {
             "clusterName": "[variables('esClusterName')]",
             "marvelClusterName": "[concat(variables('esClusterName'), '-marvel')]",
-            "version": "[variables('esVersion')]",
+            "version": "2.3.1",
             "discoveryHosts": "[concat(variables('masterNodesIpPrefix'), '-3')]",
             "marvelHosts": "[concat(variables('marvelNodesIpPrefix'), '-3')]"
         },
-        "sharedTemplateFileName": "shared-resources.json",
-        "masterTemplateFileName": "master-nodes-resources.json",
-        "marvelTemplates": {
-            "yes": "marvel-nodes-resources.json",
-            "no": "empty-resources.json"
-        },
-        "clientTemplates": [
-            "empty-resources.json",
-            "client-nodes-resources.json"
-        ],
-        "marvelTemplateFileName": "[variables('marvelTemplates')[variables('marvelCluster')]]",
-        "clientTemplateFileName": "[variables('clientTemplates')[mod(add(variables('vmClientNodeCount'), 2), add(variables('vmClientNodeCount'), 1))]]",
         "lbBackEndPoolsAdded": {
             "backendPools": [{
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', 'es-load-balancer'), '/backendAddressPools/LBBE')]"
+                "id": "[resourceId('Microsoft.Network/loadBalancers/backendAddressPools', 'es-load-balancer', 'LBBE')]"
             }]
         },
         "lbBackendPoolsRemoved": {
             "backendPools": []
         },
-        "dataLBSettingOptions": [
-            "[variables('lbBackEndPoolsAdded')]",
-            "[variables('lbBackendPoolsRemoved')]"
-        ],
-        "dataLBSettings": "[variables('dataLBSettingOptions')[mod(add(variables('vmClientNodeCount'), 2), add(variables('vmClientNodeCount'), 1))]]",
-        "jumpboxTemplateYes": "jumpbox-resources.json",
-        "jumpboxTemplateNo": "empty-resources.json",
-        "jumpboxTemplateFileName": "[variables(concat('jumpboxTemplate', variables('jumpbox')))]",
-        "senseParam": {
-            "yes": " -s ",
-            "no": ""
-        },
-        "marvelParam": {
-            "ubuntu": {
-                "yes": " -m ",
-                "no": ""
-            },
-            "centos": {
-                "yes": " -m ",
-                "no": ""
-            },
-            "windows": {
-                "yes": " -m ",
-                "no": ""
-            }
-        },
-        "afsParam": {
-            "ubuntu": {
-                "yes": "[concat(' -a ', variables('storageAccountNameAFS'), ' -c -k ')]",
-                "no": "[concat(' -a ', variables('storageAccountNameAFS'), ' -k ')]"
-            },
-            "centos": {
-                "yes": "",
-                "no": ""
-            },
-            "windows": {
-                "yes": "",
-                "no": ""
-            }
-        },
-        "marvelExportParam": {
-            "ubuntu": {
-                "yes": "[concat(' -e ', variables('marvelNodesIpPrefix'), '-3')]",
-                "no": ""
-            },
-            "centos": {
-                "yes": "[concat(' -e ', variables('marvelNodesIpPrefix'), '-3')]",
-                "no": ""
-            },
-            "windows": {
-                "yes": "[concat(' -marvelEndpoints ', variables('marvelNodesIpPrefix'), '-3')]",
-                "no": ""
-            }
-        },
-        "jmeterParam": {
-            "yes": " -j ",
-            "no": ""
-        },
-        "cloudAzureParam": {
-            "yes": "[concat(' -po ', variables('cloudAzureStorageAccount'), ' -r ', variables('cloudAzureStorageKey'), ' ')]",
-            "no": ""
-        },
-        "cloudAzureParamValue": "[variables('cloudAzureParam')[variables('cloudAzure')]]",
-        "marvelExportParamValue": "[variables('marvelExportParam')[variables('OS')][variables('marvelCluster')]]",
-        "senseParamValue": "[variables('senseParam')[variables('sense')]]",
-        "marvelParamValue": "[variables('marvelParam')[variables('OS')][variables('marvel')]]",
-        "jmeterParamValue": "[variables('jmeterParam')[variables('jmeterAgent')]]",
-        "afsParamValue": "[variables('afsParam')[variables('OS')][variables('afs')]]",
-        "kibanaTemplates": {
-            "yes": "kibana-resources.json",
-            "no": "empty-resources.json"
-        },
-        "kibanaTemplateFileName": "[variables('kibanaTemplates')[variables('kibana')]]",
+        "dataLBSettings": "[variables('lbBackendPoolsRemoved')]",
+        "afsParamValue": "[concat(' -a ', variables('storageAccountNameAFS'), ' -k ')]",
         "ubuntuScripts": [
-            "[concat(variables('scriptsLocation'), 'elasticsearch-ubuntu-install.sh', variables('_artifactsLocationSasToken'))]",
-            "[concat(variables('scriptsLocation'), 'kibana-install.sh', variables('_artifactsLocationSasToken'))]",
+            "[concat(variables('scriptsLocation'), 'elasticsearch-ubuntu-install.sh', '')]",
+            "[concat(variables('scriptsLocation'), 'kibana-install.sh', '')]",
             "[concat(variables('sharedScriptsLocation'), 'vm-disk-utils-0.1.sh')]",
             "[concat(variables('sharedScriptsLocation'), 'afs-utils-0.1.sh')]"
         ],
-        "centosScripts": [
-            "[concat(variables('scriptsLocation'), 'elasticsearch-centos-install.sh', variables('_artifactsLocationSasToken'))]",
-            "[concat(variables('scriptsLocation'), 'kibana-centos-install.sh', variables('_artifactsLocationSasToken'))]",
-            "[concat(variables('sharedScriptsLocation'), 'vm-disk-utils-0.1.sh')]"
-        ],
-        "windowsScripts": [
-            "[concat(variables('scriptsLocation'), 'elasticsearch-windows-install.ps1', variables('_artifactsLocationSasToken'))]"
-        ],
         "authSet": {
-            "password": "[variables('adminPassword')]",
-            "sshKey": "[variables('sshPublicKey')]",
-            "type": "[variables('authenticationType')]"
-        },
-        "configurationObject": {
-            "password": {},
-            "sshPublicKey": {
-                "disablePasswordAuthentication": "true",
-                "ssh": {
-                    "publicKeys": [{
-                        "path": "[concat('/home/', variables('adminUsername'), '/.ssh/authorized_keys')]",
-                        "keyData": "[variables('sshPublicKey')]"
-                    }]
-                }
-            }
+            "password": "adminPassword1!",
+            "sshKey": "",
+            "type": "password"
         },
         "ubuntuSettings": {
             "imageReference": {
@@ -204,7 +69,7 @@
                 "sku": "14.04.4-LTS",
                 "version": "latest"
             },
-            "linuxConfiguration": "[variables('configurationObject')[variables('authenticationType')]]",
+            "linuxConfiguration": {},
             "managementPort": "22",
             "extensionSettings": {
                 "marvel": {
@@ -224,7 +89,7 @@
                     "typeHandlerVersion": "2.0",
                     "settings": {
                         "fileUris": "[variables('ubuntuScripts')]",
-                        "commandToExecute": "[concat('bash elasticsearch-ubuntu-install.sh -xn ', variables('esSettings').clusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').discoveryHosts, variables('marvelParamValue'), variables('jmeterParamValue'), variables('cloudAzureParamValue'), variables('marvelExportParamValue'), variables('afsParamValue'))]"
+                        "commandToExecute": "[concat('bash elasticsearch-ubuntu-install.sh -xn ', variables('esSettings').clusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').discoveryHosts, '-m ', '', variables('afsParamValue'))]"
                     }
                 },
                 "client": {
@@ -234,7 +99,7 @@
                     "autoUpgradeMinorVersion": true,
                     "settings": {
                         "fileUris": "[variables('ubuntuScripts')]",
-                        "commandToExecute": "[concat('bash elasticsearch-ubuntu-install.sh -yn ', variables('esSettings').clusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').discoveryHosts, variables('marvelParamValue'), variables('jmeterParamValue'), variables('cloudAzureParamValue'), variables('marvelExportParamValue'), variables('afsParamValue'))]"
+                        "commandToExecute": "[concat('bash elasticsearch-ubuntu-install.sh -yn ', variables('esSettings').clusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').discoveryHosts, '-m ', '', variables('afsParamValue'))]"
                     }
                 },
                 "data": {
@@ -243,7 +108,7 @@
                     "typeHandlerVersion": "2.0",
                     "settings": {
                         "fileUris": "[variables('ubuntuScripts')]",
-                        "commandToExecute": "[concat('bash elasticsearch-ubuntu-install.sh -zn ', variables('esSettings').clusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').discoveryHosts, variables('marvelParamValue'), variables('jmeterParamValue'), variables('cloudAzureParamValue'), variables('marvelExportParamValue'), variables('afsParamValue'))]"
+                        "commandToExecute": "[concat('bash elasticsearch-ubuntu-install.sh -zn ', variables('esSettings').clusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').discoveryHosts, '-m ', '', variables('afsParamValue'))]"
                     }
                 },
                 "kibana": {
@@ -253,269 +118,72 @@
                     "typeHandlerVersion": "2.0",
                     "settings": {
                         "fileUris": "[variables('ubuntuScripts')]",
-                        "commandToExecute": "[concat('bash kibana-install.sh -v ', variables('esSettings').version, variables('marvelParamValue'), variables('senseParamValue'), ' -t ', variables('kibanaIP'))]"
+                        "commandToExecute": "[concat('bash kibana-install.sh -v ', variables('esSettings').version, '-m', ' -s ', ' -t http://10.0.0.10:9200')]"
                     }
                 }
             }
         },
-        "centosSettings": {
-            "imageReference": {
-                "publisher": "OpenLogic",
-                "offer": "CentOS",
-                "sku": "7.2",
-                "version": "latest"
-            },
-            "linuxConfiguration": "[variables('configurationObject')[variables('authenticationType')]]",
-            "managementPort": "22",
-            "extensionSettings": {
-                "marvel": {
-                    "publisher": "Microsoft.Azure.Extensions",
-                    "type": "CustomScript",
-                    "autoUpgradeMinorVersion": true,
-                    "typeHandlerVersion": "2.0",
-                    "settings": {
-                        "fileUris": "[variables('centosScripts')]",
-                        "commandToExecute": "[concat('bash elasticsearch-centos-install.sh -wn ', variables('esSettings').marvelClusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').marvelHosts, ' -k ')]"
-                    }
-                },
-                "master": {
-                    "publisher": "Microsoft.Azure.Extensions",
-                    "type": "CustomScript",
-                    "typeHandlerVersion": "2.0",
-                    "autoUpgradeMinorVersion": true,
-                    "settings": {
-                        "fileUris": "[variables('centosScripts')]",
-                        "commandToExecute": "[concat('bash elasticsearch-centos-install.sh -xn ', variables('esSettings').clusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').discoveryHosts, variables('marvelParamValue'), variables('jmeterParamValue'), variables('cloudAzureParamValue'), variables('marvelExportParamValue'), variables('afsParamValue'))]"
-                    }
-                },
-                "client": {
-                    "publisher": "Microsoft.Azure.Extensions",
-                    "type": "CustomScript",
-                    "typeHandlerVersion": "2.0",
-                    "autoUpgradeMinorVersion": true,
-                    "settings": {
-                        "fileUris": "[variables('centosScripts')]",
-                        "commandToExecute": "[concat('bash elasticsearch-centos-install.sh -yn ', variables('esSettings').clusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').discoveryHosts, variables('marvelParamValue'), variables('jmeterParamValue'),  variables('cloudAzureParamValue'),variables('marvelExportParamValue'), variables('afsParamValue'))]"
-                    }
-                },
-                "data": {
-                    "publisher": "Microsoft.Azure.Extensions",
-                    "type": "CustomScript",
-                    "typeHandlerVersion": "2.0",
-                    "autoUpgradeMinorVersion": true,
-                    "settings": {
-                        "fileUris": "[variables('centosScripts')]",
-                        "commandToExecute": "[concat('bash elasticsearch-centos-install.sh -zn ', variables('esSettings').clusterName, ' -v ', variables('esSettings').version, ' -d ', variables('esSettings').discoveryHosts, variables('marvelParamValue'), variables('jmeterParamValue'),  variables('cloudAzureParamValue'),variables('marvelExportParamValue'), variables('afsParamValue'))]"
-                    }
-                },
-                "kibana": {
-                    "publisher": "Microsoft.Azure.Extensions",
-                    "type": "CustomScript",
-                    "typeHandlerVersion": "2.0",
-                    "autoUpgradeMinorVersion": true,
-                    "settings": {
-                        "fileUris": "[variables('centosScripts')]",
-                        "commandToExecute": "[concat('bash kibana-centos-install.sh -v ', variables('esSettings').version, variables('marvelParamValue'), variables('senseParamValue'), ' -t ', variables('kibanaIP'))]"
-                    }
-                }
-            }
-        },
-        "windowsSettings": {
-            "imageReference": {
-                "publisher": "MicrosoftWindowsServer",
-                "offer": "WindowsServer",
-                "sku": "2012-R2-Datacenter",
-                "version": "latest"
-            },
-            "linuxConfiguration": "",
-            "managementPort": "3389",
-            "extensionSettings": {
-                "marvel": {
-                    "publisher": "Microsoft.Compute",
-                    "type": "CustomScriptExtension",
-                    "typeHandlerVersion": "1.4",
-                    "autoUpgradeMinorVersion": true,
-                    "settings": {
-                        "fileUris": "[variables('windowsScripts')]",
-                        "commandToExecute": "[concat('powershell.exe -File elasticsearch-windows-install.ps1 -elasticSearchVersion ', variables('esSettings').version, ' -elasticClusterName ', variables('esSettings').marvelClusterName, ' -discoveryEndpoints ', variables('esSettings').marvelHosts, ' -marvelOnlyNode -storageKey ')]"
-                    }
-                },
-                "master": {
-                    "publisher": "Microsoft.Compute",
-                    "type": "CustomScriptExtension",
-                    "typeHandlerVersion": "1.4",
-                    "autoUpgradeMinorVersion": true,
-                    "settings": {
-                        "fileUris": "[variables('windowsScripts')]",
-                        "commandToExecute": "[concat('powershell.exe -File elasticsearch-windows-install.ps1 -elasticSearchVersion ', variables('esSettings').version, ' -elasticClusterName ', variables('esSettings').clusterName, ' -discoveryEndpoints ', variables('esSettings').discoveryHosts, variables('cloudAzureParamValue'), variables('marvelParamValue'), variables('marvelExportParamValue'), ' -masterOnlyNode -storageKey ')]"
-                    }
-                },
-                "client": {
-                    "publisher": "Microsoft.Compute",
-                    "type": "CustomScriptExtension",
-                    "typeHandlerVersion": "1.4",
-                    "autoUpgradeMinorVersion": true,
-                    "settings": {
-                        "fileUris": "[variables('windowsScripts')]",
-                        "commandToExecute": "[concat('powershell.exe -File elasticsearch-windows-install.ps1 -elasticSearchVersion ', variables('esSettings').version, ' -elasticClusterName ', variables('esSettings').clusterName, ' -discoveryEndpoints ', variables('esSettings').discoveryHosts, variables('cloudAzureParamValue'), variables('marvelParamValue'), variables('marvelExportParamValue'), ' -clientOnlyNode -storageKey ')]"
-                    }
-                },
-                "data": {
-                    "publisher": "Microsoft.Compute",
-                    "type": "CustomScriptExtension",
-                    "typeHandlerVersion": "1.4",
-                    "autoUpgradeMinorVersion": true,
-                    "settings": {
-                        "fileUris": "[variables('windowsScripts')]",
-                        "commandToExecute": "[concat('powershell.exe -File elasticsearch-windows-install.ps1 -elasticSearchVersion ', variables('esSettings').version, ' -elasticClusterName ', variables('esSettings').clusterName, ' -discoveryEndpoints ', variables('esSettings').discoveryHosts, variables('cloudAzureParamValue'), variables('marvelParamValue'), variables('marvelExportParamValue'), ' -dataOnlyNode -storageKey ')]"
-                    }
-                }
-            }
-        },
-        "osSettings": "[variables(concat(variables('OS'), 'Settings'))]",
-        "dataSkuSettings": {
-            "Standard_D1_v2": {
-                "dataDisks": 2,
-                "nodesPerStorageAccount": 6,
-                "storageAccountType": "Standard_LRS"
-            },
-            "Standard_D2_v2": {
-                "dataDisks": 4,
-                "nodesPerStorageAccount": 4,
-                "storageAccountType": "Standard_LRS"
-            },
-            "Standard_D3_v2": {
-                "dataDisks": 8,
-                "nodesPerStorageAccount": 3,
-                "storageAccountType": "Standard_LRS"
-            },
-            "Standard_D4_v2": {
-                "dataDisks": 16,
-                "nodesPerStorageAccount": 2,
-                "storageAccountType": "Standard_LRS"
-            },
-            "Standard_D12_v2": {
-                "dataDisks": 8,
-                "nodesPerStorageAccount": 3,
-                "storageAccountType": "Standard_LRS"
-            },
-            "Standard_DS1": {
-                "dataDisks": 2,
-                "nodesPerStorageAccount": 6,
-                "storageAccountType": "Premium_LRS"
-            },
-            "Standard_DS2": {
-                "dataDisks": 4,
-                "nodesPerStorageAccount": 4,
-                "storageAccountType": "Premium_LRS"
-            },
-            "Standard_DS3": {
-                "dataDisks": 8,
-                "nodesPerStorageAccount": 4,
-                "storageAccountType": "Premium_LRS"
-            },
-            "Standard_DS4": {
-                "dataDisks": 16,
-                "nodesPerStorageAccount": 2,
-                "storageAccountType": "Premium_LRS"
-            },
-            "Standard_DS13": {
-                "dataDisks": 16,
-                "nodesPerStorageAccount": 2,
-                "storageAccountType": "Premium_LRS"
-            },
-            "Standard_DS14": {
-                "dataDisks": 16,
-                "nodesPerStorageAccount": 2,
-                "storageAccountType": "Premium_LRS"
-            },
-            "Standard_A2": {
-                "dataDisks": 4,
-                "nodesPerStorageAccount": 6,
-                "storageAccountType": "Standard_LRS"
-            },
-            "Standard_A3": {
-                "dataDisks": 8,
-                "nodesPerStorageAccount": 4,
-                "storageAccountType": "Standard_LRS"
-            },
-            "Standard_A4": {
-                "dataDisks": 16,
-                "nodesPerStorageAccount": 2,
-                "storageAccountType": "Standard_LRS"
-            },
-            "Standard_A7": {
-                "dataDisks": 16,
-                "nodesPerStorageAccount": 2,
-                "storageAccountType": "Standard_LRS"
-            }
-        },
-        "nodesPerStorageAccount": "[variables('dataSkuSettings')[variables('vmSizeDataNodes')].nodesPerStorageAccount]",
+        "osSettings": "[variables('ubuntuSettings')]",
         "storageBinPackMap": [
-            "[div(sub(add(1, variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
-            "[div(sub(add(2, variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
-            "[div(sub(add(3, variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
-            "[div(sub(add(4, variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
-            "[div(sub(add(5, variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
-            "[div(sub(add(6, variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
-            "[div(sub(add(7, variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
-            "[div(sub(add(8, variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
-            "[div(sub(add(9, variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
-            "[div(sub(add(10, variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
-            "[div(sub(add(11, variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
-            "[div(sub(add(12, variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
-            "[div(sub(add(13, variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
-            "[div(sub(add(14, variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
-            "[div(sub(add(15, variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
-            "[div(sub(add(16, variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
-            "[div(sub(add(17, variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
-            "[div(sub(add(18, variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
-            "[div(sub(add(19, variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
-            "[div(sub(add(20, variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
-            "[div(sub(add(21, variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
-            "[div(sub(add(22, variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
-            "[div(sub(add(23, variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
-            "[div(sub(add(24, variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
-            "[div(sub(add(25, variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
-            "[div(sub(add(26, variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
-            "[div(sub(add(27, variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
-            "[div(sub(add(28, variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
-            "[div(sub(add(29, variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
-            "[div(sub(add(30, variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
-            "[div(sub(add(31, variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
-            "[div(sub(add(32, variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
-            "[div(sub(add(33, variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
-            "[div(sub(add(34, variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
-            "[div(sub(add(35, variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
-            "[div(sub(add(36, variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
-            "[div(sub(add(37, variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
-            "[div(sub(add(38, variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
-            "[div(sub(add(39, variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
-            "[div(sub(add(40, variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
-            "[div(sub(add(51, variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
-            "[div(sub(add(52, variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
-            "[div(sub(add(53, variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
-            "[div(sub(add(54, variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
-            "[div(sub(add(55, variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
-            "[div(sub(add(56, variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
-            "[div(sub(add(57, variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
-            "[div(sub(add(58, variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
-            "[div(sub(add(59, variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
-            "[div(sub(add(60, variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]"
+            "[div(sub(add(1, 4), 1), 4)]",
+            "[div(sub(add(2, 4), 1), 4)]",
+            "[div(sub(add(3, 4), 1), 4)]",
+            "[div(sub(add(4, 4), 1), 4)]",
+            "[div(sub(add(5, 4), 1), 4)]",
+            "[div(sub(add(6, 4), 1), 4)]",
+            "[div(sub(add(7, 4), 1), 4)]",
+            "[div(sub(add(8, 4), 1), 4)]",
+            "[div(sub(add(9, 4), 1), 4)]",
+            "[div(sub(add(10, 4), 1), 4)]",
+            "[div(sub(add(11, 4), 1), 4)]",
+            "[div(sub(add(12, 4), 1), 4)]",
+            "[div(sub(add(13, 4), 1), 4)]",
+            "[div(sub(add(14, 4), 1), 4)]",
+            "[div(sub(add(15, 4), 1), 4)]",
+            "[div(sub(add(16, 4), 1), 4)]",
+            "[div(sub(add(17, 4), 1), 4)]",
+            "[div(sub(add(18, 4), 1), 4)]",
+            "[div(sub(add(19, 4), 1), 4)]",
+            "[div(sub(add(20, 4), 1), 4)]",
+            "[div(sub(add(21, 4), 1), 4)]",
+            "[div(sub(add(22, 4), 1), 4)]",
+            "[div(sub(add(23, 4), 1), 4)]",
+            "[div(sub(add(24, 4), 1), 4)]",
+            "[div(sub(add(25, 4), 1), 4)]",
+            "[div(sub(add(26, 4), 1), 4)]",
+            "[div(sub(add(27, 4), 1), 4)]",
+            "[div(sub(add(28, 4), 1), 4)]",
+            "[div(sub(add(29, 4), 1), 4)]",
+            "[div(sub(add(30, 4), 1), 4)]",
+            "[div(sub(add(31, 4), 1), 4)]",
+            "[div(sub(add(32, 4), 1), 4)]",
+            "[div(sub(add(33, 4), 1), 4)]",
+            "[div(sub(add(34, 4), 1), 4)]",
+            "[div(sub(add(35, 4), 1), 4)]",
+            "[div(sub(add(36, 4), 1), 4)]",
+            "[div(sub(add(37, 4), 1), 4)]",
+            "[div(sub(add(38, 4), 1), 4)]",
+            "[div(sub(add(39, 4), 1), 4)]",
+            "[div(sub(add(40, 4), 1), 4)]",
+            "[div(sub(add(51, 4), 1), 4)]",
+            "[div(sub(add(52, 4), 1), 4)]",
+            "[div(sub(add(53, 4), 1), 4)]",
+            "[div(sub(add(54, 4), 1), 4)]",
+            "[div(sub(add(55, 4), 1), 4)]",
+            "[div(sub(add(56, 4), 1), 4)]",
+            "[div(sub(add(57, 4), 1), 4)]",
+            "[div(sub(add(58, 4), 1), 4)]",
+            "[div(sub(add(59, 4), 1), 4)]",
+            "[div(sub(add(60, 4), 1), 4)]"
         ],
         "dataNodeStorageSettings": {
-            "count": "[div(sub(add(variables('vmDataNodeCount'), variables('nodesPerStorageAccount')), 1), variables('nodesPerStorageAccount'))]",
+            "count": "[div(sub(add(3, 4), 1), 4)]",
             "mapping": "[variables('storageBinPackMap')]",
-            "accountType": "[variables('dataSkuSettings')[variables('vmSizeDataNodes')].storageAccountType]",
+            "accountType": "Standard_LRS",
             "afs": "[variables('storageAccountNameAFS')]",
             "shared": "[variables('storageAccountNameShared')]",
             "prefix": "[concat(variables('storageAccountPrefix'), 'da')]"
-        },
-        "dataTemplateFileName": {
-            "afs-yes": "data-nodes-0disk-resources.json",
-            "afs-no": "[concat('data-nodes-', string(variables('dataSkuSettings')[variables('vmSizeDataNodes')].dataDisks), 'disk-resources.json')]"
-        },
-        "dataTemplateFileNameValue": "[variables('dataTemplateFileName')[concat('afs-', variables('afs'))]]"
+        }
     },
     "resources": [{
             "name": "master-nodes",
@@ -527,7 +195,7 @@
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "[concat(variables('_artifactsLocation'), '/', variables('nestedTemplatesFolderName'), '/', variables('masterTemplateFileName'), variables('_artifactsLocationSasToken'))]",
+                    "uri": "[concat(variables('_artifactsLocation'), '/', variables('nestedTemplatesFolderName'), '/', 'master-nodes-resources.json', '')]",
                     "contentVersion": "1.0.0.0"
                 },
                 "parameters": {
@@ -535,7 +203,7 @@
                         "value": "[variables('dataNodeStorageSettings')]"
                     },
                     "adminUsername": {
-                        "value": "[variables('adminUsername')]"
+                        "value": "demouser"
                     },
                     "authSet": {
                         "value": "[variables('authSet')]"
@@ -544,7 +212,7 @@
                         "value": "[variables('masterNodesIpPrefix')]"
                     },
                     "vmSize": {
-                        "value": "[variables('vmSizeMasterNodes')]"
+                        "value": "Standard_D2_v2"
                     },
                     "subnet": {
                         "value": "[variables('networkSettings').subnet.master]"
@@ -568,7 +236,7 @@
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "[concat(variables('_artifactsLocation'), '/', variables('nestedTemplatesFolderName'), '/', variables('marvelTemplateFileName'), variables('_artifactsLocationSasToken'))]",
+                    "uri": "[concat(variables('_artifactsLocation'), '/', variables('nestedTemplatesFolderName'), '/', 'empty-resources.json', '')]",
                     "contentVersion": "1.0.0.0"
                 },
                 "parameters": {
@@ -576,7 +244,7 @@
                         "value": "[variables('storageAccountNameShared')]"
                     },
                     "adminUsername": {
-                        "value": "[variables('adminUsername')]"
+                        "value": "demouser"
                     },
                     "authSet": {
                         "value": "[variables('authSet')]"
@@ -585,7 +253,7 @@
                         "value": "[variables('marvelNodesIpPrefix')]"
                     },
                     "vmSize": {
-                        "value": "[variables('vmSizeMarvelNodes')]"
+                        "value": "Standard_D2_v2"
                     },
                     "subnet": {
                         "value": "[variables('networkSettings').subnet.other]"
@@ -606,7 +274,7 @@
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "[concat(variables('_artifactsLocation'), '/', variables('nestedTemplatesFolderName'), '/', variables('sharedTemplateFileName'), variables('_artifactsLocationSasToken'))]",
+                    "uri": "[concat(variables('_artifactsLocation'), '/', variables('nestedTemplatesFolderName'), '/', 'shared-resources.json', '')]",
                     "contentVersion": "1.0.0.0"
                 },
                 "parameters": {
@@ -617,7 +285,7 @@
                         "value": "[variables('dataNodeStorageSettings')]"
                     },
                     "loadBalancerType": {
-                        "value": "[variables('loadBalancerType')]"
+                        "value": "internal"
                     },
                     "ilbIpAddress": {
                         "value": "10.0.2.100"
@@ -635,12 +303,12 @@
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "[concat(variables('_artifactsLocation'), '/', variables('nestedTemplatesFolderName'), '/', variables('clientTemplateFileName'), variables('_artifactsLocationSasToken'))]",
+                    "uri": "[concat(variables('_artifactsLocation'), '/', variables('nestedTemplatesFolderName'), '/', 'client-nodes-resources.json', '')]",
                     "contentVersion": "1.0.0.0"
                 },
                 "parameters": {
                     "adminUsername": {
-                        "value": "[variables('adminUsername')]"
+                        "value": "demouser"
                     },
                     "authSet": {
                         "value": "[variables('authSet')]"
@@ -652,13 +320,13 @@
                         "value": "[variables('networkSettings').subnet.other]"
                     },
                     "vmSize": {
-                        "value": "[variables('vmSizeClientNodes')]"
+                        "value": "Standard_D2_v2"
                     },
                     "osSettings": {
                         "value": "[variables('osSettings')]"
                     },
                     "vmCount": {
-                        "value": "[variables('vmClientNodeCount')]"
+                        "value": 1
                     },
                     "lbBackendPools": {
                         "value": "[variables('lbBackEndPoolsAdded')]"
@@ -679,12 +347,12 @@
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "[concat(variables('_artifactsLocation'), '/', variables('nestedTemplatesFolderName'), '/', variables('dataTemplateFileNameValue'), variables('_artifactsLocationSasToken'))]",
+                    "uri": "[concat(variables('_artifactsLocation'), '/', variables('nestedTemplatesFolderName'), '/', 'data-nodes-4disk-resources.json', '')]",
                     "contentVersion": "1.0.0.0"
                 },
                 "parameters": {
                     "adminUsername": {
-                        "value": "[variables('adminUsername')]"
+                        "value": "demouser"
                     },
                     "authSet": {
                         "value": "[variables('authSet')]"
@@ -696,10 +364,10 @@
                         "value": "[variables('networkSettings').subnet.data]"
                     },
                     "vmSize": {
-                        "value": "[variables('vmSizeDataNodes')]"
+                        "value": "Standard_D2_v2"
                     },
                     "vmCount": {
-                        "value": "[variables('vmDataNodeCount')]"
+                        "value": 3
                     },
                     "namespace": {
                         "value": "[concat(variables('esClusterName'), '-data')]"
@@ -723,7 +391,7 @@
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "[concat(variables('_artifactsLocation'), '/', variables('nestedTemplatesFolderName'), '/', variables('jumpboxTemplateFileName'), variables('_artifactsLocationSasToken'))]",
+                    "uri": "[concat(variables('_artifactsLocation'), '/', variables('nestedTemplatesFolderName'), '/', 'jumpbox-resources.json', '')]",
                     "contentVersion": "1.0.0.0"
                 },
                 "parameters": {
@@ -731,7 +399,7 @@
                         "value": "[variables('storageAccountNameShared')]"
                     },
                     "adminUsername": {
-                        "value": "[variables('adminUsername')]"
+                        "value": "demouser"
                     },
                     "authSet": {
                         "value": "[variables('authSet')]"
@@ -758,7 +426,7 @@
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "[concat(variables('_artifactsLocation'), '/', variables('nestedTemplatesFolderName'), '/', variables('kibanaTemplateFileName'), variables('_artifactsLocationSasToken'))]",
+                    "uri": "[concat(variables('_artifactsLocation'), '/', variables('nestedTemplatesFolderName'), '/kibana-resources.json', '')]",
                     "contentVersion": "1.0.0.0"
                 },
                 "parameters": {
@@ -766,7 +434,7 @@
                         "value": "[variables('storageAccountNameShared')]"
                     },
                     "adminUsername": {
-                        "value": "[variables('adminUsername')]"
+                        "value": "demouser"
                     },
                     "authSet": {
                         "value": "[variables('authSet')]"
@@ -785,9 +453,9 @@
         }
     ],
     "outputs": {
-        "existingvnetname": {
+        "existingVnetName": {
             "type": "string",
-            "value": "[variables('virtualNetworkName')]"
+            "value": "es-vnet"
         }
     }
 }
