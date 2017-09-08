@@ -28,3 +28,4 @@ This template assigns Owner, Reader or Contributor access to an existing resourc
     Id         : /subscriptions/ xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c
     Actions    : {*}
     NotActions : {Microsoft.Authorization/*/Write, Microsoft.Authorization/*/Delete} 
+
